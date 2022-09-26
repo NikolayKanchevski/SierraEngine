@@ -1,6 +1,13 @@
-#include <iostream>
+#include <GLFW/glfw3.h>
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    glfwInit();
+
+    GLFWwindow* window = glfwCreateWindow(800, 600, "My Title", nullptr, nullptr);
+
+    while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+    }
+
     return 0;
 }
