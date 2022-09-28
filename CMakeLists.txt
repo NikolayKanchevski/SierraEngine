@@ -3,7 +3,11 @@ project(SierraEngine)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(SierraEngine main.cpp)
+add_executable(${PROJECT_NAME} main.cpp Core/Rendering/Window.cpp Core/Rendering/Window.h Engine/Classes/Stopwatch.cpp Engine/Classes/Stopwatch.h Core/Rendering/Vulkan/VulkanDebugger.cpp Core/Rendering/Vulkan/VulkanDebugger.h Core/Application/Application.cpp Core/Application/Application.h)
+
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    add_definitions(-DDEBUG)
+endif()
 
 # vcpkg install vulkan
 find_package(Vulkan REQUIRED)

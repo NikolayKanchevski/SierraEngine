@@ -1,13 +1,12 @@
-#include <GLFW/glfw3.h>
+#include "Core/Rendering/Window.h"
+#include "Core/Application/Application.h"
+
+using namespace Sierra::Core::Rendering;
 
 int main() {
-    glfwInit();
-
-    GLFWwindow* window = glfwCreateWindow(800, 600, "My Title", nullptr, nullptr);
-
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
-    }
+    // Start the application
+    Application application;
+    application.Start();
 
     return 0;
 }
