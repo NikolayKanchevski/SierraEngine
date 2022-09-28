@@ -6,7 +6,11 @@
 #include <utility>
 #include "Window.h"
 #include "../../Engine/Classes/Stopwatch.h"
+#include "../../Engine/Classes/Cursor.h"
 #include "Vulkan/VulkanDebugger.h"
+#include "Vulkan/VulkanCore.h"
+
+using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Core::Rendering {
     void Window::Update()
@@ -79,7 +83,7 @@ namespace Sierra::Core::Rendering {
 
         #ifdef DEBUG
             Sierra::Core::Rendering::Vulkan::VulkanDebugger::DisplayInfo(
-                "Window [" + this->title + "] successfully created! Initialization took " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms"
+                "Window [" + this->title + "] successfully created! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms"
             );
         #endif
     }
@@ -94,8 +98,8 @@ namespace Sierra::Core::Rendering {
         glfwWindow = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
         glfwSetWindowPos(glfwWindow, (int) position.x, (int) position.y);
 
-//        VulkanCore.glfwWindow
-//        VulkanCore.window
+        Vulkan::VulkanCore::window = this;
+        Vulkan::VulkanCore::glfwWindow = glfwWindow;
 
         glfwSetWindowUserPointer(glfwWindow, this);
 
@@ -120,7 +124,10 @@ namespace Sierra::Core::Rendering {
 
 //        glfwSetKeyCallback(glfwWindow, Input.KeyboardKeyCallback);
 
-//        glfwSetCursorPositionCallback(glfwWindow, Cursor.CursorPositionCallback);
+        double xCursorPosition, yCursorPosition;
+        glfwGetCursorPos(glfwWindow, &xCursorPosition, &yCursorPosition);
+        glfwSetCursorPosCallback(glfwWindow, Cursor::CursorPositionCallback);
+        Cursor::SetCursorPosition({ xCursorPosition, yCursorPosition });
 
 //        glfwSetMouseButtonCallback(glfwWindow, Input.MouseButtonCallback);
 
