@@ -13,8 +13,10 @@ class Application
 public:
     /* --- POLLING METHODS --- */
     void Start();
+    static void StartClasses();
     static void UpdateClasses();
 
 private:
     Window window = Window("Sierra Engine v1.0.0", false, true, true);
+
 };

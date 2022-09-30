@@ -9,15 +9,15 @@
 #include "../../Engine/Classes/Cursor.h"
 #include "Vulkan/VulkanDebugger.h"
 #include "Vulkan/VulkanCore.h"
+#include "../../Engine/Classes/Input.h"
 
 using namespace Sierra::Engine::Classes;
 
-namespace Sierra::Core::Rendering {
+namespace Sierra::Core::Rendering
+{
     void Window::Update()
     {
         glfwPollEvents();
-
-        closed = glfwWindowShouldClose(glfwWindow);
 
         if (REQUIRE_FOCUS && !focused) return;
 
@@ -50,10 +50,9 @@ namespace Sierra::Core::Rendering {
         glfwSetWindowOpacity(glfwWindow, givenOpacity);
     }
 
-    Window::Window(const std::string& givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)
-            : REQUIRE_FOCUS(setFocusRequirement), RESIZABLE(setResizable)
+    Window::Window(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)
+            : title(std::move(givenTitle)), maximized(setMaximized), REQUIRE_FOCUS(setFocusRequirement), RESIZABLE(setResizable)
     {
-
         glfwInit();
 
         #ifdef DEBUG
@@ -61,9 +60,6 @@ namespace Sierra::Core::Rendering {
         #endif
 
         RetrieveMonitorData();
-
-        this->title = givenTitle;
-        this->maximized = setMaximized;
 
         if (setMaximized)
         {
@@ -112,6 +108,8 @@ namespace Sierra::Core::Rendering {
             glfwSetErrorCallback(GlfwErrorCallback);
         #endif
 
+        glfwSetWindowCloseCallback(glfwWindow, [](GLFWwindow* windowPtr) { GetGlfwWindowParentClass(windowPtr)->closed = true; });
+
         glfwSetWindowSizeCallback(glfwWindow, WindowResizeCallback);
 
         glfwSetWindowFocusCallback(glfwWindow, WindowFocusCallback);
@@ -122,18 +120,20 @@ namespace Sierra::Core::Rendering {
 
         glfwSetWindowMaximizeCallback(glfwWindow, WindowMaximizeCallback);
 
-//        glfwSetKeyCallback(glfwWindow, Input.KeyboardKeyCallback);
+        glfwSetCharCallback(glfwWindow, Input::Input::KeyboardCharacterCallback);
+
+        glfwSetKeyCallback(glfwWindow, Input::KeyboardKeyCallback);
+
+        glfwSetMouseButtonCallback(glfwWindow, Input::MouseButtonCallback);
+
+        glfwSetScrollCallback(glfwWindow, Input::MouseScrollCallback);
+
+        glfwSetJoystickCallback(Input::JoystickCallback);
 
         double xCursorPosition, yCursorPosition;
         glfwGetCursorPos(glfwWindow, &xCursorPosition, &yCursorPosition);
         glfwSetCursorPosCallback(glfwWindow, Cursor::CursorPositionCallback);
         Cursor::SetCursorPosition({ xCursorPosition, yCursorPosition });
-
-//        glfwSetMouseButtonCallback(glfwWindow, Input.MouseButtonCallback);
-
-//        glfwSetScrollCallback(glfwWindow, Input.MouseScrollCallback);
-//
-//        glfwSetJoystickCallback(Input.JoystickCallback);
     }
 
     void Window::RetrieveMonitorData()
@@ -163,7 +163,7 @@ namespace Sierra::Core::Rendering {
 //        windowObject.vulkanRenderer.Update();
 //        windowObject.vulkanRenderer.Update();
 
-//        SierraEngine.Engine.Classes.Cursor.ResetCursorOffset();
+        Cursor::ResetCursorOffset();
     }
 
     void Window::WindowFocusCallback(GLFWwindow *windowPtr, int focused)
@@ -173,7 +173,7 @@ namespace Sierra::Core::Rendering {
         windowObject->focused = focused;
         windowObject->minimized = false;
 
-//        SierraEngine.Engine.Classes.Cursor.ResetCursorOffset();
+        Cursor::ResetCursorOffset();
     }
 
     void Window::WindowMinimizeCallback(GLFWwindow *windowPtr, int minimized)
@@ -182,7 +182,7 @@ namespace Sierra::Core::Rendering {
 
         windowObject->minimized = false;
 
-//        SierraEngine.Engine.Classes.Cursor.ResetCursorOffset();
+        Cursor::ResetCursorOffset();
     }
 
     void Window::WindowMaximizeCallback(GLFWwindow *windowPtr, int maximized)
@@ -192,7 +192,7 @@ namespace Sierra::Core::Rendering {
         windowObject->minimized = !maximized;
         windowObject->maximized = maximized;
 
-//        SierraEngine.Engine.Classes.Cursor.ResetCursorOffset();
+        Cursor::ResetCursorOffset();
     }
 
     Window *Window::GetGlfwWindowParentClass(GLFWwindow* windowPtr)

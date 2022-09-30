@@ -6,6 +6,7 @@
 
 namespace Sierra::Engine::Classes
 {
+    /// \brief Contains all kinds of time-related values. Some common ones are - FPS, delta time, etc.
     class Time
     {
     public:

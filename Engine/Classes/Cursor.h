@@ -11,6 +11,7 @@ using namespace Sierra::Core::Rendering::Vulkan;
 
 namespace Sierra::Engine::Classes
 {
+    /// \brief A class to interface with the cursor.
     class Cursor
     {
     public:
@@ -60,6 +61,9 @@ namespace Sierra::Engine::Classes
         /// @param showCursor Whether to hide or show the cursor.
         static void SetCursorVisibility(bool showCursor);
 
+        /// \brief Resets the cursor position offset. Should only be called from the Window class.
+        static void ResetCursorOffset();
+
         /* --- CALLBACKS --- */
         static void CursorPositionCallback(GLFWwindow* windowPtr, double xPosition, double yPosition);
 
@@ -70,8 +74,6 @@ namespace Sierra::Engine::Classes
         static bool cursorShown;
 
         static bool cursorPositionSet;
-
-        static void ResetCursorOffset();
     };
 
 }

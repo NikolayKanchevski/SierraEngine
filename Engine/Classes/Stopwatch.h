@@ -8,16 +8,17 @@
 
 namespace Sierra::Engine::Classes
 {
+    /// \brief A class that imitates a stopwatch functionality and can be used to detect how much time takes a block of code to get executed.
     class Stopwatch
     {
     public:
-        /// Sets the elapsed time to zero.
+        /// \brief Sets the elapsed time to zero.
         void Reset();
 
-        /// Returns the time the stopwatch has been running in milliseconds.
+        /// \brief Returns the time the stopwatch has been running in milliseconds.
         int GetElapsedMilliseconds();
 
-        /// Returns the time the stopwatch has been running in seconds.
+        /// \brief Returns the time the stopwatch has been running in seconds.
         int GetElapsedSeconds();
 
         Stopwatch();

@@ -71,6 +71,12 @@ namespace Sierra::Engine::Classes
         showCursor ? ShowCursor() : HideCursor();
     }
 
+    void Cursor::ResetCursorOffset()
+    {
+        lastCursorPosition = cursorPosition;
+        cursorOffset = glm::vec2(0);
+    }
+
     /* --- CALLBACKS --- */
     void Cursor::CursorPositionCallback(GLFWwindow *windowPtr, double xPosition, double yPosition)
     {
@@ -84,11 +90,6 @@ namespace Sierra::Engine::Classes
     }
 
     /* --- PRIVATE METHODS --- */
-    void Cursor::ResetCursorOffset()
-    {
-        lastCursorPosition = cursorPosition;
-        cursorOffset = glm::vec2(0);
-    }
 
     glm::vec2 Cursor::GetGlfwCursorPosition()
     {

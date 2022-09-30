@@ -3,7 +3,7 @@ project(SierraEngine)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(${PROJECT_NAME} main.cpp Core/Rendering/Window.cpp Core/Rendering/Window.h Engine/Classes/Stopwatch.cpp Engine/Classes/Stopwatch.h Core/Rendering/Vulkan/VulkanDebugger.cpp Core/Rendering/Vulkan/VulkanDebugger.h Core/Application/Application.cpp Core/Application/Application.h Engine/Classes/Time.cpp Engine/Classes/Time.h Engine/Classes/Cursor.cpp Engine/Classes/Cursor.h Core/Rendering/Vulkan/VulkanCore.cpp Core/Rendering/Vulkan/VulkanCore.h)
+add_executable(${PROJECT_NAME} main.cpp Core/Rendering/Window.cpp Core/Rendering/Window.h Engine/Classes/Stopwatch.cpp Engine/Classes/Stopwatch.h Core/Rendering/Vulkan/VulkanDebugger.cpp Core/Rendering/Vulkan/VulkanDebugger.h Core/Application/Application.cpp Core/Application/Application.h Engine/Classes/Time.cpp Engine/Classes/Time.h Engine/Classes/Cursor.cpp Engine/Classes/Cursor.h Core/Rendering/Vulkan/VulkanCore.cpp Core/Rendering/Vulkan/VulkanCore.h Engine/Classes/Input.cpp Engine/Classes/Input.h)
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DDEBUG)

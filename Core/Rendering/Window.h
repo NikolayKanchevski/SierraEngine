@@ -11,6 +11,7 @@
 
 namespace Sierra::Core::Rendering
 {
+    /// \brief Window manager class. Wraps around a "core" GLFW window and extends its capabilities.
     class Window
     {
     public:
@@ -23,7 +24,7 @@ namespace Sierra::Core::Rendering
         /// @param setMaximized A bool indicating whether the window should use all the space on your screen and start setMaximized.
         /// @param setResizable Whether the window is going to be setResizable or not.
         /// @param setFocusRequirement Whether the window requires to be focused in order to draw and handle events.
-        Window(const std::string& givenTitle, bool setMaximized, const bool setResizable, const bool setFocusRequirement);
+        Window(std::string  givenTitle, bool setMaximized, bool setResizable, bool setFocusRequirement);
 
         /* --- POLLING METHODS --- */
 
