@@ -6,6 +6,7 @@
 
 #include <vulkan/vulkan.h>
 #include <unordered_map>
+#include <memory>
 #include <vector>
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions

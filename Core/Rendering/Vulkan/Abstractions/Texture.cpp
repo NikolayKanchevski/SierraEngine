@@ -142,7 +142,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         stbi_uc *stbiImage = stbi_load(fileLocation.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
         if (!stbiImage) {
-            throw std::runtime_error("Failed to load the texture file [" + filePath + "]");
+            VulkanDebugger::ThrowError("Failed to load the texture file [" + filePath + "]");
         }
 
         const unsigned long calculatedMemorySize = width * height * channels;

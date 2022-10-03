@@ -6,6 +6,7 @@
 
 #include <vulkan/vulkan.h>
 #include <glm/vec3.hpp>
+#include <memory>
 #include "Image.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions

@@ -5,17 +5,16 @@
 #include <iostream>
 #include <utility>
 #include "Window.h"
+#include "Vulkan/VulkanDebugger.h"
 #include "../../Engine/Classes/Stopwatch.h"
 #include "../../Engine/Classes/Cursor.h"
-#include "Vulkan/VulkanDebugger.h"
-#include "Vulkan/VulkanCore.h"
 #include "../../Engine/Classes/Input.h"
 
 using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Core::Rendering
 {
-    void Window::Update()
+    void Window::Update() const
     {
         glfwPollEvents();
 
@@ -107,8 +106,6 @@ namespace Sierra::Core::Rendering
         #if DEBUG
             glfwSetErrorCallback(GlfwErrorCallback);
         #endif
-
-        glfwSetWindowCloseCallback(glfwWindow, [](GLFWwindow* windowPtr) { GetGlfwWindowParentClass(windowPtr)->closed = true; });
 
         glfwSetWindowSizeCallback(glfwWindow, WindowResizeCallback);
 

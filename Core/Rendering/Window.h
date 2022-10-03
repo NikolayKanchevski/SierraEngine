@@ -29,7 +29,7 @@ namespace Sierra::Core::Rendering
         /* --- POLLING METHODS --- */
 
         /// \brief Does drawing and required GLFW updates. Only gets executed if the window is not minimised and is focused if required to be.
-        void Update();
+        void Update() const;
 
         /* --- SETTER METHODS --- */
 
@@ -70,7 +70,7 @@ namespace Sierra::Core::Rendering
 
         /// \brief Checks whether the window is closed.
         [[nodiscard]] inline bool IsClosed() const
-        { return this->closed; };
+        { return glfwWindowShouldClose(glfwWindow); };
 
         /// \brief Checks whether the window is minimized and is not shown.
         [[nodiscard]] inline bool IsMinimized() const

@@ -6,6 +6,7 @@
 
 #include <vulkan/vulkan_core.h>
 #include <glm/vec3.hpp>
+#include <memory>
 #include "../VulkanDebugger.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
@@ -84,7 +85,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         { return this->vkImage; };
 
         [[nodiscard]] inline VkImageView GetVulkanImageView() const
-        { if (!imageViewGenerated) { VulkanDebugger::ThrowWarning("Image view not generated. Returning null"); return nullptr; } return this->vkImageView; };
+        { if (!imageViewGenerated) { VulkanDebugger::ThrowWarning("Image view not generated. Returning null"); return NULL; } return this->vkImageView; };
 
         [[nodiscard]] inline VkDeviceMemory GetVulkanMemory() const
         { return this->vkImageMemory; };
