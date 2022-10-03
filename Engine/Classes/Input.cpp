@@ -319,7 +319,7 @@ namespace Sierra::Engine::Classes {
     std::string Input::UnicodePointToChar(const uint32_t unicodePoint)
     {
         char character[5] = {0x00, 0x00, 0x00, 0x00, 0x00 };
-        if     (unicodePoint <= 0x7F) { character[0] = unicodePoint;  }
+        if      (unicodePoint <= 0x7F) { character[0] = unicodePoint;  }
         else if (unicodePoint <= 0x7FF) { character[0] = (unicodePoint >> 6) + 192; character[1] = (unicodePoint & 63) + 128; }
         else if (0xd800 <= unicodePoint && unicodePoint <= 0xdfff) { } // Invalid block of utf8
         else if (unicodePoint <= 0xFFFF) { character[0] = (unicodePoint >> 12) + 224; character[1] = ((unicodePoint >> 6) & 63) + 128; character[2] = (unicodePoint & 63) + 128; }

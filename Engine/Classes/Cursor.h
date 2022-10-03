@@ -18,26 +18,8 @@ namespace Sierra::Engine::Classes
         /* --- POLLING METHODS --- */
         static void Update();
 
-        /* --- GETTER METHODS --- */
-        /// \brief Returns the position on the cursor.
-        inline static glm::vec2 GetCursorPosition() { return cursorPosition; }
-
-        /// \brief Returns the normalized position of the cursor where both X and Y is a value between 0 and 1.
-        inline static glm::vec2 GetCursorPositionNormalized() { return {cursorPosition.x / (float) VulkanCore::window->GetWidth(), cursorPosition.y / (float) VulkanCore::window->GetHeight()}; }
-
-        /// \brief Returns how much the mouse has been moved horizontally since last frame.
-        inline static float GetHorizontalCursorOffset() { return cursorOffset.x; }
-
-        /// \brief Returns how much the mouse has been moved vertically since last frame.
-        inline static float  GetVerticalCursorOffset() { return cursorOffset.x; }
-
-        /// \brief Tells whether the cursor is visible on the screen.
-        inline static bool IsCursorShown() { return cursorShown; }
-
-        /// \brief Gets the raw (unformatted) cursor position returned by GLFW. Only used for ImGui.
-        static glm::vec2 GetGlfwCursorPosition();
-
         /* --- SETTER METHODS --- */
+
         /// \brief Moves the cursor to a given position.
         /// @param newPosition Where exactly to put the cursor.
         static void SetCursorPosition(glm::vec2 newPosition);
@@ -63,6 +45,25 @@ namespace Sierra::Engine::Classes
 
         /// \brief Resets the cursor position offset. Should only be called from the Window class.
         static void ResetCursorOffset();
+
+        /* --- GETTER METHODS --- */
+        /// \brief Returns the position on the cursor.
+        [[nodiscard]] inline static glm::vec2 GetCursorPosition() { return cursorPosition; }
+
+        /// \brief Returns the normalized position of the cursor where both X and Y is a value between 0 and 1.
+        [[nodiscard]] inline static glm::vec2 GetCursorPositionNormalized() { return {cursorPosition.x / (float) VulkanCore::window->GetWidth(), cursorPosition.y / (float) VulkanCore::window->GetHeight()}; }
+
+        /// \brief Returns how much the mouse has been moved horizontally since last frame.
+        [[nodiscard]] inline static float GetHorizontalCursorOffset() { return cursorOffset.x; }
+
+        /// \brief Returns how much the mouse has been moved vertically since last frame.
+        [[nodiscard]] inline static float  GetVerticalCursorOffset() { return cursorOffset.x; }
+
+        /// \brief Tells whether the cursor is visible on the screen.
+        [[nodiscard]] inline static bool IsCursorShown() { return cursorShown; }
+
+        /// \brief Gets the raw (unformatted) cursor position returned by GLFW. Only used for ImGui.
+        [[nodiscard]] static glm::vec2 GetGlfwCursorPosition();
 
         /* --- CALLBACKS --- */
         static void CursorPositionCallback(GLFWwindow* windowPtr, double xPosition, double yPosition);

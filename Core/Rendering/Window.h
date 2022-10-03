@@ -53,38 +53,49 @@ namespace Sierra::Core::Rendering
 
         /* --- GETTER METHODS --- */
         /// \brief A pointer to the core GLFW window.
-        inline GLFWwindow* const GetCoreWindow() { return this->glfwWindow; };
+        [[nodiscard]] inline GLFWwindow* GetCoreWindow()
+        { return this->glfwWindow; };
 
         /// \brief Gets the width of the window.
-        inline int GetWidth() const { return this->width; };
+        [[nodiscard]] inline int GetWidth() const
+        { return this->width; };
 
         /// \brief Gets the height of the window.
-        inline int GetHeight() const { return this->height; };
+        [[nodiscard]] inline int GetHeight() const
+        { return this->height; };
 
         /// \brief Returns the title displayed at the top of the window.
-        inline std::string GetTitle() const { return this->title; };
+        [[nodiscard]] inline std::string GetTitle() const
+        { return this->title; };
 
         /// \brief Checks whether the window is closed.
-        inline bool IsClosed() const { return this->closed; };
+        [[nodiscard]] inline bool IsClosed() const
+        { return this->closed; };
 
         /// \brief Checks whether the window is minimized and is not shown.
-        inline bool IsMinimized() const { return this->minimized; };
+        [[nodiscard]] inline bool IsMinimized() const
+        { return this->minimized; };
 
         /// \brief Checks whether the window is maximised (uses the whole screen).
-        inline bool IsMaximized() const { return this->maximized; };
+        [[nodiscard]] inline bool IsMaximized() const
+        { return this->maximized; };
 
         /// \brief Checks whether the window is focused (is the one handling input currently).
-        inline bool IsFocused() const { return this->focused; };
+        [[nodiscard]] inline bool IsFocused() const
+        { return this->focused; };
 
         /// \brief Checks whether the window is hidden from the user.
-        inline bool IsHidden() const { return this->hidden; };
+        [[nodiscard]] inline bool IsHidden() const
+        { return this->hidden; };
 
         /// \brief Returns the current opacity of the window.
-        inline float GetOpacity() const { return this->opacity; };
+        [[nodiscard]] inline float GetOpacity() const
+        { return this->opacity; };
 
         /* --- DESTRUCTOR --- */
-
         ~Window();
+        Window(const Window &) = delete;
+        Window &operator=(const Window &) = delete;
     private:
         GLFWwindow* glfwWindow;
         glm::vec2 position;

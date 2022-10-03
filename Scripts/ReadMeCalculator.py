@@ -4,7 +4,7 @@ from fileinput import filename
 import os
 
 DIRECTORIES = ["../Core", "../Engine", "../Scripts"]
-FILE_EXTENSIONS = [".cpp",  ".h", ".py", ".vert", ".frag", ".sh", ".bat"]
+FILE_EXTENSIONS = [".cpp",  ".h", ".py", ".glsl", ".vert", ".frag", ".sh", ".bat"]
 
 now = datetime.datetime.now()
 lastUpdated = f"{now.day:02}/{now.month:02}/{now.year:02}"

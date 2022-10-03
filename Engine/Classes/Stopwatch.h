@@ -12,16 +12,19 @@ namespace Sierra::Engine::Classes
     class Stopwatch
     {
     public:
+        /* --- CONSTRUCTORS --- */
+        Stopwatch();
+
+        /* --- SETTER FUNCTIONS --- */
         /// \brief Sets the elapsed time to zero.
         void Reset();
 
+        /* --- GETTER FUNCTIONS --- */
         /// \brief Returns the time the stopwatch has been running in milliseconds.
-        int GetElapsedMilliseconds();
+        [[nodiscard]] int GetElapsedMilliseconds();
 
         /// \brief Returns the time the stopwatch has been running in seconds.
-        int GetElapsedSeconds();
-
-        Stopwatch();
+        [[nodiscard]] int GetElapsedSeconds();
     private:
         std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
     };

@@ -67,4 +67,15 @@ namespace Sierra::Core::Rendering::Vulkan
 
         lastMessageType = Error;
     }
+
+    bool VulkanDebugger::CheckResults(const VkResult result, const std::string& errorMessage)
+    {
+        bool success = result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR;
+        if (!success)
+        {
+            ThrowError(errorMessage + ". Error code: " + std::to_string(result));
+        }
+
+        return success;
+    }
 }

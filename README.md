@@ -52,7 +52,7 @@ You can then proceed and run the program in your IDE. Make sure you are in <b>RE
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 1818</p>
-<p align="center" id="LastUpdated">Last updated: 30/09/2022</p>
+<p align="center" id="LinesCounter">Total lines of code: 2883</p>
+<p align="center" id="LastUpdated">Last updated: 01/10/2022</p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

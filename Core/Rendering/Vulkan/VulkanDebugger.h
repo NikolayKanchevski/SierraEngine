@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <vulkan/vulkan.h>
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -15,6 +16,7 @@ namespace Sierra::Core::Rendering::Vulkan
         static void DisplaySuccess(const std::string&);
         static void ThrowWarning(const std::string&);
         static void ThrowError(const std::string&);
+        static bool CheckResults(const VkResult result, const std::string&);
     private:
         enum MessageType { Info, Success, Warning, Error };
         static MessageType lastMessageType;
