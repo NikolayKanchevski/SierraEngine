@@ -5,31 +5,43 @@
 #include <iostream>
 #include "VulkanDebugger.h"
 
-#define DEFAULT "\e[0;32m"
-#define BLUE "\e[0;34m"
-#define GREEN "\e[0;32m"
-#define YELLOW "\e[0;33m"
-#define RED "\e[0;31m"
+#if _WIN32
+    #define DEFAULT() (SetConsoleTextAttribute(hConsole, 7))
+    #define BLUE() (SetConsoleTextAttribute(hConsole, 1))
+    #define GREEN() (SetConsoleTextAttribute(hConsole, 2))
+    #define YELLOW() (SetConsoleTextAttribute(hConsole, 14))
+    #define RED() (SetConsoleTextAttribute(hConsole, 4))
+#else
+    #define DEFAULT() (printf("\e[0;32m"))
+    #define BLUE() (printf("\e[0;34m"))
+    #define GREEN() (printf("\e[0;32m"))
+    #define YELLOW() (printf("\e[0;33m"))
+    #define RED() (printf("\e[0;31m"))
+#endif
 
-// TODO: Fix colors on Windows
 namespace Sierra::Core::Rendering::Vulkan
 {
 
-#if DEBUG
-    static const bool DEBUG_MODE = true;
-#else
-    static const bool DEBUG_MODE = false;
-#endif
+    #if DEBUG
+        static const bool DEBUG_MODE = true;
+    #else
+        static const bool DEBUG_MODE = false;
+    #endif
 
     VulkanDebugger::MessageType VulkanDebugger::lastMessageType = Info;
 
+    #if _WIN32
+        HANDLE VulkanDebugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    #endif
+
     void VulkanDebugger::DisplayInfo(const std::string& message)
     {
+
         if (lastMessageType != Info) std::cout << "\n";
 
-        printf(BLUE);
+        BLUE();
         std::cout << "[i] " << message << ".\n";
-        printf(DEFAULT);
+        DEFAULT();
 
         lastMessageType = Info;
     }
@@ -38,9 +50,9 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         if (lastMessageType != Success) std::cout << "\n";
 
-        printf(GREEN);
+        GREEN();
         std::cout << "[+] " << message << "!\n";
-        printf(DEFAULT);
+        DEFAULT();
 
         lastMessageType = Success;
     }
@@ -49,9 +61,9 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         if (lastMessageType != Warning) std::cout << "\n";
 
-        printf(YELLOW);
+        YELLOW();
         std::cout << "[!] " << message << "!\n";
-        printf(DEFAULT);
+        DEFAULT();
 
         lastMessageType = Warning;
     }
@@ -60,11 +72,10 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         if (lastMessageType != Error) std::cout << "\n";
 
-        printf(RED);
-        std::cout << "[-] " << message << "!\n";
-        printf(DEFAULT);
-
-        if (DEBUG_MODE) exit(-1);
+        RED();
+        if (!DEBUG_MODE) std::cout << "[-] " << message << "!\n";
+        else throw std::runtime_error("[-] " + message + "!\n");
+        DEFAULT();
 
         lastMessageType = Error;
     }

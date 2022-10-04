@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <utility>
-//#include "Window.h"
+#include "Window.h"
 #include "Vulkan/VulkanDebugger.h"
 #include "../../Engine/Classes/Stopwatch.h"
 #include "../../Engine/Classes/Cursor.h"
@@ -14,6 +14,7 @@ using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Core::Rendering
 {
+
     void Window::Update() const
     {
         glfwPollEvents();
@@ -53,6 +54,7 @@ namespace Sierra::Core::Rendering
     {
         hasRenderer = true;
         this->vulkanRenderer = givenVulkanRenderer;
+        this->vulkanRenderer->Start();
     }
 
     Window::Window(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)

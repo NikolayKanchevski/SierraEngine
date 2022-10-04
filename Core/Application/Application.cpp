@@ -16,10 +16,11 @@ void Application::Start()
 {
     // Show the window
     Window window = Window("Sierra Engine v1.0.0", false, true, true);
-    window.Show();
 
     VulkanRenderer vulkanRenderer;
     window.SetRenderer(&vulkanRenderer);
+
+    window.Show();
 
     // Initialize utility classes
     StartClasses();

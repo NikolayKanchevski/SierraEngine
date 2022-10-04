@@ -1,5 +1,5 @@
 <h1 align="center">Sierra Engine</h1>
-<h6 align="center">By: <a href="https://nikichatv.com/Website/N-Studios.html">Nikolay Kanchevski</a></h6>
+<h6 align="center">By: <a>Nikolay Kanchevski</a></h6>
 <br>
 
 <p>

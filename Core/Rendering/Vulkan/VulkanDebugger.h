@@ -7,10 +7,19 @@
 #include <string>
 #include <vulkan/vulkan.h>
 
+#if _WIN32
+    #include <windows.h>
+#endif
+
 namespace Sierra::Core::Rendering::Vulkan
 {
     class VulkanDebugger
     {
+
+    #if _WIN32
+        static HANDLE hConsole;
+    #endif
+
     public:
         static void DisplayInfo(const std::string&);
         static void DisplaySuccess(const std::string&);
