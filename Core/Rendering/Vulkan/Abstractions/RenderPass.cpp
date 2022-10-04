@@ -151,7 +151,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan render pass
         VulkanDebugger::CheckResults(
-            vkCreateRenderPass(VulkanCore::logicalDevice, &renderPassCreateInfo, nullptr, &vkRenderPass),
+            vkCreateRenderPass(VulkanCore::GetLogicalDevice(), &renderPassCreateInfo, nullptr, &vkRenderPass),
             "Could not create render pass with [" + std::to_string(renderPassCreateInfo.subpassCount) + "] subpasses and [" + std::to_string(renderPassCreateInfo.attachmentCount) + "] attachments"
         );
     }
@@ -196,7 +196,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Set render area and background color
         beginInfo.renderArea.offset = { 0, 0 };
-        beginInfo.renderArea.extent = VulkanCore::swapchainExtent;
+        beginInfo.renderArea.extent = VulkanCore::GetSwapchainExtent();
         beginInfo.clearValueCount = 2;
         beginInfo.pClearValues = clearValues;
 
@@ -223,6 +223,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     RenderPass::~RenderPass()
     {
         // Destroy the Vulkan render pass
-        vkDestroyRenderPass(VulkanCore::logicalDevice, vkRenderPass, nullptr);
+        vkDestroyRenderPass(VulkanCore::GetLogicalDevice(), vkRenderPass, nullptr);
     }
 }

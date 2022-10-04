@@ -38,13 +38,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void *data;
 
         // Map memory
-        vkMapMemory(VulkanCore::logicalDevice, vkBufferMemory, offset, memorySize, 0, &data);
+        vkMapMemory(VulkanCore::GetLogicalDevice(), vkBufferMemory, offset, memorySize, 0, &data);
 
         // Copy memory data to Vulkan buffer
         memcpy(pointer, data, memorySize);
 
         // Unmap the memory
-        vkUnmapMemory(VulkanCore::logicalDevice, vkBufferMemory);
+        vkUnmapMemory(VulkanCore::GetLogicalDevice(), vkBufferMemory);
     }
 
     void Buffer::CopyImage(const Image& givenImage, const glm::vec3 imageOffset, const unsigned long offset)
@@ -99,12 +99,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Buffer::DestroyBuffer()
     {
-        vkDestroyBuffer(VulkanCore::logicalDevice, vkBuffer, nullptr);
+        vkDestroyBuffer(VulkanCore::GetLogicalDevice(), vkBuffer, nullptr);
     }
 
     void Buffer::FreeMemory()
     {
-        vkFreeMemory(VulkanCore::logicalDevice, vkBufferMemory, nullptr);
+        vkFreeMemory(VulkanCore::GetLogicalDevice(), vkBufferMemory, nullptr);
     }
 
     /* --- CONSTRUCTORS --- */
@@ -127,13 +127,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan buffer
         VulkanDebugger::CheckResults(
-            vkCreateBuffer(VulkanCore::logicalDevice, &bufferCreateInfo, nullptr, &vkBuffer),
+            vkCreateBuffer(VulkanCore::GetLogicalDevice(), &bufferCreateInfo, nullptr, &vkBuffer),
             "Failed to create buffer with size of [" + std::to_string(givenMemorySize) + "] for [" + std::to_string(givenBufferUsage) + "] usage"
         );
 
         // Get the Vulkan buffer's memory requirements
         VkMemoryRequirements memoryRequirements;
-        vkGetBufferMemoryRequirements(VulkanCore::logicalDevice, vkBuffer, &memoryRequirements);
+        vkGetBufferMemoryRequirements(VulkanCore::GetLogicalDevice(), vkBuffer, &memoryRequirements);
 
         // Set up the buffer's memory allocation info
         VkMemoryAllocateInfo memoryAllocationInfo;
@@ -143,12 +143,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Allocate buffer's memory
         VulkanDebugger::CheckResults(
-            vkAllocateMemory(VulkanCore::logicalDevice, &memoryAllocationInfo, nullptr, &vkBufferMemory),
+            vkAllocateMemory(VulkanCore::GetLogicalDevice(), &memoryAllocationInfo, nullptr, &vkBufferMemory),
             "Failed to allocate memory for buffer"
         );
 
         // Bind the allocated memory to the buffer
-        vkBindBufferMemory(VulkanCore::logicalDevice, vkBuffer, vkBufferMemory, 0);
+        vkBindBufferMemory(VulkanCore::GetLogicalDevice(), vkBuffer, vkBufferMemory, 0);
     }
 
     /* --- DESTRUCTOR --- */

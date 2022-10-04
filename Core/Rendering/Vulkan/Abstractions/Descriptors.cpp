@@ -63,7 +63,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan descriptor set layout
         VulkanDebugger::CheckResults(
-            vkCreateDescriptorSetLayout(VulkanCore::logicalDevice, &layoutCreateInfo, nullptr, &vkDescriptorSetLayout),
+            vkCreateDescriptorSetLayout(VulkanCore::GetLogicalDevice(), &layoutCreateInfo, nullptr, &vkDescriptorSetLayout),
             "Failed to create descriptor layout with [" + std::to_string(layoutCreateInfo.bindingCount) + "] binging(s)"
         );
     }
@@ -73,7 +73,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     DescriptorSetLayout::~DescriptorSetLayout()
     {
         // Destroy the Vulkan descriptor set
-        vkDestroyDescriptorSetLayout(VulkanCore::logicalDevice, vkDescriptorSetLayout, nullptr);
+        vkDestroyDescriptorSetLayout(VulkanCore::GetLogicalDevice(), vkDescriptorSetLayout, nullptr);
     }
 
     // ********************* Descriptor Pool ********************* \\
@@ -112,7 +112,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan descriptor set
         VulkanDebugger::CheckResults(
-            vkAllocateDescriptorSets(VulkanCore::logicalDevice, &allocateInfo, nullptr),
+            vkAllocateDescriptorSets(VulkanCore::GetLogicalDevice(), &allocateInfo, nullptr),
             "Failed to allocate descriptor set"
         );
     }
@@ -137,7 +137,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan descriptor pool
         VulkanDebugger::CheckResults(
-            vkCreateDescriptorPool(VulkanCore::logicalDevice, &descriptorPoolCreateInfo, nullptr, &vkDescriptorPool),
+            vkCreateDescriptorPool(VulkanCore::GetLogicalDevice(), &descriptorPoolCreateInfo, nullptr, &vkDescriptorPool),
             "Failed to create descriptor pool with [" + std::to_string(givenMaxSets) + "] max sets and [" + std::to_string(descriptorPoolCreateInfo.poolSizeCount) + "] pool sizes"
         );
     }
@@ -147,7 +147,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     DescriptorPool::~DescriptorPool()
     {
         // Destroy the Vulkan descriptor pool
-        vkDestroyDescriptorPool(VulkanCore::logicalDevice, this->vkDescriptorPool, nullptr);
+        vkDestroyDescriptorPool(VulkanCore::GetLogicalDevice(), this->vkDescriptorPool, nullptr);
     }
 
     // ********************* Descriptor Writer ********************* \\
@@ -236,6 +236,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             writeDescriptorSets[i].dstSet = descriptorSet;
         }
 
-        vkUpdateDescriptorSets(VulkanCore::logicalDevice, writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
+        vkUpdateDescriptorSets(VulkanCore::GetLogicalDevice(), writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
     }
 }

@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <utility>
-#include "Window.h"
+//#include "Window.h"
 #include "Vulkan/VulkanDebugger.h"
 #include "../../Engine/Classes/Stopwatch.h"
 #include "../../Engine/Classes/Cursor.h"
@@ -49,10 +49,22 @@ namespace Sierra::Core::Rendering
         glfwSetWindowOpacity(glfwWindow, givenOpacity);
     }
 
+    void Window::SetRenderer(VulkanRenderer *givenVulkanRenderer)
+    {
+        hasRenderer = true;
+        this->vulkanRenderer = givenVulkanRenderer;
+    }
+
     Window::Window(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)
             : title(std::move(givenTitle)), maximized(setMaximized), REQUIRE_FOCUS(setFocusRequirement), RESIZABLE(setResizable)
     {
         glfwInit();
+
+        if (!glfwVulkanSupported())
+        {
+            VulkanDebugger::ThrowError("Vulkan not supported on this system");
+            exit(-1);
+        }
 
         #ifdef DEBUG
                 Sierra::Engine::Classes::Stopwatch stopwatch;
@@ -86,15 +98,14 @@ namespace Sierra::Core::Rendering
     void Window::InitWindow()
     {
         glfwWindowHint(GLFW_RESIZABLE, RESIZABLE);
-        glfwWindowHint(GLFW_CLIENT_API, 0);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_MAXIMIZED, maximized);
         glfwWindowHint(GLFW_VISIBLE, 0);
 
         glfwWindow = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
         glfwSetWindowPos(glfwWindow, (int) position.x, (int) position.y);
 
-        Vulkan::VulkanCore::window = this;
-        Vulkan::VulkanCore::glfwWindow = glfwWindow;
+        Vulkan::VulkanCore::SetWindow(this);
 
         glfwSetWindowUserPointer(glfwWindow, this);
 

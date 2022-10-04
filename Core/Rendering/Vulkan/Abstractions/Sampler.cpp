@@ -39,7 +39,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan sampler
         VulkanDebugger::CheckResults(
-            vkCreateSampler(VulkanCore::logicalDevice, &samplerCreateInfo, nullptr, &vkSampler),
+            vkCreateSampler(VulkanCore::GetLogicalDevice(), &samplerCreateInfo, nullptr, &vkSampler),
             "Failed to create sampler with a LOD of [" + std::to_string(givenMinLod) + "," + std::to_string(givenMaxLod) + "] and [" + std::to_string(givenMaxAnisotropy) + "] max anisotropy"
         );
     }
@@ -47,11 +47,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     Sampler::Builder &Sampler::Builder::SetMaxAnisotropy(float givenMaxAnisotropy)
     {
         // Check if sampler anisotropy is supported by the GPU
-        if (VulkanCore::physicalDeviceFeatures.samplerAnisotropy)
+        if (VulkanCore::GetPhysicalDeviceFeatures().samplerAnisotropy)
         {
             // Clamp the anisotropy between 0.0 and 1.0 and multiply it by the maximum supported anisotropy
             givenMaxAnisotropy = Math::Clamp(givenMaxAnisotropy, 0.0f, 1.0f);
-            this->maxAnisotropy = (givenMaxAnisotropy / 1.0f) * VulkanCore::physicalDeviceProperties.limits.maxSamplerAnisotropy;
+            this->maxAnisotropy = (givenMaxAnisotropy / 1.0f) * VulkanCore::GetPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
         }
         else
         {
@@ -93,6 +93,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     Sampler::~Sampler()
     {
         // Destroy the Vulkan sampler
-        vkDestroySampler(VulkanCore::logicalDevice, this->vkSampler, nullptr);
+        vkDestroySampler(VulkanCore::GetLogicalDevice(), this->vkSampler, nullptr);
     }
 }

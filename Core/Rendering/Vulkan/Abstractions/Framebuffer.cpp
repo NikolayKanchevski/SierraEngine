@@ -17,14 +17,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferCreateInfo.renderPass = givenRenderPass;
         framebufferCreateInfo.attachmentCount = static_cast<uint32_t>(givenAttachments.size());
-        framebufferCreateInfo.width = VulkanCore::swapchainExtent.width;
-        framebufferCreateInfo.height = VulkanCore::swapchainExtent.height;
+        framebufferCreateInfo.width = VulkanCore::GetSwapchainExtent().width;
+        framebufferCreateInfo.height = VulkanCore::GetSwapchainExtent().height;
         framebufferCreateInfo.layers = 1;
         framebufferCreateInfo.pAttachments = givenAttachments.data();
 
         // Create the Vulkan framebuffer
         VulkanDebugger::CheckResults(
-            vkCreateFramebuffer(VulkanCore::logicalDevice, &framebufferCreateInfo, nullptr, &vkFramebuffer),
+            vkCreateFramebuffer(VulkanCore::GetLogicalDevice(), &framebufferCreateInfo, nullptr, &vkFramebuffer),
             "Failed to create a framebuffer with attachment count of [" + std::to_string(givenAttachments.size()) + "]"
         );
     }
@@ -53,6 +53,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     Framebuffer::~Framebuffer()
     {
         // Destroy the Vulkan framebuffer
-        vkDestroyFramebuffer(VulkanCore::logicalDevice, this->vkFramebuffer, nullptr);
+        vkDestroyFramebuffer(VulkanCore::GetLogicalDevice(), this->vkFramebuffer, nullptr);
     }
 }

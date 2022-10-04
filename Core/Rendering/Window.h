@@ -5,9 +5,13 @@
 #pragma once
 
 #include <string>
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
+#include "Vulkan/Renderer/VulkanRenderer.h"
+
+using namespace Sierra::Core::Rendering::Vulkan;
 
 namespace Sierra::Core::Rendering
 {
@@ -47,14 +51,20 @@ namespace Sierra::Core::Rendering
 
         // void SetIcon():
 
-        // bool HasRenderer();
-
-        // void SetRenderer();
+        /// @brief Sets a renderer for the window to use.
+        /// @param givenVulkanRenderer
+        void SetRenderer(VulkanRenderer *givenVulkanRenderer);
 
         /* --- GETTER METHODS --- */
         /// \brief A pointer to the core GLFW window.
         [[nodiscard]] inline GLFWwindow* GetCoreWindow()
         { return this->glfwWindow; };
+
+        [[nodiscard]] inline bool HasRenderer()
+        { return this->hasRenderer; }
+
+        [[nodiscard]] inline VulkanRenderer& GetRenderer()
+        { return *this->vulkanRenderer; }
 
         /// \brief Gets the width of the window.
         [[nodiscard]] inline int GetWidth() const
@@ -97,8 +107,11 @@ namespace Sierra::Core::Rendering
         Window(const Window &) = delete;
         Window &operator=(const Window &) = delete;
     private:
-        GLFWwindow* glfwWindow;
+        GLFWwindow *glfwWindow;
         glm::vec2 position;
+
+        VulkanRenderer *vulkanRenderer;
+        bool hasRenderer;
 
         int width, height;
         std::string title;

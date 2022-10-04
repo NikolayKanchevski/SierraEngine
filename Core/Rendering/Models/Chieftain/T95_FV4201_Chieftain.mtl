@@ -1,0 +1,46 @@
+newmtl 5443287C-AEB4-4180-A2AF-160D063382BC
+Kd 1.000 1.000 1.000
+Ks 0.314 0.314 0.314
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/t114_track_diffuse.jpg
+map_Ks textures/t114_track_specular.jpg
+norm textures/t114_track_normal.jpg
+map_d textures/t114_track_alpha.png
+
+newmtl ED06777A-5B52-47F0-8A55-642243E61331
+Kd 1.000 1.000 1.000
+Ks 0.314 0.314 0.314
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/t95_fv4201_chieftain_chassis_01_diffuse.jpg
+map_Ks textures/t95_fv4201_chieftain_chassis_01_specular.jpg
+norm textures/t95_fv4201_chieftain_chassis_01_normal.jpg
+
+newmtl 0FEB77A8-8196-4B0C-A801-C9CB2F0CB4D1
+Kd 1.000 1.000 1.000
+Ks 0.314 0.314 0.314
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/t95_fv4201_chieftain_hull_01_diffuse.jpg
+map_Ks textures/t95_fv4201_chieftain_hull_01_specular.jpg
+norm textures/t95_fv4201_chieftain_hull_01_normal.jpg
+
+newmtl 88CFA2D5-8732-4901-8401-8B1D3E396207
+Kd 1.000 1.000 1.000
+Ks 0.314 0.314 0.314
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/t95_fv4201_chieftain_turret_01_diffuse.jpg
+map_Ks textures/t95_fv4201_chieftain_turret_01_specular.jpg
+norm textures/t95_fv4201_chieftain_turret_01_normal.jpg
+
+newmtl F1FD6A5B-649D-42A1-AE45-59A60567310B
+Kd 1.000 1.000 1.000
+Ks 0.314 0.314 0.314
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/t95_fv4201_chieftain_guns_diffuse.jpg
+map_Ks textures/t95_fv4201_chieftain_guns_specular.jpg
+norm textures/t95_fv4201_chieftain_guns_normal.jpg
+

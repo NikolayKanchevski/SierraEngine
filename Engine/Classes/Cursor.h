@@ -51,7 +51,7 @@ namespace Sierra::Engine::Classes
         [[nodiscard]] inline static glm::vec2 GetCursorPosition() { return cursorPosition; }
 
         /// \brief Returns the normalized position of the cursor where both X and Y is a value between 0 and 1.
-        [[nodiscard]] inline static glm::vec2 GetCursorPositionNormalized() { return {cursorPosition.x / (float) VulkanCore::window->GetWidth(), cursorPosition.y / (float) VulkanCore::window->GetHeight()}; }
+        [[nodiscard]] inline static glm::vec2 GetCursorPositionNormalized() { return {cursorPosition.x / (float) VulkanCore::GetWindow()->GetWidth(), cursorPosition.y / (float) VulkanCore::GetWindow()->GetHeight()}; }
 
         /// \brief Returns how much the mouse has been moved horizontally since last frame.
         [[nodiscard]] inline static float GetHorizontalCursorOffset() { return cursorOffset.x; }
@@ -67,6 +67,9 @@ namespace Sierra::Engine::Classes
 
         /* --- CALLBACKS --- */
         static void CursorPositionCallback(GLFWwindow* windowPtr, double xPosition, double yPosition);
+
+        /* --- DESTRUCTOR --- */
+        Cursor() = delete;
 
     private:
         static glm::vec2 lastCursorPosition;

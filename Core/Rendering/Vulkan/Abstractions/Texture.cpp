@@ -157,7 +157,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         // Get the properties of the image's format
         VkFormatProperties formatProperties;
-        vkGetPhysicalDeviceFormatProperties(VulkanCore::physicalDevice, image->GetFormat(), &formatProperties);
+        vkGetPhysicalDeviceFormatProperties(VulkanCore::GetPhysicalDevice(), image->GetFormat(), &formatProperties);
 
         // Check if optimal tiling is supported by the GPU
         if ((formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0)

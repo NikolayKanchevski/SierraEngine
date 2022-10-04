@@ -109,7 +109,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the image view
         VulkanDebugger::CheckResults(
-                vkCreateImageView(VulkanCore::logicalDevice, &imageViewCreateInfo, nullptr, &vkImageView),
+                vkCreateImageView(VulkanCore::GetLogicalDevice(), &imageViewCreateInfo, nullptr, &vkImageView),
                 "Could not create image view for an image with dimensions of [" + std::to_string(dimensions.x) + ", " + std::to_string(dimensions.y) + ", " + std::to_string(dimensions.z) + "], format [" + std::to_string(format) + "], [" +
                 std::to_string(mipLevels) + "] mip levels, and sampling of [" + std::to_string(sampling) + "]"
         );
@@ -204,13 +204,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Image::DestroyVulkanImage()
     {
-       vkDestroyImage(VulkanCore::logicalDevice, this->vkImage, nullptr);
-       vkFreeMemory(VulkanCore::logicalDevice, this->vkImageMemory, nullptr);
+       vkDestroyImage(VulkanCore::GetLogicalDevice(), this->vkImage, nullptr);
+       vkFreeMemory(VulkanCore::GetLogicalDevice(), this->vkImageMemory, nullptr);
     }
 
     void Image::DestroyVulkanImageView()
     {
-        if (imageViewGenerated) vkDestroyImageView(VulkanCore::logicalDevice, this->vkImageView, nullptr);
+        if (imageViewGenerated) vkDestroyImageView(VulkanCore::GetLogicalDevice(), this->vkImageView, nullptr);
     }
 
     /* --- CONSTRUCTORS --- */
@@ -238,14 +238,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan image
         VulkanDebugger::CheckResults(
-                vkCreateImage(VulkanCore::logicalDevice, &imageCreateInfo, nullptr, &vkImage),
+                vkCreateImage(VulkanCore::GetLogicalDevice(), &imageCreateInfo, nullptr, &vkImage),
                 "Failed to create image with dimensions of [" + std::to_string(givenDimensions.x) + ", " + std::to_string(givenDimensions.y) + ", " + std::to_string(givenDimensions.z) + "], format [" + std::to_string(givenFormat) + "], [" +
                  std::to_string(givenMipLevels) + "] mip levels, and sampling of [" + std::to_string(givenSampling) + "]"
         );
 
         // Retrieve its memory requirements
         VkMemoryRequirements imageMemoryRequirements;
-        vkGetImageMemoryRequirements(VulkanCore::logicalDevice, vkImage, &imageMemoryRequirements);
+        vkGetImageMemoryRequirements(VulkanCore::GetLogicalDevice(), vkImage, &imageMemoryRequirements);
 
         // Set up image memory allocation info
         VkMemoryAllocateInfo imageMemoryAllocateInfo;
@@ -255,13 +255,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Allocate the image to memory
         VulkanDebugger::CheckResults(
-            vkAllocateMemory(VulkanCore::logicalDevice, &imageMemoryAllocateInfo, nullptr, &vkImageMemory),
+            vkAllocateMemory(VulkanCore::GetLogicalDevice(), &imageMemoryAllocateInfo, nullptr, &vkImageMemory),
             "Failed to allocate memory for image with dimensions of [" + std::to_string(givenDimensions.x) + ", " + std::to_string(givenDimensions.y) + ", " + std::to_string(givenDimensions.z) + "], format [" + std::to_string(givenFormat) + "], [" +
             std::to_string(givenMipLevels) + "] mip levels, and sampling of [" + std::to_string(givenSampling) + "]"
         );
 
         // Bind the image to its corresponding memory
-        vkBindImageMemory(VulkanCore::logicalDevice, vkImage, vkImageMemory, 0);
+        vkBindImageMemory(VulkanCore::GetLogicalDevice(), vkImage, vkImageMemory, 0);
     }
 
     /* --- DESTRUCTOR --- */

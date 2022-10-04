@@ -13,7 +13,7 @@ namespace Sierra::Core::Rendering::Vulkan
     uint32_t VulkanUtilities::FindMemoryTypeIndex(const uint32_t typeFilter, const VkMemoryPropertyFlags givenMemoryFlags)
     {
         VkPhysicalDeviceMemoryProperties memoryProperties;
-        vkGetPhysicalDeviceMemoryProperties(VulkanCore::physicalDevice, &memoryProperties);
+        vkGetPhysicalDeviceMemoryProperties(VulkanCore::GetPhysicalDevice(), &memoryProperties);
 
         for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++)
         {
@@ -31,12 +31,12 @@ namespace Sierra::Core::Rendering::Vulkan
         VkCommandBufferAllocateInfo commandBufferAllocateInfo;
         commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        commandBufferAllocateInfo.commandPool = VulkanCore::commandPool;
+        commandBufferAllocateInfo.commandPool = VulkanCore::GetCommandPool();
         commandBufferAllocateInfo.commandBufferCount = 1;
 
         VkCommandBuffer commandBuffer;
         VulkanDebugger::CheckResults(
-                vkAllocateCommandBuffers(VulkanCore::logicalDevice, &commandBufferAllocateInfo, &commandBuffer),
+                vkAllocateCommandBuffers(VulkanCore::GetLogicalDevice(), &commandBufferAllocateInfo, &commandBuffer),
                 "Failed to allocate single time command buffer"
         );
 
@@ -58,10 +58,10 @@ namespace Sierra::Core::Rendering::Vulkan
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &commandBuffer;
 
-        vkQueueSubmit(VulkanCore::graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-        vkQueueWaitIdle(VulkanCore::graphicsQueue);
+        vkQueueSubmit(VulkanCore::GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+        vkQueueWaitIdle(VulkanCore::GetGraphicsQueue());
 
-        vkFreeCommandBuffers(VulkanCore::logicalDevice, VulkanCore::commandPool, 1, &commandBuffer);
+        vkFreeCommandBuffers(VulkanCore::GetLogicalDevice(), VulkanCore::GetCommandPool(), 1, &commandBuffer);
     }
 
 }
