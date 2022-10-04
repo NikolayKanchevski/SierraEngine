@@ -17,8 +17,9 @@ namespace Sierra::Core::Rendering::Vulkan
         Stopwatch stopwatch;
 
         CreateInstance();
+        if (VALIDATION_ENABLED) CreateValidationMessenger();
 
-        VulkanDebugger::DisplayInfo("Successfully started Vulkan! Initialization took " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
+        VulkanDebugger::DisplaySuccess("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
     }
 
     void VulkanRenderer::Update()
@@ -30,6 +31,11 @@ namespace Sierra::Core::Rendering::Vulkan
 
     VulkanRenderer::~VulkanRenderer()
     {
+        if (VALIDATION_ENABLED)
+        {
+            DestroyDebugUtilsMessengerEXT(instance, validationMessenger, nullptr);
+        }
 
+        vkDestroyInstance(instance, nullptr);
     }
 }

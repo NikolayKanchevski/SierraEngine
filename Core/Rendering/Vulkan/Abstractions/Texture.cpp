@@ -83,7 +83,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         image->CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT);
 
         // Create the information on the image
-        VkDescriptorImageInfo textureSamplerImageInfo;
+        VkDescriptorImageInfo textureSamplerImageInfo{};
         textureSamplerImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         textureSamplerImageInfo.imageView = image->GetVulkanImageView();
         textureSamplerImageInfo.sampler = sampler;
@@ -169,7 +169,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkCommandBuffer commandBuffer = VulkanUtilities::BeginSingleTimeCommands();
 
         // Create an image memory barrier
-        VkImageMemoryBarrier memoryBarrier;
+        VkImageMemoryBarrier memoryBarrier{};
         memoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         memoryBarrier.image = image->GetVulkanImage();
         memoryBarrier.srcQueueFamilyIndex = ~0U;
@@ -198,7 +198,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 1, &memoryBarrier
             );
 
-            VkImageBlit blit;
+            VkImageBlit blit{};
             blit.srcOffsets[0] = { 0, 0, 0 };
             blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
             blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;

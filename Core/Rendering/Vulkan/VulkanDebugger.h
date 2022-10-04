@@ -26,6 +26,13 @@ namespace Sierra::Core::Rendering::Vulkan
         static void ThrowWarning(const std::string&);
         static void ThrowError(const std::string&);
         static bool CheckResults(const VkResult result, const std::string&);
+
+        static VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(
+                VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                VkDebugUtilsMessageTypeFlagsEXT messageType,
+                const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                void* pUserData
+        );
     private:
         enum MessageType { Info, Success, Warning, Error };
         static MessageType lastMessageType;

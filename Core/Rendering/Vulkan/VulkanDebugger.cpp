@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include "VulkanDebugger.h"
+#include <vulkan/vk_enum_string_helper.h>
 
 #if _WIN32
     #define DEFAULT() (SetConsoleTextAttribute(hConsole, 7))
@@ -85,9 +86,26 @@ namespace Sierra::Core::Rendering::Vulkan
         bool success = result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR;
         if (!success)
         {
-            ThrowError(errorMessage + ". Error code: " + std::to_string(result));
+            ThrowError(errorMessage + ". Error code: " + string_VkResult(result));
         }
 
         return success;
+    }
+
+    VkBool32 VulkanDebugger::ValidationCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
+    {
+        switch (messageSeverity)
+        {
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+                ThrowWarning(std::string(pCallbackData->pMessage).substr(0, strlen(pCallbackData->pMessage) - 1));
+                break;
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+                ThrowError(std::string(pCallbackData->pMessage).substr(0, strlen(pCallbackData->pMessage) - 1));
+                break;
+            default:
+                break;
+        }
+
+        return VK_FALSE;
     }
 }

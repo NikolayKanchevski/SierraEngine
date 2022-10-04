@@ -53,7 +53,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkCommandBuffer commandBuffer = VulkanUtilities::BeginSingleTimeCommands();
 
         // Set up image copy region
-        VkBufferImageCopy copyRegion;
+        VkBufferImageCopy copyRegion{};
         copyRegion.bufferOffset = offset;
         copyRegion.bufferRowLength = 0;
         copyRegion.bufferImageHeight = 0;
@@ -87,7 +87,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkCommandBuffer commandBuffer = VulkanUtilities::BeginSingleTimeCommands();
 
         // Set up the buffer's copy region
-        VkBufferCopy copyRegion;
+        VkBufferCopy copyRegion{};
         copyRegion.size = this->memorySize;
 
         // Copy the buffer
@@ -119,7 +119,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Buffer::Buffer(const unsigned long givenMemorySize, const VkMemoryPropertyFlags givenMemoryFlags, const VkBufferUsageFlags givenBufferUsage) : memorySize(givenMemorySize), memoryFlags(givenMemoryFlags), bufferUsage(givenBufferUsage)
     {
         // Set up buffer creation info
-        VkBufferCreateInfo bufferCreateInfo;
+        VkBufferCreateInfo bufferCreateInfo{};
         bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferCreateInfo.size = givenMemorySize;
         bufferCreateInfo.usage = givenBufferUsage;
@@ -136,7 +136,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkGetBufferMemoryRequirements(VulkanCore::GetLogicalDevice(), vkBuffer, &memoryRequirements);
 
         // Set up the buffer's memory allocation info
-        VkMemoryAllocateInfo memoryAllocationInfo;
+        VkMemoryAllocateInfo memoryAllocationInfo{};
         memoryAllocationInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         memoryAllocationInfo.allocationSize = memoryRequirements.size,
         memoryAllocationInfo.memoryTypeIndex = VulkanUtilities::FindMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryFlags);

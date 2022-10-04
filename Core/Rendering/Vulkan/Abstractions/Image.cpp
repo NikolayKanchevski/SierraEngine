@@ -96,7 +96,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Set up image view creation info
-        VkImageViewCreateInfo imageViewCreateInfo;
+        VkImageViewCreateInfo imageViewCreateInfo{};
         imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         imageViewCreateInfo.image = vkImage;
         imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -123,7 +123,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkCommandBuffer commandBuffer = VulkanUtilities::BeginSingleTimeCommands();
 
         // Create image memory barrier
-        VkImageMemoryBarrier imageMemoryBarrier;
+        VkImageMemoryBarrier imageMemoryBarrier{};
         imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         imageMemoryBarrier.oldLayout = layout;								// Layout to transition from
         imageMemoryBarrier.newLayout = newLayout;							// Layout to transition to
@@ -219,7 +219,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         : dimensions(givenDimensions), mipLevels(givenMipLevels), sampling(givenSampling), format(givenFormat)
     {
         // Set up image creation info
-        VkImageCreateInfo imageCreateInfo;
+        VkImageCreateInfo imageCreateInfo{};
         imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
 
@@ -248,7 +248,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkGetImageMemoryRequirements(VulkanCore::GetLogicalDevice(), vkImage, &imageMemoryRequirements);
 
         // Set up image memory allocation info
-        VkMemoryAllocateInfo imageMemoryAllocateInfo;
+        VkMemoryAllocateInfo imageMemoryAllocateInfo{};
         imageMemoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         imageMemoryAllocateInfo.allocationSize = imageMemoryRequirements.size;
         imageMemoryAllocateInfo.memoryTypeIndex = VulkanUtilities::FindMemoryTypeIndex(imageMemoryRequirements.memoryTypeBits, propertyFlags);

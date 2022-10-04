@@ -22,7 +22,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Set up the layout binding info
-        VkDescriptorSetLayoutBinding layoutBinding;
+        VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;
         layoutBinding.descriptorType = descriptorType;
         layoutBinding.descriptorCount = descriptorCount;
@@ -56,7 +56,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Set up the layout creation info
-        VkDescriptorSetLayoutCreateInfo layoutCreateInfo;
+        VkDescriptorSetLayoutCreateInfo layoutCreateInfo{};
         layoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         layoutCreateInfo.bindingCount = static_cast<uint32_t>(givenBindings.size());
         layoutCreateInfo.pBindings = layoutBindings.data();
@@ -104,7 +104,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Sierra::Core::Rendering::Vulkan::Abstractions::DescriptorPool::AllocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptorSet)
     {
         // Set up the allocation info
-        VkDescriptorSetAllocateInfo allocateInfo;
+        VkDescriptorSetAllocateInfo allocateInfo{};
         allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocateInfo.descriptorPool = this->vkDescriptorPool;
         allocateInfo.pSetLayouts = &descriptorSetLayout;
@@ -128,7 +128,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     DescriptorPool::DescriptorPool(uint32_t givenMaxSets, VkDescriptorPoolCreateFlags givenPoolCreateFlags, std::vector<VkDescriptorPoolSize> givenPoolSizes)
     {
         // Set up the descriptor pool creation info
-        VkDescriptorPoolCreateInfo descriptorPoolCreateInfo;
+        VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
         descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         descriptorPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(givenPoolSizes.size());
         descriptorPoolCreateInfo.maxSets = givenMaxSets;
@@ -170,7 +170,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Create write descriptor
-        VkWriteDescriptorSet writeDescriptor;
+        VkWriteDescriptorSet writeDescriptor{};
         writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writeDescriptor.descriptorType = bindingDescription.descriptorType;
         writeDescriptor.dstBinding = binding;
@@ -199,7 +199,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Create write descriptor
-        VkWriteDescriptorSet writeDescriptor;
+        VkWriteDescriptorSet writeDescriptor{};
         writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writeDescriptor.descriptorType = bindingDescription.descriptorType;
         writeDescriptor.dstBinding = binding;

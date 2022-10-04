@@ -13,7 +13,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     Framebuffer::Framebuffer(VkRenderPass givenRenderPass, std::vector<VkImageView> givenAttachments)
     {
         // Set up the framebuffer creation info
-        VkFramebufferCreateInfo framebufferCreateInfo;
+        VkFramebufferCreateInfo framebufferCreateInfo{};
         framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferCreateInfo.renderPass = givenRenderPass;
         framebufferCreateInfo.attachmentCount = static_cast<uint32_t>(givenAttachments.size());

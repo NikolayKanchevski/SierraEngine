@@ -19,7 +19,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkFilter samplerFilter = isBilinearFilteringApplied ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
 
         // Set up the sampler creation info
-        VkSamplerCreateInfo samplerCreateInfo;
+        VkSamplerCreateInfo samplerCreateInfo{};
         samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
         samplerCreateInfo.minFilter = samplerFilter;
         samplerCreateInfo.magFilter = samplerFilter;
