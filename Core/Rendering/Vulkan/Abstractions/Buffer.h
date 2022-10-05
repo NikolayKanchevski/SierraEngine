@@ -11,7 +11,7 @@
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
-    /// \brief An abstraction class to make managing Vulkan buffers easier.
+    /// @brief An abstraction class to make managing Vulkan buffers easier.
     class Buffer
     {
     public:

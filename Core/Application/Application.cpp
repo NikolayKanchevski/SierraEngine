@@ -3,6 +3,7 @@
 //
 
 #include "Application.h"
+#include "../../Core/Rendering/Vulkan/Renderer/VulkanRenderer.h"
 #include "../../Engine/Classes/Time.h"
 #include "../../Engine/Classes/Cursor.h"
 #include "../../Engine/Classes/Input.h"
@@ -14,24 +15,23 @@ using namespace Sierra::Engine::Classes;
 /* --- POLLING METHODS --- */
 void Application::Start()
 {
-    // Show the window
-    Window window = Window("Sierra Engine v1.0.0", false, true, true);
+    // Create the renderer
+    VulkanRenderer renderer("Sierra Engine v1.0.0", false, true, true);
+    renderer.Start();
 
-    VulkanRenderer vulkanRenderer;
-    window.SetRenderer(&vulkanRenderer);
-
-    window.Show();
+    // Get a reference to the window of the renderer
+    Window &window = renderer.GetWindow();
 
     // Initialize utility classes
     StartClasses();
 
     // Update window until closed
-    while (!window.IsClosed()) {
+    while (!renderer.IsActive()) {
         // Update utility classes
         UpdateClasses();
 
         // Update window
-        window.Update();
+        renderer.Update();
 
         // Set the window title to display current FPS
         window.SetTitle("FPS: " + std::to_string(Time::GetFPS()));

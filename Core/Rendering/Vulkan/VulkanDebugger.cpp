@@ -52,7 +52,7 @@ namespace Sierra::Core::Rendering::Vulkan
         if (lastMessageType != Success) std::cout << "\n";
 
         GREEN();
-        std::cout << "[+] " << message << "!\n";
+        std::cout << "[+] " << message << ".\n";
         DEFAULT();
 
         lastMessageType = Success;
@@ -103,6 +103,7 @@ namespace Sierra::Core::Rendering::Vulkan
                 ThrowError(std::string(pCallbackData->pMessage).substr(0, strlen(pCallbackData->pMessage) - 1));
                 break;
             default:
+//                std::cout << pCallbackData->pMessage << "\n";
                 break;
         }
 

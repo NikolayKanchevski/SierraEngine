@@ -96,7 +96,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
             if (!extensionFound)
             {
-                VulkanDebugger::ThrowWarning("Extension [" + std::string(requiredExtension) + "] not supported");
+                VulkanDebugger::ThrowWarning("Instance extension [" + std::string(requiredExtension) + "] not supported");
                 givenExtensions.erase(givenExtensions.begin() + extensionIndex);
             }
 

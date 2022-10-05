@@ -9,6 +9,12 @@ using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
+    /* --- CONSTRUCTORS --- */
+    VulkanRenderer::VulkanRenderer(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)
+     : window(Window(givenTitle, setMaximized, setResizable, setFocusRequirement))
+    {
+
+    }
 
     /* --- POLLING METHODS --- */
 
@@ -18,19 +24,24 @@ namespace Sierra::Core::Rendering::Vulkan
 
         CreateInstance();
         if (VALIDATION_ENABLED) CreateValidationMessenger();
+        CreateWindowSurface();
+        GetPhysicalDevice();
 
+        window.Show();
         VulkanDebugger::DisplaySuccess("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
     }
 
     void VulkanRenderer::Update()
     {
-
+        window.Update();
     }
 
     /* --- DESTRUCTOR --- */
 
     VulkanRenderer::~VulkanRenderer()
     {
+        vkDestroySurfaceKHR(instance, surface, nullptr);
+
         if (VALIDATION_ENABLED)
         {
             DestroyDebugUtilsMessengerEXT(instance, validationMessenger, nullptr);

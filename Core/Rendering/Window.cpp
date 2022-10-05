@@ -2,7 +2,6 @@
 // Created by Nikolay Kanchevski on 27.09.22.
 //
 
-#include <iostream>
 #include <utility>
 #include "Window.h"
 #include "Vulkan/VulkanDebugger.h"
@@ -48,13 +47,6 @@ namespace Sierra::Core::Rendering
     {
         this->opacity = givenOpacity;
         glfwSetWindowOpacity(glfwWindow, givenOpacity);
-    }
-
-    void Window::SetRenderer(VulkanRenderer *givenVulkanRenderer)
-    {
-        hasRenderer = true;
-        this->vulkanRenderer = givenVulkanRenderer;
-        this->vulkanRenderer->Start();
     }
 
     Window::Window(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)

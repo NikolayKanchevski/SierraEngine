@@ -21,7 +21,7 @@ namespace Sierra::Engine::Classes
         deltaTime = (float) (currentFrameTime - lastFrameTime);
         lastFrameTime = currentFrameTime;
 
-        FPS = (int) glm::ceil(1.0 / deltaTime);
         upTime = (float) currentFrameTime;
+        FPS = (int) glm::ceil(1.0 / deltaTime);
     }
 }
