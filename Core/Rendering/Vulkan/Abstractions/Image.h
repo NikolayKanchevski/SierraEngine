@@ -18,7 +18,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         /* --- CONSTRUCTORS --- */
         Image(glm::vec3 givenDimensions, uint32_t givenMipLevels, VkSampleCountFlagBits givenSampling, VkFormat givenFormat, VkImageTiling imageTiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags propertyFlags);
         inline Image(VkImage givenVkImage, const VkFormat givenFormat, const VkSampleCountFlagBits givenSampling, const glm::vec3 givenDimensions, const uint32_t givenMipLevels = 1, const VkImageLayout givenLayout = VK_IMAGE_LAYOUT_UNDEFINED)
-            : vkImage(givenVkImage), format(givenFormat), sampling(givenSampling), dimensions(givenDimensions), mipLevels(givenMipLevels), layout(givenLayout) { }
+            : vkImage(givenVkImage), format(givenFormat), sampling(givenSampling), dimensions(givenDimensions), mipLevels(givenMipLevels), layout(givenLayout) { swapchainImage = true; }
 
 
         class Builder
@@ -52,9 +52,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         /* --- SETTER METHODS --- */
         void CreateImageView(VkImageAspectFlags givenAspectFlags);
         void TransitionLayout(VkImageLayout newLayout);
-
-        void DestroyVulkanImage();
-        void DestroyVulkanImageView();
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline glm::vec3 GetDimensions() const
@@ -107,7 +104,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkImage vkImage;
         VkImageView vkImageView;
         VkDeviceMemory vkImageMemory;
-        bool imageViewGenerated;
+
+        bool imageViewGenerated = false;
+        bool swapchainImage = false;
     };
 
 }

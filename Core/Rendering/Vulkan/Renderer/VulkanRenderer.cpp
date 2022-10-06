@@ -26,6 +26,8 @@ namespace Sierra::Core::Rendering::Vulkan
         if (VALIDATION_ENABLED) CreateValidationMessenger();
         CreateWindowSurface();
         GetPhysicalDevice();
+        CreateLogicalDevice();
+        CreateSwapchain();
 
         window.Show();
         VulkanDebugger::DisplaySuccess("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
@@ -40,6 +42,10 @@ namespace Sierra::Core::Rendering::Vulkan
 
     VulkanRenderer::~VulkanRenderer()
     {
+        vkDestroySwapchainKHR(logicalDevice, swapchain, nullptr);
+
+        vkDestroyDevice(logicalDevice, nullptr);
+
         vkDestroySurfaceKHR(instance, surface, nullptr);
 
         if (VALIDATION_ENABLED)

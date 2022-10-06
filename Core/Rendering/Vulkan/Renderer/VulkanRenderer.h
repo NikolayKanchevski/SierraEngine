@@ -5,10 +5,14 @@
 #pragma once
 
 #include <vector>
-#include <optional>
+#include <vulkan/vk_enum_string_helper.h>
 #include "../VulkanDebugger.h"
 #include "../VulkanCore.h"
 #include "../../Window.h"
+#include "../Abstractions/Image.h"
+#include <iostream>
+
+using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -41,6 +45,9 @@ namespace Sierra::Core::Rendering::Vulkan
     private:
         /* --- GENERAL --- */
         Window window;
+
+        const bool msaaSamplingEnabled = true;
+        VkSampleCountFlagBits msaaSampleCount = msaaSamplingEnabled ? VK_SAMPLE_COUNT_64_BIT : VK_SAMPLE_COUNT_1_BIT;
 
         enum RenderingMode { Fill, Wireframe, Point };
         RenderingMode renderingMode = Fill;
@@ -84,18 +91,18 @@ namespace Sierra::Core::Rendering::Vulkan
 
         struct QueueFamilyIndices
         {
-            std::optional<uint32_t> graphicsFamily;
-            std::optional<uint32_t> presentFamily;
+            uint32_t graphicsFamily = -1;
+            uint32_t presentFamily = -1;
 
             bool IsValid()
             {
-                return graphicsFamily.has_value() && presentFamily.has_value();
+                return graphicsFamily >= 0 && presentFamily >= 0;
             }
         };
 
         std::vector<const char*> requiredDeviceExtensions
         {
-                "VK_KHR_swapchain"
+            "VK_KHR_swapchain"
         };
 
         QueueFamilyIndices queueFamilyIndices{};
@@ -105,6 +112,17 @@ namespace Sierra::Core::Rendering::Vulkan
         bool DeviceExtensionsSupported(VkPhysicalDevice &givenPhysicalDevice);
         QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice &givenPhysicalDevice);
 
+        /* --- LOGICAL DEVICE --- */
+        VkDevice logicalDevice;
+        VkQueue graphicsQueue;
+        VkQueue presentQueue;
+
+        #if __APPLE__
+            bool krhPortabilityRequired = false;
+        #endif
+
+        void CreateLogicalDevice();
+
         /* --- SWAPCHAIN --- */
         struct SwapchainSupportDetails
         {
@@ -113,7 +131,22 @@ namespace Sierra::Core::Rendering::Vulkan
             std::vector<VkPresentModeKHR> presentModes;
         };
 
+        VkSwapchainKHR swapchain = VK_NULL_HANDLE;
+        SwapchainSupportDetails swapchainSupportDetails;
+
+        VkFormat swapchainImageFormat;
+        VkExtent2D swapchainExtent;
+
+        std::vector<Image*> swapchainImages;
+
         SwapchainSupportDetails GetSwapchainSupportDetails(VkPhysicalDevice &givenPhysicalDevice);
+        VkSurfaceFormatKHR ChooseSwapchainFormat(std::vector<VkSurfaceFormatKHR> &givenFormats);
+        VkPresentModeKHR ChooseSwapchainPresentMode(std::vector<VkPresentModeKHR> &givenPresentModes);
+        VkExtent2D ChooseSwapchainExtent(VkSurfaceCapabilitiesKHR &givenCapabilities);
+        void CreateSwapchain();
+
+        /* --- COLOR BUFFER --- */
+        VkSampleCountFlagBits GetHighestSupportedMsaaCount();
     };
 
 }

@@ -23,17 +23,17 @@
 namespace Sierra::Core::Rendering::Vulkan
 {
 
-    #if DEBUG
-        static const bool DEBUG_MODE = true;
-    #else
-        static const bool DEBUG_MODE = false;
-    #endif
+#if DEBUG
+    static const bool DEBUG_MODE = true;
+#else
+    static const bool DEBUG_MODE = false;
+#endif
 
     VulkanDebugger::MessageType VulkanDebugger::lastMessageType = Info;
 
-    #if _WIN32
-        HANDLE VulkanDebugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    #endif
+#if _WIN32
+    HANDLE VulkanDebugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+#endif
 
     void VulkanDebugger::DisplayInfo(const std::string& message)
     {

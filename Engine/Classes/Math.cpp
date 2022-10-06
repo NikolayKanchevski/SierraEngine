@@ -52,7 +52,10 @@ namespace Sierra::Engine::Classes::Math
 
     double Clamp(double value, double minLimit, double maxLimit)
     {
-        return 0;
+        if (value > maxLimit) return maxLimit;
+        if (value < minLimit) return minLimit;
+
+        return value;
     }
 
     float Clamp(float value, float minLimit, float maxLimit)
@@ -80,4 +83,5 @@ namespace Sierra::Engine::Classes::Math
     {
         return (PI / 180) * degrees;
     }
+
 }

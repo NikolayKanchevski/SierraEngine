@@ -65,8 +65,8 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Create instance
         VulkanDebugger::CheckResults(
-            vkCreateInstance(&instanceCreateInfo, nullptr, &instance),
-            "Could not create Vulkan instance"
+                vkCreateInstance(&instanceCreateInfo, nullptr, &instance),
+                "Could not create Vulkan instance"
         );
     }
 

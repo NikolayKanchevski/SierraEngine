@@ -77,7 +77,7 @@ namespace Sierra::Core::Rendering::Vulkan
         bool featuresSupported = !(this->renderingMode != Fill && !deviceFeatures.fillModeNonSolid);
 
         // Check if the swapchain type is supported
-        SwapchainSupportDetails swapchainSupportDetails = GetSwapchainSupportDetails(givenPhysicalDevice);
+        swapchainSupportDetails = GetSwapchainSupportDetails(givenPhysicalDevice);
         bool swapchainAdequate = !swapchainSupportDetails.formats.empty() && !swapchainSupportDetails.presentModes.empty();
 
         return indicesValid && extensionsSupported && swapchainAdequate && featuresSupported;
@@ -85,9 +85,6 @@ namespace Sierra::Core::Rendering::Vulkan
 
     bool VulkanRenderer::DeviceExtensionsSupported(VkPhysicalDevice &givenPhysicalDevice)
     {
-        // Copy
-        auto requiredDeviceExtensionsCopy = requiredDeviceExtensions;
-
         // Get how many extensions are supported in total
         uint32_t extensionCount;
         vkEnumerateDeviceExtensionProperties(givenPhysicalDevice, nullptr, &extensionCount, nullptr);
@@ -98,17 +95,28 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Check if each given extension is in the supported extensions array
         bool allExtensionsSupported = true;
-        for (auto &requiredExtension : requiredDeviceExtensionsCopy)
+        for (auto &requiredExtension : requiredDeviceExtensions)
         {
             bool extensionFound = false;
             for (auto &extensionProperty : extensionProperties)
             {
+                #if __APPLE__
+                    if (!krhPortabilityRequired && strcmp("VK_KHR_portability_subset", extensionProperty.extensionName) == 0)
+                    {
+                        krhPortabilityRequired = true;
+                    }
+                #endif
+
                 if (strcmp(requiredExtension, extensionProperty.extensionName) == 0)
                 {
                     extensionFound = true;
                     break;
                 }
             }
+
+            #if __APPLE__
+                requiredDeviceExtensions.push_back("VK_KHR_portability_subset");
+            #endif
 
             if (!extensionFound)
             {

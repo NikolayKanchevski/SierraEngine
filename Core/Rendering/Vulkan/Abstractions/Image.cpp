@@ -202,17 +202,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->layout = newLayout;
     }
 
-    void Image::DestroyVulkanImage()
-    {
-       vkDestroyImage(VulkanCore::GetLogicalDevice(), this->vkImage, nullptr);
-       vkFreeMemory(VulkanCore::GetLogicalDevice(), this->vkImageMemory, nullptr);
-    }
-
-    void Image::DestroyVulkanImageView()
-    {
-        if (imageViewGenerated) vkDestroyImageView(VulkanCore::GetLogicalDevice(), this->vkImageView, nullptr);
-    }
-
     /* --- CONSTRUCTORS --- */
 
     Image::Image(const glm::vec3 givenDimensions, const uint32_t givenMipLevels, VkSampleCountFlagBits givenSampling, const VkFormat givenFormat, const VkImageTiling imageTiling, const VkImageUsageFlags usageFlags, const VkMemoryPropertyFlags propertyFlags)
@@ -268,7 +257,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     Image::~Image()
     {
-        DestroyVulkanImage();
-        DestroyVulkanImageView();
+        if (!swapchainImage)
+        {
+            vkDestroyImage(VulkanCore::GetLogicalDevice(), this->vkImage, nullptr);
+            vkFreeMemory(VulkanCore::GetLogicalDevice(), this->vkImageMemory, nullptr);
+        }
+        if (imageViewGenerated) vkDestroyImageView(VulkanCore::GetLogicalDevice(), this->vkImageView, nullptr);
     }
 }
