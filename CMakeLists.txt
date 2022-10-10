@@ -21,7 +21,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 find_package(glfw3 CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw Vulkan::Vulkan)
 
-# vcpkg install "imgui[core,glfw-binding,vulkan-binding]"
+# vcpkg install "imgui[core,docking-experimental,glfw-binding,vulkan-binding]"
 find_package(imgui CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE imgui::imgui)
 

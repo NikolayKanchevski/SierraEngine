@@ -52,13 +52,16 @@ namespace Sierra::Core::Rendering::Vulkan
 
         ImGui_ImplVulkan_Init(&initInfo, renderPass->GetVulkanRenderPass());
 
+        ImGuiIO &io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
         SetImGuiStyle();
     }
 
     void VulkanRenderer::SetImGuiStyle()
     {
         ImGuiIO &io = ImGui::GetIO();
-        io.Fonts->AddFontFromFileTTF("Fonts/Ruda-Bold.ttf", 12.0f);
+        io.Fonts->AddFontFromFileTTF("Fonts/Hyatheus.ttf", 26.0f);
 
         VkCommandBuffer commandBuffer = VulkanUtilities::BeginSingleTimeCommands();
         ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
