@@ -121,8 +121,7 @@ namespace Sierra::Core::Rendering::Vulkan
 //            // Draw using the index buffer to prevent vertex re-usage
 //            VulkanNative.vkCmdDrawIndexed(givenCommandBuffer, mesh.indexCount, 1, 0, 0, 0);
 //        }
-//
-//        imGuiController.Render(givenCommandBuffer);
+
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), givenCommandBuffer);
 
         // End the render pass

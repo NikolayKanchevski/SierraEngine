@@ -54,7 +54,7 @@ namespace Sierra::Core::Rendering::Vulkan
 //        swapchainCreateInfo.oldSwapchain = swapchain;
 
         // Get the queue indices
-        const std::vector<uint32_t> queueFamilyIndicesCollection  { queueFamilyIndices.graphicsFamily, queueFamilyIndices.presentFamily };
+        const std::vector<uint32_t> queueFamilyIndicesCollection  { static_cast<uint32_t>(queueFamilyIndices.graphicsFamily), static_cast<uint32_t>(queueFamilyIndices.presentFamily) };
 
         // Check whether the graphics family is the same as the present one and based on that configure the creation info
         if (queueFamilyIndices.graphicsFamily != queueFamilyIndices.presentFamily)
@@ -166,7 +166,7 @@ namespace Sierra::Core::Rendering::Vulkan
     VkExtent2D VulkanRenderer::ChooseSwapchainExtent(VkSurfaceCapabilitiesKHR &givenCapabilities)
     {
         // Check to see if the extent is already configured
-        if (givenCapabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+        if (givenCapabilities.currentExtent.width != MAX_UINT_32T)
         {
             // If so just return it
             return givenCapabilities.currentExtent;

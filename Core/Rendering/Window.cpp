@@ -79,12 +79,13 @@ namespace Sierra::Core::Rendering
         {
             this->width = monitor.width;
             this->height = monitor.height;
+            this->position = { 0, 0 };
         }
         else
         {
             this->width = 800;
             this->height = 600;
-            this->position = glm::vec2((monitor.width - width) / 2, (monitor.height - height) / 2);
+            this->position = { (monitor.width - width) / 2, (monitor.height - height) / 2 };
         }
 
         this->position.x += (float) monitor.xPosition;
@@ -102,11 +103,12 @@ namespace Sierra::Core::Rendering
     {
         glfwWindowHint(GLFW_RESIZABLE, RESIZABLE);
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_MAXIMIZED, maximized);
+//        glfwWindowHint(GLFW_MAXIMIZED, maximized);
         glfwWindowHint(GLFW_VISIBLE, 0);
 
         glfwWindow = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
-        glfwSetWindowPos(glfwWindow, (int) position.x, (int) position.y);
+        if (!maximized) glfwSetWindowPos(glfwWindow, (int) position.x, (int) position.y);
+        else glfwMaximizeWindow(glfwWindow);
 
         Vulkan::VulkanCore::SetWindow(this);
 

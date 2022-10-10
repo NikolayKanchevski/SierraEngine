@@ -2,7 +2,6 @@
 // Created by Nikolay Kanchevski on 28.09.22.
 //
 
-#include <format>
 #include "Application.h"
 #include "../../Core/Rendering/Vulkan/Renderer/VulkanRenderer.h"
 #include "../../Engine/Classes/Time.h"
@@ -17,7 +16,7 @@ using namespace Sierra::Engine::Classes;
 void Application::Start()
 {
     // Create the renderer
-    VulkanRenderer renderer("Sierra Engine v1.0.0", false, true, true);
+    VulkanRenderer renderer("Sierra Engine v1.0.0", true, true, true);
     renderer.Start();
 
     // Get a reference to the window of the renderer
@@ -36,7 +35,6 @@ void Application::Start()
 
         // Set the window title to display current FPS
         window.SetTitle("FPS: " + std::to_string(Time::GetFPS()) + " | Draw Time: " + std::to_string(renderer.GetDrawTime()) + "ms");
-//        window.SetTitle("FPS: " + std::to_string(Time::GetFPS()));
     }
 }
 

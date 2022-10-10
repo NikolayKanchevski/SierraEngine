@@ -5,6 +5,7 @@
 #pragma once
 
 #include <vector>
+#include <algorithm>
 #include <vulkan/vk_enum_string_helper.h>
 #include <glm/mat4x4.hpp>
 #include <imgui.h>
@@ -27,6 +28,8 @@
 #include "../../../../Engine/Components/Lighting/PointLight.h"
 #include "../../../../Engine/Components/Lighting/Spotlight.h"
 #include "../../../World.h"
+
+#define MAX_UINT_32T 4294967295
 
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 
@@ -108,8 +111,8 @@ namespace Sierra::Core::Rendering::Vulkan
 
         struct QueueFamilyIndices
         {
-            uint32_t graphicsFamily = -1;
-            uint32_t presentFamily = -1;
+            int graphicsFamily = -1;
+            int presentFamily = -1;
 
             bool IsValid()
             {
@@ -259,6 +262,7 @@ namespace Sierra::Core::Rendering::Vulkan
         /* --- ImGui --- */
         VkDescriptorPool imGuiDescriptorPool;
         void CreateImGuiInstance();
+        void SetImGuiStyle();
         void BeginNewImGuiFrame();
         void UpdateImGuiData();
         void RenderImGui();

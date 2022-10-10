@@ -34,7 +34,7 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         // Create the information on the buffer
         VkDescriptorBufferInfo uniformBufferInfo{};
-        uniformBufferInfo.offset = 0;
+//        uniformBufferInfo.offset = 0;
         uniformBufferInfo.range = uniformDataSize;
 
         // Resize the uniform buffers array and write to each descriptor
@@ -43,9 +43,10 @@ namespace Sierra::Core::Rendering::Vulkan
         for (int i = 0; i < MAX_CONCURRENT_FRAMES; i++)
         {
             uniformBufferInfo.buffer = uniformBuffers[i]->GetVulkanBuffer();
+//            uniformBufferInfo.offset = i * VulkanCore::GetPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
 
             DescriptorWriter(descriptorSetLayout, descriptorPool)
-                .WriteBuffer(0, uniformBufferInfo)
+                .WriteBuffer(0, &uniformBufferInfo)
             .Build(uniformDescriptorSets[i]);
         }
     }

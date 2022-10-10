@@ -43,7 +43,7 @@ namespace Sierra::Engine::Classes::File
         // Check if the file stream successfully opened
         if (!file.is_open())
         {
-            throw std::runtime_error("Failed to open file!");
+            std::runtime_error("Failed to open file!");
         }
 
         // Get file size and create resized vector

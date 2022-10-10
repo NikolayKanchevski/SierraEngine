@@ -11,7 +11,7 @@ namespace Sierra::Core::Rendering::Vulkan
     void VulkanRenderer::CreateLogicalDevice()
     {
         // Filter out repeating indices using a set
-        const std::set<uint32_t> uniqueQueueFamilies { queueFamilyIndices.graphicsFamily, queueFamilyIndices.presentFamily };
+        const std::set<uint32_t> uniqueQueueFamilies { static_cast<uint32_t>(queueFamilyIndices.graphicsFamily), static_cast<uint32_t>(queueFamilyIndices.presentFamily) };
 
         // Create an empty list to store create infos
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;

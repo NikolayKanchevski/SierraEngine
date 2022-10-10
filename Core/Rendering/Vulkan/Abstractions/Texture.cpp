@@ -22,7 +22,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Calculate the image's memory size
-        this->memorySize = static_cast<uint32_t>(width * height /* * (int) colors */);
+        this->memorySize = static_cast<uint32_t>(width * height * colorChannelsCount);
 
         // Create the staging buffer
         auto stagingBuffer = Buffer::Builder()
@@ -89,7 +89,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Write the image to the descriptor set
         DescriptorWriter(givenDescriptorSetLayout, givenDescriptorPool)
-            .WriteImage(textureType, textureSamplerImageInfo)
+            .WriteImage(textureType, &textureSamplerImageInfo)
         .Build(descriptorSet);
     }
 

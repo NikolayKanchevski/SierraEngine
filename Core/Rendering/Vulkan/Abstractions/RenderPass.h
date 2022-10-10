@@ -99,7 +99,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         /* --- SETTER METHODS --- */
         void SetFramebuffer(std::unique_ptr<Framebuffer> &givenFramebuffer);
         void SetBackgroundColor(glm::vec3 givenColor);
-        void Begin(VkCommandBuffer givenCommandBuffer);
+        void Begin(const VkCommandBuffer &givenCommandBuffer);
         void End(VkCommandBuffer givenCommandBuffer);
 
         /* --- GETTER METHODS --- */
@@ -114,7 +114,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkRenderPass vkRenderPass;
         VkClearValue clearValues[2];
         VkFramebuffer vkFramebuffer = VK_NULL_HANDLE;
-        bool renderPassBegan;
+        bool renderPassBegan = false;
 
     };
 

@@ -154,7 +154,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- SETTER METHODS --- */
 
-    DescriptorWriter &DescriptorWriter::WriteBuffer(const uint32_t binding, const VkDescriptorBufferInfo bufferInfo)
+    DescriptorWriter &DescriptorWriter::WriteBuffer(const uint32_t binding, const VkDescriptorBufferInfo *bufferInfo)
     {
         // Check if the current binding is not available
         if (descriptorSetLayout->bindings.count(binding) == 0)
@@ -174,7 +174,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writeDescriptor.descriptorType = bindingDescription.descriptorType;
         writeDescriptor.dstBinding = binding;
-        writeDescriptor.pBufferInfo = &bufferInfo;
+        writeDescriptor.pBufferInfo = bufferInfo;
         writeDescriptor.descriptorCount = 1;
 
         // Add write descriptor to the list
@@ -183,7 +183,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return *this;
     }
 
-    DescriptorWriter &DescriptorWriter::WriteImage(const uint32_t binding, const VkDescriptorImageInfo imageInfo)
+    DescriptorWriter &DescriptorWriter::WriteImage(const uint32_t binding, const VkDescriptorImageInfo *imageInfo)
     {
         // Check if the current binding is not available
         if (descriptorSetLayout->bindings.count(binding) == 0)
@@ -203,7 +203,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         writeDescriptor.descriptorType = bindingDescription.descriptorType;
         writeDescriptor.dstBinding = binding;
-        writeDescriptor.pImageInfo = &imageInfo;
+        writeDescriptor.pImageInfo = imageInfo;
         writeDescriptor.descriptorCount = 1;
 
         // Add write descriptor to the list

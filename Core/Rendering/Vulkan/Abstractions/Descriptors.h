@@ -89,8 +89,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         DescriptorWriter(std::unique_ptr<DescriptorSetLayout> &givenDescriptorSetLayout, std::unique_ptr<DescriptorPool> &givenDescriptorPool);
 
         /* --- SETTER METHODS --- */
-        DescriptorWriter& WriteBuffer(uint32_t binding, VkDescriptorBufferInfo bufferInfo);
-        DescriptorWriter& WriteImage(uint32_t binding, VkDescriptorImageInfo imageInfo);
+        DescriptorWriter& WriteBuffer(uint32_t binding, const VkDescriptorBufferInfo *bufferInfo);
+        DescriptorWriter& WriteImage(uint32_t binding, const VkDescriptorImageInfo *imageInfo);
         void Build(VkDescriptorSet &descriptorSet);
 
     private:

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 /// @brief Provides useful methods for working with the file system.
 namespace Sierra::Engine::Classes::File

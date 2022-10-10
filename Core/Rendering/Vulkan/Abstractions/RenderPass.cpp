@@ -61,6 +61,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkSubpass.pInputAttachments = nullptr;
         vkSubpass.preserveAttachmentCount = 0;
         vkSubpass.pPreserveAttachments = nullptr;
+        vkSubpass.flags = 0;
     }
 
     Subpass::Builder &Subpass::Builder::SetPipelineBindPoint(const VkPipelineBindPoint givenPipelineBindPoint)
@@ -177,7 +178,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         clearValues[0].color = { givenColor.x, givenColor.y, givenColor.z };
     }
 
-    void RenderPass::Begin(const VkCommandBuffer givenCommandBuffer)
+    void RenderPass::Begin(const VkCommandBuffer &givenCommandBuffer)
     {
         if (renderPassBegan)
         {

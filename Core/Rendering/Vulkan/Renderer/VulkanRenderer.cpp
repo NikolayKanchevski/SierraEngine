@@ -53,7 +53,12 @@ namespace Sierra::Core::Rendering::Vulkan
         // CreateNullTextures();
         CreateImGuiInstance();
 
-        window.SetResizeCallback([this](void) { Draw(); });
+        window.SetResizeCallback([this](void) {
+            Draw();
+        #if _WIN32
+            Draw();
+        #endif
+        });
         window.Show();
         VulkanDebugger::DisplaySuccess("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
     }
