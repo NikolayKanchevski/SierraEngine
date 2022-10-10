@@ -44,7 +44,8 @@ You can then proceed and run the program in your IDE. Make sure you are in <b>RE
     <br>
     Software used: 
     <ul>
-        <li><a href="https://www.jetbrains.com/rider/">JetBrains Rider</a> - A <b>cross-platform</b> IDE used to develop the .NET project on both my <b>macOS</b> and <b>Windows</b> systems.</li>
+        <li><a href="https://www.jetbrains.com/clion/">JetBrains CLion</a> - A <b>cross-platform</b> IDE used to develop the final C++ version.</li>
+        <li><a href="https://www.jetbrains.com/rider/">JetBrains Rider</a> - Another <b>cross-platform</b> IDE but for C# which was used to create the .NET 6.0 prototype version of the engine.</li>
         <li><a href="https://www.blender.org/">Blender</a> - For the testing of 3D models and textures functionality.</li>
         <li><a href="https://trello.com/b/RMYtZPOg/sierra-engine">Trello</a> - For pretending to have an organized list of things to implement next.</li>
     </ul>
@@ -52,7 +53,7 @@ You can then proceed and run the program in your IDE. Make sure you are in <b>RE
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 5084</p>
-<p align="center" id="LastUpdated">Last updated: 06/10/2022</p>
+<p align="center" id="LinesCounter">Total lines of code: 6471</p>
+<p align="center" id="LastUpdated">Last updated: 10/10/2022</p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

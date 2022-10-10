@@ -202,6 +202,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->layout = newLayout;
     }
 
+    void Image::DestroyImageView()
+    {
+        vkDestroyImageView(VulkanCore::GetLogicalDevice(), this->vkImageView, nullptr);
+        imageViewGenerated = false;
+    }
+
     /* --- CONSTRUCTORS --- */
 
     Image::Image(const glm::vec3 givenDimensions, const uint32_t givenMipLevels, VkSampleCountFlagBits givenSampling, const VkFormat givenFormat, const VkImageTiling imageTiling, const VkImageUsageFlags usageFlags, const VkMemoryPropertyFlags propertyFlags)
@@ -253,9 +259,20 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkBindImageMemory(VulkanCore::GetLogicalDevice(), vkImage, vkImageMemory, 0);
     }
 
+    Image::Image(const VkImage givenVkImage, const VkFormat givenFormat, const VkSampleCountFlagBits givenSampling, const glm::vec3 givenDimensions, const uint32_t givenMipLevels, const VkImageLayout givenLayout)
+            : vkImage(givenVkImage), format(givenFormat), sampling(givenSampling), dimensions(givenDimensions), mipLevels(givenMipLevels), layout(givenLayout), swapchainImage(true)
+    {
+
+    }
+
+    std::unique_ptr<Image> Image::Build(const VkImage givenVkImage, const VkFormat givenFormat, const VkSampleCountFlagBits givenSampling, const glm::vec3 givenDimensions, const uint32_t givenMipLevels, const VkImageLayout givenLayout)
+    {
+        return std::make_unique<Image>(givenVkImage, givenFormat, givenSampling, givenDimensions, givenMipLevels, givenLayout);
+    }
+
     /* --- DESTRUCTOR --- */
 
-    Image::~Image()
+    void Image::Destroy()
     {
         if (!swapchainImage)
         {

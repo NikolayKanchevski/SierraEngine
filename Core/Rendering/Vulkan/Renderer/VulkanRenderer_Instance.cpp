@@ -30,7 +30,7 @@ namespace Sierra::Core::Rendering::Vulkan
         auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
         std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
-        for (auto &requiredExtension : requiredInstanceExtensions)
+        for (const auto &requiredExtension : requiredInstanceExtensions)
         {
             extensions.push_back(requiredExtension);
         }
@@ -73,7 +73,7 @@ namespace Sierra::Core::Rendering::Vulkan
     void VulkanRenderer::CheckExtensionsSupport(std::vector<const char *> &givenExtensions)
     {
         // Get how many extensions are supported in total
-        uint extensionCount;
+        uint32_t extensionCount;
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
 
         // Create an array to store the supported extensions
@@ -82,10 +82,10 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Check if each given extension is in the supported array
         size_t extensionIndex = 0;
-        for (auto &requiredExtension : givenExtensions)
+        for (const auto &requiredExtension : givenExtensions)
         {
             bool extensionFound = false;
-            for (auto &extensionProperty : extensionProperties)
+            for (const auto &extensionProperty : extensionProperties)
             {
                 if (strcmp(requiredExtension, extensionProperty.extensionName) == 0)
                 {
@@ -107,7 +107,7 @@ namespace Sierra::Core::Rendering::Vulkan
     bool VulkanRenderer::ValidationLayersSupported()
     {
         // Get how many validation layers in total are supported
-        uint layerCount = 0;
+        uint32_t layerCount = 0;
         vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
         // Create an array and store the supported layers
@@ -115,10 +115,10 @@ namespace Sierra::Core::Rendering::Vulkan
         vkEnumerateInstanceLayerProperties(&layerCount, layerProperties.data());
 
         // Check if the given layers are in the supported array
-        for (auto &requiredLayer : validationLayers)
+        for (const auto &requiredLayer : validationLayers)
         {
             bool layerFound = false;
-            for (auto &layerProperty : layerProperties)
+            for (const auto &layerProperty : layerProperties)
             {
                 if (strcmp(requiredLayer, layerProperty.layerName) == 0)
                 {

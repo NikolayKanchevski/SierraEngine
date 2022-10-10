@@ -17,9 +17,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         Image(glm::vec3 givenDimensions, uint32_t givenMipLevels, VkSampleCountFlagBits givenSampling, VkFormat givenFormat, VkImageTiling imageTiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags propertyFlags);
-        inline Image(VkImage givenVkImage, const VkFormat givenFormat, const VkSampleCountFlagBits givenSampling, const glm::vec3 givenDimensions, const uint32_t givenMipLevels = 1, const VkImageLayout givenLayout = VK_IMAGE_LAYOUT_UNDEFINED)
-            : vkImage(givenVkImage), format(givenFormat), sampling(givenSampling), dimensions(givenDimensions), mipLevels(givenMipLevels), layout(givenLayout) { swapchainImage = true; }
 
+        // Only to be used for swapchain images!
+        Image(VkImage givenVkImage, VkFormat givenFormat, VkSampleCountFlagBits givenSampling, glm::vec3 givenDimensions, uint32_t givenMipLevels, VkImageLayout givenLayout);
+        static std::unique_ptr<Image> Build(VkImage givenVkImage, VkFormat givenFormat, VkSampleCountFlagBits givenSampling, glm::vec3 givenDimensions, uint32_t givenMipLevels = 1, VkImageLayout givenLayout = VK_IMAGE_LAYOUT_UNDEFINED);
 
         class Builder
         {
@@ -52,6 +53,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         /* --- SETTER METHODS --- */
         void CreateImageView(VkImageAspectFlags givenAspectFlags);
         void TransitionLayout(VkImageLayout newLayout);
+        void DestroyImageView();
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline glm::vec3 GetDimensions() const
@@ -88,12 +90,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         { return this->vkImageMemory; };
 
         /* --- DESTRUCTOR --- */
-        ~Image();
+        void Destroy();
         Image(const Image &) = delete;
         Image &operator=(const Image &) = delete;
 
     private:
-
         glm::vec3 dimensions;
 
         uint32_t mipLevels;

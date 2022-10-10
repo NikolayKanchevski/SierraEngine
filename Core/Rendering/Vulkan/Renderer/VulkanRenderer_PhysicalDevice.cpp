@@ -36,6 +36,9 @@ namespace Sierra::Core::Rendering::Vulkan
                 this->physicalDevice = currentPhysicalDevice;
                 suitablePhysicalDeviceFound = true;
 
+                // Assign physical device to Vulkan core
+                VulkanCore::SetPhysicalDevice(currentPhysicalDevice);
+
                 // Retrieve the GPU's memory properties
                 VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
                 vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
@@ -77,7 +80,7 @@ namespace Sierra::Core::Rendering::Vulkan
         bool featuresSupported = !(this->renderingMode != Fill && !deviceFeatures.fillModeNonSolid);
 
         // Check if the swapchain type is supported
-        swapchainSupportDetails = GetSwapchainSupportDetails(givenPhysicalDevice);
+        SwapchainSupportDetails swapchainSupportDetails = GetSwapchainSupportDetails(givenPhysicalDevice);
         bool swapchainAdequate = !swapchainSupportDetails.formats.empty() && !swapchainSupportDetails.presentModes.empty();
 
         return indicesValid && extensionsSupported && swapchainAdequate && featuresSupported;
@@ -95,10 +98,10 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Check if each given extension is in the supported extensions array
         bool allExtensionsSupported = true;
-        for (auto &requiredExtension : requiredDeviceExtensions)
+        for (const auto &requiredExtension : requiredDeviceExtensions)
         {
             bool extensionFound = false;
-            for (auto &extensionProperty : extensionProperties)
+            for (const auto &extensionProperty : extensionProperties)
             {
                 #if __APPLE__
                     if (!krhPortabilityRequired && strcmp("VK_KHR_portability_subset", extensionProperty.extensionName) == 0)

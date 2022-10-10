@@ -5,7 +5,9 @@
 #include "File.h"
 
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <vector>
 
 namespace Sierra::Engine::Classes::File
 {
@@ -31,6 +33,34 @@ namespace Sierra::Engine::Classes::File
         }
 
         return "";
+    }
+
+    const std::vector<char> ReadFile(const std::string &fileName)
+    {
+        // Open stream to read from given file (as binary, at the end)
+        std::ifstream file(fileName, std::ios::binary | std::ios::ate);
+
+        // Check if the file stream successfully opened
+        if (!file.is_open())
+        {
+            throw std::runtime_error("Failed to open file!");
+        }
+
+        // Get file size and create resized vector
+        size_t fileSize = static_cast<size_t>(file.tellg());
+        std::vector<char> fileBuffer(fileSize);
+
+        // Go back to the start of file
+        file.seekg(0);
+
+        // Read file and save it to the file buffer
+        file.read(fileBuffer.data(), fileSize);
+
+        // Close file stream
+        file.close();
+
+        // Return read file
+        return fileBuffer;
     }
 
 }

@@ -11,7 +11,7 @@
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     /* --- CONSTRUCTORS --- */
-    Texture::Texture(const stbi_uc *stbImage, const uint32_t width, const uint32_t height, const TextureType givenTextureType, const int givenColorChannelsCount, const unsigned long givenMemorySize, const bool givenMipMappingEnabled, const VkSampler givenSampler, DescriptorSetLayout &givenDescriptorSetLayout, DescriptorPool &givenDescriptorPool, const std::string givenName)
+    Texture::Texture(const stbi_uc *stbImage, const uint32_t width, const uint32_t height, const TextureType givenTextureType, const int givenColorChannelsCount, const uint64_t givenMemorySize, const bool givenMipMappingEnabled, const VkSampler givenSampler, std::unique_ptr<DescriptorSetLayout> &givenDescriptorSetLayout, std::unique_ptr<DescriptorPool> &givenDescriptorPool, const std::string givenName)
         : name(givenName), textureType(givenTextureType), sampler(givenSampler), colorChannelsCount(givenColorChannelsCount), memorySize(givenMemorySize)
     {
         // If mip mapping is enabled calculate mip levels
@@ -70,8 +70,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         stagingBuffer->CopyImage(*image);
 
         // Destroy the staging buffer and free its memory
-        stagingBuffer->DestroyBuffer();
-        stagingBuffer->FreeMemory();
+        stagingBuffer->Destroy();
 
         // Generate mip maps for the current texture
         if (mipMappingEnabled) GenerateMipMaps();
@@ -94,7 +93,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         .Build(descriptorSet);
     }
 
-    Texture::Builder::Builder(DescriptorSetLayout &givenDescriptorSetLayout, DescriptorPool &givenDescriptorPool)
+    Texture::Builder::Builder(std::unique_ptr<DescriptorSetLayout> &givenDescriptorSetLayout, std::unique_ptr<DescriptorPool> &givenDescriptorPool)
         : descriptorSetLayout(givenDescriptorSetLayout), descriptorPool(givenDescriptorPool)
     {
 
@@ -145,7 +144,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             VulkanDebugger::ThrowError("Failed to load the texture file [" + filePath + "]");
         }
 
-        const unsigned long calculatedMemorySize = width * height * channels;
+        const uint64_t calculatedMemorySize = width * height * channels;
 
         return std::make_unique<Texture>(stbiImage, width, height, textureType, channels, calculatedMemorySize, mipMappingEnabled, vkSampler, descriptorSetLayout, descriptorPool, name);
         return nullptr;

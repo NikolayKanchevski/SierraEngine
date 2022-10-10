@@ -14,15 +14,18 @@ using namespace Sierra::Engine::Classes;
 namespace Sierra::Core::Rendering
 {
 
-    void Window::Update() const
+    void Window::Update()
     {
         glfwPollEvents();
 
-        if (REQUIRE_FOCUS && !focused) return;
+        if (resizeSet)
+        {
+            resized = true;
+            resizeSet = false;
+            return;
+        }
 
-        if (minimized || hidden) return;
-
-//        vulkanRenderer?.Update();
+        resized = false;
     }
 
     void Window::SetTitle(const std::string& givenTitle)
@@ -49,6 +52,12 @@ namespace Sierra::Core::Rendering
         glfwSetWindowOpacity(glfwWindow, givenOpacity);
     }
 
+    void Window::SetResizeCallback(std::function<void()> givenCallback)
+    {
+        this->resizeCallbackSet = true;
+        this->resizeCallback = givenCallback;
+    }
+
     Window::Window(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)
             : title(std::move(givenTitle)), maximized(setMaximized), REQUIRE_FOCUS(setFocusRequirement), RESIZABLE(setResizable)
     {
@@ -61,7 +70,7 @@ namespace Sierra::Core::Rendering
         }
 
         #ifdef DEBUG
-                Sierra::Engine::Classes::Stopwatch stopwatch;
+            Sierra::Engine::Classes::Stopwatch stopwatch;
         #endif
 
         RetrieveMonitorData();
@@ -155,15 +164,10 @@ namespace Sierra::Core::Rendering
         auto windowObject = GetGlfwWindowParentClass(windowPtr);
         windowObject->width = newWidth;
         windowObject->height = newHeight;
+        windowObject->resized = true;
+        windowObject->resizeSet = true;
 
-//        if (windowObject.vulkanRenderer == null)
-//        {
-//            return;
-//        }
-//
-//        windowObject.vulkanRenderer.frameBufferResized = true;
-//        windowObject.vulkanRenderer.Update();
-//        windowObject.vulkanRenderer.Update();
+        if (windowObject->resizeCallbackSet) windowObject->resizeCallback();
 
         Cursor::ResetCursorOffset();
     }

@@ -21,13 +21,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Texture(const stbi_uc *stbImage, uint32_t width, uint32_t height, TextureType givenTextureType, int givenColorChannelsCount, unsigned long givenMemorySize, bool givenMipMappingEnabled, VkSampler givenSampler,
-                DescriptorSetLayout &givenDescriptorSetLayout, DescriptorPool &givenDescriptorPool, std::string givenName);
+        Texture(const stbi_uc *stbImage, uint32_t width, uint32_t height, TextureType givenTextureType, int givenColorChannelsCount, uint64_t givenMemorySize, bool givenMipMappingEnabled, VkSampler givenSampler,
+                std::unique_ptr<DescriptorSetLayout> &givenDescriptorSetLayout, std::unique_ptr<DescriptorPool> &givenDescriptorPool, std::string givenName);
 
         class Builder
         {
         public:
-            Builder(DescriptorSetLayout &givenDescriptorSetLayout, DescriptorPool &givenDescriptorPool);
+            Builder(std::unique_ptr<DescriptorSetLayout> &givenDescriptorSetLayout, std::unique_ptr<DescriptorPool> &givenDescriptorPool);
             Builder& SetName(std::string givenName);
             Builder& SetTextureType(TextureType givenTextureType);
             Builder& EnableMipMapGeneration(bool isApplied);
@@ -38,10 +38,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             std::string name = "";
             TextureType textureType = TextureType::None;
             bool mipMappingEnabled = true;
-            DescriptorSetLayout &descriptorSetLayout;
-            DescriptorPool &descriptorPool;
+            std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout;
+            std::unique_ptr<DescriptorPool> &descriptorPool;
             VkSampler vkSampler;
-            unsigned long imageSize;
+            uint64_t imageSize;
         };
 
         /* --- SETTER METHODS --- */
@@ -71,7 +71,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline bool GetMipMappingEnabled() const
         { return this->mipMappingEnabled; }
 
-        [[nodiscard]] inline unsigned long GetMemorySize() const
+        [[nodiscard]] inline uint64_t GetMemorySize() const
         { return this->memorySize; }
 
         [[nodiscard]] inline VkDescriptorSet GetDescriptorSet() const
@@ -83,7 +83,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         /* --- SETTER METHODS --- */
 
         /* --- DESTRUCTOR --- */
-        // NOTE: No destructor as the image will automatically be destroyed
+        inline void Destroy() { image->Destroy(); }
         Texture(const Texture &) = delete;
         Texture &operator=(const Texture &) = delete;
     private:
@@ -95,7 +95,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         uint32_t mipMapLevels = 1;
         bool mipMappingEnabled;
 
-        unsigned long memorySize;
+        uint64_t memorySize;
         VkDescriptorSet descriptorSet;
 
         std::unique_ptr<Image> image;

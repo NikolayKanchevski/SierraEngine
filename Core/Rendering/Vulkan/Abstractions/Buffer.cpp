@@ -11,7 +11,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- SETTER METHODS --- */
 
-    Buffer::Builder &Buffer::Builder::SetMemorySize(const unsigned long givenMemorySize)
+    Buffer::Builder &Buffer::Builder::SetMemorySize(const uint64_t givenMemorySize)
     {
         // Save the given memory size
         this->memorySize = givenMemorySize;
@@ -32,7 +32,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return *this;
     }
 
-    void Buffer::CopyFromPointer(void *pointer, unsigned long offset)
+    void Buffer::CopyFromPointer(void *pointer, uint64_t offset)
     {
         // Create an empty pointer
         void *data;
@@ -47,7 +47,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkUnmapMemory(VulkanCore::GetLogicalDevice(), vkBufferMemory);
     }
 
-    void Buffer::CopyImage(const Image& givenImage, const glm::vec3 imageOffset, const unsigned long offset)
+    void Buffer::CopyImage(const Image& givenImage, const glm::vec3 imageOffset, const uint64_t offset)
     {
         // Create a temporary command buffer
         VkCommandBuffer commandBuffer = VulkanUtilities::BeginSingleTimeCommands();
@@ -97,16 +97,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VulkanUtilities::EndSingleTimeCommands(commandBuffer);
     }
 
-    void Buffer::DestroyBuffer()
-    {
-        vkDestroyBuffer(VulkanCore::GetLogicalDevice(), vkBuffer, nullptr);
-    }
-
-    void Buffer::FreeMemory()
-    {
-        vkFreeMemory(VulkanCore::GetLogicalDevice(), vkBufferMemory, nullptr);
-    }
-
     /* --- CONSTRUCTORS --- */
 
     std::unique_ptr<Buffer> Buffer::Builder::Build() const
@@ -116,7 +106,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     }
 
 
-        Buffer::Buffer(const unsigned long givenMemorySize, const VkMemoryPropertyFlags givenMemoryFlags, const VkBufferUsageFlags givenBufferUsage) : memorySize(givenMemorySize), memoryFlags(givenMemoryFlags), bufferUsage(givenBufferUsage)
+        Buffer::Buffer(const uint64_t givenMemorySize, const VkMemoryPropertyFlags givenMemoryFlags, const VkBufferUsageFlags givenBufferUsage) : memorySize(givenMemorySize), memoryFlags(givenMemoryFlags), bufferUsage(givenBufferUsage)
     {
         // Set up buffer creation info
         VkBufferCreateInfo bufferCreateInfo{};
@@ -153,9 +143,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- DESTRUCTOR --- */
 
-    Buffer::~Buffer()
+    void Buffer::Destroy()
     {
-        DestroyBuffer();
-        FreeMemory();
+        vkDestroyBuffer(VulkanCore::GetLogicalDevice(), vkBuffer, nullptr);
+        vkFreeMemory(VulkanCore::GetLogicalDevice(), vkBufferMemory, nullptr);
     }
 }

@@ -33,7 +33,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline VkFramebuffer GetVulkanFramebuffer() const { return this->vkFramebuffer; }
 
         /* --- DESTRUCTOR --- */
-        ~Framebuffer();
+        void Destroy();
         Framebuffer(const Framebuffer &) = delete;
         Framebuffer &operator=(const Framebuffer &) = delete;
     private:

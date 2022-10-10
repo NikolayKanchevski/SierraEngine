@@ -2,6 +2,7 @@
 // Created by Nikolay Kanchevski on 28.09.22.
 //
 
+#include <format>
 #include "Application.h"
 #include "../../Core/Rendering/Vulkan/Renderer/VulkanRenderer.h"
 #include "../../Engine/Classes/Time.h"
@@ -34,7 +35,8 @@ void Application::Start()
         renderer.Update();
 
         // Set the window title to display current FPS
-        window.SetTitle("FPS: " + std::to_string(Time::GetFPS()));
+        window.SetTitle("FPS: " + std::to_string(Time::GetFPS()) + " | Draw Time: " + std::to_string(renderer.GetDrawTime()) + "ms");
+//        window.SetTitle("FPS: " + std::to_string(Time::GetFPS()));
     }
 }
 

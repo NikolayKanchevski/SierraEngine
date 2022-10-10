@@ -90,7 +90,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- DESTRUCTOR --- */
 
-    Sampler::~Sampler()
+    void Sampler::Destroy()
     {
         // Destroy the Vulkan sampler
         vkDestroySampler(VulkanCore::GetLogicalDevice(), this->vkSampler, nullptr);

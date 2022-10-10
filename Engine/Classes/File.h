@@ -18,4 +18,8 @@ namespace Sierra::Engine::Classes::File
     /// @param fileName Which file to search for. Must contain an extension!</param>
     std::string FindInSubdirectories(const std::string &directory, const std::string &fileName);
 
+    /// @brief Reads a given file and returns its data as a vector of characters.
+    /// @param fileName Location of file to read.
+    const std::vector<char> ReadFile(const std::string &fileName);
+
 }

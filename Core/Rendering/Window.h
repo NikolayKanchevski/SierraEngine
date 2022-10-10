@@ -9,6 +9,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
+#include <functional>
 
 //using namespace Sierra::Core::Rendering::Vulkan;
 
@@ -32,7 +33,7 @@ namespace Sierra::Core::Rendering
         /* --- POLLING METHODS --- */
 
         /// @brief Does drawing and required GLFW updates. Only gets executed if the window is not minimised and is focused if required to be.
-        void Update() const;
+        void Update();
 
         /* --- SETTER METHODS --- */
 
@@ -47,6 +48,9 @@ namespace Sierra::Core::Rendering
 
         /// @brief Sets the transparency (opacity) of the window
         void SetOpacity(float givenOpacity);
+
+        /// @brief Set what callback to be called upon window resizing. Must only be used by renderer classes!
+        void SetResizeCallback(std::function<void()> givenCallback);
 
         // void SetIcon():
 
@@ -87,6 +91,14 @@ namespace Sierra::Core::Rendering
         [[nodiscard]] inline bool IsHidden() const
         { return this->hidden; };
 
+        /// @brief Checks if the window requires focus for it to be updated.
+        [[nodiscard]] inline bool IsFocusRequired() const
+        { return this->REQUIRE_FOCUS; }
+
+        /// @brief Checks if the window has been resized. Only true for one frame after every resize.
+        [[nodiscard]] inline bool IsResized() const
+        { return this->resized; }
+
         /// @brief Returns the current opacity of the window.
         [[nodiscard]] inline float GetOpacity() const
         { return this->opacity; };
@@ -102,11 +114,14 @@ namespace Sierra::Core::Rendering
         int width, height;
         std::string title;
 
-        bool closed, minimized, maximized, focused, hidden;
+        bool closed, minimized, maximized, focused, hidden, resized, resizeSet;
         float opacity;
 
         const bool RESIZABLE;
         const bool REQUIRE_FOCUS;
+
+        bool resizeCallbackSet;
+        std::function<void()> resizeCallback;
 
         struct {
             int xPosition; int yPosition; int width; int height;

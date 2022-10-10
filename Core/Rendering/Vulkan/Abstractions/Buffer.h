@@ -16,30 +16,27 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Buffer(unsigned long givenMemorySize, VkMemoryPropertyFlags givenMemoryFlags, VkBufferUsageFlags givenBufferUsage);
+        Buffer(uint64_t givenMemorySize, VkMemoryPropertyFlags givenMemoryFlags, VkBufferUsageFlags givenBufferUsage);
 
         class Builder
         {
         public:
-            Builder& SetMemorySize(unsigned long givenMemorySize);
+            Builder& SetMemorySize(uint64_t givenMemorySize);
             Builder& SetMemoryFlags(VkMemoryPropertyFlags givenMemoryFlags);
             Builder& SetUsageFlags(VkBufferUsageFlags givenBufferUsage);
 
             [[nodiscard]] std::unique_ptr<Buffer> Build() const;
 
         private:
-            unsigned long memorySize;
+            uint64_t memorySize;
             VkMemoryPropertyFlags memoryFlags;
             VkBufferUsageFlags bufferUsage;
         };
 
         /* --- SETTER METHODS --- */
-        void CopyFromPointer(void* pointer, unsigned long offset = 0);
-        void CopyImage(const Image& givenImage, glm::vec3 imageOffset = { 0, 0, 0 }, unsigned long offset = 0);
+        void CopyFromPointer(void* pointer, uint64_t offset = 0);
+        void CopyImage(const Image& givenImage, glm::vec3 imageOffset = { 0, 0, 0 }, uint64_t offset = 0);
         void CopyToBuffer(const Buffer& otherBuffer);
-
-        void DestroyBuffer();
-        void FreeMemory();
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkBuffer GetVulkanBuffer() const
@@ -51,14 +48,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline VkMemoryPropertyFlags GetMemoryFlags() const
         { return this->memoryFlags; }
 
-        [[nodiscard]] inline unsigned long GetMemorySize() const
+        [[nodiscard]] inline uint64_t GetMemorySize() const
         { return this->memorySize; }
 
         [[nodiscard]] inline VkBufferUsageFlags GetBufferUsage() const
         { return this->bufferUsage; }
 
         /* --- DESTRUCTOR --- */
-        ~Buffer();
+        void Destroy();
         Buffer(const Buffer &) = delete;
         Buffer &operator=(const Buffer &) = delete;
 
@@ -67,7 +64,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkBuffer vkBuffer;
         VkDeviceMemory vkBufferMemory;
 
-        unsigned long memorySize;
+        uint64_t memorySize;
         VkMemoryPropertyFlags memoryFlags;
         VkBufferUsageFlags bufferUsage;
     };

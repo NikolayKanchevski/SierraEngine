@@ -18,14 +18,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         struct ColorAttachment
         {
             VkAttachmentDescription data;
-            uint32_t binding;
         };
 
         struct ResolveAttachment
         {
             VkAttachmentDescription data;
             VkImageLayout imageLayout;
-            uint32_t binding;
         };
 
         struct DepthAttachment
@@ -38,29 +36,29 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         /* --- CONSTRUCTORS --- */
         Subpass(VkPipelineBindPoint givenBindPoint,
                 DepthAttachment givenDepthAttachment,
-                std::vector<ColorAttachment> givenColorAttachments,
-                std::vector<ResolveAttachment> givenResolveAttachments,
+                std::unordered_map<uint32_t, ColorAttachment> givenColorAttachments,
+                std::unordered_map<uint32_t, ResolveAttachment> givenResolveAttachments,
                 uint32_t srcSubpass, uint32_t dstSubpass);
 
         class Builder
         {
         public:
             Builder& SetPipelineBindPoint(VkPipelineBindPoint givenPipelineBindPoint);
-            Builder& SetDepthAttachment(uint32_t binding, Image depthImage, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
+            Builder& SetDepthAttachment(uint32_t binding, const std::unique_ptr<Image> &depthImage, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
                                         VkAttachmentLoadOp stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, VkAttachmentStoreOp stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            Builder& AddColorAttachment(uint32_t binding, Image colorImage, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
+            Builder& AddColorAttachment(uint32_t binding, const std::unique_ptr<Image> &colorImage, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
                                         VkAttachmentLoadOp stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, VkAttachmentStoreOp stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            Builder& AddResolveAttachment(uint32_t binding, Image image, VkImageLayout finalLayout, VkImageLayout referenceLayout,
+            Builder& AddResolveAttachment(uint32_t binding, const std::unique_ptr<Image> &image, VkImageLayout finalLayout, VkImageLayout referenceLayout,
                                           VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp, VkSampleCountFlagBits sampling = VK_SAMPLE_COUNT_1_BIT,
                                           VkAttachmentLoadOp stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, VkAttachmentStoreOp stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            std::unique_ptr<Subpass> Build(uint32_t srcSubpass = ~0U, uint32_t dstSubpass = ~0U) const;
+            std::unique_ptr<Subpass> Build(uint32_t srcSubpass = ~0U, uint32_t dstSubpass = 0) const;
 
         private:
             VkPipelineBindPoint pipelineBindPoint;
             DepthAttachment depthAttachment;
 
-            std::vector<ColorAttachment> colorAttachments;
-            std::vector<ResolveAttachment> resolveAttachments;
+            std::unordered_map<uint32_t, ColorAttachment> colorAttachments;
+            std::unordered_map<uint32_t, ResolveAttachment> resolveAttachments;
         };
 
         /* --- GETTER METHODS --- */
@@ -90,20 +88,16 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        RenderPass(Subpass *subpass);
+        RenderPass(const std::unique_ptr<Subpass> &subpass);
 
         class Builder
         {
         public:
-            Builder& SetSubpass(Subpass *givenSubpass);
-            [[nodiscard]] std::unique_ptr<RenderPass> Build() const;
-
-        private:
-            Subpass *subpass;
+            [[nodiscard]] std::unique_ptr<RenderPass> Build(const std::unique_ptr<Subpass> &givenSubpass) const;
         };
 
         /* --- SETTER METHODS --- */
-        void SetFramebuffer(Framebuffer &givenFramebuffer);
+        void SetFramebuffer(std::unique_ptr<Framebuffer> &givenFramebuffer);
         void SetBackgroundColor(glm::vec3 givenColor);
         void Begin(VkCommandBuffer givenCommandBuffer);
         void End(VkCommandBuffer givenCommandBuffer);
@@ -112,7 +106,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline VkRenderPass GetVulkanRenderPass() const { return this->vkRenderPass; }
 
         /* --- DESTRUCTOR --- */
-        ~RenderPass();
+        void Destroy();
         RenderPass(const RenderPass &) = delete;
         RenderPass &operator=(const RenderPass &) = delete;
 

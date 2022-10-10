@@ -50,9 +50,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         std::vector<VkDescriptorSetLayoutBinding> layoutBindings(givenBindings.size());
 
         // Foreach pair in the provided tuple retrieve the created set layout binding
-        for (auto pair : givenBindings)
+        for (const auto pair : givenBindings)
         {
-            layoutBindings.push_back(pair.second);
+            layoutBindings[pair.first] = pair.second;
         }
 
         // Set up the layout creation info
@@ -70,7 +70,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- DESTRUCTOR --- */
 
-    DescriptorSetLayout::~DescriptorSetLayout()
+    void DescriptorSetLayout::Destroy()
     {
         // Destroy the Vulkan descriptor set
         vkDestroyDescriptorSetLayout(VulkanCore::GetLogicalDevice(), vkDescriptorSetLayout, nullptr);
@@ -112,7 +112,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan descriptor set
         VulkanDebugger::CheckResults(
-            vkAllocateDescriptorSets(VulkanCore::GetLogicalDevice(), &allocateInfo, nullptr),
+            vkAllocateDescriptorSets(VulkanCore::GetLogicalDevice(), &allocateInfo, &descriptorSet),
             "Failed to allocate descriptor set"
         );
     }
@@ -144,7 +144,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- DESTRUCTOR --- */
 
-    DescriptorPool::~DescriptorPool()
+    void DescriptorPool::Destroy()
     {
         // Destroy the Vulkan descriptor pool
         vkDestroyDescriptorPool(VulkanCore::GetLogicalDevice(), this->vkDescriptorPool, nullptr);
@@ -157,13 +157,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     DescriptorWriter &DescriptorWriter::WriteBuffer(const uint32_t binding, const VkDescriptorBufferInfo bufferInfo)
     {
         // Check if the current binding is not available
-        if (descriptorSetLayout.bindings.count(binding) == 0)
+        if (descriptorSetLayout->bindings.count(binding) == 0)
         {
             VulkanDebugger::ThrowError("Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
         }
 
         // Get the binding description and check if it expects more than 1 descriptors
-        VkDescriptorSetLayoutBinding bindingDescription = descriptorSetLayout.bindings[binding];
+        VkDescriptorSetLayoutBinding bindingDescription = descriptorSetLayout->bindings[binding];
         if (bindingDescription.descriptorCount != 1)
         {
             VulkanDebugger::ThrowError("Trying to bind [" + std::to_string(bindingDescription.descriptorCount) + "] descriptors while only 1 at a time is supported");
@@ -186,13 +186,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     DescriptorWriter &DescriptorWriter::WriteImage(const uint32_t binding, const VkDescriptorImageInfo imageInfo)
     {
         // Check if the current binding is not available
-        if (descriptorSetLayout.bindings.count(binding) == 0)
+        if (descriptorSetLayout->bindings.count(binding) == 0)
         {
             VulkanDebugger::ThrowError("Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
         }
 
         // Get the binding description and check if it expects more than 1 descriptors
-        VkDescriptorSetLayoutBinding bindingDescription = descriptorSetLayout.bindings[binding];
+        VkDescriptorSetLayoutBinding bindingDescription = descriptorSetLayout->bindings[binding];
         if (bindingDescription.descriptorCount != 1)
         {
             VulkanDebugger::ThrowError("Trying to bind [" + std::to_string(bindingDescription.descriptorCount) + "] descriptors while only 1 at a time is supported");
@@ -217,13 +217,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void DescriptorWriter::Build(VkDescriptorSet &descriptorSet)
     {
         // Allocate descriptor set to pool
-        descriptorPool.AllocateDescriptorSet(descriptorSetLayout.GetVulkanDescriptorSetLayout(), descriptorSet);
+        descriptorPool->AllocateDescriptorSet(descriptorSetLayout->GetVulkanDescriptorSetLayout(), descriptorSet);
 
         // Update the descriptor sets
         Overwrite(descriptorSet);
     }
 
-    DescriptorWriter::DescriptorWriter(DescriptorSetLayout &givenDescriptorSetLayout, DescriptorPool &givenDescriptorPool)
+    DescriptorWriter::DescriptorWriter(std::unique_ptr<DescriptorSetLayout> &givenDescriptorSetLayout, std::unique_ptr<DescriptorPool> &givenDescriptorPool)
         : descriptorSetLayout(givenDescriptorSetLayout), descriptorPool(givenDescriptorPool)
     {
 

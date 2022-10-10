@@ -21,6 +21,7 @@ namespace Sierra::Core::Rendering::Vulkan
         }
 
         // Get most suitable properties - format, present mode and extent
+        SwapchainSupportDetails swapchainSupportDetails = GetSwapchainSupportDetails(physicalDevice);
         VkSurfaceFormatKHR surfaceFormat = ChooseSwapchainFormat(swapchainSupportDetails.formats);
         VkPresentModeKHR presentMode = ChooseSwapchainPresentMode(swapchainSupportDetails.presentModes);
         VkExtent2D extent = ChooseSwapchainExtent(swapchainSupportDetails.capabilities);
@@ -38,20 +39,19 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Set up swapchain creation info
         VkSwapchainCreateInfoKHR swapchainCreateInfo{};
-        swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-        swapchainCreateInfo.surface = this->surface,
-        swapchainCreateInfo.minImageCount = imageCount,
-        swapchainCreateInfo.imageFormat = surfaceFormat.format,
-        swapchainCreateInfo.imageColorSpace = surfaceFormat.colorSpace,
-        swapchainCreateInfo.imageExtent = extent,
-        swapchainCreateInfo.imageArrayLayers = 1,
-        swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-        swapchainCreateInfo.preTransform = swapchainSupportDetails.capabilities.currentTransform,
-        swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-        swapchainCreateInfo.presentMode = presentMode,
-        swapchainCreateInfo.clipped = VK_TRUE,
-                // TODO: Remove if gives out errors
-                swapchainCreateInfo.oldSwapchain = swapchain;
+        swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        swapchainCreateInfo.surface = this->surface;
+        swapchainCreateInfo.minImageCount = imageCount;
+        swapchainCreateInfo.imageFormat = surfaceFormat.format;
+        swapchainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
+        swapchainCreateInfo.imageExtent = extent;
+        swapchainCreateInfo.imageArrayLayers = 1;
+        swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        swapchainCreateInfo.preTransform = swapchainSupportDetails.capabilities.currentTransform;
+        swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        swapchainCreateInfo.presentMode = presentMode;
+        swapchainCreateInfo.clipped = VK_TRUE;
+//        swapchainCreateInfo.oldSwapchain = swapchain;
 
         // Get the queue indices
         const std::vector<uint32_t> queueFamilyIndicesCollection  { queueFamilyIndices.graphicsFamily, queueFamilyIndices.presentFamily };
@@ -72,33 +72,70 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Create the swapchain
         VulkanDebugger::CheckResults(
-                vkCreateSwapchainKHR(this->logicalDevice, &swapchainCreateInfo, nullptr, &swapchain),
-                "Failed to create swapchain"
+            vkCreateSwapchainKHR(this->logicalDevice, &swapchainCreateInfo, nullptr, &swapchain),
+            "Failed to create swapchain"
         );
 
         // Get swapchain images
         vkGetSwapchainImagesKHR(this->logicalDevice, this->swapchain, &imageCount, nullptr);
 
         std::vector<VkImage> swapchainVkImages(imageCount);
-        swapchainImages.reserve(imageCount);
+        swapchainImages.resize(imageCount);
 
         // Resize the swapchain images array and extract every swapchain image
         vkGetSwapchainImagesKHR(this->logicalDevice, this->swapchain, &imageCount, swapchainVkImages.data());
 
-        for (int i = 0; i < imageCount; i++)
+        for (int i = imageCount; i--;)
         {
-            auto image = Image(
+            swapchainImages[i] = Image::Build(
                     swapchainVkImages[i], swapchainImageFormat, msaaSampleCount,
                     { swapchainExtent.width, swapchainExtent.height, 0.0f }, 1, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
             );
 
-            image.CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT);
-
-            swapchainImages[i] = &image;
+            swapchainImages[i]->CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT);
         }
 
         // Assign the EngineCore's swapchain extent
         VulkanCore::SetSwapchainExtent(swapchainExtent);
+    }
+
+    void VulkanRenderer::RecreateSwapchainObjects()
+    {
+        while (window.IsMinimized() || !window.IsFocused() || window.GetWidth() == 0)
+        {
+            glfwWaitEvents();
+        }
+
+        vkDeviceWaitIdle(this->logicalDevice);
+
+        DestroySwapchainObjects();
+
+        CreateSwapchain();
+        CreateRenderPass();
+        CreateDepthBufferImage();
+        CreateColorBufferImage();
+        CreateFramebuffers();
+    }
+
+    void VulkanRenderer::DestroySwapchainObjects()
+    {
+        colorImage->Destroy();
+
+        for (const auto &swapchainFramebuffer : this->swapchainFramebuffers)
+        {
+            swapchainFramebuffer->Destroy();
+        }
+
+        depthImage->Destroy();
+
+        renderPass->Destroy();
+
+        for (const auto &image : swapchainImages)
+        {
+            image->DestroyImageView();
+        }
+
+        vkDestroySwapchainKHR(this->logicalDevice, this->swapchain, nullptr);
     }
 
     VulkanRenderer::SwapchainSupportDetails VulkanRenderer::GetSwapchainSupportDetails(VkPhysicalDevice &givenPhysicalDevice)
@@ -152,7 +189,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
     VkSurfaceFormatKHR VulkanRenderer::ChooseSwapchainFormat(std::vector<VkSurfaceFormatKHR> &givenFormats)
     {
-        for (auto &availableFormat : givenFormats)
+        for (const auto &availableFormat : givenFormats)
         {
             if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
             {
@@ -167,7 +204,7 @@ namespace Sierra::Core::Rendering::Vulkan
     VkPresentModeKHR VulkanRenderer::ChooseSwapchainPresentMode(std::vector<VkPresentModeKHR> &givenPresentModes)
     {
         // Loop trough each to check if it is VK_PRESENT_MODE_MAILBOX_KHR
-        for (auto &availablePresentMode : givenPresentModes)
+        for (const auto &availablePresentMode : givenPresentModes)
         {
             if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
             {

@@ -42,7 +42,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline VkSampler GetVulkanSampler() const { return this->vkSampler; };
 
         /* --- DESTRUCTOR --- */
-        ~Sampler();
+        void Destroy();
         Sampler(const Sampler &) = delete;
         Sampler &operator=(const Sampler &) = delete;
 

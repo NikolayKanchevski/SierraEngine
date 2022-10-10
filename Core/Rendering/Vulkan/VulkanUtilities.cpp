@@ -2,9 +2,13 @@
 // Created by Nikolay Kanchevski on 30.09.22.
 //
 
+#include <vector>
 #include "VulkanUtilities.h"
 #include "VulkanCore.h"
 #include "VulkanDebugger.h"
+#include "../../../Engine/Classes/File.h"
+
+using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -12,7 +16,7 @@ namespace Sierra::Core::Rendering::Vulkan
     /* --- GETTER METHODS --- */
     uint32_t VulkanUtilities::FindMemoryTypeIndex(const uint32_t typeFilter, const VkMemoryPropertyFlags givenMemoryFlags)
     {
-        VkPhysicalDeviceMemoryProperties memoryProperties;
+        VkPhysicalDeviceMemoryProperties memoryProperties{};
         vkGetPhysicalDeviceMemoryProperties(VulkanCore::GetPhysicalDevice(), &memoryProperties);
 
         for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++)
@@ -28,7 +32,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
     VkCommandBuffer VulkanUtilities::BeginSingleTimeCommands()
     {
-        VkCommandBufferAllocateInfo commandBufferAllocateInfo;
+        VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
         commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         commandBufferAllocateInfo.commandPool = VulkanCore::GetCommandPool();
@@ -40,7 +44,7 @@ namespace Sierra::Core::Rendering::Vulkan
                 "Failed to allocate single time command buffer"
         );
 
-        VkCommandBufferBeginInfo commandBufferBeginInfo;
+        VkCommandBufferBeginInfo commandBufferBeginInfo{};
         commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
@@ -53,7 +57,7 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         vkEndCommandBuffer(commandBuffer);
 
-        VkSubmitInfo submitInfo;
+        VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &commandBuffer;
@@ -62,6 +66,27 @@ namespace Sierra::Core::Rendering::Vulkan
         vkQueueWaitIdle(VulkanCore::GetGraphicsQueue());
 
         vkFreeCommandBuffers(VulkanCore::GetLogicalDevice(), VulkanCore::GetCommandPool(), 1, &commandBuffer);
+    }
+
+    VkShaderModule VulkanUtilities::CreateShaderModule(const std::string &fileName)
+    {
+        // Read bytes from the given file
+        const std::vector<char> shaderCode = File::ReadFile(fileName);
+
+        // Set module creation info
+        VkShaderModuleCreateInfo moduleCreateInfo{};
+        moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        moduleCreateInfo.codeSize = shaderCode.size();
+        moduleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(shaderCode.data());
+
+        // Create shader module
+        VkShaderModule shaderModule;
+        VulkanDebugger::CheckResults(
+            vkCreateShaderModule(VulkanCore::GetLogicalDevice(), &moduleCreateInfo, nullptr, &shaderModule),
+            "Failed to create shader module for [" + fileName + "]"
+        );
+
+        return shaderModule;
     }
 
 }

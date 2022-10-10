@@ -21,7 +21,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         class Builder
         {
         public:
-            Builder &AddBinding(uint32_t binding, VkDescriptorType descriptorType, VkShaderStageFlags shaderStages, uint32_t descriptorCount, VkSampler const *immutableSamplers);
+            Builder &AddBinding(uint32_t binding, VkDescriptorType descriptorType, VkShaderStageFlags shaderStages, uint32_t descriptorCount = 1, VkSampler const *immutableSamplers = nullptr);
             [[nodiscard]] std::unique_ptr<DescriptorSetLayout> Build() const;
 
         private:
@@ -33,7 +33,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline VkDescriptorSetLayout GetVulkanDescriptorSetLayout() const { return this->vkDescriptorSetLayout; }
 
         /* --- DESTRUCTOR --- */
-        ~DescriptorSetLayout();
+        void Destroy();
         DescriptorSetLayout(const DescriptorSetLayout &) = delete;
         DescriptorSetLayout &operator=(const DescriptorSetLayout &) = delete;
 
@@ -73,7 +73,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline VkDescriptorPool GetVulkanDescriptorPool() const { return this->vkDescriptorPool; }
 
         /* --- DESTRUCTOR --- */
-        ~DescriptorPool();
+        void Destroy();
         DescriptorPool(const DescriptorPool &) = delete;
         DescriptorPool &operator=(const DescriptorPool &) = delete;
 
@@ -86,7 +86,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        DescriptorWriter(DescriptorSetLayout &givenDescriptorSetLayout, DescriptorPool &givenDescriptorPool);
+        DescriptorWriter(std::unique_ptr<DescriptorSetLayout> &givenDescriptorSetLayout, std::unique_ptr<DescriptorPool> &givenDescriptorPool);
 
         /* --- SETTER METHODS --- */
         DescriptorWriter& WriteBuffer(uint32_t binding, VkDescriptorBufferInfo bufferInfo);
@@ -94,8 +94,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void Build(VkDescriptorSet &descriptorSet);
 
     private:
-        DescriptorPool &descriptorPool;
-        DescriptorSetLayout &descriptorSetLayout;
+        std::unique_ptr<DescriptorPool> &descriptorPool;
+        std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout;
         std::vector<VkWriteDescriptorSet> writeDescriptorSets;
 
         void Overwrite(VkDescriptorSet &descriptorSet);

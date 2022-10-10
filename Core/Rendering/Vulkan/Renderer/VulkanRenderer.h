@@ -6,11 +6,27 @@
 
 #include <vector>
 #include <vulkan/vk_enum_string_helper.h>
-#include "../VulkanDebugger.h"
+#include <glm/mat4x4.hpp>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
+
 #include "../VulkanCore.h"
+#include "../VulkanDebugger.h"
+#include "../VulkanUtilities.h"
+
 #include "../../Window.h"
+
 #include "../Abstractions/Image.h"
-#include <iostream>
+#include "../Abstractions/RenderPass.h"
+#include "../Abstractions/Descriptors.h"
+#include "../Abstractions/Sampler.h"
+#include "../Abstractions/Buffer.h"
+
+#include "../../../../Engine/Components/Lighting/DirectionalLight.h"
+#include "../../../../Engine/Components/Lighting/PointLight.h"
+#include "../../../../Engine/Components/Lighting/Spotlight.h"
+#include "../../../World.h"
 
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 
@@ -36,6 +52,7 @@ namespace Sierra::Core::Rendering::Vulkan
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline bool IsActive() const { return window.IsClosed(); };
         [[nodiscard]] inline Window& GetWindow()  { return window; }
+        [[nodiscard]] inline float GetDrawTime() const { return drawTime; };
 
         /* --- DESTRUCTOR --- */
         ~VulkanRenderer();
@@ -132,12 +149,10 @@ namespace Sierra::Core::Rendering::Vulkan
         };
 
         VkSwapchainKHR swapchain = VK_NULL_HANDLE;
-        SwapchainSupportDetails swapchainSupportDetails;
-
         VkFormat swapchainImageFormat;
         VkExtent2D swapchainExtent;
 
-        std::vector<Image*> swapchainImages;
+        std::vector<std::unique_ptr<Image>> swapchainImages;
 
         SwapchainSupportDetails GetSwapchainSupportDetails(VkPhysicalDevice &givenPhysicalDevice);
         VkSurfaceFormatKHR ChooseSwapchainFormat(std::vector<VkSurfaceFormatKHR> &givenFormats);
@@ -145,8 +160,108 @@ namespace Sierra::Core::Rendering::Vulkan
         VkExtent2D ChooseSwapchainExtent(VkSurfaceCapabilitiesKHR &givenCapabilities);
         void CreateSwapchain();
 
+        void RecreateSwapchainObjects();
+        void DestroySwapchainObjects();
+
+        /* --- COMMANDS --- */
+        VkCommandPool commandPool;
+        void CreateCommandPool();
+        std::vector<VkCommandBuffer> commandBuffers;
+        void CreateCommandBuffers();
+        void RecordCommandBuffer(const VkCommandBuffer &givenCommandBuffer, uint32_t imageIndex);
+        void FetchRenderTimeResults(uint32_t swapchainIndex);
+
+        /* --- DEPTH BUFFER --- */
+        std::unique_ptr<Image> depthImage;
+        VkFormat depthImageFormat;
+
+        VkFormat GetBestDepthBufferFormat(std::vector<VkFormat> &givenFormats, VkImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags);
+        void CreateDepthBufferImage();
+
+        /* --- RENDER PASS --- */
+        std::unique_ptr<Subpass> subpass;
+        std::unique_ptr<RenderPass> renderPass;
+        void CreateRenderPass();
+
+        /* --- PUSH CONSTANTS --- */
+        VkPushConstantRange pushConstantRange;
+        uint64_t pushConstantSize;
+        void CreatePushConstants();
+
+        /* --- DESCRIPTORS --- */
+        std::unique_ptr<DescriptorSetLayout> descriptorSetLayout;
+        void CreateDescriptorSetLayout();
+        std::unique_ptr<DescriptorPool> descriptorPool;
+        void CreateDescriptorPool();
+        std::vector<VkDescriptorSet> uniformDescriptorSets;
+        void CreateUniformDescriptorSets();
+
+        /* --- GRAPHICS PIPELINE --- */
+        VkPipelineLayout graphicsPipelineLayout;
+        VkPipeline graphicsPipeline;
+        void CreateGraphicsPipeline();
+
         /* --- COLOR BUFFER --- */
+        std::unique_ptr<Image> colorImage;
         VkSampleCountFlagBits GetHighestSupportedMsaaCount();
+        void CreateColorBufferImage();
+
+        /* --- FRAMEBUFFERS --- */
+        std::vector<std::unique_ptr<Framebuffer>> swapchainFramebuffers;
+        void CreateFramebuffers();
+
+        /* --- TEXTURES --- */
+        std::unique_ptr<Sampler> textureSampler;
+        const uint32_t MAX_TEXTURES = World::MAX_TEXTURES;
+        void CreateTextureSampler();
+
+        /* --- UNIFORM BUFFERS --- */
+        struct alignas(16) UniformData
+        {
+            /* Vertex Uniform Data */
+            glm::mat4x4 view;
+            glm::mat4x4 projection;
+
+            /* Fragment Uniform Data */
+            std::vector<DirectionalLight::UniformDirectionalLight> directionalLights;
+            std::vector<PointLight::UniformPointLight> pointLights;
+            std::vector<Spotlight::UniformSpotLight> spotLights;
+
+            int directionalLightsCount;
+            int pointLightsCount;
+            int spotLightsCount;
+        };
+
+        UniformData uniformData;
+        const uint64_t uniformDataSize = sizeof(UniformData);
+        std::vector<std::unique_ptr<Buffer>> uniformBuffers;
+        void CreateUniformBuffers();
+        void UpdateUniformBuffers(uint32_t imageIndex);
+
+        /* --- QUERYING --- */
+        VkQueryPool drawTimeQueryPool;
+        float timestampPeriod;
+        std::vector<float> drawTimeQueryResults;
+        float drawTime;
+        void CreateQueryPool();
+
+        /* --- DRAWING --- */
+        const uint32_t MAX_CONCURRENT_FRAMES = 3;
+        std::vector<VkSemaphore> imageAvailableSemaphores;
+        std::vector<VkSemaphore> renderFinishedSemaphores;
+        std::vector<VkFence> frameBeingRenderedFences;
+
+        uint32_t currentFrame = 0;
+
+        void CreateSynchronization();
+        void Draw();
+
+        /* --- ImGui --- */
+        VkDescriptorPool imGuiDescriptorPool;
+        void CreateImGuiInstance();
+        void BeginNewImGuiFrame();
+        void UpdateImGuiData();
+        void RenderImGui();
     };
 
 }

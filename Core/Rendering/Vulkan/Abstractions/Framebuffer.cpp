@@ -50,7 +50,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- DESTRUCTOR --- */
 
-    Framebuffer::~Framebuffer()
+    void Framebuffer::Destroy()
     {
         // Destroy the Vulkan framebuffer
         vkDestroyFramebuffer(VulkanCore::GetLogicalDevice(), this->vkFramebuffer, nullptr);

@@ -18,7 +18,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // For each unique family create new create info and add it to the list
         const float queuePriority = 1.0f;
-        for (auto &queueFamily : uniqueQueueFamilies)
+        for (const auto &queueFamily : uniqueQueueFamilies)
         {
             VkDeviceQueueCreateInfo queueCreateInfo{};
             queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
