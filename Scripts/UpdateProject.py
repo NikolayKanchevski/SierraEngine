@@ -34,6 +34,11 @@ def Main():
             print("Error: Too many arguments specified!")
             return
 
+    try:
+        RemoveDirectory(OUTPUT_DIRECTORY + "Shaders/")
+    except:
+        pass
+
     # Create the required directories in the output folder
     CreateDirectory(OUTPUT_DIRECTORY + "Shaders/")
 

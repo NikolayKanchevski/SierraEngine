@@ -18,6 +18,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         struct ColorAttachment
         {
             VkAttachmentDescription data;
+            bool swapchainAttachment = false;
         };
 
         struct ResolveAttachment
@@ -46,7 +47,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             Builder& SetPipelineBindPoint(VkPipelineBindPoint givenPipelineBindPoint);
             Builder& SetDepthAttachment(uint32_t binding, const std::unique_ptr<Image> &depthImage, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
                                         VkAttachmentLoadOp stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, VkAttachmentStoreOp stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            Builder& AddColorAttachment(uint32_t binding, const std::unique_ptr<Image> &colorImage, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
+            Builder& AddColorAttachment(uint32_t binding, const std::unique_ptr<Image> &colorImage, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp, bool swapchainAttachment = false,
                                         VkAttachmentLoadOp stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, VkAttachmentStoreOp stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE);
             Builder& AddResolveAttachment(uint32_t binding, const std::unique_ptr<Image> &image, VkImageLayout finalLayout, VkImageLayout referenceLayout,
                                           VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp, VkSampleCountFlagBits sampling = VK_SAMPLE_COUNT_1_BIT,

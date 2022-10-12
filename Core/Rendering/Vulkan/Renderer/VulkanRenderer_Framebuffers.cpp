@@ -13,15 +13,21 @@ namespace Sierra::Core::Rendering::Vulkan
         swapchainFramebuffers.resize(swapchainImages.size());
 
         // Assign the static attachments
-        std::vector<VkImageView> attachments(3);
-        attachments[0] = this->colorImage->GetVulkanImageView();
+        const uint32_t attachmentCount = msaaSamplingEnabled ? 3 : 2;
+        std::vector<VkImageView> attachments(attachmentCount);
+
+        // If MSAA is enabled attach the sampled color image
+        if (msaaSamplingEnabled) attachments[0] = this->colorImage->GetVulkanImageView();
         attachments[1] = this->depthImage->GetVulkanImageView();
+
+        // Get index of swapchain image without sampling based on whether a sampled image exists
+        const uint32_t swapchainAttachmentIndex = msaaSamplingEnabled ? 2 : 0;
 
         // Create a framebuffer for each swapchain image
         for (int i = swapchainImages.size(); i--;)
         {
             // Assign the dynamic attachments
-            attachments[2] = this->swapchainImages[i]->GetVulkanImageView();
+            attachments[swapchainAttachmentIndex] = this->swapchainImages[i]->GetVulkanImageView();
 
             // Add the attachments to the framebuffer and then create it
             swapchainFramebuffers[i] = Framebuffer::Builder()

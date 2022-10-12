@@ -16,6 +16,7 @@ namespace Sierra::Engine::Classes
     {
     public:
         /* --- POLLING METHODS --- */
+        static void Start();
         static void Update();
 
         /* --- SETTER METHODS --- */
@@ -67,9 +68,6 @@ namespace Sierra::Engine::Classes
 
         /* --- CALLBACKS --- */
         static void CursorPositionCallback(GLFWwindow* windowPtr, double xPosition, double yPosition);
-
-        /* --- DESTRUCTOR --- */
-        Cursor() = delete;
 
     private:
         static glm::vec2 lastCursorPosition;

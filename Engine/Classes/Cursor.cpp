@@ -15,15 +15,19 @@ namespace Sierra::Engine::Classes
     bool Cursor::cursorPositionSet;
 
     /* --- POLLING METHODS --- */
+    void Cursor::Start()
+    {
+        ResetCursorOffset();
+    }
+
     void Cursor::Update()
     {
-        if (cursorPositionSet)
+        if (cursorPositionSet) cursorPositionSet = false;
+        else
         {
-            cursorPositionSet = false;
+            ResetCursorOffset();
             return;
         }
-
-        ResetCursorOffset();
     }
 
     /* --- SETTER METHODS --- */
@@ -74,7 +78,7 @@ namespace Sierra::Engine::Classes
     void Cursor::ResetCursorOffset()
     {
         lastCursorPosition = cursorPosition;
-        cursorOffset = glm::vec2(0);
+        cursorOffset = { 0, 0 };
     }
 
     /* --- CALLBACKS --- */

@@ -84,23 +84,17 @@ namespace Sierra::Core::Rendering::Vulkan
         scissor.offset = { 0, 0 };
         scissor.extent = this->swapchainExtent;
 
+        // Apply scissoring and viewport update
         vkCmdSetViewport(givenCommandBuffer, 0, 1, &viewport);
         vkCmdSetScissor(givenCommandBuffer, 0, 1, &scissor);
 
-//        ulong* offsets = stackalloc ulong[] { 0 };
-//        VkBuffer* vertexBuffers = stackalloc VkBuffer[1];
-//        VkDescriptorSet* descriptorSetsPtr = stackalloc VkDescriptorSet[3];
-//
+        VkBuffer vertexBuffers[1];
+        const VkDescriptorSet descriptorSets[1] { uniformDescriptorSets[currentFrame] };
+        const VkDeviceSize offsets[] = {0 };
 
-
-        // TODO: Use vectors
+        // For each mesh in the world
         for (const auto &mesh : Mesh::worldMeshes)
         {
-            VkBuffer vertexBuffers[1];
-            VkDescriptorSet descriptorSets[1];
-            VkDeviceSize offsets[] = {0};
-
-            // Define a pointer to the vertex buffer
             vertexBuffers[0] = mesh->GetVertexBuffer();
 
             // Bind the vertex buffer
@@ -110,17 +104,16 @@ namespace Sierra::Core::Rendering::Vulkan
             vkCmdBindIndexBuffer(givenCommandBuffer, mesh->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
             // Get the push constant model of the current mesh and push it to shader
-//            PushConstant pushConstantData = mesh.GetPushConstantData();
-            // FragmentPushConstant fragmentPushConstantData = mesh.GetFragmentPushConstantData();
+            Engine::Components::Mesh::PushConstantData data;
+            mesh->GetPushConstantData(&data);
 
-            auto pushConstantData = mesh->GetPushConstantData();
+            // Send push constant data to shader
             vkCmdPushConstants(
                     givenCommandBuffer, this->graphicsPipelineLayout,
                     VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-                    pushConstantSize, &pushConstantData
+                    pushConstantSize, &data
             );
 
-            descriptorSets[0] = uniformDescriptorSets[currentFrame];
 //            descriptorSetsPtr[1] = diffuseTextures[mesh.diffuseTextureID].descriptorSet;
 //            descriptorSetsPtr[2] = specularTextures[mesh.specularTextureID].descriptorSet;
 
@@ -128,10 +121,9 @@ namespace Sierra::Core::Rendering::Vulkan
 
             // Draw using the index buffer to prevent vertex re-usage
             vkCmdDrawIndexed(givenCommandBuffer, mesh->GetIndexCount(), 1, 0, 0, 0);
-//            vkCmdDraw(givenCommandBuffer, 3, 1, 0, 0);
-            printf("AD");
         }
 
+        // Render ImGui UI
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), givenCommandBuffer);
 
         // End the render pass
@@ -174,9 +166,9 @@ namespace Sierra::Core::Rendering::Vulkan
         // Calculate final GPU draw time
         for (int i = MAX_CONCURRENT_FRAMES; i--;)
         {
-            this->drawTime += drawTimeQueryResults[i];
+            rendererInfo.drawTime += drawTimeQueryResults[i];
         }
-        this->drawTime /= MAX_CONCURRENT_FRAMES * 1000000.0f;
+        rendererInfo.drawTime /= MAX_CONCURRENT_FRAMES * 1000000.0f;
     }
 
 }

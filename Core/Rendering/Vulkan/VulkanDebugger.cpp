@@ -29,56 +29,37 @@ namespace Sierra::Core::Rendering::Vulkan
     static const bool DEBUG_MODE = false;
 #endif
 
-    VulkanDebugger::MessageType VulkanDebugger::lastMessageType = Info;
-
 #if _WIN32
     HANDLE VulkanDebugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif
 
     void VulkanDebugger::DisplayInfo(const std::string& message)
     {
-
-        if (lastMessageType != Info) std::cout << "\n";
-
         BLUE();
         std::cout << "[i] " << message << ".\n";
         DEFAULT();
-
-        lastMessageType = Info;
     }
 
     void VulkanDebugger::DisplaySuccess(const std::string& message)
     {
-        if (lastMessageType != Success) std::cout << "\n";
-
         GREEN();
         std::cout << "[+] " << message << ".\n";
         DEFAULT();
-
-        lastMessageType = Success;
     }
 
     void VulkanDebugger::ThrowWarning(const std::string& message)
     {
-        if (lastMessageType != Warning) std::cout << "\n";
-
         YELLOW();
         std::cout << "[!] " << message << "!\n";
         DEFAULT();
-
-        lastMessageType = Warning;
     }
 
     void VulkanDebugger::ThrowError(const std::string& message)
     {
-        if (lastMessageType != Error) std::cout << "\n";
-
         RED();
         if (!DEBUG_MODE) std::cout << "[-] " << message << "!\n";
         else throw std::runtime_error("[-] " + message + "!\n");
         DEFAULT();
-
-        lastMessageType = Error;
     }
 
     bool VulkanDebugger::CheckResults(const VkResult result, const std::string& errorMessage)

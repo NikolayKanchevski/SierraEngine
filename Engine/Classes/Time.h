@@ -32,5 +32,8 @@ namespace Sierra::Engine::Classes
         static float deltaTime;
         static float upTime;
         static double lastFrameTime;
+
+        constexpr static const float FPS_UPDATE_PERIOD = 0.15f;
+        static float fpsUpdateCounter;
     };
 }

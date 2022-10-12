@@ -14,7 +14,7 @@ namespace Sierra::Engine::Components
     {
     public:
         /* --- PROPERTIES --- */
-        Transform transform{};
+        Transform transform { .position = { 0, 0, 10 } };
 
         float fov = 45.0f;
 
@@ -26,13 +26,14 @@ namespace Sierra::Engine::Components
 
         /* --- SETTER METHODS --- */
         void SetAsMain();
+        void SetFrontDirection(const glm::vec3 givenFrontDirection);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline glm::vec3 GetFrontDirection() const
         { return this->frontDirection; }
 
-        [[nodiscard]] inline glm::vec3 GetUpDirection() const
-        { return this->upDirection; }
+        [[nodiscard]] inline glm::vec3 GetBackDirection() const
+        { return -this->frontDirection; }
 
         [[nodiscard]] inline glm::vec3 GetLeftDirection() const
         { return glm::cross(frontDirection, upDirection); }
@@ -40,13 +41,19 @@ namespace Sierra::Engine::Components
         [[nodiscard]] inline glm::vec3 GetRightDirection() const
         { return glm::cross(-frontDirection, upDirection); }
 
+        [[nodiscard]] inline glm::vec3 GetUpDirection() const
+        { return this->upDirection; }
+
+        [[nodiscard]] inline glm::vec3 GetDownDirection() const
+        { return -this->upDirection; }
+
         [[nodiscard]] static inline Camera* GetMainCamera()
         { return mainCamera; }
 
-        glm::vec3 frontDirection = {0.0f, 0.0f, -1.0f };
     private:
         static Camera *mainCamera;
 
+        glm::vec3 frontDirection = {0.0f, 0.0f, -1.0f };
         glm::vec3 upDirection = {0.0f, 1.0f, 0.0f };
     };
 }

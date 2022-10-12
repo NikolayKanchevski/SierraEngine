@@ -91,6 +91,14 @@ namespace Sierra::Core::Rendering::Vulkan
 
         RenderImGui();
         Draw();
+
+        UpdateRendererInfo();
+    }
+
+    void VulkanRenderer::UpdateRendererInfo()
+    {
+        rendererInfo.verticesDrawn = Mesh::totalMeshVertices + ImGui::GetDrawData()->TotalVtxCount;
+        rendererInfo.meshesDrawn = Mesh::totalMeshCount;
     }
 
     /* --- DESTRUCTOR --- */

@@ -22,7 +22,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->colorAttachmentReferences.reserve(givenColorAttachments.size());
         for (const auto &colorAttachment : givenColorAttachments)
         {
-            colorAttachmentReferences.push_back({ colorAttachment.first, colorAttachment.second.data.finalLayout });
+            colorAttachmentReferences.push_back({ colorAttachment.first, colorAttachment.second.swapchainAttachment ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : colorAttachment.second.data.finalLayout });
             attachmentDescriptions[colorAttachment.first] = { colorAttachment.second.data };
         }
 
@@ -89,7 +89,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return *this;
     }
 
-    Subpass::Builder &Subpass::Builder::AddColorAttachment(const uint32_t binding, const std::unique_ptr<Image> &colorImage, const VkAttachmentLoadOp loadOp, const VkAttachmentStoreOp storeOp, const VkAttachmentLoadOp stencilLoadOp, const VkAttachmentStoreOp stencilStoreOp)
+    Subpass::Builder &Subpass::Builder::AddColorAttachment(const uint32_t binding, const std::unique_ptr<Image> &colorImage, const VkAttachmentLoadOp loadOp, const VkAttachmentStoreOp storeOp, const bool swapchainAttachment, const VkAttachmentLoadOp stencilLoadOp, const VkAttachmentStoreOp stencilStoreOp)
     {
         // Create the color attachment and save it in the local list together with its binding
         VkAttachmentDescription colorAttachmentDescription{};
@@ -100,9 +100,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         colorAttachmentDescription.stencilLoadOp = stencilLoadOp;
         colorAttachmentDescription.stencilStoreOp = stencilStoreOp;
         colorAttachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachmentDescription.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        colorAttachmentDescription.finalLayout = swapchainAttachment ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-        this->colorAttachments[binding] = { colorAttachmentDescription };
+        this->colorAttachments[binding] = { colorAttachmentDescription, swapchainAttachment };
 
         return *this;
     }

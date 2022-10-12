@@ -72,7 +72,7 @@ namespace Sierra::Core::Rendering::Vulkan
         /// @param setMaximized A bool indicating whether the window should use all the space on your screen and start setMaximized.
         /// @param setResizable Whether the window is going to be setResizable or not.
         /// @param setFocusRequirement Whether the window requires to be focused in order to draw and handle events.
-        VulkanRenderer(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement);
+        VulkanRenderer(std::string givenTitle, const bool setMaximized, const bool setResizable = true, const bool setFocusRequirement = true);
 
         /* --- POLLING METHODS --- */
 
@@ -84,8 +84,8 @@ namespace Sierra::Core::Rendering::Vulkan
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline bool IsActive() const { return !window.IsClosed(); };
         [[nodiscard]] inline Window& GetWindow()  { return window; }
-        [[nodiscard]] inline float GetDrawTime() const { return drawTime; };
-        [[nodiscard]] inline UniformData& GetUniformDataReference() { return uniformData; };
+        [[nodiscard]] inline UniformData* GetUniformDataReference() { return &uniformData; };
+        [[nodiscard]] inline auto GetRendererInfo() const { return rendererInfo; };
 
         /* --- DESTRUCTOR --- */
         ~VulkanRenderer();
@@ -94,7 +94,6 @@ namespace Sierra::Core::Rendering::Vulkan
 
     private:
         /* --- TESTER --- */
-        std::vector<Mesh> meshes;
         std::vector<Vertex> vertices
         {
                 { { -1.0, -1.0, -1.0 },{ 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
@@ -120,14 +119,22 @@ namespace Sierra::Core::Rendering::Vulkan
         /* --- GENERAL --- */
         Window window;
         void Start();
+        void UpdateRendererInfo();
 
         bool prepared = false;
-
         const bool msaaSamplingEnabled = true;
         VkSampleCountFlagBits msaaSampleCount = msaaSamplingEnabled ? VK_SAMPLE_COUNT_64_BIT : VK_SAMPLE_COUNT_1_BIT;
 
         enum RenderingMode { Fill, Wireframe, Point };
-        RenderingMode renderingMode = Wireframe;
+        RenderingMode renderingMode = Fill;
+
+        struct
+        {
+            float drawTime = 0;
+            int verticesDrawn = 0;
+            int meshesDrawn = 0;
+            int objectsInScene = 0;
+        } rendererInfo;
 
         /* --- INSTANCE --- */
         const std::vector<const char*> requiredInstanceExtensions
@@ -285,7 +292,6 @@ namespace Sierra::Core::Rendering::Vulkan
         VkQueryPool drawTimeQueryPool;
         float timestampPeriod;
         std::vector<float> drawTimeQueryResults;
-        float drawTime;
         void CreateQueryPool();
 
         /* --- DRAWING --- */

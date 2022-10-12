@@ -24,4 +24,9 @@ namespace Sierra::Engine::Components
         mainCamera = this;
     }
 
+    void Camera::SetFrontDirection(const glm::vec3 givenFrontDirection)
+    {
+        this->frontDirection = givenFrontDirection;
+    }
+
 }

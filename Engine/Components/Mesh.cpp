@@ -7,6 +7,10 @@
 namespace Sierra::Engine::Components
 {
     std::vector<std::unique_ptr<Mesh>> Mesh::worldMeshes;
+    uint32_t Mesh::totalMeshCount = 0;
+    uint32_t Mesh::totalMeshVertices = 0;
+
+    using namespace Sierra::Core::Rendering::Vulkan;
 
     /* --- CONSTRUCTORS --- */
 
@@ -15,9 +19,16 @@ namespace Sierra::Engine::Components
     {
         CreateVertexBuffer(givenVertices);
         CreateIndexBuffer(givenIndices);
+
+        totalMeshCount++;
+        totalMeshVertices += vertexCount;
     }
 
-    /* --- POLLING METHODS --- */
+    std::unique_ptr<Mesh> &Mesh::RegisterMesh(std::vector<Vertex> &givenVertices, std::vector<uint32_t> &givenIndices)
+    {
+        worldMeshes.push_back(std::make_unique<Mesh>(givenVertices, givenIndices));
+        return worldMeshes.back();
+    }
 
     /* --- SETTER METHODS --- */
 
@@ -73,7 +84,7 @@ namespace Sierra::Engine::Components
 
     /* --- GETTER METHODS --- */
 
-    Mesh::PushConstantData Mesh::GetPushConstantData() const
+    void Mesh::GetPushConstantData(Mesh::PushConstantData *data) const
     {
         // Inverse the Y coordinate to satisfy Vulkan's requirements
         glm::vec3 rendererPosition = { transform.position.x, transform.position.y * -1, transform.position.z };
@@ -81,25 +92,22 @@ namespace Sierra::Engine::Components
         // Update the model matrix per call
         glm::mat4x4 translationMatrix(1.0);
         translationMatrix = glm::translate(translationMatrix, { 0, 0, 0 });
-        return { glm::mat4x4(1.0) };
+//        return { glm::mat4x4(1.0) };
 
-//        glm::mat4x4 rotationMatrix;
-//        glm::rotate(rotationMatrix, glm::radians(transform.rotation.x), { 1.0, 0.0, 0.0 });
-//        glm::rotate(rotationMatrix, glm::radians(transform.rotation.y), { 0.0, 1.0, 0.0 });
-//        glm::rotate(rotationMatrix, glm::radians(transform.rotation.z), { 0.0, 0.0, 1.0 });
-//
-//        glm::mat4x4 scaleMatrix;
-//        glm::scale(scaleMatrix, transform.scale);
+        glm::mat4x4 rotationMatrix;
+        glm::rotate(rotationMatrix, glm::radians(transform.rotation.x), { 1.0, 0.0, 0.0 });
+        glm::rotate(rotationMatrix, glm::radians(transform.rotation.y), { 0.0, 1.0, 0.0 });
+        glm::rotate(rotationMatrix, glm::radians(transform.rotation.z), { 0.0, 0.0, 1.0 });
 
-        PushConstantData pushConstantData{};
-        pushConstantData.modelMatrix = translationMatrix;// * rotationMatrix * scaleMatrix;
+        glm::mat4x4 scaleMatrix;
+        glm::scale(scaleMatrix, transform.scale);
+
+        data->modelMatrix = translationMatrix * rotationMatrix * scaleMatrix;
+//        data->modelMatrix = glm::mat4x4(1.0f);
 //        pushConstantData.material.shininess = material.shininess;
 //        pushConstantData.material.diffuse = material.diffuse;
 //        pushConstantData.material.specular = material.specular;
 //        pushConstantData.material.ambient = material.ambient;
-
-        // Return it
-        return pushConstantData;
     }
 
     /* --- DESTRUCTOR --- */
@@ -108,11 +116,8 @@ namespace Sierra::Engine::Components
     {
         vertexBuffer->Destroy();
         indexBuffer->Destroy();
-    }
 
-    std::unique_ptr<Mesh> &Mesh::RegisterMesh(std::vector<Vertex> &givenVertices, std::vector<uint32_t> &givenIndices)
-    {
-        worldMeshes.push_back(std::make_unique<Mesh>(givenVertices, givenIndices));
-        return worldMeshes.back();
+        totalMeshCount--;
+        totalMeshVertices -= vertexCount;
     }
 }

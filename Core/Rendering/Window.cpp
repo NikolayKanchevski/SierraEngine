@@ -69,19 +69,17 @@ namespace Sierra::Core::Rendering
             exit(-1);
         }
 
+        if (maximized && !setResizable)
+        {
+            VulkanDebugger::ThrowWarning("A maximized window cannot be created unless resizing is allowed");
+            maximized = false;
+        }
+
         #ifdef DEBUG
             Sierra::Engine::Classes::Stopwatch stopwatch;
         #endif
 
-        RetrieveMonitorData();
-
-        if (setMaximized)
-        {
-            this->width = monitor.width;
-            this->height = monitor.height;
-            this->position = { 0, 0 };
-        }
-        else
+        if (!maximized)
         {
             this->width = 800;
             this->height = 600;
@@ -106,8 +104,12 @@ namespace Sierra::Core::Rendering
         glfwWindowHint(GLFW_VISIBLE, 0);
 
         glfwWindow = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
-        if (maximized) glfwSetWindowPos(glfwWindow, (int) position.x, (int) position.y);
-        else glfwMaximizeWindow(glfwWindow);
+
+        if (maximized)
+        {
+            glfwMaximizeWindow(glfwWindow);
+            glfwGetWindowSize(glfwWindow, &width, &height);
+        }
 
         Vulkan::VulkanCore::SetWindow(this);
 

@@ -2,8 +2,25 @@
 
 layout(location = 0) out vec4 outColor;
 
+layout(set = 0, binding = 0) uniform UniformBuffer
+{
+        /* VERTEX DATA */
+        mat4 view;
+        mat4 projection;
+} uniformBuffer;
+
+layout(push_constant) uniform PushConstant {
+        /* VERTEX DATA */
+        mat4 model;
+
+/* FRAGMENT DATA */
+//    Material material;
+} pushConstant;
+
 void main() {
-        outColor = vec4(1, 1, 1, 1);
+//        outColor = vec4(uniformBuffer.view[0].xyz, 1);
+//        outColor = vec4(pushConstant.model[0].xyz, 1);
+        outColor = vec4(1.0, 0.0, 0.0, 1.0);
 }
 
 //

@@ -12,8 +12,8 @@ namespace Sierra::Core::Rendering::Vulkan
         // Create the descriptor set layout
         descriptorSetLayout = DescriptorSetLayout::Builder()
                 .AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
-                .AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-                .AddBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+//                .AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+//                .AddBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
         .Build();
     }
 
@@ -26,7 +26,7 @@ namespace Sierra::Core::Rendering::Vulkan
         descriptorPool = DescriptorPool::Builder()
             .SetMaxSets(DESCRIPTOR_COUNT)
             .AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DESCRIPTOR_COUNT)
-            .AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DESCRIPTOR_COUNT)
+//            .AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DESCRIPTOR_COUNT)
         .Build();
     }
 
@@ -34,7 +34,7 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         // Create the information on the buffer
         VkDescriptorBufferInfo uniformBufferInfo{};
-//        uniformBufferInfo.offset = 0;
+        uniformBufferInfo.offset = 0;
         uniformBufferInfo.range = uniformDataSize;
 
         // Resize the uniform buffers array and write to each descriptor
@@ -43,7 +43,6 @@ namespace Sierra::Core::Rendering::Vulkan
         for (int i = 0; i < MAX_CONCURRENT_FRAMES; i++)
         {
             uniformBufferInfo.buffer = uniformBuffers[i]->GetVulkanBuffer();
-//            uniformBufferInfo.offset = i * VulkanCore::GetPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
 
             DescriptorWriter(descriptorSetLayout, descriptorPool)
                 .WriteBuffer(0, &uniformBufferInfo)

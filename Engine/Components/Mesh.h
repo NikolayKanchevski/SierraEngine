@@ -14,6 +14,8 @@
 #include "../Structures/Material.h"
 #include "../Structures/Vertex.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Buffer.h"
+#include "../../Core/Rendering/Vulkan/VulkanUtilities.h"
+#include "../../Core/Rendering/Vulkan/VulkanCore.h"
 #include "Transform.h"
 
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
@@ -29,6 +31,8 @@ namespace Sierra::Engine::Components
 
         /* --- PROPERTIES --- */
         static std::vector<std::unique_ptr<Mesh>> worldMeshes;
+        static uint32_t totalMeshCount;
+        static uint32_t totalMeshVertices;
 
         /* --- CONSTRUCTORS --- */
         Mesh(std::vector<Vertex> &givenVertices, std::vector<uint32_t> &givenIndices);
@@ -49,7 +53,7 @@ namespace Sierra::Engine::Components
         [[nodiscard]] inline uint32_t GetIndexCount() const { return indexCount; }
         [[nodiscard]] inline VkBuffer GetVertexBuffer() const { return vertexBuffer->GetVulkanBuffer(); }
         [[nodiscard]] inline VkBuffer GetIndexBuffer() const { return indexBuffer->GetVulkanBuffer(); }
-        [[nodiscard]] PushConstantData GetPushConstantData() const;
+        void GetPushConstantData(PushConstantData *data) const;
 
         /* --- DESTRUCTOR --- */
         void Destroy();

@@ -3,6 +3,9 @@
 //
 
 #include "VulkanRenderer.h"
+#include "../../../../Engine/Classes/Cursor.h"
+
+using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -134,7 +137,11 @@ namespace Sierra::Core::Rendering::Vulkan
 
     void VulkanRenderer::UpdateImGuiData()
     {
-
+        if (!Cursor::IsCursorShown())
+        {
+            ImGuiIO &io = ImGui::GetIO();
+            io.MousePos = { -696969, -696969 };
+        }
     }
 
     void VulkanRenderer::RenderImGui()

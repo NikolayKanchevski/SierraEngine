@@ -33,8 +33,5 @@ namespace Sierra::Core::Rendering::Vulkan
                 const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
                 void* pUserData
         );
-    private:
-        enum MessageType { Info, Success, Warning, Error };
-        static MessageType lastMessageType;
     };
 }

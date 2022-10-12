@@ -1,19 +1,27 @@
 #version 450
 
-vec3[] positions =
-{
-    vec3(-1.0, -1.0, -1.0),
-    vec3( 1.0, -1.0, -1.0),
-    vec3( 1.0,  1.0, -1.0),
-    vec3(-1.0,  1.0, -1.0),
-    vec3(-1.0, -1.0,  1.0),
-    vec3( 1.0, -1.0,  1.0),
-    vec3( 1.0,  1.0,  1.0),
-    vec3(-1.0,  1.0,  1.0),
-};
+layout(location = 0) in vec3 fromCode_Position;
+layout(location = 1) in vec3 fromCode_Normal;
+layout(location = 2) in vec2 fromCode_TextureCoordinates;
 
-void main() {
-    gl_Position = vec4(positions[gl_VertexIndex], 1.0);
+layout(set = 0, binding = 0) uniform UniformBuffer
+{
+    /* VERTEX DATA */
+    mat4 view;
+    mat4 projection;
+} uniformBuffer;
+
+layout(push_constant) uniform PushConstant {
+    /* VERTEX DATA */
+    mat4 model;
+
+    /* FRAGMENT DATA */
+//    Material material;
+} pushConstant;
+
+void main()
+{
+    gl_Position = uniformBuffer.projection * uniformBuffer.view * pushConstant.model * vec4(fromCode_Position, 1.0);
 }
 
 //layout(location = 0) in vec3 fromCode_Position;
@@ -64,7 +72,6 @@ void main() {
 //void main() {
 //    // Set the position of the vertex in world space
 ////    gl_Position = uniformBuffer.projection * uniformBuffer.view * pushConstant.model * vec4(fromCode_Position, 1.0);
-//    gl_Position = vec4(positions[gl_VertexID], 1.0);
 //
 //    // Get the model matrix
 ////    mat3 normalMatrix = transpose(inverse(mat3(pushConstant.model)));

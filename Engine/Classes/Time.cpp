@@ -13,6 +13,8 @@ namespace Sierra::Engine::Classes
     float Time::upTime;
     double Time::lastFrameTime;
 
+    float Time::fpsUpdateCounter = FPS_UPDATE_PERIOD;
+
     /* --- POLLING METHODS --- */
     void Time::Update()
     {
@@ -22,6 +24,17 @@ namespace Sierra::Engine::Classes
         lastFrameTime = currentFrameTime;
 
         upTime = (float) currentFrameTime;
+
+//        if (fpsUpdateCounter >= FPS_UPDATE_PERIOD)
+//        {
+//            fpsUpdateCounter = 0;
+//            FPS = (int) glm::ceil(1.0 / deltaTime);
+//        }
+//        else
+//        {
+//            fpsUpdateCounter += deltaTime;
+//        }
+
         FPS = (int) glm::ceil(1.0 / deltaTime);
     }
 }

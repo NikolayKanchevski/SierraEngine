@@ -41,7 +41,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkMapMemory(VulkanCore::GetLogicalDevice(), vkBufferMemory, offset, memorySize, 0, &data);
 
         // Copy memory data to Vulkan buffer
-        memcpy(pointer, data, memorySize);
+        memcpy(data, pointer, memorySize);
 
         // Unmap the memory
         vkUnmapMemory(VulkanCore::GetLogicalDevice(), vkBufferMemory);

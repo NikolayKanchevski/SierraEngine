@@ -33,7 +33,7 @@ namespace Sierra::Engine::Classes {
 
     void Input::Start()
     {
-        for (int i = (int) MAX_GAME_PADS + 1; i--;)
+        for (int i = 0; i < MAX_GAME_PADS; i++)
         {
             if (glfwJoystickPresent(i))
             {
@@ -47,14 +47,16 @@ namespace Sierra::Engine::Classes {
 
     void Input::Update()
     {
-        if (scrollSet)
+        if (scrollSet) scrollSet = false;
+        else
         {
             scroll = { 0, 0 };
 
             scrollSet = false;
         }
 
-        if (keySet)
+        if (keySet) keySet = false;
+        else
         {
             if (keyboardKeys[lastKeySet] == 2) keyboardKeys[lastKeySet] = 3;
             else if (keyboardKeys[lastKeySet] == 1) keyboardKeys[lastKeySet] = 0;
@@ -62,7 +64,8 @@ namespace Sierra::Engine::Classes {
             keySet = false;
         }
 
-        if (buttonSet)
+        if (buttonSet) buttonSet = false;
+        else
         {
             if (mouseButtons[lastButtonSet] == 2) mouseButtons[lastButtonSet] = 3;
             else if (mouseButtons[lastButtonSet] == 1) mouseButtons[lastButtonSet] = 0;
@@ -70,12 +73,14 @@ namespace Sierra::Engine::Classes {
             buttonSet = false;
         }
 
-        for (int i = 0; i < gamePadsConnected; i++)
+        for (int i = 0; i < MAX_GAME_PADS; i++)
         {
+            if (!gamePads[i].connected) return;
+
             GLFWgamepadstate gamePadState;
             glfwGetGamepadState(i, &gamePadState);
 
-            glm::vec2 leftAxis = { gamePadState.axes[GLFW_GAMEPAD_AXIS_LEFT_X], gamePadState.axes[GLFW_GAMEPAD_AXIS_LEFT_X] };
+            glm::vec2 leftAxis = { gamePadState.axes[GLFW_GAMEPAD_AXIS_LEFT_X], gamePadState.axes[GLFW_GAMEPAD_AXIS_LEFT_Y] };
             gamePads[i].axes[0] = { glm::abs(leftAxis.x) >= glm::abs(gamePads[i].minimumSensitivities[0]) ? leftAxis.x : 0.0f, glm::abs(leftAxis.y) >= glm::abs(gamePads[i].minimumSensitivities[0]) ? -leftAxis.y : 0.0f };
 
             glm::vec2 rightAxis = { gamePadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_X], gamePadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y] };
@@ -175,6 +180,11 @@ namespace Sierra::Engine::Classes {
         return scroll.y;
     }
 
+    std::string Input::GetGamePadName(uint32_t player)
+    {
+        return gamePads[player].name;
+    }
+
     bool Input::GetGamePadButtonPressed(const uint32_t gamePadButton, const uint32_t player)
     {
         return CheckGamePadConnection(player) && gamePads[player].buttons[gamePadButton] == 2; // 2 - Press
@@ -197,32 +207,32 @@ namespace Sierra::Engine::Classes {
 
     glm::vec2 Input::GetGamePadLeftStickAxis(const uint32_t player)
     {
-        return CheckGamePadConnection(player) ? -gamePads[player].axes[0] : glm::vec2(0, 0);
+        return CheckGamePadConnection(player) ? gamePads[player].axes[0] : glm::vec2(0, 0);
     }
 
     glm::vec2 Input::GetGamePadRightStickAxis(const uint32_t player)
     {
-        return CheckGamePadConnection(player) ? -gamePads[player].axes[1] : glm::vec2(0, 0);
+        return CheckGamePadConnection(player) ? gamePads[player].axes[1] : glm::vec2(0, 0);
     }
 
     float Input::GetHorizontalGamePadLeftStickAxis(const uint32_t player)
     {
-        return CheckGamePadConnection(player) ? gamePads[player].axes[0].x * -1 : 0.0f;
+        return CheckGamePadConnection(player) ? gamePads[player].axes[0].x : 0.0f;
     }
 
     float Input::GetVerticalGamePadLeftStickAxis(const uint32_t player)
     {
-        return CheckGamePadConnection(player) ? gamePads[player].axes[0].y * -1 : 0.0f;
+        return CheckGamePadConnection(player) ? gamePads[player].axes[0].y : 0.0f;
     }
 
     float Input::GetHorizontalGamePadRightStickAxis(const uint32_t player)
     {
-        return CheckGamePadConnection(player) ? gamePads[player].axes[1].x * -1 : 0.0f;
+        return CheckGamePadConnection(player) ? gamePads[player].axes[1].x : 0.0f;
     }
 
     float Input::GetVerticalGamePadRightStickAxis(const uint32_t player)
     {
-        return CheckGamePadConnection(player) ? gamePads[player].axes[1].y * -1 : 0.0f;
+        return CheckGamePadConnection(player) ? gamePads[player].axes[1].y : 0.0f;
     }
 
     float Input::GetGamePadLeftTriggerAxis(const uint32_t player)
@@ -242,12 +252,6 @@ namespace Sierra::Engine::Classes {
 
     bool Input::CheckGamePadConnection(uint32_t player)
     {
-        if (gamePadsConnected < 1)
-        {
-            VulkanDebugger::ThrowWarning("No game pads are found on the system");
-            return false;
-        }
-
         if (player >= MAX_GAME_PADS || !gamePads[player].connected)
         {
             VulkanDebugger::ThrowWarning("Game pad with an ID of [" + std::to_string(player) + "] is not connected");
@@ -328,5 +332,6 @@ namespace Sierra::Engine::Classes {
         else if (unicodePoint <= 0x10FFFF) { character[0] = (unicodePoint >> 18) + 240; character[1] = ((unicodePoint >> 12) & 63) + 128; character[2] = (( unicodePoint >> 6) & 63) + 128; character[3] = (unicodePoint & 63) + 128; }
         return {character };
     }
+
 #pragma clang diagnostic pop
 }
