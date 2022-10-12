@@ -91,36 +91,46 @@ namespace Sierra::Core::Rendering::Vulkan
 //        VkBuffer* vertexBuffers = stackalloc VkBuffer[1];
 //        VkDescriptorSet* descriptorSetsPtr = stackalloc VkDescriptorSet[3];
 //
-//        foreach (var mesh in World.meshes)
-//        {
-//            // Define a pointer to the vertex buffer
-//            vertexBuffers[0] = mesh.GetVertexBuffer();
-//
-//            // Bind the vertex buffer
-//            VulkanNative.vkCmdBindVertexBuffers(givenCommandBuffer, 0, 1, vertexBuffers, offsets);
-//
-//            // Bind the index buffer
-//            VulkanNative.vkCmdBindIndexBuffer(givenCommandBuffer, mesh.GetIndexBuffer(), 0, VkIndexType.VK_INDEX_TYPE_UINT32);
-//
-//            // Get the push constant model of the current mesh and push it to shader
+
+
+        // TODO: Use vectors
+        for (const auto &mesh : Mesh::worldMeshes)
+        {
+            VkBuffer vertexBuffers[1];
+            VkDescriptorSet descriptorSets[1];
+            VkDeviceSize offsets[] = {0};
+
+            // Define a pointer to the vertex buffer
+            vertexBuffers[0] = mesh->GetVertexBuffer();
+
+            // Bind the vertex buffer
+            vkCmdBindVertexBuffers(givenCommandBuffer, 0, 1, vertexBuffers, offsets);
+
+            // Bind the index buffer
+            vkCmdBindIndexBuffer(givenCommandBuffer, mesh->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+
+            // Get the push constant model of the current mesh and push it to shader
 //            PushConstant pushConstantData = mesh.GetPushConstantData();
-//            // FragmentPushConstant fragmentPushConstantData = mesh.GetFragmentPushConstantData();
-//
-//            VulkanNative.vkCmdPushConstants(
-//                    givenCommandBuffer, this.graphicsPipelineLayout,
-//                    VkShaderStageFlags.VK_SHADER_STAGE_VERTEX_BIT | VkShaderStageFlags.VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-//                    pushConstantSize, &pushConstantData
-//            );
-//
-//            descriptorSetsPtr[0] = uniformDescriptorSets[currentFrame];
+            // FragmentPushConstant fragmentPushConstantData = mesh.GetFragmentPushConstantData();
+
+            auto pushConstantData = mesh->GetPushConstantData();
+            vkCmdPushConstants(
+                    givenCommandBuffer, this->graphicsPipelineLayout,
+                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+                    pushConstantSize, &pushConstantData
+            );
+
+            descriptorSets[0] = uniformDescriptorSets[currentFrame];
 //            descriptorSetsPtr[1] = diffuseTextures[mesh.diffuseTextureID].descriptorSet;
 //            descriptorSetsPtr[2] = specularTextures[mesh.specularTextureID].descriptorSet;
-//
-//            VulkanNative.vkCmdBindDescriptorSets(givenCommandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, this.graphicsPipelineLayout, 0, 3, descriptorSetsPtr, 0, null);
-//
-//            // Draw using the index buffer to prevent vertex re-usage
-//            VulkanNative.vkCmdDrawIndexed(givenCommandBuffer, mesh.indexCount, 1, 0, 0, 0);
-//        }
+
+            vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipelineLayout, 0, 1, descriptorSets, 0, nullptr);
+
+            // Draw using the index buffer to prevent vertex re-usage
+            vkCmdDrawIndexed(givenCommandBuffer, mesh->GetIndexCount(), 1, 0, 0, 0);
+//            vkCmdDraw(givenCommandBuffer, 3, 1, 0, 0);
+            printf("AD");
+        }
 
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), givenCommandBuffer);
 

@@ -24,12 +24,4 @@ namespace Sierra::Core::Rendering::Vulkan
         static VkShaderModule CreateShaderModule(const std::string &fileName);
     };
 
-    /* --- STRUCTS --- */
-    struct Vertex
-    {
-        glm::vec3 position;
-        glm::vec3 normal;
-        glm::vec2 textureCoordinates;
-    };
-
 }

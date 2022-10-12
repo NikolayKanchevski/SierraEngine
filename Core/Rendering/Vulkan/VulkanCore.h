@@ -13,6 +13,11 @@ namespace Sierra::Core::Rendering::Vulkan
     class VulkanCore
     {
     public:
+        static const uint32_t MAX_TEXTURES = 128; // Changed as @kael wouldn't stop bitching about it
+        static const int MAX_POINT_LIGHTS = 64; // Remember to change the limit in the fragment shader too!
+        static const int MAX_DIRECTIONAL_LIGHTS = 16; // Remember to change the limit in the fragment shader too!
+        static const int MAX_SPOTLIGHT_LIGHTS = 16; // Remember to change the limit in the fragment shader too!
+
         [[nodiscard]] static inline VulkanCore& GetInstance() { return instance; }
 
         [[nodiscard]] static inline Window* GetWindow() { return GetInstance().window; }
@@ -47,6 +52,7 @@ namespace Sierra::Core::Rendering::Vulkan
         static VulkanCore instance;
 
         Window *window;
+
         VkDevice logicalDevice;
         VkPhysicalDevice physicalDevice;
 

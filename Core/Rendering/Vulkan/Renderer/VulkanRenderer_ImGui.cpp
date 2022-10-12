@@ -61,7 +61,7 @@ namespace Sierra::Core::Rendering::Vulkan
     void VulkanRenderer::SetImGuiStyle()
     {
         ImGuiIO &io = ImGui::GetIO();
-        io.Fonts->AddFontFromFileTTF("Fonts/Hyatheus.ttf", 26.0f);
+        io.Fonts->AddFontFromFileTTF("Fonts/PTSans.ttf", 18.0f);
 
         VkCommandBuffer commandBuffer = VulkanUtilities::BeginSingleTimeCommands();
         ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);

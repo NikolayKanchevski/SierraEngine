@@ -266,6 +266,8 @@ namespace Sierra::Engine::Classes {
 
     void Input::KeyboardKeyCallback(GLFWwindow *windowPtr, const int keyCode, const int scanCode, int action, const int mods)
     {
+        if (keyCode == GLFW_KEY_UNKNOWN) { return; }
+
         keyboardKeys[keyCode] = action + 1;
         lastKeySet = keyCode;
         keySet = true;

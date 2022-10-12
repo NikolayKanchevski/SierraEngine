@@ -35,7 +35,6 @@ namespace Sierra::Core::Rendering::Vulkan
         bindingDescription.stride = sizeof(Vertex);
         bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-
         // Define the attributes to be sent to the shader
         std::vector<VkVertexInputAttributeDescription> attributeDescriptions(3);
 

@@ -36,7 +36,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         /* --- SETTER METHODS --- */
         void CopyFromPointer(void* pointer, uint64_t offset = 0);
         void CopyImage(const Image& givenImage, glm::vec3 imageOffset = { 0, 0, 0 }, uint64_t offset = 0);
-        void CopyToBuffer(const Buffer& otherBuffer);
+        void CopyToBuffer(const std::unique_ptr<Buffer> &otherBuffer);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkBuffer GetVulkanBuffer() const

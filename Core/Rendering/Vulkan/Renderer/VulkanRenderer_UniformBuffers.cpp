@@ -10,9 +10,9 @@ namespace Sierra::Core::Rendering::Vulkan
     void VulkanRenderer::CreateUniformBuffers()
     {
         // Create uniform arrays
-        uniformData.directionalLights.resize(World::MAX_DIRECTIONAL_LIGHTS);
-        uniformData.pointLights.resize(World::MAX_POINT_LIGHTS);
-        uniformData.spotLights.resize(World::MAX_SPOTLIGHT_LIGHTS);
+//        uniformData.directionalLights.resize(VulkanCore::MAX_DIRECTIONAL_LIGHTS);
+//        uniformData.pointLights.resize(VulkanCore::MAX_POINT_LIGHTS);
+//        uniformData.spotLights.resize(VulkanCore::MAX_SPOTLIGHT_LIGHTS);
 
         // Resize uniform buffers array
         uniformBuffers.resize(MAX_CONCURRENT_FRAMES);
@@ -31,6 +31,7 @@ namespace Sierra::Core::Rendering::Vulkan
     void VulkanRenderer::UpdateUniformBuffers(const uint32_t imageIndex)
     {
         uniformBuffers[imageIndex]->CopyFromPointer(&uniformData);
+//        printf((std::to_string(uniformData.view[0][1])))
     }
 
 }

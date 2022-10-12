@@ -103,11 +103,10 @@ namespace Sierra::Core::Rendering
     {
         glfwWindowHint(GLFW_RESIZABLE, RESIZABLE);
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-//        glfwWindowHint(GLFW_MAXIMIZED, maximized);
         glfwWindowHint(GLFW_VISIBLE, 0);
 
         glfwWindow = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
-        if (!maximized) glfwSetWindowPos(glfwWindow, (int) position.x, (int) position.y);
+        if (maximized) glfwSetWindowPos(glfwWindow, (int) position.x, (int) position.y);
         else glfwMaximizeWindow(glfwWindow);
 
         Vulkan::VulkanCore::SetWindow(this);
@@ -158,7 +157,7 @@ namespace Sierra::Core::Rendering
     /* --- CALLBACKS --- */
     void Window::GlfwErrorCallback(int errorCode, const char *description)
     {
-        Vulkan::VulkanDebugger::ThrowError("GLFW Error: " + std::string(description) + " (" + std::to_string(errorCode) + ")");
+        Vulkan::VulkanDebugger::ThrowWarning("GLFW Error: " + std::string(description) + " (" + std::to_string(errorCode) + ")");
     }
 
     void Window::WindowResizeCallback(GLFWwindow *windowPtr, int newWidth, int newHeight)
@@ -179,7 +178,6 @@ namespace Sierra::Core::Rendering
         auto windowObject = GetGlfwWindowParentClass(windowPtr);
 
         windowObject->focused = focused;
-        windowObject->minimized = false;
 
         Cursor::ResetCursorOffset();
     }
@@ -188,7 +186,7 @@ namespace Sierra::Core::Rendering
     {
         auto windowObject = GetGlfwWindowParentClass(windowPtr);
 
-        windowObject->minimized = false;
+        windowObject->minimized = !windowObject->focused;
 
         Cursor::ResetCursorOffset();
     }
@@ -197,8 +195,7 @@ namespace Sierra::Core::Rendering
     {
         auto windowObject = GetGlfwWindowParentClass(windowPtr);
 
-        windowObject->minimized = !maximized;
-        windowObject->maximized = maximized;
+        windowObject->maximized = !windowObject->minimized;
 
         Cursor::ResetCursorOffset();
     }

@@ -4,6 +4,7 @@ import os
 import shutil
 import platform
 import sys
+import time
 
 ROOT_DIRECTORY = "../"
 OUTPUT_DIRECTORY = ""
@@ -67,8 +68,11 @@ def CompileWindowsShaders(OUTPUT_DIRECTORY):
 
 
 def CompileUnixShaders(OUTPUT_DIRECTORY):
-    command = f"{ ROOT_DIRECTORY }Core/Rendering/Shading/Compilers/glslc { ROOT_DIRECTORY }Core/Rendering/Shading/Shaders/shader.vert -o { OUTPUT_DIRECTORY }Shaders/shader.vert.spv\n"
-    command+= f"{ ROOT_DIRECTORY }Core/Rendering/Shading/Compilers/glslc { ROOT_DIRECTORY }Core/Rendering/Shading/Shaders/shader.frag -o { OUTPUT_DIRECTORY }Shaders/shader.frag.spv"
+    command = f"{ ROOT_DIRECTORY }Core/Rendering/Shading/Compilers/glslc { ROOT_DIRECTORY }Core/Rendering/Shading/Shaders/shader.frag -o { OUTPUT_DIRECTORY }Shaders/shader.frag.spv"
+
+    os.system(command)  
+
+    command = f"{ ROOT_DIRECTORY }Core/Rendering/Shading/Compilers/glslc { ROOT_DIRECTORY }Core/Rendering/Shading/Shaders/shader.frag -o { OUTPUT_DIRECTORY }Shaders/shader.frag.spv"
 
     os.system(command)      
 

@@ -57,7 +57,7 @@ namespace Sierra::Engine::Classes
         [[nodiscard]] inline static float GetHorizontalCursorOffset() { return cursorOffset.x; }
 
         /// @brief Returns how much the mouse has been moved vertically since last frame.
-        [[nodiscard]] inline static float  GetVerticalCursorOffset() { return cursorOffset.x; }
+        [[nodiscard]] inline static float  GetVerticalCursorOffset() { return cursorOffset.y; }
 
         /// @brief Tells whether the cursor is visible on the screen.
         [[nodiscard]] inline static bool IsCursorShown() { return cursorShown; }

@@ -75,10 +75,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VulkanUtilities::EndSingleTimeCommands(commandBuffer);
     }
 
-    void Buffer::CopyToBuffer(const Buffer& otherBuffer)
+    void Buffer::CopyToBuffer(const std::unique_ptr<Buffer> &otherBuffer)
     {
         // Check if the two buffers are compatible
-        if (this->memorySize != otherBuffer.memorySize)
+        if (this->memorySize != otherBuffer->memorySize)
         {
             VulkanDebugger::ThrowError("Cannot copy data from one buffer to another with a different memory size!");
         }
@@ -91,7 +91,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         copyRegion.size = this->memorySize;
 
         // Copy the buffer
-        vkCmdCopyBuffer(commandBuffer, vkBuffer, otherBuffer.vkBuffer, 1, &copyRegion);
+        vkCmdCopyBuffer(commandBuffer, vkBuffer, otherBuffer->vkBuffer, 1, &copyRegion);
 
         // Destroy the temporary command buffer
         VulkanUtilities::EndSingleTimeCommands(commandBuffer);

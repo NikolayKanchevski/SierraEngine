@@ -14,7 +14,7 @@ namespace Sierra::Core::Rendering::Vulkan
     VulkanRenderer::VulkanRenderer(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)
      : window(Window(givenTitle, setMaximized, setResizable, setFocusRequirement))
     {
-
+        Start();
     }
 
     /* --- POLLING METHODS --- */
@@ -53,6 +53,8 @@ namespace Sierra::Core::Rendering::Vulkan
         // CreateNullTextures();
         CreateImGuiInstance();
 
+        auto &mesh = Mesh::RegisterMesh(vertices, meshIndices);
+
         window.SetResizeCallback([this](void) {
             Draw();
         #if _WIN32
@@ -63,19 +65,31 @@ namespace Sierra::Core::Rendering::Vulkan
         VulkanDebugger::DisplaySuccess("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
     }
 
-    void VulkanRenderer::Update()
+    void VulkanRenderer::Prepare()
     {
-        window.Update();
+        prepared = true;
 
         if (window.IsFocusRequired() && !window.IsFocused()) return;
 
         BeginNewImGuiFrame();
         UpdateImGuiData();
+    }
 
-        ImGui::ShowDemoWindow();
+    void VulkanRenderer::UpdateWindow()
+    {
+        window.Update();
+    }
+
+    void VulkanRenderer::Render()
+    {
+        if (!prepared)
+        {
+            VulkanDebugger::ThrowError("Vulkan renderer is not prepared for rendering properly! Make sure you have called World::Prepare() before calling World::Update()");
+        }
+
+        if (window.IsFocusRequired() && !window.IsFocused()) return;
 
         RenderImGui();
-
         Draw();
     }
 
@@ -105,6 +119,11 @@ namespace Sierra::Core::Rendering::Vulkan
 
         descriptorPool->Destroy();
         descriptorSetLayout->Destroy();
+
+        for (const auto &mesh : Mesh::worldMeshes)
+        {
+            mesh->Destroy();
+        }
 
         for (int i = MAX_CONCURRENT_FRAMES; i--;)
         {

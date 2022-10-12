@@ -219,7 +219,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Allocate descriptor set to pool
         descriptorPool->AllocateDescriptorSet(descriptorSetLayout->GetVulkanDescriptorSetLayout(), descriptorSet);
 
-        // Update the descriptor sets
+        // Prepare the descriptor sets
         Overwrite(descriptorSet);
     }
 

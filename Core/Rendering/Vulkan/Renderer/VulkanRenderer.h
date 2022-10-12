@@ -6,7 +6,12 @@
 
 #include <vector>
 #include <algorithm>
+#include <functional>
 #include <vulkan/vk_enum_string_helper.h>
+
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/mat4x4.hpp>
 
 #include <imgui.h>
@@ -28,16 +33,36 @@
 #include "../../../../Engine/Components/Lighting/DirectionalLight.h"
 #include "../../../../Engine/Components/Lighting/PointLight.h"
 #include "../../../../Engine/Components/Lighting/Spotlight.h"
-#include "../../../World.h"
+#include "../../../../Engine/Components/Mesh.h"
 
 #define MAX_UINT_32T 4294967295
 
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
+using namespace Sierra::Engine::Components;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
     class VulkanRenderer
     {
+    private:
+        // Declared here to keep code consistency
+        struct alignas(16) UniformData
+        {
+            /* Vertex Uniform Data */
+            glm::mat4x4 view;
+            glm::mat4x4 projection;
+
+            /* Fragment Uniform Data */
+//            std::vector<DirectionalLight::UniformDirectionalLight> directionalLights;
+//            std::vector<PointLight::UniformPointLight> pointLights;
+//            std::vector<Spotlight::UniformSpotLight> spotLights;
+//
+//            int directionalLightsCount;
+//            int pointLightsCount;
+//            int spotLightsCount;
+        };
+
+        UniformData uniformData;
     public:
         /* --- CONSTRUCTORS --- */
 
@@ -50,13 +75,17 @@ namespace Sierra::Core::Rendering::Vulkan
         VulkanRenderer(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement);
 
         /* --- POLLING METHODS --- */
-        void Start();
-        void Update();
+
+        // Should only really be used by the World class if you are not certain you know what you are doing!
+        void Prepare();
+        void Render();
+        void UpdateWindow();
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline bool IsActive() const { return window.IsClosed(); };
+        [[nodiscard]] inline bool IsActive() const { return !window.IsClosed(); };
         [[nodiscard]] inline Window& GetWindow()  { return window; }
         [[nodiscard]] inline float GetDrawTime() const { return drawTime; };
+        [[nodiscard]] inline UniformData& GetUniformDataReference() { return uniformData; };
 
         /* --- DESTRUCTOR --- */
         ~VulkanRenderer();
@@ -64,14 +93,41 @@ namespace Sierra::Core::Rendering::Vulkan
         VulkanRenderer &operator=(const VulkanRenderer &) = delete;
 
     private:
+        /* --- TESTER --- */
+        std::vector<Mesh> meshes;
+        std::vector<Vertex> vertices
+        {
+                { { -1.0, -1.0, -1.0 },{ 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
+                { {  1.0, -1.0, -1.0 },{ 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } },
+                { {  1.0,  1.0, -1.0 },{ 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
+                { { -1.0,  1.0, -1.0 },{ 1.0f, 1.0f, 0.0f }, { 0.0f, 1.0f } },
+                { { -1.0, -1.0,  1.0 },{ 0.0f, 1.0f, 1.0f }, { 1.0f, 1.0f } },
+                { {  1.0, -1.0,  1.0 },{ 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } },
+                { {  1.0,  1.0,  1.0 },{ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
+                { { -1.0,  1.0,  1.0 },{ 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f } }
+        };
+
+        std::vector<uint32_t> meshIndices
+        {
+                0, 1, 3, 3, 1, 2,
+                1, 5, 2, 2, 5, 6,
+                5, 4, 6, 6, 4, 7,
+                4, 0, 7, 7, 0, 3,
+                3, 2, 7, 7, 2, 6,
+                4, 5, 0, 0, 5, 1
+        };
+
         /* --- GENERAL --- */
         Window window;
+        void Start();
+
+        bool prepared = false;
 
         const bool msaaSamplingEnabled = true;
         VkSampleCountFlagBits msaaSampleCount = msaaSamplingEnabled ? VK_SAMPLE_COUNT_64_BIT : VK_SAMPLE_COUNT_1_BIT;
 
         enum RenderingMode { Fill, Wireframe, Point };
-        RenderingMode renderingMode = Fill;
+        RenderingMode renderingMode = Wireframe;
 
         /* --- INSTANCE --- */
         const std::vector<const char*> requiredInstanceExtensions
@@ -216,27 +272,10 @@ namespace Sierra::Core::Rendering::Vulkan
 
         /* --- TEXTURES --- */
         std::unique_ptr<Sampler> textureSampler;
-        const uint32_t MAX_TEXTURES = World::MAX_TEXTURES;
+        const uint32_t MAX_TEXTURES = VulkanCore::MAX_TEXTURES;
         void CreateTextureSampler();
 
         /* --- UNIFORM BUFFERS --- */
-        struct alignas(16) UniformData
-        {
-            /* Vertex Uniform Data */
-            glm::mat4x4 view;
-            glm::mat4x4 projection;
-
-            /* Fragment Uniform Data */
-            std::vector<DirectionalLight::UniformDirectionalLight> directionalLights;
-            std::vector<PointLight::UniformPointLight> pointLights;
-            std::vector<Spotlight::UniformSpotLight> spotLights;
-
-            int directionalLightsCount;
-            int pointLightsCount;
-            int spotLightsCount;
-        };
-
-        UniformData uniformData;
         const uint64_t uniformDataSize = sizeof(UniformData);
         std::vector<std::unique_ptr<Buffer>> uniformBuffers;
         void CreateUniformBuffers();
