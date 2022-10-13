@@ -125,8 +125,8 @@ namespace Sierra::Core::Rendering::Vulkan
         const bool msaaSamplingEnabled = true;
         VkSampleCountFlagBits msaaSampleCount = msaaSamplingEnabled ? VK_SAMPLE_COUNT_64_BIT : VK_SAMPLE_COUNT_1_BIT;
 
-        enum RenderingMode { Fill, Wireframe, Point };
-        RenderingMode renderingMode = Fill;
+        enum RenderingMode { Fill, Wireframe };
+        RenderingMode renderingMode = Wireframe;
 
         struct
         {
@@ -260,7 +260,7 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreateDescriptorSetLayout();
         std::unique_ptr<DescriptorPool> descriptorPool;
         void CreateDescriptorPool();
-        std::vector<VkDescriptorSet> uniformDescriptorSets;
+        std::vector<std::unique_ptr<DescriptorSet>> uniformDescriptorSets;
         void CreateUniformDescriptorSets();
 
         /* --- GRAPHICS PIPELINE --- */
@@ -281,6 +281,7 @@ namespace Sierra::Core::Rendering::Vulkan
         std::unique_ptr<Sampler> textureSampler;
         const uint32_t MAX_TEXTURES = VulkanCore::MAX_TEXTURES;
         void CreateTextureSampler();
+        void CreateNullTextures();
 
         /* --- UNIFORM BUFFERS --- */
         const uint64_t uniformDataSize = sizeof(UniformData);

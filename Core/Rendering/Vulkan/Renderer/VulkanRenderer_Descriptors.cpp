@@ -27,12 +27,12 @@ namespace Sierra::Core::Rendering::Vulkan
             .SetMaxSets(DESCRIPTOR_COUNT)
             .AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DESCRIPTOR_COUNT)
 //            .AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DESCRIPTOR_COUNT)
-        .Build();
+        .Build(descriptorSetLayout);
     }
 
     void VulkanRenderer::CreateUniformDescriptorSets()
     {
-        // Create the information on the buffer
+        // Create information on the buffer
         VkDescriptorBufferInfo uniformBufferInfo{};
         uniformBufferInfo.offset = 0;
         uniformBufferInfo.range = uniformDataSize;
@@ -40,13 +40,13 @@ namespace Sierra::Core::Rendering::Vulkan
         // Resize the uniform buffers array and write to each descriptor
         uniformDescriptorSets.resize(MAX_CONCURRENT_FRAMES);
 
-        for (int i = 0; i < MAX_CONCURRENT_FRAMES; i++)
+        for (int i = MAX_CONCURRENT_FRAMES; i--;)
         {
             uniformBufferInfo.buffer = uniformBuffers[i]->GetVulkanBuffer();
 
-            DescriptorWriter(descriptorSetLayout, descriptorPool)
-                .WriteBuffer(0, &uniformBufferInfo)
-            .Build(uniformDescriptorSets[i]);
+            uniformDescriptorSets[i] = DescriptorSet::Build(descriptorPool);
+            uniformDescriptorSets[i]->WriteBuffer(0, &uniformBufferInfo);
+            uniformDescriptorSets[i]->Allocate();
         }
     }
 

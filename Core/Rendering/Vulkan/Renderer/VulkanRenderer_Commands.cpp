@@ -89,7 +89,7 @@ namespace Sierra::Core::Rendering::Vulkan
         vkCmdSetScissor(givenCommandBuffer, 0, 1, &scissor);
 
         VkBuffer vertexBuffers[1];
-        const VkDescriptorSet descriptorSets[1] { uniformDescriptorSets[currentFrame] };
+        const VkDescriptorSet descriptorSets[1] { uniformDescriptorSets[currentFrame]->GetVulkanDescriptorSet() };
         const VkDeviceSize offsets[] = {0 };
 
         // For each mesh in the world

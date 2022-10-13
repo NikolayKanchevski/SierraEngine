@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <memory>
 #include <vector>
+#include "Buffer.h"
+#include "Sampler.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -36,6 +38,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void Destroy();
         DescriptorSetLayout(const DescriptorSetLayout &) = delete;
         DescriptorSetLayout &operator=(const DescriptorSetLayout &) = delete;
+        friend class DescriptorSet;
 
     private:
         friend class DescriptorWriter;
@@ -49,7 +52,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTOR --- */
-        DescriptorPool(uint32_t givenMaxSets, VkDescriptorPoolCreateFlags givenPoolCreateFlags, std::vector<VkDescriptorPoolSize> givenPoolSizes);
+        DescriptorPool(uint32_t givenMaxSets, VkDescriptorPoolCreateFlags givenPoolCreateFlags, std::vector<VkDescriptorPoolSize> givenPoolSizes, std::unique_ptr<DescriptorSetLayout> &givenSetLayout);
 
         class Builder
         {
@@ -57,7 +60,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             Builder& AddPoolSize(VkDescriptorType descriptorType, uint32_t count);
             Builder& SetPoolFlags(VkDescriptorPoolCreateFlags givenPoolCreateFlags);
             Builder& SetMaxSets(uint32_t givenMaxSets);
-            [[nodiscard]] std::unique_ptr<DescriptorPool> Build() const;
+            [[nodiscard]] std::unique_ptr<DescriptorPool> Build(std::unique_ptr<DescriptorSetLayout> &givenSetLayout);
 
         private:
             uint32_t maxSets = 1000;
@@ -76,9 +79,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void Destroy();
         DescriptorPool(const DescriptorPool &) = delete;
         DescriptorPool &operator=(const DescriptorPool &) = delete;
+        friend class DescriptorSet;
 
     private:
         VkDescriptorPool vkDescriptorPool;
+        std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout;
 
     };
 
@@ -99,5 +104,35 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         std::vector<VkWriteDescriptorSet> writeDescriptorSets;
 
         void Overwrite(VkDescriptorSet &descriptorSet);
+    };
+
+    class DescriptorSet
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        DescriptorSet(std::unique_ptr<DescriptorPool> &givenDescriptorPool);
+        [[nodiscard]] static std::unique_ptr<DescriptorSet> Build(std::unique_ptr<DescriptorPool> &givenDescriptorPool);
+
+        /* --- SETTER METHODS --- */
+        void WriteBuffer(uint32_t binding, const VkDescriptorBufferInfo *bufferInfo);
+        void WriteImage(uint32_t binding, std::unique_ptr<Image> &image, const std::unique_ptr<Sampler> &sampler);
+        void Allocate();
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] VkDescriptorSet GetVulkanDescriptorSet() const { return this->vkDescriptorSet; }
+
+        /* --- DESTRUCTOR --- */
+        ~DescriptorSet();
+        DescriptorSet(const DescriptorSet &) = delete;
+        DescriptorSet &operator=(const DescriptorSet &) = delete;
+
+    private:
+        uint64_t offset = 0;
+
+        VkDescriptorSet vkDescriptorSet;
+        std::unique_ptr<DescriptorPool> &descriptorPool;
+        std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout;
+        std::vector<VkWriteDescriptorSet> writeDescriptorSets;
+
     };
 }

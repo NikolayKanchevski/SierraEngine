@@ -54,7 +54,7 @@ namespace Sierra::Core
 
         auto uniformData = renderer.GetUniformDataReference();
         uniformData->view = glm::lookAt(rendererCameraPosition, rendererCameraPosition + rendererCameraFrontDirection, rendererCameraUpDirection);
-        uniformData->projection = glm::perspective(glm::radians(45.0f), (float) VulkanCore::GetSwapchainExtent().width / (float) VulkanCore::GetSwapchainExtent().height, camera->nearClip, camera->farClip);
+        uniformData->projection = glm::perspective(glm::radians(camera->fov), (float) VulkanCore::GetSwapchainExtent().width / (float) VulkanCore::GetSwapchainExtent().height, camera->nearClip, camera->farClip);
         uniformData->projection[1][1] *= -1;
     }
 

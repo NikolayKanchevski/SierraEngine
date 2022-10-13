@@ -8,8 +8,8 @@
 /* --- POLLING METHODS --- */
 void Application::Start()
 {
-    // Create the renderer
-    VulkanRenderer renderer("Sierra Engine v1.0.0", true);
+    // Create renderer
+    VulkanRenderer renderer("Sierra Engine v1.0.0", false);
 
     // Get a reference to the window of the renderer
     Window &window = renderer.GetWindow();
@@ -24,9 +24,6 @@ void Application::Start()
     {
         // Prepare utility classes
         World::Prepare(renderer);
-
-        // Set the window title to display current FPS
-        window.SetTitle("FPS: " + std::to_string(Time::GetFPS()) + " | Draw Time: " + std::to_string(renderer.GetRendererInfo().drawTime) + "ms");
 
         // Do per-frame actions
         RenderLoop(renderer);
@@ -116,7 +113,6 @@ void Application::DoCameraMovement()
     // Apply camera rotation based on mouse movement
     yaw += Cursor::GetHorizontalCursorOffset() * CAMERA_LOOK_SPEED;
     pitch -= Cursor::GetVerticalCursorOffset() * CAMERA_LOOK_SPEED;
-    pitch = Math::Clamp(pitch, -89.0f, 89.0f);
 
     // Check if a game pad (player 0) is connected
     if (Input::GetGamePadConnected())
@@ -132,7 +128,13 @@ void Application::DoCameraMovement()
         // Rotate the camera based on the right stick's axis
         yaw -= Input::GetHorizontalGamePadRightStickAxis() * GAMEPAD_CAMERA_LOOK_SPEED;
         pitch += Input::GetVerticalGamePadRightStickAxis() * GAMEPAD_CAMERA_LOOK_SPEED;
+
+        // Change camera FOV depending on game pad's right trigger
+        camera.fov = Math::Clamp(Input::GetGamePadRightTriggerAxis() * 45.0f, 45.0f, 90.0f);
     }
+
+    // Clamp camera pith between -89.0f and +89.0f
+    pitch = Math::Clamp(pitch, -89.0f, 89.0f);
 
     // Apply transformations to camera
     glm::vec3 newCameraFrontDirection;

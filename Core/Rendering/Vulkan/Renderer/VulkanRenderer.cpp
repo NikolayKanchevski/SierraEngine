@@ -50,7 +50,7 @@ namespace Sierra::Core::Rendering::Vulkan
         CreateUniformDescriptorSets();
         CreateSynchronization();
 
-        // CreateNullTextures();
+        CreateNullTextures();
         CreateImGuiInstance();
 
         auto &mesh = Mesh::RegisterMesh(vertices, meshIndices);

@@ -15,4 +15,9 @@ namespace Sierra::Core::Rendering::Vulkan
         .Build();
     }
 
+    void VulkanRenderer::CreateNullTextures()
+    {
+
+    }
+
 }

@@ -60,7 +60,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Buffer &operator=(const Buffer &) = delete;
 
     private:
-
         VkBuffer vkBuffer;
         VkDeviceMemory vkBufferMemory;
 

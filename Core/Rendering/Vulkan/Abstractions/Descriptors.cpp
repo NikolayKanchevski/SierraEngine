@@ -119,13 +119,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    std::unique_ptr<DescriptorPool> DescriptorPool::Builder::Build() const
+    std::unique_ptr<DescriptorPool> DescriptorPool::Builder::Build(std::unique_ptr<DescriptorSetLayout> &givenSetLayout)
     {
         // Create the descriptor pool
-        return std::make_unique<DescriptorPool>(this->maxSets, this->poolCreateFlags, this->poolSizes);
+        return std::make_unique<DescriptorPool>(this->maxSets, this->poolCreateFlags, this->poolSizes, givenSetLayout);
     }
 
-    DescriptorPool::DescriptorPool(uint32_t givenMaxSets, VkDescriptorPoolCreateFlags givenPoolCreateFlags, std::vector<VkDescriptorPoolSize> givenPoolSizes)
+    DescriptorPool::DescriptorPool(uint32_t givenMaxSets, VkDescriptorPoolCreateFlags givenPoolCreateFlags, std::vector<VkDescriptorPoolSize> givenPoolSizes, std::unique_ptr<DescriptorSetLayout> &givenSetLayout)
+        : descriptorSetLayout(givenSetLayout)
     {
         // Set up the descriptor pool creation info
         VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
@@ -216,7 +217,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void DescriptorWriter::Build(VkDescriptorSet &descriptorSet)
     {
-        // Allocate descriptor set to pool
+        // Create descriptor set to pool
         descriptorPool->AllocateDescriptorSet(descriptorSetLayout->GetVulkanDescriptorSetLayout(), descriptorSet);
 
         // Prepare the descriptor sets
@@ -237,5 +238,92 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         vkUpdateDescriptorSets(VulkanCore::GetLogicalDevice(), writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
+    }
+
+    // ********************* Descriptor Set ********************* \\
+
+    DescriptorSet::DescriptorSet(std::unique_ptr<DescriptorPool> &givenDescriptorPool)
+        : descriptorPool(givenDescriptorPool), descriptorSetLayout(givenDescriptorPool->descriptorSetLayout)
+    {
+        // Create descriptor set to pool
+        descriptorPool->AllocateDescriptorSet(descriptorSetLayout->GetVulkanDescriptorSetLayout(), this->vkDescriptorSet);
+    }
+
+    void DescriptorSet::WriteBuffer(const uint32_t binding, const VkDescriptorBufferInfo *bufferInfo)
+    {
+        // Check if the current binding is not available
+        if (descriptorSetLayout->bindings.count(binding) == 0)
+        {
+            VulkanDebugger::ThrowError("Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+        }
+
+        // Get the binding description and check if it expects more than 1 descriptors
+        VkDescriptorSetLayoutBinding bindingDescription = descriptorSetLayout->bindings[binding];
+        if (bindingDescription.descriptorCount != 1)
+        {
+            VulkanDebugger::ThrowError("Trying to bind [" + std::to_string(bindingDescription.descriptorCount) + "] descriptors while only 1 at a time is supported");
+        }
+
+        // Create write descriptor
+        VkWriteDescriptorSet writeDescriptor{};
+        writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeDescriptor.descriptorType = bindingDescription.descriptorType;
+        writeDescriptor.dstBinding = binding;
+        writeDescriptor.dstSet = this->vkDescriptorSet;
+        writeDescriptor.pBufferInfo = bufferInfo;
+        writeDescriptor.descriptorCount = 1;
+
+        // Add write descriptor to the list
+        writeDescriptorSets.push_back(writeDescriptor);
+    }
+
+    void DescriptorSet::WriteImage(const uint32_t binding, std::unique_ptr<Image> &image, const std::unique_ptr<Sampler> &givenSampler)
+    {
+        // Check if the current binding is not available
+        if (descriptorSetLayout->bindings.count(binding) == 0)
+        {
+            VulkanDebugger::ThrowError("Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+        }
+
+        // Get the binding description and check if it expects more than 1 descriptors
+        VkDescriptorSetLayoutBinding bindingDescription = descriptorSetLayout->bindings[binding];
+        if (bindingDescription.descriptorCount != 1)
+        {
+            VulkanDebugger::ThrowError("Trying to bind [" + std::to_string(bindingDescription.descriptorCount) + "] descriptors while only 1 at a time is supported");
+        }
+
+        VkDescriptorImageInfo imageInfo{};
+        imageInfo.imageLayout = image->GetLayout();
+        imageInfo.imageView = image->GetVulkanImageView();
+        imageInfo.sampler = givenSampler->GetVulkanSampler();
+
+        // Create write descriptor
+        VkWriteDescriptorSet writeDescriptor{};
+        writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeDescriptor.descriptorType = bindingDescription.descriptorType;
+        writeDescriptor.dstBinding = binding;
+        writeDescriptor.dstSet = this->vkDescriptorSet;
+        writeDescriptor.pImageInfo = &imageInfo;
+        writeDescriptor.descriptorCount = 1;
+
+        // Add write descriptor to the list
+        writeDescriptorSets.push_back(writeDescriptor);
+    }
+
+    void DescriptorSet::Allocate()
+    {
+        vkUpdateDescriptorSets(VulkanCore::GetLogicalDevice(), writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
+    }
+
+    std::unique_ptr<DescriptorSet> DescriptorSet::Build(std::unique_ptr<DescriptorPool> &givenDescriptorPool)
+    {
+        return std::make_unique<DescriptorSet>(givenDescriptorPool);
+    }
+
+    /* --- DESTRUCTOR --- */
+
+    DescriptorSet::~DescriptorSet()
+    {
+
     }
 }

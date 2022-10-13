@@ -77,8 +77,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline VkDescriptorSet GetDescriptorSet() const
         { return this->descriptorSet; }
 
-        [[nodiscard]] inline Image& GetImage() const
-        { return *this->image; }
+        [[nodiscard]] inline std::unique_ptr<Image>& GetImage()
+        { return this->image; }
 
         /* --- SETTER METHODS --- */
 

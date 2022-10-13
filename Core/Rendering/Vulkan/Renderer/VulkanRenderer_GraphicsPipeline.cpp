@@ -97,9 +97,6 @@ namespace Sierra::Core::Rendering::Vulkan
             case Wireframe:
                 rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_LINE;
                 break;
-            case Point:
-                rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_POINT;
-                break;
         }
 
         // Set up multi sampling
