@@ -17,6 +17,7 @@
 #include "../../Core/Rendering/Vulkan/VulkanUtilities.h"
 #include "../../Core/Rendering/Vulkan/VulkanCore.h"
 #include "Transform.h"
+#include "../../Core/Rendering/Vulkan/Abstractions/Descriptors.h"
 
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 
@@ -67,8 +68,11 @@ namespace Sierra::Engine::Components
         std::unique_ptr<Buffer> vertexBuffer;
         std::unique_ptr<Buffer> indexBuffer;
 
+        std::unique_ptr<DescriptorSet> descriptorSet;
+
         void CreateVertexBuffer(std::vector<Vertex>  &givenVertices);
         void CreateIndexBuffer(std::vector<uint32_t> &givenIndices);
+        void CreateDescriptorSet();
     };
 
 }

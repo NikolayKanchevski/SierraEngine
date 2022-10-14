@@ -14,6 +14,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     /* --- CONSTRUCTORS --- */
 
     Sampler::Sampler(bool isBilinearFilteringApplied, VkSamplerAddressMode givenSamplerAddressMode, float givenMinLod, float givenMaxLod, float givenMaxAnisotropy)
+        : applyBilinearFiltering(isBilinearFilteringApplied), samplerAddressMode(givenSamplerAddressMode), minLod(givenMinLod), maxLod(givenMaxLod), maxAnisotropy(givenMaxAnisotropy)
     {
         // Get the sampler filter based on whether bilinear filtering is enabled
         VkFilter samplerFilter = isBilinearFilteringApplied ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
@@ -46,6 +47,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     Sampler::Builder &Sampler::Builder::SetMaxAnisotropy(float givenMaxAnisotropy)
     {
+        if (maxAnisotropy == 0) return *this;
+
         // Check if sampler anisotropy is supported by the GPU
         if (VulkanCore::GetPhysicalDeviceFeatures().samplerAnisotropy)
         {
@@ -72,7 +75,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         // Save the provided LOD values
         minLod = givenLod.x;
-        maxAnisotropy = givenLod.y;
+        maxLod = givenLod.y;
         return *this;
     }
 
@@ -92,7 +95,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Sampler::Destroy()
     {
+        if (vkSampler == VK_NULL_HANDLE) return;
+
         // Destroy the Vulkan sampler
         vkDestroySampler(VulkanCore::GetLogicalDevice(), this->vkSampler, nullptr);
+
+        vkSampler = VK_NULL_HANDLE;
     }
 }

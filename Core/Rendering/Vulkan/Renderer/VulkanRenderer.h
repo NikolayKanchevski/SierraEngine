@@ -29,13 +29,15 @@
 #include "../Abstractions/Descriptors.h"
 #include "../Abstractions/Sampler.h"
 #include "../Abstractions/Buffer.h"
+#include "../Abstractions/Texture.h"
 
 #include "../../../../Engine/Components/Lighting/DirectionalLight.h"
 #include "../../../../Engine/Components/Lighting/PointLight.h"
 #include "../../../../Engine/Components/Lighting/Spotlight.h"
 #include "../../../../Engine/Components/Mesh.h"
 
-#define MAX_UINT_32T 4294967295
+#define MAX_UINT32_T 4294967295
+#define MAX_UINT64_T 0xFFFFFFFFFFFFFFFF
 
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 using namespace Sierra::Engine::Components;
@@ -126,7 +128,7 @@ namespace Sierra::Core::Rendering::Vulkan
         VkSampleCountFlagBits msaaSampleCount = msaaSamplingEnabled ? VK_SAMPLE_COUNT_64_BIT : VK_SAMPLE_COUNT_1_BIT;
 
         enum RenderingMode { Fill, Wireframe };
-        RenderingMode renderingMode = Wireframe;
+        RenderingMode renderingMode = Fill;
 
         struct
         {
@@ -278,9 +280,12 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreateFramebuffers();
 
         /* --- TEXTURES --- */
-        std::unique_ptr<Sampler> textureSampler;
+//        std::unique_ptr<Sampler> textureSampler;
         const uint32_t MAX_TEXTURES = VulkanCore::MAX_TEXTURES;
-        void CreateTextureSampler();
+
+        std::shared_ptr<Texture> nullDiffuseTexture;
+        std::shared_ptr<Texture> nullSpecularTexture;
+        std::unique_ptr<DescriptorSet> nullTexturesDescriptorSet;
         void CreateNullTextures();
 
         /* --- UNIFORM BUFFERS --- */
@@ -307,6 +312,7 @@ namespace Sierra::Core::Rendering::Vulkan
         void Draw();
 
         /* --- ImGui --- */
+        bool imGuiFrameBegan = false;
         VkDescriptorPool imGuiDescriptorPool;
         void CreateImGuiInstance();
         void SetImGuiStyle();

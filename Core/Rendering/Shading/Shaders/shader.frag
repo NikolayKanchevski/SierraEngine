@@ -1,6 +1,8 @@
 #version 450
 
-layout(location = 0) out vec4 outColor;
+layout(location = 0) in vec3 fromVert_Position;
+layout(location = 1) in vec3 fromVert_Normal;
+layout(location = 2) in vec2 fromVert_TextureCoordinates;
 
 layout(set = 0, binding = 0) uniform UniformBuffer
 {
@@ -9,18 +11,24 @@ layout(set = 0, binding = 0) uniform UniformBuffer
         mat4 projection;
 } uniformBuffer;
 
-layout(push_constant) uniform PushConstant {
+layout(push_constant) uniform PushConstant
+{
         /* VERTEX DATA */
         mat4 model;
 
-/* FRAGMENT DATA */
-//    Material material;
+        /* FRAGMENT DATA */
+//        Material material;
 } pushConstant;
+
+layout(set = 1, binding = 1) uniform sampler2D diffuseSampler;
+layout(set = 1, binding = 2) uniform sampler2D specularSampler;
+
+layout(location = 0) out vec4 outColor;
 
 void main() {
 //        outColor = vec4(uniformBuffer.view[0].xyz, 1);
 //        outColor = vec4(pushConstant.model[0].xyz, 1);
-        outColor = vec4(1.0, 0.0, 0.0, 1.0);
+        outColor = vec4(texture(diffuseSampler, fromVert_TextureCoordinates).rgb, 1.0);
 }
 
 //

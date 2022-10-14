@@ -16,6 +16,9 @@ namespace Sierra::Engine::Classes
     class Input
     {
     public:
+        /* --- PROPERTIES --- */
+        static uint32_t MAX_GAME_PADS;
+
         /* --- POLLING METHODS --- */
         static void Start();
         static void Update();
@@ -179,7 +182,6 @@ namespace Sierra::Engine::Classes
         static bool scrollSet;
 
         static uint32_t gamePadsConnected;
-        static uint32_t MAX_GAME_PADS;
 
         static std::string UnicodePointToChar(uint32_t unicodePoint);
 

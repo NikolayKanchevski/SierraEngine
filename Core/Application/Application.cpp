@@ -9,7 +9,7 @@
 void Application::Start()
 {
     // Create renderer
-    VulkanRenderer renderer("Sierra Engine v1.0.0", false);
+    VulkanRenderer renderer("Sierra Engine v1.0.0", false, false);
 
     // Get a reference to the window of the renderer
     Window &window = renderer.GetWindow();
@@ -70,22 +70,25 @@ void Application::DisplayUI(VulkanRenderer &renderer)
     }
 
 
-    // If game pad (player 0) is connected render a tab with its properties
-    if (Input::GetGamePadConnected())
+    // If game pads are present is connected render a tab with its properties
+    for (int i = Input::MAX_GAME_PADS; i--;)
     {
-        bool gamePadInfoOpen = true;
-        if (ImGui::Begin("Game Pad Data", &gamePadInfoOpen, ImGuiWindowFlags_AlwaysAutoResize))
+        if (Input::GetGamePadConnected(i))
         {
-            ImGui::Text("%s", ("Game pad [" + Input::GetGamePadName() + "] properties:").c_str());
-            ImGui::Text("%s", ("Left gamepad stick: [" + std::to_string(Input::GetGamePadLeftStickAxis().x) + " || " + std::to_string(Input::GetGamePadLeftStickAxis().y) + "]").c_str());
-            ImGui::Text("%s", ("Right gamepad stick: [" + std::to_string(Input::GetGamePadRightStickAxis().x) + " || " + std::to_string(Input::GetGamePadRightStickAxis().y) + "]").c_str());
-            ImGui::Text("%s", ("Left trigger: [" + std::to_string(Input::GetGamePadLeftTriggerAxis()) + "]").c_str());
-            ImGui::Text("%s", ("Right trigger: [" + std::to_string(Input::GetGamePadRightTriggerAxis()) + "]").c_str());
-            ImGui::RadioButton("\"A\" pressed", Input::GetGamePadButtonPressed(GLFW_GAMEPAD_BUTTON_A));
-            ImGui::RadioButton("\"A\" held", Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A));
-            ImGui::RadioButton("\"A\" released", Input::GetGamePadButtonReleased(GLFW_GAMEPAD_BUTTON_A));
+            bool gamePadInfoOpen = true;
+            if (ImGui::Begin((("Game Pad [" + std::to_string(i) + "] Data").c_str()) , &gamePadInfoOpen, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("%s", ("Game pad [" + Input::GetGamePadName(i) + "] properties:").c_str());
+                ImGui::Text("%s", ("Left gamepad stick: [" + std::to_string(Input::GetGamePadLeftStickAxis(i).x) + " || " + std::to_string(Input::GetGamePadLeftStickAxis(i).y) + "]").c_str());
+                ImGui::Text("%s", ("Right gamepad stick: [" + std::to_string(Input::GetGamePadRightStickAxis(i).x) + " || " + std::to_string(Input::GetGamePadRightStickAxis(i).y) + "]").c_str());
+                ImGui::Text("%s", ("Left trigger: [" + std::to_string(Input::GetGamePadLeftTriggerAxis(i)) + "]").c_str());
+                ImGui::Text("%s", ("Right trigger: [" + std::to_string(Input::GetGamePadRightTriggerAxis(i)) + "]").c_str());
+                ImGui::RadioButton("\"A\" pressed", Input::GetGamePadButtonPressed(GLFW_GAMEPAD_BUTTON_A, i));
+                ImGui::RadioButton("\"A\" held", Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A, i));
+                ImGui::RadioButton("\"A\" released", Input::GetGamePadButtonReleased(GLFW_GAMEPAD_BUTTON_A, i));
 
-            ImGui::End();
+                ImGui::End();
+            }
         }
     }
 }

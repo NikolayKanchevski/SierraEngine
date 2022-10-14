@@ -20,26 +20,27 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         class Builder
         {
         public:
-            Builder &SetMaxAnisotropy(float givenMaxAnisotropy);
-
-            Builder &SetAddressMode(VkSamplerAddressMode givenAddressMode);
-
-            Builder &SetLod(glm::vec2 givenLod);
-
-            Builder &ApplyBilinearFiltering(bool isApplied);
-
+            Builder& SetMaxAnisotropy(float givenMaxAnisotropy);
+            Builder& SetAddressMode(VkSamplerAddressMode givenAddressMode);
+            Builder& SetLod(glm::vec2 givenLod);
+            Builder& ApplyBilinearFiltering(bool isApplied);
             [[nodiscard]] std::unique_ptr<Sampler> Build() const;
 
         private:
-            float minLod;
+            float minLod = 0.0f;
             float maxLod = 13.0f;
-            float maxAnisotropy = 1.0f;
+            float maxAnisotropy = 0.0f;
             bool applyBilinearFiltering = true;
             VkSamplerAddressMode samplerAddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         };
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkSampler GetVulkanSampler() const { return this->vkSampler; };
+        [[nodiscard]] inline float GetMinLod() const { return this->minLod; }
+        [[nodiscard]] inline float GetMaxLod() const { return this->maxLod; }
+        [[nodiscard]] inline float GetMaxAnisotropy() const { return this->maxAnisotropy; }
+        [[nodiscard]] inline bool IsBilinearFilteringApplied() const { return this->applyBilinearFiltering; }
+        [[nodiscard]] inline VkSamplerAddressMode GetAddressMode() const { return this->samplerAddressMode; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();
@@ -47,7 +48,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Sampler &operator=(const Sampler &) = delete;
 
     private:
-        VkSampler vkSampler;
+        VkSampler vkSampler = VK_NULL_HANDLE;
+        float minLod = 1.0;
+        float maxLod = 13.0f;
+        float maxAnisotropy = 0.0f;
+        bool applyBilinearFiltering = true;
+        VkSamplerAddressMode samplerAddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
     };
 

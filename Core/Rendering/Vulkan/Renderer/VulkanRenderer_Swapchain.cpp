@@ -166,7 +166,7 @@ namespace Sierra::Core::Rendering::Vulkan
     VkExtent2D VulkanRenderer::ChooseSwapchainExtent(VkSurfaceCapabilitiesKHR &givenCapabilities)
     {
         // Check to see if the extent is already configured
-        if (givenCapabilities.currentExtent.width != MAX_UINT_32T)
+        if (givenCapabilities.currentExtent.width != MAX_UINT32_T)
         {
             // If so just return it
             return givenCapabilities.currentExtent;

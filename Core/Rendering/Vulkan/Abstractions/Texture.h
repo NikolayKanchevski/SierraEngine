@@ -5,43 +5,63 @@
 #pragma once
 
 #include <string>
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include "Descriptors.h"
 #include "Sampler.h"
 #include "Image.h"
+#include "../../../../Engine/Classes/Math.h"
 
-// TODO: Move this to VulkanRenderer_Textures
-enum TextureType { None = 0, Diffuse = 1, Specular = 2, Normal = 3, Height = 4 };
+typedef enum TextureType
+{
+    TEXTURE_TYPE_NONE = 0,
+    TEXTURE_TYPE_DIFFUSE = 1,
+    TEXTURE_TYPE_SPECULAR = 2,
+    TEXTURE_TYPE_HEIGHTMAP = 3,
+    TEXTURE_TYPE_NORMAL = 4
+} TextureType;
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
+    class DescriptorSetLayout;
+    class DescriptorPool;
+    class DescriptorSet;
 
     class Texture
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Texture(const stbi_uc *stbImage, uint32_t width, uint32_t height, TextureType givenTextureType, int givenColorChannelsCount, uint64_t givenMemorySize, bool givenMipMappingEnabled, VkSampler givenSampler,
+        Texture(stbi_uc *stbImage, const std::string givenFilePath, uint32_t width, uint32_t height, TextureType givenTextureType, int givenColorChannelsCount, uint64_t givenMemorySize, bool givenMipMappingEnabled, Sampler::Builder &samplerBuilder,
                 std::unique_ptr<DescriptorSetLayout> &givenDescriptorSetLayout, std::unique_ptr<DescriptorPool> &givenDescriptorPool, std::string givenName);
 
         class Builder
         {
         public:
-            Builder(std::unique_ptr<DescriptorSetLayout> &givenDescriptorSetLayout, std::unique_ptr<DescriptorPool> &givenDescriptorPool);
+            Builder(std::unique_ptr<DescriptorPool> &givenDescriptorPool);
             Builder& SetName(std::string givenName);
             Builder& SetTextureType(TextureType givenTextureType);
             Builder& EnableMipMapGeneration(bool isApplied);
-            Builder& SetSampler(Sampler &givenSampler);
-            [[nodiscard]] std::unique_ptr<Texture> Build(std::string filePath);
+
+            Builder& SetMaxAnisotropy(float givenMaxAnisotropy);
+            Builder& SetAddressMode(VkSamplerAddressMode givenAddressMode);
+            Builder& SetLod(glm::vec2 givenLod);
+            Builder& ApplyBilinearFiltering(bool isApplied);
+
+            [[nodiscard]] std::shared_ptr<Texture> Build(std::string givenFilePath);
 
         private:
             std::string name = "";
-            TextureType textureType = TextureType::None;
-            bool mipMappingEnabled = true;
-            std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout;
+            TextureType textureType = TEXTURE_TYPE_NONE;
+
+            bool mipMappingEnabled = false;
             std::unique_ptr<DescriptorPool> &descriptorPool;
-            VkSampler vkSampler;
+
             uint64_t imageSize;
+
+            float minLod = 0.0f;
+            float maxLod = 13.0f;
+            float maxAnisotropy = 0.0f;
+            bool applyBilinearFiltering = true;
+            VkSamplerAddressMode samplerAddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
         };
 
         /* --- SETTER METHODS --- */
@@ -74,29 +94,35 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline uint64_t GetMemorySize() const
         { return this->memorySize; }
 
-        [[nodiscard]] inline VkDescriptorSet GetDescriptorSet() const
-        { return this->descriptorSet; }
+        [[nodiscard]] inline VkSampler GetVulkanSampler() const
+        { return sampler->GetVulkanSampler(); }
 
         [[nodiscard]] inline std::unique_ptr<Image>& GetImage()
         { return this->image; }
 
+        [[nodiscard]] inline std::unique_ptr<Sampler>& GetSampler()
+        { return this->sampler; }
+
         /* --- SETTER METHODS --- */
 
         /* --- DESTRUCTOR --- */
-        inline void Destroy() { image->Destroy(); }
+        void Destroy();
         Texture(const Texture &) = delete;
         Texture &operator=(const Texture &) = delete;
     private:
+        static std::unordered_map<std::string, std::shared_ptr<Texture>> texturePool;
+
         std::string name;
+        std::string filePath = "";
+
         TextureType textureType;
         uint32_t colorChannelsCount;
 
-        VkSampler sampler;
-        uint32_t mipMapLevels = 1;
-        bool mipMappingEnabled;
-
         uint64_t memorySize;
-        VkDescriptorSet descriptorSet;
+        std::unique_ptr<Sampler> sampler;
+
+        uint32_t mipMapLevels = 1;
+        bool mipMappingEnabled = false;
 
         std::unique_ptr<Image> image;
         void GenerateMipMaps();

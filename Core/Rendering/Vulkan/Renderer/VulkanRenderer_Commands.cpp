@@ -89,7 +89,7 @@ namespace Sierra::Core::Rendering::Vulkan
         vkCmdSetScissor(givenCommandBuffer, 0, 1, &scissor);
 
         VkBuffer vertexBuffers[1];
-        const VkDescriptorSet descriptorSets[1] { uniformDescriptorSets[currentFrame]->GetVulkanDescriptorSet() };
+        VkDescriptorSet descriptorSets[2] { uniformDescriptorSets[currentFrame]->GetVulkanDescriptorSet() };
         const VkDeviceSize offsets[] = {0 };
 
         // For each mesh in the world
@@ -114,10 +114,10 @@ namespace Sierra::Core::Rendering::Vulkan
                     pushConstantSize, &data
             );
 
-//            descriptorSetsPtr[1] = diffuseTextures[mesh.diffuseTextureID].descriptorSet;
+            descriptorSets[1] = nullTexturesDescriptorSet->GetVulkanDescriptorSet();
 //            descriptorSetsPtr[2] = specularTextures[mesh.specularTextureID].descriptorSet;
 
-            vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipelineLayout, 0, 1, descriptorSets, 0, nullptr);
+            vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipelineLayout, 0, 2, descriptorSets, 0, nullptr);
 
             // Draw using the index buffer to prevent vertex re-usage
             vkCmdDrawIndexed(givenCommandBuffer, mesh->GetIndexCount(), 1, 0, 0, 0);

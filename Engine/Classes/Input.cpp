@@ -73,9 +73,9 @@ namespace Sierra::Engine::Classes {
             buttonSet = false;
         }
 
-        for (int i = 0; i < MAX_GAME_PADS; i++)
+        for (int i = MAX_GAME_PADS; i--;)
         {
-            if (!gamePads[i].connected) return;
+            if (!gamePads[i].connected) continue;
 
             GLFWgamepadstate gamePadState;
             glfwGetGamepadState(i, &gamePadState);
@@ -305,8 +305,6 @@ namespace Sierra::Engine::Classes {
         }
         else
         {
-            if (gamePadsConnected < 1) return;
-
             gamePads[joystickID].connected = false;
             gamePadsConnected--;
         }

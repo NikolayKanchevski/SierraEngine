@@ -102,7 +102,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkSampleCountFlagBits sampling;
         VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-        VkImage vkImage;
+        VkImage vkImage = VK_NULL_HANDLE;
         VkImageView vkImageView;
         VkDeviceMemory vkImageMemory;
 

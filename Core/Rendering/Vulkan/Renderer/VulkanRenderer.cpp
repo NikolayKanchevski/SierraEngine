@@ -41,7 +41,6 @@ namespace Sierra::Core::Rendering::Vulkan
         CreateColorBufferImage();
 
         CreateFramebuffers();
-        CreateTextureSampler();
         CreateCommandBuffers();
         CreateUniformBuffers();
 
@@ -55,12 +54,6 @@ namespace Sierra::Core::Rendering::Vulkan
 
         auto &mesh = Mesh::RegisterMesh(vertices, meshIndices);
 
-        window.SetResizeCallback([this](void) {
-            Draw();
-        #if _WIN32
-            Draw();
-        #endif
-        });
         window.Show();
         VulkanDebugger::DisplaySuccess("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
     }
@@ -69,9 +62,14 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         prepared = true;
 
+        if (!imGuiFrameBegan)
+        {
+            BeginNewImGuiFrame();
+            imGuiFrameBegan = true;
+        }
+
         if (window.IsFocusRequired() && !window.IsFocused()) return;
 
-        BeginNewImGuiFrame();
         UpdateImGuiData();
     }
 
@@ -89,7 +87,12 @@ namespace Sierra::Core::Rendering::Vulkan
 
         if (window.IsFocusRequired() && !window.IsFocused()) return;
 
-        RenderImGui();
+        if (imGuiFrameBegan)
+        {
+            RenderImGui();
+            imGuiFrameBegan = false;
+        }
+
         Draw();
 
         UpdateRendererInfo();
@@ -113,9 +116,10 @@ namespace Sierra::Core::Rendering::Vulkan
         DestroySwapchainObjects();
         vkDestroySurfaceKHR(instance, surface, nullptr);
 
-        textureSampler->Destroy();
-
         vkDestroyQueryPool(this->logicalDevice, drawTimeQueryPool, nullptr);
+
+        nullDiffuseTexture->Destroy();
+        nullSpecularTexture->Destroy();
 
         vkDestroyPipeline(logicalDevice, graphicsPipeline, nullptr);
         vkDestroyPipelineLayout(logicalDevice, graphicsPipelineLayout, nullptr);

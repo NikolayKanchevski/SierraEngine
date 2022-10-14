@@ -274,11 +274,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Image::Destroy()
     {
+        if (vkImage == VK_NULL_HANDLE) return;
+
         if (!swapchainImage)
         {
             vkDestroyImage(VulkanCore::GetLogicalDevice(), this->vkImage, nullptr);
             vkFreeMemory(VulkanCore::GetLogicalDevice(), this->vkImageMemory, nullptr);
         }
         if (imageViewGenerated) vkDestroyImageView(VulkanCore::GetLogicalDevice(), this->vkImageView, nullptr);
+
+        vkImage = VK_NULL_HANDLE;
     }
 }

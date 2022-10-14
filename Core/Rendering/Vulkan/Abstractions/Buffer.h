@@ -54,6 +54,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline VkBufferUsageFlags GetBufferUsage() const
         { return this->bufferUsage; }
 
+        [[nodiscard]] inline uint64_t GetOffset() const { return 0; }
+
         /* --- DESTRUCTOR --- */
         void Destroy();
         Buffer(const Buffer &) = delete;

@@ -60,8 +60,8 @@ namespace Sierra::Core
 
     void World::UpdateRenderer(VulkanRenderer &renderer)
     {
-        renderer.Render();
         renderer.UpdateWindow();
+        renderer.Render();
     }
 
     /* --- GETTER METHODS --- */

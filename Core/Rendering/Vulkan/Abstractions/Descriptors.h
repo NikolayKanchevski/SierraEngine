@@ -10,9 +10,11 @@
 #include <vector>
 #include "Buffer.h"
 #include "Sampler.h"
+#include "Texture.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
+    class Texture;
 
     class DescriptorSetLayout
     {
@@ -41,8 +43,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         friend class DescriptorSet;
 
     private:
-        friend class DescriptorWriter;
-
         VkDescriptorSetLayout vkDescriptorSetLayout;
         std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings;
 
@@ -74,6 +74,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkDescriptorPool GetVulkanDescriptorPool() const { return this->vkDescriptorPool; }
+        [[nodiscard]] inline std::unique_ptr<DescriptorSetLayout>& GetDescriptorSetLayout() const { return this->descriptorSetLayout;}
 
         /* --- DESTRUCTOR --- */
         void Destroy();
@@ -87,25 +88,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     };
 
-    class DescriptorWriter
-    {
-    public:
-        /* --- CONSTRUCTORS --- */
-        DescriptorWriter(std::unique_ptr<DescriptorSetLayout> &givenDescriptorSetLayout, std::unique_ptr<DescriptorPool> &givenDescriptorPool);
-
-        /* --- SETTER METHODS --- */
-        DescriptorWriter& WriteBuffer(uint32_t binding, const VkDescriptorBufferInfo *bufferInfo);
-        DescriptorWriter& WriteImage(uint32_t binding, const VkDescriptorImageInfo *imageInfo);
-        void Build(VkDescriptorSet &descriptorSet);
-
-    private:
-        std::unique_ptr<DescriptorPool> &descriptorPool;
-        std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout;
-        std::vector<VkWriteDescriptorSet> writeDescriptorSets;
-
-        void Overwrite(VkDescriptorSet &descriptorSet);
-    };
-
     class DescriptorSet
     {
     public:
@@ -114,8 +96,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] static std::unique_ptr<DescriptorSet> Build(std::unique_ptr<DescriptorPool> &givenDescriptorPool);
 
         /* --- SETTER METHODS --- */
-        void WriteBuffer(uint32_t binding, const VkDescriptorBufferInfo *bufferInfo);
-        void WriteImage(uint32_t binding, std::unique_ptr<Image> &image, const std::unique_ptr<Sampler> &sampler);
+        void WriteBuffer(uint32_t binding, const std::unique_ptr<Buffer> &buffer);
+        void WriteImage(uint32_t binding, const VkDescriptorImageInfo *imageInfo);
+        void WriteTexture(uint32_t binding, const std::shared_ptr<Texture> &texture);
         void Allocate();
 
         /* --- GETTER METHODS --- */
@@ -128,11 +111,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     private:
         uint64_t offset = 0;
-
         VkDescriptorSet vkDescriptorSet;
+
         std::unique_ptr<DescriptorPool> &descriptorPool;
         std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout;
+
         std::vector<VkWriteDescriptorSet> writeDescriptorSets;
+        std::unordered_map<uint32_t, VkDescriptorImageInfo> descriptorImageInfos;
+        std::unordered_map<uint32_t, VkDescriptorBufferInfo> descriptorBufferInfos;
 
     };
 }
