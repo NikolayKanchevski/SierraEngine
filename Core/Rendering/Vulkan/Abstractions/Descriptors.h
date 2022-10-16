@@ -60,7 +60,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             Builder& AddPoolSize(VkDescriptorType descriptorType, uint32_t count);
             Builder& SetPoolFlags(VkDescriptorPoolCreateFlags givenPoolCreateFlags);
             Builder& SetMaxSets(uint32_t givenMaxSets);
-            [[nodiscard]] std::unique_ptr<DescriptorPool> Build(std::unique_ptr<DescriptorSetLayout> &givenSetLayout);
+            [[nodiscard]] std::shared_ptr<DescriptorPool> Build(std::unique_ptr<DescriptorSetLayout> &givenSetLayout);
 
         private:
             uint32_t maxSets = 1000;
@@ -70,7 +70,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         };
 
         /* --- SETTER METHODS --- */
-        void AllocateDescriptorSet(VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptorSet);
+        void AllocateDescriptorSet(VkDescriptorSetLayout givenDescriptorSetLayout, VkDescriptorSet &descriptorSet);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkDescriptorPool GetVulkanDescriptorPool() const { return this->vkDescriptorPool; }
@@ -92,8 +92,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        DescriptorSet(std::unique_ptr<DescriptorPool> &givenDescriptorPool);
-        [[nodiscard]] static std::unique_ptr<DescriptorSet> Build(std::unique_ptr<DescriptorPool> &givenDescriptorPool);
+        DescriptorSet(std::shared_ptr<DescriptorPool> &givenDescriptorPool);
+        [[nodiscard]] static std::unique_ptr<DescriptorSet> Build(std::shared_ptr<DescriptorPool> &givenDescriptorPool);
 
         /* --- SETTER METHODS --- */
         void WriteBuffer(uint32_t binding, const std::unique_ptr<Buffer> &buffer);
@@ -113,7 +113,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         uint64_t offset = 0;
         VkDescriptorSet vkDescriptorSet;
 
-        std::unique_ptr<DescriptorPool> &descriptorPool;
+        std::shared_ptr<DescriptorPool> &descriptorPool;
         std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout;
 
         std::vector<VkWriteDescriptorSet> writeDescriptorSets;

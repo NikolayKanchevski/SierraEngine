@@ -10,14 +10,13 @@ namespace Sierra::Core::Rendering::Vulkan
     void VulkanRenderer::CreateColorBufferImage()
     {
         // Create the sampled color image
-        colorImage = Image::Builder()
-            .SetWidth(swapchainExtent.width)
-            .SetHeight(swapchainExtent.height)
-            .SetSampling(msaaSampleCount)
-            .SetFormat(swapchainImageFormat)
-            .SetUsageFlags(VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-            .SetMemoryFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-        .Build();
+        colorImage = Image::Create({
+            .dimensions = { swapchainExtent.width, swapchainExtent.height, 1 },
+            .format = swapchainImageFormat,
+            .sampling = msaaSampleCount,
+            .usageFlags = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+            .memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        });
 
         // Create an image view off the sampled color image
         colorImage->CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT);

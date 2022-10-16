@@ -2,6 +2,7 @@
 // Created by Nikolay Kanchevski on 30.09.22.
 //
 
+#include <cstdint>
 #include "Image.h"
 #include "../VulkanCore.h"
 #include "../VulkanUtilities.h"
@@ -9,82 +10,6 @@
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     /* --- SETTER METHODS --- */
-
-    Image::Builder& Image::Builder::SetDimensions(const glm::vec3 givenDimensions)
-    {
-        // Save the given size locally
-        this->dimensions = givenDimensions;
-        return *this;
-    }
-
-    Image::Builder& Image::Builder::SetWidth(const uint32_t givenWidth)
-    {
-        // Save the given width locally
-        this->dimensions.x = (float) givenWidth;
-        return *this;
-    }
-
-    Image::Builder& Image::Builder::SetHeight(const uint32_t givenHeight)
-    {
-        // Save the given height locally
-        this->dimensions.y = (float) givenHeight;
-        return *this;
-    }
-
-    Image::Builder& Image::Builder::SetDepth(const uint32_t givenDepth)
-    {
-        // Save the given depth locally
-        this->dimensions.z = (float) givenDepth;
-        return *this;
-    }
-
-    Image::Builder& Image::Builder::SetMipLevels(const uint32_t givenMipLevels)
-    {
-        // Save the given mip levels locally
-        this->mipLevels = givenMipLevels;
-        return *this;
-    }
-
-    Image::Builder& Image::Builder::SetFormat(const VkFormat givenFormat)
-    {
-        // Save the given format locally
-        this->format = givenFormat;
-        return *this;
-    }
-
-    Image::Builder& Image::Builder::SetUsageFlags(const VkImageUsageFlags givenUsageFlags)
-    {
-        // Save the given usage flags locally
-        this->usageFlags = givenUsageFlags;
-        return *this;
-    }
-
-    Image::Builder& Image::Builder::SetMemoryFlags(const VkMemoryPropertyFlags givenMemoryFlags)
-    {
-        // Save the given memory flags locally
-        this->memoryFlags = givenMemoryFlags;
-        return *this;
-    }
-
-    Image::Builder& Image::Builder::SetImageTiling(const VkImageTiling givenImageTiling)
-    {
-        // Save the given tiling locally
-        this->imageTiling = givenImageTiling;
-        return *this;
-    }
-
-    Image::Builder& Image::Builder::SetSampling(const VkSampleCountFlagBits givenSampling)
-    {
-        // Save the given sampling locally
-        this->sampling = givenSampling;
-        return *this;
-    }
-
-    std::unique_ptr<Image> Image::Builder::Build() const
-    {
-        // Build and return the image
-        return std::make_unique<Image>(dimensions, mipLevels, sampling, format, imageTiling, usageFlags, memoryFlags);
-    }
 
     void Image::CreateImageView(const VkImageAspectFlags givenAspectFlags)
     {
@@ -210,32 +135,32 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    Image::Image(const glm::vec3 givenDimensions, const uint32_t givenMipLevels, VkSampleCountFlagBits givenSampling, const VkFormat givenFormat, const VkImageTiling imageTiling, const VkImageUsageFlags usageFlags, const VkMemoryPropertyFlags propertyFlags)
-        : dimensions(givenDimensions), mipLevels(givenMipLevels), sampling(givenSampling), format(givenFormat)
+    Image::Image(const ImageCreateInfo imageCreateInfo)
+        : dimensions(imageCreateInfo.dimensions), mipLevels(imageCreateInfo.mipLevels), sampling(imageCreateInfo.sampling), format(imageCreateInfo.format)
     {
         // Set up image creation info
-        VkImageCreateInfo imageCreateInfo{};
-        imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+        VkImageCreateInfo vkImageCreateInfo{};
+        vkImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        vkImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
 
-        imageCreateInfo.extent.width = static_cast<uint32_t>(givenDimensions.x);
-        imageCreateInfo.extent.height = static_cast<uint32_t>(givenDimensions.y);
-        imageCreateInfo.extent.depth = static_cast<uint32_t>(givenDimensions.z);
+        vkImageCreateInfo.extent.width = static_cast<uint32_t>(dimensions.x);
+        vkImageCreateInfo.extent.height = static_cast<uint32_t>(dimensions.y);
+        vkImageCreateInfo.extent.depth = static_cast<uint32_t>(dimensions.z);
 
-        imageCreateInfo.mipLevels = givenMipLevels;
-        imageCreateInfo.arrayLayers = 1;
-        imageCreateInfo.format = givenFormat;
-        imageCreateInfo.tiling = imageTiling;
-        imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        imageCreateInfo.usage = usageFlags;
-        imageCreateInfo.samples = givenSampling;
-        imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        vkImageCreateInfo.mipLevels = mipLevels;
+        vkImageCreateInfo.arrayLayers = 1;
+        vkImageCreateInfo.format = format;
+        vkImageCreateInfo.tiling = imageCreateInfo.imageTiling;
+        vkImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        vkImageCreateInfo.usage = imageCreateInfo.usageFlags;
+        vkImageCreateInfo.samples = sampling;
+        vkImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
         // Create the Vulkan image
         VulkanDebugger::CheckResults(
-                vkCreateImage(VulkanCore::GetLogicalDevice(), &imageCreateInfo, nullptr, &vkImage),
-                "Failed to create image with dimensions of [" + std::to_string(givenDimensions.x) + ", " + std::to_string(givenDimensions.y) + ", " + std::to_string(givenDimensions.z) + "], format [" + std::to_string(givenFormat) + "], [" +
-                 std::to_string(givenMipLevels) + "] mip levels, and sampling of [" + std::to_string(givenSampling) + "]"
+                vkCreateImage(VulkanCore::GetLogicalDevice(), &vkImageCreateInfo, nullptr, &vkImage),
+                "Failed to create image with dimensions of [" + std::to_string(dimensions.x) + ", " + std::to_string(dimensions.y) + ", " + std::to_string(dimensions.z) + "], format [" + std::to_string(format) + "], [" +
+                std::to_string(mipLevels) + "] mip levels, and sampling of [" + std::to_string(sampling) + "]"
         );
 
         // Retrieve its memory requirements
@@ -246,28 +171,33 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkMemoryAllocateInfo imageMemoryAllocateInfo{};
         imageMemoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         imageMemoryAllocateInfo.allocationSize = imageMemoryRequirements.size;
-        imageMemoryAllocateInfo.memoryTypeIndex = VulkanUtilities::FindMemoryTypeIndex(imageMemoryRequirements.memoryTypeBits, propertyFlags);
+        imageMemoryAllocateInfo.memoryTypeIndex = VulkanUtilities::FindMemoryTypeIndex(imageMemoryRequirements.memoryTypeBits, imageCreateInfo.memoryFlags);
 
         // Allocate the image to memory
         VulkanDebugger::CheckResults(
-            vkAllocateMemory(VulkanCore::GetLogicalDevice(), &imageMemoryAllocateInfo, nullptr, &vkImageMemory),
-            "Failed to allocate memory for image with dimensions of [" + std::to_string(givenDimensions.x) + ", " + std::to_string(givenDimensions.y) + ", " + std::to_string(givenDimensions.z) + "], format [" + std::to_string(givenFormat) + "], [" +
-            std::to_string(givenMipLevels) + "] mip levels, and sampling of [" + std::to_string(givenSampling) + "]"
+                vkAllocateMemory(VulkanCore::GetLogicalDevice(), &imageMemoryAllocateInfo, nullptr, &vkImageMemory),
+                "Failed to allocate memory for image with dimensions of [" + std::to_string(dimensions.x) + ", " + std::to_string(dimensions.y) + ", " + std::to_string(dimensions.z) + "], format [" + std::to_string(format) + "], [" +
+                std::to_string(mipLevels) + "] mip levels, and sampling of [" + std::to_string(sampling) + "]"
         );
 
         // Bind the image to its corresponding memory
         vkBindImageMemory(VulkanCore::GetLogicalDevice(), vkImage, vkImageMemory, 0);
     }
 
-    Image::Image(const VkImage givenVkImage, const VkFormat givenFormat, const VkSampleCountFlagBits givenSampling, const glm::vec3 givenDimensions, const uint32_t givenMipLevels, const VkImageLayout givenLayout)
-            : vkImage(givenVkImage), format(givenFormat), sampling(givenSampling), dimensions(givenDimensions), mipLevels(givenMipLevels), layout(givenLayout), swapchainImage(true)
+    std::unique_ptr<Image> Image::Create(ImageCreateInfo imageCreateInfo)
     {
-
+        return std::make_unique<Image>(imageCreateInfo);
     }
 
-    std::unique_ptr<Image> Image::Build(const VkImage givenVkImage, const VkFormat givenFormat, const VkSampleCountFlagBits givenSampling, const glm::vec3 givenDimensions, const uint32_t givenMipLevels, const VkImageLayout givenLayout)
+    std::unique_ptr<Image> Image::CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo)
     {
-        return std::make_unique<Image>(givenVkImage, givenFormat, givenSampling, givenDimensions, givenMipLevels, givenLayout);
+        return std::make_unique<Image>(swapchainImageCreateInfo);
+    }
+
+    Image::Image(const SwapchainImageCreateInfo swapchainImageCreateInfo)
+            : vkImage(swapchainImageCreateInfo.image), format(swapchainImageCreateInfo.format), sampling(swapchainImageCreateInfo.sampling), dimensions(swapchainImageCreateInfo.dimensions), layout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR), swapchainImage(true)
+    {
+
     }
 
     /* --- DESTRUCTOR --- */

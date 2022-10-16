@@ -61,7 +61,7 @@ namespace Sierra::Core::Rendering::Vulkan
         vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
         vertexInputStateCreateInfo.pVertexBindingDescriptions = &bindingDescription;
-        vertexInputStateCreateInfo.vertexAttributeDescriptionCount = 3;
+        vertexInputStateCreateInfo.vertexAttributeDescriptionCount = attributeDescriptions.size();
         vertexInputStateCreateInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
         // Set up assembly info

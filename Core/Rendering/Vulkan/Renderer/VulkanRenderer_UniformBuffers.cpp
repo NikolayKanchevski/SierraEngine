@@ -18,28 +18,16 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Resize uniform buffers array
         uniformBuffers.resize(MAX_CONCURRENT_FRAMES);
-
-        // For each concurrent frame
-//        for (int i = MAX_CONCURRENT_FRAMES; i--;)
-//        {
-//            uniformBuffers[i] = Buffer::Builder()
-//                .SetMemorySize(uniformDataSize)
-//                .SetMemoryFlags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-//                .SetUsageFlags(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
-//            .Build();
-//        }
-
         uniformBuffers.resize(swapchainImages.size());
-//        uniformBuffersMemory.resize(swapchainImages.size());
 
         // Create uniform buffers
         for (size_t i = 0; i < swapchainImages.size(); i++)
         {
-            uniformBuffers[i] = Buffer::Builder()
-                .SetMemorySize(uniformDataSize)
-                .SetMemoryFlags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-                .SetUsageFlags(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
-            .Build();
+            uniformBuffers[i] = Buffer::Create({
+               .memorySize = uniformDataSize,
+               .memoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+               .bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+            });
         }
     }
 

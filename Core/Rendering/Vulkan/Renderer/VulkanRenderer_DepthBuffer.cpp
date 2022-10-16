@@ -17,14 +17,13 @@ namespace Sierra::Core::Rendering::Vulkan
                 VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
         );
 
-        depthImage = Image::Builder()
-            .SetWidth(swapchainExtent.width)
-            .SetHeight(swapchainExtent.height)
-            .SetSampling(this->msaaSampleCount)
-            .SetUsageFlags(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-            .SetMemoryFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-            .SetFormat(depthImageFormat)
-        .Build();
+        depthImage = Image::Create({
+           .dimensions = { swapchainExtent.width, swapchainExtent.height, 1 },
+           .format = depthImageFormat,
+           .sampling = msaaSampleCount,
+           .usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+           .memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        });
 
         depthImage->CreateImageView(VK_IMAGE_ASPECT_DEPTH_BIT);
 

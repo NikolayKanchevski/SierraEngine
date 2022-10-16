@@ -87,10 +87,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
         for (int i = imageCount; i--;)
         {
-            swapchainImages[i] = Image::Build(
-                    swapchainVkImages[i], swapchainImageFormat, msaaSampleCount,
-                    { swapchainExtent.width, swapchainExtent.height, 0.0f }, 1, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-            );
+            swapchainImages[i] = Image::CreateSwapchainImage({.image = swapchainVkImages[i], .format = swapchainImageFormat, .sampling = msaaSampleCount, .dimensions = {swapchainExtent.width, swapchainExtent.height, 0},});
 
             swapchainImages[i]->CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT);
         }

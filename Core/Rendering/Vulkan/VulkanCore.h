@@ -6,6 +6,9 @@
 
 #include <vulkan/vulkan.h>
 #include "../Window.h"
+#include "Abstractions/Descriptors.h"
+
+using Sierra::Core::Rendering::Vulkan::Abstractions::DescriptorPool;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -33,6 +36,7 @@ namespace Sierra::Core::Rendering::Vulkan
         [[nodiscard]] static inline VkExtent2D& GetSwapchainExtent() { return instance.swapchainExtent; }
         [[nodiscard]] static inline VkQueue& GetGraphicsQueue() { return instance.graphicsQueue; }
         [[nodiscard]] static inline VkCommandPool& GetCommandPool() { return instance.commandPool; }
+        [[nodiscard]] static inline std::shared_ptr<DescriptorPool>& GetDescriptorPool() { return instance.descriptorPool; }
 
         inline static void SetWindow(Window *window) { instance.window = window; }
 
@@ -46,6 +50,7 @@ namespace Sierra::Core::Rendering::Vulkan
         inline static void SetSwapchainExtent(VkExtent2D swapchainExtent) { instance.swapchainExtent = swapchainExtent; }
         inline static void SetGraphicsQueue(VkQueue graphicsQueue) { instance.graphicsQueue = graphicsQueue; }
         inline static void SetCommandPool(VkCommandPool commandPool) { instance.commandPool = commandPool; }
+        inline static void SetDescriptorPool(std::shared_ptr<DescriptorPool> descriptorPool) { instance.descriptorPool = descriptorPool; }
 
     private:
         VulkanCore() = default;
@@ -63,6 +68,7 @@ namespace Sierra::Core::Rendering::Vulkan
         VkExtent2D swapchainExtent;
         VkQueue graphicsQueue;
         VkCommandPool commandPool;
+        std::shared_ptr<DescriptorPool> descriptorPool;
     };
 
 }

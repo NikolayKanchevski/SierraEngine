@@ -25,8 +25,9 @@ public:
     void Start();
     void RenderLoop(VulkanRenderer &renderer);
 
-    void DisplayUI(VulkanRenderer &renderer);
+    void UpdateObjects();
     void DoCameraMovement();
+    void DisplayUI(VulkanRenderer &renderer);
 
 private:
     Camera camera = Camera();

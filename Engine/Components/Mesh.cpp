@@ -19,6 +19,7 @@ namespace Sierra::Engine::Components
     {
         CreateVertexBuffer(givenVertices);
         CreateIndexBuffer(givenIndices);
+
         CreateDescriptorSet();
 
         totalMeshCount++;
@@ -38,20 +39,20 @@ namespace Sierra::Engine::Components
         // Calculate the buffer size
         uint64_t bufferSize = sizeof(Vertex) * givenVertices.size();
 
-        std::unique_ptr<Buffer> stagingBuffer = Buffer::Builder()
-            .SetMemorySize(bufferSize)
-            .SetMemoryFlags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-            .SetUsageFlags(VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
-        .Build();
+        std::unique_ptr<Buffer> stagingBuffer = Buffer::Create({
+            .memorySize = bufferSize,
+            .memoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            .bufferUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+        });
 
         // Fill the data pointer with the vertices array's information
         stagingBuffer->CopyFromPointer(givenVertices.data());
 
-        vertexBuffer = Buffer::Builder()
-            .SetMemorySize(bufferSize)
-            .SetMemoryFlags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-            .SetUsageFlags(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
-        .Build();
+        vertexBuffer = Buffer::Create({
+           .memorySize = bufferSize,
+           .memoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+           .bufferUsage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+       });
 
         stagingBuffer->CopyToBuffer(vertexBuffer);
 
@@ -63,20 +64,20 @@ namespace Sierra::Engine::Components
         // Calculate the buffer size
         uint64_t bufferSize = sizeof(uint32_t) * givenIndices.size();
 
-        std::unique_ptr<Buffer> stagingBuffer = Buffer::Builder()
-            .SetMemorySize(bufferSize)
-            .SetMemoryFlags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-            .SetUsageFlags(VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
-        .Build();
+        std::unique_ptr<Buffer> stagingBuffer = Buffer::Create({
+              .memorySize = bufferSize,
+              .memoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+              .bufferUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+        });
 
         // Fill the data pointer with the vertices array's information
         stagingBuffer->CopyFromPointer(givenIndices.data());
 
-        indexBuffer = Buffer::Builder()
-            .SetMemorySize(bufferSize)
-            .SetMemoryFlags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-            .SetUsageFlags(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
-        .Build();
+        indexBuffer = Buffer::Create({
+             .memorySize = bufferSize,
+             .memoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+             .bufferUsage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT
+         });
 
         stagingBuffer->CopyToBuffer(indexBuffer);
 
@@ -85,7 +86,22 @@ namespace Sierra::Engine::Components
 
     void Mesh::CreateDescriptorSet()
     {
+        descriptorSet = DescriptorSet::Build(VulkanCore::GetDescriptorPool());
+        descriptorSet->WriteTexture(DIFFUSE_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_DIFFUSE));
+        descriptorSet->WriteTexture(SPECULAR_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_SPECULAR));
+        descriptorSet->Allocate();
+    }
 
+    void Mesh::SetTexture(const std::shared_ptr<Texture> givenTexture)
+    {
+        if (givenTexture->GetTextureType() == TEXTURE_TYPE_NONE)
+        {
+            VulkanDebugger::ThrowError("In order to bind texture [" + givenTexture->name + "] to mesh its texture type must be specified and be different from TEXTURE_TYPE_NONE");
+        }
+
+        textures[TextureTypeToArrayIndex(givenTexture->GetTextureType())] = givenTexture;
+        descriptorSet->WriteTexture(TextureTypeToBinding(givenTexture->GetTextureType()), givenTexture);
+        descriptorSet->Allocate();
     }
 
     /* --- GETTER METHODS --- */
@@ -95,24 +111,23 @@ namespace Sierra::Engine::Components
         // Inverse the Y coordinate to satisfy Vulkan's requirements
         glm::vec3 rendererPosition = { transform.position.x, transform.position.y * -1, transform.position.z };
 
-        // Update the model matrix per call
+        // Calculate translation matrix
         glm::mat4x4 translationMatrix(1.0);
-        translationMatrix = glm::translate(translationMatrix, { 0, 0, 0 });
+        translationMatrix = glm::translate(translationMatrix, rendererPosition);
 
+        // Calculate rotation matrix
         glm::mat4x4 rotationMatrix(1.0);
-        glm::rotate(rotationMatrix, glm::radians(transform.rotation.x), { 1.0, 0.0, 0.0 });
-        glm::rotate(rotationMatrix, glm::radians(transform.rotation.y), { 0.0, 1.0, 0.0 });
-        glm::rotate(rotationMatrix, glm::radians(transform.rotation.z), { 0.0, 0.0, 1.0 });
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(transform.rotation.x), { 0.0, 1.0, 0.0 });
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(transform.rotation.y), { 1.0, 0.0, 0.0 });
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(transform.rotation.z), { 0.0, 0.0, 1.0 });
 
+        // Calculate scale matrix
         glm::mat4x4 scaleMatrix(1.0);
-        glm::scale(scaleMatrix, transform.scale);
+        scaleMatrix = glm::scale(scaleMatrix, transform.scale);
 
+        // Populate push constant data
         data->modelMatrix = translationMatrix * rotationMatrix * scaleMatrix;
-//        data->modelMatrix = glm::mat4x4(1.0f);
-//        pushConstantData.material.shininess = material.shininess;
-//        pushConstantData.material.diffuse = material.diffuse;
-//        pushConstantData.material.specular = material.specular;
-//        pushConstantData.material.ambient = material.ambient;
+        data->material = this->material;
     }
 
     /* --- DESTRUCTOR --- */
@@ -121,6 +136,12 @@ namespace Sierra::Engine::Components
     {
         vertexBuffer->Destroy();
         indexBuffer->Destroy();
+
+        for (const auto &texture : textures)
+        {
+            if (texture == nullptr) continue;
+            texture.get()->Destroy();
+        }
 
         totalMeshCount--;
         totalMeshVertices -= vertexCount;

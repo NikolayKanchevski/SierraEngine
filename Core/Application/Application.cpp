@@ -9,7 +9,7 @@
 void Application::Start()
 {
     // Create renderer
-    VulkanRenderer renderer("Sierra Engine v1.0.0", false, false);
+    VulkanRenderer renderer("Sierra Engine v1.0.0", false, true);
 
     // Get a reference to the window of the renderer
     Window &window = renderer.GetWindow();
@@ -41,58 +41,23 @@ void Application::RenderLoop(VulkanRenderer &renderer)
     // If the window of the renderer is required to be focused but is not return before executing useless code
     if (renderer.GetWindow().IsFocusRequired() && !renderer.GetWindow().IsFocused()) return;
 
-    // Build UI
-    DisplayUI(renderer);
+    // Update world objects
+    UpdateObjects();
 
     // Calculate camera movement
     DoCameraMovement();
+
+    // CreateSwapchainImage UI
+    DisplayUI(renderer);
 }
 
-void Application::DisplayUI(VulkanRenderer &renderer)
+void Application::UpdateObjects()
 {
-    const ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoFocusOnAppearing |
-                                          ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
-
-    ImGui::SetNextWindowPos({ renderer.GetWindow().GetWidth() - 10.0f, 10.0f }, ImGuiCond_Always, { 1, 0 });
-    ImGui::SetNextWindowSizeConstraints({ (float) renderer.GetWindow().GetWidth() / 8, (float) renderer.GetWindow().GetHeight() / 8 }, { 10000, 10000 });
-
-    // Draw renderer information tab
-    bool rendererInfoOpen = true;
-    if (ImGui::Begin("Renderer Information", &rendererInfoOpen, WINDOW_FLAGS) || rendererInfoOpen)
-    {
-        ImGui::Text("%s", ("CPU Frame Time: " + std::to_string(Time::GetFPS()) + " FPS").c_str());
-        ImGui::Text("%s", ("GPU Draw Time: " + std::to_string(renderer.GetRendererInfo().drawTime) + " ms").c_str());
-        ImGui::Separator();
-        ImGui::Text("%s", ("Total meshes being drawn: " + std::to_string(renderer.GetRendererInfo().meshesDrawn)).c_str());
-        ImGui::Text("%s", ("Total vertices in scene: " + std::to_string(renderer.GetRendererInfo().verticesDrawn)).c_str());
-
-        ImGui::End();
-    }
-
-
-    // If game pads are present is connected render a tab with its properties
-    for (int i = Input::MAX_GAME_PADS; i--;)
-    {
-        if (Input::GetGamePadConnected(i))
-        {
-            bool gamePadInfoOpen = true;
-            if (ImGui::Begin((("Game Pad [" + std::to_string(i) + "] Data").c_str()) , &gamePadInfoOpen, ImGuiWindowFlags_AlwaysAutoResize))
-            {
-                ImGui::Text("%s", ("Game pad [" + Input::GetGamePadName(i) + "] properties:").c_str());
-                ImGui::Text("%s", ("Left gamepad stick: [" + std::to_string(Input::GetGamePadLeftStickAxis(i).x) + " || " + std::to_string(Input::GetGamePadLeftStickAxis(i).y) + "]").c_str());
-                ImGui::Text("%s", ("Right gamepad stick: [" + std::to_string(Input::GetGamePadRightStickAxis(i).x) + " || " + std::to_string(Input::GetGamePadRightStickAxis(i).y) + "]").c_str());
-                ImGui::Text("%s", ("Left trigger: [" + std::to_string(Input::GetGamePadLeftTriggerAxis(i)) + "]").c_str());
-                ImGui::Text("%s", ("Right trigger: [" + std::to_string(Input::GetGamePadRightTriggerAxis(i)) + "]").c_str());
-                ImGui::RadioButton("\"A\" pressed", Input::GetGamePadButtonPressed(GLFW_GAMEPAD_BUTTON_A, i));
-                ImGui::RadioButton("\"A\" held", Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A, i));
-                ImGui::RadioButton("\"A\" released", Input::GetGamePadButtonReleased(GLFW_GAMEPAD_BUTTON_A, i));
-
-                ImGui::End();
-            }
-        }
-    }
+    // Calculate an animated rotation value and update meshes
+    float rotation = glm::sin(Time::GetUpTime()) * 45.0f;
+    Mesh::worldMeshes[3]->transform.rotation.x = rotation;
+    Mesh::worldMeshes[4]->transform.rotation.x = rotation;
 }
-
 
 void Application::DoCameraMovement()
 {
@@ -145,4 +110,48 @@ void Application::DoCameraMovement()
     newCameraFrontDirection.y = (float) (glm::sin(glm::radians(pitch)));
     newCameraFrontDirection.z = (float) (glm::sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch)));
     camera.SetFrontDirection(glm::normalize(newCameraFrontDirection));
+}
+
+void Application::DisplayUI(VulkanRenderer &renderer)
+{
+    const ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoFocusOnAppearing |
+                                          ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
+
+    ImGui::SetNextWindowPos({ renderer.GetWindow().GetWidth() - 10.0f, 10.0f }, ImGuiCond_Always, { 1, 0 });
+    ImGui::SetNextWindowSizeConstraints({ (float) renderer.GetWindow().GetWidth() / 8, (float) renderer.GetWindow().GetHeight() / 8 }, { 10000, 10000 });
+
+    // Draw renderer information tab
+    bool rendererInfoOpen = true;
+    if (ImGui::Begin("Renderer Information", &rendererInfoOpen, WINDOW_FLAGS) || rendererInfoOpen)
+    {
+        ImGui::Text("%s", ("CPU Frame Time: " + std::to_string(Time::GetFPS()) + " FPS").c_str());
+        ImGui::Text("%s", ("GPU Draw Time: " + std::to_string(renderer.GetRendererInfo().drawTime) + " ms").c_str());
+        ImGui::Separator();
+        ImGui::Text("%s", ("Total meshes being drawn: " + std::to_string(renderer.GetRendererInfo().meshesDrawn)).c_str());
+        ImGui::Text("%s", ("Total vertices in scene: " + std::to_string(renderer.GetRendererInfo().verticesDrawn)).c_str());
+
+        ImGui::End();
+    }
+
+    // If game pads are present display their info
+    for (int i = Input::MAX_GAME_PADS; i--;)
+    {
+        if (Input::GetGamePadConnected(i))
+        {
+            bool gamePadInfoOpen = true;
+            if (ImGui::Begin((("Game Pad [" + std::to_string(i) + "] Data").c_str()) , &gamePadInfoOpen, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("%s", ("Game pad [" + Input::GetGamePadName(i) + "] properties:").c_str());
+                ImGui::Text("%s", ("Left gamepad stick: [" + std::to_string(Input::GetGamePadLeftStickAxis(i).x) + " || " + std::to_string(Input::GetGamePadLeftStickAxis(i).y) + "]").c_str());
+                ImGui::Text("%s", ("Right gamepad stick: [" + std::to_string(Input::GetGamePadRightStickAxis(i).x) + " || " + std::to_string(Input::GetGamePadRightStickAxis(i).y) + "]").c_str());
+                ImGui::Text("%s", ("Left trigger: [" + std::to_string(Input::GetGamePadLeftTriggerAxis(i)) + "]").c_str());
+                ImGui::Text("%s", ("Right trigger: [" + std::to_string(Input::GetGamePadRightTriggerAxis(i)) + "]").c_str());
+                ImGui::RadioButton("\"A\" pressed", Input::GetGamePadButtonPressed(GLFW_GAMEPAD_BUTTON_A, i));
+                ImGui::RadioButton("\"A\" held", Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A, i));
+                ImGui::RadioButton("\"A\" released", Input::GetGamePadButtonReleased(GLFW_GAMEPAD_BUTTON_A, i));
+
+                ImGui::End();
+            }
+        }
+    }
 }

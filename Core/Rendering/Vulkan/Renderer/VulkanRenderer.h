@@ -98,13 +98,13 @@ namespace Sierra::Core::Rendering::Vulkan
         /* --- TESTER --- */
         std::vector<Vertex> vertices
         {
-                { { -1.0, -1.0, -1.0 },{ 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
+                { { -1.0, -1.0, -1.0 },{ 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
                 { {  1.0, -1.0, -1.0 },{ 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } },
-                { {  1.0,  1.0, -1.0 },{ 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
+                { {  1.0,  1.0, -1.0 },{ 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
                 { { -1.0,  1.0, -1.0 },{ 1.0f, 1.0f, 0.0f }, { 0.0f, 1.0f } },
-                { { -1.0, -1.0,  1.0 },{ 0.0f, 1.0f, 1.0f }, { 1.0f, 1.0f } },
+                { { -1.0, -1.0,  1.0 },{ 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f } },
                 { {  1.0, -1.0,  1.0 },{ 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } },
-                { {  1.0,  1.0,  1.0 },{ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
+                { {  1.0,  1.0,  1.0 },{ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
                 { { -1.0,  1.0,  1.0 },{ 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f } }
         };
 
@@ -260,7 +260,7 @@ namespace Sierra::Core::Rendering::Vulkan
         /* --- DESCRIPTORS --- */
         std::unique_ptr<DescriptorSetLayout> descriptorSetLayout;
         void CreateDescriptorSetLayout();
-        std::unique_ptr<DescriptorPool> descriptorPool;
+        std::shared_ptr<DescriptorPool> descriptorPool;
         void CreateDescriptorPool();
         std::vector<std::unique_ptr<DescriptorSet>> uniformDescriptorSets;
         void CreateUniformDescriptorSets();
@@ -285,7 +285,6 @@ namespace Sierra::Core::Rendering::Vulkan
 
         std::shared_ptr<Texture> nullDiffuseTexture;
         std::shared_ptr<Texture> nullSpecularTexture;
-        std::unique_ptr<DescriptorSet> nullTexturesDescriptorSet;
         void CreateNullTextures();
 
         /* --- UNIFORM BUFFERS --- */

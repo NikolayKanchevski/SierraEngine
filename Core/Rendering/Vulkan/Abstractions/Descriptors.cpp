@@ -101,13 +101,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return *this;
     }
 
-    void Sierra::Core::Rendering::Vulkan::Abstractions::DescriptorPool::AllocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptorSet)
+    void Sierra::Core::Rendering::Vulkan::Abstractions::DescriptorPool::AllocateDescriptorSet(const VkDescriptorSetLayout givenDescriptorSetLayout, VkDescriptorSet &descriptorSet)
     {
         // Set up the allocation info
         VkDescriptorSetAllocateInfo allocateInfo{};
         allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocateInfo.descriptorPool = this->vkDescriptorPool;
-        allocateInfo.pSetLayouts = &descriptorSetLayout;
+        allocateInfo.pSetLayouts = &givenDescriptorSetLayout;
         allocateInfo.descriptorSetCount = 1;
 
         // Create the Vulkan descriptor set
@@ -119,10 +119,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    std::unique_ptr<DescriptorPool> DescriptorPool::Builder::Build(std::unique_ptr<DescriptorSetLayout> &givenSetLayout)
+    std::shared_ptr<DescriptorPool> DescriptorPool::Builder::Build(std::unique_ptr<DescriptorSetLayout> &givenSetLayout)
     {
         // Create the descriptor pool
-        return std::make_unique<DescriptorPool>(this->maxSets, this->poolCreateFlags, this->poolSizes, givenSetLayout);
+        return std::make_shared<DescriptorPool>(this->maxSets, this->poolCreateFlags, this->poolSizes, givenSetLayout);
     }
 
     DescriptorPool::DescriptorPool(uint32_t givenMaxSets, VkDescriptorPoolCreateFlags givenPoolCreateFlags, std::vector<VkDescriptorPoolSize> givenPoolSizes, std::unique_ptr<DescriptorSetLayout> &givenSetLayout)
@@ -153,7 +153,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     // ********************* Descriptor Set ********************* \\
 
-    DescriptorSet::DescriptorSet(std::unique_ptr<DescriptorPool> &givenDescriptorPool)
+    DescriptorSet::DescriptorSet(std::shared_ptr<DescriptorPool> &givenDescriptorPool)
         : descriptorPool(givenDescriptorPool), descriptorSetLayout(givenDescriptorPool->descriptorSetLayout)
     {
         // Create descriptor set to pool
@@ -238,7 +238,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkUpdateDescriptorSets(VulkanCore::GetLogicalDevice(), writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
     }
 
-    std::unique_ptr<DescriptorSet> DescriptorSet::Build(std::unique_ptr<DescriptorPool> &givenDescriptorPool)
+    std::unique_ptr<DescriptorSet> DescriptorSet::Build(std::shared_ptr<DescriptorPool> &givenDescriptorPool)
     {
         return std::make_unique<DescriptorSet>(givenDescriptorPool);
     }

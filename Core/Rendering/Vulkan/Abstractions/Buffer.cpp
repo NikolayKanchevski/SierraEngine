@@ -11,27 +11,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- SETTER METHODS --- */
 
-    Buffer::Builder &Buffer::Builder::SetMemorySize(const uint64_t givenMemorySize)
-    {
-        // Save the given memory size
-        this->memorySize = givenMemorySize;
-        return *this;
-    }
-
-    Buffer::Builder &Buffer::Builder::SetMemoryFlags(const VkMemoryPropertyFlags givenMemoryFlags)
-    {
-        // Save the given memory flags
-        this->memoryFlags = givenMemoryFlags;
-        return *this;
-    }
-
-    Buffer::Builder &Buffer::Builder::SetUsageFlags(const VkBufferUsageFlags givenBufferUsage)
-    {
-        // Save the given usage flags
-        this->bufferUsage = givenBufferUsage;
-        return *this;
-    }
-
     void Buffer::CopyFromPointer(void *pointer, uint64_t offset)
     {
         // Create an empty pointer
@@ -99,26 +78,26 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    std::unique_ptr<Buffer> Buffer::Builder::Build() const
+    std::unique_ptr<Buffer> Buffer::Create(const BufferCreateInfo bufferCreateInfo)
     {
-        // Create and return a new buffer
-        return std::make_unique<Buffer>(memorySize, memoryFlags, bufferUsage);
+        return std::make_unique<Buffer>(bufferCreateInfo);
     }
 
 
-        Buffer::Buffer(const uint64_t givenMemorySize, const VkMemoryPropertyFlags givenMemoryFlags, const VkBufferUsageFlags givenBufferUsage) : memorySize(givenMemorySize), memoryFlags(givenMemoryFlags), bufferUsage(givenBufferUsage)
+    Buffer::Buffer(const BufferCreateInfo bufferCreateInfo)
+        : memorySize(bufferCreateInfo.memorySize), memoryFlags(bufferCreateInfo.memoryFlags), bufferUsage(bufferCreateInfo.bufferUsage)
     {
         // Set up buffer creation info
-        VkBufferCreateInfo bufferCreateInfo{};
-        bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferCreateInfo.size = givenMemorySize;
-        bufferCreateInfo.usage = givenBufferUsage;
-        bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        VkBufferCreateInfo vkBufferCreateInfo{};
+        vkBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        vkBufferCreateInfo.size = memorySize;
+        vkBufferCreateInfo.usage = bufferUsage;
+        vkBufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
         // Create the Vulkan buffer
         VulkanDebugger::CheckResults(
-            vkCreateBuffer(VulkanCore::GetLogicalDevice(), &bufferCreateInfo, nullptr, &vkBuffer),
-            "Failed to create buffer with size of [" + std::to_string(givenMemorySize) + "] for [" + std::to_string(givenBufferUsage) + "] usage"
+            vkCreateBuffer(VulkanCore::GetLogicalDevice(), &vkBufferCreateInfo, nullptr, &vkBuffer),
+            "Failed to create buffer with size of [" + std::to_string(memorySize) + "] for [" + std::to_string(bufferUsage) + "] usage"
         );
 
         // Get the Vulkan buffer's memory requirements

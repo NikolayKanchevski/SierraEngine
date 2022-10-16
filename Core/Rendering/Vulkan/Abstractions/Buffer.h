@@ -11,27 +11,20 @@
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
+    struct BufferCreateInfo
+    {
+        uint64_t memorySize = 0;
+        VkMemoryPropertyFlags memoryFlags = 0;
+        VkBufferUsageFlags bufferUsage = 0;
+    };
+
     /// @brief An abstraction class to make managing Vulkan buffers easier.
     class Buffer
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Buffer(uint64_t givenMemorySize, VkMemoryPropertyFlags givenMemoryFlags, VkBufferUsageFlags givenBufferUsage);
-
-        class Builder
-        {
-        public:
-            Builder& SetMemorySize(uint64_t givenMemorySize);
-            Builder& SetMemoryFlags(VkMemoryPropertyFlags givenMemoryFlags);
-            Builder& SetUsageFlags(VkBufferUsageFlags givenBufferUsage);
-
-            [[nodiscard]] std::unique_ptr<Buffer> Build() const;
-
-        private:
-            uint64_t memorySize;
-            VkMemoryPropertyFlags memoryFlags;
-            VkBufferUsageFlags bufferUsage;
-        };
+        Buffer(BufferCreateInfo bufferCreateInfo);
+        [[nodiscard]] static std::unique_ptr<Buffer> Create(const BufferCreateInfo bufferCreateInfo);
 
         /* --- SETTER METHODS --- */
         void CopyFromPointer(void* pointer, uint64_t offset = 0);

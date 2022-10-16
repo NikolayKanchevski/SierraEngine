@@ -28,6 +28,9 @@ namespace Sierra::Core::Rendering::Vulkan
             .AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, DESCRIPTOR_COUNT)
             .AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, DESCRIPTOR_COUNT)
         .Build(descriptorSetLayout);
+
+        // Save the descriptor pool to VulkanCore
+        VulkanCore::SetDescriptorPool(descriptorPool);
     }
 
     void VulkanRenderer::CreateUniformDescriptorSets()

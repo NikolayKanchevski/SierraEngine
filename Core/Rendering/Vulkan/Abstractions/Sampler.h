@@ -10,29 +10,22 @@
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
+    struct SamplerCreateInfo
+    {
+        float minLod = 0.0f;
+        float maxLod = 13.0f;
+        float maxAnisotropy = 0.0f;
+        bool applyBilinearFiltering = true;
+        VkSamplerAddressMode samplerAddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    };
 
+    /// @brief An abstraction for the VkSampler object.
     class Sampler
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Sampler(bool isBilinearFilteringApplied, VkSamplerAddressMode givenSamplerAddressMode, float givenMinLod, float givenMaxLod, float givenMaxAnisotropy);
-
-        class Builder
-        {
-        public:
-            Builder& SetMaxAnisotropy(float givenMaxAnisotropy);
-            Builder& SetAddressMode(VkSamplerAddressMode givenAddressMode);
-            Builder& SetLod(glm::vec2 givenLod);
-            Builder& ApplyBilinearFiltering(bool isApplied);
-            [[nodiscard]] std::unique_ptr<Sampler> Build() const;
-
-        private:
-            float minLod = 0.0f;
-            float maxLod = 13.0f;
-            float maxAnisotropy = 0.0f;
-            bool applyBilinearFiltering = true;
-            VkSamplerAddressMode samplerAddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        };
+        Sampler(SamplerCreateInfo samplerCreateInfo);
+        static std::unique_ptr<Sampler> Create(SamplerCreateInfo samplerCreateInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkSampler GetVulkanSampler() const { return this->vkSampler; };

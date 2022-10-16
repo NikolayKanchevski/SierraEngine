@@ -5,6 +5,7 @@
 #include <functional>
 #include "VulkanRenderer.h"
 #include "../../../../Engine/Classes/Stopwatch.h"
+#include "../../../../Engine/Classes/MeshObject.h"
 
 using namespace Sierra::Engine::Classes;
 
@@ -52,6 +53,7 @@ namespace Sierra::Core::Rendering::Vulkan
         CreateNullTextures();
         CreateImGuiInstance();
 
+        auto meshModel = MeshObject::LoadModel("Models/Chieftain/T95_FV4201_Chieftain.fbx");
         auto &mesh = Mesh::RegisterMesh(vertices, meshIndices);
 
         window.Show();
@@ -118,8 +120,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
         vkDestroyQueryPool(this->logicalDevice, drawTimeQueryPool, nullptr);
 
-        nullDiffuseTexture->Destroy();
-        nullSpecularTexture->Destroy();
+        Texture::DestroyDefaultTextures();
 
         vkDestroyPipeline(logicalDevice, graphicsPipeline, nullptr);
         vkDestroyPipelineLayout(logicalDevice, graphicsPipelineLayout, nullptr);

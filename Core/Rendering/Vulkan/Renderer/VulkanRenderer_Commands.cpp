@@ -109,12 +109,12 @@ namespace Sierra::Core::Rendering::Vulkan
 
             // Send push constant data to shader
             vkCmdPushConstants(
-                    givenCommandBuffer, this->graphicsPipelineLayout,
-                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-                    pushConstantSize, &data
+                givenCommandBuffer, this->graphicsPipelineLayout,
+                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+                pushConstantSize, &data
             );
 
-            descriptorSets[1] = nullTexturesDescriptorSet->GetVulkanDescriptorSet();
+            descriptorSets[1] = mesh->GetDescriptorSet();
 //            descriptorSetsPtr[2] = specularTextures[mesh.specularTextureID].descriptorSet;
 
             vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipelineLayout, 0, 2, descriptorSets, 0, nullptr);

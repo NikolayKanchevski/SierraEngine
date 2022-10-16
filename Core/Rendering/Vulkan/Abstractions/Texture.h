@@ -20,51 +20,45 @@ typedef enum TextureType
     TEXTURE_TYPE_NORMAL = 4
 } TextureType;
 
+#define DIFFUSE_TEXTURE_BINDING 1
+#define SPECULAR_TEXTURE_BINDING 2
+#define TOTAL_TEXTURE_TYPES_COUNT 2
+
+#define TextureBindingToArrayIndex(binding)(binding - 1)
+#define TextureTypeToArrayIndex(textureType)(textureType - 1)
+#define TextureTypeToBinding(textureType)(textureType)
+
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     class DescriptorSetLayout;
     class DescriptorPool;
     class DescriptorSet;
 
+    struct TextureCreateInfo
+    {
+        std::string filePath = "";
+
+        std::string name = "";
+        TextureType textureType = TEXTURE_TYPE_NONE;
+        bool mipMappingEnabled = false;
+
+        SamplerCreateInfo samplerCreateInfo{};
+        float minLod = 0.0f;
+        float maxLod = 13.0f;
+        float maxAnisotropy = 0.0f;
+        bool applyBilinearFiltering = true;
+        VkSamplerAddressMode samplerAddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    };
+
     class Texture
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Texture(stbi_uc *stbImage, const std::string givenFilePath, uint32_t width, uint32_t height, TextureType givenTextureType, int givenColorChannelsCount, uint64_t givenMemorySize, bool givenMipMappingEnabled, Sampler::Builder &samplerBuilder,
-                std::unique_ptr<DescriptorSetLayout> &givenDescriptorSetLayout, std::unique_ptr<DescriptorPool> &givenDescriptorPool, std::string givenName);
+        Texture(stbi_uc *stbImage, uint32_t width, uint32_t height, uint32_t givenColorChannelsCount, TextureCreateInfo textureCreateInfo);
+        static std::shared_ptr<Texture> Create(TextureCreateInfo textureCreateInfo, bool setDefaultTexture = false);
 
-        class Builder
-        {
-        public:
-            Builder(std::unique_ptr<DescriptorPool> &givenDescriptorPool);
-            Builder& SetName(std::string givenName);
-            Builder& SetTextureType(TextureType givenTextureType);
-            Builder& EnableMipMapGeneration(bool isApplied);
-
-            Builder& SetMaxAnisotropy(float givenMaxAnisotropy);
-            Builder& SetAddressMode(VkSamplerAddressMode givenAddressMode);
-            Builder& SetLod(glm::vec2 givenLod);
-            Builder& ApplyBilinearFiltering(bool isApplied);
-
-            [[nodiscard]] std::shared_ptr<Texture> Build(std::string givenFilePath);
-
-        private:
-            std::string name = "";
-            TextureType textureType = TEXTURE_TYPE_NONE;
-
-            bool mipMappingEnabled = false;
-            std::unique_ptr<DescriptorPool> &descriptorPool;
-
-            uint64_t imageSize;
-
-            float minLod = 0.0f;
-            float maxLod = 13.0f;
-            float maxAnisotropy = 0.0f;
-            bool applyBilinearFiltering = true;
-            VkSamplerAddressMode samplerAddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        };
-
-        /* --- SETTER METHODS --- */
+        /* --- PROPERTIES --- */
+        std::string name;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline std::string GetName() const
@@ -97,22 +91,25 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline VkSampler GetVulkanSampler() const
         { return sampler->GetVulkanSampler(); }
 
-        [[nodiscard]] inline std::unique_ptr<Image>& GetImage()
+        [[nodiscard]] inline std::unique_ptr<Image> &GetImage()
         { return this->image; }
 
-        [[nodiscard]] inline std::unique_ptr<Sampler>& GetSampler()
+        [[nodiscard]] inline std::unique_ptr<Sampler> &GetSampler()
         { return this->sampler; }
 
+        [[nodiscard]] static inline std::shared_ptr<Texture>& GetDefaultTexture(TextureType textureType)
+        { return defaultTextures[TextureTypeToArrayIndex(textureType)]; }
+
         /* --- SETTER METHODS --- */
+        static void DestroyDefaultTextures();
 
         /* --- DESTRUCTOR --- */
         void Destroy();
         Texture(const Texture &) = delete;
         Texture &operator=(const Texture &) = delete;
-    private:
-        static std::unordered_map<std::string, std::shared_ptr<Texture>> texturePool;
 
-        std::string name;
+        static std::unordered_map<std::string, std::shared_ptr<Texture>> texturePool;
+    private:
         std::string filePath = "";
 
         TextureType textureType;
@@ -126,6 +123,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         std::unique_ptr<Image> image;
         void GenerateMipMaps();
+
+        static std::shared_ptr<Texture> defaultTextures[TOTAL_TEXTURE_TYPES_COUNT];
     };
 
 }

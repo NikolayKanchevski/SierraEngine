@@ -7,48 +7,43 @@
 #include <vulkan/vulkan_core.h>
 #include <glm/vec3.hpp>
 #include <memory>
+#include <cstdint>
 #include "../VulkanDebugger.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
-    /// Abstraction to simplify the process of working with Vulkan images and image views.
+    struct ImageCreateInfo
+    {
+        glm::vec3 dimensions { 0, 0, 1 };
+        VkFormat format = VK_FORMAT_UNDEFINED;
+        uint32_t mipLevels = 1;
+
+        VkImageTiling imageTiling = VK_IMAGE_TILING_OPTIMAL;
+        VkSampleCountFlagBits sampling = VK_SAMPLE_COUNT_1_BIT;
+
+        VkImageUsageFlags usageFlags = 0;
+        VkMemoryPropertyFlags memoryFlags = 0;
+    };
+
+    struct SwapchainImageCreateInfo
+    {
+        VkImage image = VK_NULL_HANDLE;
+        VkFormat format = VK_FORMAT_UNDEFINED;
+        VkSampleCountFlagBits sampling = VK_SAMPLE_COUNT_1_BIT;
+        glm::vec3 dimensions = { 0, 0, 0 };
+    };
+
+    /// @brief Abstraction to simplify the process of working with Vulkan images and image views.
     class Image
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Image(glm::vec3 givenDimensions, uint32_t givenMipLevels, VkSampleCountFlagBits givenSampling, VkFormat givenFormat, VkImageTiling imageTiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags propertyFlags);
+        Image(ImageCreateInfo imageCreateInfo);
+        [[nodiscard]] static std::unique_ptr<Image> Create(ImageCreateInfo imageCreateInfo);
 
         // Only to be used for swapchain images!
-        Image(VkImage givenVkImage, VkFormat givenFormat, VkSampleCountFlagBits givenSampling, glm::vec3 givenDimensions, uint32_t givenMipLevels, VkImageLayout givenLayout);
-        static std::unique_ptr<Image> Build(VkImage givenVkImage, VkFormat givenFormat, VkSampleCountFlagBits givenSampling, glm::vec3 givenDimensions, uint32_t givenMipLevels = 1, VkImageLayout givenLayout = VK_IMAGE_LAYOUT_UNDEFINED);
-
-        class Builder
-        {
-        public:
-            Builder& SetDimensions(glm::vec3 givenDimensions);
-            Builder& SetWidth(uint32_t givenWidth);
-            Builder& SetHeight(uint32_t givenHeight);
-            Builder& SetDepth(uint32_t givenDepth);
-
-            Builder& SetMipLevels(uint32_t givenMipLevels);
-            Builder& SetFormat(VkFormat givenFormat);
-            Builder& SetUsageFlags(VkImageUsageFlags givenUsageFlags);
-            Builder& SetMemoryFlags(VkMemoryPropertyFlags givenMemoryFlags);
-            Builder& SetImageTiling(VkImageTiling givenImageTiling);
-            Builder& SetSampling(VkSampleCountFlagBits givenSampling);
-            [[nodiscard]] std::unique_ptr<Image> Build() const;
-
-        private:
-            glm::vec3 dimensions { 0, 0, 1 };
-            uint32_t mipLevels = 1;
-
-            VkFormat format;
-            VkImageUsageFlags usageFlags;
-            VkMemoryPropertyFlags memoryFlags;
-
-            VkImageTiling imageTiling = VK_IMAGE_TILING_OPTIMAL;
-            VkSampleCountFlagBits sampling = VK_SAMPLE_COUNT_1_BIT;
-        };
+        Image(SwapchainImageCreateInfo swapchainImageCreateInfo);
+        static std::unique_ptr<Image> CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo);
 
         /* --- SETTER METHODS --- */
         void CreateImageView(VkImageAspectFlags givenAspectFlags);
@@ -91,20 +86,21 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
+        inline ~Image() { Destroy(); }
         Image(const Image &) = delete;
         Image &operator=(const Image &) = delete;
 
     private:
-        glm::vec3 dimensions;
+        glm::vec3 dimensions { 0, 0, 1 };
 
-        uint32_t mipLevels;
-        VkFormat format;
+        uint32_t mipLevels = 1;
+        VkFormat format = VK_FORMAT_UNDEFINED;
         VkSampleCountFlagBits sampling;
         VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
         VkImage vkImage = VK_NULL_HANDLE;
-        VkImageView vkImageView;
-        VkDeviceMemory vkImageMemory;
+        VkImageView vkImageView = VK_NULL_HANDLE;
+        VkDeviceMemory vkImageMemory = VK_NULL_HANDLE;
 
         bool imageViewGenerated = false;
         bool swapchainImage = false;

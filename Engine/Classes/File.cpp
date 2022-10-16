@@ -12,9 +12,28 @@
 namespace Sierra::Engine::Classes::File
 {
 
-    std::string TrimPath(const std::string &filePath)
+    std::string GetFileNameFromPath(const std::string &filePath, const bool includeExtension)
+    {
+        size_t startIndex = filePath.find_last_of('/') + 1;
+        size_t endIndex = filePath.size() - startIndex;
+
+        if (!includeExtension)
+        {
+            endIndex -= GetFileExtensionFromPath(filePath, true).size();
+        }
+
+        return filePath.substr(startIndex, endIndex);
+    }
+
+    std::string RemoveFileNameFromPath(const std::string &filePath)
     {
         size_t index = filePath.find_last_of('/') + 1;
+        return filePath.substr(0, index);
+    }
+
+    std::string GetFileExtensionFromPath(const std::string &filePath, const bool includeDot)
+    {
+        size_t index = filePath.find_last_of('.') + !includeDot;
         return filePath.substr(index);
     }
 
@@ -22,7 +41,6 @@ namespace Sierra::Engine::Classes::File
     {
         std::string fileExtension = fileName.substr(fileName.find_last_of('.') + 1);
         size_t index = directory.find_last_of('/') + 1;
-
 
         for (std::filesystem::recursive_directory_iterator i(directory), end; i != end; ++i)
         {

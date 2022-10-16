@@ -15,15 +15,18 @@ using namespace Sierra::Engine::Classes;
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     std::unordered_map<std::string, std::shared_ptr<Texture>> Texture::texturePool;
+    std::shared_ptr<Texture> Texture::defaultTextures[TOTAL_TEXTURE_TYPES_COUNT];
 
     /* --- CONSTRUCTORS --- */
-    Texture::Texture(stbi_uc *stbImage, const std::string givenFilePath, const uint32_t width, const uint32_t height, const TextureType givenTextureType, const int givenColorChannelsCount, const uint64_t givenMemorySize, const bool givenMipMappingEnabled, Sampler::Builder &samplerBuilder, std::unique_ptr<DescriptorSetLayout> &givenDescriptorSetLayout, std::unique_ptr<DescriptorPool> &givenDescriptorPool, const std::string givenName)
-        : name(givenName), filePath(givenFilePath), textureType(givenTextureType), sampler(samplerBuilder.Build()), colorChannelsCount(givenColorChannelsCount), memorySize(givenMemorySize)
+
+    Texture::Texture(stbi_uc *stbImage, const uint32_t width, const uint32_t height, const uint32_t givenColorChannelsCount, TextureCreateInfo textureCreateInfo)
+        : name(textureCreateInfo.name), filePath(textureCreateInfo.filePath), textureType(textureCreateInfo.textureType), mipMappingEnabled(textureCreateInfo.mipMappingEnabled), colorChannelsCount(givenColorChannelsCount)
     {
+        this->sampler = Sampler::Create(textureCreateInfo.samplerCreateInfo);
+
         // If mip mapping is enabled calculate mip levels
-        if (givenMipMappingEnabled)
+        if (mipMappingEnabled)
         {
-            this->mipMappingEnabled = true;
             mipMapLevels = static_cast<uint32_t>(glm::floor(std::log2(glm::max(width, height)) + 1));
         }
 
@@ -31,11 +34,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->memorySize = static_cast<uint32_t>(width * height * 4);
 
         // Create the staging buffer
-        auto stagingBuffer = Buffer::Builder()
-            .SetMemorySize(memorySize)
-            .SetMemoryFlags(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-            .SetUsageFlags(VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
-        .Build();
+
+        auto stagingBuffer = Buffer::Create({
+            .memorySize = memorySize,
+            .memoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            .bufferUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+        });
 
         // Copy the image data to the staging buffer
         stagingBuffer->CopyFromPointer(stbImage);
@@ -55,14 +59,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Create the texture image
-        this->image = Image::Builder()
-            .SetWidth(width)
-            .SetHeight(height)
-            .SetMipLevels(mipMapLevels)
-            .SetFormat(textureImageFormat)
-            .SetUsageFlags(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
-            .SetMemoryFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-        .Build();
+        this->image = Image::Create({
+            .dimensions = { width, height, 1 },
+            .format = textureImageFormat,
+            .mipLevels = mipMapLevels,
+            .usageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            .memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        });
 
         // Transition the layout of the image, so it can be used for copying
         image->TransitionLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -82,107 +85,48 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         image->CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT);
     }
 
-    Texture::Builder::Builder(std::unique_ptr<DescriptorPool> &givenDescriptorPool)
-        : descriptorPool(givenDescriptorPool)
-    {
-
-    }
-
-    Texture::Builder &Texture::Builder::SetName(const std::string givenName)
-    {
-        // Save given name
-        this->name = givenName;
-        return *this;
-    }
-
-    Texture::Builder &Texture::Builder::SetTextureType(const TextureType givenTextureType)
-    {
-        // Save given texture type
-        this->textureType = givenTextureType;
-        return *this;
-    }
-
-    Texture::Builder &Texture::Builder::EnableMipMapGeneration(const bool isApplied)
-    {
-        // Save given mip generation toggle
-        mipMappingEnabled = isApplied;
-        return *this;
-    }
-
-    Texture::Builder &Texture::Builder::SetMaxAnisotropy(float givenMaxAnisotropy)
-    {
-        // Check if sampler anisotropy is supported by the GPU
-        if (VulkanCore::GetPhysicalDeviceFeatures().samplerAnisotropy)
-        {
-            // Clamp the anisotropy between 0.0 and 1.0 and multiply it by the maximum supported anisotropy
-            givenMaxAnisotropy = Math::Clamp(givenMaxAnisotropy, 0.0f, 1.0f);
-            this->maxAnisotropy = (givenMaxAnisotropy / 1.0f) * VulkanCore::GetPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
-        }
-        else
-        {
-            VulkanDebugger::ThrowWarning("Sampler anisotropy is requested but not supported by the GPU. The feature has automatically been disabled");
-        }
-
-        return *this;
-    }
-
-    Texture::Builder &Texture::Builder::SetAddressMode(const VkSamplerAddressMode givenAddressMode)
-    {
-        // Save the provided address mode
-        samplerAddressMode = givenAddressMode;
-        return *this;
-    }
-
-    Texture::Builder &Texture::Builder::SetLod(const glm::vec2 givenLod)
-    {
-        // Save the provided LOD values
-        minLod = givenLod.x;
-        maxLod = givenLod.y;
-        return *this;
-    }
-
-    Texture::Builder &Texture::Builder::ApplyBilinearFiltering(const bool isApplied)
-    {
-        // Save the bilinear filtering preference
-        applyBilinearFiltering = isApplied;
-        return *this;
-    }
-
-    std::shared_ptr<Texture> Texture::Builder::Build(const std::string givenFilePath)
+    std::shared_ptr<Texture> Texture::Create(TextureCreateInfo textureCreateInfo, const bool setDefaultTexture)
     {
         // Check if the texture file has already been loaded to texture
-        if (texturePool.count(givenFilePath) != 0)
+        if (texturePool.count(textureCreateInfo.filePath) != 0)
         {
             // If the same texture file has been used check to see if its sampler is the same as this one
-            Sampler *other = (&texturePool[givenFilePath]->GetSampler())->get();
-            if (other->IsBilinearFilteringApplied() == applyBilinearFiltering && other->GetMinLod() == minLod && other->GetMaxLod() == maxLod  && other->GetMaxAnisotropy() == maxAnisotropy && other->GetAddressMode() == samplerAddressMode)
+            Sampler *other = (&texturePool[textureCreateInfo.filePath]->GetSampler())->get();
+            if (other->IsBilinearFilteringApplied() == textureCreateInfo.applyBilinearFiltering && other->GetMinLod() == textureCreateInfo.minLod && other->GetMaxLod() == textureCreateInfo.maxLod  && other->GetMaxAnisotropy() == textureCreateInfo.maxAnisotropy && other->GetAddressMode() == textureCreateInfo.samplerAddressMode)
             {
                 // If so return it without creating a new texture
-                return texturePool[givenFilePath];
+                return texturePool[textureCreateInfo.filePath];
             }
         }
 
         // Set a default name if none is assigned
-        if (name == "") this->name = givenFilePath;
+        if (textureCreateInfo.name == "") textureCreateInfo.name = textureCreateInfo.filePath;
 
         // Number of channels texture has
         int channels;
 
         // Load image data
         int width, height;
-        stbi_uc *stbiImage = stbi_load(givenFilePath.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+        stbi_uc *stbiImage = stbi_load(textureCreateInfo.filePath.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
         // Check if image loading has been successful
-        if (!stbiImage) VulkanDebugger::ThrowError("Failed to load the texture file [" + givenFilePath + "]");
-
-        // Calculate memory size for image
-        const uint64_t calculatedMemorySize = width * height * channels;
+        if (!stbiImage) VulkanDebugger::ThrowError("Failed to load the texture file [" + textureCreateInfo.filePath + "]");
 
         // If texture does not exist already
-        auto texture = std::make_shared<Texture>(stbiImage, givenFilePath, width, height, textureType, channels, calculatedMemorySize, mipMappingEnabled, Sampler::Builder().SetLod({minLod, maxLod }).SetAddressMode(samplerAddressMode).SetMaxAnisotropy(maxAnisotropy).ApplyBilinearFiltering(applyBilinearFiltering), descriptorPool->GetDescriptorSetLayout(), descriptorPool, name);
-        texturePool[givenFilePath] = texture;
-        return texture;
+        auto &textureReference = texturePool[textureCreateInfo.filePath] = std::make_shared<Texture>(stbiImage, width, height, channels, textureCreateInfo);
+        if (setDefaultTexture)
+        {
+            if (textureCreateInfo.textureType == TEXTURE_TYPE_NONE)
+            {
+                VulkanDebugger::ThrowError("Cannot set texture loaded from [" + textureCreateInfo.filePath + "] as default texture for its type, as it is type is TEXTURE_TYPE_NONE");
+            }
+
+            defaultTextures[TextureTypeToArrayIndex(textureCreateInfo.textureType)] = textureReference;
+        }
+
+        return textureReference;
     }
+
 
     /* --- SETTER METHODS --- */
 
@@ -288,6 +232,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // End the current command buffer
         VulkanUtilities::EndSingleTimeCommands(commandBuffer);
+    }
+
+    void Texture::DestroyDefaultTextures()
+    {
+        for (const auto &texture : defaultTextures)
+        {
+            texture->Destroy();
+        }
     }
 
     /* --- DESTRUCTOR --- */
