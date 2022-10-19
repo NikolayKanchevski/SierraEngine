@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../Components/Mesh.h"
+#include "Entity.h"
 
 #include <vector>
 #include <assimp/scene.h>
@@ -33,20 +34,21 @@ namespace Sierra::Engine::Classes
         [[nodiscard]] inline uint32_t GetVertexCount() const { return vertexCount; }
         [[nodiscard]] inline std::string GetName() const { return modelName; }
         [[nodiscard]] inline std::string GetModelLocation() const { return modelLocation; }
+        [[nodiscard]] inline Mesh& GetMesh(const uint32_t meshIndex) const { return World::GetEnttRegistry().get<Mesh>(meshEntities[meshIndex]); }
 
         /* --- DESTRUCTOR --- */
         MeshObject(const MeshObject &) = delete;
         MeshObject &operator=(const MeshObject &) = delete;
     private:
-
-        uint32_t vertexCount;
+        uint32_t vertexCount = 0;
 
         std::string modelName;
         std::string modelLocation;
+        std::vector<entt::entity> meshEntities;
 
-        void ListDeeperNode(aiNode *node, const aiScene *assimpScene);
-        std::unique_ptr<Mesh>& LoadAssimpMesh(aiMesh *mesh);
-        void ApplyAssimpMeshTextures(std::unique_ptr<Mesh> &mesh, aiMaterial *assimpMaterial);
+        void ListDeeperNode(aiNode* node, const aiScene* assimpScene, Entity* parentEntity);
+        Mesh LoadAssimpMesh(aiMesh* mesh);
+        void ApplyAssimpMeshTextures(Mesh &meshComponent, aiMaterial *assimpMaterial);
     };
 
 }

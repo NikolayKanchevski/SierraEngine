@@ -59,7 +59,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Check if the two buffers are compatible
         if (this->memorySize != otherBuffer->memorySize)
         {
-            VulkanDebugger::ThrowError("Cannot copy data from one buffer to another with a different memory size!");
+            Debugger::ThrowError("Cannot copy data from one buffer to another with a different memory size!");
         }
 
         // Create a temporary command buffer
@@ -95,7 +95,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkBufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
         // Create the Vulkan buffer
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkCreateBuffer(VulkanCore::GetLogicalDevice(), &vkBufferCreateInfo, nullptr, &vkBuffer),
             "Failed to create buffer with size of [" + std::to_string(memorySize) + "] for [" + std::to_string(bufferUsage) + "] usage"
         );
@@ -111,7 +111,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         memoryAllocationInfo.memoryTypeIndex = VulkanUtilities::FindMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryFlags);
 
         // Allocate buffer's memory
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkAllocateMemory(VulkanCore::GetLogicalDevice(), &memoryAllocationInfo, nullptr, &vkBufferMemory),
             "Failed to allocate memory for buffer"
         );

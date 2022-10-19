@@ -4,7 +4,7 @@
 
 #include <utility>
 #include "Window.h"
-#include "Vulkan/VulkanDebugger.h"
+#include "../Debugger.h"
 #include "../../Engine/Classes/Stopwatch.h"
 #include "../../Engine/Classes/Cursor.h"
 #include "../../Engine/Classes/Input.h"
@@ -65,13 +65,13 @@ namespace Sierra::Core::Rendering
 
         if (!glfwVulkanSupported())
         {
-            VulkanDebugger::ThrowError("Vulkan not supported on this system");
+            Debugger::ThrowError("Vulkan not supported on this system");
             exit(-1);
         }
 
         if (maximized && !setResizable)
         {
-            VulkanDebugger::ThrowWarning("A maximized window cannot be created unless resizing is allowed");
+            Debugger::ThrowWarning("A maximized window cannot be created unless resizing is allowed");
             maximized = false;
         }
 
@@ -91,7 +91,7 @@ namespace Sierra::Core::Rendering
         InitWindow();
 
         #ifdef DEBUG
-            Sierra::Core::Rendering::Vulkan::VulkanDebugger::DisplayInfo(
+            Sierra::Core::Debugger::DisplayInfo(
                 "Window [" + this->title + "] successfully created! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms"
             );
         #endif
@@ -159,7 +159,7 @@ namespace Sierra::Core::Rendering
     /* --- CALLBACKS --- */
     void Window::GlfwErrorCallback(int errorCode, const char *description)
     {
-        Vulkan::VulkanDebugger::ThrowWarning("GLFW Error: " + std::string(description) + " (" + std::to_string(errorCode) + ")");
+        Debugger::ThrowWarning("GLFW Error: " + std::string(description) + " (" + std::to_string(errorCode) + ")");
     }
 
     void Window::WindowResizeCallback(GLFWwindow *windowPtr, int newWidth, int newHeight)

@@ -5,16 +5,16 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include "Transform.h"
+#include "InternalComponents.h"
 
 namespace Sierra::Engine::Components
 {
 
-    class Camera
+    class Camera : public Component
     {
     public:
         /* --- PROPERTIES --- */
-        Transform transform { .position = { 0, 0, 10 } };
+//        Transform transform ;
 
         float fov = 45.0f;
 

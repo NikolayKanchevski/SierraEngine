@@ -19,7 +19,7 @@
 #include <imgui_impl_vulkan.h>
 
 #include "../VulkanCore.h"
-#include "../VulkanDebugger.h"
+#include "../../../Debugger.h"
 #include "../VulkanUtilities.h"
 
 #include "../../Window.h"
@@ -30,17 +30,9 @@
 #include "../Abstractions/Sampler.h"
 #include "../Abstractions/Buffer.h"
 #include "../Abstractions/Texture.h"
-
-#include "../../../../Engine/Components/Lighting/DirectionalLight.h"
-#include "../../../../Engine/Components/Lighting/PointLight.h"
-#include "../../../../Engine/Components/Lighting/Spotlight.h"
-#include "../../../../Engine/Components/Mesh.h"
-
-#define MAX_UINT32_T 4294967295
-#define MAX_UINT64_T 0xFFFFFFFFFFFFFFFF
+#include "../../../../Engine/Structures/Vertex.h"
 
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
-using namespace Sierra::Engine::Components;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -70,7 +62,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
         /// @brief Creates a new renderer and a window without the need of setting its size. It will automatically be 800x600 or,
         /// if setMaximized, as big as it can be on your display.
-        /// @param givenTitle What the givenTitle / name of the window should be.
+        /// @param givenTitle What the givenTitle / tag of the window should be.
         /// @param setMaximized A bool indicating whether the window should use all the space on your screen and start setMaximized.
         /// @param setResizable Whether the window is going to be setResizable or not.
         /// @param setFocusRequirement Whether the window requires to be focused in order to draw and handle events.
@@ -95,29 +87,6 @@ namespace Sierra::Core::Rendering::Vulkan
         VulkanRenderer &operator=(const VulkanRenderer &) = delete;
 
     private:
-        /* --- TESTER --- */
-        std::vector<Vertex> vertices
-        {
-                { { -1.0, -1.0, -1.0 },{ 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
-                { {  1.0, -1.0, -1.0 },{ 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } },
-                { {  1.0,  1.0, -1.0 },{ 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
-                { { -1.0,  1.0, -1.0 },{ 1.0f, 1.0f, 0.0f }, { 0.0f, 1.0f } },
-                { { -1.0, -1.0,  1.0 },{ 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f } },
-                { {  1.0, -1.0,  1.0 },{ 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } },
-                { {  1.0,  1.0,  1.0 },{ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
-                { { -1.0,  1.0,  1.0 },{ 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f } }
-        };
-
-        std::vector<uint32_t> meshIndices
-        {
-                0, 1, 3, 3, 1, 2,
-                1, 5, 2, 2, 5, 6,
-                5, 4, 6, 6, 4, 7,
-                4, 0, 7, 7, 0, 3,
-                3, 2, 7, 7, 2, 6,
-                4, 5, 0, 0, 5, 1
-        };
-
         /* --- GENERAL --- */
         Window window;
         void Start();

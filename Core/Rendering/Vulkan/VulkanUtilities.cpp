@@ -5,7 +5,7 @@
 #include <vector>
 #include "VulkanUtilities.h"
 #include "VulkanCore.h"
-#include "VulkanDebugger.h"
+#include "../../Debugger.h"
 #include "../../../Engine/Classes/File.h"
 
 using namespace Sierra::Engine::Classes;
@@ -39,7 +39,7 @@ namespace Sierra::Core::Rendering::Vulkan
         commandBufferAllocateInfo.commandBufferCount = 1;
 
         VkCommandBuffer commandBuffer;
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
                 vkAllocateCommandBuffers(VulkanCore::GetLogicalDevice(), &commandBufferAllocateInfo, &commandBuffer),
                 "Failed to allocate single time command buffer"
         );
@@ -81,7 +81,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Create shader module
         VkShaderModule shaderModule;
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkCreateShaderModule(VulkanCore::GetLogicalDevice(), &moduleCreateInfo, nullptr, &shaderModule),
             "Failed to create shader module for [" + fileName + "]"
         );

@@ -35,11 +35,11 @@ namespace Sierra::Core::Rendering::Vulkan
     void VulkanRenderer::Draw()
     {
         // Wait for the fences to be signalled
-        vkWaitForFences(this->logicalDevice, 1, &frameBeingRenderedFences[currentFrame], VK_TRUE, MAX_UINT64_T);
+        vkWaitForFences(this->logicalDevice, 1, &frameBeingRenderedFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
         // Get the current swapchain image
         uint32_t imageIndex;
-        VkResult imageAcquireResult = vkAcquireNextImageKHR(this->logicalDevice, this->swapchain, MAX_UINT64_T, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        VkResult imageAcquireResult = vkAcquireNextImageKHR(this->logicalDevice, this->swapchain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
         if (imageAcquireResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
@@ -70,7 +70,7 @@ namespace Sierra::Core::Rendering::Vulkan
         submitInfo.pWaitDstStageMask = waitStages.data();
 
         // Submit the queue
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkQueueSubmit(graphicsQueue, 1, &submitInfo, frameBeingRenderedFences[currentFrame]),
             "Failed to submit graphics queue"
         );

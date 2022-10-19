@@ -71,7 +71,7 @@ namespace Sierra::Engine::Classes
         /// @brief Returns the vertical mouse scroll delta.
         [[nodiscard]] static float GetVerticalMouseScroll();
 
-        /// @brief Gets the model name of a given player's game pad.
+        /// @brief Gets the model tag of a given player's game pad.
         [[nodiscard]] static std::string GetGamePadName(uint32_t player = 0);
 
         /// @brief Checks whether a button on a given gamepad is pressed.

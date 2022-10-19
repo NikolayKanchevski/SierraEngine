@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "Descriptors.h"
-#include "../VulkanDebugger.h"
+#include "../../../Debugger.h"
 #include "../VulkanCore.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
@@ -18,7 +18,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         if (bindings.count(binding) != 0)
         {
-            VulkanDebugger::ThrowError("Binding [" + std::to_string(binding) + "] already in use by a [" + std::to_string(bindings[binding].descriptorType) + "] descriptor");
+            Debugger::ThrowError("Binding [" + std::to_string(binding) + "] already in use by a [" + std::to_string(bindings[binding].descriptorType) + "] descriptor");
         }
 
         // Set up the layout binding info
@@ -62,7 +62,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         layoutCreateInfo.pBindings = layoutBindings.data();
 
         // Create the Vulkan descriptor set layout
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkCreateDescriptorSetLayout(VulkanCore::GetLogicalDevice(), &layoutCreateInfo, nullptr, &vkDescriptorSetLayout),
             "Failed to create descriptor layout with [" + std::to_string(layoutCreateInfo.bindingCount) + "] binging(s)"
         );
@@ -111,7 +111,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         allocateInfo.descriptorSetCount = 1;
 
         // Create the Vulkan descriptor set
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkAllocateDescriptorSets(VulkanCore::GetLogicalDevice(), &allocateInfo, &descriptorSet),
             "Failed to allocate descriptor set"
         );
@@ -137,7 +137,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         descriptorPoolCreateInfo.pPoolSizes = givenPoolSizes.data();
 
         // Create the Vulkan descriptor pool
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkCreateDescriptorPool(VulkanCore::GetLogicalDevice(), &descriptorPoolCreateInfo, nullptr, &vkDescriptorPool),
             "Failed to create descriptor pool with [" + std::to_string(givenMaxSets) + "] max sets and [" + std::to_string(descriptorPoolCreateInfo.poolSizeCount) + "] pool sizes"
         );
@@ -165,14 +165,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Check if the current binding is not available
         if (descriptorSetLayout->bindings.count(binding) == 0)
         {
-            VulkanDebugger::ThrowError("Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+            Debugger::ThrowError("Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
         }
 
         // Get the binding description and check if it expects more than 1 descriptors
         VkDescriptorSetLayoutBinding bindingDescription = descriptorSetLayout->bindings[binding];
         if (bindingDescription.descriptorCount != 1)
         {
-            VulkanDebugger::ThrowError("Trying to bind [" + std::to_string(bindingDescription.descriptorCount) + "] descriptors while only 1 at a time is supported");
+            Debugger::ThrowError("Trying to bind [" + std::to_string(bindingDescription.descriptorCount) + "] descriptors while only 1 at a time is supported");
         }
 
         VkDescriptorBufferInfo bufferInfo{};
@@ -199,14 +199,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Check if the current binding is not available
         if (descriptorSetLayout->bindings.count(binding) == 0)
         {
-            VulkanDebugger::ThrowError("Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+            Debugger::ThrowError("Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
         }
 
         // Get the binding description and check if it expects more than 1 descriptors
         VkDescriptorSetLayoutBinding bindingDescription = descriptorSetLayout->bindings[binding];
         if (bindingDescription.descriptorCount != 1)
         {
-            VulkanDebugger::ThrowError("Trying to bind [" + std::to_string(bindingDescription.descriptorCount) + "] descriptors while only 1 at a time is supported");
+            Debugger::ThrowError("Trying to bind [" + std::to_string(bindingDescription.descriptorCount) + "] descriptors while only 1 at a time is supported");
         }
 
         // Create write descriptor

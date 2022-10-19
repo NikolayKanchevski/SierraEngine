@@ -54,7 +54,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 textureImageFormat = VK_FORMAT_R8G8B8A8_SRGB;
                 break;
             default:
-                VulkanDebugger::ThrowError("Texture format not supported");
+                Debugger::ThrowError("Texture format not supported");
                 break;
         }
 
@@ -99,7 +99,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
         }
 
-        // Set a default name if none is assigned
+        // Set a default tag if none is assigned
         if (textureCreateInfo.name == "") textureCreateInfo.name = textureCreateInfo.filePath;
 
         // Number of channels texture has
@@ -110,7 +110,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         stbi_uc *stbiImage = stbi_load(textureCreateInfo.filePath.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
         // Check if image loading has been successful
-        if (!stbiImage) VulkanDebugger::ThrowError("Failed to load the texture file [" + textureCreateInfo.filePath + "]");
+        if (!stbiImage) Debugger::ThrowError("Failed to load the texture file [" + textureCreateInfo.filePath + "]");
 
         // If texture does not exist already
         auto &textureReference = texturePool[textureCreateInfo.filePath] = std::make_shared<Texture>(stbiImage, width, height, channels, textureCreateInfo);
@@ -118,7 +118,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             if (textureCreateInfo.textureType == TEXTURE_TYPE_NONE)
             {
-                VulkanDebugger::ThrowError("Cannot set texture loaded from [" + textureCreateInfo.filePath + "] as default texture for its type, as it is type is TEXTURE_TYPE_NONE");
+                Debugger::ThrowError("Cannot set texture loaded from [" + textureCreateInfo.filePath + "] as default texture for its type, as it is type is TEXTURE_TYPE_NONE");
             }
 
             defaultTextures[TextureTypeToArrayIndex(textureCreateInfo.textureType)] = textureReference;
@@ -139,7 +139,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Check if optimal tiling is supported by the GPU
         if ((formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0)
         {
-            VulkanDebugger::ThrowError("Texture image format [" + std::to_string(image->GetFormat()) + "] does not support linear blitting");
+            Debugger::ThrowError("Texture image format [" + std::to_string(image->GetFormat()) + "] does not support linear blitting");
         }
 
         // Begin a command buffer

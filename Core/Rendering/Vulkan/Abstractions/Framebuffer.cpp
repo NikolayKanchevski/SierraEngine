@@ -23,7 +23,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         framebufferCreateInfo.pAttachments = givenAttachments.data();
 
         // Create the Vulkan framebuffer
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkCreateFramebuffer(VulkanCore::GetLogicalDevice(), &framebufferCreateInfo, nullptr, &vkFramebuffer),
             "Failed to create a framebuffer with attachment count of [" + std::to_string(givenAttachments.size()) + "]"
         );

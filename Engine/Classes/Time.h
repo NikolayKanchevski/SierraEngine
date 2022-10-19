@@ -24,9 +24,6 @@ namespace Sierra::Engine::Classes
         /// @brief Time in seconds since the program has started. It is never lowered and is increased by <see cref="deltaTime"/> every frame.
         [[nodiscard]] inline static float const GetUpTime() { return upTime; }
 
-        /* --- DESTRUCTOR --- */
-        Time() = delete;
-
     private:
         static int FPS;
         static float deltaTime;

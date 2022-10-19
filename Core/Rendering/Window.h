@@ -24,7 +24,7 @@ namespace Sierra::Core::Rendering
 
         /// @brief Creates a new window without the need of setting its size. It will automatically be 800x600 or,
         /// if setMaximized, as big as it can be on your display.
-        /// @param givenTitle What the givenTitle / name of the window should be.
+        /// @param givenTitle What the givenTitle / tag of the window should be.
         /// @param setMaximized A bool indicating whether the window should use all the space on your screen and start setMaximized.
         /// @param setResizable Whether the window is going to be setResizable or not.
         /// @param setFocusRequirement Whether the window requires to be focused in order to draw and handle events.
@@ -37,7 +37,7 @@ namespace Sierra::Core::Rendering
 
         /* --- SETTER METHODS --- */
 
-        /// @brief Sets the title (name) of the window
+        /// @brief Sets the title (tag) of the window
         void SetTitle(const std::string& givenTitle);
 
         /// @brief Shows the window after startup, or manually hiding it. @see Hide()

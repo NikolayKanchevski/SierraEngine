@@ -3,21 +3,27 @@
 //
 
 #include "Application.h"
-#include <iostream>
 
 /* --- POLLING METHODS --- */
+
 void Application::Start()
 {
     // Create renderer
-    VulkanRenderer renderer("Sierra Engine v1.0.0", false, true);
+    VulkanRenderer renderer("Sierra Engine v1.0.0", true, true);
 
     // Get a reference to the window of the renderer
     Window &window = renderer.GetWindow();
 
-    Cursor::SetCursorVisibility(true);
-
     // Initialize the world
     World::Start();
+
+    // Create camera
+    Entity cameraEntity = Entity("Camera");
+    camera = cameraEntity.AddComponent<Camera>();
+    cameraEntity.GetTransform().position = { 0.0f, 1.75f, 10.0f };
+
+    // Load a 3D model
+    tankModel = MeshObject::LoadModel("Models/Chieftain/T95_FV4201_Chieftain.fbx");
 
     // Loop while renderer is active
     while (renderer.IsActive())
@@ -55,8 +61,8 @@ void Application::UpdateObjects()
 {
     // Calculate an animated rotation value and update meshes
     float rotation = glm::sin(Time::GetUpTime()) * 45.0f;
-    Mesh::worldMeshes[3]->transform.rotation.x = rotation;
-    Mesh::worldMeshes[4]->transform.rotation.x = rotation;
+    tankModel->GetMesh(3).GetComponent<Transform>().rotation.x = rotation;
+    tankModel->GetMesh(4).GetComponent<Transform>().rotation.x = rotation;
 }
 
 void Application::DoCameraMovement()
@@ -70,13 +76,16 @@ void Application::DoCameraMovement()
     // If the cursor is visible return
     if (Cursor::IsCursorShown()) return;
 
+    // Cache the transform of the camera
+    Transform &cameraTransform = camera.GetComponent<Transform>();
+
     // Move camera accordingly
-    if (Input::GetKeyHeld(GLFW_KEY_W)) camera.transform.position += camera.GetFrontDirection() * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
-    if (Input::GetKeyHeld(GLFW_KEY_S)) camera.transform.position += camera.GetBackDirection() * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
-    if (Input::GetKeyHeld(GLFW_KEY_A)) camera.transform.position += camera.GetLeftDirection() * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
-    if (Input::GetKeyHeld(GLFW_KEY_D)) camera.transform.position += camera.GetRightDirection() * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
-    if (Input::GetKeyHeld(GLFW_KEY_E) || Input::GetKeyHeld(GLFW_KEY_SPACE)) camera.transform.position += camera.GetUpDirection() * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
-    if (Input::GetKeyHeld(GLFW_KEY_Q) || Input::GetKeyHeld(GLFW_KEY_LEFT_CONTROL)) camera.transform.position += camera.GetDownDirection() * CAMERA_MOVE_SPEED * Time::GetDeltaTime();
+    if (Input::GetKeyHeld(GLFW_KEY_W)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetFrontDirection();
+    if (Input::GetKeyHeld(GLFW_KEY_S)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetBackDirection();
+    if (Input::GetKeyHeld(GLFW_KEY_A)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetLeftDirection();
+    if (Input::GetKeyHeld(GLFW_KEY_D)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetRightDirection();
+    if (Input::GetKeyHeld(GLFW_KEY_E) || Input::GetKeyHeld(GLFW_KEY_SPACE)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection();
+    if (Input::GetKeyHeld(GLFW_KEY_Q) || Input::GetKeyHeld(GLFW_KEY_LEFT_CONTROL)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection();
 
     // Apply camera rotation based on mouse movement
     yaw += Cursor::GetHorizontalCursorOffset() * CAMERA_LOOK_SPEED;
@@ -86,12 +95,12 @@ void Application::DoCameraMovement()
     if (Input::GetGamePadConnected())
     {
         // Get the left stick's axis and calculate movement based on it
-        camera.transform.position += Input::GetVerticalGamePadLeftStickAxis() * CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetFrontDirection();
-        camera.transform.position -= Input::GetHorizontalGamePadLeftStickAxis() * CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetLeftDirection();
+        cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * Input::GetVerticalGamePadLeftStickAxis() * camera.GetFrontDirection();
+        cameraTransform.position -= CAMERA_MOVE_SPEED * Time::GetDeltaTime() * Input::GetHorizontalGamePadLeftStickAxis() * camera.GetLeftDirection();
 
         // Depending on what buttons are held move the camera
-        if (Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A)) camera.transform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection();
-        if (Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_X)) camera.transform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection();
+        if (Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection();
+        if (Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_X)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection();
 
         // Rotate the camera based on the right stick's axis
         yaw -= Input::GetHorizontalGamePadRightStickAxis() * GAMEPAD_CAMERA_LOOK_SPEED;
@@ -110,48 +119,4 @@ void Application::DoCameraMovement()
     newCameraFrontDirection.y = (float) (glm::sin(glm::radians(pitch)));
     newCameraFrontDirection.z = (float) (glm::sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch)));
     camera.SetFrontDirection(glm::normalize(newCameraFrontDirection));
-}
-
-void Application::DisplayUI(VulkanRenderer &renderer)
-{
-    const ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoFocusOnAppearing |
-                                          ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
-
-    ImGui::SetNextWindowPos({ renderer.GetWindow().GetWidth() - 10.0f, 10.0f }, ImGuiCond_Always, { 1, 0 });
-    ImGui::SetNextWindowSizeConstraints({ (float) renderer.GetWindow().GetWidth() / 8, (float) renderer.GetWindow().GetHeight() / 8 }, { 10000, 10000 });
-
-    // Draw renderer information tab
-    bool rendererInfoOpen = true;
-    if (ImGui::Begin("Renderer Information", &rendererInfoOpen, WINDOW_FLAGS) || rendererInfoOpen)
-    {
-        ImGui::Text("%s", ("CPU Frame Time: " + std::to_string(Time::GetFPS()) + " FPS").c_str());
-        ImGui::Text("%s", ("GPU Draw Time: " + std::to_string(renderer.GetRendererInfo().drawTime) + " ms").c_str());
-        ImGui::Separator();
-        ImGui::Text("%s", ("Total meshes being drawn: " + std::to_string(renderer.GetRendererInfo().meshesDrawn)).c_str());
-        ImGui::Text("%s", ("Total vertices in scene: " + std::to_string(renderer.GetRendererInfo().verticesDrawn)).c_str());
-
-        ImGui::End();
-    }
-
-    // If game pads are present display their info
-    for (int i = Input::MAX_GAME_PADS; i--;)
-    {
-        if (Input::GetGamePadConnected(i))
-        {
-            bool gamePadInfoOpen = true;
-            if (ImGui::Begin((("Game Pad [" + std::to_string(i) + "] Data").c_str()) , &gamePadInfoOpen, ImGuiWindowFlags_AlwaysAutoResize))
-            {
-                ImGui::Text("%s", ("Game pad [" + Input::GetGamePadName(i) + "] properties:").c_str());
-                ImGui::Text("%s", ("Left gamepad stick: [" + std::to_string(Input::GetGamePadLeftStickAxis(i).x) + " || " + std::to_string(Input::GetGamePadLeftStickAxis(i).y) + "]").c_str());
-                ImGui::Text("%s", ("Right gamepad stick: [" + std::to_string(Input::GetGamePadRightStickAxis(i).x) + " || " + std::to_string(Input::GetGamePadRightStickAxis(i).y) + "]").c_str());
-                ImGui::Text("%s", ("Left trigger: [" + std::to_string(Input::GetGamePadLeftTriggerAxis(i)) + "]").c_str());
-                ImGui::Text("%s", ("Right trigger: [" + std::to_string(Input::GetGamePadRightTriggerAxis(i)) + "]").c_str());
-                ImGui::RadioButton("\"A\" pressed", Input::GetGamePadButtonPressed(GLFW_GAMEPAD_BUTTON_A, i));
-                ImGui::RadioButton("\"A\" held", Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A, i));
-                ImGui::RadioButton("\"A\" released", Input::GetGamePadButtonReleased(GLFW_GAMEPAD_BUTTON_A, i));
-
-                ImGui::End();
-            }
-        }
-    }
 }

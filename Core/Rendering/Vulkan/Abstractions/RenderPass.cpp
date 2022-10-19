@@ -155,7 +155,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         clearValues[1].depthStencil.depth = 1.0;
 
         // Create the Vulkan render pass
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkCreateRenderPass(VulkanCore::GetLogicalDevice(), &renderPassCreateInfo, nullptr, &vkRenderPass),
             "Could not create render pass with [" + std::to_string(renderPassCreateInfo.subpassCount) + "] subpasses and [" + std::to_string(renderPassCreateInfo.attachmentCount) + "] attachments"
         );
@@ -182,7 +182,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         if (renderPassBegan)
         {
-            VulkanDebugger::ThrowWarning("Cannot begin a render twice. Action automatically suspended");
+            Debugger::ThrowWarning("Cannot begin a render twice. Action automatically suspended");
             return;
         }
 
@@ -207,7 +207,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         if (!renderPassBegan)
         {
-            VulkanDebugger::ThrowWarning("Cannot end a non-began render pass. Action automatically suspended");
+            Debugger::ThrowWarning("Cannot end a non-began render pass. Action automatically suspended");
             return;
         }
 

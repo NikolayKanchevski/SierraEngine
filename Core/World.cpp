@@ -5,12 +5,20 @@
 #include "World.h"
 
 #include "Rendering/Vulkan/VulkanCore.h"
+#include "../Engine/Classes/Time.h"
+#include "../Engine/Classes/Cursor.h"
+#include "../Engine/Classes/Input.h"
+#include "../Engine/Components/Camera.h"
+#include "../Engine/Components/InternalComponents.h"
 #include <iostream>
 
 using namespace Sierra::Engine::Classes;
+using namespace Sierra::Engine::Components;
+using Sierra::Engine::Components::Relationship;
 
 namespace Sierra::Core
 {
+    entt::registry World::enttRegistry;
 
     /* --- POLLING METHODS --- */
 
@@ -44,11 +52,10 @@ namespace Sierra::Core
 
     void World::UpdateObjects(VulkanRenderer &renderer)
     {
-        using namespace Sierra::Engine::Components;
+        Camera *camera = Camera::GetMainCamera();
 
-        auto camera = Camera::GetMainCamera();
-
-        glm::vec3 rendererCameraPosition = { camera->transform.position.x, -camera->transform.position.y, camera->transform.position.z };
+        Transform &cameraTransform = enttRegistry.get<Transform>(camera->GetEnttEntity());
+        glm::vec3 rendererCameraPosition = { cameraTransform.position.x, -cameraTransform.position.y, cameraTransform.position.z };
         glm::vec3 rendererCameraFrontDirection = { camera->GetFrontDirection().x, -camera->GetFrontDirection().y, camera->GetFrontDirection().z };
         glm::vec3 rendererCameraUpDirection = { camera->GetUpDirection().x, -camera->GetUpDirection().y, camera->GetUpDirection().z };
 
@@ -63,8 +70,6 @@ namespace Sierra::Core
         renderer.UpdateWindow();
         renderer.Render();
     }
-
-    /* --- GETTER METHODS --- */
 
     /* --- DESTRUCTOR --- */
 }

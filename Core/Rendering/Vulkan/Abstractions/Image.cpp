@@ -16,7 +16,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Check if an image view has already been generated
         if (imageViewGenerated)
         {
-            VulkanDebugger::ThrowWarning("Trying to create an image view for an image with an already existing view. Process automatically suspended");
+            Debugger::ThrowWarning("Trying to create an image view for an image with an already existing view. Process automatically suspended");
             return;
         }
 
@@ -33,7 +33,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         imageViewCreateInfo.subresourceRange.layerCount = 1;
 
         // Create the image view
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
                 vkCreateImageView(VulkanCore::GetLogicalDevice(), &imageViewCreateInfo, nullptr, &vkImageView),
                 "Could not create image view for an image with dimensions of [" + std::to_string(dimensions.x) + ", " + std::to_string(dimensions.y) + ", " + std::to_string(dimensions.z) + "], format [" + std::to_string(format) + "], [" +
                 std::to_string(mipLevels) + "] mip levels, and sampling of [" + std::to_string(sampling) + "]"
@@ -107,7 +107,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
         else
         {
-            VulkanDebugger::ThrowError("Transitioning images from [" + std::to_string(layout) + "] to [" + std::to_string(newLayout) + "] is not supported");
+            Debugger::ThrowError("Transitioning images from [" + std::to_string(layout) + "] to [" + std::to_string(newLayout) + "] is not supported");
         }
 
         // Bind the pipeline barrier
@@ -157,7 +157,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
         // Create the Vulkan image
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
                 vkCreateImage(VulkanCore::GetLogicalDevice(), &vkImageCreateInfo, nullptr, &vkImage),
                 "Failed to create image with dimensions of [" + std::to_string(dimensions.x) + ", " + std::to_string(dimensions.y) + ", " + std::to_string(dimensions.z) + "], format [" + std::to_string(format) + "], [" +
                 std::to_string(mipLevels) + "] mip levels, and sampling of [" + std::to_string(sampling) + "]"
@@ -174,7 +174,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         imageMemoryAllocateInfo.memoryTypeIndex = VulkanUtilities::FindMemoryTypeIndex(imageMemoryRequirements.memoryTypeBits, imageCreateInfo.memoryFlags);
 
         // Allocate the image to memory
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
                 vkAllocateMemory(VulkanCore::GetLogicalDevice(), &imageMemoryAllocateInfo, nullptr, &vkImageMemory),
                 "Failed to allocate memory for image with dimensions of [" + std::to_string(dimensions.x) + ", " + std::to_string(dimensions.y) + ", " + std::to_string(dimensions.z) + "], format [" + std::to_string(format) + "], [" +
                 std::to_string(mipLevels) + "] mip levels, and sampling of [" + std::to_string(sampling) + "]"

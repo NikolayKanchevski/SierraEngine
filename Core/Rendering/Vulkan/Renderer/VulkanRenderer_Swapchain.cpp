@@ -15,7 +15,7 @@ namespace Sierra::Core::Rendering::Vulkan
             VkSampleCountFlagBits highestSupportedSampleCount = this->GetHighestSupportedMsaaCount();
             if (this->msaaSampleCount > highestSupportedSampleCount)
             {
-                VulkanDebugger::ThrowWarning("Sampling MSAA level [" + std::string(string_VkSampleCountFlagBits(this->msaaSampleCount)) + "] requested but is not supported by the system. It is automatically lowered to [" + std::string(string_VkSampleCountFlagBits(highestSupportedSampleCount)) + "] which is the highest supported setting");
+                Debugger::ThrowWarning("Sampling MSAA level [" + std::string(string_VkSampleCountFlagBits(this->msaaSampleCount)) + "] requested but is not supported by the system. It is automatically lowered to [" + std::string(string_VkSampleCountFlagBits(highestSupportedSampleCount)) + "] which is the highest supported setting");
                 this->msaaSampleCount = highestSupportedSampleCount;
             }
         }
@@ -71,7 +71,7 @@ namespace Sierra::Core::Rendering::Vulkan
         }
 
         // Create the swapchain
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkCreateSwapchainKHR(this->logicalDevice, &swapchainCreateInfo, nullptr, &swapchain),
             "Failed to create swapchain"
         );
@@ -163,7 +163,7 @@ namespace Sierra::Core::Rendering::Vulkan
     VkExtent2D VulkanRenderer::ChooseSwapchainExtent(VkSurfaceCapabilitiesKHR &givenCapabilities)
     {
         // Check to see if the extent is already configured
-        if (givenCapabilities.currentExtent.width != MAX_UINT32_T)
+        if (givenCapabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
         {
             // If so just return it
             return givenCapabilities.currentExtent;

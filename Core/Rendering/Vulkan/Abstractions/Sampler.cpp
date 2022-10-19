@@ -5,7 +5,7 @@
 #include "Sampler.h"
 #include "../VulkanCore.h"
 #include "../../../../Engine/Classes/Math.h"
-#include "../VulkanDebugger.h"
+#include "../../../Debugger.h"
 
 using namespace Sierra::Engine::Classes;
 
@@ -39,7 +39,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkSamplerCreateInfo.maxAnisotropy = maxAnisotropy;
 
         // Create the Vulkan sampler
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
                 vkCreateSampler(VulkanCore::GetLogicalDevice(), &vkSamplerCreateInfo, nullptr, &vkSampler),
                 "Failed to create sampler with a LOD of [" + std::to_string(minLod) + "," + std::to_string(maxLod) + "] and [" + std::to_string(maxAnisotropy) + "] max anisotropy"
         );

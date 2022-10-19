@@ -4,13 +4,13 @@
 
 #include "Mesh.h"
 
+using Sierra::Core::Debugger;
+using namespace Sierra::Core::Rendering::Vulkan;
+
 namespace Sierra::Engine::Components
 {
-    std::vector<std::unique_ptr<Mesh>> Mesh::worldMeshes;
     uint32_t Mesh::totalMeshCount = 0;
     uint32_t Mesh::totalMeshVertices = 0;
-
-    using namespace Sierra::Core::Rendering::Vulkan;
 
     /* --- CONSTRUCTORS --- */
 
@@ -24,12 +24,6 @@ namespace Sierra::Engine::Components
 
         totalMeshCount++;
         totalMeshVertices += vertexCount;
-    }
-
-    std::unique_ptr<Mesh> &Mesh::RegisterMesh(std::vector<Vertex> &givenVertices, std::vector<uint32_t> &givenIndices)
-    {
-        worldMeshes.push_back(std::make_unique<Mesh>(givenVertices, givenIndices));
-        return worldMeshes.back();
     }
 
     /* --- SETTER METHODS --- */
@@ -96,7 +90,7 @@ namespace Sierra::Engine::Components
     {
         if (givenTexture->GetTextureType() == TEXTURE_TYPE_NONE)
         {
-            VulkanDebugger::ThrowError("In order to bind texture [" + givenTexture->name + "] to mesh its texture type must be specified and be different from TEXTURE_TYPE_NONE");
+            Debugger::ThrowError("In order to bind texture [" + givenTexture->name + "] to mesh its texture type must be specified and be different from TEXTURE_TYPE_NONE");
         }
 
         textures[TextureTypeToArrayIndex(givenTexture->GetTextureType())] = givenTexture;
@@ -109,6 +103,7 @@ namespace Sierra::Engine::Components
     void Mesh::GetPushConstantData(Mesh::PushConstantData *data) const
     {
         // Inverse the Y coordinate to satisfy Vulkan's requirements
+        Transform transform = GetComponent<Transform>();
         glm::vec3 rendererPosition = { transform.position.x, transform.position.y * -1, transform.position.z };
 
         // Calculate translation matrix

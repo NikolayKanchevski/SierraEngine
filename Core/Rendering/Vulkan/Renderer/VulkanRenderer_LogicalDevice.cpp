@@ -57,7 +57,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
 
         // Create logical device
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkCreateDevice(this->physicalDevice, &logicalDeviceCreateInfo, nullptr, &logicalDevice),
             "Failed to create logical device"
         );

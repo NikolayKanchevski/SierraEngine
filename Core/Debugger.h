@@ -11,9 +11,9 @@
     #include <windows.h>
 #endif
 
-namespace Sierra::Core::Rendering::Vulkan
+namespace Sierra::Core
 {
-    class VulkanDebugger
+    class Debugger
     {
 
     #if _WIN32
@@ -27,11 +27,22 @@ namespace Sierra::Core::Rendering::Vulkan
         static void ThrowError(const std::string&);
         static bool CheckResults(const VkResult result, const std::string&);
 
+        template <typename T>
+        static std::string TypeToString() {
+
+            auto unformatted = Demangle(typeid(T).name());
+            return unformatted.substr(unformatted.find_last_of(':') + 1);
+        }
+
         static VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(
                 VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                 VkDebugUtilsMessageTypeFlagsEXT messageType,
                 const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
                 void* pUserData
         );
+
+    private:
+        static std::string Demangle(const char* name);
+
     };
 }

@@ -6,6 +6,7 @@
 #include "VulkanRenderer.h"
 #include "../../../../Engine/Classes/Stopwatch.h"
 #include "../../../../Engine/Classes/MeshObject.h"
+#include "../../../World.h"
 
 using namespace Sierra::Engine::Classes;
 
@@ -53,11 +54,8 @@ namespace Sierra::Core::Rendering::Vulkan
         CreateNullTextures();
         CreateImGuiInstance();
 
-        auto meshModel = MeshObject::LoadModel("Models/Chieftain/T95_FV4201_Chieftain.fbx");
-        auto &mesh = Mesh::RegisterMesh(vertices, meshIndices);
-
         window.Show();
-        VulkanDebugger::DisplaySuccess("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
+        Debugger::DisplaySuccess("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
     }
 
     void VulkanRenderer::Prepare()
@@ -84,7 +82,7 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         if (!prepared)
         {
-            VulkanDebugger::ThrowError("Vulkan renderer is not prepared for rendering properly! Make sure you have called World::Prepare() before calling World::Update()");
+            Debugger::ThrowError("Vulkan renderer is not prepared for rendering properly! Make sure you have called World::Prepare() before calling World::Update()");
         }
 
         if (window.IsFocusRequired() && !window.IsFocused()) return;
@@ -133,9 +131,10 @@ namespace Sierra::Core::Rendering::Vulkan
         descriptorPool->Destroy();
         descriptorSetLayout->Destroy();
 
-        for (const auto &mesh : Mesh::worldMeshes)
+        auto enttMeshView = World::GetEnttRegistry().view<Mesh>();
+        for (const auto &entity : enttMeshView)
         {
-            mesh->Destroy();
+            enttMeshView.get<Mesh>(entity).Destroy();
         }
 
         for (int i = MAX_CONCURRENT_FRAMES; i--;)

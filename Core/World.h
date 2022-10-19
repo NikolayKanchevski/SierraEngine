@@ -4,14 +4,10 @@
 
 #pragma once
 
-#include <cstdint>
+#include <entt/entt.hpp>
+#include "../Core/Rendering/Vulkan/Renderer/VulkanRenderer.h"
 
-#include "../Engine/Classes/Time.h"
-#include "../Engine/Classes/Cursor.h"
-#include "../Engine/Classes/Input.h"
-#include "../Engine/Classes/File.h"
-#include "../Engine/Components/Camera.h"
-#include "Rendering/Vulkan/Renderer/VulkanRenderer.h"
+using Sierra::Core::Rendering::Vulkan::VulkanRenderer;
 
 namespace Sierra::Core
 {
@@ -20,6 +16,7 @@ namespace Sierra::Core
     {
     public:
         /* --- POLLING METHODS --- */
+
         /// @brief Starts the built-in classes. This means that each of them acquires its needed per-initialization data.
         /// Must be called once at the very beginning of the application's code.
         static void Start();
@@ -36,11 +33,14 @@ namespace Sierra::Core
         /* --- SETTER METHODS --- */
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] static entt::registry& GetEnttRegistry() { return enttRegistry; }
+        [[nodiscard]] static entt::entity RegisterEntity() { return enttRegistry.create(); }
 
         /* --- DESTRUCTOR --- */
     private:
+        static entt::registry enttRegistry;
+
         static void UpdateObjects(VulkanRenderer &renderer);
         static void UpdateRenderer(VulkanRenderer &renderer);
-
     };
 }

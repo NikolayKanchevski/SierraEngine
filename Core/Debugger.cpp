@@ -3,8 +3,12 @@
 //
 
 #include <iostream>
-#include "VulkanDebugger.h"
+#include "Debugger.h"
 #include <vulkan/vk_enum_string_helper.h>
+
+#include <cstdlib>
+#include <memory>
+#include <cxxabi.h>
 
 #if _WIN32
     #define DEFAULT() (SetConsoleTextAttribute(hConsole, 7))
@@ -13,14 +17,14 @@
     #define YELLOW() (SetConsoleTextAttribute(hConsole, 14))
     #define RED() (SetConsoleTextAttribute(hConsole, 4))
 #else
-    #define DEFAULT() (printf("\e[0;32m"))
+    #define DEFAULT() (printf("\e[0;39m"))
     #define BLUE() (printf("\e[0;34m"))
     #define GREEN() (printf("\e[0;32m"))
     #define YELLOW() (printf("\e[0;33m"))
     #define RED() (printf("\e[0;31m"))
 #endif
 
-namespace Sierra::Core::Rendering::Vulkan
+namespace Sierra::Core
 {
 
 #if DEBUG
@@ -30,31 +34,31 @@ namespace Sierra::Core::Rendering::Vulkan
 #endif
 
 #if _WIN32
-    HANDLE VulkanDebugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE Debugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif
 
-    void VulkanDebugger::DisplayInfo(const std::string& message)
+    void Debugger::DisplayInfo(const std::string& message)
     {
         BLUE();
         std::cout << "[i] " << message << ".\n";
         DEFAULT();
     }
 
-    void VulkanDebugger::DisplaySuccess(const std::string& message)
+    void Debugger::DisplaySuccess(const std::string& message)
     {
         GREEN();
         std::cout << "[+] " << message << ".\n";
         DEFAULT();
     }
 
-    void VulkanDebugger::ThrowWarning(const std::string& message)
+    void Debugger::ThrowWarning(const std::string& message)
     {
         YELLOW();
         std::cout << "[!] " << message << "!\n";
         DEFAULT();
     }
 
-    void VulkanDebugger::ThrowError(const std::string& message)
+    void Debugger::ThrowError(const std::string& message)
     {
         RED();
         if (!DEBUG_MODE) std::cout << "[-] " << message << "!\n";
@@ -62,7 +66,7 @@ namespace Sierra::Core::Rendering::Vulkan
         DEFAULT();
     }
 
-    bool VulkanDebugger::CheckResults(const VkResult result, const std::string& errorMessage)
+    bool Debugger::CheckResults(const VkResult result, const std::string& errorMessage)
     {
         bool success = result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR;
         if (!success)
@@ -73,7 +77,7 @@ namespace Sierra::Core::Rendering::Vulkan
         return success;
     }
 
-    VkBool32 VulkanDebugger::ValidationCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
+    VkBool32 Debugger::ValidationCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
     {
         switch (messageSeverity)
         {
@@ -90,4 +94,28 @@ namespace Sierra::Core::Rendering::Vulkan
 
         return VK_FALSE;
     }
+
+#ifdef __GNUG__
+
+    std::string Debugger::Demangle(const char* name) {
+
+        int status = -4; // some arbitrary value to eliminate the compiler warning
+
+        // enable c++11 by passing the flag -std=c++11 to g++
+        std::unique_ptr<char, void(*)(void*)> res {
+                abi::__cxa_demangle(name, NULL, NULL, &status),
+                std::free
+        };
+
+        return (status == 0) ? res.get() : name;
+    }
+
+#else
+
+    // does nothing if not g++
+    std::string Debugger::Demangle(const char* tag) {
+        return tag;
+    }
+
+#endif
 }

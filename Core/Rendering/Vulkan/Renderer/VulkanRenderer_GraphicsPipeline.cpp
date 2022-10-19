@@ -170,7 +170,7 @@ namespace Sierra::Core::Rendering::Vulkan
         pipelineLayoutCreateInfo.pPushConstantRanges = pushConstantRanges.data();
 
         // Create the pipeline layout
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkCreatePipelineLayout(this->logicalDevice, &pipelineLayoutCreateInfo, nullptr, &graphicsPipelineLayout),
             "Failed to create pipeline layout"
         );
@@ -195,7 +195,7 @@ namespace Sierra::Core::Rendering::Vulkan
         graphicsPipelineCreateInfo.basePipelineIndex = -1;
 
         // Create the graphics pipeline
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkCreateGraphicsPipelines(this->logicalDevice, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &graphicsPipeline),
             "Failed to create graphics pipeline"
         );

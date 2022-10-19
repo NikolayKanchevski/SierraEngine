@@ -6,9 +6,9 @@
 #include <iostream>
 #include <codecvt>
 #include "Input.h"
-#include "../../Core/Rendering/Vulkan/VulkanDebugger.h"
+#include "../../Core/Debugger.h"
 
-using namespace Sierra::Core::Rendering::Vulkan;
+using Sierra::Core::Debugger;
 
 namespace Sierra::Engine::Classes {
 
@@ -254,7 +254,7 @@ namespace Sierra::Engine::Classes {
     {
         if (player >= MAX_GAME_PADS || !gamePads[player].connected)
         {
-            VulkanDebugger::ThrowWarning("Game pad with an ID of [" + std::to_string(player) + "] is not connected");
+            Debugger::ThrowWarning("Game pad with an ID of [" + std::to_string(player) + "] is not connected");
             return false;
         }
 

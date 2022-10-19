@@ -12,7 +12,7 @@ namespace Sierra::Core::Rendering::Vulkan
         VkDebugUtilsMessengerCreateInfoEXT validationMessengerCreateInfo{};
         GetValidationMessengerCreateInfo(validationMessengerCreateInfo);
 
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
                 CreateDebugUtilsMessengerEXT(instance, &validationMessengerCreateInfo, nullptr, &validationMessenger),
                 "Failed to create validation messenger"
         );
@@ -23,7 +23,7 @@ namespace Sierra::Core::Rendering::Vulkan
         createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
         createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        createInfo.pfnUserCallback = VulkanDebugger::ValidationCallback;
+        createInfo.pfnUserCallback = Debugger::ValidationCallback;
         createInfo.pUserData = nullptr;
     }
 

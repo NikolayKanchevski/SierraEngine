@@ -10,7 +10,7 @@ namespace Sierra::Engine::Classes
     glm::vec2 Cursor::lastCursorPosition;
     glm::vec2 Cursor::cursorPosition;
     glm::vec2 Cursor::cursorOffset;
-    bool Cursor::cursorShown;
+    bool Cursor::cursorShown = true;
 
     bool Cursor::cursorPositionSet;
 

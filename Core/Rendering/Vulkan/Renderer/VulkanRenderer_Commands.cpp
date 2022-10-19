@@ -3,6 +3,10 @@
 //
 
 #include "VulkanRenderer.h"
+#include "../../../World.h"
+#include "../../../../Engine/Components/Mesh.h"
+
+using Sierra::Engine::Components::Mesh;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -16,7 +20,7 @@ namespace Sierra::Core::Rendering::Vulkan
         commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
 
         // Create the command pool
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkCreateCommandPool(this->logicalDevice, &commandPoolCreateInfo, nullptr, &commandPool),
             "Failed to create command pool"
         );
@@ -37,7 +41,7 @@ namespace Sierra::Core::Rendering::Vulkan
         commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         commandBufferAllocateInfo.commandBufferCount = MAX_CONCURRENT_FRAMES;
 
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkAllocateCommandBuffers(this->logicalDevice, &commandBufferAllocateInfo, commandBuffers.data()),
             "Failed to allocate command buffers"
         );
@@ -52,7 +56,7 @@ namespace Sierra::Core::Rendering::Vulkan
         bufferBeginInfo.pInheritanceInfo = nullptr;
 
         // Begin the buffer
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkBeginCommandBuffer(givenCommandBuffer, &bufferBeginInfo),
             "Failed to begin command buffer [" + std::to_string(imageIndex) + "]"
         );
@@ -93,19 +97,21 @@ namespace Sierra::Core::Rendering::Vulkan
         const VkDeviceSize offsets[] = {0 };
 
         // For each mesh in the world
-        for (const auto &mesh : Mesh::worldMeshes)
+        auto enttMeshView = World::GetEnttRegistry().view<Mesh>();
+        for (auto enttEntity : enttMeshView)
         {
-            vertexBuffers[0] = mesh->GetVertexBuffer();
+            Mesh &mesh = enttMeshView.get<Mesh>(enttEntity);
+            vertexBuffers[0] = mesh.GetVertexBuffer();
 
             // Bind the vertex buffer
             vkCmdBindVertexBuffers(givenCommandBuffer, 0, 1, vertexBuffers, offsets);
 
             // Bind the index buffer
-            vkCmdBindIndexBuffer(givenCommandBuffer, mesh->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(givenCommandBuffer, mesh.GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
             // Get the push constant model of the current mesh and push it to shader
             Engine::Components::Mesh::PushConstantData data;
-            mesh->GetPushConstantData(&data);
+            mesh.GetPushConstantData(&data);
 
             // Send push constant data to shader
             vkCmdPushConstants(
@@ -114,13 +120,13 @@ namespace Sierra::Core::Rendering::Vulkan
                 pushConstantSize, &data
             );
 
-            descriptorSets[1] = mesh->GetDescriptorSet();
+            descriptorSets[1] = mesh.GetDescriptorSet();
 //            descriptorSetsPtr[2] = specularTextures[mesh.specularTextureID].descriptorSet;
 
             vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipelineLayout, 0, 2, descriptorSets, 0, nullptr);
 
             // Draw using the index buffer to prevent vertex re-usage
-            vkCmdDrawIndexed(givenCommandBuffer, mesh->GetIndexCount(), 1, 0, 0, 0);
+            vkCmdDrawIndexed(givenCommandBuffer, mesh.GetIndexCount(), 1, 0, 0, 0);
         }
 
         // Render ImGui UI
@@ -132,10 +138,11 @@ namespace Sierra::Core::Rendering::Vulkan
         // End GPU timer
         vkCmdWriteTimestamp(givenCommandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, drawTimeQueryPool, imageIndex * 2 + 1);
 
+        // Get rendering time
         FetchRenderTimeResults(imageIndex);
 
         // End the command buffer and check for errors during command execution
-        VulkanDebugger::CheckResults(
+        Debugger::CheckResults(
             vkEndCommandBuffer(givenCommandBuffer),
             "Failed to end command buffer"
         );
@@ -160,7 +167,7 @@ namespace Sierra::Core::Rendering::Vulkan
         }
         else
         {
-            VulkanDebugger::ThrowError("Failed to receive query results");
+            Debugger::ThrowError("Failed to receive query results");
         }
 
         // Calculate final GPU draw time
@@ -168,6 +175,8 @@ namespace Sierra::Core::Rendering::Vulkan
         {
             rendererInfo.drawTime += drawTimeQueryResults[i];
         }
+
+        // Get the average of the concurrent draws and convert from nanoseconds to milliseconds
         rendererInfo.drawTime /= MAX_CONCURRENT_FRAMES * 1000000.0f;
     }
 

@@ -11,34 +11,32 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "Transform.h"
+#include "InternalComponents.h"
 #include "../Structures/Material.h"
 #include "../Structures/Vertex.h"
+
 #include "../../Core/Rendering/Vulkan/Abstractions/Buffer.h"
 #include "../../Core/Rendering/Vulkan/VulkanUtilities.h"
 #include "../../Core/Rendering/Vulkan/VulkanCore.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Descriptors.h"
 
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
+using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Engine::Components
 {
 
-    class Mesh
+    class Mesh : public Component
     {
     public:
-        /* --- TESTER --- */
-        Transform transform{};
-
         /* --- PROPERTIES --- */
-        static std::vector<std::unique_ptr<Mesh>> worldMeshes;
         static uint32_t totalMeshCount;
         static uint32_t totalMeshVertices;
         Material material{};
 
         /* --- CONSTRUCTORS --- */
+        Mesh() = default;
         Mesh(std::vector<Vertex> &givenVertices, std::vector<uint32_t> &givenIndices);
-        static std::unique_ptr<Mesh>& RegisterMesh(std::vector<Vertex> &givenVertices, std::vector<uint32_t> &givenIndices);
 
         struct alignas(16) PushConstantData
         {
@@ -61,8 +59,6 @@ namespace Sierra::Engine::Components
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        Mesh(const Mesh &) = delete;
-        Mesh &operator=(const Mesh &) = delete;
 
     private:
         uint32_t vertexCount;
