@@ -86,7 +86,7 @@ namespace Sierra::Engine::Components
         descriptorSet->Allocate();
     }
 
-    void Mesh::SetTexture(const std::shared_ptr<Texture> givenTexture)
+    void Mesh::SetTexture(const std::shared_ptr<Texture>& givenTexture)
     {
         if (givenTexture->GetTextureType() == TEXTURE_TYPE_NONE)
         {
@@ -135,7 +135,7 @@ namespace Sierra::Engine::Components
         for (const auto &texture : textures)
         {
             if (texture == nullptr) continue;
-            texture.get()->Destroy();
+            texture->Destroy();
         }
 
         totalMeshCount--;

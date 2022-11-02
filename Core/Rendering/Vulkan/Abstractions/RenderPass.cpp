@@ -73,7 +73,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     Subpass::Builder &Subpass::Builder::SetDepthAttachment(const uint32_t binding, const std::unique_ptr<Image> &depthImage, const VkAttachmentLoadOp loadOp, const VkAttachmentStoreOp storeOp, const VkAttachmentLoadOp stencilLoadOp, const VkAttachmentStoreOp stencilStoreOp)
     {
-        //  Create the depth attachment and save it together with its binding
+        //  Create the depth attachment and save it together with its bindingInfo
         VkAttachmentDescription depthAttachmentDescription{};
         depthAttachmentDescription.format = depthImage->GetFormat();
         depthAttachmentDescription.samples = depthImage->GetSampling();
@@ -91,7 +91,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     Subpass::Builder &Subpass::Builder::AddColorAttachment(const uint32_t binding, const std::unique_ptr<Image> &colorImage, const VkAttachmentLoadOp loadOp, const VkAttachmentStoreOp storeOp, const bool swapchainAttachment, const VkAttachmentLoadOp stencilLoadOp, const VkAttachmentStoreOp stencilStoreOp)
     {
-        // Create the color attachment and save it in the local list together with its binding
+        // Create the color attachment and save it in the local list together with its bindingInfo
         VkAttachmentDescription colorAttachmentDescription{};
         colorAttachmentDescription.format = colorImage->GetFormat();
         colorAttachmentDescription.samples = colorImage->GetSampling();
@@ -109,7 +109,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     Subpass::Builder &Subpass::Builder::AddResolveAttachment(const uint32_t binding, const std::unique_ptr<Image> &image, const VkImageLayout finalLayout, const VkImageLayout referenceLayout, const VkAttachmentLoadOp loadOp, const VkAttachmentStoreOp storeOp, const VkSampleCountFlagBits sampling, const VkAttachmentLoadOp stencilLoadOp, const VkAttachmentStoreOp stencilStoreOp)
     {
-        // Create the resolve attachment and save it in the local list together with its binding and reference layout
+        // Create the resolve attachment and save it in the local list together with its bindingInfo and reference layout
         VkAttachmentDescription resolveAttachmentDescription{};
         resolveAttachmentDescription.format = image->GetFormat();
         resolveAttachmentDescription.samples = sampling;

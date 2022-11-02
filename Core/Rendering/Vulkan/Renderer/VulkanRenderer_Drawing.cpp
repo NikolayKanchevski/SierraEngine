@@ -87,7 +87,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Present
         VkResult queuePresentResult = vkQueuePresentKHR(this->presentQueue, &presentInfo);
-        if (queuePresentResult == VK_ERROR_OUT_OF_DATE_KHR || window.IsResized())
+        if (queuePresentResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
             RecreateSwapchainObjects();
         }

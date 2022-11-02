@@ -8,7 +8,10 @@
 
 #include <cstdlib>
 #include <memory>
-#include <cxxabi.h>
+
+#if __APPLE__
+    #include <cxxabi.h>
+#endif
 
 #if _WIN32
     #define DEFAULT() (SetConsoleTextAttribute(hConsole, 7))
@@ -61,8 +64,8 @@ namespace Sierra::Core
     void Debugger::ThrowError(const std::string& message)
     {
         RED();
-        if (!DEBUG_MODE) std::cout << "[-] " << message << "!\n";
-        else throw std::runtime_error("[-] " + message + "!\n");
+        std::cout << "[-] " << message << "!\n";
+        if (!DEBUG_MODE) exit(-1);
         DEFAULT();
     }
 

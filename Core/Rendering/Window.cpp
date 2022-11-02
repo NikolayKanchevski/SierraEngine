@@ -61,7 +61,11 @@ namespace Sierra::Core::Rendering
     Window::Window(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)
             : title(std::move(givenTitle)), maximized(setMaximized), REQUIRE_FOCUS(setFocusRequirement), RESIZABLE(setResizable)
     {
-        glfwInit();
+        if (!glfwInit())
+        {
+            Debugger::ThrowError("GLFW could not be started");
+            exit(-1);
+        }
 
         if (!glfwVulkanSupported())
         {
@@ -79,14 +83,8 @@ namespace Sierra::Core::Rendering
             Sierra::Engine::Classes::Stopwatch stopwatch;
         #endif
 
-        if (!maximized)
-        {
-            this->width = 800;
-            this->height = 600;
-            this->position = { (monitor.width - width) / 2, (monitor.height - height) / 2 };
-        }
-
-        this->position.x += (float) monitor.xPosition;
+        this->width = 800;
+        this->height = 600;
 
         InitWindow();
 
@@ -102,6 +100,8 @@ namespace Sierra::Core::Rendering
         glfwWindowHint(GLFW_RESIZABLE, RESIZABLE);
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_VISIBLE, 0);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
         glfwWindow = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
 

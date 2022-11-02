@@ -96,8 +96,17 @@ namespace Sierra::Core::Rendering
         { return this->REQUIRE_FOCUS; }
 
         /// @brief Checks if the window has been resized. Only true for one frame after every resize.
-        [[nodiscard]] inline bool IsResized() const
-        { return this->resized; }
+        [[nodiscard]] inline bool IsResized()
+        {
+            bool result = false;
+            if (this->resized)
+            {
+                result = true;
+                this->resized = false;
+            }
+
+            return result;
+        }
 
         /// @brief Returns the current opacity of the window.
         [[nodiscard]] inline float GetOpacity() const

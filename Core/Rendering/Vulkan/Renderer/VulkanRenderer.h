@@ -4,6 +4,10 @@
 
 #pragma once
 
+#if _WIN32
+    #define NOMINMAX
+#endif
+
 #include <vector>
 #include <algorithm>
 #include <functional>
@@ -157,7 +161,8 @@ namespace Sierra::Core::Rendering::Vulkan
 
         std::vector<const char*> requiredDeviceExtensions
         {
-            "VK_KHR_swapchain"
+            "VK_KHR_swapchain",
+            "VK_EXT_descriptor_indexing"
         };
 
         QueueFamilyIndices queueFamilyIndices{};
@@ -171,10 +176,6 @@ namespace Sierra::Core::Rendering::Vulkan
         VkDevice logicalDevice;
         VkQueue graphicsQueue;
         VkQueue presentQueue;
-
-        #if __APPLE__
-            bool krhPortabilityRequired = false;
-        #endif
 
         void CreateLogicalDevice();
 
@@ -227,6 +228,9 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreatePushConstants();
 
         /* --- DESCRIPTORS --- */
+        std::unique_ptr<DescriptorSetLayout> globalDescriptorSetLayout;
+        std::unique_ptr<BindlessDescriptorSet> globalDescriptorSet;
+
         std::unique_ptr<DescriptorSetLayout> descriptorSetLayout;
         void CreateDescriptorSetLayout();
         std::shared_ptr<DescriptorPool> descriptorPool;
@@ -287,6 +291,30 @@ namespace Sierra::Core::Rendering::Vulkan
         void BeginNewImGuiFrame();
         void UpdateImGuiData();
         void RenderImGui();
+
+
+        /* --- TESTER --- */
+        std::vector<Vertex> vertices
+        {
+            { { -1.0, -1.0, -1.0 },{ 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
+            { {  1.0, -1.0, -1.0 },{ 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } },
+            { {  1.0,  1.0, -1.0 },{ 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
+            { { -1.0,  1.0, -1.0 },{ 1.0f, 1.0f, 0.0f }, { 0.0f, 1.0f } },
+            { { -1.0, -1.0,  1.0 },{ 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f } },
+            { {  1.0, -1.0,  1.0 },{ 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } },
+            { {  1.0,  1.0,  1.0 },{ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
+            { { -1.0,  1.0,  1.0 },{ 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f } }
+        };
+
+        std::vector<uint32_t> meshIndices
+        {
+            0, 1, 3, 3, 1, 2,
+            1, 5, 2, 2, 5, 6,
+            5, 4, 6, 6, 4, 7,
+            4, 0, 7, 7, 0, 3,
+            3, 2, 7, 7, 2, 6,
+            4, 5, 0, 0, 5, 1
+        };
     };
 
 }

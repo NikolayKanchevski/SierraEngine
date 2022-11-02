@@ -9,7 +9,7 @@
 void Application::Start()
 {
     // Create renderer
-    VulkanRenderer renderer("Sierra Engine v1.0.0", true, true);
+    VulkanRenderer renderer("Sierra Engine v1.0.0", false, false);
 
     // Get a reference to the window of the renderer
     Window &window = renderer.GetWindow();

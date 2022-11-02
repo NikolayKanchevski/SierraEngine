@@ -16,6 +16,10 @@ namespace Sierra::Core::Rendering::Vulkan
     VulkanRenderer::VulkanRenderer(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)
      : window(Window(givenTitle, setMaximized, setResizable, setFocusRequirement))
     {
+        window.SetResizeCallback([this]{
+            Draw();
+        });
+
         Start();
     }
 
@@ -53,6 +57,9 @@ namespace Sierra::Core::Rendering::Vulkan
 
         CreateNullTextures();
         CreateImGuiInstance();
+
+        Entity cubeEntity = Entity("Cube");
+        auto &cubeMesh = cubeEntity.AddComponent<Mesh>(vertices, meshIndices);
 
         window.Show();
         Debugger::DisplaySuccess("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");

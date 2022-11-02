@@ -114,7 +114,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkCmdPipelineBarrier(
                 commandBuffer,
                 srcStage, dstStage,		            // Pipeline stages (match to src and dst AccessMasks)
-                0,						                        // Dependency flags
+                0,						                        // Dependency flagsInfo
                 0, nullptr,				        // Memory Barrier count + data
                 0, nullptr,			// Buffer Memory Barrier count + data
                 1, &imageMemoryBarrier	// Image Memory Barrier count + data

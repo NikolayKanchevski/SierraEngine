@@ -78,8 +78,8 @@ namespace Sierra::Core::Rendering::Vulkan
         VkViewport viewport{};
         viewport.x = 0;
         viewport.y = 0;
-        viewport.width = this->swapchainExtent.width;
-        viewport.height = this->swapchainExtent.height;
+        viewport.width = static_cast<uint32_t>(this->swapchainExtent.width);
+        viewport.height = static_cast<uint32_t>(this->swapchainExtent.height);
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
 
@@ -93,7 +93,9 @@ namespace Sierra::Core::Rendering::Vulkan
         vkCmdSetScissor(givenCommandBuffer, 0, 1, &scissor);
 
         VkBuffer vertexBuffers[1];
-        VkDescriptorSet descriptorSets[2] { uniformDescriptorSets[currentFrame]->GetVulkanDescriptorSet() };
+        VkDescriptorSet descriptorSets[3];
+        descriptorSets[0] = uniformDescriptorSets[currentFrame]->GetVulkanDescriptorSet();
+        descriptorSets[1] = globalDescriptorSet->GetVulkanDescriptorSet();
         const VkDeviceSize offsets[] = {0 };
 
         // For each mesh in the world
@@ -110,7 +112,7 @@ namespace Sierra::Core::Rendering::Vulkan
             vkCmdBindIndexBuffer(givenCommandBuffer, mesh.GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
             // Get the push constant model of the current mesh and push it to shader
-            Engine::Components::Mesh::PushConstantData data;
+            Mesh::PushConstantData data{};
             mesh.GetPushConstantData(&data);
 
             // Send push constant data to shader
@@ -120,8 +122,7 @@ namespace Sierra::Core::Rendering::Vulkan
                 pushConstantSize, &data
             );
 
-            descriptorSets[1] = mesh.GetDescriptorSet();
-//            descriptorSetsPtr[2] = specularTextures[mesh.specularTextureID].descriptorSet;
+//            descriptorSets[1] = mesh.GetDescriptorSet();
 
             vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipelineLayout, 0, 2, descriptorSets, 0, nullptr);
 
@@ -163,7 +164,7 @@ namespace Sierra::Core::Rendering::Vulkan
         else if (result == VK_SUCCESS)
         {
             // Calculate the difference
-            drawTimeQueryResults[swapchainIndex] = (buffer[1] - buffer[0]) * timestampPeriod;
+            drawTimeQueryResults[swapchainIndex] = ((float)(buffer[1] - buffer[0]) * timestampPeriod);
         }
         else
         {
@@ -171,13 +172,13 @@ namespace Sierra::Core::Rendering::Vulkan
         }
 
         // Calculate final GPU draw time
-        for (int i = MAX_CONCURRENT_FRAMES; i--;)
+        for (uint32_t i = MAX_CONCURRENT_FRAMES; i--;)
         {
             rendererInfo.drawTime += drawTimeQueryResults[i];
         }
 
         // Get the average of the concurrent draws and convert from nanoseconds to milliseconds
-        rendererInfo.drawTime /= MAX_CONCURRENT_FRAMES * 1000000.0f;
+        rendererInfo.drawTime /= (float) MAX_CONCURRENT_FRAMES * 1000000.0f;
     }
 
 }

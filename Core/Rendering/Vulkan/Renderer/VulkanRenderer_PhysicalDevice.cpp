@@ -96,6 +96,10 @@ namespace Sierra::Core::Rendering::Vulkan
         std::vector<VkExtensionProperties> extensionProperties(extensionCount);
         vkEnumerateDeviceExtensionProperties(givenPhysicalDevice, nullptr, &extensionCount, extensionProperties.data());
 
+        #if __APPLE__
+            bool khrPortabilityRequired = false;
+        #endif
+
         // Check if each given extension is in the supported extensions array
         bool allExtensionsSupported = true;
         for (const auto &requiredExtension : requiredDeviceExtensions)
@@ -104,9 +108,10 @@ namespace Sierra::Core::Rendering::Vulkan
             for (const auto &extensionProperty : extensionProperties)
             {
                 #if __APPLE__
-                    if (!krhPortabilityRequired && strcmp("VK_KHR_portability_subset", extensionProperty.extensionName) == 0)
+                    if (strcmp("VK_KHR_portability_subset", extensionProperty.extensionName) == 0)
                     {
-                        krhPortabilityRequired = true;
+                        khrPortabilityRequired = true;
+                        continue;
                     }
                 #endif
 
@@ -117,16 +122,16 @@ namespace Sierra::Core::Rendering::Vulkan
                 }
             }
 
-            #if __APPLE__
-                requiredDeviceExtensions.push_back("VK_KHR_portability_subset");
-            #endif
-
             if (!extensionFound)
             {
                 allExtensionsSupported = false;
                 Debugger::ThrowWarning("Device extension [" + std::string(requiredExtension) + "] not supported by your [" + std::string(VulkanCore::GetPhysicalDeviceProperties().deviceName) + "] GPU");
             }
         }
+
+        #if __APPLE__
+            if (khrPortabilityRequired) requiredDeviceExtensions.push_back("VK_KHR_portability_subset");
+        #endif
 
         return allExtensionsSupported;
     }

@@ -25,9 +25,9 @@ def Main():
             print(f"Error: Unrecognized argument: { sys.argv[1] }!")
             return
         elif sys.argv[1] == "--Debug":
-            OUTPUT_DIRECTORY = ROOT_DIRECTORY + "cmake-build-debug/"
+            OUTPUT_DIRECTORY = ROOT_DIRECTORY + ("cmake-build-debug/Debug/" if platform.system() == "Windows" else "cmake-build-debug/")
         else:
-            OUTPUT_DIRECTORY = ROOT_DIRECTORY + "cmake-build-release/"
+            OUTPUT_DIRECTORY = ROOT_DIRECTORY + ("cmake-build-release/Release/" if platform.system() == "Windows" else "cmake-build-debug/")
 
         # Check if too many arguments are provided
         if (len(sys.argv) >= 3):

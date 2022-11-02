@@ -47,7 +47,7 @@ namespace Sierra::Engine::Components
         /* --- POLLING METHODS --- */
 
         /* --- SETTER METHODS --- */
-        void SetTexture(const std::shared_ptr<Texture> givenTexture);
+        void SetTexture(const std::shared_ptr<Texture>& givenTexture);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint32_t GetVertexCount() const { return vertexCount; }

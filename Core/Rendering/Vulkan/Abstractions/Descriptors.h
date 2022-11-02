@@ -18,18 +18,27 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     class DescriptorSetLayout
     {
+    private:
+        struct DescriptorSetLayoutBinding
+        {
+            VkDescriptorSetLayoutBinding bindingInfo;
+            VkDescriptorBindingFlags bindingFlags = 0;
+            uint32_t arraySize = 0;
+        };
     public:
         /* --- CONSTRUCTORS --- */
-        explicit DescriptorSetLayout(const std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding>& givenBindings);
+        DescriptorSetLayout(const std::unordered_map<uint32_t, DescriptorSetLayoutBinding>& givenBindings);
 
         class Builder
         {
         public:
-            Builder &AddBinding(uint32_t binding, VkDescriptorType descriptorType, VkShaderStageFlags shaderStages, uint32_t descriptorCount = 1, VkSampler const *immutableSamplers = nullptr);
+            Builder &AddBinding(uint32_t binding, VkDescriptorType descriptorType, VkDescriptorBindingFlags bindingFlags = 0, uint32_t arraySize = 1, VkSampler const *immutableSamplers = nullptr);
+            Builder &SetShaderStages(VkShaderStageFlags givenShaderStages);
             [[nodiscard]] std::unique_ptr<DescriptorSetLayout> Build() const;
 
         private:
-            std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings;
+            VkShaderStageFlags shaderStages = -1;
+            std::unordered_map<uint32_t, DescriptorSetLayoutBinding> bindings;
 
         };
 
@@ -40,11 +49,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void Destroy();
         DescriptorSetLayout(const DescriptorSetLayout &) = delete;
         DescriptorSetLayout &operator=(const DescriptorSetLayout &) = delete;
-        friend class DescriptorSet;
 
     private:
+        friend class DescriptorPool;
+        friend class DescriptorSet;
+        friend class BindlessDescriptorSet;
+
         VkDescriptorSetLayout vkDescriptorSetLayout;
-        std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings;
+        std::unordered_map<uint32_t, DescriptorSetLayoutBinding> bindings;
 
     };
 
@@ -70,7 +82,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         };
 
         /* --- SETTER METHODS --- */
-        void AllocateDescriptorSet(VkDescriptorSetLayout givenDescriptorSetLayout, VkDescriptorSet &descriptorSet);
+        void AllocateDescriptorSet(VkDescriptorSet &descriptorSet);
+        void AllocateBindlessDescriptorSet(uint32_t binding, VkDescriptorSet &descriptorSet);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkDescriptorPool GetVulkanDescriptorPool() const { return this->vkDescriptorPool; }
@@ -110,7 +123,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         DescriptorSet &operator=(const DescriptorSet &) = delete;
 
     private:
-        uint64_t offset = 0;
         VkDescriptorSet vkDescriptorSet;
 
         std::shared_ptr<DescriptorPool> &descriptorPool;
@@ -120,5 +132,62 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         std::unordered_map<uint32_t, VkDescriptorImageInfo> descriptorImageInfos;
         std::unordered_map<uint32_t, VkDescriptorBufferInfo> descriptorBufferInfos;
 
+    };
+
+    class BindlessDescriptorSet
+    {
+
+        #define DESCRIPTOR_TYPE_NONE 0
+        #define DESCRIPTOR_TYPE_BUFFER_TRANSFER 1
+        #define DESCRIPTOR_TYPE_IMAGE_TRANSFER 2
+        #define DESCRIPTOR_TYPE_TEXTURE_TRANSFER 2
+
+    private:
+        inline static std::string const DescriptorTypeToString(const uint32_t descriptorType)
+        {
+            switch (descriptorType)
+            {
+                case DESCRIPTOR_TYPE_NONE:
+                    return "DESCRIPTOR_TYPE_NONE";
+                case DESCRIPTOR_TYPE_BUFFER_TRANSFER:
+                    return "DESCRIPTOR_TYPE_BUFFER_TRANSFER";
+                case DESCRIPTOR_TYPE_IMAGE_TRANSFER:
+                    return "DESCRIPTOR_TYPE_IMAGE_TRANSFER";
+                default:
+                    return "";
+            }
+        }
+
+    public:
+        /* --- CONSTRUCTORS --- */
+        BindlessDescriptorSet(uint32_t givenBinding, uint32_t givenDescriptorType, std::shared_ptr<DescriptorPool> &givenDescriptorPool);
+        [[nodiscard]] static std::unique_ptr<BindlessDescriptorSet> Build(uint32_t givenBinding, uint32_t givenDescriptorType, std::shared_ptr<DescriptorPool> &givenDescriptorPool);
+
+        /* --- SETTER METHODS --- */
+        void WriteBuffer(const std::unique_ptr<Buffer> &buffer, uint32_t arrayIndex = 0);
+        void WriteImage(const VkDescriptorImageInfo *imageInfo, uint32_t arrayIndex = 0);
+        void WriteTexture(const std::shared_ptr<Texture> &texture, uint32_t arrayIndex = 0);
+        void Allocate();
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] VkDescriptorSet GetVulkanDescriptorSet() const { return this->vkDescriptorSet; }
+
+        /* --- DESTRUCTOR --- */
+        ~BindlessDescriptorSet();
+        BindlessDescriptorSet(const BindlessDescriptorSet &) = delete;
+        BindlessDescriptorSet &operator=(const BindlessDescriptorSet &) = delete;
+
+    private:
+        VkDescriptorSet vkDescriptorSet;
+
+        uint32_t boundBinding;
+        uint32_t descriptorType = DESCRIPTOR_TYPE_NONE;
+
+        std::shared_ptr<DescriptorPool> &descriptorPool;
+        std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout;
+
+        std::vector<VkWriteDescriptorSet> writeDescriptorSets;
+        std::unordered_map<uint32_t, VkDescriptorImageInfo> descriptorImageInfos;
+        std::unordered_map<uint32_t, VkDescriptorBufferInfo> descriptorBufferInfos;
     };
 }
