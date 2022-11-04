@@ -121,7 +121,7 @@ namespace Sierra::Core::Rendering::Vulkan
                 pushConstantSize, &data
             );
 
-            descriptorSets[1] = DescriptorInfo::DESCRIPTOR_INDEXING_SUPPORTED ? globalBindlessDescriptorSet->GetVulkanDescriptorSet() : mesh.GetDescriptorSet();
+            descriptorSets[1] = VulkanCore::GetDescriptorIndexingSupported() ? globalBindlessDescriptorSet->GetVulkanDescriptorSet() : mesh.GetDescriptorSet();
 
             vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipelineLayout, 0, 2, descriptorSets, 0, nullptr);
 

@@ -126,6 +126,11 @@ namespace Sierra::Core::Rendering::Vulkan
 
         Texture::DestroyDefaultTextures();
 
+        if (VulkanCore::GetDescriptorIndexingSupported())
+        {
+
+        }
+
         vkDestroyPipeline(logicalDevice, graphicsPipeline, nullptr);
         vkDestroyPipelineLayout(logicalDevice, graphicsPipelineLayout, nullptr);
 

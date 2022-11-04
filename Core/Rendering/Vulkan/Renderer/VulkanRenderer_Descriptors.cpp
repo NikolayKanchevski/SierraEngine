@@ -14,9 +14,9 @@ namespace Sierra::Core::Rendering::Vulkan
             .SetShaderStages(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
             .AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
-        if (DescriptorInfo::DESCRIPTOR_INDEXING_SUPPORTED)
+        if (VulkanCore::GetDescriptorIndexingSupported())
         {
-            descriptorSetLayoutBuilder.AddBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT, MAX_TEXTURES);
+            descriptorSetLayoutBuilder.AddBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT, MAX_TEXTURES);
         }
         else
         {

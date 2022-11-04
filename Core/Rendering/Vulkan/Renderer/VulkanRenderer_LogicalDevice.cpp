@@ -45,8 +45,25 @@ namespace Sierra::Core::Rendering::Vulkan
         resetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES,
         resetFeatures.hostQueryReset = VK_TRUE;
 
-        // Fill in logical device creation info
         VkDeviceCreateInfo logicalDeviceCreateInfo{};
+
+        // Set descriptor indexing features
+        #if !__APPLE__
+            if (VulkanCore::GetDescriptorIndexingSupported())
+            {
+                VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
+                descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+                descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+                descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
+                descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
+                descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+                logicalDeviceCreateInfo.pNext = &descriptorIndexingFeatures;
+            }
+
+            requiredDeviceExtensions.push_back("VK_EXT_descriptor_indexing");
+        #endif
+
+        // Fill in logical device creation info
         logicalDeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         logicalDeviceCreateInfo.pEnabledFeatures = &requiredPhysicalDeviceFeatures;
         logicalDeviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(requiredDeviceExtensions.size());
@@ -54,23 +71,12 @@ namespace Sierra::Core::Rendering::Vulkan
         logicalDeviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         logicalDeviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-        if (DescriptorInfo::DESCRIPTOR_INDEXING_SUPPORTED)
-        {
-            // Set descriptor indexing features
-            VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
-            descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
-            descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-            descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
-            descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
-            descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
-            logicalDeviceCreateInfo.pNext = &descriptorIndexingFeatures;
-        }
-
         // Create logical device
         Debugger::CheckResults(
             vkCreateDevice(this->physicalDevice, &logicalDeviceCreateInfo, nullptr, &logicalDevice),
             "Failed to create logical device"
         );
+
 
         // Assign the EngineCore's logical device
         VulkanCore::SetLogicalDevice(logicalDevice);

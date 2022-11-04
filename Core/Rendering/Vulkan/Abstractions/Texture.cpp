@@ -236,17 +236,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Texture::DestroyDefaultTextures()
     {
-        for (const auto &texture : defaultTextures)
+        for (const auto &texture : texturePool)
         {
-            texture->Destroy();
+            texture.second->Destroy();
         }
     }
 
     /* --- DESTRUCTOR --- */
     void Texture::Destroy()
     {
-        texturePool.erase(filePath);
-
         image->Destroy();
         sampler->Destroy();
     }

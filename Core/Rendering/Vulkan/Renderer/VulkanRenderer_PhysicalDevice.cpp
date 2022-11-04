@@ -114,12 +114,6 @@ namespace Sierra::Core::Rendering::Vulkan
                         khrPortabilityRequired = true;
                         continue;
                     }
-                #else
-                    // If descriptor indexing is supported and device is not a Mac (indexing on Mac is way too bad to be used)
-                    if (strcmp("VK_EXT_descriptor_indexing", extensionProperty.extensionName) == 0)
-                    {
-                        DescriptorInfo::DESCRIPTOR_INDEXING_SUPPORTED = true;
-                    }
                 #endif
 
                 if (strcmp(requiredExtension, extensionProperty.extensionName) == 0)
@@ -138,8 +132,6 @@ namespace Sierra::Core::Rendering::Vulkan
 
         #if __APPLE__
             if (khrPortabilityRequired) requiredDeviceExtensions.push_back("VK_KHR_portability_subset");
-        #else
-            if (DescriptorInfo::DESCRIPTOR_INDEXING_SUPPORTED) requiredDeviceExtensions.push_back("VK_EXT_descriptor_indexing");
         #endif
 
         return allExtensionsSupported;

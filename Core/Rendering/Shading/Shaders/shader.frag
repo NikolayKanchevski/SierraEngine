@@ -38,8 +38,8 @@ layout(location = 0) out vec4 outColor;
 void main()
 {
 //        outColor = vec4(1.0, 0.0, 0.0, 1.0);
-//        outColor = vec4(texture(texturePool[0], fromVert_TextureCoordinates).rgb, 1.0);
-        outColor = vec4(texture(diffuseSampler, fromVert_TextureCoordinates).rgb, 1.0);
+        outColor = vec4(texture(texturePool[0], fromVert_TextureCoordinates).rgb, 1.0);
+//                outColor = vec4(texture(diffuseSampler, fromVert_TextureCoordinates).rgb, 1.0);
 }
 
 //

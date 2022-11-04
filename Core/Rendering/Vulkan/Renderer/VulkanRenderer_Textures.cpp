@@ -24,9 +24,9 @@ namespace Sierra::Core::Rendering::Vulkan
            .textureType = TEXTURE_TYPE_SPECULAR,
         }, true);
 
-        if (DescriptorInfo::DESCRIPTOR_INDEXING_SUPPORTED)
+        if (VulkanCore::GetDescriptorIndexingSupported())
         {
-            globalBindlessDescriptorSet = BindlessDescriptorSet::Build({ 3 }, DESCRIPTOR_TYPE_TEXTURE_TRANSFER, descriptorPool);
+            globalBindlessDescriptorSet = BindlessDescriptorSet::Build({ 3 }, descriptorPool);
             globalBindlessDescriptorSet->WriteTexture(3, nullDiffuseTexture, 0);
             globalBindlessDescriptorSet->WriteTexture(3, nullSpecularTexture, 1);
             globalBindlessDescriptorSet->Allocate();

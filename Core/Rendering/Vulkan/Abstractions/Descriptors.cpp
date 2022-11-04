@@ -63,10 +63,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         auto* bindingFlags = new VkDescriptorBindingFlags[bindings.size()];
 
         // Foreach pair in the provided tuple retrieve the created set layout binding
+        uint32_t i = 0;
         for (const auto pair : givenBindings)
         {
-            layoutBindings[pair.first] = pair.second.bindingInfo;
-            bindingFlags[pair.first] = pair.second.bindingFlags;
+            layoutBindings[i] = pair.second.bindingInfo;
+            bindingFlags[i] = pair.second.bindingFlags;
+
+            i++;
         }
 
         // Set up the layout creation info
@@ -75,7 +78,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         layoutCreateInfo.bindingCount = static_cast<uint32_t>(givenBindings.size());
         layoutCreateInfo.pBindings = layoutBindings.data();
 
-        if (DescriptorInfo::DESCRIPTOR_INDEXING_SUPPORTED)
+        if (VulkanCore::GetDescriptorIndexingSupported())
         {
             VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsCreateInfo{};
             bindingFlagsCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
@@ -147,7 +150,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkDescriptorSetVariableDescriptorCountAllocateInfo variableDescriptorCountAllocateInfo{};
         variableDescriptorCountAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO;
 
-        uint32_t descriptorCounts[bindings.size()];
+        uint32_t* descriptorCounts = new uint32_t[bindings.size()];
         for (uint32_t i = bindings.size(); i--;)
         {
             descriptorCounts[i] = descriptorSetLayout->bindings[bindings[i]].arraySize;
@@ -157,13 +160,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         variableDescriptorCountAllocateInfo.pDescriptorCounts = descriptorCounts;
 
         auto vkDescriptorSetLayout = descriptorSetLayout->GetVulkanDescriptorSetLayout();
+        auto a = std::vector<VkDescriptorSetLayout>(bindings.size(), vkDescriptorSetLayout);
 
         // Set up the allocation info
         VkDescriptorSetAllocateInfo allocateInfo{};
         allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocateInfo.descriptorPool = this->vkDescriptorPool;
-        allocateInfo.pSetLayouts = &vkDescriptorSetLayout;
-        allocateInfo.descriptorSetCount = 1;
+        allocateInfo.pSetLayouts = a.data();
+        allocateInfo.descriptorSetCount = bindings.size();
         allocateInfo.pNext = &variableDescriptorCountAllocateInfo;
 
         // Create the Vulkan descriptor set
@@ -308,11 +312,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    BindlessDescriptorSet::BindlessDescriptorSet(const std::vector<uint32_t> &givenBindings, const uint32_t givenDescriptorType, std::shared_ptr<DescriptorPool> &givenDescriptorPool)
-        : descriptorType(givenDescriptorType), descriptorPool(givenDescriptorPool), descriptorSetLayout(givenDescriptorPool->GetDescriptorSetLayout())
+    BindlessDescriptorSet::BindlessDescriptorSet(const std::vector<uint32_t> &givenBindings, std::shared_ptr<DescriptorPool> &givenDescriptorPool)
+        : boundBindings(givenBindings), descriptorPool(givenDescriptorPool), descriptorSetLayout(givenDescriptorPool->GetDescriptorSetLayout())
     {
         // Check if the current binding is not available
-        // TODO: This
         for (const auto &binding : givenBindings)
         {
             if (descriptorSetLayout->bindings.count(binding) == 0)
@@ -325,18 +328,29 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         descriptorPool->AllocateBindlessDescriptorSet(givenBindings, this->vkDescriptorSet);
     }
 
-    std::unique_ptr<BindlessDescriptorSet> BindlessDescriptorSet::Build(const std::vector<uint32_t> &givenBindings, const uint32_t givenDescriptorType, std::shared_ptr<DescriptorPool> &givenDescriptorPool)
+    std::unique_ptr<BindlessDescriptorSet> BindlessDescriptorSet::Build(const std::vector<uint32_t> &givenBindings, std::shared_ptr<DescriptorPool> &givenDescriptorPool)
     {
-        return std::make_unique<BindlessDescriptorSet>(givenBindings, givenDescriptorType, givenDescriptorPool);
+        return std::make_unique<BindlessDescriptorSet>(givenBindings, givenDescriptorPool);
     }
 
     /* --- SETTER METHODS --- */
 
     void BindlessDescriptorSet::WriteBuffer(const uint32_t binding, const std::unique_ptr<Buffer> &buffer, const uint32_t arrayIndex)
     {
-        if (descriptorType != DESCRIPTOR_TYPE_BUFFER_TRANSFER)
+        if (descriptorSetLayout->bindings.count(binding) == 0)
         {
-            Debugger::ThrowError("Cannot write buffers to a bindless descriptor of type [" + DescriptorTypeToString(descriptorType) + "]. Make sure it has its type set to [DESCRIPTOR_TYPE_BUFFER_TRANSFER]");
+            Debugger::ThrowError("Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+        }
+
+        bool bindingContained = false;
+        for (const auto &boundBinding : boundBindings)
+        {
+            if (boundBinding == binding) bindingContained = true;
+        }
+
+        if (!bindingContained)
+        {
+            Debugger::ThrowError("Descriptor set is not configured to work with the specified binding: [" + std::to_string(binding) + "]");
         }
 
         // Get the binding description and check if it expects more than 1 descriptors
@@ -364,9 +378,20 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void BindlessDescriptorSet::WriteImage(const uint32_t binding, const VkDescriptorImageInfo *imageInfo, const uint32_t arrayIndex)
     {
-        if (descriptorType != DESCRIPTOR_TYPE_IMAGE_TRANSFER)
+        if (descriptorSetLayout->bindings.count(binding) == 0)
         {
-            Debugger::ThrowError("Cannot write images to a bindless descriptor of type [" + DescriptorTypeToString(descriptorType) + "]. Make sure it has its type set to [DESCRIPTOR_TYPE_IMAGE_TRANSFER]");
+            Debugger::ThrowError("Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+        }
+
+        bool bindingContained = false;
+        for (const auto &boundBinding : boundBindings)
+        {
+            if (boundBinding == binding) bindingContained = true;
+        }
+
+        if (!bindingContained)
+        {
+            Debugger::ThrowError("Descriptor set is not configured to work with the specified binding: [" + std::to_string(binding) + "]");
         }
 
         // Get the binding description and check if it expects more than 1 descriptors

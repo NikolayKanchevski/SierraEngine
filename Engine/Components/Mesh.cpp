@@ -20,7 +20,7 @@ namespace Sierra::Engine::Components
         CreateVertexBuffer(givenVertices);
         CreateIndexBuffer(givenIndices);
 
-        if (!DescriptorInfo::DESCRIPTOR_INDEXING_SUPPORTED) CreateDescriptorSet();
+        if (!VulkanCore::GetDescriptorIndexingSupported()) CreateDescriptorSet();
 
         totalMeshCount++;
         totalMeshVertices += vertexCount;
@@ -84,6 +84,8 @@ namespace Sierra::Engine::Components
         descriptorSet->WriteTexture(DIFFUSE_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_DIFFUSE));
         descriptorSet->WriteTexture(SPECULAR_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_SPECULAR));
         descriptorSet->Allocate();
+
+        printf("ASD");
     }
 
     void Mesh::SetTexture(const std::shared_ptr<Texture>& givenTexture)
@@ -93,10 +95,10 @@ namespace Sierra::Engine::Components
             Debugger::ThrowError("In order to bind texture [" + givenTexture->name + "] to mesh its texture type must be specified and be different from TEXTURE_TYPE_NONE");
         }
 
-        if (DescriptorInfo::DESCRIPTOR_INDEXING_SUPPORTED)
+        if (VulkanCore::GetDescriptorIndexingSupported())
         {
             // TODO: Make this lul
-            throw std::runtime_error("Not implemented yet!");
+//            throw std::runtime_error("Not implemented yet!");
         }
         else
         {
