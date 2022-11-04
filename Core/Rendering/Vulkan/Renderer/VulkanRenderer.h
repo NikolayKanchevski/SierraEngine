@@ -161,8 +161,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
         std::vector<const char*> requiredDeviceExtensions
         {
-            "VK_KHR_swapchain",
-            "VK_EXT_descriptor_indexing"
+            "VK_KHR_swapchain"
         };
 
         QueueFamilyIndices queueFamilyIndices{};
@@ -229,7 +228,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
         /* --- DESCRIPTORS --- */
         std::unique_ptr<DescriptorSetLayout> globalDescriptorSetLayout;
-        std::unique_ptr<BindlessDescriptorSet> globalDescriptorSet;
+        std::unique_ptr<BindlessDescriptorSet> globalBindlessDescriptorSet;
 
         std::unique_ptr<DescriptorSetLayout> descriptorSetLayout;
         void CreateDescriptorSetLayout();

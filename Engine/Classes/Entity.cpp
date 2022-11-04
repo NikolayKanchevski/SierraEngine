@@ -55,6 +55,11 @@ namespace Sierra::Engine::Classes
         GetComponent<Relationship>().SetParent(givenParent.enttEntity);
     }
 
+    void Entity::Destroy()
+    {
+        World::GetEnttRegistry().destroy(enttEntity);
+    }
+
     /* --- DESTRUCTOR --- */
 
     Entity::~Entity()

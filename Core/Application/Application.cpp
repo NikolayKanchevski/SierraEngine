@@ -3,6 +3,9 @@
 //
 
 #include "Application.h"
+#include <iostream>
+
+#include "../../Engine/Components/UUID.h"
 
 /* --- POLLING METHODS --- */
 

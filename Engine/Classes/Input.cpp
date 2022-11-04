@@ -3,7 +3,6 @@
 //
 
 #include <glm/common.hpp>
-#include <iostream>
 #include <codecvt>
 #include "Input.h"
 #include "../../Core/Debugger.h"

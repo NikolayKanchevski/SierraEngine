@@ -20,7 +20,7 @@ namespace Sierra::Engine::Components
         CreateVertexBuffer(givenVertices);
         CreateIndexBuffer(givenIndices);
 
-        CreateDescriptorSet();
+        if (!DescriptorInfo::DESCRIPTOR_INDEXING_SUPPORTED) CreateDescriptorSet();
 
         totalMeshCount++;
         totalMeshVertices += vertexCount;
@@ -93,9 +93,17 @@ namespace Sierra::Engine::Components
             Debugger::ThrowError("In order to bind texture [" + givenTexture->name + "] to mesh its texture type must be specified and be different from TEXTURE_TYPE_NONE");
         }
 
-        textures[TextureTypeToArrayIndex(givenTexture->GetTextureType())] = givenTexture;
-        descriptorSet->WriteTexture(TextureTypeToBinding(givenTexture->GetTextureType()), givenTexture);
-        descriptorSet->Allocate();
+        if (DescriptorInfo::DESCRIPTOR_INDEXING_SUPPORTED)
+        {
+            // TODO: Make this lul
+            throw std::runtime_error("Not implemented yet!");
+        }
+        else
+        {
+            textures[TextureTypeToArrayIndex(givenTexture->GetTextureType())] = givenTexture;
+            descriptorSet->WriteTexture(TextureTypeToBinding(givenTexture->GetTextureType()), givenTexture);
+            descriptorSet->Allocate();
+        }
     }
 
     /* --- GETTER METHODS --- */

@@ -95,7 +95,6 @@ namespace Sierra::Core::Rendering::Vulkan
         VkBuffer vertexBuffers[1];
         VkDescriptorSet descriptorSets[3];
         descriptorSets[0] = uniformDescriptorSets[currentFrame]->GetVulkanDescriptorSet();
-        descriptorSets[1] = globalDescriptorSet->GetVulkanDescriptorSet();
         const VkDeviceSize offsets[] = {0 };
 
         // For each mesh in the world
@@ -122,7 +121,7 @@ namespace Sierra::Core::Rendering::Vulkan
                 pushConstantSize, &data
             );
 
-//            descriptorSets[1] = mesh.GetDescriptorSet();
+            descriptorSets[1] = DescriptorInfo::DESCRIPTOR_INDEXING_SUPPORTED ? globalBindlessDescriptorSet->GetVulkanDescriptorSet() : mesh.GetDescriptorSet();
 
             vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipelineLayout, 0, 2, descriptorSets, 0, nullptr);
 

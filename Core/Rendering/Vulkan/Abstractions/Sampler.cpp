@@ -4,8 +4,6 @@
 
 #include "Sampler.h"
 #include "../VulkanCore.h"
-#include "../../../../Engine/Classes/Math.h"
-#include "../../../Debugger.h"
 
 using namespace Sierra::Engine::Classes;
 

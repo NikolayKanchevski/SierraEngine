@@ -3,7 +3,6 @@
 //
 
 #include "VulkanRenderer.h"
-#include "../VulkanCore.h"
 #include <GLFW/glfw3.h>
 
 namespace Sierra::Core::Rendering::Vulkan

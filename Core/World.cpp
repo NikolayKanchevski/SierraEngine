@@ -9,8 +9,6 @@
 #include "../Engine/Classes/Cursor.h"
 #include "../Engine/Classes/Input.h"
 #include "../Engine/Components/Camera.h"
-#include "../Engine/Components/InternalComponents.h"
-#include <iostream>
 
 using namespace Sierra::Engine::Classes;
 using namespace Sierra::Engine::Components;

@@ -30,6 +30,7 @@ namespace Sierra::Engine::Classes
 
         /* --- SETTER METHODS --- */
         void SetParent(Entity &givenParent);
+        void Destroy();
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] Transform& GetTransform() const { return GetComponent<Transform>(); }

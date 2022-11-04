@@ -45,14 +45,6 @@ namespace Sierra::Core::Rendering::Vulkan
         resetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES,
         resetFeatures.hostQueryReset = VK_TRUE;
 
-        // Set descriptor indexing features
-        VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
-        descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
-        descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-        descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
-        descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
-        descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
-
         // Fill in logical device creation info
         VkDeviceCreateInfo logicalDeviceCreateInfo{};
         logicalDeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -61,7 +53,18 @@ namespace Sierra::Core::Rendering::Vulkan
         logicalDeviceCreateInfo.ppEnabledExtensionNames = requiredDeviceExtensions.data();
         logicalDeviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         logicalDeviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
-        logicalDeviceCreateInfo.pNext = &descriptorIndexingFeatures;
+
+        if (DescriptorInfo::DESCRIPTOR_INDEXING_SUPPORTED)
+        {
+            // Set descriptor indexing features
+            VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
+            descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+            descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+            descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
+            descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
+            descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+            logicalDeviceCreateInfo.pNext = &descriptorIndexingFeatures;
+        }
 
         // Create logical device
         Debugger::CheckResults(

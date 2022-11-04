@@ -102,14 +102,14 @@ namespace Sierra::Engine::Classes
         /// @param player Which player's gamepad to use (also referred to as an ID of the gamepad).
         [[nodiscard]] static bool GetGamePadButtonResting(uint32_t gamePadButton, uint32_t player = 0);
 
-        /// @brief Returns the a Vector2 where X is the horizontal axis of the left stick (LSB) and Y the vertical.
+        /// @brief Returns a Vector2 where X is the horizontal axis of the left stick (LSB) and Y the vertical.
         /// See <see cref="GetHorizontalGamepadLeftStickAxis"/> and/or <see cref="GetVerticalGamepadLeftStickAxis"/>
         /// See also <a href="https://gist.github.com/palmerj/586375bcc5bc83ccdaf00c6f5f863e86 this link</a>
         /// if you are not familiar with the buttons and layout of gamepads.
         /// @param player Which player's gamepad to use (also referred to as an ID of the gamepad).
         [[nodiscard]] static glm::vec2 GetGamePadLeftStickAxis(uint32_t player = 0);
 
-        /// @brief Returns the a value between -1 and 1 indicating the current input on the horizontal axis of the left (LSB) stick.
+        /// @brief Returns a value between -1 and 1 indicating the current input on the horizontal axis of the left (LSB) stick.
         /// See also <a href="https://gist.github.com/palmerj/586375bcc5bc83ccdaf00c6f5f863e86 this link</a>
         /// if you are not familiar with the buttons and layout of gamepads.
         /// @param player Which player's gamepad to use (also referred to as an ID of the gamepad).

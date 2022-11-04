@@ -13,7 +13,7 @@ though the engine has only been tested on <b>Windows 10, 11</b> and <b>macOS Mon
 
 ## 🛠️ Installing, Building, and Running the Engine<br>
 
-Clone the repository in your IDE of choice (<i>Visual Studio</i>, <i>Rider</i>, etc.) Now, you will have to run a Python script what will configure the project for you. Obviously, this will require your machine to have <b><a href="https://www.python.org/downloads/">Python 3</a></b> installed, so make sure you have that. Navigate over to the folder where you cloned the repo and run the following two commands in your command prompt or terminal:
+Clone the repository in your IDE of choice (<i>Visual Studio</i>, <i>CLion</i>, etc.) Now, you will have to run a Python script what will configure the project for you. Obviously, this will require your machine to have <b><a href="https://www.python.org/downloads/">Python 3</a></b> installed, so make sure you have that. Navigate over to the folder where you cloned the repo and run the following two commands in your command prompt or terminal:
 ```bat
 $ cd Scripts/
 $ python3 UpdateProject.py --Release
@@ -55,7 +55,7 @@ You can then proceed and run the program in your IDE. Make sure you are in <b>RE
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 7849</p>
-<p align="center" id="LastUpdated">Last updated: 19/10/2022</p>
+<p align="center" id="LinesCounter">Total lines of code: 8198</p>
+<p align="center" id="LastUpdated">Last updated: 03/11/2022</p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

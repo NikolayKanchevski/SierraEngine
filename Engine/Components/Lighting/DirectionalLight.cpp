@@ -4,8 +4,6 @@
 
 #include "DirectionalLight.h"
 
-
-
 /* --- CONSTRUCTORS --- */
 
 /* --- POLLING METHODS --- */

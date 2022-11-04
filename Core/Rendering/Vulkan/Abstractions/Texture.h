@@ -24,6 +24,7 @@ typedef enum TextureType
 #define SPECULAR_TEXTURE_BINDING 2
 #define TOTAL_TEXTURE_TYPES_COUNT 2
 
+// TODO: Refactor this crap
 #define TextureBindingToArrayIndex(binding)(binding - 1)
 #define TextureTypeToArrayIndex(textureType)(textureType - 1)
 #define TextureTypeToBinding(textureType)(textureType)

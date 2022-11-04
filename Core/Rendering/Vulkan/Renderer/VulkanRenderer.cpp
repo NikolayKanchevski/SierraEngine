@@ -6,7 +6,6 @@
 #include "VulkanRenderer.h"
 #include "../../../../Engine/Classes/Stopwatch.h"
 #include "../../../../Engine/Classes/MeshObject.h"
-#include "../../../World.h"
 
 using namespace Sierra::Engine::Classes;
 

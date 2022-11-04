@@ -30,15 +30,15 @@
 namespace Sierra::Core
 {
 
-#if DEBUG
-    static const bool DEBUG_MODE = true;
-#else
-    static const bool DEBUG_MODE = false;
-#endif
+    #if DEBUG
+        static const bool DEBUG_MODE = true;
+    #else
+        static const bool DEBUG_MODE = false;
+    #endif
 
-#if _WIN32
-    HANDLE Debugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-#endif
+    #if _WIN32
+        HANDLE Debugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    #endif
 
     void Debugger::DisplayInfo(const std::string& message)
     {
@@ -65,7 +65,7 @@ namespace Sierra::Core
     {
         RED();
         std::cout << "[-] " << message << "!\n";
-        if (!DEBUG_MODE) exit(-1);
+        if (DEBUG_MODE) exit(-1);
         DEFAULT();
     }
 

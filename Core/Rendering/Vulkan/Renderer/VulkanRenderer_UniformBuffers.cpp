@@ -4,8 +4,6 @@
 
 #include "VulkanRenderer.h"
 
-#include "../VulkanUtilities.h"
-
 namespace Sierra::Core::Rendering::Vulkan
 {
 

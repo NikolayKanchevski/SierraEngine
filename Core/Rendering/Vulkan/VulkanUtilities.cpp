@@ -5,7 +5,6 @@
 #include <vector>
 #include "VulkanUtilities.h"
 #include "VulkanCore.h"
-#include "../../Debugger.h"
 #include "../../../Engine/Classes/File.h"
 
 using namespace Sierra::Engine::Classes;

@@ -46,3 +46,27 @@ namespace Sierra::Core
 
     };
 }
+
+#define THROW_ERROR_IF(__EXPRESSION__, __MESSAGE__) if (__EXPRESSION__) Debugger::ThrowError(__MESSAGE__)
+#define THROW_ERROR(__MESSAGE__) Debugger::ThrowError(__MESSAGE__)
+#define VK_DISPLAY(__EXPRESSION__, __MESSAGE__) if (__EXPRESSION__ != VK_SUCCESS) THROW_ERROR(__MESSAGE__)
+
+#if DEBUG
+    #define THROW_WARNING_IF(__EXPRESSION__, __MESSAGE__) if (__EXPRESSION__) Debugger::ThrowWarning(__MESSAGE__)
+    #define THROW_WARNING(__MESSAGE__) Debugger::ThrowWarning(__MESSAGE__)
+
+    #define DISPLAY_SUCCESS_IF(__EXPRESSION__, __MESSAGE__) if (__EXPRESSION__) Debugger::DisplaySuccess(__MESSAGE__)
+    #define DISPLAY_SUCCESS(__MESSAGE__) Debugger::DisplaySuccess(__MESSAGE__)
+
+    #define DISPLAY_INFO_IF(__EXPRESSION__, __MESSAGE__) if (__EXPRESSION__) Debugger::DisplayInfo(__MESSAGE__)
+    #define DISPLAY_INFO(__MESSAGE__) Debugger::DisplayInfo(__MESSAGE__)
+#else
+    #define THROW_WARNING_IF(__EXPRESSION__, __MESSAGE__)
+    #define THROW_WARNING(__MESSAGE__)
+
+    #define DISPLAY_SUCCESS_IF(__EXPRESSION__, __MESSAGE__)
+    #define DISPLAY_SUCCESS(__MESSAGE__)
+
+    #define DISPLAY_INFO_IF(__EXPRESSION__, __MESSAGE__)
+    #define DISPLAY_INFO(__MESSAGE__)
+#endif

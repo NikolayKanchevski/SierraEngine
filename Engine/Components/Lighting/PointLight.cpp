@@ -4,8 +4,6 @@
 
 #include "PointLight.h"
 
-
-
 /* --- CONSTRUCTORS --- */
 
 /* --- POLLING METHODS --- */

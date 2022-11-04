@@ -77,7 +77,6 @@ namespace Sierra::Engine::Classes
 
     void Cursor::ResetCursorOffset()
     {
-        lastCursorPosition = cursorPosition;
         cursorOffset = { 0, 0 };
     }
 

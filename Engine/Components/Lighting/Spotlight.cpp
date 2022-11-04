@@ -4,8 +4,6 @@
 
 #include "Spotlight.h"
 
-
-
 /* --- CONSTRUCTORS --- */
 
 /* --- POLLING METHODS --- */
