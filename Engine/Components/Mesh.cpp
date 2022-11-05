@@ -84,8 +84,6 @@ namespace Sierra::Engine::Components
         descriptorSet->WriteTexture(DIFFUSE_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_DIFFUSE));
         descriptorSet->WriteTexture(SPECULAR_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_SPECULAR));
         descriptorSet->Allocate();
-
-        printf("ASD");
     }
 
     void Mesh::SetTexture(const std::shared_ptr<Texture>& givenTexture)

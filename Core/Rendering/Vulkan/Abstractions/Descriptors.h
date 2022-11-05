@@ -141,10 +141,16 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         BindlessDescriptorSet(const std::vector<uint32_t> &givenBindings, std::shared_ptr<DescriptorPool> &givenDescriptorPool);
         [[nodiscard]] static std::unique_ptr<BindlessDescriptorSet> Build(const std::vector<uint32_t> &givenBindings, std::shared_ptr<DescriptorPool> &givenDescriptorPool);
 
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] bool IsBindingConfigured(uint32_t binding) const;
+        [[nodiscard]] uint32_t GetFirstFreeIndex(uint32_t binding) const;
+        [[nodiscard]] bool IsIndexAllocated(uint32_t binding, uint32_t arrayIndex) const;
+
         /* --- SETTER METHODS --- */
-        void WriteBuffer(uint32_t binging, const std::unique_ptr<Buffer> &buffer, uint32_t arrayIndex = 0);
-        void WriteImage(uint32_t binging, const VkDescriptorImageInfo *imageInfo, uint32_t arrayIndex = 0);
-        void WriteTexture(uint32_t binging, const std::shared_ptr<Texture> &texture, uint32_t arrayIndex = 0);
+        uint32_t WriteBuffer(uint32_t binding, const std::unique_ptr<Buffer> &buffer, int arrayIndex = -1);
+        uint32_t WriteImage(uint32_t binding, const VkDescriptorImageInfo *imageInfo, int arrayIndex = -1);
+        uint32_t WriteTexture(uint32_t binding, const std::shared_ptr<Texture> &texture, int arrayIndex = -1);
+        void FreeIndex(uint32_t binding, uint32_t arrayIndex, bool reallocate = true);
         void Allocate();
 
         /* --- GETTER METHODS --- */

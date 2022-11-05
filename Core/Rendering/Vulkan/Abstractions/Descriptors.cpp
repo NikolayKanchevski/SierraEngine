@@ -160,13 +160,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         variableDescriptorCountAllocateInfo.pDescriptorCounts = descriptorCounts;
 
         auto vkDescriptorSetLayout = descriptorSetLayout->GetVulkanDescriptorSetLayout();
-        auto a = std::vector<VkDescriptorSetLayout>(bindings.size(), vkDescriptorSetLayout);
 
         // Set up the allocation info
         VkDescriptorSetAllocateInfo allocateInfo{};
         allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocateInfo.descriptorPool = this->vkDescriptorPool;
-        allocateInfo.pSetLayouts = a.data();
+        allocateInfo.pSetLayouts = std::vector<VkDescriptorSetLayout>(bindings.size(), vkDescriptorSetLayout).data();
         allocateInfo.descriptorSetCount = bindings.size();
         allocateInfo.pNext = &variableDescriptorCountAllocateInfo;
 
@@ -333,27 +332,62 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return std::make_unique<BindlessDescriptorSet>(givenBindings, givenDescriptorPool);
     }
 
-    /* --- SETTER METHODS --- */
+    /* --- GETTER METHODS --- */
 
-    void BindlessDescriptorSet::WriteBuffer(const uint32_t binding, const std::unique_ptr<Buffer> &buffer, const uint32_t arrayIndex)
+    bool BindlessDescriptorSet::IsBindingConfigured(const uint32_t binding) const
+    {
+        bool bindingContained = false;
+        for (const auto &boundBinding : boundBindings)
+        {
+            if (boundBinding == binding)
+            {
+                bindingContained = true;
+                break;
+            }
+        }
+
+        return bindingContained;
+    }
+
+    uint32_t BindlessDescriptorSet::GetFirstFreeIndex(const uint32_t binding) const
     {
         if (descriptorSetLayout->bindings.count(binding) == 0)
         {
             Debugger::ThrowError("Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
         }
 
-        bool bindingContained = false;
-        for (const auto &boundBinding : boundBindings)
+        for (uint32_t i = 0; i < descriptorSetLayout->bindings[binding].arraySize; i++)
         {
-            if (boundBinding == binding) bindingContained = true;
+            if (!IsIndexAllocated(binding, i))
+            {
+                return i;
+            }
         }
 
-        if (!bindingContained)
+        Debugger::ThrowError("Descriptor set is full");
+        return 0;
+    }
+
+    bool BindlessDescriptorSet::IsIndexAllocated(const uint32_t binding, const uint32_t arrayIndex) const
+    {
+        return ((descriptorImageInfos.find(binding) != descriptorImageInfos.end()) && (descriptorImageInfos.find(binding)->second.find(arrayIndex) == descriptorImageInfos.find(binding)->second.end()))
+               || ((descriptorBufferInfos.find(binding) != descriptorBufferInfos.end()) && (descriptorBufferInfos.find(binding)->second.find(arrayIndex) == descriptorBufferInfos.find(binding)->second.end()));
+    }
+
+    /* --- SETTER METHODS --- */
+
+    uint32_t BindlessDescriptorSet::WriteBuffer(const uint32_t binding, const std::unique_ptr<Buffer> &buffer, const int arrayIndex)
+    {
+        if (descriptorSetLayout->bindings.count(binding) == 0)
+        {
+            Debugger::ThrowError("Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+        }
+
+        if (!IsBindingConfigured(binding))
         {
             Debugger::ThrowError("Descriptor set is not configured to work with the specified binding: [" + std::to_string(binding) + "]");
         }
 
-        // Get the binding description and check if it expects more than 1 descriptors
         VkDescriptorSetLayoutBinding bindingDescription = descriptorSetLayout->bindings[binding].bindingInfo;
 
         VkDescriptorBufferInfo bufferInfo{};
@@ -374,27 +408,22 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Add write descriptor to the list
         writeDescriptorSets.push_back(writeDescriptor);
+
+        return arrayIndex;
     }
 
-    void BindlessDescriptorSet::WriteImage(const uint32_t binding, const VkDescriptorImageInfo *imageInfo, const uint32_t arrayIndex)
+    uint32_t BindlessDescriptorSet::WriteImage(const uint32_t binding, const VkDescriptorImageInfo *imageInfo, const int arrayIndex)
     {
         if (descriptorSetLayout->bindings.count(binding) == 0)
         {
             Debugger::ThrowError("Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
         }
 
-        bool bindingContained = false;
-        for (const auto &boundBinding : boundBindings)
-        {
-            if (boundBinding == binding) bindingContained = true;
-        }
-
-        if (!bindingContained)
+        if (!IsBindingConfigured(binding))
         {
             Debugger::ThrowError("Descriptor set is not configured to work with the specified binding: [" + std::to_string(binding) + "]");
         }
 
-        // Get the binding description and check if it expects more than 1 descriptors
         VkDescriptorSetLayoutBinding bindingDescription = descriptorSetLayout->bindings[binding].bindingInfo;
 
         // Create write descriptor
@@ -409,9 +438,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Add write descriptor to the list
         writeDescriptorSets.push_back(writeDescriptor);
+
+        return arrayIndex;
     }
 
-    void BindlessDescriptorSet::WriteTexture(const uint32_t binding, const std::shared_ptr<Texture> &texture, const uint32_t arrayIndex)
+    uint32_t BindlessDescriptorSet::WriteTexture(const uint32_t binding, const std::shared_ptr<Texture> &texture, const int arrayIndex)
     {
         VkDescriptorImageInfo imageInfo{};
         imageInfo.sampler = texture->GetVulkanSampler();
@@ -420,7 +451,35 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         descriptorImageInfos[binding][arrayIndex] = imageInfo;
 
-        WriteImage(binding, &descriptorImageInfos[binding][arrayIndex], arrayIndex);
+        return WriteImage(binding, &descriptorImageInfos[binding][arrayIndex], arrayIndex);
+    }
+
+    void BindlessDescriptorSet::FreeIndex(const uint32_t binding, const uint32_t arrayIndex, const bool reallocate)
+    {
+        // TODO: Replace with a custom method
+        if (descriptorSetLayout->bindings.count(binding) == 0)
+        {
+            Debugger::ThrowError("Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+        }
+
+        if (!IsBindingConfigured(binding))
+        {
+            Debugger::ThrowError("Descriptor set is not configured to work with the specified binding: [" + std::to_string(binding) + "]");
+        }
+
+        if (arrayIndex >= descriptorSetLayout->bindings[binding].arraySize)
+        {
+            Debugger::ThrowWarning("Array index [" + std::to_string(arrayIndex) + "] is outside of the bounds of descriptor set array. Action suspended");
+            return;
+        }
+
+        descriptorBufferInfos[binding].erase(arrayIndex);
+        descriptorImageInfos[binding].erase(arrayIndex);
+
+        if (reallocate)
+        {
+            Allocate();
+        }
     }
 
     void BindlessDescriptorSet::Allocate()

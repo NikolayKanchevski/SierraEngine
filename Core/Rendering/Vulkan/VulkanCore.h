@@ -37,7 +37,14 @@ namespace Sierra::Core::Rendering::Vulkan
         [[nodiscard]] static inline VkQueue& GetGraphicsQueue() { return instance.graphicsQueue; }
         [[nodiscard]] static inline VkCommandPool& GetCommandPool() { return instance.commandPool; }
         [[nodiscard]] static inline std::shared_ptr<DescriptorPool>& GetDescriptorPool() { return instance.descriptorPool; }
-        [[nodiscard]] static inline bool GetDescriptorIndexingSupported() { return instance.physicalDeviceFeatures.shaderSampledImageArrayDynamicIndexing; }
+        [[nodiscard]] static inline bool GetDescriptorIndexingSupported()
+        {
+            #if __APPLE__
+                return false;
+            #else
+                return instance.physicalDeviceFeatures.shaderSampledImageArrayDynamicIndexing;
+            #endif
+        }
 
         inline static void SetWindow(Window *window) { instance.window = window; }
 
