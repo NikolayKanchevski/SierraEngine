@@ -1,5 +1,7 @@
 #version 450
 
+#define MAX_TEXTURES 128
+
 layout(location = 0) in vec3 fromVert_Position;
 layout(location = 1) in vec3 fromVert_Normal;
 layout(location = 2) in vec2 fromVert_TextureCoordinates;
@@ -22,23 +24,27 @@ layout(set = 0, binding = 0) uniform UniformBuffer
 
 layout(push_constant) uniform PushConstant
 {
-        /* VERTEX DATA */
+        /* --- VERTEX DATA --- */
         mat4 model;
 
-        /* FRAGMENT DATA */
+        /* --- FRAGMENT DATA --- */
         Material material;
+
+        /* --- UNIVERSAL DATA --- */
+        uint meshSlot;
+        uint meshTexturesPresence;
 } pushConstant;
 
 layout(set = 1, binding = 1) uniform sampler2D diffuseSampler;
 layout(set = 1, binding = 2) uniform sampler2D specularSampler;
-layout(set = 1, binding = 3) uniform sampler2D texturePool[];
+layout(set = 1, binding = 3) uniform sampler2D texturePool[MAX_TEXTURES];
 
 layout(location = 0) out vec4 outColor;
 
 void main()
 {
-//        outColor = vec4(1.0, 0.0, 0.0, 1.0);
-        outColor = vec4(texture(texturePool[0], fromVert_TextureCoordinates).rgb, 1.0);
+//        outColor = vec4(texture(texturePool[4], fromVert_TextureCoordinates).rgb, 1.0);
+        outColor = vec4(texture(texturePool[pushConstant.meshSlot], fromVert_TextureCoordinates).rgb, 1.0);
 //                outColor = vec4(texture(diffuseSampler, fromVert_TextureCoordinates).rgb, 1.0);
 }
 

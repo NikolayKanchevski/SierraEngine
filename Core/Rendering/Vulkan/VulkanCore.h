@@ -10,17 +10,19 @@
 
 using Sierra::Core::Rendering::Vulkan::Abstractions::DescriptorPool;
 
+// NOTE: Changing some of these may require you to update shaders
+#define MAX_TEXTURES 128 // Changed as @kael wouldn't stop bitching about it
+#define MAX_POINT_LIGHTS 64 // Remember to change the limit in the fragment shader too!
+#define MAX_DIRECTIONAL_LIGHTS 16 // Remember to change the limit in the fragment shader too!
+#define MAX_SPOTLIGHT_LIGHTS 16 // Remember to change the limit in the fragment shader too!
+
 namespace Sierra::Core::Rendering::Vulkan
 {
+    using Abstractions::BindlessDescriptorSet;
 
     class VulkanCore
     {
     public:
-        static const uint32_t MAX_TEXTURES = 128; // Changed as @kael wouldn't stop bitching about it
-        static const int MAX_POINT_LIGHTS = 64; // Remember to change the limit in the fragment shader too!
-        static const int MAX_DIRECTIONAL_LIGHTS = 16; // Remember to change the limit in the fragment shader too!
-        static const int MAX_SPOTLIGHT_LIGHTS = 16; // Remember to change the limit in the fragment shader too!
-
         [[nodiscard]] static inline VulkanCore& GetInstance() { return instance; }
 
         [[nodiscard]] static inline Window* GetWindow() { return GetInstance().window; }
@@ -37,6 +39,7 @@ namespace Sierra::Core::Rendering::Vulkan
         [[nodiscard]] static inline VkQueue& GetGraphicsQueue() { return instance.graphicsQueue; }
         [[nodiscard]] static inline VkCommandPool& GetCommandPool() { return instance.commandPool; }
         [[nodiscard]] static inline std::shared_ptr<DescriptorPool>& GetDescriptorPool() { return instance.descriptorPool; }
+        [[nodiscard]] static inline std::shared_ptr<BindlessDescriptorSet>& GetGlobalBindlessDescriptorSet() { return instance.globalBindlessDescriptorSet; }
         [[nodiscard]] static inline bool GetDescriptorIndexingSupported()
         {
             #if __APPLE__
@@ -58,7 +61,8 @@ namespace Sierra::Core::Rendering::Vulkan
         inline static void SetSwapchainExtent(VkExtent2D swapchainExtent) { instance.swapchainExtent = swapchainExtent; }
         inline static void SetGraphicsQueue(VkQueue graphicsQueue) { instance.graphicsQueue = graphicsQueue; }
         inline static void SetCommandPool(VkCommandPool commandPool) { instance.commandPool = commandPool; }
-        inline static void SetDescriptorPool(std::shared_ptr<DescriptorPool> descriptorPool) { instance.descriptorPool = descriptorPool; }
+        inline static void SetDescriptorPool(std::shared_ptr<DescriptorPool> descriptorPool) { instance.descriptorPool = std::move(descriptorPool); }
+        inline static void SetGlobalBindlessDescriptorSet(std::shared_ptr<BindlessDescriptorSet> bindlessDescriptorSet) { instance.globalBindlessDescriptorSet = std::move(bindlessDescriptorSet); }
 
     private:
         VulkanCore() = default;
@@ -77,6 +81,7 @@ namespace Sierra::Core::Rendering::Vulkan
         VkQueue graphicsQueue;
         VkCommandPool commandPool;
         std::shared_ptr<DescriptorPool> descriptorPool;
+        std::shared_ptr<BindlessDescriptorSet> globalBindlessDescriptorSet;
     };
 
 }

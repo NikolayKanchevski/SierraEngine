@@ -13,21 +13,19 @@
 
 typedef enum TextureType
 {
-    TEXTURE_TYPE_NONE = 0,
-    TEXTURE_TYPE_DIFFUSE = 1,
-    TEXTURE_TYPE_SPECULAR = 2,
-    TEXTURE_TYPE_HEIGHTMAP = 3,
-    TEXTURE_TYPE_NORMAL = 4
+    TEXTURE_TYPE_NONE = -1,
+    TEXTURE_TYPE_DIFFUSE = 0,
+    TEXTURE_TYPE_SPECULAR = 1,
+    TEXTURE_TYPE_HEIGHTMAP = 2,
+    TEXTURE_TYPE_NORMAL = 3
 } TextureType;
 
-#define DIFFUSE_TEXTURE_BINDING 1
-#define SPECULAR_TEXTURE_BINDING 2
+#define BINDLESS_TEXTURE_BINDING 3
 #define TOTAL_TEXTURE_TYPES_COUNT 2
 
-// TODO: Refactor this crap
-#define TextureBindingToArrayIndex(binding)(binding - 1)
-#define TextureTypeToArrayIndex(textureType)(textureType - 1)
-#define TextureTypeToBinding(textureType)(textureType)
+#define TEXTURE_TYPE_TO_BINDING(textureType)(textureType + 1)
+#define DIFFUSE_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_DIFFUSE)
+#define SPECULAR_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_SPECULAR)
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -37,9 +35,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     struct TextureCreateInfo
     {
-        std::string filePath = "";
+        std::string filePath;
 
-        std::string name = "";
+        std::string name;
         TextureType textureType = TEXTURE_TYPE_NONE;
         bool mipMappingEnabled = false;
 
@@ -55,7 +53,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Texture(stbi_uc *stbImage, uint32_t width, uint32_t height, uint32_t givenColorChannelsCount, TextureCreateInfo textureCreateInfo);
+        Texture(stbi_uc *stbImage, uint32_t width, uint32_t height, uint32_t givenColorChannelsCount, const TextureCreateInfo& textureCreateInfo);
         static std::shared_ptr<Texture> Create(TextureCreateInfo textureCreateInfo, bool setDefaultTexture = false);
 
         /* --- PROPERTIES --- */
@@ -99,7 +97,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         { return this->sampler; }
 
         [[nodiscard]] static inline std::shared_ptr<Texture>& GetDefaultTexture(TextureType textureType)
-        { return defaultTextures[TextureTypeToArrayIndex(textureType)]; }
+        { return defaultTextures[textureType]; }
 
         /* --- SETTER METHODS --- */
         static void DestroyDefaultTextures();

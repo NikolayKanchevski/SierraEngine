@@ -12,11 +12,36 @@ namespace Sierra::Engine::Components
     uint32_t Mesh::totalMeshCount = 0;
     uint32_t Mesh::totalMeshVertices = 0;
 
+    uint32_t Mesh::meshSlotsUsed = 0;
+    std::vector<uint32_t> Mesh::freedMeshSlots;
+
     /* --- CONSTRUCTORS --- */
 
     Mesh::Mesh(std::vector<Vertex> &givenVertices, std::vector<uint32_t> &givenIndices)
         : vertexCount(givenVertices.size()), indexCount(givenIndices.size())
     {
+        if (freedMeshSlots.empty())
+        {
+            startTextureSlot = meshSlotsUsed * TOTAL_TEXTURE_TYPES_COUNT;
+            meshSlotsUsed++;
+
+            if (VulkanCore::GetDescriptorIndexingSupported())
+            {
+                auto &globalBindlessDescriptorSet = VulkanCore::GetGlobalBindlessDescriptorSet();
+
+                // Reserve spots for mesh's textures
+                for (uint32_t i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
+                {
+                    globalBindlessDescriptorSet->ReserveIndex(BINDLESS_TEXTURE_BINDING, startTextureSlot + i);
+                }
+            }
+        }
+        else
+        {
+            startTextureSlot = freedMeshSlots[0];
+            freedMeshSlots.erase(freedMeshSlots.begin());
+        }
+
         CreateVertexBuffer(givenVertices);
         CreateIndexBuffer(givenIndices);
 
@@ -80,6 +105,7 @@ namespace Sierra::Engine::Components
 
     void Mesh::CreateDescriptorSet()
     {
+        // If descriptor indexing not supported write default textures to the corresponding descriptor set
         descriptorSet = DescriptorSet::Build(VulkanCore::GetDescriptorPool());
         descriptorSet->WriteTexture(DIFFUSE_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_DIFFUSE));
         descriptorSet->WriteTexture(SPECULAR_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_SPECULAR));
@@ -93,22 +119,23 @@ namespace Sierra::Engine::Components
             Debugger::ThrowError("In order to bind texture [" + givenTexture->name + "] to mesh its texture type must be specified and be different from TEXTURE_TYPE_NONE");
         }
 
+        textures[givenTexture->GetTextureType()] = givenTexture;
+
         if (VulkanCore::GetDescriptorIndexingSupported())
         {
-            // TODO: Make this lul
-//            throw std::runtime_error("Not implemented yet!");
+            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, startTextureSlot + (uint32_t) givenTexture->GetTextureType());
+            VulkanCore::GetGlobalBindlessDescriptorSet()->Allocate();
         }
         else
         {
-            textures[TextureTypeToArrayIndex(givenTexture->GetTextureType())] = givenTexture;
-            descriptorSet->WriteTexture(TextureTypeToBinding(givenTexture->GetTextureType()), givenTexture);
+            descriptorSet->WriteTexture(TEXTURE_TYPE_TO_BINDING(givenTexture->GetTextureType()), givenTexture);
             descriptorSet->Allocate();
         }
     }
 
     /* --- GETTER METHODS --- */
 
-    void Mesh::GetPushConstantData(Mesh::PushConstantData *data) const
+    void Mesh::GetPushConstantData(PushConstant *data) const
     {
         // Inverse the Y coordinate to satisfy Vulkan's requirements
         Transform transform = GetComponent<Transform>();
@@ -131,12 +158,17 @@ namespace Sierra::Engine::Components
         // Populate push constant data
         data->modelMatrix = translationMatrix * rotationMatrix * scaleMatrix;
         data->material = this->material;
+        data->meshSlot = this->startTextureSlot;
     }
 
     /* --- DESTRUCTOR --- */
 
-    void Mesh::Destroy()
+    void Mesh::Destroy() const
     {
+        Component::Destroy();
+
+        freedMeshSlots.push_back(startTextureSlot);
+
         vertexBuffer->Destroy();
         indexBuffer->Destroy();
 

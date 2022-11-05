@@ -19,7 +19,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    Texture::Texture(stbi_uc *stbImage, const uint32_t width, const uint32_t height, const uint32_t givenColorChannelsCount, TextureCreateInfo textureCreateInfo)
+    Texture::Texture(stbi_uc *stbImage, const uint32_t width, const uint32_t height, const uint32_t givenColorChannelsCount, const TextureCreateInfo& textureCreateInfo)
         : name(textureCreateInfo.name), filePath(textureCreateInfo.filePath), textureType(textureCreateInfo.textureType), mipMappingEnabled(textureCreateInfo.mipMappingEnabled), colorChannelsCount(givenColorChannelsCount)
     {
         this->sampler = Sampler::Create(textureCreateInfo.samplerCreateInfo);
@@ -46,17 +46,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         stbi_image_free(stbImage);
 
         // Configure the color format
-        VkFormat textureImageFormat = VK_FORMAT_R32_UINT;
-        switch (colorChannelsCount)
-        {
-            case STBI_rgb_alpha:
-            case STBI_rgb:
-                textureImageFormat = VK_FORMAT_R8G8B8A8_SRGB;
-                break;
-            default:
-                Debugger::ThrowError("Texture format not supported");
-                break;
-        }
+        // TODO: Pick suitable format
+        VkFormat textureImageFormat = VK_FORMAT_R8G8B8A8_SRGB;
 
         // Create the texture image
         this->image = Image::Create({
@@ -118,10 +109,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             if (textureCreateInfo.textureType == TEXTURE_TYPE_NONE)
             {
-                Debugger::ThrowError("Cannot set texture loaded from [" + textureCreateInfo.filePath + "] as default texture for its type, as it is type is TEXTURE_TYPE_NONE");
+                Debugger::ThrowError("Cannot set texture loaded from [" + textureCreateInfo.filePath + "] as default texture for its type, as it is of type TEXTURE_TYPE_NONE");
             }
 
-            defaultTextures[TextureTypeToArrayIndex(textureCreateInfo.textureType)] = textureReference;
+            defaultTextures[textureCreateInfo.textureType] = textureReference;
         }
 
         return textureReference;

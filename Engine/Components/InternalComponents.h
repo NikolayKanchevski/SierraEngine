@@ -17,7 +17,7 @@ namespace Sierra::Engine::Components
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Tag(const std::string& givenTag) : tag(givenTag) {}
+        explicit Tag(std::string givenTag) : tag(std::move(givenTag)) { }
 
         /* --- PROPERTIES --- */
         std::string tag;
@@ -42,11 +42,11 @@ namespace Sierra::Engine::Components
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline Relationship(entt::entity givenSelf) : self(givenSelf) { }
+        inline explicit Relationship(entt::entity givenSelf) : self(givenSelf) { }
 
         /* --- GETTER METHODS --- */
-        inline entt::entity& GetEnttParentEntity() { return parent; }
-        inline std::vector<entt::entity> GetEnttChildrenEntities() const { return children; }
+        [[nodiscard]] inline entt::entity& GetEnttParentEntity() { return parent; }
+        [[nodiscard]] inline std::vector<entt::entity> GetEnttChildrenEntities() const { return children; }
 
         /* --- SETTER METHODS --- */
         inline void SetParent(entt::entity &givenParent)

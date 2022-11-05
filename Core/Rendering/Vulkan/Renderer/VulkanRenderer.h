@@ -228,7 +228,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
         /* --- DESCRIPTORS --- */
         std::unique_ptr<DescriptorSetLayout> globalDescriptorSetLayout;
-        std::unique_ptr<BindlessDescriptorSet> globalBindlessDescriptorSet;
+        std::shared_ptr<BindlessDescriptorSet> globalBindlessDescriptorSet;
 
         std::unique_ptr<DescriptorSetLayout> descriptorSetLayout;
         void CreateDescriptorSetLayout();
@@ -252,9 +252,6 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreateFramebuffers();
 
         /* --- TEXTURES --- */
-//        std::unique_ptr<Sampler> textureSampler;
-        const uint32_t MAX_TEXTURES = VulkanCore::MAX_TEXTURES;
-
         std::shared_ptr<Texture> nullDiffuseTexture;
         std::shared_ptr<Texture> nullSpecularTexture;
         void CreateNullTextures();

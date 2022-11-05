@@ -23,8 +23,18 @@
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 using namespace Sierra::Engine::Classes;
 
+
 namespace Sierra::Engine::Components
 {
+    struct alignas(16) PushConstant
+    {
+        glm::mat4x4 modelMatrix;
+
+        Material material;
+
+        uint32_t meshSlot;
+        uint32_t meshTexturesPresence = 1; // Bools encoded as binary indicating whether texture types are bound
+    };
 
     class Mesh : public Component
     {
@@ -38,13 +48,7 @@ namespace Sierra::Engine::Components
         Mesh() = default;
         Mesh(std::vector<Vertex> &givenVertices, std::vector<uint32_t> &givenIndices);
 
-        struct alignas(16) PushConstantData
-        {
-            glm::mat4x4 modelMatrix;
-            Material material;
-        };
 
-        /* --- POLLING METHODS --- */
 
         /* --- SETTER METHODS --- */
         void SetTexture(const std::shared_ptr<Texture>& givenTexture);
@@ -55,10 +59,10 @@ namespace Sierra::Engine::Components
         [[nodiscard]] inline VkBuffer GetVertexBuffer() const { return vertexBuffer->GetVulkanBuffer(); }
         [[nodiscard]] inline VkBuffer GetIndexBuffer() const { return indexBuffer->GetVulkanBuffer(); }
         [[nodiscard]] inline VkDescriptorSet GetDescriptorSet() const { return descriptorSet->GetVulkanDescriptorSet(); }
-        void GetPushConstantData(PushConstantData *data) const;
+        void GetPushConstantData(PushConstant *data) const;
 
         /* --- DESTRUCTOR --- */
-        void Destroy();
+        void Destroy() const override;
 
     private:
         uint32_t vertexCount;
@@ -75,6 +79,10 @@ namespace Sierra::Engine::Components
         void CreateVertexBuffer(std::vector<Vertex>  &givenVertices);
         void CreateIndexBuffer(std::vector<uint32_t> &givenIndices);
         void CreateDescriptorSet();
+
+        uint32_t startTextureSlot;
+        static uint32_t meshSlotsUsed;
+        static std::vector<uint32_t> freedMeshSlots;
     };
 
 }

@@ -56,7 +56,7 @@ void Application::RenderLoop(VulkanRenderer &renderer)
     // Calculate camera movement
     DoCameraMovement();
 
-    // CreateSwapchainImage UI
+    // Update UI
     DisplayUI(renderer);
 }
 

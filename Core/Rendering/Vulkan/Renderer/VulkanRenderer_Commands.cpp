@@ -7,6 +7,7 @@
 #include "../../../../Engine/Components/Mesh.h"
 
 using Sierra::Engine::Components::Mesh;
+using Sierra::Engine::Components::PushConstant;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -111,7 +112,7 @@ namespace Sierra::Core::Rendering::Vulkan
             vkCmdBindIndexBuffer(givenCommandBuffer, mesh.GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
             // Get the push constant model of the current mesh and push it to shader
-            Mesh::PushConstantData data{};
+            PushConstant data{};
             mesh.GetPushConstantData(&data);
 
             // Send push constant data to shader

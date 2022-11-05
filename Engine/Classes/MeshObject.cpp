@@ -160,16 +160,16 @@ namespace Sierra::Engine::Classes
         {
             // Get texture file path
             aiString textureFilePath;
-            assimpMaterial->GetTexture(aiTextureType_DIFFUSE, i, &textureFilePath);
+            assimpMaterial->GetTexture(aiTextureType_SPECULAR, i, &textureFilePath);
 
             // Create texture
-            auto diffuseTexture = Texture::Create({
+            auto specularTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
                 .textureType = TEXTURE_TYPE_SPECULAR
             });
 
             // Apply texture
-            mesh.SetTexture(diffuseTexture);
+            mesh.SetTexture(specularTexture);
         }
 
         // Get material properties

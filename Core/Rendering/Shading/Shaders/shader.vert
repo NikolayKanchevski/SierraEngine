@@ -11,13 +11,25 @@ layout(set = 0, binding = 0) uniform UniformBuffer
     mat4 projection;
 } uniformBuffer;
 
+struct Material
+{
+    vec3 diffuse;
+    float shininess;
+
+    vec3 specular;
+    vec3 ambient;
+};
+
 layout(push_constant) uniform PushConstant
 {
-    /* VERTEX DATA */
+    /* --- VERTEX DATA --- */
     mat4 model;
 
-    /* FRAGMENT DATA */
-//    Material material;
+    /* --- FRAGMENT DATA --- */
+    Material material;
+
+    /* --- UNIVERSAL DATA --- */
+    uint meshSlot;
 } pushConstant;
 
 layout(location = 0) out vec3 toFrag_Position;

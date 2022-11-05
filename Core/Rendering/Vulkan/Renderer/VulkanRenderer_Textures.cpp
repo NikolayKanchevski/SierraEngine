@@ -20,16 +20,19 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Create default specular texture
         nullSpecularTexture = Texture::Create({
-           .filePath = "Textures/texture1.jpg",
-           .textureType = TEXTURE_TYPE_SPECULAR,
+           .filePath = "Textures/Null/SpecularNull.jpg",
+           .textureType = TEXTURE_TYPE_SPECULAR
         }, true);
 
+        // If descriptor indexing supported write default textures to the global descriptor set
         if (VulkanCore::GetDescriptorIndexingSupported())
         {
-            globalBindlessDescriptorSet = BindlessDescriptorSet::Build({ 3 }, descriptorPool);
-            globalBindlessDescriptorSet->WriteTexture(3, nullDiffuseTexture, 0);
-            globalBindlessDescriptorSet->WriteTexture(3, nullSpecularTexture, 1);
+            globalBindlessDescriptorSet = BindlessDescriptorSet::Build({ BINDLESS_TEXTURE_BINDING }, descriptorPool);
+            globalBindlessDescriptorSet->WriteTexture(BINDLESS_TEXTURE_BINDING, nullDiffuseTexture);
+            globalBindlessDescriptorSet->WriteTexture(BINDLESS_TEXTURE_BINDING, nullSpecularTexture);
             globalBindlessDescriptorSet->Allocate();
+
+            VulkanCore::SetGlobalBindlessDescriptorSet(globalBindlessDescriptorSet);
         }
     }
 

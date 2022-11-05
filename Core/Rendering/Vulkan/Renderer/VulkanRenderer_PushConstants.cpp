@@ -4,26 +4,12 @@
 
 #include "VulkanRenderer.h"
 
+#include "../../../../Engine/Components/Mesh.h"
+
+using Sierra::Engine::Components::PushConstant;
+
 namespace Sierra::Core::Rendering::Vulkan
 {
-
-    struct alignas(16) PushMaterial
-    {
-        glm::vec3 diffuse;
-        float shininess;
-
-        glm::vec3 specular;
-        glm::vec3 ambient;
-    };
-
-    struct PushConstant
-    {
-        /* VERTEX DATA */
-        glm::mat4x4 modelMatrix;
-
-        /* FRAGMENT DATA */
-        PushMaterial material;
-    };
 
     void VulkanRenderer::CreatePushConstants()
     {
