@@ -4,41 +4,40 @@
 
 #include <iostream>
 #include "Debugger.h"
-#include <vulkan/vk_enum_string_helper.h>
 
 #include <cstdlib>
 #include <memory>
 
 #if __APPLE__
-    #include <cxxabi.h>
+#include <cxxabi.h>
 #endif
 
 #if _WIN32
-    #define DEFAULT() (SetConsoleTextAttribute(hConsole, 7))
+#define DEFAULT() (SetConsoleTextAttribute(hConsole, 7))
     #define BLUE() (SetConsoleTextAttribute(hConsole, 1))
     #define GREEN() (SetConsoleTextAttribute(hConsole, 2))
     #define YELLOW() (SetConsoleTextAttribute(hConsole, 14))
     #define RED() (SetConsoleTextAttribute(hConsole, 4))
 #else
-    #define DEFAULT() (printf("\e[0;39m"))
-    #define BLUE() (printf("\e[0;34m"))
-    #define GREEN() (printf("\e[0;32m"))
-    #define YELLOW() (printf("\e[0;33m"))
-    #define RED() (printf("\e[0;31m"))
+#define DEFAULT() (printf("\e[0;39m"))
+#define BLUE() (printf("\e[0;34m"))
+#define GREEN() (printf("\e[0;32m"))
+#define YELLOW() (printf("\e[0;33m"))
+#define RED() (printf("\e[0;31m"))
 #endif
 
 namespace Sierra::Core
 {
 
-    #if DEBUG
-        static const bool DEBUG_MODE = true;
-    #else
-        static const bool DEBUG_MODE = false;
-    #endif
+#if DEBUG
+    static const bool DEBUG_MODE = true;
+#else
+    static const bool DEBUG_MODE = false;
+#endif
 
-    #if _WIN32
-        HANDLE Debugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    #endif
+#if _WIN32
+    HANDLE Debugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+#endif
 
     void Debugger::DisplayInfo(const std::string& message)
     {
@@ -65,7 +64,7 @@ namespace Sierra::Core
     {
         RED();
         std::cout << "[-] " << message << "!\n";
-        if (DEBUG_MODE) exit(-1);
+        if (DEBUG_MODE) throw std::runtime_error("Program execution failed miserably!");
         DEFAULT();
     }
 

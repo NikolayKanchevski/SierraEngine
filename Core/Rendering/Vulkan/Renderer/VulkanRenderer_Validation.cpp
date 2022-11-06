@@ -12,7 +12,7 @@ namespace Sierra::Core::Rendering::Vulkan
         VkDebugUtilsMessengerCreateInfoEXT validationMessengerCreateInfo{};
         GetValidationMessengerCreateInfo(validationMessengerCreateInfo);
 
-        Debugger::CheckResults(
+        VK_ASSERT(
                 CreateDebugUtilsMessengerEXT(instance, &validationMessengerCreateInfo, nullptr, &validationMessenger),
                 "Failed to create validation messenger"
         );

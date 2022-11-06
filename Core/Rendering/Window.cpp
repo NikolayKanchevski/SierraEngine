@@ -61,21 +61,13 @@ namespace Sierra::Core::Rendering
     Window::Window(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)
             : title(std::move(givenTitle)), maximized(setMaximized), REQUIRE_FOCUS(setFocusRequirement), RESIZABLE(setResizable)
     {
-        if (!glfwInit())
-        {
-            Debugger::ThrowError("GLFW could not be started");
-            exit(-1);
-        }
+        ASSERT_ERROR_IF(!glfwInit(), "GLFW could not be started");
 
-        if (!glfwVulkanSupported())
-        {
-            Debugger::ThrowError("Vulkan not supported on this system");
-            exit(-1);
-        }
+        ASSERT_ERROR_IF(!glfwVulkanSupported(), "Vulkan not supported on this system");
 
         if (maximized && !setResizable)
         {
-            Debugger::ThrowWarning("A maximized window cannot be created unless resizing is allowed");
+            ASSERT_WARNING("A maximized window cannot be created unless resizing is allowed");
             maximized = false;
         }
 
@@ -89,7 +81,7 @@ namespace Sierra::Core::Rendering
         InitWindow();
 
         #ifdef DEBUG
-            Sierra::Core::Debugger::DisplayInfo(
+            ASSERT_INFO(
                 "Window [" + this->title + "] successfully created! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms"
             );
         #endif
@@ -159,7 +151,7 @@ namespace Sierra::Core::Rendering
     /* --- CALLBACKS --- */
     void Window::GlfwErrorCallback(int errorCode, const char *description)
     {
-        Debugger::ThrowWarning("GLFW Error: " + std::string(description) + " (" + std::to_string(errorCode) + ")");
+        ASSERT_WARNING("GLFW Error: " + std::string(description) + " (" + std::to_string(errorCode) + ")");
     }
 
     void Window::WindowResizeCallback(GLFWwindow *windowPtr, int newWidth, int newHeight)

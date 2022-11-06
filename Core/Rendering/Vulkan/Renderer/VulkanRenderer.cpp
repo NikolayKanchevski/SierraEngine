@@ -61,7 +61,7 @@ namespace Sierra::Core::Rendering::Vulkan
         auto &cubeMesh = cubeEntity.AddComponent<Mesh>(vertices, meshIndices);
 
         window.Show();
-        Debugger::DisplaySuccess("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
+        ASSERT_SUCCESS("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
     }
 
     void VulkanRenderer::Prepare()
@@ -88,7 +88,7 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         if (!prepared)
         {
-            Debugger::ThrowError("Vulkan renderer is not prepared for rendering properly! Make sure you have called World::Prepare() before calling World::Update()");
+            ASSERT_ERROR("Vulkan renderer is not prepared for rendering properly! Make sure you have called World::Prepare() before calling World::Update()");
         }
 
         if (window.IsFocusRequired() && !window.IsFocused()) return;

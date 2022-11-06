@@ -22,7 +22,7 @@ namespace Sierra::Engine::Classes
 
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
-            Debugger::ThrowError("Error loading 3D model [" + modelLocation + "]: " + importer.GetErrorString());
+            ASSERT_ERROR("Error loading 3D model [" + modelLocation + "]: " + importer.GetErrorString());
             return;
         }
 
@@ -36,7 +36,7 @@ namespace Sierra::Engine::Classes
         ListDeeperNode(scene->mRootNode, scene, nullptr);
 
         #if DEBUG
-            Debugger::DisplayInfo("Total vertices count for the model [" + modelName + "] containing [" + std::to_string(scene->mNumMeshes) + "] mesh(es): " + std::to_string(vertexCount) + ". Time elapsed during model loading: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
+            ASSERT_INFO("Total vertices count for the model [" + modelName + "] containing [" + std::to_string(scene->mNumMeshes) + "] mesh(es): " + std::to_string(vertexCount) + ". Time elapsed during model loading: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
         #endif
 
         // Dispose the importer

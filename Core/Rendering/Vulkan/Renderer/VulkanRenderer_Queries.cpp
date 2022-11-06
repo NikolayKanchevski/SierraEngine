@@ -16,7 +16,7 @@ namespace Sierra::Core::Rendering::Vulkan
         queryPoolCreateInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
 
         // Create the draw time query pool
-        Debugger::CheckResults(
+        VK_ASSERT(
             vkCreateQueryPool(this->logicalDevice, &queryPoolCreateInfo, nullptr, &drawTimeQueryPool),
             "Failed to create query pool"
         );

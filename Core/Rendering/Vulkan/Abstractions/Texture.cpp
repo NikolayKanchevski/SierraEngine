@@ -101,16 +101,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         stbi_uc *stbiImage = stbi_load(textureCreateInfo.filePath.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
         // Check if image loading has been successful
-        if (!stbiImage) Debugger::ThrowError("Failed to load the texture file [" + textureCreateInfo.filePath + "]");
+        ASSERT_ERROR_IF(!stbiImage, "Failed to load the texture file [" + textureCreateInfo.filePath + "]");
 
         // If texture does not exist already
         auto &textureReference = texturePool[textureCreateInfo.filePath] = std::make_shared<Texture>(stbiImage, width, height, channels, textureCreateInfo);
         if (setDefaultTexture)
         {
-            if (textureCreateInfo.textureType == TEXTURE_TYPE_NONE)
-            {
-                Debugger::ThrowError("Cannot set texture loaded from [" + textureCreateInfo.filePath + "] as default texture for its type, as it is of type TEXTURE_TYPE_NONE");
-            }
+            ASSERT_ERROR_IF(textureCreateInfo.textureType == TEXTURE_TYPE_NONE, "Cannot set texture loaded from [" + textureCreateInfo.filePath + "] as default texture for its type, as it is of type TEXTURE_TYPE_NONE");
 
             defaultTextures[textureCreateInfo.textureType] = textureReference;
         }
@@ -128,10 +125,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkGetPhysicalDeviceFormatProperties(VulkanCore::GetPhysicalDevice(), image->GetFormat(), &formatProperties);
 
         // Check if optimal tiling is supported by the GPU
-        if ((formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0)
-        {
-            Debugger::ThrowError("Texture image format [" + std::to_string(image->GetFormat()) + "] does not support linear blitting");
-        }
+        ASSERT_ERROR_IF((formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0, "Texture image format [" + std::to_string(image->GetFormat()) + "] does not support linear blitting");
 
         // Begin a command buffer
         VkCommandBuffer commandBuffer = VulkanUtilities::BeginSingleTimeCommands();

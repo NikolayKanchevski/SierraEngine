@@ -6,9 +6,10 @@
 
 #include <string>
 #include <vulkan/vulkan.h>
+#include <vulkan/vk_enum_string_helper.h>
 
 #if _WIN32
-    #include <windows.h>
+#include <windows.h>
 #endif
 
 namespace Sierra::Core
@@ -16,9 +17,9 @@ namespace Sierra::Core
     class Debugger
     {
 
-    #if _WIN32
+#if _WIN32
         static HANDLE hConsole;
-    #endif
+#endif
 
     public:
         static void DisplayInfo(const std::string&);
@@ -47,26 +48,35 @@ namespace Sierra::Core
     };
 }
 
-#define THROW_ERROR_IF(__EXPRESSION__, __MESSAGE__) if (__EXPRESSION__) Debugger::ThrowError(__MESSAGE__)
-#define THROW_ERROR(__MESSAGE__) Debugger::ThrowError(__MESSAGE__)
-#define VK_DISPLAY(__EXPRESSION__, __MESSAGE__) if (__EXPRESSION__ != VK_SUCCESS) THROW_ERROR(__MESSAGE__)
-
 #if DEBUG
-    #define THROW_WARNING_IF(__EXPRESSION__, __MESSAGE__) if (__EXPRESSION__) Debugger::ThrowWarning(__MESSAGE__)
-    #define THROW_WARNING(__MESSAGE__) Debugger::ThrowWarning(__MESSAGE__)
+    #define ASSERT_ERROR(MESSAGE) Debugger::ThrowError(MESSAGE)
+    #define ASSERT_ERROR_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_ERROR(MESSAGE)
 
-    #define DISPLAY_SUCCESS_IF(__EXPRESSION__, __MESSAGE__) if (__EXPRESSION__) Debugger::DisplaySuccess(__MESSAGE__)
-    #define DISPLAY_SUCCESS(__MESSAGE__) Debugger::DisplaySuccess(__MESSAGE__)
+    #define ASSERT_WARNING(MESSAGE) Debugger::ThrowWarning(MESSAGE)
+    #define ASSERT_WARNING_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_WARNING(MESSAGE)
 
-    #define DISPLAY_INFO_IF(__EXPRESSION__, __MESSAGE__) if (__EXPRESSION__) Debugger::DisplayInfo(__MESSAGE__)
-    #define DISPLAY_INFO(__MESSAGE__) Debugger::DisplayInfo(__MESSAGE__)
+    #define ASSERT_SUCCESS(MESSAGE) Debugger::DisplaySuccess(MESSAGE)
+    #define ASSERT_SUCCESS_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_SUCCESS(MESSAGE)
+
+    #define ASSERT_INFO(MESSAGE) Debugger::DisplayInfo(MESSAGE)
+    #define ASSERT_INFO_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_INFO(MESSAGE)
+
+    #define VK_ASSERT(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_ERROR(std::string("Vulkan Error: ") + std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")) + std::string("() failed: ") + MESSAGE + "! Error code: " + string_VkResult(result))
+    #define VK_VALIDATE(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_WARNING(std::string("Vulkan Error: ") + std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")) + std::string("() failed: ") + MESSAGE + "! Error code: " + string_VkResult(result))
 #else
-    #define THROW_WARNING_IF(__EXPRESSION__, __MESSAGE__)
-    #define THROW_WARNING(__MESSAGE__)
+    #define ASSERT_ERROR(MESSAGE)
+    #define ASSERT_ERROR_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
 
-    #define DISPLAY_SUCCESS_IF(__EXPRESSION__, __MESSAGE__)
-    #define DISPLAY_SUCCESS(__MESSAGE__)
+    #define ASSERT_WARNING(MESSAGE)
+    #define ASSERT_WARNING_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
 
-    #define DISPLAY_INFO_IF(__EXPRESSION__, __MESSAGE__)
-    #define DISPLAY_INFO(__MESSAGE__)
+    #define ASSERT_SUCCESS(MESSAGE)
+    #define ASSERT_SUCCESS_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
+
+    #define ASSERT_INFO(MESSAGE)
+    #define ASSERT_INFO_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
+
+    #define VK_ASSERT(FUNCTION, MESSAGE) static_cast<void>(FUNCTION)
+    #define VK_VALIDATE(FUNCTION, MESSAGE) static_cast<void>(FUNCTION)
 #endif
+

@@ -34,7 +34,7 @@ namespace Sierra::Core::Rendering::Vulkan
         imGuiDescriptorPoolCreateInfo.poolSizeCount = poolSizes.size();
         imGuiDescriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
 
-        Debugger::CheckResults(
+        VK_ASSERT(
             vkCreateDescriptorPool(this->logicalDevice, &imGuiDescriptorPoolCreateInfo, nullptr, &imGuiDescriptorPool),
             "Could not create ImGui descriptor pool"
         );

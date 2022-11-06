@@ -72,7 +72,7 @@ namespace Sierra::Core::Rendering::Vulkan
         logicalDeviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
 
         // Create logical device
-        Debugger::CheckResults(
+        VK_ASSERT(
             vkCreateDevice(this->physicalDevice, &logicalDeviceCreateInfo, nullptr, &logicalDevice),
             "Failed to create logical device"
         );

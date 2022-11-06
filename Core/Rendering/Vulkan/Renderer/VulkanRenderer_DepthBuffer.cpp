@@ -50,7 +50,7 @@ namespace Sierra::Core::Rendering::Vulkan
         }
 
         // Otherwise throw an error
-        Debugger::ThrowError("No depth buffer formats supported");
+        ASSERT_ERROR("No depth buffer formats supported");
 
         return VK_FORMAT_UNDEFINED;
     }

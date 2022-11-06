@@ -15,7 +15,7 @@ namespace Sierra::Core::Rendering::Vulkan
             VkSampleCountFlagBits highestSupportedSampleCount = this->GetHighestSupportedMsaaCount();
             if (this->msaaSampleCount > highestSupportedSampleCount)
             {
-                Debugger::ThrowWarning("Sampling MSAA level [" + std::string(string_VkSampleCountFlagBits(this->msaaSampleCount)) + "] requested but is not supported by the system. It is automatically lowered to [" + std::string(string_VkSampleCountFlagBits(highestSupportedSampleCount)) + "] which is the highest supported setting");
+                ASSERT_WARNING("Sampling MSAA level [" + std::string(string_VkSampleCountFlagBits(this->msaaSampleCount)) + "] requested but is not supported by the system. It is automatically lowered to [" + std::string(string_VkSampleCountFlagBits(highestSupportedSampleCount)) + "] which is the highest supported setting");
                 this->msaaSampleCount = highestSupportedSampleCount;
             }
         }
@@ -71,7 +71,7 @@ namespace Sierra::Core::Rendering::Vulkan
         }
 
         // Create the swapchain
-        Debugger::CheckResults(
+        VK_ASSERT(
             vkCreateSwapchainKHR(this->logicalDevice, &swapchainCreateInfo, nullptr, &swapchain),
             "Failed to create swapchain"
         );

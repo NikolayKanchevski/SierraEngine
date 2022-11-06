@@ -114,10 +114,7 @@ namespace Sierra::Engine::Components
 
     void Mesh::SetTexture(const std::shared_ptr<Texture>& givenTexture)
     {
-        if (givenTexture->GetTextureType() == TEXTURE_TYPE_NONE)
-        {
-            Debugger::ThrowError("In order to bind texture [" + givenTexture->name + "] to mesh its texture type must be specified and be different from TEXTURE_TYPE_NONE");
-        }
+        ASSERT_ERROR_IF(givenTexture->GetTextureType() == TEXTURE_TYPE_NONE, "In order to bind texture [" + givenTexture->name + "] to mesh its texture type must be specified and be different from TEXTURE_TYPE_NONE");
 
         textures[givenTexture->GetTextureType()] = givenTexture;
 
@@ -131,6 +128,28 @@ namespace Sierra::Engine::Components
             descriptorSet->WriteTexture(TEXTURE_TYPE_TO_BINDING(givenTexture->GetTextureType()), givenTexture);
             descriptorSet->Allocate();
         }
+
+        meshTexturesPresence.SetBit(givenTexture->GetTextureType(), 1);
+    }
+
+    void Mesh::ResetTexture(const TextureType textureType)
+    {
+        ASSERT_ERROR_IF(textureType == TEXTURE_TYPE_NONE, "In order to rest a mesh's texture the texture type must not be TEXTURE_TYPE_NONE");
+
+        textures[textureType] = nullptr;
+
+        if (VulkanCore::GetDescriptorIndexingSupported())
+        {
+//            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, startTextureSlot + (uint32_t) givenTexture->GetTextureType());
+            VulkanCore::GetGlobalBindlessDescriptorSet()->Allocate();
+        }
+        else
+        {
+            descriptorSet->WriteTexture(TEXTURE_TYPE_TO_BINDING(textureType), Texture::GetDefaultTexture(textureType));
+            descriptorSet->Allocate();
+        }
+
+        meshTexturesPresence.SetBit(textureType, 0);
     }
 
     /* --- GETTER METHODS --- */
@@ -159,6 +178,7 @@ namespace Sierra::Engine::Components
         data->modelMatrix = translationMatrix * rotationMatrix * scaleMatrix;
         data->material = this->material;
         data->meshSlot = this->startTextureSlot;
+        data->meshTexturesPresence = this->meshTexturesPresence;
     }
 
     /* --- DESTRUCTOR --- */

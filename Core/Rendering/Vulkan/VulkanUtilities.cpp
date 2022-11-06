@@ -38,7 +38,7 @@ namespace Sierra::Core::Rendering::Vulkan
         commandBufferAllocateInfo.commandBufferCount = 1;
 
         VkCommandBuffer commandBuffer;
-        Debugger::CheckResults(
+        VK_ASSERT(
                 vkAllocateCommandBuffers(VulkanCore::GetLogicalDevice(), &commandBufferAllocateInfo, &commandBuffer),
                 "Failed to allocate single time command buffer"
         );
@@ -80,7 +80,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Create shader module
         VkShaderModule shaderModule;
-        Debugger::CheckResults(
+        VK_ASSERT(
             vkCreateShaderModule(VulkanCore::GetLogicalDevice(), &moduleCreateInfo, nullptr, &shaderModule),
             "Failed to create shader module for [" + fileName + "]"
         );

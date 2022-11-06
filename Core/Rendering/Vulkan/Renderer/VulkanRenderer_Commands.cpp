@@ -21,7 +21,7 @@ namespace Sierra::Core::Rendering::Vulkan
         commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
 
         // Create the command pool
-        Debugger::CheckResults(
+        VK_ASSERT(
             vkCreateCommandPool(this->logicalDevice, &commandPoolCreateInfo, nullptr, &commandPool),
             "Failed to create command pool"
         );
@@ -42,7 +42,7 @@ namespace Sierra::Core::Rendering::Vulkan
         commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         commandBufferAllocateInfo.commandBufferCount = MAX_CONCURRENT_FRAMES;
 
-        Debugger::CheckResults(
+        VK_ASSERT(
             vkAllocateCommandBuffers(this->logicalDevice, &commandBufferAllocateInfo, commandBuffers.data()),
             "Failed to allocate command buffers"
         );
@@ -57,7 +57,7 @@ namespace Sierra::Core::Rendering::Vulkan
         bufferBeginInfo.pInheritanceInfo = nullptr;
 
         // Begin the buffer
-        Debugger::CheckResults(
+        VK_ASSERT(
             vkBeginCommandBuffer(givenCommandBuffer, &bufferBeginInfo),
             "Failed to begin command buffer [" + std::to_string(imageIndex) + "]"
         );
@@ -143,7 +143,7 @@ namespace Sierra::Core::Rendering::Vulkan
         FetchRenderTimeResults(imageIndex);
 
         // End the command buffer and check for errors during command execution
-        Debugger::CheckResults(
+        VK_ASSERT(
             vkEndCommandBuffer(givenCommandBuffer),
             "Failed to end command buffer"
         );
@@ -168,7 +168,7 @@ namespace Sierra::Core::Rendering::Vulkan
         }
         else
         {
-            Debugger::ThrowError("Failed to receive query results");
+            ASSERT_ERROR("Failed to receive query results");
         }
 
         // Calculate final GPU draw time

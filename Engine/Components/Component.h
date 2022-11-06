@@ -23,7 +23,7 @@ namespace Sierra::Engine::Components
         {
             if (HasComponent<T>())
             {
-                Debugger::ThrowWarning("Component of type [" + Debugger::TypeToString<T>() + "] already present in entity. New components has been dismissed and instead the old one has been returned");
+                ASSERT_WARNING("Component of type [" + Debugger::TypeToString<T>() + "] already present in entity. New components has been dismissed and instead the old one has been returned");
                 return GetComponent<T>();
             }
 
@@ -43,10 +43,7 @@ namespace Sierra::Engine::Components
         template<typename T>
         T& GetComponent() const
         {
-            if (!HasComponent<T>())
-            {
-                Debugger::ThrowError("Component of type [" + Debugger::TypeToString<T>() + "] does not exist within the entity");
-            }
+            ASSERT_ERROR_IF(!HasComponent<T>(), "Component of type [" + Debugger::TypeToString<T>() + "] does not exist within the entity");
 
             return World::GetEnttRegistry().get<T>(enttEntity);
         }
@@ -62,7 +59,7 @@ namespace Sierra::Engine::Components
         {
             if (!HasComponent<T>())
             {
-                Debugger::ThrowWarning("Component of type [" + Debugger::TypeToString<T>() + "] is not exist within entity. No components were removed");
+                ASSERT_WARNING("Component of type [" + Debugger::TypeToString<T>() + "] is not exist within entity. No components were removed");
                 return;
             }
 

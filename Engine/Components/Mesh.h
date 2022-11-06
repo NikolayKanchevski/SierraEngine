@@ -14,6 +14,7 @@
 #include "InternalComponents.h"
 #include "../Structures/Material.h"
 #include "../Structures/Vertex.h"
+#include "../Classes/Binary.h"
 
 #include "../../Core/Rendering/Vulkan/Abstractions/Buffer.h"
 #include "../../Core/Rendering/Vulkan/VulkanUtilities.h"
@@ -33,7 +34,7 @@ namespace Sierra::Engine::Components
         Material material;
 
         uint32_t meshSlot;
-        uint32_t meshTexturesPresence = 1; // Bools encoded as binary indicating whether texture types are bound
+        Binary meshTexturesPresence; // Bools encoded as binary indicating whether texture types are bound
     };
 
     class Mesh : public Component
@@ -52,6 +53,7 @@ namespace Sierra::Engine::Components
 
         /* --- SETTER METHODS --- */
         void SetTexture(const std::shared_ptr<Texture>& givenTexture);
+        void ResetTexture(TextureType textureType);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint32_t GetVertexCount() const { return vertexCount; }
@@ -81,6 +83,8 @@ namespace Sierra::Engine::Components
         void CreateDescriptorSet();
 
         uint32_t startTextureSlot;
+        Binary meshTexturesPresence = 0;
+
         static uint32_t meshSlotsUsed;
         static std::vector<uint32_t> freedMeshSlots;
     };

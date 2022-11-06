@@ -37,7 +37,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkSamplerCreateInfo.maxAnisotropy = maxAnisotropy;
 
         // Create the Vulkan sampler
-        Debugger::CheckResults(
+        VK_ASSERT(
                 vkCreateSampler(VulkanCore::GetLogicalDevice(), &vkSamplerCreateInfo, nullptr, &vkSampler),
                 "Failed to create sampler with a LOD of [" + std::to_string(minLod) + "," + std::to_string(maxLod) + "] and [" + std::to_string(maxAnisotropy) + "] max anisotropy"
         );

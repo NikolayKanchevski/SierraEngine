@@ -11,16 +11,13 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         // Retrieve how many GPUs are found on the system
         uint32_t physicalDeviceCount;
-        Debugger::CheckResults(
+        VK_ASSERT(
             vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr),
             "Failed to retrieve available GPUs"
         );
 
         // If none throw error
-        if (physicalDeviceCount == 0)
-        {
-            Debugger::ThrowError("No GPUs found on the system");
-        }
+        ASSERT_ERROR_IF(physicalDeviceCount == 0, "No GPUs found on the system");
 
         // Put all found GPUs in an array
         std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
@@ -45,16 +42,13 @@ namespace Sierra::Core::Rendering::Vulkan
                 VulkanCore::SetPhysicalDeviceMemoryProperties(deviceMemoryProperties);
 
                 // Show support message
-                Debugger::DisplaySuccess("Vulkan is supported by your [SOME_PC_MODEL] running SOME_OS [Validation: " + std::to_string(VALIDATION_ENABLED) + " | CPU: SOME_CPU_MODEL | GPU: " + std::string(VulkanCore::GetPhysicalDeviceProperties().deviceName) + "]");
+                ASSERT_SUCCESS("Vulkan is supported by your [SOME_PC_MODEL] running SOME_OS [Validation: " + std::to_string(VALIDATION_ENABLED) + " | CPU: SOME_CPU_MODEL | GPU: " + std::string(VulkanCore::GetPhysicalDeviceProperties().deviceName) + "]");
 
                 break;
             }
         }
 
-        if (!suitablePhysicalDeviceFound)
-        {
-            Debugger::ThrowError("Couldn't find a GPU that supports the program");
-        }
+        ASSERT_ERROR_IF(!suitablePhysicalDeviceFound, "Couldn't find a GPU that supports the program");
     }
 
     bool VulkanRenderer::PhysicalDeviceSuitable(VkPhysicalDevice &givenPhysicalDevice)
@@ -126,7 +120,7 @@ namespace Sierra::Core::Rendering::Vulkan
             if (!extensionFound)
             {
                 allExtensionsSupported = false;
-                Debugger::ThrowWarning("Device extension [" + std::string(requiredExtension) + "] not supported by your [" + std::string(VulkanCore::GetPhysicalDeviceProperties().deviceName) + "] GPU");
+                ASSERT_WARNING("Device extension [" + std::string(requiredExtension) + "] not supported by your [" + std::string(VulkanCore::GetPhysicalDeviceProperties().deviceName) + "] GPU");
             }
         }
 

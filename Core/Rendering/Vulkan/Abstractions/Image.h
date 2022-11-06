@@ -79,7 +79,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         { return this->vkImage; };
 
         [[nodiscard]] inline VkImageView GetVulkanImageView() const
-        { if (!imageViewGenerated) { Debugger::ThrowWarning("Image view not generated. Returning null"); return NULL; } return this->vkImageView; };
+        { if (!imageViewGenerated) { ASSERT_WARNING("Image view not generated. Returning null"); return NULL; } return this->vkImageView; };
 
         [[nodiscard]] inline VkDeviceMemory GetVulkanMemory() const
         { return this->vkImageMemory; };

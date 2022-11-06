@@ -50,7 +50,7 @@ namespace Sierra::Core::Rendering::Vulkan
         {
             if (!ValidationLayersSupported())
             {
-                Debugger::ThrowWarning("Validation layers requested, but not available. Returning");
+                ASSERT_WARNING("Validation layers requested, but not available. Returning");
             }
             else
             {
@@ -64,7 +64,7 @@ namespace Sierra::Core::Rendering::Vulkan
         }
 
         // Create instance
-        Debugger::CheckResults(
+        VK_ASSERT(
                 vkCreateInstance(&instanceCreateInfo, nullptr, &instance),
                 "Could not create Vulkan instance"
         );
@@ -96,7 +96,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
             if (!extensionFound)
             {
-                Debugger::ThrowWarning("Instance extension [" + std::string(requiredExtension) + "] not supported");
+                ASSERT_WARNING("Instance extension [" + std::string(requiredExtension) + "] not supported");
                 givenExtensions.erase(givenExtensions.begin() + extensionIndex);
             }
 

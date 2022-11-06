@@ -1,7 +1,5 @@
 #version 450
 
-#define MAX_TEXTURES 128
-
 layout(location = 0) in vec3 fromVert_Position;
 layout(location = 1) in vec3 fromVert_Normal;
 layout(location = 2) in vec2 fromVert_TextureCoordinates;
@@ -17,20 +15,15 @@ struct Material
 
 layout(set = 0, binding = 0) uniform UniformBuffer
 {
-        /* VERTEX DATA */
         mat4 view;
         mat4 projection;
 } uniformBuffer;
 
 layout(push_constant) uniform PushConstant
 {
-        /* --- VERTEX DATA --- */
         mat4 model;
-
-        /* --- FRAGMENT DATA --- */
         Material material;
 
-        /* --- UNIVERSAL DATA --- */
         uint meshSlot;
         uint meshTexturesPresence;
 } pushConstant;
@@ -41,11 +34,35 @@ layout(set = 1, binding = 3) uniform sampler2D texturePool[MAX_TEXTURES];
 
 layout(location = 0) out vec4 outColor;
 
+#define MAX_TEXTURES 128
+
+#if _WIN32
+        #define BINDLESS_SHADING
+#endif
+
+#ifdef BINDLESS_SHADING
+        #define TEXTURE_TYPE_DIFFUSE_OFFSET 0
+        #define TEXTURE_TYPE_SPECULAR_OFFSET 1
+        #define TOTAL_TEXTURE_TYPES_COUNT 2
+
+        bool IsBitSet(uint binaryValue, uint bitIndex)
+        {
+                return (binaryValue & (1 << bitIndex)) != 0;
+        }
+#endif
+
 void main()
 {
-//        outColor = vec4(texture(texturePool[4], fromVert_TextureCoordinates).rgb, 1.0);
-        outColor = vec4(texture(texturePool[pushConstant.meshSlot], fromVert_TextureCoordinates).rgb, 1.0);
-//                outColor = vec4(texture(diffuseSampler, fromVert_TextureCoordinates).rgb, 1.0);
+        #ifdef BINDLESS_SHADING
+                vec3 diffuseTextureColor;
+                if (IsBitSet(pushConstant.meshTexturesPresence, TEXTURE_TYPE_DIFFUSE_OFFSET)) diffuseTextureColor = texture(texturePool[pushConstant.meshSlot + TEXTURE_TYPE_DIFFUSE_OFFSET], fromVert_TextureCoordinates).rgb;
+                else diffuseTextureColor = texture(texturePool[TEXTURE_TYPE_DIFFUSE_OFFSET], fromVert_TextureCoordinates).rgb;
+
+                outColor = vec4(diffuseTextureColor, 1.0);
+        #else
+                vec3 diffuseTextureColor = texture(diffuseSampler, fromVert_TextureCoordinates).rgb;
+                outColor = vec4(diffuseTextureColor, 1.0);
+        #endif
 }
 
 //

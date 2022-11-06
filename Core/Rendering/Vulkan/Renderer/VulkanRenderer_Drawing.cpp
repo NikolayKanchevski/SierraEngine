@@ -70,7 +70,7 @@ namespace Sierra::Core::Rendering::Vulkan
         submitInfo.pWaitDstStageMask = waitStages.data();
 
         // Submit the queue
-        Debugger::CheckResults(
+        VK_ASSERT(
             vkQueueSubmit(graphicsQueue, 1, &submitInfo, frameBeingRenderedFences[currentFrame]),
             "Failed to submit graphics queue"
         );
