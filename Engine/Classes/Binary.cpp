@@ -19,7 +19,7 @@ namespace Sierra::Engine::Classes
 
     void Binary::SetBit(uint32_t bitIndex, uint32_t newValue)
     {
-        value |= ((1 << bitIndex) | newValue);
+        newValue != 0 ? static_cast<void>(value |= (1 << bitIndex)) : static_cast<void>(value &= ~(1 << bitIndex));
     }
 
     /* --- OPERATORS --- */

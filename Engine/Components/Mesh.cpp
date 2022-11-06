@@ -120,7 +120,7 @@ namespace Sierra::Engine::Components
 
         if (VulkanCore::GetDescriptorIndexingSupported())
         {
-            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, startTextureSlot + (uint32_t) givenTexture->GetTextureType());
+            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, TOTAL_TEXTURE_TYPES_COUNT + startTextureSlot + (uint32_t) givenTexture->GetTextureType());
             VulkanCore::GetGlobalBindlessDescriptorSet()->Allocate();
         }
         else
@@ -138,12 +138,7 @@ namespace Sierra::Engine::Components
 
         textures[textureType] = nullptr;
 
-        if (VulkanCore::GetDescriptorIndexingSupported())
-        {
-//            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, startTextureSlot + (uint32_t) givenTexture->GetTextureType());
-            VulkanCore::GetGlobalBindlessDescriptorSet()->Allocate();
-        }
-        else
+        if (!VulkanCore::GetDescriptorIndexingSupported())
         {
             descriptorSet->WriteTexture(TEXTURE_TYPE_TO_BINDING(textureType), Texture::GetDefaultTexture(textureType));
             descriptorSet->Allocate();

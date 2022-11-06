@@ -1,5 +1,7 @@
 #version 450
 
+#define MAX_TEXTURES 128
+
 layout(location = 0) in vec3 fromVert_Position;
 layout(location = 1) in vec3 fromVert_Normal;
 layout(location = 2) in vec2 fromVert_TextureCoordinates;
@@ -34,11 +36,7 @@ layout(set = 1, binding = 3) uniform sampler2D texturePool[MAX_TEXTURES];
 
 layout(location = 0) out vec4 outColor;
 
-#define MAX_TEXTURES 128
-
-#if _WIN32
-        #define BINDLESS_SHADING
-#endif
+#define BINDLESS_SHADING
 
 #ifdef BINDLESS_SHADING
         #define TEXTURE_TYPE_DIFFUSE_OFFSET 0
@@ -47,7 +45,7 @@ layout(location = 0) out vec4 outColor;
 
         bool IsBitSet(uint binaryValue, uint bitIndex)
         {
-                return (binaryValue & (1 << bitIndex)) != 0;
+                return (binaryValue & (1 << bitIndex)) > 0;
         }
 #endif
 
@@ -56,7 +54,7 @@ void main()
         #ifdef BINDLESS_SHADING
                 vec3 diffuseTextureColor;
                 if (IsBitSet(pushConstant.meshTexturesPresence, TEXTURE_TYPE_DIFFUSE_OFFSET)) diffuseTextureColor = texture(texturePool[pushConstant.meshSlot + TEXTURE_TYPE_DIFFUSE_OFFSET], fromVert_TextureCoordinates).rgb;
-                else diffuseTextureColor = texture(texturePool[TEXTURE_TYPE_DIFFUSE_OFFSET], fromVert_TextureCoordinates).rgb;
+                diffuseTextureColor = texture(texturePool[0], fromVert_TextureCoordinates).rgb;
 
                 outColor = vec4(diffuseTextureColor, 1.0);
         #else
