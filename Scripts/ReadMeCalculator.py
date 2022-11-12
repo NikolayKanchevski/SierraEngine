@@ -4,13 +4,13 @@ from fileinput import filename
 import os
 
 DIRECTORIES = ["../Core", "../Engine", "../Scripts"]
-FILE_EXTENSIONS = [".cpp",  ".h", ".py", ".glsl", ".vert", ".frag", ".sh", ".bat"]
+FILE_EXTENSIONS = [".cpp",  ".h", ".py", ".glsl", ".vert", ".frag", ".glsl" ".sh", ".bat"]
 
 now = datetime.datetime.now()
 lastUpdated = f"{now.day:02}/{now.month:02}/{now.year:02}"
 
 
-def Main():
+def Main(debugInfo):
     linesOfCode = 0
 
     # For each directory to check
@@ -28,7 +28,8 @@ def Main():
 
                         # Update lines of code count and print a message to indicate the current file's count
                         linesOfCode += count + 1
-                        print(f"{fileName} consists of: {count + 1} lines")
+                        if debugInfo:
+                             print(f"{fileName} consists of: {count + 1} lines")
 
 
     # Load and count README.md's lines
@@ -38,7 +39,8 @@ def Main():
         linesOfCode += count + 1
 
     # Print README.md's line count
-    print(f"\nTotal lines of code: { linesOfCode }.")
+    if debugInfo:
+        print(f"\nTotal lines of code: { linesOfCode }.")
 
     # Update the README.md's description to have the current date and the just-calculated lines of code count
     newReadMeData = ""
@@ -58,4 +60,4 @@ def Main():
         file.write(newReadMeData)
 
 
-Main()
+Main(True)

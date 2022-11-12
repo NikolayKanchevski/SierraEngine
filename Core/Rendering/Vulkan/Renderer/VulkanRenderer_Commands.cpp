@@ -94,14 +94,15 @@ namespace Sierra::Core::Rendering::Vulkan
         vkCmdSetScissor(givenCommandBuffer, 0, 1, &scissor);
 
         VkBuffer vertexBuffers[1];
-        VkDescriptorSet descriptorSets[3];
-        descriptorSets[0] = uniformDescriptorSets[currentFrame]->GetVulkanDescriptorSet();
+        VkDescriptorSet descriptorSets[2];
+        descriptorSets[0] = bufferDescriptorSets[currentFrame]->GetVulkanDescriptorSet();
         const VkDeviceSize offsets[] = {0 };
 
         // For each mesh in the world
         auto enttMeshView = World::GetEnttRegistry().view<Mesh>();
         for (auto enttEntity : enttMeshView)
         {
+            // Get current mesh
             Mesh &mesh = enttMeshView.get<Mesh>(enttEntity);
             vertexBuffers[0] = mesh.GetVertexBuffer();
 
@@ -122,6 +123,7 @@ namespace Sierra::Core::Rendering::Vulkan
                 pushConstantSize, &data
             );
 
+            // Use either bindless or bind*full* descriptor set if not supported
             descriptorSets[1] = VulkanCore::GetDescriptorIndexingSupported() ? globalBindlessDescriptorSet->GetVulkanDescriptorSet() : mesh.GetDescriptorSet();
 
             vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipelineLayout, 0, 2, descriptorSets, 0, nullptr);
@@ -151,12 +153,11 @@ namespace Sierra::Core::Rendering::Vulkan
 
     void VulkanRenderer::FetchRenderTimeResults(const uint32_t swapchainIndex)
     {
-        std::vector<uint64_t> buffer(2);
-
+        uint64_t buffer[2];
         uint64_t size = sizeof(uint64_t) * 2;
 
         // Check if draw time query results are available
-        VkResult result = vkGetQueryPoolResults(this->logicalDevice, drawTimeQueryPool, swapchainIndex * 2, 2, size, buffer.data(), sizeof(uint64_t), VK_QUERY_RESULT_64_BIT);
+        VkResult result = vkGetQueryPoolResults(this->logicalDevice, drawTimeQueryPool, swapchainIndex * 2, 2, size, buffer, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT);
         if (result == VK_NOT_READY)
         {
             return;

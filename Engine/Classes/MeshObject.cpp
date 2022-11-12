@@ -153,8 +153,6 @@ namespace Sierra::Engine::Classes
 
             // Apply texture
             mesh.SetTexture(diffuseTexture);
-
-            mesh.ResetTexture(TEXTURE_TYPE_DIFFUSE);
         }
 
         // Check if mesh has a specular texture

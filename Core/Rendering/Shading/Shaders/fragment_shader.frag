@@ -23,44 +23,21 @@ layout(set = 0, binding = 0) uniform UniformBuffer
 
 layout(push_constant) uniform PushConstant
 {
-        mat4 model;
         Material material;
 
-        uint meshSlot;
+        uint meshID;
         uint meshTexturesPresence;
 } pushConstant;
 
-layout(set = 1, binding = 1) uniform sampler2D diffuseSampler;
-layout(set = 1, binding = 2) uniform sampler2D specularSampler;
-layout(set = 1, binding = 3) uniform sampler2D texturePool[MAX_TEXTURES];
+layout(set = 1, binding = 2) uniform sampler2D diffuseSampler;
+layout(set = 1, binding = 3) uniform sampler2D specularSampler;
 
 layout(location = 0) out vec4 outColor;
 
-#define BINDLESS_SHADING
-
-#ifdef BINDLESS_SHADING
-        #define TEXTURE_TYPE_DIFFUSE_OFFSET 0
-        #define TEXTURE_TYPE_SPECULAR_OFFSET 1
-        #define TOTAL_TEXTURE_TYPES_COUNT 2
-
-        bool IsBitSet(uint binaryValue, uint bitIndex)
-        {
-                return (binaryValue & (1 << bitIndex)) > 0;
-        }
-#endif
-
 void main()
 {
-        #ifdef BINDLESS_SHADING
-                vec3 diffuseTextureColor;
-                if (IsBitSet(pushConstant.meshTexturesPresence, TEXTURE_TYPE_DIFFUSE_OFFSET)) diffuseTextureColor = texture(texturePool[pushConstant.meshSlot + TEXTURE_TYPE_DIFFUSE_OFFSET], fromVert_TextureCoordinates).rgb;
-                diffuseTextureColor = texture(texturePool[0], fromVert_TextureCoordinates).rgb;
-
-                outColor = vec4(diffuseTextureColor, 1.0);
-        #else
-                vec3 diffuseTextureColor = texture(diffuseSampler, fromVert_TextureCoordinates).rgb;
-                outColor = vec4(diffuseTextureColor, 1.0);
-        #endif
+        vec3 diffuseTextureColor = texture(diffuseSampler, fromVert_TextureCoordinates).rgb;
+        outColor = vec4(diffuseTextureColor, 1.0);
 }
 
 //

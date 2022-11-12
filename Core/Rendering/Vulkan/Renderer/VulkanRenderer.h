@@ -11,6 +11,8 @@
 #include <vector>
 #include <algorithm>
 #include <functional>
+#include <shaderc/shaderc.h>
+#include <shaderc/shaderc.hpp>
 #include <vulkan/vk_enum_string_helper.h>
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -42,25 +44,6 @@ namespace Sierra::Core::Rendering::Vulkan
 {
     class VulkanRenderer
     {
-    private:
-        // Declared here to keep code consistency
-        struct alignas(16) UniformData
-        {
-            /* Vertex Uniform Data */
-            glm::mat4x4 view;
-            glm::mat4x4 projection;
-
-            /* Fragment Uniform Data */
-//            std::vector<DirectionalLight::UniformDirectionalLight> directionalLights;
-//            std::vector<PointLight::UniformPointLight> pointLights;
-//            std::vector<Spotlight::UniformSpotLight> spotLights;
-//
-//            int directionalLightsCount;
-//            int pointLightsCount;
-//            int spotLightsCount;
-        };
-
-        UniformData uniformData;
     public:
         /* --- CONSTRUCTORS --- */
 
@@ -82,7 +65,6 @@ namespace Sierra::Core::Rendering::Vulkan
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline bool IsActive() const { return !window.IsClosed(); };
         [[nodiscard]] inline Window& GetWindow()  { return window; }
-        [[nodiscard]] inline UniformData* GetUniformDataReference() { return &uniformData; };
         [[nodiscard]] inline auto GetRendererInfo() const { return rendererInfo; };
 
         /* --- DESTRUCTOR --- */
@@ -227,6 +209,12 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreatePushConstants();
 
         /* --- DESCRIPTORS --- */
+        #define UNIFORM_BUFFER_BINDING 0
+        #define STORAGE_BUFFER_BINDING 1
+
+        #define GET_UNIFORM_BUFFER(index)(shaderBuffers[UNIFORM_BUFFER_BINDING * bufferDescriptorSets.size() + index])
+        #define GET_STORAGE_BUFFER(index)(shaderBuffers[STORAGE_BUFFER_BINDING * bufferDescriptorSets.size() + index])
+
         std::unique_ptr<DescriptorSetLayout> globalDescriptorSetLayout;
         std::shared_ptr<BindlessDescriptorSet> globalBindlessDescriptorSet;
 
@@ -234,8 +222,8 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreateDescriptorSetLayout();
         std::shared_ptr<DescriptorPool> descriptorPool;
         void CreateDescriptorPool();
-        std::vector<std::unique_ptr<DescriptorSet>> uniformDescriptorSets;
-        void CreateUniformDescriptorSets();
+        std::vector<std::unique_ptr<DescriptorSet>> bufferDescriptorSets;
+        void CreateShaderBuffersDescriptorSets();
 
         /* --- GRAPHICS PIPELINE --- */
         VkPipelineLayout graphicsPipelineLayout;
@@ -256,11 +244,16 @@ namespace Sierra::Core::Rendering::Vulkan
         std::shared_ptr<Texture> nullSpecularTexture;
         void CreateNullTextures();
 
-        /* --- UNIFORM BUFFERS --- */
+        /* --- SHADER BUFFERS --- */
+        #define SHADER_BUFFERS_COUNT 2
+
         const uint64_t uniformDataSize = sizeof(UniformData);
-        std::vector<std::unique_ptr<Buffer>> uniformBuffers;
-        void CreateUniformBuffers();
-        void UpdateUniformBuffers(uint32_t imageIndex);
+        const uint64_t storageDataSize = sizeof(StorageData);
+
+        std::vector<std::unique_ptr<Buffer>> shaderBuffers;
+
+        void CreateShaderBuffers();
+        void UpdateShaderBuffers(uint32_t imageIndex);
 
         /* --- QUERYING --- */
         VkQueryPool drawTimeQueryPool;
@@ -269,7 +262,7 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreateQueryPool();
 
         /* --- DRAWING --- */
-        const uint32_t MAX_CONCURRENT_FRAMES = 3;
+        #define MAX_CONCURRENT_FRAMES 3
         std::vector<VkSemaphore> imageAvailableSemaphores;
         std::vector<VkSemaphore> renderFinishedSemaphores;
         std::vector<VkFence> frameBeingRenderedFences;

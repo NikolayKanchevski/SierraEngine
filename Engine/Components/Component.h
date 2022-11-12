@@ -66,6 +66,7 @@ namespace Sierra::Engine::Components
             World::GetEnttRegistry().remove<T>(enttEntity);
         }
 
+        virtual inline void Update() { }
         virtual inline void Destroy() const { }
     private:
         entt::entity enttEntity;

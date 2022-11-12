@@ -47,11 +47,11 @@ namespace Sierra::Core::Rendering::Vulkan
 
         CreateFramebuffers();
         CreateCommandBuffers();
-        CreateUniformBuffers();
+        CreateShaderBuffers();
 
         CreateQueryPool();
         CreateDescriptorPool();
-        CreateUniformDescriptorSets();
+        CreateShaderBuffersDescriptorSets();
         CreateSynchronization();
 
         CreateNullTextures();
@@ -129,7 +129,7 @@ namespace Sierra::Core::Rendering::Vulkan
         vkDestroyPipeline(logicalDevice, graphicsPipeline, nullptr);
         vkDestroyPipelineLayout(logicalDevice, graphicsPipelineLayout, nullptr);
 
-        for (const auto &uniformBuffer : uniformBuffers)
+        for (const auto &uniformBuffer : shaderBuffers)
         {
             uniformBuffer->Destroy();
         }

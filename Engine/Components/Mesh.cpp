@@ -22,7 +22,7 @@ namespace Sierra::Engine::Components
     {
         if (freedMeshSlots.empty())
         {
-            startTextureSlot = meshSlotsUsed * TOTAL_TEXTURE_TYPES_COUNT;
+            meshID = meshSlotsUsed;
             meshSlotsUsed++;
 
             if (VulkanCore::GetDescriptorIndexingSupported())
@@ -32,13 +32,13 @@ namespace Sierra::Engine::Components
                 // Reserve spots for mesh's textures
                 for (uint32_t i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
                 {
-                    globalBindlessDescriptorSet->ReserveIndex(BINDLESS_TEXTURE_BINDING, startTextureSlot + i);
+                    globalBindlessDescriptorSet->ReserveIndex(BINDLESS_TEXTURE_BINDING, meshID + i);
                 }
             }
         }
         else
         {
-            startTextureSlot = freedMeshSlots[0];
+            meshID = freedMeshSlots[0];
             freedMeshSlots.erase(freedMeshSlots.begin());
         }
 
@@ -49,6 +49,39 @@ namespace Sierra::Engine::Components
 
         totalMeshCount++;
         totalMeshVertices += vertexCount;
+    }
+
+    /* --- GETTER METHODS --- */
+
+    glm::mat4x4 Mesh::GetModelMatrix() const
+    {
+        // Inverse the Y coordinate to satisfy Vulkan's requirements
+        Transform transform = GetComponent<Transform>();
+        glm::vec3 rendererPosition = { transform.position.x, transform.position.y * -1, transform.position.z };
+
+        // Calculate translation matrix
+        glm::mat4x4 translationMatrix(1.0);
+        translationMatrix = glm::translate(translationMatrix, rendererPosition);
+
+        // Calculate rotation matrix
+        glm::mat4x4 rotationMatrix(1.0);
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(transform.rotation.x), { 0.0, 1.0, 0.0 });
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(transform.rotation.y), { 1.0, 0.0, 0.0 });
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(transform.rotation.z), { 0.0, 0.0, 1.0 });
+
+        // Calculate scale matrix
+        glm::mat4x4 scaleMatrix(1.0);
+        scaleMatrix = glm::scale(scaleMatrix, transform.scale);
+
+        return translationMatrix * rotationMatrix * scaleMatrix;
+    }
+
+    void Mesh::GetPushConstantData(PushConstant *data) const
+    {
+        // Populate push constant data
+        data->material = this->material;
+        data->meshSlot = this->meshID;
+        data->meshTexturesPresence = this->meshTexturesPresence;
     }
 
     /* --- SETTER METHODS --- */
@@ -120,7 +153,7 @@ namespace Sierra::Engine::Components
 
         if (VulkanCore::GetDescriptorIndexingSupported())
         {
-            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, TOTAL_TEXTURE_TYPES_COUNT + startTextureSlot + (uint32_t) givenTexture->GetTextureType());
+            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, TOTAL_TEXTURE_TYPES_COUNT + meshID + (uint32_t) givenTexture->GetTextureType());
             VulkanCore::GetGlobalBindlessDescriptorSet()->Allocate();
         }
         else
@@ -147,42 +180,13 @@ namespace Sierra::Engine::Components
         meshTexturesPresence.SetBit(textureType, 0);
     }
 
-    /* --- GETTER METHODS --- */
-
-    void Mesh::GetPushConstantData(PushConstant *data) const
-    {
-        // Inverse the Y coordinate to satisfy Vulkan's requirements
-        Transform transform = GetComponent<Transform>();
-        glm::vec3 rendererPosition = { transform.position.x, transform.position.y * -1, transform.position.z };
-
-        // Calculate translation matrix
-        glm::mat4x4 translationMatrix(1.0);
-        translationMatrix = glm::translate(translationMatrix, rendererPosition);
-
-        // Calculate rotation matrix
-        glm::mat4x4 rotationMatrix(1.0);
-        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(transform.rotation.x), { 0.0, 1.0, 0.0 });
-        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(transform.rotation.y), { 1.0, 0.0, 0.0 });
-        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(transform.rotation.z), { 0.0, 0.0, 1.0 });
-
-        // Calculate scale matrix
-        glm::mat4x4 scaleMatrix(1.0);
-        scaleMatrix = glm::scale(scaleMatrix, transform.scale);
-
-        // Populate push constant data
-        data->modelMatrix = translationMatrix * rotationMatrix * scaleMatrix;
-        data->material = this->material;
-        data->meshSlot = this->startTextureSlot;
-        data->meshTexturesPresence = this->meshTexturesPresence;
-    }
-
     /* --- DESTRUCTOR --- */
 
     void Mesh::Destroy() const
     {
         Component::Destroy();
 
-        freedMeshSlots.push_back(startTextureSlot);
+        freedMeshSlots.push_back(meshID);
 
         vertexBuffer->Destroy();
         indexBuffer->Destroy();

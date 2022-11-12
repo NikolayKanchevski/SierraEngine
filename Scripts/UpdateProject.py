@@ -14,6 +14,9 @@ TEXTURE_DIRECTORY = ROOT_DIRECTORY + "Core/Rendering/Textures/"
 MODEL_DIRECTORY = ROOT_DIRECTORY + "Core/Rendering/Models/"
 FONT_DIRECTORY = ROOT_DIRECTORY + "Core/Rendering/Fonts/"
 
+SHADERS_DIRECTORY = ROOT_DIRECTORY + "Core/Rendering/Shading/Shaders/"
+SHADER_FILE_EXTENSIONS = [".glsl", ".vert", ".frag"]
+
 def Main():
     # Check if required arguments are provided
     if len(sys.argv) <= 1:
@@ -46,6 +49,7 @@ def Main():
     CopyFolder(TEXTURE_DIRECTORY, OUTPUT_DIRECTORY + "Textures/")
     CopyFolder(MODEL_DIRECTORY, OUTPUT_DIRECTORY + "Models/")
     CopyFolder(FONT_DIRECTORY, OUTPUT_DIRECTORY + "Fonts/")
+    CopyFolder(SHADERS_DIRECTORY, OUTPUT_DIRECTORY + "Shaders/")
 
     # Compile shaders
     CompileShaders(OUTPUT_DIRECTORY)
@@ -56,30 +60,31 @@ def Main():
 
 def CompileShaders(OUTPUT_DIRECTORY):
     operatingSystem = platform.system()
-    if operatingSystem == "Windows":
-        CompileWindowsShaders(OUTPUT_DIRECTORY)
-    else:
-        CompileUnixShaders(OUTPUT_DIRECTORY)
+
+    # Find and compile every shader
+    for file in os.listdir(SHADERS_DIRECTORY):
+        fileExtension = file[file.index("."):]
+        if (fileExtension in SHADER_FILE_EXTENSIONS):
+            if operatingSystem == "Windows":
+                CompileWindowsShaders(os.path.join(SHADERS_DIRECTORY, file), OUTPUT_DIRECTORY)
+            else:
+                CompileUnixShaders(os.path.join(SHADERS_DIRECTORY, file), OUTPUT_DIRECTORY)
 
 
-def CompileWindowsShaders(OUTPUT_DIRECTORY):
-    command = f"..\Core\Rendering\Shading\Compilers\glslc.exe { ROOT_DIRECTORY }Core\Rendering\Shading\Shaders\shader.vert -o { OUTPUT_DIRECTORY }Shaders\shader.vert.spv"
+def CompileWindowsShaders(shaderFilePath, OUTPUT_DIRECTORY):
+    shaderFileName = shaderFilePath[shaderFilePath.rindex("/") + 1:]
 
-    os.system(command)
-
-    command = f"..\Core\Rendering\Shading\Compilers\glslc.exe { ROOT_DIRECTORY }Core\Rendering\Shading\Shaders\shader.frag -o { OUTPUT_DIRECTORY }Shaders\shader.frag.spv"
-
-    os.system(command)
-
-
-def CompileUnixShaders(OUTPUT_DIRECTORY):
-    command = f"{ ROOT_DIRECTORY }Core/Rendering/Shading/Compilers/glslc { ROOT_DIRECTORY }Core/Rendering/Shading/Shaders/shader.vert -o { OUTPUT_DIRECTORY }Shaders/shader.vert.spv"
+    command = f"..\Core\Rendering\Shading\Compilers\glslc.exe { shaderFilePath } -o { OUTPUT_DIRECTORY }Shaders\{ shaderFileName }.spv"
 
     os.system(command)
 
-    command = f"{ ROOT_DIRECTORY }Core/Rendering/Shading/Compilers/glslc { ROOT_DIRECTORY }Core/Rendering/Shading/Shaders/shader.frag -o { OUTPUT_DIRECTORY }Shaders/shader.frag.spv"
 
-    os.system(command)      
+def CompileUnixShaders(shaderFilePath, OUTPUT_DIRECTORY):
+    shaderFileName = shaderFilePath[shaderFilePath.rindex("/") + 1:]
+
+    command = f"../Core/Rendering/Shading/Compilers/glslc { shaderFilePath } -o { OUTPUT_DIRECTORY }Shaders/{ shaderFileName }.spv"
+
+    os.system(command)
 
 
 def CopyFile(file, destination):

@@ -50,7 +50,8 @@ namespace Sierra::Core::Rendering::Vulkan
         // Reset the fences
         vkResetFences(this->logicalDevice, 1, &frameBeingRenderedFences[currentFrame]);
 
-        UpdateUniformBuffers(imageIndex);
+        // Update uniform & storage buffers
+        UpdateShaderBuffers(imageIndex);
 
         // Reset and re-record the command buffer
         vkResetCommandBuffer(this->commandBuffers[currentFrame], 0);

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <glm/mat4x4.hpp>
 #include "../Window.h"
 #include "Abstractions/Descriptors.h"
 
@@ -15,6 +16,23 @@ using Sierra::Core::Rendering::Vulkan::Abstractions::DescriptorPool;
 #define MAX_POINT_LIGHTS 64 // Remember to change the limit in the fragment shader too!
 #define MAX_DIRECTIONAL_LIGHTS 16 // Remember to change the limit in the fragment shader too!
 #define MAX_SPOTLIGHT_LIGHTS 16 // Remember to change the limit in the fragment shader too!
+
+struct alignas(16) UniformData
+{
+    /* Vertex Uniform Data */
+    glm::mat4x4 view;
+    glm::mat4x4 projection;
+};
+
+struct alignas(16) ObjectData
+{
+    glm::mat4x4 model;
+};
+
+struct alignas(16) StorageData
+{
+    ObjectData objectDatas[MAX_TEXTURES];  // TODO: Make a dynamic allocator
+};
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -49,6 +67,9 @@ namespace Sierra::Core::Rendering::Vulkan
             #endif
         }
 
+        [[nodiscard]] inline static UniformData* GetUniformDataPtr() { return &instance.uniformData; }
+        [[nodiscard]] inline static StorageData* GetStorageDataPtr() { return &instance.storageData; }
+
         inline static void SetWindow(Window *window) { instance.window = window; }
 
         inline static void SetLogicalDevice(VkDevice logicalDevice) { instance.logicalDevice = logicalDevice; }
@@ -82,6 +103,9 @@ namespace Sierra::Core::Rendering::Vulkan
         VkCommandPool commandPool;
         std::shared_ptr<DescriptorPool> descriptorPool;
         std::shared_ptr<BindlessDescriptorSet> globalBindlessDescriptorSet;
+
+        UniformData uniformData;
+        StorageData storageData;
     };
 
 }

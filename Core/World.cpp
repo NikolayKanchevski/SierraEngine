@@ -9,6 +9,7 @@
 #include "../Engine/Classes/Cursor.h"
 #include "../Engine/Classes/Input.h"
 #include "../Engine/Components/Camera.h"
+#include "../Engine/Components/Mesh.h"
 
 using namespace Sierra::Engine::Classes;
 using namespace Sierra::Engine::Components;
@@ -50,17 +51,27 @@ namespace Sierra::Core
 
     void World::UpdateObjects(VulkanRenderer &renderer)
     {
+        // Update camera
         Camera *camera = Camera::GetMainCamera();
-
         Transform &cameraTransform = enttRegistry.get<Transform>(camera->GetEnttEntity());
         glm::vec3 rendererCameraPosition = { cameraTransform.position.x, -cameraTransform.position.y, cameraTransform.position.z };
         glm::vec3 rendererCameraFrontDirection = { camera->GetFrontDirection().x, -camera->GetFrontDirection().y, camera->GetFrontDirection().z };
         glm::vec3 rendererCameraUpDirection = { camera->GetUpDirection().x, -camera->GetUpDirection().y, camera->GetUpDirection().z };
 
-        auto uniformData = renderer.GetUniformDataReference();
+        // Update uniform data
+        auto uniformData = VulkanCore::GetUniformDataPtr();
         uniformData->view = glm::lookAt(rendererCameraPosition, rendererCameraPosition + rendererCameraFrontDirection, rendererCameraUpDirection);
         uniformData->projection = glm::perspective(glm::radians(camera->fov), (float) VulkanCore::GetSwapchainExtent().width / (float) VulkanCore::GetSwapchainExtent().height, camera->nearClip, camera->farClip);
         uniformData->projection[1][1] *= -1;
+
+        // Update storage data
+        auto storageData = VulkanCore::GetStorageDataPtr();
+        auto enttMeshView = World::GetEnttRegistry().view<Mesh>();
+        for (auto enttEntity : enttMeshView)
+        {
+            Mesh &mesh = enttMeshView.get<Mesh>(enttEntity);
+            storageData->objectDatas[mesh.GetMeshID()].model = mesh.GetModelMatrix();
+        }
     }
 
     void World::UpdateRenderer(VulkanRenderer &renderer)

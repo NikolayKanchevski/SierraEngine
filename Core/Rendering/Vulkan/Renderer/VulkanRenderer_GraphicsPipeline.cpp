@@ -4,14 +4,16 @@
 
 #include "VulkanRenderer.h"
 
+#include "../../../../Engine/Classes/File.h"
+
 namespace Sierra::Core::Rendering::Vulkan
 {
 
     void VulkanRenderer::CreateGraphicsPipeline()
     {
         // Create shader modules out of the read shader
-        VkShaderModule vertShaderModule = VulkanUtilities::CreateShaderModule("Shaders/shader.vert.spv");
-        VkShaderModule fragShaderModule = VulkanUtilities::CreateShaderModule("Shaders/shader.frag.spv");
+        VkShaderModule vertShaderModule = VulkanUtilities::CreateShaderModule("Shaders/vertex_shader.vert.spv");
+        VkShaderModule fragShaderModule = VulkanUtilities::CreateShaderModule(VulkanCore::GetDescriptorIndexingSupported() ? "Shaders/fragment_shader_bindless.frag.spv" : "Shaders/fragment_shader.frag.spv");
 
         // Set vertex shader properties
         VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
