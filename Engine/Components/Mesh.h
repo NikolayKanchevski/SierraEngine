@@ -31,7 +31,7 @@ namespace Sierra::Engine::Components
     {
         Material material;
 
-        uint32_t meshSlot;
+        uint32_t meshID;
         Binary meshTexturesPresence; // Bools encoded as binary indicating whether texture types are bound
     };
 

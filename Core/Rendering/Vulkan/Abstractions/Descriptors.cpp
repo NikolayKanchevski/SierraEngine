@@ -100,10 +100,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- SETTER METHODS --- */
 
-    DescriptorPool::Builder &DescriptorPool::Builder::AddPoolSize(const VkDescriptorType descriptorType, const uint32_t count)
+    DescriptorPool::Builder &DescriptorPool::Builder::AddPoolSize(const VkDescriptorType descriptorType)
     {
         // Add the pool size to the list of pool sizes
-        this->poolSizes.push_back({ descriptorType, count });
+        this->poolSizes.push_back({ descriptorType, maxSets });
         return *this;
     }
 

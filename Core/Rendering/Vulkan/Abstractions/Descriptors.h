@@ -70,7 +70,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         class Builder
         {
         public:
-            Builder& AddPoolSize(VkDescriptorType descriptorType, uint32_t count);
+            Builder& AddPoolSize(VkDescriptorType descriptorType);
             Builder& SetPoolFlags(VkDescriptorPoolCreateFlags givenPoolCreateFlags);
             Builder& SetMaxSets(uint32_t givenMaxSets);
             [[nodiscard]] std::shared_ptr<DescriptorPool> Build(std::unique_ptr<DescriptorSetLayout> &givenSetLayout);

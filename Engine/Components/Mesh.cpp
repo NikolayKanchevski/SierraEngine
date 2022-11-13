@@ -80,7 +80,7 @@ namespace Sierra::Engine::Components
     {
         // Populate push constant data
         data->material = this->material;
-        data->meshSlot = this->meshID;
+        data->meshID = this->meshID;
         data->meshTexturesPresence = this->meshTexturesPresence;
     }
 
@@ -153,7 +153,7 @@ namespace Sierra::Engine::Components
 
         if (VulkanCore::GetDescriptorIndexingSupported())
         {
-            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, TOTAL_TEXTURE_TYPES_COUNT + meshID + (uint32_t) givenTexture->GetTextureType());
+            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, (TOTAL_TEXTURE_TYPES_COUNT * meshID) + (uint32_t) givenTexture->GetTextureType());
             VulkanCore::GetGlobalBindlessDescriptorSet()->Allocate();
         }
         else

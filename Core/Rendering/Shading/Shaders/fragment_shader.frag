@@ -1,33 +1,10 @@
 #version 450
 
-#define MAX_TEXTURES 128
+#include "shader_utilities.glsl"
 
 layout(location = 0) in vec3 fromVert_Position;
 layout(location = 1) in vec3 fromVert_Normal;
 layout(location = 2) in vec2 fromVert_TextureCoordinates;
-
-struct Material
-{
-        vec3 diffuse;
-        float shininess;
-
-        vec3 specular;
-        vec3 ambient;
-};
-
-layout(set = 0, binding = 0) uniform UniformBuffer
-{
-        mat4 view;
-        mat4 projection;
-} uniformBuffer;
-
-layout(push_constant) uniform PushConstant
-{
-        Material material;
-
-        uint meshID;
-        uint meshTexturesPresence;
-} pushConstant;
 
 layout(set = 1, binding = 2) uniform sampler2D diffuseSampler;
 layout(set = 1, binding = 3) uniform sampler2D specularSampler;
