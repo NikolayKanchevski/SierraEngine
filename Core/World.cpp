@@ -17,8 +17,6 @@ using Sierra::Engine::Components::Relationship;
 
 namespace Sierra::Core
 {
-    entt::registry World::enttRegistry;
-
     /* --- POLLING METHODS --- */
 
     void World::Start()
@@ -63,6 +61,8 @@ namespace Sierra::Core
         uniformData->view = glm::lookAt(rendererCameraPosition, rendererCameraPosition + rendererCameraFrontDirection, rendererCameraUpDirection);
         uniformData->projection = glm::perspective(glm::radians(camera->fov), (float) VulkanCore::GetSwapchainExtent().width / (float) VulkanCore::GetSwapchainExtent().height, camera->nearClip, camera->farClip);
         uniformData->projection[1][1] *= -1;
+        uniformData->directionalLightCount = DirectionalLight::GetDirectionalLightCount();
+        uniformData->pointLightCount = PointLight::GetPointLightCount();
 
         // Update storage data
         auto storageData = VulkanCore::GetStorageDataPtr();
@@ -71,6 +71,22 @@ namespace Sierra::Core
         {
             Mesh &mesh = enttMeshView.get<Mesh>(enttEntity);
             storageData->objectDatas[mesh.GetMeshID()].model = mesh.GetModelMatrix();
+        }
+
+        auto enttDirectionalLightView = World::GetEnttRegistry().view<DirectionalLight>();
+        for (auto enttEntity : enttDirectionalLightView)
+        {
+            DirectionalLight &directionalLight = enttDirectionalLightView.get<DirectionalLight>(enttEntity);
+            DirectionalLight::ShaderDirectionalLight lightData = directionalLight;
+            storageData->directionalLights[directionalLight.GetID()] = lightData;
+        }
+
+        auto enntPointLightView = World::GetEnttRegistry().view<PointLight>();
+        for (auto enttEntity : enntPointLightView)
+        {
+            PointLight &pointLight = enntPointLightView.get<PointLight>(enttEntity);
+            PointLight::ShaderPointLight lightData = pointLight;
+            storageData->pointLights[pointLight.GetID()] = lightData;
         }
     }
 

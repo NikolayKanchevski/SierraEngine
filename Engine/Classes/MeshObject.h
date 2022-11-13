@@ -26,21 +26,19 @@ namespace Sierra::Engine::Classes
         MeshObject(const std::string filePath);
         static std::unique_ptr<MeshObject> LoadModel(const std::string filePath);
 
-        /* --- POLLING METHODS --- */
-
-        /* --- SETTER METHODS --- */
-
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint32_t GetVertexCount() const { return vertexCount; }
         [[nodiscard]] inline std::string GetName() const { return modelName; }
         [[nodiscard]] inline std::string GetModelLocation() const { return modelLocation; }
         [[nodiscard]] inline Mesh& GetMesh(const uint32_t meshIndex) const { return World::GetEnttRegistry().get<Mesh>(meshEntities[meshIndex]); }
+        [[nodiscard]] inline uint32_t GetMeshCount() const { return meshCount; }
 
         /* --- DESTRUCTOR --- */
         MeshObject(const MeshObject &) = delete;
         MeshObject &operator=(const MeshObject &) = delete;
     private:
         uint32_t vertexCount = 0;
+        uint32_t meshCount = 0;
 
         std::string modelName;
         std::string modelLocation;

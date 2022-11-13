@@ -6,7 +6,6 @@
 
 #include <entt/entt.hpp>
 #include "../../Core/World.h"
-#include "InternalComponents.h"
 
 using namespace Sierra::Core;
 
@@ -15,8 +14,8 @@ namespace Sierra::Engine::Components
     class Component
     {
     public:
-        inline void SetEnttEntity(entt::entity &givenEntity) { enttEntity = givenEntity; }
-        inline entt::entity& GetEnttEntity() { return enttEntity; };
+        inline void SetEnttEntity(entt::entity givenEntity) { this->enttEntity = givenEntity; }
+        inline entt::entity GetEnttEntity() { return enttEntity; };
 
         template <typename T, std::enable_if_t<std::is_base_of_v<Component, T>, bool> = true, typename... Args>
         T& AddComponent(Args&&... args)
@@ -67,9 +66,10 @@ namespace Sierra::Engine::Components
         }
 
         virtual inline void Update() { }
-        virtual inline void Destroy() const { }
+        virtual inline void Destroy() const {  }
+
     private:
-        entt::entity enttEntity;
+        entt::entity enttEntity = entt::null;
 
     };
 }

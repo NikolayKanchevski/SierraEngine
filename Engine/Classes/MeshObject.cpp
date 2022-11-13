@@ -131,6 +131,7 @@ namespace Sierra::Engine::Classes
 
         // Increase vertex count
         this->vertexCount += mesh->mNumVertices;
+        this->meshCount++;
 
         // Create and return the mesh
         return Mesh(meshVertices, indices);
@@ -174,6 +175,7 @@ namespace Sierra::Engine::Classes
 
         // Get material properties
         aiGetMaterialFloat(assimpMaterial, AI_MATKEY_SHININESS, &mesh.material.shininess);
+        mesh.material.shininess /= 512.0f;
 
         aiColor4D assimpColor;
 
@@ -185,5 +187,6 @@ namespace Sierra::Engine::Classes
 
         aiGetMaterialColor(assimpMaterial, AI_MATKEY_COLOR_SPECULAR, &assimpColor);
         mesh.material.specular = { assimpColor.r, assimpColor.g, assimpColor.b };
+
     }
 }

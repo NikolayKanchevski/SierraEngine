@@ -5,7 +5,10 @@
 #include "Application.h"
 #include <iostream>
 
-#include "../../Engine/Components/UUID.h"
+#define MODEL_ROWS 2
+#define MODEL_COLUMNS 2
+#define MODEL_SPACING_FACTOR_X 10
+#define MODEL_SPACING_FACTOR_Z 15
 
 /* --- POLLING METHODS --- */
 
@@ -25,8 +28,29 @@ void Application::Start()
     camera = cameraEntity.AddComponent<Camera>();
     cameraEntity.GetTransform().position = { 0.0f, 1.75f, 10.0f };
 
-    // Load a 3D model
-    tankModel = MeshObject::LoadModel("Models/Chieftain/T95_FV4201_Chieftain.fbx");
+    // Create point light
+    pointLight = &Entity("Point Light").AddComponent<PointLight>();
+    pointLight->GetComponent<Transform>().position.y = 3;
+
+    DirectionalLight directionalLight = Entity("Directional Light").AddComponent<DirectionalLight>();
+    directionalLight.direction = glm::normalize(camera.GetComponent<Transform>().position - glm::vec3(0, 0, 0));
+
+    // Load 3D models
+    for (uint32_t i = MODEL_COLUMNS; i--;)
+    {
+        int x = (MODEL_SPACING_FACTOR_X * i) - (MODEL_ROWS * MODEL_SPACING_FACTOR_X) / 2;
+        for (uint32_t j = MODEL_ROWS; j--;)
+        {
+            int z = (MODEL_SPACING_FACTOR_Z * j) - (MODEL_COLUMNS * MODEL_SPACING_FACTOR_Z) / 2;
+
+            tankModels.push_back(MeshObject::LoadModel("Models/Chieftain/T95_FV4201_Chieftain.fbx"));
+            for (uint32_t k = tankModels.back()->GetMeshCount(); k--;)
+            {
+                tankModels.back()->GetMesh(k).GetComponent<Transform>().position.x = x;
+                tankModels.back()->GetMesh(k).GetComponent<Transform>().position.z = z;
+            }
+        }
+    }
 
     // Loop while renderer is active
     while (renderer.IsActive())
@@ -62,10 +86,14 @@ void Application::RenderLoop(VulkanRenderer &renderer)
 
 void Application::UpdateObjects()
 {
-    // Calculate an animated rotation value and update meshes
-    float rotation = glm::sin(Time::GetUpTime()) * 45.0f;
-    tankModel->GetMesh(3).GetComponent<Transform>().rotation.x = rotation;
-    tankModel->GetMesh(4).GetComponent<Transform>().rotation.x = rotation;
+    // Calculate an animated timeSin value and update meshes
+    float timeSin = glm::sin(Time::GetUpTime());
+    for (const auto &tankModel : tankModels)
+    {
+        tankModel->GetMesh(3).GetComponent<Transform>().rotation.x = timeSin * 45.0f;
+        tankModel->GetMesh(4).GetComponent<Transform>().rotation.x = timeSin * 45.0f;
+    }
+    pointLight->GetComponent<Transform>().position.z = 3 * timeSin;
 }
 
 void Application::DoCameraMovement()

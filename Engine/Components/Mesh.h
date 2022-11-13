@@ -32,7 +32,7 @@ namespace Sierra::Engine::Components
         Material material;
 
         uint32_t meshID;
-        Binary meshTexturesPresence; // Bools encoded as binary indicating whether texture types are bound
+        uint32_t meshTexturesPresence; // Bools encoded as binary indicating whether texture types are bound
     };
 
     class Mesh : public Component

@@ -57,8 +57,8 @@ namespace Sierra::Core::Rendering::Vulkan
         CreateNullTextures();
         CreateImGuiInstance();
 
-        Entity cubeEntity = Entity("Cube");
-        auto &cubeMesh = cubeEntity.AddComponent<Mesh>(vertices, meshIndices);
+//        Entity cubeEntity = Entity("Cube");
+//        auto &cubeMesh = cubeEntity.AddComponent<Mesh>(vertices, meshIndices);
 
         window.Show();
         ASSERT_SUCCESS("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");

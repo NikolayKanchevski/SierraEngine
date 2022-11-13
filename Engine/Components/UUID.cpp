@@ -24,9 +24,4 @@ namespace Sierra::Engine::Components
     }
 
     /* --- DESTRUCTOR --- */
-
-    UUID::~UUID()
-    {
-
-    }
 }

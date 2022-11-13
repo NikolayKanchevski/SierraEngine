@@ -6,11 +6,14 @@
 
 #include <glm/vec3.hpp>
 
-struct alignas(16) Material
+struct Material
 {
     glm::vec3 diffuse;
     float shininess;
 
     glm::vec3 specular;
+    float _align1_;
+
     glm::vec3 ambient;
+    float _align2_;
 };

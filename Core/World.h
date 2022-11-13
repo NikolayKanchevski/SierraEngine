@@ -38,7 +38,7 @@ namespace Sierra::Core
 
         /* --- DESTRUCTOR --- */
     private:
-        static entt::registry enttRegistry;
+        inline static entt::registry enttRegistry = entt::registry();
 
         static void UpdateObjects(VulkanRenderer &renderer);
         static void UpdateRenderer(VulkanRenderer &renderer);

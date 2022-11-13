@@ -24,7 +24,6 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
-#include "../VulkanCore.h"
 #include "../../../Debugger.h"
 #include "../VulkanUtilities.h"
 
@@ -246,9 +245,6 @@ namespace Sierra::Core::Rendering::Vulkan
 
         /* --- SHADER BUFFERS --- */
         #define SHADER_BUFFERS_COUNT 2
-
-        const uint64_t uniformDataSize = sizeof(UniformData);
-        const uint64_t storageDataSize = sizeof(StorageData);
 
         std::vector<std::unique_ptr<Buffer>> shaderBuffers;
 

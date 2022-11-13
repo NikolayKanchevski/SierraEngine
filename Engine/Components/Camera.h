@@ -14,8 +14,6 @@ namespace Sierra::Engine::Components
     {
     public:
         /* --- PROPERTIES --- */
-//        Transform transform ;
-
         float fov = 45.0f;
 
         float nearClip = 0.1f;
@@ -49,6 +47,9 @@ namespace Sierra::Engine::Components
 
         [[nodiscard]] static inline Camera* GetMainCamera()
         { return mainCamera; }
+
+        /* --- DESTRUCTOR --- */
+        inline void Destroy() const override { RemoveComponent<Camera>(); }
 
     private:
         static Camera *mainCamera;

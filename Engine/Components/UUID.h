@@ -22,7 +22,6 @@ namespace Sierra::Engine::Components
         [[nodiscard]] uint64_t GetUUID() const { return this->uuid; }
 
         /* --- DESTRUCTOR --- */
-        ~UUID();
         UUID(const UUID&) = default;
 
         operator uint64_t() const { return uuid; }

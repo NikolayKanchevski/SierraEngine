@@ -8,20 +8,26 @@
 #include <glm/mat4x4.hpp>
 #include "../Window.h"
 #include "Abstractions/Descriptors.h"
+#include "../../../Engine/Components/Lighting/DirectionalLight.h"
+#include "../../../Engine/Components/Lighting/PointLight.h"
 
 using Sierra::Core::Rendering::Vulkan::Abstractions::DescriptorPool;
+using namespace Sierra::Engine::Components;
 
-// NOTE: Changing some of these may require you to update shaders
-#define MAX_TEXTURES 128 // Changed as @kael wouldn't stop bitching about it
-#define MAX_POINT_LIGHTS 64 // Remember to change the limit in the fragment shader too!
-#define MAX_DIRECTIONAL_LIGHTS 16 // Remember to change the limit in the fragment shader too!
-#define MAX_SPOTLIGHT_LIGHTS 16 // Remember to change the limit in the fragment shader too!
+// NOTE: Remember to change these in shaders too!
+#define MAX_OBJECTS 256 // Changed as @kael wouldn't stop bitching about it
+#define MAX_TEXTURES MAX_OBJECTS * TOTAL_TEXTURE_TYPES_COUNT
+#define MAX_POINT_LIGHTS 64
+#define MAX_DIRECTIONAL_LIGHTS 16
 
 struct alignas(16) UniformData
 {
     /* Vertex Uniform Data */
     glm::mat4x4 view;
     glm::mat4x4 projection;
+
+    uint32_t directionalLightCount;
+    uint32_t pointLightCount;
 };
 
 struct alignas(16) ObjectData
@@ -31,7 +37,9 @@ struct alignas(16) ObjectData
 
 struct alignas(16) StorageData
 {
-    ObjectData objectDatas[MAX_TEXTURES];  // TODO: Make a dynamic allocator
+    ObjectData objectDatas[MAX_OBJECTS];
+    DirectionalLight::ShaderDirectionalLight directionalLights[MAX_DIRECTIONAL_LIGHTS];
+    PointLight::ShaderPointLight pointLights[MAX_POINT_LIGHTS];
 };
 
 namespace Sierra::Core::Rendering::Vulkan

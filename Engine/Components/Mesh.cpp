@@ -184,8 +184,6 @@ namespace Sierra::Engine::Components
 
     void Mesh::Destroy() const
     {
-        Component::Destroy();
-
         freedMeshSlots.push_back(meshID);
 
         vertexBuffer->Destroy();
@@ -199,5 +197,7 @@ namespace Sierra::Engine::Components
 
         totalMeshCount--;
         totalMeshVertices -= vertexCount;
+
+        RemoveComponent<Mesh>();
     }
 }

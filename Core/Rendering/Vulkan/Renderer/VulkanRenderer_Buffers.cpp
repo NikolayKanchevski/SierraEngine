@@ -4,6 +4,8 @@
 
 #include "VulkanRenderer.h"
 
+#include "../VulkanCore.h"
+
 namespace Sierra::Core::Rendering::Vulkan
 {
     void VulkanRenderer::CreateShaderBuffers()
@@ -15,6 +17,9 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Resize uniform buffers array
         shaderBuffers.reserve(MAX_CONCURRENT_FRAMES * SHADER_BUFFERS_COUNT);
+
+        const uint64_t uniformDataSize = sizeof(UniformData);
+        const uint64_t storageDataSize = sizeof(StorageData);
 
         // Create uniform buffers
         for (uint32_t i = MAX_CONCURRENT_FRAMES; i--;)

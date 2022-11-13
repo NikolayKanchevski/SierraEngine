@@ -75,8 +75,8 @@ namespace Sierra::Core::Rendering
             Sierra::Engine::Classes::Stopwatch stopwatch;
         #endif
 
-        this->width = 800;
-        this->height = 600;
+        this->width = 1300;
+        this->height = 800;
 
         InitWindow();
 
