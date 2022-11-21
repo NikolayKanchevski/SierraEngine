@@ -5,7 +5,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include "InternalComponents.h"
+#include "Component.h"
 
 namespace Sierra::Engine::Components
 {
@@ -17,7 +17,7 @@ namespace Sierra::Engine::Components
         float fov = 45.0f;
 
         float nearClip = 0.1f;
-        float farClip = 100.0f;
+        float farClip = 200.0f;
 
         /* --- CONSTRUCTORS --- */
         Camera();

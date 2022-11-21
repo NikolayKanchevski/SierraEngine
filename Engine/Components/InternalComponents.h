@@ -9,6 +9,7 @@
 
 #include <glm/glm.hpp>
 #include "Component.h"
+#include "../Classes/Mesh.h"
 
 namespace Sierra::Engine::Components
 {
@@ -26,18 +27,6 @@ namespace Sierra::Engine::Components
         Tag(const Tag&) = default;
     };
 
-    class Transform : public Component
-    {
-    public:
-        /* --- PROPERTIES --- */
-        glm::vec3 position = {0, 0, 0 };
-        glm::vec3 rotation = { 0, 0, 0 };
-        glm::vec3 scale = { 1, 1, 1 };
-
-        Transform() = default;
-        Transform(const Transform&) = default;
-    };
-
     class Relationship : public Component
     {
     public:
@@ -49,7 +38,7 @@ namespace Sierra::Engine::Components
         [[nodiscard]] inline std::vector<entt::entity> GetEnttChildrenEntities() const { return children; }
 
         /* --- SETTER METHODS --- */
-        inline void SetParent(entt::entity &givenParent)
+        inline void SetParent(entt::entity givenParent)
         {
             // Get the new parent's relationship
             Relationship &givenParentRelationship = World::GetEnttRegistry().get<Relationship>(givenParent);
@@ -85,5 +74,17 @@ namespace Sierra::Engine::Components
         entt::entity parent = entt::null;
         entt::entity self = entt::null;
         std::vector<entt::entity> children {};
+    };
+
+    class Transform : public Component
+    {
+    public:
+        /* --- PROPERTIES --- */
+        glm::vec3 position = {0, 0, 0 };
+        glm::vec3 rotation = { 0, 0, 0 };
+        glm::vec3 scale = { 1, 1, 1 };
+
+        Transform() = default;
+        Transform(const Transform&) = default;
     };
 }

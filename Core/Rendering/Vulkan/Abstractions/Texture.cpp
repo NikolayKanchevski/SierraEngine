@@ -14,9 +14,6 @@ using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
-    std::unordered_map<std::string, std::shared_ptr<Texture>> Texture::texturePool;
-    std::shared_ptr<Texture> Texture::defaultTextures[TOTAL_TEXTURE_TYPES_COUNT];
-
     /* --- CONSTRUCTORS --- */
 
     Texture::Texture(stbi_uc *stbImage, const uint32_t width, const uint32_t height, const uint32_t givenColorChannelsCount, const TextureCreateInfo& textureCreateInfo)

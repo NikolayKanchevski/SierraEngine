@@ -4,7 +4,8 @@
 
 #include "VulkanRenderer.h"
 #include "../../../World.h"
-#include "../../../../Engine/Components/Mesh.h"
+#include "../VulkanCore.h"
+#include "../../../../Engine/Components/MeshRenderer.h"
 
 using Sierra::Engine::Components::Mesh;
 using Sierra::Engine::Components::PushConstant;
@@ -99,22 +100,21 @@ namespace Sierra::Core::Rendering::Vulkan
         const VkDeviceSize offsets[] = {0 };
 
         // For each mesh in the world
-        auto enttMeshView = World::GetEnttRegistry().view<Mesh>();
+        auto enttMeshView = World::GetEnttRegistry().view<MeshRenderer>();
         for (auto enttEntity : enttMeshView)
         {
             // Get current mesh
-            Mesh &mesh = enttMeshView.get<Mesh>(enttEntity);
-            vertexBuffers[0] = mesh.GetVertexBuffer();
+            auto &mesh = enttMeshView.get<MeshRenderer>(enttEntity);
+            vertexBuffers[0] = mesh.GetMesh()->GetVertexBuffer()->GetVulkanBuffer();
 
             // Bind the vertex buffer
             vkCmdBindVertexBuffers(givenCommandBuffer, 0, 1, vertexBuffers, offsets);
 
             // Bind the index buffer
-            vkCmdBindIndexBuffer(givenCommandBuffer, mesh.GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(givenCommandBuffer, mesh.GetMesh()->GetIndexBuffer()->GetVulkanBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
             // Get the push constant model of the current mesh and push it to shader
-            PushConstant data{};
-            mesh.GetPushConstantData(&data);
+            PushConstant data = mesh.GetPushConstantData();
 
             // Send push constant data to shader
             vkCmdPushConstants(
@@ -129,7 +129,7 @@ namespace Sierra::Core::Rendering::Vulkan
             vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipelineLayout, 0, 2, descriptorSets, 0, nullptr);
 
             // Draw using the index buffer to prevent vertex re-usage
-            vkCmdDrawIndexed(givenCommandBuffer, mesh.GetIndexCount(), 1, 0, 0, 0);
+            vkCmdDrawIndexed(givenCommandBuffer, mesh.GetMesh()->GetIndexCount(), 1, 0, 0, 0);
         }
 
         // Render ImGui UI

@@ -25,11 +25,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         /* --- CONSTRUCTORS --- */
         Buffer(BufferCreateInfo bufferCreateInfo);
         [[nodiscard]] static std::unique_ptr<Buffer> Create(const BufferCreateInfo bufferCreateInfo);
+        [[nodiscard]] static std::shared_ptr<Buffer> CreateShared(const BufferCreateInfo bufferCreateInfo);
 
         /* --- SETTER METHODS --- */
         void CopyFromPointer(void* pointer, uint64_t offset = 0);
         void CopyImage(const Image& givenImage, glm::vec3 imageOffset = { 0, 0, 0 }, uint64_t offset = 0);
-        void CopyToBuffer(const std::unique_ptr<Buffer> &otherBuffer);
+        void CopyToBuffer(const Buffer *otherBuffer);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkBuffer GetVulkanBuffer() const
@@ -61,6 +62,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         uint64_t memorySize;
         VkMemoryPropertyFlags memoryFlags;
         VkBufferUsageFlags bufferUsage;
+        bool destroyed = false;
     };
 
 }

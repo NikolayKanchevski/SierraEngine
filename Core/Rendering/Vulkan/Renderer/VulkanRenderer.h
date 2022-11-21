@@ -239,8 +239,6 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreateFramebuffers();
 
         /* --- TEXTURES --- */
-        std::shared_ptr<Texture> nullDiffuseTexture;
-        std::shared_ptr<Texture> nullSpecularTexture;
         void CreateNullTextures();
 
         /* --- SHADER BUFFERS --- */

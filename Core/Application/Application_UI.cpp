@@ -10,34 +10,36 @@ void Application::DisplayUI(VulkanRenderer &renderer)
     // Hierarchy
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoNav | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoSavedSettings;
 
-    ImGui::SetNextWindowPos({ 0, 0 }, ImGuiCond_FirstUseEver, { 0, 0 });
-    ImGui::SetNextWindowSize({ (float) renderer.GetWindow().GetWidth() / 6, (float) renderer.GetWindow().GetHeight() }, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSizeConstraints({ 100.0f, 100.0f }, { (float) renderer.GetWindow().GetWidth(), (float) renderer.GetWindow().GetHeight() });
-    ImGui::SetNextWindowBgAlpha(0.6f);
+    #ifdef DRAW_IMGUI_UI
+        ImGui::SetNextWindowPos({ 0, 0 }, ImGuiCond_FirstUseEver, { 0, 0 });
+        ImGui::SetNextWindowSize({ (float) renderer.GetWindow().GetWidth() / 6, (float) renderer.GetWindow().GetHeight() }, ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSizeConstraints({ 100.0f, 100.0f }, { (float) renderer.GetWindow().GetWidth(), (float) renderer.GetWindow().GetHeight() });
+        ImGui::SetNextWindowBgAlpha(0.6f);
 
-    bool hierachyOpen;
-    if (ImGui::Begin("Hierarchy", &hierachyOpen, windowFlags) || hierachyOpen)
-    {
-        ImGui::Separator();
-
-        auto enttRelationshipView = World::GetEnttRegistry().view<Relationship>();
-        for (uint32_t i = enttRelationshipView.size(); i--;)
+        bool hierachyOpen;
+        if (ImGui::Begin("Hierarchy", &hierachyOpen, windowFlags) || hierachyOpen)
         {
-            Relationship &entityRelationship = World::GetEnttRegistry().get<Relationship>(enttRelationshipView[i]);
-            if (entityRelationship.GetEnttParentEntity() == entt::null)
-            {
-                ListDeeper(entityRelationship, 0);
-            }
-        }
+            ImGui::Separator();
 
-        ImGui::End();
-    }
+            auto enttRelationshipView = World::GetEnttRegistry().view<Relationship>();
+            for (uint32_t i = enttRelationshipView.size(); i--;)
+            {
+                Relationship &entityRelationship = World::GetEnttRegistry().get<Relationship>(enttRelationshipView[i]);
+                if (entityRelationship.GetEnttParentEntity() == entt::null)
+                {
+                    ListDeeper(entityRelationship, 0);
+                }
+            }
+
+            ImGui::End();
+        }
+    #endif
 
     windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoFocusOnAppearing |
                   ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
 
     ImGui::SetNextWindowPos({ renderer.GetWindow().GetWidth() - 10.0f, 10.0f }, ImGuiCond_Always, { 1, 0 });
-    ImGui::SetNextWindowSizeConstraints({ (float) renderer.GetWindow().GetWidth() / 8, (float) renderer.GetWindow().GetHeight() / 8 }, { 10000, 10000 });
+    ImGui::SetNextWindowSizeConstraints({ (float) renderer.GetWindow().GetWidth() / 5.5f, (float) renderer.GetWindow().GetHeight() / 6 }, { 10000, 10000 });
     ImGui::SetNextWindowBgAlpha(0.6f);
 
     // Draw renderer information tab

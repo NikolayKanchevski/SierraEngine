@@ -11,6 +11,7 @@
 #include "Buffer.h"
 #include "Sampler.h"
 #include "Texture.h"
+#include <map>
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -108,6 +109,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         /* --- CONSTRUCTORS --- */
         DescriptorSet(std::shared_ptr<DescriptorPool> &givenDescriptorPool);
         [[nodiscard]] static std::unique_ptr<DescriptorSet> Build(std::shared_ptr<DescriptorPool> &givenDescriptorPool);
+        [[nodiscard]] static std::shared_ptr<DescriptorSet> BuildShared(std::shared_ptr<DescriptorPool> &givenDescriptorPool);
 
         /* --- SETTER METHODS --- */
         void WriteBuffer(uint32_t binding, const std::unique_ptr<Buffer> &buffer);
@@ -129,7 +131,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         std::shared_ptr<DescriptorPool> &descriptorPool;
         std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout;
 
-        std::vector<VkWriteDescriptorSet> writeDescriptorSets;
+        std::unordered_map<uint32_t, VkWriteDescriptorSet> writeDescriptorSets;
         std::unordered_map<uint32_t, VkDescriptorImageInfo> descriptorImageInfos;
         std::unordered_map<uint32_t, VkDescriptorBufferInfo> descriptorBufferInfos;
 

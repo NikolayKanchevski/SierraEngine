@@ -17,11 +17,11 @@ void main()
     float specularTextureColor;
 
     // Check what textures are set and extract the appropriate colors
-    if (IsBitSet(pushConstant.meshTexturesPresence, TEXTURE_TYPE_DIFFUSE_OFFSET)) diffuseTextureColor = texture(texturePool[(pushConstant.meshID * TOTAL_TEXTURE_TYPES_COUNT) + TEXTURE_TYPE_DIFFUSE_OFFSET], fromVert_TextureCoordinates).rgb;
-    else diffuseTextureColor = texture(texturePool[TEXTURE_TYPE_DIFFUSE_OFFSET], fromVert_TextureCoordinates).rgb;
+    if (IsBitSet(pushConstant.meshTexturesPresence, DIFFUSE_TEXTURE_OFFSET)) diffuseTextureColor = texture(texturePool[(pushConstant.meshID * TOTAL_TEXTURE_TYPES_COUNT) + DIFFUSE_TEXTURE_OFFSET], fromVert_TextureCoordinates).rgb;
+    else diffuseTextureColor = texture(texturePool[DIFFUSE_TEXTURE_OFFSET], fromVert_TextureCoordinates).rgb;
 
-    if (IsBitSet(pushConstant.meshTexturesPresence, TEXTURE_TYPE_SPECULAR_OFFSET)) specularTextureColor = texture(texturePool[(pushConstant.meshID * TOTAL_TEXTURE_TYPES_COUNT) + TEXTURE_TYPE_SPECULAR_OFFSET], fromVert_TextureCoordinates).r;
-    else specularTextureColor = texture(texturePool[TEXTURE_TYPE_SPECULAR_OFFSET], fromVert_TextureCoordinates).r;
+    if (IsBitSet(pushConstant.meshTexturesPresence, SPECULAR_TEXTURE_OFFSET)) specularTextureColor = texture(texturePool[(pushConstant.meshID * TOTAL_TEXTURE_TYPES_COUNT) + SPECULAR_TEXTURE_OFFSET], fromVert_TextureCoordinates).r;
+    else specularTextureColor = texture(texturePool[SPECULAR_TEXTURE_OFFSET], fromVert_TextureCoordinates).r;
 
     // Calculate view direction
     vec3 viewDirection = normalize(-fromVert_Position);

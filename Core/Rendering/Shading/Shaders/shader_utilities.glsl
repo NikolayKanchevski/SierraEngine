@@ -1,11 +1,12 @@
 #version 450
 
-#define TEXTURE_TYPE_DIFFUSE_OFFSET 0
-#define TEXTURE_TYPE_SPECULAR_OFFSET 1
-#define TOTAL_TEXTURE_TYPES_COUNT 2
+#define DIFFUSE_TEXTURE_OFFSET 0
+#define SPECULAR_TEXTURE_OFFSET 1
+#define HEIGHT_MAP_TEXTURE_OFFSET 2
+#define TOTAL_TEXTURE_TYPES_COUNT 3
 
-#define MAX_OBJECTS 256
-#define MAX_TEXTURES MAX_OBJECTS * TOTAL_TEXTURE_TYPES_COUNT
+#define MAX_MESHES 8192
+#define MAX_TEXTURES MAX_MESHES * TOTAL_TEXTURE_TYPES_COUNT
 #define MAX_POINT_LIGHTS 64
 #define MAX_DIRECTIONAL_LIGHTS 16
 
@@ -17,6 +18,8 @@ struct Material
     float shininess;
 
     vec3 specular;
+    float vertexExaggeration;
+
     vec3 ambient;
 };
 
@@ -57,7 +60,7 @@ layout(set = 0, binding = 0) uniform UniformBuffer
 
 layout(std140, set = 0, binding = 1) readonly buffer StorageBuffer
 {
-    ObjectData objectDatas[MAX_OBJECTS];
+    ObjectData objectDatas[MAX_MESHES];
     DirectionalLight directionalLights[MAX_DIRECTIONAL_LIGHTS];
     PointLight pointLights[MAX_POINT_LIGHTS];
 } storageBuffer;

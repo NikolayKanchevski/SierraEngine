@@ -4,7 +4,7 @@
 
 #include "VulkanRenderer.h"
 
-#include "../../../../Engine/Components/Mesh.h"
+#include "../../../../Engine/Classes/Mesh.h"
 
 using Sierra::Engine::Components::PushConstant;
 

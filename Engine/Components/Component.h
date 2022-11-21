@@ -58,7 +58,7 @@ namespace Sierra::Engine::Components
         {
             if (!HasComponent<T>())
             {
-                ASSERT_WARNING("Component of type [" + Debugger::TypeToString<T>() + "] is not exist within entity. No components were removed");
+                ASSERT_WARNING("Component of type [" + Debugger::TypeToString<T>() + "] does not exist within entity. No components were removed");
                 return;
             }
 
@@ -66,9 +66,9 @@ namespace Sierra::Engine::Components
         }
 
         virtual inline void Update() { }
-        virtual inline void Destroy() const {  }
+        virtual inline void Destroy() const { }
 
-    private:
+    protected:
         entt::entity enttEntity = entt::null;
 
     };

@@ -47,7 +47,7 @@ namespace Sierra::Engine::Components {
         inline void Destroy() const override { RemoveComponent<PointLight>(); freedIDs.push_back(this->lightID); pointLightCount--; };
 
     public:
-        struct alignas(16) ShaderPointLight
+        struct ShaderPointLight
         {
             glm::vec3 position;
             float linear;
@@ -56,6 +56,7 @@ namespace Sierra::Engine::Components {
             float intensity;
 
             float quadratic;
+            glm::vec3 _align_1;
         };
 
         operator ShaderPointLight() const noexcept { auto position = GetComponent<Transform>().position; return

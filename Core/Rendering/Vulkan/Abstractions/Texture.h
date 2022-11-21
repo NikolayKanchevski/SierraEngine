@@ -11,20 +11,20 @@
 #include "Image.h"
 #include "../../../../Engine/Classes/Math.h"
 
-#define TOTAL_TEXTURE_TYPES_COUNT 2
+#define TOTAL_TEXTURE_TYPES_COUNT 3
 #define TEXTURE_TYPE_TO_BINDING(textureType)(textureType + 2)
 
 #define BINDLESS_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_DIFFUSE)
 #define DIFFUSE_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_DIFFUSE)
 #define SPECULAR_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_SPECULAR)
+#define HEIGHT_MAP_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_HEIGHT_MAP)
 
 typedef enum TextureType
 {
     TEXTURE_TYPE_NONE = -1,
     TEXTURE_TYPE_DIFFUSE = 0,
     TEXTURE_TYPE_SPECULAR = 1,
-    TEXTURE_TYPE_HEIGHTMAP = 2,
-    TEXTURE_TYPE_NORMAL = 3
+    TEXTURE_TYPE_HEIGHT_MAP = 2
 } TextureType;
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
@@ -107,7 +107,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Texture(const Texture &) = delete;
         Texture &operator=(const Texture &) = delete;
 
-        static std::unordered_map<std::string, std::shared_ptr<Texture>> texturePool;
     private:
         std::string filePath = "";
 
@@ -123,7 +122,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         std::unique_ptr<Image> image;
         void GenerateMipMaps();
 
-        static std::shared_ptr<Texture> defaultTextures[TOTAL_TEXTURE_TYPES_COUNT];
+        inline static std::shared_ptr<Texture> defaultTextures[TOTAL_TEXTURE_TYPES_COUNT];
+        inline static std::unordered_map<std::string, std::shared_ptr<Texture>> texturePool;
     };
 
 }

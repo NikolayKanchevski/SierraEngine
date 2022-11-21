@@ -27,6 +27,7 @@ namespace Sierra::Engine::Classes
         Entity(const std::string &givenName);
         Entity(Entity &givenParent);
         Entity(const std::string &givenName, Entity &givenParent);
+        inline Entity(entt::entity givenEnttEntity) : enttEntity(givenEnttEntity) {  }
 
         /* --- SETTER METHODS --- */
         void SetParent(Entity &givenParent);
@@ -51,6 +52,21 @@ namespace Sierra::Engine::Classes
             component.SetEnttEntity(enttEntity);
             return component;
         }
+
+//        template <typename T, std::enable_if_t<std::is_base_of_v<Component, T>, bool> = true, typename... Args>
+//        T& AddComponent(T componentData)
+//        {
+//            if (HasComponent<T>())
+//            {
+//                ASSERT_WARNING("Component of type [" + Debugger::TypeToString<T>() + "] already present in entity [" + GetTag() + "]. New components has been dismissed and instead the old one has been returned");
+//                return GetComponent<T>();
+//            }
+//
+//            T& component = World::GetEnttRegistry().emplace<T>(enttEntity);
+//            component = componentData;
+//            component.SetEnttEntity(enttEntity);
+//            return component;
+//        }
 
         template<typename T, std::enable_if_t<std::is_base_of_v<Component, T>, bool> = true, typename... Args>
         T& AddOrReplaceComponent(Args&&... args)
@@ -79,7 +95,7 @@ namespace Sierra::Engine::Classes
         {
             if (!HasComponent<T>())
             {
-                ASSERT_WARNING("Component of type [" + Debugger::TypeToString<T>() + "] is not exist within entity [" + GetTag() + "]. No components were removed");
+                ASSERT_WARNING("Component of type [" + Debugger::TypeToString<T>() + "] does not exist within entity [" + GetTag() + "]. No components were removed");
                 return;
             }
 
@@ -88,8 +104,6 @@ namespace Sierra::Engine::Classes
 
         /* --- DESTRUCTOR --- */
         ~Entity();
-        Entity(const Entity &) = delete;
-        Entity &operator=(const Entity &) = delete;
 
     private:
         entt::entity enttEntity;

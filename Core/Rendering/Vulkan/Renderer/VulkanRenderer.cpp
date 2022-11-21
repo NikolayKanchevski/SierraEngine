@@ -5,7 +5,7 @@
 #include <functional>
 #include "VulkanRenderer.h"
 #include "../../../../Engine/Classes/Stopwatch.h"
-#include "../../../../Engine/Classes/MeshObject.h"
+#include "../../../../Engine/Components/Model.h"
 
 using namespace Sierra::Engine::Classes;
 
@@ -57,9 +57,6 @@ namespace Sierra::Core::Rendering::Vulkan
         CreateNullTextures();
         CreateImGuiInstance();
 
-//        Entity cubeEntity = Entity("Cube");
-//        auto &cubeMesh = cubeEntity.AddComponent<Mesh>(vertices, meshIndices);
-
         window.Show();
         ASSERT_SUCCESS("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
     }
@@ -106,8 +103,8 @@ namespace Sierra::Core::Rendering::Vulkan
 
     void VulkanRenderer::UpdateRendererInfo()
     {
-        rendererInfo.verticesDrawn = Mesh::totalMeshVertices + ImGui::GetDrawData()->TotalVtxCount;
-        rendererInfo.meshesDrawn = Mesh::totalMeshCount;
+        rendererInfo.verticesDrawn = Mesh::GetTotalVertexCount() + ImGui::GetDrawData()->TotalVtxCount;
+        rendererInfo.meshesDrawn = Mesh::GetTotalMeshCount();
     }
 
     /* --- DESTRUCTOR --- */
@@ -137,10 +134,10 @@ namespace Sierra::Core::Rendering::Vulkan
         descriptorPool->Destroy();
         descriptorSetLayout->Destroy();
 
-        auto enttMeshView = World::GetEnttRegistry().view<Mesh>();
+        auto enttMeshView = World::GetEnttRegistry().view<MeshRenderer>();
         for (const auto &entity : enttMeshView)
         {
-            enttMeshView.get<Mesh>(entity).Destroy();
+            enttMeshView.get<MeshRenderer>(entity).Destroy();
         }
 
         for (int i = MAX_CONCURRENT_FRAMES; i--;)

@@ -13,7 +13,7 @@
 #include "../../Engine/Classes/Input.h"
 #include "../../Engine/Classes/Time.h"
 #include "../../Engine/Classes/Entity.h"
-#include "../../Engine/Classes/MeshObject.h"
+#include "../../Engine/Components/Model.h"
 #include "../../Engine/Components/Camera.h"
 #include "../../Engine/Components/Lighting/DirectionalLight.h"
 
@@ -35,8 +35,7 @@ private:
     float yaw = -90.0f, pitch = 0.0f;
     const float CAMERA_MOVE_SPEED = 15.0f, CAMERA_LOOK_SPEED = 0.1f, GAMEPAD_CAMERA_LOOK_SPEED = 0.5f;
 
-//    std::unique_ptr<MeshObject> tankModel;
-    std::vector<std::unique_ptr<MeshObject>> tankModels;
+    std::vector<std::unique_ptr<Model>> tankModels;
     PointLight* pointLight;
 
     void RenderLoop(VulkanRenderer &renderer);

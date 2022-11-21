@@ -14,13 +14,13 @@
 using Sierra::Core::Rendering::Vulkan::Abstractions::DescriptorPool;
 using namespace Sierra::Engine::Components;
 
-// NOTE: Remember to change these in shaders too!
-#define MAX_OBJECTS 256 // Changed as @kael wouldn't stop bitching about it
-#define MAX_TEXTURES MAX_OBJECTS * TOTAL_TEXTURE_TYPES_COUNT
+/* ! NOTE: Remember to change these in shaders too ! */
+#define MAX_MESHES 8192 // Changed as @kael wouldn't stop bitching about it
+#define MAX_TEXTURES MAX_MESHES * TOTAL_TEXTURE_TYPES_COUNT
 #define MAX_POINT_LIGHTS 64
 #define MAX_DIRECTIONAL_LIGHTS 16
 
-struct alignas(16) UniformData
+struct UniformData
 {
     /* Vertex Uniform Data */
     glm::mat4x4 view;
@@ -28,16 +28,18 @@ struct alignas(16) UniformData
 
     uint32_t directionalLightCount;
     uint32_t pointLightCount;
+    float _align1_;
+    float _align2_;
 };
 
-struct alignas(16) ObjectData
+struct ObjectData
 {
     glm::mat4x4 model;
 };
 
-struct alignas(16) StorageData
+struct StorageData
 {
-    ObjectData objectDatas[MAX_OBJECTS];
+    ObjectData objectDatas[MAX_MESHES];
     DirectionalLight::ShaderDirectionalLight directionalLights[MAX_DIRECTIONAL_LIGHTS];
     PointLight::ShaderPointLight pointLights[MAX_POINT_LIGHTS];
 };

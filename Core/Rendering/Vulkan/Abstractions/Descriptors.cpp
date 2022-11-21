@@ -134,8 +134,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan descriptor set
         VK_ASSERT(
-                vkAllocateDescriptorSets(VulkanCore::GetLogicalDevice(), &allocateInfo, &descriptorSet),
-                "Failed to allocate descriptor set"
+            vkAllocateDescriptorSets(VulkanCore::GetLogicalDevice(), &allocateInfo, &descriptorSet),
+            "Failed to allocate descriptor set"
         );
     }
 
@@ -221,6 +221,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return std::make_unique<DescriptorSet>(givenDescriptorPool);
     }
 
+    std::shared_ptr<DescriptorSet> DescriptorSet::BuildShared(std::shared_ptr<DescriptorPool> &givenDescriptorPool)
+    {
+        return std::make_shared<DescriptorSet>(givenDescriptorPool);
+    }
+
     /* --- SETTER METHODS --- */
 
     void DescriptorSet::WriteBuffer(const uint32_t binding, const std::unique_ptr<Buffer> &buffer)
@@ -248,7 +253,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         writeDescriptor.descriptorCount = 1;
 
         // Add write descriptor to the list
-        writeDescriptorSets.push_back(writeDescriptor);
+        writeDescriptorSets[binding] = writeDescriptor;
     }
 
     void DescriptorSet::WriteImage(const uint32_t binding, const VkDescriptorImageInfo *imageInfo)
@@ -270,7 +275,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         writeDescriptor.descriptorCount = 1;
 
         // Add write descriptor to the list
-        writeDescriptorSets.push_back(writeDescriptor);
+        writeDescriptorSets[binding] = writeDescriptor;
     }
 
     void DescriptorSet::WriteTexture(const uint32_t binding, const std::shared_ptr<Texture> &texture)
@@ -286,7 +291,17 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void DescriptorSet::Allocate()
     {
-        vkUpdateDescriptorSets(VulkanCore::GetLogicalDevice(), writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
+        // Collect all write descriptor sets in a vector
+        std::vector<VkWriteDescriptorSet> writeSets;
+        writeSets.reserve(writeDescriptorSets.size());
+
+        for (const auto &writeSet : writeDescriptorSets)
+        {
+            writeSets.push_back(writeSet.second);
+        }
+
+        // Update descriptor sets
+        vkUpdateDescriptorSets(VulkanCore::GetLogicalDevice(), writeDescriptorSets.size(), writeSets.data(), 0, nullptr);
     }
 
     /* --- DESTRUCTOR --- */

@@ -54,7 +54,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VulkanUtilities::EndSingleTimeCommands(commandBuffer);
     }
 
-    void Buffer::CopyToBuffer(const std::unique_ptr<Buffer> &otherBuffer)
+    void Buffer::CopyToBuffer(const Buffer *otherBuffer)
     {
         // Check if the two buffers are compatible
         ASSERT_ERROR_IF(this->memorySize != otherBuffer->memorySize, "Cannot copy data from one buffer to another with a different memory size!");
@@ -78,6 +78,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     std::unique_ptr<Buffer> Buffer::Create(const BufferCreateInfo bufferCreateInfo)
     {
         return std::make_unique<Buffer>(bufferCreateInfo);
+    }
+
+    std::shared_ptr<Buffer> Buffer::CreateShared(const BufferCreateInfo bufferCreateInfo)
+    {
+        return std::make_shared<Buffer>(bufferCreateInfo);
     }
 
 
@@ -121,7 +126,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Buffer::Destroy()
     {
+        if (destroyed) return;
+
         vkDestroyBuffer(VulkanCore::GetLogicalDevice(), vkBuffer, nullptr);
         vkFreeMemory(VulkanCore::GetLogicalDevice(), vkBufferMemory, nullptr);
+
+        destroyed = true;
     }
 }

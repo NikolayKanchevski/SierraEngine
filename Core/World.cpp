@@ -9,7 +9,7 @@
 #include "../Engine/Classes/Cursor.h"
 #include "../Engine/Classes/Input.h"
 #include "../Engine/Components/Camera.h"
-#include "../Engine/Components/Mesh.h"
+#include "../Engine/Components/MeshRenderer.h"
 
 using namespace Sierra::Engine::Classes;
 using namespace Sierra::Engine::Components;
@@ -66,11 +66,11 @@ namespace Sierra::Core
 
         // Update storage data
         auto storageData = VulkanCore::GetStorageDataPtr();
-        auto enttMeshView = World::GetEnttRegistry().view<Mesh>();
+        auto enttMeshView = World::GetEnttRegistry().view<MeshRenderer>();
         for (auto enttEntity : enttMeshView)
         {
-            Mesh &mesh = enttMeshView.get<Mesh>(enttEntity);
-            storageData->objectDatas[mesh.GetMeshID()].model = mesh.GetModelMatrix();
+            MeshRenderer &meshRenderer = enttMeshView.get<MeshRenderer>(enttEntity);
+            storageData->objectDatas[meshRenderer.GetMeshID()].model = meshRenderer.GetModelMatrix();
         }
 
         auto enttDirectionalLightView = World::GetEnttRegistry().view<DirectionalLight>();

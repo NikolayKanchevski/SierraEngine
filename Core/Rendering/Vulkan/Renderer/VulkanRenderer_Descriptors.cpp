@@ -25,6 +25,7 @@ namespace Sierra::Core::Rendering::Vulkan
         {
             descriptorSetLayoutBuilder.AddBinding(DIFFUSE_TEXTURE_BINDING, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
             descriptorSetLayoutBuilder.AddBinding(SPECULAR_TEXTURE_BINDING, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+            descriptorSetLayoutBuilder.AddBinding(HEIGHT_MAP_TEXTURE_BINDING, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         }
 
         descriptorSetLayout = descriptorSetLayoutBuilder.Build();
@@ -33,7 +34,7 @@ namespace Sierra::Core::Rendering::Vulkan
     void VulkanRenderer::CreateDescriptorPool()
     {
         // Calculate the total descriptor count
-        const uint32_t DESCRIPTOR_COUNT = (SHADER_BUFFERS_COUNT * MAX_CONCURRENT_FRAMES) + (MAX_TEXTURES * TOTAL_TEXTURE_TYPES_COUNT);
+        const uint32_t DESCRIPTOR_COUNT = 32768;
 
         // Create the descriptor pool
         descriptorPool = DescriptorPool::Builder()

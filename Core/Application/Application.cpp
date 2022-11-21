@@ -5,9 +5,16 @@
 #include "Application.h"
 #include <iostream>
 
-#define MODEL_ROWS 2
-#define MODEL_COLUMNS 2
+#if DEBUG
+    #define DRAW_IMGUI_UI
+#endif
+
+#define MODEL_GRID_SIZE_X 2
+#define MODEL_GRID_SIZE_Y 2
+#define MODEL_GRID_SIZE_Z 2
+
 #define MODEL_SPACING_FACTOR_X 10
+#define MODEL_SPACING_FACTOR_Y 10
 #define MODEL_SPACING_FACTOR_Z 15
 
 /* --- POLLING METHODS --- */
@@ -36,18 +43,23 @@ void Application::Start()
     directionalLight.direction = glm::normalize(camera.GetComponent<Transform>().position - glm::vec3(0, 0, 0));
 
     // Load 3D models
-    for (uint32_t i = MODEL_COLUMNS; i--;)
+    for (uint32_t i = MODEL_GRID_SIZE_X; i--;)
     {
-        int x = (MODEL_SPACING_FACTOR_X * i) - (MODEL_ROWS * MODEL_SPACING_FACTOR_X) / 2;
-        for (uint32_t j = MODEL_ROWS; j--;)
-        {
-            int z = (MODEL_SPACING_FACTOR_Z * j) - (MODEL_COLUMNS * MODEL_SPACING_FACTOR_Z) / 2;
+        int x = (i * MODEL_SPACING_FACTOR_X) - (MODEL_GRID_SIZE_X * MODEL_SPACING_FACTOR_X) / 2;
 
-            tankModels.push_back(MeshObject::LoadModel("Models/Chieftain/T95_FV4201_Chieftain.fbx"));
-            for (uint32_t k = tankModels.back()->GetMeshCount(); k--;)
+        for (uint32_t j = MODEL_GRID_SIZE_Z; j--;)
+        {
+            int z = (j * MODEL_SPACING_FACTOR_Z) - (MODEL_GRID_SIZE_Z * MODEL_SPACING_FACTOR_Z) / 2;
+
+            for (uint32_t k = MODEL_GRID_SIZE_Y; k--;)
             {
-                tankModels.back()->GetMesh(k).GetComponent<Transform>().position.x = x;
-                tankModels.back()->GetMesh(k).GetComponent<Transform>().position.z = z;
+                int y = (k * MODEL_SPACING_FACTOR_Y) - (MODEL_GRID_SIZE_Y * MODEL_SPACING_FACTOR_Y) / 2;
+
+                tankModels.push_back(Model::Load("Models/Chieftain/T95_FV4201_Chieftain.fbx"));
+                for (uint32_t l = tankModels.back()->GetMeshCount(); l--;)
+                {
+                    tankModels.back()->GetMesh(l).GetComponent<Transform>().position = { x, y, z };
+                }
             }
         }
     }
@@ -93,6 +105,7 @@ void Application::UpdateObjects()
         tankModel->GetMesh(3).GetComponent<Transform>().rotation.x = timeSin * 45.0f;
         tankModel->GetMesh(4).GetComponent<Transform>().rotation.x = timeSin * 45.0f;
     }
+
     pointLight->GetComponent<Transform>().position.z = 3 * timeSin;
 }
 
