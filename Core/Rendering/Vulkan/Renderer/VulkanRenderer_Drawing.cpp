@@ -10,9 +10,9 @@ namespace Sierra::Core::Rendering::Vulkan
     void VulkanRenderer::CreateSynchronization()
     {
         // Resize the semaphores and fences arrays
-        imageAvailableSemaphores.resize(MAX_CONCURRENT_FRAMES);
-        renderFinishedSemaphores.resize(MAX_CONCURRENT_FRAMES);
-        frameBeingRenderedFences.resize(MAX_CONCURRENT_FRAMES);
+        imageAvailableSemaphores.resize(maxConcurrentFrames);
+        renderFinishedSemaphores.resize(maxConcurrentFrames);
+        frameBeingRenderedFences.resize(maxConcurrentFrames);
 
         // Define the semaphores creation info (universal for all semaphores)
         VkSemaphoreCreateInfo semaphoreCreateInfo{};
@@ -24,7 +24,7 @@ namespace Sierra::Core::Rendering::Vulkan
         fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
         // Create semaphores and fences
-        for (int i = MAX_CONCURRENT_FRAMES; i--;)
+        for (int i = maxConcurrentFrames; i--;)
         {
             vkCreateSemaphore(this->logicalDevice, &semaphoreCreateInfo, nullptr, &imageAvailableSemaphores[i]);
             vkCreateSemaphore(this->logicalDevice, &semaphoreCreateInfo, nullptr, &renderFinishedSemaphores[i]);
@@ -88,13 +88,14 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Present
         VkResult queuePresentResult = vkQueuePresentKHR(this->presentQueue, &presentInfo);
-        if (queuePresentResult == VK_ERROR_OUT_OF_DATE_KHR)
+        if (queuePresentResult == VK_ERROR_OUT_OF_DATE_KHR || queuePresentResult == VK_SUBOPTIMAL_KHR || window.IsResized())
         {
             RecreateSwapchainObjects();
+            return;
         }
 
-        // Increment the current frame whilst capping it to "MAX_CONCURRENT_FRAMES"
-        currentFrame = (currentFrame + 1) % MAX_CONCURRENT_FRAMES;
+        // Increment the current frame whilst capping it to "maxConcurrentFrames"
+        currentFrame = (currentFrame + 1) % maxConcurrentFrames;
     }
 
 }

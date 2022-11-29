@@ -129,9 +129,6 @@ namespace Sierra::Core::Rendering
         const bool RESIZABLE;
         const bool REQUIRE_FOCUS;
 
-        bool resizeCallbackSet;
-        std::function<void()> resizeCallback;
-
         struct {
             int xPosition; int yPosition; int width; int height;
         } monitor;

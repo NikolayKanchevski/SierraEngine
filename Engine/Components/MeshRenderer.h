@@ -9,7 +9,6 @@ namespace Sierra::Engine::Components
     public:
         /* --- CONSTRUCTORS --- */
         MeshRenderer() = default;
-        MeshRenderer(const MeshRenderer& meshRenderer) = default;
         MeshRenderer(std::shared_ptr<Mesh> givenCorrespondingMesh);
 
         /* --- PROPERTIES --- */
@@ -23,6 +22,7 @@ namespace Sierra::Engine::Components
         [[nodiscard]] inline std::shared_ptr<Mesh>& GetMesh() { return coreMesh; }
         [[nodiscard]] inline uint32_t GetMeshID() const { return meshID; }
         [[nodiscard]] inline VkDescriptorSet GetDescriptorSet() const { return descriptorSet->GetVulkanDescriptorSet(); }
+        [[nodiscard]] inline std::shared_ptr<Texture> GetTexture(const TextureType textureType) const { return textures[textureType]; }
         [[nodiscard]] inline std::shared_ptr<Texture> *GetTextures() { return textures; }
         [[nodiscard]] glm::mat4x4 GetModelMatrix() const;
         [[nodiscard]] PushConstant GetPushConstantData() const;

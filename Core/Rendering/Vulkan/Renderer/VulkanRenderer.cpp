@@ -12,13 +12,9 @@ using namespace Sierra::Engine::Classes;
 namespace Sierra::Core::Rendering::Vulkan
 {
     /* --- CONSTRUCTORS --- */
-    VulkanRenderer::VulkanRenderer(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)
+    VulkanRenderer::VulkanRenderer(const std::string &givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)
      : window(Window(givenTitle, setMaximized, setResizable, setFocusRequirement))
     {
-        window.SetResizeCallback([this]{
-            Draw();
-        });
-
         Start();
     }
 
@@ -38,13 +34,12 @@ namespace Sierra::Core::Rendering::Vulkan
         CreateSwapchain();
         CreateDepthBufferImage();
 
-        CreateRenderPass();
+        CreateColorBufferImage();
+        CreateRenderPasses();
         CreatePushConstants();
         CreateDescriptorSetLayout();
         CreateGraphicsPipeline();
-
-        CreateColorBufferImage();
-
+        
         CreateFramebuffers();
         CreateCommandBuffers();
         CreateShaderBuffers();
@@ -117,6 +112,7 @@ namespace Sierra::Core::Rendering::Vulkan
         ImGui_ImplVulkan_Shutdown();
 
         DestroySwapchainObjects();
+
         vkDestroySurfaceKHR(instance, surface, nullptr);
 
         vkDestroyQueryPool(this->logicalDevice, drawTimeQueryPool, nullptr);
@@ -140,7 +136,7 @@ namespace Sierra::Core::Rendering::Vulkan
             enttMeshView.get<MeshRenderer>(entity).Destroy();
         }
 
-        for (int i = MAX_CONCURRENT_FRAMES; i--;)
+        for (int i = maxConcurrentFrames; i--;)
         {
             vkDestroyFence(logicalDevice, frameBeingRenderedFences[i], nullptr);
             vkDestroySemaphore(logicalDevice, renderFinishedSemaphores[i], nullptr);

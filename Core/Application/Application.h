@@ -24,6 +24,10 @@ using namespace Sierra::Core;
 using namespace Sierra::Core::Rendering;
 using namespace Sierra::Core::Rendering::Vulkan;
 
+#if DEBUG
+    #define DRAW_IMGUI_UI
+#endif
+
 class Application
 {
 public:
@@ -36,7 +40,6 @@ private:
     const float CAMERA_MOVE_SPEED = 15.0f, CAMERA_LOOK_SPEED = 0.1f, GAMEPAD_CAMERA_LOOK_SPEED = 0.5f;
 
     std::vector<std::unique_ptr<Model>> tankModels;
-    PointLight* pointLight;
 
     void RenderLoop(VulkanRenderer &renderer);
 

@@ -43,7 +43,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         stbi_image_free(stbImage);
 
         // Configure the color format
-        // TODO: Pick suitable format
         VkFormat textureImageFormat = VK_FORMAT_R8G8B8A8_SRGB;
 
         // Create the texture image
@@ -215,6 +214,22 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // End the current command buffer
         VulkanUtilities::EndSingleTimeCommands(commandBuffer);
     }
+
+    /* --- SETTER METHODS --- */
+
+    void Texture::DrawToImGui()
+    {
+        // Create ImGui descriptor set if not created
+        if (!imGuiDescriptorSetCreated)
+        {
+            imGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(sampler->GetVulkanSampler(), image->GetVulkanImageView(), image->GetLayout());
+            imGuiDescriptorSetCreated = true;
+        }
+
+        // Draw texture image to ImGui
+        ImGui::Image((ImTextureID) imGuiDescriptorSet, { (float) GetWidth() / 10, (float) GetHeight() / 10 });
+    }
+
 
     void Texture::DestroyDefaultTextures()
     {

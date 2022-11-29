@@ -18,13 +18,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         struct ColorAttachment
         {
             VkAttachmentDescription data;
-            bool swapchainAttachment = false;
+            VkImageLayout referenceLayout;
         };
 
         struct ResolveAttachment
         {
             VkAttachmentDescription data;
-            VkImageLayout imageLayout;
+            VkImageLayout referenceLayout;
         };
 
         struct DepthAttachment
@@ -35,8 +35,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     public:
         /* --- CONSTRUCTORS --- */
-        Subpass(VkPipelineBindPoint givenBindPoint,
-                DepthAttachment givenDepthAttachment,
+        Subpass(DepthAttachment givenDepthAttachment,
                 std::unordered_map<uint32_t, ColorAttachment> givenColorAttachments,
                 std::unordered_map<uint32_t, ResolveAttachment> givenResolveAttachments,
                 uint32_t srcSubpass, uint32_t dstSubpass);
@@ -44,18 +43,16 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         class Builder
         {
         public:
-            Builder& SetPipelineBindPoint(VkPipelineBindPoint givenPipelineBindPoint);
             Builder& SetDepthAttachment(uint32_t binding, const std::unique_ptr<Image> &depthImage, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
                                         VkAttachmentLoadOp stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, VkAttachmentStoreOp stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            Builder& AddColorAttachment(uint32_t binding, const std::unique_ptr<Image> &colorImage, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp, bool swapchainAttachment = false,
+            Builder& AddColorAttachment(uint32_t binding, VkImageLayout referenceImageLayout, VkImageLayout finalImageLayout, const std::unique_ptr<Image> &colorImage, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
                                         VkAttachmentLoadOp stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, VkAttachmentStoreOp stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            Builder& AddResolveAttachment(uint32_t binding, const std::unique_ptr<Image> &image, VkImageLayout finalLayout, VkImageLayout referenceLayout,
+            Builder& AddResolveAttachment(uint32_t binding, const std::unique_ptr<Image> &image, VkImageLayout referenceLayout, VkImageLayout finalLayout,
                                           VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp, VkSampleCountFlagBits sampling = VK_SAMPLE_COUNT_1_BIT,
                                           VkAttachmentLoadOp stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, VkAttachmentStoreOp stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE);
             std::unique_ptr<Subpass> Build(uint32_t srcSubpass = ~0U, uint32_t dstSubpass = 0) const;
 
         private:
-            VkPipelineBindPoint pipelineBindPoint;
             DepthAttachment depthAttachment;
 
             std::unordered_map<uint32_t, ColorAttachment> colorAttachments;
@@ -75,7 +72,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     private:
         VkSubpassDescription vkSubpass;
         VkSubpassDependency vkSubpassDependency;
-        VkPipelineBindPoint bindPoint;
 
         bool hasDepthReference;
         VkAttachmentReference depthReference;
@@ -99,7 +95,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- SETTER METHODS --- */
         void SetFramebuffer(std::unique_ptr<Framebuffer> &givenFramebuffer);
-        void SetBackgroundColor(glm::vec3 givenColor);
+        void SetBackgroundColor(glm::vec4 givenColor);
         void Begin(const VkCommandBuffer &givenCommandBuffer);
         void End(VkCommandBuffer givenCommandBuffer);
 

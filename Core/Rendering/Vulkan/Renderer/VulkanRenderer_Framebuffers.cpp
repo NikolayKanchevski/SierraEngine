@@ -9,30 +9,44 @@ namespace Sierra::Core::Rendering::Vulkan
 
     void VulkanRenderer::CreateFramebuffers()
     {
-        // Resize the frame buffers array to be of the same size as the swapchainImages array
-        swapchainFramebuffers.resize(swapchainImages.size());
+        // Resize framebuffers vectors to store one image for each concurrent frame
+        offscreenFramebuffers.resize(maxConcurrentFrames);
+        swapchainFramebuffers.resize(maxConcurrentFrames);
 
-        // Assign the static attachments
-        const uint32_t attachmentCount = msaaSamplingEnabled ? 3 : 2;
-        std::vector<VkImageView> attachments(attachmentCount);
+        // Set up image attachments for framebufferss
+        std::vector<VkImageView> offscreenAttachments(msaaSamplingEnabled + 2);   // Color Resolve + Depth + Color
+        std::vector<VkImageView> swapchainAttachments(1);                         // Color image only (which is a combination of offscreen images)
 
-        // If MSAA is enabled attach the sampled color image
-        if (msaaSamplingEnabled) attachments[0] = this->colorImage->GetVulkanImageView();
-        attachments[1] = this->depthImage->GetVulkanImageView();
-
-        // Get index of swapchain image without sampling based on whether a sampled image exists
-        const uint32_t swapchainAttachmentIndex = msaaSamplingEnabled ? 2 : 0;
-
-        // Create a framebuffer for each swapchain image
-        for (int i = swapchainImages.size(); i--;)
+        // Set color attachment if sampling enabled
+        uint32_t colorAttachmentBinding = 0;
+        if (msaaSamplingEnabled)
         {
-            // Assign the dynamic attachments
-            attachments[swapchainAttachmentIndex] = this->swapchainImages[i]->GetVulkanImageView();
+            offscreenAttachments[0] = this->colorImage->GetVulkanImageView();
+            colorAttachmentBinding = 2;
+        }
 
-            // Add the attachments to the framebuffer and then create it
+        // Set depth attachment
+        offscreenAttachments[1] = this->depthImage->GetVulkanImageView();
+
+        // Create a framebuffer for each concurrent frame
+        for (int i = maxConcurrentFrames; i--;)
+        {
+            // Set color image of corresponding frame
+            offscreenAttachments[colorAttachmentBinding] = this->offscreenImages[i]->GetVulkanImageView();
+
+            // Create a framebuffer from the stored attachments
+            offscreenFramebuffers[i] = Framebuffer::Builder()
+                .SetRenderPass(this->offscreenRenderPass->GetVulkanRenderPass())
+                .AddAttachments(offscreenAttachments)
+            .Build();
+
+            // Set color image of corresponding frame
+            swapchainAttachments[0] = this->swapchainImages[i]->GetVulkanImageView();
+
+            // Create a framebuffer from the stored attachments
             swapchainFramebuffers[i] = Framebuffer::Builder()
-                .SetRenderPass(this->renderPass->GetVulkanRenderPass())
-                .AddAttachments(attachments)
+                .SetRenderPass(this->swapchainRenderPass->GetVulkanRenderPass())
+                .AddAttachments(swapchainAttachments)
             .Build();
         }
     }

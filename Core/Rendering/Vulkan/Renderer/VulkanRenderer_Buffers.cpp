@@ -16,13 +16,13 @@ namespace Sierra::Core::Rendering::Vulkan
 //        uniformData.spotLights.resize(VulkanCore::MAX_SPOTLIGHT_LIGHTS);
 
         // Resize uniform buffers array
-        shaderBuffers.reserve(MAX_CONCURRENT_FRAMES * SHADER_BUFFERS_COUNT);
+        shaderBuffers.reserve(maxConcurrentFrames * SHADER_BUFFERS_COUNT);
 
         const uint64_t uniformDataSize = sizeof(UniformData);
         const uint64_t storageDataSize = sizeof(StorageData);
 
         // Create uniform buffers
-        for (uint32_t i = MAX_CONCURRENT_FRAMES; i--;)
+        for (uint32_t i = maxConcurrentFrames; i--;)
         {
             shaderBuffers.push_back(Buffer::Create({
                 .memorySize = uniformDataSize,
@@ -32,7 +32,7 @@ namespace Sierra::Core::Rendering::Vulkan
         }
 
         // Create storage buffers
-        for (uint32_t i = MAX_CONCURRENT_FRAMES; i--;)
+        for (uint32_t i = maxConcurrentFrames; i--;)
         {
             shaderBuffers.push_back(Buffer::Create({
                 .memorySize = storageDataSize,

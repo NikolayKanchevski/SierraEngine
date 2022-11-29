@@ -27,5 +27,6 @@ namespace Sierra::Engine::Classes
         [[nodiscard]] int GetElapsedSeconds();
     private:
         std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
+
     };
 }

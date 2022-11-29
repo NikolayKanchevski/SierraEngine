@@ -20,29 +20,41 @@ namespace Sierra::Engine::Components
     {
         ASSERT_ERROR_IF(meshSlotsUsed >= MAX_MESHES, "Limit of maximum [" + std::to_string(MAX_MESHES) + "] meshes reached");
 
+        // Check if there are any freed slots
         if (freedMeshSlots.empty())
         {
+            // Create new mesh slot
             meshID = meshSlotsUsed;
             meshSlotsUsed++;
 
-            if (VulkanCore::GetDescriptorIndexingSupported())
-            {
-                auto &globalBindlessDescriptorSet = VulkanCore::GetGlobalBindlessDescriptorSet();
-
-                // Reserve spots for mesh's textures
-                for (uint32_t i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
+            #if DEBUG
+                // Check if descriptor indexing is supported
+                if (VulkanCore::GetDescriptorIndexingSupported())
                 {
-                    globalBindlessDescriptorSet->ReserveIndex(BINDLESS_TEXTURE_BINDING, meshID + i);
+                    auto &globalBindlessDescriptorSet = VulkanCore::GetGlobalBindlessDescriptorSet();
+
+                    // Reserve spots for mesh's textures
+                    for (uint32_t i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
+                    {
+                        globalBindlessDescriptorSet->ReserveIndex(BINDLESS_TEXTURE_BINDING, meshID + i);
+                    }
                 }
-            }
+            #endif
         }
         else
         {
+            // Use first freed slot
             meshID = freedMeshSlots[0];
             freedMeshSlots.erase(freedMeshSlots.begin());
         }
 
         if (!VulkanCore::GetDescriptorIndexingSupported()) CreateDescriptorSet();
+
+        // Assign textures array to use default ones
+        for (uint32_t i = TOTAL_TEXTURE_TYPES_COUNT - 1; i--;)
+        {
+            textures[i] = Texture::GetDefaultTexture((TextureType) i);
+        }
     }
 
     /* --- SETTER METHODS --- */

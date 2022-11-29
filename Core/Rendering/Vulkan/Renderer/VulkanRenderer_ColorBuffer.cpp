@@ -11,6 +11,8 @@ namespace Sierra::Core::Rendering::Vulkan
 
     void VulkanRenderer::CreateColorBufferImage()
     {
+        if (!msaaSamplingEnabled) return;
+
         // Create the sampled color image
         colorImage = Image::Create({
             .dimensions = { swapchainExtent.width, swapchainExtent.height, 1 },

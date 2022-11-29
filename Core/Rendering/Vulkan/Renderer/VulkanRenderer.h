@@ -52,7 +52,7 @@ namespace Sierra::Core::Rendering::Vulkan
         /// @param setMaximized A bool indicating whether the window should use all the space on your screen and start setMaximized.
         /// @param setResizable Whether the window is going to be setResizable or not.
         /// @param setFocusRequirement Whether the window requires to be focused in order to draw and handle events.
-        VulkanRenderer(std::string givenTitle, const bool setMaximized, const bool setResizable = true, const bool setFocusRequirement = true);
+        VulkanRenderer(const std::string &givenTitle, const bool setMaximized, const bool setResizable = true, const bool setFocusRequirement = true);
 
         /* --- POLLING METHODS --- */
 
@@ -62,6 +62,7 @@ namespace Sierra::Core::Rendering::Vulkan
         void UpdateWindow();
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] inline VkDescriptorSet GetRenderedTextureDescriptorSet() const { return offscrenImageDescriptorSets[currentFrame]; }
         [[nodiscard]] inline bool IsActive() const { return !window.IsClosed(); };
         [[nodiscard]] inline Window& GetWindow()  { return window; }
         [[nodiscard]] inline auto GetRendererInfo() const { return rendererInfo; };
@@ -72,17 +73,20 @@ namespace Sierra::Core::Rendering::Vulkan
         VulkanRenderer &operator=(const VulkanRenderer &) = delete;
 
     private:
-        /* --- GENERAL --- */
-        Window window;
-        void Start();
-        void UpdateRendererInfo();
-
-        bool prepared = false;
-        const bool msaaSamplingEnabled = true;
+        /* --- SETTINGS --- */
+        bool msaaSamplingEnabled = true;
         VkSampleCountFlagBits msaaSampleCount = msaaSamplingEnabled ? VK_SAMPLE_COUNT_64_BIT : VK_SAMPLE_COUNT_1_BIT;
 
         enum RenderingMode { Fill, Wireframe };
         RenderingMode renderingMode = Fill;
+
+        /* --- GENERAL --- */
+        Window window;
+
+        void Start();
+        void UpdateRendererInfo();
+
+        bool prepared = false;
 
         struct
         {
@@ -93,6 +97,8 @@ namespace Sierra::Core::Rendering::Vulkan
         } rendererInfo;
 
         /* --- INSTANCE --- */
+        VkInstance instance;
+
         const std::vector<const char*> requiredInstanceExtensions
         {
             #if DEBUG
@@ -101,8 +107,6 @@ namespace Sierra::Core::Rendering::Vulkan
         };
 
         const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
-
-        VkInstance instance;
 
         void CreateInstance();
         void CheckExtensionsSupport(std::vector<const char *> &givenExtensions);
@@ -171,8 +175,6 @@ namespace Sierra::Core::Rendering::Vulkan
         VkFormat swapchainImageFormat;
         VkExtent2D swapchainExtent;
 
-        std::vector<std::unique_ptr<Image>> swapchainImages;
-
         SwapchainSupportDetails GetSwapchainSupportDetails(VkPhysicalDevice &givenPhysicalDevice);
         VkSurfaceFormatKHR ChooseSwapchainFormat(std::vector<VkSurfaceFormatKHR> &givenFormats);
         VkPresentModeKHR ChooseSwapchainPresentMode(std::vector<VkPresentModeKHR> &givenPresentModes);
@@ -198,9 +200,12 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreateDepthBufferImage();
 
         /* --- RENDER PASS --- */
-        std::unique_ptr<Subpass> subpass;
-        std::unique_ptr<RenderPass> renderPass;
-        void CreateRenderPass();
+        std::unique_ptr<Subpass> offscreenSubpass;
+        std::unique_ptr<RenderPass> offscreenRenderPass;
+
+        std::unique_ptr<Subpass> swapchainSubpass;
+        std::unique_ptr<RenderPass> swapchainRenderPass;
+        void CreateRenderPasses();
 
         /* --- PUSH CONSTANTS --- */
         VkPushConstantRange pushConstantRange;
@@ -235,6 +240,10 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreateColorBufferImage();
 
         /* --- FRAMEBUFFERS --- */
+        std::vector<std::unique_ptr<Image>> offscreenImages;
+        std::vector<std::unique_ptr<Image>> swapchainImages;
+
+        std::vector<std::unique_ptr<Framebuffer>> offscreenFramebuffers;
         std::vector<std::unique_ptr<Framebuffer>> swapchainFramebuffers;
         void CreateFramebuffers();
 
@@ -243,7 +252,6 @@ namespace Sierra::Core::Rendering::Vulkan
 
         /* --- SHADER BUFFERS --- */
         #define SHADER_BUFFERS_COUNT 2
-
         std::vector<std::unique_ptr<Buffer>> shaderBuffers;
 
         void CreateShaderBuffers();
@@ -256,12 +264,12 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreateQueryPool();
 
         /* --- DRAWING --- */
-        #define MAX_CONCURRENT_FRAMES 3
+        uint32_t currentFrame = 0;
+        uint32_t maxConcurrentFrames = 3;
+
         std::vector<VkSemaphore> imageAvailableSemaphores;
         std::vector<VkSemaphore> renderFinishedSemaphores;
         std::vector<VkFence> frameBeingRenderedFences;
-
-        uint32_t currentFrame = 0;
 
         void CreateSynchronization();
         void Draw();
@@ -269,35 +277,14 @@ namespace Sierra::Core::Rendering::Vulkan
         /* --- ImGui --- */
         bool imGuiFrameBegan = false;
         VkDescriptorPool imGuiDescriptorPool;
+        std::vector<VkDescriptorSet> offscrenImageDescriptorSets;
+
         void CreateImGuiInstance();
+        void CreateOffscreenImageDescriptorSets();
         void SetImGuiStyle();
         void BeginNewImGuiFrame();
         void UpdateImGuiData();
         void RenderImGui();
-
-
-        /* --- TESTER --- */
-        std::vector<Vertex> vertices
-        {
-            { { -1.0, -1.0, -1.0 },{ 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
-            { {  1.0, -1.0, -1.0 },{ 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } },
-            { {  1.0,  1.0, -1.0 },{ 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
-            { { -1.0,  1.0, -1.0 },{ 1.0f, 1.0f, 0.0f }, { 0.0f, 1.0f } },
-            { { -1.0, -1.0,  1.0 },{ 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f } },
-            { {  1.0, -1.0,  1.0 },{ 1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } },
-            { {  1.0,  1.0,  1.0 },{ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
-            { { -1.0,  1.0,  1.0 },{ 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f } }
-        };
-
-        std::vector<uint32_t> meshIndices
-        {
-            0, 1, 3, 3, 1, 2,
-            1, 5, 2, 2, 5, 6,
-            5, 4, 6, 6, 4, 7,
-            4, 0, 7, 7, 0, 3,
-            3, 2, 7, 7, 2, 6,
-            4, 5, 0, 0, 5, 1
-        };
     };
 
 }

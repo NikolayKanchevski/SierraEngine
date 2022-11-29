@@ -5,13 +5,9 @@
 #include "Application.h"
 #include <iostream>
 
-#if DEBUG
-    #define DRAW_IMGUI_UI
-#endif
-
-#define MODEL_GRID_SIZE_X 2
-#define MODEL_GRID_SIZE_Y 2
-#define MODEL_GRID_SIZE_Z 2
+#define MODEL_GRID_SIZE_X 1
+#define MODEL_GRID_SIZE_Y 1
+#define MODEL_GRID_SIZE_Z 1
 
 #define MODEL_SPACING_FACTOR_X 10
 #define MODEL_SPACING_FACTOR_Y 10
@@ -22,7 +18,7 @@
 void Application::Start()
 {
     // Create renderer
-    VulkanRenderer renderer("Sierra Engine v1.0.0", false, false);
+    VulkanRenderer renderer("Sierra Engine v1.0.0", true, true);
 
     // Get a reference to the window of the renderer
     Window &window = renderer.GetWindow();
@@ -35,14 +31,11 @@ void Application::Start()
     camera = cameraEntity.AddComponent<Camera>();
     cameraEntity.GetTransform().position = { 0.0f, 1.75f, 10.0f };
 
-    // Create point light
-    pointLight = &Entity("Point Light").AddComponent<PointLight>();
-    pointLight->GetComponent<Transform>().position.y = 3;
-
+    // Create directional light
     DirectionalLight directionalLight = Entity("Directional Light").AddComponent<DirectionalLight>();
     directionalLight.direction = glm::normalize(camera.GetComponent<Transform>().position - glm::vec3(0, 0, 0));
 
-    // Load 3D models
+    // Load 3D models in a grid view
     for (uint32_t i = MODEL_GRID_SIZE_X; i--;)
     {
         int x = (i * MODEL_SPACING_FACTOR_X) - (MODEL_GRID_SIZE_X * MODEL_SPACING_FACTOR_X) / 2;
@@ -100,13 +93,13 @@ void Application::UpdateObjects()
 {
     // Calculate an animated timeSin value and update meshes
     float timeSin = glm::sin(Time::GetUpTime());
+
+    // Rotate tank models
     for (const auto &tankModel : tankModels)
     {
         tankModel->GetMesh(3).GetComponent<Transform>().rotation.x = timeSin * 45.0f;
         tankModel->GetMesh(4).GetComponent<Transform>().rotation.x = timeSin * 45.0f;
     }
-
-    pointLight->GetComponent<Transform>().position.z = 3 * timeSin;
 }
 
 void Application::DoCameraMovement()

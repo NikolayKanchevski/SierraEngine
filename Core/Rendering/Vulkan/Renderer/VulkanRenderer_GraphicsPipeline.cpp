@@ -107,7 +107,7 @@ namespace Sierra::Core::Rendering::Vulkan
         multisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multisampleStateCreateInfo.sampleShadingEnable = VK_FALSE;
         multisampleStateCreateInfo.minSampleShading = 1.0f;
-        multisampleStateCreateInfo.rasterizationSamples = this->msaaSampleCount;
+        multisampleStateCreateInfo.rasterizationSamples = msaaSampleCount;
         multisampleStateCreateInfo.pSampleMask = nullptr;
         multisampleStateCreateInfo.alphaToCoverageEnable = VK_FALSE;
         multisampleStateCreateInfo.alphaToOneEnable = VK_FALSE;
@@ -160,14 +160,14 @@ namespace Sierra::Core::Rendering::Vulkan
         depthStencilStateCreateInfo.maxDepthBounds = 1.0f;
         depthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;
 
-        const std::vector<VkDescriptorSetLayout> descriptorSetLayouts(MAX_CONCURRENT_FRAMES, descriptorSetLayout->GetVulkanDescriptorSetLayout());
+        const std::vector<VkDescriptorSetLayout> descriptorSetLayouts(maxConcurrentFrames, descriptorSetLayout->GetVulkanDescriptorSetLayout());
 
         const std::vector<VkPushConstantRange> pushConstantRanges { this->pushConstantRange };
 
         // Set pipeline layout creation info
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
         pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutCreateInfo.setLayoutCount = MAX_CONCURRENT_FRAMES;
+        pipelineLayoutCreateInfo.setLayoutCount = maxConcurrentFrames;
         pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
         pipelineLayoutCreateInfo.pushConstantRangeCount = pushConstantRanges.size();
         pipelineLayoutCreateInfo.pPushConstantRanges = pushConstantRanges.data();
@@ -192,7 +192,7 @@ namespace Sierra::Core::Rendering::Vulkan
         graphicsPipelineCreateInfo.pColorBlendState = &blendingStateCreateInfo;
         graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
         graphicsPipelineCreateInfo.layout = graphicsPipelineLayout;
-        graphicsPipelineCreateInfo.renderPass = this->renderPass->GetVulkanRenderPass();
+        graphicsPipelineCreateInfo.renderPass = this->offscreenRenderPass->GetVulkanRenderPass();
         graphicsPipelineCreateInfo.subpass = 0;
         graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
         graphicsPipelineCreateInfo.basePipelineIndex = -1;

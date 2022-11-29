@@ -87,16 +87,57 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;  // The stage the transition must occur after
             dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;     // The stage the transition must occur before
         }
-            // If transitioning from transfer destination to shader readable...
+
+
+//        else if (layout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+//        {
+//            imageMemoryBarrier.srcAccessMask = 0;
+//            imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+//
+//            srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+//            dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+//
+//            VkImageMemoryBarrier2KHR imageMemoryBarrier2 = {
+//                    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+//                    .oldLayout = layout,
+//                    .newLayout = newLayout,
+//                    .srcQueueFamilyIndex = ~0U,
+//                    .dstQueueFamilyIndex = ~0U,
+//                    .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,
+//                    .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT_KHR,
+//                    .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT_KHR,
+//                    .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT_KHR,
+//                    .oldLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+//                    .newLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+//                    .image = vkImage,
+//                    .subresourceRange.baseMipLevel = 0,
+//                    .subresourceRange.levelCount = mipLevels,
+//                    .subresourceRange.baseArrayLayer = 0,
+//                    .subresourceRange.layerCount = 1
+//            };
+//
+//            VkDependencyInfoKHR dependencyInfo = {
+//                    ...
+//                    1,                      // imageMemoryBarrierCount
+//                    &imageMemoryBarrier,    // pImageMemoryBarriers
+//                    ...
+//            }
+//
+//            vkCmdPipelineBarrier2KHR(commandBuffer, &dependencyInfo);
+//        }
+
+
+
+        // If transitioning from transfer destination to shader readable...
         else if (layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
         {
             imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-            srcStage =VK_PIPELINE_STAGE_TRANSFER_BIT;
-            dstStage =VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+            dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         }
-            // If transitioning from an undefined layout to one optimal for depth stencil...
+        // If transitioning from an undefined layout to one optimal for depth stencil...
         else if (layout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
         {
             imageMemoryBarrier.srcAccessMask = 0;
@@ -135,7 +176,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    Image::Image(const ImageCreateInfo imageCreateInfo)
+    Image::Image(ImageCreateInfo imageCreateInfo)
         : dimensions(imageCreateInfo.dimensions), mipLevels(imageCreateInfo.mipLevels), sampling(imageCreateInfo.sampling), format(imageCreateInfo.format)
     {
         // Set up image creation info

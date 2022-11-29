@@ -34,14 +34,14 @@ namespace Sierra::Core::Rendering::Vulkan
     void VulkanRenderer::CreateCommandBuffers()
     {
         // Resize the command buffers array
-        commandBuffers.resize(MAX_CONCURRENT_FRAMES);
+        commandBuffers.resize(maxConcurrentFrames);
 
         // Set up allocation info
         VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
         commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         commandBufferAllocateInfo.commandPool = commandPool;
         commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        commandBufferAllocateInfo.commandBufferCount = MAX_CONCURRENT_FRAMES;
+        commandBufferAllocateInfo.commandBufferCount = maxConcurrentFrames;
 
         VK_ASSERT(
             vkAllocateCommandBuffers(this->logicalDevice, &commandBufferAllocateInfo, commandBuffers.data()),
@@ -69,13 +69,6 @@ namespace Sierra::Core::Rendering::Vulkan
         // Start GPU timer
         vkCmdWriteTimestamp(givenCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, drawTimeQueryPool, imageIndex * 2);
 
-        // Begin the render pass
-        renderPass->SetFramebuffer(swapchainFramebuffers[imageIndex]);
-        renderPass->Begin(givenCommandBuffer);
-
-        // Bind the pipeline
-        vkCmdBindPipeline(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipeline);
-
         // Set up the viewport
         VkViewport viewport{};
         viewport.x = 0;
@@ -89,6 +82,12 @@ namespace Sierra::Core::Rendering::Vulkan
         VkRect2D scissor{};
         scissor.offset = { 0, 0 };
         scissor.extent = this->swapchainExtent;
+
+        // Bind the pipeline
+        vkCmdBindPipeline(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipeline);
+
+        offscreenRenderPass->SetFramebuffer(offscreenFramebuffers[imageIndex]);
+        offscreenRenderPass->Begin(givenCommandBuffer);
 
         // Apply scissoring and viewport update
         vkCmdSetViewport(givenCommandBuffer, 0, 1, &viewport);
@@ -118,9 +117,9 @@ namespace Sierra::Core::Rendering::Vulkan
 
             // Send push constant data to shader
             vkCmdPushConstants(
-                givenCommandBuffer, this->graphicsPipelineLayout,
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-                pushConstantSize, &data
+                    givenCommandBuffer, this->graphicsPipelineLayout,
+                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+                    pushConstantSize, &data
             );
 
             // Use either bindless or bind*full* descriptor set if not supported
@@ -132,11 +131,21 @@ namespace Sierra::Core::Rendering::Vulkan
             vkCmdDrawIndexed(givenCommandBuffer, mesh.GetMesh()->GetIndexCount(), 1, 0, 0, 0);
         }
 
+        offscreenRenderPass->End(givenCommandBuffer);
+
+        // Begin the render pass
+        swapchainRenderPass->SetFramebuffer(swapchainFramebuffers[imageIndex]);
+        swapchainRenderPass->Begin(givenCommandBuffer);
+
+        // Apply scissoring and viewport update
+        vkCmdSetViewport(givenCommandBuffer, 0, 1, &viewport);
+        vkCmdSetScissor(givenCommandBuffer, 0, 1, &scissor);
+
         // Render ImGui UI
-        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), givenCommandBuffer);
+        if (ImGui::GetDrawData() != nullptr) ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), givenCommandBuffer);
 
         // End the render pass
-        renderPass->End(givenCommandBuffer);
+        swapchainRenderPass->End(givenCommandBuffer);
 
         // End GPU timer
         vkCmdWriteTimestamp(givenCommandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, drawTimeQueryPool, imageIndex * 2 + 1);
@@ -173,13 +182,13 @@ namespace Sierra::Core::Rendering::Vulkan
         }
 
         // Calculate final GPU draw time
-        for (uint32_t i = MAX_CONCURRENT_FRAMES; i--;)
+        for (uint32_t i = maxConcurrentFrames; i--;)
         {
             rendererInfo.drawTime += drawTimeQueryResults[i];
         }
 
         // Get the average of the concurrent draws and convert from nanoseconds to milliseconds
-        rendererInfo.drawTime /= (float) MAX_CONCURRENT_FRAMES * 1000000.0f;
+        rendererInfo.drawTime /= (float) maxConcurrentFrames * 1000000.0f;
     }
 
 }

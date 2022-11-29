@@ -31,6 +31,17 @@ namespace Sierra::Core::Rendering::Vulkan
             queueCreateInfos.push_back(queueCreateInfo);
         }
 
+        // Lower the sample count if it is not supported
+        if (msaaSamplingEnabled)
+        {
+            VkSampleCountFlagBits highestSupportedSampleCount = this->GetHighestSupportedMsaaCount();
+            if (this->msaaSampleCount > highestSupportedSampleCount)
+            {
+                ASSERT_WARNING("Sampling MSAA level [" + std::string(string_VkSampleCountFlagBits(this->msaaSampleCount)) + "] requested but is not supported by the system. It is automatically lowered to [" + std::string(string_VkSampleCountFlagBits(highestSupportedSampleCount)) + "] which is the highest supported setting");
+                this->msaaSampleCount = highestSupportedSampleCount;
+            }
+        }
+
         // List required physical device features
         VkPhysicalDeviceFeatures requiredPhysicalDeviceFeatures{};
         if (this->renderingMode != Fill)
@@ -39,7 +50,7 @@ namespace Sierra::Core::Rendering::Vulkan
         if (VulkanCore::GetPhysicalDeviceFeatures().samplerAnisotropy)
             requiredPhysicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
 
-        if (this->msaaSamplingEnabled && this->msaaSampleCount != VK_SAMPLE_COUNT_1_BIT)
+        if (this->msaaSamplingEnabled)
             requiredPhysicalDeviceFeatures.sampleRateShading = VK_TRUE;
 
         // Set reset features

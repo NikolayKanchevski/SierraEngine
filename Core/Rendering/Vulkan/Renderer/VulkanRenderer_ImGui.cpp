@@ -12,6 +12,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
     void VulkanRenderer::CreateImGuiInstance()
     {
+        //
         std::vector<VkDescriptorPoolSize> poolSizes =
         {
             { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
@@ -49,16 +50,27 @@ namespace Sierra::Core::Rendering::Vulkan
         initInfo.Device = logicalDevice;
         initInfo.Queue = graphicsQueue;
         initInfo.DescriptorPool = imGuiDescriptorPool;
-        initInfo.MinImageCount = MAX_CONCURRENT_FRAMES;
-        initInfo.ImageCount = MAX_CONCURRENT_FRAMES;
-        initInfo.MSAASamples = msaaSampleCount;
+        initInfo.MinImageCount = maxConcurrentFrames;
+        initInfo.ImageCount = maxConcurrentFrames;
+        initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-        ImGui_ImplVulkan_Init(&initInfo, renderPass->GetVulkanRenderPass());
+        ImGui_ImplVulkan_Init(&initInfo, swapchainRenderPass->GetVulkanRenderPass());
 
         ImGuiIO &io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
         SetImGuiStyle();
+
+        offscrenImageDescriptorSets.resize(maxConcurrentFrames);
+        CreateOffscreenImageDescriptorSets();
+    }
+
+    void VulkanRenderer::CreateOffscreenImageDescriptorSets()
+    {
+        for (uint32_t i = maxConcurrentFrames; i--;)
+        {
+            offscrenImageDescriptorSets[i] = ImGui_ImplVulkan_AddTexture(Texture::GetDefaultTexture(TEXTURE_TYPE_DIFFUSE)->GetVulkanSampler(), offscreenImages[i]->GetVulkanImageView(), VK_IMAGE_LAYOUT_GENERAL);
+        }
     }
 
     void VulkanRenderer::SetImGuiStyle()

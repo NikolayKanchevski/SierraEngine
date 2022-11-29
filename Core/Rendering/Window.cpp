@@ -52,12 +52,6 @@ namespace Sierra::Core::Rendering
         glfwSetWindowOpacity(glfwWindow, givenOpacity);
     }
 
-    void Window::SetResizeCallback(std::function<void()> givenCallback)
-    {
-        this->resizeCallbackSet = true;
-        this->resizeCallback = givenCallback;
-    }
-
     Window::Window(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)
             : title(std::move(givenTitle)), maximized(setMaximized), REQUIRE_FOCUS(setFocusRequirement), RESIZABLE(setResizable)
     {
@@ -161,8 +155,6 @@ namespace Sierra::Core::Rendering
         windowObject->height = newHeight;
         windowObject->resized = true;
         windowObject->resizeSet = true;
-
-        if (windowObject->resizeCallbackSet) windowObject->resizeCallback();
 
         Cursor::ResetCursorOffset();
     }

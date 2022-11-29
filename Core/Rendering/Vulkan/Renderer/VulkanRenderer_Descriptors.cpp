@@ -51,9 +51,9 @@ namespace Sierra::Core::Rendering::Vulkan
     void VulkanRenderer::CreateShaderBuffersDescriptorSets()
     {
         // Resize the uniform buffers array and write to each descriptor
-        bufferDescriptorSets.resize(MAX_CONCURRENT_FRAMES);
+        bufferDescriptorSets.resize(maxConcurrentFrames);
 
-        for (uint32_t i = MAX_CONCURRENT_FRAMES; i--;)
+        for (uint32_t i = maxConcurrentFrames; i--;)
         {
             bufferDescriptorSets[i] = DescriptorSet::Build(descriptorPool);
             bufferDescriptorSets[i]->WriteBuffer(UNIFORM_BUFFER_BINDING, GET_UNIFORM_BUFFER(i));

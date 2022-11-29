@@ -27,7 +27,7 @@ namespace Sierra::Core::Rendering::Vulkan
         timestampPeriod = VulkanCore::GetPhysicalDeviceProperties().limits.timestampPeriod;
 
         // Resize query results vector
-        drawTimeQueryResults.resize(MAX_CONCURRENT_FRAMES);
+        drawTimeQueryResults.resize(maxConcurrentFrames);
     }
 
 }

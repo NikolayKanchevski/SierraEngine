@@ -8,7 +8,7 @@
 void Application::DisplayUI(VulkanRenderer &renderer)
 {
     // Hierarchy
-    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoNav | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoSavedSettings;
+    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoNav | ImGuiWindowFlags_HorizontalScrollbar;
 
     #ifdef DRAW_IMGUI_UI
         ImGui::SetNextWindowPos({ 0, 0 }, ImGuiCond_FirstUseEver, { 0, 0 });
@@ -22,9 +22,9 @@ void Application::DisplayUI(VulkanRenderer &renderer)
             ImGui::Separator();
 
             auto enttRelationshipView = World::GetEnttRegistry().view<Relationship>();
-            for (uint32_t i = enttRelationshipView.size(); i--;)
+            for (const auto &entity : enttRelationshipView)
             {
-                Relationship &entityRelationship = World::GetEnttRegistry().get<Relationship>(enttRelationshipView[i]);
+                Relationship &entityRelationship = World::GetEnttRegistry().get<Relationship>(entity);
                 if (entityRelationship.GetEnttParentEntity() == entt::null)
                 {
                     ListDeeper(entityRelationship, 0);
@@ -33,13 +33,25 @@ void Application::DisplayUI(VulkanRenderer &renderer)
 
             ImGui::End();
         }
+
+        bool textureTabOpen = true;
+        if (ImGui::Begin("Texture", &textureTabOpen, ImGuiWindowFlags_AlwaysAutoResize) || textureTabOpen)
+        {
+            int i = 0;
+            auto enttMeshRenderers = World::GetEnttRegistry().view<MeshRenderer>();
+            for (const auto &entity : enttMeshRenderers)
+            {
+                MeshRenderer &meshRenderer = World::GetEnttRegistry().get<MeshRenderer>(entity);
+                meshRenderer.GetTexture(TEXTURE_TYPE_DIFFUSE)->DrawToImGui();
+                if (i == 3) break;
+                i++;
+            }
+            ImGui::End();
+        }
     #endif
 
-    windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoFocusOnAppearing |
-                  ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
+    windowFlags = ImGuiWindowFlags_NoNav;
 
-    ImGui::SetNextWindowPos({ renderer.GetWindow().GetWidth() - 10.0f, 10.0f }, ImGuiCond_Always, { 1, 0 });
-    ImGui::SetNextWindowSizeConstraints({ (float) renderer.GetWindow().GetWidth() / 5.5f, (float) renderer.GetWindow().GetHeight() / 6 }, { 10000, 10000 });
     ImGui::SetNextWindowBgAlpha(0.6f);
 
     // Draw renderer information tab
@@ -61,7 +73,7 @@ void Application::DisplayUI(VulkanRenderer &renderer)
         if (Input::GetGamePadConnected(i))
         {
             bool gamePadInfoOpen = true;
-            if (ImGui::Begin((("Game Pad [" + std::to_string(i) + "] Data").c_str()) , &gamePadInfoOpen, ImGuiWindowFlags_AlwaysAutoResize))
+            if (ImGui::Begin((("Game Pad [" + std::to_string(i) + "] Data").c_str()) , &gamePadInfoOpen, ImGuiWindowFlags_AlwaysAutoResize) || gamePadInfoOpen)
             {
                 ImGui::Text("%s", ("Game pad [" + Input::GetGamePadName(i) + "] properties:").c_str());
                 ImGui::Text("%s", ("Left gamepad stick: [" + std::to_string(Input::GetGamePadLeftStickAxis(i).x) + " || " + std::to_string(Input::GetGamePadLeftStickAxis(i).y) + "]").c_str());
@@ -75,6 +87,13 @@ void Application::DisplayUI(VulkanRenderer &renderer)
                 ImGui::End();
             }
         }
+    }
+
+    bool rendererViewOpen = true;
+    if (ImGui::Begin("ASd", &rendererViewOpen) || rendererViewOpen)
+    {
+        ImGui::Image((ImTextureID) renderer.GetRenderedTextureDescriptorSet(), { (float) VulkanCore::GetWindow()->GetWidth() / 1.2f, (float) VulkanCore::GetWindow()->GetHeight() / 1.2f });
+        ImGui::End();
     }
 }
 

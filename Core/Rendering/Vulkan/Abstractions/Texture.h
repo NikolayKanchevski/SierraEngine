@@ -6,6 +6,8 @@
 
 #include <string>
 #include <stb_image.h>
+#include <imgui.h>
+
 #include "Descriptors.h"
 #include "Sampler.h"
 #include "Image.h"
@@ -100,6 +102,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         { return defaultTextures[textureType]; }
 
         /* --- SETTER METHODS --- */
+        void DrawToImGui();
         static void DestroyDefaultTextures();
 
         /* --- DESTRUCTOR --- */
@@ -121,6 +124,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         std::unique_ptr<Image> image;
         void GenerateMipMaps();
+
+        VkDescriptorSet imGuiDescriptorSet;
+        bool imGuiDescriptorSetCreated = false;
 
         inline static std::shared_ptr<Texture> defaultTextures[TOTAL_TEXTURE_TYPES_COUNT];
         inline static std::unordered_map<std::string, std::shared_ptr<Texture>> texturePool;

@@ -11,17 +11,6 @@ namespace Sierra::Core::Rendering::Vulkan
 
     void VulkanRenderer::CreateSwapchain()
     {
-        // Lower the sample count if it is not supported
-        if (msaaSamplingEnabled)
-        {
-            VkSampleCountFlagBits highestSupportedSampleCount = this->GetHighestSupportedMsaaCount();
-            if (this->msaaSampleCount > highestSupportedSampleCount)
-            {
-                ASSERT_WARNING("Sampling MSAA level [" + std::string(string_VkSampleCountFlagBits(this->msaaSampleCount)) + "] requested but is not supported by the system. It is automatically lowered to [" + std::string(string_VkSampleCountFlagBits(highestSupportedSampleCount)) + "] which is the highest supported setting");
-                this->msaaSampleCount = highestSupportedSampleCount;
-            }
-        }
-
         // Get most suitable properties - format, present mode and extent
         SwapchainSupportDetails swapchainSupportDetails = GetSwapchainSupportDetails(physicalDevice);
         VkSurfaceFormatKHR surfaceFormat = ChooseSwapchainFormat(swapchainSupportDetails.formats);
@@ -33,17 +22,17 @@ namespace Sierra::Core::Rendering::Vulkan
         swapchainExtent = extent;
 
         // Get swapchain image count and make sure it is between the min and max allowed
-        uint32_t imageCount = swapchainSupportDetails.capabilities.minImageCount + 1;
-        if (swapchainSupportDetails.capabilities.maxImageCount != 0 && imageCount > swapchainSupportDetails.capabilities.maxImageCount)
+        if (swapchainSupportDetails.capabilities.minImageCount > maxConcurrentFrames || swapchainSupportDetails.capabilities.maxImageCount < maxConcurrentFrames)
         {
-            imageCount = swapchainSupportDetails.capabilities.maxImageCount;
+            ASSERT_WARNING("Amount of total concurrent frames requested [" + std::to_string(maxConcurrentFrames) + "] is not supported! Setting was automatically changed to [" + std::to_string(swapchainSupportDetails.capabilities.maxImageCount) +"]");
+            maxConcurrentFrames = swapchainSupportDetails.capabilities.maxImageCount;
         }
 
         // Set up swapchain creation info
         VkSwapchainCreateInfoKHR swapchainCreateInfo{};
         swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         swapchainCreateInfo.surface = this->surface;
-        swapchainCreateInfo.minImageCount = imageCount;
+        swapchainCreateInfo.minImageCount = maxConcurrentFrames;
         swapchainCreateInfo.imageFormat = surfaceFormat.format;
         swapchainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
         swapchainCreateInfo.imageExtent = extent;
@@ -79,20 +68,41 @@ namespace Sierra::Core::Rendering::Vulkan
         );
 
         // Get swapchain images
-        vkGetSwapchainImagesKHR(this->logicalDevice, this->swapchain, &imageCount, nullptr);
+        vkGetSwapchainImagesKHR(this->logicalDevice, this->swapchain, &maxConcurrentFrames, nullptr);
+        std::vector<VkImage> swapchainVkImages(maxConcurrentFrames);
 
-        std::vector<VkImage> swapchainVkImages(imageCount);
-        swapchainImages.resize(imageCount);
+        // Resize image arrays
+        swapchainImages.resize(maxConcurrentFrames);
+        offscreenImages.resize(maxConcurrentFrames);
 
         // Resize the swapchain images array and extract every swapchain image
-        vkGetSwapchainImagesKHR(this->logicalDevice, this->swapchain, &imageCount, swapchainVkImages.data());
+        vkGetSwapchainImagesKHR(this->logicalDevice, this->swapchain, &maxConcurrentFrames, swapchainVkImages.data());
 
-        for (int i = imageCount; i--;)
+        for (int i = 0; i < maxConcurrentFrames; i++)
         {
-            swapchainImages[i] = Image::CreateSwapchainImage({.image = swapchainVkImages[i], .format = swapchainImageFormat, .sampling = msaaSampleCount, .dimensions = {swapchainExtent.width, swapchainExtent.height, 0},});
+            // Create offscreen image and view
+            offscreenImages[i] = Image::Create({
+                .dimensions = { swapchainExtent.width, swapchainExtent.height, 1 },
+                .format = swapchainImageFormat,
+                .sampling = VK_SAMPLE_COUNT_1_BIT,
+                .usageFlags = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+            });
+
+            offscreenImages[i]->CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT);
+
+            // Create swapchain image and view
+            swapchainImages[i] = Image::CreateSwapchainImage({
+                .image = swapchainVkImages[i],
+                .format = swapchainImageFormat,
+                .sampling = VK_SAMPLE_COUNT_1_BIT,
+                .dimensions = { swapchainExtent.width, swapchainExtent.height, 1 }
+            });
 
             swapchainImages[i]->CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT);
         }
+
+        // Reset frame counter
+        currentFrame = 0;
 
         // Assign the EngineCore's swapchain extent
         VulkanCore::SetSwapchainExtent(swapchainExtent);
@@ -110,29 +120,31 @@ namespace Sierra::Core::Rendering::Vulkan
         DestroySwapchainObjects();
 
         CreateSwapchain();
-        CreateRenderPass();
+        CreateRenderPasses();
         CreateDepthBufferImage();
         CreateColorBufferImage();
         CreateFramebuffers();
+        CreateOffscreenImageDescriptorSets();
     }
 
     void VulkanRenderer::DestroySwapchainObjects()
     {
-        colorImage->Destroy();
-
-        for (const auto &swapchainFramebuffer : this->swapchainFramebuffers)
-        {
-            swapchainFramebuffer->Destroy();
-        }
-
         depthImage->Destroy();
 
-        renderPass->Destroy();
+        if (msaaSamplingEnabled) colorImage->Destroy();
 
-        for (const auto &image : swapchainImages)
+        for (uint32_t i = maxConcurrentFrames; i--;)
         {
-            image->DestroyImageView();
+            offscreenImages[i]->Destroy();
+            offscreenFramebuffers[i]->Destroy();
+
+            swapchainImages[i]->Destroy();
+            swapchainFramebuffers[i]->Destroy();
         }
+
+        offscreenRenderPass->Destroy();
+
+        swapchainRenderPass->Destroy();
 
         vkDestroySwapchainKHR(this->logicalDevice, this->swapchain, nullptr);
     }

@@ -9,8 +9,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     // ********************* Subpass ********************* \\
 
-    Subpass::Subpass(const VkPipelineBindPoint givenBindPoint, const Subpass::DepthAttachment givenDepthAttachment, std::unordered_map<uint32_t, ColorAttachment> givenColorAttachments, std::unordered_map<uint32_t, ResolveAttachment> givenResolveAttachments, const uint32_t srcSubpass, const uint32_t dstSubpass)
-        : bindPoint(givenBindPoint)
+    Subpass::Subpass(const Subpass::DepthAttachment givenDepthAttachment, std::unordered_map<uint32_t, ColorAttachment> givenColorAttachments, std::unordered_map<uint32_t, ResolveAttachment> givenResolveAttachments, const uint32_t srcSubpass, const uint32_t dstSubpass)
     {
         bool depthAttachmentProvided = givenDepthAttachment.data.finalLayout != VK_IMAGE_LAYOUT_UNDEFINED;
 
@@ -22,7 +21,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->colorAttachmentReferences.reserve(givenColorAttachments.size());
         for (const auto &colorAttachment : givenColorAttachments)
         {
-            colorAttachmentReferences.push_back({ colorAttachment.first, colorAttachment.second.swapchainAttachment ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : colorAttachment.second.data.finalLayout });
+            colorAttachmentReferences.push_back({ colorAttachment.first, colorAttachment.second.referenceLayout });
             attachmentDescriptions[colorAttachment.first] = { colorAttachment.second.data };
         }
 
@@ -30,7 +29,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->resolveAttachmentReferences.reserve(givenResolveAttachments.size());
         for (const auto &resolveAttachment : givenResolveAttachments)
         {
-            resolveAttachmentReferences.push_back({ resolveAttachment.first, resolveAttachment.second.imageLayout });
+            resolveAttachmentReferences.push_back({ resolveAttachment.first, resolveAttachment.second.referenceLayout });
             attachmentDescriptions[resolveAttachment.first] = { resolveAttachment.second.data };
         }
 
@@ -52,7 +51,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkSubpassDependency.dependencyFlags = 0;
 
         // Create the subpass description
-        vkSubpass.pipelineBindPoint = bindPoint;
+        vkSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         vkSubpass.colorAttachmentCount = static_cast<uint32_t>(colorAttachmentReferences.size());
         vkSubpass.pColorAttachments = colorAttachmentReferences.data();
         vkSubpass.pResolveAttachments = resolveAttachmentReferences.data();
@@ -62,13 +61,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkSubpass.preserveAttachmentCount = 0;
         vkSubpass.pPreserveAttachments = nullptr;
         vkSubpass.flags = 0;
-    }
-
-    Subpass::Builder &Subpass::Builder::SetPipelineBindPoint(const VkPipelineBindPoint givenPipelineBindPoint)
-    {
-        // Save the given bind point locally
-        this->pipelineBindPoint = givenPipelineBindPoint;
-        return *this;
     }
 
     Subpass::Builder &Subpass::Builder::SetDepthAttachment(const uint32_t binding, const std::unique_ptr<Image> &depthImage, const VkAttachmentLoadOp loadOp, const VkAttachmentStoreOp storeOp, const VkAttachmentLoadOp stencilLoadOp, const VkAttachmentStoreOp stencilStoreOp)
@@ -89,7 +81,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return *this;
     }
 
-    Subpass::Builder &Subpass::Builder::AddColorAttachment(const uint32_t binding, const std::unique_ptr<Image> &colorImage, const VkAttachmentLoadOp loadOp, const VkAttachmentStoreOp storeOp, const bool swapchainAttachment, const VkAttachmentLoadOp stencilLoadOp, const VkAttachmentStoreOp stencilStoreOp)
+    Subpass::Builder &Subpass::Builder::AddColorAttachment(const uint32_t binding, const VkImageLayout referenceImageLayout, const VkImageLayout finalImageLayout,  const std::unique_ptr<Image> &colorImage, const VkAttachmentLoadOp loadOp, const VkAttachmentStoreOp storeOp, const VkAttachmentLoadOp stencilLoadOp, const VkAttachmentStoreOp stencilStoreOp)
     {
         // Create the color attachment and save it in the local list together with its bindingInfo
         VkAttachmentDescription colorAttachmentDescription{};
@@ -100,14 +92,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         colorAttachmentDescription.stencilLoadOp = stencilLoadOp;
         colorAttachmentDescription.stencilStoreOp = stencilStoreOp;
         colorAttachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachmentDescription.finalLayout = swapchainAttachment ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        colorAttachmentDescription.finalLayout = finalImageLayout;
 
-        this->colorAttachments[binding] = { colorAttachmentDescription, swapchainAttachment };
+        this->colorAttachments[binding] = { colorAttachmentDescription, referenceImageLayout };
 
         return *this;
     }
 
-    Subpass::Builder &Subpass::Builder::AddResolveAttachment(const uint32_t binding, const std::unique_ptr<Image> &image, const VkImageLayout finalLayout, const VkImageLayout referenceLayout, const VkAttachmentLoadOp loadOp, const VkAttachmentStoreOp storeOp, const VkSampleCountFlagBits sampling, const VkAttachmentLoadOp stencilLoadOp, const VkAttachmentStoreOp stencilStoreOp)
+    Subpass::Builder &Subpass::Builder::AddResolveAttachment(const uint32_t binding, const std::unique_ptr<Image> &image, const VkImageLayout referenceLayout, const VkImageLayout finalLayout, const VkAttachmentLoadOp loadOp, const VkAttachmentStoreOp storeOp, const VkSampleCountFlagBits sampling, const VkAttachmentLoadOp stencilLoadOp, const VkAttachmentStoreOp stencilStoreOp)
     {
         // Create the resolve attachment and save it in the local list together with its bindingInfo and reference layout
         VkAttachmentDescription resolveAttachmentDescription{};
@@ -127,7 +119,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     std::unique_ptr<Subpass> Subpass::Builder::Build(const uint32_t srcSubpass, const uint32_t dstSubpass) const
     {
-        return std::make_unique<Subpass>(pipelineBindPoint, depthAttachment, colorAttachments, resolveAttachments, srcSubpass, dstSubpass);
+        return std::make_unique<Subpass>(depthAttachment, colorAttachments, resolveAttachments, srcSubpass, dstSubpass);
     }
 
     // ********************* Render Pass ********************* \\
@@ -151,7 +143,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         renderPassCreateInfo.pDependencies = subpassDependencies.data();
 
         // Set default values
-        clearValues[0].color = { 0.0, 0.0, 0.0 };
+        clearValues[0].color = { 0.0, 0.0, 0.0, 1.0 };
         clearValues[1].depthStencil.depth = 1.0;
 
         // Create the Vulkan render pass
@@ -173,9 +165,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->vkFramebuffer = givenFramebuffer->GetVulkanFramebuffer();
     }
 
-    void RenderPass::SetBackgroundColor(const glm::vec3 givenColor)
+    void RenderPass::SetBackgroundColor(const glm::vec4 givenColor)
     {
-        clearValues[0].color = { givenColor.x, givenColor.y, givenColor.z };
+        clearValues[0].color = { givenColor.x, givenColor.y, givenColor.z, givenColor.w };
     }
 
     void RenderPass::Begin(const VkCommandBuffer &givenCommandBuffer)
