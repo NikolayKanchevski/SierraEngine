@@ -4,10 +4,57 @@
 
 #include "Buffer.h"
 #include "../VulkanCore.h"
-#include "../VulkanUtilities.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
+
+    /* --- CONSTRUCTORS --- */
+
+    Buffer::Buffer(const BufferCreateInfo &createInfo)
+        : memorySize(createInfo.memorySize), memoryFlags(createInfo.memoryFlags), bufferUsage(createInfo.bufferUsage)
+    {
+        // Set up buffer creation info
+        VkBufferCreateInfo vkBufferCreateInfo{};
+        vkBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        vkBufferCreateInfo.size = memorySize;
+        vkBufferCreateInfo.usage = bufferUsage;
+        vkBufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        // Create the Vulkan buffer
+        VK_ASSERT(
+            vkCreateBuffer(VulkanCore::GetLogicalDevice(), &vkBufferCreateInfo, nullptr, &vkBuffer),
+            "Failed to create buffer with size of [" + std::to_string(memorySize) + "] for [" + std::to_string(bufferUsage) + "] usage"
+        );
+
+        // Get the Vulkan buffer's memory requirements
+        VkMemoryRequirements memoryRequirements;
+        vkGetBufferMemoryRequirements(VulkanCore::GetLogicalDevice(), vkBuffer, &memoryRequirements);
+
+        // Set up the buffer's memory allocation info
+        VkMemoryAllocateInfo memoryAllocationInfo{};
+        memoryAllocationInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        memoryAllocationInfo.allocationSize = memoryRequirements.size,
+        memoryAllocationInfo.memoryTypeIndex = VulkanUtilities::FindMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryFlags);
+
+        // Allocate buffer's memory
+        VK_ASSERT(
+                vkAllocateMemory(VulkanCore::GetLogicalDevice(), &memoryAllocationInfo, nullptr, &vkBufferMemory),
+                "Failed to allocate memory for buffer"
+        );
+
+        // Bind the allocated memory to the buffer
+        vkBindBufferMemory(VulkanCore::GetLogicalDevice(), vkBuffer, vkBufferMemory, 0);
+    }
+
+    std::unique_ptr<Buffer> Buffer::Create(const BufferCreateInfo bufferCreateInfo)
+    {
+        return std::make_unique<Buffer>(bufferCreateInfo);
+    }
+
+    std::shared_ptr<Buffer> Buffer::CreateShared(const BufferCreateInfo bufferCreateInfo)
+    {
+        return std::make_shared<Buffer>(bufferCreateInfo);
+    }
 
     /* --- SETTER METHODS --- */
 
@@ -71,55 +118,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Destroy the temporary command buffer
         VulkanUtilities::EndSingleTimeCommands(commandBuffer);
-    }
-
-    /* --- CONSTRUCTORS --- */
-
-    std::unique_ptr<Buffer> Buffer::Create(const BufferCreateInfo bufferCreateInfo)
-    {
-        return std::make_unique<Buffer>(bufferCreateInfo);
-    }
-
-    std::shared_ptr<Buffer> Buffer::CreateShared(const BufferCreateInfo bufferCreateInfo)
-    {
-        return std::make_shared<Buffer>(bufferCreateInfo);
-    }
-
-
-    Buffer::Buffer(const BufferCreateInfo bufferCreateInfo)
-        : memorySize(bufferCreateInfo.memorySize), memoryFlags(bufferCreateInfo.memoryFlags), bufferUsage(bufferCreateInfo.bufferUsage)
-    {
-        // Set up buffer creation info
-        VkBufferCreateInfo vkBufferCreateInfo{};
-        vkBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        vkBufferCreateInfo.size = memorySize;
-        vkBufferCreateInfo.usage = bufferUsage;
-        vkBufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-        // Create the Vulkan buffer
-        VK_ASSERT(
-            vkCreateBuffer(VulkanCore::GetLogicalDevice(), &vkBufferCreateInfo, nullptr, &vkBuffer),
-            "Failed to create buffer with size of [" + std::to_string(memorySize) + "] for [" + std::to_string(bufferUsage) + "] usage"
-        );
-
-        // Get the Vulkan buffer's memory requirements
-        VkMemoryRequirements memoryRequirements;
-        vkGetBufferMemoryRequirements(VulkanCore::GetLogicalDevice(), vkBuffer, &memoryRequirements);
-
-        // Set up the buffer's memory allocation info
-        VkMemoryAllocateInfo memoryAllocationInfo{};
-        memoryAllocationInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        memoryAllocationInfo.allocationSize = memoryRequirements.size,
-        memoryAllocationInfo.memoryTypeIndex = VulkanUtilities::FindMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryFlags);
-
-        // Allocate buffer's memory
-        VK_ASSERT(
-            vkAllocateMemory(VulkanCore::GetLogicalDevice(), &memoryAllocationInfo, nullptr, &vkBufferMemory),
-            "Failed to allocate memory for buffer"
-        );
-
-        // Bind the allocated memory to the buffer
-        vkBindBufferMemory(VulkanCore::GetLogicalDevice(), vkBuffer, vkBufferMemory, 0);
     }
 
     /* --- DESTRUCTOR --- */

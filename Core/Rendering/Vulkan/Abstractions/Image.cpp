@@ -5,7 +5,6 @@
 #include <cstdint>
 #include "Image.h"
 #include "../VulkanCore.h"
-#include "../VulkanUtilities.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -14,7 +13,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Image::CreateImageView(const VkImageAspectFlags givenAspectFlags)
     {
         // Check if an image view has already been generated
-        if (imageViewGenerated)
+        if (imageViewCreated)
         {
             ASSERT_WARNING("Trying to create an image view for an image with an already existing view. Process automatically suspended");
             return;
@@ -39,7 +38,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 std::to_string(mipLevels) + "] mip levels, and sampling of [" + std::to_string(sampling) + "]"
         );
 
-        imageViewGenerated = true;
+        imageViewCreated = true;
     }
 
     void Image::TransitionLayout(const VkImageLayout newLayout)
@@ -153,12 +152,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Bind the pipeline barrier
         vkCmdPipelineBarrier(
-                commandBuffer,
-                srcStage, dstStage,		            // Pipeline stages (match to src and dst AccessMasks)
-                0,						                        // Dependency flagsInfo
-                0, nullptr,				        // Memory Barrier count + data
-                0, nullptr,			// Buffer Memory Barrier count + data
-                1, &imageMemoryBarrier	// Image Memory Barrier count + data
+            commandBuffer,
+            srcStage, dstStage,		            // Pipeline stages (match to src and dst AccessMasks)
+            0,						                        // Dependency flagsInfo
+            0, nullptr,				        // Memory Barrier count + data
+            0, nullptr,			// Buffer Memory Barrier count + data
+            1, &imageMemoryBarrier	// Image Memory Barrier count + data
         );
 
         // End command buffer
@@ -171,13 +170,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Image::DestroyImageView()
     {
         vkDestroyImageView(VulkanCore::GetLogicalDevice(), this->vkImageView, nullptr);
-        imageViewGenerated = false;
+        imageViewCreated = false;
     }
 
     /* --- CONSTRUCTORS --- */
 
-    Image::Image(ImageCreateInfo imageCreateInfo)
-        : dimensions(imageCreateInfo.dimensions), mipLevels(imageCreateInfo.mipLevels), sampling(imageCreateInfo.sampling), format(imageCreateInfo.format)
+    Image::Image(const ImageCreateInfo &createInfo)
+        : dimensions(createInfo.dimensions), mipLevels(createInfo.mipLevels), sampling(createInfo.sampling), format(createInfo.format)
     {
         // Set up image creation info
         VkImageCreateInfo vkImageCreateInfo{};
@@ -191,9 +190,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkImageCreateInfo.mipLevels = mipLevels;
         vkImageCreateInfo.arrayLayers = 1;
         vkImageCreateInfo.format = format;
-        vkImageCreateInfo.tiling = imageCreateInfo.imageTiling;
+        vkImageCreateInfo.tiling = createInfo.imageTiling;
         vkImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        vkImageCreateInfo.usage = imageCreateInfo.usageFlags;
+        vkImageCreateInfo.usage = createInfo.usageFlags;
         vkImageCreateInfo.samples = sampling;
         vkImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -212,7 +211,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkMemoryAllocateInfo imageMemoryAllocateInfo{};
         imageMemoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         imageMemoryAllocateInfo.allocationSize = imageMemoryRequirements.size;
-        imageMemoryAllocateInfo.memoryTypeIndex = VulkanUtilities::FindMemoryTypeIndex(imageMemoryRequirements.memoryTypeBits, imageCreateInfo.memoryFlags);
+        imageMemoryAllocateInfo.memoryTypeIndex = VulkanUtilities::FindMemoryTypeIndex(imageMemoryRequirements.memoryTypeBits, createInfo.memoryFlags);
 
         // Allocate the image to memory
         VK_ASSERT(
@@ -235,8 +234,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return std::make_unique<Image>(swapchainImageCreateInfo);
     }
 
-    Image::Image(const SwapchainImageCreateInfo swapchainImageCreateInfo)
-            : vkImage(swapchainImageCreateInfo.image), format(swapchainImageCreateInfo.format), sampling(swapchainImageCreateInfo.sampling), dimensions(swapchainImageCreateInfo.dimensions), layout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR), swapchainImage(true)
+    Image::Image(const SwapchainImageCreateInfo &createInfo)
+            : vkImage(createInfo.image), format(createInfo.format), sampling(createInfo.sampling), dimensions(createInfo.dimensions), layout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR), swapchainImage(true)
     {
 
     }
@@ -252,7 +251,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             vkDestroyImage(VulkanCore::GetLogicalDevice(), this->vkImage, nullptr);
             vkFreeMemory(VulkanCore::GetLogicalDevice(), this->vkImageMemory, nullptr);
         }
-        if (imageViewGenerated) vkDestroyImageView(VulkanCore::GetLogicalDevice(), this->vkImageView, nullptr);
+        if (imageViewCreated) vkDestroyImageView(VulkanCore::GetLogicalDevice(), this->vkImageView, nullptr);
 
         vkImage = VK_NULL_HANDLE;
     }

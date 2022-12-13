@@ -32,10 +32,12 @@ void Application::Start()
     cameraEntity.GetTransform().position = { 0.0f, 1.75f, 10.0f };
 
     // Create directional light
-    DirectionalLight directionalLight = Entity("Directional Light").AddComponent<DirectionalLight>();
-    directionalLight.direction = glm::normalize(camera.GetComponent<Transform>().position - glm::vec3(0, 0, 0));
+    DirectionalLight &directionalLight = Entity("Directional Light").AddComponent<DirectionalLight>();
+    directionalLight.direction = glm::normalize(camera.GetComponent<Transform>().position - glm::vec3(-7, 5, -7));
+    directionalLight.intensity = 2.0f;
 
     // Load 3D models in a grid view
+    tankModels.reserve(MODEL_GRID_SIZE_X * MODEL_GRID_SIZE_Y * MODEL_GRID_SIZE_Z);
     for (uint32_t i = MODEL_GRID_SIZE_X; i--;)
     {
         int x = (i * MODEL_SPACING_FACTOR_X) - (MODEL_GRID_SIZE_X * MODEL_SPACING_FACTOR_X) / 2;

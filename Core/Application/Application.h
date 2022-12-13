@@ -24,9 +24,7 @@ using namespace Sierra::Core;
 using namespace Sierra::Core::Rendering;
 using namespace Sierra::Core::Rendering::Vulkan;
 
-#if DEBUG
-    #define DRAW_IMGUI_UI
-#endif
+#define DRAW_IMGUI_HIERARCHY
 
 class Application
 {

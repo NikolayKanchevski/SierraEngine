@@ -24,22 +24,15 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         Stopwatch stopwatch;
 
-        CreateInstance();
-        if (VALIDATION_ENABLED) CreateValidationMessenger();
-        CreateWindowSurface();
-        GetPhysicalDevice();
-        CreateLogicalDevice();
-
-        CreateCommandPool();
+        CreateDevice();
         CreateSwapchain();
-        CreateDepthBufferImage();
 
-        CreateColorBufferImage();
-        CreateRenderPasses();
+        CreateOffscreenRenderer();
+        CreateRenderPass();
         CreatePushConstants();
         CreateDescriptorSetLayout();
         CreateGraphicsPipeline();
-        
+
         CreateFramebuffers();
         CreateCommandBuffers();
         CreateShaderBuffers();
@@ -50,7 +43,9 @@ namespace Sierra::Core::Rendering::Vulkan
         CreateSynchronization();
 
         CreateNullTextures();
+
         CreateImGuiInstance();
+        CreateOffscreenImageDescriptorSets();
 
         window.Show();
         ASSERT_SUCCESS("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
@@ -106,25 +101,28 @@ namespace Sierra::Core::Rendering::Vulkan
 
     VulkanRenderer::~VulkanRenderer()
     {
-        vkDeviceWaitIdle(logicalDevice);
+        vkDeviceWaitIdle(device->GetLogicalDevice());
 
-        vkDestroyDescriptorPool(logicalDevice, imGuiDescriptorPool, nullptr);
+        vkDestroyDescriptorPool(device->GetLogicalDevice(), imGuiDescriptorPool, nullptr);
+
         ImGui_ImplVulkan_Shutdown();
 
         DestroySwapchainObjects();
 
-        vkDestroySurfaceKHR(instance, surface, nullptr);
+        swapchainRenderPass->Destroy();
 
-        vkDestroyQueryPool(this->logicalDevice, drawTimeQueryPool, nullptr);
+        vkDestroyQueryPool(device->GetLogicalDevice(), drawTimeQueryPool, nullptr);
 
         Texture::DestroyDefaultTextures();
 
-        vkDestroyPipeline(logicalDevice, graphicsPipeline, nullptr);
-        vkDestroyPipelineLayout(logicalDevice, graphicsPipelineLayout, nullptr);
+        offscreenRenderer->Destroy();
 
-        for (const auto &uniformBuffer : shaderBuffers)
+        vkDestroyPipeline(device->GetLogicalDevice(), graphicsPipeline, nullptr);
+        vkDestroyPipelineLayout(device->GetLogicalDevice(), graphicsPipelineLayout, nullptr);
+
+        for (const auto &buffer : shaderBuffers)
         {
-            uniformBuffer->Destroy();
+            buffer->Destroy();
         }
 
         descriptorPool->Destroy();
@@ -136,22 +134,13 @@ namespace Sierra::Core::Rendering::Vulkan
             enttMeshView.get<MeshRenderer>(entity).Destroy();
         }
 
-        for (int i = maxConcurrentFrames; i--;)
+        for (uint32_t i = maxConcurrentFrames; i--;)
         {
-            vkDestroyFence(logicalDevice, frameBeingRenderedFences[i], nullptr);
-            vkDestroySemaphore(logicalDevice, renderFinishedSemaphores[i], nullptr);
-            vkDestroySemaphore(logicalDevice, imageAvailableSemaphores[i], nullptr);
+            vkDestroyFence(device->GetLogicalDevice(), frameBeingRenderedFences[i], nullptr);
+            vkDestroySemaphore(device->GetLogicalDevice(), renderFinishedSemaphores[i], nullptr);
+            vkDestroySemaphore(device->GetLogicalDevice(), imageAvailableSemaphores[i], nullptr);
         }
 
-        vkDestroyCommandPool(logicalDevice, commandPool, nullptr);
-
-        vkDestroyDevice(logicalDevice, nullptr);
-
-        if (VALIDATION_ENABLED)
-        {
-            DestroyDebugUtilsMessengerEXT(instance, validationMessenger, nullptr);
-        }
-
-        vkDestroyInstance(instance, nullptr);
+        device->Destroy();
     }
 }

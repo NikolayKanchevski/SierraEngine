@@ -11,7 +11,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     /* --- CONSTRUCTORS --- */
 
-    Sampler::Sampler(const SamplerCreateInfo samplerCreateInfo)
+    Sampler::Sampler(const SamplerCreateInfo &samplerCreateInfo)
         : applyBilinearFiltering(samplerCreateInfo.applyBilinearFiltering), samplerAddressMode(samplerCreateInfo.samplerAddressMode), minLod(samplerCreateInfo.minLod), maxLod(samplerCreateInfo.maxLod), maxAnisotropy(samplerCreateInfo.maxAnisotropy)
     {
         // Get the sampler filter based on whether bilinear filtering is enabled
@@ -43,10 +43,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
     }
 
-    std::unique_ptr<Sampler> Sampler::Create(const SamplerCreateInfo samplerCreateInfo)
+    std::unique_ptr<Sampler> Sampler::Create(const SamplerCreateInfo createInfo)
     {
-        return std::make_unique<Sampler>(samplerCreateInfo);
+        return std::make_unique<Sampler>(createInfo);
     }
+
     /* --- DESTRUCTOR --- */
 
     void Sampler::Destroy()

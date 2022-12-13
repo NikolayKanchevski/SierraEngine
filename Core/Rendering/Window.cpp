@@ -53,7 +53,7 @@ namespace Sierra::Core::Rendering
     }
 
     Window::Window(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)
-            : title(std::move(givenTitle)), maximized(setMaximized), REQUIRE_FOCUS(setFocusRequirement), RESIZABLE(setResizable)
+        : title(std::move(givenTitle)), maximized(setMaximized), REQUIRE_FOCUS(setFocusRequirement), RESIZABLE(setResizable)
     {
         ASSERT_ERROR_IF(!glfwInit(), "GLFW could not be started");
 
@@ -65,7 +65,7 @@ namespace Sierra::Core::Rendering
             maximized = false;
         }
 
-        #ifdef DEBUG
+        #if DEBUG
             Sierra::Engine::Classes::Stopwatch stopwatch;
         #endif
 
@@ -74,7 +74,7 @@ namespace Sierra::Core::Rendering
 
         InitWindow();
 
-        #ifdef DEBUG
+        #if DEBUG
             ASSERT_INFO(
                 "Window [" + this->title + "] successfully created! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms"
             );

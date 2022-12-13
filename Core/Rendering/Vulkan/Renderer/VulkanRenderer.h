@@ -35,7 +35,9 @@
 #include "../Abstractions/Sampler.h"
 #include "../Abstractions/Buffer.h"
 #include "../Abstractions/Texture.h"
+#include "../Abstractions/OffscreenRenderer.h"
 #include "../../../../Engine/Structures/Vertex.h"
+#include "../Abstractions/Device.h"
 
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 
@@ -62,7 +64,7 @@ namespace Sierra::Core::Rendering::Vulkan
         void UpdateWindow();
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline VkDescriptorSet GetRenderedTextureDescriptorSet() const { return offscrenImageDescriptorSets[currentFrame]; }
+        [[nodiscard]] inline VkDescriptorSet GetRenderedTextureDescriptorSet() const { return offscreenImageDescriptorSets[currentFrame]; }
         [[nodiscard]] inline bool IsActive() const { return !window.IsClosed(); };
         [[nodiscard]] inline Window& GetWindow()  { return window; }
         [[nodiscard]] inline auto GetRendererInfo() const { return rendererInfo; };
@@ -82,8 +84,10 @@ namespace Sierra::Core::Rendering::Vulkan
 
         /* --- GENERAL --- */
         Window window;
+        std::shared_ptr<Device> device;
 
         void Start();
+        void CreateDevice();
         void UpdateRendererInfo();
 
         bool prepared = false;
@@ -96,116 +100,32 @@ namespace Sierra::Core::Rendering::Vulkan
             int objectsInScene = 0;
         } rendererInfo;
 
-        /* --- INSTANCE --- */
-        VkInstance instance;
-
-        const std::vector<const char*> requiredInstanceExtensions
-        {
-            #if DEBUG
-                VK_EXT_DEBUG_UTILS_EXTENSION_NAME
-            #endif
-        };
-
-        const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
-
-        void CreateInstance();
-        void CheckExtensionsSupport(std::vector<const char *> &givenExtensions);
-        bool ValidationLayersSupported();
-
-        /* --- VALIDATION --- */
-        #if DEBUG
-            bool VALIDATION_ENABLED = true;
-        #else
-            bool VALIDATION_ENABLED = false;
-        #endif
-
-        VkDebugUtilsMessengerEXT validationMessenger;
-
-        void CreateValidationMessenger();
-        void GetValidationMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &createInfo);
-        VkResult CreateDebugUtilsMessengerEXT(VkInstance givenInstance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
-        void DestroyDebugUtilsMessengerEXT(VkInstance givenInstance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
-
-        /* --- SURFACE --- */
-        VkSurfaceKHR surface;
-        void CreateWindowSurface();
-
-        /* --- PHYSICAL DEVICE --- */
-        VkPhysicalDevice physicalDevice;
-
-        struct QueueFamilyIndices
-        {
-            int graphicsFamily = -1;
-            int presentFamily = -1;
-
-            bool IsValid()
-            {
-                return graphicsFamily >= 0 && presentFamily >= 0;
-            }
-        };
-
-        std::vector<const char*> requiredDeviceExtensions
-        {
-            "VK_KHR_swapchain"
-        };
-
-        QueueFamilyIndices queueFamilyIndices{};
-
-        void GetPhysicalDevice();
-        bool PhysicalDeviceSuitable(VkPhysicalDevice &givenPhysicalDevice);
-        bool DeviceExtensionsSupported(VkPhysicalDevice &givenPhysicalDevice);
-        QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice &givenPhysicalDevice);
-
-        /* --- LOGICAL DEVICE --- */
-        VkDevice logicalDevice;
-        VkQueue graphicsQueue;
-        VkQueue presentQueue;
-
-        void CreateLogicalDevice();
-
         /* --- SWAPCHAIN --- */
-        struct SwapchainSupportDetails
-        {
-            VkSurfaceCapabilitiesKHR capabilities;
-            std::vector<VkSurfaceFormatKHR> formats;
-            std::vector<VkPresentModeKHR> presentModes;
-        };
-
         VkSwapchainKHR swapchain = VK_NULL_HANDLE;
-        VkFormat swapchainImageFormat;
         VkExtent2D swapchainExtent;
 
-        SwapchainSupportDetails GetSwapchainSupportDetails(VkPhysicalDevice &givenPhysicalDevice);
-        VkSurfaceFormatKHR ChooseSwapchainFormat(std::vector<VkSurfaceFormatKHR> &givenFormats);
-        VkPresentModeKHR ChooseSwapchainPresentMode(std::vector<VkPresentModeKHR> &givenPresentModes);
-        VkExtent2D ChooseSwapchainExtent(VkSurfaceCapabilitiesKHR &givenCapabilities);
-        void CreateSwapchain();
+        VkExtent2D ChooseSwapchainExtent(const VkSurfaceCapabilitiesKHR &givenCapabilities);
 
+        void CreateSwapchain();
         void RecreateSwapchainObjects();
         void DestroySwapchainObjects();
 
+        /* --- OFFSCREEN --- */
+        std::unique_ptr<OffscreenRenderer> offscreenRenderer;
+        std::vector<VkDescriptorSet> offscreenImageDescriptorSets;
+
+        void CreateOffscreenRenderer();
+        void CreateOffscreenImageDescriptorSets();
+
         /* --- COMMANDS --- */
-        VkCommandPool commandPool;
-        void CreateCommandPool();
         std::vector<VkCommandBuffer> commandBuffers;
         void CreateCommandBuffers();
         void RecordCommandBuffer(const VkCommandBuffer &givenCommandBuffer, uint32_t imageIndex);
         void FetchRenderTimeResults(uint32_t swapchainIndex);
 
-        /* --- DEPTH BUFFER --- */
-        std::unique_ptr<Image> depthImage;
-        VkFormat depthImageFormat;
-
-        VkFormat GetBestDepthBufferFormat(std::vector<VkFormat> &givenFormats, VkImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags);
-        void CreateDepthBufferImage();
-
         /* --- RENDER PASS --- */
-        std::unique_ptr<Subpass> offscreenSubpass;
-        std::unique_ptr<RenderPass> offscreenRenderPass;
-
-        std::unique_ptr<Subpass> swapchainSubpass;
         std::unique_ptr<RenderPass> swapchainRenderPass;
-        void CreateRenderPasses();
+        void CreateRenderPass();
 
         /* --- PUSH CONSTANTS --- */
         VkPushConstantRange pushConstantRange;
@@ -234,16 +154,8 @@ namespace Sierra::Core::Rendering::Vulkan
         VkPipeline graphicsPipeline;
         void CreateGraphicsPipeline();
 
-        /* --- COLOR BUFFER --- */
-        std::unique_ptr<Image> colorImage;
-        VkSampleCountFlagBits GetHighestSupportedMsaaCount();
-        void CreateColorBufferImage();
-
         /* --- FRAMEBUFFERS --- */
-        std::vector<std::unique_ptr<Image>> offscreenImages;
         std::vector<std::unique_ptr<Image>> swapchainImages;
-
-        std::vector<std::unique_ptr<Framebuffer>> offscreenFramebuffers;
         std::vector<std::unique_ptr<Framebuffer>> swapchainFramebuffers;
         void CreateFramebuffers();
 
@@ -277,10 +189,8 @@ namespace Sierra::Core::Rendering::Vulkan
         /* --- ImGui --- */
         bool imGuiFrameBegan = false;
         VkDescriptorPool imGuiDescriptorPool;
-        std::vector<VkDescriptorSet> offscrenImageDescriptorSets;
 
         void CreateImGuiInstance();
-        void CreateOffscreenImageDescriptorSets();
         void SetImGuiStyle();
         void BeginNewImGuiFrame();
         void UpdateImGuiData();

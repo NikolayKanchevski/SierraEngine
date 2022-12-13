@@ -174,7 +174,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Create the pipeline layout
         VK_ASSERT(
-            vkCreatePipelineLayout(this->logicalDevice, &pipelineLayoutCreateInfo, nullptr, &graphicsPipelineLayout),
+            vkCreatePipelineLayout(device->GetLogicalDevice(), &pipelineLayoutCreateInfo, nullptr, &graphicsPipelineLayout),
             "Failed to create pipeline layout"
         );
 
@@ -192,20 +192,20 @@ namespace Sierra::Core::Rendering::Vulkan
         graphicsPipelineCreateInfo.pColorBlendState = &blendingStateCreateInfo;
         graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
         graphicsPipelineCreateInfo.layout = graphicsPipelineLayout;
-        graphicsPipelineCreateInfo.renderPass = this->offscreenRenderPass->GetVulkanRenderPass();
+        graphicsPipelineCreateInfo.renderPass = this->offscreenRenderer->GetRenderPass()->GetVulkanRenderPass();
         graphicsPipelineCreateInfo.subpass = 0;
         graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
         graphicsPipelineCreateInfo.basePipelineIndex = -1;
 
         // Create the graphics pipeline
         VK_ASSERT(
-            vkCreateGraphicsPipelines(this->logicalDevice, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &graphicsPipeline),
+            vkCreateGraphicsPipelines(device->GetLogicalDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &graphicsPipeline),
             "Failed to create graphics pipeline"
         );
 
         // Destroy the made shader modules
-        vkDestroyShaderModule(this->logicalDevice, vertShaderModule, nullptr);
-        vkDestroyShaderModule(this->logicalDevice, fragShaderModule, nullptr);
+        vkDestroyShaderModule(device->GetLogicalDevice(), vertShaderModule, nullptr);
+        vkDestroyShaderModule(device->GetLogicalDevice(), fragShaderModule, nullptr);
     }
 
 }

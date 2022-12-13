@@ -7,22 +7,98 @@
 
 void Application::DisplayUI(VulkanRenderer &renderer)
 {
-    // Hierarchy
-    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoNav | ImGuiWindowFlags_HorizontalScrollbar;
 
-    #ifdef DRAW_IMGUI_UI
-        ImGui::SetNextWindowPos({ 0, 0 }, ImGuiCond_FirstUseEver, { 0, 0 });
-        ImGui::SetNextWindowSize({ (float) renderer.GetWindow().GetWidth() / 6, (float) renderer.GetWindow().GetHeight() }, ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSizeConstraints({ 100.0f, 100.0f }, { (float) renderer.GetWindow().GetWidth(), (float) renderer.GetWindow().GetHeight() });
-        ImGui::SetNextWindowBgAlpha(0.6f);
+    /* --- MAIN VIEWPORT --- */
+    {
+        // Set up dock space and window flags
+        ImGuiDockNodeFlags dockSpaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
+        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBackground |
+                                       ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+                                       ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
-        bool hierachyOpen;
-        if (ImGui::Begin("Hierarchy", &hierachyOpen, windowFlags) || hierachyOpen)
+        // Get a pointer to the main viewport of ImGui
+        const ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+        // Set window sizing properties accordingly
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::SetNextWindowViewport(viewport->ID);
+
+        // Get the docking of the main viewport
+        ImGuiID dockSpaceID = ImGui::GetID("ViewportDock");
+
+        // Disable window padding
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+        // Create main viewport window
+        ImGui::Begin("Viewport", nullptr, windowFlags);
+
+        // Use dock space
+        ImGui::DockSpace(dockSpaceID, ImVec2(0.0f, 0.0f), dockSpaceFlags);
+
+        // Create menu bar
+        if (ImGui::BeginMenuBar())
+        {
+            if (ImGui::BeginMenu("File"))
+            {
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Edit"))
+            {
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Preferences"))
+            {
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("I wanna die"))
+            {
+                ImGui::EndMenu();
+            }
+
+            ImGui::EndMenuBar();
+        }
+
+        // Remove the overridden window padding
+        ImGui::PopStyleVar(1);
+
+        // Finalize main viewport window
+        ImGui::End();
+    }
+
+    /* --- DEBUG INFORMATION --- */
+    {
+        bool debugInfoOpen = true;
+
+        // Create debug tab
+        if (ImGui::Begin("Debug Information", &debugInfoOpen, ImGuiWindowFlags_NoNav) || debugInfoOpen)
+        {
+            ImGui::Text("CPU Frame Time: %i FPS", Time::GetFPS());
+            ImGui::Text("GPU Draw Time: %f ms", renderer.GetRendererInfo().drawTime);
+            ImGui::Separator();
+            ImGui::Text("Total meshes being drawn: %i", renderer.GetRendererInfo().meshesDrawn);
+            ImGui::Text("Total vertices in scene: %i", renderer.GetRendererInfo().verticesDrawn);
+
+            ImGui::End();
+        }
+    }
+
+    /* --- HIERARCHY --- */
+    #ifdef DRAW_IMGUI_HIERARCHY
+    {
+        bool hierarchyOpen = true;
+
+        // Create hierarchy tab
+        if (ImGui::Begin("Hierarchy", &hierarchyOpen, ImGuiWindowFlags_NoNav | ImGuiWindowFlags_HorizontalScrollbar) || hierarchyOpen)
         {
             ImGui::Separator();
 
+            // Recursively show all entities in the hierarchy
             auto enttRelationshipView = World::GetEnttRegistry().view<Relationship>();
-            for (const auto &entity : enttRelationshipView)
+            for (const auto &entity: enttRelationshipView)
             {
                 Relationship &entityRelationship = World::GetEnttRegistry().get<Relationship>(entity);
                 if (entityRelationship.GetEnttParentEntity() == entt::null)
@@ -33,68 +109,27 @@ void Application::DisplayUI(VulkanRenderer &renderer)
 
             ImGui::End();
         }
-
-        bool textureTabOpen = true;
-        if (ImGui::Begin("Texture", &textureTabOpen, ImGuiWindowFlags_AlwaysAutoResize) || textureTabOpen)
-        {
-            int i = 0;
-            auto enttMeshRenderers = World::GetEnttRegistry().view<MeshRenderer>();
-            for (const auto &entity : enttMeshRenderers)
-            {
-                MeshRenderer &meshRenderer = World::GetEnttRegistry().get<MeshRenderer>(entity);
-                meshRenderer.GetTexture(TEXTURE_TYPE_DIFFUSE)->DrawToImGui();
-                if (i == 3) break;
-                i++;
-            }
-            ImGui::End();
-        }
+    }
     #endif
 
-    windowFlags = ImGuiWindowFlags_NoNav;
-
-    ImGui::SetNextWindowBgAlpha(0.6f);
-
-    // Draw renderer information tab
-    bool rendererInfoOpen = true;
-    if (ImGui::Begin("Renderer Information", &rendererInfoOpen, windowFlags) || rendererInfoOpen)
+    /* --- SCENE VIEW --- */
     {
-        ImGui::Text("%s", ("CPU Frame Time: " + std::to_string(Time::GetFPS()) + " FPS").c_str());
-        ImGui::Text("%s", ("GPU Draw Time: " + std::to_string(renderer.GetRendererInfo().drawTime) + " ms").c_str());
-        ImGui::Separator();
-        ImGui::Text("%s", ("Total meshes being drawn: " + std::to_string(renderer.GetRendererInfo().meshesDrawn)).c_str());
-        ImGui::Text("%s", ("Total vertices in scene: " + std::to_string(renderer.GetRendererInfo().verticesDrawn)).c_str());
+        bool rendererViewOpen = true;
 
-        ImGui::End();
-    }
-
-    // If game pads are present display their info
-    for (int i = Input::MAX_GAME_PADS; i--;)
-    {
-        if (Input::GetGamePadConnected(i))
+        // Create scene view tab
+        if (ImGui::Begin("Scene View", &rendererViewOpen) || rendererViewOpen)
         {
-            bool gamePadInfoOpen = true;
-            if (ImGui::Begin((("Game Pad [" + std::to_string(i) + "] Data").c_str()) , &gamePadInfoOpen, ImGuiWindowFlags_AlwaysAutoResize) || gamePadInfoOpen)
-            {
-                ImGui::Text("%s", ("Game pad [" + Input::GetGamePadName(i) + "] properties:").c_str());
-                ImGui::Text("%s", ("Left gamepad stick: [" + std::to_string(Input::GetGamePadLeftStickAxis(i).x) + " || " + std::to_string(Input::GetGamePadLeftStickAxis(i).y) + "]").c_str());
-                ImGui::Text("%s", ("Right gamepad stick: [" + std::to_string(Input::GetGamePadRightStickAxis(i).x) + " || " + std::to_string(Input::GetGamePadRightStickAxis(i).y) + "]").c_str());
-                ImGui::Text("%s", ("Left trigger: [" + std::to_string(Input::GetGamePadLeftTriggerAxis(i)) + "]").c_str());
-                ImGui::Text("%s", ("Right trigger: [" + std::to_string(Input::GetGamePadRightTriggerAxis(i)) + "]").c_str());
-                ImGui::RadioButton("\"A\" pressed", Input::GetGamePadButtonPressed(GLFW_GAMEPAD_BUTTON_A, i));
-                ImGui::RadioButton("\"A\" held", Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A, i));
-                ImGui::RadioButton("\"A\" released", Input::GetGamePadButtonReleased(GLFW_GAMEPAD_BUTTON_A, i));
+            // Get and show current renderer image
+            ImVec2 freeSpace = ImGui::GetContentRegionAvail();
 
-                ImGui::End();
-            }
+            float imageAspectRatio = (float) VulkanCore::GetWindow()->GetWidth() / (float) VulkanCore::GetWindow()->GetHeight();
+            ImVec2 size = { freeSpace.x, freeSpace.x / imageAspectRatio };
+
+            ImGui::Image((ImTextureID) renderer.GetRenderedTextureDescriptorSet(), size);
+            ImGui::End();
         }
     }
 
-    bool rendererViewOpen = true;
-    if (ImGui::Begin("ASd", &rendererViewOpen) || rendererViewOpen)
-    {
-        ImGui::Image((ImTextureID) renderer.GetRenderedTextureDescriptorSet(), { (float) VulkanCore::GetWindow()->GetWidth() / 1.2f, (float) VulkanCore::GetWindow()->GetHeight() / 1.2f });
-        ImGui::End();
-    }
 }
 
 void Application::ListDeeper(Relationship &relationship, const uint32_t iteration)

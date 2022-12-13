@@ -19,7 +19,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Create the draw time query pool
         VK_ASSERT(
-            vkCreateQueryPool(this->logicalDevice, &queryPoolCreateInfo, nullptr, &drawTimeQueryPool),
+            vkCreateQueryPool(device->GetLogicalDevice(), &queryPoolCreateInfo, nullptr, &drawTimeQueryPool),
             "Failed to create query pool"
         );
 

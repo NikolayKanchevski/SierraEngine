@@ -10,42 +10,29 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    Framebuffer::Framebuffer(VkRenderPass givenRenderPass, std::vector<VkImageView> givenAttachments)
+    Framebuffer::Framebuffer(const FramebufferCreateInfo &createInfo)
+        : width(createInfo.width), height(createInfo.height)
     {
         // Set up the framebuffer creation info
         VkFramebufferCreateInfo framebufferCreateInfo{};
         framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferCreateInfo.renderPass = givenRenderPass;
-        framebufferCreateInfo.attachmentCount = static_cast<uint32_t>(givenAttachments.size());
-        framebufferCreateInfo.width = VulkanCore::GetSwapchainExtent().width;
-        framebufferCreateInfo.height = VulkanCore::GetSwapchainExtent().height;
+        framebufferCreateInfo.renderPass = createInfo.renderPass;
+        framebufferCreateInfo.attachmentCount = static_cast<uint32_t>(createInfo.attachments.size());
+        framebufferCreateInfo.width = createInfo.width;
+        framebufferCreateInfo.height = createInfo.height;
         framebufferCreateInfo.layers = 1;
-        framebufferCreateInfo.pAttachments = givenAttachments.data();
+        framebufferCreateInfo.pAttachments = createInfo.attachments.data();
 
         // Create the Vulkan framebuffer
         VK_ASSERT(
             vkCreateFramebuffer(VulkanCore::GetLogicalDevice(), &framebufferCreateInfo, nullptr, &vkFramebuffer),
-            "Failed to create a framebuffer with attachment count of [" + std::to_string(givenAttachments.size()) + "]"
+            "Failed to create a framebuffer with attachment count of [" + std::to_string(createInfo.attachments.size()) + "]"
         );
     }
 
-    std::unique_ptr<Framebuffer> Framebuffer::Builder::Build() const
+    std::unique_ptr<Framebuffer> Framebuffer::Create(FramebufferCreateInfo createInfo)
     {
-        return std::make_unique<Framebuffer>(vkRenderPass, attachments);
-    }
-
-    Framebuffer::Builder &Framebuffer::Builder::SetRenderPass(VkRenderPass givenRenderPass)
-    {
-        // Save the provided render pass
-        this->vkRenderPass = givenRenderPass;
-        return *this;
-    }
-
-    Framebuffer::Builder &Framebuffer::Builder::AddAttachments(std::vector<VkImageView> &givenAttachments)
-    {
-        // Add the given attachments to the local list
-        this->attachments.insert(attachments.end(), givenAttachments.begin(), givenAttachments.end());
-        return *this;
+        return std::make_unique<Framebuffer>(createInfo);
     }
 
     /* --- DESTRUCTOR --- */

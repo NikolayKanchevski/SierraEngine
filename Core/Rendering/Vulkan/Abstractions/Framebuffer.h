@@ -6,30 +6,30 @@
 
 #include <vector>
 #include <array>
+#include <glm/vec2.hpp>
 #include "Image.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
 
+    struct FramebufferCreateInfo
+    {
+        uint32_t width = 0;
+        uint32_t height = 0;
+        const std::vector<VkImageView> &attachments;
+        VkRenderPass renderPass = VK_NULL_HANDLE;
+    };
+
     class Framebuffer
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Framebuffer(VkRenderPass givenRenderPass, std::vector<VkImageView> givenAttachments);
-
-        class Builder
-        {
-        public:
-            Builder& SetRenderPass(VkRenderPass givenRenderPass);
-            Builder& AddAttachments(std::vector<VkImageView> &givenAttachments);
-            [[nodiscard]] std::unique_ptr<Framebuffer> Build() const;
-
-        private:
-            VkRenderPass vkRenderPass;
-            std::vector<VkImageView> attachments;
-        };
+        Framebuffer(const FramebufferCreateInfo &createInfo);
+        static std::unique_ptr<Framebuffer> Create(FramebufferCreateInfo createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] inline uint32_t GetWidth() const { return width; }
+        [[nodiscard]] inline uint32_t GetHeight() const { return height; }
         [[nodiscard]] inline VkFramebuffer GetVulkanFramebuffer() const { return this->vkFramebuffer; }
 
         /* --- DESTRUCTOR --- */
@@ -38,6 +38,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Framebuffer &operator=(const Framebuffer &) = delete;
     private:
         VkFramebuffer vkFramebuffer;
+        uint32_t width, height;
 
     };
 

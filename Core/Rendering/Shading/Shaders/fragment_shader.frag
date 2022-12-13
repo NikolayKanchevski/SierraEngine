@@ -38,7 +38,7 @@ void main()
         }
 
         // For each point light calculate its influence and add to the calculated color
-        for (int i = 0; i < uniformBuffer.pointLightCount; i++)
+        for (uint i = 0; i < uniformBuffer.pointLightCount; i++)
         {
                 if (storageBuffer.pointLights[i].intensity <= 0.0001) continue;
 
@@ -54,6 +54,4 @@ void main()
 
         // Submit the final color for drawing
         outColor = vec4(calculatedColor, 1.0);
-//        outColor = vec4(diffuseTextureColor, 1.0);
-//        outColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

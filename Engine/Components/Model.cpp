@@ -13,7 +13,7 @@ namespace Sierra::Engine::Classes
 
     /* --- CONSTRUCTORS --- */
 
-    Model::Model(const std::string filePath)
+    Model::Model(const std::string &filePath)
         : modelName(File::GetFileNameFromPath(filePath)), modelLocation(File::RemoveFileNameFromPath(filePath))
     {
         if (modelPool.count(filePath) != 0)
@@ -115,12 +115,30 @@ namespace Sierra::Engine::Classes
         }
     }
 
-    std::unique_ptr<Model> Model::Load(const std::string &filePath)
+    std::unique_ptr<Model> Model::Load(const std::string filePath)
     {
         return std::make_unique<Model>(filePath);
     }
 
     /* --- SETTER METHODS --- */
+
+    void Model::Dispose()
+    {
+        // Remove model from pool
+        modelPool.erase(modelLocation + modelName);
+
+        // For each mesh delete their textures
+        for (const auto &meshEntity : meshEntities)
+        {
+            const MeshRenderer &meshRenderer = World::GetEnttRegistry().get<MeshRenderer>(meshEntity);
+
+            for (uint32_t i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
+            {
+                auto texture = meshRenderer.GetTexture((TextureType) i);
+                if (texture != nullptr) texture->Dispose();
+            }
+        }
+    }
 
     void Model::ListDeeperNode(aiNode *node, const aiScene *assimpScene, Entity* parentEntity)
     {
@@ -248,7 +266,7 @@ namespace Sierra::Engine::Classes
     void Model::ApplyAssimpMeshTextures(MeshRenderer &meshComponent, aiMaterial *assimpMaterial)
     {
         // Check if mesh has a diffuse texture
-        for (int i = assimpMaterial->GetTextureCount(aiTextureType_DIFFUSE); i--;)
+        for (uint32_t i = assimpMaterial->GetTextureCount(aiTextureType_DIFFUSE); i--;)
         {
             // Get texture file path
             aiString textureFilePath;
@@ -265,7 +283,7 @@ namespace Sierra::Engine::Classes
         }
 
         // Check if mesh has a specular texture
-        for (int i = assimpMaterial->GetTextureCount(aiTextureType_SPECULAR); i--;)
+        for (uint32_t i = assimpMaterial->GetTextureCount(aiTextureType_SPECULAR); i--;)
         {
             // Get texture file path
             aiString textureFilePath;

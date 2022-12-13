@@ -9,10 +9,12 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <future>
 
 #include "../Classes/Mesh.h"
 #include "../Classes/Entity.h"
 #include "MeshRenderer.h"
+
 
 using namespace Sierra::Engine::Components;
 
@@ -46,8 +48,11 @@ namespace Sierra::Engine::Classes
 
     public:
         /* --- CONSTRUCTORS --- */
-        Model(const std::string filePath);
-        static std::unique_ptr<Model> Load(const std::string &filePath);
+        Model(const std::string &filePath);
+        static std::unique_ptr<Model> Load(const std::string filePath);
+
+        /* --- SETTER METHODS --- */
+        void Dispose();
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint32_t GetVertexCount() const { return vertexCount; }

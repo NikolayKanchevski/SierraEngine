@@ -52,7 +52,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         : bindings(givenBindings)
     {
         // Create a pointer to layout binding array
-        std::vector<VkDescriptorSetLayoutBinding> layoutBindings(givenBindings.size());
+        VkDescriptorSetLayoutBinding layoutBindings[givenBindings.size()];
 
         auto* bindingFlags = new VkDescriptorBindingFlags[bindings.size()];
 
@@ -70,11 +70,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkDescriptorSetLayoutCreateInfo layoutCreateInfo{};
         layoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         layoutCreateInfo.bindingCount = static_cast<uint32_t>(givenBindings.size());
-        layoutCreateInfo.pBindings = layoutBindings.data();
+        layoutCreateInfo.pBindings = layoutBindings;
 
+        VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsCreateInfo{};
         if (VulkanCore::GetDescriptorIndexingSupported())
         {
-            VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsCreateInfo{};
             bindingFlagsCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
             bindingFlagsCreateInfo.bindingCount = bindings.size();
             bindingFlagsCreateInfo.pBindingFlags = bindingFlags;

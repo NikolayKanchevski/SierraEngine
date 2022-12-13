@@ -2,7 +2,6 @@
 // Created by Nikolay Kanchevski on 28.09.22.
 //
 
-#include <glm/common.hpp>
 #include "Cursor.h"
 
 namespace Sierra::Engine::Classes

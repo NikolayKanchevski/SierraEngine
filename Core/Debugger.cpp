@@ -13,17 +13,17 @@
 #endif
 
 #if _WIN32
-#define DEFAULT() (SetConsoleTextAttribute(hConsole, 7))
+    #define DEFAULT() (SetConsoleTextAttribute(hConsole, 7))
     #define BLUE() (SetConsoleTextAttribute(hConsole, 1))
     #define GREEN() (SetConsoleTextAttribute(hConsole, 2))
     #define YELLOW() (SetConsoleTextAttribute(hConsole, 14))
     #define RED() (SetConsoleTextAttribute(hConsole, 4))
 #else
-#define DEFAULT() (printf("\e[0;39m"))
-#define BLUE() (printf("\e[0;34m"))
-#define GREEN() (printf("\e[0;32m"))
-#define YELLOW() (printf("\e[0;33m"))
-#define RED() (printf("\e[0;31m"))
+    #define DEFAULT() (printf("\e[0;39m"))
+    #define BLUE() (printf("\e[0;34m"))
+    #define GREEN() (printf("\e[0;32m"))
+    #define YELLOW() (printf("\e[0;33m"))
+    #define RED() (printf("\e[0;31m"))
 #endif
 
 namespace Sierra::Core
@@ -90,7 +90,6 @@ namespace Sierra::Core
                 ThrowError(std::string(pCallbackData->pMessage).substr(0, strlen(pCallbackData->pMessage) - 1));
                 break;
             default:
-//                std::cout << pCallbackData->pMessage << "\n";
                 break;
         }
 

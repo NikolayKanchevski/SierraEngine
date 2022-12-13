@@ -6,7 +6,6 @@
 
 #include "InternalComponents.h"
 #include "../../Core/Rendering/Vulkan/VulkanCore.h"
-#include "../../Core/Debugger.h"
 
 using Sierra::Core::Rendering::Vulkan::VulkanCore;
 

@@ -9,8 +9,11 @@
 #include <iostream>
 #include <vector>
 
+#include "../../Core/Debugger.h"
+
 namespace Sierra::Engine::Classes::File
 {
+    using Core::Debugger;
 
     std::string GetFileNameFromPath(const std::string &filePath, const bool includeExtension)
     {
@@ -59,10 +62,7 @@ namespace Sierra::Engine::Classes::File
         std::ifstream file(fileName, std::ios::binary | std::ios::ate);
 
         // Check if the file stream successfully opened
-        if (!file.is_open())
-        {
-            std::runtime_error("Failed to open file!");
-        }
+        ASSERT_ERROR_IF(file.tellg() <= 0 || !file.is_open() || file.fail(), "Could not open the file [" + fileName + "]");
 
         // Get file size and create resized vector
         size_t fileSize = static_cast<size_t>(file.tellg());

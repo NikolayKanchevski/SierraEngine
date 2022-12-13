@@ -38,11 +38,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Image(ImageCreateInfo imageCreateInfo);
+        Image(const ImageCreateInfo &createInfo);
         [[nodiscard]] static std::unique_ptr<Image> Create(ImageCreateInfo imageCreateInfo);
 
         // Only to be used for swapchain images!
-        Image(SwapchainImageCreateInfo swapchainImageCreateInfo);
+        Image(const SwapchainImageCreateInfo &createInfo);
         static std::unique_ptr<Image> CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo);
 
         /* --- SETTER METHODS --- */
@@ -79,7 +79,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         { return this->vkImage; };
 
         [[nodiscard]] inline VkImageView GetVulkanImageView() const
-        { if (!imageViewGenerated) { ASSERT_WARNING("Image view not generated. Returning null"); return NULL; } return this->vkImageView; };
+        { ASSERT_WARNING_IF(!imageViewCreated, "Image view not generated. Returning null"); return vkImageView; }
 
         [[nodiscard]] inline VkDeviceMemory GetVulkanMemory() const
         { return this->vkImageMemory; };
@@ -102,7 +102,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkImageView vkImageView = VK_NULL_HANDLE;
         VkDeviceMemory vkImageMemory = VK_NULL_HANDLE;
 
-        bool imageViewGenerated = false;
+        bool imageViewCreated = false;
         bool swapchainImage = false;
     };
 

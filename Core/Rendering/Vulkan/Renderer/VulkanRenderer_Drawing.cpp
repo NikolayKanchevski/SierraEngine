@@ -24,22 +24,22 @@ namespace Sierra::Core::Rendering::Vulkan
         fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
         // Create semaphores and fences
-        for (int i = maxConcurrentFrames; i--;)
+        for (uint32_t i = maxConcurrentFrames; i--;)
         {
-            vkCreateSemaphore(this->logicalDevice, &semaphoreCreateInfo, nullptr, &imageAvailableSemaphores[i]);
-            vkCreateSemaphore(this->logicalDevice, &semaphoreCreateInfo, nullptr, &renderFinishedSemaphores[i]);
-            vkCreateFence(this->logicalDevice, &fenceCreateInfo, nullptr, &frameBeingRenderedFences[i]);
+            vkCreateSemaphore(device->GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &imageAvailableSemaphores[i]);
+            vkCreateSemaphore(device->GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &renderFinishedSemaphores[i]);
+            vkCreateFence(device->GetLogicalDevice(), &fenceCreateInfo, nullptr, &frameBeingRenderedFences[i]);
         }
     }
 
     void VulkanRenderer::Draw()
     {
         // Wait for the fences to be signalled
-        vkWaitForFences(this->logicalDevice, 1, &frameBeingRenderedFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
+        vkWaitForFences(device->GetLogicalDevice(), 1, &frameBeingRenderedFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
         // Get the current swapchain image
         uint32_t imageIndex;
-        VkResult imageAcquireResult = vkAcquireNextImageKHR(this->logicalDevice, this->swapchain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        VkResult imageAcquireResult = vkAcquireNextImageKHR(device->GetLogicalDevice(), this->swapchain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
         if (imageAcquireResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
@@ -48,7 +48,7 @@ namespace Sierra::Core::Rendering::Vulkan
         }
 
         // Reset the fences
-        vkResetFences(this->logicalDevice, 1, &frameBeingRenderedFences[currentFrame]);
+        vkResetFences(device->GetLogicalDevice(), 1, &frameBeingRenderedFences[currentFrame]);
 
         // Update uniform & storage buffers
         UpdateShaderBuffers(imageIndex);
@@ -72,7 +72,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Submit the queue
         VK_ASSERT(
-            vkQueueSubmit(graphicsQueue, 1, &submitInfo, frameBeingRenderedFences[currentFrame]),
+            vkQueueSubmit(device->GetGraphicsQueue(), 1, &submitInfo, frameBeingRenderedFences[currentFrame]),
             "Failed to submit graphics queue"
         );
 
@@ -87,7 +87,7 @@ namespace Sierra::Core::Rendering::Vulkan
         presentInfo.pResults = nullptr;
 
         // Present
-        VkResult queuePresentResult = vkQueuePresentKHR(this->presentQueue, &presentInfo);
+        VkResult queuePresentResult = vkQueuePresentKHR(device->GetPresentationQueue(), &presentInfo);
         if (queuePresentResult == VK_ERROR_OUT_OF_DATE_KHR || queuePresentResult == VK_SUBOPTIMAL_KHR || window.IsResized())
         {
             RecreateSwapchainObjects();

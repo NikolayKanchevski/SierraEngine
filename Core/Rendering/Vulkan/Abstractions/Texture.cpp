@@ -5,7 +5,6 @@
 #include "Texture.h"
 #include "Buffer.h"
 #include "../VulkanCore.h"
-#include "../VulkanUtilities.h"
 #include <glm/common.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -111,8 +110,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return textureReference;
     }
 
-
     /* --- SETTER METHODS --- */
+
+    void Texture::Dispose()
+    {
+        // Remove texture from pool
+        texturePool.erase(filePath);
+    }
 
     void Texture::GenerateMipMaps()
     {

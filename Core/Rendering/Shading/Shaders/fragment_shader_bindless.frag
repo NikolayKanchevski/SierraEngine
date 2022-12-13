@@ -44,7 +44,7 @@ void main()
     }
 
     // For each point light calculate its influence and add to the calculated color
-    for (int i = 0; i < uniformBuffer.pointLightCount; i++)
+    for (uint i = 0; i < uniformBuffer.pointLightCount; i++)
     {
         if (storageBuffer.pointLights[i].intensity <= 0.0001) continue;
 

@@ -34,7 +34,7 @@ namespace Sierra::Core::Rendering::Vulkan
     void VulkanRenderer::CreateDescriptorPool()
     {
         // Calculate the total descriptor count
-        const uint32_t DESCRIPTOR_COUNT = 32768;
+        const uint32_t DESCRIPTOR_COUNT = 131072;
 
         // Create the descriptor pool
         descriptorPool = DescriptorPool::Builder()

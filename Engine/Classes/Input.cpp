@@ -32,7 +32,7 @@ namespace Sierra::Engine::Classes {
 
     void Input::Start()
     {
-        for (int i = 0; i < MAX_GAME_PADS; i++)
+        for (uint32_t i = 0; i < MAX_GAME_PADS; i++)
         {
             if (glfwJoystickPresent(i))
             {
@@ -72,7 +72,7 @@ namespace Sierra::Engine::Classes {
             buttonSet = false;
         }
 
-        for (int i = MAX_GAME_PADS; i--;)
+        for (uint32_t i = MAX_GAME_PADS; i--;)
         {
             if (!gamePads[i].connected) continue;
 

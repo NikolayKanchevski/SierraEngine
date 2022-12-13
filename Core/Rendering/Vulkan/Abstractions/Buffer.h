@@ -23,9 +23,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Buffer(BufferCreateInfo bufferCreateInfo);
-        [[nodiscard]] static std::unique_ptr<Buffer> Create(const BufferCreateInfo bufferCreateInfo);
-        [[nodiscard]] static std::shared_ptr<Buffer> CreateShared(const BufferCreateInfo bufferCreateInfo);
+        Buffer(const BufferCreateInfo &createInfo);
+        [[nodiscard]] static std::unique_ptr<Buffer> Create(BufferCreateInfo bufferCreateInfo);
+        [[nodiscard]] static std::shared_ptr<Buffer> CreateShared(BufferCreateInfo bufferCreateInfo);
 
         /* --- SETTER METHODS --- */
         void CopyFromPointer(void* pointer, uint64_t offset = 0);

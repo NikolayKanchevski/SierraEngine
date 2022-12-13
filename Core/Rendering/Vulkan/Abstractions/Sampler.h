@@ -24,8 +24,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Sampler(SamplerCreateInfo samplerCreateInfo);
-        static std::unique_ptr<Sampler> Create(SamplerCreateInfo samplerCreateInfo);
+        Sampler(const SamplerCreateInfo &samplerCreateInfo);
+        static std::unique_ptr<Sampler> Create(SamplerCreateInfo createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkSampler GetVulkanSampler() const { return this->vkSampler; };

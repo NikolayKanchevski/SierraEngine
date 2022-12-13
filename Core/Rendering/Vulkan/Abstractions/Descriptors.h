@@ -26,6 +26,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             VkDescriptorBindingFlags bindingFlags = 0;
             uint32_t arraySize = 0;
         };
+
     public:
         /* --- CONSTRUCTORS --- */
         DescriptorSetLayout(const std::unordered_map<uint32_t, DescriptorSetLayoutBinding>& givenBindings);

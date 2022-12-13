@@ -1,106 +1,57 @@
 //
-// Created by Nikolay Kanchevski on 30.09.22.
+// Created by Nikolay Kanchevski on 12.12.22.
 //
 
 #pragma once
 
-#include <vulkan/vulkan.h>
-#include <unordered_map>
 #include <vector>
 #include "Image.h"
 #include "Framebuffer.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
-    class Subpass
+
+    struct RenderPassAttachment
     {
-    private:
-        struct ColorAttachment
-        {
-            VkAttachmentDescription data;
-            VkImageLayout referenceLayout;
-        };
+        /* --- FRAMEBUFFER PROPERTIES --- */
+        std::unique_ptr<Image>& imageAttachment;
 
-        struct ResolveAttachment
-        {
-            VkAttachmentDescription data;
-            VkImageLayout referenceLayout;
-        };
+        /* --- RENDERPASS PROPERTIES --- */
+        VkAttachmentLoadOp loadOp;
+        VkAttachmentStoreOp storeOp;
+        VkImageLayout finalLayout;
+        bool isResolve = false;
 
-        struct DepthAttachment
-        {
-            VkAttachmentDescription data;
-            uint32_t binding;
-        };
+        bool IsDepth() const { return finalLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL; }
+    };
 
-    public:
-        /* --- CONSTRUCTORS --- */
-        Subpass(DepthAttachment givenDepthAttachment,
-                std::unordered_map<uint32_t, ColorAttachment> givenColorAttachments,
-                std::unordered_map<uint32_t, ResolveAttachment> givenResolveAttachments,
-                uint32_t srcSubpass, uint32_t dstSubpass);
+    struct SubpassInfo
+    {
+        std::vector<uint32_t> renderTargets{};
+        std::vector<uint32_t> subpassInputs{};
+    };
 
-        class Builder
-        {
-        public:
-            Builder& SetDepthAttachment(uint32_t binding, const std::unique_ptr<Image> &depthImage, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
-                                        VkAttachmentLoadOp stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, VkAttachmentStoreOp stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            Builder& AddColorAttachment(uint32_t binding, VkImageLayout referenceImageLayout, VkImageLayout finalImageLayout, const std::unique_ptr<Image> &colorImage, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
-                                        VkAttachmentLoadOp stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, VkAttachmentStoreOp stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            Builder& AddResolveAttachment(uint32_t binding, const std::unique_ptr<Image> &image, VkImageLayout referenceLayout, VkImageLayout finalLayout,
-                                          VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp, VkSampleCountFlagBits sampling = VK_SAMPLE_COUNT_1_BIT,
-                                          VkAttachmentLoadOp stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, VkAttachmentStoreOp stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE);
-            std::unique_ptr<Subpass> Build(uint32_t srcSubpass = ~0U, uint32_t dstSubpass = 0) const;
-
-        private:
-            DepthAttachment depthAttachment;
-
-            std::unordered_map<uint32_t, ColorAttachment> colorAttachments;
-            std::unordered_map<uint32_t, ResolveAttachment> resolveAttachments;
-        };
-
-        /* --- GETTER METHODS --- */
-        [[nodiscard]] inline VkSubpassDescription GetVulkanSubpass() const { return this->vkSubpass; }
-        [[nodiscard]] inline VkSubpassDependency GetVulkanSubpassDependency() const { return this->vkSubpassDependency; }
-
-        /* --- DESTRUCTOR --- */
-        friend class RenderPass;
-
-        Subpass(const Subpass &) = delete;
-        Subpass &operator=(const Subpass &) = delete;
-
-    private:
-        VkSubpassDescription vkSubpass;
-        VkSubpassDependency vkSubpassDependency;
-
-        bool hasDepthReference;
-        VkAttachmentReference depthReference;
-
-        std::vector<VkAttachmentDescription> attachmentDescriptions;
-        std::vector<VkAttachmentReference> colorAttachmentReferences;
-        std::vector<VkAttachmentReference> resolveAttachmentReferences;
+    struct RenderPassCreateInfo
+    {
+        const std::vector<RenderPassAttachment> &attachments;
+        const std::vector<SubpassInfo> &subpassInfos;
     };
 
     class RenderPass
     {
+
     public:
         /* --- CONSTRUCTORS --- */
-        RenderPass(const std::unique_ptr<Subpass> &subpass);
+        RenderPass(const RenderPassCreateInfo &createInfo);
+        static std::unique_ptr<RenderPass> Create(RenderPassCreateInfo createInfo);
 
-        class Builder
-        {
-        public:
-            [[nodiscard]] std::unique_ptr<RenderPass> Build(const std::unique_ptr<Subpass> &givenSubpass) const;
-        };
-
-        /* --- SETTER METHODS --- */
-        void SetFramebuffer(std::unique_ptr<Framebuffer> &givenFramebuffer);
-        void SetBackgroundColor(glm::vec4 givenColor);
-        void Begin(const VkCommandBuffer &givenCommandBuffer);
-        void End(VkCommandBuffer givenCommandBuffer);
+        /* --- POLLING METHODS --- */
+        void NextSubpass(VkCommandBuffer commandBuffer);
+        void Begin(const std::unique_ptr<Framebuffer> &framebuffer, VkCommandBuffer commandBuffer);
+        void End(VkCommandBuffer commandBuffer);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline VkRenderPass GetVulkanRenderPass() const { return this->vkRenderPass; }
+        [[nodiscard]] inline VkRenderPass GetVulkanRenderPass() const { return renderPass; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();
@@ -108,10 +59,17 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         RenderPass &operator=(const RenderPass &) = delete;
 
     private:
-        VkRenderPass vkRenderPass;
-        VkClearValue clearValues[2];
-        VkFramebuffer vkFramebuffer = VK_NULL_HANDLE;
-        bool renderPassBegan = false;
+        VkRenderPass renderPass;
+        std::vector<VkClearValue> clearValues;
+
+        struct SubpassDescription
+        {
+            VkAttachmentReference depthReference{};
+            std::vector<VkAttachmentReference> colorReferences{};
+            std::vector<VkAttachmentReference> resolveReferences{};
+            std::vector<VkAttachmentReference> inputReferences{};
+            VkSubpassDescription data{};
+        };
 
     };
 

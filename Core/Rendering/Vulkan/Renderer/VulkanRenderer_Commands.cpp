@@ -13,24 +13,6 @@ using Sierra::Engine::Components::PushConstant;
 namespace Sierra::Core::Rendering::Vulkan
 {
 
-    void VulkanRenderer::CreateCommandPool()
-    {
-        // Set up the command pool creation info
-        VkCommandPoolCreateInfo commandPoolCreateInfo{};
-        commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
-
-        // Create the command pool
-        VK_ASSERT(
-            vkCreateCommandPool(this->logicalDevice, &commandPoolCreateInfo, nullptr, &commandPool),
-            "Failed to create command pool"
-        );
-
-        // Assign the EngineCore's command pool
-        VulkanCore::SetCommandPool(commandPool);
-    }
-
     void VulkanRenderer::CreateCommandBuffers()
     {
         // Resize the command buffers array
@@ -39,12 +21,12 @@ namespace Sierra::Core::Rendering::Vulkan
         // Set up allocation info
         VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
         commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        commandBufferAllocateInfo.commandPool = commandPool;
+        commandBufferAllocateInfo.commandPool = device->GetCommandPool();
         commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         commandBufferAllocateInfo.commandBufferCount = maxConcurrentFrames;
 
         VK_ASSERT(
-            vkAllocateCommandBuffers(this->logicalDevice, &commandBufferAllocateInfo, commandBuffers.data()),
+            vkAllocateCommandBuffers(device->GetLogicalDevice(), &commandBufferAllocateInfo, commandBuffers.data()),
             "Failed to allocate command buffers"
         );
     }
@@ -69,29 +51,11 @@ namespace Sierra::Core::Rendering::Vulkan
         // Start GPU timer
         vkCmdWriteTimestamp(givenCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, drawTimeQueryPool, imageIndex * 2);
 
-        // Set up the viewport
-        VkViewport viewport{};
-        viewport.x = 0;
-        viewport.y = 0;
-        viewport.width = static_cast<uint32_t>(this->swapchainExtent.width);
-        viewport.height = static_cast<uint32_t>(this->swapchainExtent.height);
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-
-        // Set up scissor
-        VkRect2D scissor{};
-        scissor.offset = { 0, 0 };
-        scissor.extent = this->swapchainExtent;
-
         // Bind the pipeline
         vkCmdBindPipeline(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipeline);
 
-        offscreenRenderPass->SetFramebuffer(offscreenFramebuffers[imageIndex]);
-        offscreenRenderPass->Begin(givenCommandBuffer);
-
-        // Apply scissoring and viewport update
-        vkCmdSetViewport(givenCommandBuffer, 0, 1, &viewport);
-        vkCmdSetScissor(givenCommandBuffer, 0, 1, &scissor);
+        // Begin rendering offscreen image
+        offscreenRenderer->Begin(givenCommandBuffer, currentFrame);
 
         VkBuffer vertexBuffers[1];
         VkDescriptorSet descriptorSets[2];
@@ -117,9 +81,9 @@ namespace Sierra::Core::Rendering::Vulkan
 
             // Send push constant data to shader
             vkCmdPushConstants(
-                    givenCommandBuffer, this->graphicsPipelineLayout,
-                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-                    pushConstantSize, &data
+                givenCommandBuffer, this->graphicsPipelineLayout,
+                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+                pushConstantSize, &data
             );
 
             // Use either bindless or bind*full* descriptor set if not supported
@@ -131,11 +95,25 @@ namespace Sierra::Core::Rendering::Vulkan
             vkCmdDrawIndexed(givenCommandBuffer, mesh.GetMesh()->GetIndexCount(), 1, 0, 0, 0);
         }
 
-        offscreenRenderPass->End(givenCommandBuffer);
+        // End the offscreen renderer
+        offscreenRenderer->End(givenCommandBuffer);
 
         // Begin the render pass
-        swapchainRenderPass->SetFramebuffer(swapchainFramebuffers[imageIndex]);
-        swapchainRenderPass->Begin(givenCommandBuffer);
+        swapchainRenderPass->Begin(swapchainFramebuffers[imageIndex], givenCommandBuffer);
+
+        // Set up the viewport
+        VkViewport viewport{};
+        viewport.x = 0;
+        viewport.y = 0;
+        viewport.width = this->swapchainExtent.width;
+        viewport.height = this->swapchainExtent.height;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+
+        // Set up scissor
+        VkRect2D scissor{};
+        scissor.offset = { 0, 0 };
+        scissor.extent = { this->swapchainExtent.width,  this->swapchainExtent.height };
 
         // Apply scissoring and viewport update
         vkCmdSetViewport(givenCommandBuffer, 0, 1, &viewport);
@@ -166,7 +144,7 @@ namespace Sierra::Core::Rendering::Vulkan
         uint64_t size = sizeof(uint64_t) * 2;
 
         // Check if draw time query results are available
-        VkResult result = vkGetQueryPoolResults(this->logicalDevice, drawTimeQueryPool, swapchainIndex * 2, 2, size, buffer, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT);
+        VkResult result = vkGetQueryPoolResults(device->GetLogicalDevice(), drawTimeQueryPool, swapchainIndex * 2, 2, size, buffer, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT);
         if (result == VK_NOT_READY)
         {
             return;

@@ -49,9 +49,6 @@ namespace Sierra::Core::Rendering
         /// @brief Sets the transparency (opacity) of the window
         void SetOpacity(float givenOpacity);
 
-        /// @brief Set what callback to be called upon window resizing. Must only be used by renderer classes!
-        void SetResizeCallback(std::function<void()> givenCallback);
-
         // void SetIcon():
 
         /* --- GETTER METHODS --- */
@@ -123,11 +120,11 @@ namespace Sierra::Core::Rendering
         int width, height;
         std::string title;
 
-        bool closed, minimized, maximized, focused, hidden, resized, resizeSet;
-        float opacity;
+        bool closed = false, minimized = false, maximized = false, focused = false, hidden = false, resized = false, resizeSet = false;
+        float opacity = 0.0f;
 
-        const bool RESIZABLE;
-        const bool REQUIRE_FOCUS;
+        const bool RESIZABLE = false;
+        const bool REQUIRE_FOCUS = false;
 
         struct {
             int xPosition; int yPosition; int width; int height;

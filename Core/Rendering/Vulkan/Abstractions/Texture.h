@@ -61,6 +61,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         /* --- PROPERTIES --- */
         std::string name;
 
+        /* --- SETTER METHODS --- */
+        void Dispose();
+
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline std::string GetName() const
         { return this->name; }
