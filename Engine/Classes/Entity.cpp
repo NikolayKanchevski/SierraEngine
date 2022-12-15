@@ -4,7 +4,6 @@
 
 #include "Entity.h"
 
-#include <iostream>
 
 using namespace Sierra::Engine::Components;
 

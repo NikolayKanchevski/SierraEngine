@@ -1,8 +1,21 @@
+//
+// Created by Nikolay Kanchevski on some date lul.
+//
+
+#pragma once
+
+#include <glm/mat4x4.hpp>
+
 #include "Component.h"
 #include "../Classes/Mesh.h"
+#include "../Classes/Binary.h"
+#include "../Structures/Material.h"
+#include "../../Core/Rendering/Vulkan/Abstractions/Texture.h"
 
 namespace Sierra::Engine::Components
 {
+
+    using namespace Sierra::Engine::Classes;
 
     class MeshRenderer : public Component
     {

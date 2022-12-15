@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <vulkan/vulkan.h>
-#include <memory>
-#include <set>
 #include <vector>
+#include <vulkan/vulkan.h>
+
+#include "../VulkanTypes.h"
 
 #define VALIDATION_ENABLED DEBUG
 
@@ -58,13 +58,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures() const { return physicalDeviceFeatures; }
         [[nodiscard]] VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const { return physicalDeviceProperties; }
 
-        [[nodiscard]] VkSurfaceFormatKHR GetBestSwapchainImageFormat() const { return bestSwapchainImageFormat; }
-        [[nodiscard]] VkFormat GetBestDepthImageFormat() const { return bestDepthImageFormat; }
+        [[nodiscard]] ImageFormat GetBestSwapchainImageFormat() const { return (ImageFormat) bestSwapchainImageFormat.format; }
+        [[nodiscard]] VkColorSpaceKHR GetBestSwapchainColorSpace() const { return bestSwapchainImageFormat.colorSpace; }
+        [[nodiscard]] ImageFormat GetBestDepthImageFormat() const { return bestDepthImageFormat; }
 
         [[nodiscard]] VkSurfaceCapabilitiesKHR GetSwapchainCapabilites() const { return swapchainSupportDetails.capabilities; }
         [[nodiscard]] VkPresentModeKHR GetBestPresentationMode() const { return bestPresentationMode; }
 
-        [[nodiscard]] VkSampleCountFlagBits GetHighestMultisampling() const { return highestMultisampling; }
+        [[nodiscard]] Multisampling GetHighestMultisampling() const { return highestMultisampling; }
 
         [[nodiscard]] uint32_t GetGraphicsQueueFamily() const { return queueFamilyIndices.graphicsFamily; }
         [[nodiscard]] uint32_t GetPresentationQueueFamily() const { return queueFamilyIndices.presentationFamily; }
@@ -118,7 +119,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 func(givenInstance, givenDebugMessenger, pAllocator);
             }
         }
-
         #endif
 
     private:
@@ -142,9 +142,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkPhysicalDeviceFeatures* requiredFeatures;
 
         VkSurfaceFormatKHR bestSwapchainImageFormat;
-        VkFormat bestDepthImageFormat;
+        ImageFormat bestDepthImageFormat;
         VkPresentModeKHR bestPresentationMode;
-        VkSampleCountFlagBits highestMultisampling;
+        Multisampling highestMultisampling;
 
         /* --- SETTER METHODS --- */
         void CreateInstance();
@@ -175,9 +175,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         SwapchainSupportDetails GetSwapchainSupportDetails(const VkPhysicalDevice &givenPhysicalDevice);
 
         VkSurfaceFormatKHR ChooseBestSwapchainFormat(std::vector<VkSurfaceFormatKHR> &givenFormats);
-        VkFormat GetBestDepthBufferFormat(std::vector<VkFormat> givenFormats, VkImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags);
+        ImageFormat GetBestDepthBufferFormat(std::vector<ImageFormat> givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags);
         VkPresentModeKHR ChooseSwapchainPresentMode(std::vector<VkPresentModeKHR> &givenPresentModes);
-        VkSampleCountFlagBits GetHighestSupportedSampling();
+        Multisampling GetHighestSupportedSampling();
     };
 
 }

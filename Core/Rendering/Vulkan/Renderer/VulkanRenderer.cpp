@@ -2,11 +2,16 @@
 // Created by Nikolay Kanchevski on 4.10.22.
 //
 
-#include <functional>
 #include "VulkanRenderer.h"
-#include "../../../../Engine/Classes/Stopwatch.h"
-#include "../../../../Engine/Components/Model.h"
 
+#include <imgui_impl_vulkan.h>
+
+#include "../../../World.h"
+#include "../../../../Engine/Classes/Mesh.h"
+#include "../../../../Engine/Classes/Stopwatch.h"
+#include "../../../../Engine/Components/MeshRenderer.h"
+
+using namespace Sierra::Engine::Components;
 using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Core::Rendering::Vulkan

@@ -4,12 +4,7 @@
 
 #pragma once
 
-#include <vector>
-#include <string>
 
-#include <glm/glm.hpp>
-#include "Component.h"
-#include "../Classes/Mesh.h"
 
 namespace Sierra::Engine::Components
 {

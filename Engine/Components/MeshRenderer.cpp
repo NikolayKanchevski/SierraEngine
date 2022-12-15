@@ -4,7 +4,8 @@
 
 #include "MeshRenderer.h"
 
-#include "InternalComponents.h"
+#include <glm/ext/matrix_transform.hpp>
+
 #include "../../Core/Rendering/Vulkan/VulkanCore.h"
 
 using Sierra::Core::Rendering::Vulkan::VulkanCore;

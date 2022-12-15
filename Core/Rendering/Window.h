@@ -4,14 +4,10 @@
 
 #pragma once
 
-#include <string>
 #define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-#include <glm/vec2.hpp>
-#include <glm/vec4.hpp>
-#include <functional>
 
-//using namespace Sierra::Core::Rendering::Vulkan;
+#include <string>
+#include <GLFW/glfw3.h>
 
 namespace Sierra::Core::Rendering
 {
@@ -115,7 +111,8 @@ namespace Sierra::Core::Rendering
         Window &operator=(const Window &) = delete;
     private:
         GLFWwindow *glfwWindow;
-        glm::vec2 position;
+        uint32_t xPosition;
+        uint32_t yPosition;
 
         int width, height;
         std::string title;

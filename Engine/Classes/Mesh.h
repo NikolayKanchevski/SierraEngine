@@ -4,25 +4,18 @@
 
 #pragma once
 
-#include <cstdint>
-#include <vector>
-#include <memory>
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/mat4x4.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
-#include "../Structures/Material.h"
+#include <cstdint>
+#include <memory>
+
 #include "../Structures/Vertex.h"
-#include "Binary.h"
-
+#include "../Structures/Material.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Buffer.h"
-#include "../../Core/Rendering/Vulkan/VulkanUtilities.h"
-#include "../../Core/Rendering/Vulkan/Abstractions/Descriptors.h"
 
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
-using namespace Sierra::Engine::Classes;
 
-namespace Sierra::Engine::Components
+namespace Sierra::Engine::Classes
 {
     struct alignas(16) PushConstant
     {

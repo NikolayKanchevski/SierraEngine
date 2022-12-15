@@ -2,9 +2,10 @@
 // Created by Nikolay Kanchevski on 28.09.22.
 //
 
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
 #include "Time.h"
+
+#include <glm/glm.hpp>
+#include <GLFW/glfw3.h>
 
 namespace Sierra::Engine::Classes
 {

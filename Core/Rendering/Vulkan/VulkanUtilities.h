@@ -4,19 +4,19 @@
 
 #pragma once
 
-#include <vulkan/vulkan.h>
-#include <string>
-#include <glm/vec3.hpp>
-#include <glm/vec2.hpp>
+#include "VulkanCore.h"
+#include "VulkanTypes.h"
 
 namespace Sierra::Core::Rendering::Vulkan
 {
+
+    // TODO: MOVE TO DEVICE
 
     class VulkanUtilities
     {
     public:
         /* --- GETTER METHODS --- */
-        static uint32_t FindMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags givenMemoryFlags);
+        static uint32_t FindMemoryTypeIndex(uint32_t typeFilter, MemoryFlags givenMemoryFlags);
 
         static VkCommandBuffer BeginSingleTimeCommands();
         static void EndSingleTimeCommands(VkCommandBuffer commandBuffer);

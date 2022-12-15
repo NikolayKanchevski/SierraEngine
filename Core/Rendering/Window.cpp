@@ -2,12 +2,12 @@
 // Created by Nikolay Kanchevski on 27.09.22.
 //
 
-#include <utility>
 #include "Window.h"
+
 #include "../Debugger.h"
-#include "../../Engine/Classes/Stopwatch.h"
-#include "../../Engine/Classes/Cursor.h"
 #include "../../Engine/Classes/Input.h"
+#include "../../Engine/Classes/Cursor.h"
+#include "../../Engine/Classes/Stopwatch.h"
 
 using namespace Sierra::Engine::Classes;
 

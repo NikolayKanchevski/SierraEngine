@@ -6,7 +6,8 @@
 
 #include <memory>
 #include <vulkan/vulkan.h>
-#include <glm/vec2.hpp>
+
+#include "../VulkanTypes.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -16,7 +17,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         float maxLod = 13.0f;
         float maxAnisotropy = 0.0f;
         bool applyBilinearFiltering = true;
-        VkSamplerAddressMode samplerAddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        SamplerAddressMode samplerAddressMode = SamplerAddressMode::REPEAT;
     };
 
     /// @brief An abstraction for the VkSampler object.
@@ -29,11 +30,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkSampler GetVulkanSampler() const { return this->vkSampler; };
-        [[nodiscard]] inline float GetMinLod() const { return this->minLod; }
-        [[nodiscard]] inline float GetMaxLod() const { return this->maxLod; }
-        [[nodiscard]] inline float GetMaxAnisotropy() const { return this->maxAnisotropy; }
-        [[nodiscard]] inline bool IsBilinearFilteringApplied() const { return this->applyBilinearFiltering; }
-        [[nodiscard]] inline VkSamplerAddressMode GetAddressMode() const { return this->samplerAddressMode; }
+        [[nodiscard]] inline float GetMinLod() const { return this->createInfo.minLod; }
+        [[nodiscard]] inline float GetMaxLod() const { return this->createInfo.maxLod; }
+        [[nodiscard]] inline float GetMaxAnisotropy() const { return this->createInfo.maxAnisotropy; }
+        [[nodiscard]] inline bool IsBilinearFilteringApplied() const { return this->createInfo.applyBilinearFiltering; }
+        [[nodiscard]] inline SamplerAddressMode GetAddressMode() const { return this->samplerAddressMode; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();
@@ -42,11 +43,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     private:
         VkSampler vkSampler = VK_NULL_HANDLE;
-        float minLod = 1.0;
-        float maxLod = 13.0f;
-        float maxAnisotropy = 0.0f;
-        bool applyBilinearFiltering = true;
-        VkSamplerAddressMode samplerAddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        SamplerCreateInfo createInfo;
+        SamplerAddressMode samplerAddressMode = SamplerAddressMode::REPEAT;
 
     };
 

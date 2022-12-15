@@ -8,36 +8,21 @@
     #define NOMINMAX
 #endif
 
-#include <vector>
-#include <algorithm>
-#include <functional>
-#include <shaderc/shaderc.h>
-#include <shaderc/shaderc.hpp>
-#include <vulkan/vk_enum_string_helper.h>
-
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/mat4x4.hpp>
 
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
-
-#include "../../../Debugger.h"
-#include "../VulkanUtilities.h"
+#include <memory>
+#include <vector>
+#include <vulkan/vulkan.h>
 
 #include "../../Window.h"
-
-#include "../Abstractions/Image.h"
-#include "../Abstractions/RenderPass.h"
-#include "../Abstractions/Descriptors.h"
-#include "../Abstractions/Sampler.h"
-#include "../Abstractions/Buffer.h"
-#include "../Abstractions/Texture.h"
-#include "../Abstractions/OffscreenRenderer.h"
-#include "../../../../Engine/Structures/Vertex.h"
 #include "../Abstractions/Device.h"
+#include "../Abstractions/Buffer.h"
+#include "../Abstractions/Descriptors.h"
+#include "../Abstractions/RenderPass.h"
+#include "../Abstractions/Image.h"
+#include "../Abstractions/Framebuffer.h"
+#include "../Abstractions/OffscreenRenderer.h"
+#include "../VulkanTypes.h"
 
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 
@@ -77,7 +62,7 @@ namespace Sierra::Core::Rendering::Vulkan
     private:
         /* --- SETTINGS --- */
         bool msaaSamplingEnabled = true;
-        VkSampleCountFlagBits msaaSampleCount = msaaSamplingEnabled ? VK_SAMPLE_COUNT_64_BIT : VK_SAMPLE_COUNT_1_BIT;
+        Multisampling msaaSampleCount = msaaSamplingEnabled ? Multisampling::MSAAx64 : Multisampling::MSAAx1;
 
         enum RenderingMode { Fill, Wireframe };
         RenderingMode renderingMode = Fill;

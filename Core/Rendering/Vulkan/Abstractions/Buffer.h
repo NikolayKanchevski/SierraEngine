@@ -4,9 +4,12 @@
 
 #pragma once
 
-#include <vulkan/vulkan.h>
-#include <glm/vec3.hpp>
+#include <cstdint>
 #include <memory>
+#include <glm/vec3.hpp>
+#include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
+
 #include "Image.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
@@ -14,8 +17,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     struct BufferCreateInfo
     {
         uint64_t memorySize = 0;
-        VkMemoryPropertyFlags memoryFlags = 0;
-        VkBufferUsageFlags bufferUsage = 0;
+        MemoryFlags memoryFlags = MemoryFlags::NONE;
+        BufferUsage bufferUsage = BufferUsage::UNDEFINED;
     };
 
     /// @brief An abstraction class to make managing Vulkan buffers easier.
@@ -39,13 +42,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline VkDeviceMemory GetVulkanMemory() const
         { return this->vkBufferMemory; }
 
-        [[nodiscard]] inline VkMemoryPropertyFlags GetMemoryFlags() const
+        [[nodiscard]] inline MemoryFlags GetMemoryFlags() const
         { return this->memoryFlags; }
 
         [[nodiscard]] inline uint64_t GetMemorySize() const
         { return this->memorySize; }
 
-        [[nodiscard]] inline VkBufferUsageFlags GetBufferUsage() const
+        [[nodiscard]] inline BufferUsage GetBufferUsage() const
         { return this->bufferUsage; }
 
         [[nodiscard]] inline uint64_t GetOffset() const { return 0; }
@@ -60,8 +63,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkDeviceMemory vkBufferMemory;
 
         uint64_t memorySize;
-        VkMemoryPropertyFlags memoryFlags;
-        VkBufferUsageFlags bufferUsage;
+        MemoryFlags memoryFlags;
+        BufferUsage bufferUsage;
         bool destroyed = false;
     };
 

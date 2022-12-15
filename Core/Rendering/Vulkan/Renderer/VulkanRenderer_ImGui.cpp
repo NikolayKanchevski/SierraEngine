@@ -3,6 +3,12 @@
 //
 
 #include "VulkanRenderer.h"
+
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
+
+#include "../VulkanUtilities.h"
 #include "../../../../Engine/Classes/Cursor.h"
 
 using namespace Sierra::Engine::Classes;

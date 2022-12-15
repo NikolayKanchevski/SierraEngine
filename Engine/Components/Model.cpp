@@ -3,8 +3,12 @@
 //
 
 #include "Model.h"
-#include "../Classes/Stopwatch.h"
+
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+
 #include "../Classes/File.h"
+#include "../Classes/Stopwatch.h"
 
 using Sierra::Core::Debugger;
 

@@ -29,8 +29,8 @@ namespace Sierra::Core::Rendering::Vulkan
         swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         swapchainCreateInfo.surface = device->GetSurface();
         swapchainCreateInfo.minImageCount = maxConcurrentFrames;
-        swapchainCreateInfo.imageFormat = device->GetBestSwapchainImageFormat().format;
-        swapchainCreateInfo.imageColorSpace = device->GetBestSwapchainImageFormat().colorSpace;
+        swapchainCreateInfo.imageFormat = (VkFormat) device->GetBestSwapchainImageFormat();
+        swapchainCreateInfo.imageColorSpace = device->GetBestSwapchainColorSpace();
         swapchainCreateInfo.imageExtent = extent;
         swapchainCreateInfo.imageArrayLayers = 1;
         swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -77,12 +77,12 @@ namespace Sierra::Core::Rendering::Vulkan
             // Create swapchain image and view
             swapchainImages[i] = Image::CreateSwapchainImage({
                 .image = swapchainVkImages[i],
-                .format = device->GetBestSwapchainImageFormat().format,
-                .sampling = VK_SAMPLE_COUNT_1_BIT,
+                .format = device->GetBestSwapchainImageFormat(),
+                .sampling = Multisampling::MSAAx1,
                 .dimensions = { swapchainExtent.width, swapchainExtent.height, 1 }
             });
 
-            swapchainImages[i]->CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT);
+            swapchainImages[i]->CreateImageView(ImageAspectFlags::COLOR);
         }
 
         // Assign the EngineCore's swapchain extent

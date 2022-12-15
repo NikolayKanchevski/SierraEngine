@@ -4,10 +4,9 @@
 
 #pragma once
 
+#include <cstdint>
 #include <vector>
-#include <array>
-#include <glm/vec2.hpp>
-#include "Image.h"
+#include <vulkan/vulkan.h>
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {

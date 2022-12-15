@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "../Component.h"
 #include "Light.h"
 
 namespace Sierra::Engine::Components

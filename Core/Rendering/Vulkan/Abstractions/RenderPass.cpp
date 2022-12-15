@@ -20,14 +20,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         for (uint32_t i = attachments.size(); i--;)
         {
-            attachmentDescriptions[i].format = attachments[i].imageAttachment->GetFormat();
-            attachmentDescriptions[i].samples = attachments[i].imageAttachment->GetSampling();
-            attachmentDescriptions[i].loadOp = attachments[i].loadOp;
-            attachmentDescriptions[i].storeOp = attachments[i].storeOp;
+            attachmentDescriptions[i].format = (VkFormat) attachments[i].imageAttachment->GetFormat();
+            attachmentDescriptions[i].samples = (VkSampleCountFlagBits) attachments[i].imageAttachment->GetSampling();
+            attachmentDescriptions[i].loadOp = (VkAttachmentLoadOp) attachments[i].loadOp;
+            attachmentDescriptions[i].storeOp = (VkAttachmentStoreOp) attachments[i].storeOp;
             attachmentDescriptions[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;      /// NOTE: These lines may need to be changed
             attachmentDescriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
             attachmentDescriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            attachmentDescriptions[i].finalLayout = attachments[i].finalLayout;
+            attachmentDescriptions[i].finalLayout = (VkImageLayout) attachments[i].finalLayout;
         }
 
         std::vector<SubpassDescription> subpassDescriptions{};

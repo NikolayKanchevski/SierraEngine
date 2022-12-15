@@ -3,7 +3,8 @@
 //
 
 #include "Math.h"
-#include <glm/common.hpp>
+
+#include <glm/glm.hpp>
 
 namespace Sierra::Engine::Classes::Math
 {

@@ -3,7 +3,9 @@
 //
 
 #include "Buffer.h"
+
 #include "../VulkanCore.h"
+#include "../VulkanUtilities.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -17,13 +19,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkBufferCreateInfo vkBufferCreateInfo{};
         vkBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         vkBufferCreateInfo.size = memorySize;
-        vkBufferCreateInfo.usage = bufferUsage;
+        vkBufferCreateInfo.usage = (VkBufferUsageFlags) bufferUsage;
         vkBufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
         // Create the Vulkan buffer
         VK_ASSERT(
             vkCreateBuffer(VulkanCore::GetLogicalDevice(), &vkBufferCreateInfo, nullptr, &vkBuffer),
-            "Failed to create buffer with size of [" + std::to_string(memorySize) + "] for [" + std::to_string(bufferUsage) + "] usage"
+            "Failed to create buffer with size of [" + std::to_string(memorySize) + "] for [" + std::to_string((int) bufferUsage) + "] usage"
         );
 
         // Get the Vulkan buffer's memory requirements

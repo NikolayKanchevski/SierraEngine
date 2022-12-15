@@ -9,7 +9,7 @@
 #include <vulkan/vk_enum_string_helper.h>
 
 #if _WIN32
-#include <windows.h>
+    #include <windows.h>
 #endif
 
 namespace Sierra::Core
@@ -18,7 +18,7 @@ namespace Sierra::Core
     {
 
 #if _WIN32
-        static HANDLE hConsole;
+    static HANDLE hConsole;
 #endif
 
     public:

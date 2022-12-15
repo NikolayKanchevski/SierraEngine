@@ -3,6 +3,7 @@
 //
 
 #include "VulkanRenderer.h"
+
 #include "../VulkanCore.h"
 
 namespace Sierra::Core::Rendering::Vulkan
@@ -23,7 +24,7 @@ namespace Sierra::Core::Rendering::Vulkan
         // Lower MSAA if unsupported
         if (msaaSampleCount > device->GetHighestMultisampling())
         {
-            ASSERT_WARNING("Requested MSAA of [" + std::string(string_VkSampleCountFlagBits(msaaSampleCount)) + "] but the highest supported is [" + std::string(string_VkSampleCountFlagBits(device->GetHighestMultisampling())) + "]. The setting has been lowered automatically");
+            ASSERT_WARNING("Requested MSAA of [" + std::to_string((int) msaaSampleCount) + "] but the highest supported is [" + std::to_string((int) device->GetHighestMultisampling()) + "]. The setting has been lowered automatically");
             msaaSampleCount = device->GetHighestMultisampling();
         }
     }

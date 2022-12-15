@@ -7,9 +7,11 @@
 #include <string>
 #include <vector>
 #include <entt/entt.hpp>
-#include "../../Core/Debugger.h"
-#include "../Components/InternalComponents.h"
+
 #include "../../Core/World.h"
+#include "../../Core/Debugger.h"
+#include "../Components/Component.h"
+#include "../Components/InternalComponents.h"
 
 using Sierra::Core::World;
 using Sierra::Core::Debugger;
@@ -52,21 +54,6 @@ namespace Sierra::Engine::Classes
             component.SetEnttEntity(enttEntity);
             return component;
         }
-
-//        template <typename T, std::enable_if_t<std::is_base_of_v<Component, T>, bool> = true, typename... Args>
-//        T& AddComponent(T componentData)
-//        {
-//            if (HasComponent<T>())
-//            {
-//                ASSERT_WARNING("Component of type [" + Debugger::TypeToString<T>() + "] already present in entity [" + GetTag() + "]. New components has been dismissed and instead the old one has been returned");
-//                return GetComponent<T>();
-//            }
-//
-//            T& component = World::GetEnttRegistry().emplace<T>(enttEntity);
-//            component = componentData;
-//            component.SetEnttEntity(enttEntity);
-//            return component;
-//        }
 
         template<typename T, std::enable_if_t<std::is_base_of_v<Component, T>, bool> = true, typename... Args>
         T& AddOrReplaceComponent(Args&&... args)

@@ -2,9 +2,12 @@
 // Created by Nikolay Kanchevski on 30.09.22.
 //
 
-#include <vector>
 
 #include "Descriptors.h"
+
+#include <memory>
+
+#include "Texture.h"
 #include "../VulkanCore.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
@@ -282,7 +285,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         VkDescriptorImageInfo imageInfo{};
         imageInfo.sampler = texture->GetVulkanSampler();
-        imageInfo.imageLayout = texture->GetImage()->GetLayout();
+        imageInfo.imageLayout = (VkImageLayout) texture->GetImage()->GetLayout();
         imageInfo.imageView = texture->GetImage()->GetVulkanImageView();
 
         descriptorImageInfos[binding] = imageInfo;
@@ -499,7 +502,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         VkDescriptorImageInfo imageInfo{};
         imageInfo.sampler = texture->GetVulkanSampler();
-        imageInfo.imageLayout = texture->GetImage()->GetLayout();
+        imageInfo.imageLayout = (VkImageLayout) texture->GetImage()->GetLayout();
         imageInfo.imageView = texture->GetImage()->GetVulkanImageView();
 
         if (arrayIndex == -1)

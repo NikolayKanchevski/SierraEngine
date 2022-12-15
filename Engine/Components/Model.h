@@ -4,17 +4,14 @@
 
 #pragma once
 
-#include <vector>
+#include <memory>
+#include <entt/entt.hpp>
 #include <assimp/scene.h>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <future>
 
+#include "MeshRenderer.h"
 #include "../Classes/Mesh.h"
 #include "../Classes/Entity.h"
-#include "MeshRenderer.h"
-
+#include "../../Core/Rendering/Vulkan/Abstractions/Texture.h"
 
 using namespace Sierra::Engine::Components;
 

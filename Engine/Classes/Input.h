@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include <vector>
-#include <glm/vec2.hpp>
-#include <GLFW/glfw3.h>
 #include <string>
+#include <vector>
+#include <cstdint>
+#include <GLFW/glfw3.h>
+#include <glm/vec2.hpp>
 
 namespace Sierra::Engine::Classes
 {

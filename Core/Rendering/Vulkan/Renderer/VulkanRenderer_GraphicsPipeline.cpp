@@ -4,8 +4,8 @@
 
 #include "VulkanRenderer.h"
 
-#include "../VulkanCore.h"
-#include "../../../../Engine/Classes/File.h"
+#include "../VulkanUtilities.h"
+#include "../../../../Engine/Structures/Vertex.h"
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -107,7 +107,7 @@ namespace Sierra::Core::Rendering::Vulkan
         multisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multisampleStateCreateInfo.sampleShadingEnable = VK_FALSE;
         multisampleStateCreateInfo.minSampleShading = 1.0f;
-        multisampleStateCreateInfo.rasterizationSamples = msaaSampleCount;
+        multisampleStateCreateInfo.rasterizationSamples = (VkSampleCountFlagBits) msaaSampleCount;
         multisampleStateCreateInfo.pSampleMask = nullptr;
         multisampleStateCreateInfo.alphaToCoverageEnable = VK_FALSE;
         multisampleStateCreateInfo.alphaToOneEnable = VK_FALSE;

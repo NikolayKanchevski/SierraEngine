@@ -6,21 +6,24 @@
 
 #include <vulkan/vulkan.h>
 #include <glm/mat4x4.hpp>
+
 #include "../Window.h"
 #include "Abstractions/Descriptors.h"
+#include "Abstractions/Device.h"
 #include "../../../Engine/Components/Lighting/DirectionalLight.h"
 #include "../../../Engine/Components/Lighting/PointLight.h"
 
-using Sierra::Core::Rendering::Vulkan::Abstractions::DescriptorPool;
-using namespace Sierra::Engine::Components;
 
-/* ! NOTE: Remember to change these in shaders too ! */
-#define MAX_MESHES 8192 // Changed as @kael wouldn't stop bitching about it
+// * ! NOTE: Remember to change these in shaders too ! * //
+#define MAX_MESHES 8192                                          // Changed as @kael wouldn't stop bitching about it
 #define MAX_TEXTURES MAX_MESHES * TOTAL_TEXTURE_TYPES_COUNT
 #define MAX_POINT_LIGHTS 64
 #define MAX_DIRECTIONAL_LIGHTS 16
 
-#define MAIN_IMAGE_FORMAT VK_FORMAT_R8G8B8A8_UNORM
+#define MAIN_IMAGE_FORMAT ImageFormat::R8G8B8A8_UNORM
+
+using namespace Sierra::Engine::Components;
+using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 
 struct UniformData
 {
@@ -48,7 +51,6 @@ struct StorageData
 
 namespace Sierra::Core::Rendering::Vulkan
 {
-    using Abstractions::BindlessDescriptorSet;
 
     class VulkanCore
     {

@@ -4,11 +4,7 @@
 
 #pragma once
 
-#include <cstdint>
-
 #include "Sampler.h"
-#include "RenderPass.h"
-#include "Framebuffer.h"
 #include "RenderPass.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
@@ -19,7 +15,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         uint32_t height = 0;
         uint32_t maxConcurrentFrames = 0;
 
-        VkSampleCountFlagBits msaaSampling = VK_SAMPLE_COUNT_1_BIT;
+        Multisampling msaaSampling = Multisampling::MSAAx1;
         bool createDepthAttachment = false;
     };
 
@@ -56,7 +52,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         bool alreadyCreated = false;
         bool hasDepthAttachment = false;
-        VkSampleCountFlagBits msaaSampleCount;
+        Multisampling msaaSampleCount;
 
         std::vector<std::unique_ptr<Image>> colorImages;
         std::unique_ptr<Image> depthImage;
@@ -71,7 +67,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void CreateRenderPass();
         void CreateFramebuffers();
 
-        inline bool IsMSAAEnabled() const { return msaaSampleCount > VK_SAMPLE_COUNT_1_BIT; }
+        inline bool IsMSAAEnabled() const { return msaaSampleCount > Multisampling::MSAAx1; }
     };
 
 }

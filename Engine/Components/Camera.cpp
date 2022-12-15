@@ -4,6 +4,8 @@
 
 #include "Camera.h"
 
+#include <glm/vec3.hpp>
+
 namespace Sierra::Engine::Components
 {
     Camera *Camera::mainCamera = nullptr;

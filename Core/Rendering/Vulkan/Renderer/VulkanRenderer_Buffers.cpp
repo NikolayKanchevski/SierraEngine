@@ -10,11 +10,6 @@ namespace Sierra::Core::Rendering::Vulkan
 {
     void VulkanRenderer::CreateShaderBuffers()
     {
-        // Create uniform arrays
-//        uniformData.directionalLights.resize(VulkanCore::MAX_DIRECTIONAL_LIGHTS);
-//        uniformData.pointLights.resize(VulkanCore::MAX_POINT_LIGHTS);
-//        uniformData.spotLights.resize(VulkanCore::MAX_SPOTLIGHT_LIGHTS);
-
         // Resize uniform buffers array
         shaderBuffers.reserve(maxConcurrentFrames * SHADER_BUFFERS_COUNT);
 
@@ -26,8 +21,8 @@ namespace Sierra::Core::Rendering::Vulkan
         {
             shaderBuffers.push_back(Buffer::Create({
                 .memorySize = uniformDataSize,
-                .memoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                .bufferUsage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+                .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+                .bufferUsage = BufferUsage::UNIFORM_BUFFER
             }));
         }
 
@@ -36,8 +31,8 @@ namespace Sierra::Core::Rendering::Vulkan
         {
             shaderBuffers.push_back(Buffer::Create({
                 .memorySize = storageDataSize,
-                .memoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                .bufferUsage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+                .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+                .bufferUsage = BufferUsage::STORAGE_BUFFER
             }));
         }
     }

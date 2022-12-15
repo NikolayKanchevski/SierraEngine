@@ -4,7 +4,8 @@
 
 #include "World.h"
 
-#include "Rendering/Vulkan/VulkanCore.h"
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "../Engine/Classes/Time.h"
 #include "../Engine/Classes/Cursor.h"
 #include "../Engine/Classes/Input.h"
@@ -13,7 +14,6 @@
 
 using namespace Sierra::Engine::Classes;
 using namespace Sierra::Engine::Components;
-using Sierra::Engine::Components::Relationship;
 
 namespace Sierra::Core
 {

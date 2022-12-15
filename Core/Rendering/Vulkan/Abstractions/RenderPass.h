@@ -5,8 +5,10 @@
 #pragma once
 
 #include <vector>
+
 #include "Image.h"
 #include "Framebuffer.h"
+#include "../VulkanTypes.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -17,12 +19,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         std::unique_ptr<Image>& imageAttachment;
 
         /* --- RENDERPASS PROPERTIES --- */
-        VkAttachmentLoadOp loadOp;
-        VkAttachmentStoreOp storeOp;
-        VkImageLayout finalLayout;
+        LoadOp loadOp = LoadOp::UNDEFINED;
+        StoreOp storeOp = StoreOp::UNDEFINED;
+        ImageLayout finalLayout = ImageLayout::UNDEFINED;
         bool isResolve = false;
 
-        bool IsDepth() const { return finalLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL; }
+        bool IsDepth() const { return finalLayout == ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL; }
     };
 
     struct SubpassInfo

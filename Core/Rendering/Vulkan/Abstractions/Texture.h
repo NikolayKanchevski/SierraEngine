@@ -5,13 +5,14 @@
 #pragma once
 
 #include <string>
+#include <memory>
 #include <stb_image.h>
-#include <imgui.h>
+#include <unordered_map>
+#include <vulkan/vulkan.h>
 
-#include "Descriptors.h"
-#include "Sampler.h"
 #include "Image.h"
-#include "../../../../Engine/Classes/Math.h"
+#include "Sampler.h"
+#include "../VulkanTypes.h"
 
 #define TOTAL_TEXTURE_TYPES_COUNT 3
 #define TEXTURE_TYPE_TO_BINDING(textureType)(textureType + 2)
@@ -44,11 +45,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         bool mipMappingEnabled = false;
 
         SamplerCreateInfo samplerCreateInfo{};
-        float minLod = 0.0f;
-        float maxLod = 13.0f;
-        float maxAnisotropy = 0.0f;
-        bool applyBilinearFiltering = true;
-        VkSamplerAddressMode samplerAddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     };
 
     class Texture
@@ -77,7 +73,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline uint32_t GetDepth() const
         { return this->image->GetDepth(); }
 
-        [[nodiscard]] inline VkFormat GetImageFormat() const
+        [[nodiscard]] inline ImageFormat GetImageFormat() const
         { return this->image->GetFormat(); }
 
         [[nodiscard]] inline TextureType GetTextureType() const

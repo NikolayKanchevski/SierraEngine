@@ -4,25 +4,7 @@
 
 #pragma once
 
-#include "../Rendering/Window.h"
-#include "../Rendering/Vulkan/Renderer/VulkanRenderer.h"
-#include "../../Core/World.h"
-
-#include "../../Engine/Classes/Math.h"
-#include "../../Engine/Classes/Cursor.h"
-#include "../../Engine/Classes/Input.h"
-#include "../../Engine/Classes/Time.h"
-#include "../../Engine/Classes/Entity.h"
-#include "../../Engine/Components/Model.h"
-#include "../../Engine/Components/Camera.h"
-#include "../../Engine/Components/Lighting/DirectionalLight.h"
-
-using namespace Sierra::Engine::Classes;
-using namespace Sierra::Engine::Components;
-
-using namespace Sierra::Core;
-using namespace Sierra::Core::Rendering;
-using namespace Sierra::Core::Rendering::Vulkan;
+#include "../../Engine/Include.h"
 
 #define DRAW_IMGUI_HIERARCHY
 

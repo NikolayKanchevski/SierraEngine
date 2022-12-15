@@ -4,33 +4,40 @@
 
 #pragma once
 
-#include <vulkan/vulkan_core.h>
-#include <glm/vec3.hpp>
 #include <memory>
-#include <cstdint>
+#include <vulkan/vulkan.h>
+
 #include "../../../Debugger.h"
+#include "../VulkanTypes.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
+    struct Dimensions
+    {
+        uint32_t width = 0;
+        uint32_t height = 0;
+        uint32_t depth = 1;
+    };
+
     struct ImageCreateInfo
     {
-        glm::vec3 dimensions { 0, 0, 1 };
-        VkFormat format = VK_FORMAT_UNDEFINED;
+        Dimensions dimensions{};
+        ImageFormat format = ImageFormat::UNDEFINED;
         uint32_t mipLevels = 1;
 
-        VkImageTiling imageTiling = VK_IMAGE_TILING_OPTIMAL;
-        VkSampleCountFlagBits sampling = VK_SAMPLE_COUNT_1_BIT;
+        ImageTiling imageTiling = ImageTiling::OPTIMAL;
+        Multisampling sampling = Multisampling::MSAAx1;
 
-        VkImageUsageFlags usageFlags = 0;
-        VkMemoryPropertyFlags memoryFlags = 0;
+        ImageUsage usageFlags = ImageUsage::UNDEFINED;
+        MemoryFlags memoryFlags = MemoryFlags::NONE;
     };
 
     struct SwapchainImageCreateInfo
     {
         VkImage image = VK_NULL_HANDLE;
-        VkFormat format = VK_FORMAT_UNDEFINED;
-        VkSampleCountFlagBits sampling = VK_SAMPLE_COUNT_1_BIT;
-        glm::vec3 dimensions = { 0, 0, 0 };
+        ImageFormat format = ImageFormat::UNDEFINED;
+        Multisampling sampling = Multisampling::MSAAx1;
+        Dimensions dimensions{};
     };
 
     /// @brief Abstraction to simplify the process of working with Vulkan images and image views.
@@ -46,33 +53,33 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         static std::unique_ptr<Image> CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo);
 
         /* --- SETTER METHODS --- */
-        void CreateImageView(VkImageAspectFlags givenAspectFlags);
-        void TransitionLayout(VkImageLayout newLayout);
+        void CreateImageView(ImageAspectFlags givenAspectFlags);
+        void TransitionLayout(ImageLayout newLayout);
         void DestroyImageView();
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline glm::vec3 GetDimensions() const
+        [[nodiscard]] inline Dimensions GetDimensions() const
         { return this->dimensions; };
 
         [[nodiscard]] inline float GetWidth() const
-        { return this->dimensions.x; };
+        { return this->dimensions.width; };
 
         [[nodiscard]] inline float GetHeight() const
-        { return this->dimensions.y; };
+        { return this->dimensions.height; };
 
         [[nodiscard]] inline float GetDepth() const
-        { return this->dimensions.z; };
+        { return this->dimensions.depth; };
 
         [[nodiscard]] inline uint32_t GetMipLevels() const
         { return this->mipLevels; };
 
-        [[nodiscard]] inline VkFormat GetFormat() const
+        [[nodiscard]] inline ImageFormat GetFormat() const
         { return this->format; };
 
-        [[nodiscard]] inline VkSampleCountFlagBits GetSampling() const
+        [[nodiscard]] inline Multisampling GetSampling() const
         { return this->sampling; };
 
-        [[nodiscard]] inline VkImageLayout GetLayout() const
+        [[nodiscard]] inline ImageLayout GetLayout() const
         { return this->layout; };
 
         [[nodiscard]] inline VkImage GetVulkanImage() const
@@ -91,12 +98,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Image &operator=(const Image &) = delete;
 
     private:
-        glm::vec3 dimensions { 0, 0, 1 };
+        Dimensions dimensions{};
 
         uint32_t mipLevels = 1;
-        VkFormat format = VK_FORMAT_UNDEFINED;
-        VkSampleCountFlagBits sampling;
-        VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
+        ImageFormat format = ImageFormat::UNDEFINED;
+        Multisampling sampling;
+        ImageLayout layout = ImageLayout::UNDEFINED;
 
         VkImage vkImage = VK_NULL_HANDLE;
         VkImageView vkImageView = VK_NULL_HANDLE;

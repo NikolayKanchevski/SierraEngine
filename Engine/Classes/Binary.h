@@ -5,7 +5,6 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
 #include <bitset>
 
 namespace Sierra::Engine::Classes

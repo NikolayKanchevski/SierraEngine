@@ -3,12 +3,16 @@
 //
 
 #include "VulkanRenderer.h"
-#include "../../../World.h"
+
+#include <imgui.h>
+#include <imgui_impl_vulkan.h>
+
 #include "../VulkanCore.h"
+#include "../../../../Engine/Classes/Mesh.h"
 #include "../../../../Engine/Components/MeshRenderer.h"
 
-using Sierra::Engine::Components::Mesh;
-using Sierra::Engine::Components::PushConstant;
+using Sierra::Engine::Classes::Mesh;
+using Sierra::Engine::Classes::PushConstant;
 
 namespace Sierra::Core::Rendering::Vulkan
 {

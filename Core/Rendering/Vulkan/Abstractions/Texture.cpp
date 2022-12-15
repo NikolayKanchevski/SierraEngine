@@ -3,13 +3,15 @@
 //
 
 #include "Texture.h"
-#include "Buffer.h"
-#include "../VulkanCore.h"
-#include <glm/common.hpp>
+
+#include <imgui.h>
+#include <glm/glm.hpp>
+#include <imgui_impl_vulkan.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-using namespace Sierra::Engine::Classes;
+#include "../VulkanCore.h"
+#include "../VulkanUtilities.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -33,8 +35,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         auto stagingBuffer = Buffer::Create({
             .memorySize = memorySize,
-            .memoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            .bufferUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+            .bufferUsage = BufferUsage::TRANSFER_SRC
         });
 
         // Copy the image data to the staging buffer
@@ -42,19 +44,19 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         stbi_image_free(stbImage);
 
         // Configure the color format
-        VkFormat textureImageFormat = VK_FORMAT_R8G8B8A8_SRGB;
+        ImageFormat textureImageFormat = ImageFormat::R8G8B8A8_SRGB;
 
         // Create the texture image
         this->image = Image::Create({
             .dimensions = { width, height, 1 },
             .format = textureImageFormat,
             .mipLevels = mipMapLevels,
-            .usageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-            .memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+            .usageFlags = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
+            .memoryFlags = MemoryFlags::DEVICE_LOCAL
         });
 
         // Transition the layout of the image, so it can be used for copying
-        image->TransitionLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        image->TransitionLayout(ImageLayout::TRANSFER_DST_OPTIMAL);
 
         // Copy the image to the staging buffer
         stagingBuffer->CopyImage(*image);
@@ -65,10 +67,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Generate mip maps for the current texture
         if (mipMappingEnabled) GenerateMipMaps();
         // NOTE: Transitioning to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL is not required as it is automatically done during the mip map generation
-        else image->TransitionLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        else image->TransitionLayout(ImageLayout::SHADER_READ_ONLY_OPTIMAL);
 
         // Create the image view using the proper image format
-        image->CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT);
+        image->CreateImageView(ImageAspectFlags::COLOR);
     }
 
     std::shared_ptr<Texture> Texture::Create(TextureCreateInfo textureCreateInfo, const bool setDefaultTexture)
@@ -78,7 +80,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             // If the same texture file has been used check to see if its sampler is the same as this one
             Sampler *other = (&texturePool[textureCreateInfo.filePath]->GetSampler())->get();
-            if (other->IsBilinearFilteringApplied() == textureCreateInfo.applyBilinearFiltering && other->GetMinLod() == textureCreateInfo.minLod && other->GetMaxLod() == textureCreateInfo.maxLod  && other->GetMaxAnisotropy() == textureCreateInfo.maxAnisotropy && other->GetAddressMode() == textureCreateInfo.samplerAddressMode)
+            if (other->IsBilinearFilteringApplied() == textureCreateInfo.samplerCreateInfo.applyBilinearFiltering && other->GetMinLod() == textureCreateInfo.samplerCreateInfo.minLod && other->GetMaxLod() == textureCreateInfo.samplerCreateInfo.maxLod  && other->GetMaxAnisotropy() == textureCreateInfo.samplerCreateInfo.maxAnisotropy && other->GetAddressMode() == textureCreateInfo.samplerCreateInfo.samplerAddressMode)
             {
                 // If so return it without creating a new texture
                 return texturePool[textureCreateInfo.filePath];
@@ -122,10 +124,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         // Get the properties of the image's format
         VkFormatProperties formatProperties;
-        vkGetPhysicalDeviceFormatProperties(VulkanCore::GetPhysicalDevice(), image->GetFormat(), &formatProperties);
+        vkGetPhysicalDeviceFormatProperties(VulkanCore::GetPhysicalDevice(), (VkFormat) image->GetFormat(), &formatProperties);
 
         // Check if optimal tiling is supported by the GPU
-        ASSERT_ERROR_IF((formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0, "Texture image format [" + std::to_string(image->GetFormat()) + "] does not support linear blitting");
+        ASSERT_ERROR_IF((formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0, "Texture image format [" + std::to_string((int) image->GetFormat()) + "] does not support linear blitting");
 
         // Begin a command buffer
         VkCommandBuffer commandBuffer = VulkanUtilities::BeginSingleTimeCommands();
@@ -226,7 +228,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create ImGui descriptor set if not created
         if (!imGuiDescriptorSetCreated)
         {
-            imGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(sampler->GetVulkanSampler(), image->GetVulkanImageView(), image->GetLayout());
+            imGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(sampler->GetVulkanSampler(), image->GetVulkanImageView(), (VkImageLayout) image->GetLayout());
             imGuiDescriptorSetCreated = true;
         }
 

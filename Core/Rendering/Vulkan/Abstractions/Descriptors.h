@@ -4,14 +4,12 @@
 
 #pragma once
 
-#include <vulkan/vulkan.h>
-#include <unordered_map>
 #include <memory>
 #include <vector>
+#include <unordered_map>
+#include <vulkan/vulkan.h>
+
 #include "Buffer.h"
-#include "Sampler.h"
-#include "Texture.h"
-#include <map>
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {

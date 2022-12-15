@@ -5,6 +5,8 @@
 #pragma once
 
 #include <glm/vec2.hpp>
+#include <GLFW/glfw3.h>
+
 #include "../../Core/Rendering/Vulkan/VulkanCore.h"
 
 using namespace Sierra::Core::Rendering::Vulkan;

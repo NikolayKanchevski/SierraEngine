@@ -5,6 +5,7 @@
 #include "VulkanRenderer.h"
 
 #include "../VulkanCore.h"
+#include "../Abstractions/Texture.h"
 
 namespace Sierra::Core::Rendering::Vulkan
 {

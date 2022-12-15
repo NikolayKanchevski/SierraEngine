@@ -2,14 +2,12 @@
 // Created by Nikolay Kanchevski on 28.09.22.
 //
 
-#include <iostream>
 #include "Debugger.h"
 
-#include <cstdlib>
-#include <memory>
+#include <iostream>
 
 #if __APPLE__
-#include <cxxabi.h>
+    #include <cxxabi.h>
 #endif
 
 #if _WIN32

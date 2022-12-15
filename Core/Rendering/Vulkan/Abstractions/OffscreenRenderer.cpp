@@ -5,7 +5,6 @@
 #include "OffscreenRenderer.h"
 
 #include "../VulkanCore.h"
-#include "RenderPass.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -83,10 +82,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             colorImages[i] = Image::Create({
                 .dimensions = { width, height, 1 },
                 .format = MAIN_IMAGE_FORMAT,
-                .usageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
+                .usageFlags = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED
             });
 
-            colorImages[i]->CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT);
+            colorImages[i]->CreateImageView(ImageAspectFlags::COLOR);
         }
 
         // Check if depth attachment is required
@@ -97,13 +96,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 .dimensions = { VulkanCore::GetSwapchainExtent().width, VulkanCore::GetSwapchainExtent().height, 1 },
                 .format = VulkanCore::GetDevice()->GetBestDepthImageFormat(),
                 .sampling = msaaSampleCount,
-                .usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                .memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                .usageFlags = ImageUsage::DEPTH_STENCIL_ATTACHMENT,
+                .memoryFlags = MemoryFlags::DEVICE_LOCAL,
             });
 
-            depthImage->CreateImageView(VK_IMAGE_ASPECT_DEPTH_BIT);
+            depthImage->CreateImageView(ImageAspectFlags::DEPTH);
 
-            depthImage->TransitionLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+            depthImage->TransitionLayout(ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL);
         }
 
         // Check if MSAA is enabled
@@ -114,12 +113,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 .dimensions = { VulkanCore::GetSwapchainExtent().width, VulkanCore::GetSwapchainExtent().height, 1 },
                 .format = MAIN_IMAGE_FORMAT,
                 .sampling = msaaSampleCount,
-                .usageFlags = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                .memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+                .usageFlags = ImageUsage::TRANSIENT_ATTACHMENT | ImageUsage::COLOR_ATTACHMENT,
+                .memoryFlags = MemoryFlags::DEVICE_LOCAL
             });
 
             // Create an image view off the sampled color image
-            msaaImage->CreateImageView(VK_IMAGE_ASPECT_COLOR_BIT);
+            msaaImage->CreateImageView(ImageAspectFlags::COLOR);
         }
 
         // Create sampler
@@ -138,26 +137,26 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         if (IsMSAAEnabled())
         {
             renderPassAttachments.push_back({
-                .imageAttachment = msaaImage, .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR, .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-                .finalLayout = VK_IMAGE_LAYOUT_GENERAL
+                .imageAttachment = msaaImage, .loadOp = LoadOp::CLEAR, .storeOp = StoreOp::STORE,
+                .finalLayout = ImageLayout::GENERAL
             });
 
             renderPassAttachments.push_back({
-                .imageAttachment = colorImages[0], .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-                .finalLayout = VK_IMAGE_LAYOUT_GENERAL, .isResolve = true
+                .imageAttachment = colorImages[0], .loadOp = LoadOp::DONT_CARE, .storeOp = StoreOp::STORE,
+                .finalLayout = ImageLayout::GENERAL, .isResolve = true
             });
         }
         else
         {
             renderPassAttachments.push_back({
-                .imageAttachment = colorImages[0], .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR, .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-                .finalLayout = VK_IMAGE_LAYOUT_GENERAL
+                .imageAttachment = colorImages[0], .loadOp = LoadOp::CLEAR, .storeOp = StoreOp::STORE,
+                .finalLayout = ImageLayout::GENERAL
             });
         }
 
         if (hasDepthAttachment) renderPassAttachments.push_back({
-            .imageAttachment = depthImage, .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR, .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+            .imageAttachment = depthImage, .loadOp = LoadOp::CLEAR, .storeOp = StoreOp::DONT_CARE,
+            .finalLayout = ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL
         });
 
         // Set up render targets

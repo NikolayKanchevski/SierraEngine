@@ -2,9 +2,10 @@
 // Created by Nikolay Kanchevski on 29.09.22.
 //
 
-#include <glm/common.hpp>
-#include <codecvt>
 #include "Input.h"
+
+#include <glm/glm.hpp>
+
 #include "../../Core/Debugger.h"
 
 using Sierra::Core::Debugger;

@@ -3,7 +3,6 @@
 //
 
 #include "Application.h"
-#include <iostream>
 
 #define MODEL_GRID_SIZE_X 1
 #define MODEL_GRID_SIZE_Y 1

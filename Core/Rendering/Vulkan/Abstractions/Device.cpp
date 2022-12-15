@@ -7,6 +7,8 @@
 #include "../VulkanCore.h"
 #include "../../../Version.h"
 
+using namespace Sierra::Engine::Classes;
+
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     /* --- CONSTRUCTORS --- */
@@ -214,8 +216,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->bestSwapchainImageFormat = ChooseBestSwapchainFormat(swapchainSupportDetails.formats);
 
         this->bestDepthImageFormat = GetBestDepthBufferFormat(
-            { VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT },
-            VK_IMAGE_TILING_OPTIMAL,
+            { ImageFormat::D32_SFLOAT_S8_UINT, ImageFormat::D32_SFLOAT, ImageFormat::D24_UNORM_S8_UINT },
+            ImageTiling::OPTIMAL,
             VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
         );
 
@@ -519,20 +521,20 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return givenFormats[0];
     }
 
-    VkFormat Device::GetBestDepthBufferFormat(std::vector<VkFormat> givenFormats, VkImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags)
+    ImageFormat Device::GetBestDepthBufferFormat(std::vector<ImageFormat> givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags)
     {
         for (const auto &givenFormat : givenFormats)
         {
             // Get the properties for the current format
             VkFormatProperties formatProperties;
-            vkGetPhysicalDeviceFormatProperties(physicalDevice, givenFormat, &formatProperties);
+            vkGetPhysicalDeviceFormatProperties(physicalDevice, (VkFormat) givenFormat, &formatProperties);
 
             // Check if the required format properties are supported
-            if (imageTiling == VK_IMAGE_TILING_LINEAR && (formatProperties.linearTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
+            if (imageTiling == ImageTiling::LINEAR && (formatProperties.linearTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
             {
                 return givenFormat;
             }
-            else if (imageTiling == VK_IMAGE_TILING_OPTIMAL && (formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
+            else if (imageTiling == ImageTiling::OPTIMAL && (formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
             {
                 return givenFormat;
             }
@@ -541,7 +543,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Otherwise throw an error
         ASSERT_ERROR("No depth buffer formats supported");
 
-        return VK_FORMAT_UNDEFINED;
+        return ImageFormat::UNDEFINED;
     }
 
     VkPresentModeKHR Device::ChooseSwapchainPresentMode(std::vector<VkPresentModeKHR> &givenPresentModes)
@@ -559,18 +561,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 
-    VkSampleCountFlagBits Device::GetHighestSupportedSampling()
+    Multisampling Device::GetHighestSupportedSampling()
     {
         VkSampleCountFlags countFlags = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
 
-        if ((countFlags & VK_SAMPLE_COUNT_64_BIT) != 0) return VK_SAMPLE_COUNT_64_BIT;
-        if ((countFlags & VK_SAMPLE_COUNT_32_BIT) != 0) return VK_SAMPLE_COUNT_32_BIT;
-        if ((countFlags & VK_SAMPLE_COUNT_16_BIT) != 0) return VK_SAMPLE_COUNT_16_BIT;
-        if ((countFlags & VK_SAMPLE_COUNT_8_BIT) != 0) return VK_SAMPLE_COUNT_8_BIT;
-        if ((countFlags & VK_SAMPLE_COUNT_4_BIT) != 0) return VK_SAMPLE_COUNT_4_BIT;
-        if ((countFlags & VK_SAMPLE_COUNT_2_BIT) != 0) return VK_SAMPLE_COUNT_2_BIT;
+        if ((countFlags & (int) Multisampling::MSAAx64) != 0) return Multisampling::MSAAx64;
+        if ((countFlags & (int) Multisampling::MSAAx32) != 0) return Multisampling::MSAAx32;
+        if ((countFlags & (int) Multisampling::MSAAx16) != 0) return Multisampling::MSAAx16;
+        if ((countFlags & (int) Multisampling::MSAAx8) != 0) return Multisampling::MSAAx8;
+        if ((countFlags & (int) Multisampling::MSAAx4) != 0) return Multisampling::MSAAx4;
+        if ((countFlags & (int) Multisampling::MSAAx2) != 0) return Multisampling::MSAAx2;
 
-        return VK_SAMPLE_COUNT_1_BIT;
+        return Multisampling::MSAAx1;
     }
 
     /* --- DESTRUCTOR --- */

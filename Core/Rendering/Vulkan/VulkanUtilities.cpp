@@ -2,9 +2,8 @@
 // Created by Nikolay Kanchevski on 30.09.22.
 //
 
-#include <vector>
 #include "VulkanUtilities.h"
-#include "VulkanCore.h"
+
 #include "../../../Engine/Classes/File.h"
 
 using namespace Sierra::Engine::Classes;
@@ -13,14 +12,14 @@ namespace Sierra::Core::Rendering::Vulkan
 {
 
     /* --- GETTER METHODS --- */
-    uint32_t VulkanUtilities::FindMemoryTypeIndex(const uint32_t typeFilter, const VkMemoryPropertyFlags givenMemoryFlags)
+    uint32_t VulkanUtilities::FindMemoryTypeIndex(const uint32_t typeFilter, const MemoryFlags givenMemoryFlags)
     {
         VkPhysicalDeviceMemoryProperties memoryProperties{};
         vkGetPhysicalDeviceMemoryProperties(VulkanCore::GetPhysicalDevice(), &memoryProperties);
 
         for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++)
         {
-            if ((typeFilter & (1 << (int) i)) != 0 && (memoryProperties.memoryTypes[i].propertyFlags & givenMemoryFlags) == givenMemoryFlags)
+            if ((typeFilter & (1 << (int) i)) != 0 && (memoryProperties.memoryTypes[i].propertyFlags & (int) givenMemoryFlags) == (int) givenMemoryFlags)
             {
                 return i;
             }

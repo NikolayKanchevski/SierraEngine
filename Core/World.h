@@ -5,7 +5,8 @@
 #pragma once
 
 #include <entt/entt.hpp>
-#include "../Core/Rendering/Vulkan/Renderer/VulkanRenderer.h"
+
+#include "Rendering/Vulkan/Renderer/VulkanRenderer.h"
 
 using Sierra::Core::Rendering::Vulkan::VulkanRenderer;
 

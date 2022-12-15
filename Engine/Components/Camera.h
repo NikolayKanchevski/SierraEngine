@@ -5,6 +5,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+
 #include "Component.h"
 
 namespace Sierra::Engine::Components

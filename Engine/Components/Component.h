@@ -5,6 +5,7 @@
 #pragma once
 
 #include <entt/entt.hpp>
+
 #include "../../Core/World.h"
 
 using namespace Sierra::Core;

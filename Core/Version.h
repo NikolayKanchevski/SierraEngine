@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <cstdint>
 
 namespace Sierra::Engine::Classes::Version
 {

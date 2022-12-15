@@ -6,7 +6,7 @@
 
 #include "../../../../Engine/Classes/Mesh.h"
 
-using Sierra::Engine::Components::PushConstant;
+using Sierra::Engine::Classes::PushConstant;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
