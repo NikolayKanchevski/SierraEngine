@@ -7,12 +7,13 @@
 #include <imgui_impl_vulkan.h>
 
 #include "../../../World.h"
+#include "../../UI/ImGuiCore.h"
 #include "../../../../Engine/Classes/Mesh.h"
-#include "../../../../Engine/Classes/Stopwatch.h"
 #include "../../../../Engine/Components/MeshRenderer.h"
 
-using namespace Sierra::Engine::Components;
+using Rendering::UI::ImGuiCore;
 using namespace Sierra::Engine::Classes;
+using namespace Sierra::Engine::Components;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -27,7 +28,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
     void VulkanRenderer::Start()
     {
-        Stopwatch stopwatch;
+        PROFILE_FUNCTION();
 
         CreateDevice();
         CreateSwapchain();
@@ -53,7 +54,6 @@ namespace Sierra::Core::Rendering::Vulkan
         CreateOffscreenImageDescriptorSets();
 
         window.Show();
-        ASSERT_SUCCESS("Successfully started Vulkan! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
     }
 
     void VulkanRenderer::Prepare()
@@ -89,6 +89,12 @@ namespace Sierra::Core::Rendering::Vulkan
         {
             RenderImGui();
             imGuiFrameBegan = false;
+        }
+
+        if (lastSceneViewWidth != ImGuiCore::GetSceneViewWidth() || lastSceneViewHeight != ImGuiCore::GetSceneViewHeight())
+        {
+            lastSceneViewWidth = ImGuiCore::GetSceneViewWidth();
+            lastSceneViewHeight = ImGuiCore::GetSceneViewHeight();
         }
 
         Draw();

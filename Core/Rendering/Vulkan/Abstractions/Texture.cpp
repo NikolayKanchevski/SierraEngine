@@ -11,7 +11,6 @@
 #include <stb_image.h>
 
 #include "../VulkanCore.h"
-#include "../VulkanUtilities.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -130,7 +129,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ASSERT_ERROR_IF((formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0, "Texture image format [" + std::to_string((int) image->GetFormat()) + "] does not support linear blitting");
 
         // Begin a command buffer
-        VkCommandBuffer commandBuffer = VulkanUtilities::BeginSingleTimeCommands();
+        VkCommandBuffer commandBuffer = VulkanCore::GetDevice()->BeginSingleTimeCommands();
 
         // Create an image memory barrier
         VkImageMemoryBarrier memoryBarrier{};
@@ -218,7 +217,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
           );
 
         // End the current command buffer
-        VulkanUtilities::EndSingleTimeCommands(commandBuffer);
+        VulkanCore::GetDevice()->EndSingleTimeCommands(commandBuffer);
     }
 
     /* --- SETTER METHODS --- */

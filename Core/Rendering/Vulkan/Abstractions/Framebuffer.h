@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <memory>
 #include <vulkan/vulkan.h>
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions

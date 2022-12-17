@@ -61,7 +61,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
     private:
         /* --- SETTINGS --- */
-        bool msaaSamplingEnabled = true;
+        bool msaaSamplingEnabled = false;
         Multisampling msaaSampleCount = msaaSamplingEnabled ? Multisampling::MSAAx64 : Multisampling::MSAAx1;
 
         enum RenderingMode { Fill, Wireframe };
@@ -174,6 +174,9 @@ namespace Sierra::Core::Rendering::Vulkan
         /* --- ImGui --- */
         bool imGuiFrameBegan = false;
         VkDescriptorPool imGuiDescriptorPool;
+
+        uint32_t lastSceneViewWidth = 100;
+        uint32_t lastSceneViewHeight = 100;
 
         void CreateImGuiInstance();
         void SetImGuiStyle();

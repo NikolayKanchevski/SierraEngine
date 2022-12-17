@@ -5,7 +5,6 @@
 #include "Image.h"
 
 #include "../VulkanCore.h"
-#include "../VulkanUtilities.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -45,7 +44,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Image::TransitionLayout(const ImageLayout newLayout)
     {
         // Create a temporary command buffer
-        VkCommandBuffer commandBuffer = VulkanUtilities::BeginSingleTimeCommands();
+        VkCommandBuffer commandBuffer = VulkanCore::GetDevice()->BeginSingleTimeCommands();
 
         // Create image memory barrier
         VkImageMemoryBarrier imageMemoryBarrier{};
@@ -121,7 +120,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
 
         // End command buffer
-        VulkanUtilities::EndSingleTimeCommands(commandBuffer);
+        VulkanCore::GetDevice()->EndSingleTimeCommands(commandBuffer);
 
         // Change the current layout
         this->layout = newLayout;
@@ -171,7 +170,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkMemoryAllocateInfo imageMemoryAllocateInfo{};
         imageMemoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         imageMemoryAllocateInfo.allocationSize = imageMemoryRequirements.size;
-        imageMemoryAllocateInfo.memoryTypeIndex = VulkanUtilities::FindMemoryTypeIndex(imageMemoryRequirements.memoryTypeBits, createInfo.memoryFlags);
+        imageMemoryAllocateInfo.memoryTypeIndex = VulkanCore::GetDevice()->FindMemoryTypeIndex(imageMemoryRequirements.memoryTypeBits, createInfo.memoryFlags);
 
         // Allocate the image to memory
         VK_ASSERT(

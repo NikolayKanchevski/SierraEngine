@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 #include "../Structures/Vertex.h"
 #include "../Structures/Material.h"

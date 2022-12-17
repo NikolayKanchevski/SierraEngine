@@ -49,6 +49,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void OffscreenRenderer::Resize(const uint32_t newWidth, const uint32_t newHeight)
     {
+        if (newWidth == width && newHeight == height) return;
+
         // Save new dimensions
         width = newWidth;
         height = newHeight;
@@ -67,13 +69,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             vkDeviceWaitIdle(VulkanCore::GetLogicalDevice());
 
             // Destroy resources
-            sampler->Destroy();
             for (const auto &colorImage : colorImages) colorImage->Destroy();
+            if (IsMSAAEnabled()) msaaImage->Destroy();
             if (hasDepthAttachment) depthImage->Destroy();
         }
         else
         {
             colorImages.resize(maxConcurrentFrames);
+
+            // Create sampler
+            sampler = Sampler::Create({
+                .maxAnisotropy = 1.0f
+            });
         }
 
         // Create color images and their views
@@ -120,11 +127,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             // Create an image view off the sampled color image
             msaaImage->CreateImageView(ImageAspectFlags::COLOR);
         }
-
-        // Create sampler
-        sampler = Sampler::Create({
-            .maxAnisotropy = 1.0f
-        });
     }
 
     void OffscreenRenderer::CreateRenderPass()

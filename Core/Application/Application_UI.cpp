@@ -5,6 +5,9 @@
 #include <imgui.h>
 
 #include "Application.h"
+#include "../../Core/Rendering/UI/ImGuiCore.h"
+
+using UI::ImGuiCore;
 
 void Application::DisplayUI(VulkanRenderer &renderer)
 {
@@ -123,10 +126,9 @@ void Application::DisplayUI(VulkanRenderer &renderer)
             // Get and show current renderer image
             ImVec2 freeSpace = ImGui::GetContentRegionAvail();
 
-            float imageAspectRatio = (float) VulkanCore::GetWindow()->GetWidth() / (float) VulkanCore::GetWindow()->GetHeight();
-            ImVec2 size = { freeSpace.x, freeSpace.x / imageAspectRatio };
-
-            ImGui::Image((ImTextureID) renderer.GetRenderedTextureDescriptorSet(), size);
+            ImGuiCore::SetSceneViewSize(freeSpace.x, freeSpace.y);
+//
+            ImGui::Image((ImTextureID) renderer.GetRenderedTextureDescriptorSet(), freeSpace);
             ImGui::End();
         }
     }

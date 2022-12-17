@@ -55,8 +55,7 @@ namespace Sierra::Core::Rendering::Vulkan
     class VulkanCore
     {
     public:
-        [[nodiscard]] static inline VulkanCore& GetInstance() { return instance; }
-
+        /* --- GETTER METHODS --- */
         [[nodiscard]] static inline Window* GetWindow() { return instance.window; }
         [[nodiscard]] static inline GLFWwindow* GetCoreWindow() { return instance.window->GetCoreWindow(); }
 
@@ -77,7 +76,7 @@ namespace Sierra::Core::Rendering::Vulkan
             #if __APPLE__
                 return false;
             #else
-                return instance.physicalDeviceFeatures.shaderSampledImageArrayDynamicIndexing;
+                return instance.device->GetDescriptorIndexingSupported();
             #endif
         }
 

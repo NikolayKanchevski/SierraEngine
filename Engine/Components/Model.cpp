@@ -22,9 +22,7 @@ namespace Sierra::Engine::Classes
     {
         if (modelPool.count(filePath) != 0)
         {
-            #if DEBUG
-                Stopwatch stopwatch;
-            #endif
+            PROFILE_FUNCTION();
 
             ModelData &loadedModelData = modelPool[filePath];
 
@@ -81,14 +79,12 @@ namespace Sierra::Engine::Classes
             }
 
             #if DEBUG
-                ASSERT_INFO("Total vertices count for the model [" + modelName + "] containing [" + std::to_string(loadedModelData.meshes.size()) + "] mesh(es): " + std::to_string(vertexCount) + ". Time elapsed during model loading: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
+                ASSERT_INFO("Total vertices count for the model [" + modelName + "] containing [" + std::to_string(loadedModelData.meshes.size()) + "] mesh(es): " + std::to_string(vertexCount));
             #endif
         }
         else
         {
-            #if DEBUG
-                Stopwatch stopwatch;
-            #endif
+            PROFILE_FUNCTION();
 
             modelData = new ModelData();
 
@@ -111,7 +107,7 @@ namespace Sierra::Engine::Classes
             delete modelData;
 
             #if DEBUG
-                ASSERT_INFO("Total vertices count for the model [" + modelName + "] containing [" + std::to_string(scene->mNumMeshes) + "] mesh(es): " + std::to_string(vertexCount) + ". Time elapsed during model loading: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms");
+                ASSERT_INFO("Total vertices count for the model [" + modelName + "] containing [" + std::to_string(scene->mNumMeshes) + "] mesh(es): " + std::to_string(vertexCount));
             #endif
 
             // Dispose the importer

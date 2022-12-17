@@ -11,7 +11,9 @@
 #include "../Engine/Classes/Input.h"
 #include "../Engine/Components/Camera.h"
 #include "../Engine/Components/MeshRenderer.h"
+#include "Rendering/UI/ImGuiCore.h"
 
+using Rendering::UI::ImGuiCore;
 using namespace Sierra::Engine::Classes;
 using namespace Sierra::Engine::Components;
 
@@ -59,7 +61,7 @@ namespace Sierra::Core
         // Update uniform data
         auto uniformData = VulkanCore::GetUniformDataPtr();
         uniformData->view = glm::lookAt(rendererCameraPosition, rendererCameraPosition + rendererCameraFrontDirection, rendererCameraUpDirection);
-        uniformData->projection = glm::perspective(glm::radians(camera->fov), (float) VulkanCore::GetSwapchainExtent().width / (float) VulkanCore::GetSwapchainExtent().height, camera->nearClip, camera->farClip);
+        uniformData->projection = glm::perspective(glm::radians(camera->fov), (float) ImGuiCore::GetSceneViewWidth() / (float) ImGuiCore::GetSceneViewHeight(), camera->nearClip, camera->farClip);
         uniformData->projection[1][1] *= -1;
         uniformData->directionalLightCount = DirectionalLight::GetDirectionalLightCount();
         uniformData->pointLightCount = PointLight::GetPointLightCount();

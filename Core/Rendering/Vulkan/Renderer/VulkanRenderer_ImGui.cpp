@@ -8,7 +8,6 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
-#include "../VulkanUtilities.h"
 #include "../../../../Engine/Classes/Cursor.h"
 
 using namespace Sierra::Engine::Classes;
@@ -72,9 +71,9 @@ namespace Sierra::Core::Rendering::Vulkan
         ImGuiIO &io = ImGui::GetIO();
         io.Fonts->AddFontFromFileTTF("Fonts/PTSans.ttf", 18.0f);
 
-        VkCommandBuffer commandBuffer = VulkanUtilities::BeginSingleTimeCommands();
+        VkCommandBuffer commandBuffer = VulkanCore::GetDevice()->BeginSingleTimeCommands();
         ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-        VulkanUtilities::EndSingleTimeCommands(commandBuffer);
+        VulkanCore::GetDevice()->EndSingleTimeCommands(commandBuffer);
         ImGui_ImplVulkan_DestroyFontUploadObjects();
 
         ImGuiStyle &style = ImGui::GetStyle();

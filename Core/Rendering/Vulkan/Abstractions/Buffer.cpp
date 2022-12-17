@@ -5,7 +5,6 @@
 #include "Buffer.h"
 
 #include "../VulkanCore.h"
-#include "../VulkanUtilities.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -36,7 +35,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkMemoryAllocateInfo memoryAllocationInfo{};
         memoryAllocationInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         memoryAllocationInfo.allocationSize = memoryRequirements.size,
-        memoryAllocationInfo.memoryTypeIndex = VulkanUtilities::FindMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryFlags);
+        memoryAllocationInfo.memoryTypeIndex = VulkanCore::GetDevice()->FindMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryFlags);
 
         // Allocate buffer's memory
         VK_ASSERT(
@@ -78,7 +77,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Buffer::CopyImage(const Image& givenImage, const glm::vec3 imageOffset, const uint64_t offset)
     {
         // Create a temporary command buffer
-        VkCommandBuffer commandBuffer = VulkanUtilities::BeginSingleTimeCommands();
+        VkCommandBuffer commandBuffer = VulkanCore::GetDevice()->BeginSingleTimeCommands();
 
         // Set up image copy region
         VkBufferImageCopy copyRegion{};
@@ -100,7 +99,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkCmdCopyBufferToImage(commandBuffer, this->vkBuffer, givenImage.GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
         // Destroy the temporary command buffer
-        VulkanUtilities::EndSingleTimeCommands(commandBuffer);
+        VulkanCore::GetDevice()->EndSingleTimeCommands(commandBuffer);
     }
 
     void Buffer::CopyToBuffer(const Buffer *otherBuffer)
@@ -109,7 +108,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ASSERT_ERROR_IF(this->memorySize != otherBuffer->memorySize, "Cannot copy data from one buffer to another with a different memory size!");
 
         // Create a temporary command buffer
-        VkCommandBuffer commandBuffer = VulkanUtilities::BeginSingleTimeCommands();
+        VkCommandBuffer commandBuffer = VulkanCore::GetDevice()->BeginSingleTimeCommands();
 
         // Set up the buffer's copy region
         VkBufferCopy copyRegion{};
@@ -119,7 +118,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkCmdCopyBuffer(commandBuffer, vkBuffer, otherBuffer->vkBuffer, 1, &copyRegion);
 
         // Destroy the temporary command buffer
-        VulkanUtilities::EndSingleTimeCommands(commandBuffer);
+        VulkanCore::GetDevice()->EndSingleTimeCommands(commandBuffer);
     }
 
     /* --- DESTRUCTOR --- */

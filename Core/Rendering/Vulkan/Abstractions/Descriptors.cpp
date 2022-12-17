@@ -55,7 +55,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         : bindings(givenBindings)
     {
         // Create a pointer to layout binding array
-        VkDescriptorSetLayoutBinding layoutBindings[givenBindings.size()];
+        VkDescriptorSetLayoutBinding* layoutBindings = new VkDescriptorSetLayoutBinding[givenBindings.size()];
 
         auto* bindingFlags = new VkDescriptorBindingFlags[bindings.size()];
 

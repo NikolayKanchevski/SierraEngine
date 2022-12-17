@@ -5,6 +5,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 #include <vulkan/vulkan.h>
 
 #include "../VulkanTypes.h"
@@ -47,7 +48,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         static std::shared_ptr<Device> Create(DeviceCreateInfo createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] bool GetDescriptorIndexingSupported() const { return physicalDeviceFeatures.shaderSampledImageArrayDynamicIndexing; };
+        [[nodiscard]] inline bool GetDescriptorIndexingSupported() const
+        #if !__APPLE__
+            { return physicalDeviceFeatures.shaderSampledImageArrayDynamicIndexing; };
+        #else
+            { return false; }
+        #endif
 
         [[nodiscard]] VkInstance GetInstance() const { return instance; }
         [[nodiscard]] VkSurfaceKHR GetSurface() const { return surface; }
@@ -57,12 +63,17 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         [[nodiscard]] VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures() const { return physicalDeviceFeatures; }
         [[nodiscard]] VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const { return physicalDeviceProperties; }
+        [[nodiscard]] VkPhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties() const { return physicalDeviceMemoryProperties; }
 
         [[nodiscard]] ImageFormat GetBestSwapchainImageFormat() const { return (ImageFormat) bestSwapchainImageFormat.format; }
         [[nodiscard]] VkColorSpaceKHR GetBestSwapchainColorSpace() const { return bestSwapchainImageFormat.colorSpace; }
         [[nodiscard]] ImageFormat GetBestDepthImageFormat() const { return bestDepthImageFormat; }
 
-        [[nodiscard]] VkSurfaceCapabilitiesKHR GetSwapchainCapabilites() const { return swapchainSupportDetails.capabilities; }
+        [[nodiscard]] VkSurfaceCapabilitiesKHR GetSwapchainCapabilites()
+        {
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &swapchainSupportDetails.capabilities);
+            return swapchainSupportDetails.capabilities;
+        }
         [[nodiscard]] VkPresentModeKHR GetBestPresentationMode() const { return bestPresentationMode; }
 
         [[nodiscard]] Multisampling GetHighestMultisampling() const { return highestMultisampling; }
@@ -74,6 +85,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] VkQueue GetPresentationQueue() const { return presentationQueue; }
 
         [[nodiscard]] VkCommandPool GetCommandPool() const { return commandPool; }
+
+        [[nodiscard]] uint32_t FindMemoryTypeIndex(uint32_t typeFilter, MemoryFlags givenMemoryFlags) const;
+        [[nodiscard]] VkCommandBuffer BeginSingleTimeCommands() const;
+        void EndSingleTimeCommands(VkCommandBuffer commandBuffer) const;
+
+        [[nodiscard]] VkShaderModule CreateShaderModule(const std::string &fileName);
 
         /* --- DESTRUCTOR --- */
         void Destroy();
@@ -130,6 +147,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         VkPhysicalDeviceFeatures physicalDeviceFeatures;
         VkPhysicalDeviceProperties physicalDeviceProperties;
+        VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
 
         VkQueue graphicsQueue;
         VkQueue presentationQueue;

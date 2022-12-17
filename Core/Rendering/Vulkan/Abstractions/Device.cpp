@@ -6,6 +6,7 @@
 
 #include "../VulkanCore.h"
 #include "../../../Version.h"
+#include "../../../../Engine/Classes/File.h"
 
 using namespace Sierra::Engine::Classes;
 
@@ -33,6 +34,80 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     std::shared_ptr<Device> Device::Create(DeviceCreateInfo createInfo)
     {
         return std::make_unique<Device>(createInfo);
+    }
+
+    /* --- GETTER METHODS --- */
+
+    uint32_t Device::FindMemoryTypeIndex(const uint32_t typeFilter, const MemoryFlags givenMemoryFlags) const
+    {
+        for (uint32_t i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++)
+        {
+            if ((typeFilter & (1 << (int) i)) != 0 && (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & (int) givenMemoryFlags) == (int) givenMemoryFlags)
+            {
+                return i;
+            }
+        }
+
+        return 0;
+    }
+
+    VkCommandBuffer Device::BeginSingleTimeCommands() const
+    {
+        VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
+        commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        commandBufferAllocateInfo.commandPool = VulkanCore::GetCommandPool();
+        commandBufferAllocateInfo.commandBufferCount = 1;
+
+        VkCommandBuffer commandBuffer;
+        VK_ASSERT(
+            vkAllocateCommandBuffers(VulkanCore::GetLogicalDevice(), &commandBufferAllocateInfo, &commandBuffer),
+            "Failed to allocate single time command buffer"
+        );
+
+        VkCommandBufferBeginInfo commandBufferBeginInfo{};
+        commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+        vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
+
+        return commandBuffer;
+    }
+
+    void Device::EndSingleTimeCommands(const VkCommandBuffer commandBuffer) const
+    {
+        vkEndCommandBuffer(commandBuffer);
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        vkQueueSubmit(VulkanCore::GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+        vkQueueWaitIdle(VulkanCore::GetGraphicsQueue());
+
+        vkFreeCommandBuffers(VulkanCore::GetLogicalDevice(), VulkanCore::GetCommandPool(), 1, &commandBuffer);
+    }
+
+    VkShaderModule Device::CreateShaderModule(const std::string &fileName)
+    {
+        // Read bytes from the given file
+        const std::vector<char> shaderCode = File::ReadFile(fileName);
+
+        // Set module creation info
+        VkShaderModuleCreateInfo moduleCreateInfo{};
+        moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        moduleCreateInfo.codeSize = shaderCode.size();
+        moduleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(shaderCode.data());
+
+        // Create shader module
+        VkShaderModule shaderModule;
+        VK_ASSERT(
+            vkCreateShaderModule(VulkanCore::GetLogicalDevice(), &moduleCreateInfo, nullptr, &shaderModule),
+            "Failed to create shader module for [" + fileName + "]"
+        );
+
+        return shaderModule;
     }
 
     /* --- SETTER METHODS --- */
@@ -122,11 +197,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             "Failed to retrieve available GPUs"
         );
 
-        // If none throw error
-        ASSERT_ERROR_IF(physicalDeviceCount == 0, "No GPUs found on the system");
-
         // Put all found GPUs in an array
-        VkPhysicalDevice physicalDevices[physicalDeviceCount];
+        VkPhysicalDevice* physicalDevices = new VkPhysicalDevice[physicalDeviceCount];
         vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices);
 
         // TODO: Pick most suitable GPU, not the first one
@@ -306,8 +378,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     bool Device::PhysicalDeviceSuitable(const VkPhysicalDevice &givenPhysicalDevice)
     {
-        // Retrieve the GPU's properties
+        // Retrieve GPU's properties
         vkGetPhysicalDeviceProperties(givenPhysicalDevice, &physicalDeviceProperties);
+
+        // Retrieve GPU's memory properties
+        vkGetPhysicalDeviceMemoryProperties(givenPhysicalDevice, &physicalDeviceMemoryProperties);
 
         // Get the features of the given GPU
         vkGetPhysicalDeviceFeatures(givenPhysicalDevice, &physicalDeviceFeatures);
@@ -447,7 +522,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkGetPhysicalDeviceQueueFamilyProperties(givenPhysicalDevice, &queueFamilyPropertiesCount, nullptr);
 
         // Put each of them in an array
-        VkQueueFamilyProperties queueFamilyProperties[queueFamilyPropertiesCount];
+        VkQueueFamilyProperties* queueFamilyProperties = new VkQueueFamilyProperties[queueFamilyPropertiesCount];
         vkGetPhysicalDeviceQueueFamilyProperties(givenPhysicalDevice, &queueFamilyPropertiesCount, queueFamilyProperties);
 
         // Iterate trough each
@@ -592,13 +667,5 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkDestroyInstance(instance, nullptr);
     }
 }
-
-
-
-/* --- POLLING METHODS --- */
-
-/* --- SETTER METHODS --- */
-
-/* --- GETTER METHODS --- */
 
 
