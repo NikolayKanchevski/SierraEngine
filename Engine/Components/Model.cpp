@@ -140,6 +140,11 @@ namespace Sierra::Engine::Classes
         }
     }
 
+    void Model::DisposePool()
+    {
+        modelPool.clear();
+    }
+
     void Model::ListDeeperNode(aiNode *node, const aiScene *assimpScene, Entity* parentEntity)
     {
         Entity nodeEntity = Entity(parentEntity == nullptr ? modelName : node->mName.C_Str());

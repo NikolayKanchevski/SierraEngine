@@ -76,7 +76,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
         [[nodiscard]] VkPresentModeKHR GetBestPresentationMode() const { return bestPresentationMode; }
 
-        [[nodiscard]] Multisampling GetHighestMultisampling() const { return highestMultisampling; }
+        [[nodiscard]] Sampling GetHighestMultisampling() const { return highestMultisampling; }
 
         [[nodiscard]] uint32_t GetGraphicsQueueFamily() const { return queueFamilyIndices.graphicsFamily; }
         [[nodiscard]] uint32_t GetPresentationQueueFamily() const { return queueFamilyIndices.presentationFamily; }
@@ -89,8 +89,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] uint32_t FindMemoryTypeIndex(uint32_t typeFilter, MemoryFlags givenMemoryFlags) const;
         [[nodiscard]] VkCommandBuffer BeginSingleTimeCommands() const;
         void EndSingleTimeCommands(VkCommandBuffer commandBuffer) const;
-
-        [[nodiscard]] VkShaderModule CreateShaderModule(const std::string &fileName);
 
         /* --- DESTRUCTOR --- */
         void Destroy();
@@ -162,7 +160,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkSurfaceFormatKHR bestSwapchainImageFormat;
         ImageFormat bestDepthImageFormat;
         VkPresentModeKHR bestPresentationMode;
-        Multisampling highestMultisampling;
+        Sampling highestMultisampling;
 
         /* --- SETTER METHODS --- */
         void CreateInstance();
@@ -195,7 +193,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkSurfaceFormatKHR ChooseBestSwapchainFormat(std::vector<VkSurfaceFormatKHR> &givenFormats);
         ImageFormat GetBestDepthBufferFormat(std::vector<ImageFormat> givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags);
         VkPresentModeKHR ChooseSwapchainPresentMode(std::vector<VkPresentModeKHR> &givenPresentModes);
-        Multisampling GetHighestSupportedSampling();
+        Sampling GetHighestSupportedSampling();
     };
 
 }

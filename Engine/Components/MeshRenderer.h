@@ -38,7 +38,7 @@ namespace Sierra::Engine::Components
         [[nodiscard]] inline std::shared_ptr<Texture> GetTexture(const TextureType textureType) const { return textures[textureType]; }
         [[nodiscard]] inline std::shared_ptr<Texture> *GetTextures() { return textures; }
         [[nodiscard]] glm::mat4x4 GetModelMatrix() const;
-        [[nodiscard]] PushConstant GetPushConstantData() const;
+        [[nodiscard]] MeshPushConstant GetPushConstantData() const;
 
         /* --- SETTER METHODS --- */
         void Destroy() const override;

@@ -21,8 +21,8 @@ namespace Sierra::Core::Rendering::Vulkan
         {
             shaderBuffers.push_back(Buffer::Create({
                 .memorySize = uniformDataSize,
-                .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
-                .bufferUsage = BufferUsage::UNIFORM_BUFFER
+                .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
+                .bufferUsage = UNIFORM_BUFFER
             }));
         }
 
@@ -31,8 +31,8 @@ namespace Sierra::Core::Rendering::Vulkan
         {
             shaderBuffers.push_back(Buffer::Create({
                 .memorySize = storageDataSize,
-                .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
-                .bufferUsage = BufferUsage::STORAGE_BUFFER
+                .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
+                .bufferUsage = STORAGE_BUFFER
             }));
         }
     }

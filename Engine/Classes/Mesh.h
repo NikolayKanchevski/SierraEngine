@@ -18,7 +18,7 @@ using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 
 namespace Sierra::Engine::Classes
 {
-    struct alignas(16) PushConstant
+    struct alignas(16) MeshPushConstant
     {
         Material material;
 

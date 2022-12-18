@@ -35,7 +35,6 @@ namespace Sierra::Core::Rendering::Vulkan
 
         CreateOffscreenRenderer();
         CreateRenderPass();
-        CreatePushConstants();
         CreateDescriptorSetLayout();
         CreateGraphicsPipeline();
 
@@ -126,10 +125,13 @@ namespace Sierra::Core::Rendering::Vulkan
 
         Texture::DestroyDefaultTextures();
 
+        Texture::DisposePool();
+
         offscreenRenderer->Destroy();
 
-        vkDestroyPipeline(device->GetLogicalDevice(), graphicsPipeline, nullptr);
-        vkDestroyPipelineLayout(device->GetLogicalDevice(), graphicsPipelineLayout, nullptr);
+        Shader::DisposePool();
+
+        graphicsPipeline->Destroy();
 
         for (const auto &buffer : shaderBuffers)
         {

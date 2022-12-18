@@ -9,14 +9,31 @@
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
+    typedef enum AntiAliasingType
+    {
+        ANTI_ALIASING_NONE = 0x00000001,
+        ANTI_ALIASING_MSAAx2 = 0x00000002,
+        ANTI_ALIASING_MSAAx4 = 0x00000004,
+        ANTI_ALIASING_MSAAx8 = 0x00000008,
+        ANTI_ALIASING_MSAAx16 = 0x00000010,
+        ANTI_ALIASING_MSAAx32 = 0x00000020,
+        ANTI_ALIASING_MSAAx64 = 0x00000020
+    } AntiAliasingType;
+
+    typedef enum AttachmentType
+    {
+        ATTACHMENT_COLOR = 0x00000001,
+        ATTACHMENT_DEPTH = 0x00000002
+    } AttachmentType;
+
     struct OffscreenRendererCreateInfo
     {
         uint32_t width = 0;
         uint32_t height = 0;
         uint32_t maxConcurrentFrames = 0;
 
-        Multisampling msaaSampling = Multisampling::MSAAx1;
-        bool createDepthAttachment = false;
+        AttachmentType attachmentTypes;
+        AntiAliasingType antiAliasingType = ANTI_ALIASING_NONE;
     };
 
     class OffscreenRenderer
@@ -50,9 +67,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     private:
         uint32_t width, height, maxConcurrentFrames;
 
+        AttachmentType attachmentTypes;
+        AntiAliasingType antiAliasingType;
+
         bool alreadyCreated = false;
-        bool hasDepthAttachment = false;
-        Multisampling msaaSampleCount;
 
         std::vector<std::unique_ptr<Image>> colorImages;
         std::unique_ptr<Image> depthImage;
@@ -67,7 +85,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void CreateRenderPass();
         void CreateFramebuffers();
 
-        inline bool IsMSAAEnabled() const { return msaaSampleCount > Multisampling::MSAAx1; }
+        inline bool HasColorAttachment() const { return attachmentTypes & ATTACHMENT_COLOR; }
+        inline bool HasDepthAttachment() const { return attachmentTypes & ATTACHMENT_DEPTH; }
+        inline bool HasMSAAEnabled() const { return antiAliasingType >= ANTI_ALIASING_MSAAx2 && antiAliasingType <= ANTI_ALIASING_MSAAx64; }
     };
 
 }

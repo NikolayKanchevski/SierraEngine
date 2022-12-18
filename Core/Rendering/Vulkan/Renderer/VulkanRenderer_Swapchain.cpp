@@ -78,11 +78,11 @@ namespace Sierra::Core::Rendering::Vulkan
             swapchainImages[i] = Image::CreateSwapchainImage({
                 .image = swapchainVkImages[i],
                 .format = device->GetBestSwapchainImageFormat(),
-                .sampling = Multisampling::MSAAx1,
+                .sampling = Sampling::MSAAx1,
                 .dimensions = { swapchainExtent.width, swapchainExtent.height, 1 }
             });
 
-            swapchainImages[i]->CreateImageView(ImageAspectFlags::COLOR);
+            swapchainImages[i]->CreateImageView(ASPECT_COLOR);
         }
 
         // Assign the EngineCore's swapchain extent
@@ -102,9 +102,6 @@ namespace Sierra::Core::Rendering::Vulkan
         DestroySwapchainObjects();
         CreateSwapchain();
         CreateFramebuffers();
-
-        offscreenRenderer->Resize(swapchainExtent.width, swapchainExtent.height);
-        CreateOffscreenImageDescriptorSets();
     }
 
     void VulkanRenderer::DestroySwapchainObjects()

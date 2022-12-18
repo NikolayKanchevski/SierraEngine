@@ -89,27 +89,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkFreeCommandBuffers(VulkanCore::GetLogicalDevice(), VulkanCore::GetCommandPool(), 1, &commandBuffer);
     }
 
-    VkShaderModule Device::CreateShaderModule(const std::string &fileName)
-    {
-        // Read bytes from the given file
-        const std::vector<char> shaderCode = File::ReadFile(fileName);
-
-        // Set module creation info
-        VkShaderModuleCreateInfo moduleCreateInfo{};
-        moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        moduleCreateInfo.codeSize = shaderCode.size();
-        moduleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(shaderCode.data());
-
-        // Create shader module
-        VkShaderModule shaderModule;
-        VK_ASSERT(
-            vkCreateShaderModule(VulkanCore::GetLogicalDevice(), &moduleCreateInfo, nullptr, &shaderModule),
-            "Failed to create shader module for [" + fileName + "]"
-        );
-
-        return shaderModule;
-    }
-
     /* --- SETTER METHODS --- */
 
     void Device::CreateInstance()
@@ -288,8 +267,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->bestSwapchainImageFormat = ChooseBestSwapchainFormat(swapchainSupportDetails.formats);
 
         this->bestDepthImageFormat = GetBestDepthBufferFormat(
-            { ImageFormat::D32_SFLOAT_S8_UINT, ImageFormat::D32_SFLOAT, ImageFormat::D24_UNORM_S8_UINT },
-            ImageTiling::OPTIMAL,
+            { FORMAT_D32_SFLOAT_S8_UINT, FORMAT_D32_SFLOAT, FORMAT_D24_UNORM_S8_UINT },
+            TILING_OPTIMAL,
             VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
         );
 
@@ -605,11 +584,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             vkGetPhysicalDeviceFormatProperties(physicalDevice, (VkFormat) givenFormat, &formatProperties);
 
             // Check if the required format properties are supported
-            if (imageTiling == ImageTiling::LINEAR && (formatProperties.linearTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
+            if (imageTiling == TILING_LINEAR && (formatProperties.linearTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
             {
                 return givenFormat;
             }
-            else if (imageTiling == ImageTiling::OPTIMAL && (formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
+            else if (imageTiling == TILING_OPTIMAL && (formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
             {
                 return givenFormat;
             }
@@ -618,7 +597,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Otherwise throw an error
         ASSERT_ERROR("No depth buffer formats supported");
 
-        return ImageFormat::UNDEFINED;
+        return FORMAT_UNDEFINED;
     }
 
     VkPresentModeKHR Device::ChooseSwapchainPresentMode(std::vector<VkPresentModeKHR> &givenPresentModes)
@@ -636,18 +615,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 
-    Multisampling Device::GetHighestSupportedSampling()
+    Sampling Device::GetHighestSupportedSampling()
     {
         VkSampleCountFlags countFlags = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
 
-        if ((countFlags & (int) Multisampling::MSAAx64) != 0) return Multisampling::MSAAx64;
-        if ((countFlags & (int) Multisampling::MSAAx32) != 0) return Multisampling::MSAAx32;
-        if ((countFlags & (int) Multisampling::MSAAx16) != 0) return Multisampling::MSAAx16;
-        if ((countFlags & (int) Multisampling::MSAAx8) != 0) return Multisampling::MSAAx8;
-        if ((countFlags & (int) Multisampling::MSAAx4) != 0) return Multisampling::MSAAx4;
-        if ((countFlags & (int) Multisampling::MSAAx2) != 0) return Multisampling::MSAAx2;
+        if ((countFlags & (int) Sampling::MSAAx64) != 0) return Sampling::MSAAx64;
+        if ((countFlags & (int) Sampling::MSAAx32) != 0) return Sampling::MSAAx32;
+        if ((countFlags & (int) Sampling::MSAAx16) != 0) return Sampling::MSAAx16;
+        if ((countFlags & (int) Sampling::MSAAx8) != 0) return Sampling::MSAAx8;
+        if ((countFlags & (int) Sampling::MSAAx4) != 0) return Sampling::MSAAx4;
+        if ((countFlags & (int) Sampling::MSAAx2) != 0) return Sampling::MSAAx2;
 
-        return Multisampling::MSAAx1;
+        return Sampling::MSAAx1;
     }
 
     /* --- DESTRUCTOR --- */

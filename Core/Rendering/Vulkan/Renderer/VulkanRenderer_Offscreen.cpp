@@ -12,7 +12,10 @@ namespace Sierra::Core::Rendering::Vulkan
     void VulkanRenderer::CreateOffscreenRenderer()
     {
         // Create offscreen renderer
-        offscreenRenderer = OffscreenRenderer::Create({ swapchainExtent.width, swapchainExtent.height, maxConcurrentFrames, msaaSampleCount, true });
+        offscreenRenderer = OffscreenRenderer::Create({
+            swapchainExtent.width, swapchainExtent.height, maxConcurrentFrames,
+            ATTACHMENT_COLOR | ATTACHMENT_DEPTH, (AntiAliasingType) msaaSampleCount
+        });
 
         // Resize the offscreen descriptor sets vector
         offscreenImageDescriptorSets.resize(maxConcurrentFrames);

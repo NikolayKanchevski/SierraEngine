@@ -129,7 +129,7 @@ namespace Sierra::Engine::Components
         return translationMatrix * rotationMatrix * scaleMatrix;
     }
 
-    PushConstant MeshRenderer::GetPushConstantData() const
+    MeshPushConstant MeshRenderer::GetPushConstantData() const
     {
         return { .material = material, .meshID = meshID, .meshTexturesPresence =  meshTexturesPresence };
     }

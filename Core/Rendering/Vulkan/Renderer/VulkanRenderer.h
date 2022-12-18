@@ -23,6 +23,7 @@
 #include "../Abstractions/Framebuffer.h"
 #include "../Abstractions/OffscreenRenderer.h"
 #include "../VulkanTypes.h"
+#include "../Abstractions/Pipeline.h"
 
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 
@@ -62,7 +63,7 @@ namespace Sierra::Core::Rendering::Vulkan
     private:
         /* --- SETTINGS --- */
         bool msaaSamplingEnabled = false;
-        Multisampling msaaSampleCount = msaaSamplingEnabled ? Multisampling::MSAAx64 : Multisampling::MSAAx1;
+        Sampling msaaSampleCount = msaaSamplingEnabled ? Sampling::MSAAx64 : Sampling::MSAAx1;
 
         enum RenderingMode { Fill, Wireframe };
         RenderingMode renderingMode = Fill;
@@ -112,11 +113,6 @@ namespace Sierra::Core::Rendering::Vulkan
         std::unique_ptr<RenderPass> swapchainRenderPass;
         void CreateRenderPass();
 
-        /* --- PUSH CONSTANTS --- */
-        VkPushConstantRange pushConstantRange;
-        uint64_t pushConstantSize;
-        void CreatePushConstants();
-
         /* --- DESCRIPTORS --- */
         #define UNIFORM_BUFFER_BINDING 0
         #define STORAGE_BUFFER_BINDING 1
@@ -135,8 +131,7 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreateShaderBuffersDescriptorSets();
 
         /* --- GRAPHICS PIPELINE --- */
-        VkPipelineLayout graphicsPipelineLayout;
-        VkPipeline graphicsPipeline;
+        std::unique_ptr<Pipeline> graphicsPipeline;
         void CreateGraphicsPipeline();
 
         /* --- FRAMEBUFFERS --- */

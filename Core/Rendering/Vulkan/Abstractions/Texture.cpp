@@ -34,8 +34,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         auto stagingBuffer = Buffer::Create({
             .memorySize = memorySize,
-            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
-            .bufferUsage = BufferUsage::TRANSFER_SRC
+            .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
+            .bufferUsage = TRANSFER_SRC_BUFFER
         });
 
         // Copy the image data to the staging buffer
@@ -43,19 +43,19 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         stbi_image_free(stbImage);
 
         // Configure the color format
-        ImageFormat textureImageFormat = ImageFormat::R8G8B8A8_SRGB;
+        ImageFormat textureImageFormat = FORMAT_R8G8B8A8_SRGB;
 
         // Create the texture image
         this->image = Image::Create({
             .dimensions = { width, height, 1 },
             .format = textureImageFormat,
             .mipLevels = mipMapLevels,
-            .usageFlags = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
-            .memoryFlags = MemoryFlags::DEVICE_LOCAL
+            .usageFlags = TRANSFER_SRC_IMAGE | TRANSFER_DST_IMAGE | SAMPLED_IMAGE,
+            .memoryFlags = MEMORY_FLAGS_DEVICE_LOCAL
         });
 
         // Transition the layout of the image, so it can be used for copying
-        image->TransitionLayout(ImageLayout::TRANSFER_DST_OPTIMAL);
+        image->TransitionLayout(LAYOUT_TRANSFER_DST_OPTIMAL);
 
         // Copy the image to the staging buffer
         stagingBuffer->CopyImage(*image);
@@ -66,10 +66,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Generate mip maps for the current texture
         if (mipMappingEnabled) GenerateMipMaps();
         // NOTE: Transitioning to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL is not required as it is automatically done during the mip map generation
-        else image->TransitionLayout(ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+        else image->TransitionLayout(LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
         // Create the image view using the proper image format
-        image->CreateImageView(ImageAspectFlags::COLOR);
+        image->CreateImageView(ASPECT_COLOR);
     }
 
     std::shared_ptr<Texture> Texture::Create(TextureCreateInfo textureCreateInfo, const bool setDefaultTexture)
@@ -105,6 +105,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             ASSERT_ERROR_IF(textureCreateInfo.textureType == TEXTURE_TYPE_NONE, "Cannot set texture loaded from [" + textureCreateInfo.filePath + "] as default texture for its type, as it is of type TEXTURE_TYPE_NONE");
 
+            textureReference->isDefault = true;
             defaultTextures[textureCreateInfo.textureType] = textureReference;
         }
 
@@ -112,12 +113,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     }
 
     /* --- SETTER METHODS --- */
-
-    void Texture::Dispose()
-    {
-        // Remove texture from pool
-        texturePool.erase(filePath);
-    }
 
     void Texture::GenerateMipMaps()
     {
@@ -221,6 +216,24 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     }
 
     /* --- SETTER METHODS --- */
+
+    void Texture::Dispose()
+    {
+        // Remove texture from pool
+        texturePool.erase(filePath);
+    }
+
+    void Texture::DisposePool()
+    {
+        for (const auto &texture : texturePool)
+        {
+            if (texture.second->isDefault) continue;
+
+            texture.second->Destroy();
+        }
+
+        texturePool.clear();
+    }
 
     void Texture::DrawToImGui()
     {

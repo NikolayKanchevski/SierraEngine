@@ -14,9 +14,9 @@ namespace Sierra::Core::Rendering::Vulkan
             {
                 {
                     .imageAttachment = swapchainImages[0],
-                    .loadOp = LoadOp::CLEAR,
-                    .storeOp = StoreOp::STORE,
-                    .finalLayout = ImageLayout::PRESENT_SRC
+                    .loadOp = LOAD_OP_CLEAR,
+                    .storeOp = STORE_OP_STORE,
+                    .finalLayout = LAYOUT_PRESENT_SRC
                 }
             },
             { { .renderTargets = { 0 } } }

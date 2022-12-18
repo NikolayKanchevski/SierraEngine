@@ -50,6 +50,7 @@ namespace Sierra::Engine::Classes
 
         /* --- SETTER METHODS --- */
         void Dispose();
+        static void DisposePool();
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint32_t GetVertexCount() const { return vertexCount; }
@@ -75,7 +76,6 @@ namespace Sierra::Engine::Classes
         std::shared_ptr<Mesh> LoadAssimpMesh(aiMesh* mesh);
         void ListDeeperNode(aiNode* node, const aiScene* assimpScene, Entity* parentEntity);
         void ApplyAssimpMeshTextures(MeshRenderer &meshComponent, aiMaterial *assimpMaterial);
-
         static inline std::unordered_map<std::string, ModelData> modelPool;
     };
 

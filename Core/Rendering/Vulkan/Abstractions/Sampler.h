@@ -17,7 +17,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         float maxLod = 13.0f;
         float maxAnisotropy = 0.0f;
         bool applyBilinearFiltering = true;
-        SamplerAddressMode samplerAddressMode = SamplerAddressMode::REPEAT;
+        SamplerAddressMode samplerAddressMode = ADDRESS_REPEAT;
     };
 
     /// @brief An abstraction for the VkSampler object.
@@ -44,7 +44,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     private:
         VkSampler vkSampler = VK_NULL_HANDLE;
         SamplerCreateInfo createInfo;
-        SamplerAddressMode samplerAddressMode = SamplerAddressMode::REPEAT;
+        SamplerAddressMode samplerAddressMode = ADDRESS_REPEAT;
 
     };
 

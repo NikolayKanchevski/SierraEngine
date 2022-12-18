@@ -12,7 +12,7 @@
 #include "../../../../Engine/Components/MeshRenderer.h"
 
 using Sierra::Engine::Classes::Mesh;
-using Sierra::Engine::Classes::PushConstant;
+using Sierra::Engine::Classes::MeshPushConstant;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -56,14 +56,12 @@ namespace Sierra::Core::Rendering::Vulkan
         vkCmdWriteTimestamp(givenCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, drawTimeQueryPool, imageIndex * 2);
 
         // Bind the pipeline
-        vkCmdBindPipeline(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipeline);
+        graphicsPipeline->Bind(givenCommandBuffer);
 
         // Begin rendering offscreen image
         offscreenRenderer->Begin(givenCommandBuffer, currentFrame);
 
         VkBuffer vertexBuffers[1];
-        VkDescriptorSet descriptorSets[2];
-        descriptorSets[0] = bufferDescriptorSets[currentFrame]->GetVulkanDescriptorSet();
         const VkDeviceSize offsets[] = {0 };
 
         // For each mesh in the world
@@ -81,19 +79,16 @@ namespace Sierra::Core::Rendering::Vulkan
             vkCmdBindIndexBuffer(givenCommandBuffer, mesh.GetMesh()->GetIndexBuffer()->GetVulkanBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
             // Get the push constant model of the current mesh and push it to shader
-            PushConstant data = mesh.GetPushConstantData();
+            MeshPushConstant data = mesh.GetPushConstantData();
 
             // Send push constant data to shader
-            vkCmdPushConstants(
-                givenCommandBuffer, this->graphicsPipelineLayout,
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-                pushConstantSize, &data
-            );
+            graphicsPipeline->PushConstants(givenCommandBuffer, &data);
 
             // Use either bindless or bind*full* descriptor set if not supported
-            descriptorSets[1] = VulkanCore::GetDescriptorIndexingSupported() ? globalBindlessDescriptorSet->GetVulkanDescriptorSet() : mesh.GetDescriptorSet();
-
-            vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->graphicsPipelineLayout, 0, 2, descriptorSets, 0, nullptr);
+            graphicsPipeline->BindDescriptorSets(givenCommandBuffer, {
+                bufferDescriptorSets[currentFrame]->GetVulkanDescriptorSet(),
+                VulkanCore::GetDescriptorIndexingSupported() ? globalBindlessDescriptorSet->GetVulkanDescriptorSet() : mesh.GetDescriptorSet()
+            });
 
             // Draw using the index buffer to prevent vertex re-usage
             vkCmdDrawIndexed(givenCommandBuffer, mesh.GetMesh()->GetIndexCount(), 1, 0, 0, 0);

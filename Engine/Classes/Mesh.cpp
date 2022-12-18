@@ -33,8 +33,8 @@ namespace Sierra::Engine::Classes
 
         auto stagingBuffer = Buffer::Create({
             .memorySize = bufferSize,
-            .memoryFlags = Core::Rendering::Vulkan::MemoryFlags::HOST_VISIBLE | Core::Rendering::Vulkan::MemoryFlags::HOST_COHERENT,
-            .bufferUsage = Core::Rendering::Vulkan::BufferUsage::TRANSFER_SRC
+            .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
+            .bufferUsage = TRANSFER_SRC_BUFFER
         });
 
         // Fill the data pointer with the vertices array's information
@@ -42,8 +42,8 @@ namespace Sierra::Engine::Classes
 
         vertexBuffer = Buffer::CreateShared({
            .memorySize = bufferSize,
-           .memoryFlags = Core::Rendering::Vulkan::MemoryFlags::HOST_VISIBLE | Core::Rendering::Vulkan::MemoryFlags::HOST_COHERENT,
-           .bufferUsage = Core::Rendering::Vulkan::BufferUsage::TRANSFER_DST | BufferUsage::VERTEX_BUFFER
+           .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
+           .bufferUsage = TRANSFER_DST_BUFFER | BufferUsage::VERTEX_BUFFER
        });
 
         stagingBuffer->CopyToBuffer(vertexBuffer.get());
@@ -58,8 +58,8 @@ namespace Sierra::Engine::Classes
 
         auto stagingBuffer = Buffer::Create({
               .memorySize = bufferSize,
-              .memoryFlags = Core::Rendering::Vulkan::MemoryFlags::HOST_VISIBLE | Core::Rendering::Vulkan::MemoryFlags::HOST_COHERENT,
-              .bufferUsage = BufferUsage::TRANSFER_SRC
+              .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
+              .bufferUsage = TRANSFER_SRC_BUFFER
         });
 
         // Fill the data pointer with the vertices array's information
@@ -67,8 +67,8 @@ namespace Sierra::Engine::Classes
 
         indexBuffer = Buffer::CreateShared({
              .memorySize = bufferSize,
-             .memoryFlags = Core::Rendering::Vulkan::MemoryFlags::HOST_VISIBLE | Core::Rendering::Vulkan::MemoryFlags::HOST_COHERENT,
-             .bufferUsage = Core::Rendering::Vulkan::BufferUsage::TRANSFER_DST | BufferUsage::INDEX_BUFFER
+             .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
+             .bufferUsage = TRANSFER_DST_BUFFER | INDEX_BUFFER
          });
 
         stagingBuffer->CopyToBuffer(indexBuffer.get());

@@ -17,8 +17,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     struct BufferCreateInfo
     {
         uint64_t memorySize = 0;
-        MemoryFlags memoryFlags = MemoryFlags::NONE;
-        BufferUsage bufferUsage = BufferUsage::UNDEFINED;
+        MemoryFlags memoryFlags = MEMORY_FLAGS_NONE;
+        BufferUsage bufferUsage = UNDEFINED_BUFFER;
     };
 
     /// @brief An abstraction class to make managing Vulkan buffers easier.

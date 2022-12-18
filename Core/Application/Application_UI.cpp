@@ -127,7 +127,7 @@ void Application::DisplayUI(VulkanRenderer &renderer)
             ImVec2 freeSpace = ImGui::GetContentRegionAvail();
 
             ImGuiCore::SetSceneViewSize(freeSpace.x, freeSpace.y);
-//
+
             ImGui::Image((ImTextureID) renderer.GetRenderedTextureDescriptorSet(), freeSpace);
             ImGui::End();
         }

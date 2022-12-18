@@ -22,21 +22,21 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     struct ImageCreateInfo
     {
         Dimensions dimensions{};
-        ImageFormat format = ImageFormat::UNDEFINED;
+        ImageFormat format = FORMAT_UNDEFINED;
         uint32_t mipLevels = 1;
 
-        ImageTiling imageTiling = ImageTiling::OPTIMAL;
-        Multisampling sampling = Multisampling::MSAAx1;
+        ImageTiling imageTiling = TILING_OPTIMAL;
+        Sampling sampling = Sampling::MSAAx1;
 
-        ImageUsage usageFlags = ImageUsage::UNDEFINED;
-        MemoryFlags memoryFlags = MemoryFlags::NONE;
+        ImageUsage usageFlags = UNDEFINED_IMAGE;
+        MemoryFlags memoryFlags = MEMORY_FLAGS_NONE;
     };
 
     struct SwapchainImageCreateInfo
     {
         VkImage image = VK_NULL_HANDLE;
-        ImageFormat format = ImageFormat::UNDEFINED;
-        Multisampling sampling = Multisampling::MSAAx1;
+        ImageFormat format = FORMAT_UNDEFINED;
+        Sampling sampling = MSAAx1;
         Dimensions dimensions{};
     };
 
@@ -76,7 +76,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline ImageFormat GetFormat() const
         { return this->format; };
 
-        [[nodiscard]] inline Multisampling GetSampling() const
+        [[nodiscard]] inline Sampling GetSampling() const
         { return this->sampling; };
 
         [[nodiscard]] inline ImageLayout GetLayout() const
@@ -101,9 +101,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Dimensions dimensions{};
 
         uint32_t mipLevels = 1;
-        ImageFormat format = ImageFormat::UNDEFINED;
-        Multisampling sampling;
-        ImageLayout layout = ImageLayout::UNDEFINED;
+        ImageFormat format = FORMAT_UNDEFINED;
+        Sampling sampling;
+        ImageLayout layout = LAYOUT_UNDEFINED;
 
         VkImage vkImage = VK_NULL_HANDLE;
         VkImageView vkImageView = VK_NULL_HANDLE;

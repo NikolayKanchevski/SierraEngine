@@ -19,12 +19,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         std::unique_ptr<Image>& imageAttachment;
 
         /* --- RENDERPASS PROPERTIES --- */
-        LoadOp loadOp = LoadOp::UNDEFINED;
-        StoreOp storeOp = StoreOp::UNDEFINED;
-        ImageLayout finalLayout = ImageLayout::UNDEFINED;
+        LoadOp loadOp = LOAD_OP_UNDEFINED;
+        StoreOp storeOp = STORE_OP_UNDEFINED;
+        ImageLayout finalLayout = LAYOUT_UNDEFINED;
         bool isResolve = false;
 
-        bool IsDepth() const { return finalLayout == ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL; }
+        bool IsDepth() const { return finalLayout == LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL; }
     };
 
     struct SubpassInfo

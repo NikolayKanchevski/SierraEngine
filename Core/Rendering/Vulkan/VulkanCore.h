@@ -20,7 +20,7 @@
 #define MAX_POINT_LIGHTS 64
 #define MAX_DIRECTIONAL_LIGHTS 16
 
-#define MAIN_IMAGE_FORMAT ImageFormat::R8G8B8A8_UNORM
+#define MAIN_IMAGE_FORMAT FORMAT_R8G8B8A8_UNORM
 
 using namespace Sierra::Engine::Components;
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;

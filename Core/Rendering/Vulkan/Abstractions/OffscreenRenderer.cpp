@@ -11,7 +11,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     /* --- CONSTRUCTORS --- */
 
     OffscreenRenderer::OffscreenRenderer(const OffscreenRendererCreateInfo &createInfo)
-        : width(createInfo.width), height(createInfo.height), maxConcurrentFrames(createInfo.maxConcurrentFrames), msaaSampleCount(createInfo.msaaSampling), hasDepthAttachment(createInfo.createDepthAttachment)
+        : width(createInfo.width), height(createInfo.height), maxConcurrentFrames(createInfo.maxConcurrentFrames), attachmentTypes(createInfo.attachmentTypes), antiAliasingType(createInfo.antiAliasingType)
     {
         // Create images
         CreateImages();
@@ -69,13 +69,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             vkDeviceWaitIdle(VulkanCore::GetLogicalDevice());
 
             // Destroy resources
-            for (const auto &colorImage : colorImages) colorImage->Destroy();
-            if (IsMSAAEnabled()) msaaImage->Destroy();
-            if (hasDepthAttachment) depthImage->Destroy();
+            if (HasColorAttachment()) for (const auto &colorImage : colorImages) colorImage->Destroy();
+            if (HasMSAAEnabled()) msaaImage->Destroy();
+            if (HasDepthAttachment()) depthImage->Destroy();
         }
         else
         {
-            colorImages.resize(maxConcurrentFrames);
+            if (HasColorAttachment()) colorImages.resize(maxConcurrentFrames);
 
             // Create sampler
             sampler = Sampler::Create({
@@ -84,48 +84,51 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Create color images and their views
-        for (uint32_t i = maxConcurrentFrames; i--;)
+        if (HasColorAttachment())
         {
-            colorImages[i] = Image::Create({
-                .dimensions = { width, height, 1 },
-                .format = MAIN_IMAGE_FORMAT,
-                .usageFlags = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED
-            });
+            for (uint32_t i = maxConcurrentFrames; i--;)
+            {
+                colorImages[i] = Image::Create({
+                    .dimensions = { width, height, 1 },
+                    .format = MAIN_IMAGE_FORMAT,
+                    .usageFlags = COLOR_ATTACHMENT_IMAGE | SAMPLED_IMAGE
+                });
 
-            colorImages[i]->CreateImageView(ImageAspectFlags::COLOR);
+                colorImages[i]->CreateImageView(ASPECT_COLOR);
+            }
         }
 
         // Check if depth attachment is required
-        if (hasDepthAttachment)
+        if (HasDepthAttachment())
         {
             // Create depth image
             depthImage = Image::Create({
                 .dimensions = { VulkanCore::GetSwapchainExtent().width, VulkanCore::GetSwapchainExtent().height, 1 },
                 .format = VulkanCore::GetDevice()->GetBestDepthImageFormat(),
-                .sampling = msaaSampleCount,
-                .usageFlags = ImageUsage::DEPTH_STENCIL_ATTACHMENT,
-                .memoryFlags = MemoryFlags::DEVICE_LOCAL,
+                .sampling = (Sampling) antiAliasingType,
+                .usageFlags = DEPTH_STENCIL_ATTACHMENT_IMAGE,
+                .memoryFlags = MEMORY_FLAGS_DEVICE_LOCAL,
             });
 
-            depthImage->CreateImageView(ImageAspectFlags::DEPTH);
+            depthImage->CreateImageView(ASPECT_DEPTH);
 
-            depthImage->TransitionLayout(ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL);
+            depthImage->TransitionLayout(LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL);
         }
 
         // Check if MSAA is enabled
-        if (IsMSAAEnabled())
+        if (HasMSAAEnabled())
         {
             // Create the sampled color image
             msaaImage = Image::Create({
                 .dimensions = { VulkanCore::GetSwapchainExtent().width, VulkanCore::GetSwapchainExtent().height, 1 },
                 .format = MAIN_IMAGE_FORMAT,
-                .sampling = msaaSampleCount,
-                .usageFlags = ImageUsage::TRANSIENT_ATTACHMENT | ImageUsage::COLOR_ATTACHMENT,
-                .memoryFlags = MemoryFlags::DEVICE_LOCAL
+                .sampling = (Sampling) antiAliasingType,
+                .usageFlags = TRANSIENT_ATTACHMENT_IMAGE | COLOR_ATTACHMENT_IMAGE,
+                .memoryFlags = MEMORY_FLAGS_DEVICE_LOCAL
             });
 
             // Create an image view off the sampled color image
-            msaaImage->CreateImageView(ImageAspectFlags::COLOR);
+            msaaImage->CreateImageView(ASPECT_COLOR);
         }
     }
 
@@ -133,32 +136,32 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         // Set up attachments
         std::vector<RenderPassAttachment> renderPassAttachments;
-        renderPassAttachments.reserve(1 + (int) hasDepthAttachment + (int) IsMSAAEnabled());
+        renderPassAttachments.reserve((int) HasColorAttachment() + (int) HasDepthAttachment() + (int) HasMSAAEnabled());
 
         // Populate attachments vector
-        if (IsMSAAEnabled())
+        if (HasMSAAEnabled())
         {
             renderPassAttachments.push_back({
-                .imageAttachment = msaaImage, .loadOp = LoadOp::CLEAR, .storeOp = StoreOp::STORE,
-                .finalLayout = ImageLayout::GENERAL
+                .imageAttachment = msaaImage, .loadOp = LOAD_OP_CLEAR, .storeOp = STORE_OP_STORE,
+                .finalLayout = LAYOUT_GENERAL
             });
 
-            renderPassAttachments.push_back({
-                .imageAttachment = colorImages[0], .loadOp = LoadOp::DONT_CARE, .storeOp = StoreOp::STORE,
-                .finalLayout = ImageLayout::GENERAL, .isResolve = true
+            if (HasColorAttachment()) renderPassAttachments.push_back({
+                .imageAttachment = colorImages[0], .loadOp = LOAD_OP_DONT_CARE, .storeOp = STORE_OP_STORE,
+                .finalLayout = LAYOUT_GENERAL, .isResolve = true
             });
         }
         else
         {
-            renderPassAttachments.push_back({
-                .imageAttachment = colorImages[0], .loadOp = LoadOp::CLEAR, .storeOp = StoreOp::STORE,
-                .finalLayout = ImageLayout::GENERAL
+            if (HasColorAttachment()) renderPassAttachments.push_back({
+                .imageAttachment = colorImages[0], .loadOp = LOAD_OP_CLEAR, .storeOp = STORE_OP_STORE,
+                .finalLayout = LAYOUT_GENERAL
             });
         }
 
-        if (hasDepthAttachment) renderPassAttachments.push_back({
-            .imageAttachment = depthImage, .loadOp = LoadOp::CLEAR, .storeOp = StoreOp::DONT_CARE,
-            .finalLayout = ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL
+        if (HasDepthAttachment()) renderPassAttachments.push_back({
+            .imageAttachment = depthImage, .loadOp = LOAD_OP_CLEAR, .storeOp = STORE_OP_DONT_CARE,
+            .finalLayout = LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL
         });
 
         // Set up render targets
@@ -192,22 +195,22 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Set up attachments
         uint32_t colorImageIndex = 0;
-        std::vector<VkImageView> framebufferAttachments(1 + (int) hasDepthAttachment + (int) IsMSAAEnabled());
+        std::vector<VkImageView> framebufferAttachments((int) HasColorAttachment() + (int) HasDepthAttachment() + (int) HasMSAAEnabled());
 
         // Populate attachments
-        if (IsMSAAEnabled())
+        if (HasMSAAEnabled())
         {
             colorImageIndex = 1;
             framebufferAttachments[0] = msaaImage->GetVulkanImageView();
         }
 
-        if (hasDepthAttachment) framebufferAttachments[framebufferAttachments.size() - 1] = depthImage->GetVulkanImageView();
+        if (HasDepthAttachment()) framebufferAttachments[framebufferAttachments.size() - 1] = depthImage->GetVulkanImageView();
 
         // Create a framebuffer for each concurrent frame
         for (uint32_t i = maxConcurrentFrames; i--;)
         {
             // Assign corresponding color image
-            framebufferAttachments[colorImageIndex] = colorImages[i]->GetVulkanImageView();
+            if (HasColorAttachment()) framebufferAttachments[colorImageIndex] = colorImages[i]->GetVulkanImageView();
 
             // Create framebuffer
             framebuffers[i] = Framebuffer::Create({
@@ -225,9 +228,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         // Free resources
         sampler->Destroy();
-        for (const auto &colorImage : colorImages) colorImage->Destroy();
-        if (hasDepthAttachment) depthImage->Destroy();
-        if (IsMSAAEnabled()) msaaImage->Destroy();
+        if (HasColorAttachment()) for (const auto &colorImage : colorImages) colorImage->Destroy();
+        if (HasDepthAttachment()) depthImage->Destroy();
+        if (HasMSAAEnabled()) msaaImage->Destroy();
 
         for (const auto &framebuffer : framebuffers) framebuffer->Destroy();
         renderPass->Destroy();

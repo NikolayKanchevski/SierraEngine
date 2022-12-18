@@ -59,6 +59,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- SETTER METHODS --- */
         void Dispose();
+        static void DisposePool();
+
+        void DrawToImGui();
+        static void DestroyDefaultTextures();
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline std::string GetName() const
@@ -100,10 +104,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] static inline std::shared_ptr<Texture>& GetDefaultTexture(TextureType textureType)
         { return defaultTextures[textureType]; }
 
-        /* --- SETTER METHODS --- */
-        void DrawToImGui();
-        static void DestroyDefaultTextures();
-
         /* --- DESTRUCTOR --- */
         void Destroy();
         Texture(const Texture &) = delete;
@@ -126,6 +126,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         VkDescriptorSet imGuiDescriptorSet;
         bool imGuiDescriptorSetCreated = false;
+
+        bool isDefault = false;
 
         inline static std::shared_ptr<Texture> defaultTextures[TOTAL_TEXTURE_TYPES_COUNT];
         inline static std::unordered_map<std::string, std::shared_ptr<Texture>> texturePool;
