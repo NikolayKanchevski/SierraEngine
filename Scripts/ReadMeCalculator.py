@@ -41,6 +41,8 @@ class ReadMeCalculator:
         if debugInfo:
             print(f"\nTotal lines of code: { linesOfCode }.")
 
+        linesOfCodeString = f'{linesOfCode:,}'
+
         # Update the README.md's description to have the current date and the just-calculated lines of code count
         newReadMeData = ""
         with open('../README.md', 'r') as file:
@@ -48,7 +50,7 @@ class ReadMeCalculator:
             index = readMeData.index("<p align=\"center\" id=\"LinesCounter\">")
             readMeData = readMeData[0:index]
 
-            linesOfCodeLine = f"<p align=\"center\" id=\"LinesCounter\">Total lines of code: {linesOfCode}</p>\n"
+            linesOfCodeLine = f"<p align=\"center\" id=\"LinesCounter\">Total lines of code: {linesOfCodeString}</p>\n"
             lastUpdatedLine = f"<p align=\"center\" id=\"LastUpdated\">Last updated: {lastUpdated}</p>\n"
 
             newReadMeData = readMeData + linesOfCodeLine + lastUpdatedLine + "\n" + ("-" * 171)

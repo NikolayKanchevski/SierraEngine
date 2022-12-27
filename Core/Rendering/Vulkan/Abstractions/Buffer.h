@@ -9,6 +9,8 @@
 #include <glm/vec3.hpp>
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
+#include <vulkan/vk_enum_string_helper.h>
+#include <vk_mem_alloc.h>
 
 #include "Image.h"
 
@@ -31,7 +33,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] static std::shared_ptr<Buffer> CreateShared(BufferCreateInfo bufferCreateInfo);
 
         /* --- SETTER METHODS --- */
-        void CopyFromPointer(void* pointer, uint64_t offset = 0);
+        void CopyFromPointer(void* pointer);
         void CopyImage(const Image& givenImage, glm::vec3 imageOffset = { 0, 0, 0 }, uint64_t offset = 0);
         void CopyToBuffer(const Buffer *otherBuffer);
 
@@ -39,8 +41,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline VkBuffer GetVulkanBuffer() const
         { return this->vkBuffer; }
 
-        [[nodiscard]] inline VkDeviceMemory GetVulkanMemory() const
-        { return this->vkBufferMemory; }
+        [[nodiscard]] inline VmaAllocation GetMemory() const
+        { return this->vmaBufferAllocation; }
 
         [[nodiscard]] inline MemoryFlags GetMemoryFlags() const
         { return this->memoryFlags; }
@@ -60,12 +62,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     private:
         VkBuffer vkBuffer;
-        VkDeviceMemory vkBufferMemory;
+        VmaAllocation vmaBufferAllocation;
 
         uint64_t memorySize;
         MemoryFlags memoryFlags;
         BufferUsage bufferUsage;
-        bool destroyed = false;
     };
 
 }

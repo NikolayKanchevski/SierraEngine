@@ -4,8 +4,6 @@
 
 #pragma once
 
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-
 #include <cstdint>
 #include <memory>
 #include <vector>

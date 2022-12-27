@@ -4,7 +4,7 @@
 
 #include "Framebuffer.h"
 
-#include "../VulkanCore.h"
+#include "../VK.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -26,7 +26,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan framebuffer
         VK_ASSERT(
-            vkCreateFramebuffer(VulkanCore::GetLogicalDevice(), &framebufferCreateInfo, nullptr, &vkFramebuffer),
+            vkCreateFramebuffer(VK::GetLogicalDevice(), &framebufferCreateInfo, nullptr, &vkFramebuffer),
             "Failed to create a framebuffer with attachment count of [" + std::to_string(createInfo.attachments.size()) + "]"
         );
     }
@@ -41,6 +41,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Framebuffer::Destroy()
     {
         // Destroy the Vulkan framebuffer
-        vkDestroyFramebuffer(VulkanCore::GetLogicalDevice(), this->vkFramebuffer, nullptr);
+        vkDestroyFramebuffer(VK::GetLogicalDevice(), this->vkFramebuffer, nullptr);
     }
 }

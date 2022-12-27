@@ -19,13 +19,14 @@ private:
     float yaw = -90.0f, pitch = 0.0f;
     const float CAMERA_MOVE_SPEED = 15.0f, CAMERA_LOOK_SPEED = 0.1f, GAMEPAD_CAMERA_LOOK_SPEED = 0.5f;
 
+    PointLight* pointLight;
     std::vector<std::unique_ptr<Model>> tankModels;
 
-    void RenderLoop(VulkanRenderer &renderer);
+    void RenderLoop(std::unique_ptr<MainVulkanRenderer> &renderer);
 
     void UpdateObjects();
     void DoCameraMovement();
 
-    void DisplayUI(VulkanRenderer &renderer);
+    void DisplayUI(std::unique_ptr<MainVulkanRenderer> &renderer);
     void ListDeeper(Relationship &relationship, const uint32_t iteration);
 };

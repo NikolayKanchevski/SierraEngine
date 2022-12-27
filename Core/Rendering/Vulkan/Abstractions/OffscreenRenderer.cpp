@@ -4,14 +4,14 @@
 
 #include "OffscreenRenderer.h"
 
-#include "../VulkanCore.h"
+#include "../VK.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     /* --- CONSTRUCTORS --- */
 
     OffscreenRenderer::OffscreenRenderer(const OffscreenRendererCreateInfo &createInfo)
-        : width(createInfo.width), height(createInfo.height), maxConcurrentFrames(createInfo.maxConcurrentFrames), attachmentTypes(createInfo.attachmentTypes), antiAliasingType(createInfo.antiAliasingType)
+        : width(createInfo.width), height(createInfo.height), maxConcurrentFrames(createInfo.maxConcurrentFrames), attachmentTypes(createInfo.attachmentTypes), msaaSampling(createInfo.msaaSampling)
     {
         // Create images
         CreateImages();
@@ -47,6 +47,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- SETTER METHODS --- */
 
+    void OffscreenRenderer::SetMultisampling(const Sampling newMultisampling)
+    {
+        this->msaaSampling = newMultisampling;
+
+        CreateImages();
+        CreateRenderPass();
+        CreateFramebuffers();
+    }
+
     void OffscreenRenderer::Resize(const uint32_t newWidth, const uint32_t newHeight)
     {
         if (newWidth == width && newHeight == height) return;
@@ -66,11 +75,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         if (alreadyCreated)
         {
             // Wait for device to be idle
-            vkDeviceWaitIdle(VulkanCore::GetLogicalDevice());
+            vkDeviceWaitIdle(VK::GetLogicalDevice());
 
             // Destroy resources
             if (HasColorAttachment()) for (const auto &colorImage : colorImages) colorImage->Destroy();
-            if (HasMSAAEnabled()) msaaImage->Destroy();
+            if (msaaImage != nullptr) msaaImage->Destroy();
             if (HasDepthAttachment()) depthImage->Destroy();
         }
         else
@@ -90,7 +99,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             {
                 colorImages[i] = Image::Create({
                     .dimensions = { width, height, 1 },
-                    .format = MAIN_IMAGE_FORMAT,
+                    .format = VK::GetDevice()->GetBestColorImageFormat(),
                     .usageFlags = COLOR_ATTACHMENT_IMAGE | SAMPLED_IMAGE
                 });
 
@@ -103,9 +112,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             // Create depth image
             depthImage = Image::Create({
-                .dimensions = { VulkanCore::GetSwapchainExtent().width, VulkanCore::GetSwapchainExtent().height, 1 },
-                .format = VulkanCore::GetDevice()->GetBestDepthImageFormat(),
-                .sampling = (Sampling) antiAliasingType,
+                .dimensions = { width, height, 1 },
+                .format = VK::GetDevice()->GetBestDepthImageFormat(),
+                .sampling = (Sampling) msaaSampling,
                 .usageFlags = DEPTH_STENCIL_ATTACHMENT_IMAGE,
                 .memoryFlags = MEMORY_FLAGS_DEVICE_LOCAL,
             });
@@ -120,9 +129,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             // Create the sampled color image
             msaaImage = Image::Create({
-                .dimensions = { VulkanCore::GetSwapchainExtent().width, VulkanCore::GetSwapchainExtent().height, 1 },
-                .format = MAIN_IMAGE_FORMAT,
-                .sampling = (Sampling) antiAliasingType,
+                .dimensions = { width, height, 1 },
+                .format = VK::GetDevice()->GetBestColorImageFormat(),
+                .sampling = (Sampling) msaaSampling,
                 .usageFlags = TRANSIENT_ATTACHMENT_IMAGE | COLOR_ATTACHMENT_IMAGE,
                 .memoryFlags = MEMORY_FLAGS_DEVICE_LOCAL
             });
@@ -134,6 +143,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void OffscreenRenderer::CreateRenderPass()
     {
+        if (alreadyCreated)
+        {
+            renderPass->Destroy();
+        }
+
         // Set up attachments
         std::vector<RenderPassAttachment> renderPassAttachments;
         renderPassAttachments.reserve((int) HasColorAttachment() + (int) HasDepthAttachment() + (int) HasMSAAEnabled());

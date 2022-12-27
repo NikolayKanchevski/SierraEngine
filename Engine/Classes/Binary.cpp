@@ -22,6 +22,19 @@ namespace Sierra::Engine::Classes
         newValue != 0 ? static_cast<void>(value |= (1 << bitIndex)) : static_cast<void>(value &= ~(1 << bitIndex));
     }
 
+    /* --- GETTER METHODS --- */
+
+    uint32_t Binary::GetBitCount(Binary binary)
+    {
+        size_t counter = 0;
+
+        for (size_t i = 0; i < 8 * sizeof(uint32_t); i++) {
+            counter += static_cast<bool>(binary.value & (1 << i));
+        }
+
+        return counter;
+    }
+
     /* --- OPERATORS --- */
 
     Binary &Binary::operator=(uint32_t givenValue)

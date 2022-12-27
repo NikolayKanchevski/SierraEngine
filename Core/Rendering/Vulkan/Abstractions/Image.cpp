@@ -4,10 +4,63 @@
 
 #include "Image.h"
 
-#include "../VulkanCore.h"
+#include "../VK.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
+    /* --- CONSTRUCTORS --- */
+
+    Image::Image(const ImageCreateInfo &createInfo)
+        : dimensions(createInfo.dimensions), mipLevels(createInfo.mipLevels), sampling(createInfo.sampling), format(createInfo.format)
+    {
+        // Set up image creation info
+        VkImageCreateInfo vkImageCreateInfo{};
+        vkImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        vkImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+
+        vkImageCreateInfo.extent.width = static_cast<uint32_t>(dimensions.width);
+        vkImageCreateInfo.extent.height = static_cast<uint32_t>(dimensions.height);
+        vkImageCreateInfo.extent.depth = static_cast<uint32_t>(dimensions.depth);
+
+        vkImageCreateInfo.mipLevels = mipLevels;
+        vkImageCreateInfo.arrayLayers = 1;
+        vkImageCreateInfo.format = (VkFormat) format;
+        vkImageCreateInfo.tiling = (VkImageTiling) createInfo.imageTiling;
+        vkImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        vkImageCreateInfo.usage = (VkImageUsageFlagBits) createInfo.usageFlags;
+        vkImageCreateInfo.samples = (VkSampleCountFlagBits) sampling;
+        vkImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        // Set up image allocation info
+        VmaAllocationCreateInfo allocationCreateInfo{};
+        allocationCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
+        allocationCreateInfo.memoryTypeBits = std::numeric_limits<uint32_t>::max();
+        allocationCreateInfo.priority = 0.5f;
+
+        // Create and allocate image
+        VK_ASSERT(
+            vmaCreateImage(VK::GetMemoryAllocator(), &vkImageCreateInfo, &allocationCreateInfo, &vkImage, &vmaImageAllocation, nullptr),
+            "Failed to allocate memory for image with dimensions of [" + std::to_string(dimensions.width) + ", " + std::to_string(dimensions.height) + ", " + std::to_string(dimensions.depth) + "], format [" + std::to_string((int) format) + "], [" +
+            std::to_string(mipLevels) + "] mip levels, and sampling of [" + std::to_string((int) sampling) + "]"
+        );
+    }
+
+    std::unique_ptr<Image> Image::Create(ImageCreateInfo imageCreateInfo)
+    {
+        return std::make_unique<Image>(imageCreateInfo);
+    }
+
+    Image::Image(const SwapchainImageCreateInfo &createInfo)
+        : vkImage(createInfo.image), format(createInfo.format), sampling(createInfo.sampling), dimensions(createInfo.dimensions), layout(LAYOUT_PRESENT_SRC), swapchainImage(true)
+    {
+
+    }
+
+    std::unique_ptr<Image> Image::CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo)
+    {
+        return std::make_unique<Image>(swapchainImageCreateInfo);
+    }
+
     /* --- SETTER METHODS --- */
 
     void Image::CreateImageView(const ImageAspectFlags givenAspectFlags)
@@ -33,7 +86,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the image view
         VK_ASSERT(
-            vkCreateImageView(VulkanCore::GetLogicalDevice(), &imageViewCreateInfo, nullptr, &vkImageView),
+            vkCreateImageView(VK::GetLogicalDevice(), &imageViewCreateInfo, nullptr, &vkImageView),
             "Could not create image view for an image with dimensions of [" + std::to_string(dimensions.width) + ", " + std::to_string(dimensions.height) + ", " + std::to_string(dimensions.depth) + "], format [" + std::to_string((int) format) + "], [" +
             std::to_string(mipLevels) + "] mip levels, and sampling of [" + std::to_string((int) sampling) + "]"
         );
@@ -44,7 +97,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Image::TransitionLayout(const ImageLayout newLayout)
     {
         // Create a temporary command buffer
-        VkCommandBuffer commandBuffer = VulkanCore::GetDevice()->BeginSingleTimeCommands();
+        VkCommandBuffer commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
 
         // Create image memory barrier
         VkImageMemoryBarrier imageMemoryBarrier{};
@@ -95,7 +148,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
             dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         }
-        // If transitioning from an undefined layout to one optimal for depth stencil...
+            // If transitioning from an undefined layout to one optimal for depth stencil...
         else if (layout == LAYOUT_UNDEFINED && newLayout == LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL)
         {
             imageMemoryBarrier.srcAccessMask = 0;
@@ -120,7 +173,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
 
         // End command buffer
-        VulkanCore::GetDevice()->EndSingleTimeCommands(commandBuffer);
+        VK::GetDevice()->EndSingleTimeCommands(commandBuffer);
 
         // Change the current layout
         this->layout = newLayout;
@@ -128,75 +181,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Image::DestroyImageView()
     {
-        vkDestroyImageView(VulkanCore::GetLogicalDevice(), this->vkImageView, nullptr);
+        vkDestroyImageView(VK::GetLogicalDevice(), this->vkImageView, nullptr);
         imageViewCreated = false;
-    }
-
-    /* --- CONSTRUCTORS --- */
-
-    Image::Image(const ImageCreateInfo &createInfo)
-        : dimensions(createInfo.dimensions), mipLevels(createInfo.mipLevels), sampling(createInfo.sampling), format(createInfo.format)
-    {
-        // Set up image creation info
-        VkImageCreateInfo vkImageCreateInfo{};
-        vkImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        vkImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-
-        vkImageCreateInfo.extent.width = static_cast<uint32_t>(dimensions.width);
-        vkImageCreateInfo.extent.height = static_cast<uint32_t>(dimensions.height);
-        vkImageCreateInfo.extent.depth = static_cast<uint32_t>(dimensions.depth);
-
-        vkImageCreateInfo.mipLevels = mipLevels;
-        vkImageCreateInfo.arrayLayers = 1;
-        vkImageCreateInfo.format = (VkFormat) format;
-        vkImageCreateInfo.tiling = (VkImageTiling) createInfo.imageTiling;
-        vkImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        vkImageCreateInfo.usage = (VkImageUsageFlagBits) createInfo.usageFlags;
-        vkImageCreateInfo.samples = (VkSampleCountFlagBits) sampling;
-        vkImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-        // Create the Vulkan image
-        VK_ASSERT(
-            vkCreateImage(VulkanCore::GetLogicalDevice(), &vkImageCreateInfo, nullptr, &vkImage),
-            "Failed to create image with dimensions of [" + std::to_string(dimensions.width) + ", " + std::to_string(dimensions.height) + ", " + std::to_string(dimensions.depth) + "], format [" + std::to_string((int) format) + "], [" +
-            std::to_string(mipLevels) + "] mip levels, and sampling of [" + std::to_string((int) sampling) + "]"
-        );
-
-        // Retrieve its memory requirements
-        VkMemoryRequirements imageMemoryRequirements;
-        vkGetImageMemoryRequirements(VulkanCore::GetLogicalDevice(), vkImage, &imageMemoryRequirements);
-
-        // Set up image memory allocation info
-        VkMemoryAllocateInfo imageMemoryAllocateInfo{};
-        imageMemoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        imageMemoryAllocateInfo.allocationSize = imageMemoryRequirements.size;
-        imageMemoryAllocateInfo.memoryTypeIndex = VulkanCore::GetDevice()->FindMemoryTypeIndex(imageMemoryRequirements.memoryTypeBits, createInfo.memoryFlags);
-
-        // Allocate the image to memory
-        VK_ASSERT(
-                vkAllocateMemory(VulkanCore::GetLogicalDevice(), &imageMemoryAllocateInfo, nullptr, &vkImageMemory),
-                "Failed to allocate memory for image with dimensions of [" + std::to_string(dimensions.width) + ", " + std::to_string(dimensions.height) + ", " + std::to_string(dimensions.depth) + "], format [" + std::to_string((int) format) + "], [" +
-                std::to_string(mipLevels) + "] mip levels, and sampling of [" + std::to_string((int) sampling) + "]"
-        );
-
-        // Bind the image to its corresponding memory
-        vkBindImageMemory(VulkanCore::GetLogicalDevice(), vkImage, vkImageMemory, 0);
-    }
-
-    std::unique_ptr<Image> Image::Create(ImageCreateInfo imageCreateInfo)
-    {
-        return std::make_unique<Image>(imageCreateInfo);
-    }
-
-    std::unique_ptr<Image> Image::CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo)
-    {
-        return std::make_unique<Image>(swapchainImageCreateInfo);
-    }
-
-    Image::Image(const SwapchainImageCreateInfo &createInfo)
-            : vkImage(createInfo.image), format(createInfo.format), sampling(createInfo.sampling), dimensions(createInfo.dimensions), layout(LAYOUT_PRESENT_SRC), swapchainImage(true)
-    {
-
     }
 
     /* --- DESTRUCTOR --- */
@@ -207,10 +193,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         if (!swapchainImage)
         {
-            vkDestroyImage(VulkanCore::GetLogicalDevice(), this->vkImage, nullptr);
-            vkFreeMemory(VulkanCore::GetLogicalDevice(), this->vkImageMemory, nullptr);
+            vmaDestroyImage(VK::GetMemoryAllocator(), vkImage, vmaImageAllocation);
         }
-        if (imageViewCreated) vkDestroyImageView(VulkanCore::GetLogicalDevice(), this->vkImageView, nullptr);
+
+        if (imageViewCreated) vkDestroyImageView(VK::GetLogicalDevice(), this->vkImageView, nullptr);
 
         vkImage = VK_NULL_HANDLE;
     }

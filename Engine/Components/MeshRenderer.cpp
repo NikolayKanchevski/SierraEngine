@@ -6,9 +6,11 @@
 
 #include <glm/ext/matrix_transform.hpp>
 
-#include "../../Core/Rendering/Vulkan/VulkanCore.h"
+#include "InternalComponents.h"
+//#include "../../Core/Rendering/Vulkan/VulkanCore.h"
+#include "../../Core/Rendering/Vulkan/VK.h"
 
-using Sierra::Core::Rendering::Vulkan::VulkanCore;
+using namespace Sierra::Core::Rendering::Vulkan;
 
 namespace Sierra::Engine::Components
 {
@@ -27,19 +29,18 @@ namespace Sierra::Engine::Components
             meshID = meshSlotsUsed;
             meshSlotsUsed++;
 
-            #if DEBUG
-                // Check if descriptor indexing is supported
-                if (VulkanCore::GetDescriptorIndexingSupported())
-                {
-                    auto &globalBindlessDescriptorSet = VulkanCore::GetGlobalBindlessDescriptorSet();
-
-                    // Reserve spots for mesh's textures
-                    for (uint32_t i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
-                    {
-                        globalBindlessDescriptorSet->ReserveIndex(BINDLESS_TEXTURE_BINDING, meshID + i);
-                    }
-                }
-            #endif
+            // TODO: BINDLESS
+//            // Check if descriptor indexing is supported
+//            if (VK::GetDevice()->GetDescriptorIndexingSupported())
+//            {
+//                auto &globalBindlessDescriptorSet = VulkanCore::GetGlobalBindlessDescriptorSet();
+//
+//                // Reserve spots for mesh's textures
+//                for (uint32_t i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
+//                {
+//                    globalBindlessDescriptorSet->ReserveIndex(BINDLESS_TEXTURE_BINDING, meshID + i);
+//                }
+//            }
         }
         else
         {
@@ -48,7 +49,7 @@ namespace Sierra::Engine::Components
             freedMeshSlots.erase(freedMeshSlots.begin());
         }
 
-        if (!VulkanCore::GetDescriptorIndexingSupported()) CreateDescriptorSet();
+        if (!VK::GetDevice()->GetDescriptorIndexingSupported()) CreateDescriptorSet();
 
         // Assign textures array to use default ones
         for (uint32_t i = TOTAL_TEXTURE_TYPES_COUNT - 1; i--;)
@@ -62,7 +63,7 @@ namespace Sierra::Engine::Components
     void MeshRenderer::CreateDescriptorSet()
     {
         // If descriptor indexing not supported write default textures to the corresponding descriptor set
-        descriptorSet = DescriptorSet::Build(VulkanCore::GetDescriptorPool());
+        descriptorSet = DescriptorSet::Build(VK::GetDescriptorSetLayout());
         descriptorSet->WriteTexture(DIFFUSE_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_DIFFUSE));
         descriptorSet->WriteTexture(SPECULAR_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_SPECULAR));
         descriptorSet->WriteTexture(HEIGHT_MAP_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_HEIGHT_MAP));
@@ -75,10 +76,11 @@ namespace Sierra::Engine::Components
 
         textures[givenTexture->GetTextureType()] = givenTexture;
 
-        if (VulkanCore::GetDescriptorIndexingSupported())
+        if (VK::GetDevice()->GetDescriptorIndexingSupported())
         {
-            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, (TOTAL_TEXTURE_TYPES_COUNT * meshID) + (uint32_t) givenTexture->GetTextureType());
-            VulkanCore::GetGlobalBindlessDescriptorSet()->Allocate();
+            // TODO: BINDLESS
+//            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, (TOTAL_TEXTURE_TYPES_COUNT * meshID) + (uint32_t) givenTexture->GetTextureType());
+//            VulkanCore::GetGlobalBindlessDescriptorSet()->Allocate();
         }
         else
         {
@@ -95,7 +97,7 @@ namespace Sierra::Engine::Components
 
         textures[textureType] = nullptr;
 
-        if (!VulkanCore::GetDescriptorIndexingSupported())
+        if (!VK::GetDevice()->GetDescriptorIndexingSupported())
         {
             descriptorSet->WriteTexture(TEXTURE_TYPE_TO_BINDING(textureType), Texture::GetDefaultTexture(textureType));
             descriptorSet->Allocate();
@@ -110,7 +112,7 @@ namespace Sierra::Engine::Components
     {
         // Inverse the Y coordinate to satisfy Vulkan's requirements
         Transform transform = GetComponent<Transform>();
-        glm::vec3 rendererPosition = {transform.position.x, transform.position.y * -1, transform.position.z};
+        glm::vec3 rendererPosition = { transform.position.x, transform.position.y * -1, transform.position.z };
 
         // Calculate translation matrix
         glm::mat4x4 translationMatrix(1.0);

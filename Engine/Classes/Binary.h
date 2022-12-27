@@ -21,7 +21,9 @@ namespace Sierra::Engine::Classes
         void SetBit(uint32_t bitIndex, uint32_t newValue);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] bool IsBitSet(const uint32_t bitIndex) const { return (value & (1 << bitIndex)) != 0; };
+        [[nodiscard]] inline bool IsBitSet(const uint32_t bitIndex) const { return (value & (1 << bitIndex)) != 0; };
+        [[nodiscard]] inline uint32_t GetBitCount() const { return GetBitCount(value); };
+        [[nodiscard]] static uint32_t GetBitCount(Binary binary);
         [[nodiscard]] std::string ToString() const { return std::bitset<16>(value).to_string(); };
 
         /* --- OPERATORS --- */

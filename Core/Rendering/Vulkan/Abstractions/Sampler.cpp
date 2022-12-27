@@ -4,7 +4,7 @@
 
 #include "Sampler.h"
 
-#include "../VulkanCore.h"
+#include "../VK.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -37,7 +37,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan sampler
         VK_ASSERT(
-                vkCreateSampler(VulkanCore::GetLogicalDevice(), &vkSamplerCreateInfo, nullptr, &vkSampler),
+                vkCreateSampler(VK::GetLogicalDevice(), &vkSamplerCreateInfo, nullptr, &vkSampler),
                 "Failed to create sampler with a LOD of [" + std::to_string(createInfo.minLod) + "," + std::to_string(createInfo.maxLod) + "] and [" + std::to_string(createInfo.maxAnisotropy) + "] max anisotropy"
         );
     }
@@ -54,7 +54,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         if (vkSampler == VK_NULL_HANDLE) return;
 
         // Destroy the Vulkan sampler
-        vkDestroySampler(VulkanCore::GetLogicalDevice(), this->vkSampler, nullptr);
+        vkDestroySampler(VK::GetLogicalDevice(), this->vkSampler, nullptr);
 
         vkSampler = VK_NULL_HANDLE;
     }

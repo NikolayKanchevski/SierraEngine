@@ -4,24 +4,16 @@
 
 #include "Entity.h"
 
-
 using namespace Sierra::Engine::Components;
 
 namespace Sierra::Engine::Classes
 {
     /* --- CONSTRUCTORS --- */
 
-    Entity::Entity()
-        : enttEntity(World::RegisterEntity())
-    {
-        AddComponent<Transform>();
-        AddComponent<Tag>("Entity");
-        AddComponent<Relationship>(enttEntity);
-    }
-
     Entity::Entity(const std::string &givenName)
         : enttEntity(World::RegisterEntity())
     {
+        AddComponent<UUID>();
         AddComponent<Transform>();
         AddComponent<Tag>(givenName);
         AddComponent<Relationship>(enttEntity);
@@ -30,6 +22,7 @@ namespace Sierra::Engine::Classes
     Entity::Entity(Entity &givenParent)
         : enttEntity(World::RegisterEntity())
     {
+        AddComponent<UUID>();
         AddComponent<Transform>();
         AddComponent<Tag>("Entity");
         AddComponent<Relationship>(enttEntity);
@@ -40,6 +33,7 @@ namespace Sierra::Engine::Classes
     Entity::Entity(const std::string &givenName, Entity &givenParent)
         : enttEntity(World::RegisterEntity())
     {
+        AddComponent<UUID>();
         AddComponent<Transform>();
         AddComponent<Tag>(givenName);
         AddComponent<Relationship>(enttEntity);
@@ -56,7 +50,7 @@ namespace Sierra::Engine::Classes
 
     void Entity::Destroy()
     {
-        World::GetEnttRegistry().destroy(enttEntity);
+        World::GetEnttRegistry()->destroy(enttEntity);
     }
 
     /* --- DESTRUCTOR --- */
@@ -64,5 +58,10 @@ namespace Sierra::Engine::Classes
     Entity::~Entity()
     {
 
+    }
+
+    bool Entity::operator==(Entity &right)
+    {
+        return enttEntity == right.enttEntity;
     }
 }

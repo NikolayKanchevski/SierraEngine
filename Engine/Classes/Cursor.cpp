@@ -32,27 +32,27 @@ namespace Sierra::Engine::Classes
     /* --- SETTER METHODS --- */
     void Cursor::SetCursorPosition(const glm::vec2 newPosition)
     {
-        glfwSetCursorPos(VulkanCore::GetCoreWindow(), newPosition.x, newPosition.y);
-        CursorPositionCallback(VulkanCore::GetCoreWindow(), newPosition.x, newPosition.y);
+        glfwSetCursorPos(Window::GetCurrentlyFocusedWindow()->GetCoreWindow(), newPosition.x, newPosition.y);
+        CursorPositionCallback(Window::GetCurrentlyFocusedWindow()->GetCoreWindow(), newPosition.x, newPosition.y);
 
         ResetCursorOffset();
     }
 
     void Cursor::SetCursorPositionNormalized(const glm::vec2 newPosition)
     {
-        glm::vec2 nonNormalizedPosition = { newPosition.x * (float) VulkanCore::GetWindow()->GetWidth(), newPosition.y * (float) VulkanCore::GetWindow()->GetHeight() };
+        glm::vec2 nonNormalizedPosition = { newPosition.x * (float) Window::GetCurrentlyFocusedWindow()->GetWidth(), newPosition.y * (float) Window::GetCurrentlyFocusedWindow()->GetHeight() };
         SetCursorPosition(nonNormalizedPosition);
     }
 
     void Cursor::CenterCursor()
     {
-        SetCursorPosition({ VulkanCore::GetWindow()->GetWidth() / 2, VulkanCore::GetWindow()->GetHeight() / 2 });
+        SetCursorPosition({ Window::GetCurrentlyFocusedWindow()->GetWidth() / 2, Window::GetCurrentlyFocusedWindow()->GetHeight() / 2 });
     }
 
     void Cursor::ShowCursor(const bool centerCursor)
     {
         cursorShown = true;
-        glfwSetInputMode(VulkanCore::GetCoreWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        glfwSetInputMode(Window::GetCurrentlyFocusedWindow()->GetCoreWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
         if (centerCursor) CenterCursor();
 
@@ -62,7 +62,7 @@ namespace Sierra::Engine::Classes
     void Cursor::HideCursor(const bool centerCursor)
     {
         cursorShown = false;
-        glfwSetInputMode(VulkanCore::GetCoreWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetInputMode(Window::GetCurrentlyFocusedWindow()->GetCoreWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
         if (centerCursor) CenterCursor();
 
@@ -84,7 +84,7 @@ namespace Sierra::Engine::Classes
     {
         lastCursorPosition = cursorPosition;
 
-        yPosition = -(yPosition - VulkanCore::GetWindow()->GetHeight());
+        if (Window::GetCurrentlyFocusedWindow() != nullptr) yPosition = -(yPosition - Window::GetCurrentlyFocusedWindow()->GetHeight());
         cursorPosition = glm::vec2(xPosition, yPosition);
 
         cursorOffset = glm::vec2(lastCursorPosition.x - cursorPosition.x, lastCursorPosition.y - cursorPosition.y);
@@ -95,8 +95,14 @@ namespace Sierra::Engine::Classes
 
     glm::vec2 Cursor::GetGlfwCursorPosition()
     {
+        if (Window::GetCurrentlyFocusedWindow() == nullptr)
+        {
+            ASSERT_WARNING("Trying to get the GLFW cursor position within a non-focused window. Since this is not possible and a value of { 0, 0 } has been returned");
+            return { 0, 0 };
+        }
+
         double xPosition, yPosition;
-        glfwGetCursorPos(VulkanCore::GetCoreWindow(), &xPosition, &yPosition);
+        glfwGetCursorPos(Window::GetCurrentlyFocusedWindow()->GetCoreWindow(), &xPosition, &yPosition);
         return { xPosition, yPosition };
     }
 }

@@ -4,7 +4,7 @@
 
 #include "RenderPass.h"
 
-#include "../VulkanCore.h"
+#include "../VK.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -15,7 +15,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         const std::vector<RenderPassAttachment> &attachments = createInfo.attachments;
         const std::vector<SubpassInfo> &subpassInfos = createInfo.subpassInfos;
 
-//        std::vector<VkAttachmentReference
         std::vector<VkAttachmentDescription> attachmentDescriptions(attachments.size());
 
         for (uint32_t i = attachments.size(); i--;)
@@ -205,7 +204,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
         renderPassInfo.pDependencies = dependencies.data();
 
-        VK_ASSERT(vkCreateRenderPass(VulkanCore::GetLogicalDevice(), &renderPassInfo, nullptr, &renderPass), "Could not create render pass");
+        VK_ASSERT(vkCreateRenderPass(VK::GetLogicalDevice(), &renderPassInfo, nullptr, &renderPass), "Could not create render pass");
 
         clearValues.resize(attachments.size());
         for (uint32_t i = 0; i < attachments.size(); i++)
@@ -278,7 +277,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void RenderPass::Destroy()
     {
-        vkDestroyRenderPass(VulkanCore::GetLogicalDevice(), renderPass, nullptr);
+        vkDestroyRenderPass(VK::GetLogicalDevice(), renderPass, nullptr);
         clearValues.clear();
     }
 }

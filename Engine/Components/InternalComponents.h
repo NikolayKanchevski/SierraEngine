@@ -4,10 +4,30 @@
 
 #pragma once
 
-
+#include <glm/vec3.hpp>
+#include "Component.h"
 
 namespace Sierra::Engine::Components
 {
+
+    class UUID : public Component
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        UUID();
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] inline uint64_t GetValue() const { return value; }
+
+        /* --- OPERATORS --- */
+        UUID& operator=(uint32_t givenValue);
+
+        UUID(const UUID&) = default;
+        operator uint32_t() const noexcept { return value; }
+
+    private:
+        uint64_t value;
+    };
 
     class Tag : public Component
     {
@@ -18,6 +38,7 @@ namespace Sierra::Engine::Components
         /* --- PROPERTIES --- */
         std::string tag;
 
+        /* --- OPERATORS --- */
         Tag() = default;
         Tag(const Tag&) = default;
     };
@@ -33,35 +54,9 @@ namespace Sierra::Engine::Components
         [[nodiscard]] inline std::vector<entt::entity> GetEnttChildrenEntities() const { return children; }
 
         /* --- SETTER METHODS --- */
-        inline void SetParent(entt::entity givenParent)
-        {
-            // Get the new parent's relationship
-            Relationship &givenParentRelationship = World::GetEnttRegistry().get<Relationship>(givenParent);
+        void SetParent(entt::entity givenParent);
 
-            // Check if the current parent is not null
-            if (parent != entt::null)
-            {
-                // Get the current parent's relationship
-                Relationship &currentParentRelationship = Core::World::GetEnttRegistry().get<Relationship>(parent);
-
-                // Get the index of "self" in current parent's children
-                uint32_t childIndex = 0;
-                while (currentParentRelationship.children[childIndex] != self)
-                {
-                    childIndex++;
-                }
-
-                // Erase "self" from current parent's children
-                currentParentRelationship.children.erase(currentParentRelationship.children.begin() + childIndex);
-            }
-
-            // Change parent
-            parent = givenParent;
-
-            // Add "self" to new parent's children
-            givenParentRelationship.children.push_back(self);
-        }
-
+        /* --- OPERATORS --- */
         Relationship() = default;
         Relationship(const Relationship&) = default;
 
@@ -79,6 +74,10 @@ namespace Sierra::Engine::Components
         glm::vec3 rotation = { 0, 0, 0 };
         glm::vec3 scale = { 1, 1, 1 };
 
+        /* --- POLLING METHODS --- */
+        void DrawUI() override;
+
+        /* --- OPERATORS --- */
         Transform() = default;
         Transform(const Transform&) = default;
     };

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <chrono>
 #include <vulkan/vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
 #include <iostream>
@@ -155,41 +156,41 @@ public:
 
     void Stop()
     {
-        auto endTimepoint = std::chrono::steady_clock::now();
-        auto highResStart = std::chrono::duration_cast<std::chrono::microseconds>(startTimepoint.time_since_epoch()).count();
-        auto highResEnd = std::chrono::duration_cast<std::chrono::microseconds>(endTimepoint.time_since_epoch()).count();
+        auto endTimePoint = std::chrono::steady_clock::now();
+        auto highResStart = std::chrono::duration_cast<std::chrono::milliseconds>(startTimepoint.time_since_epoch()).count();
+        auto highResEnd = std::chrono::duration_cast<std::chrono::milliseconds>(endTimePoint.time_since_epoch()).count();
         auto elapsedTime = highResEnd - highResStart;
 
         std::string nameString = std::string(name);
 
-        uint32_t i = nameString.size() - 1;
+        uint32_t i = nameString.size();
         while (true)
         {
-            if (i == 0) break;
-
-            if (nameString[i] == ':' && nameString[i + 1] == ':')
+            if (nameString[i] == '(')
             {
-                uint32_t j = i - 1;
-                while (true)
+                uint32_t j = i;
+                uint32_t columnCounter = 0;
+
+                while (columnCounter < 3)
                 {
-                    if (j == 0) break;
+                    j--;
 
                     if (nameString[j] == ':')
                     {
-                        nameString = nameString.substr(j + 1, nameString.size());
-                        break;
+                        columnCounter++;
                     }
-
-                    j--;
                 }
+
+                j++;
+
+                nameString = nameString.substr(j, i - j + 1) + ')';
+                break;
             }
 
             i--;
         }
 
-        nameString = nameString.substr(0, nameString.find('(')) + "()";
-
-        ASSERT_INFO("Method " + nameString + " took " + std::to_string(elapsedTime) + " μs");
+        ASSERT_INFO("Method " + nameString + " took " + std::to_string(elapsedTime) + "ms");
 
         stopped = true;
     }

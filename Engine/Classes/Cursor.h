@@ -7,9 +7,10 @@
 #include <glm/vec2.hpp>
 #include <GLFW/glfw3.h>
 
-#include "../../Core/Rendering/Vulkan/VulkanCore.h"
+#include "../../Core/Rendering/Window.h"
+#include "../../Core/Debugger.h"
 
-using namespace Sierra::Core::Rendering::Vulkan;
+using Sierra::Core::Rendering::Window;
 
 namespace Sierra::Engine::Classes
 {
@@ -54,7 +55,16 @@ namespace Sierra::Engine::Classes
         [[nodiscard]] inline static glm::vec2 GetCursorPosition() { return cursorPosition; }
 
         /// @brief Returns the normalized position of the cursor where both X and Y is a value between 0 and 1.
-        [[nodiscard]] inline static glm::vec2 GetCursorPositionNormalized() { return {cursorPosition.x / (float) VulkanCore::GetWindow()->GetWidth(), cursorPosition.y / (float) VulkanCore::GetWindow()->GetHeight()}; }
+        [[nodiscard]] inline static glm::vec2 GetCursorPositionNormalized()
+        {
+            if (Window::GetCurrentlyFocusedWindow() == nullptr)
+            {
+                ASSERT_WARNING("Trying to get the normalized cursor position within a non-focused window. Since this is not possible and a value of { 0, 0 } has been returned");
+                return { 0, 0 };
+            }
+
+            return {cursorPosition.x / (float) Window::GetCurrentlyFocusedWindow()->GetWidth(), cursorPosition.y / (float) Window::GetCurrentlyFocusedWindow()->GetHeight() };
+        }
 
         /// @brief Returns how much the mouse has been moved horizontally since last frame.
         [[nodiscard]] inline static float GetHorizontalCursorOffset() { return cursorOffset.x; }

@@ -23,6 +23,64 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     class Device
     {
     public:
+        /* --- CONSTRUCTORS --- */
+        Device(DeviceCreateInfo &deviceCreateInfo);
+        static std::unique_ptr<Device> Create(DeviceCreateInfo createInfo);
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] inline bool GetDescriptorIndexingSupported() const
+        { return false; } // TODO: BINDLESS
+//        #if !__APPLE__
+//            { return physicalDeviceFeatures.shaderSampledImageArrayDynamicIndexing; };
+//        #else
+//            { return false; }
+//        #endif
+
+        [[nodiscard]] VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
+        [[nodiscard]] VkDevice GetLogicalDevice() const { return logicalDevice; }
+
+        [[nodiscard]] VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures() const { return physicalDeviceFeatures; }
+        [[nodiscard]] VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const { return physicalDeviceProperties; }
+        [[nodiscard]] VkPhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties() const { return physicalDeviceMemoryProperties; }
+
+        [[nodiscard]] ImageFormat GetBestColorImageFormat() const { return bestColorImageFormat; }
+        [[nodiscard]] ImageFormat GetBestDepthImageFormat() const { return bestDepthImageFormat; }
+
+        [[nodiscard]] Sampling GetHighestMultisampling() const { return highestMultisampling; }
+
+        [[nodiscard]] uint32_t GetGraphicsQueueFamily() const { return queueFamilyIndices.graphicsFamily; }
+        [[nodiscard]] uint32_t GetPresentationQueueFamily() const { return queueFamilyIndices.presentationFamily; }
+
+        [[nodiscard]] VkQueue GetGraphicsQueue() const { return graphicsQueue; }
+        [[nodiscard]] VkQueue GetPresentationQueue() const { return presentationQueue; }
+
+        [[nodiscard]] float GetTimestampPeriod() const { return physicalDeviceProperties.limits.timestampPeriod; }
+
+        [[nodiscard]] VkCommandBuffer BeginSingleTimeCommands() const;
+        void EndSingleTimeCommands(VkCommandBuffer commandBuffer) const;
+
+        /* --- SETTER METHODS --- */
+        inline void WaitUntilIdle() { vkDeviceWaitIdle(logicalDevice); };
+
+        /* --- DESTRUCTOR --- */
+        void Destroy();
+        Device(const Device &) = delete;
+        Device &operator=(const Device &) = delete;
+        Device(Device &&) = delete;
+        Device &operator=(Device &&) = delete;
+
+    private:
+        VkPhysicalDevice physicalDevice;
+        VkSurfaceKHR exampleSurface; // An existing surface is required for device creation so one will be created specifically and destroyed after that
+
+        VkDevice logicalDevice;
+        VkPhysicalDeviceFeatures physicalDeviceFeatures;
+        VkPhysicalDeviceProperties physicalDeviceProperties;
+        VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+
+        VkQueue graphicsQueue;
+        VkQueue presentationQueue;
+
         struct QueueFamilyIndices
         {
             int graphicsFamily = -1;
@@ -34,166 +92,32 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
         };
 
-        struct SwapchainSupportDetails
-        {
-            VkSurfaceCapabilitiesKHR capabilities;
-            std::vector<VkSurfaceFormatKHR> formats;
-            std::vector<VkPresentModeKHR> presentModes;
-        };
+        QueueFamilyIndices queueFamilyIndices;
+        VkPhysicalDeviceFeatures* requiredFeatures;
 
-    public:
+        ImageFormat bestColorImageFormat;
+        ImageFormat bestDepthImageFormat;
 
-        /* --- CONSTRUCTORS --- */
-        Device(DeviceCreateInfo &deviceCreateInfo);
-        static std::shared_ptr<Device> Create(DeviceCreateInfo createInfo);
+        Sampling highestMultisampling;
 
-        /* --- GETTER METHODS --- */
-        [[nodiscard]] inline bool GetDescriptorIndexingSupported() const
-        #if !__APPLE__
-            { return physicalDeviceFeatures.shaderSampledImageArrayDynamicIndexing; };
-        #else
-            { return false; }
-        #endif
+        void RetrievePhysicalDevice();
+        void CreateLogicalDevice();
 
-        [[nodiscard]] VkInstance GetInstance() const { return instance; }
-        [[nodiscard]] VkSurfaceKHR GetSurface() const { return surface; }
+        void RetrieveBestProperties();
+        bool DeviceExtensionsSupported(const VkPhysicalDevice &givenPhysicalDevice);
 
-        [[nodiscard]] VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
-        [[nodiscard]] VkDevice GetLogicalDevice() const { return logicalDevice; }
+        bool PhysicalDeviceSuitable(const VkPhysicalDevice &givenPhysicalDevice);
+        QueueFamilyIndices FindQueueFamilies(const VkPhysicalDevice &givenPhysicalDevice);
 
-        [[nodiscard]] VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures() const { return physicalDeviceFeatures; }
-        [[nodiscard]] VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const { return physicalDeviceProperties; }
-        [[nodiscard]] VkPhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties() const { return physicalDeviceMemoryProperties; }
-
-        [[nodiscard]] ImageFormat GetBestSwapchainImageFormat() const { return (ImageFormat) bestSwapchainImageFormat.format; }
-        [[nodiscard]] VkColorSpaceKHR GetBestSwapchainColorSpace() const { return bestSwapchainImageFormat.colorSpace; }
-        [[nodiscard]] ImageFormat GetBestDepthImageFormat() const { return bestDepthImageFormat; }
-
-        [[nodiscard]] VkSurfaceCapabilitiesKHR GetSwapchainCapabilites()
-        {
-            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &swapchainSupportDetails.capabilities);
-            return swapchainSupportDetails.capabilities;
-        }
-        [[nodiscard]] VkPresentModeKHR GetBestPresentationMode() const { return bestPresentationMode; }
-
-        [[nodiscard]] Sampling GetHighestMultisampling() const { return highestMultisampling; }
-
-        [[nodiscard]] uint32_t GetGraphicsQueueFamily() const { return queueFamilyIndices.graphicsFamily; }
-        [[nodiscard]] uint32_t GetPresentationQueueFamily() const { return queueFamilyIndices.presentationFamily; }
-
-        [[nodiscard]] VkQueue GetGraphicsQueue() const { return graphicsQueue; }
-        [[nodiscard]] VkQueue GetPresentationQueue() const { return presentationQueue; }
-
-        [[nodiscard]] VkCommandPool GetCommandPool() const { return commandPool; }
-
-        [[nodiscard]] uint32_t FindMemoryTypeIndex(uint32_t typeFilter, MemoryFlags givenMemoryFlags) const;
-        [[nodiscard]] VkCommandBuffer BeginSingleTimeCommands() const;
-        void EndSingleTimeCommands(VkCommandBuffer commandBuffer) const;
-
-        /* --- DESTRUCTOR --- */
-        void Destroy();
-        Device(const Device &) = delete;
-        Device &operator=(const Device &) = delete;
-        Device(Device &&) = delete;
-        Device &operator=(Device &&) = delete;
-
-    private:
-        inline static const std::vector<const char*> requiredInstanceExtensions
-        {
-            #if VALIDATION_ENABLED
-                VK_EXT_DEBUG_UTILS_EXTENSION_NAME
-            #endif
-        };
+        ImageFormat GetBestColorBufferFormat(std::vector<ImageFormat> givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags);
+        ImageFormat GetBestDepthBufferFormat(std::vector<ImageFormat> givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags);
+        Sampling RetrieveMaxSampling();
 
         std::vector<const char*> requiredDeviceExtensions
         {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
         };
 
-        #if VALIDATION_ENABLED
-        inline static const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
-
-        inline VkResult CreateDebugUtilsMessengerEXT(VkInstance givenInstance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger)
-        {
-            auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(givenInstance, "vkCreateDebugUtilsMessengerEXT");
-            if (func != nullptr)
-            {
-                return func(givenInstance, pCreateInfo, pAllocator, pDebugMessenger);
-            }
-            else
-            {
-                return VK_ERROR_EXTENSION_NOT_PRESENT;
-            }
-        }
-
-        inline void DestroyDebugUtilsMessengerEXT(VkInstance givenInstance, VkDebugUtilsMessengerEXT givenDebugMessenger, const VkAllocationCallbacks* pAllocator)
-        {
-            auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(givenInstance, "vkDestroyDebugUtilsMessengerEXT");
-            if (func != nullptr)
-            {
-                func(givenInstance, givenDebugMessenger, pAllocator);
-            }
-        }
-        #endif
-
-    private:
-        VkInstance instance;
-        VkSurfaceKHR surface;
-
-        VkPhysicalDevice physicalDevice;
-        VkDevice logicalDevice;
-
-        VkPhysicalDeviceFeatures physicalDeviceFeatures;
-        VkPhysicalDeviceProperties physicalDeviceProperties;
-        VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-
-        VkQueue graphicsQueue;
-        VkQueue presentationQueue;
-
-        VkCommandPool commandPool;
-
-        QueueFamilyIndices queueFamilyIndices;
-        SwapchainSupportDetails swapchainSupportDetails;
-
-        VkPhysicalDeviceFeatures* requiredFeatures;
-
-        VkSurfaceFormatKHR bestSwapchainImageFormat;
-        ImageFormat bestDepthImageFormat;
-        VkPresentModeKHR bestPresentationMode;
-        Sampling highestMultisampling;
-
-        /* --- SETTER METHODS --- */
-        void CreateInstance();
-
-        #if VALIDATION_ENABLED
-        void CreateDebugMessenger();
-        #endif
-
-        void CreateSurface();
-        void RetrievePhysicalDevice();
-        void CreateLogicalDevice();
-        void CreateCommandPool();
-        void RetrieveBestProperties();
-
-        /* --- GETTER METHODS --- */
-        #if VALIDATION_ENABLED
-        VkDebugUtilsMessengerEXT debugMessenger;
-        VkDebugUtilsMessengerCreateInfoEXT* debugMessengerCreateInfo;
-        bool ValidationLayersSupported();
-        #endif
-
-        bool ExtensionsSupported(std::vector<const char*> &givenExtensions);
-        bool DeviceExtensionsSupported(const VkPhysicalDevice &givenPhysicalDevice);
-
-        bool PhysicalDeviceSuitable(const VkPhysicalDevice &givenPhysicalDevice);
-
-        QueueFamilyIndices FindQueueFamilies(const VkPhysicalDevice &givenPhysicalDevice);
-        SwapchainSupportDetails GetSwapchainSupportDetails(const VkPhysicalDevice &givenPhysicalDevice);
-
-        VkSurfaceFormatKHR ChooseBestSwapchainFormat(std::vector<VkSurfaceFormatKHR> &givenFormats);
-        ImageFormat GetBestDepthBufferFormat(std::vector<ImageFormat> givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags);
-        VkPresentModeKHR ChooseSwapchainPresentMode(std::vector<VkPresentModeKHR> &givenPresentModes);
-        Sampling GetHighestSupportedSampling();
     };
 
 }

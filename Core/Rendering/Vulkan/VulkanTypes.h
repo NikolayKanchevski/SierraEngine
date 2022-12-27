@@ -294,7 +294,8 @@ namespace Sierra::Core::Rendering::Vulkan
         FORMAT_A4B4G4R4_UNORM_PACK16_EXT = VK_FORMAT_A4B4G4R4_UNORM_PACK16_EXT,
     } ImageFormat;
 
-    typedef enum ImageUsage
+    typedef uint32_t ImageUsage;
+    typedef enum _ImageUsage
     {
         UNDEFINED_IMAGE = 0x00000000,
         TRANSFER_SRC_IMAGE = VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
@@ -308,7 +309,7 @@ namespace Sierra::Core::Rendering::Vulkan
         FRAGMENT_DENSITY_MAP_IMAGE = VK_IMAGE_USAGE_FRAGMENT_DENSITY_MAP_BIT_EXT,
         FRAGMENT_SHADING_RATE_ATTACHMENT_IMAGE = VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR,
         SHADING_RATE_IMAGE = FRAGMENT_SHADING_RATE_ATTACHMENT_IMAGE
-    } ImageUsage;
+    } _ImageUsage;
 
     typedef enum ImageLayout
     {
@@ -476,7 +477,8 @@ namespace Sierra::Core::Rendering::Vulkan
         }
     };
 
-    typedef enum BufferUsage
+    typedef uint32_t BufferUsage;
+    typedef enum _BufferUsage
     {
         UNDEFINED_BUFFER = 0x00000000,
         TRANSFER_SRC_BUFFER = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -489,7 +491,7 @@ namespace Sierra::Core::Rendering::Vulkan
         VERTEX_BUFFER = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         INDIRECT_BUFFER = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
         SHADER_DEVICE_ADDRESS = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT
-    } BufferUsage;
+    } _BufferUsage;
 
     typedef enum LoadOp
     {
@@ -510,19 +512,58 @@ namespace Sierra::Core::Rendering::Vulkan
         STORE_OP_MAX_ENUM = VK_ATTACHMENT_STORE_OP_MAX_ENUM
     } StoreOp;
 
-    typedef enum MemoryFlags
+    typedef uint32_t MemoryFlags;
+    typedef enum _MemoryFlags
     {
         MEMORY_FLAGS_NONE = 0x00000000,
         MEMORY_FLAGS_DEVICE_LOCAL = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         MEMORY_FLAGS_HOST_VISIBLE = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
         MEMORY_FLAGS_HOST_COHERENT = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-    } MemoryFlags;
+    } _MemoryFlags;
 
-    template<class T> inline T operator~ (T a) { return (T)~(int)a; }
-    template<class T> inline T operator| (T a, T b) { return (T)((int)a | (int)b); }
-    template<class T> inline T operator& (T a, T b) { return (T)((int)a & (int)b); }
-    template<class T> inline T operator^ (T a, T b) { return (T)((int)a ^ (int)b); }
-    template<class T> inline T& operator|= (T& a, T b) { return (T&)((int&)a |= (int)b); }
-    template<class T> inline T& operator&= (T& a, T b) { return (T&)((int&)a &= (int)b); }
-    template<class T> inline T& operator^= (T& a, T b) { return (T&)((int&)a ^= (int)b); }
+    typedef enum VertexAttribute
+    {
+        VERTEX_ATTRIBUTE_FLOAT = sizeof(float) * 1, // 4
+        VERTEX_ATTRIBUTE_VEC2 = sizeof(float) * 2, // 8
+        VERTEX_ATTRIBUTE_VEC3 = sizeof(float) * 3, // 16
+        VERTEX_ATTRIBUTE_VEC4 = sizeof(float) * 4, // 20
+
+        VERTEX_ATTRIBUTE_POSITION  = VERTEX_ATTRIBUTE_VEC3,
+        VERTEX_ATTRIBUTE_NORMAL = VERTEX_ATTRIBUTE_VEC3,
+        VERTEX_ATTRIBUTE_COLOR = VERTEX_ATTRIBUTE_VEC3,
+        VERTEX_ATTRIBUTE_COLOR_WITH_ALPHA = VERTEX_ATTRIBUTE_VEC4,
+        VERTEX_ATTRIBUTE_TEXTURE_COORDINATE = VERTEX_ATTRIBUTE_VEC2
+    } VertexAttribute;
+
+    typedef enum FrontFace
+    {
+        FRONT_FACE_CLOCKWISE = VK_FRONT_FACE_CLOCKWISE,
+        FRONT_FACE_COUNTER_CLOCKWISE = VK_FRONT_FACE_COUNTER_CLOCKWISE
+    } FrontFace;
+
+    typedef enum CullMode
+    {
+        CULL_NONE = VK_CULL_MODE_NONE,
+        CULL_FRONT = VK_CULL_MODE_FRONT_BIT,
+        CULL_BACK = VK_CULL_MODE_BACK_BIT,
+        CULL_FRONT_AND_BACK = VK_CULL_MODE_FRONT_AND_BACK
+    } CullMode;
+
+    typedef enum ShadingType
+    {
+        SHADE_FILL = VK_POLYGON_MODE_FILL,
+        SHADE_WIREFRAME = VK_POLYGON_MODE_LINE
+    } ShadingType;
+
+    typedef uint32_t ShaderType;
+    typedef enum _ShaderType
+    {
+        VERTEX_SHADER = VK_SHADER_STAGE_VERTEX_BIT,
+        FRAGMENT_SHADER = VK_SHADER_STAGE_FRAGMENT_BIT,
+        TESSELATION_CONTROL_SHADER = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
+        TESSELATION_EVALUATION_SHADER = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+        GEOMETRY_SHADER = VK_SHADER_STAGE_GEOMETRY_BIT,
+        COMPUTE_SHADER = VK_SHADER_STAGE_COMPUTE_BIT
+    } _ShaderType;
+
 }

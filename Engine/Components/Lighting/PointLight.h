@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Light.h"
 #include "../InternalComponents.h"
 
 namespace Sierra::Engine::Components {
@@ -48,11 +49,11 @@ namespace Sierra::Engine::Components {
     public:
         struct ShaderPointLight
         {
-            glm::vec3 position;
-            float linear;
-
             glm::vec3 color;
             float intensity;
+
+            glm::vec3 position;
+            float linear;
 
             float quadratic;
             glm::vec3 _align_1;

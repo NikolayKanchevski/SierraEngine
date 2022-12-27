@@ -8,6 +8,11 @@
 
 #include <string>
 #include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
+
+#include "../Version.h"
+
+using namespace Sierra::Engine;
 
 namespace Sierra::Core::Rendering
 {
@@ -16,15 +21,22 @@ namespace Sierra::Core::Rendering
     {
     public:
 
+        /// @param givenTitle What the title / tag of the window should be.
+        /// @param startMaximized A bool indicating whether the window should use all the space on your screen upon start.
+        /// @param isResizable Whether the window is going to be setResizable or not.
+        /// @param isFocusRequired Whether the window requires to be focused in order to draw and handle events.
+        struct WindowCreateInfo
+        {
+            std::string givenTitle = "v" + std::to_string(Version::MAJOR) + "." + std::to_string(Version::MINOR) + "." + std::to_string(Version::PATCH) + " " + Version::RELEASE_TYPE;
+            bool startMaximized = true;
+            bool isResizable = true;
+            bool isFocusRequired = true;
+        };
+
         /* --- CONSTRUCTORS --- */
 
-        /// @brief Creates a new window without the need of setting its size. It will automatically be 800x600 or,
-        /// if setMaximized, as big as it can be on your display.
-        /// @param givenTitle What the givenTitle / tag of the window should be.
-        /// @param setMaximized A bool indicating whether the window should use all the space on your screen and start setMaximized.
-        /// @param setResizable Whether the window is going to be setResizable or not.
-        /// @param setFocusRequirement Whether the window requires to be focused in order to draw and handle events.
-        Window(std::string  givenTitle, bool setMaximized, bool setResizable, bool setFocusRequirement);
+        static std::unique_ptr<Window> Create(WindowCreateInfo createInfo);
+        Window(const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
 
@@ -45,9 +57,8 @@ namespace Sierra::Core::Rendering
         /// @brief Sets the transparency (opacity) of the window
         void SetOpacity(float givenOpacity);
 
-        // void SetIcon():
-
         /* --- GETTER METHODS --- */
+
         /// @brief A pointer to the core GLFW window.
         [[nodiscard]] inline GLFWwindow* GetCoreWindow()
         { return this->glfwWindow; };
@@ -63,6 +74,10 @@ namespace Sierra::Core::Rendering
         /// @brief Returns the title displayed at the top of the window.
         [[nodiscard]] inline std::string GetTitle() const
         { return this->title; };
+
+        /// @brief Returns the corresponding window surface. Should only be used for inside the core functionalities.
+        [[nodiscard]] inline VkSurfaceKHR GetSurface() const
+        { return this->surface; }
 
         /// @brief Checks whether the window is closed.
         [[nodiscard]] inline bool IsClosed() const
@@ -86,7 +101,7 @@ namespace Sierra::Core::Rendering
 
         /// @brief Checks if the window requires focus for it to be updated.
         [[nodiscard]] inline bool IsFocusRequired() const
-        { return this->REQUIRE_FOCUS; }
+        { return this->requireFocus; }
 
         /// @brief Checks if the window has been resized. Only true for one frame after every resize.
         [[nodiscard]] inline bool IsResized()
@@ -105,45 +120,40 @@ namespace Sierra::Core::Rendering
         [[nodiscard]] inline float GetOpacity() const
         { return this->opacity; };
 
+        /// @brief Returns the currently focused window. Make sure to always check if there is one before calling this method!
+        [[nodiscard]] static inline Window* GetCurrentlyFocusedWindow() { return currentlyFocusedWindow; }
+
         /* --- DESTRUCTOR --- */
-        ~Window();
+        void Destroy();
         Window(const Window &) = delete;
         Window &operator=(const Window &) = delete;
+
     private:
         GLFWwindow *glfwWindow;
+        VkSurfaceKHR surface;
+
         uint32_t xPosition;
         uint32_t yPosition;
 
-        int width, height;
         std::string title;
+        int width = 1300, height = 800;
 
-        bool closed = false, minimized = false, maximized = false, focused = false, hidden = false, resized = false, resizeSet = false;
         float opacity = 0.0f;
+        bool closed = false, minimized = false, maximized = false, focused = false, hidden = false, resized = false, resizeSet = false, resizable = false, requireFocus = false;
 
-        const bool RESIZABLE = false;
-        const bool REQUIRE_FOCUS = false;
-
-        struct {
-            int xPosition; int yPosition; int width; int height;
-        } monitor;
-
-        void InitWindow();
-
+        /* --- SETTER METHODS --- */
+        void Initialize();
+        void CreateSurface();
         void SetCallbacks();
-
-        void RetrieveMonitorData();
 
         /* --- CALLBACKS --- */
         static void GlfwErrorCallback(int errorCode, const char* description);
-
         static void WindowResizeCallback(GLFWwindow* windowPtr, int newWidth, int newHeight);
-
         static void WindowFocusCallback(GLFWwindow* windowPtr, int focused);
-
         static void WindowMinimizeCallback(GLFWwindow* windowPtr, int minimized);
-
         static void WindowMaximizeCallback(GLFWwindow* windowPtr, int maximized);
-
         static Window* GetGlfwWindowParentClass(GLFWwindow* windowPtr);
+
+        static inline Window* currentlyFocusedWindow;
     };
 }

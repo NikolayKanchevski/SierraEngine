@@ -35,6 +35,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             Builder &AddBinding(uint32_t binding, VkDescriptorType descriptorType, VkDescriptorBindingFlags bindingFlags = 0, uint32_t arraySize = 1, VkSampler const *immutableSamplers = nullptr);
             Builder &SetShaderStages(VkShaderStageFlags givenShaderStages);
             [[nodiscard]] std::unique_ptr<DescriptorSetLayout> Build() const;
+            [[nodiscard]] std::shared_ptr<DescriptorSetLayout> BuildShared() const;
 
         private:
             VkShaderStageFlags shaderStages = -1;
@@ -65,7 +66,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTOR --- */
-        DescriptorPool(uint32_t givenMaxSets, VkDescriptorPoolCreateFlags givenPoolCreateFlags, std::vector<VkDescriptorPoolSize> givenPoolSizes, std::unique_ptr<DescriptorSetLayout> &givenSetLayout);
+        DescriptorPool(uint32_t givenMaxSets, VkDescriptorPoolCreateFlags givenPoolCreateFlags, std::vector<VkDescriptorPoolSize> givenPoolSizes);
 
         class Builder
         {
@@ -73,7 +74,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             Builder& AddPoolSize(VkDescriptorType descriptorType);
             Builder& SetPoolFlags(VkDescriptorPoolCreateFlags givenPoolCreateFlags);
             Builder& SetMaxSets(uint32_t givenMaxSets);
-            [[nodiscard]] std::shared_ptr<DescriptorPool> Build(std::unique_ptr<DescriptorSetLayout> &givenSetLayout);
+            [[nodiscard]] std::unique_ptr<DescriptorPool> Build();
 
         private:
             uint32_t maxSets = 1024;
@@ -83,12 +84,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         };
 
         /* --- SETTER METHODS --- */
-        void AllocateDescriptorSet(VkDescriptorSet &descriptorSet);
-        void AllocateBindlessDescriptorSet(const std::vector<uint32_t> &bindings, VkDescriptorSet &descriptorSet);
+        void AllocateDescriptorSet(const std::shared_ptr<DescriptorSetLayout> &descriptorSetLayout, VkDescriptorSet &descriptorSet);
+        void AllocateBindlessDescriptorSet(const std::vector<uint32_t> &bindings, const std::shared_ptr<DescriptorSetLayout> &descriptorSetLayout, VkDescriptorSet &descriptorSet);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkDescriptorPool GetVulkanDescriptorPool() const { return this->vkDescriptorPool; }
-        [[nodiscard]] inline std::unique_ptr<DescriptorSetLayout>& GetDescriptorSetLayout() const { return this->descriptorSetLayout;}
 
         /* --- DESTRUCTOR --- */
         void Destroy();
@@ -98,7 +98,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     private:
         VkDescriptorPool vkDescriptorPool;
-        std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout;
 
     };
 
@@ -106,9 +105,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        DescriptorSet(std::shared_ptr<DescriptorPool> &givenDescriptorPool);
-        [[nodiscard]] static std::unique_ptr<DescriptorSet> Build(std::shared_ptr<DescriptorPool> &givenDescriptorPool);
-        [[nodiscard]] static std::shared_ptr<DescriptorSet> BuildShared(std::shared_ptr<DescriptorPool> &givenDescriptorPool);
+        DescriptorSet(std::shared_ptr<DescriptorSetLayout> &descriptorSetLayout);
+        [[nodiscard]] static std::unique_ptr<DescriptorSet> Build(std::shared_ptr<DescriptorSetLayout> &givenDescriptorSetLayout);
 
         /* --- SETTER METHODS --- */
         void WriteBuffer(uint32_t binding, const std::unique_ptr<Buffer> &buffer);
@@ -127,8 +125,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     private:
         VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
 
-        std::shared_ptr<DescriptorPool> &descriptorPool;
-        std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout;
+        std::shared_ptr<DescriptorSetLayout> &descriptorSetLayout;
 
         std::unordered_map<uint32_t, VkWriteDescriptorSet> writeDescriptorSets;
         std::unordered_map<uint32_t, VkDescriptorImageInfo> descriptorImageInfos;
@@ -140,8 +137,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        BindlessDescriptorSet(const std::vector<uint32_t> &givenBindings, std::shared_ptr<DescriptorPool> &givenDescriptorPool);
-        [[nodiscard]] static std::shared_ptr<BindlessDescriptorSet> Build(const std::vector<uint32_t> &givenBindings, std::shared_ptr<DescriptorPool> &givenDescriptorPool);
+        BindlessDescriptorSet(const std::vector<uint32_t> &givenBindings, std::shared_ptr<DescriptorSetLayout> &descriptorSetLayout);
+        [[nodiscard]] static std::shared_ptr<BindlessDescriptorSet> Build(const std::vector<uint32_t> &givenBindings, std::shared_ptr<DescriptorSetLayout> &givenDescriptorSetLayout);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] bool IsBindingConfigured(uint32_t binding) const;
@@ -169,8 +166,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
         std::vector<uint32_t> boundBindings;
 
-        std::shared_ptr<DescriptorPool> &descriptorPool;
-        std::unique_ptr<DescriptorSetLayout> &descriptorSetLayout;
+        std::shared_ptr<DescriptorSetLayout> &descriptorSetLayout;
 
         std::vector<VkWriteDescriptorSet> writeDescriptorSets;
 

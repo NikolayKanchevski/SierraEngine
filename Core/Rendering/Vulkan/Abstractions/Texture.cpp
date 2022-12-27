@@ -10,7 +10,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include "../VulkanCore.h"
+#include "../VK.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -31,7 +31,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->memorySize = static_cast<uint32_t>(width * height * 4);
 
         // Create the staging buffer
-
         auto stagingBuffer = Buffer::Create({
             .memorySize = memorySize,
             .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
@@ -65,6 +64,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Generate mip maps for the current texture
         if (mipMappingEnabled) GenerateMipMaps();
+
         // NOTE: Transitioning to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL is not required as it is automatically done during the mip map generation
         else image->TransitionLayout(LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -100,7 +100,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ASSERT_ERROR_IF(!stbiImage, "Failed to load the texture file [" + textureCreateInfo.filePath + "]");
 
         // If texture does not exist already
-        auto &textureReference = texturePool[textureCreateInfo.filePath] = std::make_shared<Texture>(stbiImage, width, height, channels, textureCreateInfo);
+        auto &textureReference = texturePool[textureCreateInfo.filePath];
+        textureReference = std::make_shared<Texture>(stbiImage, width, height, channels, textureCreateInfo);
         if (setDefaultTexture)
         {
             ASSERT_ERROR_IF(textureCreateInfo.textureType == TEXTURE_TYPE_NONE, "Cannot set texture loaded from [" + textureCreateInfo.filePath + "] as default texture for its type, as it is of type TEXTURE_TYPE_NONE");
@@ -118,13 +119,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         // Get the properties of the image's format
         VkFormatProperties formatProperties;
-        vkGetPhysicalDeviceFormatProperties(VulkanCore::GetPhysicalDevice(), (VkFormat) image->GetFormat(), &formatProperties);
+        vkGetPhysicalDeviceFormatProperties(VK::GetPhysicalDevice(), (VkFormat) image->GetFormat(), &formatProperties);
 
         // Check if optimal tiling is supported by the GPU
         ASSERT_ERROR_IF((formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0, "Texture image format [" + std::to_string((int) image->GetFormat()) + "] does not support linear blitting");
 
         // Begin a command buffer
-        VkCommandBuffer commandBuffer = VulkanCore::GetDevice()->BeginSingleTimeCommands();
+        VkCommandBuffer commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
 
         // Create an image memory barrier
         VkImageMemoryBarrier memoryBarrier{};
@@ -212,7 +213,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
           );
 
         // End the current command buffer
-        VulkanCore::GetDevice()->EndSingleTimeCommands(commandBuffer);
+        VK::GetDevice()->EndSingleTimeCommands(commandBuffer);
     }
 
     /* --- SETTER METHODS --- */

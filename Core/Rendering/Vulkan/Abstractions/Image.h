@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
 
 #include "../../../Debugger.h"
 #include "../VulkanTypes.h"
@@ -88,12 +89,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline VkImageView GetVulkanImageView() const
         { ASSERT_WARNING_IF(!imageViewCreated, "Image view not generated. Returning null"); return vkImageView; }
 
-        [[nodiscard]] inline VkDeviceMemory GetVulkanMemory() const
-        { return this->vkImageMemory; };
+        [[nodiscard]] inline VmaAllocation GetMemory() const
+        { return this->vmaImageAllocation; };
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        inline ~Image() { Destroy(); }
         Image(const Image &) = delete;
         Image &operator=(const Image &) = delete;
 
@@ -107,7 +107,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         VkImage vkImage = VK_NULL_HANDLE;
         VkImageView vkImageView = VK_NULL_HANDLE;
-        VkDeviceMemory vkImageMemory = VK_NULL_HANDLE;
+        VmaAllocation vmaImageAllocation;
 
         bool imageViewCreated = false;
         bool swapchainImage = false;

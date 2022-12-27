@@ -9,22 +9,13 @@
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
-    typedef enum AntiAliasingType
-    {
-        ANTI_ALIASING_NONE = 0x00000001,
-        ANTI_ALIASING_MSAAx2 = 0x00000002,
-        ANTI_ALIASING_MSAAx4 = 0x00000004,
-        ANTI_ALIASING_MSAAx8 = 0x00000008,
-        ANTI_ALIASING_MSAAx16 = 0x00000010,
-        ANTI_ALIASING_MSAAx32 = 0x00000020,
-        ANTI_ALIASING_MSAAx64 = 0x00000020
-    } AntiAliasingType;
 
-    typedef enum AttachmentType
+    typedef uint32_t AttachmentType;
+    typedef enum _AttachmentType
     {
         ATTACHMENT_COLOR = 0x00000001,
         ATTACHMENT_DEPTH = 0x00000002
-    } AttachmentType;
+    } _AttachmentType;
 
     struct OffscreenRendererCreateInfo
     {
@@ -33,7 +24,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         uint32_t maxConcurrentFrames = 0;
 
         AttachmentType attachmentTypes;
-        AntiAliasingType antiAliasingType = ANTI_ALIASING_NONE;
+        Sampling msaaSampling = MSAAx1;
     };
 
     class OffscreenRenderer
@@ -49,6 +40,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- SETTER METHODS --- */
         void Resize(uint32_t newWidth, uint32_t newHeight);
+        void SetMultisampling(const Sampling newMultisampling);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint32_t GetWidth() const { return this->width; }
@@ -68,7 +60,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         uint32_t width, height, maxConcurrentFrames;
 
         AttachmentType attachmentTypes;
-        AntiAliasingType antiAliasingType;
+        Sampling msaaSampling;
 
         bool alreadyCreated = false;
 
@@ -87,7 +79,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         inline bool HasColorAttachment() const { return attachmentTypes & ATTACHMENT_COLOR; }
         inline bool HasDepthAttachment() const { return attachmentTypes & ATTACHMENT_DEPTH; }
-        inline bool HasMSAAEnabled() const { return antiAliasingType >= ANTI_ALIASING_MSAAx2 && antiAliasingType <= ANTI_ALIASING_MSAAx64; }
+        inline bool HasMSAAEnabled() const { return msaaSampling > MSAAx1; }
     };
 
 }

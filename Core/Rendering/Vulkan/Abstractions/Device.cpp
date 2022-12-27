@@ -4,9 +4,10 @@
 
 #include "Device.h"
 
-#include "../VulkanCore.h"
-#include "../../../Version.h"
 #include "../../../../Engine/Classes/File.h"
+
+#include <set>
+#include "../VK.h"
 
 using namespace Sierra::Engine::Classes;
 
@@ -17,51 +18,29 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     Device::Device(DeviceCreateInfo &deviceCreateInfo)
         : requiredFeatures(&deviceCreateInfo.requiredFeatures)
     {
-        CreateInstance();
-        CreateSurface();
-
-        #if VALIDATION_ENABLED
-        CreateDebugMessenger();
-        #endif
-
         RetrievePhysicalDevice();
         CreateLogicalDevice();
-        CreateCommandPool();
-
         RetrieveBestProperties();
     }
 
-    std::shared_ptr<Device> Device::Create(DeviceCreateInfo createInfo)
+    std::unique_ptr<Device> Device::Create(DeviceCreateInfo createInfo)
     {
         return std::make_unique<Device>(createInfo);
     }
 
     /* --- GETTER METHODS --- */
 
-    uint32_t Device::FindMemoryTypeIndex(const uint32_t typeFilter, const MemoryFlags givenMemoryFlags) const
-    {
-        for (uint32_t i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++)
-        {
-            if ((typeFilter & (1 << (int) i)) != 0 && (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & (int) givenMemoryFlags) == (int) givenMemoryFlags)
-            {
-                return i;
-            }
-        }
-
-        return 0;
-    }
-
     VkCommandBuffer Device::BeginSingleTimeCommands() const
     {
         VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
         commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        commandBufferAllocateInfo.commandPool = VulkanCore::GetCommandPool();
+        commandBufferAllocateInfo.commandPool = VK::GetCommandPool();
         commandBufferAllocateInfo.commandBufferCount = 1;
 
         VkCommandBuffer commandBuffer;
         VK_ASSERT(
-            vkAllocateCommandBuffers(VulkanCore::GetLogicalDevice(), &commandBufferAllocateInfo, &commandBuffer),
+            vkAllocateCommandBuffers(VK::GetLogicalDevice(), &commandBufferAllocateInfo, &commandBuffer),
             "Failed to allocate single time command buffer"
         );
 
@@ -83,102 +62,37 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &commandBuffer;
 
-        vkQueueSubmit(VulkanCore::GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-        vkQueueWaitIdle(VulkanCore::GetGraphicsQueue());
+        vkQueueSubmit(VK::GetDevice()->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+        vkQueueWaitIdle(VK::GetDevice()->GetGraphicsQueue());
 
-        vkFreeCommandBuffers(VulkanCore::GetLogicalDevice(), VulkanCore::GetCommandPool(), 1, &commandBuffer);
+        vkFreeCommandBuffers(VK::GetLogicalDevice(), VK::GetCommandPool(), 1, &commandBuffer);
     }
 
     /* --- SETTER METHODS --- */
 
-    void Device::CreateInstance()
-    {
-        // Create application information
-        VkApplicationInfo applicationInfo{};
-        applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        applicationInfo.pApplicationName = "Sierra Engine";
-        applicationInfo.applicationVersion = VK_MAKE_VERSION(Version::MAJOR, Version::MINOR, Version::PATCH);
-        applicationInfo.pEngineName = "No Engine";
-        applicationInfo.engineVersion = VK_MAKE_VERSION(Version::MAJOR, Version::MINOR, Version::PATCH);
-        applicationInfo.apiVersion = VK_API_VERSION_1_1;
-
-        // Get GLFW extensions
-        uint32_t glfwExtensionCount;
-        auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-        std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
-        for (const auto &requiredExtension : requiredInstanceExtensions)
-        {
-            extensions.push_back(requiredExtension);
-        }
-
-        // Check whether all extensions are supported
-        ASSERT_WARNING_IF(!ExtensionsSupported(extensions), "Some requested extensions are not supported. They have been automatically disabled, but this could lead to issues");
-
-        // Set up instance creation info
-        VkInstanceCreateInfo instanceCreateInfo{};
-        instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        instanceCreateInfo.pApplicationInfo = &applicationInfo;
-        instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-        instanceCreateInfo.ppEnabledExtensionNames = extensions.data();
-        instanceCreateInfo.enabledLayerCount = 0;
-        instanceCreateInfo.pNext = nullptr;
-
-        // If validation is enabled check validation layers support and bind them to instance
-        #if VALIDATION_ENABLED
-            ASSERT_ERROR_IF(!ValidationLayersSupported(), "Validation layers requested but are not supported");
-
-            // Set up debug messenger info
-            debugMessengerCreateInfo = new VkDebugUtilsMessengerCreateInfoEXT();
-            debugMessengerCreateInfo->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-            debugMessengerCreateInfo->messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-            debugMessengerCreateInfo->messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-            debugMessengerCreateInfo->pfnUserCallback = Debugger::ValidationCallback;
-            debugMessengerCreateInfo->pUserData = nullptr;
-
-            // Set instance to use the debug messenger
-            instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-            instanceCreateInfo.ppEnabledLayerNames = validationLayers.data();
-            instanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) debugMessengerCreateInfo;
-        #endif
-
-        // Create instance
-        VK_ASSERT(
-            vkCreateInstance(&instanceCreateInfo, nullptr, &instance),
-            "Could not create Vulkan instance"
-        );
-    }
-
-    #if VALIDATION_ENABLED
-    void Device::CreateDebugMessenger()
-    {
-        VK_ASSERT(
-            CreateDebugUtilsMessengerEXT(instance, debugMessengerCreateInfo, nullptr, &debugMessenger),
-            "Failed to create validation messenger"
-        );
-
-        delete debugMessengerCreateInfo;
-    }
-    #endif
-
-    void Device::CreateSurface()
-    {
-        // Create GLFW surface
-        glfwCreateWindowSurface(this->instance, VulkanCore::GetCoreWindow(), nullptr, &surface);
-    }
 
     void Device::RetrievePhysicalDevice()
     {
+        // Set up example surface parameters
+        glfwWindowHint(GLFW_VISIBLE, 0);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+
+        // Create the example surface
+        GLFWwindow* glfwWindow = glfwCreateWindow(100, 100, "dQw4w9WgXcQ", nullptr, nullptr);
+        glfwCreateWindowSurface(VK::GetInstance(), glfwWindow, nullptr, &exampleSurface);
+
         // Retrieve how many GPUs are found on the system
         uint32_t physicalDeviceCount;
         VK_ASSERT(
-            vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr),
+            vkEnumeratePhysicalDevices(VK::GetInstance(), &physicalDeviceCount, nullptr),
             "Failed to retrieve available GPUs"
         );
 
         // Put all found GPUs in an array
         VkPhysicalDevice* physicalDevices = new VkPhysicalDevice[physicalDeviceCount];
-        vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices);
+        vkEnumeratePhysicalDevices(VK::GetInstance(), &physicalDeviceCount, physicalDevices);
 
         // TODO: Pick most suitable GPU, not the first one
         ASSERT_ERROR_IF(physicalDeviceCount <= 0, "No GPUs were found on the system");
@@ -186,6 +100,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         this->physicalDevice = physicalDevices[0];
         ASSERT_SUCCESS("Vulkan is supported by your [SOME_PC_MODEL] running SOME_OS [Validation: " + std::to_string(VALIDATION_ENABLED) + " | CPU: SOME_CPU_MODEL | GPU: " + physicalDeviceProperties.deviceName + "]");
+
+        // Destroy temporary data
+        vkDestroySurfaceKHR(VK::GetInstance(), exampleSurface, nullptr);
+        glfwDestroyWindow(glfwWindow);
     }
 
     void Device::CreateLogicalDevice()
@@ -245,115 +163,24 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkGetDeviceQueue(logicalDevice, queueFamilyIndices.presentationFamily, 0, &presentationQueue);
     }
 
-    void Device::CreateCommandPool()
-    {
-        // Set up the command pool creation info
-        VkCommandPoolCreateInfo commandPoolCreateInfo{};
-        commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
-
-        // Create the command pool
-        VK_ASSERT(
-            vkCreateCommandPool(logicalDevice, &commandPoolCreateInfo, nullptr, &commandPool),
-            "Failed to create command pool"
-        );
-    }
-
     void Device::RetrieveBestProperties()
     {
-        this->bestPresentationMode = ChooseSwapchainPresentMode(swapchainSupportDetails.presentModes);
+        this->highestMultisampling = RetrieveMaxSampling();
 
-        this->bestSwapchainImageFormat = ChooseBestSwapchainFormat(swapchainSupportDetails.formats);
+        this->bestColorImageFormat = GetBestColorBufferFormat(
+            { FORMAT_R8G8B8A8_SRGB, FORMAT_R8G8B8A8_UNORM },
+            TILING_OPTIMAL,
+            VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT
+        );
 
         this->bestDepthImageFormat = GetBestDepthBufferFormat(
             { FORMAT_D32_SFLOAT_S8_UINT, FORMAT_D32_SFLOAT, FORMAT_D24_UNORM_S8_UINT },
             TILING_OPTIMAL,
             VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
         );
-
-        this->highestMultisampling = GetHighestSupportedSampling();
-
-        // Deallocate useless data
-        swapchainSupportDetails.formats.clear();
-        swapchainSupportDetails.presentModes.clear();
     }
 
     /* --- GETTER METHODS --- */
-
-    bool Device::ExtensionsSupported(std::vector<const char*> &givenExtensions)
-    {
-        // Get how many extensions are supported in total
-        uint32_t extensionCount;
-        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-
-        // Create an array to store the supported extensions
-        std::vector<VkExtensionProperties> extensionProperties(extensionCount);
-        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensionProperties.data());
-
-        // Check if each given extension is in the supported array
-        size_t extensionIndex = 0;
-
-        bool success = true;
-        for (const auto &requiredExtension : givenExtensions)
-        {
-            bool extensionFound = false;
-            for (const auto &extensionProperty : extensionProperties)
-            {
-                if (strcmp(requiredExtension, extensionProperty.extensionName) == 0)
-                {
-                    extensionFound = true;
-                    break;
-                }
-            }
-
-            if (!extensionFound)
-            {
-                success = false;
-
-                ASSERT_WARNING("Instance extension [" + std::string(requiredExtension) + "] not supported");
-                givenExtensions.erase(givenExtensions.begin() + extensionIndex);
-            }
-
-            extensionIndex++;
-        }
-
-        return success;
-    }
-
-    #if VALIDATION_ENABLED
-    bool Device::ValidationLayersSupported()
-    {
-        // Get how many validation layers in total are supported
-        uint32_t layerCount = 0;
-        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-        // Create an array and store the supported layers
-        std::vector<VkLayerProperties> layerProperties(layerCount);
-        vkEnumerateInstanceLayerProperties(&layerCount, layerProperties.data());
-
-        // Check if the given layers are in the supported array
-        for (const auto &requiredLayer : validationLayers)
-        {
-            bool layerFound = false;
-            for (const auto &layerProperty : layerProperties)
-            {
-                if (strcmp(requiredLayer, layerProperty.layerName) == 0)
-                {
-                    layerFound = true;
-                    break;
-                }
-            }
-
-            if (!layerFound)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-    #endif
 
     bool Device::PhysicalDeviceSuitable(const VkPhysicalDevice &givenPhysicalDevice)
     {
@@ -432,11 +259,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             requiredFeatures->variableMultisampleRate <= physicalDeviceFeatures.variableMultisampleRate &&
             requiredFeatures->inheritedQueries <= physicalDeviceFeatures.inheritedQueries;
 
-        swapchainSupportDetails = GetSwapchainSupportDetails(givenPhysicalDevice);
-
-        bool swapchainAdequate = !swapchainSupportDetails.formats.empty() && !swapchainSupportDetails.presentModes.empty();
-
-        return indicesValid && extensionsSupported && swapchainAdequate && featuresSupported;
+        return indicesValid && extensionsSupported && featuresSupported;
     }
 
     bool Device::DeviceExtensionsSupported(VkPhysicalDevice const &givenPhysicalDevice)
@@ -479,7 +302,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             if (!extensionFound)
             {
                 allExtensionsSupported = false;
-                ASSERT_WARNING("Device extension [" + std::string(requiredExtension) + "] not supported by your [" + std::string(VulkanCore::GetPhysicalDeviceProperties().deviceName) + "] GPU");
+                ASSERT_WARNING("Device extension [" + std::string(requiredExtension) + "] not supported by your [" + std::string(VK::GetDevice()->GetPhysicalDeviceProperties().deviceName) + "] GPU");
             }
         }
 
@@ -518,7 +341,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
             // Check if the current queue supports presentation
             VkBool32 presentationSupported;
-            vkGetPhysicalDeviceSurfaceSupportKHR(givenPhysicalDevice, i, this->surface, &presentationSupported);
+            vkGetPhysicalDeviceSurfaceSupportKHR(givenPhysicalDevice, i, exampleSurface, &presentationSupported);
 
             // If so set its presentation family
             if (presentationSupported)
@@ -536,43 +359,29 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return indices;
     }
 
-    Device::SwapchainSupportDetails Device::GetSwapchainSupportDetails(const VkPhysicalDevice &givenPhysicalDevice)
+    ImageFormat Device::GetBestColorBufferFormat(std::vector<ImageFormat> givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags)
     {
-        // Get the details of the GPU's supported swapchain
-        SwapchainSupportDetails swapchainDetails{};
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(givenPhysicalDevice, surface, &swapchainDetails.capabilities);
-
-        // Get how many formats are available
-        uint32_t formatCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(givenPhysicalDevice, this->surface, &formatCount, nullptr);
-
-        // Put each of them in an array
-        swapchainDetails.formats = std::vector<VkSurfaceFormatKHR>(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(givenPhysicalDevice, this->surface, &formatCount, swapchainDetails.formats.data());
-
-        // Get how many presentation modes are available
-        uint32_t presentModesCount;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(givenPhysicalDevice, this->surface, &presentModesCount, nullptr);
-
-        // Put each of them in an array
-        swapchainDetails.presentModes = std::vector<VkPresentModeKHR>(presentModesCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(givenPhysicalDevice, this->surface, &formatCount, swapchainDetails.presentModes.data());
-
-        return swapchainDetails;
-    }
-
-    VkSurfaceFormatKHR Device::ChooseBestSwapchainFormat(std::vector<VkSurfaceFormatKHR> &givenFormats)
-    {
-        for (const auto &availableFormat : givenFormats)
+        for (const auto &givenFormat : givenFormats)
         {
-            if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            // Get the properties for the current format
+            VkFormatProperties formatProperties;
+            vkGetPhysicalDeviceFormatProperties(physicalDevice, (VkFormat) givenFormat, &formatProperties);
+
+            // Check if the required format properties are supported
+            if (imageTiling == TILING_LINEAR && (formatProperties.linearTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
             {
-                return availableFormat;
+                return givenFormat;
+            }
+            else if (imageTiling == TILING_OPTIMAL && (formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
+            {
+                return givenFormat;
             }
         }
 
-        // Otherwise just return the very first one
-        return givenFormats[0];
+        // Otherwise throw an error
+        ASSERT_ERROR("No color buffer formats supported");
+
+        return FORMAT_UNDEFINED;
     }
 
     ImageFormat Device::GetBestDepthBufferFormat(std::vector<ImageFormat> givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags)
@@ -600,22 +409,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return FORMAT_UNDEFINED;
     }
 
-    VkPresentModeKHR Device::ChooseSwapchainPresentMode(std::vector<VkPresentModeKHR> &givenPresentModes)
-    {
-        // Loop trough each to check if it is VK_PRESENT_MODE_MAILBOX_KHR
-        for (const auto &availablePresentMode : givenPresentModes)
-        {
-            if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
-            {
-                return availablePresentMode;
-            }
-        }
-
-        // Otherwise return VK_PRESENT_MODE_FIFO_KHR which is guaranteed to be available
-        return VK_PRESENT_MODE_FIFO_KHR;
-    }
-
-    Sampling Device::GetHighestSupportedSampling()
+    Sampling Device::RetrieveMaxSampling()
     {
         VkSampleCountFlags countFlags = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
 
@@ -633,17 +427,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Device::Destroy()
     {
-        vkDestroyCommandPool(logicalDevice, commandPool, nullptr);
-
         vkDestroyDevice(logicalDevice, nullptr);
-
-        vkDestroySurfaceKHR(instance, surface, nullptr);
-
-        #if VALIDATION_ENABLED
-            DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
-        #endif
-
-        vkDestroyInstance(instance, nullptr);
     }
 }
 

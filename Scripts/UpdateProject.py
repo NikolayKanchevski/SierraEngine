@@ -34,7 +34,7 @@ def Main():
         elif sys.argv[1] == "--Debug":
             OUTPUT_DIRECTORY = ROOT_DIRECTORY + ("cmake-build-debug/Debug/" if platform.system() == "Windows" else "cmake-build-debug/")
         else:
-            OUTPUT_DIRECTORY = ROOT_DIRECTORY + ("cmake-build-release/Release/" if platform.system() == "Windows" else "cmake-build-debug/")
+            OUTPUT_DIRECTORY = ROOT_DIRECTORY + ("cmake-build-release/Release/" if platform.system() == "Windows" else "cmake-build-release/")
 
         # Check if too many arguments are provided
         if (len(sys.argv) >= 3):
@@ -58,10 +58,10 @@ def Main():
     CopyFolder(FONT_DIRECTORY, OUTPUT_DIRECTORY + "Fonts/")
 
     # Compile shaders
-    try:
-        CompileShaders()
-    except:
-        pass
+    # try:
+    CompileShaders()
+    # except:
+        # pass
 
     # Remove temporary shader directory
     RemoveDirectory(TEMPORARY_SHADER_DIRECTORY)
@@ -76,20 +76,25 @@ def Main():
 def CompileShaders():
 
     # Find and compile every shader
-    for file in os.listdir(SHADERS_DIRECTORY):
-        fileExtensionIndex = file.find(".")
-        if fileExtensionIndex == 0:
-            continue
-        
-        fileExtension = file[fileExtensionIndex:]
-        if (fileExtension in SHADER_FILE_EXTENSIONS):
-            PreCompileShader(os.path.join(SHADERS_DIRECTORY, file))
+    for root, dirs, files in os.walk(SHADERS_DIRECTORY):
+        for file in os.listdir(root):
+            filePath = root + ("/" if root[-1] != "/" else "") + file
+
+            fileExtensionIndex = file.find(".")
+            if fileExtensionIndex == 0:
+                continue
+            
+            fileExtension = file[fileExtensionIndex:]
+            
+            if (fileExtension in SHADER_FILE_EXTENSIONS):
+                PreCompileShader(filePath)
             
 
 def PreCompileShader(shaderFilePath):
     # Load shader data and check if #include is done
     shaderData = open(shaderFilePath, "r").read()
     shaderFileName = shaderFilePath[shaderFilePath.rindex("/") + 1:]
+    shaderDirectory = shaderFilePath[:shaderFilePath.rindex("/") + 1]
     includeIndex = shaderData.find("#include")
 
     # For each #include
@@ -109,12 +114,12 @@ def PreCompileShader(shaderFilePath):
         includedShader = shaderData[startIndex:endIndex]
 
         # Check if included file is of .glsl format and exists
-        if includedShader.find(".glsl") == -1 or not exists(SHADERS_DIRECTORY + includedShader):
+        if includedShader.find(".glsl") == -1 or not exists(shaderDirectory + includedShader):
             print(f"Error: Cannot include [{ includedShader }] in shader [{ shaderFileName }]!")
             exit(-1)
 
         # Read included shader
-        includedShaderData = open(SHADERS_DIRECTORY + includedShader, "r").read()
+        includedShaderData = open(shaderDirectory + includedShader, "r").read()
         includedShaderData = includedShaderData.replace("#version", "//")
 
         # Append read shader data to original shader
@@ -148,7 +153,7 @@ def CompileWindowsShaders(shaderFilePath):
 
 def CompileUnixShaders(shaderFilePath):
     shaderFileName = shaderFilePath[shaderFilePath.rindex("/") + 1:]
-
+    
     command = f"../Core/Rendering/Shading/Compilers/glslc { shaderFilePath } -o { OUTPUT_DIRECTORY }Shaders/{ shaderFileName }.spv"
 
     os.system(command)

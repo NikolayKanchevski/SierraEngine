@@ -8,7 +8,7 @@
 #include <memory>
 
 #include "Texture.h"
-#include "../VulkanCore.h"
+#include "../VK.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -51,6 +51,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return std::make_unique<DescriptorSetLayout>(this->bindings);
     }
 
+    std::shared_ptr<DescriptorSetLayout> DescriptorSetLayout::Builder::BuildShared() const
+    {
+        // Create the descriptor set layout
+        return std::make_shared<DescriptorSetLayout>(this->bindings);
+    }
+
     DescriptorSetLayout::DescriptorSetLayout(const std::unordered_map<uint32_t, DescriptorSetLayoutBinding>& givenBindings)
         : bindings(givenBindings)
     {
@@ -76,7 +82,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         layoutCreateInfo.pBindings = layoutBindings;
 
         VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsCreateInfo{};
-        if (VulkanCore::GetDescriptorIndexingSupported())
+        if (VK::GetDevice()->GetDescriptorIndexingSupported())
         {
             bindingFlagsCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
             bindingFlagsCreateInfo.bindingCount = bindings.size();
@@ -86,7 +92,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan descriptor set layout
         VK_ASSERT(
-            vkCreateDescriptorSetLayout(VulkanCore::GetLogicalDevice(), &layoutCreateInfo, nullptr, &vkDescriptorSetLayout),
+            vkCreateDescriptorSetLayout(VK::GetLogicalDevice(), &layoutCreateInfo, nullptr, &vkDescriptorSetLayout),
             "Failed to create descriptor layout with [" + std::to_string(layoutCreateInfo.bindingCount) + "] binging(s)"
         );
     }
@@ -96,7 +102,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void DescriptorSetLayout::Destroy()
     {
         // Destroy the Vulkan descriptor set
-        vkDestroyDescriptorSetLayout(VulkanCore::GetLogicalDevice(), vkDescriptorSetLayout, nullptr);
+        vkDestroyDescriptorSetLayout(VK::GetLogicalDevice(), vkDescriptorSetLayout, nullptr);
     }
 
     // ********************* Descriptor Pool ********************* \\
@@ -124,7 +130,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return *this;
     }
 
-    void DescriptorPool::AllocateDescriptorSet(VkDescriptorSet &descriptorSet)
+    void DescriptorPool::AllocateDescriptorSet(const std::shared_ptr<DescriptorSetLayout> &descriptorSetLayout, VkDescriptorSet &descriptorSet)
     {
         auto vkDescriptorSetLayout = descriptorSetLayout->GetVulkanDescriptorSetLayout();
 
@@ -137,12 +143,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan descriptor set
         VK_ASSERT(
-            vkAllocateDescriptorSets(VulkanCore::GetLogicalDevice(), &allocateInfo, &descriptorSet),
+            vkAllocateDescriptorSets(VK::GetLogicalDevice(), &allocateInfo, &descriptorSet),
             "Failed to allocate descriptor set"
         );
     }
 
-    void DescriptorPool::AllocateBindlessDescriptorSet(const std::vector<uint32_t> &bindings, VkDescriptorSet &descriptorSet)
+    void DescriptorPool::AllocateBindlessDescriptorSet(const std::vector<uint32_t> &bindings, const std::shared_ptr<DescriptorSetLayout> &descriptorSetLayout, VkDescriptorSet &descriptorSet)
     {
         VkDescriptorSetVariableDescriptorCountAllocateInfo variableDescriptorCountAllocateInfo{};
         variableDescriptorCountAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO;
@@ -169,21 +175,20 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan descriptor set
         VK_ASSERT(
-            vkAllocateDescriptorSets(VulkanCore::GetLogicalDevice(), &allocateInfo, &descriptorSet),
+            vkAllocateDescriptorSets(VK::GetLogicalDevice(), &allocateInfo, &descriptorSet),
             "Failed to allocate descriptor set"
         );
     }
 
     /* --- CONSTRUCTORS --- */
 
-    std::shared_ptr<DescriptorPool> DescriptorPool::Builder::Build(std::unique_ptr<DescriptorSetLayout> &givenSetLayout)
+    std::unique_ptr<DescriptorPool> DescriptorPool::Builder::Build()
     {
         // Create the descriptor pool
-        return std::make_shared<DescriptorPool>(this->maxSets, this->poolCreateFlags, this->poolSizes, givenSetLayout);
+        return std::make_unique<DescriptorPool>(this->maxSets, this->poolCreateFlags, this->poolSizes);
     }
 
-    DescriptorPool::DescriptorPool(uint32_t givenMaxSets, VkDescriptorPoolCreateFlags givenPoolCreateFlags, std::vector<VkDescriptorPoolSize> givenPoolSizes, std::unique_ptr<DescriptorSetLayout> &givenSetLayout)
-        : descriptorSetLayout(givenSetLayout)
+    DescriptorPool::DescriptorPool(uint32_t givenMaxSets, VkDescriptorPoolCreateFlags givenPoolCreateFlags, std::vector<VkDescriptorPoolSize> givenPoolSizes)
     {
         // Set up the descriptor pool creation info
         VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
@@ -195,7 +200,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan descriptor pool
         VK_ASSERT(
-            vkCreateDescriptorPool(VulkanCore::GetLogicalDevice(), &descriptorPoolCreateInfo, nullptr, &vkDescriptorPool),
+            vkCreateDescriptorPool(VK::GetLogicalDevice(), &descriptorPoolCreateInfo, nullptr, &vkDescriptorPool),
             "Failed to create descriptor pool with [" + std::to_string(givenMaxSets) + "] max sets and [" + std::to_string(descriptorPoolCreateInfo.poolSizeCount) + "] pool sizes"
         );
     }
@@ -205,28 +210,23 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void DescriptorPool::Destroy()
     {
         // Destroy the Vulkan descriptor pool
-        vkDestroyDescriptorPool(VulkanCore::GetLogicalDevice(), this->vkDescriptorPool, nullptr);
+        vkDestroyDescriptorPool(VK::GetLogicalDevice(), this->vkDescriptorPool, nullptr);
     }
 
     // ********************* Descriptor Set ********************* \\
 
     /* --- CONSTRUCTORS --- */
 
-    DescriptorSet::DescriptorSet(std::shared_ptr<DescriptorPool> &givenDescriptorPool)
-        : descriptorPool(givenDescriptorPool), descriptorSetLayout(givenDescriptorPool->descriptorSetLayout)
+    DescriptorSet::DescriptorSet(std::shared_ptr<DescriptorSetLayout> &descriptorSetLayout)
+        : descriptorSetLayout(descriptorSetLayout)
     {
         // Create descriptor set to pool
-        descriptorPool->AllocateDescriptorSet(this->vkDescriptorSet);
+        VK::GetDescriptorPool()->AllocateDescriptorSet(descriptorSetLayout, this->vkDescriptorSet);
     }
 
-    std::unique_ptr<DescriptorSet> DescriptorSet::Build(std::shared_ptr<DescriptorPool> &givenDescriptorPool)
+    std::unique_ptr<DescriptorSet> DescriptorSet::Build(std::shared_ptr<DescriptorSetLayout> &givenDescriptorSetLayout)
     {
-        return std::make_unique<DescriptorSet>(givenDescriptorPool);
-    }
-
-    std::shared_ptr<DescriptorSet> DescriptorSet::BuildShared(std::shared_ptr<DescriptorPool> &givenDescriptorPool)
-    {
-        return std::make_shared<DescriptorSet>(givenDescriptorPool);
+        return std::make_unique<DescriptorSet>(givenDescriptorSetLayout);
     }
 
     /* --- SETTER METHODS --- */
@@ -304,7 +304,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Update descriptor sets
-        vkUpdateDescriptorSets(VulkanCore::GetLogicalDevice(), writeDescriptorSets.size(), writeSets.data(), 0, nullptr);
+        vkUpdateDescriptorSets(VK::GetLogicalDevice(), writeDescriptorSets.size(), writeSets.data(), 0, nullptr);
     }
 
     /* --- DESTRUCTOR --- */
@@ -318,8 +318,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    BindlessDescriptorSet::BindlessDescriptorSet(const std::vector<uint32_t> &givenBindings, std::shared_ptr<DescriptorPool> &givenDescriptorPool)
-        : boundBindings(givenBindings), descriptorPool(givenDescriptorPool), descriptorSetLayout(givenDescriptorPool->GetDescriptorSetLayout())
+    BindlessDescriptorSet::BindlessDescriptorSet(const std::vector<uint32_t> &givenBindings, std::shared_ptr<DescriptorSetLayout> &descriptorSetLayout)
+        : boundBindings(givenBindings), descriptorSetLayout(descriptorSetLayout)
     {
         // Check if the current binding is not available
         for (const auto &binding : givenBindings)
@@ -328,12 +328,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Create descriptor set to pool
-        descriptorPool->AllocateBindlessDescriptorSet(givenBindings, this->vkDescriptorSet);
+        VK::GetDescriptorPool()->AllocateBindlessDescriptorSet(givenBindings, descriptorSetLayout, this->vkDescriptorSet);
     }
 
-    std::shared_ptr<BindlessDescriptorSet> BindlessDescriptorSet::Build(const std::vector<uint32_t> &givenBindings, std::shared_ptr<DescriptorPool> &givenDescriptorPool)
+    std::shared_ptr<BindlessDescriptorSet> BindlessDescriptorSet::Build(const std::vector<uint32_t> &givenBindings, std::shared_ptr<DescriptorSetLayout> &givenDescriptorSetLayout)
     {
-        return std::make_shared<BindlessDescriptorSet>(givenBindings, givenDescriptorPool);
+        return std::make_shared<BindlessDescriptorSet>(givenBindings, givenDescriptorSetLayout);
     }
 
     /* --- GETTER METHODS --- */
@@ -522,7 +522,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void BindlessDescriptorSet::Allocate()
     {
-        vkUpdateDescriptorSets(VulkanCore::GetLogicalDevice(), writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
+        vkUpdateDescriptorSets(VK::GetLogicalDevice(), writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
     }
 
     /* --- DESTRUCTOR --- */

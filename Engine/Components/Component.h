@@ -7,8 +7,7 @@
 #include <entt/entt.hpp>
 
 #include "../../Core/World.h"
-
-using namespace Sierra::Core;
+#include "../../Core/Debugger.h"
 
 namespace Sierra::Engine::Components
 {
@@ -19,7 +18,7 @@ namespace Sierra::Engine::Components
         inline entt::entity GetEnttEntity() { return enttEntity; };
 
         template <typename T, std::enable_if_t<std::is_base_of_v<Component, T>, bool> = true, typename... Args>
-        T& AddComponent(Args&&... args)
+        inline T& AddComponent(Args&&... args)
         {
             if (HasComponent<T>())
             {
@@ -27,35 +26,35 @@ namespace Sierra::Engine::Components
                 return GetComponent<T>();
             }
 
-            T& component = World::GetEnttRegistry().emplace<T>(enttEntity, std::forward<Args>(args)...);
+            T& component = World::GetEnttRegistry()->emplace<T>(enttEntity, std::forward<Args>(args)...);
             component.SetEnttEntity(enttEntity);
             return component;
         }
 
         template<typename T, std::enable_if_t<std::is_base_of_v<Component, T>, bool> = true, typename... Args>
-        T& AddOrReplaceComponent(Args&&... args)
+        inline T& AddOrReplaceComponent(Args&&... args)
         {
-            T& component = World::GetEnttRegistry().emplace_or_replace<T>(enttEntity, std::forward<Args>(args)...);
+            T& component = World::GetEnttRegistry()->emplace_or_replace<T>(enttEntity, std::forward<Args>(args)...);
             component.SetEnttEntity(enttEntity);
             return component;
         }
 
         template<typename T>
-        T& GetComponent() const
+        inline T& GetComponent() const
         {
             ASSERT_ERROR_IF(!HasComponent<T>(), "Component of type [" + Debugger::TypeToString<T>() + "] does not exist within the entity");
 
-            return World::GetEnttRegistry().get<T>(enttEntity);
+            return World::GetEnttRegistry()->get<T>(enttEntity);
         }
 
         template<typename T>
-        bool HasComponent() const
+        inline bool HasComponent() const
         {
-            return World::GetEnttRegistry().all_of<T>(enttEntity);
+            return World::GetEnttRegistry()->all_of<T>(enttEntity);
         }
 
         template<typename T>
-        void RemoveComponent() const
+        inline void RemoveComponent() const
         {
             if (!HasComponent<T>())
             {
@@ -63,10 +62,11 @@ namespace Sierra::Engine::Components
                 return;
             }
 
-            World::GetEnttRegistry().remove<T>(enttEntity);
+            World::GetEnttRegistry()->remove<T>(enttEntity);
         }
 
         virtual inline void Update() { }
+        virtual inline void DrawUI() { };
         virtual inline void Destroy() const { }
 
     protected:

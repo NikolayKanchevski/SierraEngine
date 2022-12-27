@@ -4,7 +4,7 @@
 
 #include "Buffer.h"
 
-#include "../VulkanCore.h"
+#include "../VK.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -21,30 +21,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkBufferCreateInfo.usage = (VkBufferUsageFlags) bufferUsage;
         vkBufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-        // Create the Vulkan buffer
+        // Set up buffer allocation info
+        VmaAllocationCreateInfo allocationCreateInfo{};
+        allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+        allocationCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
+        allocationCreateInfo.memoryTypeBits = std::numeric_limits<uint32_t>::max();
+        allocationCreateInfo.priority = 0.5f;
+
+        // Create and allocate buffer
         VK_ASSERT(
-            vkCreateBuffer(VulkanCore::GetLogicalDevice(), &vkBufferCreateInfo, nullptr, &vkBuffer),
+            vmaCreateBuffer(VK::GetMemoryAllocator(), &vkBufferCreateInfo, &allocationCreateInfo, &vkBuffer, &vmaBufferAllocation, nullptr),
             "Failed to create buffer with size of [" + std::to_string(memorySize) + "] for [" + std::to_string((int) bufferUsage) + "] usage"
         );
-
-        // Get the Vulkan buffer's memory requirements
-        VkMemoryRequirements memoryRequirements;
-        vkGetBufferMemoryRequirements(VulkanCore::GetLogicalDevice(), vkBuffer, &memoryRequirements);
-
-        // Set up the buffer's memory allocation info
-        VkMemoryAllocateInfo memoryAllocationInfo{};
-        memoryAllocationInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        memoryAllocationInfo.allocationSize = memoryRequirements.size,
-        memoryAllocationInfo.memoryTypeIndex = VulkanCore::GetDevice()->FindMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryFlags);
-
-        // Allocate buffer's memory
-        VK_ASSERT(
-                vkAllocateMemory(VulkanCore::GetLogicalDevice(), &memoryAllocationInfo, nullptr, &vkBufferMemory),
-                "Failed to allocate memory for buffer"
-        );
-
-        // Bind the allocated memory to the buffer
-        vkBindBufferMemory(VulkanCore::GetLogicalDevice(), vkBuffer, vkBufferMemory, 0);
     }
 
     std::unique_ptr<Buffer> Buffer::Create(const BufferCreateInfo bufferCreateInfo)
@@ -59,25 +47,25 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- SETTER METHODS --- */
 
-    void Buffer::CopyFromPointer(void *pointer, uint64_t offset)
+    void Buffer::CopyFromPointer(void *pointer)
     {
         // Create an empty pointer
         void *data;
 
         // Map memory
-        vkMapMemory(VulkanCore::GetLogicalDevice(), vkBufferMemory, offset, memorySize, 0, &data);
+        vmaMapMemory(VK::GetMemoryAllocator(), vmaBufferAllocation, &data);
 
         // Copy memory data to Vulkan buffer
         memcpy(data, pointer, memorySize);
 
         // Unmap the memory
-        vkUnmapMemory(VulkanCore::GetLogicalDevice(), vkBufferMemory);
+        vmaUnmapMemory(VK::GetMemoryAllocator(), vmaBufferAllocation);
     }
 
     void Buffer::CopyImage(const Image& givenImage, const glm::vec3 imageOffset, const uint64_t offset)
     {
         // Create a temporary command buffer
-        VkCommandBuffer commandBuffer = VulkanCore::GetDevice()->BeginSingleTimeCommands();
+        VkCommandBuffer commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
 
         // Set up image copy region
         VkBufferImageCopy copyRegion{};
@@ -99,7 +87,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkCmdCopyBufferToImage(commandBuffer, this->vkBuffer, givenImage.GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
         // Destroy the temporary command buffer
-        VulkanCore::GetDevice()->EndSingleTimeCommands(commandBuffer);
+        VK::GetDevice()->EndSingleTimeCommands(commandBuffer);
     }
 
     void Buffer::CopyToBuffer(const Buffer *otherBuffer)
@@ -108,7 +96,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ASSERT_ERROR_IF(this->memorySize != otherBuffer->memorySize, "Cannot copy data from one buffer to another with a different memory size!");
 
         // Create a temporary command buffer
-        VkCommandBuffer commandBuffer = VulkanCore::GetDevice()->BeginSingleTimeCommands();
+        VkCommandBuffer commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
 
         // Set up the buffer's copy region
         VkBufferCopy copyRegion{};
@@ -118,18 +106,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkCmdCopyBuffer(commandBuffer, vkBuffer, otherBuffer->vkBuffer, 1, &copyRegion);
 
         // Destroy the temporary command buffer
-        VulkanCore::GetDevice()->EndSingleTimeCommands(commandBuffer);
+        VK::GetDevice()->EndSingleTimeCommands(commandBuffer);
     }
 
     /* --- DESTRUCTOR --- */
 
     void Buffer::Destroy()
     {
-        if (destroyed) return;
-
-        vkDestroyBuffer(VulkanCore::GetLogicalDevice(), vkBuffer, nullptr);
-        vkFreeMemory(VulkanCore::GetLogicalDevice(), vkBufferMemory, nullptr);
-
-        destroyed = true;
+        vmaDestroyBuffer(VK::GetMemoryAllocator(), vkBuffer, vmaBufferAllocation);
     }
 }

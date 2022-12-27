@@ -2,17 +2,47 @@
 // Created by Nikolay Kanchevski on 27.09.22.
 //
 
+#include <imgui_impl_glfw.h>
 #include "Window.h"
 
 #include "../Debugger.h"
 #include "../../Engine/Classes/Input.h"
 #include "../../Engine/Classes/Cursor.h"
 #include "../../Engine/Classes/Stopwatch.h"
+#include "Vulkan/VK.h"
 
+using Rendering::Vulkan::VK;
 using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Core::Rendering
 {
+
+    std::unique_ptr<Window> Window::Create(WindowCreateInfo createInfo)
+    {
+        return std::make_unique<Window>(createInfo);
+    }
+
+    Window::Window(const WindowCreateInfo &createInfo)
+        : title(std::move(createInfo.givenTitle)), maximized(createInfo.startMaximized), requireFocus(createInfo.isFocusRequired), resizable(createInfo.isResizable)
+    {
+        PROFILE_FUNCTION();
+
+        ASSERT_ERROR_IF(!glfwInit(), "GLFW could not be started");
+
+        ASSERT_ERROR_IF(!glfwVulkanSupported(), "Vulkan not supported on this system");
+
+        if (maximized && !createInfo.isResizable)
+        {
+            ASSERT_WARNING("A maximized window cannot be created unless resizing is allowed. Setting was automatically disabled");
+            maximized = false;
+        }
+
+        Initialize();
+        CreateSurface();
+        SetCallbacks();
+    }
+
+    /* --- POLLING METHODS --- */
 
     void Window::Update()
     {
@@ -27,6 +57,8 @@ namespace Sierra::Core::Rendering
 
         resized = false;
     }
+
+    /* --- SETTER METHODS --- */
 
     void Window::SetTitle(const std::string& givenTitle)
     {
@@ -52,38 +84,11 @@ namespace Sierra::Core::Rendering
         glfwSetWindowOpacity(glfwWindow, givenOpacity);
     }
 
-    Window::Window(std::string givenTitle, const bool setMaximized, const bool setResizable, const bool setFocusRequirement)
-        : title(std::move(givenTitle)), maximized(setMaximized), REQUIRE_FOCUS(setFocusRequirement), RESIZABLE(setResizable)
+    /* --- SETTER METHODS --- */
+
+    void Window::Initialize()
     {
-        ASSERT_ERROR_IF(!glfwInit(), "GLFW could not be started");
-
-        ASSERT_ERROR_IF(!glfwVulkanSupported(), "Vulkan not supported on this system");
-
-        if (maximized && !setResizable)
-        {
-            ASSERT_WARNING("A maximized window cannot be created unless resizing is allowed");
-            maximized = false;
-        }
-
-        #if DEBUG
-            Sierra::Engine::Classes::Stopwatch stopwatch;
-        #endif
-
-        this->width = 1300;
-        this->height = 800;
-
-        InitWindow();
-
-        #if DEBUG
-            ASSERT_INFO(
-                "Window [" + this->title + "] successfully created! Initialization took: " + std::to_string(stopwatch.GetElapsedMilliseconds()) + "ms"
-            );
-        #endif
-    }
-
-    void Window::InitWindow()
-    {
-        glfwWindowHint(GLFW_RESIZABLE, RESIZABLE);
+        glfwWindowHint(GLFW_RESIZABLE, resizable);
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_VISIBLE, 0);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -97,11 +102,19 @@ namespace Sierra::Core::Rendering
             glfwGetWindowSize(glfwWindow, &width, &height);
         }
 
-        Vulkan::VulkanCore::SetWindow(this);
-
         glfwSetWindowUserPointer(glfwWindow, this);
 
-        SetCallbacks();
+//        imGuiContext = ImGui::CreateContext();
+//        ImGui::SetCurrentContext(imGuiContext);
+//        ImGui_ImplGlfw_InitForVulkan(glfwWindow, true);
+
+        currentlyFocusedWindow = this;
+    }
+
+    void Window::CreateSurface()
+    {
+        // Create window surface
+        glfwCreateWindowSurface(VK::GetInstance(), glfwWindow, nullptr, &surface);
     }
 
     void Window::SetCallbacks()
@@ -120,7 +133,7 @@ namespace Sierra::Core::Rendering
 
         glfwSetWindowMaximizeCallback(glfwWindow, WindowMaximizeCallback);
 
-        glfwSetCharCallback(glfwWindow, Input::Input::KeyboardCharacterCallback);
+        glfwSetCharCallback(glfwWindow, Input::KeyboardCharacterCallback);
 
         glfwSetKeyCallback(glfwWindow, Input::KeyboardKeyCallback);
 
@@ -136,13 +149,8 @@ namespace Sierra::Core::Rendering
         Cursor::SetCursorPosition({ xCursorPosition, yCursorPosition });
     }
 
-    void Window::RetrieveMonitorData()
-    {
-        auto defaultMonitor = glfwGetPrimaryMonitor();
-        glfwGetMonitorWorkarea(defaultMonitor, &monitor.xPosition, &monitor.yPosition, &monitor.width, &monitor.height);
-    }
-
     /* --- CALLBACKS --- */
+
     void Window::GlfwErrorCallback(int errorCode, const char *description)
     {
         ASSERT_WARNING("GLFW Error: " + std::string(description) + " (" + std::to_string(errorCode) + ")");
@@ -162,6 +170,8 @@ namespace Sierra::Core::Rendering
     void Window::WindowFocusCallback(GLFWwindow *windowPtr, int focused)
     {
         auto windowObject = GetGlfwWindowParentClass(windowPtr);
+
+        currentlyFocusedWindow = focused ? windowObject : nullptr;
 
         windowObject->focused = focused;
 
@@ -193,9 +203,9 @@ namespace Sierra::Core::Rendering
     }
 
 
-    Window::~Window()
+    void Window::Destroy()
     {
+        vkDestroySurfaceKHR(VK::GetInstance(), surface, nullptr);
         glfwDestroyWindow(glfwWindow);
-        glfwTerminate();
     }
 }

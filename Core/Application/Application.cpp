@@ -4,8 +4,8 @@
 
 #include "Application.h"
 
-#define MODEL_GRID_SIZE_X 1
-#define MODEL_GRID_SIZE_Y 1
+#define MODEL_GRID_SIZE_X 2
+#define MODEL_GRID_SIZE_Y 2
 #define MODEL_GRID_SIZE_Z 1
 
 #define MODEL_SPACING_FACTOR_X 10
@@ -16,11 +16,12 @@
 
 void Application::Start()
 {
-    // Create renderer
-    VulkanRenderer renderer("Sierra Engine v1.0.0", true, true);
+    // Start up the engine
+    EngineCore::Initialize();
 
-    // Get a reference to the window of the renderer
-    Window &window = renderer.GetWindow();
+    // Create renderer
+    std::unique_ptr<Window> window = Window::Create({ });
+    std::unique_ptr<MainVulkanRenderer> renderer = MainVulkanRenderer::Create({ .window = window, .createImGuiInstance = true });
 
     // Initialize the world
     World::Start();
@@ -28,12 +29,16 @@ void Application::Start()
     // Create camera
     Entity cameraEntity = Entity("Camera");
     camera = cameraEntity.AddComponent<Camera>();
-    cameraEntity.GetTransform().position = { 0.0f, 1.75f, 10.0f };
+    cameraEntity.GetTransform().position = { -5.0f, -2.5f, 5.0f };
 
     // Create directional light
     DirectionalLight &directionalLight = Entity("Directional Light").AddComponent<DirectionalLight>();
     directionalLight.direction = glm::normalize(camera.GetComponent<Transform>().position - glm::vec3(-7, 5, -7));
     directionalLight.intensity = 2.0f;
+
+    // Create point light
+    pointLight = &Entity("Point Light").AddComponent<PointLight>();
+    pointLight->intensity = 3.0f;
 
     // Load 3D models in a grid view
     tankModels.reserve(MODEL_GRID_SIZE_X * MODEL_GRID_SIZE_Y * MODEL_GRID_SIZE_Z);
@@ -54,31 +59,44 @@ void Application::Start()
                 {
                     tankModels.back()->GetMesh(l).GetComponent<Transform>().position = { x, y, z };
                 }
+
+                pointLight->GetComponent<Transform>().position = { x, y + 3, z };
             }
         }
     }
 
     // Loop while renderer is active
-    while (renderer.IsActive())
+    while (!window->IsClosed())
     {
         // Prepare utility classes
-        World::Prepare(renderer);
+        World::Prepare();
+
+        // Prepare renderer for next frame
+        renderer->Prepare();
 
         // Do per-frame actions
         RenderLoop(renderer);
 
+        renderer->Update();
+
+        // Push updates to renderer
+        World::Update();
+
         // Update and render world
-        World::Update(renderer);
+        renderer->Render();
     }
 
+    renderer->Destroy();
+    window->Destroy();
+
     // Deallocate world memory
-    World::Shutdown();
+    EngineCore::Terminate();
 }
 
-void Application::RenderLoop(VulkanRenderer &renderer)
+void Application::RenderLoop(std::unique_ptr<MainVulkanRenderer> &renderer)
 {
     // If the window of the renderer is required to be focused but is not return before executing useless code
-    if (renderer.GetWindow().IsFocusRequired() && !renderer.GetWindow().IsFocused()) return;
+    if (renderer->GetWindow()->IsFocusRequired() && !renderer->GetWindow()->IsFocused()) return;
 
     // Update world objects
     UpdateObjects();
@@ -101,6 +119,10 @@ void Application::UpdateObjects()
         tankModel->GetMesh(3).GetComponent<Transform>().rotation.x = timeSin * 45.0f;
         tankModel->GetMesh(4).GetComponent<Transform>().rotation.x = timeSin * 45.0f;
     }
+
+    // Move point light
+    const static float startingZ = pointLight->GetComponent<Transform>().position.z;
+    pointLight->GetComponent<Transform>().position.z = (2 * timeSin) + startingZ;
 }
 
 void Application::DoCameraMovement()

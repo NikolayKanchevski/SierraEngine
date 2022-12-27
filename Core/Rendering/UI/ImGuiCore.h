@@ -5,6 +5,8 @@
 #pragma once
 
 #include <cstdint>
+#include <imgui.h>
+#include <glm/vec2.hpp>
 
 namespace Sierra::Core::Rendering::UI
 {
@@ -19,13 +21,18 @@ namespace Sierra::Core::Rendering::UI
         [[nodiscard]] static inline uint32_t GetSceneViewWidth() { return instance.sceneViewWidth; }
         [[nodiscard]] static inline uint32_t GetSceneViewHeight() { return instance.sceneViewHeight; }
 
+        [[nodiscard]] static inline ImGuiStyle GetDefaultStyle() { return instance.defaultStyle; }
+
         /* --- DESTRUCTOR --- */
     private:
-        ImGuiCore() = default;
+        ImGuiCore();
         static ImGuiCore instance;
 
         uint32_t sceneViewWidth = 1;
         uint32_t sceneViewHeight = 1;
+
+
+        ImGuiStyle defaultStyle;
 
     };
 

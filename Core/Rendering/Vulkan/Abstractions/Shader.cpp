@@ -4,7 +4,7 @@
 
 #include "Shader.h"
 
-#include "../VulkanCore.h"
+#include "../VK.h"
 #include "../../../../Engine/Classes/File.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
@@ -22,7 +22,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create shader module
         VK_ASSERT(
-            vkCreateShaderModule(VulkanCore::GetLogicalDevice(), &moduleCreateInfo, nullptr, &shaderModule),
+            vkCreateShaderModule(VK::GetLogicalDevice(), &moduleCreateInfo, nullptr, &shaderModule),
             "Failed to create shader module for [" + createInfo.filePath + "]"
         );
 
@@ -69,7 +69,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Shader::Destroy()
     {
-        vkDestroyShaderModule(VulkanCore::GetLogicalDevice(), shaderModule, nullptr);
+        vkDestroyShaderModule(VK::GetLogicalDevice(), shaderModule, nullptr);
     }
 
 }

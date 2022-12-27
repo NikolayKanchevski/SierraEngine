@@ -27,7 +27,7 @@ namespace Sierra::Engine::Classes
             ModelData &loadedModelData = modelPool[filePath];
 
             // Store pointers to all loaded entities to be able to parent them
-            std::vector<Entity*> entities;
+            std::vector<Entity> entities;
             entities.reserve(loadedModelData.entities.size());
 
             meshEntities.clear();
@@ -69,11 +69,11 @@ namespace Sierra::Engine::Classes
                 if (entityData.parentEntityID != -1)
                 {
                     // Set its parent
-                    entity.SetParent(*entities[entityData.parentEntityID]);
+                    entity.SetParent(entities[entityData.parentEntityID]);
                 }
 
                 // Store pointer to the newly created entity
-                entities.push_back(&entity);
+                entities.push_back(entity);
 
                 Mesh::IncreaseTotalVertexCount(vertexCount);
             }
@@ -130,7 +130,7 @@ namespace Sierra::Engine::Classes
         // For each mesh delete their textures
         for (const auto &meshEntity : meshEntities)
         {
-            const MeshRenderer &meshRenderer = World::GetEnttRegistry().get<MeshRenderer>(meshEntity);
+            const MeshRenderer &meshRenderer = World::GetEnttRegistry()->get<MeshRenderer>(meshEntity);
 
             for (uint32_t i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
             {
@@ -142,6 +142,14 @@ namespace Sierra::Engine::Classes
 
     void Model::DisposePool()
     {
+        for (const auto &model : modelPool)
+        {
+            for (const auto &mesh : model.second.meshes)
+            {
+                mesh.mesh->Destroy();
+            }
+        }
+
         modelPool.clear();
     }
 

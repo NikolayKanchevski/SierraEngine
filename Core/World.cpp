@@ -9,13 +9,8 @@
 #include "../Engine/Classes/Time.h"
 #include "../Engine/Classes/Cursor.h"
 #include "../Engine/Classes/Input.h"
-#include "../Engine/Components/Camera.h"
-#include "../Engine/Components/MeshRenderer.h"
-#include "Rendering/UI/ImGuiCore.h"
 
-using Rendering::UI::ImGuiCore;
 using namespace Sierra::Engine::Classes;
-using namespace Sierra::Engine::Components;
 
 namespace Sierra::Core
 {
@@ -27,76 +22,60 @@ namespace Sierra::Core
         Cursor::Start();
     }
 
-    void World::Prepare(VulkanRenderer &renderer)
+    void World::Prepare()
     {
         Time::Update();
         Cursor::Update();
         Input::Update();
-
-        renderer.Prepare();
     }
 
-    void World::Update(VulkanRenderer &renderer)
+    void World::Update()
     {
-        UpdateObjects(renderer);
-        UpdateRenderer(renderer);
-    }
-
-    void World::Shutdown()
-    {
-
+        UpdateObjects();
     }
 
     /* --- SETTER METHODS --- */
 
-    void World::UpdateObjects(VulkanRenderer &renderer)
+    void World::UpdateObjects()
     {
-        // Update camera
-        Camera *camera = Camera::GetMainCamera();
-        Transform &cameraTransform = enttRegistry.get<Transform>(camera->GetEnttEntity());
-        glm::vec3 rendererCameraPosition = { cameraTransform.position.x, -cameraTransform.position.y, cameraTransform.position.z };
-        glm::vec3 rendererCameraFrontDirection = { camera->GetFrontDirection().x, -camera->GetFrontDirection().y, camera->GetFrontDirection().z };
-        glm::vec3 rendererCameraUpDirection = { camera->GetUpDirection().x, -camera->GetUpDirection().y, camera->GetUpDirection().z };
+//        // Update camera
+//        Camera *camera = Camera::GetMainCamera();
+//        Transform &cameraTransform = enttRegistry->get<Transform>(camera->GetEnttEntity());
+//        glm::vec3 rendererCameraPosition = { cameraTransform.position.x, -cameraTransform.position.y, cameraTransform.position.z };
+//        glm::vec3 rendererCameraFrontDirection = { camera->GetFrontDirection().x, -camera->GetFrontDirection().y, camera->GetFrontDirection().z };
+//        glm::vec3 rendererCameraUpDirection = { camera->GetUpDirection().x, -camera->GetUpDirection().y, camera->GetUpDirection().z };
+//
+//        // Update uniform data
+//        auto &uniformData = VulkanCore::GetUniformDataPtr();
+//        uniformData.view = glm::lookAt(rendererCameraPosition, rendererCameraPosition + rendererCameraFrontDirection, rendererCameraUpDirection);
+//        uniformData.projection = glm::perspective(glm::radians(camera->fov), (float) ImGuiCore::GetSceneViewWidth() / (float) ImGuiCore::GetSceneViewHeight(), camera->nearClip, camera->farClip);
+//        uniformData.projection[1][1] *= -1;
+//        uniformData.directionalLightCount = DirectionalLight::GetDirectionalLightCount();
+//        uniformData.pointLightCount = PointLight::GetPointLightCount();
+//
+//        // Update storage data
+//        auto &storageData = VulkanCore::GetStorageDataPtr();
+//        auto enttMeshView = World::GetEnttRegistry()->view<MeshRenderer>();
+//        for (auto enttEntity : enttMeshView)
+//        {
+//            MeshRenderer &meshRenderer = enttMeshView.get<MeshRenderer>(enttEntity);
+//            storageData.objectDatas[meshRenderer.GetMeshID()].model = meshRenderer.GetModelMatrix();
+//        }
+//
+//        auto enttDirectionalLightView = World::GetEnttRegistry()->view<DirectionalLight>();
+//        for (auto enttEntity : enttDirectionalLightView)
+//        {
+//            DirectionalLight &directionalLight = enttDirectionalLightView.get<DirectionalLight>(enttEntity);
+//            storageData.directionalLights[directionalLight.GetID()] = directionalLight;
+//        }
+//
+//        auto enntPointLightView = World::GetEnttRegistry()->view<PointLight>();
+//        for (auto enttEntity : enntPointLightView)
+//        {
+//            PointLight &pointLight = enntPointLightView.get<PointLight>(enttEntity);
+//            storageData.pointLights[pointLight.GetID()] = pointLight;
+//        }
 
-        // Update uniform data
-        auto uniformData = VulkanCore::GetUniformDataPtr();
-        uniformData->view = glm::lookAt(rendererCameraPosition, rendererCameraPosition + rendererCameraFrontDirection, rendererCameraUpDirection);
-        uniformData->projection = glm::perspective(glm::radians(camera->fov), (float) ImGuiCore::GetSceneViewWidth() / (float) ImGuiCore::GetSceneViewHeight(), camera->nearClip, camera->farClip);
-        uniformData->projection[1][1] *= -1;
-        uniformData->directionalLightCount = DirectionalLight::GetDirectionalLightCount();
-        uniformData->pointLightCount = PointLight::GetPointLightCount();
-
-        // Update storage data
-        auto storageData = VulkanCore::GetStorageDataPtr();
-        auto enttMeshView = World::GetEnttRegistry().view<MeshRenderer>();
-        for (auto enttEntity : enttMeshView)
-        {
-            MeshRenderer &meshRenderer = enttMeshView.get<MeshRenderer>(enttEntity);
-            storageData->objectDatas[meshRenderer.GetMeshID()].model = meshRenderer.GetModelMatrix();
-        }
-
-        auto enttDirectionalLightView = World::GetEnttRegistry().view<DirectionalLight>();
-        for (auto enttEntity : enttDirectionalLightView)
-        {
-            DirectionalLight &directionalLight = enttDirectionalLightView.get<DirectionalLight>(enttEntity);
-            DirectionalLight::ShaderDirectionalLight lightData = directionalLight;
-            storageData->directionalLights[directionalLight.GetID()] = lightData;
-        }
-
-        auto enntPointLightView = World::GetEnttRegistry().view<PointLight>();
-        for (auto enttEntity : enntPointLightView)
-        {
-            PointLight &pointLight = enntPointLightView.get<PointLight>(enttEntity);
-            PointLight::ShaderPointLight lightData = pointLight;
-            storageData->pointLights[pointLight.GetID()] = lightData;
-        }
     }
 
-    void World::UpdateRenderer(VulkanRenderer &renderer)
-    {
-        renderer.UpdateWindow();
-        renderer.Render();
-    }
-
-    /* --- DESTRUCTOR --- */
 }

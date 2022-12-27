@@ -9,18 +9,10 @@
 #include <vector>
 #include <unordered_map>
 #include <vulkan/vulkan.h>
+#include "../VulkanTypes.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
-    typedef enum ShaderType
-    {
-        VERTEX_SHADER = VK_SHADER_STAGE_VERTEX_BIT,
-        FRAGMENT_SHADER = VK_SHADER_STAGE_FRAGMENT_BIT,
-        TESSELATION_CONTROL_SHADER = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
-        TESSELATION_EVALUATION_SHADER = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
-        GEOMETRY_SHADER = VK_SHADER_STAGE_GEOMETRY_BIT,
-        COMPUTE_SHADER = VK_SHADER_STAGE_COMPUTE_BIT
-    } ShaderType;
 
     struct ShaderCreateInfo
     {

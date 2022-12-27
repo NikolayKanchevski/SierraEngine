@@ -9,8 +9,8 @@
 #include "Component.h"
 #include "../Classes/Mesh.h"
 #include "../Classes/Binary.h"
-#include "../Structures/Material.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Texture.h"
+#include "../../Core/Rendering/Vulkan/Abstractions/Descriptors.h"
 
 namespace Sierra::Engine::Components
 {

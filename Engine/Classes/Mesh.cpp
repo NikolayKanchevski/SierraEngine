@@ -43,7 +43,7 @@ namespace Sierra::Engine::Classes
         vertexBuffer = Buffer::CreateShared({
            .memorySize = bufferSize,
            .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
-           .bufferUsage = TRANSFER_DST_BUFFER | BufferUsage::VERTEX_BUFFER
+           .bufferUsage = TRANSFER_DST_BUFFER | VERTEX_BUFFER
        });
 
         stagingBuffer->CopyToBuffer(vertexBuffer.get());
@@ -57,9 +57,9 @@ namespace Sierra::Engine::Classes
         uint64_t bufferSize = sizeof(uint32_t) * givenIndices.size();
 
         auto stagingBuffer = Buffer::Create({
-              .memorySize = bufferSize,
-              .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
-              .bufferUsage = TRANSFER_SRC_BUFFER
+            .memorySize = bufferSize,
+            .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
+            .bufferUsage = TRANSFER_SRC_BUFFER
         });
 
         // Fill the data pointer with the vertices array's information
