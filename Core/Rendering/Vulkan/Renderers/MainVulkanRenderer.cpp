@@ -5,12 +5,13 @@
 #include "MainVulkanRenderer.h"
 
 #include <imgui_impl_vulkan.h>
-#include <glm/gtc/matrix_transform.hpp>
 #include <tbb/parallel_for_each.h>
 
 #include "../../UI/ImGuiCore.h"
 #include "../../../../Engine/Components/Camera.h"
 #include "../../../../Engine/Components/MeshRenderer.h"
+#include "../../Math/MatrixUtilities.h"
+#include "../../../../Engine/Classes/Time.h"
 
 using Rendering::UI::ImGuiCore;
 using namespace Sierra::Engine::Components;
@@ -37,21 +38,25 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
     {
         // Update camera
         Camera *camera = Camera::GetMainCamera();
-        Transform &cameraTransform = World::GetEnttRegistry()->get<Transform>(camera->GetEnttEntity());
-        glm::vec3 rendererCameraPosition = { cameraTransform.position.x, -cameraTransform.position.y, cameraTransform.position.z };
-        glm::vec3 rendererCameraFrontDirection = { camera->GetFrontDirection().x, -camera->GetFrontDirection().y, camera->GetFrontDirection().z };
-        glm::vec3 rendererCameraUpDirection = { camera->GetUpDirection().x, -camera->GetUpDirection().y, camera->GetUpDirection().z };
+        glm::vec3 &cameraPosition = camera->GetComponent<Transform>().position;
+        glm::vec3 rendererCameraPosition = { cameraPosition.x, -cameraPosition.y, cameraPosition.z };
 
         // Update uniform data
-        auto &uniformData = offscreenGraphicsPipeline->GetUniformBufferData();
-        uniformData.view = glm::lookAt(rendererCameraPosition, rendererCameraPosition + rendererCameraFrontDirection, rendererCameraUpDirection);
-        uniformData.projection = glm::perspective(glm::radians(camera->fov), (float) ImGuiCore::GetSceneViewWidth() / (float) ImGuiCore::GetSceneViewHeight(), camera->nearClip, camera->farClip);
-        uniformData.projection[1][1] *= -1;
-        uniformData.directionalLightCount = DirectionalLight::GetDirectionalLightCount();
-        uniformData.pointLightCount = PointLight::GetPointLightCount();
+        auto &sceneUniformData = scenePipeline->GetUniformBufferData();
+        sceneUniformData.view = camera->GetViewMatrix();
+        sceneUniformData.projection = camera->GetProjectionMatrix();
+        sceneUniformData.directionalLightCount = DirectionalLight::GetDirectionalLightCount();
+        sceneUniformData.pointLightCount = PointLight::GetPointLightCount();
+
+        auto &skyboxUniformData = skyboxPipeline->GetUniformBufferData();
+        skyboxUniformData.view = sceneUniformData.view;
+        skyboxUniformData.projection = sceneUniformData.projection;
+
+        float timeAngle = std::fmod(Time::GetUpTime(), 360.0f) * 0.8f;
+        skyboxUniformData.model = Matrix::CreateModel(rendererCameraPosition, { timeAngle, 0.0f, 0.0f }, glm::vec3(camera->farClip / 1.73f));
 
         // Update storage data
-        auto &storageData = offscreenGraphicsPipeline->GetStorageBufferData();
+        auto &storageData = scenePipeline->GetStorageBufferData();
 
         auto enttMeshView = World::GetEnttRegistry()->view<MeshRenderer>();
         tbb::parallel_for_each(enttMeshView.begin(), enttMeshView.end(),
@@ -99,10 +104,10 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         offscreenTimestampQueries[currentFrame]->Begin(commandBuffer->GetVulkanCommandBuffer());
 
         // Bind the pipeline
-        offscreenGraphicsPipeline->Bind(commandBuffer->GetVulkanCommandBuffer());
+        scenePipeline->Bind(commandBuffer->GetVulkanCommandBuffer());
 
         // Begin rendering offscreen image
-        offscreenRenderer->Begin(commandBuffer->GetVulkanCommandBuffer(), currentFrame);
+        sceneOffscreenRenderer->Begin(commandBuffer->GetVulkanCommandBuffer(), currentFrame);
 
         // Create a vector to hold vertex buffers of the meshes
         std::vector<VkBuffer> vertexBuffers(1);
@@ -122,13 +127,13 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             commandBuffer->BindIndexBuffer(meshRenderer.GetMesh()->GetIndexBuffer()->GetVulkanBuffer());
 
             // Copy push constant data to pipeline
-            offscreenGraphicsPipeline->GetPushConstantData() = meshRenderer.GetPushConstantData();
+            scenePipeline->GetPushConstantData() = meshRenderer.GetPushConstantData();
 
             // Send push constant data to shader
-            offscreenGraphicsPipeline->PushConstants(commandBuffer->GetVulkanCommandBuffer());
+            scenePipeline->PushConstants(commandBuffer->GetVulkanCommandBuffer());
 
             // Use either bindless or bind*full* descriptor set if not supported
-            offscreenGraphicsPipeline->BindDescriptorSets(
+            scenePipeline->BindDescriptorSets(
                     commandBuffer->GetVulkanCommandBuffer(),
                      // TODO: BINDLESS
 //                    { VK::GetDevice()->GetDescriptorIndexingSupported() ? globalBindlessDescriptorSet->GetVulkanDescriptorSet() : meshRenderer.GetDescriptorSet() },
@@ -140,8 +145,17 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             commandBuffer->Draw(meshRenderer.GetMesh()->GetIndexCount());
         }
 
+        skyboxPipeline->Bind(commandBuffer->GetVulkanCommandBuffer());
+
+        commandBuffer->BindVertexBuffers({ skyboxMesh->GetVertexBuffer()->GetVulkanBuffer() });
+        commandBuffer->BindIndexBuffer({ skyboxMesh->GetIndexBuffer()->GetVulkanBuffer() });
+
+        skyboxPipeline->BindDescriptorSets(commandBuffer->GetVulkanCommandBuffer(), { }, currentFrame);
+
+        commandBuffer->Draw(skyboxMesh->GetIndexCount());
+
         // End the offscreen renderer
-        offscreenRenderer->End(commandBuffer->GetVulkanCommandBuffer());
+        sceneOffscreenRenderer->End(commandBuffer->GetVulkanCommandBuffer());
 
         // Begin the render pass
         swapchain->BeginRenderPass(commandBuffer->GetVulkanCommandBuffer());
@@ -179,9 +193,13 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         VK::GetDevice()->WaitUntilIdle();
 
-        offscreenRenderer->SetMultisampling(newSampling);
-        offscreenGraphicsPipeline->GetCreateInfo().sampling = newSampling;
-        offscreenGraphicsPipeline->Recreate();
+        sceneOffscreenRenderer->SetMultisampling(newSampling);
+
+        scenePipeline->GetCreateInfo().sampling = newSampling;
+        scenePipeline->Recreate();
+
+        skyboxPipeline->GetCreateInfo().sampling = newSampling;
+        skyboxPipeline->Recreate();
 
         CreateOffscreenDescriptorSets();
     }
@@ -192,22 +210,99 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         VK::GetDevice()->WaitUntilIdle();
 
-        offscreenGraphicsPipeline->GetCreateInfo().shadingType = newShadingType;
-        offscreenGraphicsPipeline->Recreate();
+        scenePipeline->GetCreateInfo().shadingType = newShadingType;
+        scenePipeline->Recreate();
     }
 
     void MainVulkanRenderer::InitializeOffscreenRendering()
     {
+        CreateSceneRenderingObjects();
+        CreateSkyboxRenderingObjects();
+
+        CreateOffscreenDescriptorSets();
+        CreateTimestampQueries();
+    }
+
+    void MainVulkanRenderer::CreateSkyboxRenderingObjects()
+    {
+        // Create descriptor set layout for skybox pipeline
+        skyboxDescriptorSetLayout = DescriptorSetLayout::Builder()
+            .SetShaderStages(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+            .AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+            .AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+        .Build();
+
+        // Create shaders for skybox pipeline
+        auto skyboxVertexShader = Shader::Create({ .filePath = "Shaders/skybox_vertex.vert.spv", .shaderType = VERTEX_SHADER });
+        auto skyboxFragmentShader = Shader::Create({ .filePath = "Shaders/skybox_fragment.frag.spv", .shaderType = FRAGMENT_SHADER });
+
+        // Create pipeline
+        skyboxPipeline = SKYBOX_PIPELINE::Create({
+            .maxConcurrentFrames = swapchain->GetMaxConcurrentFramesCount(),
+            .vertexAttributes = { VERTEX_ATTRIBUTE_POSITION },
+            .shaders = {skyboxVertexShader, skyboxFragmentShader },
+            .renderPass = sceneOffscreenRenderer->GetRenderPass(),
+            .descriptorSetLayout = skyboxDescriptorSetLayout,
+            .sampling = MSAAx1,
+            .cullMode = CULL_FRONT,
+            .shadingType = SHADE_FILL,
+        });
+
+        std::vector<VertexP> cubeVertices =
+        {
+            { glm::vec3(-1, -1, -1) },
+            { glm::vec3( 1, -1, -1) },
+            { glm::vec3( 1,  1, -1) },
+            { glm::vec3(-1,  1, -1) },
+            { glm::vec3(-1, -1,  1) },
+            { glm::vec3( 1, -1,  1) },
+            { glm::vec3( 1,  1,  1) },
+            { glm::vec3(-1,  1,  1) }
+        };
+
+        std::vector<uint32_t> cubeIndices =
+        {
+            1, 5, 0, 0, 5, 4,
+            6, 2, 7, 7, 2, 3,
+            3, 0, 7, 7, 0, 4,
+            7, 4, 6, 6, 4, 5,
+            6, 5, 2, 2, 5, 1,
+            2, 1, 3, 3, 1, 0
+        };
+
+        // Create cube vertex buffer
+        skyboxMesh = std::make_unique<Mesh>(cubeVertices, cubeIndices);
+
+        // Create cubemap texture
+        skyboxCubemap = Cubemap::Create({ .filePaths = {
+            "Textures/Skyboxes/skybox_right.png",
+            "Textures/Skyboxes/skybox_left.png",
+            "Textures/Skyboxes/skybox_top.png",
+            "Textures/Skyboxes/skybox_bottom.png",
+            "Textures/Skyboxes/skybox_front.png",
+            "Textures/Skyboxes/skybox_back.png",
+        }, .cubemapType = CUBEMAP_TYPE_SKYBOX });
+
+        // Add skybox cubemap to its pipeline's descriptor set
+        for (const auto &descriptorSet : skyboxPipeline->GetDescriptorSets())
+        {
+            descriptorSet->WriteCubemap(1, skyboxCubemap);
+            descriptorSet->Allocate();
+        }
+    }
+
+    void MainVulkanRenderer::CreateSceneRenderingObjects()
+    {
         // Create descriptor set layout
         auto descriptorSetBuilder = DescriptorSetLayout::Builder();
-        descriptorSetBuilder.SetShaderStages(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+        descriptorSetBuilder.SetShaderStages(VK_SHADER_STAGE_ALL);
         descriptorSetBuilder.AddBinding(UNIFORM_BUFFER_BINDING, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         descriptorSetBuilder.AddBinding(STORAGE_BUFFER_BINDING, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 
         if (VK::GetDevice()->GetDescriptorIndexingSupported())
         {
             // TODO: BINDLESS
-//            descriptorSetBuilder.AddBinding(BINDLESS_TEXTURE_BINDING, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT, MAX_TEXTURES);
+            // descriptorSetBuilder.AddBinding(BINDLESS_TEXTURE_BINDING, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT, MAX_TEXTURES);
         }
         else
         {
@@ -216,11 +311,12 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             descriptorSetBuilder.AddBinding(HEIGHT_MAP_TEXTURE_BINDING, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         }
 
-        descriptorSetLayout = descriptorSetBuilder.BuildShared();
-        VK::m_Instance.descriptorSetLayout = descriptorSetLayout;
+        // Create descriptor set layout
+        sceneDescriptorSetLayout = descriptorSetBuilder.Build();
+        VK::m_Instance.descriptorSetLayout = sceneDescriptorSetLayout;
 
         // Create renderer
-        offscreenRenderer = OffscreenRenderer::Create({
+        sceneOffscreenRenderer = OffscreenRenderer::Create({
             .width = swapchain->GetWidth(),
             .height = swapchain->GetHeight(),
             .maxConcurrentFrames = maxConcurrentFrames,
@@ -228,24 +324,27 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             .msaaSampling = MSAAx1
         });
 
+        // Create descriptor sets to rendered images
         offscreenImageDescriptorSets.resize(maxConcurrentFrames);
-        CreateOffscreenDescriptorSets();
 
-        // Create shaders
+        // Create shaders for scene pipeline
         auto sceneVertexShader = Shader::Create({ .filePath = VK::GetDevice()->GetDescriptorIndexingSupported() ? "Shaders/blinn-phong-vertex_bindless.vert.spv" : "Shaders/blinn-phong-vertex.vert.spv", .shaderType = VERTEX_SHADER });
         auto sceneFragmentShader = Shader::Create({ .filePath = VK::GetDevice()->GetDescriptorIndexingSupported() ? "Shaders/blinn-phong-fragment_bindless.frag.spv" : "Shaders/blinn-phong-fragment.frag.spv", .shaderType = FRAGMENT_SHADER });
 
         // Create pipeline
-        offscreenGraphicsPipeline = OFFSCREEN_PIPELINE::Create({
+        scenePipeline = OFFSCREEN_PIPELINE::Create({
             .maxConcurrentFrames = swapchain->GetMaxConcurrentFramesCount(),
             .vertexAttributes = { VERTEX_ATTRIBUTE_POSITION, VERTEX_ATTRIBUTE_NORMAL, VERTEX_ATTRIBUTE_TEXTURE_COORDINATE },
             .shaders = {sceneVertexShader, sceneFragmentShader },
-            .renderPass = offscreenRenderer->GetRenderPass(),
-            .descriptorSetLayout = descriptorSetLayout,
+            .renderPass = sceneOffscreenRenderer->GetRenderPass(),
+            .descriptorSetLayout = sceneDescriptorSetLayout,
             .sampling = sampling,
             .shadingType = shadingType,
         });
+    }
 
+    void MainVulkanRenderer::CreateTimestampQueries()
+    {
         // Create timestamp queries
         offscreenTimestampQueries.resize(maxConcurrentFrames);
         for (uint32_t i = 0; i < maxConcurrentFrames; i++)
@@ -256,21 +355,27 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
     void MainVulkanRenderer::CreateOffscreenDescriptorSets()
     {
+        // Create descriptor sets to rendered images
+        offscreenImageDescriptorSets.resize(maxConcurrentFrames);
         for (uint32_t i = maxConcurrentFrames; i--;)
         {
-            offscreenImageDescriptorSets[i] = ImGui_ImplVulkan_AddTexture(offscreenRenderer->GetSampler()->GetVulkanSampler(), offscreenRenderer->GetColorImage(i)->GetVulkanImageView(), VK_IMAGE_LAYOUT_GENERAL);
+            offscreenImageDescriptorSets[i] = ImGui_ImplVulkan_AddTexture(sceneOffscreenRenderer->GetSampler()->GetVulkanSampler(), sceneOffscreenRenderer->GetColorImage(i)->GetVulkanImageView(), VK_IMAGE_LAYOUT_GENERAL);
         }
     }
-
-    /* --- GETTER METHODS --- */
 
     /* --- DESTRUCTOR --- */
 
     void MainVulkanRenderer::TerminateOffscreenRendering()
     {
-        offscreenGraphicsPipeline->Destroy();
-        offscreenRenderer->Destroy();
-        descriptorSetLayout->Destroy();
+        skyboxCubemap->Destroy();
+        skyboxMesh->Destroy();
+
+        scenePipeline->Destroy();
+        sceneOffscreenRenderer->Destroy();
+        sceneDescriptorSetLayout->Destroy();
+
+        skyboxPipeline->Destroy();
+        skyboxDescriptorSetLayout->Destroy();
     }
 
     void MainVulkanRenderer::Destroy()

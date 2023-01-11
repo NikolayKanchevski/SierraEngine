@@ -22,7 +22,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             imGuiInstance = ImGuiInstance::Create({
                 .window = window,
-                .swapchain = swapchain
+                .swapchain = swapchain,
+                .createImGuizmoLayer = createInfo.createImGuizmoLayer
             });
 
             hasImGuiInstance = true;

@@ -14,8 +14,18 @@ namespace Sierra::Engine::Classes
 
     /* --- CONSTRUCTORS --- */
 
-    Mesh::Mesh(std::vector<Vertex> &givenVertices, std::vector<uint32_t> &givenIndices)
+    Mesh::Mesh(std::vector<VertexP> &givenVertices, std::vector<uint32_t> &givenIndices)
         : vertexCount(givenVertices.size()), indexCount(givenIndices.size())
+    {
+        CreateVertexBuffer(givenVertices);
+        CreateIndexBuffer(givenIndices);
+
+        totalMeshCount++;
+        totalVertexCount += vertexCount;
+    }
+
+    Mesh::Mesh(std::vector<VertexPNT> &givenVertices, std::vector<uint32_t> &givenIndices)
+            : vertexCount(givenVertices.size()), indexCount(givenIndices.size())
     {
         CreateVertexBuffer(givenVertices);
         CreateIndexBuffer(givenIndices);
@@ -26,10 +36,10 @@ namespace Sierra::Engine::Classes
 
     /* --- SETTER METHODS --- */
 
-    void Mesh::CreateVertexBuffer(std::vector<Vertex> &givenVertices)
+    void Mesh::CreateVertexBuffer(std::vector<VertexP> &givenVertices)
     {
         // Calculate the buffer size
-        uint64_t bufferSize = sizeof(Vertex) * givenVertices.size();
+        uint64_t bufferSize = sizeof(VertexP) * givenVertices.size();
 
         auto stagingBuffer = Buffer::Create({
             .memorySize = bufferSize,
@@ -45,6 +55,32 @@ namespace Sierra::Engine::Classes
            .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
            .bufferUsage = TRANSFER_DST_BUFFER | VERTEX_BUFFER
        });
+
+        stagingBuffer->CopyToBuffer(vertexBuffer.get());
+
+        stagingBuffer->Destroy();
+    }
+
+
+    void Mesh::CreateVertexBuffer(std::vector<VertexPNT> &givenVertices)
+    {
+        // Calculate the buffer size
+        uint64_t bufferSize = sizeof(VertexPNT) * givenVertices.size();
+
+        auto stagingBuffer = Buffer::Create({
+            .memorySize = bufferSize,
+            .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
+            .bufferUsage = TRANSFER_SRC_BUFFER
+        });
+
+        // Fill the data pointer with the vertices array's information
+        stagingBuffer->CopyFromPointer(givenVertices.data());
+
+        vertexBuffer = Buffer::CreateShared({
+            .memorySize = bufferSize,
+            .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
+            .bufferUsage = TRANSFER_DST_BUFFER | VERTEX_BUFFER
+        });
 
         stagingBuffer->CopyToBuffer(vertexBuffer.get());
 

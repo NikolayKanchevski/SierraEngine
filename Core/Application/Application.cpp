@@ -4,8 +4,8 @@
 
 #include "Application.h"
 
-#define MODEL_GRID_SIZE_X 2
-#define MODEL_GRID_SIZE_Y 2
+#define MODEL_GRID_SIZE_X 1
+#define MODEL_GRID_SIZE_Y 1
 #define MODEL_GRID_SIZE_Z 1
 
 #define MODEL_SPACING_FACTOR_X 10
@@ -21,7 +21,7 @@ void Application::Start()
 
     // Create renderer
     std::unique_ptr<Window> window = Window::Create({ });
-    std::unique_ptr<MainVulkanRenderer> renderer = MainVulkanRenderer::Create({ .window = window, .createImGuiInstance = true });
+    std::unique_ptr<MainVulkanRenderer> renderer = MainVulkanRenderer::Create({ .window = window, .createImGuiInstance = true, .createImGuizmoLayer = true });
 
     // Initialize the world
     World::Start();
@@ -134,49 +134,46 @@ void Application::DoCameraMovement()
     }
 
     // If the cursor is visible return
-    if (Cursor::IsCursorShown()) return;
-
-    // Cache the transform of the camera
-    Transform &cameraTransform = camera.GetComponent<Transform>();
-
-    // Move camera accordingly
-    if (Input::GetKeyHeld(GLFW_KEY_W)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetFrontDirection();
-    if (Input::GetKeyHeld(GLFW_KEY_S)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetBackDirection();
-    if (Input::GetKeyHeld(GLFW_KEY_A)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetLeftDirection();
-    if (Input::GetKeyHeld(GLFW_KEY_D)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetRightDirection();
-    if (Input::GetKeyHeld(GLFW_KEY_E) || Input::GetKeyHeld(GLFW_KEY_SPACE)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection();
-    if (Input::GetKeyHeld(GLFW_KEY_Q) || Input::GetKeyHeld(GLFW_KEY_LEFT_CONTROL)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection();
-
-    // Apply camera rotation based on mouse movement
-    yaw += Cursor::GetHorizontalCursorOffset() * CAMERA_LOOK_SPEED;
-    pitch -= Cursor::GetVerticalCursorOffset() * CAMERA_LOOK_SPEED;
-
-    // Check if a game pad (player 0) is connected
-    if (Input::GetGamePadConnected())
+    if (!Cursor::IsCursorShown())
     {
-        // Get the left stick's axis and calculate movement based on it
-        cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * Input::GetVerticalGamePadLeftStickAxis() * camera.GetFrontDirection();
-        cameraTransform.position -= CAMERA_MOVE_SPEED * Time::GetDeltaTime() * Input::GetHorizontalGamePadLeftStickAxis() * camera.GetLeftDirection();
+        // Cache the transform of the camera
+        Transform &cameraTransform = camera.GetComponent<Transform>();
 
-        // Depending on what buttons are held move the camera
-        if (Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection();
-        if (Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_X)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection();
+        // Move camera accordingly
+        if (Input::GetKeyHeld(GLFW_KEY_W)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetFrontDirection();
+        if (Input::GetKeyHeld(GLFW_KEY_S)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetBackDirection();
+        if (Input::GetKeyHeld(GLFW_KEY_A)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetLeftDirection();
+        if (Input::GetKeyHeld(GLFW_KEY_D)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetRightDirection();
+        if (Input::GetKeyHeld(GLFW_KEY_E) || Input::GetKeyHeld(GLFW_KEY_SPACE)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection();
+        if (Input::GetKeyHeld(GLFW_KEY_Q) || Input::GetKeyHeld(GLFW_KEY_LEFT_CONTROL)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection();
 
-        // Rotate the camera based on the right stick's axis
-        yaw -= Input::GetHorizontalGamePadRightStickAxis() * GAMEPAD_CAMERA_LOOK_SPEED;
-        pitch += Input::GetVerticalGamePadRightStickAxis() * GAMEPAD_CAMERA_LOOK_SPEED;
+        // Apply camera rotation based on mouse movement
+        yaw += Cursor::GetHorizontalCursorOffset() * CAMERA_LOOK_SPEED;
+        pitch += Cursor::GetVerticalCursorOffset() * CAMERA_LOOK_SPEED;
 
-        // Change camera FOV depending on game pad's right trigger
-        camera.fov = Math::Clamp(Input::GetGamePadRightTriggerAxis() * 45.0f, 45.0f, 90.0f);
+        // Check if a game pad (player 0) is connected
+        if (Input::GetGamePadConnected())
+        {
+            // Get the left stick's axis and calculate movement based on it
+            cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * Input::GetVerticalGamePadLeftStickAxis() * camera.GetFrontDirection();
+            cameraTransform.position -= CAMERA_MOVE_SPEED * Time::GetDeltaTime() * Input::GetHorizontalGamePadLeftStickAxis() * camera.GetLeftDirection();
+
+            // Depending on what buttons are held move the camera
+            if (Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection();
+            if (Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_X)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection();
+
+            // Rotate the camera based on the right stick's axis
+            yaw -= Input::GetHorizontalGamePadRightStickAxis() * GAMEPAD_CAMERA_LOOK_SPEED;
+            pitch += Input::GetVerticalGamePadRightStickAxis() * GAMEPAD_CAMERA_LOOK_SPEED;
+
+            // Change camera FOV depending on game pad's right trigger
+            camera.fov = Math::Clamp(Input::GetGamePadRightTriggerAxis() * 45.0f, 45.0f, 90.0f);
+        }
+
+        // Clamp camera pith between -85.0f and +85.0f
+        pitch = Math::Clamp(pitch, -85.0f, 85.0f);
     }
 
-    // Clamp camera pith between -89.0f and +89.0f
-    pitch = Math::Clamp(pitch, -89.0f, 89.0f);
-
     // Apply transformations to camera
-    glm::vec3 newCameraFrontDirection;
-    newCameraFrontDirection.x = (float) (glm::cos(glm::radians(yaw)) * glm::cos(glm::radians(pitch)));
-    newCameraFrontDirection.y = (float) (glm::sin(glm::radians(pitch)));
-    newCameraFrontDirection.z = (float) (glm::sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch)));
-    camera.SetFrontDirection(glm::normalize(newCameraFrontDirection));
+    camera.GetComponent<Transform>().rotation = { yaw, pitch, 0.0f };
 }

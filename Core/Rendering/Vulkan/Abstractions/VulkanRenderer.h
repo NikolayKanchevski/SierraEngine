@@ -17,6 +17,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         std::unique_ptr<Window> &window;
         bool createImGuiInstance = false;
+        bool createImGuizmoLayer = false;
     };
 
     class VulkanRenderer
@@ -38,6 +39,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline std::unique_ptr<Window>& GetWindow() const { return window; }
         [[nodiscard]] float GetTotalDrawTime() const { return totalDrawTime; }
+        [[nodiscard]] std::unique_ptr<ImGuiInstance>& GetImGuiInstance() { return imGuiInstance; }
         [[nodiscard]] uint64_t GetTotalVerticesDrawn() const { return totalVerticesDrawn; }
 
         /* --- DESTRUCTOR --- */

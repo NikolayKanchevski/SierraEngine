@@ -30,6 +30,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void BindVertexBuffers(const std::vector<VkBuffer> &vertexBuffers) const;
         void BindIndexBuffer(const VkBuffer &indexBuffer) const;
         void Draw(const uint32_t indexCount) const;
+        void DrawUnindexed(const uint32_t vertexCount) const;
         void SetViewport(uint32_t width, uint32_t height) const;
         void SetScissor(uint32_t width, uint32_t height, int xOffset = 0, int yOffset = 0) const;
         void SetViewportAndScissor(uint32_t width, uint32_t height, int xOffset = 0, int yOffset = 0) const;

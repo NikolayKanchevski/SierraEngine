@@ -22,19 +22,19 @@
 #define SPECULAR_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_SPECULAR)
 #define HEIGHT_MAP_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_HEIGHT_MAP)
 
-typedef enum TextureType
-{
-    TEXTURE_TYPE_NONE = -1,
-    TEXTURE_TYPE_DIFFUSE = 0,
-    TEXTURE_TYPE_SPECULAR = 1,
-    TEXTURE_TYPE_HEIGHT_MAP = 2
-} TextureType;
-
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     class DescriptorSetLayout;
     class DescriptorPool;
     class DescriptorSet;
+
+    typedef enum TextureType
+    {
+        TEXTURE_TYPE_NONE = -1,
+        TEXTURE_TYPE_DIFFUSE = 0,
+        TEXTURE_TYPE_SPECULAR = 1,
+        TEXTURE_TYPE_HEIGHT_MAP = 2
+    } TextureType;
 
     struct TextureCreateInfo
     {
@@ -42,6 +42,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         std::string name;
         TextureType textureType = TEXTURE_TYPE_NONE;
+        // TODO: Fix mip mapping
         bool mipMappingEnabled = false;
 
         SamplerCreateInfo samplerCreateInfo{};
@@ -84,7 +85,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         { return this->textureType; }
 
         [[nodiscard]] inline uint32_t GetMipMapLevels() const
-        { return this->mipMapLevels; }
+        { return this->image->GetMipMapLevels(); }
 
         [[nodiscard]] inline bool GetMipMappingEnabled() const
         { return this->mipMappingEnabled; }
@@ -116,13 +117,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         uint32_t colorChannelsCount;
 
         uint64_t memorySize;
+        uint32_t mipMapLevels = 1;
+
         std::unique_ptr<Sampler> sampler;
 
-        uint32_t mipMapLevels = 1;
-        bool mipMappingEnabled = false;
-
         std::unique_ptr<Image> image;
-        void GenerateMipMaps();
+        bool mipMappingEnabled = false;
 
         VkDescriptorSet imGuiDescriptorSet;
         bool imGuiDescriptorSetCreated = false;
@@ -131,6 +131,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         inline static std::shared_ptr<Texture> defaultTextures[TOTAL_TEXTURE_TYPES_COUNT];
         inline static std::unordered_map<std::string, std::shared_ptr<Texture>> texturePool;
+
+        void GenerateMipMaps();
     };
 
 }

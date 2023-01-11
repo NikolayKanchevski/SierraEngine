@@ -7,8 +7,8 @@
 #include <glm/ext/matrix_transform.hpp>
 
 #include "InternalComponents.h"
-//#include "../../Core/Rendering/Vulkan/VulkanCore.h"
 #include "../../Core/Rendering/Vulkan/VK.h"
+#include "../../Core/Rendering/Math/MatrixUtilities.h"
 
 using namespace Sierra::Core::Rendering::Vulkan;
 
@@ -110,25 +110,11 @@ namespace Sierra::Engine::Components
 
     glm::mat4x4 MeshRenderer::GetModelMatrix() const
     {
-        // Inverse the Y coordinate to satisfy Vulkan's requirements
+        // Get a reference to the transform
         Transform transform = GetComponent<Transform>();
-        glm::vec3 rendererPosition = { transform.position.x, transform.position.y * -1, transform.position.z };
 
-        // Calculate translation matrix
-        glm::mat4x4 translationMatrix(1.0);
-        translationMatrix = glm::translate(translationMatrix, rendererPosition);
-
-        // Calculate rotation matrix
-        glm::mat4x4 rotationMatrix(1.0);
-        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(transform.rotation.x), {0.0, 1.0, 0.0});
-        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(transform.rotation.y), {1.0, 0.0, 0.0});
-        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(transform.rotation.z), {0.0, 0.0, 1.0});
-
-        // Calculate scale matrix
-        glm::mat4x4 scaleMatrix(1.0);
-        scaleMatrix = glm::scale(scaleMatrix, transform.scale);
-
-        return translationMatrix * rotationMatrix * scaleMatrix;
+        // Invert the Y coordinate to satisfy Vulkan's requirements
+        return Rendering::Matrix::CreateModel({ transform.position.x, -transform.position.y, transform.position.z }, transform.rotation, transform.scale);
     }
 
     MeshPushConstant MeshRenderer::GetPushConstantData() const

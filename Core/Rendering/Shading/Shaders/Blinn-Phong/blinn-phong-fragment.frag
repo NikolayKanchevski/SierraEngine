@@ -39,6 +39,7 @@ void main()
 
                 calculatedColor += CalculateDirectionalLight(
                         storageBuffer.directionalLights[i],
+                        fromVert_Position,
                         fromVert_Normal,
                         viewDirection,
                         diffuseTextureColor,

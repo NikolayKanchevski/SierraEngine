@@ -81,10 +81,10 @@ namespace Sierra::Engine::Classes {
             glfwGetGamepadState(i, &gamePadState);
 
             glm::vec2 leftAxis = { gamePadState.axes[GLFW_GAMEPAD_AXIS_LEFT_X], gamePadState.axes[GLFW_GAMEPAD_AXIS_LEFT_Y] };
-            gamePads[i].axes[0] = { glm::abs(leftAxis.x) >= glm::abs(gamePads[i].minimumSensitivities[0]) ? leftAxis.x : 0.0f, glm::abs(leftAxis.y) >= glm::abs(gamePads[i].minimumSensitivities[0]) ? -leftAxis.y : 0.0f };
+            gamePads[i].axes[0] = { glm::abs(leftAxis.x) >= glm::abs(gamePads[i].minimumSensitivities[0]) ? -leftAxis.x : 0.0f, glm::abs(leftAxis.y) >= glm::abs(gamePads[i].minimumSensitivities[0]) ? -leftAxis.y : 0.0f };
 
             glm::vec2 rightAxis = { gamePadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_X], gamePadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y] };
-            gamePads[i].axes[1] = { glm::abs(rightAxis.x) >= glm::abs(gamePads[i].minimumSensitivities[1]) ? rightAxis.x : 0.0f, glm::abs(rightAxis.y) >= glm::abs(gamePads[i].minimumSensitivities[1]) ? -rightAxis.y : 0.0f };
+            gamePads[i].axes[1] = { glm::abs(rightAxis.x) >= glm::abs(gamePads[i].minimumSensitivities[1]) ? -rightAxis.x : 0.0f, glm::abs(rightAxis.y) >= glm::abs(gamePads[i].minimumSensitivities[1]) ? -rightAxis.y : 0.0f };
 
             gamePads[i].triggers[0] = (gamePadState.axes[GLFW_GAMEPAD_AXIS_LEFT_TRIGGER] + 1) / 2;
             gamePads[i].triggers[1] = (gamePadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER] + 1) / 2;

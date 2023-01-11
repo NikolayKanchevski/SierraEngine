@@ -5,6 +5,7 @@
 #include "InternalComponents.h"
 
 #include <imgui.h>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "../Classes/RNG.h"
 
@@ -13,6 +14,8 @@ using Sierra::Engine::Classes::RNG;
 
 namespace Sierra::Engine::Components
 {
+    /* --- UUID --- */
+
     UUID::UUID()
         : value(RNG::GetRandomUInt64())
     {
@@ -24,6 +27,32 @@ namespace Sierra::Engine::Components
         this->value = givenValue;
         return *this;
     }
+
+    void UUID::DrawUI()
+    {
+        ImGui::Text("UUID");
+
+        int intValue = value;
+        ImGui::InputInt("Tests", &intValue, 0, 0, ImGuiInputTextFlags_ReadOnly);
+    }
+
+    /* --- Tag --- */
+
+    void Tag::DrawUI()
+    {
+        ImGui::Text("Tag");
+
+        char buffer[128];
+        memset(buffer, 0, sizeof(buffer));
+        strcpy(buffer, tag.c_str());
+
+        if (ImGui::InputText("assds", buffer, sizeof(buffer)))
+        {
+            tag = std::string(buffer);
+        }
+    }
+
+    /* --- Relationship --- */
 
     void Relationship::SetParent(entt::entity givenParent)
     {
@@ -54,8 +83,14 @@ namespace Sierra::Engine::Components
         givenParentRelationship.children.push_back(self);
     }
 
+    /* --- Transform --- */
+
     void Transform::DrawUI()
     {
+        ImGui::Text("Transform");
 
+        ImGui::DragFloat3("Position", glm::value_ptr(position), 0.1f, 0.0f, 0.0f, "%.2f");
+        ImGui::DragFloat3("Rotation", glm::value_ptr(rotation), 0.1f, 0.0f, 0.0f, "%.2f");
+        ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.1f, 0.0f, 0.0f, "%.2f");
     }
 }

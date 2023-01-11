@@ -23,7 +23,6 @@ namespace Sierra::Engine::Classes
     class Entity
     {
     public:
-
         /* --- CONSTRUCTORS --- */
         Entity() = default;
         Entity(const std::string &givenName);

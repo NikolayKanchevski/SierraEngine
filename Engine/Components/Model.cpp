@@ -244,7 +244,7 @@ namespace Sierra::Engine::Classes
 
     std::shared_ptr<Mesh> Model::LoadAssimpMesh(aiMesh *mesh)
     {
-        std::vector<Vertex> meshVertices(mesh->mNumVertices);
+        std::vector<VertexPNT> meshVertices(mesh->mNumVertices);
         std::vector<uint32_t> indices;
 
         // Load vertex data

@@ -25,6 +25,8 @@ namespace Sierra::Core::Rendering::UI
         ImGuiStyle *givenImGuiStyle;
         ImGuiConfigFlags imGuiConfigFlags = ImGuiConfigFlags_DockingEnable;
         Sampling sampling = MSAAx1;
+
+        bool createImGuizmoLayer = false;
     };
 
     class ImGuiInstance
@@ -33,6 +35,10 @@ namespace Sierra::Core::Rendering::UI
         /* --- CONSTRUCTORS --- */
         ImGuiInstance(const ImGuiInstanceCreateInfo &createInfo);
         static std::unique_ptr<ImGuiInstance> Create(ImGuiInstanceCreateInfo createInfo);
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] ImGuiContext* GetImGuiContext() const { return imGuiContext; };
+        [[nodiscard]] bool HasImGuizmoLayer() const { return hasImGuizmoLayer; };
 
         /* --- POLLING METHODS --- */
         void BeginNewImGuiFrame();
@@ -51,6 +57,8 @@ namespace Sierra::Core::Rendering::UI
         ImGuiStyle imGuiStyle;
         ImGuiContext *imGuiContext;
         VkDescriptorPool descriptorPool;
+
+        bool hasImGuizmoLayer;
 
         static inline bool imGuiFrameBegan = false;
     };

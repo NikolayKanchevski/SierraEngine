@@ -16,7 +16,7 @@ public:
 
 private:
     Camera camera;
-    float yaw = -90.0f, pitch = 0.0f;
+    float yaw = 270.0f, pitch = 0.0f;
     const float CAMERA_MOVE_SPEED = 15.0f, CAMERA_LOOK_SPEED = 0.1f, GAMEPAD_CAMERA_LOOK_SPEED = 0.5f;
 
     PointLight* pointLight;

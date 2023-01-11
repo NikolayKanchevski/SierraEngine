@@ -31,7 +31,5 @@ namespace Sierra::Core
         /* --- DESTRUCTOR --- */
     private:
         inline static std::shared_ptr<entt::registry> enttRegistry = std::make_shared<entt::registry>();
-
-        static void UpdateObjects();
     };
 }

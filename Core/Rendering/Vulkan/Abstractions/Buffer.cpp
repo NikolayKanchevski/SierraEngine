@@ -62,23 +62,23 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vmaUnmapMemory(VK::GetMemoryAllocator(), vmaBufferAllocation);
     }
 
-    void Buffer::CopyImage(const Image& givenImage, const glm::vec3 imageOffset, const uint64_t offset)
+    void Buffer::CopyImage(const Image& givenImage)
     {
         // Create a temporary command buffer
         VkCommandBuffer commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
 
         // Set up image copy region
         VkBufferImageCopy copyRegion{};
-        copyRegion.bufferOffset = offset;
+        copyRegion.bufferOffset = 0;
         copyRegion.bufferRowLength = 0;
         copyRegion.bufferImageHeight = 0;
         copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         copyRegion.imageSubresource.mipLevel = 0;
         copyRegion.imageSubresource.baseArrayLayer = 0;
-        copyRegion.imageSubresource.layerCount = 1;
-        copyRegion.imageOffset.x = static_cast<int>(imageOffset.x);
-        copyRegion.imageOffset.y = static_cast<int>(imageOffset.y);
-        copyRegion.imageOffset.z = static_cast<int>(imageOffset.z);
+        copyRegion.imageSubresource.layerCount = givenImage.GetLayerCount();
+        copyRegion.imageOffset.x = 0;
+        copyRegion.imageOffset.y = 0;
+        copyRegion.imageOffset.z = 0;
         copyRegion.imageExtent.width = static_cast<uint32_t>(givenImage.GetWidth());
         copyRegion.imageExtent.height = static_cast<uint32_t>(givenImage.GetHeight());
         copyRegion.imageExtent.depth = static_cast<uint32_t>(givenImage.GetDepth());

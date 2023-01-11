@@ -19,6 +19,9 @@ namespace Sierra::Engine::Components
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint64_t GetValue() const { return value; }
 
+        /* --- POLLING METHODS --- */
+        void DrawUI() override;
+
         /* --- OPERATORS --- */
         UUID& operator=(uint32_t givenValue);
 
@@ -37,6 +40,9 @@ namespace Sierra::Engine::Components
 
         /* --- PROPERTIES --- */
         std::string tag;
+
+        /* --- POLLING METHODS --- */
+        void DrawUI() override;
 
         /* --- OPERATORS --- */
         Tag() = default;
@@ -70,7 +76,7 @@ namespace Sierra::Engine::Components
     {
     public:
         /* --- PROPERTIES --- */
-        glm::vec3 position = {0, 0, 0 };
+        glm::vec3 position = { 0, 0, 0 };
         glm::vec3 rotation = { 0, 0, 0 };
         glm::vec3 scale = { 1, 1, 1 };
 

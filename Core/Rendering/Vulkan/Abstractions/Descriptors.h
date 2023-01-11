@@ -10,6 +10,7 @@
 #include <vulkan/vulkan.h>
 
 #include "Buffer.h"
+#include "Cubemap.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -34,8 +35,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         public:
             Builder &AddBinding(uint32_t binding, VkDescriptorType descriptorType, VkDescriptorBindingFlags bindingFlags = 0, uint32_t arraySize = 1, VkSampler const *immutableSamplers = nullptr);
             Builder &SetShaderStages(VkShaderStageFlags givenShaderStages);
-            [[nodiscard]] std::unique_ptr<DescriptorSetLayout> Build() const;
-            [[nodiscard]] std::shared_ptr<DescriptorSetLayout> BuildShared() const;
+            [[nodiscard]] std::shared_ptr<DescriptorSetLayout> Build() const;
 
         private:
             VkShaderStageFlags shaderStages = -1;
@@ -112,6 +112,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void WriteBuffer(uint32_t binding, const std::unique_ptr<Buffer> &buffer);
         void WriteImage(uint32_t binding, const VkDescriptorImageInfo *imageInfo);
         void WriteTexture(uint32_t binding, const std::shared_ptr<Texture> &texture);
+        void WriteCubemap(uint32_t binding, const std::unique_ptr<Cubemap> &cubemap);
         void Allocate();
 
         /* --- GETTER METHODS --- */

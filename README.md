@@ -39,8 +39,10 @@ You can then proceed and run the program in your IDE. Make sure you are in <b>RE
         <li><a href="https://github.com/ocornut/imgui">ImGui</a> - For the user interface implemented.</li>
         <li><a href="https://github.com/skypjack/entt">EnTT</a> - For the easy-to-use and incredibly perfomant <a href="https://en.wikipedia.org/wiki/Entity_component_system">entity component system</a>.</li>
         <li><a href="https://github.com/g-truc/glm">GLM</a> - For all advanced mathematical operations and objects within the engine.</li>
+        <li><a href="https://gpuopen.com/vulkan-memory-allocator/">VMA</a> - For easier and more optimal memory allocation and distribution of <a href="https://www.vulkan.org/">Vulkan</a>' objects.</li>
         <li><a href="https://github.com/assimp/assimp">Assimp</a> - For the loading of all kinds of 3D model formats (.obj, .fbx, .dae, etc.).</li>
         <li><a href="https://github.com/nothings/stb">Stb</a> - For loading image data from all kinds of image formats (.jpg, .png, etc.).</li>
+        <li><a href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/onetbb.html#gs.m2vcgt">TBB</a> - For easier and guaranteed-to-be-supported threading.</li>
         <li><a href="https://ih1.redbubble.net/image.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg">My Brain</a> - There is not much left of it, actually...</li>
     </ul>
     <br>
@@ -55,7 +57,7 @@ You can then proceed and run the program in your IDE. Make sure you are in <b>RE
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 11,345</p>
-<p align="center" id="LastUpdated">Last updated: 28/12/2022</p>
+<p align="center" id="LinesCounter">Total lines of code: 12,092</p>
+<p align="center" id="LastUpdated">Last updated: 11/01/2023</p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

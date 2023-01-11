@@ -11,25 +11,26 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     /* --- CONSTRUCTORS --- */
 
     Image::Image(const ImageCreateInfo &createInfo)
-        : dimensions(createInfo.dimensions), mipLevels(createInfo.mipLevels), sampling(createInfo.sampling), format(createInfo.format)
+        : dimensions(createInfo.dimensions), layerCount(createInfo.layerCount), sampling(createInfo.sampling), format(createInfo.format)
     {
         // Set up image creation info
         VkImageCreateInfo vkImageCreateInfo{};
         vkImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        vkImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+        vkImageCreateInfo.imageType = createInfo.imageType;
 
         vkImageCreateInfo.extent.width = static_cast<uint32_t>(dimensions.width);
         vkImageCreateInfo.extent.height = static_cast<uint32_t>(dimensions.height);
         vkImageCreateInfo.extent.depth = static_cast<uint32_t>(dimensions.depth);
 
-        vkImageCreateInfo.mipLevels = mipLevels;
-        vkImageCreateInfo.arrayLayers = 1;
+        vkImageCreateInfo.mipLevels = mipMapLevels;
+        vkImageCreateInfo.arrayLayers = createInfo.layerCount;
         vkImageCreateInfo.format = (VkFormat) format;
         vkImageCreateInfo.tiling = (VkImageTiling) createInfo.imageTiling;
         vkImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         vkImageCreateInfo.usage = (VkImageUsageFlagBits) createInfo.usageFlags;
         vkImageCreateInfo.samples = (VkSampleCountFlagBits) sampling;
         vkImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        vkImageCreateInfo.flags = createInfo.createFlags;
 
         // Set up image allocation info
         VmaAllocationCreateInfo allocationCreateInfo{};
@@ -41,7 +42,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VK_ASSERT(
             vmaCreateImage(VK::GetMemoryAllocator(), &vkImageCreateInfo, &allocationCreateInfo, &vkImage, &vmaImageAllocation, nullptr),
             "Failed to allocate memory for image with dimensions of [" + std::to_string(dimensions.width) + ", " + std::to_string(dimensions.height) + ", " + std::to_string(dimensions.depth) + "], format [" + std::to_string((int) format) + "], [" +
-            std::to_string(mipLevels) + "] mip levels, and sampling of [" + std::to_string((int) sampling) + "]"
+            std::to_string(mipMapLevels) + "] mip levels, and sampling of [" + std::to_string((int) sampling) + "]"
         );
     }
 
@@ -63,7 +64,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- SETTER METHODS --- */
 
-    void Image::CreateImageView(const ImageAspectFlags givenAspectFlags)
+    void Image::CreateImageView(const ImageAspectFlags givenAspectFlags, const VkImageViewType imageViewType)
     {
         // Check if an image view has already been generated
         if (imageViewCreated)
@@ -76,19 +77,19 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkImageViewCreateInfo imageViewCreateInfo{};
         imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         imageViewCreateInfo.image = vkImage;
-        imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        imageViewCreateInfo.viewType = imageViewType;
         imageViewCreateInfo.format = (VkFormat) format;
         imageViewCreateInfo.subresourceRange.aspectMask = (VkImageAspectFlagBits) givenAspectFlags;
         imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-        imageViewCreateInfo.subresourceRange.levelCount = mipLevels;
+        imageViewCreateInfo.subresourceRange.levelCount = mipMapLevels;
         imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-        imageViewCreateInfo.subresourceRange.layerCount = 1;
+        imageViewCreateInfo.subresourceRange.layerCount = layerCount;
 
         // Create the image view
         VK_ASSERT(
             vkCreateImageView(VK::GetLogicalDevice(), &imageViewCreateInfo, nullptr, &vkImageView),
             "Could not create image view for an image with dimensions of [" + std::to_string(dimensions.width) + ", " + std::to_string(dimensions.height) + ", " + std::to_string(dimensions.depth) + "], format [" + std::to_string((int) format) + "], [" +
-            std::to_string(mipLevels) + "] mip levels, and sampling of [" + std::to_string((int) sampling) + "]"
+            std::to_string(mipMapLevels) + "] mip levels, and sampling of [" + std::to_string((int) sampling) + "]"
         );
 
         imageViewCreated = true;
@@ -108,9 +109,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         imageMemoryBarrier.dstQueueFamilyIndex = ~0U;			            // Queue family to transition to
         imageMemoryBarrier.image = vkImage;									// Image being accessed and modified as part of barrier
         imageMemoryBarrier.subresourceRange.baseMipLevel = 0;				// First mip level to start alterations on
-        imageMemoryBarrier.subresourceRange.levelCount = mipLevels;			// Number of mip levels to alter starting from baseMipLevel
+        imageMemoryBarrier.subresourceRange.levelCount = mipMapLevels;			// Number of mip levels to alter starting from baseMipLevel
         imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;				// First layer to start alterations on
-        imageMemoryBarrier.subresourceRange.layerCount = 1;					// Number of layers to alter starting from baseArrayLayer
+        imageMemoryBarrier.subresourceRange.layerCount = layerCount;					// Number of layers to alter starting from baseArrayLayer
 
         // If transitioning from a depth image...
         if (newLayout == LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL)

@@ -4,6 +4,7 @@
 
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
+#include <ImGuizmo.h>
 
 #include "ImGuiInstance.h"
 
@@ -20,7 +21,7 @@ namespace Sierra::Core::Rendering::UI
     /* --- CONSTRUCTORS --- */
 
     ImGuiInstance::ImGuiInstance(const ImGuiInstanceCreateInfo &createInfo)
-        : window(createInfo.window)
+        : window(createInfo.window), hasImGuizmoLayer(createInfo.createImGuizmoLayer)
     {
         // Set up example pool sizes
         std::vector<VkDescriptorPoolSize> poolSizes =
@@ -80,6 +81,10 @@ namespace Sierra::Core::Rendering::UI
         // Set settings
         ImGuiIO &io = ImGui::GetIO();
         io.ConfigFlags = createInfo.imGuiConfigFlags;
+        if (VK::GetDevice()->GetBestColorImageFormat() == Vulkan::FORMAT_R8G8B8A8_SRGB)
+        {
+            io.ConfigFlags |= ImGuiConfigFlags_IsSRGB;
+        }
 
         if (createInfo.fontFilePath != nullptr)
         {
@@ -126,6 +131,8 @@ namespace Sierra::Core::Rendering::UI
         if (imGuiFrameBegan) return;
 
         ImGui::SetCurrentContext(imGuiContext);
+        if (hasImGuizmoLayer) ImGuizmo::SetImGuiContext(imGuiContext);
+
         ImGui::GetStyle() = imGuiStyle;
 
         ImGui_ImplVulkan_NewFrame();
@@ -134,6 +141,8 @@ namespace Sierra::Core::Rendering::UI
         ImGui::NewFrame();
 
         if (!Cursor::IsCursorShown()) ImGui::GetIO().MousePos = { -696969, -696969 };
+
+        if (hasImGuizmoLayer) ImGuizmo::BeginFrame();
 
         imGuiFrameBegan = true;
     }

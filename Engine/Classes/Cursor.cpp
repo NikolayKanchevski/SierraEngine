@@ -77,6 +77,8 @@ namespace Sierra::Engine::Classes
     void Cursor::ResetCursorOffset()
     {
         cursorOffset = { 0, 0 };
+        lastCursorPosition = cursorPosition;
+        cursorPositionSet = true;
     }
 
     /* --- CALLBACKS --- */
@@ -87,7 +89,7 @@ namespace Sierra::Engine::Classes
         if (Window::GetCurrentlyFocusedWindow() != nullptr) yPosition = -(yPosition - Window::GetCurrentlyFocusedWindow()->GetHeight());
         cursorPosition = glm::vec2(xPosition, yPosition);
 
-        cursorOffset = glm::vec2(lastCursorPosition.x - cursorPosition.x, lastCursorPosition.y - cursorPosition.y);
+        cursorOffset = glm::vec2(-(lastCursorPosition.x - cursorPosition.x), lastCursorPosition.y - cursorPosition.y);
         cursorPositionSet = true;
     }
 

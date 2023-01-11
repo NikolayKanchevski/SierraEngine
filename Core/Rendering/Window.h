@@ -11,6 +11,7 @@
 #include <vulkan/vulkan.h>
 
 #include "../Version.h"
+#include "../Debugger.h"
 
 using namespace Sierra::Engine;
 
@@ -121,7 +122,7 @@ namespace Sierra::Core::Rendering
         { return this->opacity; };
 
         /// @brief Returns the currently focused window. Make sure to always check if there is one before calling this method!
-        [[nodiscard]] static inline Window* GetCurrentlyFocusedWindow() { return currentlyFocusedWindow; }
+        [[nodiscard]] static inline Window* GetCurrentlyFocusedWindow() { ASSERT_ERROR_IF(currentlyFocusedWindow == nullptr, "No windows are currently focused. Make sure to first check if return value is not null"); return currentlyFocusedWindow; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();

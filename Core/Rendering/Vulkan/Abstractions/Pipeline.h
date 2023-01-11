@@ -15,6 +15,9 @@
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
+    struct NullPushConstant { };
+    struct NullUniformBuffer { };
+    struct NullStorageBuffer { };
 
     struct PipelineCreateInfo
     {
@@ -36,7 +39,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ShadingType shadingType = SHADE_FILL;
     };
 
-    template<typename PC = std::nullopt_t, typename UB = std::nullopt_t, typename SB = std::nullopt_t>
+    template<typename PC = NullPushConstant, typename UB = NullUniformBuffer, typename SB = NullStorageBuffer>
     class Pipeline {
     public:
         /* --- CONSTRUCTORS --- */
@@ -67,6 +70,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             ASSERT_WARNING_IF(!HasStorageBuffer(), "Storage buffers have not been created for this pipeline");
             return storageBufferData;
         }
+        [[nodiscard]] inline std::vector<std::unique_ptr<DescriptorSet>>& GetDescriptorSets()
+        {
+            return descriptorSets;
+        }
 
         [[nodiscard]] inline PipelineCreateInfo& GetCreateInfo() { return createInfo; }
         [[nodiscard]] inline VkPipeline GetVulkanPipeline() const { return vkPipeline; }
@@ -81,14 +88,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             vkCmdBindPipeline(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkPipeline);
         };
-        inline void BindDescriptorSets(VkCommandBuffer givenCommandBuffer, std::vector<VkDescriptorSet> descriptorSets, const uint32_t currentFrame)
+        inline void BindDescriptorSets(VkCommandBuffer givenCommandBuffer, std::vector<VkDescriptorSet> givenDescriptorSets, const uint32_t currentFrame)
         {
-            if (HasUniformBuffer()) uniformBuffers[currentFrame]->CopyFromPointer(&uniformBufferData);
+            if (HasUniformBuffer())
+            {
+                uniformBuffers[currentFrame]->CopyFromPointer(&uniformBufferData);
+
+            }
             if (HasStorageBuffer()) storageBuffers[currentFrame]->CopyFromPointer(&storageBufferData);
 
-            descriptorSets.insert(descriptorSets.begin(), bufferDescriptorSets[currentFrame]->GetVulkanDescriptorSet());
+            givenDescriptorSets.insert(givenDescriptorSets.begin(), descriptorSets[currentFrame]->GetVulkanDescriptorSet());
 
-            vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, descriptorSets.size(), descriptorSets.data(), 0, nullptr);
+            vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, givenDescriptorSets.size(), givenDescriptorSets.data(), 0, nullptr);
         };
         inline void PushConstants(VkCommandBuffer givenCommandBuffer)
         {
@@ -156,7 +167,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         SB storageBufferData;
         std::vector<std::unique_ptr<Buffer>> storageBuffers;
 
-        std::vector<std::unique_ptr<DescriptorSet>> bufferDescriptorSets;
+        std::vector<std::unique_ptr<DescriptorSet>> descriptorSets;
 
         bool alreadyCreated = false;
         PipelineCreateInfo createInfo;
@@ -167,12 +178,16 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         void CreatePipelineLayout()
         {
+            pushConstantData = PC {};
+            uniformBufferData = UB {};
+            storageBufferData = SB {};
+
             // Set pipeline layout creation info
             VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
             pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
             // Create push constant
-            if constexpr (!std::is_same<PC, std::nullopt_t>::value)
+            if constexpr (!std::is_same<PC, NullPushConstant>::value)
             {
                 pushConstantData = PC{};
 
@@ -186,7 +201,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
 
             // Create uniform buffer
-            if constexpr (!std::is_same<UB, std::nullopt_t>::value)
+            if constexpr (!std::is_same<UB, NullUniformBuffer>::value)
             {
                 uniformBuffers.reserve(createInfo.maxConcurrentFrames);
                 for (uint32_t i = createInfo.maxConcurrentFrames; i--;)
@@ -200,7 +215,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
 
             // Create storage buffer
-            if constexpr (!std::is_same<SB, std::nullopt_t>::value)
+            if constexpr (!std::is_same<SB, NullStorageBuffer>::value)
             {
                 storageBuffers.reserve(createInfo.maxConcurrentFrames);
                 for (uint32_t i = createInfo.maxConcurrentFrames; i--;)
@@ -213,13 +228,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 }
             }
 
-            bufferDescriptorSets.resize( (HasUniformBuffer() || HasStorageBuffer()) * createInfo.maxConcurrentFrames );
+            descriptorSets.resize((HasUniformBuffer() || HasStorageBuffer()) * createInfo.maxConcurrentFrames );
             for (uint32_t i = createInfo.maxConcurrentFrames; i--;)
             {
-                bufferDescriptorSets[i] = DescriptorSet::Build(createInfo.descriptorSetLayout);
-                if (HasUniformBuffer()) bufferDescriptorSets[i]->WriteBuffer(UNIFORM_BUFFER_BINDING, uniformBuffers[i]);
-                if (HasStorageBuffer()) bufferDescriptorSets[i]->WriteBuffer(STORAGE_BUFFER_BINDING, storageBuffers[i]);
-                bufferDescriptorSets[i]->Allocate();
+                descriptorSets[i] = DescriptorSet::Build(createInfo.descriptorSetLayout);
+                if (HasUniformBuffer()) descriptorSets[i]->WriteBuffer(UNIFORM_BUFFER_BINDING, uniformBuffers[i]);
+                if (HasStorageBuffer()) descriptorSets[i]->WriteBuffer(STORAGE_BUFFER_BINDING, storageBuffers[i]);
+                descriptorSets[i]->Allocate();
             }
 
             // Add descriptor layout
@@ -415,5 +430,4 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     };
 
-    using DefaultPipeline = Pipeline<std::nullopt_t, std::nullopt_t, std::nullopt_t>;
 }

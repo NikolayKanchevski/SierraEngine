@@ -5,7 +5,6 @@
 #include <imgui_impl_glfw.h>
 #include "Window.h"
 
-#include "../Debugger.h"
 #include "../../Engine/Classes/Input.h"
 #include "../../Engine/Classes/Cursor.h"
 #include "../../Engine/Classes/Stopwatch.h"
@@ -103,10 +102,6 @@ namespace Sierra::Core::Rendering
         }
 
         glfwSetWindowUserPointer(glfwWindow, this);
-
-//        imGuiContext = ImGui::CreateContext();
-//        ImGui::SetCurrentContext(imGuiContext);
-//        ImGui_ImplGlfw_InitForVulkan(glfwWindow, true);
 
         currentlyFocusedWindow = this;
     }

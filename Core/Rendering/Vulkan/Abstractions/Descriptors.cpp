@@ -15,50 +15,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     // ********************* Descriptor Set Layout ********************* \\
 
-    /* --- SETTER METHODS --- */
-
-    DescriptorSetLayout::Builder &DescriptorSetLayout::Builder::AddBinding(const uint32_t binding, const VkDescriptorType descriptorType, const VkDescriptorBindingFlags bindingFlags, const uint32_t arraySize, const VkSampler *immutableSamplers)
-    {
-        ASSERT_ERROR_IF(this->shaderStages == -1, "No shader stages specified for descriptor set layout");
-
-        ASSERT_ERROR_IF(bindings.count(binding) != 0, "Binding [" + std::to_string(binding) + "] already in use by a [" + std::to_string(bindings[binding].bindingInfo.descriptorType) + "] descriptor");
-
-        // Set up the layout binding info
-        VkDescriptorSetLayoutBinding layoutBinding{};
-        layoutBinding.binding = binding;
-        layoutBinding.descriptorType = descriptorType;
-        layoutBinding.descriptorCount = arraySize;
-        layoutBinding.stageFlags = this->shaderStages;
-        layoutBinding.pImmutableSamplers = immutableSamplers;
-
-        // Add the binding info to the tuple list
-        this->bindings[binding] = { layoutBinding, bindingFlags, arraySize };
-
-        return *this;
-    }
-
-    DescriptorSetLayout::Builder &DescriptorSetLayout::Builder::SetShaderStages(const VkShaderStageFlags givenShaderStages)
-    {
-        this->shaderStages = givenShaderStages;
-        return *this;
-    }
-
     /* --- CONSTRUCTORS --- */
 
-    std::unique_ptr<DescriptorSetLayout> DescriptorSetLayout::Builder::Build() const
-    {
-        // Create the descriptor set layout
-        return std::make_unique<DescriptorSetLayout>(this->bindings);
-    }
-
-    std::shared_ptr<DescriptorSetLayout> DescriptorSetLayout::Builder::BuildShared() const
-    {
-        // Create the descriptor set layout
-        return std::make_shared<DescriptorSetLayout>(this->bindings);
-    }
-
     DescriptorSetLayout::DescriptorSetLayout(const std::unordered_map<uint32_t, DescriptorSetLayoutBinding>& givenBindings)
-        : bindings(givenBindings)
+            : bindings(givenBindings)
     {
         // Create a pointer to layout binding array
         VkDescriptorSetLayoutBinding* layoutBindings = new VkDescriptorSetLayoutBinding[givenBindings.size()];
@@ -92,9 +52,43 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan descriptor set layout
         VK_ASSERT(
-            vkCreateDescriptorSetLayout(VK::GetLogicalDevice(), &layoutCreateInfo, nullptr, &vkDescriptorSetLayout),
-            "Failed to create descriptor layout with [" + std::to_string(layoutCreateInfo.bindingCount) + "] binging(s)"
+                vkCreateDescriptorSetLayout(VK::GetLogicalDevice(), &layoutCreateInfo, nullptr, &vkDescriptorSetLayout),
+                "Failed to create descriptor layout with [" + std::to_string(layoutCreateInfo.bindingCount) + "] binging(s)"
         );
+    }
+
+    std::shared_ptr<DescriptorSetLayout> DescriptorSetLayout::Builder::Build() const
+    {
+        // Create the descriptor set layout
+        return std::make_shared<DescriptorSetLayout>(this->bindings);
+    }
+
+    /* --- SETTER METHODS --- */
+
+    DescriptorSetLayout::Builder &DescriptorSetLayout::Builder::AddBinding(const uint32_t binding, const VkDescriptorType descriptorType, const VkDescriptorBindingFlags bindingFlags, const uint32_t arraySize, const VkSampler *immutableSamplers)
+    {
+        ASSERT_ERROR_IF(this->shaderStages == -1, "No shader stages specified for descriptor set layout");
+
+        ASSERT_ERROR_IF(bindings.count(binding) != 0, "Binding [" + std::to_string(binding) + "] already in use by a [" + std::to_string(bindings[binding].bindingInfo.descriptorType) + "] descriptor");
+
+        // Set up the layout binding info
+        VkDescriptorSetLayoutBinding layoutBinding{};
+        layoutBinding.binding = binding;
+        layoutBinding.descriptorType = descriptorType;
+        layoutBinding.descriptorCount = arraySize;
+        layoutBinding.stageFlags = this->shaderStages;
+        layoutBinding.pImmutableSamplers = immutableSamplers;
+
+        // Add the binding info to the tuple list
+        this->bindings[binding] = { layoutBinding, bindingFlags, arraySize };
+
+        return *this;
+    }
+
+    DescriptorSetLayout::Builder &DescriptorSetLayout::Builder::SetShaderStages(const VkShaderStageFlags givenShaderStages)
+    {
+        this->shaderStages = givenShaderStages;
+        return *this;
     }
 
     /* --- DESTRUCTOR --- */
@@ -240,8 +234,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkDescriptorSetLayoutBinding bindingDescription = descriptorSetLayout->bindings[binding].bindingInfo;
 
         VkDescriptorBufferInfo bufferInfo{};
+        bufferInfo.offset = 0;
         bufferInfo.range = buffer->GetMemorySize();
-        bufferInfo.offset = buffer->GetOffset();
         bufferInfo.buffer = buffer->GetVulkanBuffer();
         descriptorBufferInfos[binding] = bufferInfo;
 
@@ -287,6 +281,17 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         imageInfo.sampler = texture->GetVulkanSampler();
         imageInfo.imageLayout = (VkImageLayout) texture->GetImage()->GetLayout();
         imageInfo.imageView = texture->GetImage()->GetVulkanImageView();
+
+        descriptorImageInfos[binding] = imageInfo;
+        WriteImage(binding, &descriptorImageInfos[binding]);
+    }
+
+    void DescriptorSet::WriteCubemap(const uint32_t binding, const std::unique_ptr<Cubemap> &cubemap)
+    {
+        VkDescriptorImageInfo imageInfo{};
+        imageInfo.sampler = cubemap->GetSampler()->GetVulkanSampler();
+        imageInfo.imageLayout = (VkImageLayout) cubemap->GetImage()->GetLayout();
+        imageInfo.imageView = cubemap->GetImage()->GetVulkanImageView();
 
         descriptorImageInfos[binding] = imageInfo;
         WriteImage(binding, &descriptorImageInfos[binding]);
@@ -439,8 +444,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkDescriptorSetLayoutBinding bindingDescription = descriptorSetLayout->bindings[binding].bindingInfo;
 
         VkDescriptorBufferInfo bufferInfo{};
+        bufferInfo.offset = 0;
         bufferInfo.range = buffer->GetMemorySize();
-        bufferInfo.offset = buffer->GetOffset();
         bufferInfo.buffer = buffer->GetVulkanBuffer();
 
         descriptorInfos[binding][arrayIndex].bufferInfo = bufferInfo;

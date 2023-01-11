@@ -15,6 +15,9 @@ namespace Sierra::Engine::Classes
         [[nodiscard]] static uint32_t GetRandomUInt();
         [[nodiscard]] static uint64_t GetRandomUInt64();
 
+        [[nodiscard]] static int GetRandomInt(int min, int max);
+        [[nodiscard]] static float GetRandomFloat(float min, float max);
+
     private:
         static std::random_device randomDevice;
         static std::mt19937_64 randomizer;

@@ -23,13 +23,16 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     struct ImageCreateInfo
     {
         Dimensions dimensions{};
+        VkImageType imageType = VK_IMAGE_TYPE_2D;
         ImageFormat format = FORMAT_UNDEFINED;
-        uint32_t mipLevels = 1;
+
+        uint32_t layerCount = 1;
 
         ImageTiling imageTiling = TILING_OPTIMAL;
         Sampling sampling = Sampling::MSAAx1;
 
         ImageUsage usageFlags = UNDEFINED_IMAGE;
+        ImageCreateFlags createFlags = IMAGE_FLAGS_NONE;
         MemoryFlags memoryFlags = MEMORY_FLAGS_NONE;
     };
 
@@ -54,7 +57,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         static std::unique_ptr<Image> CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo);
 
         /* --- SETTER METHODS --- */
-        void CreateImageView(ImageAspectFlags givenAspectFlags);
+        void CreateImageView(ImageAspectFlags givenAspectFlags, VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_2D);
         void TransitionLayout(ImageLayout newLayout);
         void DestroyImageView();
 
@@ -71,8 +74,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline float GetDepth() const
         { return this->dimensions.depth; };
 
-        [[nodiscard]] inline uint32_t GetMipLevels() const
-        { return this->mipLevels; };
+        [[nodiscard]] inline uint32_t GetMipMapLevels() const
+        { return this->mipMapLevels; };
 
         [[nodiscard]] inline ImageFormat GetFormat() const
         { return this->format; };
@@ -82,6 +85,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         [[nodiscard]] inline ImageLayout GetLayout() const
         { return this->layout; };
+
+        [[nodiscard]] inline uint32_t GetLayerCount() const
+        { return this->layerCount; };
 
         [[nodiscard]] inline VkImage GetVulkanImage() const
         { return this->vkImage; };
@@ -100,7 +106,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     private:
         Dimensions dimensions{};
 
-        uint32_t mipLevels = 1;
+        uint32_t mipMapLevels = 1;
+        uint32_t layerCount = 1;
+
         ImageFormat format = FORMAT_UNDEFINED;
         Sampling sampling;
         ImageLayout layout = LAYOUT_UNDEFINED;
@@ -110,6 +118,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VmaAllocation vmaImageAllocation;
 
         bool imageViewCreated = false;
+        bool mipMapsGenerated = false;
         bool swapchainImage = false;
     };
 

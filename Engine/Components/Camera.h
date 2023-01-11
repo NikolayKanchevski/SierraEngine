@@ -25,26 +25,27 @@ namespace Sierra::Engine::Components
 
         /* --- SETTER METHODS --- */
         void SetAsMain();
-        void SetFrontDirection(const glm::vec3 givenFrontDirection);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline glm::vec3 GetFrontDirection() const
-        { return this->frontDirection; }
+        [[nodiscard]] glm::vec3 GetFrontDirection() const;
+
+        [[nodiscard]] glm::mat4x4 GetViewMatrix() const;
+        [[nodiscard]] glm::mat4x4 GetProjectionMatrix() const;
 
         [[nodiscard]] inline glm::vec3 GetBackDirection() const
-        { return -this->frontDirection; }
+        { return -GetFrontDirection(); }
 
         [[nodiscard]] inline glm::vec3 GetLeftDirection() const
-        { return glm::cross(frontDirection, upDirection); }
+        { return glm::cross(-GetFrontDirection(), upDirection); }
 
         [[nodiscard]] inline glm::vec3 GetRightDirection() const
-        { return glm::cross(-frontDirection, upDirection); }
+        { return glm::cross(GetFrontDirection(), upDirection); }
 
         [[nodiscard]] inline glm::vec3 GetUpDirection() const
-        { return this->upDirection; }
+        { return upDirection; }
 
         [[nodiscard]] inline glm::vec3 GetDownDirection() const
-        { return -this->upDirection; }
+        { return -upDirection; }
 
         [[nodiscard]] static inline Camera* GetMainCamera()
         { return mainCamera; }
@@ -55,7 +56,6 @@ namespace Sierra::Engine::Components
     private:
         static Camera *mainCamera;
 
-        glm::vec3 frontDirection = {0.0f, 0.0f, -1.0f };
-        glm::vec3 upDirection = {0.0f, 1.0f, 0.0f };
+        static inline const glm::vec3 upDirection = { 0.0f, 1.0f, 0.0f };
     };
 }

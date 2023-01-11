@@ -102,4 +102,10 @@ namespace Sierra::Core::Rendering::UI
         instance.sceneViewHeight = newHeight;
     }
 
+    void ImGuiCore::SetSceneViewPosition(const float xPosition, const float yPosition)
+    {
+        instance.sceneViewPositionX = xPosition;
+        instance.sceneViewPositionY = yPosition;
+    }
+
 }

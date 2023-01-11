@@ -9,10 +9,12 @@
 #include "../../../../Engine/Classes/Mesh.h"
 #include "../../../../Engine/Components/Lighting/PointLight.h"
 #include "../../../../Engine/Components/Lighting/DirectionalLight.h"
+#include "../Abstractions/Cubemap.h"
 
 #define OFFSCREEN_PIPELINE Pipeline<MeshPushConstant, UniformData, StorageData>
+#define SKYBOX_PIPELINE Pipeline<Abstractions::NullPushConstant, SkyboxUniformData, Abstractions::NullStorageBuffer>
 
-using Sierra::Engine::Classes::MeshPushConstant;
+using namespace Sierra::Engine::Classes;
 using namespace Sierra::Engine::Components;
 
 namespace Sierra::Core::Rendering::Vulkan::Renderers
@@ -31,6 +33,13 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             uint32_t pointLightCount;
             float _align1_;
             float _align2_;
+        };
+
+        struct SkyboxUniformData
+        {
+            glm::mat4x4 view;
+            glm::mat4x4 projection;
+            glm::mat4x4 model;
         };
 
         struct ObjectData
@@ -59,7 +68,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         void SetSampling(const Sampling newSampling) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline std::unique_ptr<OFFSCREEN_PIPELINE>& GetPipeline() { return offscreenGraphicsPipeline; }
+        [[nodiscard]] inline std::unique_ptr<OFFSCREEN_PIPELINE>& GetScenePipeline() { return scenePipeline; }
         [[nodiscard]] inline VkDescriptorSet GetRenderedTextureDescriptorSet() const { return offscreenImageDescriptorSets[swapchain->GetCurrentFrameIndex()]; }
 
         /* --- DESTRUCTOR --- */
@@ -67,13 +76,24 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
     private:
         void InitializeOffscreenRendering();
-        void CreateOffscreenDescriptorSets();
         void TerminateOffscreenRendering();
 
-        std::shared_ptr<DescriptorSetLayout> descriptorSetLayout;
-        std::unique_ptr<OffscreenRenderer> offscreenRenderer;
+        void CreateSkyboxRenderingObjects();
+        void CreateSceneRenderingObjects();
+
+        void CreateTimestampQueries();
+        void CreateOffscreenDescriptorSets();
+
+        std::shared_ptr<DescriptorSetLayout> sceneDescriptorSetLayout;
+        std::unique_ptr<OffscreenRenderer> sceneOffscreenRenderer;
+        std::unique_ptr<OFFSCREEN_PIPELINE> scenePipeline;
+
+        std::shared_ptr<DescriptorSetLayout> skyboxDescriptorSetLayout;
+        std::unique_ptr<Mesh> skyboxMesh;
+        std::unique_ptr<SKYBOX_PIPELINE> skyboxPipeline;
+        std::unique_ptr<Cubemap> skyboxCubemap;
+
         std::vector<VkDescriptorSet> offscreenImageDescriptorSets;
-        std::unique_ptr<OFFSCREEN_PIPELINE> offscreenGraphicsPipeline;
         std::vector<std::unique_ptr<TimestampQuery>> offscreenTimestampQueries;
 
     };

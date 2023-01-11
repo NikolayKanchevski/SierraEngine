@@ -34,7 +34,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- SETTER METHODS --- */
         void CopyFromPointer(void* pointer);
-        void CopyImage(const Image& givenImage, glm::vec3 imageOffset = { 0, 0, 0 }, uint64_t offset = 0);
+        void CopyImage(const Image& givenImage);
         void CopyToBuffer(const Buffer *otherBuffer);
 
         /* --- GETTER METHODS --- */
@@ -52,8 +52,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         [[nodiscard]] inline BufferUsage GetBufferUsage() const
         { return this->bufferUsage; }
-
-        [[nodiscard]] inline uint64_t GetOffset() const { return 0; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();

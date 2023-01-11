@@ -24,6 +24,18 @@ namespace Sierra::Engine::Classes
         return uniformDistribution64(randomizer);
     }
 
+    int RNG::GetRandomInt(const int min, const int max)
+    {
+        std::uniform_int_distribution<> distribution(min, max);
+        return distribution(randomizer);
+    }
+
+    float RNG::GetRandomFloat(const float min, const float max)
+    {
+        std::uniform_real_distribution<> distribution(min, max);
+        return distribution(randomizer);
+    }
+
 }
 
 /* --- CONSTRUCTORS --- */

@@ -11,6 +11,7 @@
 #include <stb_image.h>
 
 #include "../VK.h"
+#include "../../../../Engine/Classes/File.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -19,16 +20,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     Texture::Texture(stbi_uc *stbImage, const uint32_t width, const uint32_t height, const uint32_t givenColorChannelsCount, const TextureCreateInfo& textureCreateInfo)
         : name(textureCreateInfo.name), filePath(textureCreateInfo.filePath), textureType(textureCreateInfo.textureType), mipMappingEnabled(textureCreateInfo.mipMappingEnabled), colorChannelsCount(givenColorChannelsCount)
     {
+        // Create sampler
         this->sampler = Sampler::Create(textureCreateInfo.samplerCreateInfo);
 
-        // If mip mapping is enabled calculate mip levels
-        if (mipMappingEnabled)
-        {
-            mipMapLevels = static_cast<uint32_t>(glm::floor(std::log2(glm::max(width, height)) + 1));
-        }
-
         // Calculate the image's memory size
-        this->memorySize = static_cast<uint32_t>(width * height * 4);
+        this->memorySize = width * height * 4;
 
         // Create the staging buffer
         auto stagingBuffer = Buffer::Create({
@@ -48,7 +44,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->image = Image::Create({
             .dimensions = { width, height, 1 },
             .format = textureImageFormat,
-            .mipLevels = mipMapLevels,
             .usageFlags = TRANSFER_SRC_IMAGE | TRANSFER_DST_IMAGE | SAMPLED_IMAGE,
             .memoryFlags = MEMORY_FLAGS_DEVICE_LOCAL
         });
@@ -87,7 +82,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Set a default tag if none is assigned
-        if (textureCreateInfo.name == "") textureCreateInfo.name = textureCreateInfo.filePath;
+        if (textureCreateInfo.name == "") textureCreateInfo.name = Engine::Classes::File::GetFileNameFromPath(textureCreateInfo.filePath);
 
         // Number of channels texture has
         int channels;
@@ -117,6 +112,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Texture::GenerateMipMaps()
     {
+        if (GetWidth() + GetHeight() < 1024)
+        {
+            ASSERT_WARNING("Image is too small for mip map generation. Its size is " + std::to_string(GetWidth()) + "x" + std::to_string(GetHeight()) + ", while an image of total size bigger than 512x512 is required. Action suspended automatically");
+            return;
+        }
+
+        mipMapLevels = static_cast<uint32_t>(glm::floor(std::log2(glm::max(GetWidth(), GetHeight())) + 1));
+
         // Get the properties of the image's format
         VkFormatProperties formatProperties;
         vkGetPhysicalDeviceFormatProperties(VK::GetPhysicalDevice(), (VkFormat) image->GetFormat(), &formatProperties);
@@ -142,7 +145,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         int mipHeight = GetHeight();
 
         // For each mip level resize the image
-        for (uint32_t i = 1; i < mipMapLevels; i++) {
+        for (uint32_t i = 1; i < mipMapLevels; i++)
+        {
             memoryBarrier.subresourceRange.baseMipLevel = i - 1;
             memoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             memoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;

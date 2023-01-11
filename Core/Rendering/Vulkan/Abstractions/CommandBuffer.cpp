@@ -76,6 +76,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkCmdDrawIndexed(vkCommandBuffer, indexCount, 1, 0, 0, 0);
     }
 
+    void CommandBuffer::DrawUnindexed(const uint32_t vertexCount) const
+    {
+        vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
+    }
+
     void CommandBuffer::SetViewport(const uint32_t width, const uint32_t height) const
     {
         VkViewport viewport{};
@@ -103,6 +108,5 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         SetViewport(width, height);
         SetScissor(width, height, xOffset, yOffset);
     }
-
 
 }
