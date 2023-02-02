@@ -22,7 +22,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             stbiImages[i] = stbi_load(createInfo.filePaths[i], &width, &height, &colorChannelsCount, STBI_rgb_alpha);
 
             // Check if image loading has been successful
-            ASSERT_ERROR_IF(!stbiImages[i], "Failed to load the cubemap file [" + String(createInfo.filePaths[i]) + "]");
+            ASSERT_ERROR_FORMATTED_IF(!stbiImages[i], "Failed to load the cubemap file [{0}]", createInfo.filePaths[i]);
         }
 
         // Create sampler

@@ -59,7 +59,7 @@ namespace Sierra::Engine::Classes
         Entity(const Entity&) = default;
         bool operator==(Entity &right);
         operator entt::entity() const noexcept;
-        operator UUID() const noexcept;
+        operator Components::UUID() const noexcept;
 
     private:
         entt::entity enttEntity = entt::null;

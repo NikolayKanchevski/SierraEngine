@@ -375,7 +375,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         for (const auto &availableFormat : givenFormats)
         {
-            if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            if ((availableFormat.format == VK_FORMAT_R8G8B8A8_UNORM || availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM) && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
             {
                 return availableFormat;
             }
@@ -390,7 +390,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Loop trough each to check if it is VK_PRESENT_MODE_MAILBOX_KHR
         for (const auto &availablePresentMode : givenPresentModes)
         {
-            if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+            if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) // VK_PRESENT_MODE_MAILBOX_KHR
             {
                 return availablePresentMode;
             }

@@ -271,7 +271,8 @@ namespace ImGui
         auto dataType = GetNumericImGuiDataType<T>();
         String dataTypeFormatting = String(ImGui::DataTypeGetInfo(dataType)->ScanFmt);
 
-        return dataTypeFormatting.insert(1, format);
+        dataTypeFormatting = dataTypeFormatting.insert(1, format);
+        return dataTypeFormatting;
     }
 
     template<typename T, std::enable_if_t<std::is_arithmetic_v<T>, bool> = true>
@@ -287,13 +288,8 @@ namespace ImGui
         ImGuiContext& g = *GImGui;
         ImGuiStyle& style = g.Style;
 
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Wdangling-gsl"
-            const char* localFormat = GetSuitableFormat<T>().c_str();
-        #pragma clang diagnostic pop
-
-        if (localFormat == NULL)
-            localFormat = DataTypeGetInfo(dataType)->PrintFmt;
+        std::string formatString = GetSuitableFormat<T>();
+        const char* localFormat = formatString.c_str();
 
         if (!canDrag)
         {

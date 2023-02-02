@@ -51,7 +51,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
         else if (result != VK_SUCCESS)
         {
-            ASSERT_WARNING("Getting the results from timestamp query with index [" + std::to_string(index) + "] was unsuccessful. Returned time: 0.0f ms.");
+            ASSERT_WARNING_FORMATTED("Getting the results from timestamp query with index [{0}] was unsuccessful. Returned time: 0.0f ms.", index);
             return 0.0f;
         }
 

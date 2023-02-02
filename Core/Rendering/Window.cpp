@@ -146,7 +146,7 @@ namespace Sierra::Core::Rendering
 
     void Window::GlfwErrorCallback(int errorCode, const char *description)
     {
-        ASSERT_WARNING("GLFW Error: " + String(description) + " (" + std::to_string(errorCode) + ")");
+        ASSERT_WARNING_FORMATTED("GLFW Error: {0}! Error code: {1}.", description, errorCode);
     }
 
     void Window::WindowResizeCallback(GLFWwindow *windowPtr, int newWidth, int newHeight)

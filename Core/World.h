@@ -35,7 +35,7 @@ namespace Sierra::Core
         {
             if (HasComponent<T>(enttEntity))
             {
-                ASSERT_WARNING("Component of type [" + Debugger::TypeToString<T>() + "] already present in entity. New components has been dismissed and instead the old one has been returned");
+                ASSERT_WARNING_FORMATTED("Component of type [{0}] already present in entity. New components has been dismissed and instead the old one has been returned", Debugger::TypeToString<T>());
                 return GetComponent<T>(enttEntity);
             }
 
@@ -57,7 +57,7 @@ namespace Sierra::Core
         template<typename T>
         inline static T& GetComponent(const entt::entity enttEntity)
         {
-            ASSERT_ERROR_IF(!HasComponent<T>(enttEntity), "Component of type [" + Debugger::TypeToString<T>() + "] does not exist within the entity");
+            ASSERT_ERROR_FORMATTED_IF(!HasComponent<T>(enttEntity), "Component of type [{0}] does not exist within the entity", Debugger::TypeToString<T>());
 
             return enttRegistry->get<T>(enttEntity);
         }
@@ -73,7 +73,7 @@ namespace Sierra::Core
         {
             if (!HasComponent<T>(enttEntity))
             {
-                ASSERT_WARNING("Component of type [" + Debugger::TypeToString<T>() + "] does not exist within entity. No components were removed");
+                ASSERT_WARNING_FORMATTED("Component of type [{0}] does not exist within entity. No components were removed", Debugger::TypeToString<T>());
                 return;
             }
 

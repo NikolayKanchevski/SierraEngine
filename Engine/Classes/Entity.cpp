@@ -19,7 +19,7 @@ namespace Sierra::Engine::Classes
     Entity::Entity(const String &givenName)
         : enttEntity(World::RegisterEntity())
     {
-        AddComponent<UUID>();
+        AddComponent<Components::UUID>();
         AddComponent<Transform>();
         AddComponent<Tag>(givenName);
         AddComponent<Relationship>(enttEntity);
@@ -28,7 +28,7 @@ namespace Sierra::Engine::Classes
     Entity::Entity(Entity &givenParent)
         : enttEntity(World::RegisterEntity())
     {
-        AddComponent<UUID>();
+        AddComponent<Components::UUID>();
         AddComponent<Transform>();
         AddComponent<Tag>("Entity");
         AddComponent<Relationship>(enttEntity);
@@ -39,7 +39,7 @@ namespace Sierra::Engine::Classes
     Entity::Entity(const String &givenName, Entity &givenParent)
         : enttEntity(World::RegisterEntity())
     {
-        AddComponent<UUID>();
+        AddComponent<Components::UUID>();
         AddComponent<Transform>();
         AddComponent<Tag>(givenName);
         AddComponent<Relationship>(enttEntity);
@@ -76,8 +76,8 @@ namespace Sierra::Engine::Classes
         return enttEntity;
     }
 
-    Entity::operator UUID() const noexcept
+    Entity::operator Components::UUID() const noexcept
     {
-        return GetComponent<UUID>();
+        return GetComponent<Components::UUID>();
     }
 }

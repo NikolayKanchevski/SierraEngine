@@ -143,11 +143,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- SETTER METHODS --- */
         void FreeIndex(uint binding, uint arrayIndex, bool reallocate = true);
-        uint ReserveIndex(uint binding, int arrayIndex = -1);
+        uint ReserveIndex(uint binding, uint arrayIndex = -1);
 
-        uint WriteBuffer(uint binding, const UniquePtr<Buffer> &buffer, bool overwrite = false, int arrayIndex = -1);
-        uint WriteImage(uint binding, const VkDescriptorImageInfo *imageInfo, bool overwrite = false, int arrayIndex = -1);
-        uint WriteTexture(uint binding, const SharedPtr<Texture> &texture, bool overwrite = false, int arrayIndex = -1);
+        uint WriteBuffer(uint binding, const UniquePtr<Buffer> &buffer, bool overwrite = false, uint arrayIndex = -1);
+        uint WriteImage(uint binding, const VkDescriptorImageInfo *imageInfo, bool overwrite = false, uint arrayIndex = -1);
+        uint WriteTexture(uint binding, const SharedPtr<Texture> &texture, bool overwrite = false, uint arrayIndex = -1);
         void Allocate();
 
         /* --- GETTER METHODS --- */

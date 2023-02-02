@@ -94,7 +94,7 @@ namespace Sierra::Engine::Classes
             model->loaded = true;
 
             #if DEBUG
-                ASSERT_INFO("Total vertices count for the model [" + model->modelName + "] containing [" + std::to_string(loadedModelData.meshes.size()) + "] mesh(es): " + std::to_string(model->vertexCount));
+                ASSERT_INFO_FORMATTED("Total vertices count for the model [{0}] containing [{1}] mesh(es): {2}", model->modelName, loadedModelData.meshes.size(), model->vertexCount);
             #endif
         }
         else
@@ -122,7 +122,7 @@ namespace Sierra::Engine::Classes
             delete model->modelData;
 
             #if DEBUG
-                ASSERT_INFO("Total vertices count for the model [" + model->modelName + "] containing [" + std::to_string(scene->mNumMeshes) + "] mesh(es): " + std::to_string(model->vertexCount));
+                ASSERT_INFO_FORMATTED("Total vertices count for the model [{0}] containing [{1}] mesh(es): {2}", model->modelName, scene->mNumMeshes, model->vertexCount);
             #endif
 
             // Dispose the importer

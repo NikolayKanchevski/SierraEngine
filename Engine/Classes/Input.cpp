@@ -250,7 +250,7 @@ namespace Sierra::Engine::Classes {
     {
         if (player >= MAX_GAME_PADS || !gamePads[player].connected)
         {
-            ASSERT_WARNING("Game pad with an ID of [" + std::to_string(player) + "] is not connected");
+            ASSERT_WARNING_FORMATTED("Game pad with an ID of [{0}] is not connected", player);
             return false;
         }
 

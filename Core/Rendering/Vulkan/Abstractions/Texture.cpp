@@ -89,14 +89,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         stbi_uc *stbiImage = stbi_load(textureCreateInfo.filePath.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
         // Check if image loading has been successful
-        ASSERT_ERROR_IF(!stbiImage, "Failed to load the texture file [" + textureCreateInfo.filePath + "]");
+        ASSERT_ERROR_FORMATTED_IF(!stbiImage, "Failed to load the texture file [{0}]", textureCreateInfo.filePath);
 
         // If texture does not exist already
         auto &textureReference = texturePool[textureCreateInfo.filePath];
         textureReference = std::make_shared<Texture>(stbiImage, width, height, channels, textureCreateInfo);
         if (setDefaultTexture)
         {
-            ASSERT_ERROR_IF(textureCreateInfo.textureType == TEXTURE_TYPE_NONE, "Cannot set texture loaded from [" + textureCreateInfo.filePath + "] as default texture for its type, as it is of type TEXTURE_TYPE_NONE");
+            ASSERT_ERROR_FORMATTED_IF(textureCreateInfo.textureType == TEXTURE_TYPE_NONE, "Cannot set texture loaded from [{0}] as default texture for its type, as it is of type TEXTURE_TYPE_NONE", textureCreateInfo.filePath);
 
             textureReference->isDefault = true;
             defaultTextures[textureCreateInfo.textureType] = textureReference;
@@ -111,7 +111,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         if (GetWidth() + GetHeight() < 1024)
         {
-            ASSERT_WARNING("Image is too small for mip map generation. Its size is " + std::to_string(GetWidth()) + "x" + std::to_string(GetHeight()) + ", while an image of total size bigger than 512x512 is required. Action suspended automatically");
+            ASSERT_WARNING_FORMATTED("Image is too small for mip map generation. Its size is {0}x{1}, while an image of total size bigger than 512x512 is required. Action suspended automatically", GetWidth(), GetHeight());
             return;
         }
 
@@ -122,7 +122,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkGetPhysicalDeviceFormatProperties(VK::GetPhysicalDevice(), (VkFormat) image->GetFormat(), &formatProperties);
 
         // Check if optimal tiling is supported by the GPU
-        ASSERT_ERROR_IF((formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0, "Texture image format [" + std::to_string((int) image->GetFormat()) + "] does not support linear blitting");
+        ASSERT_ERROR_FORMATTED_IF((formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0, "Texture image format [{0}] does not support linear blitting", (int) image->GetFormat());
 
         // Begin a command buffer
         VkCommandBuffer commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
@@ -138,8 +138,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         memoryBarrier.subresourceRange.layerCount = 1;
         memoryBarrier.subresourceRange.levelCount = 1;
 
-        int mipWidth = GetWidth();
-        int mipHeight = GetHeight();
+        int mipWidth = static_cast<int>(GetWidth());
+        int mipHeight = static_cast<int>(GetHeight());
 
         // For each mip level resize the image
         for (uint i = 1; i < mipMapLevels; i++)

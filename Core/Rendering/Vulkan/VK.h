@@ -190,7 +190,7 @@ namespace Sierra::Core::Rendering::Vulkan
                 {
                     success = false;
 
-                    ASSERT_WARNING("Instance extension [" + String(requiredExtension) + "] not supported");
+                    ASSERT_WARNING_FORMATTED("Instance extension [{0}] not supported", String(requiredExtension));
                     givenExtensions.erase(givenExtensions.begin() + extensionIndex);
                 }
 

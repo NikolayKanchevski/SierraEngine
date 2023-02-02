@@ -39,7 +39,7 @@ namespace ImGui
     void CustomLabel(const char* label);
     void ShowTooltip(const char* tooltip);
 
-    void BeginProperties(const ImGuiTableFlags tableFlags = ImGuiTableFlags_None);
+    void BeginProperties(ImGuiTableFlags tableFlags = ImGuiTableFlags_None);
     void EndProperties();
 
     void BeginProperty(const char* label);

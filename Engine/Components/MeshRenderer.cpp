@@ -17,7 +17,7 @@ namespace Sierra::Engine::Components
     MeshRenderer::MeshRenderer(SharedPtr<Mesh> givenCorrespondingMesh)
         : coreMesh(givenCorrespondingMesh)
     {
-        ASSERT_ERROR_IF(meshSlotsUsed >= MAX_MESHES, "Limit of maximum [" + std::to_string(MAX_MESHES) + "] meshes reached");
+        ASSERT_ERROR_FORMATTED_IF(meshSlotsUsed >= MAX_MESHES, "Limit of maximum [{0}] meshes reached", MAX_MESHES);
 
         // Check if there are any freed slots
         if (freedMeshSlots.empty())

@@ -23,7 +23,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create shader module
         VK_ASSERT(
             vkCreateShaderModule(VK::GetLogicalDevice(), &moduleCreateInfo, nullptr, &shaderModule),
-            "Failed to create shader module for [" + createInfo.filePath + "]"
+            fmt::format("Failed to create shader module for [{0}]", createInfo.filePath)
         );
 
         // Setup shader stage creation info

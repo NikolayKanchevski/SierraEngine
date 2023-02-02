@@ -12,8 +12,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     /* --- CONSTRUCTORS --- */
 
     Buffer::Buffer(const BufferCreateInfo &createInfo)
-        : memorySize(createInfo.memorySize), memoryFlags(createInfo.memoryFlags), bufferUsage(createInfo.bufferUsage)
-    {
+        : memorySize(createInfo.memorySize), memoryFlags(createInfo.memoryFlags), bufferUsage(createInfo.bufferUsage) {
         // Set up buffer creation info
         VkBufferCreateInfo vkBufferCreateInfo{};
         vkBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -31,7 +30,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create and allocate buffer
         VK_ASSERT(
             vmaCreateBuffer(VK::GetMemoryAllocator(), &vkBufferCreateInfo, &allocationCreateInfo, &vkBuffer, &vmaBufferAllocation, nullptr),
-            "Failed to create buffer with size of [" + std::to_string(memorySize) + "] for [" + std::to_string((int) bufferUsage) + "] usage"
+            fmt::format("Failed to create buffer with size of [{0}] for [{1}] usage", memorySize, (int) bufferUsage)
         );
     }
 

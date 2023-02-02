@@ -25,7 +25,6 @@
 #include <chrono>
 #include <mutex>
 #include <shared_mutex>
-#include <limits>
 #include <future>
 #include <string>
 #include <cstring>
@@ -36,6 +35,8 @@
 #include <fstream>
 #include <filesystem>
 #include <bitset>
+#define NOMINMAX
+#include <limits>
 
 // === External Libraries == //
 

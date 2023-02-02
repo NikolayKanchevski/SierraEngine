@@ -51,8 +51,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan descriptor set layout
         VK_ASSERT(
-                vkCreateDescriptorSetLayout(VK::GetLogicalDevice(), &layoutCreateInfo, nullptr, &vkDescriptorSetLayout),
-                "Failed to create descriptor layout with [" + std::to_string(layoutCreateInfo.bindingCount) + "] binging(s)"
+            vkCreateDescriptorSetLayout(VK::GetLogicalDevice(), &layoutCreateInfo, nullptr, &vkDescriptorSetLayout),
+            fmt::format("Failed to create descriptor layout with [{0}] binging(s)", layoutCreateInfo.bindingCount)
         );
     }
 
@@ -68,7 +68,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         ASSERT_ERROR_IF(this->shaderStages == -1, "No shader stages specified for descriptor set layout");
 
-        ASSERT_ERROR_IF(bindings.count(binding) != 0, "Binding [" + std::to_string(binding) + "] already in use by a [" + std::to_string(bindings[binding].bindingInfo.descriptorType) + "] descriptor");
+        ASSERT_ERROR_FORMATTED_IF(bindings.count(binding) != 0, "Binding [{0}] already in use by a [{1}] descriptor", binding, bindings[binding].bindingInfo.descriptorType);
 
         // Set up the layout binding info
         VkDescriptorSetLayoutBinding layoutBinding{};
@@ -194,7 +194,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create the Vulkan descriptor pool
         VK_ASSERT(
             vkCreateDescriptorPool(VK::GetLogicalDevice(), &descriptorPoolCreateInfo, nullptr, &vkDescriptorPool),
-            "Failed to create descriptor pool with [" + std::to_string(givenMaxSets) + "] max sets and [" + std::to_string(descriptorPoolCreateInfo.poolSizeCount) + "] pool sizes"
+            fmt::format("Failed to create descriptor pool with [{0}] max sets and [{1}] pool sizes", givenMaxSets, descriptorPoolCreateInfo.poolSizeCount)
         );
     }
 
@@ -227,7 +227,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void DescriptorSet::WriteBuffer(const uint binding, const UniquePtr<Buffer> &buffer)
     {
         // Check if the current binding is not available
-        ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+        ASSERT_ERROR_FORMATTED_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [{0}]", binding);
 
         // Get the binding description and check if it expects more than 1 descriptors
         VkDescriptorSetLayoutBinding bindingDescription = descriptorSetLayout->bindings[binding].bindingInfo;
@@ -255,7 +255,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void DescriptorSet::WriteImage(const uint binding, const VkDescriptorImageInfo *imageInfo)
     {
         // Check if the current binding is not available
-        ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+        ASSERT_ERROR_FORMATTED_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [{0}]", binding);
 
         // Get the binding description and check if it expects more than 1 descriptors
         VkDescriptorSetLayoutBinding bindingDescription = descriptorSetLayout->bindings[binding].bindingInfo;
@@ -328,7 +328,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Check if the current binding is not available
         for (const auto &binding : givenBindings)
         {
-            ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+            ASSERT_ERROR_FORMATTED_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [{0}]", binding);
         }
 
         // Create descriptor set to pool
@@ -359,7 +359,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     uint BindlessDescriptorSet::GetFirstFreeIndex(const uint binding) const
     {
-        ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+        ASSERT_ERROR_FORMATTED_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [{0}]", binding);
 
         for (uint i = 0; i < descriptorSetLayout->bindings[binding].arraySize; i++)
         {
@@ -382,13 +382,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void BindlessDescriptorSet::FreeIndex(const uint binding, const uint arrayIndex, const bool reallocate)
     {
-        ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+        ASSERT_ERROR_FORMATTED_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [{0}]", binding);
 
-        ASSERT_ERROR_IF(!IsBindingConfigured(binding), "Descriptor set is not configured to work with the specified binding: [" + std::to_string(binding) + "]");
+        ASSERT_ERROR_FORMATTED_IF(!IsBindingConfigured(binding), "Descriptor set is not configured to work with the specified binding: [{0}]", binding);
 
         if (arrayIndex >= descriptorSetLayout->bindings[binding].arraySize)
         {
-            ASSERT_WARNING("Array index [" + std::to_string(arrayIndex) + "] is outside of the bounds of descriptor set array. Action suspended");
+            ASSERT_WARNING_FORMATTED("Array index [{0}] is outside of the bounds of descriptor set array. Action suspended", arrayIndex);
             return;
         }
 
@@ -400,11 +400,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
     }
 
-    uint BindlessDescriptorSet::ReserveIndex(const uint binding, int arrayIndex)
+    uint BindlessDescriptorSet::ReserveIndex(const uint binding, uint arrayIndex)
     {
-        ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+        ASSERT_ERROR_FORMATTED_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [{0}]", binding);
 
-        ASSERT_ERROR_IF(!IsBindingConfigured(binding), "Descriptor set is not configured to work with the specified binding: [" + std::to_string(binding) + "]");
+        ASSERT_ERROR_FORMATTED_IF(!IsBindingConfigured(binding), "Descriptor set is not configured to work with the specified binding: [{0}]", binding);
 
         if (arrayIndex == -1)
         {
@@ -414,7 +414,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             if (arrayIndex >= descriptorSetLayout->bindings[binding].arraySize)
             {
-                ASSERT_WARNING("Array index [" + std::to_string(arrayIndex) + "] is outside of the bounds of descriptor set array. Action suspended");
+                ASSERT_WARNING_FORMATTED("Array index [{0}] is outside of the bounds of descriptor set array. Action suspended", arrayIndex);
                 return arrayIndex;
             }
         }
@@ -424,11 +424,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return arrayIndex;
     }
 
-    uint BindlessDescriptorSet::WriteBuffer(const uint binding, const UniquePtr<Buffer> &buffer, const bool overwrite, int arrayIndex)
+    uint BindlessDescriptorSet::WriteBuffer(const uint binding, const UniquePtr<Buffer> &buffer, const bool overwrite, uint arrayIndex)
     {
-        ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+        ASSERT_ERROR_FORMATTED_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [{0}]", binding);
 
-        ASSERT_ERROR_IF(!IsBindingConfigured(binding), "Descriptor set is not configured to work with the specified binding: [" + std::to_string(binding) + "]");
+        ASSERT_ERROR_FORMATTED_IF(!IsBindingConfigured(binding), "Descriptor set is not configured to work with the specified binding: [{0}]", binding);
 
         if (arrayIndex == -1)
         {
@@ -466,11 +466,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return arrayIndex;
     }
 
-    uint BindlessDescriptorSet::WriteImage(const uint binding, const VkDescriptorImageInfo *imageInfo, const bool overwrite, int arrayIndex)
+    uint BindlessDescriptorSet::WriteImage(const uint binding, const VkDescriptorImageInfo *imageInfo, const bool overwrite, uint arrayIndex)
     {
-        ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
+        ASSERT_ERROR_FORMATTED_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [{0}]", binding);
 
-        ASSERT_ERROR_IF(!IsBindingConfigured(binding), "Descriptor set is not configured to work with the specified binding: [" + std::to_string(binding) + "]");
+        ASSERT_ERROR_FORMATTED_IF(!IsBindingConfigured(binding), "Descriptor set is not configured to work with the specified binding: [{0}]", binding);
 
         if (arrayIndex == -1)
         {
@@ -502,7 +502,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return arrayIndex;
     }
 
-    uint BindlessDescriptorSet::WriteTexture(const uint binding, const SharedPtr<Texture> &texture, const bool overwrite, int arrayIndex)
+    uint BindlessDescriptorSet::WriteTexture(const uint binding, const SharedPtr<Texture> &texture, const bool overwrite, uint arrayIndex)
     {
         VkDescriptorImageInfo imageInfo{};
         imageInfo.sampler = texture->GetVulkanSampler();

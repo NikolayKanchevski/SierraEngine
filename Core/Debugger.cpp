@@ -25,15 +25,15 @@
 namespace Sierra::Core
 {
 
-#if DEBUG
-    static const bool DEBUG_MODE = true;
-#else
-    static const bool DEBUG_MODE = false;
-#endif
+    #if DEBUG
+        static const bool DEBUG_MODE = true;
+    #else
+        static const bool DEBUG_MODE = false;
+    #endif
 
-#if _WIN32
-    HANDLE Debugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-#endif
+    #if _WIN32
+        HANDLE Debugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    #endif
 
     void Debugger::DisplayInfo(const String& message)
     {
@@ -64,17 +64,6 @@ namespace Sierra::Core
         DEFAULT();
     }
 
-    bool Debugger::CheckResults(const VkResult result, const String& errorMessage)
-    {
-        bool success = result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR;
-        if (!success)
-        {
-            ThrowError(errorMessage + ". Error code: " + string_VkResult(result));
-        }
-
-        return success;
-    }
-
     VkBool32 Debugger::ValidationCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
     {
         switch (messageSeverity)
@@ -93,8 +82,8 @@ namespace Sierra::Core
     }
 
     #ifdef __GNUG__
-        String Debugger::Demangle(const char* name) {
-
+        String Debugger::Demangle(const char* name)
+        {
             int status = -4; // Some arbitrary value to eliminate the compiler warning
 
             std::unique_ptr<char, void(*)(void*)> res
@@ -107,7 +96,8 @@ namespace Sierra::Core
         }
     #else
         // Do nothing if not g++
-        String Debugger::Demangle(const char* tag) {
+        String Debugger::Demangle(const char* tag)
+        {
             return tag;
         }
     #endif

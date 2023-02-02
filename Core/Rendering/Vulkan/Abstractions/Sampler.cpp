@@ -37,8 +37,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the Vulkan sampler
         VK_ASSERT(
-                vkCreateSampler(VK::GetLogicalDevice(), &vkSamplerCreateInfo, nullptr, &vkSampler),
-                "Failed to create sampler with a LOD of [" + std::to_string(createInfo.minLod) + "," + std::to_string(createInfo.maxLod) + "] and [" + std::to_string(createInfo.maxAnisotropy) + "] max anisotropy"
+            vkCreateSampler(VK::GetLogicalDevice(), &vkSamplerCreateInfo, nullptr, &vkSampler),
+            fmt::format("Failed to create sampler with a LOD of [{0}, {1}] and [{2}] max anisotropy", createInfo.minLod, createInfo.maxLod, createInfo.maxAnisotropy)
         );
     }
 

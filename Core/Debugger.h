@@ -25,8 +25,6 @@ namespace Sierra::Core
         static void ThrowWarning(const std::string&);
         static void ThrowError(const std::string&);
 
-        static bool CheckResults(const VkResult result, const std::string&);
-
         template <typename T>
         static inline std::string TypeToString()
         {
@@ -49,42 +47,42 @@ namespace Sierra::Core
 
 #if DEBUG
     #define ASSERT_ERROR(MESSAGE) Debugger::ThrowError(MESSAGE)
-    #define ASSERT_ERROR_FORMATTED(MESSAGE, VALUES...) ASSERT_ERROR(fmt::format(MESSAGE, VALUES))
+    #define ASSERT_ERROR_FORMATTED(MESSAGE, ...) ASSERT_ERROR(fmt::format(MESSAGE, ##__VA_ARGS__))
     #define ASSERT_ERROR_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_ERROR(MESSAGE)
-    #define ASSERT_ERROR_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) if (EXPRESSION) ASSERT_ERROR_FORMATTED(MESSAGE, VALUES)
+    #define ASSERT_ERROR_FORMATTED_IF(EXPRESSION, MESSAGE, ...) if (EXPRESSION) ASSERT_ERROR_FORMATTED(MESSAGE, ##__VA_ARGS__)
 
     #define ASSERT_WARNING(MESSAGE) Debugger::ThrowWarning(MESSAGE)
-    #define ASSERT_WARNING_FORMATTED(MESSAGE, VALUES...) ASSERT_WARNING(fmt::format(MESSAGE, VALUES))
+    #define ASSERT_WARNING_FORMATTED(MESSAGE, ...) ASSERT_WARNING(fmt::format(MESSAGE, ##__VA_ARGS__))
     #define ASSERT_WARNING_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_WARNING(MESSAGE)
-    #define ASSERT_WARNING_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) if (EXPRESSION) ASSERT_WARNING_FORMATTED(MESSAGE, VALUES)
+    #define ASSERT_WARNING_FORMATTED_IF(EXPRESSION, MESSAGE, ...) if (EXPRESSION) ASSERT_WARNING_FORMATTED(MESSAGE, ##__VA_ARGS__)
 
     #define ASSERT_SUCCESS(MESSAGE) Debugger::DisplaySuccess(MESSAGE)
-    #define ASSERT_SUCCESS_FORMATTED(MESSAGE, VALUES...) ASSERT_SUCCESS(fmt::format(MESSAGE, VALUES))
+    #define ASSERT_SUCCESS_FORMATTED(MESSAGE, ...) ASSERT_SUCCESS(fmt::format(MESSAGE, ##__VA_ARGS__))
     #define ASSERT_SUCCESS_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_SUCCESS(MESSAGE)
-    #define ASSERT_SUCCESS_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) if (EXPRESSION) ASSERT_SUCCESS_FORMATTED(MESSAGE, VALUES)
+    #define ASSERT_SUCCESS_FORMATTED_IF(EXPRESSION, MESSAGE, ...) if (EXPRESSION) ASSERT_SUCCESS_FORMATTED(MESSAGE, ##__VA_ARGS__)
 
     #define VK_ASSERT(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_ERROR_FORMATTED("Vulkan Error: {0}() failed: {1}! Error code: {2}", std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")), MESSAGE, string_VkResult(result))
     #define VK_VALIDATE(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_WARNING_FORMATTED("Vulkan Error: {0}() failed: {1}! Error code: {2}", std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")), MESSAGE, string_VkResult(result))
 #else
     #define ASSERT_ERROR(MESSAGE)
-    #define ASSERT_ERROR_FORMATTED(MESSAGE, VALUES...)
+    #define ASSERT_ERROR_FORMATTED(MESSAGE, ...)
     #define ASSERT_ERROR_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
-    #define ASSERT_ERROR_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) static_cast<void>(EXPRESSION)
+    #define ASSERT_ERROR_FORMATTED_IF(EXPRESSION, MESSAGE, ...) static_cast<void>(EXPRESSION)
 
     #define ASSERT_WARNING(MESSAGE)
-    #define ASSERT_WARNING_FORMATTED(MESSAGE, VALUES...)
+    #define ASSERT_WARNING_FORMATTED(MESSAGE, ...)
     #define ASSERT_WARNING_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
-    #define ASSERT_WARNING_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) static_cast<void>(EXPRESSION)
+    #define ASSERT_WARNING_FORMATTED_IF(EXPRESSION, MESSAGE, ...) static_cast<void>(EXPRESSION)
 
     #define ASSERT_SUCCESS(MESSAGE)
-    #define ASSERT_SUCCESS_FORMATTED(MESSAGE, VALUES...)
+    #define ASSERT_SUCCESS_FORMATTED(MESSAGE, ...)
     #define ASSERT_SUCCESS_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
-    #define ASSERT_SUCCESS_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) static_cast<void>(EXPRESSION)
+    #define ASSERT_SUCCESS_FORMATTED_IF(EXPRESSION, MESSAGE, ...) static_cast<void>(EXPRESSION)
 
     #define ASSERT_INFO(MESSAGE)
-    #define ASSERT_INFO_FORMATTED(MESSAGE, VALUES...)
+    #define ASSERT_INFO_FORMATTED(MESSAGE, ...)
     #define ASSERT_INFO_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
-    #define ASSERT_INFO_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) static_cast<void>(EXPRESSION)
+    #define ASSERT_INFO_FORMATTED_IF(EXPRESSION, MESSAGE, ...) static_cast<void>(EXPRESSION)
 
     #define VK_ASSERT(FUNCTION, MESSAGE) static_cast<void>(FUNCTION)
     #define VK_VALIDATE(FUNCTION, MESSAGE) static_cast<void>(FUNCTION)
@@ -92,9 +90,9 @@ namespace Sierra::Core
 
 #if DEBUG || PROFILE_FUNCTIONS_IN_RELEASE
     #define ASSERT_INFO(MESSAGE) Debugger::DisplayInfo(MESSAGE)
-    #define ASSERT_INFO_FORMATTED(MESSAGE, VALUES...) ASSERT_INFO(fmt::format(MESSAGE, VALUES))
+    #define ASSERT_INFO_FORMATTED(MESSAGE, ...) ASSERT_INFO(fmt::format(MESSAGE, ##__VA_ARGS__))
     #define ASSERT_INFO_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_INFO(MESSAGE)
-    #define ASSERT_INFO_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) if (EXPRESSION) ASSERT_INFO_FORMATTED(MESSAGE, VALUES)
+    #define ASSERT_INFO_FORMATTED_IF(EXPRESSION, MESSAGE, ...) if (EXPRESSION) ASSERT_INFO_FORMATTED(MESSAGE, ##__VA_ARGS__)
 
     #if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600)) || defined(__ghs__)
         #define FUNC_SIG __PRETTY_FUNCTION__
@@ -209,7 +207,7 @@ public:
             i--;
         }
 
-        ASSERT_INFO("Method " + nameString + " took " + std::to_string(elapsedTime) + "ms");
+        ASSERT_INFO_FORMATTED("Method {0} took {1}ms", nameString, elapsedTime);
 
         stopped = true;
     }

@@ -137,7 +137,7 @@ void Application::DisplayUI(UniquePtr<MainVulkanRenderer> &renderer)
                 ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
                 if (ImGui::Dropdown("##RENDERER_ANTI_ALIASING_DROPDOWN", currentMSAATypeIndex, msaaTypes, 7, deactivatedFlags))
                 {
-                    renderer->SetSampling((Sampling) currentMSAATypeIndex);
+                    renderer->SetSampling((Sampling) glm::pow(2, currentMSAATypeIndex));
                 }
             }
 
@@ -217,23 +217,18 @@ void Application::DisplayUI(UniquePtr<MainVulkanRenderer> &renderer)
 
     /* --- GAMEPAD STATISTICS --- */
     {
-        for (int i = Input::MAX_GAME_PADS; i--;)
+        for (uint i = Input::MAX_GAME_PADS; i--;)
         {
             if (Input::GetGamePadConnected(i))
             {
                 bool gamePadInfoOpen = true;
-                if (ImGui::Begin((("Game Pad [" + std::to_string(i) + "] Data").c_str()), &gamePadInfoOpen,
-                                 ImGuiWindowFlags_AlwaysAutoResize))
+                if (ImGui::Begin((fmt::format("Game Pad [{0}] Data", i).c_str()), &gamePadInfoOpen, ImGuiWindowFlags_AlwaysAutoResize))
                 {
                     ImGui::Text("%s", ("Game pad [" + Input::GetGamePadName(i) + "] properties:").c_str());
-                    ImGui::Text("%s", ("Left gamepad stick: [" + std::to_string(Input::GetGamePadLeftStickAxis(i).x) +
-                                       " || " + std::to_string(Input::GetGamePadLeftStickAxis(i).y) + "]").c_str());
-                    ImGui::Text("%s", ("Right gamepad stick: [" + std::to_string(Input::GetGamePadRightStickAxis(i).x) +
-                                       " || " + std::to_string(Input::GetGamePadRightStickAxis(i).y) + "]").c_str());
-                    ImGui::Text("%s", ("Left trigger: [" + std::to_string(Input::GetGamePadLeftTriggerAxis(i)) +
-                                       "]").c_str());
-                    ImGui::Text("%s", ("Right trigger: [" + std::to_string(Input::GetGamePadRightTriggerAxis(i)) +
-                                       "]").c_str());
+                    ImGui::Text("%s", fmt::format("Left gamepad stick: [{0}, {1}]", Input::GetGamePadLeftStickAxis(i).x, Input::GetGamePadLeftStickAxis(i).y).c_str());
+                    ImGui::Text("%s", fmt::format("Right gamepad stick: [{0}, {1}]", Input::GetGamePadRightStickAxis(i).x, Input::GetGamePadRightStickAxis(i).y).c_str());
+                    ImGui::Text("%s", fmt::format("Left trigger: [{0}]", Input::GetGamePadLeftTriggerAxis(i)).c_str());
+                    ImGui::Text("%s", fmt::format("Right trigger: [{0}]", Input::GetGamePadRightTriggerAxis(i)).c_str());
                     ImGui::RadioButton("\"A\" pressed", Input::GetGamePadButtonPressed(GLFW_GAMEPAD_BUTTON_A, i));
                     ImGui::RadioButton("\"A\" held", Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A, i));
                     ImGui::RadioButton("\"A\" released", Input::GetGamePadButtonReleased(GLFW_GAMEPAD_BUTTON_A, i));

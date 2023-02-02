@@ -37,7 +37,7 @@ You can then proceed and run the program in your IDE. Make sure you are in <b>RE
         <li><a href="https://www.vulkan.org/">Vulkan</a> - For both cross-platform and pefromant-friendly rendering.</li>
         <li><a href="https://github.com/glfw/glfw">GLFW</a> - For creating window interface and connecting it to the <b>Vulkan</b> renderer.</li>
         <li><a href="https://github.com/ocornut/imgui">ImGui</a> - For the user interface implemented.</li>
-<li><a href="https://github.com/CedricGuillemet/ImGuizmo">ImGuizmo</a> - For gizmos in the scene view.</li>
+        <li><a href="https://github.com/CedricGuillemet/ImGuizmo">ImGuizmo</a> - For gizmos in the scene view.</li>
         <li><a href="https://github.com/skypjack/entt">EnTT</a> - For the easy-to-use and incredibly perfomant <a href="https://en.wikipedia.org/wiki/Entity_component_system">entity component system</a>.</li>
         <li><a href="https://github.com/g-truc/glm">GLM</a> - For all advanced mathematical operations and objects within the engine.</li>
         <li><a href="https://gpuopen.com/vulkan-memory-allocator/">VMA</a> - For easier and more optimal memory allocation and distribution of <a href="https://www.vulkan.org/">Vulkan</a> objects.</li>
@@ -60,7 +60,7 @@ You can then proceed and run the program in your IDE. Make sure you are in <b>RE
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 13,597</p>
+<p align="center" id="LinesCounter">Total lines of code: 13,588</p>
 <p align="center" id="LastUpdated">Last updated: 02/02/2023</p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

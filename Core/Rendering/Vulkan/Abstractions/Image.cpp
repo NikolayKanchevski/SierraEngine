@@ -41,8 +41,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create and allocate image
         VK_ASSERT(
             vmaCreateImage(VK::GetMemoryAllocator(), &vkImageCreateInfo, &allocationCreateInfo, &vkImage, &vmaImageAllocation, nullptr),
-            "Failed to allocate memory for image with dimensions of [" + std::to_string(dimensions.width) + ", " + std::to_string(dimensions.height) + ", " + std::to_string(dimensions.depth) + "], format [" + std::to_string((int) format) + "], [" +
-            std::to_string(mipMapLevels) + "] mip levels, and sampling of [" + std::to_string((int) sampling) + "]"
+            fmt::format("Failed to allocate memory for image with dimensions of [{0}, {1}, {2}], format [{3}], [{4}] mip levels, and sampling of [{5}]", dimensions.width, dimensions.height, dimensions.depth, (int) format, mipMapLevels, (int) sampling)
         );
     }
 
@@ -88,8 +87,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create the image view
         VK_ASSERT(
             vkCreateImageView(VK::GetLogicalDevice(), &imageViewCreateInfo, nullptr, &vkImageView),
-            "Could not create image view for an image with dimensions of [" + std::to_string(dimensions.width) + ", " + std::to_string(dimensions.height) + ", " + std::to_string(dimensions.depth) + "], format [" + std::to_string((int) format) + "], [" +
-            std::to_string(mipMapLevels) + "] mip levels, and sampling of [" + std::to_string((int) sampling) + "]"
+            fmt::format("Failed to create image view for an image with dimensions of [{0}, {1}, {2}], format [{3}], [{4}] mip levels, and sampling of [{5}]", dimensions.width, dimensions.height, dimensions.depth, (int) format, mipMapLevels, (int) sampling)
         );
 
         imageViewCreated = true;
@@ -160,7 +158,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
         else
         {
-            ASSERT_ERROR("Transitioning images from [" + std::to_string((int) layout) + "] to [" + std::to_string((int) newLayout) + "] is not supported");
+            ASSERT_ERROR_FORMATTED("Transitioning images from [{0}] to [{1}] is not supported", (int) layout, (int) newLayout);
         }
 
         // Bind the pipeline barrier

@@ -94,7 +94,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ASSERT_ERROR_IF(!PhysicalDeviceSuitable(physicalDevices[0]), "The GPU of your machine is not supported");
 
         this->physicalDevice = physicalDevices[0];
-        ASSERT_SUCCESS("Vulkan is supported by your [SOME_PC_MODEL] running SOME_OS [Validation: " + std::to_string(VALIDATION_ENABLED) + " | CPU: SOME_CPU_MODEL | GPU: " + physicalDeviceProperties.deviceName + "]");
+        ASSERT_SUCCESS_FORMATTED("Vulkan is supported by your [SOME_PC_MODEL] running SOME_OS [Validation: {0} | CPU: SOME_CPU_MODEL | GPU: {1}]", VALIDATION_ENABLED, physicalDeviceProperties.deviceName);
 
         // Destroy temporary data
         vkDestroySurfaceKHR(VK::GetInstance(), exampleSurface, nullptr);
@@ -297,7 +297,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             if (!extensionFound)
             {
                 allExtensionsSupported = false;
-                ASSERT_WARNING("Device extension [" + String(requiredExtension) + "] not supported by your [" + String(VK::GetDevice()->GetPhysicalDeviceProperties().deviceName) + "] GPU");
+                ASSERT_WARNING_FORMATTED("Device extension [{0}] is not supported by your [{1}] GPU", requiredExtension, VK::GetDevice()->GetPhysicalDeviceProperties().deviceName);
             }
         }
 

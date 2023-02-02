@@ -48,12 +48,7 @@ namespace Sierra::Core::Rendering::UI
         io.ConfigFlags = createInfo.imGuiConfigFlags;
         io.ConfigDragClickToInputText = true;
 
-        if (VK::GetDevice()->GetBestColorImageFormat() == ImageFormat::R8G8B8A8_SRGB)
-        {
-            io.ConfigFlags |= ImGuiConfigFlags_IsSRGB;
-        }
-
-        if (createInfo.fontCreateInfos.size() > 0)
+        if (!createInfo.fontCreateInfos.empty())
         {
             // Load font file
             for (const auto &fontCreateInfo : createInfo.fontCreateInfos)
