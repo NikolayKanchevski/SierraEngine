@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <chrono>
 
 namespace Sierra::Engine::Classes
 {

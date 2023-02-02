@@ -4,9 +4,6 @@
 
 #pragma once
 
-#include <memory>
-#include <vulkan/vulkan.h>
-
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     class TimestampQuery
@@ -14,7 +11,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         TimestampQuery();
-        static std::unique_ptr<TimestampQuery> Create();
+        static UniquePtr<TimestampQuery> Create();
 
         /* --- SETTER METHODS --- */
         void Begin(VkCommandBuffer commandBuffer, VkPipelineStageFlagBits pipelineStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
@@ -28,16 +25,16 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         TimestampQuery &operator=(const TimestampQuery &) = delete;
 
     private:
-        uint32_t index;
-        uint64_t* buffer = new uint64_t[2];
+        uint index;
+        uint64* buffer = new uint64[2];
 
-        static inline const uint32_t UINT64_SIZE = sizeof(uint64_t);
+        static inline const uint UINT64_SIZE = sizeof(uint64);
 
     };
 
     struct QueryPoolCreateInfo
     {
-        uint32_t queryCount = 32;
+        uint queryCount = 32;
         VkQueryType queryType = VK_QUERY_TYPE_TIMESTAMP;
     };
 
@@ -46,7 +43,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         QueryPool(const QueryPoolCreateInfo &createInfo);
-        static std::unique_ptr<QueryPool> Create(QueryPoolCreateInfo createInfo);
+        static UniquePtr<QueryPool> Create(QueryPoolCreateInfo createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkQueryPool GetVulkanQueryPool() const { return vkQueryPool; }
@@ -59,7 +56,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     private:
         VkQueryPool vkQueryPool;
-        static inline uint32_t queryCount = 0;
+        static inline uint queryCount = 0;
 
     };
 

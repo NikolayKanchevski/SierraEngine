@@ -1,10 +1,13 @@
+# === PROJECT & CMAKE SETTINGS === #
 cmake_minimum_required(VERSION 3.20)
 project(SierraEngine)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(${PROJECT_NAME} main.cpp Core/Rendering/Window.cpp Core/Rendering/Window.h Engine/Classes/Stopwatch.cpp Engine/Classes/Stopwatch.h Core/Debugger.cpp Core/Debugger.h Core/Application/Application.cpp Core/Application/Application.h Engine/Classes/Time.cpp Engine/Classes/Time.h Engine/Classes/Cursor.cpp Engine/Classes/Cursor.h Engine/Classes/Input.cpp Engine/Classes/Input.h Core/Rendering/Vulkan/Abstractions/Buffer.cpp Core/Rendering/Vulkan/Abstractions/Buffer.h Core/Rendering/Vulkan/Abstractions/Descriptors.cpp Core/Rendering/Vulkan/Abstractions/Descriptors.h Core/Rendering/Vulkan/Abstractions/Framebuffer.cpp Core/Rendering/Vulkan/Abstractions/Framebuffer.h Core/Rendering/Vulkan/Abstractions/Image.cpp Core/Rendering/Vulkan/Abstractions/Image.h Core/Rendering/Vulkan/Abstractions/Sampler.cpp Core/Rendering/Vulkan/Abstractions/Sampler.h Core/Rendering/Vulkan/Abstractions/Texture.cpp Core/Rendering/Vulkan/Abstractions/Texture.h Engine/Classes/Math.cpp Engine/Classes/Math.h Engine/Classes/File.cpp Engine/Classes/File.h Core/Version.h Engine/Components/Lighting/DirectionalLight.h Engine/Components/Lighting/PointLight.h Core/World.cpp Core/World.h Engine/Components/Camera.cpp Engine/Components/Camera.h Engine/Classes/Mesh.cpp Engine/Classes/Mesh.h Engine/Components/Model.cpp Engine/Components/Model.h Engine/Structures/Vertex.h Engine/Structures/Material.h Engine/Classes/Entity.cpp Engine/Classes/Entity.h Engine/Components/InternalComponents.h Engine/Components/Component.h Core/Application/Application_UI.cpp Engine/Classes/Binary.cpp Engine/Classes/Binary.h Engine/Components/Lighting/Light.h Engine/Components/MeshRenderer.cpp Engine/Components/MeshRenderer.h Core/Rendering/Vulkan/Abstractions/OffscreenRenderer.cpp Core/Rendering/Vulkan/Abstractions/OffscreenRenderer.h Core/Rendering/Vulkan/Abstractions/Device.cpp Core/Rendering/Vulkan/Abstractions/Device.h Core/Rendering/Vulkan/Abstractions/RenderPass.cpp Core/Rendering/Vulkan/Abstractions/RenderPass.h Engine/Include.h Core/Rendering/Vulkan/VulkanTypes.h Core/Rendering/UI/ImGuiCore.cpp Core/Rendering/UI/ImGuiCore.h Core/Rendering/Vulkan/Abstractions/Shader.cpp Core/Rendering/Vulkan/Abstractions/Shader.h Core/Rendering/Vulkan/Abstractions/Pipeline.h Engine/Components/InternalComponents.cpp Core/Rendering/Vulkan/VK.cpp Core/Rendering/Vulkan/VK.h Core/Rendering/Vulkan/Abstractions/Swapchain.cpp Core/Rendering/Vulkan/Abstractions/Swapchain.h Core/EngineCore.cpp Core/EngineCore.h Core/Rendering/Vulkan/Abstractions/CommandBuffer.cpp Core/Rendering/Vulkan/Abstractions/CommandBuffer.h Core/Rendering/Vulkan/Abstractions/VulkanRenderer.cpp Core/Rendering/Vulkan/Abstractions/VulkanRenderer.h Core/Rendering/UI/ImGuiInstance.cpp Core/Rendering/UI/ImGuiInstance.h Core/Rendering/Vulkan/Renderers/MainVulkanRenderer.cpp Core/Rendering/Vulkan/Renderers/MainVulkanRenderer.h Core/Rendering/Vulkan/Abstractions/Queries.cpp Core/Rendering/Vulkan/Abstractions/Queries.h Engine/Classes/RNG.cpp Engine/Classes/RNG.h Core/Rendering/Vulkan/Abstractions/Cubemap.cpp Core/Rendering/Vulkan/Abstractions/Cubemap.h Core/Rendering/Math/MatrixUtilities.h)
+set(SOURCE_FILES main.cpp Core/Rendering/Window.cpp Core/Rendering/Window.h Engine/Classes/Stopwatch.cpp Engine/Classes/Stopwatch.h Core/Debugger.cpp Core/Debugger.h Core/Application/Application.cpp Core/Application/Application.h Engine/Classes/Time.cpp Engine/Classes/Time.h Engine/Classes/Cursor.cpp Engine/Classes/Cursor.h Engine/Classes/Input.cpp Engine/Classes/Input.h Core/Rendering/Vulkan/Abstractions/Buffer.cpp Core/Rendering/Vulkan/Abstractions/Buffer.h Core/Rendering/Vulkan/Abstractions/Descriptors.cpp Core/Rendering/Vulkan/Abstractions/Descriptors.h Core/Rendering/Vulkan/Abstractions/Framebuffer.cpp Core/Rendering/Vulkan/Abstractions/Framebuffer.h Core/Rendering/Vulkan/Abstractions/Image.cpp Core/Rendering/Vulkan/Abstractions/Image.h Core/Rendering/Vulkan/Abstractions/Sampler.cpp Core/Rendering/Vulkan/Abstractions/Sampler.h Core/Rendering/Vulkan/Abstractions/Texture.cpp Core/Rendering/Vulkan/Abstractions/Texture.h Engine/Classes/Math.cpp Engine/Classes/Math.h Engine/Classes/File.cpp Engine/Classes/File.h Core/Version.h Engine/Components/Lighting/DirectionalLight.h Engine/Components/Lighting/PointLight.h Core/World.cpp Core/World.h Engine/Components/Camera.cpp Engine/Components/Camera.h Engine/Classes/Mesh.cpp Engine/Classes/Mesh.h Engine/Components/Model.cpp Engine/Components/Model.h Engine/Structures/Vertex.h Engine/Structures/Material.h Engine/Classes/Entity.cpp Engine/Classes/Entity.h Engine/Components/Component.h Core/Application/Application_UI.cpp Engine/Classes/Binary.cpp Engine/Classes/Binary.h Engine/Components/Lighting/Light.h Engine/Components/MeshRenderer.cpp Engine/Components/MeshRenderer.h Core/Rendering/Vulkan/Abstractions/OffscreenRenderer.cpp Core/Rendering/Vulkan/Abstractions/OffscreenRenderer.h Core/Rendering/Vulkan/Abstractions/Device.cpp Core/Rendering/Vulkan/Abstractions/Device.h Core/Rendering/Vulkan/Abstractions/RenderPass.cpp Core/Rendering/Vulkan/Abstractions/RenderPass.h Engine/Include.h Core/Rendering/Vulkan/VulkanTypes.h Core/Rendering/UI/ImGuiCore.cpp Core/Rendering/UI/ImGuiCore.h Core/Rendering/Vulkan/Abstractions/Shader.cpp Core/Rendering/Vulkan/Abstractions/Shader.h Core/Rendering/Vulkan/Abstractions/Pipeline.h Core/Rendering/Vulkan/VK.cpp Core/Rendering/Vulkan/VK.h Core/Rendering/Vulkan/Abstractions/Swapchain.cpp Core/Rendering/Vulkan/Abstractions/Swapchain.h Core/EngineCore.cpp Core/EngineCore.h Core/Rendering/Vulkan/Abstractions/CommandBuffer.cpp Core/Rendering/Vulkan/Abstractions/CommandBuffer.h Core/Rendering/Vulkan/Abstractions/VulkanRenderer.cpp Core/Rendering/Vulkan/Abstractions/VulkanRenderer.h Core/Rendering/UI/ImGuiInstance.cpp Core/Rendering/UI/ImGuiInstance.h Core/Rendering/Vulkan/Renderers/MainVulkanRenderer.cpp Core/Rendering/Vulkan/Renderers/MainVulkanRenderer.h Core/Rendering/Vulkan/Abstractions/Queries.cpp Core/Rendering/Vulkan/Abstractions/Queries.h Engine/Classes/RNG.cpp Engine/Classes/RNG.h Core/Rendering/Vulkan/Abstractions/Cubemap.cpp Core/Rendering/Vulkan/Abstractions/Cubemap.h Core/Rendering/Math/MatrixUtilities.h Core/Rendering/UI/ImGuiUtilities.h Core/Rendering/UI/ImGuiUtilities.cpp Engine/Components/Transform.cpp Engine/Components/Transform.h Engine/Components/UUID.cpp Engine/Components/UUID.h Engine/Components/Tag.cpp Engine/Components/Tag.h Engine/Components/Relationship.cpp Engine/Components/Relationship.h Core/Internal/Types.h)
+add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
+# === COMPILER SETTINGS === #
 if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.12.25835)
     set(CMAKE_CXX20_STANDARD_COMPILE_OPTION "-std:c++latest")
     set(CMAKE_CXX20_EXTENSION_COMPILE_OPTION "-std:c++latest")
@@ -15,6 +18,8 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
 endif()
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+
+# === DEPENDENCIES LINKAGE === #
 
 # vcpkg install vulkan
 find_package(Vulkan REQUIRED)
@@ -32,7 +37,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glfw Vulkan::Vulkan)
 find_package(imgui CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE imgui::imgui)
 
-# --- IMGUIZMO
+# Imguizmo
 set(IMGUIZMO_DIR "${PROJECT_SOURCE_DIR}/Dependencies/ImGuizmo/include")
 set(IMGUIZMO_SOURCES "${IMGUIZMO_DIR}/ImGuizmo.cpp" "${IMGUIZMO_DIR}/ImGuizmo.h")
 target_sources(${PROJECT_NAME} PRIVATE ${IMGUIZMO_SOURCES})
@@ -52,8 +57,19 @@ target_link_libraries(${PROJECT_NAME} PRIVATE EnTT::EnTT)
 
 # vcpkg install tbb
 find_package(TBB CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE TBB::tbb TBB::tbbmalloc)
+if (APPLE)
+    target_link_libraries(${PROJECT_NAME} PRIVATE TBB::tbb TBB::tbbmalloc)
+else()
+    target_link_libraries(${PROJECT_NAME} PRIVATE TBB::tbb TBB::tbbmalloc_proxy)
+endif()
+
+# vcpkg install fmt
+find_package(fmt CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
 
 # vcpkg install vulkan-memory-allocator
 find_package(unofficial-vulkan-memory-allocator CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::vulkan-memory-allocator::vulkan-memory-allocator)
+
+# === PRECOMPILED HEADERS LINKAGE === #
+target_precompile_headers(${PROJECT_NAME} PUBLIC Core/Internal/PrecompiledHeaders.h)

@@ -4,10 +4,6 @@
 
 #pragma once
 
-#include <cstdint>
-#include <memory>
-#include <vector>
-
 #include "../Structures/Vertex.h"
 #include "../Structures/Material.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Buffer.h"
@@ -20,30 +16,30 @@ namespace Sierra::Engine::Classes
     {
         Material material;
 
-        uint32_t meshID;
-        uint32_t meshTexturesPresence; // Bools encoded as binary indicating whether texture types are bound
+        uint meshID;
+        uint meshTexturesPresence; // Bools encoded as binary indicating whether texture types are bound
     };
 
     class Mesh
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Mesh(std::vector<VertexP> &givenVertices, std::vector<uint32_t> &givenIndices);
-        Mesh(std::vector<VertexPNT> &givenVertices, std::vector<uint32_t> &givenIndices);
+        Mesh(std::vector<VertexP> &givenVertices, std::vector<uint> &givenIndices);
+        Mesh(std::vector<VertexPNT> &givenVertices, std::vector<uint> &givenIndices);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32_t GetVertexCount() const { return vertexCount; }
-        [[nodiscard]] inline uint32_t GetIndexCount() const { return indexCount; }
+        [[nodiscard]] inline uint GetVertexCount() const { return vertexCount; }
+        [[nodiscard]] inline uint GetIndexCount() const { return indexCount; }
 
-        [[nodiscard]] inline std::shared_ptr<Buffer> GetVertexBuffer() { return vertexBuffer; }
-        [[nodiscard]] inline std::shared_ptr<Buffer> GetIndexBuffer() { return indexBuffer; }
+        [[nodiscard]] inline SharedPtr<Buffer> GetVertexBuffer() { return vertexBuffer; }
+        [[nodiscard]] inline SharedPtr<Buffer> GetIndexBuffer() { return indexBuffer; }
 
-        [[nodiscard]] static inline uint32_t GetTotalMeshCount()  { return totalMeshCount; }
-        [[nodiscard]] static inline uint32_t GetTotalVertexCount() { return totalVertexCount; }
+        [[nodiscard]] static inline uint GetTotalMeshCount()  { return totalMeshCount; }
+        [[nodiscard]] static inline uint GetTotalVertexCount() { return totalVertexCount; }
 
         /* --- SETTER METHODS --- */
-        static inline void IncreaseTotalMeshCount(const uint32_t count = 1) { totalMeshCount += count; }
-        static inline void IncreaseTotalVertexCount(const uint32_t count) { totalVertexCount += count; }
+        static inline void IncreaseTotalMeshCount(const uint count = 1) { totalMeshCount += count; }
+        static inline void IncreaseTotalVertexCount(const uint count) { totalVertexCount += count; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();
@@ -51,18 +47,18 @@ namespace Sierra::Engine::Classes
         Mesh &operator=(const Mesh &) = delete;
 
     private:
-        uint32_t vertexCount;
-        uint32_t indexCount;
+        uint vertexCount;
+        uint indexCount;
 
-        std::shared_ptr<Buffer> vertexBuffer;
-        std::shared_ptr<Buffer> indexBuffer;
+        SharedPtr<Buffer> vertexBuffer;
+        SharedPtr<Buffer> indexBuffer;
 
         void CreateVertexBuffer(std::vector<VertexP> &givenVertices);
         void CreateVertexBuffer(std::vector<VertexPNT> &givenVertices);
-        void CreateIndexBuffer(std::vector<uint32_t> &givenIndices);
+        void CreateIndexBuffer(std::vector<uint> &givenIndices);
 
-        static inline uint32_t totalMeshCount;
-        static inline uint32_t totalVertexCount;
+        static inline uint totalMeshCount;
+        static inline uint totalVertexCount;
     };
 
 }

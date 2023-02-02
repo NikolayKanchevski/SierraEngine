@@ -11,9 +11,6 @@
 #include "../../../../Engine/Components/Lighting/DirectionalLight.h"
 #include "../Abstractions/Cubemap.h"
 
-#define OFFSCREEN_PIPELINE Pipeline<MeshPushConstant, UniformData, StorageData>
-#define SKYBOX_PIPELINE Pipeline<Abstractions::NullPushConstant, SkyboxUniformData, Abstractions::NullStorageBuffer>
-
 using namespace Sierra::Engine::Classes;
 using namespace Sierra::Engine::Components;
 
@@ -26,25 +23,25 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         struct UniformData
         {
             /* Vertex Uniform Data */
-            glm::mat4x4 view;
-            glm::mat4x4 projection;
+            Matrix4x4 view;
+            Matrix4x4 projection;
 
-            uint32_t directionalLightCount;
-            uint32_t pointLightCount;
+            uint directionalLightCount;
+            uint pointLightCount;
             float _align1_;
             float _align2_;
         };
 
         struct SkyboxUniformData
         {
-            glm::mat4x4 view;
-            glm::mat4x4 projection;
-            glm::mat4x4 model;
+            Matrix4x4 view;
+            Matrix4x4 projection;
+            Matrix4x4 model;
         };
 
         struct ObjectData
         {
-            glm::mat4x4 model;
+            Matrix4x4 model;
         };
 
         struct StorageData
@@ -54,10 +51,14 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             PointLight::ShaderPointLight pointLights[MAX_POINT_LIGHTS];
         };
 
+
+        typedef Pipeline<Abstractions::NullPushConstant, SkyboxUniformData, Abstractions::NullStorageBuffer> SKYBOX_PIPELINE;
+        typedef Pipeline<MeshPushConstant, UniformData, StorageData> OFFSCREEN_PIPELINE;
+
     public:
         /* --- CONSTRUCTORS --- */
         MainVulkanRenderer(const VulkanRendererCreateInfo &createInfo);
-        static std::unique_ptr<MainVulkanRenderer> Create(VulkanRendererCreateInfo createInfo);
+        static UniquePtr<MainVulkanRenderer> Create(VulkanRendererCreateInfo createInfo);
 
         /* --- POLLING METHODS --- */
         void Update() override;
@@ -68,7 +69,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         void SetSampling(const Sampling newSampling) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline std::unique_ptr<OFFSCREEN_PIPELINE>& GetScenePipeline() { return scenePipeline; }
+        [[nodiscard]] inline UniquePtr<OFFSCREEN_PIPELINE>& GetScenePipeline() { return scenePipeline; }
         [[nodiscard]] inline VkDescriptorSet GetRenderedTextureDescriptorSet() const { return offscreenImageDescriptorSets[swapchain->GetCurrentFrameIndex()]; }
 
         /* --- DESTRUCTOR --- */
@@ -84,17 +85,17 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         void CreateTimestampQueries();
         void CreateOffscreenDescriptorSets();
 
-        std::shared_ptr<DescriptorSetLayout> sceneDescriptorSetLayout;
-        std::unique_ptr<OffscreenRenderer> sceneOffscreenRenderer;
-        std::unique_ptr<OFFSCREEN_PIPELINE> scenePipeline;
+        SharedPtr<DescriptorSetLayout> sceneDescriptorSetLayout;
+        UniquePtr<OffscreenRenderer> sceneOffscreenRenderer;
+        UniquePtr<OFFSCREEN_PIPELINE> scenePipeline;
 
-        std::shared_ptr<DescriptorSetLayout> skyboxDescriptorSetLayout;
-        std::unique_ptr<Mesh> skyboxMesh;
-        std::unique_ptr<SKYBOX_PIPELINE> skyboxPipeline;
-        std::unique_ptr<Cubemap> skyboxCubemap;
+        SharedPtr<DescriptorSetLayout> skyboxDescriptorSetLayout;
+        UniquePtr<Mesh> skyboxMesh;
+        UniquePtr<SKYBOX_PIPELINE> skyboxPipeline;
+        UniquePtr<Cubemap> skyboxCubemap;
 
         std::vector<VkDescriptorSet> offscreenImageDescriptorSets;
-        std::vector<std::unique_ptr<TimestampQuery>> offscreenTimestampQueries;
+        std::vector<UniquePtr<TimestampQuery>> offscreenTimestampQueries;
 
     };
 

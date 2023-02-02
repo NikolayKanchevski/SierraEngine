@@ -19,7 +19,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VK::GetQueryPool()->queryCount += 2;
     }
 
-    std::unique_ptr<TimestampQuery> TimestampQuery::Create()
+    UniquePtr<TimestampQuery> TimestampQuery::Create()
     {
         return std::make_unique<TimestampQuery>();
     }
@@ -42,7 +42,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     float TimestampQuery::GetTimeTaken() const
     {
         // Get results from query
-        VkResult result = vkGetQueryPoolResults(VK::GetLogicalDevice(), VK::GetQueryPool()->GetVulkanQueryPool(), index, 2, UINT64_SIZE * 2, buffer, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT);
+        VkResult result = vkGetQueryPoolResults(VK::GetLogicalDevice(), VK::GetQueryPool()->GetVulkanQueryPool(), index, 2, UINT64_SIZE * 2, buffer, sizeof(uint64), VK_QUERY_RESULT_64_BIT);
 
         // Check for errors
         if (result == VK_NOT_READY)
@@ -75,7 +75,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
     }
 
-    std::unique_ptr<QueryPool> QueryPool::Create(QueryPoolCreateInfo createInfo)
+    UniquePtr<QueryPool> QueryPool::Create(QueryPoolCreateInfo createInfo)
     {
         return std::make_unique<QueryPool>(createInfo);
     }

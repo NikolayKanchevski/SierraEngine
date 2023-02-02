@@ -83,7 +83,7 @@ namespace ImZoomSlider
       const ImRect scrollBarRect(scrollBarA, scrollBarB);
       const float deltaScreen = io.MousePos[componentIndex] - scrollingSource;
       const float deltaView = ((higher - lower) / canvasSizeLength) * deltaScreen;
-      const uint32_t barColor = ImGui::GetColorU32((inScrollBar || movingScrollBar) ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg);
+      const uint barColor = ImGui::GetColorU32((inScrollBar || movingScrollBar) ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg);
       const float middleCoord = (scrollStart + scrollEnd) * 0.5f;
       const bool insideControl = canUseControl && ImRect(scrollBarMin, scrollBarMax).Contains(io.MousePos);
       const bool hasAnchors = !(flags & ImGuiZoomSliderFlags_NoAnchors);

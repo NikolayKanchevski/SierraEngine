@@ -15,7 +15,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     struct VulkanRendererCreateInfo
     {
-        std::unique_ptr<Window> &window;
+        UniquePtr<Window> &window;
         bool createImGuiInstance = false;
         bool createImGuizmoLayer = false;
     };
@@ -25,7 +25,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         VulkanRenderer(const VulkanRendererCreateInfo &createInfo);
-        static std::unique_ptr<VulkanRenderer> Create(VulkanRendererCreateInfo createInfo);
+        static UniquePtr<VulkanRenderer> Create(VulkanRendererCreateInfo createInfo);
 
         /* --- POLLING METHODS --- */
         void Prepare();
@@ -37,10 +37,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         inline virtual void SetSampling(const Sampling newSampling) { sampling = newSampling; };
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline std::unique_ptr<Window>& GetWindow() const { return window; }
+        [[nodiscard]] inline UniquePtr<Window>& GetWindow() const { return window; }
         [[nodiscard]] float GetTotalDrawTime() const { return totalDrawTime; }
-        [[nodiscard]] std::unique_ptr<ImGuiInstance>& GetImGuiInstance() { return imGuiInstance; }
-        [[nodiscard]] uint64_t GetTotalVerticesDrawn() const { return totalVerticesDrawn; }
+        [[nodiscard]] UniquePtr<ImGuiInstance>& GetImGuiInstance() { return imGuiInstance; }
+        [[nodiscard]] uint64 GetTotalVerticesDrawn() const { return totalVerticesDrawn; }
 
         /* --- DESTRUCTOR --- */
         virtual void Destroy();
@@ -48,16 +48,16 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VulkanRenderer &operator=(const VulkanRenderer &) = delete;
 
     protected:
-        std::unique_ptr<Window> &window;
-        std::unique_ptr<Swapchain> swapchain;
-        std::unique_ptr<ImGuiInstance> imGuiInstance = nullptr;
+        UniquePtr<Window> &window;
+        UniquePtr<Swapchain> swapchain;
+        UniquePtr<ImGuiInstance> imGuiInstance = nullptr;
 
-        Sampling sampling = MSAAx1;
-        ShadingType shadingType = SHADE_FILL;
-        uint32_t maxConcurrentFrames;
+        Sampling sampling = Sampling::MSAAx1;
+        ShadingType shadingType = ShadingType::FILL;
+        uint maxConcurrentFrames;
 
         float totalDrawTime = 0.0f;
-        uint64_t totalVerticesDrawn = 0;
+        uint64 totalVerticesDrawn = 0;
 
     private:
         bool prepared = false;

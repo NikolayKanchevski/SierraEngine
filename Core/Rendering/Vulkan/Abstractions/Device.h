@@ -4,10 +4,6 @@
 
 #pragma once
 
-#include <vector>
-#include <memory>
-#include <vulkan/vulkan.h>
-
 #include "../VulkanTypes.h"
 
 #define VALIDATION_ENABLED DEBUG
@@ -25,7 +21,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         Device(DeviceCreateInfo &deviceCreateInfo);
-        static std::unique_ptr<Device> Create(DeviceCreateInfo createInfo);
+        static UniquePtr<Device> Create(DeviceCreateInfo createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline bool GetDescriptorIndexingSupported() const
@@ -48,8 +44,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         [[nodiscard]] Sampling GetHighestMultisampling() const { return highestMultisampling; }
 
-        [[nodiscard]] uint32_t GetGraphicsQueueFamily() const { return queueFamilyIndices.graphicsFamily; }
-        [[nodiscard]] uint32_t GetPresentationQueueFamily() const { return queueFamilyIndices.presentationFamily; }
+        [[nodiscard]] uint GetGraphicsQueueFamily() const { return queueFamilyIndices.graphicsFamily; }
+        [[nodiscard]] uint GetPresentationQueueFamily() const { return queueFamilyIndices.presentationFamily; }
 
         [[nodiscard]] VkQueue GetGraphicsQueue() const { return graphicsQueue; }
         [[nodiscard]] VkQueue GetPresentationQueue() const { return presentationQueue; }

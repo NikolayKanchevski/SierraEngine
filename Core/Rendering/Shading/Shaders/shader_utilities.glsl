@@ -74,58 +74,44 @@ bool IsBitSet(uint binaryValue, uint bitIndex)
 
 vec3 CalculateDirectionalLight(DirectionalLight directionalLight, vec3 fragmentPosition, vec3 normal, vec3 viewDirection, vec3 textureColor, float specularColor, Material material)
 {
-        // Calculate required directions
-        const vec3 halfwayDirection = normalize(directionalLight.direction + normalize(viewDirection - fragmentPosition));
+    // Calculate required directions
+    const vec3 halfwayDirection = normalize(directionalLight.direction + normalize(viewDirection - fragmentPosition));
 
-        // Calculate diffuse and base specular values
-        const float diffuseStrength = max(dot(normal, directionalLight.direction), 0.0);
-        const float specularStrength = pow(max(dot(normal, halfwayDirection), 0.0), max(material.shininess * 512.f, 1.0f));
+    // Calculate diffuse and base specular values
+    const float diffuseStrength = max(dot(normal, directionalLight.direction), 0.0);
+    const float specularStrength = pow(max(dot(normal, halfwayDirection), 0.0), max(material.shininess * 512.f, 1.0f));
 
-        // Calculate light components
-        vec3 ambient = material.ambient * textureColor;
-        vec3 diffuse = diffuseStrength * directionalLight.intensity * directionalLight.color * material.diffuse * textureColor;
-        vec3 specular = 0.3f * specularStrength * directionalLight.intensity * directionalLight.color * material.specular * specularColor;
+    // Calculate light components
+    vec3 ambient = material.ambient * textureColor;
+    vec3 diffuse = diffuseStrength * directionalLight.intensity * directionalLight.color * material.diffuse * textureColor;
+    vec3 specular = specularStrength * directionalLight.color * material.specular * specularColor;
 
-        return ambient + diffuse + specular;
-
-
-//        const vec3 reflectionDirection = reflect(directionalLight.direction, normal);
-//
-//        // Calculate diffuse and base specular values
-//        const float diffuseStrength = max(dot(normal, directionalLight.direction), 0.0);
-//        const float specularStrength = pow(max(dot(viewDirection, reflectionDirection), 0.0), max(material.shininess * 512, 1.0));
-//
-//        // Calculate final light components
-//        const vec3 ambient = material.ambient * textureColor;
-//        const vec3 diffuse = material.diffuse * textureColor * diffuseStrength * directionalLight.color * directionalLight.intensity;
-//        const vec3 specular = material.specular * specularColor * specularStrength * directionalLight.color * directionalLight.intensity;
-//
-//        return ambient + diffuse + specular;
+    return ambient + diffuse + specular;
 }
 
 vec3 CalculatePointLight(PointLight pointLight, vec3 fragmentPosition, vec3 normal, vec3 viewDirection, vec3 textureColor, float specularColor, Material material)
 {
-        // Calculate required directions
-        const vec3 lightDirection = normalize(pointLight.position - fragmentPosition);
-        const vec3 halfwayDirection = normalize(lightDirection + normalize(viewDirection - fragmentPosition));
+    // Calculate required directions
+    const vec3 lightDirection = normalize(pointLight.position - fragmentPosition);
+    const vec3 halfwayDirection = normalize(lightDirection + normalize(viewDirection - fragmentPosition));
 
-        // Calculate diffuse and base specular values
-        const float diffuseStrength = max(dot(normal, lightDirection), 0.0);
-        const float specularStrength = pow(max(dot(normal, halfwayDirection), 0.0), max(material.shininess * 512.f, 1.0f));
+    // Calculate diffuse and base specular values
+    const float diffuseStrength = max(dot(normal, lightDirection), 0.0);
+    const float specularStrength = pow(max(dot(normal, halfwayDirection), 0.0), max(material.shininess * 512.f, 1.0f));
 
-        // Calculate light components
-        vec3 ambient = material.ambient * textureColor;
-        vec3 diffuse = diffuseStrength * pointLight.intensity * pointLight.color * material.diffuse * textureColor;
-        vec3 specular = 0.3f * specularStrength * pointLight.intensity * pointLight.color * material.specular * specularColor;
+    // Calculate light components
+    vec3 ambient = material.ambient * textureColor;
+    vec3 diffuse = diffuseStrength * pointLight.intensity * pointLight.color * material.diffuse * textureColor;
+    vec3 specular =specularStrength * pointLight.color * material.specular * specularColor;
 
-        // Calculate attenuation
-        const float distance = length(pointLight.position - fragmentPosition);
-        const float attenuation = 1.0 / (1.0f + pointLight.linear * distance + pointLight.quadratic * (distance * distance));
+    // Calculate attenuation
+    const float distance = length(pointLight.position - fragmentPosition);
+    const float attenuation = 1.0 / (1.0f + pointLight.linear * distance + pointLight.quadratic * (distance * distance));
 
-        // Apply attenuation
-        ambient  *= attenuation;
-        diffuse  *= attenuation;
-        specular *= attenuation;
+    // Apply attenuation
+    ambient  *= attenuation;
+    diffuse  *= attenuation;
+    specular *= attenuation;
 
-        return ambient + diffuse + specular;
+    return ambient + diffuse + specular;
 }

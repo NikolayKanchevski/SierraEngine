@@ -4,9 +4,6 @@
 
 #include "Texture.h"
 
-#include <imgui.h>
-#include <glm/glm.hpp>
-#include <imgui_impl_vulkan.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -17,7 +14,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     /* --- CONSTRUCTORS --- */
 
-    Texture::Texture(stbi_uc *stbImage, const uint32_t width, const uint32_t height, const uint32_t givenColorChannelsCount, const TextureCreateInfo& textureCreateInfo)
+    Texture::Texture(stbi_uc *stbImage, const uint width, const uint height, const uint givenColorChannelsCount, const TextureCreateInfo& textureCreateInfo)
         : name(textureCreateInfo.name), filePath(textureCreateInfo.filePath), textureType(textureCreateInfo.textureType), mipMappingEnabled(textureCreateInfo.mipMappingEnabled), colorChannelsCount(givenColorChannelsCount)
     {
         // Create sampler
@@ -29,8 +26,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create the staging buffer
         auto stagingBuffer = Buffer::Create({
             .memorySize = memorySize,
-            .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
-            .bufferUsage = TRANSFER_SRC_BUFFER
+            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+            .bufferUsage = BufferUsage::TRANSFER_SRC
         });
 
         // Copy the image data to the staging buffer
@@ -38,18 +35,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         stbi_image_free(stbImage);
 
         // Configure the color format
-        ImageFormat textureImageFormat = FORMAT_R8G8B8A8_SRGB;
+        ImageFormat textureImageFormat = ImageFormat::R8G8B8A8_SRGB;
 
         // Create the texture image
         this->image = Image::Create({
             .dimensions = { width, height, 1 },
             .format = textureImageFormat,
-            .usageFlags = TRANSFER_SRC_IMAGE | TRANSFER_DST_IMAGE | SAMPLED_IMAGE,
-            .memoryFlags = MEMORY_FLAGS_DEVICE_LOCAL
+            .usageFlags = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
+            .memoryFlags = MemoryFlags::DEVICE_LOCAL
         });
 
         // Transition the layout of the image, so it can be used for copying
-        image->TransitionLayout(LAYOUT_TRANSFER_DST_OPTIMAL);
+        image->TransitionLayout(ImageLayout::TRANSFER_DST_OPTIMAL);
 
         // Copy the image to the staging buffer
         stagingBuffer->CopyImage(*image);
@@ -61,13 +58,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         if (mipMappingEnabled) GenerateMipMaps();
 
         // NOTE: Transitioning to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL is not required as it is automatically done during the mip map generation
-        else image->TransitionLayout(LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        else image->TransitionLayout(ImageLayout::SHADER_READ_ONLY_OPTIMAL);
 
         // Create the image view using the proper image format
-        image->CreateImageView(ASPECT_COLOR);
+        image->CreateImageView(ImageAspectFlags::COLOR);
     }
 
-    std::shared_ptr<Texture> Texture::Create(TextureCreateInfo textureCreateInfo, const bool setDefaultTexture)
+    SharedPtr<Texture> Texture::Create(TextureCreateInfo textureCreateInfo, const bool setDefaultTexture)
     {
         // Check if the texture file has already been loaded to texture
         if (texturePool.count(textureCreateInfo.filePath) != 0)
@@ -118,7 +115,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             return;
         }
 
-        mipMapLevels = static_cast<uint32_t>(glm::floor(std::log2(glm::max(GetWidth(), GetHeight())) + 1));
+        mipMapLevels = static_cast<uint>(glm::floor(std::log2(glm::max(GetWidth(), GetHeight())) + 1));
 
         // Get the properties of the image's format
         VkFormatProperties formatProperties;
@@ -145,7 +142,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         int mipHeight = GetHeight();
 
         // For each mip level resize the image
-        for (uint32_t i = 1; i < mipMapLevels; i++)
+        for (uint i = 1; i < mipMapLevels; i++)
         {
             memoryBarrier.subresourceRange.baseMipLevel = i - 1;
             memoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -220,8 +217,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VK::GetDevice()->EndSingleTimeCommands(commandBuffer);
     }
 
-    /* --- SETTER METHODS --- */
-
     void Texture::Dispose()
     {
         // Remove texture from pool
@@ -240,20 +235,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         texturePool.clear();
     }
 
-    void Texture::DrawToImGui()
-    {
-        // Create ImGui descriptor set if not created
-        if (!imGuiDescriptorSetCreated)
-        {
-            imGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(sampler->GetVulkanSampler(), image->GetVulkanImageView(), (VkImageLayout) image->GetLayout());
-            imGuiDescriptorSetCreated = true;
-        }
-
-        // Draw texture image to ImGui
-        ImGui::Image((ImTextureID) imGuiDescriptorSet, { (float) GetWidth() / 10, (float) GetHeight() / 10 });
-    }
-
-
     void Texture::DestroyDefaultTextures()
     {
         for (const auto &texture : texturePool)
@@ -262,7 +243,22 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
     }
 
+    /* --- GETTER METHODS --- */
+
+    ImTextureID Texture::GetImGuiTextureID()
+    {
+        // Create ImGui descriptor set if not created
+        if (!imGuiDescriptorSetCreated)
+        {
+            imGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(sampler->GetVulkanSampler(), image->GetVulkanImageView(), (VkImageLayout) image->GetLayout());
+            imGuiDescriptorSetCreated = true;
+        }
+
+        return (ImTextureID) imGuiDescriptorSet;
+    }
+
     /* --- DESTRUCTOR --- */
+
     void Texture::Destroy()
     {
         image->Destroy();

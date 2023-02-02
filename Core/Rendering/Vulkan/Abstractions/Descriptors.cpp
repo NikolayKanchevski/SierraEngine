@@ -5,7 +5,6 @@
 
 #include "Descriptors.h"
 
-#include <memory>
 
 #include "Texture.h"
 #include "../VK.h"
@@ -17,7 +16,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    DescriptorSetLayout::DescriptorSetLayout(const std::unordered_map<uint32_t, DescriptorSetLayoutBinding>& givenBindings)
+    DescriptorSetLayout::DescriptorSetLayout(const std::unordered_map<uint, DescriptorSetLayoutBinding>& givenBindings)
             : bindings(givenBindings)
     {
         // Create a pointer to layout binding array
@@ -26,7 +25,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         auto* bindingFlags = new VkDescriptorBindingFlags[bindings.size()];
 
         // Foreach pair in the provided tuple retrieve the created set layout binding
-        uint32_t i = 0;
+        uint i = 0;
         for (const auto pair : givenBindings)
         {
             layoutBindings[i] = pair.second.bindingInfo;
@@ -38,7 +37,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Set up the layout creation info
         VkDescriptorSetLayoutCreateInfo layoutCreateInfo{};
         layoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        layoutCreateInfo.bindingCount = static_cast<uint32_t>(givenBindings.size());
+        layoutCreateInfo.bindingCount = static_cast<uint>(givenBindings.size());
         layoutCreateInfo.pBindings = layoutBindings;
 
         VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsCreateInfo{};
@@ -57,7 +56,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
     }
 
-    std::shared_ptr<DescriptorSetLayout> DescriptorSetLayout::Builder::Build() const
+    SharedPtr<DescriptorSetLayout> DescriptorSetLayout::Builder::Build() const
     {
         // Create the descriptor set layout
         return std::make_shared<DescriptorSetLayout>(this->bindings);
@@ -65,7 +64,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- SETTER METHODS --- */
 
-    DescriptorSetLayout::Builder &DescriptorSetLayout::Builder::AddBinding(const uint32_t binding, const VkDescriptorType descriptorType, const VkDescriptorBindingFlags bindingFlags, const uint32_t arraySize, const VkSampler *immutableSamplers)
+    DescriptorSetLayout::Builder &DescriptorSetLayout::Builder::AddBinding(const uint binding, const VkDescriptorType descriptorType, const VkDescriptorBindingFlags bindingFlags, const uint arraySize, const VkSampler *immutableSamplers)
     {
         ASSERT_ERROR_IF(this->shaderStages == -1, "No shader stages specified for descriptor set layout");
 
@@ -117,14 +116,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return *this;
     }
 
-    DescriptorPool::Builder &DescriptorPool::Builder::SetMaxSets(const uint32_t givenMaxSets)
+    DescriptorPool::Builder &DescriptorPool::Builder::SetMaxSets(const uint givenMaxSets)
     {
         // Set the max set value
         this->maxSets = givenMaxSets;
         return *this;
     }
 
-    void DescriptorPool::AllocateDescriptorSet(const std::shared_ptr<DescriptorSetLayout> &descriptorSetLayout, VkDescriptorSet &descriptorSet)
+    void DescriptorPool::AllocateDescriptorSet(const SharedPtr<DescriptorSetLayout> &descriptorSetLayout, VkDescriptorSet &descriptorSet)
     {
         auto vkDescriptorSetLayout = descriptorSetLayout->GetVulkanDescriptorSetLayout();
 
@@ -142,13 +141,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
     }
 
-    void DescriptorPool::AllocateBindlessDescriptorSet(const std::vector<uint32_t> &bindings, const std::shared_ptr<DescriptorSetLayout> &descriptorSetLayout, VkDescriptorSet &descriptorSet)
+    void DescriptorPool::AllocateBindlessDescriptorSet(const std::vector<uint> &bindings, const SharedPtr<DescriptorSetLayout> &descriptorSetLayout, VkDescriptorSet &descriptorSet)
     {
         VkDescriptorSetVariableDescriptorCountAllocateInfo variableDescriptorCountAllocateInfo{};
         variableDescriptorCountAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO;
 
-        uint32_t* descriptorCounts = new uint32_t[bindings.size()];
-        for (uint32_t i = bindings.size(); i--;)
+        uint* descriptorCounts = new uint[bindings.size()];
+        for (uint i = bindings.size(); i--;)
         {
             descriptorCounts[i] = descriptorSetLayout->bindings[bindings[i]].arraySize;
         }
@@ -176,18 +175,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    std::unique_ptr<DescriptorPool> DescriptorPool::Builder::Build()
+    UniquePtr<DescriptorPool> DescriptorPool::Builder::Build()
     {
         // Create the descriptor pool
         return std::make_unique<DescriptorPool>(this->maxSets, this->poolCreateFlags, this->poolSizes);
     }
 
-    DescriptorPool::DescriptorPool(uint32_t givenMaxSets, VkDescriptorPoolCreateFlags givenPoolCreateFlags, std::vector<VkDescriptorPoolSize> givenPoolSizes)
+    DescriptorPool::DescriptorPool(uint givenMaxSets, VkDescriptorPoolCreateFlags givenPoolCreateFlags, std::vector<VkDescriptorPoolSize> givenPoolSizes)
     {
         // Set up the descriptor pool creation info
         VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
         descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        descriptorPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(givenPoolSizes.size());
+        descriptorPoolCreateInfo.poolSizeCount = static_cast<uint>(givenPoolSizes.size());
         descriptorPoolCreateInfo.maxSets = givenMaxSets;
         descriptorPoolCreateInfo.flags = givenPoolCreateFlags;
         descriptorPoolCreateInfo.pPoolSizes = givenPoolSizes.data();
@@ -211,21 +210,21 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    DescriptorSet::DescriptorSet(std::shared_ptr<DescriptorSetLayout> &descriptorSetLayout)
+    DescriptorSet::DescriptorSet(SharedPtr<DescriptorSetLayout> &descriptorSetLayout)
         : descriptorSetLayout(descriptorSetLayout)
     {
         // Create descriptor set to pool
         VK::GetDescriptorPool()->AllocateDescriptorSet(descriptorSetLayout, this->vkDescriptorSet);
     }
 
-    std::unique_ptr<DescriptorSet> DescriptorSet::Build(std::shared_ptr<DescriptorSetLayout> &givenDescriptorSetLayout)
+    UniquePtr<DescriptorSet> DescriptorSet::Build(SharedPtr<DescriptorSetLayout> &givenDescriptorSetLayout)
     {
         return std::make_unique<DescriptorSet>(givenDescriptorSetLayout);
     }
 
     /* --- SETTER METHODS --- */
 
-    void DescriptorSet::WriteBuffer(const uint32_t binding, const std::unique_ptr<Buffer> &buffer)
+    void DescriptorSet::WriteBuffer(const uint binding, const UniquePtr<Buffer> &buffer)
     {
         // Check if the current binding is not available
         ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
@@ -253,7 +252,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         writeDescriptorSets[binding] = writeDescriptor;
     }
 
-    void DescriptorSet::WriteImage(const uint32_t binding, const VkDescriptorImageInfo *imageInfo)
+    void DescriptorSet::WriteImage(const uint binding, const VkDescriptorImageInfo *imageInfo)
     {
         // Check if the current binding is not available
         ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
@@ -275,7 +274,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         writeDescriptorSets[binding] = writeDescriptor;
     }
 
-    void DescriptorSet::WriteTexture(const uint32_t binding, const std::shared_ptr<Texture> &texture)
+    void DescriptorSet::WriteTexture(const uint binding, const SharedPtr<Texture> &texture)
     {
         VkDescriptorImageInfo imageInfo{};
         imageInfo.sampler = texture->GetVulkanSampler();
@@ -286,7 +285,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         WriteImage(binding, &descriptorImageInfos[binding]);
     }
 
-    void DescriptorSet::WriteCubemap(const uint32_t binding, const std::unique_ptr<Cubemap> &cubemap)
+    void DescriptorSet::WriteCubemap(const uint binding, const UniquePtr<Cubemap> &cubemap)
     {
         VkDescriptorImageInfo imageInfo{};
         imageInfo.sampler = cubemap->GetSampler()->GetVulkanSampler();
@@ -323,7 +322,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    BindlessDescriptorSet::BindlessDescriptorSet(const std::vector<uint32_t> &givenBindings, std::shared_ptr<DescriptorSetLayout> &descriptorSetLayout)
+    BindlessDescriptorSet::BindlessDescriptorSet(const std::vector<uint> &givenBindings, SharedPtr<DescriptorSetLayout> &descriptorSetLayout)
         : boundBindings(givenBindings), descriptorSetLayout(descriptorSetLayout)
     {
         // Check if the current binding is not available
@@ -336,14 +335,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VK::GetDescriptorPool()->AllocateBindlessDescriptorSet(givenBindings, descriptorSetLayout, this->vkDescriptorSet);
     }
 
-    std::shared_ptr<BindlessDescriptorSet> BindlessDescriptorSet::Build(const std::vector<uint32_t> &givenBindings, std::shared_ptr<DescriptorSetLayout> &givenDescriptorSetLayout)
+    SharedPtr<BindlessDescriptorSet> BindlessDescriptorSet::Build(const std::vector<uint> &givenBindings, SharedPtr<DescriptorSetLayout> &givenDescriptorSetLayout)
     {
         return std::make_shared<BindlessDescriptorSet>(givenBindings, givenDescriptorSetLayout);
     }
 
     /* --- GETTER METHODS --- */
 
-    bool BindlessDescriptorSet::IsBindingConfigured(const uint32_t binding) const
+    bool BindlessDescriptorSet::IsBindingConfigured(const uint binding) const
     {
         bool bindingContained = false;
         for (const auto &boundBinding : boundBindings)
@@ -358,11 +357,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return bindingContained;
     }
 
-    uint32_t BindlessDescriptorSet::GetFirstFreeIndex(const uint32_t binding) const
+    uint BindlessDescriptorSet::GetFirstFreeIndex(const uint binding) const
     {
         ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
 
-        for (uint32_t i = 0; i < descriptorSetLayout->bindings[binding].arraySize; i++)
+        for (uint i = 0; i < descriptorSetLayout->bindings[binding].arraySize; i++)
         {
             if (!IsIndexAllocated(binding, i))
             {
@@ -374,14 +373,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return 0;
     }
 
-    bool BindlessDescriptorSet::IsIndexAllocated(const uint32_t binding, const uint32_t arrayIndex) const
+    bool BindlessDescriptorSet::IsIndexAllocated(const uint binding, const uint arrayIndex) const
     {
         return descriptorInfos.find(binding) != descriptorInfos.end() && descriptorInfos.at(binding).find(arrayIndex) != descriptorInfos.at(binding).end() && descriptorInfos.at(binding).at(arrayIndex).allocatedOrReserved;
     }
 
     /* --- SETTER METHODS --- */
 
-    void BindlessDescriptorSet::FreeIndex(const uint32_t binding, const uint32_t arrayIndex, const bool reallocate)
+    void BindlessDescriptorSet::FreeIndex(const uint binding, const uint arrayIndex, const bool reallocate)
     {
         ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
 
@@ -401,7 +400,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
     }
 
-    uint32_t BindlessDescriptorSet::ReserveIndex(const uint32_t binding, int arrayIndex)
+    uint BindlessDescriptorSet::ReserveIndex(const uint binding, int arrayIndex)
     {
         ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
 
@@ -425,7 +424,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return arrayIndex;
     }
 
-    uint32_t BindlessDescriptorSet::WriteBuffer(const uint32_t binding, const std::unique_ptr<Buffer> &buffer, const bool overwrite, int arrayIndex)
+    uint BindlessDescriptorSet::WriteBuffer(const uint binding, const UniquePtr<Buffer> &buffer, const bool overwrite, int arrayIndex)
     {
         ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
 
@@ -467,7 +466,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return arrayIndex;
     }
 
-    uint32_t BindlessDescriptorSet::WriteImage(const uint32_t binding, const VkDescriptorImageInfo *imageInfo, const bool overwrite, int arrayIndex)
+    uint BindlessDescriptorSet::WriteImage(const uint binding, const VkDescriptorImageInfo *imageInfo, const bool overwrite, int arrayIndex)
     {
         ASSERT_ERROR_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [" + std::to_string(binding) + "]");
 
@@ -503,7 +502,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return arrayIndex;
     }
 
-    uint32_t BindlessDescriptorSet::WriteTexture(const uint32_t binding, const std::shared_ptr<Texture> &texture, const bool overwrite, int arrayIndex)
+    uint BindlessDescriptorSet::WriteTexture(const uint binding, const SharedPtr<Texture> &texture, const bool overwrite, int arrayIndex)
     {
         VkDescriptorImageInfo imageInfo{};
         imageInfo.sampler = texture->GetVulkanSampler();

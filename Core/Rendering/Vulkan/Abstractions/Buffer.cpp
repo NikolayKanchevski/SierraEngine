@@ -25,7 +25,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VmaAllocationCreateInfo allocationCreateInfo{};
         allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
         allocationCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
-        allocationCreateInfo.memoryTypeBits = std::numeric_limits<uint32_t>::max();
+        allocationCreateInfo.memoryTypeBits = std::numeric_limits<uint>::max();
         allocationCreateInfo.priority = 0.5f;
 
         // Create and allocate buffer
@@ -35,12 +35,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
     }
 
-    std::unique_ptr<Buffer> Buffer::Create(const BufferCreateInfo bufferCreateInfo)
+    UniquePtr<Buffer> Buffer::Create(const BufferCreateInfo bufferCreateInfo)
     {
         return std::make_unique<Buffer>(bufferCreateInfo);
     }
 
-    std::shared_ptr<Buffer> Buffer::CreateShared(const BufferCreateInfo bufferCreateInfo)
+    SharedPtr<Buffer> Buffer::CreateShared(const BufferCreateInfo bufferCreateInfo)
     {
         return std::make_shared<Buffer>(bufferCreateInfo);
     }
@@ -79,9 +79,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         copyRegion.imageOffset.x = 0;
         copyRegion.imageOffset.y = 0;
         copyRegion.imageOffset.z = 0;
-        copyRegion.imageExtent.width = static_cast<uint32_t>(givenImage.GetWidth());
-        copyRegion.imageExtent.height = static_cast<uint32_t>(givenImage.GetHeight());
-        copyRegion.imageExtent.depth = static_cast<uint32_t>(givenImage.GetDepth());
+        copyRegion.imageExtent.width = static_cast<uint>(givenImage.GetWidth());
+        copyRegion.imageExtent.height = static_cast<uint>(givenImage.GetHeight());
+        copyRegion.imageExtent.depth = static_cast<uint>(givenImage.GetDepth());
 
         // Copy the image to the buffer
         vkCmdCopyBufferToImage(commandBuffer, this->vkBuffer, givenImage.GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);

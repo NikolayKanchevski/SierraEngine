@@ -4,11 +4,6 @@
 
 #pragma once
 
-#include <string>
-#include <memory>
-#include <vector>
-#include <unordered_map>
-#include <vulkan/vulkan.h>
 #include "../VulkanTypes.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
@@ -16,7 +11,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     struct ShaderCreateInfo
     {
-        std::string filePath;
+        String filePath;
         ShaderType shaderType;
 
         const char* entryPoint = "main";
@@ -27,7 +22,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         Shader(const ShaderCreateInfo &createInfo);
-        static std::shared_ptr<Shader> Create(ShaderCreateInfo createInfo);
+        static SharedPtr<Shader> Create(ShaderCreateInfo createInfo);
 
         /* --- SETTER METHODS --- */
         void Dispose();
@@ -45,7 +40,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Shader &operator=(const Shader &) = delete;
 
     private:
-        std::string filePath = "";
+        String filePath = "";
         ShaderType shaderType;
 
         std::vector<char> shaderCode;
@@ -54,7 +49,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkPipelineShaderStageCreateInfo shaderStageCreateInfo{};
 
         // filePath | Shader object
-        inline static std::unordered_map<std::string, std::shared_ptr<Shader>> shaderPool;
+        inline static std::unordered_map<String, SharedPtr<Shader>> shaderPool;
 
     };
 

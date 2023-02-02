@@ -4,9 +4,6 @@
 
 #include "VK.h"
 
-#include <GLFW/glfw3.h>
-#include <imgui_impl_vulkan.h>
-
 #define VMA_IMPLEMENTATION
 #define VMA_STATS_STRING_ENABLED 0
 #define VMA_STATIC_VULKAN_FUNCTIONS 0
@@ -17,6 +14,7 @@
 #include "Abstractions/Texture.h"
 
 #define VK_VERSION VK_API_VERSION_1_1
+#define MAX_IMGUI_DESCRIPTOR_COUNT 2000
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -39,7 +37,9 @@ namespace Sierra::Core::Rendering::Vulkan
 
         m_Instance.CreateCommandPool();
         m_Instance.CreateQueryPool();
+
         m_Instance.CreateDescriptorPool();
+        m_Instance.CreateImGuiDescriptorPool();
 
         m_Instance.CreateDefaultTextures();
     }
@@ -61,7 +61,7 @@ namespace Sierra::Core::Rendering::Vulkan
         applicationInfo.apiVersion = VK_VERSION;
 
         // Get GLFW extensions
-        uint32_t glfwExtensionCount;
+        uint glfwExtensionCount;
         auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
         std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
@@ -77,7 +77,7 @@ namespace Sierra::Core::Rendering::Vulkan
         VkInstanceCreateInfo instanceCreateInfo{};
         instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         instanceCreateInfo.pApplicationInfo = &applicationInfo;
-        instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+        instanceCreateInfo.enabledExtensionCount = static_cast<uint>(extensions.size());
         instanceCreateInfo.ppEnabledExtensionNames = extensions.data();
         instanceCreateInfo.enabledLayerCount = 0;
         instanceCreateInfo.pNext = nullptr;
@@ -95,7 +95,7 @@ namespace Sierra::Core::Rendering::Vulkan
             debugMessengerCreateInfo->pUserData = nullptr;
 
             // Set m_Instance to use the debug messenger
-            instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+            instanceCreateInfo.enabledLayerCount = static_cast<uint>(validationLayers.size());
             instanceCreateInfo.ppEnabledLayerNames = validationLayers.data();
             instanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) debugMessengerCreateInfo;
         #endif
@@ -174,6 +174,39 @@ namespace Sierra::Core::Rendering::Vulkan
         .Build();
     }
 
+    void VK::CreateImGuiDescriptorPool()
+    {
+        // Set up example pool sizes
+        std::vector<VkDescriptorPoolSize> poolSizes =
+        {
+            { VK_DESCRIPTOR_TYPE_SAMPLER,                MAX_IMGUI_DESCRIPTOR_COUNT },
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_IMGUI_DESCRIPTOR_COUNT },
+            { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,          MAX_IMGUI_DESCRIPTOR_COUNT },
+            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          MAX_IMGUI_DESCRIPTOR_COUNT },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,   MAX_IMGUI_DESCRIPTOR_COUNT },
+            { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,   MAX_IMGUI_DESCRIPTOR_COUNT },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         MAX_IMGUI_DESCRIPTOR_COUNT },
+            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         MAX_IMGUI_DESCRIPTOR_COUNT },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, MAX_IMGUI_DESCRIPTOR_COUNT },
+            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, MAX_IMGUI_DESCRIPTOR_COUNT },
+            { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,       MAX_IMGUI_DESCRIPTOR_COUNT }
+        };
+
+        // Set up descriptor pool creation info
+        VkDescriptorPoolCreateInfo imGuiDescriptorPoolCreateInfo{};
+        imGuiDescriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        imGuiDescriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+        imGuiDescriptorPoolCreateInfo.maxSets = MAX_IMGUI_DESCRIPTOR_COUNT;
+        imGuiDescriptorPoolCreateInfo.poolSizeCount = poolSizes.size();
+        imGuiDescriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
+
+        // Create descriptor pool
+        VK_ASSERT(
+            vkCreateDescriptorPool(VK::GetDevice()->GetLogicalDevice(), &imGuiDescriptorPoolCreateInfo, nullptr, &imGuiDescriptorPool),
+            "Could not create ImGui descriptor pool"
+        );
+    }
+
     void VK::CreateDefaultTextures()
     {
         // Create default diffuse texture
@@ -206,8 +239,9 @@ namespace Sierra::Core::Rendering::Vulkan
 
         ImGui_ImplVulkan_Shutdown();
 
-        m_Instance.descriptorPool->Destroy();
+        vkDestroyDescriptorPool(m_Instance.GetLogicalDevice(), m_Instance.imGuiDescriptorPool, nullptr);
 
+        m_Instance.descriptorPool->Destroy();
         m_Instance.queryPool->Destroy();
 
         vkDestroyCommandPool(m_Instance.device->GetLogicalDevice(), m_Instance.commandPool, nullptr);

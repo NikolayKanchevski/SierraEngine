@@ -4,7 +4,6 @@
 
 #include "Math.h"
 
-#include <glm/glm.hpp>
 
 namespace Sierra::Engine::Classes::Math
 {

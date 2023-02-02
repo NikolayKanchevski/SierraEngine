@@ -228,7 +228,7 @@ namespace ImCurveEdit
          if (curveType == CurveNone)
             continue;
          const ImVec2* pts = delegate.GetPoints(c);
-         uint32_t curveColor = delegate.GetCurveColor(c);
+         uint curveColor = delegate.GetCurveColor(c);
          if ((c == highLightedCurveIndex && selection.empty() && !selectingQuad) || movingCurve == c)
             curveColor = 0xFFFFFFFF;
 

@@ -4,12 +4,7 @@
 
 #include "Device.h"
 
-#include "../../../../Engine/Classes/File.h"
-
-#include <set>
 #include "../VK.h"
-
-using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -23,7 +18,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         RetrieveBestProperties();
     }
 
-    std::unique_ptr<Device> Device::Create(DeviceCreateInfo createInfo)
+    UniquePtr<Device> Device::Create(DeviceCreateInfo createInfo)
     {
         return std::make_unique<Device>(createInfo);
     }
@@ -84,7 +79,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         glfwCreateWindowSurface(VK::GetInstance(), glfwWindow, nullptr, &exampleSurface);
 
         // Retrieve how many GPUs are found on the system
-        uint32_t physicalDeviceCount;
+        uint physicalDeviceCount;
         VK_ASSERT(
             vkEnumeratePhysicalDevices(VK::GetInstance(), &physicalDeviceCount, nullptr),
             "Failed to retrieve available GPUs"
@@ -109,13 +104,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Device::CreateLogicalDevice()
     {
         // Filter out repeating indices using a set
-        const std::set<uint32_t> uniqueQueueFamilies { static_cast<uint32_t>(queueFamilyIndices.graphicsFamily), static_cast<uint32_t>(queueFamilyIndices.presentationFamily) };
+        const std::set<uint> uniqueQueueFamilies { static_cast<uint>(queueFamilyIndices.graphicsFamily), static_cast<uint>(queueFamilyIndices.presentationFamily) };
 
         // Create an empty list to store create infos
         VkDeviceQueueCreateInfo* queueCreateInfos = new VkDeviceQueueCreateInfo[uniqueQueueFamilies.size()];
 
         // For each unique family create new create info and add it to the list
-        uint32_t i = 0;
+        uint i = 0;
         const float queuePriority = 1.0f;
         for (const auto &queueFamily : uniqueQueueFamilies)
         {
@@ -133,9 +128,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkDeviceCreateInfo logicalDeviceCreateInfo{};
         logicalDeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         logicalDeviceCreateInfo.pEnabledFeatures = requiredFeatures;
-        logicalDeviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(requiredDeviceExtensions.size());
+        logicalDeviceCreateInfo.enabledExtensionCount = static_cast<uint>(requiredDeviceExtensions.size());
         logicalDeviceCreateInfo.ppEnabledExtensionNames = requiredDeviceExtensions.data();
-        logicalDeviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(uniqueQueueFamilies.size());
+        logicalDeviceCreateInfo.queueCreateInfoCount = static_cast<uint>(uniqueQueueFamilies.size());
         logicalDeviceCreateInfo.pQueueCreateInfos = queueCreateInfos;
 
         // Set descriptor indexing features
@@ -168,14 +163,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->highestMultisampling = RetrieveMaxSampling();
 
         this->bestColorImageFormat = GetBestColorBufferFormat(
-            { FORMAT_R8G8B8A8_SRGB, FORMAT_R8G8B8A8_UNORM },
-            TILING_OPTIMAL,
+            { ImageFormat::R8G8B8A8_SRGB, ImageFormat::R8G8B8A8_UNORM },
+            ImageTiling::OPTIMAL,
             VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT
         );
 
         this->bestDepthImageFormat = GetBestDepthBufferFormat(
-            { FORMAT_D32_SFLOAT_S8_UINT, FORMAT_D32_SFLOAT, FORMAT_D24_UNORM_S8_UINT },
-            TILING_OPTIMAL,
+            { ImageFormat::D32_SFLOAT_S8_UINT, ImageFormat::D32_SFLOAT, ImageFormat::D24_UNORM_S8_UINT },
+            ImageTiling::OPTIMAL,
             VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
         );
     }
@@ -265,7 +260,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     bool Device::DeviceExtensionsSupported(VkPhysicalDevice const &givenPhysicalDevice)
     {
         // Get how many extensions are supported in total
-        uint32_t extensionCount;
+        uint extensionCount;
         vkEnumerateDeviceExtensionProperties(givenPhysicalDevice, nullptr, &extensionCount, nullptr);
 
         // Create an array to store the supported extensions
@@ -302,7 +297,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             if (!extensionFound)
             {
                 allExtensionsSupported = false;
-                ASSERT_WARNING("Device extension [" + std::string(requiredExtension) + "] not supported by your [" + std::string(VK::GetDevice()->GetPhysicalDeviceProperties().deviceName) + "] GPU");
+                ASSERT_WARNING("Device extension [" + String(requiredExtension) + "] not supported by your [" + String(VK::GetDevice()->GetPhysicalDeviceProperties().deviceName) + "] GPU");
             }
         }
 
@@ -320,7 +315,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         QueueFamilyIndices indices{};
 
         // Get how many family properties are available
-        uint32_t queueFamilyPropertiesCount = 0;
+        uint queueFamilyPropertiesCount = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(givenPhysicalDevice, &queueFamilyPropertiesCount, nullptr);
 
         // Put each of them in an array
@@ -328,7 +323,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkGetPhysicalDeviceQueueFamilyProperties(givenPhysicalDevice, &queueFamilyPropertiesCount, queueFamilyProperties);
 
         // Iterate trough each
-        for (uint32_t i = queueFamilyPropertiesCount; i--;)
+        for (uint i = queueFamilyPropertiesCount; i--;)
         {
             // Save the current one
             VkQueueFamilyProperties currentQueueProperties = queueFamilyProperties[i];
@@ -368,11 +363,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             vkGetPhysicalDeviceFormatProperties(physicalDevice, (VkFormat) givenFormat, &formatProperties);
 
             // Check if the required format properties are supported
-            if (imageTiling == TILING_LINEAR && (formatProperties.linearTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
+            if (imageTiling == ImageTiling::LINEAR && (formatProperties.linearTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
             {
                 return givenFormat;
             }
-            else if (imageTiling == TILING_OPTIMAL && (formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
+            else if (imageTiling == ImageTiling::OPTIMAL && (formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
             {
                 return givenFormat;
             }
@@ -381,7 +376,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Otherwise throw an error
         ASSERT_ERROR("No color buffer formats supported");
 
-        return FORMAT_UNDEFINED;
+        return ImageFormat::UNDEFINED;
     }
 
     ImageFormat Device::GetBestDepthBufferFormat(std::vector<ImageFormat> givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags)
@@ -393,11 +388,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             vkGetPhysicalDeviceFormatProperties(physicalDevice, (VkFormat) givenFormat, &formatProperties);
 
             // Check if the required format properties are supported
-            if (imageTiling == TILING_LINEAR && (formatProperties.linearTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
+            if (imageTiling == ImageTiling::LINEAR && (formatProperties.linearTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
             {
                 return givenFormat;
             }
-            else if (imageTiling == TILING_OPTIMAL && (formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
+            else if (imageTiling == ImageTiling::OPTIMAL && (formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
             {
                 return givenFormat;
             }
@@ -406,7 +401,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Otherwise throw an error
         ASSERT_ERROR("No depth buffer formats supported");
 
-        return FORMAT_UNDEFINED;
+        return ImageFormat::UNDEFINED;
     }
 
     Sampling Device::RetrieveMaxSampling()

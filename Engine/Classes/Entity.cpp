@@ -4,13 +4,19 @@
 
 #include "Entity.h"
 
+
+#include "../Components/Relationship.h"
+#include "../Components/Transform.h"
+
 using namespace Sierra::Engine::Components;
 
 namespace Sierra::Engine::Classes
 {
+    const Entity Entity::Null = Entity((entt::entity)   entt::null);
+
     /* --- CONSTRUCTORS --- */
 
-    Entity::Entity(const std::string &givenName)
+    Entity::Entity(const String &givenName)
         : enttEntity(World::RegisterEntity())
     {
         AddComponent<UUID>();
@@ -30,7 +36,7 @@ namespace Sierra::Engine::Classes
         SetParent(givenParent);
     }
 
-    Entity::Entity(const std::string &givenName, Entity &givenParent)
+    Entity::Entity(const String &givenName, Entity &givenParent)
         : enttEntity(World::RegisterEntity())
     {
         AddComponent<UUID>();
@@ -50,7 +56,7 @@ namespace Sierra::Engine::Classes
 
     void Entity::Destroy()
     {
-        World::GetEnttRegistry()->destroy(enttEntity);
+        World::DestroyEntity(enttEntity);
     }
 
     /* --- DESTRUCTOR --- */
@@ -63,5 +69,15 @@ namespace Sierra::Engine::Classes
     bool Entity::operator==(Entity &right)
     {
         return enttEntity == right.enttEntity;
+    }
+
+    Entity::operator entt::entity() const noexcept
+    {
+        return enttEntity;
+    }
+
+    Entity::operator UUID() const noexcept
+    {
+        return GetComponent<UUID>();
     }
 }

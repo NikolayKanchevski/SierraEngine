@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include "../Core/World.h"
+#define NO_CHANGE std::nullopt
+
 #include "../Core/EngineCore.h"
 #include "../Core/Rendering/Vulkan/Renderers/MainVulkanRenderer.h"
 
@@ -22,13 +23,16 @@
 #include "Classes/Binary.h"
 #include "Classes/RNG.h"
 
-#include "Components/Camera.h"
+#include "Components/Tag.h"
+#include "Components/UUID.h"
 #include "Components/Model.h"
+#include "Components/Camera.h"
+#include "Components/Transform.h"
 #include "Components/Component.h"
-#include "Components/InternalComponents.h"
 #include "Components/MeshRenderer.h"
-#include "Components/Lighting/PointLight.h"
+#include "Components/Relationship.h"
 #include "Components/Lighting/Light.h"
+#include "Components/Lighting/PointLight.h"
 #include "Components/Lighting/DirectionalLight.h"
 
 using namespace Sierra;

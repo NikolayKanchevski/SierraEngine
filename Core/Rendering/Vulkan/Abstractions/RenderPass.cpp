@@ -17,7 +17,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         std::vector<VkAttachmentDescription> attachmentDescriptions(attachments.size());
 
-        for (uint32_t i = attachments.size(); i--;)
+        for (uint i = attachments.size(); i--;)
         {
             attachmentDescriptions[i].format = (VkFormat) attachments[i].imageAttachment->GetFormat();
             attachmentDescriptions[i].samples = (VkSampleCountFlagBits) attachments[i].imageAttachment->GetSampling();
@@ -32,7 +32,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         std::vector<SubpassDescription> subpassDescriptions{};
         std::vector<VkAttachmentReference> depthReferences;
 
-        for (uint32_t i = subpassInfos.size(); i--;)
+        for (uint i = subpassInfos.size(); i--;)
         {
             SubpassDescription subpassDescription{};
             subpassDescription.data.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -58,9 +58,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 if (hasDepth && hasResolve) break;
             }
 
-            for (uint32_t j = subpassInfos[i].renderTargets.size(); j--;)
+            for (uint j = subpassInfos[i].renderTargets.size(); j--;)
             {
-                uint32_t renderTarget = subpassInfos[i].renderTargets[j];
+                uint renderTarget = subpassInfos[i].renderTargets[j];
 
                 if (attachments[renderTarget].IsDepth())
                 {
@@ -87,9 +87,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 }
             }
 
-            for (uint32_t j = subpassInfos[i].subpassInputs.size(); j--;)
+            for (uint j = subpassInfos[i].subpassInputs.size(); j--;)
             {
-                uint32_t renderTarget = subpassInfos[i].subpassInputs[j];
+                uint renderTarget = subpassInfos[i].subpassInputs[j];
 
                 if (attachments[renderTarget].IsDepth())
                 {
@@ -149,7 +149,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             firstDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
             firstDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-            for (size_t i = 1; i < (dependencies.size() - 1); i++)
+            for (uSize i = 1; i < (dependencies.size() - 1); i++)
             {
                 dependencies[i].srcSubpass = i-1;
                 dependencies[i].dstSubpass = i;
@@ -190,24 +190,24 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         std::vector<VkSubpassDescription> vkSubpassDescriptions{};
-        for (uint32_t i = subpassDescriptions.size(); i--;)
+        for (uint i = subpassDescriptions.size(); i--;)
         {
             vkSubpassDescriptions.push_back(subpassDescriptions[i].data);
         }
 
         VkRenderPassCreateInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = static_cast<uint32_t>(attachmentDescriptions.size());
+        renderPassInfo.attachmentCount = static_cast<uint>(attachmentDescriptions.size());
         renderPassInfo.pAttachments = attachmentDescriptions.data();
-        renderPassInfo.subpassCount = static_cast<uint32_t>(vkSubpassDescriptions.size());
+        renderPassInfo.subpassCount = static_cast<uint>(vkSubpassDescriptions.size());
         renderPassInfo.pSubpasses = vkSubpassDescriptions.data();
-        renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+        renderPassInfo.dependencyCount = static_cast<uint>(dependencies.size());
         renderPassInfo.pDependencies = dependencies.data();
 
         VK_ASSERT(vkCreateRenderPass(VK::GetLogicalDevice(), &renderPassInfo, nullptr, &renderPass), "Could not create render pass");
 
         clearValues.resize(attachments.size());
-        for (uint32_t i = 0; i < attachments.size(); i++)
+        for (uint i = 0; i < attachments.size(); i++)
         {
             if (attachments[i].IsDepth())
             {
@@ -220,7 +220,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
     }
 
-    std::unique_ptr<RenderPass> RenderPass::Create(const RenderPassCreateInfo renderPassCreateInfo)
+    UniquePtr<RenderPass> RenderPass::Create(const RenderPassCreateInfo renderPassCreateInfo)
     {
         return std::make_unique<RenderPass>(renderPassCreateInfo);
     }
@@ -232,7 +232,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
     }
 
-    void RenderPass::Begin(const std::unique_ptr<Framebuffer> &framebuffer, const VkCommandBuffer commandBuffer)
+    void RenderPass::Begin(const UniquePtr<Framebuffer> &framebuffer, const VkCommandBuffer commandBuffer)
     {
         // Set up begin info
         VkRenderPassBeginInfo renderPassBeginInfo{};

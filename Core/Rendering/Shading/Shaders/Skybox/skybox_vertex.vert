@@ -13,7 +13,9 @@ layout(location = 0) out vec3 toFrag_UVW;
 
 void main()
 {
-    gl_Position = uniformBuffer.projection * uniformBuffer.view * uniformBuffer.model * vec4(fromCode_Position, 1.0);
+    vec4 position = uniformBuffer.projection * mat4x4(mat3x3(uniformBuffer.view)) * uniformBuffer.model * vec4(fromCode_Position, 1.0);
+    gl_Position = position.xyww;
+
     toFrag_UVW = fromCode_Position;
     toFrag_UVW.y *= -1;
 }

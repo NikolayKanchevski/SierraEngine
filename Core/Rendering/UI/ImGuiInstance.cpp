@@ -2,16 +2,11 @@
 // Created by Nikolay Kanchevski on 23.12.22.
 //
 
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
-#include <ImGuizmo.h>
 
 #include "ImGuiInstance.h"
 
 #include "ImGuiCore.h"
 #include "../../../Engine/Classes/Cursor.h"
-
-#define MAX_IMGUI_DESCRIPTOR_COUNT 2000
 
 using Sierra::Engine::Classes::Cursor;
 
@@ -23,39 +18,9 @@ namespace Sierra::Core::Rendering::UI
     ImGuiInstance::ImGuiInstance(const ImGuiInstanceCreateInfo &createInfo)
         : window(createInfo.window), hasImGuizmoLayer(createInfo.createImGuizmoLayer)
     {
-        // Set up example pool sizes
-        std::vector<VkDescriptorPoolSize> poolSizes =
-        {
-            { VK_DESCRIPTOR_TYPE_SAMPLER,                MAX_IMGUI_DESCRIPTOR_COUNT },
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_IMGUI_DESCRIPTOR_COUNT },
-            { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,          MAX_IMGUI_DESCRIPTOR_COUNT },
-            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          MAX_IMGUI_DESCRIPTOR_COUNT },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,   MAX_IMGUI_DESCRIPTOR_COUNT },
-            { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,   MAX_IMGUI_DESCRIPTOR_COUNT },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         MAX_IMGUI_DESCRIPTOR_COUNT },
-            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         MAX_IMGUI_DESCRIPTOR_COUNT },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, MAX_IMGUI_DESCRIPTOR_COUNT },
-            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, MAX_IMGUI_DESCRIPTOR_COUNT },
-            { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,       MAX_IMGUI_DESCRIPTOR_COUNT }
-        };
-
-        // Set up descriptor pool creation info
-        VkDescriptorPoolCreateInfo imGuiDescriptorPoolCreateInfo{};
-        imGuiDescriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        imGuiDescriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-        imGuiDescriptorPoolCreateInfo.maxSets = MAX_IMGUI_DESCRIPTOR_COUNT;
-        imGuiDescriptorPoolCreateInfo.poolSizeCount = poolSizes.size();
-        imGuiDescriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
-
-        // Create descriptor pool
-        VK_ASSERT(
-            vkCreateDescriptorPool(VK::GetDevice()->GetLogicalDevice(), &imGuiDescriptorPoolCreateInfo, nullptr, &descriptorPool),
-            "Could not create ImGui descriptor pool"
-        );
-
         // Get style
         if (createInfo.givenImGuiStyle == nullptr) imGuiStyle = ImGuiCore::GetDefaultStyle();
-        else imGuiStyle = std::move(*createInfo.givenImGuiStyle);
+        else imGuiStyle = *createInfo.givenImGuiStyle;
 
         // Create ImGui context
         imGuiContext = ImGui::CreateContext();
@@ -70,7 +35,7 @@ namespace Sierra::Core::Rendering::UI
         initInfo.PhysicalDevice = VK::GetDevice()->GetPhysicalDevice();
         initInfo.Device = VK::GetDevice()->GetLogicalDevice();
         initInfo.Queue = VK::GetDevice()->GetGraphicsQueue();
-        initInfo.DescriptorPool = descriptorPool;
+        initInfo.DescriptorPool = VK::GetImGuiDescriptorPool();
         initInfo.MinImageCount = createInfo.swapchain->GetMaxConcurrentFramesCount();
         initInfo.ImageCount = createInfo.swapchain->GetMaxConcurrentFramesCount();
         initInfo.MSAASamples = (VkSampleCountFlagBits) createInfo.sampling;
@@ -81,15 +46,20 @@ namespace Sierra::Core::Rendering::UI
         // Set settings
         ImGuiIO &io = ImGui::GetIO();
         io.ConfigFlags = createInfo.imGuiConfigFlags;
-        if (VK::GetDevice()->GetBestColorImageFormat() == Vulkan::FORMAT_R8G8B8A8_SRGB)
+        io.ConfigDragClickToInputText = true;
+
+        if (VK::GetDevice()->GetBestColorImageFormat() == ImageFormat::R8G8B8A8_SRGB)
         {
             io.ConfigFlags |= ImGuiConfigFlags_IsSRGB;
         }
 
-        if (createInfo.fontFilePath != nullptr)
+        if (createInfo.fontCreateInfos.size() > 0)
         {
             // Load font file
-            io.Fonts->AddFontFromFileTTF(createInfo.fontFilePath, createInfo.fontSize);
+            for (const auto &fontCreateInfo : createInfo.fontCreateInfos)
+            {
+                io.Fonts->AddFontFromFileTTF(fontCreateInfo.fontFilePath, fontCreateInfo.fontSize);
+            }
 
             // Upload font file to shader
             VkCommandBuffer commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
@@ -97,19 +67,19 @@ namespace Sierra::Core::Rendering::UI
             VK::GetDevice()->EndSingleTimeCommands(commandBuffer);
             ImGui_ImplVulkan_DestroyFontUploadObjects();
         }
+
+        if (createInfo.createImGuizmoLayer)
+        {
+            ImGuizmo::Style &imGuizmoStyle = ImGuizmo::GetStyle();
+            imGuizmoStyle.Colors[ImGuizmo::COLOR::DIRECTION_X] = ImVec4(0.000f, 0.666f, 0.000f, 1.000f);
+            imGuizmoStyle.Colors[ImGuizmo::COLOR::DIRECTION_Y] = ImVec4(0.666f, 0.000f, 0.000f, 1.000f);
+            imGuizmoStyle.Colors[ImGuizmo::COLOR::DIRECTION_Z] = ImVec4(0.000f, 0.000f, 0.666f, 1.000f);
+        }
     }
 
-    std::unique_ptr<ImGuiInstance> ImGuiInstance::Create(ImGuiInstanceCreateInfo createInfo)
+    UniquePtr<ImGuiInstance> ImGuiInstance::Create(ImGuiInstanceCreateInfo createInfo)
     {
         return std::make_unique<ImGuiInstance>(createInfo);
-    }
-
-    /* --- POLLING METHODS --- */
-
-    void ImGuiInstance::RenderDrawData(VkCommandBuffer commandBuffer)
-    {
-        // NOTE: Might have to have a separate draw list per instance
-        if (ImGui::GetDrawData() != nullptr) ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
     }
 
     void ImGuiInstance::Render()
@@ -157,7 +127,7 @@ namespace Sierra::Core::Rendering::UI
 
     void ImGuiInstance::Destroy()
     {
-        vkDestroyDescriptorPool(VK::GetLogicalDevice(), descriptorPool, nullptr);
+
     }
 
 }

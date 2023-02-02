@@ -4,8 +4,6 @@
 
 #include "Mesh.h"
 
-#include <vector>
-
 using Sierra::Core::Debugger;
 using namespace Sierra::Core::Rendering::Vulkan;
 
@@ -14,7 +12,7 @@ namespace Sierra::Engine::Classes
 
     /* --- CONSTRUCTORS --- */
 
-    Mesh::Mesh(std::vector<VertexP> &givenVertices, std::vector<uint32_t> &givenIndices)
+    Mesh::Mesh(std::vector<VertexP> &givenVertices, std::vector<uint> &givenIndices)
         : vertexCount(givenVertices.size()), indexCount(givenIndices.size())
     {
         CreateVertexBuffer(givenVertices);
@@ -24,7 +22,7 @@ namespace Sierra::Engine::Classes
         totalVertexCount += vertexCount;
     }
 
-    Mesh::Mesh(std::vector<VertexPNT> &givenVertices, std::vector<uint32_t> &givenIndices)
+    Mesh::Mesh(std::vector<VertexPNT> &givenVertices, std::vector<uint> &givenIndices)
             : vertexCount(givenVertices.size()), indexCount(givenIndices.size())
     {
         CreateVertexBuffer(givenVertices);
@@ -39,12 +37,12 @@ namespace Sierra::Engine::Classes
     void Mesh::CreateVertexBuffer(std::vector<VertexP> &givenVertices)
     {
         // Calculate the buffer size
-        uint64_t bufferSize = sizeof(VertexP) * givenVertices.size();
+        uint64 bufferSize = sizeof(VertexP) * givenVertices.size();
 
         auto stagingBuffer = Buffer::Create({
             .memorySize = bufferSize,
-            .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
-            .bufferUsage = TRANSFER_SRC_BUFFER
+            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+            .bufferUsage = BufferUsage::TRANSFER_SRC
         });
 
         // Fill the data pointer with the vertices array's information
@@ -52,8 +50,8 @@ namespace Sierra::Engine::Classes
 
         vertexBuffer = Buffer::CreateShared({
            .memorySize = bufferSize,
-           .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
-           .bufferUsage = TRANSFER_DST_BUFFER | VERTEX_BUFFER
+           .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+           .bufferUsage = BufferUsage::TRANSFER_DST | BufferUsage::VERTEX
        });
 
         stagingBuffer->CopyToBuffer(vertexBuffer.get());
@@ -65,12 +63,12 @@ namespace Sierra::Engine::Classes
     void Mesh::CreateVertexBuffer(std::vector<VertexPNT> &givenVertices)
     {
         // Calculate the buffer size
-        uint64_t bufferSize = sizeof(VertexPNT) * givenVertices.size();
+        uint64 bufferSize = sizeof(VertexPNT) * givenVertices.size();
 
         auto stagingBuffer = Buffer::Create({
             .memorySize = bufferSize,
-            .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
-            .bufferUsage = TRANSFER_SRC_BUFFER
+            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+            .bufferUsage = BufferUsage::TRANSFER_SRC
         });
 
         // Fill the data pointer with the vertices array's information
@@ -78,8 +76,8 @@ namespace Sierra::Engine::Classes
 
         vertexBuffer = Buffer::CreateShared({
             .memorySize = bufferSize,
-            .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
-            .bufferUsage = TRANSFER_DST_BUFFER | VERTEX_BUFFER
+            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+            .bufferUsage = BufferUsage::TRANSFER_DST | BufferUsage::VERTEX
         });
 
         stagingBuffer->CopyToBuffer(vertexBuffer.get());
@@ -87,15 +85,15 @@ namespace Sierra::Engine::Classes
         stagingBuffer->Destroy();
     }
 
-    void Mesh::CreateIndexBuffer(std::vector<uint32_t> &givenIndices)
+    void Mesh::CreateIndexBuffer(std::vector<uint> &givenIndices)
     {
         // Calculate the buffer size
-        uint64_t bufferSize = sizeof(uint32_t) * givenIndices.size();
+        uint64 bufferSize = sizeof(uint) * givenIndices.size();
 
         auto stagingBuffer = Buffer::Create({
             .memorySize = bufferSize,
-            .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
-            .bufferUsage = TRANSFER_SRC_BUFFER
+            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+            .bufferUsage = BufferUsage::TRANSFER_SRC
         });
 
         // Fill the data pointer with the vertices array's information
@@ -103,8 +101,8 @@ namespace Sierra::Engine::Classes
 
         indexBuffer = Buffer::CreateShared({
              .memorySize = bufferSize,
-             .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
-             .bufferUsage = TRANSFER_DST_BUFFER | INDEX_BUFFER
+             .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+             .bufferUsage = BufferUsage::TRANSFER_DST | BufferUsage::INDEX
          });
 
         stagingBuffer->CopyToBuffer(indexBuffer.get());

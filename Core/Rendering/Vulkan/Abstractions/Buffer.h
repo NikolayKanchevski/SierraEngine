@@ -4,23 +4,15 @@
 
 #pragma once
 
-#include <cstdint>
-#include <memory>
-#include <glm/vec3.hpp>
-#include <GLFW/glfw3.h>
-#include <vulkan/vulkan.h>
-#include <vulkan/vk_enum_string_helper.h>
-#include <vk_mem_alloc.h>
-
 #include "Image.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     struct BufferCreateInfo
     {
-        uint64_t memorySize = 0;
-        MemoryFlags memoryFlags = MEMORY_FLAGS_NONE;
-        BufferUsage bufferUsage = UNDEFINED_BUFFER;
+        uint64 memorySize = 0;
+        MemoryFlags memoryFlags = MemoryFlags::NONE;
+        BufferUsage bufferUsage = BufferUsage::UNDEFINED;
     };
 
     /// @brief An abstraction class to make managing Vulkan buffers easier.
@@ -29,8 +21,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         Buffer(const BufferCreateInfo &createInfo);
-        [[nodiscard]] static std::unique_ptr<Buffer> Create(BufferCreateInfo bufferCreateInfo);
-        [[nodiscard]] static std::shared_ptr<Buffer> CreateShared(BufferCreateInfo bufferCreateInfo);
+        [[nodiscard]] static UniquePtr<Buffer> Create(BufferCreateInfo bufferCreateInfo);
+        [[nodiscard]] static SharedPtr<Buffer> CreateShared(BufferCreateInfo bufferCreateInfo);
 
         /* --- SETTER METHODS --- */
         void CopyFromPointer(void* pointer);
@@ -47,7 +39,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline MemoryFlags GetMemoryFlags() const
         { return this->memoryFlags; }
 
-        [[nodiscard]] inline uint64_t GetMemorySize() const
+        [[nodiscard]] inline uint64 GetMemorySize() const
         { return this->memorySize; }
 
         [[nodiscard]] inline BufferUsage GetBufferUsage() const
@@ -62,7 +54,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkBuffer vkBuffer;
         VmaAllocation vmaBufferAllocation;
 
-        uint64_t memorySize;
+        uint64 memorySize;
         MemoryFlags memoryFlags;
         BufferUsage bufferUsage;
     };

@@ -4,16 +4,10 @@
 
 #pragma once
 
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
-#include <glm/gtx/quaternion.hpp>
-
-namespace Sierra::Core::Rendering::Matrix
+namespace Sierra::Core::Rendering::MatrixUtilities
 {
 
-    inline void ToArray(const glm::mat4x4 matrix, float* dstArray)
+    inline void ToArray(const Matrix4x4 matrix, float* dstArray)
     {
         dstArray[0] = matrix[0][0];
         dstArray[1] = matrix[0][1];
@@ -36,9 +30,9 @@ namespace Sierra::Core::Rendering::Matrix
         dstArray[15] = matrix[3][3];
     }
 
-    inline glm::mat4x4 FromArray(const float* matrixArray)
+    inline Matrix4x4 FromArray(const float* matrixArray)
     {
-        glm::mat4x4 matrix;
+        Matrix4x4 matrix;
 
         matrix[0][0] = matrixArray[0];
         matrix[0][1] = matrixArray[1];
@@ -63,29 +57,29 @@ namespace Sierra::Core::Rendering::Matrix
         return matrix;
     }
 
-    inline glm::mat4x4 CreateTranslation(const glm::vec3 position)
+    inline Matrix4x4 CreateTranslation(const Vector3 position)
     {
-        return glm::translate(glm::mat4x4(1.0f), position);
+        return glm::translate(Matrix4x4(1.0f), position);
     }
 
-    inline glm::mat4x4 CreateRotation(const float angle, const glm::vec3 direction)
+    inline Matrix4x4 CreateRotation(const float angle, const Vector3 direction)
     {
-        return glm::rotate(glm::mat4x4(1.0f), glm::radians(angle), direction);
+        return glm::rotate(Matrix4x4(1.0f), glm::radians(angle), direction);
     }
 
-    inline glm::mat4x4 CreateScale(const glm::vec3 scale)
+    inline Matrix4x4 CreateScale(const Vector3 scale)
     {
-        return glm::scale(glm::mat4x4(1.0f), scale);
+        return glm::scale(Matrix4x4(1.0f), scale);
     }
 
-    inline glm::mat4x4 CreateModel(const glm::vec3 position, const glm::vec3 rotation = { 0.0f, 0.0f, 0.0f }, const glm::vec3 scale = { 1.0f, 1.0f, 1.0f })
+    inline Matrix4x4 CreateModel(const Vector3 position, const Vector3 rotation = { 0.0f, 0.0f, 0.0f }, const Vector3 scale = { 1.0f, 1.0f, 1.0f })
     {
-        glm::mat4x4 rotationMatrix = glm::toMat4(glm::quat({ glm::radians(rotation.y), glm::radians(rotation.x), glm::radians(rotation.z) }));
+        Matrix4x4 rotationMatrix = glm::toMat4(Quaternion({ glm::radians(rotation.y), glm::radians(rotation.x), glm::radians(rotation.z) }));
 
         return CreateTranslation(position) * rotationMatrix * CreateScale(scale);
     }
 
-    inline bool DecomposeModelMatrix(const glm::mat4x4 &matrix, glm::vec3 &translation, glm::vec3 &rotation, glm::vec3 &scale)
+    inline bool DecomposeModelMatrix(const Matrix4x4 &matrix, Vector3 &translation, Vector3 &rotation, Vector3 &scale)
     {
         using namespace glm;
         using T = float;

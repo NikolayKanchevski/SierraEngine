@@ -4,15 +4,6 @@
 
 #pragma once
 
-#include <vector>
-#include <string>
-#include <memory>
-#include <glm/mat4x4.hpp>
-#include <vulkan/vulkan.h>
-
-#include <vk_mem_alloc.h>
-
-#include "../../Debugger.h"
 #include "Abstractions/Device.h"
 #include "Abstractions/Descriptors.h"
 #include "Abstractions/Texture.h"
@@ -38,13 +29,14 @@ namespace Sierra::Core::Rendering::Vulkan
 
         [[nodiscard]] inline static VkPhysicalDevice GetPhysicalDevice() { return m_Instance.device->GetPhysicalDevice(); }
         [[nodiscard]] inline static VkDevice GetLogicalDevice() { return m_Instance.device->GetLogicalDevice(); }
-        [[nodiscard]] inline static std::unique_ptr<Device>& GetDevice() { return m_Instance.device; }
+        [[nodiscard]] inline static UniquePtr<Device>& GetDevice() { return m_Instance.device; }
 
-        [[nodiscard]] inline static std::shared_ptr<DescriptorSetLayout>& GetDescriptorSetLayout() { return m_Instance.descriptorSetLayout; }
+        [[nodiscard]] inline static SharedPtr<DescriptorSetLayout>& GetDescriptorSetLayout() { return m_Instance.descriptorSetLayout; }
 
         [[nodiscard]] inline static VkCommandPool GetCommandPool() { return m_Instance.commandPool; }
-        [[nodiscard]] inline static std::unique_ptr<QueryPool>& GetQueryPool() { return m_Instance.queryPool; }
-        [[nodiscard]] inline static std::unique_ptr<DescriptorPool>& GetDescriptorPool() { return m_Instance.descriptorPool; }
+        [[nodiscard]] inline static UniquePtr<QueryPool>& GetQueryPool() { return m_Instance.queryPool; }
+        [[nodiscard]] inline static UniquePtr<DescriptorPool>& GetDescriptorPool() { return m_Instance.descriptorPool; }
+        [[nodiscard]] inline static VkDescriptorPool GetImGuiDescriptorPool() { return m_Instance.imGuiDescriptorPool; }
 
         /* --- DESTRUCTOR --- */
         friend class Renderers::MainVulkanRenderer;
@@ -64,7 +56,7 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreateInstance();
 
         /* --- DEVICE --- */
-        std::unique_ptr<Device> device;
+        UniquePtr<Device> device;
         void CreateDevice();
 
         /* --- VMA --- */
@@ -76,18 +68,23 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreateCommandPool();
 
         /* --- QUERY POOL --- */
-        std::unique_ptr<QueryPool> queryPool;
+        UniquePtr<QueryPool> queryPool;
         void CreateQueryPool();
 
         /* --- DESCRIPTOR POOL --- */
-        std::unique_ptr<DescriptorPool> descriptorPool;
+        UniquePtr<DescriptorPool> descriptorPool;
         void CreateDescriptorPool();
+
+        VkDescriptorPool imGuiDescriptorPool;
+        void CreateImGuiDescriptorPool();
+
+        /* --- IMGUI SAMPLER --- */
 
         /* --- DEFAULT TEXTURES --- */
         void CreateDefaultTextures();
 
         /* --- MAIN VULKAN RENDERER --- */
-        std::shared_ptr<DescriptorSetLayout> descriptorSetLayout;
+        SharedPtr<DescriptorSetLayout> descriptorSetLayout;
 
     private:
         const std::vector<const char*> requiredInstanceExtensions
@@ -133,7 +130,7 @@ namespace Sierra::Core::Rendering::Vulkan
         bool ValidationLayersSupported()
         {
             // Get how many validation layers in total are supported
-            uint32_t layerCount = 0;
+            uint layerCount = 0;
             vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
             // Create an array and store the supported layers
@@ -166,7 +163,7 @@ namespace Sierra::Core::Rendering::Vulkan
         inline bool ExtensionsSupported(std::vector<const char*> &givenExtensions)
         {
             // Get how many extensions are supported in total
-            uint32_t extensionCount;
+            uint extensionCount;
             vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
 
             // Create an array to store the supported extensions
@@ -174,7 +171,7 @@ namespace Sierra::Core::Rendering::Vulkan
             vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensionProperties.data());
 
             // Check if each given extension is in the supported array
-            size_t extensionIndex = 0;
+            uSize extensionIndex = 0;
 
             bool success = true;
             for (const auto &requiredExtension : givenExtensions)
@@ -193,7 +190,7 @@ namespace Sierra::Core::Rendering::Vulkan
                 {
                     success = false;
 
-                    ASSERT_WARNING("Instance extension [" + std::string(requiredExtension) + "] not supported");
+                    ASSERT_WARNING("Instance extension [" + String(requiredExtension) + "] not supported");
                     givenExtensions.erase(givenExtensions.begin() + extensionIndex);
                 }
 

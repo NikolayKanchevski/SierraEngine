@@ -4,9 +4,6 @@
 
 #pragma once
 
-#include <GLFW/glfw3.h>
-
-#include "../Engine/Components/InternalComponents.h"
 #include "../Engine/Classes/Entity.h"
 
 using Sierra::Engine::Components::UUID;

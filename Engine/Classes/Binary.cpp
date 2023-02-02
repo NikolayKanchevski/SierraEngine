@@ -9,7 +9,7 @@ namespace Sierra::Engine::Classes
 
     /* --- CONSTRUCTORS --- */
 
-    Binary::Binary(uint32_t givenValue)
+    Binary::Binary(uint givenValue)
         : value(givenValue)
     {
 
@@ -17,18 +17,18 @@ namespace Sierra::Engine::Classes
 
     /* --- SETTER METHODS --- */
 
-    void Binary::SetBit(uint32_t bitIndex, uint32_t newValue)
+    void Binary::SetBit(uint bitIndex, uint newValue)
     {
         newValue != 0 ? static_cast<void>(value |= (1 << bitIndex)) : static_cast<void>(value &= ~(1 << bitIndex));
     }
 
     /* --- GETTER METHODS --- */
 
-    uint32_t Binary::GetBitCount(Binary binary)
+    uint Binary::GetBitCount(Binary binary)
     {
         size_t counter = 0;
 
-        for (size_t i = 0; i < 8 * sizeof(uint32_t); i++) {
+        for (size_t i = 0; i < 8 * sizeof(uint); i++) {
             counter += static_cast<bool>(binary.value & (1 << i));
         }
 
@@ -37,7 +37,7 @@ namespace Sierra::Engine::Classes
 
     /* --- OPERATORS --- */
 
-    Binary &Binary::operator=(uint32_t givenValue)
+    Binary &Binary::operator=(uint givenValue)
     {
         this->value = givenValue;
         return *this;

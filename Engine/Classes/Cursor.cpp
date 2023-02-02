@@ -6,9 +6,9 @@
 
 namespace Sierra::Engine::Classes
 {
-    glm::vec2 Cursor::lastCursorPosition;
-    glm::vec2 Cursor::cursorPosition;
-    glm::vec2 Cursor::cursorOffset;
+    Vector2 Cursor::lastCursorPosition;
+    Vector2 Cursor::cursorPosition;
+    Vector2 Cursor::cursorOffset;
     bool Cursor::cursorShown = true;
 
     bool Cursor::cursorPositionSet;
@@ -30,7 +30,7 @@ namespace Sierra::Engine::Classes
     }
 
     /* --- SETTER METHODS --- */
-    void Cursor::SetCursorPosition(const glm::vec2 newPosition)
+    void Cursor::SetCursorPosition(const Vector2 newPosition)
     {
         glfwSetCursorPos(Window::GetCurrentlyFocusedWindow()->GetCoreWindow(), newPosition.x, newPosition.y);
         CursorPositionCallback(Window::GetCurrentlyFocusedWindow()->GetCoreWindow(), newPosition.x, newPosition.y);
@@ -38,9 +38,9 @@ namespace Sierra::Engine::Classes
         ResetCursorOffset();
     }
 
-    void Cursor::SetCursorPositionNormalized(const glm::vec2 newPosition)
+    void Cursor::SetCursorPositionNormalized(const Vector2 newPosition)
     {
-        glm::vec2 nonNormalizedPosition = { newPosition.x * (float) Window::GetCurrentlyFocusedWindow()->GetWidth(), newPosition.y * (float) Window::GetCurrentlyFocusedWindow()->GetHeight() };
+        Vector2 nonNormalizedPosition = { newPosition.x * (float) Window::GetCurrentlyFocusedWindow()->GetWidth(), newPosition.y * (float) Window::GetCurrentlyFocusedWindow()->GetHeight() };
         SetCursorPosition(nonNormalizedPosition);
     }
 
@@ -86,18 +86,18 @@ namespace Sierra::Engine::Classes
     {
         lastCursorPosition = cursorPosition;
 
-        if (Window::GetCurrentlyFocusedWindow() != nullptr) yPosition = -(yPosition - Window::GetCurrentlyFocusedWindow()->GetHeight());
-        cursorPosition = glm::vec2(xPosition, yPosition);
+        if (Window::IsFocusedWindowPresent()) yPosition = -(yPosition - Window::GetCurrentlyFocusedWindow()->GetHeight());
+        cursorPosition = Vector2(xPosition, yPosition);
 
-        cursorOffset = glm::vec2(-(lastCursorPosition.x - cursorPosition.x), lastCursorPosition.y - cursorPosition.y);
+        cursorOffset = Vector2(-(lastCursorPosition.x - cursorPosition.x), -(lastCursorPosition.y - cursorPosition.y));
         cursorPositionSet = true;
     }
 
     /* --- PRIVATE METHODS --- */
 
-    glm::vec2 Cursor::GetGlfwCursorPosition()
+    Vector2 Cursor::GetGlfwCursorPosition()
     {
-        if (Window::GetCurrentlyFocusedWindow() == nullptr)
+        if (!Window::IsFocusedWindowPresent())
         {
             ASSERT_WARNING("Trying to get the GLFW cursor position within a non-focused window. Since this is not possible and a value of { 0, 0 } has been returned");
             return { 0, 0 };

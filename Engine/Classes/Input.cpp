@@ -4,36 +4,32 @@
 
 #include "Input.h"
 
-#include <glm/glm.hpp>
-
-#include "../../Core/Debugger.h"
-
 using Sierra::Core::Debugger;
 
 namespace Sierra::Engine::Classes {
 
     /* --- STATIC FIELDS IMPLEMENTATION --- */
-    uint32_t Input::keyboardKeys[349];
-    uint32_t Input::lastKeySet;
+    uint Input::keyboardKeys[349];
+    uint Input::lastKeySet;
     bool Input::keySet;
-    std::vector<std::string> Input::enteredCharacters;
+    std::vector<String> Input::enteredCharacters;
 
-    uint32_t Input::mouseButtons[349];
-    uint32_t Input::lastButtonSet;
+    uint Input::mouseButtons[349];
+    uint Input::lastButtonSet;
     bool Input::buttonSet;
 
-    glm::vec2 Input::scroll;
+    Vector2 Input::scroll;
     bool Input::scrollSet;
 
-    uint32_t Input::MAX_GAME_PADS = 8;
-    uint32_t Input::gamePadsConnected = 0;
+    uint Input::MAX_GAME_PADS = 8;
+    uint Input::gamePadsConnected = 0;
     Input::GamePad Input::gamePads[8];
 
     /* --- POLLING METHODS --- */
 
     void Input::Start()
     {
-        for (uint32_t i = 0; i < MAX_GAME_PADS; i++)
+        for (uint i = 0; i < MAX_GAME_PADS; i++)
         {
             if (glfwJoystickPresent(i))
             {
@@ -73,26 +69,26 @@ namespace Sierra::Engine::Classes {
             buttonSet = false;
         }
 
-        for (uint32_t i = MAX_GAME_PADS; i--;)
+        for (uint i = MAX_GAME_PADS; i--;)
         {
             if (!gamePads[i].connected) continue;
 
             GLFWgamepadstate gamePadState;
             glfwGetGamepadState(i, &gamePadState);
 
-            glm::vec2 leftAxis = { gamePadState.axes[GLFW_GAMEPAD_AXIS_LEFT_X], gamePadState.axes[GLFW_GAMEPAD_AXIS_LEFT_Y] };
-            gamePads[i].axes[0] = { glm::abs(leftAxis.x) >= glm::abs(gamePads[i].minimumSensitivities[0]) ? -leftAxis.x : 0.0f, glm::abs(leftAxis.y) >= glm::abs(gamePads[i].minimumSensitivities[0]) ? -leftAxis.y : 0.0f };
+            Vector2 leftAxis = { gamePadState.axes[GLFW_GAMEPAD_AXIS_LEFT_X], gamePadState.axes[GLFW_GAMEPAD_AXIS_LEFT_Y] };
+            gamePads[i].axes[0] = { glm::abs(leftAxis.x) >= glm::abs(gamePads[i].minimumSensitivities[0]) ? leftAxis.x : 0.0f, glm::abs(leftAxis.y) >= glm::abs(gamePads[i].minimumSensitivities[0]) ? -leftAxis.y : 0.0f };
 
-            glm::vec2 rightAxis = { gamePadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_X], gamePadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y] };
-            gamePads[i].axes[1] = { glm::abs(rightAxis.x) >= glm::abs(gamePads[i].minimumSensitivities[1]) ? -rightAxis.x : 0.0f, glm::abs(rightAxis.y) >= glm::abs(gamePads[i].minimumSensitivities[1]) ? -rightAxis.y : 0.0f };
+            Vector2 rightAxis = { gamePadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_X], gamePadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y] };
+            gamePads[i].axes[1] = { glm::abs(rightAxis.x) >= glm::abs(gamePads[i].minimumSensitivities[1]) ? rightAxis.x : 0.0f, glm::abs(rightAxis.y) >= glm::abs(gamePads[i].minimumSensitivities[1]) ? -rightAxis.y : 0.0f };
 
             gamePads[i].triggers[0] = (gamePadState.axes[GLFW_GAMEPAD_AXIS_LEFT_TRIGGER] + 1) / 2;
             gamePads[i].triggers[1] = (gamePadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER] + 1) / 2;
 
             for (int j = 15; j--;)
             {
-                uint32_t oldState = gamePads[i].buttons[j];
-                uint32_t newState = gamePadState.buttons[j] + 1;
+                uint oldState = gamePads[i].buttons[j];
+                uint newState = gamePadState.buttons[j] + 1;
 
                 if (oldState == 3 && newState == 2 || oldState == 2 && newState == 2) newState = 3;
                 else if (oldState == 0 && newState == 1 || oldState == 1 && newState == 1) newState = 0;
@@ -104,7 +100,7 @@ namespace Sierra::Engine::Classes {
 
     /* --- SETTER METHODS --- */
 
-    void Input::SetGamePadMinimumStickSensitivity(const float minimumSensitivity, const uint32_t player)
+    void Input::SetGamePadMinimumStickSensitivity(const float minimumSensitivity, const uint player)
     {
         if (CheckGamePadConnection(player))
         {
@@ -113,59 +109,59 @@ namespace Sierra::Engine::Classes {
         }
     }
 
-    void Input::SetGamePadMinimumLeftStickSensitivity(const float minimumSensitivity, const uint32_t player)
+    void Input::SetGamePadMinimumLeftStickSensitivity(const float minimumSensitivity, const uint player)
     {
         if (CheckGamePadConnection(player)) gamePads[player].minimumSensitivities[0] = minimumSensitivity;
     }
 
-    void Input::SetGamePadMinimumRightStickSensitivity(const float minimumSensitivity, const uint32_t player)
+    void Input::SetGamePadMinimumRightStickSensitivity(const float minimumSensitivity, const uint player)
     {
         if (CheckGamePadConnection(player)) gamePads[player].minimumSensitivities[1] = minimumSensitivity;
     }
 
     /* --- GETTER METHODS --- */
 
-    bool Input::GetKeyPressed(const uint32_t keyCode)
+    bool Input::GetKeyPressed(const uint keyCode)
     {
         return keyboardKeys[keyCode] == 2; // 2 = Press
     }
 
-    bool Input::GetKeyHeld(const uint32_t keyCode)
+    bool Input::GetKeyHeld(const uint keyCode)
     {
         return keyboardKeys[keyCode] == 3 || keyboardKeys[keyCode] == 2; // 3 = Repeat || 2 = Press
     }
 
-    bool Input::GetKeyResting(const uint32_t keyCode)
+    bool Input::GetKeyResting(const uint keyCode)
     {
         return keyboardKeys[keyCode] == 0; // 0 = Rest
     }
 
-    bool Input::GetKeyReleased(const uint32_t keyCode)
+    bool Input::GetKeyReleased(const uint keyCode)
     {
         return keyboardKeys[keyCode] == 1; // 1 = Release
     }
 
-    std::vector<std::string> *Input::GetEnteredCharacters()
+    std::vector<String> *Input::GetEnteredCharacters()
     {
         return &enteredCharacters;
     }
 
-    bool Input::GetMouseButtonPressed(const uint32_t buttonCode)
+    bool Input::GetMouseButtonPressed(const uint buttonCode)
     {
         return mouseButtons[buttonCode] == 2; // 2 = Press
     }
 
-    bool Input::GetMouseButtonHeld(const uint32_t buttonCode)
+    bool Input::GetMouseButtonHeld(const uint buttonCode)
     {
         return mouseButtons[buttonCode] == 3 || mouseButtons[buttonCode] == 2; // 3 = Repeat || 2 = Press
     }
 
-    bool Input::GetMouseButtonReleased(const uint32_t buttonCode)
+    bool Input::GetMouseButtonReleased(const uint buttonCode)
     {
         return mouseButtons[buttonCode] == 1; // 1 = Release
     }
 
-    bool Input::GetMouseButtonResting(const uint32_t buttonCode)
+    bool Input::GetMouseButtonResting(const uint buttonCode)
     {
         return mouseButtons[buttonCode] == 0; // 0 = Rest
     }
@@ -180,77 +176,77 @@ namespace Sierra::Engine::Classes {
         return scroll.y;
     }
 
-    std::string Input::GetGamePadName(uint32_t player)
+    String Input::GetGamePadName(uint player)
     {
         return gamePads[player].name;
     }
 
-    bool Input::GetGamePadButtonPressed(const uint32_t gamePadButton, const uint32_t player)
+    bool Input::GetGamePadButtonPressed(const uint gamePadButton, const uint player)
     {
         return CheckGamePadConnection(player) && gamePads[player].buttons[gamePadButton] == 2; // 2 - Press
     }
 
-    bool Input::GetGamePadButtonHeld(const uint32_t gamePadButton, const uint32_t player)
+    bool Input::GetGamePadButtonHeld(const uint gamePadButton, const uint player)
     {
         return CheckGamePadConnection(player) && (gamePads[player].buttons[gamePadButton] == 2 || gamePads[player].buttons[gamePadButton] == 3); // 2 - Press || 3 - Hold
     }
 
-    bool Input::GetGamePadButtonReleased(const uint32_t gamePadButton, const uint32_t player)
+    bool Input::GetGamePadButtonReleased(const uint gamePadButton, const uint player)
     {
         return CheckGamePadConnection(player) && gamePads[player].buttons[gamePadButton] == 1; // 1 - Press
     }
 
-    bool Input::GetGamePadButtonResting(const uint32_t gamePadButton, const uint32_t player)
+    bool Input::GetGamePadButtonResting(const uint gamePadButton, const uint player)
     {
         return CheckGamePadConnection(player) && gamePads[player].buttons[gamePadButton] == 0; // 0 - Rest
     }
 
-    glm::vec2 Input::GetGamePadLeftStickAxis(const uint32_t player)
+    Vector2 Input::GetGamePadLeftStickAxis(const uint player)
     {
-        return CheckGamePadConnection(player) ? gamePads[player].axes[0] : glm::vec2(0, 0);
+        return CheckGamePadConnection(player) ? gamePads[player].axes[0] : Vector2(0, 0);
     }
 
-    glm::vec2 Input::GetGamePadRightStickAxis(const uint32_t player)
+    Vector2 Input::GetGamePadRightStickAxis(const uint player)
     {
-        return CheckGamePadConnection(player) ? gamePads[player].axes[1] : glm::vec2(0, 0);
+        return CheckGamePadConnection(player) ? gamePads[player].axes[1] : Vector2(0, 0);
     }
 
-    float Input::GetHorizontalGamePadLeftStickAxis(const uint32_t player)
+    float Input::GetHorizontalGamePadLeftStickAxis(const uint player)
     {
         return CheckGamePadConnection(player) ? gamePads[player].axes[0].x : 0.0f;
     }
 
-    float Input::GetVerticalGamePadLeftStickAxis(const uint32_t player)
+    float Input::GetVerticalGamePadLeftStickAxis(const uint player)
     {
         return CheckGamePadConnection(player) ? gamePads[player].axes[0].y : 0.0f;
     }
 
-    float Input::GetHorizontalGamePadRightStickAxis(const uint32_t player)
+    float Input::GetHorizontalGamePadRightStickAxis(const uint player)
     {
         return CheckGamePadConnection(player) ? gamePads[player].axes[1].x : 0.0f;
     }
 
-    float Input::GetVerticalGamePadRightStickAxis(const uint32_t player)
+    float Input::GetVerticalGamePadRightStickAxis(const uint player)
     {
         return CheckGamePadConnection(player) ? gamePads[player].axes[1].y : 0.0f;
     }
 
-    float Input::GetGamePadLeftTriggerAxis(const uint32_t player)
+    float Input::GetGamePadLeftTriggerAxis(const uint player)
     {
         return CheckGamePadConnection(player) ? gamePads[player].triggers[0] : 0.0f;
     }
 
-    float Input::GetGamePadRightTriggerAxis(const uint32_t player)
+    float Input::GetGamePadRightTriggerAxis(const uint player)
     {
         return CheckGamePadConnection(player) ? gamePads[player].triggers[1] : 0.0f;
     }
 
-    bool Input::GetGamePadConnected(const uint32_t player)
+    bool Input::GetGamePadConnected(const uint player)
     {
         return player < MAX_GAME_PADS && gamePads[player].connected;
     }
 
-    bool Input::CheckGamePadConnection(uint32_t player)
+    bool Input::CheckGamePadConnection(uint player)
     {
         if (player >= MAX_GAME_PADS || !gamePads[player].connected)
         {
@@ -263,7 +259,7 @@ namespace Sierra::Engine::Classes {
 
     /* --- CALLBACKS --- */
 
-    void Input::KeyboardCharacterCallback(GLFWwindow *windowPtr, const uint32_t character)
+    void Input::KeyboardCharacterCallback(GLFWwindow *windowPtr, const uint character)
     {
         enteredCharacters.push_back(UnicodePointToChar(character));
     }
@@ -310,7 +306,7 @@ namespace Sierra::Engine::Classes {
         }
     }
 
-    void Input::RegisterGamePad(const uint32_t player)
+    void Input::RegisterGamePad(const uint player)
     {
         gamePads[player].connected = true;
         gamePads[player].name = glfwGetGamepadName((int) player);
@@ -320,7 +316,7 @@ namespace Sierra::Engine::Classes {
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
-    std::string Input::UnicodePointToChar(const uint32_t unicodePoint)
+    String Input::UnicodePointToChar(const uint unicodePoint)
     {
         char character[5] = {0x00, 0x00, 0x00, 0x00, 0x00 };
         if      (unicodePoint <= 0x7F) { character[0] = unicodePoint;  }

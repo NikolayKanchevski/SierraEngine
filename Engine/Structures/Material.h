@@ -7,12 +7,12 @@
 
 struct Material
 {
-    glm::vec3 diffuse = glm::vec3(0);
+    Vector3 diffuse = Vector3(0);
     float shininess = 0.0f;
 
-    glm::vec3 specular = glm::vec3(0);
+    Vector3 specular = Vector3(0);
     float vertexExaggeration = 0.0f;
 
-    glm::vec3 ambient = glm::vec3(0);
+    Vector3 ambient = Vector3(0);
     float _align1_;
 };

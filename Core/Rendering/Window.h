@@ -4,14 +4,7 @@
 
 #pragma once
 
-#define GLFW_INCLUDE_VULKAN
-
-#include <string>
-#include <GLFW/glfw3.h>
-#include <vulkan/vulkan.h>
-
 #include "../Version.h"
-#include "../Debugger.h"
 
 using namespace Sierra::Engine;
 
@@ -28,7 +21,7 @@ namespace Sierra::Core::Rendering
         /// @param isFocusRequired Whether the window requires to be focused in order to draw and handle events.
         struct WindowCreateInfo
         {
-            std::string givenTitle = "v" + std::to_string(Version::MAJOR) + "." + std::to_string(Version::MINOR) + "." + std::to_string(Version::PATCH) + " " + Version::RELEASE_TYPE;
+            String givenTitle = "v" + std::to_string(Version::MAJOR) + "." + std::to_string(Version::MINOR) + "." + std::to_string(Version::PATCH) + " " + Version::RELEASE_TYPE;
             bool startMaximized = true;
             bool isResizable = true;
             bool isFocusRequired = true;
@@ -36,7 +29,7 @@ namespace Sierra::Core::Rendering
 
         /* --- CONSTRUCTORS --- */
 
-        static std::unique_ptr<Window> Create(WindowCreateInfo createInfo);
+        static UniquePtr<Window> Create(WindowCreateInfo createInfo);
         Window(const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
@@ -47,7 +40,7 @@ namespace Sierra::Core::Rendering
         /* --- SETTER METHODS --- */
 
         /// @brief Sets the title (tag) of the window
-        void SetTitle(const std::string& givenTitle);
+        void SetTitle(const String& givenTitle);
 
         /// @brief Shows the window after startup, or manually hiding it. @see Hide()
         void Show();
@@ -73,7 +66,7 @@ namespace Sierra::Core::Rendering
         { return this->height; };
 
         /// @brief Returns the title displayed at the top of the window.
-        [[nodiscard]] inline std::string GetTitle() const
+        [[nodiscard]] inline String GetTitle() const
         { return this->title; };
 
         /// @brief Returns the corresponding window surface. Should only be used for inside the core functionalities.
@@ -121,7 +114,10 @@ namespace Sierra::Core::Rendering
         [[nodiscard]] inline float GetOpacity() const
         { return this->opacity; };
 
-        /// @brief Returns the currently focused window. Make sure to always check if there is one before calling this method!
+        /// @brief Returns a bool indicating whether there currently is a focused window.
+        [[nodiscard]] static inline bool IsFocusedWindowPresent() { return currentlyFocusedWindow != nullptr; }
+
+        /// @brief Returns the currently focused window. Make sure to always check if there is one by calling IsFocusedWindowPresent() before calling this method!
         [[nodiscard]] static inline Window* GetCurrentlyFocusedWindow() { ASSERT_ERROR_IF(currentlyFocusedWindow == nullptr, "No windows are currently focused. Make sure to first check if return value is not null"); return currentlyFocusedWindow; }
 
         /* --- DESTRUCTOR --- */
@@ -133,10 +129,10 @@ namespace Sierra::Core::Rendering
         GLFWwindow *glfwWindow;
         VkSurfaceKHR surface;
 
-        uint32_t xPosition;
-        uint32_t yPosition;
+        uint xPosition;
+        uint yPosition;
 
-        std::string title;
+        String title;
         int width = 1300, height = 800;
 
         float opacity = 0.0f;

@@ -4,12 +4,7 @@
 
 #pragma once
 
-#include <memory>
-#include <vector>
-#include <vulkan/vulkan.h>
-
 #include "Pipeline.h"
-#include "../../../Debugger.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -19,7 +14,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         CommandBuffer();
-        static std::unique_ptr<CommandBuffer> Create();
+        static UniquePtr<CommandBuffer> Create();
 
         /* --- POLLING METHODS --- */
         void Begin() const;
@@ -29,11 +24,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 //        void WriteTimestamp(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, drawTimeQueryPool, imageIndex * 2) const;
         void BindVertexBuffers(const std::vector<VkBuffer> &vertexBuffers) const;
         void BindIndexBuffer(const VkBuffer &indexBuffer) const;
-        void Draw(const uint32_t indexCount) const;
-        void DrawUnindexed(const uint32_t vertexCount) const;
-        void SetViewport(uint32_t width, uint32_t height) const;
-        void SetScissor(uint32_t width, uint32_t height, int xOffset = 0, int yOffset = 0) const;
-        void SetViewportAndScissor(uint32_t width, uint32_t height, int xOffset = 0, int yOffset = 0) const;
+        void Draw(const uint indexCount) const;
+        void DrawUnindexed(const uint vertexCount) const;
+        void SetViewport(uint width, uint height) const;
+        void SetScissor(uint width, uint height, int xOffset = 0, int yOffset = 0) const;
+        void SetViewportAndScissor(uint width, uint height, int xOffset = 0, int yOffset = 0) const;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkCommandBuffer GetVulkanCommandBuffer() const { return vkCommandBuffer; };

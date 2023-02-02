@@ -4,9 +4,6 @@
 
 #pragma once
 
-#include <memory>
-#include <vulkan/vulkan.h>
-
 #include "../VulkanTypes.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
@@ -17,7 +14,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         float maxLod = 13.0f;
         float maxAnisotropy = 0.0f;
         bool applyBilinearFiltering = true;
-        SamplerAddressMode samplerAddressMode = ADDRESS_REPEAT;
+        SamplerAddressMode samplerAddressMode = SamplerAddressMode::REPEAT;
     };
 
     /// @brief An abstraction for the VkSampler object.
@@ -26,7 +23,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         Sampler(const SamplerCreateInfo &samplerCreateInfo);
-        static std::unique_ptr<Sampler> Create(SamplerCreateInfo createInfo);
+        static UniquePtr<Sampler> Create(SamplerCreateInfo createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkSampler GetVulkanSampler() const { return this->vkSampler; };
@@ -44,7 +41,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     private:
         VkSampler vkSampler = VK_NULL_HANDLE;
         SamplerCreateInfo createInfo;
-        SamplerAddressMode samplerAddressMode = ADDRESS_REPEAT;
+        SamplerAddressMode samplerAddressMode = SamplerAddressMode::REPEAT;
 
     };
 

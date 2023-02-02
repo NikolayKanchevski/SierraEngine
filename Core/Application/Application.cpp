@@ -12,16 +12,14 @@
 #define MODEL_SPACING_FACTOR_Y 10
 #define MODEL_SPACING_FACTOR_Z 15
 
-/* --- POLLING METHODS --- */
-
 void Application::Start()
 {
     // Start up the engine
     EngineCore::Initialize();
 
     // Create renderer
-    std::unique_ptr<Window> window = Window::Create({ });
-    std::unique_ptr<MainVulkanRenderer> renderer = MainVulkanRenderer::Create({ .window = window, .createImGuiInstance = true, .createImGuizmoLayer = true });
+    UniquePtr<Window> window = Window::Create({ });
+    UniquePtr<MainVulkanRenderer> renderer = MainVulkanRenderer::Create({ .window = window, .createImGuiInstance = true, .createImGuizmoLayer = true });
 
     // Initialize the world
     World::Start();
@@ -29,11 +27,12 @@ void Application::Start()
     // Create camera
     Entity cameraEntity = Entity("Camera");
     camera = cameraEntity.AddComponent<Camera>();
-    cameraEntity.GetTransform().position = { -5.0f, -2.5f, 5.0f };
+    cameraEntity.GetComponent<Transform>().SetPosition(-5.0f, -2.5f, 5.0f);
+    cameraEntity.GetComponent<Transform>().SetRotation(270.0f, NO_CHANGE, NO_CHANGE);
 
     // Create directional light
     DirectionalLight &directionalLight = Entity("Directional Light").AddComponent<DirectionalLight>();
-    directionalLight.direction = glm::normalize(camera.GetComponent<Transform>().position - glm::vec3(-7, 5, -7));
+    directionalLight.direction = glm::normalize(camera.GetComponent<Transform>().GetPosition() - Vector3(-7, 5, -7));
     directionalLight.intensity = 2.0f;
 
     // Create point light
@@ -42,25 +41,22 @@ void Application::Start()
 
     // Load 3D models in a grid view
     tankModels.reserve(MODEL_GRID_SIZE_X * MODEL_GRID_SIZE_Y * MODEL_GRID_SIZE_Z);
-    for (uint32_t i = MODEL_GRID_SIZE_X; i--;)
+    for (uint i = MODEL_GRID_SIZE_X; i--;)
     {
         int x = (i * MODEL_SPACING_FACTOR_X) - (MODEL_GRID_SIZE_X * MODEL_SPACING_FACTOR_X) / 2;
 
-        for (uint32_t j = MODEL_GRID_SIZE_Z; j--;)
+        for (uint j = MODEL_GRID_SIZE_Z; j--;)
         {
             int z = (j * MODEL_SPACING_FACTOR_Z) - (MODEL_GRID_SIZE_Z * MODEL_SPACING_FACTOR_Z) / 2;
 
-            for (uint32_t k = MODEL_GRID_SIZE_Y; k--;)
+            for (uint k = MODEL_GRID_SIZE_Y; k--;)
             {
                 int y = (k * MODEL_SPACING_FACTOR_Y) - (MODEL_GRID_SIZE_Y * MODEL_SPACING_FACTOR_Y) / 2;
 
                 tankModels.push_back(Model::Load("Models/Chieftain/T95_FV4201_Chieftain.fbx"));
-                for (uint32_t l = tankModels.back()->GetMeshCount(); l--;)
-                {
-                    tankModels.back()->GetMesh(l).GetComponent<Transform>().position = { x, y, z };
-                }
+                tankModels.back()->GetOriginEntity().GetComponent<Transform>().SetPosition({ x, y, z });
 
-                pointLight->GetComponent<Transform>().position = { x, y + 3, z };
+                pointLight->GetComponent<Transform>().SetPosition({ x, y + 3, z });
             }
         }
     }
@@ -77,10 +73,10 @@ void Application::Start()
         // Do per-frame actions
         RenderLoop(renderer);
 
-        renderer->Update();
+        World::Update();
 
         // Push updates to renderer
-        World::Update();
+        renderer->Update();
 
         // Update and render world
         renderer->Render();
@@ -93,19 +89,19 @@ void Application::Start()
     EngineCore::Terminate();
 }
 
-void Application::RenderLoop(std::unique_ptr<MainVulkanRenderer> &renderer)
+void Application::RenderLoop(UniquePtr<MainVulkanRenderer> &renderer)
 {
     // If the window of the renderer is required to be focused but is not return before executing useless code
     if (renderer->GetWindow()->IsFocusRequired() && !renderer->GetWindow()->IsFocused()) return;
+
+    // Update UI
+    DisplayUI(renderer);
 
     // Update world objects
     UpdateObjects();
 
     // Calculate camera movement
     DoCameraMovement();
-
-    // Update UI
-    DisplayUI(renderer);
 }
 
 void Application::UpdateObjects()
@@ -116,13 +112,15 @@ void Application::UpdateObjects()
     // Rotate tank models
     for (const auto &tankModel : tankModels)
     {
-        tankModel->GetMesh(3).GetComponent<Transform>().rotation.x = timeSin * 45.0f;
-        tankModel->GetMesh(4).GetComponent<Transform>().rotation.x = timeSin * 45.0f;
+        if (!tankModel->IsLoaded()) continue;
+
+        tankModel->GetMesh(3).GetComponent<Transform>().SetRotation(timeSin * 45.0f, NO_CHANGE, NO_CHANGE);
+        tankModel->GetMesh(4).GetComponent<Transform>().SetRotation(timeSin * 45.0f, NO_CHANGE, NO_CHANGE);
     }
 
     // Move point light
-    const static float startingZ = pointLight->GetComponent<Transform>().position.z;
-    pointLight->GetComponent<Transform>().position.z = (2 * timeSin) + startingZ;
+    const static float startingZ = pointLight->GetComponent<Transform>().GetPosition().z;
+    pointLight->GetComponent<Transform>().SetPosition(NO_CHANGE, (2 * timeSin) + startingZ, NO_CHANGE);
 }
 
 void Application::DoCameraMovement()
@@ -133,47 +131,53 @@ void Application::DoCameraMovement()
         Cursor::SetCursorVisibility(!Cursor::IsCursorShown());
     }
 
+    if (Input::GetKeyPressed(GLFW_KEY_B))
+    {
+        camera.GetComponent<Transform>().LookAt(tankModels.back()->GetOriginEntity().GetComponent<Transform>().GetWorldPosition());
+    }
+
     // If the cursor is visible return
     if (!Cursor::IsCursorShown())
     {
         // Cache the transform of the camera
         Transform &cameraTransform = camera.GetComponent<Transform>();
+        Vector3 newCameraRotation = cameraTransform.GetRotation();
 
         // Move camera accordingly
-        if (Input::GetKeyHeld(GLFW_KEY_W)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetFrontDirection();
-        if (Input::GetKeyHeld(GLFW_KEY_S)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetBackDirection();
-        if (Input::GetKeyHeld(GLFW_KEY_A)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetLeftDirection();
-        if (Input::GetKeyHeld(GLFW_KEY_D)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetRightDirection();
-        if (Input::GetKeyHeld(GLFW_KEY_E) || Input::GetKeyHeld(GLFW_KEY_SPACE)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection();
-        if (Input::GetKeyHeld(GLFW_KEY_Q) || Input::GetKeyHeld(GLFW_KEY_LEFT_CONTROL)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection();
+        if (Input::GetKeyHeld(GLFW_KEY_W)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetFrontDirection());
+        if (Input::GetKeyHeld(GLFW_KEY_S)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetBackDirection());
+        if (Input::GetKeyHeld(GLFW_KEY_A)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetLeftDirection());
+        if (Input::GetKeyHeld(GLFW_KEY_D)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetRightDirection());
+        if (Input::GetKeyHeld(GLFW_KEY_E) || Input::GetKeyHeld(GLFW_KEY_SPACE)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection());
+        if (Input::GetKeyHeld(GLFW_KEY_Q) || Input::GetKeyHeld(GLFW_KEY_LEFT_CONTROL)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection());
 
         // Apply camera rotation based on mouse movement
-        yaw += Cursor::GetHorizontalCursorOffset() * CAMERA_LOOK_SPEED;
-        pitch += Cursor::GetVerticalCursorOffset() * CAMERA_LOOK_SPEED;
+        newCameraRotation.x += Cursor::GetHorizontalCursorOffset() * CAMERA_LOOK_SPEED;
+        newCameraRotation.y += Cursor::GetVerticalCursorOffset() * CAMERA_LOOK_SPEED;
 
         // Check if a game pad (player 0) is connected
         if (Input::GetGamePadConnected())
         {
             // Get the left stick's axis and calculate movement based on it
-            cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * Input::GetVerticalGamePadLeftStickAxis() * camera.GetFrontDirection();
-            cameraTransform.position -= CAMERA_MOVE_SPEED * Time::GetDeltaTime() * Input::GetHorizontalGamePadLeftStickAxis() * camera.GetLeftDirection();
+            cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * Input::GetVerticalGamePadLeftStickAxis() * camera.GetFrontDirection());
+            cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * Input::GetHorizontalGamePadLeftStickAxis() * camera.GetRightDirection());
 
             // Depending on what buttons are held move the camera
-            if (Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection();
-            if (Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_X)) cameraTransform.position += CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection();
+            if (Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection());
+            if (Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_X)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection());
 
             // Rotate the camera based on the right stick's axis
-            yaw -= Input::GetHorizontalGamePadRightStickAxis() * GAMEPAD_CAMERA_LOOK_SPEED;
-            pitch += Input::GetVerticalGamePadRightStickAxis() * GAMEPAD_CAMERA_LOOK_SPEED;
+            newCameraRotation.x += Input::GetHorizontalGamePadRightStickAxis() * GAMEPAD_CAMERA_LOOK_SPEED;
+            newCameraRotation.y += Input::GetVerticalGamePadRightStickAxis() * GAMEPAD_CAMERA_LOOK_SPEED;
 
             // Change camera FOV depending on game pad's right trigger
-            camera.fov = Math::Clamp(Input::GetGamePadRightTriggerAxis() * 45.0f, 45.0f, 90.0f);
+            camera.fov = Math::Clamp(Input::GetGamePadRightTriggerAxis() * 90.0f, 45.0f, 90.0f);
         }
 
         // Clamp camera pith between -85.0f and +85.0f
-        pitch = Math::Clamp(pitch, -85.0f, 85.0f);
-    }
+        newCameraRotation.y = Math::Clamp(newCameraRotation.y, -85.0f, 85.0f);
 
-    // Apply transformations to camera
-    camera.GetComponent<Transform>().rotation = { yaw, pitch, 0.0f };
+        // Apply transformations to camera
+        camera.GetComponent<Transform>().SetRotation(newCameraRotation);
+    }
 }

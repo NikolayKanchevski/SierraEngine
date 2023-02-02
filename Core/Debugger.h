@@ -4,11 +4,7 @@
 
 #pragma once
 
-#include <string>
-#include <chrono>
-#include <vulkan/vulkan.h>
-#include <vulkan/vk_enum_string_helper.h>
-#include <iostream>
+#define PROFILE_FUNCTIONS_IN_RELEASE 0
 
 #if _WIN32
     #include <windows.h>
@@ -28,20 +24,21 @@ namespace Sierra::Core
         static void DisplaySuccess(const std::string&);
         static void ThrowWarning(const std::string&);
         static void ThrowError(const std::string&);
+
         static bool CheckResults(const VkResult result, const std::string&);
 
         template <typename T>
-        static std::string TypeToString() {
-
+        static inline std::string TypeToString()
+        {
             auto unformatted = Demangle(typeid(T).name());
             return unformatted.substr(unformatted.find_last_of(':') + 1);
         }
 
         static VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(
-                VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                VkDebugUtilsMessageTypeFlagsEXT messageType,
-                const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-                void* pUserData
+            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+            VkDebugUtilsMessageTypeFlagsEXT messageType,
+            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+            void* pUserData
         );
 
     private:
@@ -52,19 +49,52 @@ namespace Sierra::Core
 
 #if DEBUG
     #define ASSERT_ERROR(MESSAGE) Debugger::ThrowError(MESSAGE)
+    #define ASSERT_ERROR_FORMATTED(MESSAGE, VALUES...) ASSERT_ERROR(fmt::format(MESSAGE, VALUES))
     #define ASSERT_ERROR_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_ERROR(MESSAGE)
+    #define ASSERT_ERROR_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) if (EXPRESSION) ASSERT_ERROR_FORMATTED(MESSAGE, VALUES)
 
     #define ASSERT_WARNING(MESSAGE) Debugger::ThrowWarning(MESSAGE)
+    #define ASSERT_WARNING_FORMATTED(MESSAGE, VALUES...) ASSERT_WARNING(fmt::format(MESSAGE, VALUES))
     #define ASSERT_WARNING_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_WARNING(MESSAGE)
+    #define ASSERT_WARNING_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) if (EXPRESSION) ASSERT_WARNING_FORMATTED(MESSAGE, VALUES)
 
     #define ASSERT_SUCCESS(MESSAGE) Debugger::DisplaySuccess(MESSAGE)
+    #define ASSERT_SUCCESS_FORMATTED(MESSAGE, VALUES...) ASSERT_SUCCESS(fmt::format(MESSAGE, VALUES))
     #define ASSERT_SUCCESS_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_SUCCESS(MESSAGE)
+    #define ASSERT_SUCCESS_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) if (EXPRESSION) ASSERT_SUCCESS_FORMATTED(MESSAGE, VALUES)
 
+    #define VK_ASSERT(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_ERROR_FORMATTED("Vulkan Error: {0}() failed: {1}! Error code: {2}", std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")), MESSAGE, string_VkResult(result))
+    #define VK_VALIDATE(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_WARNING_FORMATTED("Vulkan Error: {0}() failed: {1}! Error code: {2}", std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")), MESSAGE, string_VkResult(result))
+#else
+    #define ASSERT_ERROR(MESSAGE)
+    #define ASSERT_ERROR_FORMATTED(MESSAGE, VALUES...)
+    #define ASSERT_ERROR_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
+    #define ASSERT_ERROR_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) static_cast<void>(EXPRESSION)
+
+    #define ASSERT_WARNING(MESSAGE)
+    #define ASSERT_WARNING_FORMATTED(MESSAGE, VALUES...)
+    #define ASSERT_WARNING_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
+    #define ASSERT_WARNING_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) static_cast<void>(EXPRESSION)
+
+    #define ASSERT_SUCCESS(MESSAGE)
+    #define ASSERT_SUCCESS_FORMATTED(MESSAGE, VALUES...)
+    #define ASSERT_SUCCESS_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
+    #define ASSERT_SUCCESS_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) static_cast<void>(EXPRESSION)
+
+    #define ASSERT_INFO(MESSAGE)
+    #define ASSERT_INFO_FORMATTED(MESSAGE, VALUES...)
+    #define ASSERT_INFO_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
+    #define ASSERT_INFO_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) static_cast<void>(EXPRESSION)
+
+    #define VK_ASSERT(FUNCTION, MESSAGE) static_cast<void>(FUNCTION)
+    #define VK_VALIDATE(FUNCTION, MESSAGE) static_cast<void>(FUNCTION)
+#endif
+
+#if DEBUG || PROFILE_FUNCTIONS_IN_RELEASE
     #define ASSERT_INFO(MESSAGE) Debugger::DisplayInfo(MESSAGE)
+    #define ASSERT_INFO_FORMATTED(MESSAGE, VALUES...) ASSERT_INFO(fmt::format(MESSAGE, VALUES))
     #define ASSERT_INFO_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_INFO(MESSAGE)
-
-    #define VK_ASSERT(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_ERROR(std::string("Vulkan Error: ") + std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")) + std::string("() failed: ") + MESSAGE + "! Error code: " + string_VkResult(result))
-    #define VK_VALIDATE(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_WARNING(std::string("Vulkan Error: ") + std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")) + std::string("() failed: ") + MESSAGE + "! Error code: " + string_VkResult(result))
+    #define ASSERT_INFO_FORMATTED_IF(EXPRESSION, MESSAGE, VALUES...) if (EXPRESSION) ASSERT_INFO_FORMATTED(MESSAGE, VALUES)
 
     #if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600)) || defined(__ghs__)
         #define FUNC_SIG __PRETTY_FUNCTION__
@@ -90,21 +120,6 @@ namespace Sierra::Core
     #define PROFILE_SCOPE(name) PROFILE_SCOPE_LINE(name, __LINE__)
     #define PROFILE_FUNCTION() PROFILE_SCOPE(FUNC_SIG)
 #else
-    #define ASSERT_ERROR(MESSAGE)
-    #define ASSERT_ERROR_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
-
-    #define ASSERT_WARNING(MESSAGE)
-    #define ASSERT_WARNING_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
-
-    #define ASSERT_SUCCESS(MESSAGE)
-    #define ASSERT_SUCCESS_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
-
-    #define ASSERT_INFO(MESSAGE)
-    #define ASSERT_INFO_IF(EXPRESSION, MESSAGE) static_cast<void>(EXPRESSION)
-
-    #define VK_ASSERT(FUNCTION, MESSAGE) static_cast<void>(FUNCTION)
-    #define VK_VALIDATE(FUNCTION, MESSAGE) static_cast<void>(FUNCTION)
-
     #define PROFILE_FUNCTION()
 #endif
 
@@ -163,19 +178,23 @@ public:
 
         std::string nameString = std::string(name);
 
-        uint32_t i = nameString.size();
+        uint i = nameString.size();
         while (true)
         {
             if (nameString[i] == '(')
             {
-                uint32_t j = i;
-                uint32_t columnCounter = 0;
+                uint j = i;
+                uint columnCounter = 0;
 
                 while (columnCounter < 3)
                 {
                     j--;
 
-                    if (nameString[j] == ':')
+                    if (j == -1)
+                    {
+                        break;
+                    }
+                    else if (nameString[j] == ':')
                     {
                         columnCounter++;
                     }

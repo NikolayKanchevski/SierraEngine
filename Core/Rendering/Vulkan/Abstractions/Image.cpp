@@ -16,26 +16,26 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Set up image creation info
         VkImageCreateInfo vkImageCreateInfo{};
         vkImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        vkImageCreateInfo.imageType = createInfo.imageType;
+        vkImageCreateInfo.imageType = (VkImageType) createInfo.imageType;
 
-        vkImageCreateInfo.extent.width = static_cast<uint32_t>(dimensions.width);
-        vkImageCreateInfo.extent.height = static_cast<uint32_t>(dimensions.height);
-        vkImageCreateInfo.extent.depth = static_cast<uint32_t>(dimensions.depth);
+        vkImageCreateInfo.extent.width = static_cast<uint>(dimensions.width);
+        vkImageCreateInfo.extent.height = static_cast<uint>(dimensions.height);
+        vkImageCreateInfo.extent.depth = static_cast<uint>(dimensions.depth);
 
         vkImageCreateInfo.mipLevels = mipMapLevels;
         vkImageCreateInfo.arrayLayers = createInfo.layerCount;
         vkImageCreateInfo.format = (VkFormat) format;
         vkImageCreateInfo.tiling = (VkImageTiling) createInfo.imageTiling;
-        vkImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        vkImageCreateInfo.initialLayout = (VkImageLayout) ImageLayout::UNDEFINED;
         vkImageCreateInfo.usage = (VkImageUsageFlagBits) createInfo.usageFlags;
         vkImageCreateInfo.samples = (VkSampleCountFlagBits) sampling;
         vkImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        vkImageCreateInfo.flags = createInfo.createFlags;
+        vkImageCreateInfo.flags = (uint) createInfo.createFlags;
 
         // Set up image allocation info
         VmaAllocationCreateInfo allocationCreateInfo{};
         allocationCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
-        allocationCreateInfo.memoryTypeBits = std::numeric_limits<uint32_t>::max();
+        allocationCreateInfo.memoryTypeBits = std::numeric_limits<uint>::max();
         allocationCreateInfo.priority = 0.5f;
 
         // Create and allocate image
@@ -46,18 +46,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
     }
 
-    std::unique_ptr<Image> Image::Create(ImageCreateInfo imageCreateInfo)
+    UniquePtr<Image> Image::Create(ImageCreateInfo imageCreateInfo)
     {
         return std::make_unique<Image>(imageCreateInfo);
     }
 
     Image::Image(const SwapchainImageCreateInfo &createInfo)
-        : vkImage(createInfo.image), format(createInfo.format), sampling(createInfo.sampling), dimensions(createInfo.dimensions), layout(LAYOUT_PRESENT_SRC), swapchainImage(true)
+        : vkImage(createInfo.image), format(createInfo.format), sampling(createInfo.sampling), dimensions(createInfo.dimensions), layout(ImageLayout::PRESENT_SRC), swapchainImage(true)
     {
 
     }
 
-    std::unique_ptr<Image> Image::CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo)
+    UniquePtr<Image> Image::CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo)
     {
         return std::make_unique<Image>(swapchainImageCreateInfo);
     }
@@ -114,11 +114,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         imageMemoryBarrier.subresourceRange.layerCount = layerCount;					// Number of layers to alter starting from baseArrayLayer
 
         // If transitioning from a depth image...
-        if (newLayout == LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL)
+        if (newLayout == ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL)
         {
             imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
-            if (format == FORMAT_D32_SFLOAT_S8_UINT || format == FORMAT_D24_UNORM_S8_UINT)
+            if (format == ImageFormat::D32_SFLOAT_S8_UINT || format == ImageFormat::D24_UNORM_S8_UINT)
             {
                 imageMemoryBarrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
             }
@@ -132,7 +132,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkPipelineStageFlags dstStage = 0;
 
         // If transitioning from a new or undefined image to an image that is ready to receive data...
-        if (layout == LAYOUT_UNDEFINED && newLayout == LAYOUT_TRANSFER_DST_OPTIMAL)
+        if (layout == ImageLayout::UNDEFINED && newLayout == ImageLayout::TRANSFER_DST_OPTIMAL)
         {
             imageMemoryBarrier.srcAccessMask = 0;
             imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -141,7 +141,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;     // The stage the transition must occur before
         }
         // If transitioning from transfer destination to shader readable...
-        else if (layout == LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+        else if (layout == ImageLayout::TRANSFER_DST_OPTIMAL && newLayout == ImageLayout::SHADER_READ_ONLY_OPTIMAL)
         {
             imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
@@ -150,7 +150,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         }
             // If transitioning from an undefined layout to one optimal for depth stencil...
-        else if (layout == LAYOUT_UNDEFINED && newLayout == LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL)
+        else if (layout == ImageLayout::UNDEFINED && newLayout == ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL)
         {
             imageMemoryBarrier.srcAccessMask = 0;
             imageMemoryBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;

@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <vector>
-
 #include "Image.h"
 #include "Framebuffer.h"
 #include "../VulkanTypes.h"
@@ -16,21 +14,21 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     struct RenderPassAttachment
     {
         /* --- FRAMEBUFFER PROPERTIES --- */
-        std::unique_ptr<Image>& imageAttachment;
+        UniquePtr<Image>& imageAttachment;
 
         /* --- RENDERPASS PROPERTIES --- */
-        LoadOp loadOp = LOAD_OP_UNDEFINED;
-        StoreOp storeOp = STORE_OP_UNDEFINED;
-        ImageLayout finalLayout = LAYOUT_UNDEFINED;
+        LoadOp loadOp =  LoadOp::UNDEFINED;
+        StoreOp storeOp = StoreOp::UNDEFINED;
+        ImageLayout finalLayout = ImageLayout::UNDEFINED;
         bool isResolve = false;
 
-        bool IsDepth() const { return finalLayout == LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL; }
+        bool IsDepth() const { return finalLayout == ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL; }
     };
 
     struct SubpassInfo
     {
-        std::vector<uint32_t> renderTargets{};
-        std::vector<uint32_t> subpassInputs{};
+        std::vector<uint> renderTargets{};
+        std::vector<uint> subpassInputs{};
     };
 
     struct RenderPassCreateInfo
@@ -45,11 +43,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         RenderPass(const RenderPassCreateInfo &createInfo);
-        static std::unique_ptr<RenderPass> Create(RenderPassCreateInfo createInfo);
+        static UniquePtr<RenderPass> Create(RenderPassCreateInfo createInfo);
 
         /* --- POLLING METHODS --- */
         void NextSubpass(VkCommandBuffer commandBuffer);
-        void Begin(const std::unique_ptr<Framebuffer> &framebuffer, VkCommandBuffer commandBuffer);
+        void Begin(const UniquePtr<Framebuffer> &framebuffer, VkCommandBuffer commandBuffer);
         void End(VkCommandBuffer commandBuffer);
 
         /* --- GETTER METHODS --- */

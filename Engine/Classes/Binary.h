@@ -4,9 +4,6 @@
 
 #pragma once
 
-#include <cstdint>
-#include <bitset>
-
 namespace Sierra::Engine::Classes
 {
 
@@ -15,22 +12,22 @@ namespace Sierra::Engine::Classes
     public:
         /* --- CONSTRUCTORS --- */
         Binary() = default;
-        Binary(uint32_t givenValue);
+        Binary(uint givenValue);
 
         /* --- SETTER METHODS --- */
-        void SetBit(uint32_t bitIndex, uint32_t newValue);
+        void SetBit(uint bitIndex, uint newValue);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline bool IsBitSet(const uint32_t bitIndex) const { return (value & (1 << bitIndex)) != 0; };
-        [[nodiscard]] inline uint32_t GetBitCount() const { return GetBitCount(value); };
-        [[nodiscard]] static uint32_t GetBitCount(Binary binary);
-        [[nodiscard]] std::string ToString() const { return std::bitset<16>(value).to_string(); };
+        [[nodiscard]] inline bool IsBitSet(const uint bitIndex) const { return (value & (1 << bitIndex)) != 0; };
+        [[nodiscard]] inline uint GetBitCount() const { return GetBitCount(value); };
+        [[nodiscard]] static uint GetBitCount(Binary binary);
+        [[nodiscard]] String ToString() const { return std::bitset<16>(value).to_string(); };
 
         /* --- OPERATORS --- */
-        Binary& operator=(uint32_t givenValue);
-        operator uint32_t() const noexcept { return value; }
+        Binary& operator=(uint givenValue);
+        operator uint() const noexcept { return value; }
     private:
-        uint32_t value = 0;
+        uint value = 0;
 
     };
 

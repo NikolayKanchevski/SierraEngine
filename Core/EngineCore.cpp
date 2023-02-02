@@ -30,7 +30,6 @@ namespace Sierra
         Texture::DestroyDefaultTextures();
         Texture::DisposePool();
         Model::DisposePool();
-
         VK::Destroy();
 
         glfwTerminate();

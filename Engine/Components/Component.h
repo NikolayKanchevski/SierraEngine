@@ -4,11 +4,6 @@
 
 #pragma once
 
-#include <entt/entt.hpp>
-
-#include "../../Core/World.h"
-#include "../../Core/Debugger.h"
-
 namespace Sierra::Engine::Components
 {
     class Component
@@ -18,53 +13,21 @@ namespace Sierra::Engine::Components
         inline entt::entity GetEnttEntity() { return enttEntity; };
 
         template <typename T, std::enable_if_t<std::is_base_of_v<Component, T>, bool> = true, typename... Args>
-        inline T& AddComponent(Args&&... args)
-        {
-            if (HasComponent<T>())
-            {
-                ASSERT_WARNING("Component of type [" + Debugger::TypeToString<T>() + "] already present in entity. New components has been dismissed and instead the old one has been returned");
-                return GetComponent<T>();
-            }
-
-            T& component = World::GetEnttRegistry()->emplace<T>(enttEntity, std::forward<Args>(args)...);
-            component.SetEnttEntity(enttEntity);
-            return component;
-        }
+        inline T& AddComponent(Args&&... args) { return World::AddComponent<T>(enttEntity, std::forward<Args>(args)...); }
 
         template<typename T, std::enable_if_t<std::is_base_of_v<Component, T>, bool> = true, typename... Args>
-        inline T& AddOrReplaceComponent(Args&&... args)
-        {
-            T& component = World::GetEnttRegistry()->emplace_or_replace<T>(enttEntity, std::forward<Args>(args)...);
-            component.SetEnttEntity(enttEntity);
-            return component;
-        }
+        inline T& AddOrReplaceComponent(Args&&... args) { return World::AddOrReplaceComponent<T>(enttEntity, std::forward<Args>(args)...); }
 
         template<typename T>
-        inline T& GetComponent() const
-        {
-            ASSERT_ERROR_IF(!HasComponent<T>(), "Component of type [" + Debugger::TypeToString<T>() + "] does not exist within the entity");
-
-            return World::GetEnttRegistry()->get<T>(enttEntity);
-        }
+        inline T& GetComponent() const { return World::GetComponent<T>(enttEntity); }
 
         template<typename T>
-        inline bool HasComponent() const
-        {
-            return World::GetEnttRegistry()->all_of<T>(enttEntity);
-        }
+        inline bool HasComponent() const { return World::HasComponent<T>(enttEntity); }
 
         template<typename T>
-        inline void RemoveComponent() const
-        {
-            if (!HasComponent<T>())
-            {
-                ASSERT_WARNING("Component of type [" + Debugger::TypeToString<T>() + "] does not exist within entity. No components were removed");
-                return;
-            }
+        inline void RemoveComponent() const { World::RemoveComponent<T>(enttEntity); }
 
-            World::GetEnttRegistry()->remove<T>(enttEntity);
-        }
-
+        virtual inline void OnAddComponent() { };
         virtual inline void Update() { }
         virtual inline void DrawUI() { };
         virtual inline void Destroy() const { }

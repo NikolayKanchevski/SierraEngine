@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <entt/entt.hpp>
-
 namespace Sierra::Core
 {
 
@@ -24,12 +22,73 @@ namespace Sierra::Core
         /// @brief Updates all objects, their properties and the corresponding renderer. Draws to the window.
         static void Update();
 
+        /* --- SETTER METHODS --- */
+        static inline void DestroyEntity(const entt::entity enttEntity) { enttRegistry->destroy(enttEntity); }
+
         /* --- GETTER METHODS --- */
-        [[nodiscard]] static std::shared_ptr<entt::registry>& GetEnttRegistry() { return enttRegistry; }
-        [[nodiscard]] static entt::entity RegisterEntity() { return enttRegistry->create(); }
+        [[nodiscard]] static inline entt::entity RegisterEntity() { return enttRegistry->create(); }
+        [[nodiscard]] static inline std::unordered_map<uint, entt::entity>& GetOriginEntitiesList() { return originEntities; }
+
+        /* --- TEMPLATES --- */
+        template <typename T, typename... Args>
+        inline static T& AddComponent(const entt::entity enttEntity, Args&&... args)
+        {
+            if (HasComponent<T>(enttEntity))
+            {
+                ASSERT_WARNING("Component of type [" + Debugger::TypeToString<T>() + "] already present in entity. New components has been dismissed and instead the old one has been returned");
+                return GetComponent<T>(enttEntity);
+            }
+
+            T& component = enttRegistry->emplace<T>(enttEntity, std::forward<Args>(args)...);
+            component.SetEnttEntity(enttEntity);
+            component.OnAddComponent();
+            return component;
+        }
+
+        template <typename T, typename... Args>
+        inline static T& AddOrReplaceComponent(const entt::entity enttEntity, Args&&... args)
+        {
+            T& component = enttRegistry->emplace_or_replace<T>(enttEntity, std::forward<Args>(args)...);
+            component.SetEnttEntity(enttEntity);
+            component.OnAddComponent();
+            return component;
+        }
+
+        template<typename T>
+        inline static T& GetComponent(const entt::entity enttEntity)
+        {
+            ASSERT_ERROR_IF(!HasComponent<T>(enttEntity), "Component of type [" + Debugger::TypeToString<T>() + "] does not exist within the entity");
+
+            return enttRegistry->get<T>(enttEntity);
+        }
+
+        template<typename T>
+        inline static bool HasComponent(const entt::entity enttEntity)
+        {
+            return enttRegistry->all_of<T>(enttEntity);
+        }
+
+        template<typename T>
+        inline static void RemoveComponent(const entt::entity enttEntity)
+        {
+            if (!HasComponent<T>(enttEntity))
+            {
+                ASSERT_WARNING("Component of type [" + Debugger::TypeToString<T>() + "] does not exist within entity. No components were removed");
+                return;
+            }
+
+            enttRegistry->remove<T>(enttEntity);
+        }
+
+        template<typename T>
+        inline static auto GetAllComponentsOfType()
+        {
+            return enttRegistry->view<T>();
+        }
 
         /* --- DESTRUCTOR --- */
     private:
+        inline static std::unordered_map<uint, entt::entity> originEntities;
         inline static std::shared_ptr<entt::registry> enttRegistry = std::make_shared<entt::registry>();
     };
 }

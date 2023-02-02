@@ -182,7 +182,7 @@ static void DisplayLinks(Delegate& delegate,
             continue;
 
         bool highlightCons = hoveredNode == link.mInputNodeIndex || hoveredNode == link.mOutputNodeIndex;
-        uint32_t col = delegate.GetTemplate(nodeInput.mTemplateIndex).mHeaderColor | (highlightCons ? 0xF0F0F0 : 0);
+        uint col = delegate.GetTemplate(nodeInput.mTemplateIndex).mHeaderColor | (highlightCons ? 0xF0F0F0 : 0);
         if (options.mDisplayLinksAsCurves)
         {
             // curves
@@ -682,7 +682,7 @@ static bool DrawNode(ImDrawList* drawList,
         delegate.CustomDraw(drawList, customDrawRect, nodeIndex);
     }
 /*
-    const ImTextureID bmpInfo = (ImTextureID)(uint64_t)delegate->GetBitmapInfo(nodeIndex).idx;
+    const ImTextureID bmpInfo = (ImTextureID)(uint64)delegate->GetBitmapInfo(nodeIndex).idx;
     if (bmpInfo)
     {
         ImVec2 bmpInfoPos(nodeRectangleMax - ImVec2(26, 12));

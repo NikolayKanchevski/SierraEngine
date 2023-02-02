@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Light.h"
+#include "../../../Core/Rendering/UI/ImGuiUtilities.h"
 
 namespace Sierra::Engine::Components
 {
@@ -15,7 +16,7 @@ namespace Sierra::Engine::Components
     public:
         /* --- PROPERTIES --- */
         /// @brief What direction the light casting will follow.
-        glm::vec3 direction = { 0, -1, 0 };
+        Vector3 direction = { 0, -1, 0 };
 
         /* --- CONSTRUCTORS --- */
         inline DirectionalLight()
@@ -34,8 +35,25 @@ namespace Sierra::Engine::Components
             }
         };
 
+        /* --- POLLING METHODS --- */
+        inline void DrawUI() override
+        {
+            ImGui::BeginProperties();
+
+            ImGui::FloatProperty("Intensity:", intensity);
+
+            static const float resetValues[3] = { 0.0f, 0.0f, 0.0f };
+            static const char* tooltips[3] = { "Some tooltip.", "Some tooltip.", "Some tooltip." };
+            ImGui::PropertyVector3("Color:", color, resetValues, tooltips);
+
+            ImGui::PropertyVector3("Direction:", direction, resetValues, tooltips);
+
+
+            ImGui::EndProperties();
+        }
+
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline static uint32_t GetDirectionalLightCount() { return directionalLightCount; }
+        [[nodiscard]] inline static uint GetDirectionalLightCount() { return directionalLightCount; }
 
         /* --- DESTRUCTOR --- */
         inline void Destroy() const override { RemoveComponent<DirectionalLight>(); freedIDs.push_back(this->lightID); directionalLightCount--; };
@@ -43,10 +61,10 @@ namespace Sierra::Engine::Components
     public:
         struct alignas(16) ShaderDirectionalLight
         {
-            glm::vec3 direction;
+            Vector3 direction;
             float intensity;
 
-            glm::vec3 color;
+            Vector3 color;
         };
 
         operator ShaderDirectionalLight() const noexcept { return
@@ -57,10 +75,10 @@ namespace Sierra::Engine::Components
         }; }
 
     private:
-        inline static uint32_t currentMaxID = 0;
+        inline static uint currentMaxID = 0;
 
-        inline static std::vector<uint32_t> freedIDs;
-        inline static uint32_t directionalLightCount = 0;
+        inline static std::vector<uint> freedIDs;
+        inline static uint directionalLightCount = 0;
     };
 
 }

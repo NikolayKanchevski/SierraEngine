@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <imgui.h>
-
 #include "../Window.h"
 #include "../Vulkan/Abstractions/Swapchain.h"
 
@@ -14,17 +12,22 @@ using namespace Rendering::Vulkan;
 namespace Sierra::Core::Rendering::UI
 {
 
+    struct FontCreateInfo
+    {
+        const char* fontFilePath = "Fonts/PTSans.ttf";
+        float fontSize = 18.0f;
+    };
+
     struct ImGuiInstanceCreateInfo
     {
-        std::unique_ptr<Window> &window;
-        std::unique_ptr<Swapchain> &swapchain;
+        UniquePtr<Window> &window;
+        UniquePtr<Swapchain> &swapchain;
 
-        float fontSize = 18.0f;
-        const char* fontFilePath = "Fonts/PTSans.ttf";
+        std::vector<FontCreateInfo> fontCreateInfos { FontCreateInfo() };
 
         ImGuiStyle *givenImGuiStyle;
         ImGuiConfigFlags imGuiConfigFlags = ImGuiConfigFlags_DockingEnable;
-        Sampling sampling = MSAAx1;
+        Sampling sampling = Sampling::MSAAx1;
 
         bool createImGuizmoLayer = false;
     };
@@ -34,7 +37,7 @@ namespace Sierra::Core::Rendering::UI
     public:
         /* --- CONSTRUCTORS --- */
         ImGuiInstance(const ImGuiInstanceCreateInfo &createInfo);
-        static std::unique_ptr<ImGuiInstance> Create(ImGuiInstanceCreateInfo createInfo);
+        static UniquePtr<ImGuiInstance> Create(ImGuiInstanceCreateInfo createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] ImGuiContext* GetImGuiContext() const { return imGuiContext; };
@@ -44,7 +47,6 @@ namespace Sierra::Core::Rendering::UI
         void BeginNewImGuiFrame();
         void EndImGuiFrame();
         void Render();
-        void RenderDrawData(VkCommandBuffer commandBuffer);
 
         /* --- DESTRUCTOR --- */
         void Destroy();
@@ -52,11 +54,10 @@ namespace Sierra::Core::Rendering::UI
         ImGuiInstance &operator=(const ImGuiInstance &) = delete;
 
     private:
-        std::unique_ptr<Window> &window;
+        UniquePtr<Window> &window;
 
         ImGuiStyle imGuiStyle;
         ImGuiContext *imGuiContext;
-        VkDescriptorPool descriptorPool;
 
         bool hasImGuizmoLayer;
 

@@ -14,16 +14,16 @@ namespace Sierra::Engine::Components
     {
     public:
         /// @brief Color of the light.
-        glm::vec3 color = { 1, 1, 1 };
+        Vector3 color = { 1, 1, 1 };
 
         /// @brief Intensity of the light color.
         float intensity = 1.0f;
 
         /// @brief Returns the ID of the light within the storage buffer array.
-        [[nodiscard]] uint32_t GetID() const { return lightID; }
+        [[nodiscard]] uint GetID() const { return lightID; }
 
     protected:
-        uint32_t lightID;
+        uint lightID;
     };
 
 }

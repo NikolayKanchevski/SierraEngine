@@ -2,12 +2,10 @@
 // Created by Nikolay Kanchevski on 27.09.22.
 //
 
-#include <imgui_impl_glfw.h>
 #include "Window.h"
 
 #include "../../Engine/Classes/Input.h"
 #include "../../Engine/Classes/Cursor.h"
-#include "../../Engine/Classes/Stopwatch.h"
 #include "Vulkan/VK.h"
 
 using Rendering::Vulkan::VK;
@@ -16,7 +14,7 @@ using namespace Sierra::Engine::Classes;
 namespace Sierra::Core::Rendering
 {
 
-    std::unique_ptr<Window> Window::Create(WindowCreateInfo createInfo)
+    UniquePtr<Window> Window::Create(WindowCreateInfo createInfo)
     {
         return std::make_unique<Window>(createInfo);
     }
@@ -59,7 +57,7 @@ namespace Sierra::Core::Rendering
 
     /* --- SETTER METHODS --- */
 
-    void Window::SetTitle(const std::string& givenTitle)
+    void Window::SetTitle(const String& givenTitle)
     {
         this->title = givenTitle;
         glfwSetWindowTitle(glfwWindow, givenTitle.c_str());
@@ -148,7 +146,7 @@ namespace Sierra::Core::Rendering
 
     void Window::GlfwErrorCallback(int errorCode, const char *description)
     {
-        ASSERT_WARNING("GLFW Error: " + std::string(description) + " (" + std::to_string(errorCode) + ")");
+        ASSERT_WARNING("GLFW Error: " + String(description) + " (" + std::to_string(errorCode) + ")");
     }
 
     void Window::WindowResizeCallback(GLFWwindow *windowPtr, int newWidth, int newHeight)

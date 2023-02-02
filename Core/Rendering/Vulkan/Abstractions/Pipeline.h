@@ -4,9 +4,6 @@
 
 #pragma once
 
-#include <memory>
-#include <vector>
-
 #include "Shader.h"
 #include "RenderPass.h"
 #include "Descriptors.h"
@@ -21,22 +18,22 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     struct PipelineCreateInfo
     {
-        uint32_t maxConcurrentFrames;
+        uint maxConcurrentFrames;
         const std::vector<VertexAttribute> vertexAttributes;
 
-        std::vector<std::shared_ptr<Shader>> shaders;
-        const std::unique_ptr<RenderPass> &renderPass;
+        std::vector<SharedPtr<Shader>> shaders;
+        const UniquePtr<RenderPass> &renderPass;
 
         bool createDepthBuffer = true;
-        std::shared_ptr<DescriptorSetLayout> descriptorSetLayout = nullptr;
+        SharedPtr<DescriptorSetLayout> descriptorSetLayout = nullptr;
 
-        uint32_t pushConstantOffset = 0;
-        ShaderType pushConstantShaderStages = VERTEX_SHADER | FRAGMENT_SHADER;
+        uint pushConstantOffset = 0;
+        ShaderType pushConstantShaderStages = ShaderType::VERTEX | ShaderType::FRAGMENT;
 
-        Sampling sampling = MSAAx1;
-        FrontFace frontFace = FRONT_FACE_COUNTER_CLOCKWISE;
-        CullMode cullMode = CULL_FRONT;
-        ShadingType shadingType = SHADE_FILL;
+        Sampling sampling = Sampling::MSAAx1;
+        FrontFace frontFace = FrontFace::COUNTER_CLOCKWISE;
+        CullMode cullMode = CullMode::FRONT;
+        ShadingType shadingType = ShadingType::FILL;
     };
 
     template<typename PC = NullPushConstant, typename UB = NullUniformBuffer, typename SB = NullStorageBuffer>
@@ -49,7 +46,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             CreatePipelineLayout();
             CreatePipeline();
         };
-        inline static std::unique_ptr<Pipeline> Create(PipelineCreateInfo createInfo)
+        inline static UniquePtr<Pipeline> Create(PipelineCreateInfo createInfo)
         {
             return std::make_unique<Pipeline>(createInfo);
         };
@@ -70,7 +67,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             ASSERT_WARNING_IF(!HasStorageBuffer(), "Storage buffers have not been created for this pipeline");
             return storageBufferData;
         }
-        [[nodiscard]] inline std::vector<std::unique_ptr<DescriptorSet>>& GetDescriptorSets()
+        [[nodiscard]] inline std::vector<UniquePtr<DescriptorSet>>& GetDescriptorSets()
         {
             return descriptorSets;
         }
@@ -88,7 +85,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             vkCmdBindPipeline(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkPipeline);
         };
-        inline void BindDescriptorSets(VkCommandBuffer givenCommandBuffer, std::vector<VkDescriptorSet> givenDescriptorSets, const uint32_t currentFrame)
+        inline void BindDescriptorSets(VkCommandBuffer givenCommandBuffer, std::vector<VkDescriptorSet> givenDescriptorSets, const uint currentFrame)
         {
             if (HasUniformBuffer())
             {
@@ -111,11 +108,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                     pushConstantRange->size, &pushConstantData
             );
         };
-        inline void OverloadShader(std::shared_ptr<Shader> newShader)
+        inline void OverloadShader(SharedPtr<Shader> newShader)
         {
             VK::GetDevice()->WaitUntilIdle();
 
-            for (uint32_t i = createInfo.shaders.size(); i--;)
+            for (uint i = createInfo.shaders.size(); i--;)
             {
                 if (createInfo.shaders[i]->GetShaderType() == newShader->GetShaderType())
                 {
@@ -126,7 +123,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 }
             }
 
-            ASSERT_ERROR("Shader of type [" + std::to_string(newShader->GetShaderType()) + "] could not be overloaded because it is not present in the pipeline");
+            ASSERT_ERROR_FORMATTED("Shader of type [{0}] could not be overloaded because it is not present in the pipeline", (uint) newShader->GetShaderType());
         };
 
         /* --- DESTRUCTOR --- */
@@ -162,12 +159,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkPushConstantRange *pushConstantRange = nullptr;
 
         UB uniformBufferData;
-        std::vector<std::unique_ptr<Buffer>> uniformBuffers;
+        std::vector<UniquePtr<Buffer>> uniformBuffers;
 
         SB storageBufferData;
-        std::vector<std::unique_ptr<Buffer>> storageBuffers;
+        std::vector<UniquePtr<Buffer>> storageBuffers;
 
-        std::vector<std::unique_ptr<DescriptorSet>> descriptorSets;
+        std::vector<UniquePtr<DescriptorSet>> descriptorSets;
 
         bool alreadyCreated = false;
         PipelineCreateInfo createInfo;
@@ -194,7 +191,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 pushConstantRange = new VkPushConstantRange();
                 pushConstantRange->size = sizeof(PC);
                 pushConstantRange->offset = 0;
-                pushConstantRange->stageFlags = createInfo.pushConstantShaderStages;
+                pushConstantRange->stageFlags = (VkShaderStageFlags) createInfo.pushConstantShaderStages;
 
                 pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
                 pipelineLayoutCreateInfo.pPushConstantRanges = pushConstantRange;
@@ -204,12 +201,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             if constexpr (!std::is_same<UB, NullUniformBuffer>::value)
             {
                 uniformBuffers.reserve(createInfo.maxConcurrentFrames);
-                for (uint32_t i = createInfo.maxConcurrentFrames; i--;)
+                for (uint i = createInfo.maxConcurrentFrames; i--;)
                 {
                     uniformBuffers.push_back(Buffer::Create({
                         .memorySize = sizeof(UB),
-                        .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
-                        .bufferUsage = UNIFORM_BUFFER
+                        .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+                        .bufferUsage = BufferUsage::UNIFORM
                     }));
                 }
             }
@@ -218,18 +215,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             if constexpr (!std::is_same<SB, NullStorageBuffer>::value)
             {
                 storageBuffers.reserve(createInfo.maxConcurrentFrames);
-                for (uint32_t i = createInfo.maxConcurrentFrames; i--;)
+                for (uint i = createInfo.maxConcurrentFrames; i--;)
                 {
                     storageBuffers.push_back(Buffer::Create({
                         .memorySize = sizeof(SB),
-                        .memoryFlags = MEMORY_FLAGS_HOST_VISIBLE | MEMORY_FLAGS_HOST_COHERENT,
-                        .bufferUsage = STORAGE_BUFFER
+                        .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+                        .bufferUsage = BufferUsage::STORAGE
                     }));
                 }
             }
 
             descriptorSets.resize((HasUniformBuffer() || HasStorageBuffer()) * createInfo.maxConcurrentFrames );
-            for (uint32_t i = createInfo.maxConcurrentFrames; i--;)
+            for (uint i = createInfo.maxConcurrentFrames; i--;)
             {
                 descriptorSets[i] = DescriptorSet::Build(createInfo.descriptorSetLayout);
                 if (HasUniformBuffer()) descriptorSets[i]->WriteBuffer(UNIFORM_BUFFER_BINDING, uniformBuffers[i]);
@@ -261,7 +258,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
 
             VkPipelineShaderStageCreateInfo* shaderStages = new VkPipelineShaderStageCreateInfo[createInfo.shaders.size()];
-            for (uint32_t i = createInfo.shaders.size(); i--;)
+            for (uint i = createInfo.shaders.size(); i--;)
             {
                 shaderStages[i] = createInfo.shaders[i]->GetVkShaderStageInfo();
             }
@@ -269,27 +266,27 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             // Define the attributes to be sent to the shader
             std::vector<VkVertexInputAttributeDescription> attributeDescriptions(createInfo.vertexAttributes.size());
 
-            uint32_t lastOffset = 0;
-            for (uint32_t i = 0; i < createInfo.vertexAttributes.size(); i++)
+            uint lastOffset = 0;
+            for (uint i = 0; i < createInfo.vertexAttributes.size(); i++)
             {
                 attributeDescriptions[i].binding = 0;
                 attributeDescriptions[i].location = i;
                 attributeDescriptions[i].offset = lastOffset;
 
-                lastOffset += (uint32_t) createInfo.vertexAttributes[i];
+                lastOffset += (uint) createInfo.vertexAttributes[i];
 
                 switch (createInfo.vertexAttributes[i])
                 {
-                    case VERTEX_ATTRIBUTE_FLOAT:
+                    case VertexAttribute::FLOAT:
                         attributeDescriptions[i].format = VK_FORMAT_R32_SFLOAT;
                         break;
-                    case VERTEX_ATTRIBUTE_VEC2:
+                    case VertexAttribute::VEC2:
                         attributeDescriptions[i].format = VK_FORMAT_R32G32_SFLOAT;
                         break;
-                    case VERTEX_ATTRIBUTE_VEC3:
+                    case VertexAttribute::VEC3:
                         attributeDescriptions[i].format = VK_FORMAT_R32G32B32_SFLOAT;
                         break;
-                    case VERTEX_ATTRIBUTE_VEC4:
+                    case VertexAttribute::VEC4:
                         attributeDescriptions[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
                         break;
                 }
@@ -348,7 +345,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             multisampleStateCreateInfo.alphaToCoverageEnable = VK_FALSE;
             multisampleStateCreateInfo.alphaToOneEnable = VK_FALSE;
 
-            if (createInfo.sampling > MSAAx1)
+            if (createInfo.sampling > Sampling::MSAAx1)
             {
                 multisampleStateCreateInfo.sampleShadingEnable = VK_TRUE;
                 multisampleStateCreateInfo.minSampleShading = 0.2f;
@@ -410,7 +407,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
                 depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
                 depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
-                depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+                depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
                 depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
                 depthStencilStateCreateInfo.minDepthBounds = 0.0f;
                 depthStencilStateCreateInfo.maxDepthBounds = 1.0f;

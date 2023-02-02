@@ -18,7 +18,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkShaderModuleCreateInfo moduleCreateInfo{};
         moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         moduleCreateInfo.codeSize = shaderCode.size();
-        moduleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(shaderCode.data());
+        moduleCreateInfo.pCode = reinterpret_cast<const uint*>(shaderCode.data());
 
         // Create shader module
         VK_ASSERT(
@@ -33,7 +33,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         shaderStageCreateInfo.pName = "main";
     }
 
-    std::shared_ptr<Shader> Shader::Create(ShaderCreateInfo createInfo)
+    SharedPtr<Shader> Shader::Create(ShaderCreateInfo createInfo)
     {
         // Check if shader has already been loaded and return it
         if (shaderPool.count(createInfo.filePath))

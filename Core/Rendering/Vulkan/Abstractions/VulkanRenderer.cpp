@@ -4,7 +4,6 @@
 
 #include "VulkanRenderer.h"
 
-#include <imgui_impl_vulkan.h>
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -23,6 +22,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             imGuiInstance = ImGuiInstance::Create({
                 .window = window,
                 .swapchain = swapchain,
+                .fontCreateInfos = {
+                { .fontFilePath = "Fonts/PTSans.ttf", .fontSize = 18.0f },
+                { .fontFilePath = "Fonts/OpenSans-Bold.ttf", .fontSize = 18.0f },
+                },
                 .createImGuizmoLayer = createInfo.createImGuizmoLayer
             });
 
@@ -32,7 +35,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         window->Show();
     }
 
-    std::unique_ptr<VulkanRenderer> VulkanRenderer::Create(VulkanRendererCreateInfo createInfo)
+    UniquePtr<VulkanRenderer> VulkanRenderer::Create(VulkanRendererCreateInfo createInfo)
     {
         return std::make_unique<VulkanRenderer>(createInfo);
     }

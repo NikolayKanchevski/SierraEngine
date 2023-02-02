@@ -42,7 +42,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
     }
 
-    std::unique_ptr<Sampler> Sampler::Create(const SamplerCreateInfo createInfo)
+    UniquePtr<Sampler> Sampler::Create(const SamplerCreateInfo createInfo)
     {
         return std::make_unique<Sampler>(createInfo);
     }

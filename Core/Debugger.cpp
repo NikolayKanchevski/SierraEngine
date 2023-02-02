@@ -4,8 +4,6 @@
 
 #include "Debugger.h"
 
-#include <iostream>
-
 #if __APPLE__
     #include <cxxabi.h>
 #endif
@@ -37,28 +35,28 @@ namespace Sierra::Core
     HANDLE Debugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif
 
-    void Debugger::DisplayInfo(const std::string& message)
+    void Debugger::DisplayInfo(const String& message)
     {
         BLUE();
         std::cout << "[i] " << message << ".\n";
         DEFAULT();
     }
 
-    void Debugger::DisplaySuccess(const std::string& message)
+    void Debugger::DisplaySuccess(const String& message)
     {
         GREEN();
         std::cout << "[+] " << message << ".\n";
         DEFAULT();
     }
 
-    void Debugger::ThrowWarning(const std::string& message)
+    void Debugger::ThrowWarning(const String& message)
     {
         YELLOW();
         std::cout << "[!] " << message << "!\n";
         DEFAULT();
     }
 
-    void Debugger::ThrowError(const std::string& message)
+    void Debugger::ThrowError(const String& message)
     {
         RED();
         std::cout << "[-] " << message << "!\n";
@@ -66,7 +64,7 @@ namespace Sierra::Core
         DEFAULT();
     }
 
-    bool Debugger::CheckResults(const VkResult result, const std::string& errorMessage)
+    bool Debugger::CheckResults(const VkResult result, const String& errorMessage)
     {
         bool success = result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR;
         if (!success)
@@ -82,10 +80,10 @@ namespace Sierra::Core
         switch (messageSeverity)
         {
             case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-                ThrowWarning(std::string(pCallbackData->pMessage).substr(0, strlen(pCallbackData->pMessage) - 1));
+                ThrowWarning(String(pCallbackData->pMessage).substr(0, strlen(pCallbackData->pMessage) - 1));
                 break;
             case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-                ThrowError(std::string(pCallbackData->pMessage).substr(0, strlen(pCallbackData->pMessage) - 1));
+                ThrowError(String(pCallbackData->pMessage).substr(0, strlen(pCallbackData->pMessage) - 1));
                 break;
             default:
                 break;
@@ -94,27 +92,23 @@ namespace Sierra::Core
         return VK_FALSE;
     }
 
-#ifdef __GNUG__
+    #ifdef __GNUG__
+        String Debugger::Demangle(const char* name) {
 
-    std::string Debugger::Demangle(const char* name) {
+            int status = -4; // Some arbitrary value to eliminate the compiler warning
 
-        int status = -4; // some arbitrary value to eliminate the compiler warning
-
-        // enable c++11 by passing the flag -std=c++11 to g++
-        std::unique_ptr<char, void(*)(void*)> res {
+            std::unique_ptr<char, void(*)(void*)> res
+            {
                 abi::__cxa_demangle(name, NULL, NULL, &status),
                 std::free
-        };
+            };
 
-        return (status == 0) ? res.get() : name;
-    }
-
-#else
-
-    // does nothing if not g++
-    std::string Debugger::Demangle(const char* tag) {
-        return tag;
-    }
-
-#endif
+            return (status == 0) ? res.get() : name;
+        }
+    #else
+        // Do nothing if not g++
+        String Debugger::Demangle(const char* tag) {
+            return tag;
+        }
+    #endif
 }

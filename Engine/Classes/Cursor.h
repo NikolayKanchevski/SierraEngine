@@ -4,11 +4,7 @@
 
 #pragma once
 
-#include <glm/vec2.hpp>
-#include <GLFW/glfw3.h>
-
 #include "../../Core/Rendering/Window.h"
-#include "../../Core/Debugger.h"
 
 using Sierra::Core::Rendering::Window;
 
@@ -26,11 +22,11 @@ namespace Sierra::Engine::Classes
 
         /// @brief Moves the cursor to a given position.
         /// @param newPosition Where exactly to put the cursor.
-        static void SetCursorPosition(glm::vec2 newPosition);
+        static void SetCursorPosition(Vector2 newPosition);
 
         /// @brief Moves the cursor to a given normalized position (a vec2 where both X and Y are between 0.0 and 1.0).
         /// @param newPosition Where exactly to put the cursor (as a normalized vector).
-        static void SetCursorPositionNormalized(glm::vec2 newPosition);
+        static void SetCursorPositionNormalized(Vector2 newPosition);
 
         /// @brief Puts the cursor in the center of the window.
         static void CenterCursor();
@@ -52,10 +48,10 @@ namespace Sierra::Engine::Classes
 
         /* --- GETTER METHODS --- */
         /// @brief Returns the position on the cursor.
-        [[nodiscard]] inline static glm::vec2 GetCursorPosition() { return cursorPosition; }
+        [[nodiscard]] inline static Vector2 GetCursorPosition() { return cursorPosition; }
 
         /// @brief Returns the normalized position of the cursor where both X and Y is a value between 0 and 1.
-        [[nodiscard]] inline static glm::vec2 GetCursorPositionNormalized()
+        [[nodiscard]] inline static Vector2 GetCursorPositionNormalized()
         {
             if (Window::GetCurrentlyFocusedWindow() == nullptr)
             {
@@ -76,15 +72,15 @@ namespace Sierra::Engine::Classes
         [[nodiscard]] inline static bool IsCursorShown() { return cursorShown; }
 
         /// @brief Gets the raw (unformatted) cursor position returned by GLFW. Only used for ImGui.
-        [[nodiscard]] static glm::vec2 GetGlfwCursorPosition();
+        [[nodiscard]] static Vector2 GetGlfwCursorPosition();
 
         /* --- CALLBACKS --- */
         static void CursorPositionCallback(GLFWwindow* windowPtr, double xPosition, double yPosition);
 
     private:
-        static glm::vec2 lastCursorPosition;
-        static glm::vec2 cursorPosition;
-        static glm::vec2 cursorOffset;
+        static Vector2 lastCursorPosition;
+        static Vector2 cursorPosition;
+        static Vector2 cursorOffset;
         static bool cursorShown;
 
         static bool cursorPositionSet;

@@ -4,11 +4,10 @@
 
 #include "Camera.h"
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
-#include "InternalComponents.h"
+#include "Transform.h"
 #include "../../Core/Rendering/UI/ImGuiCore.h"
+#include "../../Core/Rendering/UI/ImGuiUtilities.h"
 
 using Sierra::Core::Rendering::UI::ImGuiCore;
 
@@ -18,11 +17,29 @@ namespace Sierra::Engine::Components
 
     /* --- CONSTRUCTORS --- */
 
-    Camera::Camera()
+    void Camera::OnAddComponent()
     {
-        if (mainCamera != nullptr) return;
+        CalculateViewMatrix();
+        CalculateProjectionMatrix();
 
-        SetAsMain();
+        GetComponent<Transform>().PushOnChangeCallback([this]{
+            CalculateViewMatrix();
+        });
+
+        if (mainCamera == nullptr) SetAsMain();
+    }
+
+    /* --- POLLING METHODS --- */
+
+    void Camera::DrawUI()
+    {
+        ImGui::BeginProperties();
+
+        ImGui::FloatProperty("FOV:", fov);
+        ImGui::FloatProperty("Near Clip:", nearClip);
+        ImGui::FloatProperty("Far Clip:", farClip);
+
+        ImGui::EndProperties();
     }
 
     /* --- SETTER METHODS --- */
@@ -34,16 +51,16 @@ namespace Sierra::Engine::Components
 
     /* --- GETTER METHODS --- */
 
-    glm::vec3 Camera::GetFrontDirection() const
+    Vector3 Camera::GetFrontDirection() const
     {
         Transform &transform = GetComponent<Transform>();
 
-        float cosYaw = glm::cos(glm::radians(transform.rotation.x));
-        float sinYaw = glm::sin(glm::radians(transform.rotation.x));
-        float cosPitch = glm::cos(glm::radians(transform.rotation.y));
-        float sinPitch = glm::sin(glm::radians(transform.rotation.y));
+        float cosYaw = glm::cos(glm::radians(transform.GetRotation().x));
+        float sinYaw = glm::sin(glm::radians(transform.GetRotation().x));
+        float cosPitch = glm::cos(glm::radians(transform.GetRotation().y));
+        float sinPitch = glm::sin(glm::radians(transform.GetRotation().y));
 
-        glm::vec3 direction;
+        Vector3 direction;
         direction.x = cosYaw * cosPitch;
         direction.y = sinPitch;
         direction.z = sinYaw * cosPitch;
@@ -51,23 +68,56 @@ namespace Sierra::Engine::Components
         return glm::normalize(direction);
     }
 
-    glm::mat4x4 Camera::GetViewMatrix() const
+    float Camera::GetYaw() const
     {
-        Transform &transform = GetComponent<Transform>();
-        glm::vec3 frontDirection = GetFrontDirection();
-
-        glm::vec3 rendererCameraPosition = { transform.position.x, -transform.position.y, transform.position.z };
-        glm::vec3 rendererCameraFrontDirection = { frontDirection.x, frontDirection.y, frontDirection.z };
-        glm::vec3 rendererCameraUpDirection = { upDirection.x, upDirection.y, upDirection.z };
-
-        return glm::lookAtRH(rendererCameraPosition, rendererCameraPosition + rendererCameraFrontDirection, rendererCameraUpDirection);
+        return GetComponent<Transform>().GetWorldRotation().x;
     }
 
-    glm::mat4x4 Camera::GetProjectionMatrix() const
+    float Camera::GetPitch() const
     {
-        glm::mat4x4 matrix = glm::perspectiveRH(glm::radians(fov), (float) ImGuiCore::GetSceneViewWidth() / (float) ImGuiCore::GetSceneViewHeight(), nearClip, farClip);
-        matrix[1][1] *= -1;
-        return matrix;
+        return GetComponent<Transform>().GetWorldRotation().y;
+    }
+
+    float Camera::GetRoll() const
+    {
+        return GetComponent<Transform>().GetWorldRotation().z;
+    }
+
+    Vector3 Camera::GetYawPitchRoll() const
+    {
+        return GetComponent<Transform>().GetWorldRotation();
+    }
+
+    Matrix4x4 Camera::GetViewMatrix()
+    {
+        return viewMatrix;
+    }
+
+    Matrix4x4 Camera::GetProjectionMatrix()
+    {
+        // TODO: Add a callback to only recalculate this on resize
+        CalculateProjectionMatrix();
+
+        return projectionMatrix;
+    }
+
+    void Camera::CalculateViewMatrix()
+    {
+        Transform &transform = GetComponent<Transform>();
+        Vector3 frontDirection = GetFrontDirection();
+
+        Vector3 rendererCameraPosition = transform.GetWorldPositionUpInverted();
+
+        Vector3 rendererCameraFrontDirection = { frontDirection.x, -frontDirection.y, frontDirection.z };
+        Vector3 rendererCameraUpDirection = { upDirection.x, upDirection.y, upDirection.z };
+
+        viewMatrix = glm::lookAtRH(rendererCameraPosition, rendererCameraPosition + rendererCameraFrontDirection, rendererCameraUpDirection);
+    }
+
+    void Camera::CalculateProjectionMatrix()
+    {
+        projectionMatrix = glm::perspectiveRH(glm::radians(fov), (float) ImGuiCore::GetSceneViewWidth() / (float) ImGuiCore::GetSceneViewHeight(), nearClip, farClip);
+        projectionMatrix[1][1] *= -1;
     }
 
 }

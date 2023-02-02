@@ -4,12 +4,6 @@
 
 #pragma once
 
-#include <string>
-#include <memory>
-#include <stb_image.h>
-#include <unordered_map>
-#include <vulkan/vulkan.h>
-
 #include "Image.h"
 #include "Sampler.h"
 #include "../VulkanTypes.h"
@@ -38,9 +32,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     struct TextureCreateInfo
     {
-        std::string filePath;
+        String filePath;
 
-        std::string name;
+        String name;
         TextureType textureType = TEXTURE_TYPE_NONE;
         // TODO: Fix mip mapping
         bool mipMappingEnabled = false;
@@ -52,30 +46,29 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Texture(stbi_uc *stbImage, uint32_t width, uint32_t height, uint32_t givenColorChannelsCount, const TextureCreateInfo& textureCreateInfo);
-        static std::shared_ptr<Texture> Create(TextureCreateInfo textureCreateInfo, bool setDefaultTexture = false);
+        Texture(stbi_uc *stbImage, uint width, uint height, uint givenColorChannelsCount, const TextureCreateInfo& textureCreateInfo);
+        static SharedPtr<Texture> Create(TextureCreateInfo textureCreateInfo, bool setDefaultTexture = false);
 
         /* --- PROPERTIES --- */
-        std::string name;
+        String name;
 
         /* --- SETTER METHODS --- */
         void Dispose();
         static void DisposePool();
 
-        void DrawToImGui();
         static void DestroyDefaultTextures();
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline std::string GetName() const
+        [[nodiscard]] inline String GetName() const
         { return this->name; }
 
-        [[nodiscard]] inline uint32_t GetWidth() const
+        [[nodiscard]] inline uint GetWidth() const
         { return this->image->GetWidth(); }
 
-        [[nodiscard]] inline uint32_t GetHeight() const
+        [[nodiscard]] inline uint GetHeight() const
         { return this->image->GetHeight(); }
 
-        [[nodiscard]] inline uint32_t GetDepth() const
+        [[nodiscard]] inline uint GetDepth() const
         { return this->image->GetDepth(); }
 
         [[nodiscard]] inline ImageFormat GetImageFormat() const
@@ -84,25 +77,27 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline TextureType GetTextureType() const
         { return this->textureType; }
 
-        [[nodiscard]] inline uint32_t GetMipMapLevels() const
+        [[nodiscard]] inline uint GetMipMapLevels() const
         { return this->image->GetMipMapLevels(); }
 
         [[nodiscard]] inline bool GetMipMappingEnabled() const
         { return this->mipMappingEnabled; }
 
-        [[nodiscard]] inline uint64_t GetMemorySize() const
+        [[nodiscard]] inline uint64 GetMemorySize() const
         { return this->memorySize; }
 
         [[nodiscard]] inline VkSampler GetVulkanSampler() const
         { return sampler->GetVulkanSampler(); }
 
-        [[nodiscard]] inline std::unique_ptr<Image> &GetImage()
+        [[nodiscard]] inline UniquePtr<Image>& GetImage()
         { return this->image; }
 
-        [[nodiscard]] inline std::unique_ptr<Sampler> &GetSampler()
+        [[nodiscard]] inline UniquePtr<Sampler>& GetSampler()
         { return this->sampler; }
 
-        [[nodiscard]] static inline std::shared_ptr<Texture>& GetDefaultTexture(TextureType textureType)
+        [[nodiscard]] ImTextureID GetImGuiTextureID();
+
+        [[nodiscard]] static inline SharedPtr<Texture>& GetDefaultTexture(TextureType textureType)
         { return defaultTextures[textureType]; }
 
         /* --- DESTRUCTOR --- */
@@ -111,17 +106,17 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Texture &operator=(const Texture &) = delete;
 
     private:
-        std::string filePath = "";
+        String filePath = "";
 
         TextureType textureType;
-        uint32_t colorChannelsCount;
+        uint colorChannelsCount;
 
-        uint64_t memorySize;
-        uint32_t mipMapLevels = 1;
+        uint64 memorySize;
+        uint mipMapLevels = 1;
 
-        std::unique_ptr<Sampler> sampler;
+        UniquePtr<Sampler> sampler;
 
-        std::unique_ptr<Image> image;
+        UniquePtr<Image> image;
         bool mipMappingEnabled = false;
 
         VkDescriptorSet imGuiDescriptorSet;
@@ -129,8 +124,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         bool isDefault = false;
 
-        inline static std::shared_ptr<Texture> defaultTextures[TOTAL_TEXTURE_TYPES_COUNT];
-        inline static std::unordered_map<std::string, std::shared_ptr<Texture>> texturePool;
+        inline static SharedPtr<Texture> defaultTextures[TOTAL_TEXTURE_TYPES_COUNT];
+        inline static std::unordered_map<String, SharedPtr<Texture>> texturePool;
 
         void GenerateMipMaps();
     };

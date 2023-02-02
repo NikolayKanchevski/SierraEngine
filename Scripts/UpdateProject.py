@@ -131,7 +131,7 @@ def PreCompileShader(shaderFilePath):
 
     # Create temporary shader file with the newly "compiled" code
     temporaryShaderPath = TEMPORARY_SHADER_DIRECTORY + shaderFileName
-    temporaryShaderFile = open(temporaryShaderPath, "x")
+    temporaryShaderFile = open(temporaryShaderPath, "w+")
     temporaryShaderFile.write(shaderData)
     temporaryShaderFile.close()
 

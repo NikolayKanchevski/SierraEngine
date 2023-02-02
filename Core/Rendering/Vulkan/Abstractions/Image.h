@@ -4,43 +4,38 @@
 
 #pragma once
 
-#include <memory>
-#include <vulkan/vulkan.h>
-#include <vk_mem_alloc.h>
-
-#include "../../../Debugger.h"
 #include "../VulkanTypes.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     struct Dimensions
     {
-        uint32_t width = 0;
-        uint32_t height = 0;
-        uint32_t depth = 1;
+        uint width = 0;
+        uint height = 0;
+        uint depth = 1;
     };
 
     struct ImageCreateInfo
     {
         Dimensions dimensions{};
-        VkImageType imageType = VK_IMAGE_TYPE_2D;
-        ImageFormat format = FORMAT_UNDEFINED;
+        ImageType imageType = ImageType::TEXTURE;
+        ImageFormat format = ImageFormat::UNDEFINED;
 
-        uint32_t layerCount = 1;
+        uint layerCount = 1;
 
-        ImageTiling imageTiling = TILING_OPTIMAL;
+        ImageTiling imageTiling = ImageTiling::OPTIMAL;
         Sampling sampling = Sampling::MSAAx1;
 
-        ImageUsage usageFlags = UNDEFINED_IMAGE;
-        ImageCreateFlags createFlags = IMAGE_FLAGS_NONE;
-        MemoryFlags memoryFlags = MEMORY_FLAGS_NONE;
+        ImageUsage usageFlags = ImageUsage::UNDEFINED;
+        ImageCreateFlags createFlags = ImageCreateFlags::NONE;
+        MemoryFlags memoryFlags = MemoryFlags::NONE;
     };
 
     struct SwapchainImageCreateInfo
     {
         VkImage image = VK_NULL_HANDLE;
-        ImageFormat format = FORMAT_UNDEFINED;
-        Sampling sampling = MSAAx1;
+        ImageFormat format = ImageFormat::UNDEFINED;
+        Sampling sampling = Sampling::MSAAx1;
         Dimensions dimensions{};
     };
 
@@ -50,11 +45,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         Image(const ImageCreateInfo &createInfo);
-        [[nodiscard]] static std::unique_ptr<Image> Create(ImageCreateInfo imageCreateInfo);
+        [[nodiscard]] static UniquePtr<Image> Create(ImageCreateInfo imageCreateInfo);
 
         // Only to be used for swapchain images!
         Image(const SwapchainImageCreateInfo &createInfo);
-        static std::unique_ptr<Image> CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo);
+        static UniquePtr<Image> CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo);
 
         /* --- SETTER METHODS --- */
         void CreateImageView(ImageAspectFlags givenAspectFlags, VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_2D);
@@ -74,7 +69,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline float GetDepth() const
         { return this->dimensions.depth; };
 
-        [[nodiscard]] inline uint32_t GetMipMapLevels() const
+        [[nodiscard]] inline uint GetMipMapLevels() const
         { return this->mipMapLevels; };
 
         [[nodiscard]] inline ImageFormat GetFormat() const
@@ -86,7 +81,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline ImageLayout GetLayout() const
         { return this->layout; };
 
-        [[nodiscard]] inline uint32_t GetLayerCount() const
+        [[nodiscard]] inline uint GetLayerCount() const
         { return this->layerCount; };
 
         [[nodiscard]] inline VkImage GetVulkanImage() const
@@ -106,12 +101,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     private:
         Dimensions dimensions{};
 
-        uint32_t mipMapLevels = 1;
-        uint32_t layerCount = 1;
+        uint mipMapLevels = 1;
+        uint layerCount = 1;
 
-        ImageFormat format = FORMAT_UNDEFINED;
+        ImageFormat format = ImageFormat::UNDEFINED;
         Sampling sampling;
-        ImageLayout layout = LAYOUT_UNDEFINED;
+        ImageLayout layout = ImageLayout::UNDEFINED;
 
         VkImage vkImage = VK_NULL_HANDLE;
         VkImageView vkImageView = VK_NULL_HANDLE;

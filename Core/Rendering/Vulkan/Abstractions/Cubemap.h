@@ -4,9 +4,6 @@
 
 #pragma once
 
-#include <memory>
-#include <vulkan/vulkan.h>
-
 #include "Texture.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
@@ -33,15 +30,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         Cubemap(const CubemapCreateInfo &createInfo);
-        static std::unique_ptr<Cubemap> Create(CubemapCreateInfo createInfo);
+        static UniquePtr<Cubemap> Create(CubemapCreateInfo createInfo);
 
         /* --- POLLING METHODS --- */
 
         /* --- SETTER METHODS --- */
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::unique_ptr<Image>& GetImage() { return image; }
-        [[nodiscard]] std::unique_ptr<Sampler>& GetSampler() { return sampler; }
+        [[nodiscard]] UniquePtr<Image>& GetImage() { return image; }
+        [[nodiscard]] UniquePtr<Sampler>& GetSampler() { return sampler; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();
@@ -56,11 +53,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         int colorChannelsCount;
         CubemapType cubemapType = CUBEMAP_TYPE_NONE;
 
-        uint32_t layerSize;
-        uint64_t memorySize;
+        uint layerSize;
+        uint64 memorySize;
 
-        std::unique_ptr<Image> image;
-        std::unique_ptr<Sampler> sampler;
+        UniquePtr<Image> image;
+        UniquePtr<Sampler> sampler;
     };
 
 }

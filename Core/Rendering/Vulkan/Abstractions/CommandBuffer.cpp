@@ -3,9 +3,7 @@
 //
 
 #include "CommandBuffer.h"
-#include "../VK.h"
 
-#define CHECK_INDEX() ASSERT_ERROR_IF(index > vkCommandBuffers.size() - 1, "Command buffer index out of bounds")
 #define INDEX_BUFFER_TYPE VK_INDEX_TYPE_UINT32
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
@@ -30,7 +28,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Reset();
     }
 
-    std::unique_ptr<CommandBuffer> CommandBuffer::Create()
+    UniquePtr<CommandBuffer> CommandBuffer::Create()
     {
         return std::make_unique<CommandBuffer>();
     }
@@ -71,17 +69,17 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer, 0, INDEX_BUFFER_TYPE);
     }
 
-    void CommandBuffer::Draw(const uint32_t indexCount) const
+    void CommandBuffer::Draw(const uint indexCount) const
     {
         vkCmdDrawIndexed(vkCommandBuffer, indexCount, 1, 0, 0, 0);
     }
 
-    void CommandBuffer::DrawUnindexed(const uint32_t vertexCount) const
+    void CommandBuffer::DrawUnindexed(const uint vertexCount) const
     {
         vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
     }
 
-    void CommandBuffer::SetViewport(const uint32_t width, const uint32_t height) const
+    void CommandBuffer::SetViewport(const uint width, const uint height) const
     {
         VkViewport viewport{};
         viewport.x = 0;
@@ -94,7 +92,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
     }
 
-    void CommandBuffer::SetScissor(const uint32_t width, const uint32_t height, const int xOffset, const int yOffset) const
+    void CommandBuffer::SetScissor(const uint width, const uint height, const int xOffset, const int yOffset) const
     {
         VkRect2D scissor{};
         scissor.offset = { xOffset, yOffset };
@@ -103,7 +101,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
     }
 
-    void CommandBuffer::SetViewportAndScissor(const uint32_t width, const uint32_t height, const int xOffset, const int yOffset) const
+    void CommandBuffer::SetViewportAndScissor(const uint width, const uint height, const int xOffset, const int yOffset) const
     {
         SetViewport(width, height);
         SetScissor(width, height, xOffset, yOffset);

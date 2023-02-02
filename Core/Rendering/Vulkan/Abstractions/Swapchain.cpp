@@ -9,7 +9,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    Swapchain::Swapchain(std::unique_ptr<Window> &givenWindow)
+    Swapchain::Swapchain(UniquePtr<Window> &givenWindow)
         : window(givenWindow)
     {
         GetSurfaceData();
@@ -21,7 +21,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         CreateSynchronization();
     }
 
-    std::unique_ptr<Swapchain> Swapchain::Create(std::unique_ptr<Window> &givenWindow)
+    UniquePtr<Swapchain> Swapchain::Create(UniquePtr<Window> &givenWindow)
     {
         return std::make_unique<Swapchain>(givenWindow);
     }
@@ -51,7 +51,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             RecreateSwapchain();
             AcquireNextImage();
-            return result;
         }
 
         return result;
@@ -172,7 +171,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         swapchainCreateInfo.clipped = VK_TRUE;
 
         // Get the queue indices
-        const std::vector<uint32_t> queueFamilyIndicesCollection  { static_cast<uint32_t>(VK::GetDevice()->GetGraphicsQueueFamily()), static_cast<uint32_t>(VK::GetDevice()->GetPresentationQueueFamily()) };
+        const std::vector<uint> queueFamilyIndicesCollection  { static_cast<uint>(VK::GetDevice()->GetGraphicsQueueFamily()), static_cast<uint>(VK::GetDevice()->GetPresentationQueueFamily()) };
 
         // Check whether the graphics family is the same as the present one and based on that configure the creation info
         if (VK::GetDevice()->GetGraphicsQueueFamily() != VK::GetDevice()->GetPresentationQueueFamily())
@@ -201,7 +200,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         commandBuffers.resize(maxConcurrentFrames);
 
         // Create command buffers
-        for (uint32_t i = maxConcurrentFrames; i--;)
+        for (uint i = maxConcurrentFrames; i--;)
         {
             commandBuffers[i] = CommandBuffer::Create();
         }
@@ -221,7 +220,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         swapchainImages.resize(maxConcurrentFrames);
 
         // Create every image
-        for (uint32_t i = 0; i < maxConcurrentFrames; i++)
+        for (uint i = 0; i < maxConcurrentFrames; i++)
         {
             // Create swapchain image and view
             swapchainImages[i] = Image::CreateSwapchainImage({
@@ -231,7 +230,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 .dimensions = { extent.width, extent.height, 1 }
             });
 
-            swapchainImages[i]->CreateImageView(ASPECT_COLOR);
+            swapchainImages[i]->CreateImageView(ImageAspectFlags::COLOR);
         }
     }
 
@@ -241,9 +240,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             {
                 {
                     .imageAttachment = swapchainImages[0],
-                    .loadOp = LOAD_OP_CLEAR,
-                    .storeOp = STORE_OP_STORE,
-                    .finalLayout = LAYOUT_PRESENT_SRC
+                    .loadOp =  LoadOp::CLEAR,
+                    .storeOp = StoreOp::STORE,
+                    .finalLayout = ImageLayout::PRESENT_SRC
                 }
             },
             { { .renderTargets = { 0 } } }
@@ -259,7 +258,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         std::vector<VkImageView> swapchainAttachments(1);   // Color image only (which is a combination of offscreen images)
 
         // Create a framebuffer for each concurrent frame
-        for (uint32_t i = maxConcurrentFrames; i--;)
+        for (uint i = maxConcurrentFrames; i--;)
         {
             // Set color image of corresponding frame
             swapchainAttachments[0] = this->swapchainImages[i]->GetVulkanImageView();
@@ -292,7 +291,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
         // Create semaphores and fences
-        for (uint32_t i = maxConcurrentFrames; i--;)
+        for (uint i = maxConcurrentFrames; i--;)
         {
             VK_ASSERT(vkCreateSemaphore(VK::GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &imageAvailableSemaphores[i]), "Could not create semaphores/fences for swapcahin");
             VK_ASSERT(vkCreateSemaphore(VK::GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &renderFinishedSemaphores[i]), "Could not create semaphores/fences for swapcahin");
@@ -310,7 +309,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         renderPass->Destroy();
 
-        for (uint32_t i = maxConcurrentFrames; i--;)
+        for (uint i = maxConcurrentFrames; i--;)
         {
             vkDestroyFence(VK::GetDevice()->GetLogicalDevice(), inFlightFences[i], nullptr);
             vkDestroySemaphore(VK::GetDevice()->GetLogicalDevice(), imageAvailableSemaphores[i], nullptr);
@@ -320,7 +319,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Swapchain::DestroyTemporaryObjects()
     {
-        for (uint32_t i = maxConcurrentFrames; i--;)
+        for (uint i = maxConcurrentFrames; i--;)
         {
             swapchainImages[i]->Destroy();
             swapchainFramebuffers[i]->Destroy();
@@ -335,7 +334,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         SwapchainSupportDetails swapchainDetails{};
 
         // Get how many formats are available
-        uint32_t formatCount;
+        uint formatCount;
         vkGetPhysicalDeviceSurfaceFormatsKHR(VK::GetPhysicalDevice(), window->GetSurface(), &formatCount, nullptr);
 
         // Put each of them in an array
@@ -343,7 +342,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkGetPhysicalDeviceSurfaceFormatsKHR(VK::GetPhysicalDevice(), window->GetSurface(), &formatCount, swapchainDetails.formats.data());
 
         // Get how many presentation modes are available
-        uint32_t presentModesCount;
+        uint presentModesCount;
         vkGetPhysicalDeviceSurfacePresentModesKHR(VK::GetPhysicalDevice(), window->GetSurface(), &presentModesCount, nullptr);
 
         // Put each of them in an array

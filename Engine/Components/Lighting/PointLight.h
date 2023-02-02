@@ -5,7 +5,9 @@
 #pragma once
 
 #include "Light.h"
-#include "../InternalComponents.h"
+
+#include "../Transform.h"
+#include "../../../Core/Rendering/UI/ImGuiUtilities.h"
 
 namespace Sierra::Engine::Components {
 
@@ -40,8 +42,26 @@ namespace Sierra::Engine::Components {
             }
         }
 
+        /* --- POLLING METHODS --- */
+        inline void DrawUI() override
+        {
+            ImGui::BeginProperties();
+
+            ImGui::FloatProperty("Intensity:", intensity);
+
+            static const float resetValues[3] = { 0.0f, 0.0f, 0.0f };
+            static const char* tooltips[3] = { "Some tooltip.", "Some tooltip.", "Some tooltip." };
+            ImGui::PropertyVector3("Color:", color, resetValues, tooltips);
+
+            ImGui::FloatProperty("Linear:", linear);
+            ImGui::FloatProperty("Quadratic:", quadratic);
+
+
+            ImGui::EndProperties();
+        }
+
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline static uint32_t GetPointLightCount() { return pointLightCount; }
+        [[nodiscard]] inline static uint GetPointLightCount() { return pointLightCount; }
 
         /* --- DESTRUCTOR --- */
         inline void Destroy() const override { RemoveComponent<PointLight>(); freedIDs.push_back(this->lightID); pointLightCount--; };
@@ -49,30 +69,30 @@ namespace Sierra::Engine::Components {
     public:
         struct ShaderPointLight
         {
-            glm::vec3 color;
+            Vector3 color;
             float intensity;
 
-            glm::vec3 position;
+            Vector3 position;
             float linear;
 
             float quadratic;
-            glm::vec3 _align_1;
+            Vector3 _align_1;
         };
 
-        operator ShaderPointLight() const noexcept { auto position = GetComponent<Transform>().position; return
+        operator ShaderPointLight() const noexcept { auto position = GetComponent<Transform>().GetPosition(); return
         {
-            .position = { position.x, -position.y, position.z },
-            .linear = this->linear,
             .color = this->color,
             .intensity = this->intensity,
+            .position = { position.x, -position.y, position.z },
+            .linear = this->linear,
             .quadratic = this->quadratic
         }; }
 
     private:
-        inline static uint32_t currentMaxID = 0;
+        inline static uint currentMaxID = 0;
 
-        inline static std::vector<uint32_t> freedIDs;
-        inline static uint32_t pointLightCount = 0;
+        inline static std::vector<uint> freedIDs;
+        inline static uint pointLightCount = 0;
     };
 
 }

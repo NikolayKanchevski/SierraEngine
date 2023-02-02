@@ -4,11 +4,7 @@
 
 #include "Model.h"
 
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-
 #include "../Classes/File.h"
-#include "../Classes/Stopwatch.h"
 
 using Sierra::Core::Debugger;
 
@@ -17,9 +13,25 @@ namespace Sierra::Engine::Classes
 
     /* --- CONSTRUCTORS --- */
 
-    Model::Model(const std::string &filePath)
-        : modelName(File::GetFileNameFromPath(filePath)), modelLocation(File::RemoveFileNameFromPath(filePath))
+    UniquePtr<Model> Model::Load(const String filePath)
     {
+//        // NOTE: Logic is working but will wait until thread pool has been implemented
+//        static std::vector<std::future<void>> asyncFutures;
+//
+//        UniquePtr<Model> model = std::make_unique<Model>();
+//        asyncFutures.push_back(std::async(std::launch::async, LoadInternal, model.get(), filePath));
+//        return model;
+
+        UniquePtr<Model> model = std::make_unique<Model>();
+        LoadInternal(model.get(), filePath);
+        return model;
+    }
+
+    void Model::LoadInternal(Model *model, const String filePath)
+    {
+        model->modelName = File::GetFileNameFromPath(filePath);
+        model->modelLocation = File::RemoveFileNameFromPath(filePath);
+
         if (modelPool.count(filePath) != 0)
         {
             PROFILE_FUNCTION();
@@ -30,14 +42,15 @@ namespace Sierra::Engine::Classes
             std::vector<Entity> entities;
             entities.reserve(loadedModelData.entities.size());
 
-            meshEntities.clear();
-            meshEntities.reserve(loadedModelData.entities.size());
+            model->meshEntities.clear();
+            model->meshEntities.reserve(loadedModelData.entities.size());
 
             // For each entity tag
             for (const auto &entityData : loadedModelData.entities)
             {
                 // Create entity
                 Entity entity(entityData.tag);
+                if (model->originEntity == entt::null) model->originEntity = entity.GetEnttEntity();
 
                 // Check if it has mesh
                 if (entityData.correspondingMeshID != -1)
@@ -50,19 +63,19 @@ namespace Sierra::Engine::Classes
                     mesh.material = meshData.material;
 
                     // Apply textures
-                    for (uint32_t i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
+                    for (uint i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
                     {
                         if (meshData.textures[i] == nullptr) continue;
                         mesh.SetTexture(meshData.textures[i]);
                     }
 
                     // Increase vertex count
-                    vertexCount += mesh.GetMesh()->GetVertexCount();
-                    meshCount++;
+                    model->vertexCount += mesh.GetMesh()->GetVertexCount();
+                    model->meshCount++;
 
                     Mesh::IncreaseTotalMeshCount();
 
-                    meshEntities.push_back(entity.GetEnttEntity());
+                    model->meshEntities.push_back(entity.GetEnttEntity());
                 }
 
                 // Check if entity has a parent
@@ -75,18 +88,20 @@ namespace Sierra::Engine::Classes
                 // Store pointer to the newly created entity
                 entities.push_back(entity);
 
-                Mesh::IncreaseTotalVertexCount(vertexCount);
+                Mesh::IncreaseTotalVertexCount(model->vertexCount);
             }
 
+            model->loaded = true;
+
             #if DEBUG
-                ASSERT_INFO("Total vertices count for the model [" + modelName + "] containing [" + std::to_string(loadedModelData.meshes.size()) + "] mesh(es): " + std::to_string(vertexCount));
+                ASSERT_INFO("Total vertices count for the model [" + model->modelName + "] containing [" + std::to_string(loadedModelData.meshes.size()) + "] mesh(es): " + std::to_string(model->vertexCount));
             #endif
         }
         else
         {
             PROFILE_FUNCTION();
 
-            modelData = new ModelData();
+            model->modelData = new ModelData();
 
             // Load the model file
             Assimp::Importer importer;
@@ -94,30 +109,25 @@ namespace Sierra::Engine::Classes
 
             if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
             {
-                ASSERT_ERROR("Error loading 3D model [" + modelLocation + "]: " + importer.GetErrorString());
-                return;
+                ASSERT_ERROR("Error loading 3D model [" + model->modelLocation + "]: " + importer.GetErrorString());
             }
 
-            meshEntities.reserve(scene->mNumMeshes);
+            model->meshEntities.reserve(scene->mNumMeshes);
 
             // Recursively load every node's mesh in the scene
-            ListDeeperNode(scene->mRootNode, scene, nullptr);
+            model->ListDeeperNode(scene->mRootNode, scene, nullptr);
+            model->loaded = true;
 
-            modelPool[filePath] = *modelData;
-            delete modelData;
+            modelPool[filePath] = *model->modelData;
+            delete model->modelData;
 
             #if DEBUG
-                ASSERT_INFO("Total vertices count for the model [" + modelName + "] containing [" + std::to_string(scene->mNumMeshes) + "] mesh(es): " + std::to_string(vertexCount));
+                ASSERT_INFO("Total vertices count for the model [" + model->modelName + "] containing [" + std::to_string(scene->mNumMeshes) + "] mesh(es): " + std::to_string(model->vertexCount));
             #endif
 
             // Dispose the importer
             importer.FreeScene();
         }
-    }
-
-    std::unique_ptr<Model> Model::Load(const std::string filePath)
-    {
-        return std::make_unique<Model>(filePath);
     }
 
     /* --- SETTER METHODS --- */
@@ -130,9 +140,9 @@ namespace Sierra::Engine::Classes
         // For each mesh delete their textures
         for (const auto &meshEntity : meshEntities)
         {
-            const MeshRenderer &meshRenderer = World::GetEnttRegistry()->get<MeshRenderer>(meshEntity);
+            const MeshRenderer &meshRenderer = World::GetComponent<MeshRenderer>(meshEntity);
 
-            for (uint32_t i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
+            for (uint i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
             {
                 auto texture = meshRenderer.GetTexture((TextureType) i);
                 if (texture != nullptr) texture->Dispose();
@@ -156,6 +166,7 @@ namespace Sierra::Engine::Classes
     void Model::ListDeeperNode(aiNode *node, const aiScene *assimpScene, Entity* parentEntity)
     {
         Entity nodeEntity = Entity(parentEntity == nullptr ? modelName : node->mName.C_Str());
+        if (!parentEntity) this->originEntity = nodeEntity.GetEnttEntity();
 
         // Find index of parent using a reversed for loop
         int parentID = -1;
@@ -163,7 +174,7 @@ namespace Sierra::Engine::Classes
         {
             nodeEntity.SetParent(*parentEntity);
 
-            for (uint32_t i = modelData->entities.size(); i--;)
+            for (uint i = modelData->entities.size(); i--;)
             {
                 if (modelData->entities[i].selfID == static_cast<int>(parentEntity->GetEnttEntity()))
                 {
@@ -204,7 +215,7 @@ namespace Sierra::Engine::Classes
         }
         else
         {
-            for (uint32_t i = 0; i < node->mNumMeshes; i++)
+            for (uint i = 0; i < node->mNumMeshes; i++)
             {
                 // Create a new entity for each submesh as an entity cannot have more than 1 of the same components
                 Entity submeshEntity = Entity(nodeEntity.GetTag() + "_" + std::to_string(i), nodeEntity);
@@ -242,27 +253,27 @@ namespace Sierra::Engine::Classes
         }
     }
 
-    std::shared_ptr<Mesh> Model::LoadAssimpMesh(aiMesh *mesh)
+    SharedPtr<Mesh> Model::LoadAssimpMesh(aiMesh *mesh)
     {
         std::vector<VertexPNT> meshVertices(mesh->mNumVertices);
-        std::vector<uint32_t> indices;
+        std::vector<uint> indices;
 
         // Load vertex data
-        for (uint32_t i = 0; i < mesh->mNumVertices; i++)
+        for (uint i = 0; i < mesh->mNumVertices; i++)
         {
             meshVertices[i].position = {mesh->mVertices[i].x, -mesh->mVertices[i].y, mesh->mVertices[i].z };
-            meshVertices[i].normal = mesh->HasNormals() ? glm::vec3{mesh->mNormals[i].x, -mesh->mNormals[i].y, mesh->mNormals[i].z } : glm::vec3{0, 0, 0 };
-            meshVertices[i].textureCoordinates = mesh->HasTextureCoords(0) ? glm::vec2{mesh->mTextureCoords[0][i].x, -mesh->mTextureCoords[0][i].y } : glm::vec2{0, 0 };
+            meshVertices[i].normal = mesh->HasNormals() ? Vector3{mesh->mNormals[i].x, -mesh->mNormals[i].y, mesh->mNormals[i].z } : Vector3{0, 0, 0 };
+            meshVertices[i].textureCoordinates = mesh->HasTextureCoords(0) ? Vector2{mesh->mTextureCoords[0][i].x, -mesh->mTextureCoords[0][i].y } : Vector2{0, 0 };
         }
 
         // Iterate over indices through faces and copy across
-        for (uint32_t i = 0; i < mesh->mNumFaces; i++)
+        for (uint i = 0; i < mesh->mNumFaces; i++)
         {
             // Get a face
             aiFace face = mesh->mFaces[i];
 
             // Go through face's indices and add to list
-            for (uint32_t j = 0; j < face.mNumIndices; j++)
+            for (uint j = 0; j < face.mNumIndices; j++)
             {
                 indices.push_back(face.mIndices[j]);
             }
@@ -279,7 +290,7 @@ namespace Sierra::Engine::Classes
     void Model::ApplyAssimpMeshTextures(MeshRenderer &meshComponent, aiMaterial *assimpMaterial)
     {
         // Check if mesh has a diffuse texture
-        for (uint32_t i = assimpMaterial->GetTextureCount(aiTextureType_DIFFUSE); i--;)
+        for (uint i = assimpMaterial->GetTextureCount(aiTextureType_DIFFUSE); i--;)
         {
             // Get texture file path
             aiString textureFilePath;
@@ -296,7 +307,7 @@ namespace Sierra::Engine::Classes
         }
 
         // Check if mesh has a specular texture
-        for (uint32_t i = assimpMaterial->GetTextureCount(aiTextureType_SPECULAR); i--;)
+        for (uint i = assimpMaterial->GetTextureCount(aiTextureType_SPECULAR); i--;)
         {
             // Get texture file path
             aiString textureFilePath;

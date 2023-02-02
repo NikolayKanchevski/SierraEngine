@@ -4,10 +4,6 @@
 
 #pragma once
 
-#include <memory>
-#include <entt/entt.hpp>
-#include <assimp/scene.h>
-
 #include "MeshRenderer.h"
 #include "../Classes/Mesh.h"
 #include "../Classes/Entity.h"
@@ -24,14 +20,14 @@ namespace Sierra::Engine::Classes
     private:
         struct MeshData
         {
-            std::shared_ptr<Mesh> mesh;
-            std::shared_ptr<Texture>* textures;
+            SharedPtr<Mesh> mesh;
+            SharedPtr<Texture>* textures;
             Material material {};
         };
 
         struct EntityData
         {
-            std::string tag;
+            String tag;
             int selfID = -1;
             int parentEntityID = -1;
             int correspondingMeshID = -1;
@@ -45,38 +41,44 @@ namespace Sierra::Engine::Classes
 
     public:
         /* --- CONSTRUCTORS --- */
-        Model(const std::string &filePath);
-        static std::unique_ptr<Model> Load(const std::string filePath);
+        Model() = default;
+        static UniquePtr<Model> Load(const String filePath);
 
         /* --- SETTER METHODS --- */
         void Dispose();
         static void DisposePool();
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32_t GetVertexCount() const { return vertexCount; }
-        [[nodiscard]] inline std::string GetName() const { return modelName; }
-        [[nodiscard]] inline std::string GetModelLocation() const { return modelLocation; }
-        [[nodiscard]] inline MeshRenderer& GetMesh(const uint32_t meshIndex) const { return Entity(meshEntities[meshIndex]).GetComponent<MeshRenderer>(); }
-        [[nodiscard]] inline uint32_t GetMeshCount() const { return meshCount; }
+        [[nodiscard]] inline uint GetVertexCount() const { return vertexCount; }
+        [[nodiscard]] inline String GetName() const { return modelName; }
+        [[nodiscard]] inline String GetModelLocation() const { return modelLocation; }
+        [[nodiscard]] inline MeshRenderer& GetMesh(const uint meshIndex) const { return Entity(meshEntities[meshIndex]).GetComponent<MeshRenderer>(); }
+        [[nodiscard]] inline uint GetMeshCount() const { return meshCount; }
+        [[nodiscard]] inline Entity GetOriginEntity() const { return Entity(originEntity); }
+        [[nodiscard]] inline bool IsLoaded() { return loaded; };
 
         /* --- DESTRUCTOR --- */
         Model(const Model &) = delete;
         Model &operator=(const Model &) = delete;
 
     private:
+        bool loaded = false;
         ModelData *modelData;
 
-        uint32_t vertexCount = 0;
-        uint32_t meshCount = 0;
+        uint vertexCount = 0;
+        uint meshCount = 0;
 
-        std::string modelName;
-        std::string modelLocation;
+        String modelName;
+        String modelLocation;
+
+        entt::entity originEntity = entt::null;
         std::vector<entt::entity> meshEntities;
 
-        std::shared_ptr<Mesh> LoadAssimpMesh(aiMesh* mesh);
+        static void LoadInternal(Model *model, const String filePath);
+        SharedPtr<Mesh> LoadAssimpMesh(aiMesh* mesh);
         void ListDeeperNode(aiNode* node, const aiScene* assimpScene, Entity* parentEntity);
         void ApplyAssimpMeshTextures(MeshRenderer &meshComponent, aiMaterial *assimpMaterial);
-        static inline std::unordered_map<std::string, ModelData> modelPool;
+        static inline std::unordered_map<String, ModelData> modelPool;
     };
 
 }

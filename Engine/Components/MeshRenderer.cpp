@@ -4,11 +4,8 @@
 
 #include "MeshRenderer.h"
 
-#include <glm/ext/matrix_transform.hpp>
-
-#include "InternalComponents.h"
-#include "../../Core/Rendering/Vulkan/VK.h"
-#include "../../Core/Rendering/Math/MatrixUtilities.h"
+#include "../../Core/Rendering/UI/ImGuiUtilities.h"
+#include "Transform.h"
 
 using namespace Sierra::Core::Rendering::Vulkan;
 
@@ -17,7 +14,7 @@ namespace Sierra::Engine::Components
 
     /* --- CONSTRUCTORS --- */
 
-    MeshRenderer::MeshRenderer(std::shared_ptr<Mesh> givenCorrespondingMesh)
+    MeshRenderer::MeshRenderer(SharedPtr<Mesh> givenCorrespondingMesh)
         : coreMesh(givenCorrespondingMesh)
     {
         ASSERT_ERROR_IF(meshSlotsUsed >= MAX_MESHES, "Limit of maximum [" + std::to_string(MAX_MESHES) + "] meshes reached");
@@ -36,7 +33,7 @@ namespace Sierra::Engine::Components
 //                auto &globalBindlessDescriptorSet = VulkanCore::GetGlobalBindlessDescriptorSet();
 //
 //                // Reserve spots for mesh's textures
-//                for (uint32_t i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
+//                for (uint i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
 //                {
 //                    globalBindlessDescriptorSet->ReserveIndex(BINDLESS_TEXTURE_BINDING, meshID + i);
 //                }
@@ -52,10 +49,40 @@ namespace Sierra::Engine::Components
         if (!VK::GetDevice()->GetDescriptorIndexingSupported()) CreateDescriptorSet();
 
         // Assign textures array to use default ones
-        for (uint32_t i = TOTAL_TEXTURE_TYPES_COUNT - 1; i--;)
+        for (uint i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
         {
             textures[i] = Texture::GetDefaultTexture((TextureType) i);
         }
+    }
+
+    /* --- POLLING METHODS --- */
+
+    void MeshRenderer::DrawUI()
+    {
+        ImGui::BeginProperties();
+
+        if (ImGui::BeginTreeProperties("Material"))
+        {
+            ImGui::SetInputLimits({ 0.0f, 1.0f });
+            ImGui::FloatProperty("Shininess:", material.shininess, "Some tooltip.");
+            ImGui::ResetInputLimits();
+
+            ImGui::FloatProperty("Vertex Exaggaration:", material.vertexExaggeration, "Some tooltip.");
+
+            static const float resetValues[3] = { 1.0f, 1.0f, 1.0f };
+            static const char* tooltips[3] = { "Some tooltip.", "Some tooltip.", "Some tooltip." };
+            ImGui::PropertyVector3("Diffuse:", material.diffuse, resetValues, tooltips);
+            ImGui::PropertyVector3("Specular:", material.specular, resetValues, tooltips);
+            ImGui::PropertyVector3("Ambient:", material.ambient, resetValues, tooltips);
+
+            ImGui::EndTreeProperties();
+        }
+
+        ImGui::TextureProperty("Diffuse Texture:", *this, TEXTURE_TYPE_DIFFUSE, "Some tooltip.");
+        ImGui::TextureProperty("Specular Texture:", *this, TEXTURE_TYPE_SPECULAR, "Some tooltip.");
+        ImGui::TextureProperty("Height Map Texture:", *this, TEXTURE_TYPE_HEIGHT_MAP, "Some tooltip.");
+
+        ImGui::EndProperties();
     }
 
     /* --- SETTER METHODS --- */
@@ -70,16 +97,18 @@ namespace Sierra::Engine::Components
         descriptorSet->Allocate();
     }
 
-    void MeshRenderer::SetTexture(const std::shared_ptr<Texture>& givenTexture)
+    void MeshRenderer::SetTexture(const SharedPtr<Texture>& givenTexture)
     {
         ASSERT_ERROR_IF(givenTexture->GetTextureType() == TEXTURE_TYPE_NONE, "In order to bind texture [" + givenTexture->name + "] to mesh its texture type must be specified and be different from TEXTURE_TYPE_NONE");
 
         textures[givenTexture->GetTextureType()] = givenTexture;
 
+        VK::GetDevice()->WaitUntilIdle();
+
         if (VK::GetDevice()->GetDescriptorIndexingSupported())
         {
             // TODO: BINDLESS
-//            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, (TOTAL_TEXTURE_TYPES_COUNT * meshID) + (uint32_t) givenTexture->GetTextureType());
+//            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, (TOTAL_TEXTURE_TYPES_COUNT * meshID) + (uint) givenTexture->GetTextureType());
 //            VulkanCore::GetGlobalBindlessDescriptorSet()->Allocate();
         }
         else
@@ -93,28 +122,18 @@ namespace Sierra::Engine::Components
 
     void MeshRenderer::ResetTexture(const TextureType textureType)
     {
-        ASSERT_ERROR_IF(textureType == TEXTURE_TYPE_NONE, "In order to rest a mesh's texture the texture type must not be TEXTURE_TYPE_NONE");
+        ASSERT_ERROR_IF(textureType == TEXTURE_TYPE_NONE, "In order to reset a mesh's texture the texture type must not be TEXTURE_TYPE_NONE");
 
-        textures[textureType] = nullptr;
-
-        if (!VK::GetDevice()->GetDescriptorIndexingSupported())
-        {
-            descriptorSet->WriteTexture(TEXTURE_TYPE_TO_BINDING(textureType), Texture::GetDefaultTexture(textureType));
-            descriptorSet->Allocate();
-        }
+        SetTexture(Texture::GetDefaultTexture(textureType));
 
         meshTexturesPresence.SetBit(textureType, 0);
     }
 
     /* --- GETTER METHODS --- */
 
-    glm::mat4x4 MeshRenderer::GetModelMatrix() const
+    Matrix4x4 MeshRenderer::GetModelMatrix() const
     {
-        // Get a reference to the transform
-        Transform transform = GetComponent<Transform>();
-
-        // Invert the Y coordinate to satisfy Vulkan's requirements
-        return Rendering::Matrix::CreateModel({ transform.position.x, -transform.position.y, transform.position.z }, transform.rotation, transform.scale);
+        return GetComponent<Transform>().GetModelMatrix();
     }
 
     MeshPushConstant MeshRenderer::GetPushConstantData() const
