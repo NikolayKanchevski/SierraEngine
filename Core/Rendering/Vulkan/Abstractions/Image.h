@@ -95,8 +95,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        Image(const Image &) = delete;
-        Image &operator=(const Image &) = delete;
+        DELETE_COPY(Image);
 
     private:
         Dimensions dimensions{};

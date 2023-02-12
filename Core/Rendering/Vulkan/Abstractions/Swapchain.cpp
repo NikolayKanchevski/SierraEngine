@@ -240,7 +240,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             {
                 {
                     .imageAttachment = swapchainImages[0],
-                    .loadOp =  LoadOp::CLEAR,
+                    .loadOp = LoadOp::CLEAR,
                     .storeOp = StoreOp::STORE,
                     .finalLayout = ImageLayout::PRESENT_SRC
                 }
@@ -254,20 +254,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Resize framebuffers vectors to store one image for each concurrent frame
         swapchainFramebuffers.resize(maxConcurrentFrames);
 
-        // Set up image attachments for framebuffers
-        std::vector<VkImageView> swapchainAttachments(1);   // Color image only (which is a combination of offscreen images)
-
         // Create a framebuffer for each concurrent frame
         for (uint i = maxConcurrentFrames; i--;)
         {
-            // Set color image of corresponding frame
-            swapchainAttachments[0] = this->swapchainImages[i]->GetVulkanImageView();
-
             // Create a framebuffer from the stored attachments
             swapchainFramebuffers[i] = Framebuffer::Create({
                 .width = extent.width,
                 .height = extent.height,
-                .attachments = swapchainAttachments,
+                .attachments = { &this->swapchainImages[i] },
                 .renderPass = renderPass->GetVulkanRenderPass()
             });
         }

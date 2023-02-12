@@ -4,12 +4,13 @@
 
 #pragma once
 
-#include "../Abstractions/VulkanRenderer.h"
-#include "../Abstractions/OffscreenRenderer.h"
+#include "../../RenderingSettings.h"
+#include "../Abstractions/Abstractions.h"
+#include "VulkanRenderer.h"
 #include "../../../../Engine/Classes/Mesh.h"
+#include "../Abstractions/OffscreenRenderer.h"
 #include "../../../../Engine/Components/Lighting/PointLight.h"
 #include "../../../../Engine/Components/Lighting/DirectionalLight.h"
-#include "../Abstractions/Cubemap.h"
 
 using namespace Sierra::Engine::Classes;
 using namespace Sierra::Engine::Components;
@@ -25,18 +26,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             /* Vertex Uniform Data */
             Matrix4x4 view;
             Matrix4x4 projection;
-
-            uint directionalLightCount;
-            uint pointLightCount;
-            float _align1_;
-            float _align2_;
-        };
-
-        struct SkyboxUniformData
-        {
-            Matrix4x4 view;
-            Matrix4x4 projection;
-            Matrix4x4 model;
         };
 
         struct ObjectData
@@ -47,13 +36,23 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         struct StorageData
         {
             ObjectData objectDatas[MAX_MESHES];
+
             DirectionalLight::ShaderDirectionalLight directionalLights[MAX_DIRECTIONAL_LIGHTS];
             PointLight::ShaderPointLight pointLights[MAX_POINT_LIGHTS];
+
+            uint directionalLightCount;
+            uint pointLightCount;
+            float _align1_;
+            float _align2_;
         };
 
+        struct SkyboxPushConstant
+        {
+            glm::mat4x4 model;
+        };
 
-        typedef Pipeline<Abstractions::NullPushConstant, SkyboxUniformData, Abstractions::NullStorageBuffer> SKYBOX_PIPELINE;
-        typedef Pipeline<MeshPushConstant, UniformData, StorageData> OFFSCREEN_PIPELINE;
+        typedef Pipeline<MeshPushConstant, UniformData, StorageData> ScenePipeline;
+        typedef Pipeline<SkyboxPushConstant, UniformData, Abstractions::NullStorageBuffer> SkyboxPipeline;
 
     public:
         /* --- CONSTRUCTORS --- */
@@ -62,15 +61,11 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         /* --- POLLING METHODS --- */
         void Update() override;
+        void DrawUI() override;
         void Render() override;
 
-        /* --- SETTER METHODS --- */
-        void SetShadingType(const ShadingType newShadingType) override;
-        void SetSampling(const Sampling newSampling) override;
-
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline UniquePtr<OFFSCREEN_PIPELINE>& GetScenePipeline() { return scenePipeline; }
-        [[nodiscard]] inline VkDescriptorSet GetRenderedTextureDescriptorSet() const { return offscreenImageDescriptorSets[swapchain->GetCurrentFrameIndex()]; }
+        [[nodiscard]] inline VkDescriptorSet GetRenderedTextureDescriptorSet() const override { return offscreenImageDescriptorSets[swapchain->GetCurrentFrameIndex()]; }
 
         /* --- DESTRUCTOR --- */
         void Destroy() override;
@@ -85,14 +80,16 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         void CreateTimestampQueries();
         void CreateOffscreenDescriptorSets();
 
+        Sampling sampling = Sampling::MSAAx1;
+        ShadingType shadingType = ShadingType::FILL;
+
         SharedPtr<DescriptorSetLayout> sceneDescriptorSetLayout;
         UniquePtr<OffscreenRenderer> sceneOffscreenRenderer;
-        UniquePtr<OFFSCREEN_PIPELINE> scenePipeline;
+        UniquePtr<ScenePipeline> scenePipeline;
 
         SharedPtr<DescriptorSetLayout> skyboxDescriptorSetLayout;
         UniquePtr<Mesh> skyboxMesh;
-        UniquePtr<SKYBOX_PIPELINE> skyboxPipeline;
-        UniquePtr<Cubemap> skyboxCubemap;
+        UniquePtr<SkyboxPipeline> skyboxPipeline;
 
         std::vector<VkDescriptorSet> offscreenImageDescriptorSets;
         std::vector<UniquePtr<TimestampQuery>> offscreenTimestampQueries;

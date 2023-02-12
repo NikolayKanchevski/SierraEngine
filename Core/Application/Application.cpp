@@ -17,12 +17,12 @@ void Application::Start()
     // Start up the engine
     EngineCore::Initialize();
 
-    // Create renderer
-    UniquePtr<Window> window = Window::Create({ });
-    UniquePtr<MainVulkanRenderer> renderer = MainVulkanRenderer::Create({ .window = window, .createImGuiInstance = true, .createImGuizmoLayer = true });
-
     // Initialize the world
     World::Start();
+
+    // Create renderer
+    UniquePtr<Window> window = Window::Create({ });
+    UniquePtr<VulkanRenderer> renderer = DeferredVulkanRenderer ::Create({ .window = window, .createImGuiInstance = true, .createImGuizmoLayer = true });
 
     // Create camera
     Entity cameraEntity = Entity("Camera");
@@ -82,14 +82,17 @@ void Application::Start()
         renderer->Render();
     }
 
+    // Destroy created resources
     renderer->Destroy();
     window->Destroy();
+
+    World::Shutdown();
 
     // Deallocate world memory
     EngineCore::Terminate();
 }
 
-void Application::RenderLoop(UniquePtr<MainVulkanRenderer> &renderer)
+void Application::RenderLoop(UniquePtr<VulkanRenderer> &renderer)
 {
     // If the window of the renderer is required to be focused but is not return before executing useless code
     if (renderer->GetWindow()->IsFocusRequired() && !renderer->GetWindow()->IsFocused()) return;

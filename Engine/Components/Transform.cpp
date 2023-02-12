@@ -7,6 +7,7 @@
 #include "Relationship.h"
 #include "../../Core/Rendering/UI/ImGuiUtilities.h"
 #include "../../Core/Rendering/Math/MatrixUtilities.h"
+#include "MeshRenderer.h"
 
 #define CHECK_CHANGE(a, b) if (a == b) return; else { a = b; isDirty = true; }
 
@@ -225,7 +226,7 @@ namespace Sierra::Engine::Components
         DoCallbacks();
     }
 
-    void Transform::DrawUI()
+    void Transform::OnDrawUI()
     {
         ImGui::BeginProperties(ImGuiTableFlags_BordersInnerV);
 

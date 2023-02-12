@@ -29,7 +29,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->sampler = Sampler::Create(createInfo.samplerCreateInfo);
 
         // Calculate the image's memory size
-        // TODO: color channels count
         this->layerSize = width * height * 4;
         this->memorySize = layerSize * 6;
 

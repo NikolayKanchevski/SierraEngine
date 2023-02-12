@@ -323,20 +323,53 @@ namespace Sierra::Engine::Classes
             meshComponent.SetTexture(specularTexture);
         }
 
+        // Check if mesh has a normal texture
+        for (uint i = assimpMaterial->GetTextureCount(aiTextureType_NORMALS); i--;)
+        {
+            // Get texture file path
+            aiString textureFilePath;
+            assimpMaterial->GetTexture(aiTextureType_NORMALS, i, &textureFilePath);
+
+            // Create texture
+            auto normalTexture = Texture::Create({
+                .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
+                .textureType = TEXTURE_TYPE_NORMAL_MAP
+            });
+
+            // Apply texture
+            meshComponent.SetTexture(normalTexture);
+        }
+
+        // Check if mesh has a height map texture
+        for (uint i = assimpMaterial->GetTextureCount(aiTextureType_HEIGHT); i--;)
+        {
+            // Get texture file path
+            aiString textureFilePath;
+            assimpMaterial->GetTexture(aiTextureType_HEIGHT, i, &textureFilePath);
+
+            // Create texture
+            auto heightMapTexture = Texture::Create({
+                .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
+                .textureType = TEXTURE_TYPE_HEIGHT_MAP
+            });
+
+            // Apply texture
+            meshComponent.SetTexture(heightMapTexture);
+        }
+
         // Get material properties
         aiGetMaterialFloat(assimpMaterial, AI_MATKEY_SHININESS, &meshComponent.material.shininess);
         meshComponent.material.shininess /= 512.0f;
 
         aiColor4D assimpColor;
 
-        aiGetMaterialColor(assimpMaterial, AI_MATKEY_COLOR_AMBIENT, &assimpColor);
-        meshComponent.material.ambient = { assimpColor.r, assimpColor.g, assimpColor.b };
-
         aiGetMaterialColor(assimpMaterial, AI_MATKEY_COLOR_DIFFUSE, &assimpColor);
         meshComponent.material.diffuse = { assimpColor.r, assimpColor.g, assimpColor.b };
 
         aiGetMaterialColor(assimpMaterial, AI_MATKEY_COLOR_SPECULAR, &assimpColor);
-        meshComponent.material.specular = { assimpColor.r, assimpColor.g, assimpColor.b };
+        meshComponent.material.specular = assimpColor.r;
 
+        aiGetMaterialColor(assimpMaterial, AI_MATKEY_COLOR_AMBIENT, &assimpColor);
+        meshComponent.material.ambient = assimpColor.r;
     }
 }

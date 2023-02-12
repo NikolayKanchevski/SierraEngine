@@ -5,10 +5,11 @@
 #include "MainVulkanRenderer.h"
 
 #include "../../UI/ImGuiCore.h"
-#include "../../../../Engine/Components/Camera.h"
-#include "../../../../Engine/Classes/Time.h"
-#include "../../../../Engine/Components/MeshRenderer.h"
 #include "../../Math/MatrixUtilities.h"
+#include "../../../../Engine/Classes/Time.h"
+#include "../../../../Engine/Components/Camera.h"
+#include "../../../Engine/Components/WorldManager.h"
+#include "../../../../Engine/Components/MeshRenderer.h"
 
 using Rendering::UI::ImGuiCore;
 using namespace Sierra::Engine::Components;
@@ -40,18 +41,18 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         auto &sceneUniformData = scenePipeline->GetUniformBufferData();
         sceneUniformData.view = camera->GetViewMatrix();
         sceneUniformData.projection = camera->GetProjectionMatrix();
-        sceneUniformData.directionalLightCount = DirectionalLight::GetDirectionalLightCount();
-        sceneUniformData.pointLightCount = PointLight::GetPointLightCount();
 
         auto &skyboxUniformData = skyboxPipeline->GetUniformBufferData();
         skyboxUniformData.view = sceneUniformData.view;
         skyboxUniformData.projection = sceneUniformData.projection;
 
         float timeAngle = std::fmod(Time::GetUpTime(), 360.0f) * -0.8f;
-        skyboxUniformData.model = MatrixUtilities::CreateModel(Vector3(0.0f), {timeAngle, 0.0f, 0.0f });
+        skyboxPipeline->GetPushConstantData().model = MatrixUtilities::CreateModel(Vector3(0.0f), {timeAngle, 0.0f, 0.0f });
 
         // Update storage data
         auto &storageData = scenePipeline->GetStorageBufferData();
+        storageData.directionalLightCount = DirectionalLight::GetDirectionalLightCount();
+        storageData.pointLightCount = PointLight::GetPointLightCount();
 
         auto enttMeshView = World::GetAllComponentsOfType<MeshRenderer>();
         tbb::parallel_for_each(enttMeshView.begin(), enttMeshView.end(),
@@ -79,6 +80,70 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
                 storageData.pointLights[pointLight.GetID()] = pointLight;
             }
         );
+    }
+
+    void MainVulkanRenderer::DrawUI()
+    {
+        // Shading type dropdown
+        {
+            static uint currentShadingTypeIndex = 0;
+            static const char* shadingTypes[] = {"Shaded", "Wireframe" };
+
+            ImGui::CustomLabel("Renderer Shading:");
+            ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
+            if (ImGui::Dropdown("##RENDERER_SHADING_DROPDOWN", currentShadingTypeIndex, shadingTypes, 2))
+            {
+                VK::GetDevice()->WaitUntilIdle();
+
+                scenePipeline->GetCreateInfo().shadingType = (ShadingType) currentShadingTypeIndex;
+                scenePipeline->Recreate();
+            }
+        }
+
+        // Shaders to use
+        {
+            static uint currentShaderIndex = 2;
+
+            static const char* shaderPaths[] { "Shaders/standard_diffuse_fragment.frag.spv", "Shaders/standard_specular_fragment.frag.spv", "Shaders/blinn-phong-fragment.frag.spv" };
+            static const char* shaderTypes[] = {"Diffuse", "Specular", "Blinn-Phong" };
+
+            ImGui::CustomLabel("Renderer's Fragment Shader:");
+            ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
+            if (ImGui::Dropdown("##RENDERER_FRAGMENT_SHADER_DROPDOWN", currentShaderIndex, shaderTypes, 3))
+            {
+                    scenePipeline->OverloadShader(Shader::Create({
+                        .filePath = shaderPaths[currentShaderIndex],
+                        .shaderType = ShaderType::FRAGMENT
+                    }));
+            }
+        }
+
+        // Anti-Aliasing
+        {
+            static uint currentMSAATypeIndex = 0;
+            static const char* msaaTypes[] = {"None", "MSAAx2", "MSAAx4", "MSAAx8", "MSAAx16", "MSAAx32", "MSAAx64" };
+
+            uint maximumSampling = (uint) VK::GetDevice()->GetHighestMultisampling();
+            static const bool deactivatedFlags[] = { 1 > maximumSampling, 2 > maximumSampling, 4 > maximumSampling, 8 > maximumSampling, 16 > maximumSampling, 32 > maximumSampling, 64 > maximumSampling };
+
+            ImGui::CustomLabel("Renderer Anti-Aliasing:");
+            ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
+            if (ImGui::Dropdown("##RENDERER_ANTI_ALIASING_DROPDOWN", currentMSAATypeIndex, msaaTypes, 7, deactivatedFlags))
+            {
+                VK::GetDevice()->WaitUntilIdle();
+
+                Sampling newSampling = (Sampling) glm::pow(2, currentMSAATypeIndex);
+                sceneOffscreenRenderer->SetMultisampling(newSampling);
+
+                scenePipeline->GetCreateInfo().sampling = newSampling;
+                scenePipeline->Recreate();
+
+                skyboxPipeline->GetCreateInfo().sampling = newSampling;
+                skyboxPipeline->Recreate();
+
+                CreateOffscreenDescriptorSets();
+            }
+        }
     }
 
     void MainVulkanRenderer::Render()
@@ -145,7 +210,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         commandBuffer->BindVertexBuffers({ skyboxMesh->GetVertexBuffer()->GetVulkanBuffer() });
         commandBuffer->BindIndexBuffer({ skyboxMesh->GetIndexBuffer()->GetVulkanBuffer() });
 
-        skyboxPipeline->BindDescriptorSets(commandBuffer->GetVulkanCommandBuffer(), { }, currentFrame);
+        skyboxPipeline->PushConstants(commandBuffer->GetVulkanCommandBuffer());
+        skyboxPipeline->BindDescriptorSets(commandBuffer->GetVulkanCommandBuffer(), currentFrame);
 
         commandBuffer->Draw(skyboxMesh->GetIndexCount());
 
@@ -180,35 +246,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         swapchain->SubmitCommandBuffers();
     }
 
-    /* --- SETTER METHODS --- */
-
-    void MainVulkanRenderer::SetSampling(Sampling newSampling)
-    {
-        VulkanRenderer::SetSampling(newSampling);
-
-        VK::GetDevice()->WaitUntilIdle();
-
-        sceneOffscreenRenderer->SetMultisampling(newSampling);
-
-        scenePipeline->GetCreateInfo().sampling = newSampling;
-        scenePipeline->Recreate();
-
-        skyboxPipeline->GetCreateInfo().sampling = newSampling;
-        skyboxPipeline->Recreate();
-
-        CreateOffscreenDescriptorSets();
-    }
-
-    void MainVulkanRenderer::SetShadingType(const ShadingType newShadingType)
-    {
-        VulkanRenderer::SetShadingType(newShadingType);
-
-        VK::GetDevice()->WaitUntilIdle();
-
-        scenePipeline->GetCreateInfo().shadingType = newShadingType;
-        scenePipeline->Recreate();
-    }
-
     void MainVulkanRenderer::InitializeOffscreenRendering()
     {
         CreateSceneRenderingObjects();
@@ -222,9 +259,9 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
     {
         // Create descriptor set layout for skybox pipeline
         skyboxDescriptorSetLayout = DescriptorSetLayout::Builder()
-            .SetShaderStages(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
-            .AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-            .AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+            .SetShaderStages(ShaderType::VERTEX | ShaderType::FRAGMENT)
+            .AddBinding(0, DescriptorType::UNIFORM_BUFFER)
+            .AddBinding(1, DescriptorType::COMBINED_IMAGE_SAMPLER)
         .Build();
 
         // Create shaders for skybox pipeline
@@ -232,7 +269,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         auto skyboxFragmentShader = Shader::Create({ .filePath = "Shaders/skybox_fragment.frag.spv", .shaderType = ShaderType::FRAGMENT });
 
         // Create pipeline
-        skyboxPipeline = SKYBOX_PIPELINE::Create({
+        skyboxPipeline = SkyboxPipeline::CreateFromAnotherPipeline({
             .maxConcurrentFrames = swapchain->GetMaxConcurrentFramesCount(),
             .vertexAttributes = { VertexAttribute::POSITION },
             .shaders = {skyboxVertexShader, skyboxFragmentShader },
@@ -241,7 +278,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             .sampling = Sampling::MSAAx1,
             .cullMode = CullMode::FRONT,
             .shadingType = ShadingType::FILL,
-        });
+        }, scenePipeline, PIPELINE_COPY_OP_UNIFORM_BUFFER);
 
         std::vector<VertexP> cubeVertices =
         {
@@ -268,20 +305,10 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         // Create cube vertex buffer
         skyboxMesh = std::make_unique<Mesh>(cubeVertices, cubeIndices);
 
-        // Create cubemap texture
-        skyboxCubemap = Cubemap::Create({ .filePaths = {
-            "Textures/Skyboxes/Default/skybox_right.png",
-            "Textures/Skyboxes/Default/skybox_left.png",
-            "Textures/Skyboxes/Default/skybox_top.png",
-            "Textures/Skyboxes/Default/skybox_bottom.png",
-            "Textures/Skyboxes/Default/skybox_front.png",
-            "Textures/Skyboxes/Default/skybox_back.png",
-        }, .cubemapType = CUBEMAP_TYPE_SKYBOX });
-
         // Add skybox cubemap to its pipeline's descriptor set
         for (const auto &descriptorSet : skyboxPipeline->GetDescriptorSets())
         {
-            descriptorSet->WriteCubemap(1, skyboxCubemap);
+            descriptorSet->WriteCubemap(1, World::GetManager().GetSkyboxSystem().skyboxCubemap);
             descriptorSet->Allocate();
         }
     }
@@ -290,20 +317,21 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
     {
         // Create descriptor set layout
         auto descriptorSetBuilder = DescriptorSetLayout::Builder();
-        descriptorSetBuilder.SetShaderStages(VK_SHADER_STAGE_ALL);
-        descriptorSetBuilder.AddBinding(UNIFORM_BUFFER_BINDING, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-        descriptorSetBuilder.AddBinding(STORAGE_BUFFER_BINDING, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+        descriptorSetBuilder.SetShaderStages(ShaderType::VERTEX | ShaderType::FRAGMENT);
+        descriptorSetBuilder.AddBinding(UNIFORM_BUFFER_BINDING, DescriptorType::UNIFORM_BUFFER);
+        descriptorSetBuilder.AddBinding(STORAGE_BUFFER_BINDING, DescriptorType::STORAGE_BUFFER);
 
         if (VK::GetDevice()->GetDescriptorIndexingSupported())
         {
             // TODO: BINDLESS
-            // descriptorSetBuilder.AddBinding(BINDLESS_TEXTURE_BINDING, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT, MAX_TEXTURES);
+            // descriptorSetBuilder.AddBinding(BINDLESS_TEXTURE_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT, MAX_TEXTURES);
         }
         else
         {
-            descriptorSetBuilder.AddBinding(DIFFUSE_TEXTURE_BINDING, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-            descriptorSetBuilder.AddBinding(SPECULAR_TEXTURE_BINDING, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-            descriptorSetBuilder.AddBinding(HEIGHT_MAP_TEXTURE_BINDING, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+            descriptorSetBuilder.AddBinding(DIFFUSE_TEXTURE_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER);
+            descriptorSetBuilder.AddBinding(SPECULAR_TEXTURE_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER);
+            descriptorSetBuilder.AddBinding(NORMAL_MAP_TEXTURE_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER);
+            descriptorSetBuilder.AddBinding(HEIGHT_MAP_TEXTURE_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER);
         }
 
         // Create descriptor set layout
@@ -327,14 +355,14 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         auto sceneFragmentShader = Shader::Create({ .filePath = VK::GetDevice()->GetDescriptorIndexingSupported() ? "Shaders/blinn-phong-fragment_bindless.frag.spv" : "Shaders/blinn-phong-fragment.frag.spv", .shaderType = ShaderType::FRAGMENT });
 
         // Create pipeline
-        scenePipeline = OFFSCREEN_PIPELINE::Create({
+        scenePipeline = ScenePipeline::Create({
             .maxConcurrentFrames = swapchain->GetMaxConcurrentFramesCount(),
             .vertexAttributes = { VertexAttribute::POSITION, VertexAttribute::NORMAL, VertexAttribute::TEXTURE_COORDINATE },
             .shaders = {sceneVertexShader, sceneFragmentShader },
             .renderPass = sceneOffscreenRenderer->GetRenderPass(),
             .descriptorSetLayout = sceneDescriptorSetLayout,
             .sampling = sampling,
-            .shadingType = shadingType,
+            .shadingType = shadingType
         });
     }
 
@@ -362,7 +390,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
     void MainVulkanRenderer::TerminateOffscreenRendering()
     {
-        skyboxCubemap->Destroy();
         skyboxMesh->Destroy();
 
         scenePipeline->Destroy();

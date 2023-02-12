@@ -58,8 +58,7 @@ namespace Sierra::Engine::Classes
         [[nodiscard]] inline bool IsLoaded() { return loaded; };
 
         /* --- DESTRUCTOR --- */
-        Model(const Model &) = delete;
-        Model &operator=(const Model &) = delete;
+        DELETE_COPY(Model);
 
     private:
         bool loaded = false;

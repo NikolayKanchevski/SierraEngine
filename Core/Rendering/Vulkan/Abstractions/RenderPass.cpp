@@ -12,39 +12,43 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     RenderPass::RenderPass(const RenderPassCreateInfo &createInfo)
     {
-        const std::vector<RenderPassAttachment> &attachments = createInfo.attachments;
-        const std::vector<SubpassInfo> &subpassInfos = createInfo.subpassInfos;
+        auto &attachments = createInfo.attachments;
+        auto &subpassInfos = createInfo.subpassInfos;
 
-        std::vector<VkAttachmentDescription> attachmentDescriptions(attachments.size());
+        std::vector<VkAttachmentDescription> attachmentDescriptions;
+        attachmentDescriptions.resize(attachments.size());
 
-        for (uint i = attachments.size(); i--;)
+        for (uint i = 0; i < attachments.size(); i++)
         {
             attachmentDescriptions[i].format = (VkFormat) attachments[i].imageAttachment->GetFormat();
             attachmentDescriptions[i].samples = (VkSampleCountFlagBits) attachments[i].imageAttachment->GetSampling();
             attachmentDescriptions[i].loadOp = (VkAttachmentLoadOp) attachments[i].loadOp;
             attachmentDescriptions[i].storeOp = (VkAttachmentStoreOp) attachments[i].storeOp;
-            attachmentDescriptions[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;      /// NOTE: These lines may need to be changed
-            attachmentDescriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            attachmentDescriptions[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE; // I don't care maybe change this in future
+            attachmentDescriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE; // this too
             attachmentDescriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            attachmentDescriptions[i].finalLayout = (VkImageLayout) attachments[i].finalLayout;
+
+            if (attachments[i].IsDepth()) attachmentDescriptions[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+            else attachmentDescriptions[i].finalLayout = (VkImageLayout) attachments[i].finalLayout;
         }
 
+        // Subpasses
         std::vector<SubpassDescription> subpassDescriptions{};
-        std::vector<VkAttachmentReference> depthReferences;
+        subpassDescriptions.resize(subpassInfos.size());
 
-        for (uint i = subpassInfos.size(); i--;)
+        for (uint i = 0; i < subpassInfos.size(); i++)
         {
-            SubpassDescription subpassDescription{};
+            SubpassDescription &subpassDescription = subpassDescriptions[i];
             subpassDescription.data.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
             subpassDescription.data.colorAttachmentCount = 0;
             subpassDescription.data.inputAttachmentCount = 0;
 
             bool hasDepth = false;
             bool hasColor = false;
-            bool hasInput = false;
             bool hasResolve = false;
+            bool hasInput = false;
 
-            for (auto& attachment : attachments)
+            for (auto &attachment : attachments)
             {
                 if (attachment.IsDepth())
                 {
@@ -58,21 +62,21 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 if (hasDepth && hasResolve) break;
             }
 
-            for (uint j = subpassInfos[i].renderTargets.size(); j--;)
+            for (uint j = 0; j < subpassInfos[i].renderTargets.size(); j++)
             {
-                uint renderTarget = subpassInfos[i].renderTargets[j];
-
+                uint32_t renderTarget = subpassInfos[i].renderTargets[j];
                 if (attachments[renderTarget].IsDepth())
                 {
                     subpassDescription.depthReference.attachment = renderTarget;
                     subpassDescription.depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
                     hasDepth = true;
                 }
                 else if (attachments[renderTarget].isResolve)
                 {
                     VkAttachmentReference resolveReference{};
                     resolveReference.attachment = renderTarget;
+                    resolveReference.attachment = attachments[renderTarget].resolveTarget;
+
                     resolveReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                     subpassDescription.resolveReferences.push_back(resolveReference);
                 }
@@ -80,39 +84,30 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 {
                     VkAttachmentReference colorReference{};
                     colorReference.attachment = renderTarget;
-                    colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                    subpassDescription.colorReferences.push_back(colorReference);
 
+                    bool attachmentIsAlsoInput = false;
+                    for (const auto &input : subpassInfos[i].subpassInputs) { if (input == renderTarget) { attachmentIsAlsoInput = true; break; } }
+
+                    colorReference.layout = attachmentIsAlsoInput ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                    subpassDescription.colorReferences.push_back(colorReference);
                     hasColor = true;
                 }
             }
 
-            for (uint j = subpassInfos[i].subpassInputs.size(); j--;)
+            for (uint j = 0; j < subpassInfos[i].subpassInputs.size(); j++)
             {
                 uint renderTarget = subpassInfos[i].subpassInputs[j];
+                VkAttachmentReference inputReference{};
+                inputReference.attachment = renderTarget;
+                inputReference.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                subpassDescription.inputReferences.push_back(inputReference);
+                hasInput = true;
 
-                if (attachments[renderTarget].IsDepth())
-                {
-                    subpassDescription.depthReference.attachment = renderTarget;
-                    subpassDescription.depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-                    hasDepth = true;
-                }
-                else
-                {
-                    VkAttachmentReference inputReference{};
-                    inputReference.attachment = renderTarget;
-                    inputReference.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    subpassDescription.inputReferences.push_back(inputReference);
-
-                    hasInput = true;
-                }
             }
 
             if (hasDepth)
             {
-                depthReferences.push_back(subpassDescription.depthReference);
-                subpassDescription.data.pDepthStencilAttachment = &depthReferences.back();
+                subpassDescription.data.pDepthStencilAttachment = subpassDescription.depthReference.layout != VK_IMAGE_LAYOUT_UNDEFINED ? &subpassDescription.depthReference : nullptr;
             }
 
             if (hasColor)
@@ -131,15 +126,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 subpassDescription.data.pInputAttachments = subpassDescription.inputReferences.data();
                 subpassDescription.data.inputAttachmentCount = subpassDescription.inputReferences.size();
             }
-
-            subpassDescriptions.push_back(std::move(subpassDescription));
         }
 
+        // Dependencies
         std::vector<VkSubpassDependency> dependencies;
         if (subpassInfos.size() != 1)
         {
             dependencies.resize(subpassInfos.size() + 1);
-
             VkSubpassDependency& firstDependency = dependencies[0];
             firstDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
             firstDependency.dstSubpass = 0;
@@ -190,18 +183,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         std::vector<VkSubpassDescription> vkSubpassDescriptions{};
-        for (uint i = subpassDescriptions.size(); i--;)
+        for (uint i = 0; i < subpassDescriptions.size(); i++)
         {
             vkSubpassDescriptions.push_back(subpassDescriptions[i].data);
         }
 
-        VkRenderPassCreateInfo renderPassInfo{};
+        VkRenderPassCreateInfo renderPassInfo = {};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = static_cast<uint>(attachmentDescriptions.size());
+        renderPassInfo.attachmentCount = static_cast<uint32_t>(attachmentDescriptions.size());
         renderPassInfo.pAttachments = attachmentDescriptions.data();
-        renderPassInfo.subpassCount = static_cast<uint>(vkSubpassDescriptions.size());
+        renderPassInfo.subpassCount = static_cast<uint32_t>(vkSubpassDescriptions.size());
         renderPassInfo.pSubpasses = vkSubpassDescriptions.data();
-        renderPassInfo.dependencyCount = static_cast<uint>(dependencies.size());
+        renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
         renderPassInfo.pDependencies = dependencies.data();
 
         VK_ASSERT(vkCreateRenderPass(VK::GetLogicalDevice(), &renderPassInfo, nullptr, &renderPass), "Could not create render pass");
@@ -211,11 +204,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             if (attachments[i].IsDepth())
             {
-                clearValues[i].depthStencil = {1.0f, 0};
+                clearValues[i].depthStencil = { 1.0f, 0 };
             }
             else
             {
-                clearValues[i].color = {0.31f, 0.31f, 0.31f, 1.0f};
+                clearValues[i].color = { 0.31f, 0.31f, 0.31f, 1.0f };
             }
         }
     }

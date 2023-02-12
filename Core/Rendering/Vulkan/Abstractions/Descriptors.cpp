@@ -64,18 +64,24 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- SETTER METHODS --- */
 
-    DescriptorSetLayout::Builder &DescriptorSetLayout::Builder::AddBinding(const uint binding, const VkDescriptorType descriptorType, const VkDescriptorBindingFlags bindingFlags, const uint arraySize, const VkSampler *immutableSamplers)
+    DescriptorSetLayout::Builder &DescriptorSetLayout::Builder::SetShaderStages(const ShaderType &givenShaderStages)
     {
-        ASSERT_ERROR_IF(this->shaderStages == -1, "No shader stages specified for descriptor set layout");
+        this->shaderStages = givenShaderStages;
+        return *this;
+    }
+
+    DescriptorSetLayout::Builder &DescriptorSetLayout::Builder::AddBinding(const uint binding, const DescriptorType descriptorType, const ShaderType givenShaderStages, const VkDescriptorBindingFlags bindingFlags, const uint arraySize, const VkSampler *immutableSamplers)
+    {
+        ASSERT_ERROR_IF(givenShaderStages == ShaderType::NONE, "No shader stages specified for descriptor set layout");
 
         ASSERT_ERROR_FORMATTED_IF(bindings.count(binding) != 0, "Binding [{0}] already in use by a [{1}] descriptor", binding, bindings[binding].bindingInfo.descriptorType);
 
         // Set up the layout binding info
         VkDescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.binding = binding;
-        layoutBinding.descriptorType = descriptorType;
+        layoutBinding.descriptorType = (VkDescriptorType) descriptorType;
         layoutBinding.descriptorCount = arraySize;
-        layoutBinding.stageFlags = this->shaderStages;
+        layoutBinding.stageFlags = (VkShaderStageFlagBits) givenShaderStages;
         layoutBinding.pImmutableSamplers = immutableSamplers;
 
         // Add the binding info to the tuple list
@@ -84,9 +90,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return *this;
     }
 
-    DescriptorSetLayout::Builder &DescriptorSetLayout::Builder::SetShaderStages(const VkShaderStageFlags givenShaderStages)
+    DescriptorSetLayout::Builder &DescriptorSetLayout::Builder::AddBinding(const uint binding, const DescriptorType descriptorType, const VkDescriptorBindingFlags bindingFlags, const uint arraySize, const VkSampler *immutableSamplers)
     {
-        this->shaderStages = givenShaderStages;
+        AddBinding(binding, descriptorType, (ShaderType) this->shaderStages, bindingFlags, arraySize, immutableSamplers);
+
         return *this;
     }
 
@@ -102,10 +109,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- SETTER METHODS --- */
 
-    DescriptorPool::Builder &DescriptorPool::Builder::AddPoolSize(const VkDescriptorType descriptorType)
+    DescriptorPool::Builder &DescriptorPool::Builder::AddPoolSize(const DescriptorType descriptorType)
     {
         // Add the pool size to the list of pool sizes
-        this->poolSizes.push_back({ descriptorType, maxSets });
+        this->poolSizes.push_back({ (VkDescriptorType) descriptorType, maxSets });
         return *this;
     }
 
@@ -224,7 +231,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- SETTER METHODS --- */
 
-    void DescriptorSet::WriteBuffer(const uint binding, const UniquePtr<Buffer> &buffer)
+    void DescriptorSet::WriteBuffer(uint binding, const Buffer *buffer)
     {
         // Check if the current binding is not available
         ASSERT_ERROR_FORMATTED_IF(!descriptorSetLayout->IsBindingPresent(binding), "Descriptor set layout does not contain the specified binding: [{0}]", binding);
@@ -250,6 +257,27 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Add write descriptor to the list
         writeDescriptorSets[binding] = writeDescriptor;
+    }
+
+    void DescriptorSet::WriteBuffer(const uint binding, const UniquePtr<Buffer> &buffer)
+    {
+        WriteBuffer(binding, buffer.get());
+    }
+
+    void DescriptorSet::WriteBuffer(const uint binding, const SharedPtr<Buffer> &buffer)
+    {
+        WriteBuffer(binding, buffer.get());
+    }
+
+    void DescriptorSet::WriteImage(const uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler)
+    {
+        VkDescriptorImageInfo imageInfo{};
+        imageInfo.sampler = sampler->GetVulkanSampler();
+        imageInfo.imageView = image->GetVulkanImageView();
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        descriptorImageInfos[binding] = imageInfo;
+        WriteImage(binding, &descriptorImageInfos[binding]);
     }
 
     void DescriptorSet::WriteImage(const uint binding, const VkDescriptorImageInfo *imageInfo)
@@ -529,10 +557,4 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkUpdateDescriptorSets(VK::GetLogicalDevice(), writeDescriptorSets.size(), writeDescriptorSets.data(), 0, nullptr);
     }
 
-    /* --- DESTRUCTOR --- */
-
-    BindlessDescriptorSet::~BindlessDescriptorSet()
-    {
-
-    }
 }

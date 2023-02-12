@@ -36,8 +36,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        Shader(const Shader &) = delete;
-        Shader &operator=(const Shader &) = delete;
+        DELETE_COPY(Shader);
 
     private:
         String filePath = "";

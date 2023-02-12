@@ -168,9 +168,10 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         descriptorPool = DescriptorPool::Builder()
             .SetMaxSets(32768)
-            .AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-            .AddPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
-            .AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+            .AddPoolSize(DescriptorType::UNIFORM_BUFFER)
+            .AddPoolSize(DescriptorType::STORAGE_BUFFER)
+            .AddPoolSize(DescriptorType::COMBINED_IMAGE_SAMPLER)
+            .AddPoolSize(DescriptorType::INPUT_ATTACHMENT)
         .Build();
     }
 
@@ -222,6 +223,12 @@ namespace Sierra::Core::Rendering::Vulkan
         Texture::Create({
             .filePath = "Textures/Null/SpecularNull.jpg",
             .textureType = TEXTURE_TYPE_SPECULAR
+        }, true);
+
+        // Create default specular texture
+        Texture::Create({
+            .filePath = "Textures/Null/NormalMapNull.jpg",
+            .textureType = TEXTURE_TYPE_NORMAL_MAP
         }, true);
 
         // Create default height map texture

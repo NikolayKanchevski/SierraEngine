@@ -31,7 +31,7 @@ namespace Sierra::Engine::Components
 
     /* --- POLLING METHODS --- */
 
-    void Camera::DrawUI()
+    void Camera::OnDrawUI()
     {
         ImGui::BeginProperties();
 

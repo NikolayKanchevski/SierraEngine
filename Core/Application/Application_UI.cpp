@@ -11,7 +11,7 @@
 
 using UI::ImGuiCore;
 
-void Application::DisplayUI(UniquePtr<MainVulkanRenderer> &renderer)
+void Application::DisplayUI(UniquePtr<VulkanRenderer> &renderer)
 {
 
     /* --- MAIN VIEWPORT --- */
@@ -94,53 +94,7 @@ void Application::DisplayUI(UniquePtr<MainVulkanRenderer> &renderer)
     {
         if (ImGui::Begin("Renderer Settings", nullptr, ImGuiWindowFlags_NoNav))
         {
-            // Shading type dropdown
-            {
-                static uint currentShadingTypeIndex = 0;
-                static const char* shadingTypes[] = {"Shaded", "Wireframe" };
-
-                ImGui::CustomLabel("Renderer Shading:");
-                ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
-                if (ImGui::Dropdown("##RENDERER_SHADING_DROPDOWN", currentShadingTypeIndex, shadingTypes, 2))
-                {
-                    renderer->SetShadingType((ShadingType) currentShadingTypeIndex);
-                }
-            }
-
-            // Shaders to use
-            {
-                static uint currentShaderIndex = 2;
-
-                static const char* shaderPaths[] { "Shaders/standard_diffuse_fragment.frag.spv", "Shaders/standard_specular_fragment.frag.spv", "Shaders/blinn-phong-fragment.frag.spv" };
-                static const char* shaderTypes[] = {"Diffuse", "Specular", "Blinn-Phong" };
-
-                ImGui::CustomLabel("Renderer's Fragment Shader:");
-                ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
-                if (ImGui::Dropdown("##RENDERER_FRAGMENT_SHADER_DROPDOWN", currentShaderIndex, shaderTypes, 3))
-                {
-                    renderer->GetScenePipeline()->OverloadShader(Shader::Create({
-                        .filePath = shaderPaths[currentShaderIndex],
-                        .shaderType = ShaderType::FRAGMENT
-                    }));
-                }
-            }
-
-            // Anti-Aliasing
-            {
-                static uint currentMSAATypeIndex = 0;
-                static const char* msaaTypes[] = {"None", "MSAAx2", "MSAAx4", "MSAAx8", "MSAAx16", "MSAAx32", "MSAAx64" };
-
-                uint maximumSampling = (uint) VK::GetDevice()->GetHighestMultisampling();
-                static const bool deactivatedFlags[] = { 1 > maximumSampling, 2 > maximumSampling, 4 > maximumSampling, 8 > maximumSampling, 16 > maximumSampling, 32 > maximumSampling, 64 > maximumSampling };
-
-                ImGui::CustomLabel("Renderer Anti-Aliasing:");
-                ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
-                if (ImGui::Dropdown("##RENDERER_ANTI_ALIASING_DROPDOWN", currentMSAATypeIndex, msaaTypes, 7, deactivatedFlags))
-                {
-                    renderer->SetSampling((Sampling) glm::pow(2, currentMSAATypeIndex));
-                }
-            }
-
+            renderer->DrawUI();
             ImGui::End();
         }
 
@@ -162,7 +116,7 @@ void Application::DisplayUI(UniquePtr<MainVulkanRenderer> &renderer)
             ImGuiCore::SetSceneViewPosition(ImGui::GetCurrentWindow()->WorkRect.GetTL().x, ImGui::GetCurrentWindow()->WorkRect.GetTL().y);
 
             // Flip renderer image
-            ImGui::Image((ImTextureID) renderer->GetRenderedTextureDescriptorSet(), freeSpace, { 0.0f, 1.0f }, { 1.0f, 0.0f });
+            if (renderer->GetRenderedTextureDescriptorSet()) ImGui::Image((ImTextureID) renderer->GetRenderedTextureDescriptorSet(), freeSpace, { 0.0f, 1.0f }, { 1.0f, 0.0f });
             ImGui::End();
         }
     }
@@ -210,6 +164,56 @@ void Application::DisplayUI(UniquePtr<MainVulkanRenderer> &renderer)
             {
                 EngineCore::SetSelectedEntity(Entity::Null);
             }
+
+            ImGui::End();
+        }
+    }
+
+    /* --- DETAILED STATS PANEL --- */
+    {
+        if (ImGui::Begin("Detailed Stats"))
+        {
+            ImGui::Text("GPU Draw Time: %fms", renderer->GetTotalDrawTime());
+
+            static constexpr uint SAMPLE_COUNT = 200;
+            static constexpr uint REFRESH_RATE = 60;
+
+            static uint currentSampleIndex = 0;
+
+            static float drawTimeSamples[SAMPLE_COUNT] = {};
+            static float frameTimeSamples[SAMPLE_COUNT] = {};
+
+            static double refreshTime = Time::GetUpTime();
+            while (refreshTime < Time::GetUpTime())
+            {
+                drawTimeSamples[currentSampleIndex] = renderer->GetTotalDrawTime();
+                frameTimeSamples[currentSampleIndex] = Time::GetFPS();
+
+                currentSampleIndex = (currentSampleIndex + 1) % SAMPLE_COUNT;
+                refreshTime += 1.0f / REFRESH_RATE;
+            }
+
+            float averageDrawTime = 0.0f;
+            for (int i = SAMPLE_COUNT; i--;) averageDrawTime += drawTimeSamples[i];
+            averageDrawTime /= (float) SAMPLE_COUNT;
+
+            float averageFrameTime = 0.0f;
+            for (int i = SAMPLE_COUNT; i--;) averageFrameTime += frameTimeSamples[i];
+            averageFrameTime /= (float) SAMPLE_COUNT;
+
+            char drawTimeOverlay[32];
+            sprintf(drawTimeOverlay, "Average: %f", averageDrawTime);
+            ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
+            ImGui::PlotLines("Lines", drawTimeSamples, SAMPLE_COUNT, currentSampleIndex, drawTimeOverlay, 0.0f, 100.0f, ImVec2(0, 80.0f));
+
+            ImGui::Separator();
+
+            ImGui::Text("CPU Frame Time: %i FPS", Time::GetFPS());
+
+            char frameTimeOverlay[32];
+            sprintf(frameTimeOverlay, "Average: %f", averageFrameTime);
+            ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
+            ImGui::PlotLines("Lines", frameTimeSamples, SAMPLE_COUNT, currentSampleIndex, frameTimeOverlay, 0.0f, 1000.0f, ImVec2(0, 80.0f));
 
             ImGui::End();
         }

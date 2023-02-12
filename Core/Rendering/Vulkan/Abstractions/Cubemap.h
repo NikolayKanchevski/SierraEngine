@@ -42,8 +42,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        Cubemap(const Cubemap &) = delete;
-        Cubemap &operator=(const Cubemap &) = delete;
+        DELETE_COPY(Cubemap);
 
     private:
         int width;

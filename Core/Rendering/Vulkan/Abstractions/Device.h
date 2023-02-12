@@ -60,10 +60,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        Device(const Device &) = delete;
-        Device &operator=(const Device &) = delete;
-        Device(Device &&) = delete;
-        Device &operator=(Device &&) = delete;
+        DELETE_COPY(Device);
 
     private:
         VkPhysicalDevice physicalDevice;

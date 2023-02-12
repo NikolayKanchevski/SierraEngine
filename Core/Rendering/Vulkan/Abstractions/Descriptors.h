@@ -6,6 +6,7 @@
 
 #include "Buffer.h"
 #include "Cubemap.h"
+#include "../VulkanTypes.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -28,12 +29,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         class Builder
         {
         public:
-            Builder &AddBinding(uint binding, VkDescriptorType descriptorType, VkDescriptorBindingFlags bindingFlags = 0, uint arraySize = 1, VkSampler const *immutableSamplers = nullptr);
-            Builder &SetShaderStages(VkShaderStageFlags givenShaderStages);
+            Builder& SetShaderStages(const ShaderType &givenShaderStages);
+            Builder& AddBinding(uint binding, DescriptorType descriptorType, ShaderType givenShaderStages, VkDescriptorBindingFlags bindingFlags = 0, uint arraySize = 1, VkSampler const *immutableSamplers = nullptr);
+            Builder& AddBinding(uint binding, DescriptorType descriptorType, VkDescriptorBindingFlags bindingFlags = 0, uint arraySize = 1, VkSampler const *immutableSamplers = nullptr);
+
             [[nodiscard]] SharedPtr<DescriptorSetLayout> Build() const;
 
         private:
-            VkShaderStageFlags shaderStages = -1;
+            ShaderType shaderStages = ShaderType::NONE;
             std::unordered_map<uint, DescriptorSetLayoutBinding> bindings;
 
         };
@@ -44,8 +47,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        DescriptorSetLayout(const DescriptorSetLayout &) = delete;
-        DescriptorSetLayout &operator=(const DescriptorSetLayout &) = delete;
+        DELETE_COPY(DescriptorSetLayout);
 
     private:
         friend class DescriptorPool;
@@ -66,7 +68,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         class Builder
         {
         public:
-            Builder& AddPoolSize(VkDescriptorType descriptorType);
+            Builder& AddPoolSize(DescriptorType descriptorType);
             Builder& SetPoolFlags(VkDescriptorPoolCreateFlags givenPoolCreateFlags);
             Builder& SetMaxSets(uint givenMaxSets);
             [[nodiscard]] UniquePtr<DescriptorPool> Build();
@@ -87,8 +89,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        DescriptorPool(const DescriptorPool &) = delete;
-        DescriptorPool &operator=(const DescriptorPool &) = delete;
+        DELETE_COPY(DescriptorPool);
         friend class DescriptorSet;
 
     private:
@@ -104,7 +105,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] static UniquePtr<DescriptorSet> Build(SharedPtr<DescriptorSetLayout> &givenDescriptorSetLayout);
 
         /* --- SETTER METHODS --- */
+        void WriteBuffer(uint binding, const Buffer *buffer);
         void WriteBuffer(uint binding, const UniquePtr<Buffer> &buffer);
+        void WriteBuffer(uint binding, const SharedPtr<Buffer> &buffer);
+        void WriteImage(uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler);
         void WriteImage(uint binding, const VkDescriptorImageInfo *imageInfo);
         void WriteTexture(uint binding, const SharedPtr<Texture> &texture);
         void WriteCubemap(uint binding, const UniquePtr<Cubemap> &cubemap);
@@ -115,8 +119,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         ~DescriptorSet();
-        DescriptorSet(const DescriptorSet &) = delete;
-        DescriptorSet &operator=(const DescriptorSet &) = delete;
+        DELETE_COPY(DescriptorSet);
 
     private:
         VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
@@ -154,9 +157,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] VkDescriptorSet GetVulkanDescriptorSet() const { return this->vkDescriptorSet; }
 
         /* --- DESTRUCTOR --- */
-        ~BindlessDescriptorSet();
-        BindlessDescriptorSet(const BindlessDescriptorSet &) = delete;
-        BindlessDescriptorSet &operator=(const BindlessDescriptorSet &) = delete;
+        DELETE_COPY(BindlessDescriptorSet);
 
     private:
         VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;

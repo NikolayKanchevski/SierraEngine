@@ -36,16 +36,16 @@ You can then proceed and run the program in your IDE. Make sure you are in <b>RE
     <ul>
         <li><a href="https://www.vulkan.org/">Vulkan</a> - For both cross-platform and pefromant-friendly rendering.</li>
         <li><a href="https://github.com/glfw/glfw">GLFW</a> - For creating window interface and connecting it to the <b>Vulkan</b> renderer.</li>
+        <li><a href="https://github.com/g-truc/glm">GLM</a> - For all advanced mathematical operations and objects within the engine.</li>
         <li><a href="https://github.com/ocornut/imgui">ImGui</a> - For the user interface implemented.</li>
         <li><a href="https://github.com/CedricGuillemet/ImGuizmo">ImGuizmo</a> - For gizmos in the scene view.</li>
         <li><a href="https://github.com/skypjack/entt">EnTT</a> - For the easy-to-use and incredibly perfomant <a href="https://en.wikipedia.org/wiki/Entity_component_system">entity component system</a>.</li>
-        <li><a href="https://github.com/g-truc/glm">GLM</a> - For all advanced mathematical operations and objects within the engine.</li>
         <li><a href="https://gpuopen.com/vulkan-memory-allocator/">VMA</a> - For easier and more optimal memory allocation and distribution of <a href="https://www.vulkan.org/">Vulkan</a> objects.</li>
         <li><a href="https://github.com/assimp/assimp">Assimp</a> - For the loading of all kinds of 3D model formats (.obj, .fbx, .dae, etc.).</li>
         <li><a href="https://github.com/nothings/stb">Stb</a> - For loading image data from all kinds of image formats (.jpg, .png, etc.).</li>
-        <li><a href="https://fmt.dev/latest/index.html">FMT</a> - For easy and fast string coreFormatting.</li>
+        <li><a href="https://fmt.dev/latest/index.html">FMT</a> - For fast and easy string formatting.</li>
+        <!--<li><a href="https://github.com/TheNitesWhoSay/RareCpp">RareCpp</a> - For reflections and serialization.</li>-->
         <li><a href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/onetbb.html#gs.m2vcgt">TBB</a> - For easier and guaranteed-to-be-supported threading.</li>
-        <!--<li><a href="https://billyquith.github.io/ponder/index.html">Ponder</a> - For reflections and serialization.</li>-->
         <li><a href="https://ih1.redbubble.net/image.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg">My Brain</a> - There is not much left of it, actually...</li>
     </ul>
     <br>
@@ -60,7 +60,7 @@ You can then proceed and run the program in your IDE. Make sure you are in <b>RE
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 13,588</p>
-<p align="center" id="LastUpdated">Last updated: 02/02/2023</p>
+<p align="center" id="LinesCounter">Total lines of code: 15,023</p>
+<p align="center" id="LastUpdated">Last updated: 10/02/2023</p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -47,8 +47,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        Swapchain(const Swapchain &) = delete;
-        Swapchain &operator=(const Swapchain &) = delete;
+        DELETE_COPY(Swapchain);
 
     private:
         UniquePtr<Window> &window;

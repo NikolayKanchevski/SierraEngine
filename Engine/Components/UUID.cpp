@@ -10,7 +10,7 @@
 namespace Sierra::Engine::Components
 {
     UUID::UUID()
-        : value(RNG::GetRandomUInt64())
+        : value(Classes::RNG::GetRandomUInt64())
     {
 
     }
@@ -21,9 +21,8 @@ namespace Sierra::Engine::Components
         return *this;
     }
 
-    void UUID::DrawUI()
+    void UUID::OnDrawUI()
     {
-
         ImGui::BeginProperties();
 
         ImGui::PushDeactivatedStatus();

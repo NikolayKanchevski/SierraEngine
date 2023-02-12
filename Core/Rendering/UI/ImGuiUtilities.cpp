@@ -6,8 +6,6 @@
 
 namespace ImGui
 {
-    using namespace Sierra::Engine::Classes;
-
     static float dataLimitMin = 0.0f;
     static float dataLimitMax = 0.0f;
     static float dataDragSpeed = 0.1f;
@@ -156,6 +154,13 @@ namespace ImGui
 
     void BeginProperties(const ImGuiTableFlags tableFlags)
     {
+        bool statusChanged = false;
+        if (setNextItemDisabled)
+        {
+            PopDeactivatedStatus();
+            statusChanged = true;
+        }
+
         GenerateID();
         ImGui::Unindent(GImGui->Style.IndentSpacing * 0.5);
         ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { GImGui->Style.CellPadding.x, GImGui->Style.CellPadding.y / 2.0f });
@@ -163,6 +168,11 @@ namespace ImGui
         ImGui::TableSetupColumn("PropertyName");
         ImGui::TableSetupColumn("PropertyData", ImGuiTableColumnFlags_WidthStretch);
         currentPropertyTableFlags = tableFlags;
+
+        if (statusChanged)
+        {
+            PushDeactivatedStatus();
+        }
     }
 
     void EndProperties()
@@ -522,7 +532,7 @@ namespace ImGui
                 modified = true;
             }
 
-            ShowTooltip(tooltips[0]);
+            if (tooltips) ShowTooltip(tooltips[0]);
 
             if (drawButtons) ImGui::PopStyleVar();
         }
@@ -558,7 +568,7 @@ namespace ImGui
                 modified = true;
             }
 
-            ShowTooltip(tooltips[1]);
+            if (tooltips) ShowTooltip(tooltips[1]);
 
             if (drawButtons) ImGui::PopStyleVar();
         }
@@ -594,7 +604,7 @@ namespace ImGui
                 modified = true;
             }
 
-            ShowTooltip(tooltips[2]);
+            if (tooltips) ShowTooltip(tooltips[2]);
 
             if (drawButtons) ImGui::PopStyleVar();
         }
@@ -744,8 +754,7 @@ namespace ImGui
         return modified;
     }
 
-    using Sierra::Engine::Components::MeshRenderer;
-    bool TextureProperty(const char* label, Sierra::Engine::Components::MeshRenderer &meshRenderer, const TextureType textureType, const char* tooltip)
+    bool TextureProperty(const char* label, SharedPtr<Texture> &texture, const char* tooltip)
     {
         BeginProperty(label);
 
@@ -760,7 +769,7 @@ namespace ImGui
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.35f, 0.35f, 0.35f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
 
-        ImGui::ImageButton(meshRenderer.GetTexture(textureType)->GetImGuiTextureID(), { buttonSize, buttonSize }, { 1, 1 }, { 0, 0 }, 0);
+        ImGui::ImageButton(texture->GetImGuiTextureID(), { buttonSize, buttonSize }, { 1, 1 }, { 0, 0 }, 0);
         ShowTooltip(tooltip);
 
         ImGui::PopStyleColor(3);
@@ -772,7 +781,7 @@ namespace ImGui
 
         if (ImGui::RoundedButton("x", xButtonSize, ImDrawFlags_RoundCornersRight))
         {
-            meshRenderer.ResetTexture(textureType);
+            texture = Texture::GetDefaultTexture(texture->GetTextureType());
             changed = true;
         }
 
@@ -783,5 +792,45 @@ namespace ImGui
 
         return changed;
     }
+
+//    using Sierra::Engine::Components::MeshRenderer;
+//    bool TextureProperty(const char* label, Sierra::Engine::Components::MeshRenderer &meshRenderer, const TextureType textureType, const char* tooltip)
+//    {
+//        BeginProperty(label);
+//
+//        bool changed = false;
+//
+//        float buttonSize = ImGui::GetFrameHeight() * 3.0f;
+//        ImVec2 xButtonSize = { buttonSize / 4.0f, buttonSize };
+//
+//        ImGui::SetCursorPos({ ImGui::GetContentRegionMax().x - buttonSize - xButtonSize.x, ImGui::GetCursorPosY() + ImGui::GetStyle().FramePadding.y });
+//        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+//        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
+//        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.35f, 0.35f, 0.35f, 1.0f));
+//        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
+//
+//        ImGui::ImageButton(meshRenderer.GetTexture(textureType)->GetImGuiTextureID(), { buttonSize, buttonSize }, { 1, 1 }, { 0, 0 }, 0);
+//        ShowTooltip(tooltip);
+//
+//        ImGui::PopStyleColor(3);
+//
+//        ImGui::SameLine();
+//        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
+//        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
+//        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
+//
+//        if (ImGui::RoundedButton("x", xButtonSize, ImDrawFlags_RoundCornersRight))
+//        {
+//            meshRenderer.ResetTexture(textureType);
+//            changed = true;
+//        }
+//
+//        ImGui::PopStyleColor(3);
+//        ImGui::PopStyleVar();
+//
+//        EndProperty();
+//
+//        return changed;
+//    }
 
 }

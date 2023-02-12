@@ -19,11 +19,11 @@ private:
     PointLight* pointLight = nullptr;
     std::vector<UniquePtr<Model>> tankModels;
 
-    void RenderLoop(UniquePtr<MainVulkanRenderer> &renderer);
+    void RenderLoop(UniquePtr<VulkanRenderer> &renderer);
 
     void UpdateObjects();
     void DoCameraMovement();
 
-    void DisplayUI(UniquePtr<MainVulkanRenderer> &renderer);
+    void DisplayUI(UniquePtr<VulkanRenderer> &renderer);
     void ListDeeper(Relationship &relationship, const uint iteration);
 };

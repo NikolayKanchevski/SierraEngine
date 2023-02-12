@@ -69,7 +69,7 @@ namespace Sierra::Engine::Components
 
         /* --- POLLING METHODS --- */
         void UpdateChain();
-        void DrawUI() override;
+        void OnDrawUI() override;
 
         void PushOnChangeCallback(Callback callback);
         void PopOnChangeCallback();

@@ -9,6 +9,7 @@
 #include "Descriptors.h"
 #include "../VulkanTypes.h"
 #include "../VK.h"
+#include "../../RenderingSettings.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -23,11 +24,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         std::vector<SharedPtr<Shader>> shaders;
         const UniquePtr<RenderPass> &renderPass;
+        uint subpasss = 0;
 
         bool createDepthBuffer = true;
         SharedPtr<DescriptorSetLayout> descriptorSetLayout = nullptr;
 
-        uint pushConstantOffset = 0;
+        uint colorAttachmentCount = 1;
         ShaderType pushConstantShaderStages = ShaderType::VERTEX | ShaderType::FRAGMENT;
 
         Sampling sampling = Sampling::MSAAx1;
@@ -35,6 +37,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         CullMode cullMode = CullMode::FRONT;
         ShadingType shadingType = ShadingType::FILL;
     };
+
+    typedef uint PipelineCopyOp;
+    typedef enum _PipelineCopyOp
+    {
+        PIPELINE_COPY_OP_PUSH_CONSTANTS = 0,
+        PIPELINE_COPY_OP_UNIFORM_BUFFER = 1,
+        PIPELINE_COPY_OP_STORAGE_BUFFER = 2
+    } _PipelineCopyOp;
 
     template<typename PC = NullPushConstant, typename UB = NullUniformBuffer, typename SB = NullStorageBuffer>
     class Pipeline {
@@ -45,27 +55,124 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             CreatePipelineLayout();
             CreatePipeline();
-        };
+        }
+        inline Pipeline(const PipelineCreateInfo &givenCreateInfo, PC *externalPushConstantData, UB *externalUniformData, UniquePtr<Buffer>* *externalUniformBuffers, SB *externalStorageData, UniquePtr<Buffer>* *externalStorageBuffers)
+                : createInfo(std::move(givenCreateInfo))
+        {
+            if constexpr(!std::is_same<PC, NullPushConstant>::value)
+            {
+                if (externalPushConstantData != nullptr)
+                {
+                    usesExternalPushConstants = true;
+                    pushConstantData = externalPushConstantData;
+                }
+            }
+
+            if constexpr(!std::is_same<UB, NullUniformBuffer>::value)
+            {
+                if (externalUniformBuffers != nullptr)
+                {
+                    usesExternalUniformBuffers = true;
+                    uniformBufferData = externalUniformData;
+
+                    uniformBuffers.resize(createInfo.maxConcurrentFrames);
+                    for (uint32_t i = createInfo.maxConcurrentFrames; i--;) uniformBuffers[i] = externalUniformBuffers[i];
+                }
+            }
+
+            if constexpr(!std::is_same<SB, NullStorageBuffer>::value)
+            {
+                if (externalStorageBuffers != nullptr)
+                {
+                    usesExternalStorageBuffers = true;
+                    storageBufferData = externalStorageData;
+
+                    storageBuffers.resize(createInfo.maxConcurrentFrames);
+                    for (uint32_t i = createInfo.maxConcurrentFrames; i--;) storageBuffers[i] = externalStorageBuffers[i];
+                }
+            }
+
+            CreatePipelineLayout();
+            CreatePipeline();
+        }
+
         inline static UniquePtr<Pipeline> Create(PipelineCreateInfo createInfo)
         {
             return std::make_unique<Pipeline>(createInfo);
+        };
+        template<typename OtherPC, typename OtherUB, typename OtherSB>
+        inline static UniquePtr<Pipeline> CreateFromAnotherPipeline(PipelineCreateInfo createInfo, const UniquePtr<Pipeline<OtherPC, OtherUB, OtherSB>> &otherPipeline, const PipelineCopyOp copyOperations)
+        {
+            PC* newPushConstantData = nullptr;
+            if constexpr (std::is_same<PC, OtherPC>::value)
+            {
+                if (copyOperations & PIPELINE_COPY_OP_PUSH_CONSTANTS)
+                {
+                    newPushConstantData = &otherPipeline->GetPushConstantData();
+                }
+            }
+
+            UB *newUniformData = nullptr;
+            UniquePtr<Buffer> **newUniformBuffers = nullptr;
+            if constexpr(std::is_same<UB, OtherUB>::value)
+            {
+                if (copyOperations & PIPELINE_COPY_OP_UNIFORM_BUFFER)
+                {
+                    newUniformData = &otherPipeline->GetUniformBufferData();
+                    newUniformBuffers = otherPipeline->GetUniformBuffers().data();
+                }
+            }
+
+            SB *newStorageData = nullptr;
+            UniquePtr<Buffer> **newStorageBuffers = nullptr;
+            if constexpr(std::is_same<SB, OtherSB>::value)
+            {
+                if (copyOperations & PIPELINE_COPY_OP_STORAGE_BUFFER)
+                {
+                    newStorageData = &otherPipeline->GetStorageBufferData();
+                    newStorageBuffers = otherPipeline->GetStorageBuffers().data();
+                }
+            }
+
+            return std::make_unique<Pipeline>(createInfo, newPushConstantData, newUniformData, newUniformBuffers, newStorageData, newStorageBuffers
+            );
         };
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline PC& GetPushConstantData()
         {
-            ASSERT_WARNING_IF(!HasPushConstant(), "Push constants have not been created for this pipeline");
-            return pushConstantData;
+            ASSERT_WARNING_IF(!HasPushConstants(), "Push constants have not been created for this pipeline");
+            return *pushConstantData;
         }
         [[nodiscard]] inline UB& GetUniformBufferData()
         {
-            ASSERT_WARNING_IF(!HasUniformBuffer(), "Uniform buffers have not been created for this pipeline");
-            return uniformBufferData;
+            ASSERT_WARNING_IF(!HasUniformBuffers(), "Uniform buffers have not been created for this pipeline");
+            return *uniformBufferData;
         }
         [[nodiscard]] inline SB& GetStorageBufferData()
         {
-            ASSERT_WARNING_IF(!HasStorageBuffer(), "Storage buffers have not been created for this pipeline");
-            return storageBufferData;
+            ASSERT_WARNING_IF(!HasStorageBuffers(), "Storage buffers have not been created for this pipeline");
+            return *storageBufferData;
+        }
+
+        [[nodiscard]] inline std::vector<UniquePtr<Buffer>*>& GetUniformBuffers()
+        {
+            return uniformBuffers;
+        }
+        [[nodiscard]] inline UniquePtr<Buffer>& GetUniformBuffer(const uint32_t index)
+        {
+            ASSERT_WARNING_IF(!HasUniformBuffers(), "Uniform buffers have not been created for this pipeline");
+            return *uniformBuffers[index];
+        }
+
+        [[nodiscard]] inline std::vector<UniquePtr<Buffer>*>& GetStorageBuffers()
+        {
+            return storageBuffers;
+        }
+        [[nodiscard]] inline UniquePtr<Buffer>& GetStorageBuffer(const uint32_t index)
+        {
+            ASSERT_WARNING_IF(!HasStorageBuffers(), "Storage buffers have not been created for this pipeline");
+            return *storageBuffers[index];
         }
         [[nodiscard]] inline std::vector<UniquePtr<DescriptorSet>>& GetDescriptorSets()
         {
@@ -85,27 +192,42 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             vkCmdBindPipeline(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkPipeline);
         };
-        inline void BindDescriptorSets(VkCommandBuffer givenCommandBuffer, std::vector<VkDescriptorSet> givenDescriptorSets, const uint currentFrame)
+        inline void BindDescriptorSets(VkCommandBuffer givenCommandBuffer, std::vector<VkDescriptorSet> externalDescriptorSets, const uint currentFrame)
         {
-            if (HasUniformBuffer())
+            if (HasUniformBuffers()) uniformBuffers[currentFrame]->get()->CopyFromPointer(uniformBufferData);
+            if (HasStorageBuffers()) storageBuffers[currentFrame]->get()->CopyFromPointer(storageBufferData);
+
+            if (!descriptorSets.empty()) externalDescriptorSets.insert(externalDescriptorSets.begin(), descriptorSets[currentFrame]->GetVulkanDescriptorSet());
+
+            vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, externalDescriptorSets.size(), externalDescriptorSets.data(), 0, nullptr);
+        };
+        inline void BindDescriptorSets(VkCommandBuffer givenCommandBuffer, const uint currentFrame)
+        {
+            uint count = descriptorSets.size() / createInfo.maxConcurrentFrames;
+            VkDescriptorSet* localDescriptorSets = new VkDescriptorSet[count];
+
+            if (HasUniformBuffers())
             {
-                uniformBuffers[currentFrame]->CopyFromPointer(&uniformBufferData);
-
+                uniformBuffers[currentFrame]->get()->CopyFromPointer(uniformBufferData);
+                localDescriptorSets[0] = descriptorSets[currentFrame * 1]->GetVulkanDescriptorSet();
             }
-            if (HasStorageBuffer()) storageBuffers[currentFrame]->CopyFromPointer(&storageBufferData);
 
-            givenDescriptorSets.insert(givenDescriptorSets.begin(), descriptorSets[currentFrame]->GetVulkanDescriptorSet());
+            if (HasStorageBuffers())
+            {
+                storageBuffers[currentFrame]->get()->CopyFromPointer(storageBufferData);
+                localDescriptorSets[1] = descriptorSets[currentFrame * 2]->GetVulkanDescriptorSet();
+            }
 
-            vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, givenDescriptorSets.size(), givenDescriptorSets.data(), 0, nullptr);
+            vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, count, localDescriptorSets, 0, nullptr);
         };
         inline void PushConstants(VkCommandBuffer givenCommandBuffer)
         {
             ASSERT_ERROR_IF(pushConstantRange == nullptr, "Trying to push constants in pipeline that was created without support for them in mind");
 
             vkCmdPushConstants(
-                    givenCommandBuffer, vkPipelineLayout,
-                    pushConstantRange->stageFlags, pushConstantRange->offset,
-                    pushConstantRange->size, &pushConstantData
+                givenCommandBuffer, vkPipelineLayout,
+                pushConstantRange->stageFlags, pushConstantRange->offset,
+                pushConstantRange->size, pushConstantData
             );
         };
         inline void OverloadShader(SharedPtr<Shader> newShader)
@@ -132,53 +254,74 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             if (pushConstantRange != nullptr)
             {
                 delete pushConstantRange;
+                if (!usesExternalPushConstants)
+                {
+                    delete pushConstantData;
+                }
             }
 
-            for (const auto &uniformBuffer : uniformBuffers)
+            if (uniformBufferData != nullptr)
             {
-                uniformBuffer->Destroy();
+                if (!usesExternalUniformBuffers)
+                {
+                    delete uniformBufferData;
+
+                    for (const auto &uniformBuffer : uniformBuffers)
+                    {
+                        uniformBuffer->get()->Destroy();
+                        delete uniformBuffer;
+                    }
+                }
             }
 
-            for (const auto &storageBuffer : storageBuffers)
+            if (storageBufferData != nullptr)
             {
-                storageBuffer->Destroy();
+                if (!usesExternalStorageBuffers)
+                {
+                    delete storageBufferData;
+
+                    for (const auto &storageBuffer : storageBuffers)
+                    {
+                        storageBuffer->get()->Destroy();
+                        delete storageBuffer;
+                    }
+                }
             }
 
             vkDestroyPipeline(VK::GetLogicalDevice(), vkPipeline, nullptr);
             vkDestroyPipelineLayout(VK::GetLogicalDevice(), vkPipelineLayout, nullptr);
         };
 
-        Pipeline(const Pipeline &) = delete;
-        Pipeline &operator=(const Pipeline &) = delete;
+        DELETE_COPY(Pipeline);
 
     private:
         VkPipeline vkPipeline;
         VkPipelineLayout vkPipelineLayout;
 
-        PC pushConstantData;
-        VkPushConstantRange *pushConstantRange = nullptr;
+        PC* pushConstantData = nullptr;
+        VkPushConstantRange* pushConstantRange = nullptr;
 
-        UB uniformBufferData;
-        std::vector<UniquePtr<Buffer>> uniformBuffers;
+        UB* uniformBufferData = nullptr;
+        std::vector<UniquePtr<Buffer>*> uniformBuffers;
 
-        SB storageBufferData;
-        std::vector<UniquePtr<Buffer>> storageBuffers;
+        SB* storageBufferData = nullptr;
+        std::vector<UniquePtr<Buffer>*> storageBuffers;
 
         std::vector<UniquePtr<DescriptorSet>> descriptorSets;
 
         bool alreadyCreated = false;
+        bool usesExternalPushConstants = false;
+        bool usesExternalUniformBuffers = false;
+        bool usesExternalStorageBuffers = false;
+
         PipelineCreateInfo createInfo;
 
-        bool HasPushConstant() const { return pushConstantRange != nullptr; }
-        bool HasUniformBuffer() const { return !uniformBuffers.empty(); }
-        bool HasStorageBuffer() const { return !storageBuffers.empty(); }
+        bool HasPushConstants() const { return pushConstantRange != nullptr; }
+        bool HasUniformBuffers() const { return !uniformBuffers.empty() && uniformBuffers[0] != nullptr; }
+        bool HasStorageBuffers() const { return !storageBuffers.empty() && storageBuffers[0] != nullptr; }
 
         void CreatePipelineLayout()
         {
-            pushConstantData = PC {};
-            uniformBufferData = UB {};
-            storageBufferData = SB {};
-
             // Set pipeline layout creation info
             VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
             pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -186,52 +329,72 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             // Create push constant
             if constexpr (!std::is_same<PC, NullPushConstant>::value)
             {
-                pushConstantData = PC{};
+                if (pushConstantData == nullptr)
+                {
+                    pushConstantData = new PC();
+                }
+                if (pushConstantRange == nullptr)
+                {
+                    pushConstantRange = new VkPushConstantRange();
+                    pushConstantRange->size = sizeof(PC);
+                    pushConstantRange->offset = 0;
+                    pushConstantRange->stageFlags = (VkShaderStageFlags) createInfo.pushConstantShaderStages;
 
-                pushConstantRange = new VkPushConstantRange();
-                pushConstantRange->size = sizeof(PC);
-                pushConstantRange->offset = 0;
-                pushConstantRange->stageFlags = (VkShaderStageFlags) createInfo.pushConstantShaderStages;
-
-                pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-                pipelineLayoutCreateInfo.pPushConstantRanges = pushConstantRange;
+                    pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+                    pipelineLayoutCreateInfo.pPushConstantRanges = pushConstantRange;
+                }
             }
 
             // Create uniform buffer
             if constexpr (!std::is_same<UB, NullUniformBuffer>::value)
             {
-                uniformBuffers.reserve(createInfo.maxConcurrentFrames);
-                for (uint i = createInfo.maxConcurrentFrames; i--;)
+                // Check if user has provided external storage buffers
+                if (!HasUniformBuffers())
                 {
-                    uniformBuffers.push_back(Buffer::Create({
-                        .memorySize = sizeof(UB),
-                        .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
-                        .bufferUsage = BufferUsage::UNIFORM
-                    }));
+                    uniformBufferData = new UB();
+
+                    uniformBuffers.reserve(createInfo.maxConcurrentFrames);
+                    for (uint i = createInfo.maxConcurrentFrames; i--;)
+                    {
+                        uniformBuffers.push_back(new UniquePtr<Buffer>(new Buffer({
+                            .memorySize = sizeof(UB),
+                            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+                            .bufferUsage = BufferUsage::UNIFORM
+                        })));
+                    }
                 }
             }
 
             // Create storage buffer
             if constexpr (!std::is_same<SB, NullStorageBuffer>::value)
             {
-                storageBuffers.reserve(createInfo.maxConcurrentFrames);
-                for (uint i = createInfo.maxConcurrentFrames; i--;)
+                // Check if user has provided external storage buffers
+                if (!HasStorageBuffers())
                 {
-                    storageBuffers.push_back(Buffer::Create({
-                        .memorySize = sizeof(SB),
-                        .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
-                        .bufferUsage = BufferUsage::STORAGE
-                    }));
+                    storageBufferData = new SB();
+
+                    storageBuffers.resize(createInfo.maxConcurrentFrames);
+                    for (uint i = createInfo.maxConcurrentFrames; i--;)
+                    {
+                        storageBuffers[i] = new UniquePtr<Buffer>(new Buffer({
+                            .memorySize = sizeof(SB),
+                            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+                            .bufferUsage = BufferUsage::STORAGE
+                        }));
+                    }
                 }
             }
 
-            descriptorSets.resize((HasUniformBuffer() || HasStorageBuffer()) * createInfo.maxConcurrentFrames );
-            for (uint i = createInfo.maxConcurrentFrames; i--;)
+            descriptorSets.resize((HasUniformBuffers() || HasStorageBuffers()) * createInfo.maxConcurrentFrames);
+            if (!descriptorSets.empty())
             {
-                descriptorSets[i] = DescriptorSet::Build(createInfo.descriptorSetLayout);
-                if (HasUniformBuffer()) descriptorSets[i]->WriteBuffer(UNIFORM_BUFFER_BINDING, uniformBuffers[i]);
-                if (HasStorageBuffer()) descriptorSets[i]->WriteBuffer(STORAGE_BUFFER_BINDING, storageBuffers[i]);
-                descriptorSets[i]->Allocate();
+                for (uint i = createInfo.maxConcurrentFrames; i--;)
+                {
+                    descriptorSets[i] = DescriptorSet::Build(createInfo.descriptorSetLayout);
+                    if (HasUniformBuffers()) descriptorSets[i]->WriteBuffer(UNIFORM_BUFFER_BINDING, *uniformBuffers[i]);
+                    if (HasStorageBuffers()) descriptorSets[i]->WriteBuffer(STORAGE_BUFFER_BINDING, *storageBuffers[i]);
+                    descriptorSets[i]->Allocate();
+                }
             }
 
             // Add descriptor layout
@@ -362,13 +525,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             blendingAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
             blendingAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
 
+            std::vector<VkPipelineColorBlendAttachmentState> colorAttachmentStates(createInfo.colorAttachmentCount, blendingAttachmentState);
+
             // Set up bindings
             VkPipelineColorBlendStateCreateInfo blendingStateCreateInfo{};
             blendingStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
             blendingStateCreateInfo.logicOpEnable = VK_FALSE;
             blendingStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;
-            blendingStateCreateInfo.attachmentCount = 1;
-            blendingStateCreateInfo.pAttachments = &blendingAttachmentState;
+            blendingStateCreateInfo.attachmentCount = createInfo.colorAttachmentCount;
+            blendingStateCreateInfo.pAttachments = colorAttachmentStates.data();
 
             // Define dynamic states to use
             const std::vector<VkDynamicState> dynamicStates
@@ -397,7 +562,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
             graphicsPipelineCreateInfo.layout = vkPipelineLayout;
             graphicsPipelineCreateInfo.renderPass = createInfo.renderPass->GetVulkanRenderPass();
-            graphicsPipelineCreateInfo.subpass = 0;
+            graphicsPipelineCreateInfo.subpass = createInfo.subpasss;
             graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
             graphicsPipelineCreateInfo.basePipelineIndex = -1;
 

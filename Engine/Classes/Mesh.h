@@ -4,20 +4,34 @@
 
 #pragma once
 
-#include "../Structures/Vertex.h"
-#include "../Structures/Material.h"
+#include "../../Core/Rendering/RenderingTemplates.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Buffer.h"
 
+using namespace Sierra::Core::Rendering;
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 
 namespace Sierra::Engine::Classes
 {
-    struct alignas(16) MeshPushConstant
+    struct Material
+    {
+        Vector3 diffuse = Vector3(1);
+        float specular = 1.0f;
+
+        float shininess = 0.001953125f;
+        float ambient = 0.1f;
+
+        float vertexExaggeration = 0.0f;
+        float _align1_;
+    };
+
+    struct MeshPushConstant
     {
         Material material;
 
         uint meshID;
         uint meshTexturesPresence; // Bools encoded as binary indicating whether texture types are bound
+        float _align1_;
+        float _align2_;
     };
 
     class Mesh
@@ -43,8 +57,7 @@ namespace Sierra::Engine::Classes
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        Mesh(const Mesh &) = delete;
-        Mesh &operator=(const Mesh &) = delete;
+        DELETE_COPY(Mesh);
 
     private:
         uint vertexCount;

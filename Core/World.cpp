@@ -7,6 +7,8 @@
 #include "../Engine/Classes/Input.h"
 #include "../Engine/Classes/Entity.h"
 #include "../Engine/Components/Transform.h"
+#include "../Engine/Components/WorldManager.h"
+#include "../Engine/Classes/SystemInformation.h"
 
 using namespace Sierra::Engine::Classes;
 
@@ -16,6 +18,10 @@ namespace Sierra::Core
 
     void World::Start()
     {
+        // Create scene entity
+        worldManagerEntity = World::RegisterEntity();
+        World::AddComponent<WorldManager>(worldManagerEntity);
+
         Input::Start();
         Cursor::Start();
     }
@@ -36,6 +42,18 @@ namespace Sierra::Core
     void World::Update()
     {
 
+    }
+
+    void World::Shutdown()
+    {
+        GetManager().GetSkyboxSystem().skyboxCubemap->Destroy();
+        SystemInformation::Shutdown();
+    }
+
+    /* --- GETTER METHODS --- */
+    WorldManager& World::GetManager()
+    {
+        return GetComponent<WorldManager>(worldManagerEntity);
     }
 
 }

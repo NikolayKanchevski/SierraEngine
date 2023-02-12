@@ -27,9 +27,11 @@ namespace Sierra::Engine::Components
         template<typename T>
         inline void RemoveComponent() const { World::RemoveComponent<T>(enttEntity); }
 
-        virtual inline void OnAddComponent() { };
+        virtual inline void OnAddComponent() { }
+        virtual inline void OnRemoveComponent() { }
+
+        virtual inline void OnDrawUI() { }
         virtual inline void Update() { }
-        virtual inline void DrawUI() { };
         virtual inline void Destroy() const { }
 
     protected:

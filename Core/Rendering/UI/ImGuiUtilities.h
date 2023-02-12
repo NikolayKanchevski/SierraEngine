@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include "../../../Engine/Components/MeshRenderer.h"
+#include "../Vulkan/Abstractions/Texture.h"
+using Rendering::Vulkan::Abstractions::Texture;
 
 #define HOVER_TIME_THRESHOLD 1.0f
 
@@ -63,6 +64,21 @@ namespace ImGui
     bool Dropdown(const char* labelID, uint &value, const char** options, uint optionsCount, const bool* deactivatedFlags = nullptr);
     bool RoundedButton(const char* label, const ImVec2 &givenSize, ImDrawFlags roundingType, float rounding = GImGui->Style.FrameRounding, ImGuiButtonFlags flags = 0);
 
+    template<typename T>
+    inline bool AnyInput(const char* labelID, T &value)
+    {
+        if constexpr(std::is_same<T, String>::value) { return StringInput(labelID, value); }
+        else if constexpr(std::is_same<T, int>::value) { return IntInput(labelID, value); }
+        else if constexpr(std::is_same<T, int64>::value) { return Int64Input(labelID, value); }
+        else if constexpr(std::is_same<T, uint>::value) { return UIntInput(labelID, value); }
+        else if constexpr(std::is_same<T, uint64>::value) { return UInt64Input(labelID, value); }
+        else if constexpr(std::is_same<T, float>::value) { return FloatInput(labelID, value); }
+        else if constexpr(std::is_same<T, double>::value) { return DoubleInput(labelID, value); }
+        else if constexpr(std::is_same<T, bool>::value) { return Checkbox(labelID, value); }
+        else if constexpr(std::is_same<T, Vector3>::value) { const float resetValues[3] = { 0.0f, 0.0f, 0.0f }; return Vector3Input(value, resetValues); }
+        else return false;
+    }
+
     /* --- PROPERTIES --- */
     bool StringProperty(const char* label, String &value, const char* tooltip = nullptr, ImGuiInputTextFlags inputFlags = ImGuiInputTextFlags_None);
     bool IntProperty(const char* label, int &value, const char* tooltip = nullptr, ImGuiInputTextFlags inputFlags = ImGuiInputTextFlags_None);
@@ -74,7 +90,22 @@ namespace ImGui
     bool CheckboxProperty(const char* label, bool &value, const char* tooltip = nullptr);
     bool DropdownProperty(const char* label, uint &value, const char** options, uint optionsCount, const bool* deactivatedFlags = nullptr, const char* tooltip = nullptr);
     bool PropertyVector3(const char* label, Vector3 &value, const float *resetValues, const char** tooltips = nullptr);
-    bool TextureProperty(const char* label, Sierra::Engine::Components::MeshRenderer &meshRenderer, TextureType textureType, const char* tooltip = nullptr);
+    bool TextureProperty(const char* label, SharedPtr<Texture> &texture, const char* tooltip = nullptr);
+
+    template<typename T>
+    inline bool AnyPropertyInput(const char* labelID, T &value)
+    {
+        if constexpr(std::is_same<T, String>::value) { return StringProperty(labelID, value); }
+        else if constexpr(std::is_same<T, int>::value) { return IntProperty(labelID, value); }
+        else if constexpr(std::is_same<T, int64>::value) { return Int64Property(labelID, value); }
+        else if constexpr(std::is_same<T, uint>::value) { return UIntProperty(labelID, value); }
+        else if constexpr(std::is_same<T, uint64>::value) { return UInt64Property(labelID, value); }
+        else if constexpr(std::is_same<T, float>::value) { return FloatProperty(labelID, value); }
+        else if constexpr(std::is_same<T, double>::value) { return DoubleProperty(labelID, value); }
+        else if constexpr(std::is_same<T, bool>::value) { return CheckboxProperty(labelID, value); }
+        else if constexpr(std::is_same<T, Vector3>::value) { const float resetValues[3] = { 0.0f, 0.0f, 0.0f }; return PropertyVector3(labelID, value, resetValues); }
+        else return false;
+    }
 
     template<typename T>
     inline void DrawComponent(entt::entity entity)
@@ -111,7 +142,7 @@ namespace ImGui
 
             if (open)
             {
-                component.DrawUI();
+                component.OnDrawUI();
                 ImGui::VerticalIndent(GImGui->Style.ItemSpacing.y);
                 ImGui::TreePop();
             }
@@ -121,5 +152,23 @@ namespace ImGui
 //                World::RemoveComponent<T>(entity);
             }
         }
+    }
+
+    template<typename T>
+    inline bool AutoDrawFields(T &reference)
+    {
+        ImGui::BeginProperties();
+
+        bool modified = false;
+        T::Class::ForEachField(reference, [&modified](auto & field, auto & value){
+            using Type = typename std::remove_reference<decltype(value)>::type;
+            std::string stringName = std::string(field.name);
+            stringName[0] = std::toupper(stringName[0]);
+            modified = modified || ImGui::AnyPropertyInput<Type>(stringName.c_str(), value);
+        });
+
+        ImGui::EndProperties();
+
+        return modified;
     }
 }

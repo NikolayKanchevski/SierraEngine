@@ -34,8 +34,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline VkCommandBuffer GetVulkanCommandBuffer() const { return vkCommandBuffer; };
 
         /* --- OPERATIONS --- */
-        CommandBuffer(const CommandBuffer &) = delete;
-        CommandBuffer &operator=(const CommandBuffer &) = delete;
+        DELETE_COPY(CommandBuffer);
 
     private:
         VkCommandBuffer vkCommandBuffer;

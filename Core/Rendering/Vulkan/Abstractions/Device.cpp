@@ -5,6 +5,9 @@
 #include "Device.h"
 
 #include "../VK.h"
+#include "../../../Engine/Classes/SystemInformation.h"
+
+using Sierra::Engine::Classes::SystemInformation;
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -94,7 +97,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ASSERT_ERROR_IF(!PhysicalDeviceSuitable(physicalDevices[0]), "The GPU of your machine is not supported");
 
         this->physicalDevice = physicalDevices[0];
-        ASSERT_SUCCESS_FORMATTED("Vulkan is supported by your [SOME_PC_MODEL] running SOME_OS [Validation: {0} | CPU: SOME_CPU_MODEL | GPU: {1}]", VALIDATION_ENABLED, physicalDeviceProperties.deviceName);
+
+        ASSERT_SUCCESS_FORMATTED("Vulkan is supported on your system running [{0}] | [Validation: {1} | CPU: {2} | GPU: {3}]", SystemInformation::GetOperatingSystem().name, VALIDATION_ENABLED, SystemInformation::GetCPU().name, SystemInformation::GetGPU().name);
 
         // Destroy temporary data
         vkDestroySurfaceKHR(VK::GetInstance(), exampleSurface, nullptr);
@@ -169,10 +173,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
 
         this->bestDepthImageFormat = GetBestDepthBufferFormat(
-            { ImageFormat::D32_SFLOAT_S8_UINT, ImageFormat::D32_SFLOAT, ImageFormat::D24_UNORM_S8_UINT },
-            ImageTiling::OPTIMAL,
-            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+            { ImageFormat::D32_SFLOAT_S8_UINT, ImageFormat::D32_SFLOAT, ImageFormat::D24_UNORM_S8_UINT, ImageFormat::D16_UNORM_S8_UINT, ImageFormat::D16_UNORM },
+            ImageTiling::OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
         );
+
     }
 
     /* --- GETTER METHODS --- */
@@ -305,7 +309,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             if (khrPortabilityRequired) requiredDeviceExtensions.push_back("VK_KHR_portability_subset");
         #endif
 
-        if (GetDescriptorIndexingSupported()) requiredDeviceExtensions.push_back("VK_EXT_descriptor_indexing");
+        if (GetDescriptorIndexingSupported()) requiredDeviceExtensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 
         return allExtensionsSupported;
     }

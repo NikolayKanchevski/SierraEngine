@@ -4,6 +4,8 @@
 
 #include "MeshRenderer.h"
 
+#include "../../Core/Rendering/Vulkan/VK.h"
+#include "../../Core/Rendering/RenderingSettings.h"
 #include "../../Core/Rendering/UI/ImGuiUtilities.h"
 #include "Transform.h"
 
@@ -57,7 +59,7 @@ namespace Sierra::Engine::Components
 
     /* --- POLLING METHODS --- */
 
-    void MeshRenderer::DrawUI()
+    void MeshRenderer::OnDrawUI()
     {
         ImGui::BeginProperties();
 
@@ -72,15 +74,16 @@ namespace Sierra::Engine::Components
             static const float resetValues[3] = { 1.0f, 1.0f, 1.0f };
             static const char* tooltips[3] = { "Some tooltip.", "Some tooltip.", "Some tooltip." };
             ImGui::PropertyVector3("Diffuse:", material.diffuse, resetValues, tooltips);
-            ImGui::PropertyVector3("Specular:", material.specular, resetValues, tooltips);
-            ImGui::PropertyVector3("Ambient:", material.ambient, resetValues, tooltips);
+            ImGui::FloatProperty("Specular:", material.specular, "Some tooltip.");
+            ImGui::FloatProperty("Ambient:", material.ambient, "Some tooltip.");
 
             ImGui::EndTreeProperties();
         }
 
-        ImGui::TextureProperty("Diffuse Texture:", *this, TEXTURE_TYPE_DIFFUSE, "Some tooltip.");
-        ImGui::TextureProperty("Specular Texture:", *this, TEXTURE_TYPE_SPECULAR, "Some tooltip.");
-        ImGui::TextureProperty("Height Map Texture:", *this, TEXTURE_TYPE_HEIGHT_MAP, "Some tooltip.");
+        if (ImGui::TextureProperty("Diffuse Texture:", textures[TEXTURE_TYPE_DIFFUSE], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_DIFFUSE]);
+        if (ImGui::TextureProperty("Specular Texture:", textures[TEXTURE_TYPE_SPECULAR], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_SPECULAR]);
+        if (ImGui::TextureProperty("Normal Map Texture:", textures[TEXTURE_TYPE_NORMAL_MAP], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_NORMAL_MAP]);
+        if (ImGui::TextureProperty("Height Map Texture:", textures[TEXTURE_TYPE_HEIGHT_MAP], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_HEIGHT_MAP]);
 
         ImGui::EndProperties();
     }
@@ -93,6 +96,7 @@ namespace Sierra::Engine::Components
         descriptorSet = DescriptorSet::Build(VK::GetDescriptorSetLayout());
         descriptorSet->WriteTexture(DIFFUSE_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_DIFFUSE));
         descriptorSet->WriteTexture(SPECULAR_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_SPECULAR));
+        descriptorSet->WriteTexture(NORMAL_MAP_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_NORMAL_MAP));
         descriptorSet->WriteTexture(HEIGHT_MAP_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_HEIGHT_MAP));
         descriptorSet->Allocate();
     }

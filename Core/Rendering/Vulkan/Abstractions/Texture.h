@@ -8,12 +8,13 @@
 #include "Sampler.h"
 #include "../VulkanTypes.h"
 
-#define TOTAL_TEXTURE_TYPES_COUNT 3
+#define TOTAL_TEXTURE_TYPES_COUNT 4
 #define TEXTURE_TYPE_TO_BINDING(textureType)(textureType + 2)
 
 #define BINDLESS_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_DIFFUSE)
 #define DIFFUSE_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_DIFFUSE)
 #define SPECULAR_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_SPECULAR)
+#define NORMAL_MAP_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_NORMAL_MAP)
 #define HEIGHT_MAP_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_HEIGHT_MAP)
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
@@ -27,7 +28,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         TEXTURE_TYPE_NONE = -1,
         TEXTURE_TYPE_DIFFUSE = 0,
         TEXTURE_TYPE_SPECULAR = 1,
-        TEXTURE_TYPE_HEIGHT_MAP = 2
+        TEXTURE_TYPE_NORMAL_MAP = 2,
+        TEXTURE_TYPE_HEIGHT_MAP = 3
     } TextureType;
 
     struct TextureCreateInfo
@@ -102,8 +104,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        Texture(const Texture &) = delete;
-        Texture &operator=(const Texture &) = delete;
+        DELETE_COPY(Texture);
 
     private:
         String filePath = "";

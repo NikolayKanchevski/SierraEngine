@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Image.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -12,7 +13,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         uint width = 0;
         uint height = 0;
-        const std::vector<VkImageView> &attachments;
+        const std::vector<UniquePtr<Image>*> &attachments;
         VkRenderPass renderPass = VK_NULL_HANDLE;
     };
 
@@ -30,8 +31,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        Framebuffer(const Framebuffer &) = delete;
-        Framebuffer &operator=(const Framebuffer &) = delete;
+        DELETE_COPY(Framebuffer);
+
     private:
         VkFramebuffer vkFramebuffer;
         uint width, height;

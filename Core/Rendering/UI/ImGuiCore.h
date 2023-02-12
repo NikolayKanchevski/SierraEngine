@@ -33,7 +33,6 @@ namespace Sierra::Core::Rendering::UI
         uint sceneViewHeight = 1;
 
         ImGuiStyle defaultStyle;
-
     };
 
 }

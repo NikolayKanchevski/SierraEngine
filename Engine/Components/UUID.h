@@ -19,7 +19,7 @@ namespace Sierra::Engine::Components
         [[nodiscard]] inline uint64 GetValue() const { return value; }
 
         /* --- POLLING METHODS --- */
-        void DrawUI() override;
+        void OnDrawUI() override;
 
         /* --- OPERATORS --- */
         UUID& operator=(uint givenValue);

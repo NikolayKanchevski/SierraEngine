@@ -18,7 +18,7 @@ namespace Sierra::Engine::Components
         String tag;
 
         /* --- POLLING METHODS --- */
-        void DrawUI() override;
+        void OnDrawUI() override;
 
         /* --- OPERATORS --- */
         Tag() = default;

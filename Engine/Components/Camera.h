@@ -23,7 +23,7 @@ namespace Sierra::Engine::Components
         void OnAddComponent() override;
 
         /* --- POLLING METHODS --- */
-        void DrawUI() override;
+        void OnDrawUI() override;
 
         /* --- SETTER METHODS --- */
         void SetAsMain();

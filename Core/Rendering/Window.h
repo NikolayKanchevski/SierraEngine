@@ -122,8 +122,7 @@ namespace Sierra::Core::Rendering
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        Window(const Window &) = delete;
-        Window &operator=(const Window &) = delete;
+        DELETE_COPY(Window);
 
     private:
         GLFWwindow *glfwWindow;

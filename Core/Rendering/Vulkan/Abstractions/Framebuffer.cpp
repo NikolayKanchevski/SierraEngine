@@ -22,7 +22,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         framebufferCreateInfo.width = createInfo.width;
         framebufferCreateInfo.height = createInfo.height;
         framebufferCreateInfo.layers = 1;
-        framebufferCreateInfo.pAttachments = createInfo.attachments.data();
+
+        VkImageView* attachmentsPtr = new VkImageView[createInfo.attachments.size()];
+        for (uint i = createInfo.attachments.size(); i--;) attachmentsPtr[i] = createInfo.attachments[i]->get()->GetVulkanImageView();
+        framebufferCreateInfo.pAttachments = attachmentsPtr;
 
         // Create the Vulkan framebuffer
         VK_ASSERT(

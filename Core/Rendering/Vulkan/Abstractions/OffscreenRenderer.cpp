@@ -11,7 +11,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     /* --- CONSTRUCTORS --- */
 
     OffscreenRenderer::OffscreenRenderer(const OffscreenRendererCreateInfo &createInfo)
-        : width(createInfo.width), height(createInfo.height), maxConcurrentFrames(createInfo.maxConcurrentFrames), attachmentTypes(createInfo.attachmentTypes), msaaSampling(createInfo.msaaSampling)
+            : width(createInfo.width), height(createInfo.height), maxConcurrentFrames(createInfo.maxConcurrentFrames), attachmentTypes(createInfo.attachmentTypes), msaaSampling(createInfo.msaaSampling)
     {
         // Create images
         CreateImages();
@@ -117,10 +117,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 .sampling = msaaSampling,
                 .usageFlags = ImageUsage::DEPTH_STENCIL_ATTACHMENT,
                 .memoryFlags = MemoryFlags::DEVICE_LOCAL,
-            });
+                });
 
             depthImage->CreateImageView(ImageAspectFlags::DEPTH);
-
             depthImage->TransitionLayout(ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL);
         }
 
@@ -162,7 +161,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
             if (HasColorAttachment()) renderPassAttachments.push_back({
                 .imageAttachment = colorImages[0], .loadOp =  LoadOp::DONT_CARE, .storeOp = StoreOp::STORE,
-                .finalLayout = ImageLayout::GENERAL, .isResolve = true
+                .finalLayout = ImageLayout::GENERAL, .resolveTarget = 1, .isResolve = true
             });
         }
         else
@@ -209,22 +208,22 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Set up attachments
         uint colorImageIndex = 0;
-        std::vector<VkImageView> framebufferAttachments((int) HasColorAttachment() + (int) HasDepthAttachment() + (int) HasMSAAEnabled());
+        std::vector<UniquePtr<Image>*> framebufferAttachments((int) HasColorAttachment() + (int) HasDepthAttachment() + (int) HasMSAAEnabled());
 
         // Populate attachments
         if (HasMSAAEnabled())
         {
             colorImageIndex = 1;
-            framebufferAttachments[0] = msaaImage->GetVulkanImageView();
+            framebufferAttachments[0] = &msaaImage;
         }
 
-        if (HasDepthAttachment()) framebufferAttachments[framebufferAttachments.size() - 1] = depthImage->GetVulkanImageView();
+        if (HasDepthAttachment()) framebufferAttachments[framebufferAttachments.size() - 1] = &depthImage;
 
         // Create a framebuffer for each concurrent frame
         for (uint i = maxConcurrentFrames; i--;)
         {
             // Assign corresponding color image
-            if (HasColorAttachment()) framebufferAttachments[colorImageIndex] = colorImages[i]->GetVulkanImageView();
+            if (HasColorAttachment()) framebufferAttachments[colorImageIndex] = &colorImages[i];
 
             // Create framebuffer
             framebuffers[i] = Framebuffer::Create({

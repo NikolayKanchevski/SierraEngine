@@ -47,8 +47,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        Buffer(const Buffer &) = delete;
-        Buffer &operator=(const Buffer &) = delete;
+        DELETE_COPY(Buffer);
 
     private:
         VkBuffer vkBuffer;

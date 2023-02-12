@@ -53,14 +53,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        OffscreenRenderer(const OffscreenRenderer &) = delete;
-        OffscreenRenderer &operator=(const OffscreenRenderer &) = delete;
+        DELETE_COPY(OffscreenRenderer);
 
     private:
         uint width, height, maxConcurrentFrames;
 
         AttachmentType attachmentTypes;
-        Sampling msaaSampling;
+        Sampling msaaSampling = Sampling::MSAAx2;
 
         bool alreadyCreated = false;
 

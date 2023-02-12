@@ -7,7 +7,7 @@
 
 namespace Sierra::Engine::Components
 {
-    void Tag::DrawUI()
+    void Tag::OnDrawUI()
     {
         ImGui::BeginProperties();
 

@@ -20,9 +20,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         LoadOp loadOp =  LoadOp::UNDEFINED;
         StoreOp storeOp = StoreOp::UNDEFINED;
         ImageLayout finalLayout = ImageLayout::UNDEFINED;
+
+        uint resolveTarget = 0;
         bool isResolve = false;
 
-        bool IsDepth() const { return finalLayout == ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL; }
+        bool IsDepth() const { return finalLayout == ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL || finalLayout == ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL || finalLayout == ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL; }
     };
 
     struct SubpassInfo
@@ -55,8 +57,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        RenderPass(const RenderPass &) = delete;
-        RenderPass &operator=(const RenderPass &) = delete;
+        DELETE_COPY(RenderPass);
 
     private:
         VkRenderPass renderPass;

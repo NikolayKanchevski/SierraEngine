@@ -21,8 +21,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] float GetTimeTaken() const;
 
         /* --- OPERATORS --- */
-        TimestampQuery(const TimestampQuery &) = delete;
-        TimestampQuery &operator=(const TimestampQuery &) = delete;
+        DELETE_COPY(TimestampQuery);
 
     private:
         uint index;
@@ -51,8 +50,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         /* --- DESTRUCTOR --- */
         void Destroy();
         friend class TimestampQuery;
-        QueryPool(const QueryPool &) = delete;
-        QueryPool &operator=(const QueryPool &) = delete;
+        DELETE_COPY(QueryPool);
 
     private:
         VkQueryPool vkQueryPool;

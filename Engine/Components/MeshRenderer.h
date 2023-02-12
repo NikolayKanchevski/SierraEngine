@@ -6,7 +6,6 @@
 
 #include "Component.h"
 
-#include "../../Core/Rendering/Vulkan/VK.h"
 #include "../Classes/Mesh.h"
 #include "../Classes/Binary.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Texture.h"
@@ -24,7 +23,7 @@ namespace Sierra::Engine::Components
         MeshRenderer(SharedPtr<Mesh> givenCorrespondingMesh);
 
         /* --- POLLING METHODS --- */
-        void DrawUI() override;
+        void OnDrawUI() override;
 
         /* --- PROPERTIES --- */
         Material material {};

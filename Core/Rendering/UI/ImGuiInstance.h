@@ -50,8 +50,7 @@ namespace Sierra::Core::Rendering::UI
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        ImGuiInstance(const ImGuiInstance &) = delete;
-        ImGuiInstance &operator=(const ImGuiInstance &) = delete;
+        DELETE_COPY(ImGuiInstance);
 
     private:
         UniquePtr<Window> &window;

@@ -159,9 +159,6 @@ namespace Sierra::Engine::Classes
         static void MouseScrollCallback(GLFWwindow* windowPtr, double xScroll, double yScroll);
         static void JoystickCallback(int joystickID, int event);
 
-        /* --- DESTRUCTOR --- */
-        Input() = delete;
-
     private:
         static uint keyboardKeys[349];
         static uint lastKeySet;

@@ -83,7 +83,7 @@ namespace Sierra::Core::Rendering::UI
             defaultStyle.PopupBorderSize                   = 1;
             defaultStyle.FrameBorderSize                   = 1;
             defaultStyle.TabBorderSize                     = 1;
-            defaultStyle.WindowRounding                    = 7;
+            defaultStyle.WindowRounding                    = 0; // 7
             defaultStyle.ChildRounding                     = 4;
             defaultStyle.FrameRounding                     = 3;
             defaultStyle.PopupRounding                     = 4;

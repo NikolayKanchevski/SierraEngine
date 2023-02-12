@@ -35,6 +35,7 @@
 #include <fstream>
 #include <filesystem>
 #include <bitset>
+#include <any>
 #define NOMINMAX
 #include <limits>
 
@@ -44,6 +45,9 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
 
+// '-- GLFW
+#include <GLFW/glfw3.h>
+
 // '-- GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -52,9 +56,6 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
-
-// '-- GLFW
-#include <GLFW/glfw3.h>
 
 // '-- ImGui
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -66,6 +67,16 @@
 // '-- ImGuizmo
 #include <ImGuizmo.h>
 
+// '-- ENTT
+#include <entt/entt.hpp>
+
+// '-- VMA
+// Needs VMA_IMPLEMENTATION defined in CPP
+// Needs VMA_STATS_STRING_ENABLED 0 defined in CPP
+// Needs VMA_STATIC_VULKAN_FUNCTIONS 0 defined in CPP
+// Needs VMA_DYNAMIC_VULKAN_FUNCTIONS 1 defined in CPP
+#include <vk_mem_alloc.h>
+
 // '-- Assimp
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
@@ -75,8 +86,18 @@
 // Needs STB_IMAGE_IMPLEMENTATION defined in CPP
 #include <stb_image.h>
 
-// '-- ENTT
-#include <entt/entt.hpp>
+// '-- FMT
+#include <fmt/format.h>
+
+// '-- RareCpp
+#include <Reflect.h>
+
+// '-- Infoware
+#include <infoware/system.hpp>
+#include <infoware/version.hpp>
+#include <infoware/cpu.hpp>
+#include <infoware/gpu.hpp>
+#include <infoware/pci.hpp>
 
 // '-- TBB
 #include <tbb/parallel_for.h>
@@ -90,20 +111,11 @@
 #include <tbb/concurrent_set.h>
 #include <tbb/concurrent_unordered_set.h>
 
-// '-- FMT
-#include <fmt/format.h>
-
-// '-- VMA
-// Needs VMA_IMPLEMENTATION defined in CPP
-// Needs VMA_STATS_STRING_ENABLED 0 defined in CPP
-// Needs VMA_STATIC_VULKAN_FUNCTIONS 0 defined in CPP
-// Needs VMA_DYNAMIC_VULKAN_FUNCTIONS 1 defined in CPP
-#include <vk_mem_alloc.h>
-
 // === Custom Types === //
 #include "Types.h"
 #include "../Rendering/Vulkan/VulkanTypes.h"
 
 // === Custom Utilities == //
+#include "Macros.h"
 #include "../Debugger.h"
 #include "../World.h"

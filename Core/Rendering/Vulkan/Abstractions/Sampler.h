@@ -21,6 +21,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     class Sampler
     {
     public:
+
         /* --- CONSTRUCTORS --- */
         Sampler(const SamplerCreateInfo &samplerCreateInfo);
         static UniquePtr<Sampler> Create(SamplerCreateInfo createInfo);
@@ -35,8 +36,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
-        Sampler(const Sampler &) = delete;
-        Sampler &operator=(const Sampler &) = delete;
+        DELETE_COPY(Sampler);
 
     private:
         VkSampler vkSampler = VK_NULL_HANDLE;

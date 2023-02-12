@@ -15,7 +15,7 @@ using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
-    namespace Renderers { class MainVulkanRenderer; }
+    namespace Renderers { class MainVulkanRenderer; class DeferredVulkanRenderer; }
 
     class VK
     {
@@ -40,6 +40,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
         /* --- DESTRUCTOR --- */
         friend class Renderers::MainVulkanRenderer;
+        friend class Renderers::DeferredVulkanRenderer;
         static void Destroy();
 
     private:
@@ -77,8 +78,6 @@ namespace Sierra::Core::Rendering::Vulkan
 
         VkDescriptorPool imGuiDescriptorPool;
         void CreateImGuiDescriptorPool();
-
-        /* --- IMGUI SAMPLER --- */
 
         /* --- DEFAULT TEXTURES --- */
         void CreateDefaultTextures();
@@ -202,12 +201,3 @@ namespace Sierra::Core::Rendering::Vulkan
     };
 
 }
-
-#define UNIFORM_BUFFER_BINDING 0
-#define STORAGE_BUFFER_BINDING 1
-
-// * ! NOTE: Remember to change these in shaders too ! * //
-#define MAX_MESHES 8192                                  // Changed as @kael wouldn't stop bitching about it
-#define MAX_TEXTURES MAX_MESHES * TOTAL_TEXTURE_TYPES_COUNT
-#define MAX_POINT_LIGHTS 64
-#define MAX_DIRECTIONAL_LIGHTS 16

@@ -43,7 +43,7 @@ namespace Sierra::Engine::Components {
         }
 
         /* --- POLLING METHODS --- */
-        inline void DrawUI() override
+        inline void OnDrawUI() override
         {
             ImGui::BeginProperties();
 
