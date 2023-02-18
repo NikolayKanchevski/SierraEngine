@@ -10,7 +10,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     /* --- CONSTRUCTORS --- */
 
     Swapchain::Swapchain(UniquePtr<Window> &givenWindow)
-        : window(givenWindow)
+            : window(givenWindow)
     {
         GetSurfaceData();
         CreateSwapchain();
@@ -30,7 +30,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Swapchain::BeginRenderPass(const VkCommandBuffer givenCommandBuffer)
     {
-        renderPass->Begin(swapchainFramebuffers[currentFrame], givenCommandBuffer);
+        renderPass->Begin(swapchainFramebuffers[imageIndex], givenCommandBuffer);
     }
 
     void Swapchain::EndRenderPass(const VkCommandBuffer givenCommandBuffer)
@@ -68,7 +68,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
         // Set up submit info
-        VkSubmitInfo submitInfo = {};
+        VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
         VkPipelineStageFlags waitStagesPtr[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -79,15 +79,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = &renderFinishedSemaphores[currentFrame];
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = commandBuffersPtr;
         submitInfo.pWaitDstStageMask = waitStagesPtr;
+        submitInfo.pCommandBuffers = commandBuffersPtr;
 
         // Reset the current image's fence and submit graphics queue
         vkResetFences(VK::GetLogicalDevice(), 1, &inFlightFences[currentFrame]);
         VK_ASSERT(vkQueueSubmit(VK::GetDevice()->GetGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]), "Failed to submit draw command buffer");
 
         // Set up presentation info
-        VkPresentInfoKHR presentInfo = {};
+        VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = &renderFinishedSemaphores[currentFrame];
@@ -130,8 +130,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             commandBuffer->Reset();
         }
 
-        currentFrame = 0;
-
         if (resizeCallback != nullptr) resizeCallback();
     }
 
@@ -153,7 +151,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the extent and retrieve how many frames ahead can be rendered
         extent = GetSwapchainExtent(surfaceCapabilities);
-        maxConcurrentFrames = surfaceCapabilities.maxImageCount;
+        maxConcurrentFrames = surfaceCapabilities.maxImageCount > 3 ? 3 : surfaceCapabilities.maxImageCount;
 
         // Set up swapchain creation info
         VkSwapchainCreateInfoKHR swapchainCreateInfo{};
@@ -169,6 +167,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
         swapchainCreateInfo.presentMode = bestPresentMode;
         swapchainCreateInfo.clipped = VK_TRUE;
+
+        // Reuse old swapchain
+        VkSwapchainKHR oldSwapchain = vkSwapchain;
+        swapchainCreateInfo.oldSwapchain = vkSwapchain;
 
         // Get the queue indices
         const std::vector<uint> queueFamilyIndicesCollection  { static_cast<uint>(VK::GetDevice()->GetGraphicsQueueFamily()), static_cast<uint>(VK::GetDevice()->GetPresentationQueueFamily()) };
@@ -192,6 +194,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             vkCreateSwapchainKHR(VK::GetLogicalDevice(), &swapchainCreateInfo, nullptr, &vkSwapchain),
             "Failed to create swapchain"
         );
+
+        // If old swapchain was reused make sure to destroy it
+        if (oldSwapchain != VK_NULL_HANDLE)
+        {
+            vkDestroySwapchainKHR(VK::GetLogicalDevice(), oldSwapchain, nullptr);
+        }
     }
 
     void Swapchain::CreateCommandBuffers()
@@ -244,8 +252,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                     .storeOp = StoreOp::STORE,
                     .finalLayout = ImageLayout::PRESENT_SRC
                 }
-            },
-            { { .renderTargets = { 0 } } }
+                },
+                { { .renderTargets = { 0 } } }
         });
     }
 
@@ -276,11 +284,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         imagesInFlight.resize(maxConcurrentFrames, VK_NULL_HANDLE);
 
         // Define the semaphores creation info (universal for all semaphores)
-        VkSemaphoreCreateInfo semaphoreCreateInfo = {};
+        VkSemaphoreCreateInfo semaphoreCreateInfo{};
         semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
         // Define the fences creation info (universal for all fences)
-        VkFenceCreateInfo fenceCreateInfo = {};
+        VkFenceCreateInfo fenceCreateInfo{};
         fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
@@ -301,6 +309,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         DestroyTemporaryObjects();
 
+        vkDestroySwapchainKHR(VK::GetLogicalDevice(), vkSwapchain, nullptr);
+
         renderPass->Destroy();
 
         for (uint i = maxConcurrentFrames; i--;)
@@ -318,8 +328,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             swapchainImages[i]->Destroy();
             swapchainFramebuffers[i]->Destroy();
         }
-
-        vkDestroySwapchainKHR(VK::GetLogicalDevice(), vkSwapchain, nullptr);
     }
 
     Swapchain::SwapchainSupportDetails Swapchain::GetSwapchainSupportDetails()

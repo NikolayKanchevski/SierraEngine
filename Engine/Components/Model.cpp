@@ -299,7 +299,8 @@ namespace Sierra::Engine::Classes
             // Create texture
             auto diffuseTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
-                .textureType = TEXTURE_TYPE_DIFFUSE
+                .textureType = TEXTURE_TYPE_DIFFUSE,
+                .mipMappingEnabled = true
             });
 
             // Apply texture

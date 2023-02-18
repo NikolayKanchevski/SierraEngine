@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "../../Internal/Definitions.h"
+
 #define DEFINE_ENUM_FLAG_OPERATORS(EnumType) \
     inline EnumType operator~ (EnumType a) { return (EnumType)~(int)a; } \
     inline EnumType operator| (EnumType a, EnumType b) { return (EnumType)((int)a | (int)b); } \
@@ -535,10 +537,10 @@ namespace Sierra::Core::Rendering::Vulkan
 
     enum class VertexAttribute
     {
-        FLOAT = sizeof(float) * 1,   // 4
-        VEC2 = sizeof(float) * 2,    // 8
-        VEC3 = sizeof(float) * 3,    // 16
-        VEC4 = sizeof(float) * 4,    // 20
+        FLOAT = FLOAT_SIZE * 1,   // 4
+        VEC2 = FLOAT_SIZE * 2,    // 8
+        VEC3 = FLOAT_SIZE * 3,    // 16
+        VEC4 = FLOAT_SIZE * 4,    // 20
 
         POSITION  = VEC3,
         NORMAL = VEC3,

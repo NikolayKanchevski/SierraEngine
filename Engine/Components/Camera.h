@@ -56,8 +56,8 @@ namespace Sierra::Engine::Components
         [[nodiscard]] inline Vector3 GetDownDirection() const
         { return -upDirection; }
 
-        [[nodiscard]] static inline Camera* GetMainCamera()
-        { return mainCamera; }
+        [[nodiscard]] static inline Camera& GetMainCamera()
+        { return World::GetComponent<Camera>(mainCamera); }
 
         /* --- DESTRUCTOR --- */
         inline void Destroy() const override { RemoveComponent<Camera>(); }
@@ -66,7 +66,7 @@ namespace Sierra::Engine::Components
         Matrix4x4 viewMatrix;
         Matrix4x4 projectionMatrix;
 
-        static Camera *mainCamera;
+        static inline entt::entity mainCamera = entt::null;
         static inline const Vector3 upDirection = { 0.0f, 1.0f, 0.0f };
     };
 }

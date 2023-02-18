@@ -4,6 +4,10 @@
 
 #include "WorldManager.h"
 
+#include "../Classes/File.h"
+
+using namespace Sierra::Engine::Classes;
+
 namespace Sierra::Engine::Components
 {
 
@@ -13,12 +17,12 @@ namespace Sierra::Engine::Components
     {
         // Create default skybox cubemap texture
         skyboxSystem.skyboxCubemap = Cubemap::Create({ .filePaths = {
-            "Textures/Skyboxes/Default/skybox_right.png",
-            "Textures/Skyboxes/Default/skybox_left.png",
-            "Textures/Skyboxes/Default/skybox_top.png",
-            "Textures/Skyboxes/Default/skybox_bottom.png",
-            "Textures/Skyboxes/Default/skybox_front.png",
-            "Textures/Skyboxes/Default/skybox_back.png",
+            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_right.png",
+            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_left.png",
+            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_top.png",
+            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_bottom.png",
+            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_front.png",
+            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_back.png",
         }, .cubemapType = CUBEMAP_TYPE_SKYBOX });
     }
 

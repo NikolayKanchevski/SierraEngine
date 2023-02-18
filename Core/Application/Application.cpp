@@ -22,7 +22,7 @@ void Application::Start()
 
     // Create renderer
     UniquePtr<Window> window = Window::Create({ });
-    UniquePtr<VulkanRenderer> renderer = DeferredVulkanRenderer ::Create({ .window = window, .createImGuiInstance = true, .createImGuizmoLayer = true });
+    UniquePtr<VulkanRenderer> renderer = DeferredVulkanRenderer::Create({ .window = window, .createImGuiInstance = true, .createImGuizmoLayer = true });
 
     // Create camera
     Entity cameraEntity = Entity("Camera");
@@ -53,7 +53,7 @@ void Application::Start()
             {
                 int y = (k * MODEL_SPACING_FACTOR_Y) - (MODEL_GRID_SIZE_Y * MODEL_SPACING_FACTOR_Y) / 2;
 
-                tankModels.push_back(Model::Load("Models/Chieftain/T95_FV4201_Chieftain.fbx"));
+                tankModels.push_back(Model::Load(File::OUTPUT_FOLDER_PATH + "Models/Chieftain/T95_FV4201_Chieftain.fbx"));
                 tankModels.back()->GetOriginEntity().GetComponent<Transform>().SetPosition({ x, y, z });
 
                 pointLight->GetComponent<Transform>().SetPosition({ x, y + 3, z });
@@ -75,9 +75,6 @@ void Application::Start()
 
         World::Update();
 
-        // Push updates to renderer
-        renderer->Update();
-
         // Update and render world
         renderer->Render();
     }
@@ -96,9 +93,6 @@ void Application::RenderLoop(UniquePtr<VulkanRenderer> &renderer)
 {
     // If the window of the renderer is required to be focused but is not return before executing useless code
     if (renderer->GetWindow()->IsFocusRequired() && !renderer->GetWindow()->IsFocused()) return;
-
-    // Update UI
-    DisplayUI(renderer);
 
     // Update world objects
     UpdateObjects();

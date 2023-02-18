@@ -22,6 +22,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ImageFormat format = ImageFormat::UNDEFINED;
 
         uint layerCount = 1;
+        bool generateMipMaps = false;
 
         ImageTiling imageTiling = ImageTiling::OPTIMAL;
         Sampling sampling = Sampling::MSAAx1;
@@ -52,6 +53,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         static UniquePtr<Image> CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo);
 
         /* --- SETTER METHODS --- */
+        bool GenerateMipMaps();
         void CreateImageView(ImageAspectFlags givenAspectFlags, VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_2D);
         void TransitionLayout(ImageLayout newLayout);
         void DestroyImageView();
@@ -70,7 +72,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         { return this->dimensions.depth; };
 
         [[nodiscard]] inline uint GetMipMapLevels() const
-        { return this->mipMapLevels; };
+        { return this->mipLevels; };
 
         [[nodiscard]] inline ImageFormat GetFormat() const
         { return this->format; };
@@ -100,7 +102,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     private:
         Dimensions dimensions{};
 
-        uint mipMapLevels = 1;
+        uint mipLevels = 1;
         uint layerCount = 1;
 
         ImageFormat format = ImageFormat::UNDEFINED;

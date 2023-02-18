@@ -13,8 +13,6 @@ using Sierra::Core::Rendering::UI::ImGuiCore;
 
 namespace Sierra::Engine::Components
 {
-    Camera *Camera::mainCamera = nullptr;
-
     /* --- CONSTRUCTORS --- */
 
     void Camera::OnAddComponent()
@@ -26,27 +24,27 @@ namespace Sierra::Engine::Components
             CalculateViewMatrix();
         });
 
-        if (mainCamera == nullptr) SetAsMain();
+        if (mainCamera == entt::null) SetAsMain();
     }
 
     /* --- POLLING METHODS --- */
 
     void Camera::OnDrawUI()
     {
-        ImGui::BeginProperties();
+        GUI::BeginProperties();
 
-        ImGui::FloatProperty("FOV:", fov);
-        ImGui::FloatProperty("Near Clip:", nearClip);
-        ImGui::FloatProperty("Far Clip:", farClip);
+        GUI::FloatProperty("FOV:", fov);
+        GUI::FloatProperty("Near Clip:", nearClip);
+        GUI::FloatProperty("Far Clip:", farClip);
 
-        ImGui::EndProperties();
+        GUI::EndProperties();
     }
 
     /* --- SETTER METHODS --- */
 
     void Camera::SetAsMain()
     {
-        mainCamera = this;
+        mainCamera = enttEntity;
     }
 
     /* --- GETTER METHODS --- */
@@ -116,7 +114,7 @@ namespace Sierra::Engine::Components
 
     void Camera::CalculateProjectionMatrix()
     {
-        projectionMatrix = glm::perspectiveRH(glm::radians(fov), (float) ImGuiCore::GetSceneViewWidth() / (float) ImGuiCore::GetSceneViewHeight(), nearClip, farClip);
+        projectionMatrix = glm::perspectiveRH(glm::radians(fov), static_cast<float>(ImGuiCore::GetSceneViewWidth()) / static_cast<float>(ImGuiCore::GetSceneViewHeight()), nearClip, farClip);
         projectionMatrix[1][1] *= -1;
     }
 

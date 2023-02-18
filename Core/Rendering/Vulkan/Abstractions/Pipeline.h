@@ -10,6 +10,9 @@
 #include "../VulkanTypes.h"
 #include "../VK.h"
 #include "../../RenderingSettings.h"
+#include "../../../Engine/Classes/File.h"
+
+using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -51,7 +54,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         inline Pipeline(const PipelineCreateInfo &givenCreateInfo)
-            : createInfo(std::move(givenCreateInfo))
+                : createInfo(std::move(givenCreateInfo))
         {
             CreatePipelineLayout();
             CreatePipeline();
@@ -134,8 +137,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 }
             }
 
-            return std::make_unique<Pipeline>(createInfo, newPushConstantData, newUniformData, newUniformBuffers, newStorageData, newStorageBuffers
-            );
+            return std::make_unique<Pipeline>(createInfo, newPushConstantData, newUniformData, newUniformBuffers, newStorageData, newStorageBuffers);
         };
 
         /* --- GETTER METHODS --- */
@@ -190,19 +192,26 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
         inline void Bind(VkCommandBuffer givenCommandBuffer)
         {
+            localDescriptorsHaveBeenBoundForFrame = false;
             vkCmdBindPipeline(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkPipeline);
         };
         inline void BindDescriptorSets(VkCommandBuffer givenCommandBuffer, std::vector<VkDescriptorSet> externalDescriptorSets, const uint currentFrame)
         {
-            if (HasUniformBuffers()) uniformBuffers[currentFrame]->get()->CopyFromPointer(uniformBufferData);
-            if (HasStorageBuffers()) storageBuffers[currentFrame]->get()->CopyFromPointer(storageBufferData);
+            if (!localDescriptorsHaveBeenBoundForFrame)
+            {
+                if (HasUniformBuffers()) uniformBuffers[currentFrame]->get()->CopyFromPointer(uniformBufferData);
+                if (HasStorageBuffers()) storageBuffers[currentFrame]->get()->CopyFromPointer(storageBufferData);
+
+                localDescriptorsHaveBeenBoundForFrame = true;
+            }
 
             if (!descriptorSets.empty()) externalDescriptorSets.insert(externalDescriptorSets.begin(), descriptorSets[currentFrame]->GetVulkanDescriptorSet());
-
             vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, externalDescriptorSets.size(), externalDescriptorSets.data(), 0, nullptr);
         };
         inline void BindDescriptorSets(VkCommandBuffer givenCommandBuffer, const uint currentFrame)
         {
+            if (localDescriptorsHaveBeenBoundForFrame) return;
+
             uint count = descriptorSets.size() / createInfo.maxConcurrentFrames;
             VkDescriptorSet* localDescriptorSets = new VkDescriptorSet[count];
 
@@ -218,6 +227,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 localDescriptorSets[1] = descriptorSets[currentFrame * 2]->GetVulkanDescriptorSet();
             }
 
+            localDescriptorsHaveBeenBoundForFrame = true;
             vkCmdBindDescriptorSets(givenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, count, localDescriptorSets, 0, nullptr);
         };
         inline void PushConstants(VkCommandBuffer givenCommandBuffer)
@@ -225,9 +235,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             ASSERT_ERROR_IF(pushConstantRange == nullptr, "Trying to push constants in pipeline that was created without support for them in mind");
 
             vkCmdPushConstants(
-                givenCommandBuffer, vkPipelineLayout,
-                pushConstantRange->stageFlags, pushConstantRange->offset,
-                pushConstantRange->size, pushConstantData
+                    givenCommandBuffer, vkPipelineLayout,
+                    pushConstantRange->stageFlags, pushConstantRange->offset,
+                    pushConstantRange->size, pushConstantData
             );
         };
         inline void OverloadShader(SharedPtr<Shader> newShader)
@@ -245,12 +255,29 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 }
             }
 
-            ASSERT_ERROR_FORMATTED("Shader of type [{0}] could not be overloaded because it is not present in the pipeline", (uint) newShader->GetShaderType());
+            ASSERT_ERROR_FORMATTED("Shader of type [{0}] could not be overloaded because it is not present in the pipeline", static_cast<uint32_t>(newShader->GetShaderType()));
         };
 
         /* --- DESTRUCTOR --- */
         inline void Destroy()
         {
+            // If no cache was read create new one and store it
+            if (pipelineCache == VK_NULL_HANDLE)
+            {
+                VkPipelineCacheCreateInfo pipelineCacheCreateInfo{};
+                pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+
+                vkCreatePipelineCache(VK::GetLogicalDevice(), &pipelineCacheCreateInfo, nullptr, &pipelineCache);
+
+                uSize cacheSize;
+                vkGetPipelineCacheData(VK::GetLogicalDevice(), pipelineCache, &cacheSize, nullptr);
+
+                std::vector<uint8> cacheData(cacheSize);
+                vkGetPipelineCacheData(VK::GetLogicalDevice(), pipelineCache, &cacheSize, cacheData.data());
+
+                File::WriteBinaryDataToFile(fmt::format(File::INTERNAL_TEMP_FOLDER_PATH + "PipelineCache/PipelineCache_{0}", GetCacheHash()), cacheData, true);
+            }
+
             if (pushConstantRange != nullptr)
             {
                 delete pushConstantRange;
@@ -288,6 +315,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 }
             }
 
+            vkDestroyPipelineCache(VK::GetLogicalDevice(), pipelineCache, nullptr);
             vkDestroyPipeline(VK::GetLogicalDevice(), vkPipeline, nullptr);
             vkDestroyPipelineLayout(VK::GetLogicalDevice(), vkPipelineLayout, nullptr);
         };
@@ -309,6 +337,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         std::vector<UniquePtr<DescriptorSet>> descriptorSets;
 
+        VkPipelineCache pipelineCache = VK_NULL_HANDLE;
+
         bool alreadyCreated = false;
         bool usesExternalPushConstants = false;
         bool usesExternalUniformBuffers = false;
@@ -316,11 +346,24 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         PipelineCreateInfo createInfo;
 
-        bool HasPushConstants() const { return pushConstantRange != nullptr; }
-        bool HasUniformBuffers() const { return !uniformBuffers.empty() && uniformBuffers[0] != nullptr; }
-        bool HasStorageBuffers() const { return !storageBuffers.empty() && storageBuffers[0] != nullptr; }
+        bool localDescriptorsHaveBeenBoundForFrame = false;
 
-        void CreatePipelineLayout()
+        inline bool HasPushConstants() const { return pushConstantRange != nullptr; }
+        inline bool HasUniformBuffers() const { return !uniformBuffers.empty() && uniformBuffers[0] != nullptr; }
+        inline bool HasStorageBuffers() const { return !storageBuffers.empty() && storageBuffers[0] != nullptr; }
+
+        inline uSize GetCacheHash()
+        {
+            String stringToCache;
+            for (const auto &shader : createInfo.shaders)
+            {
+                stringToCache += shader->GetFilePath();
+            }
+
+            return std::hash<String>{}(stringToCache);
+        }
+
+        inline void CreatePipelineLayout()
         {
             // Set pipeline layout creation info
             VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
@@ -436,7 +479,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 attributeDescriptions[i].location = i;
                 attributeDescriptions[i].offset = lastOffset;
 
-                lastOffset += (uint) createInfo.vertexAttributes[i];
+                lastOffset += static_cast<uint32_t>(createInfo.vertexAttributes[i]);
 
                 switch (createInfo.vertexAttributes[i])
                 {
@@ -581,9 +624,27 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 graphicsPipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
             }
 
+            if (pipelineCache == VK_NULL_HANDLE)
+            {
+                uSize cacheHash = GetCacheHash();
+                String cachePath = fmt::format(File::INTERNAL_TEMP_FOLDER_PATH + "PipelineCache/PipelineCache_{0}", cacheHash);
+
+                if (File::FileExists(cachePath))
+                {
+                    std::vector<uint8> cacheData = File::ReadBinaryFile(cachePath);
+
+                    VkPipelineCacheCreateInfo cacheCreateInfo{};
+                    cacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+                    cacheCreateInfo.initialDataSize = cacheData.size();
+                    cacheCreateInfo.pInitialData = cacheData.data();
+
+                    VK_ASSERT(vkCreatePipelineCache(VK::GetLogicalDevice(), &cacheCreateInfo, nullptr, &pipelineCache), "Could not create cache for pipeline");
+                }
+            }
+
             // Create the graphics pipeline
             VK_ASSERT(
-                vkCreateGraphicsPipelines(VK::GetLogicalDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &vkPipeline),
+                vkCreateGraphicsPipelines(VK::GetLogicalDevice(), pipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &vkPipeline),
                 "Failed to create graphics pipeline"
             );
 

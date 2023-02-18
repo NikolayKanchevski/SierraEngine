@@ -31,17 +31,15 @@ namespace Sierra::Core
         Time::Update();
         Cursor::Update();
         Input::Update();
+    }
 
+    void World::Update()
+    {
         for (const auto &entityData : originEntities)
         {
             Entity entity = Entity(entityData.second);
             entity.GetComponent<Transform>().UpdateChain();
         }
-    }
-
-    void World::Update()
-    {
-
     }
 
     void World::Shutdown()

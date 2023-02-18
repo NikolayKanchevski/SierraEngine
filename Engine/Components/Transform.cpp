@@ -228,7 +228,7 @@ namespace Sierra::Engine::Components
 
     void Transform::OnDrawUI()
     {
-        ImGui::BeginProperties(ImGuiTableFlags_BordersInnerV);
+        GUI::BeginProperties(ImGuiTableFlags_BordersInnerV);
 
         static float resetValues[3];
         static const char* tooltips[3];
@@ -240,7 +240,7 @@ namespace Sierra::Engine::Components
         tooltips[0] = "Some tooltip.";
         tooltips[1] = "Some tooltip.";
         tooltips[2] = "Some tooltip.";
-        if (ImGui::PropertyVector3("Position:", localPosition, resetValues, tooltips)) isDirty = true;
+        if (GUI::PropertyVector3("Position:", localPosition, resetValues, tooltips)) isDirty = true;
 
         resetValues[0] = 0.0f;
         resetValues[1] = 0.0f;
@@ -249,7 +249,7 @@ namespace Sierra::Engine::Components
         tooltips[0] = "Some tooltip.";
         tooltips[1] = "Some tooltip.";
         tooltips[2] = "Some tooltip.";
-        if (ImGui::PropertyVector3("Rotation:", localRotation, resetValues, tooltips)) isDirty = true;
+        if (GUI::PropertyVector3("Rotation:", localRotation, resetValues, tooltips)) isDirty = true;
 
         resetValues[0] = 1.0f;
         resetValues[1] = 1.0f;
@@ -258,9 +258,9 @@ namespace Sierra::Engine::Components
         tooltips[0] = "Some tooltip.";
         tooltips[1] = "Some tooltip.";
         tooltips[2] = "Some tooltip.";
-        if (ImGui::PropertyVector3("Scale:", localScale, resetValues, tooltips)) isDirty = true;
+        if (GUI::PropertyVector3("Scale:", localScale, resetValues, tooltips)) isDirty = true;
 
-        ImGui::EndProperties();
+        GUI::EndProperties();
     }
 
     void Transform::PushOnChangeCallback(Callback callback)

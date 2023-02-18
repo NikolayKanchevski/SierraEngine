@@ -88,7 +88,7 @@ namespace Sierra::Engine::Classes
     void Mesh::CreateIndexBuffer(std::vector<uint> &givenIndices)
     {
         // Calculate the buffer size
-        uint64 bufferSize = sizeof(uint) * givenIndices.size();
+        uint64 bufferSize = UINT_SIZE * givenIndices.size();
 
         auto stagingBuffer = Buffer::Create({
             .memorySize = bufferSize,

@@ -23,13 +23,13 @@ namespace Sierra::Engine::Components
 
     void UUID::OnDrawUI()
     {
-        ImGui::BeginProperties();
+        GUI::BeginProperties();
 
-        ImGui::PushDeactivatedStatus();
-        ImGui::UInt64Property("Identifier:", value, nullptr, ImGuiInputTextFlags_ReadOnly);
-        ImGui::PopDeactivatedStatus();
+        GUI::PushDeactivatedStatus();
+        GUI::UInt64Property("Identifier:", value, nullptr, ImGuiInputTextFlags_ReadOnly);
+        GUI::PopDeactivatedStatus();
 
-        ImGui::EndProperties();
+        GUI::EndProperties();
     }
 
 }

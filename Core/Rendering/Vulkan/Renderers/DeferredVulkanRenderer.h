@@ -39,8 +39,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         };
 
         typedef Pipeline<MeshPushConstant, UniformData, StorageData> ScenePipeline;
-        typedef Pipeline<SkyboxPushConstant, UniformData, Abstractions::NullStorageBuffer> SkyboxPipeline;
         typedef Pipeline<MergingRendererPushConstant, NullUniformBuffer, StorageData> MergingPipeline;
+        typedef Pipeline<SkyboxPushConstant, UniformData, NullStorageBuffer> SkyboxPipeline;
     public:
         /* --- CONSTRUCTORS --- */
         DeferredVulkanRenderer(const VulkanRendererCreateInfo &createInfo);

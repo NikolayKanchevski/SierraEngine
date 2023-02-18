@@ -17,7 +17,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     struct CubemapCreateInfo
     {
-        const char* filePaths[6];
+        String filePaths[6];
 
         CubemapType cubemapType = CUBEMAP_TYPE_NONE;
         bool mipMappingEnabled = false;

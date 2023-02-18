@@ -61,7 +61,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         /* --- POLLING METHODS --- */
         void Update() override;
-        void DrawUI() override;
         void Render() override;
 
         /* --- GETTER METHODS --- */
@@ -80,6 +79,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         void CreateTimestampQueries();
         void CreateOffscreenDescriptorSets();
 
+        void DrawUI() override;
+
         Sampling sampling = Sampling::MSAAx1;
         ShadingType shadingType = ShadingType::FILL;
 
@@ -93,7 +94,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         std::vector<VkDescriptorSet> offscreenImageDescriptorSets;
         std::vector<UniquePtr<TimestampQuery>> offscreenTimestampQueries;
-
     };
 
 }

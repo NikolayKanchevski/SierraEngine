@@ -4,8 +4,8 @@
 
 #include "ImGuiUtilities.h"
 
-namespace ImGui
-{
+    using namespace ImGui;
+
     static float dataLimitMin = 0.0f;
     static float dataLimitMax = 0.0f;
     static float dataDragSpeed = 0.1f;
@@ -16,7 +16,7 @@ namespace ImGui
     static bool drawnAnyProperties = false;
     static ImGuiTableFlags currentPropertyTableFlags = 0;
 
-    void GenerateID()
+    void GUI::GenerateID()
     {
         IDBuffer[0] = '#';
         IDBuffer[1] = '#';
@@ -26,76 +26,76 @@ namespace ImGui
         std::memcpy(&IDBuffer, buffer.data(), 16);
     }
 
-    void ExternalPushID()
+    void GUI::ExternalPushID()
     {
         ++s_UIContextID;
         ImGui::PushID(s_UIContextID);
         s_Counter = 0;
     }
 
-    void ExternalPopID()
+    void GUI::ExternalPopID()
     {
         ImGui::PopID();
         --s_UIContextID;
     }
 
-    void VerticalIndent(const float height)
+    void GUI::VerticalIndent(const float height)
     {
         ImGui::Dummy(ImVec2(0.0f, height));
     }
 
-    void PushDeactivatedStatus()
+    void GUI::PushDeactivatedStatus()
     {
         setNextItemDisabled = true;
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
     }
 
-    void PopDeactivatedStatus()
+    void GUI::PopDeactivatedStatus()
     {
         setNextItemDisabled = false;
         ImGui::PopItemFlag();
         ImGui::PopStyleVar();
     }
 
-    void SetNumericFormattingSpaces(const uint spacesCount)
+    void GUI::SetNumericFormattingSpaces(const uint spacesCount)
     {
         format = "." + std::to_string(spacesCount);
     }
 
-    void ResetNumericFormattingSpaces()
+    void GUI::ResetNumericFormattingSpaces()
     {
         format = ".2";
     }
 
-    void SetNumericStepChange(float newStep)
+    void GUI::SetNumericStepChange(float newStep)
     {
         step = newStep;
     }
 
-    void ResetNumericStepChange()
+    void GUI::ResetNumericStepChange()
     {
         step = 1.0f;
     }
 
-    void SetInputLimits(Vector2 limits)
+    void GUI::SetInputLimits(Vector2 limits)
     {
         dataLimitMin = limits.x;
         dataLimitMax = limits.y;
     }
 
-    void ResetInputLimits()
+    void GUI::ResetInputLimits()
     {
         dataLimitMin = 0.0f;
         dataLimitMax = 0.0f;
     }
 
-    void CustomLabel(const char* label)
+    void GUI::CustomLabel(const char* label)
     {
         ImGui::Text("%s", label);
     }
 
-    void ShowTooltip(const char* tooltip)
+    void GUI::ShowTooltip(const char* tooltip)
     {
         if (tooltip && ImGui::IsItemHovered() && GImGui->HoveredIdTimer > HOVER_TIME_THRESHOLD)
         {
@@ -105,14 +105,24 @@ namespace ImGui
         }
     }
 
-    void BoldText(const char* text)
+    bool GUI::BeginWindow(const char* title, bool *open, const ImGuiWindowFlags windowFlags)
+    {
+        return ImGui::Begin(title, open, windowFlags);
+    }
+
+    void GUI::EndWindow()
+    {
+        ImGui::End();
+    }
+
+    void GUI::BoldText(const char* text)
     {
         ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[boldFontIndex]);
         ImGui::Text("%s", text);
         ImGui::PopFont();
     }
 
-    bool RoundedButton(const char *label, const ImVec2 &givenSize, const ImDrawFlags roundingType, const float rounding, ImGuiButtonFlags flags)
+    bool GUI::RoundedButton(const char *label, const ImVec2 &givenSize, const ImDrawFlags roundingType, const float rounding, ImGuiButtonFlags flags)
     {
         ImGuiWindow* window = GetCurrentWindow();
         if (window->SkipItems)
@@ -152,7 +162,7 @@ namespace ImGui
         return pressed;
     }
 
-    void BeginProperties(const ImGuiTableFlags tableFlags)
+    void GUI::BeginProperties(const ImGuiTableFlags tableFlags)
     {
         bool statusChanged = false;
         if (setNextItemDisabled)
@@ -175,7 +185,7 @@ namespace ImGui
         }
     }
 
-    void EndProperties()
+    void GUI::EndProperties()
     {
         ImGui::EndTable();
         ImGui::PopStyleVar();
@@ -183,7 +193,7 @@ namespace ImGui
         drawnAnyProperties = false;
     }
 
-    void BeginProperty(const char *label)
+    void GUI::BeginProperty(const char *label)
     {
         ExternalPushID();
 
@@ -214,15 +224,15 @@ namespace ImGui
         drawnAnyProperties = true;
     }
 
-    void EndProperty()
+    void GUI::EndProperty()
     {
         ImGui::PopID();
         ExternalPopID();
     }
 
-    bool BeginTreeProperties(const char* label)
+    bool GUI::BeginTreeProperties(const char* label)
     {
-        ImGui::EndProperties();
+        GUI::EndProperties();
 
         ImGui::Unindent(GImGui->Style.IndentSpacing * 0.5f);
         bool opened = ImGui::TreeNodeEx(label);
@@ -235,35 +245,35 @@ namespace ImGui
         return opened;
     }
 
-    void EndTreeProperties()
+    void GUI::EndTreeProperties()
     {
         EndProperties();
 
         ImGui::TreePop();
-        ImGui::VerticalIndent(GImGui->Style.ItemSpacing.y);
+        GUI::VerticalIndent(GImGui->Style.ItemSpacing.y);
 
         GenerateID();
         BeginProperties(currentPropertyTableFlags);
     }
 
-    void PropertyTabHeader(const char* label)
+    void GUI::PropertyTabHeader(const char* label)
     {
         bool hadDrawnAnyProperties = drawnAnyProperties;
         EndProperties();
 
-        if (hadDrawnAnyProperties) ImGui::VerticalIndent(GImGui->Style.ItemSpacing.y);
-        ImGui::BoldText(label);
+        if (hadDrawnAnyProperties) GUI::VerticalIndent(GImGui->Style.ItemSpacing.y);
+        GUI::BoldText(label);
 
         GenerateID();
         BeginProperties(currentPropertyTableFlags);
     }
 
-    bool StringInput(const char* labelID, String &value, const ImGuiInputTextFlags inputFlags)
+    bool GUI::StringInput(const char* labelID, String &value, const ImGuiInputTextFlags inputFlags)
     {
         return ImGui::InputText(labelID, value.data(), inputFlags);
     }
 
-    template<typename T, std::enable_if_t<std::is_arithmetic_v<T>, bool> = true>
+    template<typename T, ENABLE_IF(std::is_arithmetic_v<T>)>
     static inline ImGuiDataType GetNumericImGuiDataType()
     {
         if (std::is_same<T, int>()) return ImGuiDataType_S32;
@@ -275,7 +285,7 @@ namespace ImGui
         return -1;
     }
 
-    template<typename T, std::enable_if_t<std::is_arithmetic_v<T>, bool> = true>
+    template<typename T, ENABLE_IF(std::is_arithmetic_v<T>)>
     static inline String GetSuitableFormat()
     {
         auto dataType = GetNumericImGuiDataType<T>();
@@ -285,7 +295,7 @@ namespace ImGui
         return dataTypeFormatting;
     }
 
-    template<typename T, std::enable_if_t<std::is_arithmetic_v<T>, bool> = true>
+    template<typename T, ENABLE_IF(std::is_arithmetic_v<T>)>
     static inline bool NumericInput(const char* labelID, T &valueReference, bool canDrag, bool centerAlign, ImDrawFlags roundingType = ImDrawFlags_RoundCornersAll, float rounding = GImGui->Style.FrameRounding, ImGuiInputTextFlags flags = ImGuiInputTextFlags_None)
     {
         ImGuiDataType dataType = GetNumericImGuiDataType<T>();
@@ -446,42 +456,42 @@ namespace ImGui
 
     }
 
-    bool IntInput(const char* labelID, int &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
+    bool GUI::IntInput(const char* labelID, int &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
     {
         return NumericInput<int>(labelID, value, canDrag, false, inputFlags);
     }
 
-    bool Int64Input(const char* labelID, int64 &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
+    bool GUI::Int64Input(const char* labelID, int64 &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
     {
         return NumericInput<int64>(labelID, value, canDrag, false, inputFlags);
     }
 
-    bool UIntInput(const char* labelID, uint &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
+    bool GUI::UIntInput(const char* labelID, uint &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
     {
         return NumericInput<uint>(labelID, value, canDrag, false, inputFlags);
     }
 
-    bool UInt64Input(const char* labelID, uint64 &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
+    bool GUI::UInt64Input(const char* labelID, uint64 &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
     {
         return NumericInput<uint64>(labelID, value, canDrag, false, inputFlags);
     }
 
-    bool FloatInput(const char* labelID, float &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
+    bool GUI::FloatInput(const char* labelID, float &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
     {
         return NumericInput<float>(labelID, value, canDrag, false, inputFlags);
     }
 
-    bool DoubleInput(const char* labelID, double &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
+    bool GUI::DoubleInput(const char* labelID, double &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
     {
         return NumericInput<double>(labelID, value, canDrag, false, inputFlags);
     }
 
-    bool Checkbox(const char* labelID, bool &value)
+    bool GUI::Checkbox(const char* labelID, bool &value)
     {
         return ImGui::Checkbox(labelID, &value);
     }
 
-    bool Vector3Input(Vector3 &value, const float *resetValues, const char** tooltips)
+    bool GUI::Vector3Input(Vector3 &value, const float *resetValues, const char** tooltips)
     {
         auto boldFont = ImGui::GetIO().Fonts->Fonts[boldFontIndex];
 
@@ -514,7 +524,7 @@ namespace ImGui
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
                 ImGui::PushFont(boldFont);
 
-                if (ImGui::RoundedButton("X", buttonSize, ImDrawFlags_RoundCornersLeft))
+                if (GUI::RoundedButton("X", buttonSize, ImDrawFlags_RoundCornersLeft))
                 {
                     value.x = resetValues[0];
                     modified = true;
@@ -527,7 +537,7 @@ namespace ImGui
             }
 
             ImGui::SetNextItemWidth(inputFieldWidth);
-            if (ImGui::NumericInput<float>("##X", value.x, true, true, inputFieldRounding))
+            if (NumericInput<float>("##X", value.x, true, true, inputFieldRounding))
             {
                 modified = true;
             }
@@ -550,7 +560,7 @@ namespace ImGui
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
                 ImGui::PushFont(boldFont);
 
-                if (ImGui::RoundedButton("Y", buttonSize, ImDrawFlags_RoundCornersLeft))
+                if (GUI::RoundedButton("Y", buttonSize, ImDrawFlags_RoundCornersLeft))
                 {
                     value.y = resetValues[1];
                     modified = true;
@@ -563,7 +573,7 @@ namespace ImGui
             }
 
             ImGui::SetNextItemWidth(inputFieldWidth);
-            if (ImGui::NumericInput<float>("##Y", value.y, true, true, inputFieldRounding))
+            if (NumericInput<float>("##Y", value.y, true, true, inputFieldRounding))
             {
                 modified = true;
             }
@@ -586,7 +596,7 @@ namespace ImGui
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.25f, 0.8f, 1.0f));
                 ImGui::PushFont(boldFont);
 
-                if (ImGui::RoundedButton("Z", buttonSize, ImDrawFlags_RoundCornersLeft))
+                if (GUI::RoundedButton("Z", buttonSize, ImDrawFlags_RoundCornersLeft))
                 {
                     value.z = resetValues[2];
                     modified = true;
@@ -599,7 +609,7 @@ namespace ImGui
             }
 
             ImGui::SetNextItemWidth(inputFieldWidth);
-            if (ImGui::NumericInput<float>("##Z", value.z, true, true, inputFieldRounding))
+            if (NumericInput<float>("##Z", value.z, true, true, inputFieldRounding))
             {
                 modified = true;
             }
@@ -612,7 +622,7 @@ namespace ImGui
         return modified;
     }
 
-    bool Dropdown(const char* labelID, uint &value, const char** options, uint optionsCount, const bool* deactivatedFlags)
+    bool GUI::Dropdown(const char* labelID, uint &value, const char** options, uint optionsCount, const bool* deactivatedFlags)
     {
         bool modified = false;
         const char* currentOption = options[value];
@@ -655,7 +665,7 @@ namespace ImGui
     }
 
 
-    bool StringProperty(const char* label, String &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
+    bool GUI::StringProperty(const char* label, String &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
     {
         BeginProperty(label);
         bool modified = StringInput(IDBuffer, value, inputFlags);
@@ -665,7 +675,7 @@ namespace ImGui
         return modified;
     }
 
-    bool IntProperty(const char* label, int &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
+    bool GUI::IntProperty(const char* label, int &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
     {
         BeginProperty(label);
         bool modified = NumericInput<int>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll, GImGui->Style.FrameRounding, inputFlags);
@@ -675,7 +685,7 @@ namespace ImGui
         return modified;
     }
 
-    bool Int64Property(const char* label, int64 &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
+    bool GUI::Int64Property(const char* label, int64 &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
     {
         BeginProperty(label);
         bool modified = NumericInput<int64>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll, GImGui->Style.FrameRounding, inputFlags);
@@ -685,7 +695,7 @@ namespace ImGui
         return modified;
     }
 
-    bool UIntProperty(const char* label, uint &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
+    bool GUI::UIntProperty(const char* label, uint &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
     {
         BeginProperty(label);
         bool modified = NumericInput<uint>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll, GImGui->Style.FrameRounding, inputFlags);
@@ -695,7 +705,7 @@ namespace ImGui
         return modified;
     }
 
-    bool UInt64Property(const char* label, uint64 &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
+    bool GUI::UInt64Property(const char* label, uint64 &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
     {
         BeginProperty(label);
         bool modified = NumericInput<uint64>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll, GImGui->Style.FrameRounding, inputFlags);
@@ -705,7 +715,7 @@ namespace ImGui
         return modified;
     }
 
-    bool FloatProperty(const char* label, float &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
+    bool GUI::FloatProperty(const char* label, float &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
     {
         BeginProperty(label);
         bool modified = NumericInput<float>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll, GImGui->Style.FrameRounding, inputFlags);
@@ -715,7 +725,7 @@ namespace ImGui
         return modified;
     }
 
-    bool DoubleProperty(const char* label, double &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
+    bool GUI::DoubleProperty(const char* label, double &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
     {
         BeginProperty(label);
         bool modified = NumericInput<double>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll, GImGui->Style.FrameRounding, inputFlags);
@@ -725,7 +735,7 @@ namespace ImGui
         return modified;
     }
 
-    bool CheckboxProperty(const char* label, bool &value, const char* tooltip)
+    bool GUI::CheckboxProperty(const char* label, bool &value, const char* tooltip)
     {
         BeginProperty(label);
         bool modified = Checkbox(IDBuffer, value);
@@ -735,7 +745,7 @@ namespace ImGui
         return modified;
     }
 
-    bool DropdownProperty(const char* label, uint &value, const char** options, const uint optionsCount,  const bool* deactivatedFlags, const char* tooltip)
+    bool GUI::DropdownProperty(const char* label, uint &value, const char** options, const uint optionsCount,  const bool* deactivatedFlags, const char* tooltip)
     {
         BeginProperty(label);
         bool modified = Dropdown(IDBuffer, value, options, optionsCount, deactivatedFlags);
@@ -745,7 +755,7 @@ namespace ImGui
         return modified;
     }
 
-    bool PropertyVector3(const char* label, Vector3 &value, const float *resetValues, const char** tooltips)
+    bool GUI::PropertyVector3(const char* label, Vector3 &value, const float *resetValues, const char** tooltips)
     {
         BeginProperty(label);
         bool modified = Vector3Input(value, resetValues, tooltips);
@@ -754,7 +764,7 @@ namespace ImGui
         return modified;
     }
 
-    bool TextureProperty(const char* label, SharedPtr<Texture> &texture, const char* tooltip)
+    bool GUI::TextureProperty(const char* label, SharedPtr<Texture> &texture, const char* tooltip)
     {
         BeginProperty(label);
 
@@ -779,7 +789,7 @@ namespace ImGui
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
 
-        if (ImGui::RoundedButton("x", xButtonSize, ImDrawFlags_RoundCornersRight))
+        if (GUI::RoundedButton("x", xButtonSize, ImDrawFlags_RoundCornersRight))
         {
             texture = Texture::GetDefaultTexture(texture->GetTextureType());
             changed = true;
@@ -793,44 +803,3 @@ namespace ImGui
         return changed;
     }
 
-//    using Sierra::Engine::Components::MeshRenderer;
-//    bool TextureProperty(const char* label, Sierra::Engine::Components::MeshRenderer &meshRenderer, const TextureType textureType, const char* tooltip)
-//    {
-//        BeginProperty(label);
-//
-//        bool changed = false;
-//
-//        float buttonSize = ImGui::GetFrameHeight() * 3.0f;
-//        ImVec2 xButtonSize = { buttonSize / 4.0f, buttonSize };
-//
-//        ImGui::SetCursorPos({ ImGui::GetContentRegionMax().x - buttonSize - xButtonSize.x, ImGui::GetCursorPosY() + ImGui::GetStyle().FramePadding.y });
-//        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-//        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
-//        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.35f, 0.35f, 0.35f, 1.0f));
-//        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
-//
-//        ImGui::ImageButton(meshRenderer.GetTexture(textureType)->GetImGuiTextureID(), { buttonSize, buttonSize }, { 1, 1 }, { 0, 0 }, 0);
-//        ShowTooltip(tooltip);
-//
-//        ImGui::PopStyleColor(3);
-//
-//        ImGui::SameLine();
-//        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
-//        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.3f, 0.3f, 1.0f));
-//        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
-//
-//        if (ImGui::RoundedButton("x", xButtonSize, ImDrawFlags_RoundCornersRight))
-//        {
-//            meshRenderer.ResetTexture(textureType);
-//            changed = true;
-//        }
-//
-//        ImGui::PopStyleColor(3);
-//        ImGui::PopStyleVar();
-//
-//        EndProperty();
-//
-//        return changed;
-//    }
-
-}

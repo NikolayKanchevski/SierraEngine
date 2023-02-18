@@ -9,10 +9,10 @@ namespace Sierra::Engine::Components
 {
     void Tag::OnDrawUI()
     {
-        ImGui::BeginProperties();
+        GUI::BeginProperties();
 
-        ImGui::StringProperty("Tag:", tag, "Some tooltip.");
+        GUI::StringProperty("Tag:", tag, "Some tooltip.");
 
-        ImGui::EndProperties();
+        GUI::EndProperties();
     }
 }

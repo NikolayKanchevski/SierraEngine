@@ -54,7 +54,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Callback resizeCallback = nullptr;
 
         uint maxConcurrentFrames;
-        VkSwapchainKHR vkSwapchain;
+        VkSwapchainKHR vkSwapchain = VK_NULL_HANDLE;
 
         VkExtent2D extent;
         VkSurfaceFormatKHR bestSurfaceFormat;

@@ -45,19 +45,19 @@ namespace Sierra::Engine::Components {
         /* --- POLLING METHODS --- */
         inline void OnDrawUI() override
         {
-            ImGui::BeginProperties();
+            GUI::BeginProperties();
 
-            ImGui::FloatProperty("Intensity:", intensity);
+            GUI::FloatProperty("Intensity:", intensity);
 
             static const float resetValues[3] = { 0.0f, 0.0f, 0.0f };
             static const char* tooltips[3] = { "Some tooltip.", "Some tooltip.", "Some tooltip." };
-            ImGui::PropertyVector3("Color:", color, resetValues, tooltips);
+            GUI::PropertyVector3("Color:", color, resetValues, tooltips);
 
-            ImGui::FloatProperty("Linear:", linear);
-            ImGui::FloatProperty("Quadratic:", quadratic);
+            GUI::FloatProperty("Linear:", linear);
+            GUI::FloatProperty("Quadratic:", quadratic);
 
 
-            ImGui::EndProperties();
+            GUI::EndProperties();
         }
 
         /* --- GETTER METHODS --- */

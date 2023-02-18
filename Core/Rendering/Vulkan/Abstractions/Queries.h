@@ -27,8 +27,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         uint index;
         uint64* buffer = new uint64[2];
 
-        static inline const uint UINT64_SIZE = sizeof(uint64);
-
     };
 
     struct QueryPoolCreateInfo

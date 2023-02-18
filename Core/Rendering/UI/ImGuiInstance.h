@@ -14,7 +14,7 @@ namespace Sierra::Core::Rendering::UI
 
     struct FontCreateInfo
     {
-        const char* fontFilePath = "Fonts/PTSans.ttf";
+        String fontFilePath = File::OUTPUT_FOLDER_PATH + "Fonts/PTSans.ttf";
         float fontSize = 18.0f;
     };
 

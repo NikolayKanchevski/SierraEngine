@@ -61,31 +61,31 @@ namespace Sierra::Engine::Components
 
     void MeshRenderer::OnDrawUI()
     {
-        ImGui::BeginProperties();
+        GUI::BeginProperties();
 
-        if (ImGui::BeginTreeProperties("Material"))
+        if (GUI::BeginTreeProperties("Material"))
         {
-            ImGui::SetInputLimits({ 0.0f, 1.0f });
-            ImGui::FloatProperty("Shininess:", material.shininess, "Some tooltip.");
-            ImGui::ResetInputLimits();
+            GUI::SetInputLimits({ 0.0f, 1.0f });
+            GUI::FloatProperty("Shininess:", material.shininess, "Some tooltip.");
+            GUI::ResetInputLimits();
 
-            ImGui::FloatProperty("Vertex Exaggaration:", material.vertexExaggeration, "Some tooltip.");
+            GUI::FloatProperty("Vertex Exaggaration:", material.vertexExaggeration, "Some tooltip.");
 
             static const float resetValues[3] = { 1.0f, 1.0f, 1.0f };
             static const char* tooltips[3] = { "Some tooltip.", "Some tooltip.", "Some tooltip." };
-            ImGui::PropertyVector3("Diffuse:", material.diffuse, resetValues, tooltips);
-            ImGui::FloatProperty("Specular:", material.specular, "Some tooltip.");
-            ImGui::FloatProperty("Ambient:", material.ambient, "Some tooltip.");
+            GUI::PropertyVector3("Diffuse:", material.diffuse, resetValues, tooltips);
+            GUI::FloatProperty("Specular:", material.specular, "Some tooltip.");
+            GUI::FloatProperty("Ambient:", material.ambient, "Some tooltip.");
 
-            ImGui::EndTreeProperties();
+            GUI::EndTreeProperties();
         }
 
-        if (ImGui::TextureProperty("Diffuse Texture:", textures[TEXTURE_TYPE_DIFFUSE], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_DIFFUSE]);
-        if (ImGui::TextureProperty("Specular Texture:", textures[TEXTURE_TYPE_SPECULAR], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_SPECULAR]);
-        if (ImGui::TextureProperty("Normal Map Texture:", textures[TEXTURE_TYPE_NORMAL_MAP], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_NORMAL_MAP]);
-        if (ImGui::TextureProperty("Height Map Texture:", textures[TEXTURE_TYPE_HEIGHT_MAP], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_HEIGHT_MAP]);
+        if (GUI::TextureProperty("Diffuse Texture:", textures[TEXTURE_TYPE_DIFFUSE], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_DIFFUSE]);
+        if (GUI::TextureProperty("Specular Texture:", textures[TEXTURE_TYPE_SPECULAR], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_SPECULAR]);
+        if (GUI::TextureProperty("Normal Map Texture:", textures[TEXTURE_TYPE_NORMAL_MAP], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_NORMAL_MAP]);
+        if (GUI::TextureProperty("Height Map Texture:", textures[TEXTURE_TYPE_HEIGHT_MAP], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_HEIGHT_MAP]);
 
-        ImGui::EndProperties();
+        GUI::EndProperties();
     }
 
     /* --- SETTER METHODS --- */
@@ -112,7 +112,7 @@ namespace Sierra::Engine::Components
         if (VK::GetDevice()->GetDescriptorIndexingSupported())
         {
             // TODO: BINDLESS
-//            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, (TOTAL_TEXTURE_TYPES_COUNT * meshID) + (uint) givenTexture->GetTextureType());
+//            VulkanCore::GetGlobalBindlessDescriptorSet()->WriteTexture(BINDLESS_TEXTURE_BINDING, givenTexture, true, (TOTAL_TEXTURE_TYPES_COUNT * meshID) + static_cast<uint32_t>(givenTexture->GetTextureType()));
 //            VulkanCore::GetGlobalBindlessDescriptorSet()->Allocate();
         }
         else

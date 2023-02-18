@@ -40,7 +40,7 @@ namespace Sierra::Engine::Classes
 
     void Cursor::SetCursorPositionNormalized(const Vector2 newPosition)
     {
-        Vector2 nonNormalizedPosition = { newPosition.x * (float) Window::GetCurrentlyFocusedWindow()->GetWidth(), newPosition.y * (float) Window::GetCurrentlyFocusedWindow()->GetHeight() };
+        Vector2 nonNormalizedPosition = { newPosition.x * static_cast<float>(Window::GetCurrentlyFocusedWindow()->GetWidth()), newPosition.y * static_cast<float>(Window::GetCurrentlyFocusedWindow()->GetHeight()) };
         SetCursorPosition(nonNormalizedPosition);
     }
 

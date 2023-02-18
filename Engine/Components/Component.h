@@ -12,10 +12,10 @@ namespace Sierra::Engine::Components
         inline void SetEnttEntity(entt::entity givenEntity) { this->enttEntity = givenEntity; }
         inline entt::entity GetEnttEntity() { return enttEntity; };
 
-        template <typename T, std::enable_if_t<std::is_base_of_v<Component, T>, bool> = true, typename... Args>
+        template <typename T, ENABLE_IF(std::is_base_of_v<Component, T>), typename... Args>
         inline T& AddComponent(Args&&... args) { return World::AddComponent<T>(enttEntity, std::forward<Args>(args)...); }
 
-        template<typename T, std::enable_if_t<std::is_base_of_v<Component, T>, bool> = true, typename... Args>
+        template<typename T, ENABLE_IF(std::is_base_of_v<Component, T>), typename... Args>
         inline T& AddOrReplaceComponent(Args&&... args) { return World::AddOrReplaceComponent<T>(enttEntity, std::forward<Args>(args)...); }
 
         template<typename T>

@@ -4,8 +4,6 @@
 
 #pragma once
 
-#define NO_CHANGE std::nullopt
-
 #include "../Core/EngineCore.h"
 #include "../Core/Rendering/Vulkan/Renderers/MainVulkanRenderer.h"
 #include "../Core/Rendering/Vulkan/Renderers/DeferredVulkanRenderer.h"

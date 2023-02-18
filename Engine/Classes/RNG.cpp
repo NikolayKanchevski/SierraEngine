@@ -51,7 +51,7 @@ namespace Sierra::Engine::Classes
 
     float RNG::GetRandomFloat()
     {
-        std::uniform_real_distribution<> distribution(std::numeric_limits<float>::min(), std::numeric_limits<float>::max());
+        std::uniform_real_distribution<> distribution(FLOAT_MIN, FLOAT_MAX);
         return distribution(randomizer);
     }
 

@@ -9,7 +9,7 @@ using Rendering::Vulkan::Abstractions::Texture;
 
 #define HOVER_TIME_THRESHOLD 1.0f
 
-namespace ImGui
+namespace GUI
 {
     inline const uint boldFontIndex = 1;
     inline static int s_UIContextID = 0;
@@ -39,6 +39,9 @@ namespace ImGui
     void BoldText(const char* text);
     void CustomLabel(const char* label);
     void ShowTooltip(const char* tooltip);
+
+    bool BeginWindow(const char* title, bool *open = nullptr, ImGuiWindowFlags windowFlags = 0);
+    void EndWindow();
 
     void BeginProperties(ImGuiTableFlags tableFlags = ImGuiTableFlags_None);
     void EndProperties();
@@ -120,7 +123,7 @@ namespace ImGui
 
             float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
 
-            bool open = ImGui::TreeNodeEx((void*)(typeid(T).hash_code() << (uint)entity), treeNodeFlags, "%s", Debugger::TypeToString<T>().c_str());
+            bool open = ImGui::TreeNodeEx((void*)(typeid(T).hash_code() << static_cast<uint32_t>(entity)), treeNodeFlags, "%s", Debugger::TypeToString<T>().c_str());
             ImGui::PopStyleVar();
 
             ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
@@ -143,7 +146,7 @@ namespace ImGui
             if (open)
             {
                 component.OnDrawUI();
-                ImGui::VerticalIndent(GImGui->Style.ItemSpacing.y);
+                GUI::VerticalIndent(GImGui->Style.ItemSpacing.y);
                 ImGui::TreePop();
             }
 
@@ -157,17 +160,17 @@ namespace ImGui
     template<typename T>
     inline bool AutoDrawFields(T &reference)
     {
-        ImGui::BeginProperties();
+        GUI::BeginProperties();
 
         bool modified = false;
         T::Class::ForEachField(reference, [&modified](auto & field, auto & value){
             using Type = typename std::remove_reference<decltype(value)>::type;
             std::string stringName = std::string(field.name);
             stringName[0] = std::toupper(stringName[0]);
-            modified = modified || ImGui::AnyPropertyInput<Type>(stringName.c_str(), value);
+            modified = modified || GUI::AnyPropertyInput<Type>(stringName.c_str(), value);
         });
 
-        ImGui::EndProperties();
+        GUI::EndProperties();
 
         return modified;
     }

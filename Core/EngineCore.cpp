@@ -9,6 +9,7 @@
 #include "Rendering/Vulkan/Abstractions/Texture.h"
 #include "../Engine/Components/Model.h"
 #include "../Engine/Classes/SystemInformation.h"
+#include "../Engine/Classes/File.h"
 
 using Sierra::Engine::Classes::Model;
 using Sierra::Engine::Classes::SystemInformation;
@@ -23,6 +24,7 @@ namespace Sierra
     {
         glfwInit();
 
+        File::Start();
         SystemInformation::Start();
         VK::Initialize({ .sampleRateShading = VK_TRUE, .fillModeNonSolid = VK_TRUE, .samplerAnisotropy = VK_TRUE });
     }

@@ -24,13 +24,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VmaAllocationCreateInfo allocationCreateInfo{};
         allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
         allocationCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
-        allocationCreateInfo.memoryTypeBits = std::numeric_limits<uint>::max();
+        allocationCreateInfo.memoryTypeBits = UINT_MAX;
         allocationCreateInfo.priority = 0.5f;
 
         // Create and allocate buffer
         VK_ASSERT(
             vmaCreateBuffer(VK::GetMemoryAllocator(), &vkBufferCreateInfo, &allocationCreateInfo, &vkBuffer, &vmaBufferAllocation, nullptr),
-            fmt::format("Failed to create buffer with size of [{0}] for [{1}] usage", memorySize, (int) bufferUsage)
+            fmt::format("Failed to create buffer with size of [{0}] for [{1}] usage", memorySize, static_cast<uint32_t>(bufferUsage))
         );
     }
 

@@ -46,6 +46,7 @@ You can then proceed and run the program in your IDE. Make sure you are in <b>RE
         <li><a href="https://fmt.dev/latest/index.html">FMT</a> - For fast and easy string formatting.</li>
         <!--<li><a href="https://github.com/TheNitesWhoSay/RareCpp">RareCpp</a> - For reflections and serialization.</li>-->
         <li><a href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/onetbb.html#gs.m2vcgt">TBB</a> - For easier and guaranteed-to-be-supported threading.</li>
+        <li><a href="https://github.com/gpakosz/whereami">Whereami</a> - For the retrieval of the compiled exectuble's location within the file system.</li>
         <li><a href="https://ih1.redbubble.net/image.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg">My Brain</a> - There is not much left of it, actually...</li>
     </ul>
     <br>
@@ -60,7 +61,7 @@ You can then proceed and run the program in your IDE. Make sure you are in <b>RE
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 15,023</p>
-<p align="center" id="LastUpdated">Last updated: 10/02/2023</p>
+<p align="center" id="LinesCounter">Total lines of code: 16,024</p>
+<p align="center" id="LastUpdated">Last updated: 18/02/2023</p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

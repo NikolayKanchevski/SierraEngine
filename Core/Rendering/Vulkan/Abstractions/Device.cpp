@@ -412,12 +412,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         VkSampleCountFlags countFlags = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
 
-        if ((countFlags & (int) Sampling::MSAAx64) != 0) return Sampling::MSAAx64;
-        if ((countFlags & (int) Sampling::MSAAx32) != 0) return Sampling::MSAAx32;
-        if ((countFlags & (int) Sampling::MSAAx16) != 0) return Sampling::MSAAx16;
-        if ((countFlags & (int) Sampling::MSAAx8) != 0) return Sampling::MSAAx8;
-        if ((countFlags & (int) Sampling::MSAAx4) != 0) return Sampling::MSAAx4;
-        if ((countFlags & (int) Sampling::MSAAx2) != 0) return Sampling::MSAAx2;
+        if ((countFlags & static_cast<uint>(Sampling::MSAAx64)) != 0) return Sampling::MSAAx64;
+        if ((countFlags & static_cast<uint>(Sampling::MSAAx32)) != 0) return Sampling::MSAAx32;
+        if ((countFlags & static_cast<uint>(Sampling::MSAAx16)) != 0) return Sampling::MSAAx16;
+        if ((countFlags & static_cast<uint>(Sampling::MSAAx8)) != 0) return Sampling::MSAAx8;
+        if ((countFlags & static_cast<uint>(Sampling::MSAAx4)) != 0) return Sampling::MSAAx4;
+        if ((countFlags & static_cast<uint>(Sampling::MSAAx2)) != 0) return Sampling::MSAAx2;
 
         return Sampling::MSAAx1;
     }

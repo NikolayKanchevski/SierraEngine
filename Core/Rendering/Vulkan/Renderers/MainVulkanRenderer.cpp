@@ -4,14 +4,20 @@
 
 #include "MainVulkanRenderer.h"
 
-#include "../../UI/ImGuiCore.h"
 #include "../../Math/MatrixUtilities.h"
 #include "../../../../Engine/Classes/Time.h"
 #include "../../../../Engine/Components/Camera.h"
 #include "../../../Engine/Components/WorldManager.h"
 #include "../../../../Engine/Components/MeshRenderer.h"
 
-using Rendering::UI::ImGuiCore;
+#define USE_THREADED_FOR_EACH
+
+#ifdef USE_THREADED_FOR_EACH
+    #define FOR_EACH_LOOP tbb::parallel_for_each
+#else
+    #define FOR_EACH_LOOP std::for_each
+#endif
+
 using namespace Sierra::Engine::Components;
 
 namespace Sierra::Core::Rendering::Vulkan::Renderers
@@ -35,12 +41,12 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
     void MainVulkanRenderer::Update()
     {
         // Update camera
-        Camera *camera = Camera::GetMainCamera();
+        Camera &camera = Camera::GetMainCamera();
 
         // Update uniform data
         auto &sceneUniformData = scenePipeline->GetUniformBufferData();
-        sceneUniformData.view = camera->GetViewMatrix();
-        sceneUniformData.projection = camera->GetProjectionMatrix();
+        sceneUniformData.view = camera.GetViewMatrix();
+        sceneUniformData.projection = camera.GetProjectionMatrix();
 
         auto &skyboxUniformData = skyboxPipeline->GetUniformBufferData();
         skyboxUniformData.view = sceneUniformData.view;
@@ -55,7 +61,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         storageData.pointLightCount = PointLight::GetPointLightCount();
 
         auto enttMeshView = World::GetAllComponentsOfType<MeshRenderer>();
-        tbb::parallel_for_each(enttMeshView.begin(), enttMeshView.end(),
+        FOR_EACH_LOOP(enttMeshView.begin(), enttMeshView.end(),
             [&enttMeshView, &storageData](auto &enttEntity)
             {
                 MeshRenderer &meshRenderer = enttMeshView.get<MeshRenderer>(enttEntity);
@@ -64,7 +70,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         );
 
         auto enttDirectionalLightView = World::GetAllComponentsOfType<DirectionalLight>();
-        tbb::parallel_for_each(enttDirectionalLightView.begin(), enttDirectionalLightView.end(),
+        FOR_EACH_LOOP(enttDirectionalLightView.begin(), enttDirectionalLightView.end(),
            [&enttDirectionalLightView, &storageData](auto &enttEntity)
            {
                DirectionalLight &directionalLight = enttDirectionalLightView.get<DirectionalLight>(enttEntity);
@@ -73,7 +79,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         );
 
         auto enttPointLightView = World::GetAllComponentsOfType<PointLight>();
-        tbb::parallel_for_each(enttPointLightView.begin(), enttPointLightView.end(),
+        FOR_EACH_LOOP(enttPointLightView.begin(), enttPointLightView.end(),
             [&enttPointLightView, &storageData](auto &enttEntity)
             {
                 PointLight &pointLight = enttPointLightView.get<PointLight>(enttEntity);
@@ -84,14 +90,18 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
     void MainVulkanRenderer::DrawUI()
     {
+        ViewportPanel().DrawUI();
+
+        GUI::BeginWindow("Renderer's Properties", nullptr, ImGuiWindowFlags_NoNav);
+
         // Shading type dropdown
         {
             static uint currentShadingTypeIndex = 0;
             static const char* shadingTypes[] = {"Shaded", "Wireframe" };
 
-            ImGui::CustomLabel("Renderer Shading:");
+            GUI::CustomLabel("Renderer Shading:");
             ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
-            if (ImGui::Dropdown("##RENDERER_SHADING_DROPDOWN", currentShadingTypeIndex, shadingTypes, 2))
+            if (GUI::Dropdown("##RENDERER_SHADING_DROPDOWN", currentShadingTypeIndex, shadingTypes, 2))
             {
                 VK::GetDevice()->WaitUntilIdle();
 
@@ -104,12 +114,12 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         {
             static uint currentShaderIndex = 2;
 
-            static const char* shaderPaths[] { "Shaders/standard_diffuse_fragment.frag.spv", "Shaders/standard_specular_fragment.frag.spv", "Shaders/blinn-phong-fragment.frag.spv" };
+            static String shaderPaths[] { File::OUTPUT_FOLDER_PATH + "Shaders/standard_diffuse_fragment.frag.spv", File::OUTPUT_FOLDER_PATH + "Shaders/standard_specular_fragment.frag.spv", File::OUTPUT_FOLDER_PATH + "Shaders/blinn-phong-fragment.frag.spv" };
             static const char* shaderTypes[] = {"Diffuse", "Specular", "Blinn-Phong" };
 
-            ImGui::CustomLabel("Renderer's Fragment Shader:");
+            GUI::CustomLabel("Renderer's Fragment Shader:");
             ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
-            if (ImGui::Dropdown("##RENDERER_FRAGMENT_SHADER_DROPDOWN", currentShaderIndex, shaderTypes, 3))
+            if (GUI::Dropdown("##RENDERER_FRAGMENT_SHADER_DROPDOWN", currentShaderIndex, shaderTypes, 3))
             {
                     scenePipeline->OverloadShader(Shader::Create({
                         .filePath = shaderPaths[currentShaderIndex],
@@ -123,12 +133,12 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             static uint currentMSAATypeIndex = 0;
             static const char* msaaTypes[] = {"None", "MSAAx2", "MSAAx4", "MSAAx8", "MSAAx16", "MSAAx32", "MSAAx64" };
 
-            uint maximumSampling = (uint) VK::GetDevice()->GetHighestMultisampling();
+            uint maximumSampling = static_cast<uint32_t>(VK::GetDevice()->GetHighestMultisampling());
             static const bool deactivatedFlags[] = { 1 > maximumSampling, 2 > maximumSampling, 4 > maximumSampling, 8 > maximumSampling, 16 > maximumSampling, 32 > maximumSampling, 64 > maximumSampling };
 
-            ImGui::CustomLabel("Renderer Anti-Aliasing:");
+            GUI::CustomLabel("Renderer Anti-Aliasing:");
             ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
-            if (ImGui::Dropdown("##RENDERER_ANTI_ALIASING_DROPDOWN", currentMSAATypeIndex, msaaTypes, 7, deactivatedFlags))
+            if (GUI::Dropdown("##RENDERER_ANTI_ALIASING_DROPDOWN", currentMSAATypeIndex, msaaTypes, 7, deactivatedFlags))
             {
                 VK::GetDevice()->WaitUntilIdle();
 
@@ -144,6 +154,10 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
                 CreateOffscreenDescriptorSets();
             }
         }
+
+        GUI::EndWindow();
+
+        VulkanRenderer::DrawUI();
     }
 
     void MainVulkanRenderer::Render()
@@ -248,6 +262,14 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
     void MainVulkanRenderer::InitializeOffscreenRendering()
     {
+        // Set what UI panels to use
+        PushUIPanel<RendererViewportPanel>(*this);
+        PushUIPanel<PropertiesPanel>();
+        PushUIPanel<HierarchyPanel>();
+        PushUIPanel<DebugPanel>(*this);
+        PushUIPanel<DetailedDebugPanel>(*this);
+        PushUIPanel<GamePadDebugPanel>();
+
         CreateSceneRenderingObjects();
         CreateSkyboxRenderingObjects();
 
@@ -265,8 +287,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         .Build();
 
         // Create shaders for skybox pipeline
-        auto skyboxVertexShader = Shader::Create({ .filePath = "Shaders/skybox_vertex.vert.spv", .shaderType = ShaderType::VERTEX });
-        auto skyboxFragmentShader = Shader::Create({ .filePath = "Shaders/skybox_fragment.frag.spv", .shaderType = ShaderType::FRAGMENT });
+        auto skyboxVertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/skybox_vertex.vert.spv", .shaderType = ShaderType::VERTEX });
+        auto skyboxFragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/skybox_fragment.frag.spv", .shaderType = ShaderType::FRAGMENT });
 
         // Create pipeline
         skyboxPipeline = SkyboxPipeline::CreateFromAnotherPipeline({
@@ -351,8 +373,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         offscreenImageDescriptorSets.resize(maxConcurrentFrames);
 
         // Create shaders for scene pipeline
-        auto sceneVertexShader = Shader::Create({ .filePath = VK::GetDevice()->GetDescriptorIndexingSupported() ? "Shaders/blinn-phong-vertex_bindless.vert.spv" : "Shaders/blinn-phong-vertex.vert.spv", .shaderType = ShaderType::VERTEX });
-        auto sceneFragmentShader = Shader::Create({ .filePath = VK::GetDevice()->GetDescriptorIndexingSupported() ? "Shaders/blinn-phong-fragment_bindless.frag.spv" : "Shaders/blinn-phong-fragment.frag.spv", .shaderType = ShaderType::FRAGMENT });
+        auto sceneVertexShader = Shader::Create({ .filePath = VK::GetDevice()->GetDescriptorIndexingSupported() ? File::OUTPUT_FOLDER_PATH + "Shaders/blinn-phong-vertex_bindless.vert.spv" : File::OUTPUT_FOLDER_PATH + "Shaders/blinn-phong-vertex.vert.spv", .shaderType = ShaderType::VERTEX });
+        auto sceneFragmentShader = Shader::Create({ .filePath = VK::GetDevice()->GetDescriptorIndexingSupported() ? File::OUTPUT_FOLDER_PATH + "Shaders/blinn-phong-fragment_bindless.frag.spv" : File::OUTPUT_FOLDER_PATH + "Shaders/blinn-phong-fragment.frag.spv", .shaderType = ShaderType::FRAGMENT });
 
         // Create pipeline
         scenePipeline = ScenePipeline::Create({

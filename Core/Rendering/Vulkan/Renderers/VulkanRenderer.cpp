@@ -23,8 +23,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
                 .window = window,
                 .swapchain = swapchain,
                 .fontCreateInfos = {
-                { .fontFilePath = "Fonts/PTSans.ttf", .fontSize = 18.0f },
-                { .fontFilePath = "Fonts/OpenSans-Bold.ttf", .fontSize = 18.0f },
+                { .fontFilePath = File::OUTPUT_FOLDER_PATH + "Fonts/PTSans.ttf", .fontSize = 18.0f },
+                { .fontFilePath = File::OUTPUT_FOLDER_PATH + "Fonts/OpenSans-Bold.ttf", .fontSize = 18.0f },
                 },
                 .createImGuizmoLayer = createInfo.createImGuizmoLayer
             });
@@ -57,6 +57,10 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
     void VulkanRenderer::Render()
     {
         window->Update();
+
+        Update();
+
+        DrawUI();
 
         if (!prepared)
         {

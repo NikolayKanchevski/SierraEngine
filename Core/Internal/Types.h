@@ -47,6 +47,7 @@ using SharedPtr = std::shared_ptr<T>;
 typedef std::string String;
 typedef std::string_view StringView;
 typedef std::function<void()> Callback;
+#define NO_CHANGE std::nullopt
 
 // === Deprecated === //
 // template<class T, size_t Size>

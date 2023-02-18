@@ -12,9 +12,12 @@
 
 #include "../../Version.h"
 #include "Abstractions/Texture.h"
+#include "../../../Engine/Classes/File.h"
 
 #define VK_VERSION VK_API_VERSION_1_1
 #define MAX_IMGUI_DESCRIPTOR_COUNT 2000
+
+using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -71,7 +74,7 @@ namespace Sierra::Core::Rendering::Vulkan
         }
 
         // Check whether all extensions are supported
-        ASSERT_WARNING_IF(!ExtensionsSupported(extensions), "Some requested extensions are not supported. They have been automatically disabled, but this could lead to issues");
+        ASSERT_WARNING_IF(!ExtensionsSupported(extensions), "Some requested extensions are not supported. They have been automatically disabled but this could lead to issues");
 
         // Set up m_Instance creation info
         VkInstanceCreateInfo instanceCreateInfo{};
@@ -212,7 +215,7 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         // Create default diffuse texture
         Texture::Create({
-            .filePath = "Textures/Null/DiffuseNull.jpg",
+            .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/DiffuseNull.jpg",
             .textureType = TEXTURE_TYPE_DIFFUSE,
             .samplerCreateInfo {
                 .applyBilinearFiltering = false
@@ -221,19 +224,19 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Create default specular texture
         Texture::Create({
-            .filePath = "Textures/Null/SpecularNull.jpg",
+            .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/SpecularNull.jpg",
             .textureType = TEXTURE_TYPE_SPECULAR
         }, true);
 
         // Create default specular texture
         Texture::Create({
-            .filePath = "Textures/Null/NormalMapNull.jpg",
+            .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/NormalMapNull.jpg",
             .textureType = TEXTURE_TYPE_NORMAL_MAP
         }, true);
 
         // Create default height map texture
         Texture::Create({
-            .filePath = "Textures/Null/HeightMapNull.jpg",
+            .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/HeightMapNull.jpg",
             .textureType = TEXTURE_TYPE_HEIGHT_MAP
         }, true);
     }

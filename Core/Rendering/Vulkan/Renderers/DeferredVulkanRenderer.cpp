@@ -19,13 +19,21 @@
 
 #define G_BUFFER_IMAGE_FORMAT ImageFormat::R16G16B16A16_SFLOAT
 
+#define USE_THREADED_FOR_EACH
+
+#ifdef USE_THREADED_FOR_EACH
+    #define FOR_EACH_LOOP tbb::parallel_for_each
+#else
+    #define FOR_EACH_LOOP std::for_each
+#endif
+
 namespace Sierra::Core::Rendering::Vulkan::Renderers
 {
 
     /* --- CONSTRUCTORS --- */
 
     DeferredVulkanRenderer::DeferredVulkanRenderer(const VulkanRendererCreateInfo &createInfo)
-        : VulkanRenderer(createInfo)
+            : VulkanRenderer(createInfo)
     {
         PROFILE_FUNCTION();
 
@@ -36,14 +44,22 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
     void DeferredVulkanRenderer::InitializeRenderer()
     {
+        // Set what UI panels to use
+        PushUIPanel<RendererViewportPanel>(*this);
+        PushUIPanel<PropertiesPanel>();
+        PushUIPanel<HierarchyPanel>();
+        PushUIPanel<DebugPanel>(*this);
+        PushUIPanel<DetailedDebugPanel>(*this);
+        PushUIPanel<GamePadDebugPanel>();
+
         // Create texture sampler to use when passing data to shaders
         textureSampler = Sampler::Create({ .maxAnisotropy = 1.0f, .applyBilinearFiltering = true });
 
         // Create (world) position buffer image
         positionBuffer = Image::Create({
+            .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .format = G_BUFFER_IMAGE_FORMAT,
             .sampling = Sampling::MSAAx1,
-            .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .usageFlags = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::INPUT_ATTACHMENT
         });
 
@@ -51,9 +67,9 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         // Create diffuse image
         diffuseBuffer = Image::Create({
+            .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .format = G_BUFFER_IMAGE_FORMAT,
             .sampling = Sampling::MSAAx1,
-            .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .usageFlags = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::INPUT_ATTACHMENT
         });
 
@@ -61,9 +77,9 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         // Create specular and shininess image
         specularAndShininessBuffer = Image::Create({
+            .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .format = ImageFormat::R8G8_UNORM,
             .sampling = Sampling::MSAAx1,
-            .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .usageFlags = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::INPUT_ATTACHMENT
         });
 
@@ -71,9 +87,9 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         // Create normals data image
         normalBuffer = Image::Create({
+            .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .format = G_BUFFER_IMAGE_FORMAT,
             .sampling = Sampling::MSAAx1,
-            .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .usageFlags = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::INPUT_ATTACHMENT
         });
 
@@ -81,9 +97,9 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         // Create depth stencil image
         depthStencilBuffer = Image::Create({
+            .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .format = VK::GetDevice()->GetBestDepthImageFormat(),
             .sampling = Sampling::MSAAx1,
-            .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .usageFlags = ImageUsage::DEPTH_STENCIL_ATTACHMENT | ImageUsage::INPUT_ATTACHMENT
         });
 
@@ -91,9 +107,9 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         depthStencilBuffer->TransitionLayout(ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL);
 
         renderedImage = Image::Create({
+            .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .format = G_BUFFER_IMAGE_FORMAT,
             .sampling = Sampling::MSAAx1,
-            .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .usageFlags = ImageUsage::COLOR_ATTACHMENT | ImageUsage::INPUT_ATTACHMENT | ImageUsage::SAMPLED
         });
 
@@ -102,7 +118,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         // Set up render pass attachments
         const std::vector<RenderPassAttachment> defferedRenderPassAttachments
         {
-            // Position buffer attachment
+                // Position buffer attachment
             {
                 .imageAttachment = positionBuffer,
                 .loadOp = LoadOp::CLEAR,
@@ -223,21 +239,21 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         VK::m_Instance.descriptorSetLayout = sceneDescriptorSetLayout;
 
         // Load scene shaders
-        auto vertexShader = Shader::Create({ .filePath = "Shaders/deferred_subpass_0.vert.spv", .shaderType = ShaderType::VERTEX });
-        auto fragmentShader = Shader::Create({ .filePath = "Shaders/deferred_subpass_0.frag.spv", .shaderType = ShaderType::FRAGMENT });
+        auto vertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/deferred_subpass_0.vert.spv", .shaderType = ShaderType::VERTEX });
+        auto fragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/deferred_subpass_0.frag.spv", .shaderType = ShaderType::FRAGMENT });
 
         // Create scene renderer pipeline
         scenePipeline = ScenePipeline::Create({
             .maxConcurrentFrames = maxConcurrentFrames,
-            .sampling = Sampling::MSAAx1,
             .vertexAttributes = { VertexAttribute::POSITION, VertexAttribute::NORMAL, VertexAttribute::TEXTURE_COORDINATE },
+            .shaders = { vertexShader, fragmentShader },
             .renderPass = deferredRenderPass,
             .subpasss = 0,
+            .createDepthBuffer = true,
             .descriptorSetLayout = sceneDescriptorSetLayout,
-            .shaders = { vertexShader, fragmentShader },
-            .shadingType = ShadingType::FILL,
             .colorAttachmentCount = 4,
-            .createDepthBuffer = true
+            .sampling = Sampling::MSAAx1,
+            .shadingType = ShadingType::FILL
         });
 
         // Set up merging descriptor layout
@@ -262,21 +278,21 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         mergingDescriptorSet->Allocate();
 
         // Load merging shaders
-        vertexShader = Shader::Create({ .filePath = "Shaders/deferred_subpass_1.vert.spv", .shaderType = ShaderType::VERTEX });
-        fragmentShader = Shader::Create({ .filePath = "Shaders/deferred_subpass_1.frag.spv", .shaderType = ShaderType::FRAGMENT });
+        vertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/deferred_subpass_1.vert.spv", .shaderType = ShaderType::VERTEX });
+        fragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/deferred_subpass_1.frag.spv", .shaderType = ShaderType::FRAGMENT });
 
         // Create scene renderer pipeline
         mergingPipeline = MergingPipeline::CreateFromAnotherPipeline({
             .maxConcurrentFrames = maxConcurrentFrames,
-            .sampling = Sampling::MSAAx1,
             .vertexAttributes = {  },
+            .shaders = { vertexShader, fragmentShader },
             .renderPass = deferredRenderPass,
             .subpasss = 1,
+            .createDepthBuffer = false,
             .descriptorSetLayout = mergingDescriptorSetLayout,
-            .shaders = { vertexShader, fragmentShader },
-            .shadingType = ShadingType::FILL,
             .colorAttachmentCount = 1,
-            .createDepthBuffer = false
+            .sampling = Sampling::MSAAx1,
+            .shadingType = ShadingType::FILL
         }, scenePipeline, PIPELINE_COPY_OP_STORAGE_BUFFER);
 
         // Create descriptor sets to rendered images
@@ -298,8 +314,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         .Build();
 
         // Create shaders for skybox pipeline
-        auto skyboxVertexShader = Shader::Create({ .filePath = "Shaders/deferred_subpass_2.vert.spv", .shaderType = ShaderType::VERTEX });
-        auto skyboxFragmentShader = Shader::Create({ .filePath = "Shaders/deferred_subpass_2.frag.spv", .shaderType = ShaderType::FRAGMENT });
+        auto skyboxVertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/deferred_subpass_2.vert.spv", .shaderType = ShaderType::VERTEX });
+        auto skyboxFragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/deferred_subpass_2.frag.spv", .shaderType = ShaderType::FRAGMENT });
 
         // Create pipeline
         skyboxPipeline = SkyboxPipeline::CreateFromAnotherPipeline({
@@ -309,10 +325,10 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             .renderPass = deferredRenderPass,
             .subpasss = 2,
             .descriptorSetLayout = skyboxDescriptorSetLayout,
+            .colorAttachmentCount = 1,
             .sampling = Sampling::MSAAx1,
             .cullMode = CullMode::FRONT,
             .shadingType = ShadingType::FILL,
-            .colorAttachmentCount = 1,
         }, scenePipeline, PIPELINE_COPY_OP_UNIFORM_BUFFER);
 
         std::vector<VertexP> cubeVertices =
@@ -359,12 +375,12 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
     void DeferredVulkanRenderer::Update()
     {
         // Update camera
-        Camera *camera = Camera::GetMainCamera();
+        Camera &camera = Camera::GetMainCamera();
 
         // Update uniform data
         auto &sceneUniformData = scenePipeline->GetUniformBufferData();
-        sceneUniformData.view = camera->GetViewMatrix();
-        sceneUniformData.projection = camera->GetProjectionMatrix();
+        sceneUniformData.view = camera.GetViewMatrix();
+        sceneUniformData.projection = camera.GetProjectionMatrix();
 
         // Update storage data
         auto &storageData = scenePipeline->GetStorageBufferData();
@@ -372,31 +388,25 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         storageData.pointLightCount = PointLight::GetPointLightCount();
 
         auto enttMeshView = World::GetAllComponentsOfType<MeshRenderer>();
-        tbb::parallel_for_each(enttMeshView.begin(), enttMeshView.end(),
-           [&enttMeshView, &storageData](auto &enttEntity)
-           {
-               MeshRenderer &meshRenderer = enttMeshView.get<MeshRenderer>(enttEntity);
-               storageData.objectDatas[meshRenderer.GetMeshID()].model = meshRenderer.GetModelMatrix();
-           }
-        );
+        FOR_EACH_LOOP(enttMeshView.begin(), enttMeshView.end(), [&enttMeshView, &storageData](auto &enttEntity)
+        {
+            MeshRenderer &meshRenderer = enttMeshView.get<MeshRenderer>(enttEntity);
+            storageData.objectDatas[meshRenderer.GetMeshID()].model = meshRenderer.GetModelMatrix();
+        });
 
         auto enttDirectionalLightView = World::GetAllComponentsOfType<DirectionalLight>();
-        tbb::parallel_for_each(enttDirectionalLightView.begin(), enttDirectionalLightView.end(),
-           [&enttDirectionalLightView, &storageData](auto &enttEntity)
-           {
-               DirectionalLight &directionalLight = enttDirectionalLightView.get<DirectionalLight>(enttEntity);
-               storageData.directionalLights[directionalLight.GetID()] = directionalLight;
-           }
-        );
+        FOR_EACH_LOOP(enttDirectionalLightView.begin(), enttDirectionalLightView.end(), [&enttDirectionalLightView, &storageData](auto &enttEntity)
+        {
+            DirectionalLight &directionalLight = enttDirectionalLightView.get<DirectionalLight>(enttEntity);
+            storageData.directionalLights[directionalLight.GetID()] = directionalLight;
+        });
 
         auto enttPointLightView = World::GetAllComponentsOfType<PointLight>();
-        tbb::parallel_for_each(enttPointLightView.begin(), enttPointLightView.end(),
-           [&enttPointLightView, &storageData](auto &enttEntity)
-           {
-               PointLight &pointLight = enttPointLightView.get<PointLight>(enttEntity);
-               storageData.pointLights[pointLight.GetID()] = pointLight;
-           }
-        );
+        FOR_EACH_LOOP(enttPointLightView.begin(), enttPointLightView.end(), [&enttPointLightView, &storageData](auto &enttEntity)
+        {
+            PointLight &pointLight = enttPointLightView.get<PointLight>(enttEntity);
+            storageData.pointLights[pointLight.GetID()] = pointLight;
+        });
 
         float timeAngle = std::fmod(Time::GetUpTime(), 360.0f) * 0.8f;
         skyboxPipeline->GetPushConstantData().model = MatrixUtilities::CreateModel({ 0, 0, 0 }, { timeAngle, 0.0f, 0.0f });
@@ -404,15 +414,20 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
     void DeferredVulkanRenderer::DrawUI()
     {
+        ViewportPanel().DrawUI();
+
+        GUI::BeginWindow("Renderer's Properties", nullptr, ImGuiWindowFlags_NoNav);
         // Rendered image type dropdown
         {
             static uint currentRenderedImageValue = RenderedImageValue::RenderedImage;
-            static const char* renderedImageValueTypes[] = { "Final Render", "Position Buffer", "Diffuse Buffer", "Specular Buffer", "Shininess Buffer", "Normal Buffer", "Depth Buffer" };
+            static const char *renderedImageValueTypes[] = {"Final Render", "Position Buffer", "Diffuse Buffer",
+                                                            "Specular Buffer", "Shininess Buffer", "Normal Buffer",
+                                                            "Depth Buffer"};
 
-            ImGui::CustomLabel("Renderer Image Output:");
+            GUI::CustomLabel("Renderer Image Output:");
             ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
-            if (ImGui::Dropdown("##DEFFERED_VULKAN_RENDERER_RENDERED_IMGAGE_TYPE_DROPDOWN", currentRenderedImageValue, renderedImageValueTypes, 7))
-            {
+            if (GUI::Dropdown("##DEFFERED_VULKAN_RENDERER_RENDERED_IMGAGE_TYPE_DROPDOWN", currentRenderedImageValue,
+                              renderedImageValueTypes, 7)) {
                 mergingPipeline->GetPushConstantData().renderedImageValue = (RenderedImageValue) currentRenderedImageValue;
             }
         }
@@ -420,18 +435,22 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         // Shading type dropdown
         {
             static uint currentShadingTypeIndex = 0;
-            static const char* shadingTypes[] = {"Shaded", "Wireframe" };
+            static const char *shadingTypes[] = {"Shaded", "Wireframe"};
 
-            ImGui::CustomLabel("Renderer Shading:");
+            GUI::CustomLabel("Renderer Shading:");
             ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
-            if (ImGui::Dropdown("##DEFFERED_VULKAN_RENDERER_SHADING_TYPE_DROPDOWN", currentShadingTypeIndex, shadingTypes, 2))
-            {
+            if (GUI::Dropdown("##DEFFERED_VULKAN_RENDERER_SHADING_TYPE_DROPDOWN", currentShadingTypeIndex,
+                              shadingTypes, 2)) {
                 VK::GetDevice()->WaitUntilIdle();
 
                 scenePipeline->GetCreateInfo().shadingType = (ShadingType) currentShadingTypeIndex;
                 scenePipeline->Recreate();
             }
         }
+
+        GUI::EndWindow();
+
+        VulkanRenderer::DrawUI();
     }
 
     void DeferredVulkanRenderer::Render()
@@ -479,7 +498,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
             // Use either bindless or bind*full* descriptor set if not supported
             scenePipeline->BindDescriptorSets(
-                commandBuffer->GetVulkanCommandBuffer(),{ meshRenderer.GetDescriptorSet() }, currentFrame
+                    commandBuffer->GetVulkanCommandBuffer(), { meshRenderer.GetDescriptorSet() }, currentFrame
             );
 
             // Draw using the index buffer to prevent vertex re-usage
@@ -490,7 +509,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         mergingPipeline->Bind(commandBuffer->GetVulkanCommandBuffer());
 
-        mergingPipeline->BindDescriptorSets(commandBuffer->GetVulkanCommandBuffer(), {mergingDescriptorSet->GetVulkanDescriptorSet() }, currentFrame);
+        mergingPipeline->BindDescriptorSets(commandBuffer->GetVulkanCommandBuffer(), { mergingDescriptorSet->GetVulkanDescriptorSet() }, currentFrame);
 
         mergingPipeline->PushConstants(commandBuffer->GetVulkanCommandBuffer());
 

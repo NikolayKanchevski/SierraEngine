@@ -38,7 +38,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         String name;
         TextureType textureType = TEXTURE_TYPE_NONE;
-        // TODO: Fix mip mapping
         bool mipMappingEnabled = false;
 
         SamplerCreateInfo samplerCreateInfo{};
@@ -48,7 +47,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Texture(stbi_uc *stbImage, uint width, uint height, uint givenColorChannelsCount, const TextureCreateInfo& textureCreateInfo);
+        Texture(stbi_uc *stbImage, uint width, uint height, uint givenColorChannelsCount, TextureCreateInfo &textureCreateInfo);
         static SharedPtr<Texture> Create(TextureCreateInfo textureCreateInfo, bool setDefaultTexture = false);
 
         /* --- PROPERTIES --- */
@@ -113,8 +112,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         uint colorChannelsCount;
 
         uint64 memorySize;
-        uint mipMapLevels = 1;
-
         UniquePtr<Sampler> sampler;
 
         UniquePtr<Image> image;
@@ -127,8 +124,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         inline static SharedPtr<Texture> defaultTextures[TOTAL_TEXTURE_TYPES_COUNT];
         inline static std::unordered_map<String, SharedPtr<Texture>> texturePool;
-
-        void GenerateMipMaps();
     };
 
 }

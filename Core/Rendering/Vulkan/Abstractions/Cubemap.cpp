@@ -19,7 +19,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         for (uint i = 6; i--;)
         {
             // Load image data
-            stbiImages[i] = stbi_load(createInfo.filePaths[i], &width, &height, &colorChannelsCount, STBI_rgb_alpha);
+            stbiImages[i] = stbi_load(createInfo.filePaths[i].c_str(), &width, &height, &colorChannelsCount, STBI_rgb_alpha);
 
             // Check if image loading has been successful
             ASSERT_ERROR_FORMATTED_IF(!stbiImages[i], "Failed to load the cubemap file [{0}]", createInfo.filePaths[i]);

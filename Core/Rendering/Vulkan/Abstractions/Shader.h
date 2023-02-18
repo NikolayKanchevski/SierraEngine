@@ -29,6 +29,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         static void DisposePool();
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] inline String GetFilePath() const { return filePath; }
         [[nodiscard]] inline VkShaderModule GetVkShaderModule() const { return shaderModule; }
         [[nodiscard]] inline VkPipelineShaderStageCreateInfo& GetVkShaderStageInfo() { return shaderStageCreateInfo; }
         [[nodiscard]] inline std::vector<char>& GetShaderCode() { return shaderCode; }

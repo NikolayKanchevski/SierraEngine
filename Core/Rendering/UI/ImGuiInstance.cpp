@@ -53,7 +53,8 @@ namespace Sierra::Core::Rendering::UI
             // Load font file
             for (const auto &fontCreateInfo : createInfo.fontCreateInfos)
             {
-                io.Fonts->AddFontFromFileTTF(fontCreateInfo.fontFilePath, fontCreateInfo.fontSize);
+                auto fontData = File::ReadBinaryFile(fontCreateInfo.fontFilePath);
+                io.Fonts->AddFontFromMemoryTTF(fontData.data(), fontData.size(), fontCreateInfo.fontSize);
             }
 
             // Upload font file to shader

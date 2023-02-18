@@ -4,10 +4,6 @@
 
 #include "SystemInformation.h"
 
-#if __APPLE__
-    #include "TargetConditionals.h"
-#endif
-
 namespace Sierra::Engine::Classes
 {
 

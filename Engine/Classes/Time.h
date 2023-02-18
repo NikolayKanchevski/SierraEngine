@@ -25,12 +25,10 @@ namespace Sierra::Engine::Classes
         [[nodiscard]] inline static float const GetUpTime() { return upTime; }
 
     private:
-        static int FPS;
-        static float deltaTime;
-        static float upTime;
-        static double lastFrameTime;
+        static inline uint FPS = 0;
+        static inline float deltaTime = 0;
+        static inline float upTime = 0;
+        static inline double lastFrameTime = 0;
 
-        constexpr static const float FPS_UPDATE_PERIOD = 0.15f;
-        static float fpsUpdateCounter;
     };
 }

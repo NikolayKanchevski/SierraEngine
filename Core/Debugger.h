@@ -176,36 +176,69 @@ public:
 
         std::string nameString = std::string(name);
 
-        uint i = nameString.size();
-        while (true)
+        String templateData = "";
+        uint templateIndex = nameString.find_first_of('<');
+        if (templateIndex < nameString.size())
         {
-            if (nameString[i] == '(')
+            uint endTemplateIndex = nameString.find_first_of('>');
+            templateData = nameString.substr(templateIndex, endTemplateIndex - templateIndex + 1);
+
+            nameString = nameString.substr(0, templateIndex) + nameString.substr(endTemplateIndex + 1, nameString.size() - endTemplateIndex - 1);
+        }
+
+        if (!templateData.empty())
+        {
+            uint leftIndex = 0;
+            uint rightIndex = 0;
+
+            String formattedTemplateData = "";
+            while (rightIndex < templateData.size())
             {
-                uint j = i;
-                uint columnCounter = 0;
+                if (templateData.find(':') >= templateData.size()) break;
 
-                while (columnCounter < 3)
+                if (templateData[rightIndex] == ',' || templateData[rightIndex] == '>')
                 {
-                    j--;
-
-                    if (j == -1)
-                    {
-                        break;
-                    }
-                    else if (nameString[j] == ':')
-                    {
-                        columnCounter++;
-                    }
+                    leftIndex = templateData.substr(0, rightIndex).find_last_of(':') + 1;
+                    formattedTemplateData += templateData.substr(leftIndex, rightIndex - leftIndex) + ", ";
                 }
 
-                j++;
-
-                nameString = nameString.substr(j, i - j + 1) + ')';
-                break;
+                rightIndex++;
             }
 
-            i--;
+            formattedTemplateData = '<' + formattedTemplateData.substr(0, formattedTemplateData.size() - 2  ) + ">::";
+            templateData = formattedTemplateData;
         }
+
+        uint braceIndex = nameString.find_last_of('(');
+
+        uint j = braceIndex;
+        uint columnCounter = 0;
+
+        uint firstColumnIndex = 0;
+        while (columnCounter < 3)
+        {
+            j--;
+
+            if (j == -1)
+            {
+                break;
+            }
+            else if (nameString[j] == ':')
+            {
+                if (firstColumnIndex == 0)
+                {
+                    firstColumnIndex = j + 1;
+                }
+
+                columnCounter++;
+            }
+        }
+
+        nameString = nameString.substr(0, firstColumnIndex) + templateData + nameString.substr(firstColumnIndex, nameString.size() - firstColumnIndex);
+
+        braceIndex += templateData.size();
+
+        nameString = nameString.substr(j + 1, braceIndex - j) + ')';
 
         ASSERT_INFO_FORMATTED("Method {0} took {1}ms", nameString, elapsedTime);
 
