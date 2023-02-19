@@ -70,7 +70,16 @@ target_sources(${PROJECT_NAME} PRIVATE ${RARECPP_SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${RARECPP_DIR})
 
 # Infoware
-set(INFOWARE_USE_OPENCL 1)
+if (WIN32)
+    set(INFOWARE_USE_D3D 1)
+    set(INFOWARE_USE_OPENCL 0)
+    set(INFOWARE_USE_OPENGL 0)
+else()
+    set(INFOWARE_USE_OPENCL 1)
+    set(INFOWARE_USE_D3D 0)
+    set(INFOWARE_USE_OPENGL 0)
+endif()
+
 set(INFOWARE_DIR "${PROJECT_SOURCE_DIR}/Dependencies/Infoware")
 set(INFOWARE_PCI_IDS_PATH "${INFOWARE_DIR}/pcids/pci.ids")
 add_subdirectory(${INFOWARE_DIR})

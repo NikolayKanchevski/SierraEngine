@@ -71,7 +71,7 @@ namespace Sierra::Engine::Classes
 
         if (!FileExists(filePath))
         {
-            ASSERT_WARNING_FORMATTED("Trying to write data to a file with a path of [{0}] but the file does not exist");
+            ASSERT_WARNING_FORMATTED("Trying to write data to a file with a path of [{0}] but the file does not exist", filePath);
             return false;
         }
 
@@ -108,7 +108,7 @@ namespace Sierra::Engine::Classes
 
         if (!FileExists(filePath))
         {
-            ASSERT_WARNING_FORMATTED("Trying to write data to a file with a path of [{0}] but the file does not exist");
+            ASSERT_WARNING_FORMATTED("Trying to write data to a file with a path of [{0}] but the file does not exist", filePath);
             return false;
         }
 
@@ -227,7 +227,11 @@ namespace Sierra::Engine::Classes
             return true;
         }
 
-        return mkdir(directoryPath.c_str(), 0777) == 0;
+        #if defined _MSC_VER
+            return _mkdir(directoryPath.c_str()) == 0;
+        #elif defined __GNUC__
+            return mkdir(directoryPath.c_str(), 0777) == 0;
+        #endif
     }
 
     bool File::CreateDirectory(const String &where, const String &directoryName)
@@ -326,14 +330,13 @@ namespace Sierra::Engine::Classes
 
     String File::FindInSubdirectories(const String &directory, const String &fileName)
     {
-        String fileExtension = fileName.substr(fileName.find_last_of('.') + 1);
-        uSize index = directory.find_last_of('/');
-
         for (std::filesystem::recursive_directory_iterator i(directory), end; i != end; ++i)
         {
             if (!is_directory(i->path()) && i->path().filename() == fileName)
             {
-                return i->path().relative_path().string().substr(index);
+                String path = i->path().relative_path().string();
+                uSize index = path.find_last_of('/');
+                return path.substr(index);
             }
         }
 
@@ -352,7 +355,11 @@ namespace Sierra::Engine::Classes
             wai_getExecutablePath(path, length, &dirnameLength);
 
             path[dirnameLength] = '\0';
-            MODIFY_CONST(String, OUTPUT_FOLDER_PATH, String(path) + '/');
+
+            String pathString = String(path) + '/';
+            std::replace(pathString.begin(), pathString.end(), '\\', '/');
+            MODIFY_CONST(String, OUTPUT_FOLDER_PATH, pathString);
+
             free(path);
         }
         else

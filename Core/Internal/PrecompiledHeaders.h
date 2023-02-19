@@ -38,10 +38,21 @@
     #include <filesystem>
     #include <bitset>
     #include <any>
-    #include <limits>
-    #include <sys/stat.h>
-    #include <unistd.h>
     #include <stdio.h>
+
+    #define NOMINMAX
+    #include <limits>
+
+    #if defined _MSC_VER
+        #include <direct.h>
+    #elif defined __GNUC__
+        #include <sys/types.h>
+        #include <sys/stat.h>
+    #endif
+
+    #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+        #include <unistd.h>
+    #endif
 
     #if __APPLE__
         #include "TargetConditionals.h"

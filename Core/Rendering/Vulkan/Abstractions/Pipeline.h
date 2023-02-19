@@ -275,7 +275,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 std::vector<uint8> cacheData(cacheSize);
                 vkGetPipelineCacheData(VK::GetLogicalDevice(), pipelineCache, &cacheSize, cacheData.data());
 
-                File::WriteBinaryDataToFile(fmt::format(File::INTERNAL_TEMP_FOLDER_PATH + "PipelineCache/PipelineCache_{0}", GetCacheHash()), cacheData, true);
+                File::WriteBinaryDataToFile(File::INTERNAL_TEMP_FOLDER_PATH + "PipelineCache/PipelineCache_" + std::to_string(GetCacheHash()), cacheData, true);
             }
 
             if (pushConstantRange != nullptr)
@@ -627,7 +627,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             if (pipelineCache == VK_NULL_HANDLE)
             {
                 uSize cacheHash = GetCacheHash();
-                String cachePath = fmt::format(File::INTERNAL_TEMP_FOLDER_PATH + "PipelineCache/PipelineCache_{0}", cacheHash);
+                String cachePath = File::INTERNAL_TEMP_FOLDER_PATH + "PipelineCache/PipelineCache_" + std::to_string(cacheHash);
 
                 if (File::FileExists(cachePath))
                 {

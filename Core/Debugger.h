@@ -177,7 +177,7 @@ public:
         std::string nameString = std::string(name);
 
         String templateData = "";
-        uint templateIndex = nameString.find_first_of('<');
+        uint templateIndex = nameString.substr(0, nameString.find_first_of('(')).find_first_of('<');
         if (templateIndex < nameString.size())
         {
             uint endTemplateIndex = nameString.find_first_of('>');

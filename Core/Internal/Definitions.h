@@ -4,8 +4,6 @@
 
 #pragma once
 
-#define NOMINMAX
-
 #define UINT_MAX std::numeric_limits<uint>::max()
 #define UINT_MIN std::numeric_limits<uint>::min()
 
