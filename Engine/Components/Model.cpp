@@ -289,6 +289,8 @@ namespace Sierra::Engine::Classes
 
     void Model::ApplyAssimpMeshTextures(MeshRenderer &meshComponent, aiMaterial *assimpMaterial)
     {
+        using Sierra::Core::Rendering::Vulkan::ImageFormat;
+
         // Check if mesh has a diffuse texture
         for (uint i = assimpMaterial->GetTextureCount(aiTextureType_DIFFUSE); i--;)
         {
@@ -300,6 +302,7 @@ namespace Sierra::Engine::Classes
             auto diffuseTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
                 .textureType = TEXTURE_TYPE_DIFFUSE,
+                .imageFormat = ImageFormat::R8G8B8A8_SRGB,
                 .mipMappingEnabled = true
             });
 
@@ -317,6 +320,7 @@ namespace Sierra::Engine::Classes
             // Create texture
             auto specularTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
+                .imageFormat = ImageFormat::R8_UNORM,
                 .textureType = TEXTURE_TYPE_SPECULAR
             });
 
@@ -334,6 +338,7 @@ namespace Sierra::Engine::Classes
             // Create texture
             auto normalTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
+                .imageFormat = ImageFormat::R8G8B8A8_UNORM,
                 .textureType = TEXTURE_TYPE_NORMAL_MAP
             });
 
@@ -351,6 +356,7 @@ namespace Sierra::Engine::Classes
             // Create texture
             auto heightMapTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
+                .imageFormat = ImageFormat::R8_UNORM,
                 .textureType = TEXTURE_TYPE_HEIGHT_MAP
             });
 

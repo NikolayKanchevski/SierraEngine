@@ -11,6 +11,7 @@
 #include "../Abstractions/OffscreenRenderer.h"
 #include "../../../../Engine/Components/Lighting/PointLight.h"
 #include "../../../../Engine/Components/Lighting/DirectionalLight.h"
+#include "../../RenderingTemplates.h"
 
 using namespace Sierra::Engine::Classes;
 using namespace Sierra::Engine::Components;
@@ -21,38 +22,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
     class MainVulkanRenderer : public VulkanRenderer
     {
     private:
-        struct UniformData
-        {
-            /* Vertex Uniform Data */
-            Matrix4x4 view;
-            Matrix4x4 projection;
-        };
-
-        struct ObjectData
-        {
-            Matrix4x4 model;
-        };
-
-        struct StorageData
-        {
-            ObjectData objectDatas[MAX_MESHES];
-
-            DirectionalLight::ShaderDirectionalLight directionalLights[MAX_DIRECTIONAL_LIGHTS];
-            PointLight::ShaderPointLight pointLights[MAX_POINT_LIGHTS];
-
-            uint directionalLightCount;
-            uint pointLightCount;
-            float _align1_;
-            float _align2_;
-        };
-
-        struct SkyboxPushConstant
-        {
-            glm::mat4x4 model;
-        };
-
-        typedef Pipeline<MeshPushConstant, UniformData, StorageData> ScenePipeline;
-        typedef Pipeline<SkyboxPushConstant, UniformData, Abstractions::NullStorageBuffer> SkyboxPipeline;
+        typedef GraphicsPipeline<MeshPushConstant, UniformData, StorageData> ScenePipeline;
+        typedef GraphicsPipeline<SkyboxPushConstant, UniformData, NullType> SkyboxPipeline;
 
     public:
         /* --- CONSTRUCTORS --- */

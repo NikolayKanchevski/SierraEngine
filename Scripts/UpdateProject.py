@@ -75,6 +75,9 @@ def Main():
 
 def CompileShaders():
 
+    CopyFolder(SHADERS_DIRECTORY, OUTPUT_DIRECTORY + "Shaders/")
+    return
+
     # Find and compile every shader
     for root, dirs, files in os.walk(SHADERS_DIRECTORY):
         for file in os.listdir(root):
@@ -88,6 +91,7 @@ def CompileShaders():
             
             if (fileExtension in SHADER_FILE_EXTENSIONS):
                 PreCompileShader(filePath)
+                CopyFile(filePath, OUTPUT_DIRECTORY + "/Shaders/")
             
 
 def PreCompileShader(shaderFilePath):

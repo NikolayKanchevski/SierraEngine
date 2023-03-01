@@ -11,6 +11,7 @@
 #include <vk_mem_alloc.h>
 
 #include "../../Version.h"
+#include "RenderingUtilities.h"
 #include "Abstractions/Texture.h"
 #include "../../../Engine/Classes/File.h"
 
@@ -45,6 +46,8 @@ namespace Sierra::Core::Rendering::Vulkan
         m_Instance.CreateImGuiDescriptorPool();
 
         m_Instance.CreateDefaultTextures();
+
+        Sampler::Initialize();
     }
 
     /* --- SETTER METHODS --- */
@@ -52,7 +55,6 @@ namespace Sierra::Core::Rendering::Vulkan
     void VK::CreateInstance()
     {
         using namespace Sierra::Engine;
-
 
         // Create application information
         VkApplicationInfo applicationInfo{};
@@ -248,6 +250,8 @@ namespace Sierra::Core::Rendering::Vulkan
         vkDeviceWaitIdle(m_Instance.device->GetLogicalDevice());
 
         ImGui_ImplVulkan_Shutdown();
+
+        Sampler::Shutdown();
 
         vkDestroyDescriptorPool(m_Instance.GetLogicalDevice(), m_Instance.imGuiDescriptorPool, nullptr);
 

@@ -11,6 +11,7 @@
 
 namespace Sierra::Core::Rendering
 {
+
     struct VertexP
     {
         Vector3 position;
@@ -27,6 +28,8 @@ namespace Sierra::Core::Rendering
     {
         Matrix4x4 view;
         Matrix4x4 projection;
+        Matrix4x4 inverseView;
+        Matrix4x4 inverseProjection;
     };
 
     struct ObjectData

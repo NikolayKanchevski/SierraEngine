@@ -8,6 +8,8 @@
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
+    const UniquePtr<Sampler> Sampler::Default;
+
     /* --- CONSTRUCTORS --- */
 
     Sampler::Sampler(const SamplerCreateInfo &samplerCreateInfo)
@@ -45,6 +47,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     UniquePtr<Sampler> Sampler::Create(const SamplerCreateInfo createInfo)
     {
         return std::make_unique<Sampler>(createInfo);
+    }
+
+    /* --- POLLING METHODS --- */
+
+    void Sampler::Initialize()
+    {
+        MODIFY_CONST(UniquePtr<Sampler>, Default, Sampler::Create({ .applyBilinearFiltering = false }));
+    }
+
+    void Sampler::Shutdown()
+    {
+        Default->Destroy();
     }
 
     /* --- DESTRUCTOR --- */

@@ -35,7 +35,7 @@ namespace Sierra::Engine::Components
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline SharedPtr<Mesh>& GetMesh() { return coreMesh; }
         [[nodiscard]] inline uint GetMeshID() const { return meshID; }
-        [[nodiscard]] inline VkDescriptorSet GetDescriptorSet() const { return descriptorSet->GetVulkanDescriptorSet(); }
+        [[nodiscard]] inline UniquePtr<DescriptorSet>& GetDescriptorSet() { return descriptorSet; }
         [[nodiscard]] inline SharedPtr<Texture> GetTexture(const TextureType textureType) const { return textures[textureType]; }
         [[nodiscard]] inline SharedPtr<Texture> *GetTextures() { return textures; }
         [[nodiscard]] Matrix4x4 GetModelMatrix() const;
@@ -48,7 +48,7 @@ namespace Sierra::Engine::Components
         uint meshID;
         SharedPtr<Mesh> coreMesh = nullptr;
 
-        SharedPtr<DescriptorSet> descriptorSet;
+        UniquePtr<DescriptorSet> descriptorSet;
         SharedPtr<Texture> textures[TOTAL_TEXTURE_TYPES_COUNT];
 
         Binary meshTexturesPresence = 0;

@@ -9,10 +9,9 @@
 #include "../Abstractions/Abstractions.h"
 #include "../../UI/Panels/UIPanels.h"
 
-using namespace Rendering::UI;
-
 namespace Sierra::Core::Rendering::Vulkan::Renderers
 {
+    using namespace UI;
 
     struct VulkanRendererCreateInfo
     {

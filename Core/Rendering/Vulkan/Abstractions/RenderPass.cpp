@@ -132,14 +132,16 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         std::vector<VkSubpassDependency> dependencies;
         if (subpassInfos.size() != 1)
         {
-            dependencies.resize(subpassInfos.size() + 1);
-            VkSubpassDependency& firstDependency = dependencies[0];
+            dependencies.resize(subpassInfos.size() +  1);
+
+            VkSubpassDependency &firstDependency = dependencies[0];
             firstDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
             firstDependency.dstSubpass = 0;
             firstDependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
             firstDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
             firstDependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
             firstDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            firstDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
             firstDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
             for (uSize i = 1; i < (dependencies.size() - 1); i++)
@@ -153,7 +155,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 dependencies[i].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
             }
 
-            VkSubpassDependency& lastDependency = *(dependencies.end() - 1);
+            VkSubpassDependency &lastDependency = *(dependencies.end() - 1);
             lastDependency.srcSubpass = subpassInfos.size() - 1;
             lastDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
             lastDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -208,7 +210,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
             else
             {
-                clearValues[i].color = { 0.31f, 0.31f, 0.31f, 1.0f };
+                clearValues[i].color = { 0.0f, 0.0f, 0.0f, 0.0f };
             }
         }
     }
@@ -220,12 +222,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- POLLING METHODS --- */
 
-    void RenderPass::NextSubpass(const VkCommandBuffer commandBuffer)
+    void RenderPass::NextSubpass(const UniquePtr<CommandBuffer> &commandBuffer)
     {
-        vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdNextSubpass(commandBuffer->GetVulkanCommandBuffer(), VK_SUBPASS_CONTENTS_INLINE);
     }
 
-    void RenderPass::Begin(const UniquePtr<Framebuffer> &framebuffer, const VkCommandBuffer commandBuffer)
+    void RenderPass::Begin(const UniquePtr<Framebuffer> &framebuffer, const UniquePtr<CommandBuffer> &commandBuffer)
     {
         // Set up begin info
         VkRenderPassBeginInfo renderPassBeginInfo{};
@@ -238,7 +240,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         renderPassBeginInfo.pClearValues = clearValues.data();
 
         // Begin render pass
-        vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(commandBuffer->GetVulkanCommandBuffer(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         // Set up viewport info
         VkViewport viewport{};
@@ -248,7 +250,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         viewport.maxDepth = 1.0f;
 
         // Set viewport
-        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+        vkCmdSetViewport(commandBuffer->GetVulkanCommandBuffer(), 0, 1, &viewport);
 
         // Set up scissor info
         VkRect2D scissor{};
@@ -258,12 +260,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         scissor.offset.y = 0;
 
         // Set scissor
-        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+        vkCmdSetScissor(commandBuffer->GetVulkanCommandBuffer(), 0, 1, &scissor);
     }
 
-    void RenderPass::End(const VkCommandBuffer commandBuffer)
+    void RenderPass::End(const UniquePtr<CommandBuffer> &commandBuffer)
     {
-        vkCmdEndRenderPass(commandBuffer);
+        vkCmdEndRenderPass(commandBuffer->GetVulkanCommandBuffer());
     }
 
     /* --- DESTRUCTOR --- */

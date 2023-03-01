@@ -47,6 +47,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         auto &sceneUniformData = scenePipeline->GetUniformBufferData();
         sceneUniformData.view = camera.GetViewMatrix();
         sceneUniformData.projection = camera.GetProjectionMatrix();
+        sceneUniformData.inverseView = camera.GetInverseViewMatrix();
+        sceneUniformData.inverseProjection = camera.GetInverseProjectionMatrix();
 
         auto &skyboxUniformData = skyboxPipeline->GetUniformBufferData();
         skyboxUniformData.view = sceneUniformData.view;
@@ -114,7 +116,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         {
             static uint currentShaderIndex = 2;
 
-            static String shaderPaths[] { File::OUTPUT_FOLDER_PATH + "Shaders/standard_diffuse_fragment.frag.spv", File::OUTPUT_FOLDER_PATH + "Shaders/standard_specular_fragment.frag.spv", File::OUTPUT_FOLDER_PATH + "Shaders/blinn-phong-fragment.frag.spv" };
+            static String shaderPaths[] { File::OUTPUT_FOLDER_PATH + "Shaders/StandardDiffuse.frag.spv", File::OUTPUT_FOLDER_PATH + "Shaders/StandardSpecular.frag.spv", File::OUTPUT_FOLDER_PATH + "Shaders/BlinnPhong.frag.spv" };
             static const char* shaderTypes[] = {"Diffuse", "Specular", "Blinn-Phong" };
 
             GUI::CustomLabel("Renderer's Fragment Shader:");
@@ -175,13 +177,13 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         commandBuffer->Begin();
 
         // Start GPU timer
-        offscreenTimestampQueries[currentFrame]->Begin(commandBuffer->GetVulkanCommandBuffer());
+        offscreenTimestampQueries[currentFrame]->Begin(commandBuffer);
 
         // Bind the pipeline
-        scenePipeline->Bind(commandBuffer->GetVulkanCommandBuffer());
+        scenePipeline->Bind(commandBuffer);
 
         // Begin rendering offscreen image
-        sceneOffscreenRenderer->Begin(commandBuffer->GetVulkanCommandBuffer(), currentFrame);
+        sceneOffscreenRenderer->Begin(commandBuffer, currentFrame);
 
         // Create a vector to hold vertex buffers of the meshes
         std::vector<VkBuffer> vertexBuffers(1);
@@ -204,36 +206,35 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             scenePipeline->GetPushConstantData() = meshRenderer.GetPushConstantData();
 
             // Send push constant data to shader
-            scenePipeline->PushConstants(commandBuffer->GetVulkanCommandBuffer());
+            scenePipeline->PushConstants(commandBuffer);
 
             // Use either bindless or bind*full* descriptor set if not supported
             scenePipeline->BindDescriptorSets(
-                    commandBuffer->GetVulkanCommandBuffer(),
+                    commandBuffer,
                      // TODO: BINDLESS
 //                    { VK::GetDevice()->GetDescriptorIndexingSupported() ? globalBindlessDescriptorSet->GetVulkanDescriptorSet() : meshRenderer.GetDescriptorSet() },
-                    { meshRenderer.GetDescriptorSet() },
-                    currentFrame
+                    meshRenderer.GetDescriptorSet()
             );
 
             // Draw using the index buffer to prevent vertex re-usage
-            commandBuffer->Draw(meshRenderer.GetMesh()->GetIndexCount());
+            commandBuffer->DrawIndexed(meshRenderer.GetMesh()->GetIndexCount());
         }
 
-        skyboxPipeline->Bind(commandBuffer->GetVulkanCommandBuffer());
+        skyboxPipeline->Bind(commandBuffer);
 
         commandBuffer->BindVertexBuffers({ skyboxMesh->GetVertexBuffer()->GetVulkanBuffer() });
         commandBuffer->BindIndexBuffer({ skyboxMesh->GetIndexBuffer()->GetVulkanBuffer() });
 
-        skyboxPipeline->PushConstants(commandBuffer->GetVulkanCommandBuffer());
-        skyboxPipeline->BindDescriptorSets(commandBuffer->GetVulkanCommandBuffer(), currentFrame);
+        skyboxPipeline->PushConstants(commandBuffer);
+        skyboxPipeline->BindDescriptorSets(commandBuffer);
 
-        commandBuffer->Draw(skyboxMesh->GetIndexCount());
+        commandBuffer->DrawIndexed(skyboxMesh->GetIndexCount());
 
         // End the offscreen renderer
-        sceneOffscreenRenderer->End(commandBuffer->GetVulkanCommandBuffer());
+        sceneOffscreenRenderer->End(commandBuffer);
 
         // Begin the render pass
-        swapchain->BeginRenderPass(commandBuffer->GetVulkanCommandBuffer());
+        swapchain->BeginRenderPass(commandBuffer);
 
         // Apply scissoring and viewport update
         commandBuffer->SetViewportAndScissor(swapchain->GetWidth(), swapchain->GetHeight());
@@ -247,10 +248,10 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         }
 
         // End the render pass
-        swapchain->EndRenderPass(commandBuffer->GetVulkanCommandBuffer());
+        swapchain->EndRenderPass(commandBuffer);
 
         // End and save GPU timer results
-        offscreenTimestampQueries[currentFrame]->End(commandBuffer->GetVulkanCommandBuffer());
+        offscreenTimestampQueries[currentFrame]->End(commandBuffer);
         this->totalDrawTime = offscreenTimestampQueries[currentFrame]->GetTimeTaken();
 
         // End the command buffer and check for errors during command execution
@@ -287,16 +288,16 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         .Build();
 
         // Create shaders for skybox pipeline
-        auto skyboxVertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/skybox_vertex.vert.spv", .shaderType = ShaderType::VERTEX });
-        auto skyboxFragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/skybox_fragment.frag.spv", .shaderType = ShaderType::FRAGMENT });
+        auto skyboxVertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Skybox.vert.spv", .shaderType = ShaderType::VERTEX });
+        auto skyboxFragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Skybox.frag.spv", .shaderType = ShaderType::FRAGMENT });
 
         // Create pipeline
         skyboxPipeline = SkyboxPipeline::CreateFromAnotherPipeline({
             .maxConcurrentFrames = swapchain->GetMaxConcurrentFramesCount(),
-            .vertexAttributes = { VertexAttribute::POSITION },
             .shaders = {skyboxVertexShader, skyboxFragmentShader },
-            .renderPass = sceneOffscreenRenderer->GetRenderPass(),
             .descriptorSetLayout = skyboxDescriptorSetLayout,
+            .vertexAttributes = { VertexAttribute::POSITION },
+            .renderPass = sceneOffscreenRenderer->GetRenderPass(),
             .sampling = Sampling::MSAAx1,
             .cullMode = CullMode::FRONT,
             .shadingType = ShadingType::FILL,
@@ -358,7 +359,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         // Create descriptor set layout
         sceneDescriptorSetLayout = descriptorSetBuilder.Build();
-        VK::m_Instance.descriptorSetLayout = sceneDescriptorSetLayout;
+        VK::SetGlobalDescriptorSetLayout(sceneDescriptorSetLayout);
 
         // Create renderer
         sceneOffscreenRenderer = OffscreenRenderer::Create({
@@ -373,16 +374,16 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         offscreenImageDescriptorSets.resize(maxConcurrentFrames);
 
         // Create shaders for scene pipeline
-        auto sceneVertexShader = Shader::Create({ .filePath = VK::GetDevice()->GetDescriptorIndexingSupported() ? File::OUTPUT_FOLDER_PATH + "Shaders/blinn-phong-vertex_bindless.vert.spv" : File::OUTPUT_FOLDER_PATH + "Shaders/blinn-phong-vertex.vert.spv", .shaderType = ShaderType::VERTEX });
-        auto sceneFragmentShader = Shader::Create({ .filePath = VK::GetDevice()->GetDescriptorIndexingSupported() ? File::OUTPUT_FOLDER_PATH + "Shaders/blinn-phong-fragment_bindless.frag.spv" : File::OUTPUT_FOLDER_PATH + "Shaders/blinn-phong-fragment.frag.spv", .shaderType = ShaderType::FRAGMENT });
+        auto sceneVertexShader = Shader::Create({ .filePath = VK::GetDevice()->GetDescriptorIndexingSupported() ? File::OUTPUT_FOLDER_PATH + "Shaders/BlinnPhong.vert.spv" : File::OUTPUT_FOLDER_PATH + "Shaders/BlinnPhong.vert.spv", .shaderType = ShaderType::VERTEX });
+        auto sceneFragmentShader = Shader::Create({ .filePath = VK::GetDevice()->GetDescriptorIndexingSupported() ? File::OUTPUT_FOLDER_PATH + "Shaders/BlinnPhong.frag.spv" : File::OUTPUT_FOLDER_PATH + "Shaders/BlinnPhong.frag.spv", .shaderType = ShaderType::FRAGMENT });
 
         // Create pipeline
         scenePipeline = ScenePipeline::Create({
             .maxConcurrentFrames = swapchain->GetMaxConcurrentFramesCount(),
             .vertexAttributes = { VertexAttribute::POSITION, VertexAttribute::NORMAL, VertexAttribute::TEXTURE_COORDINATE },
             .shaders = {sceneVertexShader, sceneFragmentShader },
-            .renderPass = sceneOffscreenRenderer->GetRenderPass(),
             .descriptorSetLayout = sceneDescriptorSetLayout,
+            .renderPass = sceneOffscreenRenderer->GetRenderPass(),
             .sampling = sampling,
             .shadingType = shadingType
         });

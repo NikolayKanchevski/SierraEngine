@@ -27,8 +27,8 @@ namespace Sierra::Engine::Components
 
         /* --- SETTER METHODS --- */
         void SetAsMain();
-        void CalculateViewMatrix();
-        void CalculateProjectionMatrix();
+        void CalculateViewMatrices();
+        void CalculateProjectionMatrices();
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] float GetYaw() const;
@@ -36,8 +36,16 @@ namespace Sierra::Engine::Components
         [[nodiscard]] float GetRoll() const;
         [[nodiscard]] Vector3 GetYawPitchRoll() const;
 
-        [[nodiscard]] Matrix4x4 GetViewMatrix();
-        [[nodiscard]] Matrix4x4 GetProjectionMatrix();
+        [[nodiscard]] inline Matrix4x4 GetViewMatrix() { return viewMatrix; };
+        [[nodiscard]] inline Matrix4x4 GetProjectionMatrix()
+        {
+            // TODO: Add a callback to only recalculate this on resize
+            CalculateProjectionMatrices();
+            return projectionMatrix;
+        };
+
+        [[nodiscard]] inline Matrix4x4 GetInverseViewMatrix() { return inverseViewMatrix; };
+        [[nodiscard]] inline Matrix4x4 GetInverseProjectionMatrix() { return inverseProjectionMatrix; }
 
         [[nodiscard]] Vector3 GetFrontDirection() const;
 
@@ -59,12 +67,11 @@ namespace Sierra::Engine::Components
         [[nodiscard]] static inline Camera& GetMainCamera()
         { return World::GetComponent<Camera>(mainCamera); }
 
-        /* --- DESTRUCTOR --- */
-        inline void Destroy() const override { RemoveComponent<Camera>(); }
-
     private:
         Matrix4x4 viewMatrix;
         Matrix4x4 projectionMatrix;
+        Matrix4x4 inverseViewMatrix;
+        Matrix4x4 inverseProjectionMatrix;
 
         static inline entt::entity mainCamera = entt::null;
         static inline const Vector3 upDirection = { 0.0f, 1.0f, 0.0f };

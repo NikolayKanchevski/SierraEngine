@@ -142,7 +142,7 @@ namespace Sierra::Engine::Components
 
     MeshPushConstant MeshRenderer::GetPushConstantData() const
     {
-        return { .material = material, .meshID = meshID, .meshTexturesPresence =  meshTexturesPresence };
+        return { .material = material, .entityID = static_cast<uint>(enttEntity), .meshID = meshID, .meshTexturesPresence =  meshTexturesPresence };
     }
 
     /* --- DESTRUCTOR --- */
@@ -158,6 +158,5 @@ namespace Sierra::Engine::Components
         }
 
         coreMesh->Destroy();
-        RemoveComponent<MeshRenderer>();
     }
 }

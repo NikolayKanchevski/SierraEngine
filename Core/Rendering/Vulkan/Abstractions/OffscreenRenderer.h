@@ -35,8 +35,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         static UniquePtr<OffscreenRenderer> Create(OffscreenRendererCreateInfo createInfo);
 
         /* --- POLLING METHODS --- */
-        void Begin(const VkCommandBuffer &givenCommandBuffer, uint frameIndex) const;
-        void End(const VkCommandBuffer &givenCommandBuffer) const;
+        void Begin(const UniquePtr<CommandBuffer> &givenCommandBuffer, uint frameIndex) const;
+        void End(const UniquePtr<CommandBuffer> &givenCommandBuffer) const;
 
         /* --- SETTER METHODS --- */
         void Resize(uint newWidth, uint newHeight);

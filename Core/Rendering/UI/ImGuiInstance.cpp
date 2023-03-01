@@ -6,6 +6,7 @@
 #include "ImGuiInstance.h"
 
 #include "ImGuiCore.h"
+#include "../Vulkan/VK.h"
 #include "../../../Engine/Classes/Cursor.h"
 
 using Sierra::Engine::Classes::Cursor;
@@ -53,13 +54,11 @@ namespace Sierra::Core::Rendering::UI
             // Load font file
             for (const auto &fontCreateInfo : createInfo.fontCreateInfos)
             {
-                #if PLATFORM_WINDOWS
-                    io.Fonts->AddFontFromFileTTF(fontCreateInfo.fontFilePath.c_str(), fontCreateInfo.fontSize);
-                #else
-                    auto fontData = File::ReadBinaryFile(fontCreateInfo.fontFilePath);
-                    io.Fonts->AddFontFromMemoryTTF(fontData.data(), fontData.size(), fontCreateInfo.fontSize);
-                #endif
+                io.Fonts->AddFontFromFileTTF(fontCreateInfo.fontFilePath.c_str(), fontCreateInfo.fontSize);
             }
+
+            // ImGui sometimes bugs out and doesn't assign its default font, so we are doing it manually here
+            io.FontDefault = io.Fonts->Fonts[0];
 
             // Upload font file to shader
             VkCommandBuffer commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();

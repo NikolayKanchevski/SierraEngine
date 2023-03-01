@@ -44,11 +44,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         [[nodiscard]] Sampling GetHighestMultisampling() const { return highestMultisampling; }
 
-        [[nodiscard]] uint GetGraphicsQueueFamily() const { return queueFamilyIndices.graphicsFamily; }
+        [[nodiscard]] uint GetGraphicsQueueFamily() const { return queueFamilyIndices.graphicsAndComputeFamily; }
         [[nodiscard]] uint GetPresentationQueueFamily() const { return queueFamilyIndices.presentationFamily; }
+        [[nodiscard]] uint GetComputeQueueFamily() const { return queueFamilyIndices.graphicsAndComputeFamily; }
 
-        [[nodiscard]] VkQueue GetGraphicsQueue() const { return graphicsQueue; }
+        [[nodiscard]] VkQueue GetGraphicsQueue() const { return graphicsAndComputeQueue; }
         [[nodiscard]] VkQueue GetPresentationQueue() const { return presentationQueue; }
+        [[nodiscard]] VkQueue GetComputeQueue() const { return graphicsAndComputeQueue; }
 
         [[nodiscard]] float GetTimestampPeriod() const { return physicalDeviceProperties.limits.timestampPeriod; }
 
@@ -71,17 +73,17 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkPhysicalDeviceProperties physicalDeviceProperties;
         VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
 
-        VkQueue graphicsQueue;
+        VkQueue graphicsAndComputeQueue;
         VkQueue presentationQueue;
 
         struct QueueFamilyIndices
         {
-            int graphicsFamily = -1;
+            int graphicsAndComputeFamily = -1;
             int presentationFamily = -1;
 
             bool IsValid()
             {
-                return graphicsFamily >= 0 && presentationFamily >= 0;
+                return graphicsAndComputeFamily >= 0 && presentationFamily >= 0;
             }
         };
 

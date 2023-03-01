@@ -64,7 +64,7 @@ namespace Sierra::Engine::Components {
         [[nodiscard]] inline static uint GetPointLightCount() { return pointLightCount; }
 
         /* --- DESTRUCTOR --- */
-        inline void Destroy() const override { RemoveComponent<PointLight>(); freedIDs.push_back(this->lightID); pointLightCount--; };
+        inline void Destroy() const override { freedIDs.push_back(this->lightID); pointLightCount--; };
 
     public:
         struct ShaderPointLight

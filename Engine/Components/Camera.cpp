@@ -17,11 +17,11 @@ namespace Sierra::Engine::Components
 
     void Camera::OnAddComponent()
     {
-        CalculateViewMatrix();
-        CalculateProjectionMatrix();
+        CalculateViewMatrices();
+        CalculateProjectionMatrices();
 
         GetComponent<Transform>().PushOnChangeCallback([this]{
-            CalculateViewMatrix();
+            CalculateViewMatrices();
         });
 
         if (mainCamera == entt::null) SetAsMain();
@@ -86,20 +86,7 @@ namespace Sierra::Engine::Components
         return GetComponent<Transform>().GetWorldRotation();
     }
 
-    Matrix4x4 Camera::GetViewMatrix()
-    {
-        return viewMatrix;
-    }
-
-    Matrix4x4 Camera::GetProjectionMatrix()
-    {
-        // TODO: Add a callback to only recalculate this on resize
-        CalculateProjectionMatrix();
-
-        return projectionMatrix;
-    }
-
-    void Camera::CalculateViewMatrix()
+    void Camera::CalculateViewMatrices()
     {
         Transform &transform = GetComponent<Transform>();
         Vector3 frontDirection = GetFrontDirection();
@@ -110,12 +97,14 @@ namespace Sierra::Engine::Components
         Vector3 rendererCameraUpDirection = { upDirection.x, upDirection.y, upDirection.z };
 
         viewMatrix = glm::lookAtRH(rendererCameraPosition, rendererCameraPosition + rendererCameraFrontDirection, rendererCameraUpDirection);
+        inverseViewMatrix = glm::inverse(viewMatrix);
     }
 
-    void Camera::CalculateProjectionMatrix()
+    void Camera::CalculateProjectionMatrices()
     {
         projectionMatrix = glm::perspectiveRH(glm::radians(fov), static_cast<float>(ImGuiCore::GetSceneViewWidth()) / static_cast<float>(ImGuiCore::GetSceneViewHeight()), nearClip, farClip);
         projectionMatrix[1][1] *= -1;
+        inverseProjectionMatrix = glm::inverse(projectionMatrix);
     }
 
 }

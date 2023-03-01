@@ -269,12 +269,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         WriteBuffer(binding, buffer.get());
     }
 
-    void DescriptorSet::WriteImage(const uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler)
+    void DescriptorSet::WriteImage(const uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler, const ImageLayout imageLayout)
     {
         VkDescriptorImageInfo imageInfo{};
         imageInfo.sampler = sampler->GetVulkanSampler();
         imageInfo.imageView = image->GetVulkanImageView();
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo.imageLayout = (VkImageLayout) imageLayout;
 
         descriptorImageInfos[binding] = imageInfo;
         WriteImage(binding, &descriptorImageInfos[binding]);

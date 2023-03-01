@@ -6,6 +6,8 @@
 
 namespace Sierra::Engine::Components
 {
+    using Sierra::Core::World;
+
     class Component
     {
     public:

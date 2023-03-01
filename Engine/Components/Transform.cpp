@@ -199,7 +199,7 @@ namespace Sierra::Engine::Components
         upDirection.y = 1 - 2 * (quaternion.x * quaternion.x + quaternion.z * quaternion.z);
         upDirection.z = 2 * (quaternion.y * quaternion.z + quaternion.w * quaternion.x);
 
-        if (HasComponent<MeshRenderer>()) modelMatrix = Rendering::MatrixUtilities::CreateModel(GetWorldPositionUpInverted(), rotation, scale);
+        if (HasComponent<MeshRenderer>()) modelMatrix = MatrixUtilities::CreateModel(GetWorldPositionUpInverted(), rotation, scale);
 
         DoCallbacks();
 
@@ -221,7 +221,7 @@ namespace Sierra::Engine::Components
         upDirection.y = 1 - 2 * (quaternion.x * quaternion.x + quaternion.z * quaternion.z);
         upDirection.z = 2 * (quaternion.y * quaternion.z + quaternion.w * quaternion.x);
 
-        if (HasComponent<MeshRenderer>()) modelMatrix = Rendering::MatrixUtilities::CreateModel(GetWorldPositionUpInverted(), rotation, scale);
+        if (HasComponent<MeshRenderer>()) modelMatrix = MatrixUtilities::CreateModel(GetWorldPositionUpInverted(), rotation, scale);
 
         DoCallbacks();
     }

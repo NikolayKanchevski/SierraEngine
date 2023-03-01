@@ -26,15 +26,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- SETTER METHODS --- */
 
-    void TimestampQuery::Begin(const VkCommandBuffer commandBuffer, const VkPipelineStageFlagBits pipelineStage)
+    void TimestampQuery::Begin(const UniquePtr<CommandBuffer> &commandBuffer, const VkPipelineStageFlagBits pipelineStage)
     {
-        vkCmdResetQueryPool(commandBuffer, VK::GetQueryPool()->GetVulkanQueryPool(), index, 2);
-        vkCmdWriteTimestamp(commandBuffer, pipelineStage, VK::GetQueryPool()->GetVulkanQueryPool(), index);
+        vkCmdResetQueryPool(commandBuffer->GetVulkanCommandBuffer(), VK::GetQueryPool()->GetVulkanQueryPool(), index, 2);
+        vkCmdWriteTimestamp(commandBuffer->GetVulkanCommandBuffer(), pipelineStage, VK::GetQueryPool()->GetVulkanQueryPool(), index);
     }
 
-    void TimestampQuery::End(const VkCommandBuffer commandBuffer, const VkPipelineStageFlagBits pipelineStage)
+    void TimestampQuery::End(const UniquePtr<CommandBuffer> &commandBuffer, const VkPipelineStageFlagBits pipelineStage)
     {
-        vkCmdWriteTimestamp(commandBuffer, pipelineStage, VK::GetQueryPool()->GetVulkanQueryPool(), index + 1);
+        vkCmdWriteTimestamp(commandBuffer->GetVulkanCommandBuffer(), pipelineStage, VK::GetQueryPool()->GetVulkanQueryPool(), index + 1);
     }
 
     /* --- GETTER METHODS --- */

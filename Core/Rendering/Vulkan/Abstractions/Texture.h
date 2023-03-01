@@ -38,8 +38,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         String name;
         TextureType textureType = TEXTURE_TYPE_NONE;
-        bool mipMappingEnabled = false;
 
+        ImageFormat imageFormat = ImageFormat::R8G8B8A8_SRGB;
+
+        bool mipMappingEnabled = false;
         SamplerCreateInfo samplerCreateInfo{};
     };
 
@@ -47,8 +49,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Texture(stbi_uc *stbImage, uint width, uint height, uint givenColorChannelsCount, TextureCreateInfo &textureCreateInfo);
-        static SharedPtr<Texture> Create(TextureCreateInfo textureCreateInfo, bool setDefaultTexture = false);
+        Texture(stbi_uc *stbImage, uint width, uint height, uint givenColorChannelsCount, TextureCreateInfo &createInfo);
+        static SharedPtr<Texture> Create(TextureCreateInfo createInfo, bool setDefaultTexture = false);
 
         /* --- PROPERTIES --- */
         String name;

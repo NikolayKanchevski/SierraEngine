@@ -4,6 +4,8 @@
 
 #include "Swapchain.h"
 
+#include "../VK.h"
+
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
 
@@ -28,12 +30,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- POLLING METHODS --- */
 
-    void Swapchain::BeginRenderPass(const VkCommandBuffer givenCommandBuffer)
+    void Swapchain::BeginRenderPass(const UniquePtr<CommandBuffer> &givenCommandBuffer)
     {
         renderPass->Begin(swapchainFramebuffers[imageIndex], givenCommandBuffer);
     }
 
-    void Swapchain::EndRenderPass(const VkCommandBuffer givenCommandBuffer)
+    void Swapchain::EndRenderPass(const UniquePtr<CommandBuffer> &givenCommandBuffer)
     {
         renderPass->End(givenCommandBuffer);
     }

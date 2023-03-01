@@ -5,7 +5,7 @@
 #pragma once
 
 #include "../Vulkan/Abstractions/Texture.h"
-using Rendering::Vulkan::Abstractions::Texture;
+using Sierra::Core::Rendering::Vulkan::Abstractions::Texture;
 
 #define HOVER_TIME_THRESHOLD 1.0f
 
@@ -113,6 +113,8 @@ namespace GUI
     template<typename T>
     inline void DrawComponent(entt::entity entity)
     {
+        using namespace Sierra::Core;
+
         const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
         if (World::HasComponent<T>(entity))
         {

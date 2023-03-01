@@ -33,13 +33,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- POLLING METHODS --- */
 
-    void OffscreenRenderer::Begin(const VkCommandBuffer &givenCommandBuffer, const uint frameIndex) const
+    void OffscreenRenderer::Begin(const UniquePtr<CommandBuffer> &givenCommandBuffer, const uint frameIndex) const
     {
         // Begin render pass
         renderPass->Begin(framebuffers[frameIndex], givenCommandBuffer);
     }
 
-    void OffscreenRenderer::End(const VkCommandBuffer &givenCommandBuffer) const
+    void OffscreenRenderer::End(const UniquePtr<CommandBuffer> &givenCommandBuffer) const
     {
         // End render pass
         renderPass->End(givenCommandBuffer);

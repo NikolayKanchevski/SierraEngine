@@ -7,6 +7,7 @@
 #include "Image.h"
 #include "Framebuffer.h"
 #include "../VulkanTypes.h"
+#include "CommandBuffer.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -48,9 +49,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         static UniquePtr<RenderPass> Create(RenderPassCreateInfo createInfo);
 
         /* --- POLLING METHODS --- */
-        void NextSubpass(VkCommandBuffer commandBuffer);
-        void Begin(const UniquePtr<Framebuffer> &framebuffer, VkCommandBuffer commandBuffer);
-        void End(VkCommandBuffer commandBuffer);
+        void NextSubpass(const UniquePtr<CommandBuffer> &commandBuffer);
+        void Begin(const UniquePtr<Framebuffer> &framebuffer, const UniquePtr<CommandBuffer> &commandBuffer);
+        void End(const UniquePtr<CommandBuffer> &commandBuffer);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkRenderPass GetVulkanRenderPass() const { return renderPass; }

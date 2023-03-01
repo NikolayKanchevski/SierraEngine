@@ -334,9 +334,7 @@ namespace Sierra::Engine::Classes
         {
             if (!is_directory(i->path()) && i->path().filename() == fileName)
             {
-                String path = i->path().relative_path().string();
-                uSize index = path.find_last_of('/');
-                return path.substr(index);
+                return i->path().string().substr(directory.size());
             }
         }
 

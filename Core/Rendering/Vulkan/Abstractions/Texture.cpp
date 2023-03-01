@@ -14,8 +14,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     /* --- CONSTRUCTORS --- */
 
-    Texture::Texture(stbi_uc *stbImage, const uint width, const uint height, const uint givenColorChannelsCount, TextureCreateInfo &textureCreateInfo)
-        : name(textureCreateInfo.name), filePath(textureCreateInfo.filePath), textureType(textureCreateInfo.textureType), mipMappingEnabled(textureCreateInfo.mipMappingEnabled), colorChannelsCount(givenColorChannelsCount)
+    Texture::Texture(stbi_uc *stbImage, const uint width, const uint height, const uint givenColorChannelsCount, TextureCreateInfo &createInfo)
+        : name(createInfo.name), filePath(createInfo.filePath), textureType(createInfo.textureType), mipMappingEnabled(createInfo.mipMappingEnabled), colorChannelsCount(givenColorChannelsCount)
     {
         // Calculate the image's memory size
         this->memorySize = width * height * 4;
@@ -31,14 +31,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         stagingBuffer->CopyFromPointer(stbImage);
         stbi_image_free(stbImage);
 
-        // Configure the color format
-        ImageFormat textureImageFormat = ImageFormat::R8G8B8A8_SRGB;
-
         // Create the texture image
         this->image = Image::Create({
             .dimensions = { width, height, 1 },
-            .format = textureImageFormat,
-            .generateMipMaps = textureCreateInfo.mipMappingEnabled,
+            .format = createInfo.imageFormat,
+            .generateMipMaps = createInfo.mipMappingEnabled,
             .usageFlags = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
             .memoryFlags = MemoryFlags::DEVICE_LOCAL
         });
@@ -62,46 +59,46 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         image->CreateImageView(ImageAspectFlags::COLOR);
 
         // Create sampler
-        if (mipMappingEnabled) textureCreateInfo.samplerCreateInfo.maxLod = static_cast<float>(image->GetMipMapLevels());
-        this->sampler = Sampler::Create(textureCreateInfo.samplerCreateInfo);
+        if (mipMappingEnabled) createInfo.samplerCreateInfo.maxLod = static_cast<float>(image->GetMipMapLevels());
+        this->sampler = Sampler::Create(createInfo.samplerCreateInfo);
     }
 
-    SharedPtr<Texture> Texture::Create(TextureCreateInfo textureCreateInfo, const bool setDefaultTexture)
+    SharedPtr<Texture> Texture::Create(TextureCreateInfo createInfo, const bool setDefaultTexture)
     {
         // Check if the texture file has already been loaded to texture
-        if (texturePool.count(textureCreateInfo.filePath) != 0)
+        if (texturePool.count(createInfo.filePath) != 0)
         {
             // If the same texture file has been used check to see if its sampler is the same as this one
-            Sampler *other = (&texturePool[textureCreateInfo.filePath]->GetSampler())->get();
-            if (other->IsBilinearFilteringApplied() == textureCreateInfo.samplerCreateInfo.applyBilinearFiltering && other->GetMinLod() == textureCreateInfo.samplerCreateInfo.minLod && other->GetMaxLod() == textureCreateInfo.samplerCreateInfo.maxLod  && other->GetMaxAnisotropy() == textureCreateInfo.samplerCreateInfo.maxAnisotropy && other->GetAddressMode() == textureCreateInfo.samplerCreateInfo.samplerAddressMode)
+            Sampler *other = (&texturePool[createInfo.filePath]->GetSampler())->get();
+            if (other->IsBilinearFilteringApplied() == createInfo.samplerCreateInfo.applyBilinearFiltering && other->GetMinLod() == createInfo.samplerCreateInfo.minLod && other->GetMaxLod() == createInfo.samplerCreateInfo.maxLod && other->GetMaxAnisotropy() == createInfo.samplerCreateInfo.maxAnisotropy && other->GetAddressMode() == createInfo.samplerCreateInfo.samplerAddressMode)
             {
                 // If so return it without creating a new texture
-                return texturePool[textureCreateInfo.filePath];
+                return texturePool[createInfo.filePath];
             }
         }
 
         // Set a default tag if none is assigned
-        if (textureCreateInfo.name == "") textureCreateInfo.name = Engine::Classes::File::GetFileNameFromPath(textureCreateInfo.filePath);
+        if (createInfo.name == "") createInfo.name = Engine::Classes::File::GetFileNameFromPath(createInfo.filePath);
 
         // Number of channels texture has
         int channels;
 
         // Load image data
         int width, height;
-        stbi_uc *stbiImage = stbi_load(textureCreateInfo.filePath.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+        stbi_uc *stbiImage = stbi_load(createInfo.filePath.c_str(), &width, &height, &channels, GetChannelCountForImageFormat(createInfo.imageFormat));
 
         // Check if image loading has been successful
-        ASSERT_ERROR_FORMATTED_IF(!stbiImage, "Failed to load the texture file [{0}]", textureCreateInfo.filePath);
+        ASSERT_ERROR_FORMATTED_IF(!stbiImage, "Failed to load the texture file [{0}]", createInfo.filePath);
 
         // If texture does not exist already
-        auto &textureReference = texturePool[textureCreateInfo.filePath];
-        textureReference = std::make_shared<Texture>(stbiImage, width, height, channels, textureCreateInfo);
+        auto &textureReference = texturePool[createInfo.filePath];
+        textureReference = std::make_shared<Texture>(stbiImage, width, height, channels, createInfo);
         if (setDefaultTexture)
         {
-            ASSERT_ERROR_FORMATTED_IF(textureCreateInfo.textureType == TEXTURE_TYPE_NONE, "Cannot set texture loaded from [{0}] as default texture for its type, as it is of type TEXTURE_TYPE_NONE", textureCreateInfo.filePath);
+            ASSERT_ERROR_FORMATTED_IF(createInfo.textureType == TEXTURE_TYPE_NONE, "Cannot set texture loaded from [{0}] as default texture for its type, as it is of type TEXTURE_TYPE_NONE", createInfo.filePath);
 
             textureReference->isDefault = true;
-            defaultTextures[textureCreateInfo.textureType] = textureReference;
+            defaultTextures[createInfo.textureType] = textureReference;
         }
 
         return textureReference;

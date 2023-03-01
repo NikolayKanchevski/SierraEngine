@@ -32,6 +32,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             vmaCreateBuffer(VK::GetMemoryAllocator(), &vkBufferCreateInfo, &allocationCreateInfo, &vkBuffer, &vmaBufferAllocation, nullptr),
             fmt::format("Failed to create buffer with size of [{0}] for [{1}] usage", memorySize, static_cast<uint32_t>(bufferUsage))
         );
+
+        // Map memory
+        vmaMapMemory(VK::GetMemoryAllocator(), vmaBufferAllocation, &data);
     }
 
     UniquePtr<Buffer> Buffer::Create(const BufferCreateInfo bufferCreateInfo)
@@ -48,17 +51,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Buffer::CopyFromPointer(void *pointer)
     {
-        // Create an empty pointer
-        void *data;
-
-        // Map memory
-        vmaMapMemory(VK::GetMemoryAllocator(), vmaBufferAllocation, &data);
-
         // Copy memory data to Vulkan buffer
         memcpy(data, pointer, memorySize);
-
-        // Unmap the memory
-        vmaUnmapMemory(VK::GetMemoryAllocator(), vmaBufferAllocation);
     }
 
     void Buffer::CopyImage(const Image& givenImage)
@@ -112,6 +106,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Buffer::Destroy()
     {
+        // Unmap the memory
+        vmaUnmapMemory(VK::GetMemoryAllocator(), vmaBufferAllocation);
+
         vmaDestroyBuffer(VK::GetMemoryAllocator(), vkBuffer, vmaBufferAllocation);
     }
 }

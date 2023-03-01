@@ -7,6 +7,8 @@
 #include "../VK.h"
 #include "../../../Engine/Classes/SystemInformation.h"
 
+#define DEBUG_DEVICE_EXTENSIONS 0
+
 using Sierra::Engine::Classes::SystemInformation;
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
@@ -108,7 +110,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Device::CreateLogicalDevice()
     {
         // Filter out repeating indices using a set
-        const std::set<uint> uniqueQueueFamilies { static_cast<uint>(queueFamilyIndices.graphicsFamily), static_cast<uint>(queueFamilyIndices.presentationFamily) };
+        const std::set<uint> uniqueQueueFamilies {static_cast<uint>(queueFamilyIndices.graphicsAndComputeFamily), static_cast<uint>(queueFamilyIndices.presentationFamily) };
 
         // Create an empty list to store create infos
         VkDeviceQueueCreateInfo* queueCreateInfos = new VkDeviceQueueCreateInfo[uniqueQueueFamilies.size()];
@@ -158,7 +160,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
 
         // Retrieve queues
-        vkGetDeviceQueue(logicalDevice, queueFamilyIndices.graphicsFamily, 0, &graphicsQueue);
+        vkGetDeviceQueue(logicalDevice, queueFamilyIndices.graphicsAndComputeFamily, 0, &graphicsAndComputeQueue);
         vkGetDeviceQueue(logicalDevice, queueFamilyIndices.presentationFamily, 0, &presentationQueue);
     }
 
@@ -271,6 +273,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         std::vector<VkExtensionProperties> extensionProperties(extensionCount);
         vkEnumerateDeviceExtensionProperties(givenPhysicalDevice, nullptr, &extensionCount, extensionProperties.data());
 
+        #if DEBUG_DEVICE_EXTENSIONS
+            for (const auto &extensionProperty : extensionProperties)
+            {
+                ASSERT_INFO_FORMATTED("Device extension found: {0}", extensionProperty.extensionName);
+            }
+        #endif
+
         #if __APPLE__
             bool khrPortabilityRequired = false;
         #endif
@@ -333,9 +342,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             VkQueueFamilyProperties currentQueueProperties = queueFamilyProperties[i];
 
             // Check if the current queue has a graphics family
-            if ((currentQueueProperties.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0)
+            // TODO: Check for asynchronous compute queue
+            if ((currentQueueProperties.queueFlags & VK_QUEUE_GRAPHICS_BIT && currentQueueProperties.queueFlags & VK_QUEUE_COMPUTE_BIT) != 0)
             {
-                indices.graphicsFamily = i;
+                indices.graphicsAndComputeFamily = i;
             }
 
             // Check if the current queue supports presentation

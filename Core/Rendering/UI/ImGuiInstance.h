@@ -6,22 +6,22 @@
 
 #include "../Window.h"
 #include "../Vulkan/Abstractions/Swapchain.h"
-
-using namespace Rendering::Vulkan;
+#include "../../../Engine/Classes/File.h"
 
 namespace Sierra::Core::Rendering::UI
 {
+    using namespace Rendering::Vulkan;
 
     struct FontCreateInfo
     {
-        String fontFilePath = File::OUTPUT_FOLDER_PATH + "Fonts/PTSans.ttf";
+        String fontFilePath = Engine::Classes::File::OUTPUT_FOLDER_PATH + "Fonts/PTSans.ttf";
         float fontSize = 18.0f;
     };
 
     struct ImGuiInstanceCreateInfo
     {
         UniquePtr<Window> &window;
-        UniquePtr<Swapchain> &swapchain;
+        UniquePtr<Vulkan::Abstractions::Swapchain> &swapchain;
 
         std::vector<FontCreateInfo> fontCreateInfos { FontCreateInfo() };
 

@@ -178,7 +178,7 @@ namespace Sierra::Core::Rendering::UI
         {
             sceneDrawList = ImGui::GetWindowDrawList();
 
-            // Get and show current renderer image
+            // Get and show current renderer images
             ImVec2 freeSpace = ImGui::GetContentRegionAvail();
             ImGuiCore::SetSceneViewSize(freeSpace.x, freeSpace.y);
             ImGuiCore::SetSceneViewPosition(ImGui::GetCurrentWindow()->WorkRect.GetTL().x, ImGui::GetCurrentWindow()->WorkRect.GetTL().y);
@@ -208,7 +208,7 @@ namespace Sierra::Core::Rendering::UI
 
         // Convert camera's view matrix to array data
         Camera &camera = Camera::GetMainCamera();
-        camera.CalculateProjectionMatrix();
+        camera.CalculateProjectionMatrices();
         Matrix4x4 viewMatrix = camera.GetViewMatrix();
         Matrix4x4 projectionMatrix = camera.GetProjectionMatrix();
 
@@ -279,7 +279,7 @@ namespace Sierra::Core::Rendering::UI
         if (GUI::BeginWindow("Debug Information", nullptr, ImGuiWindowFlags_NoNav))
         {
             ImGui::Text("CPU Frame Time: %i FPS", Time::GetFPS());
-            ImGui::Text("GPU Draw Time: %f ms", renderer.GetTotalDrawTime());
+            ImGui::Text("GPU DrawIndexed Time: %f ms", renderer.GetTotalDrawTime());
             ImGui::Separator();
             ImGui::Text("Total meshes being drawn: %i", Mesh::GetTotalMeshCount());
             ImGui::Text("Total vertices in scene: %llu", renderer.GetTotalVerticesDrawn());
@@ -292,7 +292,7 @@ namespace Sierra::Core::Rendering::UI
     {
         if (GUI::BeginWindow("Detailed Stats"))
         {
-            ImGui::Text("GPU Draw Time: %fms", renderer.GetTotalDrawTime());
+            ImGui::Text("GPU DrawIndexed Time: %fms", renderer.GetTotalDrawTime());
 
             static constexpr uint SAMPLE_COUNT = 200;
             static constexpr uint REFRESH_RATE = 60;
@@ -321,7 +321,7 @@ namespace Sierra::Core::Rendering::UI
             averageFrameTime /= (float) SAMPLE_COUNT;
 
             char drawTimeOverlay[32];
-            sprintf(drawTimeOverlay, "Average: %f", averageDrawTime);
+            snprintf(drawTimeOverlay, 32, "Average: %f", averageDrawTime);
             ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
             ImGui::PlotLines("Lines", drawTimeSamples, SAMPLE_COUNT, currentSampleIndex, drawTimeOverlay, 0.0f, 100.0f, ImVec2(0, 80.0f));
 
@@ -330,7 +330,7 @@ namespace Sierra::Core::Rendering::UI
             ImGui::Text("CPU Frame Time: %i FPS", Time::GetFPS());
 
             char frameTimeOverlay[32];
-            sprintf(frameTimeOverlay, "Average: %f", averageFrameTime);
+            snprintf(frameTimeOverlay, 32, "Average: %f", averageFrameTime);
             ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
             ImGui::PlotLines("Lines", frameTimeSamples, SAMPLE_COUNT, currentSampleIndex, frameTimeOverlay, 0.0f, 1000.0f, ImVec2(0, 80.0f));
 

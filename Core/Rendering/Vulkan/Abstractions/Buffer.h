@@ -24,6 +24,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] static UniquePtr<Buffer> Create(BufferCreateInfo bufferCreateInfo);
         [[nodiscard]] static SharedPtr<Buffer> CreateShared(BufferCreateInfo bufferCreateInfo);
 
+        /* --- GETTER METHODS --- */
+        template<typename T>
+        inline T* GetDataAs()
+        {
+            return reinterpret_cast<T*>(data);
+        }
+
         /* --- SETTER METHODS --- */
         void CopyFromPointer(void* pointer);
         void CopyImage(const Image& givenImage);
@@ -56,6 +63,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         uint64 memorySize;
         MemoryFlags memoryFlags;
         BufferUsage bufferUsage;
+
+        void* data;
     };
 
 }

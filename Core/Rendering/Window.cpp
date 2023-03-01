@@ -8,8 +8,8 @@
 #include "../../Engine/Classes/Cursor.h"
 #include "Vulkan/VK.h"
 
-using Rendering::Vulkan::VK;
 using namespace Sierra::Engine::Classes;
+using Sierra::Core::Rendering::Vulkan::VK;
 
 namespace Sierra::Core::Rendering
 {

@@ -1,0 +1,49 @@
+[submodule "Dependencies/SPIRV-Tools"]
+	path = Dependencies/SPIRV-Tools
+	url = https://github.com/KhronosGroup/SPIRV-Tools
+[submodule "Dependencies/Shaderc"]
+	path = Dependencies/Shaderc
+	url = https://github.com/google/shaderc
+[submodule "Dependencies/SPIRV-Headers"]
+	path = Dependencies/SPIRV-Headers
+	url = https://github.com/KhronosGroup/SPIRV-Headers
+[submodule "Dependencies/glslang"]
+	path = Dependencies/glslang
+	url = https://github.com/KhronosGroup/glslang
+[submodule "Dependencies/RareCpp"]
+	path = Dependencies/RareCpp
+	url = https://github.com/TheNitesWhoSay/RareCpp
+[submodule "Dependencies/GLFW"]
+	path = Dependencies/GLFW
+	url = https://github.com/glfw/glfw
+[submodule "Dependencies/ImGui"]
+	path = Dependencies/ImGui
+	url = https://github.com/ocornut/imgui
+	branch = docking
+[submodule "Dependencies/glm"]
+	path = Dependencies/glm
+	url = https://github.com/g-truc/glm
+[submodule "Dependencies/ImGuizmo"]
+	path = Dependencies/ImGuizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo
+[submodule "Dependencies/EnTT"]
+	path = Dependencies/EnTT
+	url = https://github.com/skypjack/entt
+[submodule "Dependencies/VMA"]
+	path = Dependencies/VMA
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+[submodule "Dependencies/Assimp"]
+	path = Dependencies/Assimp
+	url = https://github.com/assimp/assimp
+[submodule "Dependencies/stb"]
+	path = Dependencies/stb
+	url = https://github.com/nothings/stb
+[submodule "Dependencies/fmt"]
+	path = Dependencies/fmt
+	url = https://github.com/fmtlib/fmt
+[submodule "Dependencies/TBB"]
+	path = Dependencies/TBB
+	url = https://github.com/oneapi-src/oneTBB
+[submodule "Dependencies/whereami"]
+	path = Dependencies/whereami
+	url = https://github.com/gpakosz/whereami

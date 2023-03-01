@@ -56,7 +56,7 @@ namespace Sierra::Engine::Components
         [[nodiscard]] inline static uint GetDirectionalLightCount() { return directionalLightCount; }
 
         /* --- DESTRUCTOR --- */
-        inline void Destroy() const override { RemoveComponent<DirectionalLight>(); freedIDs.push_back(this->lightID); directionalLightCount--; };
+        inline void Destroy() const override { freedIDs.push_back(this->lightID); directionalLightCount--; };
 
     public:
         struct alignas(16) ShaderDirectionalLight

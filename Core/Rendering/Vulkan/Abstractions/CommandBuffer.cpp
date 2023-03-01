@@ -4,7 +4,8 @@
 
 #include "CommandBuffer.h"
 
-#define INDEX_BUFFER_TYPE VK_INDEX_TYPE_UINT32
+#include "../VK.h"
+#include "../../RenderingSettings.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -35,11 +36,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- POLLING METHODS --- */
 
-    void CommandBuffer::Begin() const
+    void CommandBuffer::Begin(const VkCommandBufferUsageFlagBits flags) const
     {
         VkCommandBufferBeginInfo bufferBeginInfo{};
         bufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        bufferBeginInfo.flags = 0;
+        bufferBeginInfo.flags = flags;
         bufferBeginInfo.pInheritanceInfo = nullptr;
 
         VK_ASSERT(
@@ -69,14 +70,19 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer, 0, INDEX_BUFFER_TYPE);
     }
 
-    void CommandBuffer::Draw(const uint indexCount) const
+    void CommandBuffer::DrawIndexed(const uint indexCount) const
     {
         vkCmdDrawIndexed(vkCommandBuffer, indexCount, 1, 0, 0, 0);
     }
 
-    void CommandBuffer::DrawUnindexed(const uint vertexCount) const
+    void CommandBuffer::Draw(const uint vertexCount) const
     {
         vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
+    }
+
+    void CommandBuffer::Dispatch(const uint xCount, const uint yCount, const uint zCount)
+    {
+        vkCmdDispatch(vkCommandBuffer, xCount, yCount, zCount);
     }
 
     void CommandBuffer::SetViewport(const uint width, const uint height) const

@@ -31,7 +31,8 @@ namespace Sierra::Core::Rendering::Vulkan
         [[nodiscard]] inline static VkDevice GetLogicalDevice() { return m_Instance.device->GetLogicalDevice(); }
         [[nodiscard]] inline static UniquePtr<Device>& GetDevice() { return m_Instance.device; }
 
-        [[nodiscard]] inline static SharedPtr<DescriptorSetLayout>& GetDescriptorSetLayout() { return m_Instance.descriptorSetLayout; }
+        [[nodiscard]] inline static SharedPtr<DescriptorSetLayout>& GetDescriptorSetLayout() { return m_Instance.globalDescriptorSetLayout; }
+        inline static void SetGlobalDescriptorSetLayout(SharedPtr<DescriptorSetLayout>& givenDescriptorSetLayout) { m_Instance.globalDescriptorSetLayout = givenDescriptorSetLayout; }
 
         [[nodiscard]] inline static VkCommandPool GetCommandPool() { return m_Instance.commandPool; }
         [[nodiscard]] inline static UniquePtr<QueryPool>& GetQueryPool() { return m_Instance.queryPool; }
@@ -39,8 +40,6 @@ namespace Sierra::Core::Rendering::Vulkan
         [[nodiscard]] inline static VkDescriptorPool GetImGuiDescriptorPool() { return m_Instance.imGuiDescriptorPool; }
 
         /* --- DESTRUCTOR --- */
-        friend class Renderers::MainVulkanRenderer;
-        friend class Renderers::DeferredVulkanRenderer;
         static void Destroy();
 
     private:
@@ -72,7 +71,7 @@ namespace Sierra::Core::Rendering::Vulkan
         UniquePtr<QueryPool> queryPool;
         void CreateQueryPool();
 
-        /* --- DESCRIPTOR POOL --- */
+        /* --- DESCRIPTOR POOLS --- */
         UniquePtr<DescriptorPool> descriptorPool;
         void CreateDescriptorPool();
 
@@ -82,8 +81,8 @@ namespace Sierra::Core::Rendering::Vulkan
         /* --- DEFAULT TEXTURES --- */
         void CreateDefaultTextures();
 
-        /* --- MAIN VULKAN RENDERER --- */
-        SharedPtr<DescriptorSetLayout> descriptorSetLayout;
+        /* --- GLOABAL MESH LAYOUT --- */
+        SharedPtr<DescriptorSetLayout> globalDescriptorSetLayout;
 
     private:
         const std::vector<const char*> requiredInstanceExtensions

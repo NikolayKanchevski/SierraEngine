@@ -15,7 +15,7 @@ using namespace Sierra;
 using namespace Sierra::Engine::Classes;
 using namespace Sierra::Engine::Components;
 
-using namespace Renderers;
 using namespace Sierra::Core;
 using namespace Sierra::Core::Rendering;
 using namespace Sierra::Core::Rendering::Vulkan;
+using namespace Sierra::Core::Rendering::Vulkan::Renderers;

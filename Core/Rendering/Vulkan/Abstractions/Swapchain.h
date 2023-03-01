@@ -22,8 +22,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         static UniquePtr<Swapchain> Create(UniquePtr<Window> &givenWindow);
 
         /* --- POLLING METHODS --- */
-        void BeginRenderPass(VkCommandBuffer givenCommandBuffer);
-        void EndRenderPass(VkCommandBuffer givenCommandBuffer);
+        void BeginRenderPass(const UniquePtr<CommandBuffer> &givenCommandBuffer);
+        void EndRenderPass(const UniquePtr<CommandBuffer> &givenCommandBuffer);
 
         VkResult AcquireNextImage();
         VkResult SubmitCommandBuffers();

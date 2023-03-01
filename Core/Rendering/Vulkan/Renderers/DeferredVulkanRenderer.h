@@ -38,9 +38,9 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             float _align3_;
         };
 
-        typedef Pipeline<MeshPushConstant, UniformData, StorageData> ScenePipeline;
-        typedef Pipeline<MergingRendererPushConstant, NullUniformBuffer, StorageData> MergingPipeline;
-        typedef Pipeline<SkyboxPushConstant, UniformData, NullStorageBuffer> SkyboxPipeline;
+        typedef GraphicsPipeline<MeshPushConstant, UniformData, StorageData> ScenePipeline;
+        typedef GraphicsPipeline<MergingRendererPushConstant, NullType, StorageData> MergingPipeline;
+        typedef GraphicsPipeline<SkyboxPushConstant, UniformData, NullType> SkyboxPipeline;
     public:
         /* --- CONSTRUCTORS --- */
         DeferredVulkanRenderer(const VulkanRendererCreateInfo &createInfo);
@@ -59,6 +59,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         /* --- DESTRUCTOR --- */
         void Destroy() override;
     private:
+        UniquePtr<Image> IDBuffer;
         UniquePtr<Image> positionBuffer;
         UniquePtr<Image> diffuseBuffer;
         UniquePtr<Image> specularAndShininessBuffer;

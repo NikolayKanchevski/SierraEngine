@@ -28,10 +28,10 @@ namespace Sierra::Engine::Classes
     {
         Material material;
 
+        uint entityID;
         uint meshID;
         uint meshTexturesPresence; // Bools encoded as binary indicating whether texture types are bound
         float _align1_;
-        float _align2_;
     };
 
     class Mesh

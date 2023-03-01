@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "CommandBuffer.h"
+
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     class TimestampQuery
@@ -14,8 +16,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         static UniquePtr<TimestampQuery> Create();
 
         /* --- SETTER METHODS --- */
-        void Begin(VkCommandBuffer commandBuffer, VkPipelineStageFlagBits pipelineStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
-        void End(VkCommandBuffer commandBuffer, VkPipelineStageFlagBits pipelineStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+        void Begin(const UniquePtr<CommandBuffer> &commandBuffer, VkPipelineStageFlagBits pipelineStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
+        void End(const UniquePtr<CommandBuffer> &commandBuffer, VkPipelineStageFlagBits pipelineStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] float GetTimeTaken() const;

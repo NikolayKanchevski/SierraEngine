@@ -21,6 +21,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     class Sampler
     {
     public:
+        /* --- PUBLIC FIELDS --- */
+        static const UniquePtr<Sampler> Default;
+
+        /* --- POLLING METHODS --- */
+        static void Initialize();
+        static void Shutdown();
 
         /* --- CONSTRUCTORS --- */
         Sampler(const SamplerCreateInfo &samplerCreateInfo);

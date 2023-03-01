@@ -108,7 +108,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void WriteBuffer(uint binding, const Buffer *buffer);
         void WriteBuffer(uint binding, const UniquePtr<Buffer> &buffer);
         void WriteBuffer(uint binding, const SharedPtr<Buffer> &buffer);
-        void WriteImage(uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler);
+        void WriteImage(uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler, ImageLayout imageLayout = ImageLayout::SHADER_READ_ONLY_OPTIMAL);
         void WriteImage(uint binding, const VkDescriptorImageInfo *imageInfo);
         void WriteTexture(uint binding, const SharedPtr<Texture> &texture);
         void WriteCubemap(uint binding, const UniquePtr<Cubemap> &cubemap);

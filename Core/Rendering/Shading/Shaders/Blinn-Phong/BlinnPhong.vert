@@ -1,0 +1,40 @@
+#version 450
+
+#include "../Types/Material.glsl"
+#include "../Utility/ShaderDefinitions.glsl"
+#include "../Types/GlobalUniformBuffer.glsl"
+#include "../Types/GlobalStorageBuffer.glsl"
+
+layout(location = 0) in vec3 fromCode_Position;
+layout(location = 1) in vec3 fromCode_Normal;
+layout(location = 2) in vec2 fromCode_TextureCoordinates;
+
+layout(push_constant) uniform MeshPushConstant
+{
+    Material material;
+
+    uint meshID;
+    uint meshTexturesPresence;
+} pushConstant;
+
+layout(set = 1, binding = HEIGHT_MAP_TEXTURE_OFFSET + 2) uniform sampler2D heightMapSampler;
+
+layout(location = 0) out vec3 toFrag_Position;
+layout(location = 1) out vec3 toFrag_Normal;
+layout(location = 2) out vec2 toFrag_TextureCoordinates;
+
+void main()
+{
+    // Set the position of the vertex in world space
+    vec3 vertexPosition = (storageBuffer.objectDatas[pushConstant.meshID].model * vec4(fromCode_Position, 1.0)).xyz;
+    vertexPosition += pushConstant.material.vertexExaggeration * texture(heightMapSampler, fromCode_TextureCoordinates).r * fromCode_Normal;
+    gl_Position = uniformBuffer.projection * uniformBuffer.view * vec4(vertexPosition, 1.0);
+
+    // Calculate normal matrix
+    mat3 normalMatrix = transpose(inverse(mat3(storageBuffer.objectDatas[pushConstant.meshID].model)));
+
+    // Transfer required data from vertex to fragment shader
+    toFrag_Position = vertexPosition.xyz;
+    toFrag_Normal = normalize(normalMatrix * fromCode_Normal);
+    toFrag_TextureCoordinates = fromCode_TextureCoordinates;
+}
