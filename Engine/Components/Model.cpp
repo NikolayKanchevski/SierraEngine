@@ -255,7 +255,7 @@ namespace Sierra::Engine::Classes
 
     SharedPtr<Mesh> Model::LoadAssimpMesh(aiMesh *mesh)
     {
-        std::vector<VertexPNT> meshVertices(mesh->mNumVertices);
+        std::vector<VertexPNU> meshVertices(mesh->mNumVertices);
         std::vector<uint> indices;
 
         // Load vertex data
@@ -263,7 +263,7 @@ namespace Sierra::Engine::Classes
         {
             meshVertices[i].position = {mesh->mVertices[i].x, -mesh->mVertices[i].y, mesh->mVertices[i].z };
             meshVertices[i].normal = mesh->HasNormals() ? Vector3{mesh->mNormals[i].x, -mesh->mNormals[i].y, mesh->mNormals[i].z } : Vector3{0, 0, 0 };
-            meshVertices[i].textureCoordinates = mesh->HasTextureCoords(0) ? Vector2{mesh->mTextureCoords[0][i].x, -mesh->mTextureCoords[0][i].y } : Vector2{0, 0 };
+            meshVertices[i].UV = mesh->HasTextureCoords(0) ? Vector2{mesh->mTextureCoords[0][i].x, -mesh->mTextureCoords[0][i].y } : Vector2{0, 0 };
         }
 
         // Iterate over indices through faces and copy across
@@ -320,8 +320,8 @@ namespace Sierra::Engine::Classes
             // Create texture
             auto specularTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
-                .imageFormat = ImageFormat::R8_UNORM,
-                .textureType = TEXTURE_TYPE_SPECULAR
+                .textureType = TEXTURE_TYPE_SPECULAR,
+                .imageFormat = ImageFormat::R8_UNORM
             });
 
             // Apply texture
@@ -338,8 +338,8 @@ namespace Sierra::Engine::Classes
             // Create texture
             auto normalTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
-                .imageFormat = ImageFormat::R8G8B8A8_UNORM,
-                .textureType = TEXTURE_TYPE_NORMAL_MAP
+                .textureType = TEXTURE_TYPE_NORMAL_MAP,
+                .imageFormat = ImageFormat::R8G8B8A8_UNORM
             });
 
             // Apply texture
@@ -356,8 +356,8 @@ namespace Sierra::Engine::Classes
             // Create texture
             auto heightMapTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
-                .imageFormat = ImageFormat::R8_UNORM,
-                .textureType = TEXTURE_TYPE_HEIGHT_MAP
+                .textureType = TEXTURE_TYPE_HEIGHT_MAP,
+                .imageFormat = ImageFormat::R8_UNORM
             });
 
             // Apply texture

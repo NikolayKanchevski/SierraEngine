@@ -16,8 +16,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         if (vkCmdBeginRenderingKHR == nullptr)
         {
-            vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetDeviceProcAddr(VK::GetLogicalDevice(), "vkCmdBeginRenderingKHR"));
-            vkCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkGetDeviceProcAddr(VK::GetLogicalDevice(), "vkCmdEndRenderingKHR"));
+            vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetDeviceProcAddr(VK::GetLogicalDevice(), "vkCmdBeginRendering"));
+            vkCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkGetDeviceProcAddr(VK::GetLogicalDevice(), "vkCmdEndRendering"));
         }
 
         bool hasDepthAttachment = false;
@@ -25,8 +25,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             if (attachment.IsDepth())
             {
-                hasDepthAttachment = true;
                 depthStencilAttachment = new VkRenderingAttachmentInfoKHR();
+                hasDepthAttachment = true;
                 break;
             }
         }
@@ -78,7 +78,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         renderingInfo.colorAttachmentCount = createInfo.attachments.size() - (uint)(hasDepthAttachment);
         renderingInfo.pColorAttachments = colorAttachments;
         renderingInfo.pDepthAttachment = depthStencilAttachment;
-        renderingInfo.pStencilAttachment = depthStencilAttachment;
+        renderingInfo.pStencilAttachment = nullptr;
     }
 
     UniquePtr<DynamicRenderer> DynamicRenderer::Create(const DynamicRendererCreateInfo createInfo)
@@ -103,7 +103,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void DynamicRenderer::Destroy()
     {
-        delete colorAttachments;
+        delete[] colorAttachments;
 
         if (depthStencilAttachment != nullptr)
         {

@@ -279,7 +279,7 @@ namespace Sierra::Core::Rendering::UI
         if (GUI::BeginWindow("Debug Information", nullptr, ImGuiWindowFlags_NoNav))
         {
             ImGui::Text("CPU Frame Time: %i FPS", Time::GetFPS());
-            ImGui::Text("GPU DrawIndexed Time: %f ms", renderer.GetTotalDrawTime());
+            ImGui::Text("GPU Indexed Time: %f ms", renderer.GetTotalDrawTime());
             ImGui::Separator();
             ImGui::Text("Total meshes being drawn: %i", Mesh::GetTotalMeshCount());
             ImGui::Text("Total vertices in scene: %llu", renderer.GetTotalVerticesDrawn());
@@ -292,7 +292,7 @@ namespace Sierra::Core::Rendering::UI
     {
         if (GUI::BeginWindow("Detailed Stats"))
         {
-            ImGui::Text("GPU DrawIndexed Time: %fms", renderer.GetTotalDrawTime());
+            ImGui::Text("GPU Indexed Time: %fms", renderer.GetTotalDrawTime());
 
             static constexpr uint SAMPLE_COUNT = 200;
             static constexpr uint REFRESH_RATE = 60;

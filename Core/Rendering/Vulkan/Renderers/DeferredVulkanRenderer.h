@@ -73,9 +73,10 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         UniquePtr<DynamicRenderer> bufferRenderer;
         SharedPtr<DescriptorSetLayout> bufferDescriptorSetLayout;
 
-//        UniquePtr<Mesh> skyboxMesh;
-//        UniquePtr<SkyboxPipeline> skyboxPipeline;
-//        SharedPtr<DescriptorSetLayout> skyboxDescriptorSetLayout;
+        UniquePtr<Mesh> skyboxMesh;
+        UniquePtr<DynamicRenderer> skyboxRenderer;
+        UniquePtr<SkyboxPipeline> skyboxPipeline;
+        SharedPtr<DescriptorSetLayout> skyboxDescriptorSetLayout;
 
         UniquePtr<DynamicRenderer> mergingRenderer;
         UniquePtr<MergingPipeline> mergingPipeline;

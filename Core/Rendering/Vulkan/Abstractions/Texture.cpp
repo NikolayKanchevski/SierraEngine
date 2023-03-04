@@ -18,7 +18,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         : name(createInfo.name), filePath(createInfo.filePath), textureType(createInfo.textureType), mipMappingEnabled(createInfo.mipMappingEnabled), colorChannelsCount(givenColorChannelsCount)
     {
         // Calculate the image's memory size
-        this->memorySize = width * height * 4;
+        this->memorySize = width * height * GetChannelCountForImageFormat(createInfo.imageFormat);
 
         // Create the staging buffer
         auto stagingBuffer = Buffer::Create({

@@ -39,7 +39,7 @@ namespace Sierra::Engine::Classes
     public:
         /* --- CONSTRUCTORS --- */
         Mesh(std::vector<VertexP> &givenVertices, std::vector<uint> &givenIndices);
-        Mesh(std::vector<VertexPNT> &givenVertices, std::vector<uint> &givenIndices);
+        Mesh(std::vector<VertexPNU> &givenVertices, std::vector<uint> &givenIndices);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint GetVertexCount() const { return vertexCount; }
@@ -67,7 +67,7 @@ namespace Sierra::Engine::Classes
         SharedPtr<Buffer> indexBuffer;
 
         void CreateVertexBuffer(std::vector<VertexP> &givenVertices);
-        void CreateVertexBuffer(std::vector<VertexPNT> &givenVertices);
+        void CreateVertexBuffer(std::vector<VertexPNU> &givenVertices);
         void CreateIndexBuffer(std::vector<uint> &givenIndices);
 
         static inline uint totalMeshCount;

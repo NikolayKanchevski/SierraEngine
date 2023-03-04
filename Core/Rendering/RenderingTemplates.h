@@ -17,11 +17,19 @@ namespace Sierra::Core::Rendering
         Vector3 position;
     };
 
-    struct VertexPNT
+
+    struct VertexPU
+    {
+        Vector3 position;
+        Vector2 UV;
+    };
+
+
+    struct VertexPNU
     {
         Vector3 position;
         Vector3 normal;
-        Vector2 textureCoordinates;
+        Vector2 UV;
     };
 
     struct UniformData

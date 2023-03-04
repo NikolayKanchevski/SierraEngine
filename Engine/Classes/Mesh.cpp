@@ -22,7 +22,7 @@ namespace Sierra::Engine::Classes
         totalVertexCount += vertexCount;
     }
 
-    Mesh::Mesh(std::vector<VertexPNT> &givenVertices, std::vector<uint> &givenIndices)
+    Mesh::Mesh(std::vector<VertexPNU> &givenVertices, std::vector<uint> &givenIndices)
             : vertexCount(givenVertices.size()), indexCount(givenIndices.size())
     {
         CreateVertexBuffer(givenVertices);
@@ -33,6 +33,8 @@ namespace Sierra::Engine::Classes
     }
 
     /* --- SETTER METHODS --- */
+
+    // TEMPLATE FOLLOWING 2 FUNCTIONS
 
     void Mesh::CreateVertexBuffer(std::vector<VertexP> &givenVertices)
     {
@@ -60,10 +62,10 @@ namespace Sierra::Engine::Classes
     }
 
 
-    void Mesh::CreateVertexBuffer(std::vector<VertexPNT> &givenVertices)
+    void Mesh::CreateVertexBuffer(std::vector<VertexPNU> &givenVertices)
     {
         // Calculate the buffer size
-        uint64 bufferSize = sizeof(VertexPNT) * givenVertices.size();
+        uint64 bufferSize = sizeof(VertexPNU) * givenVertices.size();
 
         auto stagingBuffer = Buffer::Create({
             .memorySize = bufferSize,

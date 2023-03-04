@@ -187,7 +187,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
 
         this->bestDepthImageFormat = GetBestDepthBufferFormat(
-            { ImageFormat::D32_SFLOAT_S8_UINT, ImageFormat::D32_SFLOAT, ImageFormat::D24_UNORM_S8_UINT, ImageFormat::D16_UNORM_S8_UINT, ImageFormat::D16_UNORM },
+            { ImageFormat::D32_SFLOAT, ImageFormat::D16_UNORM },
             ImageTiling::OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
         );
 

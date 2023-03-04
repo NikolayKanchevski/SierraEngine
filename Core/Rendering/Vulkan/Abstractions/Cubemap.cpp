@@ -16,10 +16,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         : cubemapType(createInfo.cubemapType)
     {
         stbi_uc *stbiImages[6];
+
+        uint channelCount = GetChannelCountForImageFormat(createInfo.imageFormat);
         for (uint i = 6; i--;)
         {
             // Load image data
-            stbiImages[i] = stbi_load(createInfo.filePaths[i].c_str(), &width, &height, &colorChannelsCount, STBI_rgb_alpha);
+            stbiImages[i] = stbi_load(createInfo.filePaths[i].c_str(), &width, &height, &colorChannelsCount, channelCount);
 
             // Check if image loading has been successful
             ASSERT_ERROR_FORMATTED_IF(!stbiImages[i], "Failed to load the cubemap file [{0}]", createInfo.filePaths[i]);
@@ -29,7 +31,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->sampler = Sampler::Create(createInfo.samplerCreateInfo);
 
         // Calculate the image's memory size
-        this->layerSize = width * height * 4;
+        this->layerSize = width * height * channelCount;
         this->memorySize = layerSize * 6;
 
         // Create the staging buffer
@@ -53,14 +55,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Unmap buffer memory
         vmaUnmapMemory(VK::GetMemoryAllocator(), stagingBuffer->GetMemory());
 
-        // Configure texture format
-        ImageFormat textureImageFormat = ImageFormat::R8G8B8A8_SRGB;
-
         // Create the texture image
         this->image = Image::Create({
             .dimensions = { static_cast<uint>(width), static_cast<uint>(height), 1 },
             .imageType = ImageType::TEXTURE,
-            .format = textureImageFormat,
+            .format = createInfo.imageFormat,
             .layerCount = 6,
             .usage = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
             .createFlags = ImageCreateFlags::CUBE_COMPATIBLE,
@@ -90,6 +89,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             stbi_image_free(stbiImage);
         }
+
+        // TODO: CUBEMAP CACHING
     }
 
     UniquePtr<Cubemap> Cubemap::Create(CubemapCreateInfo createInfo)

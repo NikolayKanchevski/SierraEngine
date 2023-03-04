@@ -23,7 +23,4 @@ private:
 
     void UpdateObjects();
     void DoCameraMovement();
-
-    void DisplayUI(UniquePtr<VulkanRenderer> &renderer);
-    void ListDeeper(Relationship &relationship, const uint iteration);
 };

@@ -53,7 +53,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         vkEndCommandBuffer(vkCommandBuffer);
 
-        // Revert all images' initial layouts, as the updated ones are discared after drawing
+        // Revert all images' initial layouts, as the updated ones are discarded after drawing
         for (const auto pair : initialImageLayouts)
         {
             pair.first->layout = pair.second.initialLayout;
@@ -119,8 +119,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             case ImageLayout::COLOR_ATTACHMENT_OPTIMAL:
                 imageBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
                 break;
+            case ImageLayout::DEPTH_ATTACHMENT_OPTIMAL:
+            case ImageLayout::STENCIL_ATTACHMENT_OPTIMAL:
             case ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
                 imageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                break;
+            case ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL:
+            case ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL:
+                imageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
                 break;
             case ImageLayout::TRANSFER_SRC_OPTIMAL:
                 imageBarrier.srcAccessMask |= VK_ACCESS_TRANSFER_READ_BIT;
@@ -168,7 +174,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
     }
 
-    void CommandBuffer::TransitionImageLayouts(std::vector<ImageReference> images, const ImageLayout newLayout, const VkPipelineStageFlags lastUsageStage, const VkPipelineStageFlags expectedUsageStage)
+    void CommandBuffer::TransitionImageLayouts(const std::vector<ImageReference>& images, const ImageLayout newLayout, const VkPipelineStageFlags lastUsageStage, const VkPipelineStageFlags expectedUsageStage)
     {
         for (auto &imageReference : images)
         {

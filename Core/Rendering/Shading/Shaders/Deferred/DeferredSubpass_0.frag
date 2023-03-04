@@ -12,7 +12,6 @@ layout(set = 1, binding = SPECULAR_TEXTURE_BINDING) uniform sampler2D specularSa
 layout(set = 1, binding = NORMAL_MAP_TEXTURE_BINDING) uniform sampler2D normalSampler;
 
 layout(location = 0) out uint toFramebuffer_ID;
-// TODO: Make a 3-component image
 layout(location = 1) out vec4 toFramebuffer_Position;
 layout(location = 2) out vec4 toFramebuffer_Diffuse;
 layout(location = 3) out vec2 toFramebuffer_SpecularAndShininess;

@@ -673,7 +673,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 // Assign attachment info to pipeline
                 graphicsPipelineCreateInfoKHR.pColorAttachmentFormats = colorAttachmentFormats;
                 graphicsPipelineCreateInfoKHR.depthAttachmentFormat = depthAttachmentFormat;
-                graphicsPipelineCreateInfoKHR.stencilAttachmentFormat = depthAttachmentFormat;
+                graphicsPipelineCreateInfoKHR.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
             }
 
             // Set up graphics pipeline creation info using all the modules created before

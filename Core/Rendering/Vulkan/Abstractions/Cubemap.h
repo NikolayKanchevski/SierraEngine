@@ -19,6 +19,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         String filePaths[6];
 
+        ImageFormat imageFormat = ImageFormat::R8G8B8A8_SRGB;
         CubemapType cubemapType = CUBEMAP_TYPE_NONE;
         bool mipMappingEnabled = false;
 

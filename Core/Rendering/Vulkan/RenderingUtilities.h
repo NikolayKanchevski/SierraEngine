@@ -31,8 +31,8 @@ namespace Sierra::Core::Rendering::Vulkan
         {
             instance.IDBuffer = Buffer::Create({
                 .memorySize = sizeof(IDWriteBuffer),
-                .bufferUsage = BufferUsage::STORAGE,
-                .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT
+                .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
+                .bufferUsage = BufferUsage::STORAGE
             });
 
             // Write arbitrary memory to buffer, so that we do not read garbage memory later on
@@ -59,16 +59,16 @@ namespace Sierra::Core::Rendering::Vulkan
             }, pipelineToCopyFrom, PipelineCopyOp::UNIFORM_BUFFER);
 
             instance.IDBufferDescriptorSet->WriteImage(1, IDImage, Sampler::Default);
-            instance.IDBufferDescriptorSet->WriteImage(2, depthImage, Sampler::Default, ImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+            instance.IDBufferDescriptorSet->WriteImage(2, depthImage, Sampler::Default, ImageLayout::SHADER_READ_ONLY_OPTIMAL);
             instance.IDBufferDescriptorSet->WriteBuffer(3, instance.IDBuffer);
             instance.IDBufferDescriptorSet->Allocate();
         }
 
         /* --- POLLING METHODS --- */
-        static bool UpdateIDBuffer(const UniquePtr<CommandBuffer> &commandBuffer);
+        static void UpdateIDBuffer(const UniquePtr<CommandBuffer> &commandBuffer);
 
         /* --- GETTER METHODS --- */
-        inline static entt::entity GetHoveredEntityID() { return static_cast<entt::entity>(instance.IDData.entityID); }
+        inline static entt::entity GetHoveredEntityID() { return instance.IDData.entityID == 0 ? entt::null : static_cast<entt::entity>(instance.IDData.entityID); }
         inline static Vector3 GetHoveredWorldPosition() { return instance.IDData.worldPosition; }
 
         /* --- DESTRUCTOR --- */

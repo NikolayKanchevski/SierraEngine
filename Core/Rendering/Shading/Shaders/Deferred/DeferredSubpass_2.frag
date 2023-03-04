@@ -3,6 +3,7 @@
 layout(location = 0) in vec3 fromVert_UVW;
 
 layout(set = 0, binding = 1) uniform samplerCube samplerCubeMap;
+layout(set = 0, binding = 2) uniform sampler2D depthBuffer;
 
 layout(location = 2) out vec4 toFramebuffer_FinalizedColor;
 

@@ -28,7 +28,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkSamplerCreateInfo.addressModeW = (VkSamplerAddressMode) samplerAddressMode;
         vkSamplerCreateInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
         vkSamplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
-        vkSamplerCreateInfo.compareEnable = VK_FALSE;
+        vkSamplerCreateInfo.compareEnable = VK_TRUE;
         vkSamplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
         vkSamplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
         vkSamplerCreateInfo.mipLodBias = 0.0f;

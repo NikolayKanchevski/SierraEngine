@@ -84,7 +84,9 @@ namespace Sierra::Core::Rendering::Vulkan
         instanceCreateInfo.enabledExtensionCount = static_cast<uint>(extensions.size());
         instanceCreateInfo.ppEnabledExtensionNames = extensions.data();
         instanceCreateInfo.enabledLayerCount = 0;
-        instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+        #if PLATFORM_APPLE
+            instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+        #endif
         instanceCreateInfo.pNext = nullptr;
 
         // If validation is enabled check validation layers support and bind them to m_Instance

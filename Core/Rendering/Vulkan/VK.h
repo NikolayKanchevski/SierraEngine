@@ -91,7 +91,9 @@ namespace Sierra::Core::Rendering::Vulkan
                 VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
             #endif
             VK_KHR_SURFACE_EXTENSION_NAME,
-            VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
+            #if PLATFORM_APPLE
+                VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
+            #endif
         };
 
         std::vector<const char*> requiredDeviceExtensions

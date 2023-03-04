@@ -21,7 +21,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void End() const;
         void Reset() const;
         void TransitionImageLayout(const UniquePtr<Image> &image, ImageLayout newLayout, VkPipelineStageFlags lastUsageStage, VkPipelineStageFlags expectedUsageStage);
-        void TransitionImageLayouts(std::vector<ImageReference> images, ImageLayout newLayout, VkPipelineStageFlags lastUsageStage, VkPipelineStageFlags expectedUsageStage);
+        void TransitionImageLayouts(const std::vector<ImageReference>& images, ImageLayout newLayout, VkPipelineStageFlags lastUsageStage, VkPipelineStageFlags expectedUsageStage);
         void BindVertexBuffers(const std::vector<VkBuffer> &vertexBuffers) const;
         void BindIndexBuffer(const VkBuffer &indexBuffer) const;
         void DrawIndexed(const uint indexCount) const;

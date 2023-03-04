@@ -13,7 +13,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
     /* --- POLLING METHODS --- */
 
-    bool RenderingUtilities::UpdateIDBuffer(const UniquePtr<CommandBuffer> &commandBuffer)
+    void RenderingUtilities::UpdateIDBuffer(const UniquePtr<CommandBuffer> &commandBuffer)
     {
         using Sierra::Engine::Classes::Input;
         using Sierra::Engine::Classes::Cursor;
@@ -42,8 +42,6 @@ namespace Sierra::Core::Rendering::Vulkan
         commandBuffer->Dispatch(1, 1, 1);
 
         instance.IDData = *instance.IDBuffer->GetDataAs<IDWriteBuffer>();
-
-        return true;
     }
 
     /* --- DESTRUCTOR --- */

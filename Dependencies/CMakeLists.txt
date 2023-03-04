@@ -7,17 +7,21 @@ add_library(Dependencies INTERFACE)
 #TODO: CHECK FOR WETHER VK WAS fouND
 
 # ========== VULKAN ========== #
-#if(NOT DEFINED "VULKAN_SDK")
+#if(NOT DEFINED ${VULKAN_SDK})
 #    message(FATAL_ERROR "Did you forget to set the [VULKAN_SDK] CMake variable?")
 #endif()
 
+set(VULKAN_SDK C:/VulkanSDK/1.3.239.0)
+set(Vulkan_LIBRARY "${VULKAN_SDK}/Lib/vulkan-1.lib")
+set(Vulkan_INCLUDE_DIR "${VULKAN_SDK}/Include/vulkan")
 find_package(Vulkan REQUIRED)
-target_include_directories(Dependencies INTERFACE "${VULKAN_SDK}/include")
+target_include_directories(Dependencies INTERFACE "${VULKAN_SDK}/Include/")
 target_link_libraries(Dependencies INTERFACE Vulkan::Vulkan)
 
 # ========== KHRONOS UTILITIES ========== #
 add_subdirectory(glslang)
 add_subdirectory(SPIRV-Headers)
+set(SPIRV_WERROR OFF)
 add_subdirectory(SPIRV-Tools)
 
 # ========== VMA ========== #
@@ -49,7 +53,7 @@ target_include_directories(Dependencies INTERFACE glm)
 # ========== IMGUI ========== #
 add_library(IMGUI STATIC)
 target_sources(IMGUI PRIVATE ImGui/imgui_demo.cpp ImGui/imgui_draw.cpp ImGui/imgui_tables.cpp ImGui/imgui_widgets.cpp ImGui/imgui.cpp ImGui/imgui.h ImGui/imgui_internal.h ImGui/imconfig.h ImGui/imstb_rectpack.h ImGui/imstb_textedit.h ImGui/imstb_truetype.h ImGui/backends/imgui_impl_vulkan.cpp ImGui/backends/imgui_impl_vulkan.h ImGui/backends/imgui_impl_glfw.cpp ImGui/backends/imgui_impl_glfw.h)
-target_include_directories(IMGUI PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/GLFW/include/ ${VULKAN_SDK}/include ImGui/backends ImGui)
+target_include_directories(IMGUI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/GLFW/include/" "${VULKAN_SDK}/include/" "ImGui/backends" "ImGui/")
 target_link_libraries(Dependencies INTERFACE IMGUI)
 target_include_directories(Dependencies INTERFACE ImGui ImGui/backends)
 
@@ -122,13 +126,6 @@ ExternalProject_Add(TBB-project
     "-DCMAKE_INSTALL_PREFIX:STRING=<INSTALL_DIR>"
 )
 
-add_library(TBB-lib INTERFACE)
-add_dependencies(TBB-lib TBB-project)
-ExternalProject_Get_property(TBB-project INSTALL_DIR)
-target_include_directories(TBB-lib SYSTEM INTERFACE "${INSTALL_DIR}/include")
-target_link_directories(TBB-lib INTERFACE "${INSTALL_DIR}/lib")
-
+# TODO: FIX TBB NOT WORKING
 find_package(TBB)
-target_link_libraries(TBB-lib INTERFACE TBB::tbb)
-
-target_link_libraries(Dependencies INTERFACE TBB-lib)
+target_link_libraries(Dependencies INTERFACE TBB::tbb)
