@@ -90,7 +90,8 @@ namespace Sierra::Core::Rendering::Vulkan
             #if VALIDATION_ENABLED
                 VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
             #endif
-            "VK_KHR_surface"
+            VK_KHR_SURFACE_EXTENSION_NAME,
+            VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
         };
 
         std::vector<const char*> requiredDeviceExtensions

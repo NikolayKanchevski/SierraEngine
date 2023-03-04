@@ -105,6 +105,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Destroy temporary data
         vkDestroySurfaceKHR(VK::GetInstance(), exampleSurface, nullptr);
         glfwDestroyWindow(glfwWindow);
+
+        delete[] physicalDevices;
     }
 
     void Device::CreateLogicalDevice()
@@ -139,6 +141,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         logicalDeviceCreateInfo.queueCreateInfoCount = static_cast<uint>(uniqueQueueFamilies.size());
         logicalDeviceCreateInfo.pQueueCreateInfos = queueCreateInfos;
 
+        // Set up dynamic rendering features
+        VkPhysicalDeviceDynamicRenderingFeaturesKHR deviceDynamicRenderingFeatures{};
+        deviceDynamicRenderingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
+        deviceDynamicRenderingFeatures.dynamicRendering = VK_TRUE;
+
         // Set descriptor indexing features
         #if !__APPLE__
             VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
@@ -149,9 +156,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
                 descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
                 descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
-                logicalDeviceCreateInfo.pNext = &descriptorIndexingFeatures;
+                deviceDynamicRenderingFeatures.pNext = &descriptorIndexingFeatures;
             }
         #endif
+
+        // Add chain to device create info
+        logicalDeviceCreateInfo.pNext = &deviceDynamicRenderingFeatures;
 
         // Create logical device
         VK_ASSERT(
@@ -162,6 +172,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Retrieve queues
         vkGetDeviceQueue(logicalDevice, queueFamilyIndices.graphicsAndComputeFamily, 0, &graphicsAndComputeQueue);
         vkGetDeviceQueue(logicalDevice, queueFamilyIndices.presentationFamily, 0, &presentationQueue);
+
+        delete[] queueCreateInfos;
     }
 
     void Device::RetrieveBestProperties()
@@ -365,6 +377,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
         }
 
+        delete[] queueFamilyProperties;
+
         return indices;
     }
 
@@ -422,12 +436,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         VkSampleCountFlags countFlags = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
 
-        if ((countFlags & static_cast<uint>(Sampling::MSAAx64)) != 0) return Sampling::MSAAx64;
-        if ((countFlags & static_cast<uint>(Sampling::MSAAx32)) != 0) return Sampling::MSAAx32;
-        if ((countFlags & static_cast<uint>(Sampling::MSAAx16)) != 0) return Sampling::MSAAx16;
-        if ((countFlags & static_cast<uint>(Sampling::MSAAx8)) != 0) return Sampling::MSAAx8;
-        if ((countFlags & static_cast<uint>(Sampling::MSAAx4)) != 0) return Sampling::MSAAx4;
-        if ((countFlags & static_cast<uint>(Sampling::MSAAx2)) != 0) return Sampling::MSAAx2;
+        if (IS_FLAG_PRESENT(countFlags, Sampling::MSAAx64)) return Sampling::MSAAx64;
+        if (IS_FLAG_PRESENT(countFlags, Sampling::MSAAx32)) return Sampling::MSAAx32;
+        if (IS_FLAG_PRESENT(countFlags, Sampling::MSAAx16)) return Sampling::MSAAx16;
+        if (IS_FLAG_PRESENT(countFlags, Sampling::MSAAx8)) return Sampling::MSAAx8;
+        if (IS_FLAG_PRESENT(countFlags, Sampling::MSAAx4)) return Sampling::MSAAx4;
+        if (IS_FLAG_PRESENT(countFlags, Sampling::MSAAx2)) return Sampling::MSAAx2;
 
         return Sampling::MSAAx1;
     }

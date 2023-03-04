@@ -27,7 +27,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ImageTiling imageTiling = ImageTiling::OPTIMAL;
         Sampling sampling = Sampling::MSAAx1;
 
-        ImageUsage usageFlags = ImageUsage::UNDEFINED;
+        ImageUsage usage = ImageUsage::UNDEFINED;
         ImageCreateFlags createFlags = ImageCreateFlags::NONE;
         MemoryFlags memoryFlags = MemoryFlags::NONE;
     };
@@ -46,7 +46,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         Image(const ImageCreateInfo &createInfo);
-        [[nodiscard]] static UniquePtr<Image> Create(ImageCreateInfo imageCreateInfo);
+        static UniquePtr<Image> Create(ImageCreateInfo imageCreateInfo);
 
         // Only to be used for swapchain images!
         Image(const SwapchainImageCreateInfo &createInfo);
@@ -77,6 +77,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline ImageFormat GetFormat() const
         { return this->format; };
 
+        [[nodiscard]] inline ImageUsage GetUsage() const
+        { return this->usage; };
+
         [[nodiscard]] inline Sampling GetSampling() const
         { return this->sampling; };
 
@@ -85,6 +88,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         [[nodiscard]] inline uint GetLayerCount() const
         { return this->layerCount; };
+
+        [[nodiscard]] inline ImageAspectFlags GetAspectFlags() const
+        { return this->aspectFlags; };
+
+        [[nodiscard]] inline bool IsSwapchainImage() const
+        { return swapchainImage; }
 
         [[nodiscard]] inline VkImage GetVulkanImage() const
         { return this->vkImage; };
@@ -105,9 +114,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         uint mipLevels = 1;
         uint layerCount = 1;
 
-        ImageFormat format = ImageFormat::UNDEFINED;
+        ImageUsage usage;
+        ImageFormat format;
         Sampling sampling;
         ImageLayout layout = ImageLayout::UNDEFINED;
+        ImageAspectFlags aspectFlags = ImageAspectFlags::NONE;
 
         VkImage vkImage = VK_NULL_HANDLE;
         VkImageView vkImageView = VK_NULL_HANDLE;
@@ -116,6 +127,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         bool imageViewCreated = false;
         bool mipMapsGenerated = false;
         bool swapchainImage = false;
+
+        friend class CommandBuffer;
+    };
+
+    struct ImageReference
+    {
+        UniquePtr<Image>& image;
     };
 
 }

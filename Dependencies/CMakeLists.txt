@@ -4,10 +4,12 @@ cmake_minimum_required(VERSION 3.20)
 include(ExternalProject)
 add_library(Dependencies INTERFACE)
 
+#TODO: CHECK FOR WETHER VK WAS fouND
+
 # ========== VULKAN ========== #
-if(NOT DEFINED "VULKAN_SDK")
-    message(FATAL_ERROR "Did you forget to set the [VULKAN_SDK] CMake variable?")
-endif()
+#if(NOT DEFINED "VULKAN_SDK")
+#    message(FATAL_ERROR "Did you forget to set the [VULKAN_SDK] CMake variable?")
+#endif()
 
 find_package(Vulkan REQUIRED)
 target_include_directories(Dependencies INTERFACE "${VULKAN_SDK}/include")

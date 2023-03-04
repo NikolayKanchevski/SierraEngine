@@ -11,7 +11,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     /* --- CONSTRUCTORS --- */
 
     Image::Image(const ImageCreateInfo &createInfo)
-        : dimensions(createInfo.dimensions), layerCount(createInfo.layerCount), sampling(createInfo.sampling), format(createInfo.format)
+        : dimensions(createInfo.dimensions), layerCount(createInfo.layerCount), usage(createInfo.usage), sampling(createInfo.sampling), format(createInfo.format)
     {
         // Set up image creation info
         VkImageCreateInfo vkImageCreateInfo{};
@@ -29,7 +29,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkImageCreateInfo.format = (VkFormat) format;
         vkImageCreateInfo.tiling = (VkImageTiling) createInfo.imageTiling;
         vkImageCreateInfo.initialLayout = (VkImageLayout) ImageLayout::UNDEFINED;
-        vkImageCreateInfo.usage = (VkImageUsageFlagBits) createInfo.usageFlags;
+        vkImageCreateInfo.usage = (VkImageUsageFlagBits) createInfo.usage;
         vkImageCreateInfo.samples = (VkSampleCountFlagBits) sampling;
         vkImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         vkImageCreateInfo.flags = static_cast<uint>(createInfo.createFlags);
@@ -53,7 +53,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     }
 
     Image::Image(const SwapchainImageCreateInfo &createInfo)
-        : vkImage(createInfo.image), format(createInfo.format), sampling(createInfo.sampling), dimensions(createInfo.dimensions), layout(ImageLayout::PRESENT_SRC), swapchainImage(true)
+        : vkImage(createInfo.image), format(createInfo.format), usage(ImageUsage::UNDEFINED), sampling(createInfo.sampling), dimensions(createInfo.dimensions), layout(ImageLayout::UNDEFINED), swapchainImage(true)
     {
 
     }
@@ -204,6 +204,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             fmt::format("Failed to create image view for an image with dimensions of [{0}, {1}, {2}], format [{3}], [{4}] mip levels, and sampling of [{5}]", dimensions.width, dimensions.height, dimensions.depth, static_cast<int>(format), static_cast<int>(mipLevels), static_cast<int>(sampling))
         );
 
+        aspectFlags = givenAspectFlags;
+
         imageViewCreated = true;
     }
 
@@ -211,6 +213,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         // Create a temporary command buffer
         VkCommandBuffer commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
+
+        // TODO: USE COMMAND BUFFER FUNCTION
 
         // Create image memory barrier
         VkImageMemoryBarrier imageMemoryBarrier{};
@@ -261,7 +265,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
             dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         }
-            // If transitioning from an undefined layout to one optimal for depth stencil...
+        // If transitioning from an undefined layout to one optimal for depth stencil...
         else if (layout == ImageLayout::UNDEFINED && newLayout == ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL)
         {
             imageMemoryBarrier.srcAccessMask = 0;

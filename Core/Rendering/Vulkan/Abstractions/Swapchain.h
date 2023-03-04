@@ -38,6 +38,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline UniquePtr<CommandBuffer>& GetCurrentCommandBuffer() { return commandBuffers[currentFrame]; }
         [[nodiscard]] inline UniquePtr<RenderPass>& GetRenderPass() { return renderPass; }
 
+        [[nodiscard]] inline UniquePtr<Image>& GetImage(const uint index) { return swapchainImages[index]; }
+        [[nodiscard]] inline UniquePtr<Image>& GetCurrentImage() { return GetImage(currentFrame); }
+
         [[nodiscard]] inline uint GetCurrentFrameIndex() const { return currentFrame; }
         [[nodiscard]] inline uint GetMaxConcurrentFramesCount() const { return maxConcurrentFrames; }
 

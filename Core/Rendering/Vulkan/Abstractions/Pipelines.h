@@ -26,15 +26,21 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         uint maxConcurrentFrames;
         std::vector<SharedPtr<Shader>> shaders;
 
+        /* ! --- ONLY NEEDED IF USING PIPELINE WITH DYNAMIC RENDERERS --- ! */
+        const std::vector<ImageReference> attachments = { };
+        /* ! ------------------------------------------------------------ ! */
+
+        const std::vector<VertexAttribute> vertexAttributes = { };
+
         SharedPtr<DescriptorSetLayout> descriptorSetLayout = nullptr;
         ShaderType pushConstantShaderStages = ShaderType::VERTEX | ShaderType::FRAGMENT;
 
-        const std::vector<VertexAttribute> vertexAttributes;
-        const UniquePtr<RenderPass> &renderPass;
+        /* ! --- ONLY NEEDED IF USING PIPELINE WITH RENDER PASSES --- ! */
+        const UniquePtr<RenderPass> *renderPass = nullptr;
         uint subpasss = 0;
-
         uint colorAttachmentCount = 1;
         bool createDepthBuffer = true;
+        /* ! -------------------------------------------------------- ! */
 
         Sampling sampling = Sampling::MSAAx1;
         FrontFace frontFace = FrontFace::COUNTER_CLOCKWISE;
@@ -47,11 +53,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         inline GraphicsPipeline(const GraphicsPipelineCreateInfo &givenCreateInfo)
-                : createInfo(std::move(givenCreateInfo))
+            : createInfo(std::move(givenCreateInfo))
         {
             CreatePipelineLayout();
             CreatePipeline();
         }
+
         inline GraphicsPipeline(const GraphicsPipelineCreateInfo &givenCreateInfo, PC *externalPushConstantData, UB *externalUniformData, UniquePtr<Buffer>* *externalUniformBuffers, SB *externalStorageData, UniquePtr<Buffer>* *externalStorageBuffers)
                 : createInfo(std::move(givenCreateInfo))
         {
@@ -103,7 +110,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             PC* newPushConstantData = nullptr;
             if constexpr (std::is_same<PC, OtherPC>::value)
             {
-                if (copyOperations & PIPELINE_COPY_OP_PUSH_CONSTANTS)
+                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::PUSH_CONSTANTS))
                 {
                     newPushConstantData = &otherPipeline->GetPushConstantData();
                 }
@@ -113,7 +120,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             UniquePtr<Buffer> **newUniformBuffers = nullptr;
             if constexpr(std::is_same<UB, OtherUB>::value)
             {
-                if (copyOperations & PIPELINE_COPY_OP_UNIFORM_BUFFER)
+                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::UNIFORM_BUFFER))
                 {
                     newUniformData = &otherPipeline->GetUniformBufferData();
                     newUniformBuffers = otherPipeline->GetUniformBuffers().data();
@@ -124,7 +131,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             UniquePtr<Buffer> **newStorageBuffers = nullptr;
             if constexpr(std::is_same<SB, OtherSB>::value)
             {
-                if (copyOperations & PIPELINE_COPY_OP_STORAGE_BUFFER)
+                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::STORAGE_BUFFER))
                 {
                     newStorageData = &otherPipeline->GetStorageBufferData();
                     newStorageBuffers = otherPipeline->GetStorageBuffers().data();
@@ -241,10 +248,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
             localDescriptorsHaveBeenBoundForFrame = true;
 
-            static VkDescriptorSet* descriptorSetPtr = new VkDescriptorSet[1];
+            VkDescriptorSet* descriptorSetPtr = new VkDescriptorSet[1];
             descriptorSetPtr[0] = descriptorSets[currentFrame]->GetVulkanDescriptorSet();
 
             vkCmdBindDescriptorSets(givenCommandBuffer->GetVulkanCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, 1, descriptorSetPtr, 0, nullptr);
+
+            delete[] descriptorSetPtr;
         };
         inline void PushConstants(const UniquePtr<CommandBuffer> &givenCommandBuffer)
         {
@@ -474,6 +483,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 "Failed to create graphics pipeline layout"
             );
 
+            delete[] descriptorSetLayoutsPtr;
         };
         void CreatePipeline()
         {
@@ -587,14 +597,40 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             blendingAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
             blendingAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
 
-            std::vector<VkPipelineColorBlendAttachmentState> colorAttachmentStates(createInfo.colorAttachmentCount, blendingAttachmentState);
+            bool hasDepthAttachment = false;
+            bool usesRenderPasses = createInfo.renderPass != nullptr;
+
+            if (!usesRenderPasses)
+            {
+                // Check if depth attachment is set
+                for (const auto attachment : createInfo.attachments)
+                {
+                    if (IS_FLAG_PRESENT(attachment.image->GetUsage(), ImageUsage::DEPTH_STENCIL_ATTACHMENT))
+                    {
+                        hasDepthAttachment = true;
+                        break;
+                    }
+                }
+            }
+
+            // Calculate final color attachment count
+            uint colorAttachmentCount = usesRenderPasses ? createInfo.colorAttachmentCount : (createInfo.attachments.size() - (uint) hasDepthAttachment);
+            std::vector<VkPipelineColorBlendAttachmentState> colorAttachmentStates;
+            if (!usesRenderPasses)
+            {
+                colorAttachmentStates = std::vector<VkPipelineColorBlendAttachmentState>(colorAttachmentCount, blendingAttachmentState);
+            }
+            else
+            {
+                colorAttachmentStates = std::vector<VkPipelineColorBlendAttachmentState>(createInfo.colorAttachmentCount, blendingAttachmentState);
+            }
 
             // Set up bindings
             VkPipelineColorBlendStateCreateInfo blendingStateCreateInfo{};
             blendingStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
             blendingStateCreateInfo.logicOpEnable = VK_FALSE;
             blendingStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;
-            blendingStateCreateInfo.attachmentCount = createInfo.colorAttachmentCount;
+            blendingStateCreateInfo.attachmentCount = colorAttachmentStates.size();
             blendingStateCreateInfo.pAttachments = colorAttachmentStates.data();
 
             // Define dynamic states to use
@@ -609,6 +645,36 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
             dynamicStateCreateInfo.dynamicStateCount = 2;
             dynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
+            VkPipelineRenderingCreateInfoKHR graphicsPipelineCreateInfoKHR{};
+            graphicsPipelineCreateInfoKHR.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+            graphicsPipelineCreateInfoKHR.colorAttachmentCount = colorAttachmentCount;
+
+            VkFormat* colorAttachmentFormats = nullptr;
+            if (!usesRenderPasses)
+            {
+                // Set up attachments
+                VkFormat depthAttachmentFormat = VK_FORMAT_UNDEFINED;
+                colorAttachmentFormats = new VkFormat[colorAttachmentCount];
+
+                uint i = 0;
+                for (const auto &attachment: createInfo.attachments)
+                {
+                    // Check wether attachment is color
+                    if (!IS_FLAG_PRESENT(attachment.image->GetUsage(), ImageUsage::DEPTH_STENCIL_ATTACHMENT))
+                    {
+                        colorAttachmentFormats[i] = (VkFormat) attachment.image->GetFormat();
+                        i++;
+                    } else
+                    {
+                        depthAttachmentFormat = (VkFormat) attachment.image->GetFormat();
+                    }
+                }
+
+                // Assign attachment info to pipeline
+                graphicsPipelineCreateInfoKHR.pColorAttachmentFormats = colorAttachmentFormats;
+                graphicsPipelineCreateInfoKHR.depthAttachmentFormat = depthAttachmentFormat;
+                graphicsPipelineCreateInfoKHR.stencilAttachmentFormat = depthAttachmentFormat;
+            }
 
             // Set up graphics pipeline creation info using all the modules created before
             VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo{};
@@ -623,13 +689,22 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             graphicsPipelineCreateInfo.pColorBlendState = &blendingStateCreateInfo;
             graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
             graphicsPipelineCreateInfo.layout = vkPipelineLayout;
-            graphicsPipelineCreateInfo.renderPass = createInfo.renderPass->GetVulkanRenderPass();
-            graphicsPipelineCreateInfo.subpass = createInfo.subpasss;
+            graphicsPipelineCreateInfo.subpass = 0;
             graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
             graphicsPipelineCreateInfo.basePipelineIndex = -1;
 
+            if (!usesRenderPasses)
+            {
+                graphicsPipelineCreateInfo.renderPass = VK_NULL_HANDLE;
+                graphicsPipelineCreateInfo.pNext = &graphicsPipelineCreateInfoKHR;
+            }
+            else
+            {
+                graphicsPipelineCreateInfo.renderPass = createInfo.renderPass->get()->GetVulkanRenderPass();
+            }
+
             VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{};
-            if (createInfo.createDepthBuffer)
+            if (hasDepthAttachment)
             {
                 depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
                 depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
@@ -668,6 +743,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             );
 
             alreadyCreated = true;
+
+            delete[] shaderStages;
+            if (!usesRenderPasses) delete[] colorAttachmentFormats;
         };
 
     };
@@ -739,7 +817,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             PC* newPushConstantData = nullptr;
             if constexpr (std::is_same<PC, OtherPC>::value)
             {
-                if (copyOperations & PIPELINE_COPY_OP_PUSH_CONSTANTS)
+                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::PUSH_CONSTANTS))
                 {
                     newPushConstantData = &otherPipeline->GetPushConstantData();
                 }
@@ -749,7 +827,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             UniquePtr<Buffer> *newUniformBuffer = nullptr;
             if constexpr(std::is_same<UB, OtherUB>::value)
             {
-                if (copyOperations & PIPELINE_COPY_OP_UNIFORM_BUFFER)
+                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::UNIFORM_BUFFER))
                 {
                     newUniformData = &otherPipeline->GetUniformBufferData();
                     newUniformBuffer = &otherPipeline->GetUniformBuffer(0);
@@ -760,7 +838,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             UniquePtr<Buffer> *newStorageBuffer = nullptr;
             if constexpr(std::is_same<SB, OtherSB>::value)
             {
-                if (copyOperations & PIPELINE_COPY_OP_STORAGE_BUFFER)
+                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::STORAGE_BUFFER))
                 {
                     newStorageData = &otherPipeline->GetStorageBufferData();
                     newStorageBuffer = &otherPipeline->GetStorageBuffer(0);
@@ -776,7 +854,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             PC* newPushConstantData = nullptr;
             if constexpr (std::is_same<PC, OtherPC>::value)
             {
-                if (copyOperations & PIPELINE_COPY_OP_PUSH_CONSTANTS)
+                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::PUSH_CONSTANTS))
                 {
                     newPushConstantData = &otherPipeline->GetPushConstantData();
                 }
@@ -786,7 +864,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             UniquePtr<Buffer> *newUniformBuffer = nullptr;
             if constexpr(std::is_same<UB, OtherUB>::value)
             {
-                if (copyOperations & PIPELINE_COPY_OP_UNIFORM_BUFFER)
+                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::UNIFORM_BUFFER))
                 {
                     newUniformData = &otherPipeline->GetUniformBufferData();
                     newUniformBuffer = &otherPipeline->GetUniformBuffer(0);
@@ -797,7 +875,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             UniquePtr<Buffer> *newStorageBuffer = nullptr;
             if constexpr(std::is_same<SB, OtherSB>::value)
             {
-                if (copyOperations & PIPELINE_COPY_OP_STORAGE_BUFFER)
+                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::STORAGE_BUFFER))
                 {
                     newStorageData = &otherPipeline->GetStorageBufferData();
                     newStorageBuffer = &otherPipeline->GetStorageBuffer(0);
@@ -880,6 +958,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
             localDescriptorsHaveBeenBoundForFrame = true;
             vkCmdBindDescriptorSets(givenCommandBuffer->GetVulkanCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, vkPipelineLayout, 0, hasDescriptorSet, localDescriptorSets, 0, nullptr);
+
+            delete[] localDescriptorSets;
         };
         inline void PushConstants(const UniquePtr<CommandBuffer> &givenCommandBuffer)
         {
@@ -1077,6 +1157,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 vkCreatePipelineLayout(VK::GetLogicalDevice(), &pipelineLayoutCreateInfo, nullptr, &vkPipelineLayout),
                 "Failed to create compute pipeline layout"
             );
+
+            delete[] descriptorSetLayoutsPtr;
         };
         void CreatePipeline()
         {

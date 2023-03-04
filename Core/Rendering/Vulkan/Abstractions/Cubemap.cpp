@@ -62,7 +62,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             .imageType = ImageType::TEXTURE,
             .format = textureImageFormat,
             .layerCount = 6,
-            .usageFlags = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
+            .usage = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
             .createFlags = ImageCreateFlags::CUBE_COMPATIBLE,
             .memoryFlags = MemoryFlags::DEVICE_LOCAL
         });

@@ -24,7 +24,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         framebufferCreateInfo.layers = 1;
 
         VkImageView* attachmentsPtr = new VkImageView[createInfo.attachments.size()];
-        for (uint i = createInfo.attachments.size(); i--;) attachmentsPtr[i] = createInfo.attachments[i]->get()->GetVulkanImageView();
+        for (uint i = createInfo.attachments.size(); i--;) attachmentsPtr[i] = createInfo.attachments[i].image->GetVulkanImageView();
         framebufferCreateInfo.pAttachments = attachmentsPtr;
 
         // Create the Vulkan framebuffer
@@ -32,6 +32,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             vkCreateFramebuffer(VK::GetLogicalDevice(), &framebufferCreateInfo, nullptr, &vkFramebuffer),
             fmt::format("Failed to create a framebuffer with attachment count of [{0}]", createInfo.attachments.size())
         );
+
+        delete[] attachmentsPtr;
     }
 
     UniquePtr<Framebuffer> Framebuffer::Create(FramebufferCreateInfo createInfo)

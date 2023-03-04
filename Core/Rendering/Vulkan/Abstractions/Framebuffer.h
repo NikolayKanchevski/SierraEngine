@@ -8,12 +8,16 @@
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
+    struct FramebufferAttachment
+    {
+        UniquePtr<Image>& image;
+    };
 
     struct FramebufferCreateInfo
     {
         uint width = 0;
         uint height = 0;
-        const std::vector<UniquePtr<Image>*> &attachments;
+        const std::vector<FramebufferAttachment> &attachments;
         VkRenderPass renderPass = VK_NULL_HANDLE;
     };
 

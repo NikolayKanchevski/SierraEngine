@@ -242,25 +242,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Begin render pass
         vkCmdBeginRenderPass(commandBuffer->GetVulkanCommandBuffer(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        // Set up viewport info
-        VkViewport viewport{};
-        viewport.width = framebuffer->GetWidth();
-        viewport.height = framebuffer->GetHeight();
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-
-        // Set viewport
-        vkCmdSetViewport(commandBuffer->GetVulkanCommandBuffer(), 0, 1, &viewport);
-
-        // Set up scissor info
-        VkRect2D scissor{};
-        scissor.extent.width = framebuffer->GetWidth();
-        scissor.extent.height = framebuffer->GetHeight();
-        scissor.offset.x = 0;
-        scissor.offset.y = 0;
-
-        // Set scissor
-        vkCmdSetScissor(commandBuffer->GetVulkanCommandBuffer(), 0, 1, &scissor);
+        // Set viewport and apply scissoring
+        commandBuffer->SetViewportAndScissor(framebuffer->GetWidth(), framebuffer->GetHeight());
     }
 
     void RenderPass::End(const UniquePtr<CommandBuffer> &commandBuffer)

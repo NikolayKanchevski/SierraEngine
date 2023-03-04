@@ -242,6 +242,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
             swapchainImages[i]->CreateImageView(ImageAspectFlags::COLOR);
         }
+
+        delete[] swapchainVkImages;
     }
 
     void Swapchain::CreateRenderPass()
@@ -271,7 +273,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             swapchainFramebuffers[i] = Framebuffer::Create({
                 .width = extent.width,
                 .height = extent.height,
-                .attachments = { &this->swapchainImages[i] },
+                .attachments = { { this->swapchainImages[i] } },
                 .renderPass = renderPass->GetVulkanRenderPass()
             });
         }

@@ -22,7 +22,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create a pointer to layout binding array
         VkDescriptorSetLayoutBinding* layoutBindings = new VkDescriptorSetLayoutBinding[givenBindings.size()];
 
-        auto* bindingFlags = new VkDescriptorBindingFlags[bindings.size()];
+        VkDescriptorBindingFlags* bindingFlags = new VkDescriptorBindingFlags[bindings.size()];
 
         // Foreach pair in the provided tuple retrieve the created set layout binding
         uint i = 0;
@@ -54,6 +54,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             vkCreateDescriptorSetLayout(VK::GetLogicalDevice(), &layoutCreateInfo, nullptr, &vkDescriptorSetLayout),
             fmt::format("Failed to create descriptor layout with [{0}] binging(s)", layoutCreateInfo.bindingCount)
         );
+
+        delete[] layoutBindings;
+        delete[] bindingFlags;
     }
 
     SharedPtr<DescriptorSetLayout> DescriptorSetLayout::Builder::Build() const
@@ -178,6 +181,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             vkAllocateDescriptorSets(VK::GetLogicalDevice(), &allocateInfo, &descriptorSet),
             "Failed to allocate descriptor set"
         );
+
+        delete[] descriptorCounts;
     }
 
     /* --- CONSTRUCTORS --- */

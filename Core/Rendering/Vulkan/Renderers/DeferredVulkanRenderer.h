@@ -4,8 +4,10 @@
 
 #pragma once
 
-#include "../../RenderingTemplates.h"
 #include "VulkanRenderer.h"
+
+#include "../../RenderingTemplates.h"
+#include "../Abstractions/DynamicRenderer.h"
 #include "../../../../Engine/Classes/Mesh.h"
 #include "../../../../Engine/Components/Lighting/PointLight.h"
 #include "../../../../Engine/Components/Lighting/DirectionalLight.h"
@@ -67,19 +69,17 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         UniquePtr<Image> depthStencilBuffer;
         UniquePtr<Image> renderedImage;
 
-        UniquePtr<RenderPass> deferredRenderPass;
-        UniquePtr<Framebuffer> deferredFramebuffer;
+        UniquePtr<ScenePipeline> bufferPipeline;
+        UniquePtr<DynamicRenderer> bufferRenderer;
+        SharedPtr<DescriptorSetLayout> bufferDescriptorSetLayout;
 
-        UniquePtr<ScenePipeline> scenePipeline;
-        SharedPtr<DescriptorSetLayout> sceneDescriptorSetLayout;
+//        UniquePtr<Mesh> skyboxMesh;
+//        UniquePtr<SkyboxPipeline> skyboxPipeline;
+//        SharedPtr<DescriptorSetLayout> skyboxDescriptorSetLayout;
 
+        UniquePtr<DynamicRenderer> mergingRenderer;
         UniquePtr<MergingPipeline> mergingPipeline;
-        UniquePtr<DescriptorSet> mergingDescriptorSet;
         SharedPtr<DescriptorSetLayout> mergingDescriptorSetLayout;
-
-        UniquePtr<Mesh> skyboxMesh;
-        UniquePtr<SkyboxPipeline> skyboxPipeline;
-        SharedPtr<DescriptorSetLayout> skyboxDescriptorSetLayout;
 
         UniquePtr<Sampler> textureSampler;
         std::vector<VkDescriptorSet> renderedImageDescriptorSets;

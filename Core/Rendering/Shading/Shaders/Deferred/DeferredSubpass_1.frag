@@ -3,11 +3,13 @@
 #include "../Lighting/DefaultLighting.glsl"
 #include "../Types/GlobalStorageBuffer.glsl"
 
-layout(input_attachment_index = 0, set = 1, binding = 2) uniform subpassInput fromSubpass_PositionBuffer;
-layout(input_attachment_index = 1, set = 1, binding = 3) uniform subpassInput fromSubpass_ColorBuffer;
-layout(input_attachment_index = 2, set = 1, binding = 4) uniform subpassInput fromSubpass_SpecularAndShininess;
-layout(input_attachment_index = 3, set = 1, binding = 5) uniform subpassInput fromSubpass_NormalBuffer;
-layout(input_attachment_index = 4, set = 1, binding = 6) uniform subpassInput fromSubpass_DepthBuffer;
+layout(location = 0) in vec2 fromVert_UV;
+
+layout(set = 0, binding = 2) uniform sampler2D fromCode_PositionBuffer;
+layout(set = 0, binding = 3) uniform sampler2D fromCode_DiffuseBuffer;
+layout(set = 0, binding = 4) uniform sampler2D fromCode_SpecularAndShininess;
+layout(set = 0, binding = 5) uniform sampler2D fromCode_NormalBuffer;
+layout(set = 0, binding = 6) uniform sampler2D fromCode_DepthBuffer;
 
 const uint RenderedImageValue_RenderedImage = 0;
 const uint RenderedImageValue_PositionBuffer = 1;
@@ -27,29 +29,29 @@ layout (location = 0) out vec4 toFramebuffer_FinalizedColor;
 void main()
 {
     // Check if a pixel has been dran in current texel and if not discard it
-    float depth = subpassLoad(fromSubpass_DepthBuffer).r;
+    float depth = texture(fromCode_DepthBuffer, fromVert_UV).r;
     if (depth == 1.0)
     {
-        discard;
+        toFramebuffer_FinalizedColor = texture(fromCode_DiffuseBuffer, fromVert_UV);
+        return;
     }
     if (pushConstant.renderedImageValue == RenderedImageValue_DepthBuffer) { toFramebuffer_FinalizedColor = vec4(depth, depth, depth, 1.0); return; }
 
-
     // Load values and return depending on rendered output type
-    vec3 position = subpassLoad(fromSubpass_PositionBuffer).xyz;
+    vec3 position = texture(fromCode_PositionBuffer, fromVert_UV).xyz;
     if (pushConstant.renderedImageValue == RenderedImageValue_PositionBuffer) { toFramebuffer_FinalizedColor = vec4(position, 1.0); return; }
 
-    vec3 color = subpassLoad(fromSubpass_ColorBuffer).rgb;
-    if (pushConstant.renderedImageValue == RenderedImageValue_DiffuseBuffer) { toFramebuffer_FinalizedColor = vec4(color, 1.0); return; }
+    vec3 diffuse = texture(fromCode_DiffuseBuffer, fromVert_UV).rgb;
+    if (pushConstant.renderedImageValue == RenderedImageValue_DiffuseBuffer) { toFramebuffer_FinalizedColor = vec4(diffuse, 1.0); return; }
 
-    vec2 specularAndShininess = subpassLoad(fromSubpass_SpecularAndShininess).rg;
+    vec2 specularAndShininess = texture(fromCode_SpecularAndShininess, fromVert_UV).rg;
     if (pushConstant.renderedImageValue == RenderedImageValue_SpecularBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.xxx, 1.0); return; }
-    if (pushConstant.renderedImageValue == RenderedImageValue_ShininessBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.yyy, 1.0); return; }
+    if (pushConstant.renderedImageValue == RenderedImageValue_ShininessBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.y / 512.0f, specularAndShininess.y / 512.0f, specularAndShininess.y / 512.0f, 1.0); return; }
 
     float specular = specularAndShininess.x;
     float shininess = specularAndShininess.y;
 
-    vec3 normal = subpassLoad(fromSubpass_NormalBuffer).rgb;
+    vec3 normal = texture(fromCode_NormalBuffer, fromVert_UV).rgb;
     if (pushConstant.renderedImageValue == RenderedImageValue_NormalBuffer) { toFramebuffer_FinalizedColor = vec4(normal, 1.0); return; }
 
     // Define the final color
@@ -63,7 +65,7 @@ void main()
         calculatedColor += CalculateDirectionalLight(
             storageBuffer.directionalLights[i],
             position,
-            color,
+            diffuse,
             specular,
             shininess,
             normal
@@ -78,7 +80,7 @@ void main()
         calculatedColor += CalculatePointLight(
             storageBuffer.pointLights[i],
             position,
-            color,
+            diffuse,
             specular,
             shininess,
             normal

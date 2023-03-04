@@ -857,12 +857,22 @@ namespace Sierra::Core::Rendering::Vulkan
         MUTABLE_VALVE = VK_DESCRIPTOR_TYPE_MUTABLE_VALVE
     };
 
-    typedef uint PipelineCopyOp;
-    typedef enum _PipelineCopyOp
+    enum class PipelineCopyOp
     {
-        PIPELINE_COPY_OP_PUSH_CONSTANTS = 0,
-        PIPELINE_COPY_OP_UNIFORM_BUFFER = 1,
-        PIPELINE_COPY_OP_STORAGE_BUFFER = 2
-    } _PipelineCopyOp;
+        PUSH_CONSTANTS = 0,
+        UNIFORM_BUFFER = 1,
+        STORAGE_BUFFER = 2
+    };
+
+    DEFINE_ENUM_FLAG_OPERATORS(PipelineCopyOp)
+
+    enum class ResolveMode
+    {
+        NONE = VK_RESOLVE_MODE_NONE,
+        SAMPLE_ZERO = VK_RESOLVE_MODE_SAMPLE_ZERO_BIT,
+        AVERAGE = VK_RESOLVE_MODE_AVERAGE_BIT,
+        MIN = VK_RESOLVE_MODE_MIN_BIT,
+        MAX = VK_RESOLVE_MODE_MAX_BIT
+    };
 
 }

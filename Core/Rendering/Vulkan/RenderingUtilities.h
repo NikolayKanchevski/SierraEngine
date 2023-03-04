@@ -56,7 +56,7 @@ namespace Sierra::Core::Rendering::Vulkan
             instance.IDBufferComputePipeline = ComputePipeline<IDPushConstant, UniformData, NullType>::CreateFromAnotherPipeline({
                .shader = raycastShader,
                .descriptorSetLayout = instance.IDBufferDescriptorSetLayout
-            }, pipelineToCopyFrom, PIPELINE_COPY_OP_UNIFORM_BUFFER);
+            }, pipelineToCopyFrom, PipelineCopyOp::UNIFORM_BUFFER);
 
             instance.IDBufferDescriptorSet->WriteImage(1, IDImage, Sampler::Default);
             instance.IDBufferDescriptorSet->WriteImage(2, depthImage, Sampler::Default, ImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL);

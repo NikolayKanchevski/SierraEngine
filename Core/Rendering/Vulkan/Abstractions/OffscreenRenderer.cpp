@@ -6,6 +6,7 @@
 
 #include "../VK.h"
 
+// TODO: OBSOLETE
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     /* --- CONSTRUCTORS --- */
@@ -100,7 +101,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 colorImages[i] = Image::Create({
                     .dimensions = { width, height, 1 },
                     .format = VK::GetDevice()->GetBestColorImageFormat(),
-                    .usageFlags = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED
+                    .usage = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED
                 });
 
                 colorImages[i]->CreateImageView(ImageAspectFlags::COLOR);
@@ -115,7 +116,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 .dimensions = { width, height, 1 },
                 .format = VK::GetDevice()->GetBestDepthImageFormat(),
                 .sampling = msaaSampling,
-                .usageFlags = ImageUsage::DEPTH_STENCIL_ATTACHMENT,
+                .usage = ImageUsage::DEPTH_STENCIL_ATTACHMENT,
                 .memoryFlags = MemoryFlags::DEVICE_LOCAL,
                 });
 
@@ -131,7 +132,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 .dimensions = { width, height, 1 },
                 .format = VK::GetDevice()->GetBestColorImageFormat(),
                 .sampling = (Sampling) msaaSampling,
-                .usageFlags = ImageUsage::TRANSIENT_ATTACHMENT | ImageUsage::COLOR_ATTACHMENT,
+                .usage = ImageUsage::TRANSIENT_ATTACHMENT | ImageUsage::COLOR_ATTACHMENT,
                 .memoryFlags = MemoryFlags::DEVICE_LOCAL
             });
 
@@ -226,12 +227,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             if (HasColorAttachment()) framebufferAttachments[colorImageIndex] = &colorImages[i];
 
             // Create framebuffer
-            framebuffers[i] = Framebuffer::Create({
-                .width = width,
-                .height = height,
-                .attachments = framebufferAttachments,
-                .renderPass = renderPass->GetVulkanRenderPass()
-            });
+//            framebuffers[i] = Framebuffer::Create({
+//                .width = width,
+//                .height = height,
+//                .attachments = framebufferAttachments,
+//                .renderPass = renderPass->GetVulkanRenderPass()
+//            });
         }
     }
 

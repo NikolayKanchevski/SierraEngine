@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "Image.h"
+
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
 
@@ -18,6 +20,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void Begin(VkCommandBufferUsageFlagBits flags = (VkCommandBufferUsageFlagBits) 0) const;
         void End() const;
         void Reset() const;
+        void TransitionImageLayout(const UniquePtr<Image> &image, ImageLayout newLayout, VkPipelineStageFlags lastUsageStage, VkPipelineStageFlags expectedUsageStage);
+        void TransitionImageLayouts(std::vector<ImageReference> images, ImageLayout newLayout, VkPipelineStageFlags lastUsageStage, VkPipelineStageFlags expectedUsageStage);
         void BindVertexBuffers(const std::vector<VkBuffer> &vertexBuffers) const;
         void BindIndexBuffer(const VkBuffer &indexBuffer) const;
         void DrawIndexed(const uint indexCount) const;
@@ -35,6 +39,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     private:
         VkCommandBuffer vkCommandBuffer;
+
+        // [Pointer to image | Initial image layout before first TransitionLayout() | First time transitioning]
+        struct ImageLayoutPair
+        {
+            ImageLayout initialLayout = ImageLayout::UNDEFINED;
+            bool firstTime = false;
+        };
+        std::unordered_map<Image*, ImageLayoutPair> initialImageLayouts;
 
     };
 

@@ -13,9 +13,8 @@
 #include "../../Version.h"
 #include "RenderingUtilities.h"
 #include "Abstractions/Texture.h"
-#include "../../../Engine/Classes/File.h"
 
-#define VK_VERSION VK_API_VERSION_1_1
+#define VK_VERSION VK_API_VERSION_1_2
 #define MAX_IMGUI_DESCRIPTOR_COUNT 2000
 
 using namespace Sierra::Engine::Classes;
@@ -62,8 +61,8 @@ namespace Sierra::Core::Rendering::Vulkan
         applicationInfo.pApplicationName = "Sierra Engine";
         applicationInfo.applicationVersion = VK_MAKE_VERSION(Version::MAJOR, Version::MINOR, Version::PATCH);
         applicationInfo.pEngineName = "No Engine";
-        applicationInfo.engineVersion = VK_MAKE_VERSION(Version::MAJOR, Version::MINOR, Version::PATCH);
-        applicationInfo.apiVersion = VK_VERSION;
+        applicationInfo.engineVersion = VK_VERSION_1_3;
+        applicationInfo.apiVersion = VK_API_VERSION_1_3;
 
         // Get GLFW extensions
         uint glfwExtensionCount;
@@ -85,6 +84,7 @@ namespace Sierra::Core::Rendering::Vulkan
         instanceCreateInfo.enabledExtensionCount = static_cast<uint>(extensions.size());
         instanceCreateInfo.ppEnabledExtensionNames = extensions.data();
         instanceCreateInfo.enabledLayerCount = 0;
+        instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
         instanceCreateInfo.pNext = nullptr;
 
         // If validation is enabled check validation layers support and bind them to m_Instance

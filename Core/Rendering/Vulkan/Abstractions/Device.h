@@ -110,7 +110,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         std::vector<const char*> requiredDeviceExtensions
         {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+            VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
         };
 
     };

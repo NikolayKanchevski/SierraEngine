@@ -12,8 +12,9 @@ layout(set = 1, binding = SPECULAR_TEXTURE_BINDING) uniform sampler2D specularSa
 layout(set = 1, binding = NORMAL_MAP_TEXTURE_BINDING) uniform sampler2D normalSampler;
 
 layout(location = 0) out uint toFramebuffer_ID;
+// TODO: Make a 3-component image
 layout(location = 1) out vec4 toFramebuffer_Position;
-layout(location = 2) out vec4 toFramebuffer_Color;
+layout(location = 2) out vec4 toFramebuffer_Diffuse;
 layout(location = 3) out vec2 toFramebuffer_SpecularAndShininess;
 layout(location = 4) out vec4 toFramebuffer_Normal;
 
@@ -37,7 +38,7 @@ void main()
     // Pass data to framebuffer
     toFramebuffer_ID = pushConstant.entityID;
     toFramebuffer_Position = vec4(fromVert_Position, 1.0f);
-    toFramebuffer_Color = vec4(diffuseTextureColor * pushConstant.material.diffuse, 1.0f);
+    toFramebuffer_Diffuse = vec4(diffuseTextureColor * pushConstant.material.diffuse, 1.0f);
     toFramebuffer_SpecularAndShininess = vec2(specularTextureColor * pushConstant.material.specular, pushConstant.material.shininess);
     toFramebuffer_Normal = vec4(tnorm, 1.0f);
 }

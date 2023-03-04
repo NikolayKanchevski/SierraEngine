@@ -36,7 +36,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             .dimensions = { width, height, 1 },
             .format = createInfo.imageFormat,
             .generateMipMaps = createInfo.mipMappingEnabled,
-            .usageFlags = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
+            .usage = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
             .memoryFlags = MemoryFlags::DEVICE_LOCAL
         });
 

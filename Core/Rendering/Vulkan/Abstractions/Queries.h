@@ -22,6 +22,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         /* --- GETTER METHODS --- */
         [[nodiscard]] float GetTimeTaken() const;
 
+        /* --- DESTRUCTORS --- */
+        inline ~TimestampQuery() { delete[] buffer; }
+
         /* --- OPERATORS --- */
         DELETE_COPY(TimestampQuery);
 

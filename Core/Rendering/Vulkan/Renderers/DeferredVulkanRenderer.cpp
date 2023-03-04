@@ -14,7 +14,7 @@
 #include "../../../../Engine/Components/WorldManager.h"
 
 #define POSITION_BUFFER_BINDING 2
-#define COLOR_BUFFER_BINDING 3
+#define DIFFUSE_BUFFER_BINDING 3
 #define SPECULAR_AND_SHININESS_BUFFER_BINDING 4
 #define NORMAL_BUFFER_BINDING 5
 #define DEPTH_BUFFER_BINDING 6
@@ -34,7 +34,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
     /* --- CONSTRUCTORS --- */
 
     DeferredVulkanRenderer::DeferredVulkanRenderer(const VulkanRendererCreateInfo &createInfo)
-            : VulkanRenderer(createInfo)
+        : VulkanRenderer(createInfo)
     {
         PROFILE_FUNCTION();
 
@@ -61,7 +61,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .format = ImageFormat::R32_UINT,
             .sampling = Sampling::MSAAx1,
-            .usageFlags = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED
+            .usage = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED
         });
 
         IDBuffer->CreateImageView(ImageAspectFlags::COLOR);
@@ -71,7 +71,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .format = ImageFormat::R16G16B16A16_SFLOAT,
             .sampling = Sampling::MSAAx1,
-            .usageFlags = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::INPUT_ATTACHMENT
+            .usage = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED
         });
 
         positionBuffer->CreateImageView(ImageAspectFlags::COLOR);
@@ -81,7 +81,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .format = ImageFormat::R16G16B16A16_SFLOAT,
             .sampling = Sampling::MSAAx1,
-            .usageFlags = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::INPUT_ATTACHMENT
+            .usage = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED
         });
 
         diffuseBuffer->CreateImageView(ImageAspectFlags::COLOR);
@@ -91,7 +91,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .format = ImageFormat::R8G8_UNORM,
             .sampling = Sampling::MSAAx1,
-            .usageFlags = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::INPUT_ATTACHMENT
+            .usage = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED
         });
 
         specularAndShininessBuffer->CreateImageView(ImageAspectFlags::COLOR);
@@ -101,7 +101,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .format = ImageFormat::R16G16B16A16_SFLOAT,
             .sampling = Sampling::MSAAx1,
-            .usageFlags = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::INPUT_ATTACHMENT
+            .usage = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED
         });
 
         normalBuffer->CreateImageView(ImageAspectFlags::COLOR);
@@ -111,7 +111,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .format = VK::GetDevice()->GetBestDepthImageFormat(),
             .sampling = Sampling::MSAAx1,
-            .usageFlags = ImageUsage::DEPTH_STENCIL_ATTACHMENT | ImageUsage::INPUT_ATTACHMENT | ImageUsage::SAMPLED
+            .usage = ImageUsage::DEPTH_STENCIL_ATTACHMENT | ImageUsage::SAMPLED
         });
 
         depthStencilBuffer->CreateImageView(ImageAspectFlags::DEPTH);
@@ -121,105 +121,69 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .format = ImageFormat::R16G16B16A16_SFLOAT,
             .sampling = Sampling::MSAAx1,
-            .usageFlags = ImageUsage::COLOR_ATTACHMENT | ImageUsage::INPUT_ATTACHMENT | ImageUsage::SAMPLED
+            .usage = ImageUsage::COLOR_ATTACHMENT | ImageUsage::SAMPLED
         });
 
         renderedImage->CreateImageView(ImageAspectFlags::COLOR);
 
-        // Set up render pass attachments
-        const std::vector<RenderPassAttachment> defferedRenderPassAttachments
+        // Set up rendering attachments
+        const std::vector<DynamicRendererAttachment> defferedDynamicAttachments
         {
             // Entity ID buffer attachment [0]
             {
-                .imageAttachment = IDBuffer,
+                .image = IDBuffer,
                 .loadOp = LoadOp::CLEAR,
                 .storeOp = StoreOp::STORE,
-                .finalLayout = ImageLayout::SHADER_READ_ONLY_OPTIMAL
             },
             // Position buffer attachment [1]
             {
-                .imageAttachment = positionBuffer,
+                .image = positionBuffer,
                 .loadOp = LoadOp::CLEAR,
                 .storeOp = StoreOp::STORE,
-                .finalLayout = ImageLayout::SHADER_READ_ONLY_OPTIMAL
             },
 
             // Color buffer attachment [2]
             {
-                .imageAttachment = diffuseBuffer,
+                .image = diffuseBuffer,
                 .loadOp = LoadOp::CLEAR,
                 .storeOp = StoreOp::STORE,
-                .finalLayout = ImageLayout::SHADER_READ_ONLY_OPTIMAL
             },
 
             // Specular and shininess buffer attachment [3]
             {
-                .imageAttachment = specularAndShininessBuffer,
+                .image = specularAndShininessBuffer,
                 .loadOp = LoadOp::CLEAR,
                 .storeOp = StoreOp::STORE,
-                .finalLayout = ImageLayout::SHADER_READ_ONLY_OPTIMAL
             },
 
             // Normal buffer attachment [4]
             {
-                .imageAttachment = normalBuffer,
+                .image = normalBuffer,
                 .loadOp = LoadOp::CLEAR,
                 .storeOp = StoreOp::STORE,
-                .finalLayout = ImageLayout::SHADER_READ_ONLY_OPTIMAL
             },
 
             // Depth stencil buffer attachment [5]
             {
-                .imageAttachment = depthStencilBuffer,
+                .image = depthStencilBuffer,
                 .loadOp = LoadOp::CLEAR,
                 .storeOp = StoreOp::STORE,
-                .finalLayout = ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-            },
-
-            // Finalized/rendered image attachment [6]
-            {
-                .imageAttachment = renderedImage,
-                .loadOp = LoadOp::CLEAR,
-                .storeOp = StoreOp::STORE,
-                .finalLayout = ImageLayout::SHADER_READ_ONLY_OPTIMAL
-            },
+            }
         };
 
-        // Create render pass
-        deferredRenderPass = RenderPass::Create({
-            .attachments = defferedRenderPassAttachments,
-            .subpassInfos = {
-                // Subpass 0
-                {
-                    .renderTargets = { 0, 1, 2, 3, 4, 5 }
-                },
-                // Subpass 1
-                {
-                    .renderTargets = { 6 },
-                    .subpassInputs = { 1, 2, 3, 4, 5 }
-                },
-                // Subpass 2
-                {
-                    .renderTargets = { 6 },
-                    .subpassInputs = { 5, 6 }
-                }
-            }
+        // Create dynamic renderers
+        bufferRenderer = DynamicRenderer::Create({
+            .attachments = defferedDynamicAttachments
         });
 
-        // Create framebuffer
-        deferredFramebuffer = Framebuffer::Create({
-            .width = swapchain->GetWidth(),
-            .height = swapchain->GetHeight(),
+        mergingRenderer = DynamicRenderer::Create({
             .attachments = {
-                &IDBuffer,
-                &positionBuffer,
-                &diffuseBuffer,
-                &specularAndShininessBuffer,
-                &normalBuffer,
-                &depthStencilBuffer,
-                &renderedImage
-            },
-            .renderPass = deferredRenderPass->GetVulkanRenderPass()
+                {
+                    .image = renderedImage,
+                    .loadOp = LoadOp::CLEAR,
+                    .storeOp = StoreOp::STORE
+                }
+            }
         });
 
         // Create timestamp queries
@@ -252,47 +216,35 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         }
 
         // Create scene descriptor set layout
-        sceneDescriptorSetLayout = descriptorLayoutBuilder.Build();
-        VK::SetGlobalDescriptorSetLayout(sceneDescriptorSetLayout);
+        bufferDescriptorSetLayout = descriptorLayoutBuilder.Build();
+        VK::SetGlobalDescriptorSetLayout(bufferDescriptorSetLayout);
 
         // Load scene shaders
+        // TODO: RENAME SHADERS
         auto vertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/DeferredSubpass_0.vert" });
         auto fragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/DeferredSubpass_0.frag" });
 
         // Create scene renderer pipeline
-        scenePipeline = ScenePipeline::Create({
+        bufferPipeline = ScenePipeline::Create({
             .maxConcurrentFrames = maxConcurrentFrames,
             .shaders = { vertexShader, fragmentShader },
-            .descriptorSetLayout = sceneDescriptorSetLayout,
+            .attachments = { { IDBuffer }, { positionBuffer }, { diffuseBuffer }, { specularAndShininessBuffer }, { normalBuffer }, { depthStencilBuffer } },
             .vertexAttributes = { VertexAttribute::POSITION, VertexAttribute::NORMAL, VertexAttribute::TEXTURE_COORDINATE },
-            .renderPass = deferredRenderPass,
-            .subpasss = 0,
-            .colorAttachmentCount = 5,
-            .createDepthBuffer = true,
+            .descriptorSetLayout = bufferDescriptorSetLayout,
             .sampling = Sampling::MSAAx1,
             .shadingType = ShadingType::FILL
         });
 
         // Set up merging descriptor layout
-        descriptorLayoutBuilder = DescriptorSetLayout::Builder();
-        descriptorLayoutBuilder.SetShaderStages(ShaderType::FRAGMENT);
-        descriptorLayoutBuilder.AddBinding(STORAGE_BUFFER_BINDING, DescriptorType::STORAGE_BUFFER);
-        descriptorLayoutBuilder.AddBinding(POSITION_BUFFER_BINDING, DescriptorType::INPUT_ATTACHMENT);
-        descriptorLayoutBuilder.AddBinding(COLOR_BUFFER_BINDING, DescriptorType::INPUT_ATTACHMENT);
-        descriptorLayoutBuilder.AddBinding(SPECULAR_AND_SHININESS_BUFFER_BINDING, DescriptorType::INPUT_ATTACHMENT);
-        descriptorLayoutBuilder.AddBinding(NORMAL_BUFFER_BINDING, DescriptorType::INPUT_ATTACHMENT);
-        descriptorLayoutBuilder.AddBinding(DEPTH_BUFFER_BINDING, DescriptorType::INPUT_ATTACHMENT);
-
-        // Creaete merging descriptor set layout
-        mergingDescriptorSetLayout = descriptorLayoutBuilder.Build();
-
-        mergingDescriptorSet = DescriptorSet::Build(mergingDescriptorSetLayout);
-        mergingDescriptorSet->WriteImage(POSITION_BUFFER_BINDING, positionBuffer, textureSampler);
-        mergingDescriptorSet->WriteImage(COLOR_BUFFER_BINDING, diffuseBuffer, textureSampler);
-        mergingDescriptorSet->WriteImage(SPECULAR_AND_SHININESS_BUFFER_BINDING, specularAndShininessBuffer, textureSampler);
-        mergingDescriptorSet->WriteImage(NORMAL_BUFFER_BINDING, normalBuffer, textureSampler);
-        mergingDescriptorSet->WriteImage(DEPTH_BUFFER_BINDING, depthStencilBuffer, textureSampler);
-        mergingDescriptorSet->Allocate();
+        mergingDescriptorSetLayout = DescriptorSetLayout::Builder()
+            .SetShaderStages(ShaderType::FRAGMENT)
+            .AddBinding(STORAGE_BUFFER_BINDING, DescriptorType::STORAGE_BUFFER)
+            .AddBinding(POSITION_BUFFER_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER)
+            .AddBinding(DIFFUSE_BUFFER_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER)
+            .AddBinding(SPECULAR_AND_SHININESS_BUFFER_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER)
+            .AddBinding(NORMAL_BUFFER_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER)
+            .AddBinding(DEPTH_BUFFER_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER)
+        .Build();
 
         // Load merging shaders
         vertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/DeferredSubpass_1.vert", .shaderType = ShaderType::VERTEX });
@@ -302,15 +254,23 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         mergingPipeline = MergingPipeline::CreateFromAnotherPipeline({
             .maxConcurrentFrames = maxConcurrentFrames,
             .shaders = { vertexShader, fragmentShader },
+            .attachments = { { renderedImage } },
             .descriptorSetLayout = mergingDescriptorSetLayout,
-            .vertexAttributes = {  },
-            .renderPass = deferredRenderPass,
-            .subpasss = 1,
-            .colorAttachmentCount = 1,
-            .createDepthBuffer = false,
             .sampling = Sampling::MSAAx1,
             .shadingType = ShadingType::FILL
-        }, scenePipeline, PIPELINE_COPY_OP_STORAGE_BUFFER);
+        }, bufferPipeline, PipelineCopyOp::STORAGE_BUFFER);
+
+        // TODO: Special write method
+        for (const auto &mergingDescriptorSet : mergingPipeline->GetDescriptorSets())
+        {
+            mergingDescriptorSet->WriteImage(POSITION_BUFFER_BINDING, positionBuffer, textureSampler);
+            mergingDescriptorSet->WriteImage(POSITION_BUFFER_BINDING, positionBuffer, textureSampler);
+            mergingDescriptorSet->WriteImage(DIFFUSE_BUFFER_BINDING, diffuseBuffer, textureSampler);
+            mergingDescriptorSet->WriteImage(SPECULAR_AND_SHININESS_BUFFER_BINDING, specularAndShininessBuffer, textureSampler);
+            mergingDescriptorSet->WriteImage(NORMAL_BUFFER_BINDING, normalBuffer, textureSampler);
+            mergingDescriptorSet->WriteImage(DEPTH_BUFFER_BINDING, depthStencilBuffer, textureSampler);
+            mergingDescriptorSet->Allocate();
+        }
 
         // Create descriptor sets to rendered images
         renderedImageDescriptorSets.resize(maxConcurrentFrames);
@@ -319,69 +279,66 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             renderedImageDescriptorSets[i] = ImGui_ImplVulkan_AddTexture(textureSampler->GetVulkanSampler(), renderedImage->GetVulkanImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
 
-        RenderingUtilities::Initialize(IDBuffer, depthStencilBuffer, scenePipeline);
+//        RenderingUtilities::Initialize(IDBuffer, depthStencilBuffer, scenePipeline);
     }
 
     void DeferredVulkanRenderer::CreateSkyboxRenderingObjects()
     {
-        // Create descriptor set layout for skybox pipeline
-        skyboxDescriptorSetLayout = DescriptorSetLayout::Builder()
-            .SetShaderStages(ShaderType::VERTEX | ShaderType::FRAGMENT)
-            .AddBinding(UNIFORM_BUFFER_BINDING, DescriptorType::UNIFORM_BUFFER)
-            .AddBinding(SKYBOX_CUBEMAP_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER)
-            .AddBinding(SKYBOX_CUBEMAP_BINDING + 1, DescriptorType::INPUT_ATTACHMENT, ShaderType::FRAGMENT)
-        .Build();
-
-        // Create shaders for skybox pipeline
-        auto skyboxVertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/DeferredSubpass_2.vert", .shaderType = ShaderType::VERTEX });
-        auto skyboxFragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/DeferredSubpass_2.frag", .shaderType = ShaderType::FRAGMENT });
-
-        // Create pipeline
-        skyboxPipeline = SkyboxPipeline::CreateFromAnotherPipeline({
-            .maxConcurrentFrames = swapchain->GetMaxConcurrentFramesCount(),
-            .shaders = { skyboxVertexShader, skyboxFragmentShader },
-            .descriptorSetLayout = skyboxDescriptorSetLayout,
-            .vertexAttributes = { VertexAttribute::POSITION },
-            .renderPass = deferredRenderPass,
-            .subpasss = 2,
-            .colorAttachmentCount = 1,
-            .sampling = Sampling::MSAAx1,
-            .cullMode = CullMode::FRONT,
-            .shadingType = ShadingType::FILL,
-        }, scenePipeline, PIPELINE_COPY_OP_UNIFORM_BUFFER);
-
-        std::vector<VertexP> cubeVertices =
-        {
-            { Vector3(-1, -1, -1) },
-            { Vector3( 1, -1, -1) },
-            { Vector3( 1,  1, -1) },
-            { Vector3(-1,  1, -1) },
-            { Vector3(-1, -1,  1) },
-            { Vector3( 1, -1,  1) },
-            { Vector3( 1,  1,  1) },
-            { Vector3(-1,  1,  1) }
-        };
-
-        std::vector<uint> cubeIndices =
-        {
-            1, 5, 0, 0, 5, 4,
-            6, 2, 7, 7, 2, 3,
-            3, 0, 7, 7, 0, 4,
-            7, 4, 6, 6, 4, 5,
-            6, 5, 2, 2, 5, 1,
-            2, 1, 3, 3, 1, 0
-        };
-
-        // Create cube vertex buffer
-        skyboxMesh = std::make_unique<Mesh>(cubeVertices, cubeIndices);
-
-        // Add skybox cubemap to its pipeline's descriptor set
-        for (const auto &descriptorSet : skyboxPipeline->GetDescriptorSets())
-        {
-            descriptorSet->WriteCubemap(SKYBOX_CUBEMAP_BINDING, World::GetManager().GetSkyboxSystem().skyboxCubemap);
-            descriptorSet->WriteImage(SKYBOX_CUBEMAP_BINDING + 1, depthStencilBuffer, textureSampler);
-            descriptorSet->Allocate();
-        }
+//        // Create descriptor set layout for skybox pipeline
+//        skyboxDescriptorSetLayout = DescriptorSetLayout::Builder()
+//            .SetShaderStages(ShaderType::VERTEX | ShaderType::FRAGMENT)
+//            .AddBinding(UNIFORM_BUFFER_BINDING, DescriptorType::UNIFORM_BUFFER)
+//            .AddBinding(SKYBOX_CUBEMAP_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER)
+//        .Build();
+//
+//        // Create shaders for skybox pipeline
+//        auto skyboxVertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/DeferredSubpass_2.vert", .shaderType = ShaderType::VERTEX });
+//        auto skyboxFragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/DeferredSubpass_2.frag", .shaderType = ShaderType::FRAGMENT });
+//
+//        // Create pipeline
+//        skyboxPipeline = SkyboxPipeline::CreateFromAnotherPipeline({
+//            .maxConcurrentFrames = swapchain->GetMaxConcurrentFramesCount(),
+//            .shaders = { skyboxVertexShader, skyboxFragmentShader },
+//            // TODO: PASS DYNAMIC RENDERER INSTEAD OF ATTACHMENTS
+//            .attachments = { { IDBuffer }, { positionBuffer }, { diffuseBuffer }, { specularAndShininessBuffer }, { normalBuffer }, { depthStencilBuffer } },
+//            .vertexAttributes = { VertexAttribute::POSITION },
+//            .descriptorSetLayout = skyboxDescriptorSetLayout,
+//            .sampling = Sampling::MSAAx1,
+//            .cullMode = CullMode::FRONT,
+//            .shadingType = ShadingType::FILL,
+//        }, bufferPipeline, PipelineCopyOp::UNIFORM_BUFFER);
+//
+//        std::vector<VertexP> cubeVertices =
+//        {
+//            { Vector3(-1, -1, -1) },
+//            { Vector3( 1, -1, -1) },
+//            { Vector3( 1,  1, -1) },
+//            { Vector3(-1,  1, -1) },
+//            { Vector3(-1, -1,  1) },
+//            { Vector3( 1, -1,  1) },
+//            { Vector3( 1,  1,  1) },
+//            { Vector3(-1,  1,  1) }
+//        };
+//
+//        std::vector<uint> cubeIndices =
+//        {
+//            1, 5, 0, 0, 5, 4,
+//            6, 2, 7, 7, 2, 3,
+//            3, 0, 7, 7, 0, 4,
+//            7, 4, 6, 6, 4, 5,
+//            6, 5, 2, 2, 5, 1,
+//            2, 1, 3, 3, 1, 0
+//        };
+//
+//        // Create cube vertex buffer
+//        skyboxMesh = std::make_unique<Mesh>(cubeVertices, cubeIndices);
+//
+//        // Add skybox cubemap to its pipeline's descriptor set
+//        for (const auto &descriptorSet : skyboxPipeline->GetDescriptorSets())
+//        {
+//            descriptorSet->WriteCubemap(SKYBOX_CUBEMAP_BINDING, World::GetManager().GetSkyboxSystem().skyboxCubemap);
+//            descriptorSet->Allocate();
+//        }
     }
 
     UniquePtr<DeferredVulkanRenderer> DeferredVulkanRenderer::Create(const VulkanRendererCreateInfo createInfo)
@@ -397,14 +354,14 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         Camera &camera = Camera::GetMainCamera();
 
         // Update uniform data
-        auto &sceneUniformData = scenePipeline->GetUniformBufferData();
+        auto &sceneUniformData = bufferPipeline->GetUniformBufferData();
         sceneUniformData.view = camera.GetViewMatrix();
         sceneUniformData.projection = camera.GetProjectionMatrix();
         sceneUniformData.inverseView = camera.GetInverseViewMatrix();
         sceneUniformData.inverseProjection = camera.GetInverseProjectionMatrix();
 
         // Update storage data
-        auto &storageData = scenePipeline->GetStorageBufferData();
+        auto &storageData = bufferPipeline->GetStorageBufferData();
         storageData.directionalLightCount = DirectionalLight::GetDirectionalLightCount();
         storageData.pointLightCount = PointLight::GetPointLightCount();
 
@@ -430,7 +387,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         });
 
         float timeAngle = std::fmod(Time::GetUpTime(), 360.0f) * 0.8f;
-        skyboxPipeline->GetPushConstantData().model = MatrixUtilities::CreateModel({ 0, 0, 0 }, { timeAngle, 0.0f, 0.0f });
+//        skyboxPipeline->GetPushConstantData().model = MatrixUtilities::CreateModel({ 0, 0, 0 }, { timeAngle, 0.0f, 0.0f });
     }
 
     void DeferredVulkanRenderer::DrawUI()
@@ -464,8 +421,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
                               shadingTypes, 2)) {
                 VK::GetDevice()->WaitUntilIdle();
 
-                scenePipeline->GetCreateInfo().shadingType = (ShadingType) currentShadingTypeIndex;
-                scenePipeline->Recreate();
+                bufferPipeline->GetCreateInfo().shadingType = (ShadingType) currentShadingTypeIndex;
+                bufferPipeline->Recreate();
             }
         }
 
@@ -491,9 +448,12 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         // Start GPU timer
         renderTimestampQueries[currentFrame]->Begin(commandBuffer);
 
-        scenePipeline->Bind(commandBuffer);
+        commandBuffer->TransitionImageLayouts({ { positionBuffer }, { diffuseBuffer }, { specularAndShininessBuffer }, { normalBuffer }, { renderedImage }, }, ImageLayout::COLOR_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
-        deferredRenderPass->Begin(deferredFramebuffer, commandBuffer);
+        bufferRenderer->Begin(commandBuffer);
+
+        bufferPipeline->Bind(commandBuffer);
+
         // Create a vector to hold vertex buffers of the meshes
         std::vector<VkBuffer> vertexBuffers(1);
 
@@ -512,13 +472,13 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             commandBuffer->BindIndexBuffer(meshRenderer.GetMesh()->GetIndexBuffer()->GetVulkanBuffer());
 
             // Copy push constant data to pipeline
-            scenePipeline->GetPushConstantData() = meshRenderer.GetPushConstantData();
+            bufferPipeline->GetPushConstantData() = meshRenderer.GetPushConstantData();
 
             // Send push constant data to shader
-            scenePipeline->PushConstants(commandBuffer);
+            bufferPipeline->PushConstants(commandBuffer);
 
             // Use either bindless or bind*full* descriptor set if not supported
-            scenePipeline->BindDescriptorSets(
+            bufferPipeline->BindDescriptorSets(
                 commandBuffer, meshRenderer.GetDescriptorSet()
             );
 
@@ -526,35 +486,36 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             commandBuffer->DrawIndexed(meshRenderer.GetMesh()->GetIndexCount());
         }
 
-        deferredRenderPass->NextSubpass(commandBuffer);
+//        skyboxPipeline->Bind(commandBuffer);
+//
+//        commandBuffer->BindVertexBuffers({ skyboxMesh->GetVertexBuffer()->GetVulkanBuffer() });
+//        commandBuffer->BindIndexBuffer({ skyboxMesh->GetIndexBuffer()->GetVulkanBuffer() });
+//
+//        skyboxPipeline->PushConstants(commandBuffer);
+//        skyboxPipeline->BindDescriptorSets(commandBuffer);
+//
+//        commandBuffer->DrawIndexed(skyboxMesh->GetIndexCount());
+
+        bufferRenderer->End(commandBuffer);
+
+        commandBuffer->TransitionImageLayouts({ { positionBuffer }, { diffuseBuffer }, { specularAndShininessBuffer }, { normalBuffer } }, ImageLayout::SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+        mergingRenderer->Begin(commandBuffer);
 
         mergingPipeline->Bind(commandBuffer);
 
-        mergingPipeline->BindDescriptorSets(commandBuffer, mergingDescriptorSet);
+        mergingPipeline->BindDescriptorSets(commandBuffer);
 
         mergingPipeline->PushConstants(commandBuffer);
 
-        commandBuffer->Draw(3);
+        commandBuffer->Draw(6);
 
-        deferredRenderPass->NextSubpass(commandBuffer);
+        mergingRenderer->End(commandBuffer);
 
-        skyboxPipeline->Bind(commandBuffer);
-
-        commandBuffer->BindVertexBuffers({ skyboxMesh->GetVertexBuffer()->GetVulkanBuffer() });
-        commandBuffer->BindIndexBuffer({ skyboxMesh->GetIndexBuffer()->GetVulkanBuffer() });
-
-        skyboxPipeline->PushConstants(commandBuffer);
-        skyboxPipeline->BindDescriptorSets(commandBuffer);
-
-        commandBuffer->DrawIndexed(skyboxMesh->GetIndexCount());
-
-        deferredRenderPass->End(commandBuffer);
+        commandBuffer->TransitionImageLayout(renderedImage, ImageLayout::SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
         // Begin the render pass
         swapchain->BeginRenderPass(commandBuffer);
-
-        // Apply scissoring and viewport update
-        commandBuffer->SetViewportAndScissor(swapchain->GetWidth(), swapchain->GetHeight());
 
         // Render ImGui UI
         totalVerticesDrawn = Mesh::GetTotalVertexCount();
@@ -587,24 +548,24 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
     {
         VK::GetDevice()->WaitUntilIdle();
 
-        RenderingUtilities::Destroy();
+//        RenderingUtilities::Destroy();
 
         textureSampler->Destroy();
 
-        skyboxMesh->Destroy();
-        skyboxPipeline->Destroy();
-        skyboxDescriptorSetLayout->Destroy();
+//        skyboxMesh->Destroy();
+//        skyboxPipeline->Destroy();
+//        skyboxDescriptorSetLayout->Destroy();
 
         mergingPipeline->Destroy();
         mergingDescriptorSetLayout->Destroy();
 
-        scenePipeline->Destroy();
-        sceneDescriptorSetLayout->Destroy();
-
-        deferredFramebuffer->Destroy();
-        deferredRenderPass->Destroy();
-
+        mergingRenderer->Destroy();
         renderedImage->Destroy();
+
+        bufferPipeline->Destroy();
+        bufferDescriptorSetLayout->Destroy();
+
+        bufferRenderer->Destroy();
         depthStencilBuffer->Destroy();
         normalBuffer->Destroy();
         specularAndShininessBuffer->Destroy();
