@@ -3,10 +3,10 @@
 #include "../Utility/DepthUtilities.glsl"
 #include "../Types/GlobalUniformBuffer.glsl"
 
-layout(set = 1, binding = 1) uniform usampler2D IDImage;
-layout(set = 1, binding = 2) uniform sampler2D depthImage;
+layout(set = 0, binding = 1) uniform usampler2D IDImage;
+layout(set = 0, binding = 2) uniform sampler2D depthImage;
 
-layout(set = 1, binding = 3) writeonly buffer IDBuffer {
+layout(set = 0, binding = 3) writeonly buffer IDBuffer {
     vec3 worldPosition;
     uint ID;
 } IDBufferData;

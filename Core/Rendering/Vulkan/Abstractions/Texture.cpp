@@ -8,14 +8,13 @@
 #include <stb_image.h>
 
 #include "../VK.h"
-#include "../../../../Engine/Classes/File.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     /* --- CONSTRUCTORS --- */
 
     Texture::Texture(stbi_uc *stbImage, const uint width, const uint height, const uint givenColorChannelsCount, TextureCreateInfo &createInfo)
-        : name(createInfo.name), filePath(createInfo.filePath), textureType(createInfo.textureType), mipMappingEnabled(createInfo.mipMappingEnabled), colorChannelsCount(givenColorChannelsCount)
+        : textureType(createInfo.textureType), mipMappingEnabled(createInfo.mipMappingEnabled), colorChannelsCount(givenColorChannelsCount)
     {
         // Calculate the image's memory size
         this->memorySize = width * height * GetChannelCountForImageFormat(createInfo.imageFormat);
@@ -23,7 +22,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create the staging buffer
         auto stagingBuffer = Buffer::Create({
             .memorySize = memorySize,
-            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
             .bufferUsage = BufferUsage::TRANSFER_SRC
         });
 
@@ -37,14 +35,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             .format = createInfo.imageFormat,
             .generateMipMaps = createInfo.mipMappingEnabled,
             .usage = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
-            .memoryFlags = MemoryFlags::DEVICE_LOCAL
         });
 
         // Transition the layout of the image, so it can be used for copying
         image->TransitionLayout(ImageLayout::TRANSFER_DST_OPTIMAL);
 
         // Copy the image to the staging buffer
-        stagingBuffer->CopyImage(*image);
+        stagingBuffer->CopyToImage(*image);
 
         // Destroy the staging buffer and free its memory
         stagingBuffer->Destroy();
@@ -66,19 +63,19 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     SharedPtr<Texture> Texture::Create(TextureCreateInfo createInfo, const bool setDefaultTexture)
     {
         // Check if the texture file has already been loaded to texture
-        if (texturePool.count(createInfo.filePath) != 0)
+        Hash hash = GET_HASH(createInfo.filePath);
+        if (texturePool.count(hash) != 0)
         {
             // If the same texture file has been used check to see if its sampler is the same as this one
-            Sampler *other = (&texturePool[createInfo.filePath]->GetSampler())->get();
+            Sampler *other = (&texturePool[hash]->GetSampler())->get();
             if (other->IsBilinearFilteringApplied() == createInfo.samplerCreateInfo.applyBilinearFiltering && other->GetMinLod() == createInfo.samplerCreateInfo.minLod && other->GetMaxLod() == createInfo.samplerCreateInfo.maxLod && other->GetMaxAnisotropy() == createInfo.samplerCreateInfo.maxAnisotropy && other->GetAddressMode() == createInfo.samplerCreateInfo.samplerAddressMode)
             {
                 // If so return it without creating a new texture
-                return texturePool[createInfo.filePath];
+                auto &foundTexture = texturePool[hash];
+                defaultTextures[static_cast<uint>(createInfo.textureType)] = foundTexture;
+                return foundTexture;
             }
         }
-
-        // Set a default tag if none is assigned
-        if (createInfo.name == "") createInfo.name = Engine::Classes::File::GetFileNameFromPath(createInfo.filePath);
 
         // Number of channels texture has
         int channels;
@@ -91,11 +88,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ASSERT_ERROR_FORMATTED_IF(!stbiImage, "Failed to load the texture file [{0}]", createInfo.filePath);
 
         // If texture does not exist already
-        auto &textureReference = texturePool[createInfo.filePath];
+        auto &textureReference = texturePool[GET_HASH(createInfo.filePath)];
         textureReference = std::make_shared<Texture>(stbiImage, width, height, channels, createInfo);
         if (setDefaultTexture)
         {
-            ASSERT_ERROR_FORMATTED_IF(createInfo.textureType == TEXTURE_TYPE_NONE, "Cannot set texture loaded from [{0}] as default texture for its type, as it is of type TEXTURE_TYPE_NONE", createInfo.filePath);
+            ASSERT_ERROR_FORMATTED_IF(createInfo.textureType == TextureType::UNDEFINED_TEXTURE, "Cannot set texture loaded from [{0}] as default texture for its type, as it is of type TEXTURE_TYPE_NONE", createInfo.filePath);
 
             textureReference->isDefault = true;
             defaultTextures[createInfo.textureType] = textureReference;
@@ -109,7 +106,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Texture::Dispose()
     {
         // Remove texture from pool
-        texturePool.erase(filePath);
+        texturePool.erase(GET_HASH(filePath));
     }
 
     void Texture::DisposePool()

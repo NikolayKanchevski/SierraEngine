@@ -52,9 +52,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkRenderingAttachmentInfoKHR* colorAttachments = nullptr;
         VkRenderingAttachmentInfoKHR* depthStencilAttachment = nullptr;
 
-        inline static PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR = nullptr;
-        inline static PFN_vkCmdEndRenderingKHR vkCmdEndRenderingKHR = nullptr;
-
     };
 
 }

@@ -9,11 +9,9 @@
 
 namespace Sierra::Core::Rendering::Vulkan
 {
-    RenderingUtilities RenderingUtilities::instance;
-
     /* --- POLLING METHODS --- */
 
-    void RenderingUtilities::UpdateIDBuffer(const UniquePtr<CommandBuffer> &commandBuffer)
+    void Raycaster::UpdateData(const UniquePtr<CommandBuffer> &commandBuffer)
     {
         using Sierra::Engine::Classes::Input;
         using Sierra::Engine::Classes::Cursor;
@@ -27,30 +25,30 @@ namespace Sierra::Core::Rendering::Vulkan
             mousePositionWithinView.y -= ImGuiCore::GetSceneViewPositionY();
             mousePositionWithinView.y /= ImGuiCore::GetSceneViewHeight();
             mousePositionWithinView.y = 1.0f - mousePositionWithinView.y;
-            instance.IDBufferComputePipeline->GetPushConstantData().mousePosition = mousePositionWithinView;
+            computePipeline->GetPushConstantData().mousePosition = mousePositionWithinView;
         }
         else
         {
-            instance.IDBufferComputePipeline->GetPushConstantData().mousePosition = { -1, -1 };
+            computePipeline->GetPushConstantData().mousePosition = { -1, -1 };
         }
+        
+        computePipeline->Bind(commandBuffer);
 
-        instance.IDBufferComputePipeline->Bind(commandBuffer);
-
-        instance.IDBufferComputePipeline->PushConstants(commandBuffer);
-        instance.IDBufferComputePipeline->BindDescriptorSets(commandBuffer, instance.IDBufferDescriptorSet);
+        computePipeline->PushConstants(commandBuffer);
+        computePipeline->BindDescriptorSets(commandBuffer);
 
         commandBuffer->Dispatch(1, 1, 1);
 
-        instance.IDData = *instance.IDBuffer->GetDataAs<IDWriteBuffer>();
+        data = *dataBuffer->GetDataAs<WriteBuffer>();
+        data.worldPosition.y *= -1;
     }
 
     /* --- DESTRUCTOR --- */
 
-    void RenderingUtilities::Destroy()
+    void Raycaster::Destroy()
     {
-        instance.IDBufferDescriptorSetLayout->Destroy();
-        instance.IDBufferComputePipeline->Destroy();
-        instance.IDBuffer->Destroy();
+        computePipeline->Destroy();
+        dataBuffer->Destroy();
     }
 
 }

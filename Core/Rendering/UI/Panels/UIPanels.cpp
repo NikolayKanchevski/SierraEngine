@@ -180,8 +180,16 @@ namespace Sierra::Core::Rendering::UI
 
             // Get and show current renderer images
             ImVec2 freeSpace = ImGui::GetContentRegionAvail();
-            ImGuiCore::SetSceneViewSize(freeSpace.x, freeSpace.y);
             ImGuiCore::SetSceneViewPosition(ImGui::GetCurrentWindow()->WorkRect.GetTL().x, ImGui::GetCurrentWindow()->WorkRect.GetTL().y);
+            if (ImGuiCore::SetSceneViewSize(freeSpace.x, freeSpace.y))
+            {
+                // Recalculate projection matrices
+                auto cameraEntities = World::GetAllComponentsOfType<Camera>();
+                for (const auto &cameraEntity : cameraEntities)
+                {
+                    World::GetComponent<Camera>(cameraEntity).CalculateProjectionMatrix();
+                }
+            }
 
             // Flip renderer image
             if (renderer.GetRenderedTextureDescriptorSet()) ImGui::Image((ImTextureID) renderer.GetRenderedTextureDescriptorSet(), freeSpace, { 0.0f, 1.0f }, { 1.0f, 0.0f });
@@ -208,7 +216,7 @@ namespace Sierra::Core::Rendering::UI
 
         // Convert camera's view matrix to array data
         Camera &camera = Camera::GetMainCamera();
-        camera.CalculateProjectionMatrices();
+        camera.CalculateProjectionMatrix();
         Matrix4x4 viewMatrix = camera.GetViewMatrix();
         Matrix4x4 projectionMatrix = camera.GetProjectionMatrix();
 
@@ -244,7 +252,7 @@ namespace Sierra::Core::Rendering::UI
             Transform &transform = EngineCore::GetSelectedEntity().GetComponent<Transform>();
 
             // Convert object's transform into an array
-            Matrix4x4 modelMatrix = MatrixUtilities::CreateModel(transform.GetWorldPositionUpInverted(), transform.GetRotation(), transform.GetScale());
+            Matrix4x4 modelMatrix = MatrixUtilities::CreateModelMatrix(transform.GetWorldPositionUpInverted(), transform.GetRotation(), transform.GetScale());
 
             // Set snapping
             float snapDeterminant = Input::GetKeyHeld(GLFW_KEY_LEFT_SHIFT) ? (operation == ImGuizmo::OPERATION::ROTATE ? 45.0f : 0.5f) : 0.0f;
@@ -279,7 +287,7 @@ namespace Sierra::Core::Rendering::UI
         if (GUI::BeginWindow("Debug Information", nullptr, ImGuiWindowFlags_NoNav))
         {
             ImGui::Text("CPU Frame Time: %i FPS", Time::GetFPS());
-            ImGui::Text("GPU Indexed Time: %f ms", renderer.GetTotalDrawTime());
+            ImGui::Text("GPU Draw Time: %f ms", renderer.GetTotalDrawTime());
             ImGui::Separator();
             ImGui::Text("Total meshes being drawn: %i", Mesh::GetTotalMeshCount());
             ImGui::Text("Total vertices in scene: %llu", renderer.GetTotalVerticesDrawn());
@@ -292,7 +300,7 @@ namespace Sierra::Core::Rendering::UI
     {
         if (GUI::BeginWindow("Detailed Stats"))
         {
-            ImGui::Text("GPU Indexed Time: %fms", renderer.GetTotalDrawTime());
+            ImGui::Text("GPU Draw Time: %fms", renderer.GetTotalDrawTime());
 
             static constexpr uint SAMPLE_COUNT = 200;
             static constexpr uint REFRESH_RATE = 60;
@@ -345,13 +353,13 @@ namespace Sierra::Core::Rendering::UI
             if (Input::GetGamePadConnected(i))
             {
                 bool gamePadInfoOpen = true;
-                if (GUI::BeginWindow((fmt::format("Game Pad [{0}] Data", i).c_str()), &gamePadInfoOpen, ImGuiWindowFlags_AlwaysAutoResize))
+                if (GUI::BeginWindow((FORMAT_STRING("Game Pad [{0}] Data", i).c_str()), &gamePadInfoOpen, ImGuiWindowFlags_AlwaysAutoResize))
                 {
                     ImGui::Text("%s", ("Game pad [" + Input::GetGamePadName(i) + "] properties:").c_str());
-                    ImGui::Text("%s", fmt::format("Left gamepad stick: [{0}, {1}]", Input::GetGamePadLeftStickAxis(i).x, Input::GetGamePadLeftStickAxis(i).y).c_str());
-                    ImGui::Text("%s", fmt::format("Right gamepad stick: [{0}, {1}]", Input::GetGamePadRightStickAxis(i).x, Input::GetGamePadRightStickAxis(i).y).c_str());
-                    ImGui::Text("%s", fmt::format("Left trigger: [{0}]", Input::GetGamePadLeftTriggerAxis(i)).c_str());
-                    ImGui::Text("%s", fmt::format("Right trigger: [{0}]", Input::GetGamePadRightTriggerAxis(i)).c_str());
+                    ImGui::Text("%s", FORMAT_STRING("Left gamepad stick: [{0}, {1}]", Input::GetGamePadLeftStickAxis(i).x, Input::GetGamePadLeftStickAxis(i).y).c_str());
+                    ImGui::Text("%s", FORMAT_STRING("Right gamepad stick: [{0}, {1}]", Input::GetGamePadRightStickAxis(i).x, Input::GetGamePadRightStickAxis(i).y).c_str());
+                    ImGui::Text("%s", FORMAT_STRING("Left trigger: [{0}]", Input::GetGamePadLeftTriggerAxis(i)).c_str());
+                    ImGui::Text("%s", FORMAT_STRING("Right trigger: [{0}]", Input::GetGamePadRightTriggerAxis(i)).c_str());
                     ImGui::RadioButton("\"A\" pressed", Input::GetGamePadButtonPressed(GLFW_GAMEPAD_BUTTON_A, i));
                     ImGui::RadioButton("\"A\" held", Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A, i));
                     ImGui::RadioButton("\"A\" released", Input::GetGamePadButtonReleased(GLFW_GAMEPAD_BUTTON_A, i));

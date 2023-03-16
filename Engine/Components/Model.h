@@ -1,4 +1,4 @@
-//
+    //
 // Created by Nikolay Kanchevski on 11.10.22.
 //
 
@@ -9,12 +9,12 @@
 #include "../Classes/Entity.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Texture.h"
 
-using namespace Sierra::Engine::Components;
-
 namespace Sierra::Engine::Classes
 {
 
     /// A wrapper around the Mesh class used for loading 3D objects - collections of meshes.
+
+    // TODO: Convert to component
     class Model
     {
     private:

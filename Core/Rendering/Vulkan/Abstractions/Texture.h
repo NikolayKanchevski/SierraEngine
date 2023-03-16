@@ -11,33 +11,28 @@
 #define TOTAL_TEXTURE_TYPES_COUNT 4
 #define TEXTURE_TYPE_TO_BINDING(textureType)(textureType + 2)
 
-#define BINDLESS_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_DIFFUSE)
-#define DIFFUSE_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_DIFFUSE)
-#define SPECULAR_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_SPECULAR)
-#define NORMAL_MAP_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_NORMAL_MAP)
-#define HEIGHT_MAP_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TEXTURE_TYPE_HEIGHT_MAP)
+#define BINDLESS_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::DIFFUSE)
+#define DIFFUSE_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::DIFFUSE)
+#define SPECULAR_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::SPECULAR)
+#define NORMAL_MAP_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::NORMAL_MAP)
+#define HEIGHT_MAP_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::HEIGHT_MAP)
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
-    class DescriptorSetLayout;
-    class DescriptorPool;
-    class DescriptorSet;
 
-    typedef enum TextureType
+    enum TextureType
     {
-        TEXTURE_TYPE_NONE = -1,
-        TEXTURE_TYPE_DIFFUSE = 0,
-        TEXTURE_TYPE_SPECULAR = 1,
-        TEXTURE_TYPE_NORMAL_MAP = 2,
-        TEXTURE_TYPE_HEIGHT_MAP = 3
-    } TextureType;
+        UNDEFINED_TEXTURE = -1,
+        DIFFUSE = 0,
+        SPECULAR = 1,
+        NORMAL_MAP = 2,
+        HEIGHT_MAP = 3
+    };
 
     struct TextureCreateInfo
     {
         String filePath;
-
-        String name;
-        TextureType textureType = TEXTURE_TYPE_NONE;
+        TextureType textureType = TextureType::UNDEFINED_TEXTURE;
 
         ImageFormat imageFormat = ImageFormat::R8G8B8A8_SRGB;
 
@@ -52,9 +47,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Texture(stbi_uc *stbImage, uint width, uint height, uint givenColorChannelsCount, TextureCreateInfo &createInfo);
         static SharedPtr<Texture> Create(TextureCreateInfo createInfo, bool setDefaultTexture = false);
 
-        /* --- PROPERTIES --- */
-        String name;
-
         /* --- SETTER METHODS --- */
         void Dispose();
         static void DisposePool();
@@ -62,9 +54,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         static void DestroyDefaultTextures();
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline String GetName() const
-        { return this->name; }
-
         [[nodiscard]] inline uint GetWidth() const
         { return this->image->GetWidth(); }
 
@@ -98,6 +87,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline UniquePtr<Sampler>& GetSampler()
         { return this->sampler; }
 
+        [[nodiscard]] inline String GetFilePath() const
+        { return filePath; }
+
         [[nodiscard]] ImTextureID GetImGuiTextureID();
 
         [[nodiscard]] static inline SharedPtr<Texture>& GetDefaultTexture(TextureType textureType)
@@ -125,7 +117,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         bool isDefault = false;
 
         inline static SharedPtr<Texture> defaultTextures[TOTAL_TEXTURE_TYPES_COUNT];
-        inline static std::unordered_map<String, SharedPtr<Texture>> texturePool;
+        inline static std::unordered_map<Hash, SharedPtr<Texture>> texturePool;
     };
 
 }

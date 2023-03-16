@@ -10,40 +10,28 @@
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
-    class Texture;
+    struct DescriptorSetLayoutBinding
+    {
+        DescriptorType descriptorType;
+        uint arraySize = 1;
+        ShaderType shaderStages;
+    };
+
+    struct DescriptorSetLayoutCreateInfo
+    {
+        std::unordered_map<uint, DescriptorSetLayoutBinding> bindings;
+    };
 
     class DescriptorSetLayout
     {
-    private:
-        struct DescriptorSetLayoutBinding
-        {
-            VkDescriptorSetLayoutBinding bindingInfo;
-            VkDescriptorBindingFlags bindingFlags = 0;
-            uint arraySize = 0;
-        };
-
     public:
         /* --- CONSTRUCTORS --- */
-        DescriptorSetLayout(const std::unordered_map<uint, DescriptorSetLayoutBinding>& givenBindings);
-
-        class Builder
-        {
-        public:
-            Builder& SetShaderStages(const ShaderType &givenShaderStages);
-            Builder& AddBinding(uint binding, DescriptorType descriptorType, ShaderType givenShaderStages, VkDescriptorBindingFlags bindingFlags = 0, uint arraySize = 1, VkSampler const *immutableSamplers = nullptr);
-            Builder& AddBinding(uint binding, DescriptorType descriptorType, VkDescriptorBindingFlags bindingFlags = 0, uint arraySize = 1, VkSampler const *immutableSamplers = nullptr);
-
-            [[nodiscard]] SharedPtr<DescriptorSetLayout> Build() const;
-
-        private:
-            ShaderType shaderStages = ShaderType::NONE;
-            std::unordered_map<uint, DescriptorSetLayoutBinding> bindings;
-
-        };
+        DescriptorSetLayout(const DescriptorSetLayoutCreateInfo &createInfo);
+        static UniquePtr<DescriptorSetLayout> Create(DescriptorSetLayoutCreateInfo createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline VkDescriptorSetLayout GetVulkanDescriptorSetLayout() const { return this->vkDescriptorSetLayout; }
         [[nodiscard]] inline bool IsBindingPresent(const uint binding) const { return bindings.count(binding) != 0; }
+        [[nodiscard]] inline VkDescriptorSetLayout GetVulkanDescriptorSetLayout() const { return this->vkDescriptorSetLayout; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();
@@ -62,27 +50,22 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     class DescriptorPool
     {
     public:
-        /* --- CONSTRUCTOR --- */
-        DescriptorPool(uint givenMaxSets, VkDescriptorPoolCreateFlags givenPoolCreateFlags, std::vector<VkDescriptorPoolSize> givenPoolSizes);
-
-        class Builder
+        struct DescriptorPoolCreateInfo
         {
-        public:
-            Builder& AddPoolSize(DescriptorType descriptorType);
-            Builder& SetPoolFlags(VkDescriptorPoolCreateFlags givenPoolCreateFlags);
-            Builder& SetMaxSets(uint givenMaxSets);
-            [[nodiscard]] UniquePtr<DescriptorPool> Build();
-
-        private:
-            uint maxSets = 1024;
-            VkDescriptorPoolCreateFlags poolCreateFlags = 0;
-            std::vector<VkDescriptorPoolSize> poolSizes;
-
+            uint multiplier = 512;
+            VkDescriptorPoolCreateFlags flags = 0;
         };
 
+        /* --- CONSTRUCTOR --- */
+        DescriptorPool(const DescriptorPoolCreateInfo &givenCreateInfo);
+        static UniquePtr<DescriptorPool> Create(DescriptorPoolCreateInfo givenCreateInfo);
+
+        /* --- GETTER METHODS -- */
+        static UniquePtr<DescriptorPool>& GetPool();
+
         /* --- SETTER METHODS --- */
-        void AllocateDescriptorSet(const SharedPtr<DescriptorSetLayout> &descriptorSetLayout, VkDescriptorSet &descriptorSet);
-        void AllocateBindlessDescriptorSet(const std::vector<uint> &bindings, const SharedPtr<DescriptorSetLayout> &descriptorSetLayout, VkDescriptorSet &descriptorSet);
+        static void ResetPools();
+        static void DisposePools();
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkDescriptorPool GetVulkanDescriptorPool() const { return this->vkDescriptorPool; }
@@ -90,28 +73,49 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         /* --- DESTRUCTOR --- */
         void Destroy();
         DELETE_COPY(DescriptorPool);
-        friend class DescriptorSet;
 
     private:
         VkDescriptorPool vkDescriptorPool;
+        DescriptorPoolCreateInfo createInfo;
 
+        static void AllocateDescriptorSet(const UniquePtr<DescriptorSetLayout> &descriptorSetLayout, VkDescriptorSet &descriptorSet);
+        static void AllocateBindlessDescriptorSet(const std::vector<uint> &bindings, const SharedPtr<DescriptorSetLayout> &descriptorSetLayout, VkDescriptorSet &descriptorSet);
+
+        inline static std::vector<std::pair<DescriptorType, float>> defaultPoolSizes =
+        {
+            { DescriptorType::SAMPLER, 0.5f },
+            { DescriptorType::COMBINED_IMAGE_SAMPLER, 4.0f },
+            { DescriptorType::SAMPLED_IMAGE, 4.0f },
+            { DescriptorType::STORAGE_IMAGE, 1.0f },
+            { DescriptorType::UNIFORM_TEXEL_BUFFER, 1.0f },
+            { DescriptorType::STORAGE_TEXEL_BUFFER, 1.0f },
+            { DescriptorType::UNIFORM_BUFFER, 2.0f },
+            { DescriptorType::STORAGE_BUFFER, 2.0f },
+            { DescriptorType::UNIFORM_BUFFER_DYNAMIC, 1.0f },
+            { DescriptorType::STORAGE_BUFFER_DYNAMIC, 1.0f },
+            { DescriptorType::INPUT_ATTACHMENT, 0.5f }
+        };
+
+        static inline VkDescriptorPool currentPool = VK_NULL_HANDLE;
+        inline static std::vector<UniquePtr<DescriptorPool>> usedPools;
+        inline static std::vector<UniquePtr<DescriptorPool>> freePools;
+
+        friend class DescriptorSet;
+        friend class BindlessDescriptorSet;
     };
 
     class DescriptorSet
     {
     public:
         /* --- CONSTRUCTORS --- */
-        DescriptorSet(SharedPtr<DescriptorSetLayout> &descriptorSetLayout);
-        [[nodiscard]] static UniquePtr<DescriptorSet> Build(SharedPtr<DescriptorSetLayout> &givenDescriptorSetLayout);
+        DescriptorSet(const UniquePtr<DescriptorSetLayout> &descriptorSetLayout);
+        [[nodiscard]] static UniquePtr<DescriptorSet> Create(const UniquePtr<DescriptorSetLayout> &givenDescriptorSetLayout);
 
         /* --- SETTER METHODS --- */
-        void WriteBuffer(uint binding, const Buffer *buffer);
-        void WriteBuffer(uint binding, const UniquePtr<Buffer> &buffer);
-        void WriteBuffer(uint binding, const SharedPtr<Buffer> &buffer);
-        void WriteImage(uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler, ImageLayout imageLayout = ImageLayout::SHADER_READ_ONLY_OPTIMAL);
-        void WriteImage(uint binding, const VkDescriptorImageInfo *imageInfo);
-        void WriteTexture(uint binding, const SharedPtr<Texture> &texture);
-        void WriteCubemap(uint binding, const UniquePtr<Cubemap> &cubemap);
+        DescriptorSet* WriteBuffer(uint binding, const UniquePtr<Buffer> &buffer);
+        DescriptorSet* WriteImage(uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler, ImageLayout imageLayout = ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+        DescriptorSet* WriteTexture(uint binding, const SharedPtr<Texture> &texture);
+        DescriptorSet* WriteCubemap(uint binding, const UniquePtr<Cubemap> &cubemap);
         void Allocate();
 
         /* --- GETTER METHODS --- */
@@ -123,13 +127,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     private:
         VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
-
-        SharedPtr<DescriptorSetLayout> &descriptorSetLayout;
+        const UniquePtr<DescriptorSetLayout> &descriptorSetLayout;
 
         std::unordered_map<uint, VkWriteDescriptorSet> writeDescriptorSets;
         std::unordered_map<uint, VkDescriptorImageInfo> descriptorImageInfos;
         std::unordered_map<uint, VkDescriptorBufferInfo> descriptorBufferInfos;
 
+        void WriteImage(uint binding, const VkDescriptorImageInfo *imageInfo);
     };
 
     class BindlessDescriptorSet
@@ -148,6 +152,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void FreeIndex(uint binding, uint arrayIndex, bool reallocate = true);
         uint ReserveIndex(uint binding, uint arrayIndex = -1);
 
+        // TODO: Rewrite this
         uint WriteBuffer(uint binding, const UniquePtr<Buffer> &buffer, bool overwrite = false, uint arrayIndex = -1);
         uint WriteImage(uint binding, const VkDescriptorImageInfo *imageInfo, bool overwrite = false, uint arrayIndex = -1);
         uint WriteTexture(uint binding, const SharedPtr<Texture> &texture, bool overwrite = false, uint arrayIndex = -1);

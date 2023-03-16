@@ -9,18 +9,18 @@
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
 
-    typedef enum CubemapType
+    enum CubemapType
     {
-        CUBEMAP_TYPE_NONE = -1,
-        CUBEMAP_TYPE_SKYBOX = 0
-    } CubemapType;
+        UNDEFINED_CUBEMAP = -1,
+        SKYBOX = 0
+    };
 
     struct CubemapCreateInfo
     {
         String filePaths[6];
+        CubemapType cubemapType = CubemapType::UNDEFINED_CUBEMAP;
 
         ImageFormat imageFormat = ImageFormat::R8G8B8A8_SRGB;
-        CubemapType cubemapType = CUBEMAP_TYPE_NONE;
         bool mipMappingEnabled = false;
 
         SamplerCreateInfo samplerCreateInfo{};
@@ -33,30 +33,28 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Cubemap(const CubemapCreateInfo &createInfo);
         static UniquePtr<Cubemap> Create(CubemapCreateInfo createInfo);
 
-        /* --- POLLING METHODS --- */
-
-        /* --- SETTER METHODS --- */
-
         /* --- GETTER METHODS --- */
         [[nodiscard]] UniquePtr<Image>& GetImage() { return image; }
         [[nodiscard]] UniquePtr<Sampler>& GetSampler() { return sampler; }
+        [[nodiscard]] inline String GetFilePath(const uint index = 0) const { return filePaths[index]; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();
         DELETE_COPY(Cubemap);
 
     private:
+        String filePaths[6];
+
+        CubemapType cubemapType;
+        int colorChannelsCount;
+
         int width;
         int height;
 
-        bool mipMappingEnabled;
-        int colorChannelsCount;
-        CubemapType cubemapType = CUBEMAP_TYPE_NONE;
-
-        uint layerSize;
-        uint64 memorySize;
-
         UniquePtr<Image> image;
+        bool mipMappingEnabled;
+
+        uint64 memorySize;
         UniquePtr<Sampler> sampler;
     };
 

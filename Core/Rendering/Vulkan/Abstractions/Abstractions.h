@@ -21,6 +21,5 @@
 #include "Framebuffer.h"
 #include "CommandBuffer.h"
 #include "../VulkanTypes.h"
-#include "OffscreenRenderer.h"
 
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;

@@ -72,7 +72,7 @@ namespace Sierra::Core::Rendering::MatrixUtilities
         return glm::scale(Matrix4x4(1.0f), scale);
     }
 
-    inline Matrix4x4 CreateModel(const Vector3 position, const Vector3 rotation = { 0.0f, 0.0f, 0.0f }, const Vector3 scale = { 1.0f, 1.0f, 1.0f })
+    inline Matrix4x4 CreateModelMatrix(const Vector3 position, const Vector3 rotation = {0.0f, 0.0f, 0.0f}, const Vector3 scale = {1.0f, 1.0f, 1.0f})
     {
         Matrix4x4 rotationMatrix = glm::toMat4(Quaternion({ glm::radians(rotation.y), glm::radians(rotation.x), glm::radians(rotation.z) }));
 

@@ -12,14 +12,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     DynamicRenderer::DynamicRenderer(const DynamicRendererCreateInfo &createInfo)
     {
-        // TODO: DOCUMENT
-
-        if (vkCmdBeginRenderingKHR == nullptr)
-        {
-            vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetDeviceProcAddr(VK::GetLogicalDevice(), "vkCmdBeginRendering"));
-            vkCmdEndRenderingKHR = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkGetDeviceProcAddr(VK::GetLogicalDevice(), "vkCmdEndRendering"));
-        }
-
+        // Search for a depth attachment first
         bool hasDepthAttachment = false;
         for (const auto &attachment : createInfo.attachments)
         {
@@ -31,9 +24,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
         }
 
+        // Store biggest attachment dimensions to use as viewport size and create color attachments array
         uint biggestWidth = 0, biggestHeight = 0;
         colorAttachments = new VkRenderingAttachmentInfoKHR[createInfo.attachments.size() - (uint)(hasDepthAttachment)];
 
+        // Populate color and depth attachments
         uint i = 0;
         for (const auto attachmentInfo : createInfo.attachments)
         {
@@ -68,10 +63,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 i++;
             }
 
+            // Check if current dimensions are bigger than saved
             if (attachmentInfo.image->GetWidth() > biggestWidth) biggestWidth = static_cast<uint>(attachmentInfo.image->GetWidth());
             if (attachmentInfo.image->GetHeight() > biggestHeight) biggestHeight = static_cast<uint>(attachmentInfo.image->GetHeight());
         }
 
+        // Set up rendering info
         renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
         renderingInfo.renderArea = { 0, 0, biggestWidth, biggestHeight };
         renderingInfo.layerCount = 1;

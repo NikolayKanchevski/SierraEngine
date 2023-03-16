@@ -98,13 +98,12 @@ namespace Sierra::Core::Rendering::UI
 
     bool ImGuiCore::SetSceneViewSize(const uint newWidth, const uint newHeight)
     {
-        bool result = false;
-        if (instance.sceneViewWidth != newWidth || instance.sceneViewHeight != newHeight) result = true;
+        if (instance.sceneViewWidth == newWidth && instance.sceneViewHeight == newHeight) return false;
 
         instance.sceneViewWidth = newWidth;
         instance.sceneViewHeight = newHeight;
 
-        return result;
+        return true;
     }
 
     void ImGuiCore::SetSceneViewPosition(const float xPosition, const float yPosition)

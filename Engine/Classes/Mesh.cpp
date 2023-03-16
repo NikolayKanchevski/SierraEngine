@@ -43,7 +43,6 @@ namespace Sierra::Engine::Classes
 
         auto stagingBuffer = Buffer::Create({
             .memorySize = bufferSize,
-            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
             .bufferUsage = BufferUsage::TRANSFER_SRC
         });
 
@@ -52,7 +51,6 @@ namespace Sierra::Engine::Classes
 
         vertexBuffer = Buffer::CreateShared({
            .memorySize = bufferSize,
-           .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
            .bufferUsage = BufferUsage::TRANSFER_DST | BufferUsage::VERTEX
        });
 
@@ -69,7 +67,6 @@ namespace Sierra::Engine::Classes
 
         auto stagingBuffer = Buffer::Create({
             .memorySize = bufferSize,
-            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
             .bufferUsage = BufferUsage::TRANSFER_SRC
         });
 
@@ -78,7 +75,6 @@ namespace Sierra::Engine::Classes
 
         vertexBuffer = Buffer::CreateShared({
             .memorySize = bufferSize,
-            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
             .bufferUsage = BufferUsage::TRANSFER_DST | BufferUsage::VERTEX
         });
 
@@ -94,7 +90,6 @@ namespace Sierra::Engine::Classes
 
         auto stagingBuffer = Buffer::Create({
             .memorySize = bufferSize,
-            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
             .bufferUsage = BufferUsage::TRANSFER_SRC
         });
 
@@ -103,7 +98,6 @@ namespace Sierra::Engine::Classes
 
         indexBuffer = Buffer::CreateShared({
              .memorySize = bufferSize,
-             .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
              .bufferUsage = BufferUsage::TRANSFER_DST | BufferUsage::INDEX
          });
 

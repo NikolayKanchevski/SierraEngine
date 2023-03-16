@@ -3,13 +3,15 @@
 #include "../Lighting/DefaultLighting.glsl"
 #include "../Types/GlobalStorageBuffer.glsl"
 
-layout(location = 0) in vec2 fromVert_UV;
+layout(location = 0) in flat uint fromVert_DrawingSkybox;
+layout(location = 1) in vec3 fromVert_UVW;
 
 layout(set = 0, binding = 2) uniform sampler2D fromCode_PositionBuffer;
 layout(set = 0, binding = 3) uniform sampler2D fromCode_DiffuseBuffer;
 layout(set = 0, binding = 4) uniform sampler2D fromCode_SpecularAndShininess;
 layout(set = 0, binding = 5) uniform sampler2D fromCode_NormalBuffer;
 layout(set = 0, binding = 6) uniform sampler2D fromCode_DepthBuffer;
+layout(set = 0, binding = 7) uniform samplerCube fromCode_Skybox;
 
 const uint RenderedImageValue_RenderedImage = 0;
 const uint RenderedImageValue_PositionBuffer = 1;
@@ -21,6 +23,7 @@ const uint RenderedImageValue_DepthBuffer = 6;
 
 layout(push_constant) uniform FinalizationPushConstant
 {
+    mat4x4 skyboxModel;
     uint renderedImageValue;
 } pushConstant;
 
@@ -28,30 +31,44 @@ layout (location = 0) out vec4 toFramebuffer_FinalizedColor;
 
 void main()
 {
-    // Check if a pixel has been dran in current texel and if not discard it
-    float depth = texture(fromCode_DepthBuffer, fromVert_UV).r;
-    if (depth == 1.0)
+    // If we are already drawing skybox there is no need to sample below's textures so we just return skybox color
+    if (fromVert_DrawingSkybox == 1)
     {
-        toFramebuffer_FinalizedColor = texture(fromCode_DiffuseBuffer, fromVert_UV);
+        toFramebuffer_FinalizedColor = texture(fromCode_Skybox, fromVert_UVW);
         return;
     }
+
+    // A single vec3 UV coordinates are used for both the skybox UVs (vec3) and sampling UVs (vec2) so we just get XY
+    const vec2 sampleUV = fromVert_UVW.xy;
+
+    // Check if a pixel has been dran in current texel and if not discard it
+    const float depth = texture(fromCode_DepthBuffer, sampleUV).r;
     if (pushConstant.renderedImageValue == RenderedImageValue_DepthBuffer) { toFramebuffer_FinalizedColor = vec4(depth, depth, depth, 1.0); return; }
 
-    // Load values and return depending on rendered output type
-    vec3 position = texture(fromCode_PositionBuffer, fromVert_UV).xyz;
+    // Check if fragment we are writing to actually should contain a color
+    if (depth >= 1.0f)
+    {
+        discard;
+    }
+
+    /*
+        Load and store G-Buffer values
+    */
+
+    const vec3 position = texture(fromCode_PositionBuffer, sampleUV).xyz;
     if (pushConstant.renderedImageValue == RenderedImageValue_PositionBuffer) { toFramebuffer_FinalizedColor = vec4(position, 1.0); return; }
 
-    vec3 diffuse = texture(fromCode_DiffuseBuffer, fromVert_UV).rgb;
+    const vec3 diffuse = texture(fromCode_DiffuseBuffer, sampleUV).rgb;
     if (pushConstant.renderedImageValue == RenderedImageValue_DiffuseBuffer) { toFramebuffer_FinalizedColor = vec4(diffuse, 1.0); return; }
 
-    vec2 specularAndShininess = texture(fromCode_SpecularAndShininess, fromVert_UV).rg;
+    const vec2 specularAndShininess = texture(fromCode_SpecularAndShininess, sampleUV).rg;
     if (pushConstant.renderedImageValue == RenderedImageValue_SpecularBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.xxx, 1.0); return; }
     if (pushConstant.renderedImageValue == RenderedImageValue_ShininessBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.y / 512.0f, specularAndShininess.y / 512.0f, specularAndShininess.y / 512.0f, 1.0); return; }
 
-    float specular = specularAndShininess.x;
-    float shininess = specularAndShininess.y;
+    const float specular = specularAndShininess.x;
+    const float shininess = specularAndShininess.y;
 
-    vec3 normal = texture(fromCode_NormalBuffer, fromVert_UV).rgb;
+    const vec3 normal = texture(fromCode_NormalBuffer, sampleUV).rgb;
     if (pushConstant.renderedImageValue == RenderedImageValue_NormalBuffer) { toFramebuffer_FinalizedColor = vec4(normal, 1.0); return; }
 
     // Define the final color

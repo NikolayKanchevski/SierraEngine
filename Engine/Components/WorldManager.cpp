@@ -23,7 +23,7 @@ namespace Sierra::Engine::Components
             File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_bottom.png",
             File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_front.png",
             File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_back.png",
-        }, .cubemapType = CUBEMAP_TYPE_SKYBOX });
+        }, .cubemapType = CubemapType::SKYBOX });
     }
 
     /* --- DESTRUCTOR --- */

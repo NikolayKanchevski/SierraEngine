@@ -559,7 +559,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
     enum class ImageUsage
     {
-        UNDEFINED = 0x00000000,
+        UNDEFINED = 0,
         TRANSFER_SRC = VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
         TRANSFER_DST = VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         SAMPLED = VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -602,7 +602,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
     enum class ImageAspectFlags
     {
-        NONE = 0x00000000,
+        UNDEFINED = 0,
         COLOR = VK_IMAGE_ASPECT_COLOR_BIT,
         DEPTH = VK_IMAGE_ASPECT_DEPTH_BIT,
         STENCIL = VK_IMAGE_ASPECT_STENCIL_BIT,
@@ -624,7 +624,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
     enum class ImageCreateFlags
     {
-        NONE = 0x00000000,
+        UNDEFINED = 0,
         SPARSE_BINDING = VK_IMAGE_CREATE_SPARSE_BINDING_BIT,
         SPARSE_RESIDENCY = VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT,
         SPARSE_ALIASED = VK_IMAGE_CREATE_SPARSE_ALIASED_BIT,
@@ -745,7 +745,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
     enum class BufferUsage
     {
-        UNDEFINED = 0x00000000,
+        UNDEFINED = 0,
         TRANSFER_SRC = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         TRANSFER_DST = VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         UNIFORM_TEXEL = VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT,
@@ -762,7 +762,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
     enum class LoadOp
     {
-        UNDEFINED = -1,
+        UNDEFINED = 0,
         LOAD = VK_ATTACHMENT_LOAD_OP_LOAD,
         CLEAR = VK_ATTACHMENT_LOAD_OP_CLEAR,
         DONT_CARE = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
@@ -772,7 +772,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
     enum class StoreOp
     {
-        UNDEFINED = -1,
+        UNDEFINED = 0,
         STORE = VK_ATTACHMENT_STORE_OP_STORE,
         DONT_CARE = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         NONE = VK_ATTACHMENT_STORE_OP_NONE_EXT,
@@ -781,7 +781,7 @@ namespace Sierra::Core::Rendering::Vulkan
 
     enum class MemoryFlags
     {
-        NONE = 0x00000000,
+        UNDEFINED = 0,
         DEVICE_LOCAL = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         HOST_VISIBLE = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
         HOST_COHERENT = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -789,19 +789,34 @@ namespace Sierra::Core::Rendering::Vulkan
 
     DEFINE_ENUM_FLAG_OPERATORS(MemoryFlags)
 
-    enum class VertexAttribute
+    enum class VertexAttributeType
     {
-        FLOAT = FLOAT_SIZE * 1,   // 4
-        VEC2 = FLOAT_SIZE * 2,    // 8
-        VEC3 = FLOAT_SIZE * 3,    // 16
-        VEC4 = FLOAT_SIZE * 4,    // 20
+        FLOAT = VK_FORMAT_R32_SFLOAT,
+        VECTOR_2 = VK_FORMAT_R32G32_SFLOAT,
+        VECTOR_3 = VK_FORMAT_R32G32B32_SFLOAT,
+        VECTOR_4 = VK_FORMAT_R32G32B32A32_SFLOAT,
 
-        POSITION  = VEC3,
-        NORMAL = VEC3,
-        COLOR = VEC3,
-        COLOR_WITH_ALPHA = VEC4,
-        TEXTURE_COORDINATE = VEC2
+        POSITION = VECTOR_3,
+        NORMAL = VECTOR_3,
+        COLOR_RGB = VECTOR_3,
+        COLOR_RGBA = VECTOR_4,
+        TEXTURE_COORDINATE = VECTOR_2
     };
+
+    constexpr uint GetVertexAttributeTypeSize(const VertexAttributeType vertexAttributeType)
+    {
+        switch (vertexAttributeType)
+        {
+            case VertexAttributeType::FLOAT:
+                return FLOAT_SIZE * 1;
+            case VertexAttributeType::VECTOR_2:
+                return FLOAT_SIZE * 2;
+            case VertexAttributeType::VECTOR_3:
+                return FLOAT_SIZE * 3;
+            case VertexAttributeType::VECTOR_4:
+                return FLOAT_SIZE * 4;
+        }
+    }
 
     enum class FrontFace
     {
@@ -860,8 +875,8 @@ namespace Sierra::Core::Rendering::Vulkan
     enum class PipelineCopyOp
     {
         PUSH_CONSTANTS = 0,
-        UNIFORM_BUFFER = 1,
-        STORAGE_BUFFER = 2
+        UNIFORM_BUFFERS = 1,
+        STORAGE_BUFFERS = 2
     };
 
     DEFINE_ENUM_FLAG_OPERATORS(PipelineCopyOp)

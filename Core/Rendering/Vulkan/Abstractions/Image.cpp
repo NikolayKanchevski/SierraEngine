@@ -43,7 +43,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create and allocate image
         VK_ASSERT(
             vmaCreateImage(VK::GetMemoryAllocator(), &vkImageCreateInfo, &allocationCreateInfo, &vkImage, &vmaImageAllocation, nullptr),
-            fmt::format("Failed to allocate memory for image with dimensions of [{0}, {1}, {2}], format [{3}], [{4}] mip levels, and sampling of [{5}]", dimensions.width, dimensions.height, dimensions.depth, static_cast<uint>(format), mipLevels, static_cast<uint>(sampling))
+            FORMAT_STRING("Failed to allocate memory for image with dimensions of [{0}, {1}, {2}], format [{3}], [{4}] mip levels, and sampling of [{5}]", dimensions.width, dimensions.height, dimensions.depth, VK_TO_STRING(format, Format), mipLevels, VK_TO_STRING(sampling, SampleCountFlagBits))
         );
     }
 
@@ -88,7 +88,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             return false;
         }
 
-        VkCommandBuffer commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
+        auto commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
 
         VkImageMemoryBarrier barrier{};
         barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -111,7 +111,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
-            vkCmdPipelineBarrier(commandBuffer,
+            vkCmdPipelineBarrier(commandBuffer->GetVulkanCommandBuffer(),
                 VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
                 0, nullptr,
                 0, nullptr,
@@ -132,7 +132,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             blit.dstSubresource.baseArrayLayer = 0;
             blit.dstSubresource.layerCount = 1;
 
-            vkCmdBlitImage(commandBuffer,
+            vkCmdBlitImage(commandBuffer->GetVulkanCommandBuffer(),
                 vkImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                 vkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 1, &blit,
@@ -144,7 +144,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
             barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-            vkCmdPipelineBarrier(commandBuffer,
+            vkCmdPipelineBarrier(commandBuffer->GetVulkanCommandBuffer(),
                 VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
                 0, nullptr,
                 0, nullptr,
@@ -161,7 +161,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-        vkCmdPipelineBarrier(commandBuffer,
+        vkCmdPipelineBarrier(commandBuffer->GetVulkanCommandBuffer(),
             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
             0, nullptr,
             0, nullptr,
@@ -201,7 +201,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create the image view
         VK_ASSERT(
             vkCreateImageView(VK::GetLogicalDevice(), &imageViewCreateInfo, nullptr, &vkImageView),
-            fmt::format("Failed to create image view for an image with dimensions of [{0}, {1}, {2}], format [{3}], [{4}] mip levels, and sampling of [{5}]", dimensions.width, dimensions.height, dimensions.depth, static_cast<int>(format), static_cast<int>(mipLevels), static_cast<int>(sampling))
+            FORMAT_STRING("Failed to create image view for an image with dimensions of [{0}, {1}, {2}], format [{3}], [{4}] mip levels, and sampling of [{5}]", dimensions.width, dimensions.height, dimensions.depth, static_cast<int>(format), static_cast<int>(mipLevels), static_cast<int>(sampling))
         );
 
         aspectFlags = givenAspectFlags;
@@ -212,88 +212,40 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Image::TransitionLayout(const ImageLayout newLayout)
     {
         // Create a temporary command buffer
-        VkCommandBuffer commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
+        auto commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
 
-        // TODO: USE COMMAND BUFFER FUNCTION
-
-        // Create image memory barrier
-        VkImageMemoryBarrier imageMemoryBarrier{};
-        imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        imageMemoryBarrier.oldLayout = (VkImageLayout) layout;								// Layout to transition from
-        imageMemoryBarrier.newLayout = (VkImageLayout) newLayout;							// Layout to transition to
-        imageMemoryBarrier.srcQueueFamilyIndex = ~0U;			            // Queue family to transition from
-        imageMemoryBarrier.dstQueueFamilyIndex = ~0U;			            // Queue family to transition to
-        imageMemoryBarrier.image = vkImage;									// Image being accessed and modified as part of barrier
-        imageMemoryBarrier.subresourceRange.baseMipLevel = 0;				// First mip level to start alterations on
-        imageMemoryBarrier.subresourceRange.levelCount = mipLevels;			// Number of mip levels to alter starting from baseMipLevel
-        imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;				// First layer to start alterations on
-        imageMemoryBarrier.subresourceRange.layerCount = layerCount;					// Number of layers to alter starting from baseArrayLayer
-
-        // If transitioning from a depth image...
-        if (newLayout == ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL)
-        {
-            imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-
-            if (format == ImageFormat::D32_SFLOAT_S8_UINT || format == ImageFormat::D24_UNORM_S8_UINT)
-            {
-                imageMemoryBarrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-            }
-        }
-        else
-        {
-            imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        }
-
+        // Set up shader stages
         VkPipelineStageFlags srcStage = 0;
         VkPipelineStageFlags dstStage = 0;
 
         // If transitioning from a new or undefined image to an image that is ready to receive data...
         if (layout == ImageLayout::UNDEFINED && newLayout == ImageLayout::TRANSFER_DST_OPTIMAL)
         {
-            imageMemoryBarrier.srcAccessMask = 0;
-            imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
             srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;  // The stage the transition must occur after
             dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;     // The stage the transition must occur before
         }
         // If transitioning from transfer destination to shader readable...
         else if (layout == ImageLayout::TRANSFER_DST_OPTIMAL && newLayout == ImageLayout::SHADER_READ_ONLY_OPTIMAL)
         {
-            imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
             srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
             dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         }
         // If transitioning from an undefined layout to one optimal for depth stencil...
         else if (layout == ImageLayout::UNDEFINED && newLayout == ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL)
         {
-            imageMemoryBarrier.srcAccessMask = 0;
-            imageMemoryBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
             srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             dstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         }
         else
         {
-            ASSERT_ERROR_FORMATTED("Transitioning images from [{0}] to [{1}] is not supported", (int) layout, (int) newLayout);
+            ASSERT_ERROR_FORMATTED("Transitioning images from [{0}] to [{1}] is not supported", static_cast<uint>(layout), static_cast<uint>(newLayout));
         }
 
-        // Bind the pipeline barrier
-        vkCmdPipelineBarrier(
-            commandBuffer,
-            srcStage, dstStage,		            // Pipeline stages (match to src and dst AccessMasks)
-            0,						                        // Dependency flagsInfo
-            0, nullptr,				        // Memory Barrier count + data
-            0, nullptr,			// Buffer Memory Barrier count + data
-            1, &imageMemoryBarrier	// Image Memory Barrier count + data
-        );
+        // Record transition command
+        commandBuffer->TransitionImageLayout(this, newLayout, srcStage, dstStage);
 
         // End command buffer
         VK::GetDevice()->EndSingleTimeCommands(commandBuffer);
-
-        // Change the current layout
-        this->layout = newLayout;
     }
 
     void Image::DestroyImageView()

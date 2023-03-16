@@ -12,13 +12,14 @@
 #include "../../../../Engine/Components/Camera.h"
 #include "../../../../Engine/Components/MeshRenderer.h"
 #include "../../../../Engine/Components/WorldManager.h"
+#include "../../../../Engine/Components/Model.h"
 
 #define POSITION_BUFFER_BINDING 2
 #define DIFFUSE_BUFFER_BINDING 3
 #define SPECULAR_AND_SHININESS_BUFFER_BINDING 4
 #define NORMAL_BUFFER_BINDING 5
 #define DEPTH_BUFFER_BINDING 6
-#define SKYBOX_CUBEMAP_BINDING 1
+#define SKYBOX_CUBEMAP_BINDING 7
 
 #define USE_THREADED_FOR_EACH
 
@@ -40,7 +41,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         InitializeRenderer();
         CreateSceneRenderingObjects();
-        CreateSkyboxRenderingObjects();
     }
 
     void DeferredVulkanRenderer::InitializeRenderer()
@@ -116,6 +116,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         depthStencilBuffer->CreateImageView(ImageAspectFlags::DEPTH);
 
+        // Create final rendered image
         renderedImage = Image::Create({
             .dimensions = { swapchain->GetWidth(), swapchain->GetHeight(), 1 },
             .format = ImageFormat::R16G16B16A16_SFLOAT,
@@ -134,6 +135,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
                 .loadOp = LoadOp::CLEAR,
                 .storeOp = StoreOp::STORE,
             },
+
             // Position buffer attachment [1]
             {
                 .image = positionBuffer,
@@ -171,16 +173,22 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         };
 
         // Create dynamic renderers
-        bufferRenderer = DynamicRenderer::Create({
+        bufferPass = DynamicRenderer::Create({
             .attachments = defferedDynamicAttachments
         });
 
-        mergingRenderer = DynamicRenderer::Create({
+        // Create composition renderer
+        compositionPass = DynamicRenderer::Create({
             .attachments = {
                 {
                     .image = renderedImage,
                     .loadOp = LoadOp::CLEAR,
                     .storeOp = StoreOp::STORE
+                },
+                {
+                    .image = depthStencilBuffer,
+                    .loadOp = LoadOp::LOAD,
+                    .storeOp = StoreOp::DONT_CARE
                 }
             }
         });
@@ -195,72 +203,40 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
     void DeferredVulkanRenderer::CreateSceneRenderingObjects()
     {
-        // Create descriptor set layout builder
-        auto descriptorLayoutBuilder = DescriptorSetLayout::Builder();
-        descriptorLayoutBuilder.SetShaderStages(ShaderType::ALL);
-        descriptorLayoutBuilder.AddBinding(UNIFORM_BUFFER_BINDING, DescriptorType::UNIFORM_BUFFER);
-        descriptorLayoutBuilder.AddBinding(STORAGE_BUFFER_BINDING, DescriptorType::STORAGE_BUFFER);
-
-        if (VK::GetDevice()->GetDescriptorIndexingSupported())
-        {
-            // TODO: BINDLESS
-            // descriptorSetBuilder.AddBinding(BINDLESS_TEXTURE_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT, MAX_TEXTURES);
-        }
-        else
-        {
-            descriptorLayoutBuilder.AddBinding(DIFFUSE_TEXTURE_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER);
-            descriptorLayoutBuilder.AddBinding(SPECULAR_TEXTURE_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER);
-            descriptorLayoutBuilder.AddBinding(NORMAL_MAP_TEXTURE_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER);
-            descriptorLayoutBuilder.AddBinding(HEIGHT_MAP_TEXTURE_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER);
-        }
-
-        // Create scene descriptor set layout
-        bufferDescriptorSetLayout = descriptorLayoutBuilder.Build();
-        VK::SetGlobalDescriptorSetLayout(bufferDescriptorSetLayout);
-
         // Load scene shaders
-        // TODO: RENAME SHADERS
-        auto vertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/DeferredSubpass_0.vert" });
-        auto fragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/DeferredSubpass_0.frag" });
+        auto vertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/G-Buffer.vert" });
+        auto fragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/G-Buffer.frag" });
 
         // Create scene renderer pipeline
         bufferPipeline = ScenePipeline::Create({
             .maxConcurrentFrames = maxConcurrentFrames,
             .shaders = { vertexShader, fragmentShader },
-            .attachments = { { IDBuffer }, { positionBuffer }, { diffuseBuffer }, { specularAndShininessBuffer }, { normalBuffer }, { depthStencilBuffer } },
-            .vertexAttributes = { VertexAttribute::POSITION, VertexAttribute::NORMAL, VertexAttribute::TEXTURE_COORDINATE },
-            .descriptorSetLayout = bufferDescriptorSetLayout,
+            .dynamicRenderingInfo = GraphicsPipelineDynamicRenderingInfo {
+                .attachments = { { IDBuffer }, { positionBuffer }, { diffuseBuffer }, { specularAndShininessBuffer }, { normalBuffer }, { depthStencilBuffer } }
+            },
             .sampling = Sampling::MSAAx1,
             .shadingType = ShadingType::FILL
         });
 
-        // Set up merging descriptor layout
-        mergingDescriptorSetLayout = DescriptorSetLayout::Builder()
-            .SetShaderStages(ShaderType::FRAGMENT)
-            .AddBinding(STORAGE_BUFFER_BINDING, DescriptorType::STORAGE_BUFFER)
-            .AddBinding(POSITION_BUFFER_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER)
-            .AddBinding(DIFFUSE_BUFFER_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER)
-            .AddBinding(SPECULAR_AND_SHININESS_BUFFER_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER)
-            .AddBinding(NORMAL_BUFFER_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER)
-            .AddBinding(DEPTH_BUFFER_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER)
-        .Build();
+        VK::SetGlobalDescriptorSetLayout(bufferPipeline->GetDescriptorSetLayout());
 
         // Load merging shaders
-        vertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/DeferredSubpass_1.vert", .shaderType = ShaderType::VERTEX });
-        fragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/DeferredSubpass_1.frag", .shaderType = ShaderType::FRAGMENT });
+        vertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/Composition.vert", .shaderType = ShaderType::VERTEX });
+        fragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/Composition.frag", .shaderType = ShaderType::FRAGMENT });
 
         // Create scene renderer pipeline
-        mergingPipeline = MergingPipeline::CreateFromAnotherPipeline({
+        compositionPipeline = CompositionPipeline::CreateFromAnotherPipeline({
             .maxConcurrentFrames = maxConcurrentFrames,
             .shaders = { vertexShader, fragmentShader },
-            .attachments = { { renderedImage } },
-            .descriptorSetLayout = mergingDescriptorSetLayout,
+            .dynamicRenderingInfo = GraphicsPipelineDynamicRenderingInfo {
+                .attachments = { { renderedImage }, { depthStencilBuffer } }
+            },
             .sampling = Sampling::MSAAx1,
             .shadingType = ShadingType::FILL
-        }, bufferPipeline, PipelineCopyOp::STORAGE_BUFFER);
+        }, bufferPipeline, PipelineCopyOp::UNIFORM_BUFFERS | PipelineCopyOp::STORAGE_BUFFERS);
 
         // TODO: Special write method
-        for (const auto &mergingDescriptorSet : mergingPipeline->GetDescriptorSets())
+        for (const auto &mergingDescriptorSet : compositionPipeline->GetDescriptorSets())
         {
             mergingDescriptorSet->WriteImage(POSITION_BUFFER_BINDING, positionBuffer, textureSampler);
             mergingDescriptorSet->WriteImage(POSITION_BUFFER_BINDING, positionBuffer, textureSampler);
@@ -268,6 +244,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             mergingDescriptorSet->WriteImage(SPECULAR_AND_SHININESS_BUFFER_BINDING, specularAndShininessBuffer, textureSampler);
             mergingDescriptorSet->WriteImage(NORMAL_BUFFER_BINDING, normalBuffer, textureSampler);
             mergingDescriptorSet->WriteImage(DEPTH_BUFFER_BINDING, depthStencilBuffer, textureSampler);
+            mergingDescriptorSet->WriteCubemap(SKYBOX_CUBEMAP_BINDING, World::GetManager().GetSkyboxSystem().skyboxCubemap);
             mergingDescriptorSet->Allocate();
         }
 
@@ -278,79 +255,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             renderedImageDescriptorSets[i] = ImGui_ImplVulkan_AddTexture(textureSampler->GetVulkanSampler(), renderedImage->GetVulkanImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
 
-        RenderingUtilities::Initialize(IDBuffer, depthStencilBuffer, bufferPipeline);
-    }
-
-    void DeferredVulkanRenderer::CreateSkyboxRenderingObjects()
-    {
-        // Create renderer that will write skybox to rendered image
-        skyboxRenderer = DynamicRenderer::Create({
-            .attachments = {
-                {
-                    .image = renderedImage,
-                    .loadOp = LoadOp::LOAD,
-                    .storeOp = StoreOp::STORE
-                }
-            }
-        });
-
-        // Create descriptor set layout for skybox pipeline
-        skyboxDescriptorSetLayout = DescriptorSetLayout::Builder()
-            .SetShaderStages(ShaderType::VERTEX | ShaderType::FRAGMENT)
-            .AddBinding(UNIFORM_BUFFER_BINDING, DescriptorType::UNIFORM_BUFFER)
-            .AddBinding(SKYBOX_CUBEMAP_BINDING, DescriptorType::COMBINED_IMAGE_SAMPLER)
-            .AddBinding(SKYBOX_CUBEMAP_BINDING + 1, DescriptorType::COMBINED_IMAGE_SAMPLER)
-        .Build();
-
-        // Create shaders for skybox pipeline
-        auto skyboxVertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/DeferredSubpass_2.vert", .shaderType = ShaderType::VERTEX });
-        auto skyboxFragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/DeferredSubpass_2.frag", .shaderType = ShaderType::FRAGMENT });
-
-        // Create pipeline
-        skyboxPipeline = SkyboxPipeline::CreateFromAnotherPipeline({
-            .maxConcurrentFrames = swapchain->GetMaxConcurrentFramesCount(),
-            .shaders = { skyboxVertexShader, skyboxFragmentShader },
-            // TODO: PASS DYNAMIC RENDERER INSTEAD OF ATTACHMENTS
-            .attachments = { { renderedImage } },
-            .vertexAttributes = { VertexAttribute::POSITION },
-            .descriptorSetLayout = skyboxDescriptorSetLayout,
-            .sampling = Sampling::MSAAx1,
-            .cullMode = CullMode::FRONT,
-            .shadingType = ShadingType::FILL,
-        }, bufferPipeline, PipelineCopyOp::UNIFORM_BUFFER);
-
-        std::vector<VertexP> cubeVertices =
-        {
-            { Vector3(-1, -1, -1) },
-            { Vector3( 1, -1, -1) },
-            { Vector3( 1,  1, -1) },
-            { Vector3(-1,  1, -1) },
-            { Vector3(-1, -1,  1) },
-            { Vector3( 1, -1,  1) },
-            { Vector3( 1,  1,  1) },
-            { Vector3(-1,  1,  1) }
-        };
-
-        std::vector<uint> cubeIndices =
-        {
-            1, 5, 0, 0, 5, 4,
-            6, 2, 7, 7, 2, 3,
-            3, 0, 7, 7, 0, 4,
-            7, 4, 6, 6, 4, 5,
-            6, 5, 2, 2, 5, 1,
-            2, 1, 3, 3, 1, 0
-        };
-
-        // Create cube vertex buffer
-        skyboxMesh = std::make_unique<Mesh>(cubeVertices, cubeIndices);
-
-        // Add skybox cubemap to its pipeline's descriptor set
-        for (const auto &descriptorSet : skyboxPipeline->GetDescriptorSets())
-        {
-            descriptorSet->WriteCubemap(SKYBOX_CUBEMAP_BINDING, World::GetManager().GetSkyboxSystem().skyboxCubemap);
-            descriptorSet->WriteImage(SKYBOX_CUBEMAP_BINDING + 1, depthStencilBuffer, textureSampler);
-            descriptorSet->Allocate();
-        }
+        raycaster = RenderingUtilities::CreateRaycaster(IDBuffer, depthStencilBuffer, bufferPipeline);
     }
 
     UniquePtr<DeferredVulkanRenderer> DeferredVulkanRenderer::Create(const VulkanRendererCreateInfo createInfo)
@@ -399,7 +304,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         });
 
         float timeAngle = std::fmod(Time::GetUpTime(), 360.0f) * 0.8f;
-        skyboxPipeline->GetPushConstantData().model = MatrixUtilities::CreateModel({ 0, 0, 0 }, { timeAngle, 0.0f, 0.0f });
+        compositionPipeline->GetPushConstantData().skyboxModel = MatrixUtilities::CreateModelMatrix({0, 0, 0}, {timeAngle, 0.0f, 0.0f});
     }
 
     void DeferredVulkanRenderer::DrawUI()
@@ -407,6 +312,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         ViewportPanel().DrawUI();
 
         GUI::BeginWindow("Renderer's Properties", nullptr, ImGuiWindowFlags_NoNav);
+
         // Rendered image type dropdown
         {
             static uint currentRenderedImageValue = RenderedImageValue::RenderedImage;
@@ -418,7 +324,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
             if (GUI::Dropdown("##DEFFERED_VULKAN_RENDERER_RENDERED_IMGAGE_TYPE_DROPDOWN", currentRenderedImageValue,
                               renderedImageValueTypes, 7)) {
-                mergingPipeline->GetPushConstantData().renderedImageValue = (RenderedImageValue) currentRenderedImageValue;
+                compositionPipeline->GetPushConstantData().renderedImageValue = (RenderedImageValue) currentRenderedImageValue;
             }
         }
 
@@ -455,7 +361,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         uint currentFrame = swapchain->GetCurrentFrameIndex();
 
         // Begin command buffer
-        commandBuffer->Begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+        commandBuffer->Begin();
 
         // Start GPU timer
         renderTimestampQueries[currentFrame]->Begin(commandBuffer);
@@ -465,7 +371,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         commandBuffer->TransitionImageLayouts({ { IDBuffer }, { positionBuffer }, { diffuseBuffer }, { specularAndShininessBuffer }, { normalBuffer }, { renderedImage } }, ImageLayout::COLOR_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
         // Begin rendering
-        bufferRenderer->Begin(commandBuffer);
+        bufferPass->Begin(commandBuffer);
 
         // Bind the pipeline which will draw to the G-Buffer
         bufferPipeline->Bind(commandBuffer);
@@ -475,7 +381,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         // For each mesh in the world
         auto enttMeshView = World::GetAllComponentsOfType<MeshRenderer>();
-        for (auto enttEntity : enttMeshView) {
+        for (auto enttEntity : enttMeshView)
+        {
             // Get current meshRenderer
             auto &meshRenderer = enttMeshView.get<MeshRenderer>(enttEntity);
             vertexBuffers[0] = meshRenderer.GetMesh()->GetVertexBuffer()->GetVulkanBuffer();
@@ -500,59 +407,39 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         }
 
         // End rendering to G-Buffer
-        bufferRenderer->End(commandBuffer);
+        bufferPass->End(commandBuffer);
 
         // Transition images' layouts to be suitable for reading from in shaders
         commandBuffer->TransitionImageLayout(depthStencilBuffer, ImageLayout::SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
         commandBuffer->TransitionImageLayouts({ { IDBuffer }, { positionBuffer }, { diffuseBuffer }, { specularAndShininessBuffer }, { normalBuffer }  }, ImageLayout::SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
         // Begin combining renderer
-        mergingRenderer->Begin(commandBuffer);
+        compositionPass->Begin(commandBuffer);
 
         // Bind the pipeline which will be combining the G-Buffer data into single image
-        mergingPipeline->Bind(commandBuffer);
+        compositionPipeline->Bind(commandBuffer);
 
         // Update pipeline's shaders' data
-        mergingPipeline->BindDescriptorSets(commandBuffer);
-        mergingPipeline->PushConstants(commandBuffer);
+        compositionPipeline->BindDescriptorSets(commandBuffer);
+        compositionPipeline->PushConstants(commandBuffer);
 
-        // Draw a fullscreen quad (2x triangles each with 3 vertices)
-        commandBuffer->Draw(6);
+        // Draw a fullscreen quad (2x triangles each with 3 vertices + skybox cube which consists of 36 more)
+        commandBuffer->Draw(42);
 
         // End rendering
-        mergingRenderer->End(commandBuffer);
-
-//        // Begin rendering skybox
-//        skyboxRenderer->Begin(commandBuffer);
-//
-//        // Bind skybox pipeline
-//        skyboxPipeline->Bind(commandBuffer);
-//
-//        // Send required mesh data to pipeline
-//        commandBuffer->BindVertexBuffers({ skyboxMesh->GetVertexBuffer()->GetVulkanBuffer() });
-//        commandBuffer->BindIndexBuffer({ skyboxMesh->GetIndexBuffer()->GetVulkanBuffer() });
-//
-//        // Send required external data to pipeline
-//        skyboxPipeline->PushConstants(commandBuffer);
-//        skyboxPipeline->BindDescriptorSets(commandBuffer);
-//
-//        // Draw skybox cube
-//        commandBuffer->DrawIndexed(skyboxMesh->GetIndexCount());
-//
-//        // End rendering skybox
-//        skyboxRenderer->End(commandBuffer);
+        compositionPass->End(commandBuffer);
 
         // End and save GPU timer results
         renderTimestampQueries[currentFrame]->End(commandBuffer);
 
         // Update ID buffer on CPU side
-        RenderingUtilities::UpdateIDBuffer(commandBuffer);
+        raycaster->UpdateData(commandBuffer);
 
         // Handle viewport clicking
-        if (Input::GetMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) && !ImGui::IsAnyItemHovered())
+        if (Input::GetMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) && !ImGui::IsAnyItemHovered() && !ImGuizmo::IsOver())
         {
-            EngineCore::SetSelectedEntity(RenderingUtilities::GetHoveredEntityID());
-            std::cout << RenderingUtilities::GetHoveredWorldPosition().x << " " << RenderingUtilities::GetHoveredWorldPosition().y << " " << RenderingUtilities::GetHoveredWorldPosition().z << "\n";
+            EngineCore::SetSelectedEntity(raycaster->GetHoveredEntityID());
+            EngineCore::SetMouseHoveredPosition(raycaster->GetHoveredWorldPosition());
         }
 
         // Transition rendered image's layout to be suitable for reading in ImGui shaders
@@ -580,31 +467,22 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         swapchain->SubmitCommandBuffers();
     }
 
-
     /* --- DESTRUCTOR --- */
 
     void DeferredVulkanRenderer::Destroy()
     {
         VK::GetDevice()->WaitUntilIdle();
 
-        RenderingUtilities::Destroy();
+        raycaster->Destroy();
 
         textureSampler->Destroy();
 
-        skyboxMesh->Destroy();
-        skyboxPipeline->Destroy();
-        skyboxDescriptorSetLayout->Destroy();
-
-        mergingPipeline->Destroy();
-        mergingDescriptorSetLayout->Destroy();
-
-        mergingRenderer->Destroy();
+        compositionPipeline->Destroy();
+        compositionPass->Destroy();
         renderedImage->Destroy();
 
         bufferPipeline->Destroy();
-        bufferDescriptorSetLayout->Destroy();
-
-        bufferRenderer->Destroy();
+        bufferPass->Destroy();
         depthStencilBuffer->Destroy();
         normalBuffer->Destroy();
         specularAndShininessBuffer->Destroy();

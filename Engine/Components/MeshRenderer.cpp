@@ -80,10 +80,10 @@ namespace Sierra::Engine::Components
             GUI::EndTreeProperties();
         }
 
-        if (GUI::TextureProperty("Diffuse Texture:", textures[TEXTURE_TYPE_DIFFUSE], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_DIFFUSE]);
-        if (GUI::TextureProperty("Specular Texture:", textures[TEXTURE_TYPE_SPECULAR], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_SPECULAR]);
-        if (GUI::TextureProperty("Normal Map Texture:", textures[TEXTURE_TYPE_NORMAL_MAP], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_NORMAL_MAP]);
-        if (GUI::TextureProperty("Height Map Texture:", textures[TEXTURE_TYPE_HEIGHT_MAP], "Some tooltip.")) SetTexture(textures[TEXTURE_TYPE_HEIGHT_MAP]);
+        if (GUI::TextureProperty("Diffuse Texture:", textures[TextureType::DIFFUSE], "Some tooltip.")) SetTexture(textures[TextureType::DIFFUSE]);
+        if (GUI::TextureProperty("Specular Texture:", textures[TextureType::SPECULAR], "Some tooltip.")) SetTexture(textures[TextureType::SPECULAR]);
+        if (GUI::TextureProperty("Normal Map Texture:", textures[TextureType::NORMAL_MAP], "Some tooltip.")) SetTexture(textures[TextureType::NORMAL_MAP]);
+        if (GUI::TextureProperty("Height Map Texture:", textures[TextureType::HEIGHT_MAP], "Some tooltip.")) SetTexture(textures[TextureType::HEIGHT_MAP]);
 
         GUI::EndProperties();
     }
@@ -93,17 +93,17 @@ namespace Sierra::Engine::Components
     void MeshRenderer::CreateDescriptorSet()
     {
         // If descriptor indexing not supported write default textures to the corresponding descriptor set
-        descriptorSet = DescriptorSet::Build(VK::GetDescriptorSetLayout());
-        descriptorSet->WriteTexture(DIFFUSE_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_DIFFUSE));
-        descriptorSet->WriteTexture(SPECULAR_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_SPECULAR));
-        descriptorSet->WriteTexture(NORMAL_MAP_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_NORMAL_MAP));
-        descriptorSet->WriteTexture(HEIGHT_MAP_TEXTURE_BINDING, Texture::GetDefaultTexture(TEXTURE_TYPE_HEIGHT_MAP));
+        descriptorSet = DescriptorSet::Create(VK::GetDescriptorSetLayout());
+        descriptorSet->WriteTexture(DIFFUSE_TEXTURE_BINDING, Texture::GetDefaultTexture(TextureType::DIFFUSE));
+        descriptorSet->WriteTexture(SPECULAR_TEXTURE_BINDING, Texture::GetDefaultTexture(TextureType::SPECULAR));
+        descriptorSet->WriteTexture(NORMAL_MAP_TEXTURE_BINDING, Texture::GetDefaultTexture(TextureType::NORMAL_MAP));
+        descriptorSet->WriteTexture(HEIGHT_MAP_TEXTURE_BINDING, Texture::GetDefaultTexture(TextureType::HEIGHT_MAP));
         descriptorSet->Allocate();
     }
 
     void MeshRenderer::SetTexture(const SharedPtr<Texture>& givenTexture)
     {
-        ASSERT_ERROR_IF(givenTexture->GetTextureType() == TEXTURE_TYPE_NONE, "In order to bind texture [" + givenTexture->name + "] to mesh its texture type must be specified and be different from TEXTURE_TYPE_NONE");
+        ASSERT_ERROR_IF(givenTexture->GetTextureType() == TextureType::UNDEFINED_TEXTURE, "In order to bind texture to mesh its texture type must be specified and be different from TextureType::NONE");
 
         textures[givenTexture->GetTextureType()] = givenTexture;
 
@@ -126,7 +126,7 @@ namespace Sierra::Engine::Components
 
     void MeshRenderer::ResetTexture(const TextureType textureType)
     {
-        ASSERT_ERROR_IF(textureType == TEXTURE_TYPE_NONE, "In order to reset a mesh's texture the texture type must not be TEXTURE_TYPE_NONE");
+        ASSERT_ERROR_IF(textureType == TextureType::UNDEFINED_TEXTURE, "In order to reset a mesh's texture the texture type must not be TextureType::UNDEFINED_TEXTURE");
 
         SetTexture(Texture::GetDefaultTexture(textureType));
 

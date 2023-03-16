@@ -12,177 +12,56 @@
 #include "../../RenderingSettings.h"
 #include "../../../Engine/Classes/File.h"
 
-// TODO: Also copy descriptor sets when copying data from pipelines
-// TODO: Before writing to buffers check if data has changed
-
 using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
-    // ==================== GRAPHICS PIPELINE ==================== \\
-
-    struct GraphicsPipelineCreateInfo
-    {
-        uint maxConcurrentFrames;
-        std::vector<SharedPtr<Shader>> shaders;
-
-        /* ! --- ONLY NEEDED IF USING PIPELINE WITH DYNAMIC RENDERERS --- ! */
-        const std::vector<ImageReference> attachments = { };
-        /* ! ------------------------------------------------------------ ! */
-
-        const std::vector<VertexAttribute> vertexAttributes = { };
-
-        SharedPtr<DescriptorSetLayout> descriptorSetLayout = nullptr;
-        ShaderType pushConstantShaderStages = ShaderType::VERTEX | ShaderType::FRAGMENT;
-
-        /* ! --- ONLY NEEDED IF USING PIPELINE WITH RENDER PASSES --- ! */
-        const UniquePtr<RenderPass> *renderPass = nullptr;
-        uint subpasss = 0;
-        uint colorAttachmentCount = 1;
-        bool createDepthBuffer = true;
-        /* ! -------------------------------------------------------- ! */
-
-        Sampling sampling = Sampling::MSAAx1;
-        FrontFace frontFace = FrontFace::COUNTER_CLOCKWISE;
-        CullMode cullMode = CullMode::FRONT;
-        ShadingType shadingType = ShadingType::FILL;
-    };
-
     template<typename PC = NullType, typename UB = NullType, typename SB = NullType>
-    class GraphicsPipeline {
+    class Pipeline
+    {
     public:
-        /* --- CONSTRUCTORS --- */
-        inline GraphicsPipeline(const GraphicsPipelineCreateInfo &givenCreateInfo)
-            : createInfo(std::move(givenCreateInfo))
-        {
-            CreatePipelineLayout();
-            CreatePipeline();
-        }
-
-        inline GraphicsPipeline(const GraphicsPipelineCreateInfo &givenCreateInfo, PC *externalPushConstantData, UB *externalUniformData, UniquePtr<Buffer>* *externalUniformBuffers, SB *externalStorageData, UniquePtr<Buffer>* *externalStorageBuffers)
-                : createInfo(std::move(givenCreateInfo))
-        {
-            if constexpr(!std::is_same<PC, NullType>::value)
-            {
-                if (externalPushConstantData != nullptr)
-                {
-                    usesExternalPushConstants = true;
-                    pushConstantData = externalPushConstantData;
-                }
-            }
-
-            if constexpr(!std::is_same<UB, NullType>::value)
-            {
-                if (externalUniformBuffers != nullptr)
-                {
-                    usesExternalUniformBuffers = true;
-                    uniformBufferData = externalUniformData;
-
-                    uniformBuffers.resize(createInfo.maxConcurrentFrames);
-                    for (uint i = createInfo.maxConcurrentFrames; i--;) uniformBuffers[i] = externalUniformBuffers[i];
-                }
-            }
-
-            if constexpr(!std::is_same<SB, NullType>::value)
-            {
-                if (externalStorageBuffers != nullptr)
-                {
-                    usesExternalStorageBuffers = true;
-                    storageBufferData = externalStorageData;
-
-                    storageBuffers.resize(createInfo.maxConcurrentFrames);
-                    for (uint i = createInfo.maxConcurrentFrames; i--;) storageBuffers[i] = externalStorageBuffers[i];
-                }
-            }
-
-            CreatePipelineLayout();
-            CreatePipeline();
-        }
-
-        inline static UniquePtr<GraphicsPipeline> Create(GraphicsPipelineCreateInfo createInfo)
-        {
-            return std::make_unique<GraphicsPipeline>(createInfo);
-        };
-
-        template<typename OtherPC, typename OtherUB, typename OtherSB>
-        inline static UniquePtr<GraphicsPipeline> CreateFromAnotherPipeline(GraphicsPipelineCreateInfo createInfo, const UniquePtr<GraphicsPipeline<OtherPC, OtherUB, OtherSB>> &otherPipeline, const PipelineCopyOp copyOperations)
-        {
-            PC* newPushConstantData = nullptr;
-            if constexpr (std::is_same<PC, OtherPC>::value)
-            {
-                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::PUSH_CONSTANTS))
-                {
-                    newPushConstantData = &otherPipeline->GetPushConstantData();
-                }
-            }
-
-            UB *newUniformData = nullptr;
-            UniquePtr<Buffer> **newUniformBuffers = nullptr;
-            if constexpr(std::is_same<UB, OtherUB>::value)
-            {
-                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::UNIFORM_BUFFER))
-                {
-                    newUniformData = &otherPipeline->GetUniformBufferData();
-                    newUniformBuffers = otherPipeline->GetUniformBuffers().data();
-                }
-            }
-
-            SB *newStorageData = nullptr;
-            UniquePtr<Buffer> **newStorageBuffers = nullptr;
-            if constexpr(std::is_same<SB, OtherSB>::value)
-            {
-                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::STORAGE_BUFFER))
-                {
-                    newStorageData = &otherPipeline->GetStorageBufferData();
-                    newStorageBuffers = otherPipeline->GetStorageBuffers().data();
-                }
-            }
-
-            return std::make_unique<GraphicsPipeline>(createInfo, newPushConstantData, newUniformData, newUniformBuffers, newStorageData, newStorageBuffers);
-        };
-
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline PC& GetPushConstantData()
         {
-            ASSERT_WARNING_IF(!HasPushConstants(), "Push constants have not been created for this pipeline");
+            ASSERT_WARNING_IF(!HasPushConstants(), "Push constants have not been created for this compute pipeline");
             return *pushConstantData;
         }
         [[nodiscard]] inline UB& GetUniformBufferData()
         {
-            ASSERT_WARNING_IF(!HasUniformBuffers(), "Uniform buffers have not been created for this graphics pipeline");
+            ASSERT_WARNING_IF(!HasUniformBuffers(), "Uniform buffers have not been created for this compute pipeline");
             return *uniformBufferData;
         }
         [[nodiscard]] inline SB& GetStorageBufferData()
         {
-            ASSERT_WARNING_IF(!HasStorageBuffers(), "Storage buffers have not been created for this graphics pipeline");
+            ASSERT_WARNING_IF(!HasStorageBuffers(), "Storage buffers have not been created for this compute pipeline");
             return *storageBufferData;
         }
 
-        [[nodiscard]] inline std::vector<UniquePtr<Buffer>*>& GetUniformBuffers()
-        {
-            return uniformBuffers;
-        }
         [[nodiscard]] inline UniquePtr<Buffer>& GetUniformBuffer(const uint index)
         {
             ASSERT_WARNING_IF(!HasUniformBuffers(), "Uniform buffers have not been created for this graphics pipeline");
-            return *uniformBuffers[index];
-        }
-
-        [[nodiscard]] inline std::vector<UniquePtr<Buffer>*>& GetStorageBuffers()
-        {
-            return storageBuffers;
+            return *uniformBuffers[index].buffer;
         }
         [[nodiscard]] inline UniquePtr<Buffer>& GetStorageBuffer(const uint index)
         {
             ASSERT_WARNING_IF(!HasStorageBuffers(), "Storage buffers have not been created for this graphics pipeline");
-            return *storageBuffers[index];
+            return *storageBuffers[index].buffer;
+        }
+
+        [[nodiscard]] inline UniquePtr<DescriptorSetLayout>& GetDescriptorSetLayout()
+        {
+            return *descriptorSetLayout;
+        }
+
+        [[nodiscard]] inline UniquePtr<DescriptorSet>& GetDescriptorSet(const uint forFrame = 0)
+        {
+            return descriptorSets[forFrame];
         }
         [[nodiscard]] inline std::vector<UniquePtr<DescriptorSet>>& GetDescriptorSets()
         {
             return descriptorSets;
         }
 
-        [[nodiscard]] inline GraphicsPipelineCreateInfo& GetCreateInfo() { return createInfo; }
         [[nodiscard]] inline VkPipeline GetVulkanPipeline() const { return vkPipeline; }
         [[nodiscard]] inline VkPipelineLayout GetVulkanPipelineLayout() const { return vkPipelineLayout; }
 
@@ -191,100 +70,99 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             CreatePipeline();
         }
-        inline void SetShaderDefinition(const ShaderType shaderType, const ShaderDefinition definition)
+        inline void Bind(const UniquePtr<CommandBuffer> &givenCommandBuffer)
         {
-            VK::GetDevice()->WaitUntilIdle();
+            vkCmdBindPipeline(givenCommandBuffer->GetVulkanCommandBuffer(), bindPoint, vkPipeline);
 
-            for (uint i = createInfo.shaders.size(); i--;)
+            if (!usesExternalUniformBuffers)
             {
-                if (createInfo.shaders[i]->GetShaderType() == shaderType)
+                for (auto &bufferData : uniformBuffers)
                 {
-                    if (createInfo.shaders[i]->SetDefinition(definition))
-                    {
-                        CreatePipeline();
-                    }
-
-                    return;
+                    bufferData.updatedForFrame = false;
                 }
             }
 
-            ASSERT_ERROR_FORMATTED("Shader of type [{0}] could not be overloaded because it is not present in the pipeline", static_cast<uint>(shaderType));
-        }
-        inline void Bind(const UniquePtr<CommandBuffer> &givenCommandBuffer)
-        {
-            localDescriptorsHaveBeenBoundForFrame = false;
-            vkCmdBindPipeline(givenCommandBuffer->GetVulkanCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, this->vkPipeline);
-
-            currentFrame = (currentFrame + 1) % createInfo.maxConcurrentFrames;
-        };
-        inline void BindDescriptorSets(const UniquePtr<CommandBuffer> &givenCommandBuffer, UniquePtr<DescriptorSet> &externalDescriptorSet)
-        {
-            if (!localDescriptorsHaveBeenBoundForFrame)
+            if (!usesExternalStorageBuffers)
             {
-                if (HasUniformBuffers()) uniformBuffers[currentFrame]->get()->CopyFromPointer(uniformBufferData);
-                if (HasStorageBuffers()) storageBuffers[currentFrame]->get()->CopyFromPointer(storageBufferData);
-
-                localDescriptorsHaveBeenBoundForFrame = true;
+                for (auto &bufferData : storageBuffers)
+                {
+                    bufferData.updatedForFrame = false;
+                }
             }
 
-           std::vector<VkDescriptorSet> finalDescriptorSetGroup { externalDescriptorSet->GetVulkanDescriptorSet() };
+            if (bindPoint == VK_PIPELINE_BIND_POINT_GRAPHICS) currentFrame = (currentFrame + 1) % maxConcurrentFrames;
+        };
+        inline void BindDescriptorSets(const UniquePtr<CommandBuffer> &givenCommandBuffer, UniquePtr<DescriptorSet> &externalDescriptorSet, const bool forceUpdateUniformBuffers = false, const bool forceUpdateStorageBuffers = false)
+        {
+            if (HasUniformBuffers() && (!uniformBuffers[currentFrame].updatedForFrame || forceUpdateUniformBuffers))
+            {
+                uniformBuffers[currentFrame].updatedForFrame = true;
+                uniformBuffers[currentFrame].buffer->get()->CopyFromPointer(uniformBufferData);
+            }
+
+            if (HasStorageBuffers() && (!storageBuffers[currentFrame].updatedForFrame || forceUpdateStorageBuffers))
+            {
+                storageBuffers[currentFrame].updatedForFrame = true;
+                storageBuffers[currentFrame].buffer->get()->CopyFromPointer(storageBufferData);
+            }
+
+            std::vector<VkDescriptorSet> finalDescriptorSetGroup { externalDescriptorSet->GetVulkanDescriptorSet() };
 
             if (!descriptorSets.empty()) finalDescriptorSetGroup.insert(finalDescriptorSetGroup.begin(), descriptorSets[currentFrame]->GetVulkanDescriptorSet());
-            vkCmdBindDescriptorSets(givenCommandBuffer->GetVulkanCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, finalDescriptorSetGroup.size(), finalDescriptorSetGroup.data(), 0, nullptr);
+            vkCmdBindDescriptorSets(givenCommandBuffer->GetVulkanCommandBuffer(), bindPoint, vkPipelineLayout, 0, finalDescriptorSetGroup.size(), finalDescriptorSetGroup.data(), 0, nullptr);
         };
-        inline void BindDescriptorSets(const UniquePtr<CommandBuffer> &givenCommandBuffer)
+        inline void BindDescriptorSets(const UniquePtr<CommandBuffer> &givenCommandBuffer, const bool forceUpdateUniformBuffers = false, const bool forceUpdateStorageBuffers = false)
         {
-            if (localDescriptorsHaveBeenBoundForFrame) return;
-
-            if (HasUniformBuffers())
+            if (HasUniformBuffers() && (!uniformBuffers[currentFrame].updatedForFrame || forceUpdateUniformBuffers))
             {
-                uniformBuffers[currentFrame]->get()->CopyFromPointer(uniformBufferData);
+                uniformBuffers[currentFrame].updatedForFrame = true;
+                uniformBuffers[currentFrame].buffer->get()->CopyFromPointer(uniformBufferData);
             }
 
-            if (HasStorageBuffers())
+            if (HasStorageBuffers() && (!storageBuffers[currentFrame].updatedForFrame || forceUpdateStorageBuffers))
             {
-                storageBuffers[currentFrame]->get()->CopyFromPointer(storageBufferData);
+                storageBuffers[currentFrame].updatedForFrame = true;
+                storageBuffers[currentFrame].buffer->get()->CopyFromPointer(storageBufferData);
             }
 
-            localDescriptorsHaveBeenBoundForFrame = true;
+            VkDescriptorSet descriptorSetPtr;
+            descriptorSetPtr = descriptorSets[currentFrame]->GetVulkanDescriptorSet();
 
-            VkDescriptorSet* descriptorSetPtr = new VkDescriptorSet[1];
-            descriptorSetPtr[0] = descriptorSets[currentFrame]->GetVulkanDescriptorSet();
-
-            vkCmdBindDescriptorSets(givenCommandBuffer->GetVulkanCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, 1, descriptorSetPtr, 0, nullptr);
-
-            delete[] descriptorSetPtr;
+            vkCmdBindDescriptorSets(givenCommandBuffer->GetVulkanCommandBuffer(), bindPoint, vkPipelineLayout, 0, 1, &descriptorSetPtr, 0, nullptr);
         };
         inline void PushConstants(const UniquePtr<CommandBuffer> &givenCommandBuffer)
         {
             ASSERT_ERROR_IF(pushConstantRange == nullptr, "Trying to push constants in pipeline that was created without support for them in mind");
 
             vkCmdPushConstants(
-                givenCommandBuffer->GetVulkanCommandBuffer(), vkPipelineLayout,
-                pushConstantRange->stageFlags, pushConstantRange->offset,
-                pushConstantRange->size, pushConstantData
+                    givenCommandBuffer->GetVulkanCommandBuffer(), vkPipelineLayout,
+                    pushConstantRange->stageFlags, pushConstantRange->offset,
+                    pushConstantRange->size, pushConstantData
             );
         };
         inline void OverloadShader(SharedPtr<Shader> newShader)
         {
             VK::GetDevice()->WaitUntilIdle();
 
-            for (uint i = createInfo.shaders.size(); i--;)
+            for (uint i = (*shaders).size(); i--;)
             {
-                if (createInfo.shaders[i]->GetShaderType() == newShader->GetShaderType())
+                if ((*shaders)[i]->GetShaderType() == newShader->GetShaderType())
                 {
-                    createInfo.shaders[i] = newShader;
+                    (*shaders)[i] = newShader;
                     CreatePipeline();
 
                     return;
                 }
             }
 
-            ASSERT_ERROR_FORMATTED("Shader of type [{0}] could not be overloaded because it is not present in the pipeline", static_cast<uint>(newShader->GetShaderType()));
+            ASSERT_ERROR_FORMATTED("Shader of type [{0}] could not be overloaded because it is not present in the pipeline", VK_TO_STRING(newShader->GetShaderType(), ShaderStageFlagBits));
         };
 
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] uint GetMaxConcurrentFrames() const { return maxConcurrentFrames; }
+
         /* --- DESTRUCTOR --- */
-        inline void Destroy()
+        inline virtual void Destroy()
         {
             // If no cache was read create new one and store it
             if (pipelineCache == VK_NULL_HANDLE)
@@ -303,13 +181,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 File::WriteBinaryDataToFile(File::INTERNAL_TEMP_FOLDER_PATH + "PipelineCache/PipelineCache_" + std::to_string(GetCacheHash()), cacheData, true);
             }
 
-            if (pushConstantRange != nullptr)
+            if (!usesExternalPushConstants)
             {
+                delete pushConstantData;
                 delete pushConstantRange;
-                if (!usesExternalPushConstants)
-                {
-                    delete pushConstantData;
-                }
             }
 
             if (uniformBufferData != nullptr)
@@ -320,8 +195,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
                     for (const auto &uniformBuffer : uniformBuffers)
                     {
-                        uniformBuffer->get()->Destroy();
-                        delete uniformBuffer;
+                        uniformBuffer.buffer->get()->Destroy();
+                        delete uniformBuffer.buffer;
                     }
                 }
             }
@@ -334,61 +209,68 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
                     for (const auto &storageBuffer : storageBuffers)
                     {
-                        storageBuffer->get()->Destroy();
-                        delete storageBuffer;
+                        storageBuffer.buffer->get()->Destroy();
+                        delete storageBuffer.buffer;
                     }
                 }
+            }
+
+            if (!usesExternalDescriptorSetLayout && descriptorSetLayout != nullptr)
+            {
+                (*descriptorSetLayout)->Destroy();
+                delete descriptorSetLayout;
             }
 
             vkDestroyPipelineCache(VK::GetLogicalDevice(), pipelineCache, nullptr);
             vkDestroyPipeline(VK::GetLogicalDevice(), vkPipeline, nullptr);
             vkDestroyPipelineLayout(VK::GetLogicalDevice(), vkPipelineLayout, nullptr);
         };
-
-        DELETE_COPY(GraphicsPipeline);
+        DELETE_COPY(Pipeline);
 
     private:
-        VkPipeline vkPipeline;
-        VkPipelineLayout vkPipelineLayout;
-
-        PC* pushConstantData = nullptr;
-        VkPushConstantRange* pushConstantRange = nullptr;
-
-        UB* uniformBufferData = nullptr;
-        std::vector<UniquePtr<Buffer>*> uniformBuffers;
-
-        SB* storageBufferData = nullptr;
-        std::vector<UniquePtr<Buffer>*> storageBuffers;
-
-        std::vector<UniquePtr<DescriptorSet>> descriptorSets;
-
-        VkPipelineCache pipelineCache = VK_NULL_HANDLE;
-
-        bool alreadyCreated = false;
-        bool usesExternalPushConstants = false;
-        bool usesExternalUniformBuffers = false;
-        bool usesExternalStorageBuffers = false;
-
-        uint currentFrame = 0;
-        GraphicsPipelineCreateInfo createInfo;
-
-        bool localDescriptorsHaveBeenBoundForFrame = false;
-
-        inline bool HasPushConstants() const { return pushConstantRange != nullptr; }
-        inline bool HasUniformBuffers() const { return !uniformBuffers.empty() && uniformBuffers[0] != nullptr; }
-        inline bool HasStorageBuffers() const { return !storageBuffers.empty() && storageBuffers[0] != nullptr; }
-
-        inline uSize GetCacheHash()
+        struct BufferData
         {
-            String stringToCache;
-            for (const auto &shader : createInfo.shaders)
+            UniquePtr<Buffer> *buffer;
+            bool updatedForFrame = false;
+        };
+
+    protected:
+        inline Pipeline<PC, UB, SB>() = default;
+
+        inline virtual void SaveUniversalInfo() { };
+        inline void CreateDescriptors(UniquePtr<DescriptorSetLayout> *providedLayout)
+        {
+            if (providedLayout != nullptr)
             {
-                stringToCache += shader->GetFilePath();
+                descriptorSetLayout = providedLayout;
+
+                usesExternalDescriptorSetLayout = true;
+                return;
             }
 
-            return std::hash<String>{}(stringToCache);
-        }
+            DescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
 
+            for (const auto &shader : *shaders)
+            {
+                for (const auto &binding : *shader->precompiledData->reflectionData.descriptorBindings)
+                {
+                    auto &reference = descriptorSetLayoutCreateInfo.bindings[binding.binding];
+                    reference.shaderStages |= shader->GetShaderType();
+                    reference.descriptorType = static_cast<DescriptorType>(binding.fieldType);
+                    reference.arraySize = binding.arraySize;
+                }
+
+                delete shader->precompiledData->reflectionData.descriptorBindings;
+            }
+
+            if (descriptorSetLayoutCreateInfo.bindings.empty())
+            {
+                descriptorSetLayout = nullptr;
+                return;
+            }
+
+            descriptorSetLayout = new UniquePtr<DescriptorSetLayout>(DescriptorSetLayout::Create(descriptorSetLayoutCreateInfo));
+        };
         inline void CreatePipelineLayout()
         {
             // Set pipeline layout creation info
@@ -396,18 +278,16 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
             // Create push constant
-            if constexpr (!std::is_same<PC, NullType>::value)
+            if constexpr (!std::is_same_v<PC, NullType>)
             {
                 if (pushConstantData == nullptr)
                 {
                     pushConstantData = new PC();
-                }
-                if (pushConstantRange == nullptr)
-                {
+
                     pushConstantRange = new VkPushConstantRange();
                     pushConstantRange->size = sizeof(PC);
                     pushConstantRange->offset = 0;
-                    pushConstantRange->stageFlags = (VkShaderStageFlags) createInfo.pushConstantShaderStages;
+                    pushConstantRange->stageFlags = (VkShaderStageFlags) pushConstantShaderStages;
 
                     pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
                     pipelineLayoutCreateInfo.pPushConstantRanges = pushConstantRange;
@@ -415,63 +295,61 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
 
             // Create uniform buffer
-            if constexpr (!std::is_same<UB, NullType>::value)
+            if constexpr (!std::is_same_v<UB, NullType>)
             {
                 // Check if user has provided external storage buffers
                 if (!HasUniformBuffers())
                 {
                     uniformBufferData = new UB();
 
-                    uniformBuffers.resize(createInfo.maxConcurrentFrames);
-                    for (uint i = createInfo.maxConcurrentFrames; i--;)
+                    uniformBuffers.resize(maxConcurrentFrames);
+                    for (uint i = maxConcurrentFrames; i--;)
                     {
-                        uniformBuffers[i] = new UniquePtr<Buffer>(new Buffer({
+                        uniformBuffers[i] = { new UniquePtr<Buffer>(new Buffer({
                             .memorySize = sizeof(UB),
-                            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
                             .bufferUsage = BufferUsage::UNIFORM
-                        }));
+                        })) };
                     }
                 }
             }
 
             // Create storage buffer
-            if constexpr (!std::is_same<SB, NullType>::value)
+            if constexpr (!std::is_same_v<SB, NullType>)
             {
                 // Check if user has provided external storage buffers
                 if (!HasStorageBuffers())
                 {
                     storageBufferData = new SB();
 
-                    storageBuffers.resize(createInfo.maxConcurrentFrames);
-                    for (uint i = createInfo.maxConcurrentFrames; i--;)
+                    storageBuffers.resize(maxConcurrentFrames);
+                    for (uint i = maxConcurrentFrames; i--;)
                     {
-                        storageBuffers[i] = new UniquePtr<Buffer>(new Buffer({
+                        storageBuffers[i] = { new UniquePtr<Buffer>(new Buffer({
                             .memorySize = sizeof(SB),
-                            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
                             .bufferUsage = BufferUsage::STORAGE
-                        }));
+                        })) };
                     }
                 }
             }
 
-            descriptorSets.resize((uint) (HasUniformBuffers() || HasStorageBuffers()) * createInfo.maxConcurrentFrames);
+            descriptorSets.resize((uint) (HasUniformBuffers() || HasStorageBuffers()) * maxConcurrentFrames);
             if (!descriptorSets.empty())
             {
-                for (uint i = createInfo.maxConcurrentFrames; i--;)
+                for (uint i = 0; i < maxConcurrentFrames; i++)
                 {
-                    descriptorSets[i] = DescriptorSet::Build(createInfo.descriptorSetLayout);
-                    if (HasUniformBuffers()) descriptorSets[i]->WriteBuffer(UNIFORM_BUFFER_BINDING, *uniformBuffers[i]);
-                    if (HasStorageBuffers()) descriptorSets[i]->WriteBuffer(STORAGE_BUFFER_BINDING, *storageBuffers[i]);
+                    descriptorSets[i] = DescriptorSet::Create(*descriptorSetLayout);
+                    if (HasUniformBuffers()) descriptorSets[i]->WriteBuffer(UNIFORM_BUFFER_BINDING, *uniformBuffers[i].buffer);
+                    if (HasStorageBuffers()) descriptorSets[i]->WriteBuffer(STORAGE_BUFFER_BINDING, *storageBuffers[i].buffer);
                     descriptorSets[i]->Allocate();
                 }
             }
 
             // Add descriptor layout
-            VkDescriptorSetLayout* descriptorSetLayoutsPtr = new VkDescriptorSetLayout[(uint) (createInfo.descriptorSetLayout != nullptr) * 2];
-            if (createInfo.descriptorSetLayout != nullptr)
+            VkDescriptorSetLayout* descriptorSetLayoutsPtr = new VkDescriptorSetLayout[(uint) (descriptorSetLayout != nullptr) * 2];
+            if (descriptorSetLayout != nullptr)
             {
-                descriptorSetLayoutsPtr[0] = createInfo.descriptorSetLayout->GetVulkanDescriptorSetLayout();
-                descriptorSetLayoutsPtr[1] = createInfo.descriptorSetLayout->GetVulkanDescriptorSetLayout();
+                descriptorSetLayoutsPtr[0] = (*descriptorSetLayout)->GetVulkanDescriptorSetLayout();
+                descriptorSetLayoutsPtr[1] = (*descriptorSetLayout)->GetVulkanDescriptorSetLayout();
 
                 pipelineLayoutCreateInfo.setLayoutCount = 2;
                 pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayoutsPtr;
@@ -480,52 +358,268 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             // Create the pipeline layout
             VK_ASSERT(
                 vkCreatePipelineLayout(VK::GetLogicalDevice(), &pipelineLayoutCreateInfo, nullptr, &vkPipelineLayout),
-                "Failed to create graphics pipeline layout"
+                "Failed to create pipeline layout"
             );
 
             delete[] descriptorSetLayoutsPtr;
         };
-        void CreatePipeline()
+        inline virtual void CreatePipeline() { };
+
+        VkPipeline vkPipeline;
+        VkPipelineLayout vkPipelineLayout;
+
+        PC* pushConstantData = nullptr;
+        VkPushConstantRange* pushConstantRange = nullptr;
+
+        UB* uniformBufferData = nullptr;
+        std::vector<BufferData> uniformBuffers;
+
+        SB* storageBufferData = nullptr;
+        std::vector<BufferData> storageBuffers;
+
+        std::vector<SharedPtr<Shader>>* shaders = nullptr;
+        std::vector<UniquePtr<DescriptorSet>> descriptorSets;
+
+        VkPipelineCache pipelineCache = VK_NULL_HANDLE;
+        UniquePtr<DescriptorSetLayout> *descriptorSetLayout = nullptr;
+
+        ShaderType pushConstantShaderStages;
+
+        bool alreadyCreated = false;
+        bool usesExternalPushConstants = false;
+        bool usesExternalUniformBuffers = false;
+        bool usesExternalStorageBuffers = false;
+        bool usesExternalDescriptorSetLayout = false;
+
+        uint currentFrame = 0;
+        uint maxConcurrentFrames = 1;
+
+        VkPipelineBindPoint bindPoint;
+
+        inline bool HasPushConstants() const { return pushConstantRange != nullptr; }
+        inline bool HasUniformBuffers() const { return !uniformBuffers.empty() && uniformBuffers[0].buffer != nullptr; }
+        inline bool HasStorageBuffers() const { return !storageBuffers.empty() && storageBuffers[0].buffer != nullptr; }
+        inline uSize GetCacheHash()
         {
-            if (alreadyCreated)
+            String stringToCache;
+            for (const auto &shader : *shaders)
             {
-                vkDestroyPipeline(VK::GetLogicalDevice(), vkPipeline, nullptr);
+                stringToCache += shader->GetFilePath();
+            }
+
+            return GET_HASH(stringToCache);
+        }
+
+        template<typename OtherPC, typename OtherUB, typename OtherSB>
+        inline void CopyDataInPipelines(Pipeline<OtherPC, OtherUB, OtherSB> *copyFrom, const PipelineCopyOp copyOp)
+        {
+            if constexpr(!std::is_same_v<PC, NullType> && std::is_same_v<PC, OtherPC>)
+            {
+                if (IS_FLAG_PRESENT(copyOp, PipelineCopyOp::PUSH_CONSTANTS))
+                {
+                    usesExternalPushConstants = true;
+                    pushConstantData = copyFrom->pushConstantData;
+                    pushConstantRange = copyFrom->pushConstantRange;
+                }
+            }
+
+            if constexpr(!std::is_same_v<UB, NullType> && std::is_same_v<OtherUB, OtherUB>)
+            {
+                if (IS_FLAG_PRESENT(copyOp, PipelineCopyOp::UNIFORM_BUFFERS))
+                {
+                    usesExternalUniformBuffers = true;
+                    uniformBufferData = &copyFrom->GetUniformBufferData();
+
+                    uniformBuffers.resize(maxConcurrentFrames);
+                    for (uint i = maxConcurrentFrames; i--;) uniformBuffers[i].buffer = &copyFrom->GetUniformBuffer(i);
+                }
+            }
+
+            if constexpr(!std::is_same_v<SB, NullType> && std::is_same_v<SB, OtherSB>)
+            {
+                if (IS_FLAG_PRESENT(copyOp, PipelineCopyOp::STORAGE_BUFFERS))
+                {
+                    usesExternalStorageBuffers = true;
+                    storageBufferData = &copyFrom->GetStorageBufferData();
+
+                    storageBuffers.resize(maxConcurrentFrames);
+                    for (uint i = maxConcurrentFrames; i--;) storageBuffers[i].buffer = &copyFrom->GetStorageBuffer(i);
+                }
+            }
+
+        }
+    };
+
+    // ==================== GRAPHICS PIPELINE ==================== \\
+
+    struct GraphicsPipelineDynamicRenderingInfo
+    {
+        std::vector<ImageReference> attachments;
+    };
+
+    struct GraphicsPipelineRenderPassInfo
+    {
+        const UniquePtr<RenderPass> *renderPass;
+        uint subpasss = 0;
+        uint colorAttachmentCount = 1;
+        bool createDepthBuffer = false;
+    };
+
+    struct GraphicsPipelineShaderData
+    {
+        std::vector<VertexAttributeType> vertexAttributes;
+        UniquePtr<DescriptorSetLayout> *descriptorSetLayout = nullptr;
+    };
+
+    struct GraphicsPipelineCreateInfo
+    {
+        uint maxConcurrentFrames;
+        std::vector<SharedPtr<Shader>> shaders;
+        Optional<GraphicsPipelineShaderData> shaderData;
+
+        Optional<GraphicsPipelineDynamicRenderingInfo> dynamicRenderingInfo;
+        // OR
+        Optional<GraphicsPipelineRenderPassInfo> renderPassInfo;
+
+        ShaderType pushConstantShaderStages = ShaderType::VERTEX | ShaderType::FRAGMENT;
+        Sampling sampling = Sampling::MSAAx1;
+        FrontFace frontFace = FrontFace::COUNTER_CLOCKWISE;
+        CullMode cullMode = CullMode::FRONT;
+        ShadingType shadingType = ShadingType::FILL;
+    };
+
+    template<typename PC = NullType, typename UB = NullType, typename SB = NullType>
+    class GraphicsPipeline : public Pipeline<PC, UB, SB>
+    {
+    public:
+
+        /* --- CONSTRUCTORS --- */
+        inline GraphicsPipeline() = default;
+
+        inline GraphicsPipeline(const GraphicsPipelineCreateInfo &givenCreateInfo)
+            : createInfo(std::move(givenCreateInfo))
+        {
+            this->SaveUniversalInfo();
+            this->CreateDescriptors(createInfo.shaderData.has_value() ? createInfo.shaderData.value().descriptorSetLayout : nullptr);
+            this->CreatePipelineLayout();
+            this->CreatePipeline();
+        }
+
+        inline static UniquePtr<GraphicsPipeline> Create(GraphicsPipelineCreateInfo createInfo)
+        {
+            return std::make_unique<GraphicsPipeline>(createInfo);
+        };
+
+        template<typename OtherPC, typename OtherUB, typename OtherSB>
+        inline static UniquePtr<GraphicsPipeline> CreateFromAnotherPipeline(GraphicsPipelineCreateInfo createInfo, const UniquePtr<GraphicsPipeline<OtherPC, OtherUB, OtherSB>> &copyFrom, const PipelineCopyOp copyOp)
+        {
+            UniquePtr<GraphicsPipeline<PC, UB, SB>> pipeline = std::make_unique<GraphicsPipeline<PC, UB, SB>>();
+
+            pipeline->createInfo = std::move(createInfo);
+            pipeline->SaveUniversalInfo();
+
+            pipeline->CopyDataInPipelines(copyFrom.get(), copyOp);
+
+            pipeline->CreateDescriptors(createInfo.shaderData.has_value() ? createInfo.shaderData.value().descriptorSetLayout : nullptr);
+            pipeline->CreatePipelineLayout();
+            pipeline->CreatePipeline();
+
+            return pipeline;
+        };
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] inline GraphicsPipelineCreateInfo& GetCreateInfo() { return createInfo; }
+
+        /* --- SETTER METHODS --- */
+        inline void SetShaderDefinition(const ShaderType shaderType, const ShaderDefinition definition)
+        {
+            VK::GetDevice()->WaitUntilIdle();
+
+            for (uint i = createInfo.shaders.size(); i--;)
+            {
+                if (createInfo.shaders[i]->GetShaderType() == shaderType)
+                {
+                    if (createInfo.shaders[i]->SetDefinition(definition))
+                    {
+                        CreatePipeline();
+                    }
+
+                    return;
+                }
+            }
+
+            ASSERT_ERROR_FORMATTED("Shader of type [{0}] could not be overloaded because it is not present in the pipeline", VK_TO_STRING(shaderType, ShaderStageFlagBits));
+        }
+
+        /* --- DESTRUCTOR --- */
+        DELETE_COPY(GraphicsPipeline);
+    private:
+        GraphicsPipelineCreateInfo createInfo;
+        inline void SaveUniversalInfo() override
+        {
+            this->shaders = &createInfo.shaders;
+            this->bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+            this->maxConcurrentFrames = createInfo.maxConcurrentFrames;
+            this->pushConstantShaderStages = createInfo.pushConstantShaderStages;
+        }
+        inline void CreatePipeline() override
+        {
+            if (this->alreadyCreated)
+            {
+                vkDestroyPipeline(VK::GetLogicalDevice(), this->vkPipeline, nullptr);
             }
 
             VkPipelineShaderStageCreateInfo* shaderStages = new VkPipelineShaderStageCreateInfo[createInfo.shaders.size()];
+
+            int vertexShaderIndex = -1;
             for (uint i = createInfo.shaders.size(); i--;)
             {
                 shaderStages[i] = createInfo.shaders[i]->GetVkShaderStageInfo();
+                if (createInfo.shaders[i]->GetShaderType() == ShaderType::VERTEX) vertexShaderIndex = i;
             }
 
             // Define the attributes to be sent to the shader
-            std::vector<VkVertexInputAttributeDescription> attributeDescriptions(createInfo.vertexAttributes.size());
+            std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 
             uint lastOffset = 0;
-            for (uint i = 0; i < createInfo.vertexAttributes.size(); i++)
+            if (vertexShaderIndex != -1)
             {
-                attributeDescriptions[i].binding = 0;
-                attributeDescriptions[i].location = i;
-                attributeDescriptions[i].offset = lastOffset;
-
-                lastOffset += static_cast<uint>(createInfo.vertexAttributes[i]);
-
-                switch (createInfo.vertexAttributes[i])
+                if (createInfo.shaderData.has_value())
                 {
-                    case VertexAttribute::FLOAT:
-                        attributeDescriptions[i].format = VK_FORMAT_R32_SFLOAT;
-                        break;
-                    case VertexAttribute::VEC2:
-                        attributeDescriptions[i].format = VK_FORMAT_R32G32_SFLOAT;
-                        break;
-                    case VertexAttribute::VEC3:
-                        attributeDescriptions[i].format = VK_FORMAT_R32G32B32_SFLOAT;
-                        break;
-                    case VertexAttribute::VEC4:
-                        attributeDescriptions[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-                        break;
+                    attributeDescriptions.resize(createInfo.shaderData.value().vertexAttributes.size());
+
+                    for (uint i = 0; i < attributeDescriptions.size(); i++)
+                    {
+                        attributeDescriptions[i].binding = 0;
+                        attributeDescriptions[i].location = i;
+                        attributeDescriptions[i].format = static_cast<VkFormat>(createInfo.shaderData.value().vertexAttributes[i]);
+                        attributeDescriptions[i].offset = lastOffset;
+
+                        lastOffset += GetVertexAttributeTypeSize(createInfo.shaderData.value().vertexAttributes[i]);
+                    }
+                }
+                else
+                {
+                    if (createInfo.shaders[vertexShaderIndex]->precompiledData->reflectionData.vertexAttributes != nullptr)
+                    {
+                        auto &attributes = *createInfo.shaders[vertexShaderIndex]->precompiledData->reflectionData.vertexAttributes;
+                        attributeDescriptions.resize(attributes.size());
+
+                        for (uint i = 0; i < attributeDescriptions.size(); i++)
+                        {
+                            attributeDescriptions[i].binding = 0;
+                            attributeDescriptions[i].location = attributes[i].location;
+                            attributeDescriptions[i].format = static_cast<VkFormat>(attributes[i].vertexAttributeType);
+                            attributeDescriptions[i].offset = lastOffset;
+
+                            lastOffset += GetVertexAttributeTypeSize(attributes[i].vertexAttributeType);
+                        }
+
+                        delete createInfo.shaders[vertexShaderIndex]->precompiledData->reflectionData.vertexAttributes;
+                    }
                 }
             }
+
 
             // Set up binding description
             VkVertexInputBindingDescription bindingDescription{};
@@ -537,7 +631,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo{};
             vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-            if (!createInfo.vertexAttributes.empty())
+            if (!attributeDescriptions.empty())
             {
                 vertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
                 vertexInputStateCreateInfo.pVertexBindingDescriptions = &bindingDescription;
@@ -598,12 +692,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             blendingAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
 
             bool hasDepthAttachment = false;
-            bool usesRenderPasses = createInfo.renderPass != nullptr;
+
+            ASSERT_ERROR_IF(!createInfo.renderPassInfo.has_value() && !createInfo.dynamicRenderingInfo.has_value(), "When creating graphics pipelines either [renderPassInfo] or [dynamicRenderingInfo] must be set");
+
+            bool usesRenderPasses = createInfo.renderPassInfo.has_value();
 
             if (!usesRenderPasses)
             {
                 // Check if depth attachment is set
-                for (const auto attachment : createInfo.attachments)
+                for (const auto attachment : createInfo.dynamicRenderingInfo.value().attachments)
                 {
                     if (IS_FLAG_PRESENT(attachment.image->GetUsage(), ImageUsage::DEPTH_STENCIL_ATTACHMENT))
                     {
@@ -614,7 +711,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
 
             // Calculate final color attachment count
-            uint colorAttachmentCount = usesRenderPasses ? createInfo.colorAttachmentCount : (createInfo.attachments.size() - (uint) hasDepthAttachment);
+            uint colorAttachmentCount = usesRenderPasses ? createInfo.renderPassInfo.value().colorAttachmentCount : (createInfo.dynamicRenderingInfo.value().attachments.size() - (uint) hasDepthAttachment);
             std::vector<VkPipelineColorBlendAttachmentState> colorAttachmentStates;
             if (!usesRenderPasses)
             {
@@ -622,7 +719,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
             else
             {
-                colorAttachmentStates = std::vector<VkPipelineColorBlendAttachmentState>(createInfo.colorAttachmentCount, blendingAttachmentState);
+                colorAttachmentStates = std::vector<VkPipelineColorBlendAttachmentState>(createInfo.renderPassInfo.value().colorAttachmentCount, blendingAttachmentState);
             }
 
             // Set up bindings
@@ -649,7 +746,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             graphicsPipelineCreateInfoKHR.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
             graphicsPipelineCreateInfoKHR.colorAttachmentCount = colorAttachmentCount;
 
-            VkFormat* colorAttachmentFormats = nullptr;
+            VkFormat* colorAttachmentFormats;
             if (!usesRenderPasses)
             {
                 // Set up attachments
@@ -657,7 +754,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 colorAttachmentFormats = new VkFormat[colorAttachmentCount];
 
                 uint i = 0;
-                for (const auto &attachment: createInfo.attachments)
+                for (const auto &attachment: createInfo.dynamicRenderingInfo.value().attachments)
                 {
                     // Check wether attachment is color
                     if (!IS_FLAG_PRESENT(attachment.image->GetUsage(), ImageUsage::DEPTH_STENCIL_ATTACHMENT))
@@ -688,7 +785,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             graphicsPipelineCreateInfo.pMultisampleState = &multisampleStateCreateInfo;
             graphicsPipelineCreateInfo.pColorBlendState = &blendingStateCreateInfo;
             graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
-            graphicsPipelineCreateInfo.layout = vkPipelineLayout;
+            graphicsPipelineCreateInfo.layout = this->vkPipelineLayout;
             graphicsPipelineCreateInfo.subpass = 0;
             graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
             graphicsPipelineCreateInfo.basePipelineIndex = -1;
@@ -700,7 +797,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
             else
             {
-                graphicsPipelineCreateInfo.renderPass = createInfo.renderPass->get()->GetVulkanRenderPass();
+                graphicsPipelineCreateInfo.renderPass = createInfo.renderPassInfo.value().renderPass->get()->GetVulkanRenderPass();
             }
 
             VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{};
@@ -718,9 +815,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 graphicsPipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
             }
 
-            if (pipelineCache == VK_NULL_HANDLE)
+            if (this->pipelineCache == VK_NULL_HANDLE)
             {
-                uSize cacheHash = GetCacheHash();
+                uSize cacheHash = this->GetCacheHash();
                 String cachePath = File::INTERNAL_TEMP_FOLDER_PATH + "PipelineCache/PipelineCache_" + std::to_string(cacheHash);
 
                 if (File::FileExists(cachePath))
@@ -732,78 +829,49 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                     cacheCreateInfo.initialDataSize = cacheData.size();
                     cacheCreateInfo.pInitialData = cacheData.data();
 
-                    VK_ASSERT(vkCreatePipelineCache(VK::GetLogicalDevice(), &cacheCreateInfo, nullptr, &pipelineCache), "Could not create cache for pipeline");
+                    VK_ASSERT(vkCreatePipelineCache(VK::GetLogicalDevice(), &cacheCreateInfo, nullptr, &this->pipelineCache), "Could not create cache for pipeline");
                 }
             }
 
             // Create the graphics pipeline
             VK_ASSERT(
-                vkCreateGraphicsPipelines(VK::GetLogicalDevice(), pipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &vkPipeline),
+                vkCreateGraphicsPipelines(VK::GetLogicalDevice(), this->pipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &this->vkPipeline),
                 "Failed to create graphics pipeline"
             );
 
-            alreadyCreated = true;
+            this->alreadyCreated = true;
 
             delete[] shaderStages;
             if (!usesRenderPasses) delete[] colorAttachmentFormats;
         };
-
     };
 
     // ==================== COMPUTE PIPELINE ==================== \\
 
+    struct ComputePipelineShaderData
+    {
+        UniquePtr<DescriptorSetLayout> *descriptorSetLayout;
+    };
+
     struct ComputePipelineCreateInfo
     {
         SharedPtr<Shader> shader;
-        SharedPtr<DescriptorSetLayout> descriptorSetLayout = nullptr;
+        Optional<ComputePipelineShaderData> shaderData;
     };
 
     template<typename PC = NullType, typename UB = NullType, typename SB = NullType>
-    class ComputePipeline {
+    class ComputePipeline : public Pipeline<PC, UB, SB> {
     public:
         /* --- CONSTRUCTORS --- */
+        ComputePipeline() = default;
+
         inline ComputePipeline(const ComputePipelineCreateInfo &givenCreateInfo)
-                : createInfo(std::move(givenCreateInfo))
+            : createInfo(std::move(givenCreateInfo))
         {
-            CreatePipelineLayout();
-            CreatePipeline();
-        }
-        inline ComputePipeline(const ComputePipelineCreateInfo &givenCreateInfo, PC *externalPushConstantData, UB *externalUniformData, UniquePtr<Buffer>* externalUniformBuffer, SB *externalStorageData, UniquePtr<Buffer>* externalStorageBuffer)
-                : createInfo(std::move(givenCreateInfo))
-        {
-            if constexpr(!std::is_same<PC, NullType>::value)
-            {
-                if (externalPushConstantData != nullptr)
-                {
-                    usesExternalPushConstants = true;
-                    pushConstantData = externalPushConstantData;
-                }
-            }
-
-            if constexpr(!std::is_same<UB, NullType>::value)
-            {
-                if (externalUniformBuffer != nullptr)
-                {
-                    usesExternalUniformBuffers = true;
-                    uniformBufferData = externalUniformData;
-
-                    uniformBuffer = externalUniformBuffer;
-                }
-            }
-
-            if constexpr(!std::is_same<SB, NullType>::value)
-            {
-                if (externalStorageBuffer != nullptr)
-                {
-                    usesExternalStorageBuffers = true;
-                    storageBufferData = externalStorageData;
-
-                    storageBuffer = externalStorageBuffer;
-                }
-            }
-
-            CreatePipelineLayout();
-            CreatePipeline();
+            this->SaveUniversalInfo();
+            this->CreateDescriptors(createInfo.shaderData.has_value() ? createInfo.shaderData.value().descriptorSetLayout : nullptr);
+            this->CreatePipelineLayout();
+            this->CreatePipeline();
         }
 
         inline static UniquePtr<ComputePipeline> Create(ComputePipelineCreateInfo createInfo)
@@ -812,375 +880,89 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         };
 
         template<typename OtherPC, typename OtherUB, typename OtherSB>
-        inline static UniquePtr<ComputePipeline> CreateFromAnotherPipeline(ComputePipelineCreateInfo createInfo, const UniquePtr<GraphicsPipeline<OtherPC, OtherUB, OtherSB>> &otherPipeline, const PipelineCopyOp copyOperations)
+        inline static UniquePtr<ComputePipeline> CreateFromAnotherPipeline(ComputePipelineCreateInfo createInfo, const UniquePtr<GraphicsPipeline<OtherPC, OtherUB, OtherSB>> &copyFrom, const PipelineCopyOp copyOp)
         {
-            PC* newPushConstantData = nullptr;
-            if constexpr (std::is_same<PC, OtherPC>::value)
-            {
-                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::PUSH_CONSTANTS))
-                {
-                    newPushConstantData = &otherPipeline->GetPushConstantData();
-                }
-            }
+            UniquePtr<ComputePipeline<PC, UB, SB>> pipeline = std::make_unique<ComputePipeline<PC, UB, SB>>();
 
-            UB *newUniformData = nullptr;
-            UniquePtr<Buffer> *newUniformBuffer = nullptr;
-            if constexpr(std::is_same<UB, OtherUB>::value)
-            {
-                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::UNIFORM_BUFFER))
-                {
-                    newUniformData = &otherPipeline->GetUniformBufferData();
-                    newUniformBuffer = &otherPipeline->GetUniformBuffer(0);
-                }
-            }
+            pipeline->createInfo = std::move(createInfo);
+            pipeline->SaveUniversalInfo();
 
-            SB *newStorageData = nullptr;
-            UniquePtr<Buffer> *newStorageBuffer = nullptr;
-            if constexpr(std::is_same<SB, OtherSB>::value)
-            {
-                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::STORAGE_BUFFER))
-                {
-                    newStorageData = &otherPipeline->GetStorageBufferData();
-                    newStorageBuffer = &otherPipeline->GetStorageBuffer(0);
-                }
-            }
+            pipeline->CopyDataInPipelines(copyFrom.get(), copyOp);
 
-            return std::make_unique<ComputePipeline>(createInfo, newPushConstantData, newUniformData, newUniformBuffer, newStorageData, newStorageBuffer);
+            pipeline->CreateDescriptors(createInfo.shaderData.has_value() ? createInfo.shaderData.value().descriptorSetLayout : nullptr);
+            pipeline->CreatePipelineLayout();
+            pipeline->CreatePipeline();
+
+            return pipeline;
         };
 
         template<typename OtherPC, typename OtherUB, typename OtherSB>
-        inline static UniquePtr<ComputePipeline> CreateFromAnotherPipeline(ComputePipelineCreateInfo createInfo, const UniquePtr<ComputePipeline<OtherPC, OtherUB, OtherSB>> &otherPipeline, const PipelineCopyOp copyOperations)
+        inline static UniquePtr<ComputePipeline> CreateFromAnotherPipeline(ComputePipelineCreateInfo createInfo, const UniquePtr<ComputePipeline<OtherPC, OtherUB, OtherSB>> &copyFrom, const PipelineCopyOp copyOp)
         {
-            PC* newPushConstantData = nullptr;
-            if constexpr (std::is_same<PC, OtherPC>::value)
-            {
-                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::PUSH_CONSTANTS))
-                {
-                    newPushConstantData = &otherPipeline->GetPushConstantData();
-                }
-            }
+            UniquePtr<ComputePipeline<PC, UB, SB>> pipeline = std::make_unique<ComputePipeline<PC, UB, SB>>();
 
-            UB *newUniformData = nullptr;
-            UniquePtr<Buffer> *newUniformBuffer = nullptr;
-            if constexpr(std::is_same<UB, OtherUB>::value)
-            {
-                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::UNIFORM_BUFFER))
-                {
-                    newUniformData = &otherPipeline->GetUniformBufferData();
-                    newUniformBuffer = &otherPipeline->GetUniformBuffer(0);
-                }
-            }
+            pipeline->createInfo = std::move(createInfo);
+            pipeline->SaveUniversalInfo();
 
-            SB *newStorageData = nullptr;
-            UniquePtr<Buffer> *newStorageBuffer = nullptr;
-            if constexpr(std::is_same<SB, OtherSB>::value)
-            {
-                if (IS_FLAG_PRESENT(copyOperations, PipelineCopyOp::STORAGE_BUFFER))
-                {
-                    newStorageData = &otherPipeline->GetStorageBufferData();
-                    newStorageBuffer = &otherPipeline->GetStorageBuffer(0);
-                }
-            }
+            pipeline->CopyDataInPipelines(copyFrom.get(), copyOp);
 
-            return std::make_unique<ComputePipeline>(createInfo, newPushConstantData, newUniformData, newUniformBuffer, newStorageData, newStorageBuffer);
-        }
+            pipeline->CreateDescriptors(createInfo.shaderData.has_value() ? createInfo.shaderData.value().descriptorSetLayout : nullptr);
+            pipeline->CreatePipelineLayout();
+            pipeline->CreatePipeline();
 
-        /* --- GETTER METHODS --- */
-        [[nodiscard]] inline PC& GetPushConstantData()
-        {
-            ASSERT_WARNING_IF(!HasPushConstants(), "Push constants have not been created for this compute pipeline");
-            return *pushConstantData;
-        }
-        [[nodiscard]] inline UB& GetUniformBufferData()
-        {
-            ASSERT_WARNING_IF(!HasUniformBuffer(), "Uniform buffers have not been created for this compute pipeline");
-            return *uniformBufferData;
-        }
-        [[nodiscard]] inline SB& GetStorageBufferData()
-        {
-            ASSERT_WARNING_IF(!HasStorageBuffer(), "Storage buffers have not been created for this compute pipeline");
-            return *storageBufferData;
-        }
-        [[nodiscard]] inline UniquePtr<Buffer>& GetUniformBuffer()
-        {
-            return *uniformBuffer;
-        }
-        [[nodiscard]] inline UniquePtr<Buffer>& GetStorageBuffer()
-        {
-            return *storageBuffer;
-        }
-        [[nodiscard]] inline UniquePtr<DescriptorSet>& GetDescriptorSet()
-        {
-            return descriptorSet;
-        }
-
-        [[nodiscard]] inline ComputePipelineCreateInfo& GetCreateInfo() { return createInfo; }
-        [[nodiscard]] inline VkPipeline GetVulkanPipeline() const { return vkPipeline; }
-        [[nodiscard]] inline VkPipelineLayout GetVulkanPipelineLayout() const { return vkPipelineLayout; }
+            return pipeline;
+        };
 
         /* --- SETTER METHODS --- */
-        inline void Recreate()
-        {
-            CreatePipeline();
-        }
-        inline void Bind(const UniquePtr<CommandBuffer> &givenCommandBuffer)
-        {
-            localDescriptorsHaveBeenBoundForFrame = false;
-            vkCmdBindPipeline(givenCommandBuffer->GetVulkanCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, this->vkPipeline);
-        };
-        inline void BindDescriptorSets(const UniquePtr<CommandBuffer> &givenCommandBuffer, UniquePtr<DescriptorSet> &externalDescriptorSet)
-        {
-            if (!localDescriptorsHaveBeenBoundForFrame)
-            {
-                if (HasUniformBuffer()) uniformBuffer->get()->CopyFromPointer(uniformBufferData);
-                if (HasStorageBuffer()) storageBuffer->get()->CopyFromPointer(storageBufferData);
 
-                localDescriptorsHaveBeenBoundForFrame = true;
-            }
-
-            std::vector<VkDescriptorSet> finalDescriptorSetGroup {externalDescriptorSet->GetVulkanDescriptorSet() };
-
-            if (descriptorSet != nullptr) finalDescriptorSetGroup.insert(finalDescriptorSetGroup.begin(), descriptorSet->GetVulkanDescriptorSet());
-            vkCmdBindDescriptorSets(givenCommandBuffer->GetVulkanCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, vkPipelineLayout, 0, finalDescriptorSetGroup.size(), finalDescriptorSetGroup.data(), 0, nullptr);
-        };
-        inline void BindDescriptorSets(const UniquePtr<CommandBuffer> &givenCommandBuffer)
-        {
-            if (localDescriptorsHaveBeenBoundForFrame) return;
-
-            bool hasDescriptorSet = (uint) HasUniformBuffer() || HasStorageBuffer();
-
-            VkDescriptorSet* localDescriptorSets = new VkDescriptorSet[hasDescriptorSet];
-            if (hasDescriptorSet)
-            {
-                uniformBuffer->get()->CopyFromPointer(uniformBufferData);
-                localDescriptorSets[0] = descriptorSet->GetVulkanDescriptorSet();
-            }
-
-            localDescriptorsHaveBeenBoundForFrame = true;
-            vkCmdBindDescriptorSets(givenCommandBuffer->GetVulkanCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, vkPipelineLayout, 0, hasDescriptorSet, localDescriptorSets, 0, nullptr);
-
-            delete[] localDescriptorSets;
-        };
-        inline void PushConstants(const UniquePtr<CommandBuffer> &givenCommandBuffer)
-        {
-            ASSERT_ERROR_IF(pushConstantRange == nullptr, "Trying to push constants in pipeline that was created without support for them in mind");
-
-            vkCmdPushConstants(
-                givenCommandBuffer->GetVulkanCommandBuffer(), vkPipelineLayout,
-                pushConstantRange->stageFlags, pushConstantRange->offset,
-                pushConstantRange->size, pushConstantData
-            );
-        };
-        inline void OverloadShader(SharedPtr<Shader> newShader)
+        inline void SetShaderDefinition(const ShaderDefinition definition)
         {
             VK::GetDevice()->WaitUntilIdle();
 
-            if (createInfo.shader->GetShaderType() == newShader->GetShaderType())
+            if (createInfo.shader->SetDefinition(definition))
             {
-                createInfo.shader = newShader;
                 CreatePipeline();
-
-                return;
             }
-
-            ASSERT_ERROR_FORMATTED("Shader of type [{0}] could not be overloaded because it is not present in the pipeline", static_cast<uint>(newShader->GetShaderType()));
-        };
+        }
 
         /* --- DESTRUCTOR --- */
-        inline void Destroy()
+        inline void Destroy() override
         {
-            // If no cache was read create new one and store it
-
-            if (pipelineCache == VK_NULL_HANDLE)
-            {
-                VkPipelineCacheCreateInfo pipelineCacheCreateInfo{};
-                pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-
-                vkCreatePipelineCache(VK::GetLogicalDevice(), &pipelineCacheCreateInfo, nullptr, &pipelineCache);
-
-                uSize cacheSize;
-                vkGetPipelineCacheData(VK::GetLogicalDevice(), pipelineCache, &cacheSize, nullptr);
-
-                std::vector<uint8> cacheData(cacheSize);
-                vkGetPipelineCacheData(VK::GetLogicalDevice(), pipelineCache, &cacheSize, cacheData.data());
-
-                File::WriteBinaryDataToFile(File::INTERNAL_TEMP_FOLDER_PATH + "PipelineCache/PipelineCache_" + std::to_string(GetCacheHash()), cacheData, true);
-            }
-
-            if (pushConstantRange != nullptr)
-            {
-                delete pushConstantRange;
-                if (!usesExternalPushConstants)
-                {
-                    delete pushConstantData;
-                }
-            }
-
-            if (uniformBufferData != nullptr)
-            {
-                if (!usesExternalUniformBuffers)
-                {
-                    delete uniformBufferData;
-
-                    uniformBuffer->get()->Destroy();
-                    delete uniformBuffer;
-                }
-            }
-
-            if (storageBufferData != nullptr)
-            {
-                if (!usesExternalStorageBuffers)
-                {
-                    delete storageBufferData;
-
-                    storageBuffer->get()->Destroy();
-                    delete storageBuffer;
-                }
-            }
-
-            vkDestroyPipelineCache(VK::GetLogicalDevice(), pipelineCache, nullptr);
-            vkDestroyPipeline(VK::GetLogicalDevice(), vkPipeline, nullptr);
-            vkDestroyPipelineLayout(VK::GetLogicalDevice(), vkPipelineLayout, nullptr);
+            Pipeline<PC, UB, SB>::Destroy();
+            delete this->shaders;
         };
         DELETE_COPY(ComputePipeline);
 
     private:
-        VkPipeline vkPipeline;
-        VkPipelineLayout vkPipelineLayout;
-
-        PC* pushConstantData = nullptr;
-        VkPushConstantRange* pushConstantRange = nullptr;
-
-        UB* uniformBufferData = nullptr;
-        UniquePtr<Buffer>* uniformBuffer = nullptr;
-
-        SB* storageBufferData = nullptr;
-        UniquePtr<Buffer>* storageBuffer = nullptr;
-
-        UniquePtr<DescriptorSet> descriptorSet = nullptr;
-
-        VkPipelineCache pipelineCache = VK_NULL_HANDLE;
-
-        bool alreadyCreated = false;
-        bool usesExternalPushConstants = false;
-        bool usesExternalUniformBuffers = false;
-        bool usesExternalStorageBuffers = false;
-
         ComputePipelineCreateInfo createInfo;
-
-        bool localDescriptorsHaveBeenBoundForFrame = false;
-
-        inline bool HasPushConstants() const { return pushConstantRange != nullptr; }
-        inline bool HasUniformBuffer() const { return uniformBuffer != nullptr; }
-        inline bool HasStorageBuffer() const { return storageBuffer != nullptr; }
-
-        inline uSize GetCacheHash()
+        void SaveUniversalInfo() override
         {
-            return std::hash<String>{}(createInfo.shader->GetFilePath());
+            this->shaders = new std::vector<SharedPtr<Shader>> { createInfo.shader };
+            this->bindPoint = VK_PIPELINE_BIND_POINT_COMPUTE;
+            this->maxConcurrentFrames = 1;
+            this->pushConstantShaderStages = ShaderType::COMPUTE;
         }
-
-        inline void CreatePipelineLayout()
+        void CreatePipeline() override
         {
-            // Set pipeline layout creation info
-            VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
-            pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-
-            // Create push constant
-            if constexpr (!std::is_same<PC, NullType>::value)
+            if (this->alreadyCreated)
             {
-                if (pushConstantData == nullptr)
-                {
-                    pushConstantData = new PC();
-                }
-                if (pushConstantRange == nullptr)
-                {
-                    pushConstantRange = new VkPushConstantRange();
-                    pushConstantRange->size = sizeof(PC);
-                    pushConstantRange->offset = 0;
-                    pushConstantRange->stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-
-                    pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-                    pipelineLayoutCreateInfo.pPushConstantRanges = pushConstantRange;
-                }
+                vkDestroyPipeline(VK::GetLogicalDevice(), this->vkPipeline, nullptr);
             }
 
-            // Create uniform buffer
-            if constexpr (!std::is_same<UB, NullType>::value)
-            {
-                // Check if user has provided external storage buffers
-                if (!HasUniformBuffer())
-                {
-                    uniformBufferData = new UB();
-
-                    uniformBuffer = new UniquePtr<Buffer>(new Buffer({
-                        .memorySize = sizeof(UB),
-                        .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
-                        .bufferUsage = BufferUsage::UNIFORM
-                    }));
-                }
-            }
-
-            // Create storage buffer
-            if constexpr (!std::is_same<SB, NullType>::value)
-            {
-                // Check if user has provided external storage buffers
-                if (!HasStorageBuffer())
-                {
-                    storageBufferData = new SB();
-
-                    storageBuffer = new UniquePtr<Buffer>(new Buffer({
-                        .memorySize = sizeof(SB),
-                        .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
-                        .bufferUsage = BufferUsage::STORAGE
-                    }));
-                }
-            }
-
-            if (HasUniformBuffer() || HasStorageBuffer())
-            {
-                descriptorSet = DescriptorSet::Build(createInfo.descriptorSetLayout);
-                if (HasUniformBuffer()) descriptorSet->WriteBuffer(UNIFORM_BUFFER_BINDING, *uniformBuffer);
-                if (HasStorageBuffer()) descriptorSet->WriteBuffer(STORAGE_BUFFER_BINDING, *storageBuffer);
-                descriptorSet->Allocate();
-            }
-
-            // Add descriptor layout
-            VkDescriptorSetLayout* descriptorSetLayoutsPtr = new VkDescriptorSetLayout[2];
-            descriptorSetLayoutsPtr[0] = createInfo.descriptorSetLayout->GetVulkanDescriptorSetLayout();
-            descriptorSetLayoutsPtr[1] = createInfo.descriptorSetLayout->GetVulkanDescriptorSetLayout();
-
-            pipelineLayoutCreateInfo.setLayoutCount = 2;
-            pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayoutsPtr;
-
-            // Create the pipeline layout
-            VK_ASSERT(
-                vkCreatePipelineLayout(VK::GetLogicalDevice(), &pipelineLayoutCreateInfo, nullptr, &vkPipelineLayout),
-                "Failed to create compute pipeline layout"
-            );
-
-            delete[] descriptorSetLayoutsPtr;
-        };
-        void CreatePipeline()
-        {
-            if (alreadyCreated)
-            {
-                vkDestroyPipeline(VK::GetLogicalDevice(), vkPipeline, nullptr);
-            }
-
-            ASSERT_ERROR_FORMATTED_IF(createInfo.shader->GetShaderType() != ShaderType::COMPUTE, "Cannot bind a shader of type [{0}] to a compute pipeline! It must be of type [ShaderType::COMPUTE]", static_cast<uint>(createInfo.shader->GetShaderType()));
+            ASSERT_ERROR_FORMATTED_IF(createInfo.shader->GetShaderType() != ShaderType::COMPUTE, "Cannot bind a shader of type [{0}] to a compute pipeline! It must be of type [ShaderType::COMPUTE]", VK_TO_STRING(createInfo.shader->GetShaderType(), ShaderStageFlagBits));
 
             VkComputePipelineCreateInfo pipelineCreateInfo{};
             pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
             pipelineCreateInfo.stage = createInfo.shader->GetVkShaderStageInfo();
-            pipelineCreateInfo.layout = vkPipelineLayout;
+            pipelineCreateInfo.layout = this->vkPipelineLayout;
 
             // Create the compute pipeline
             VK_ASSERT(
-                vkCreateComputePipelines(VK::GetLogicalDevice(), pipelineCache, 1, &pipelineCreateInfo, nullptr, &vkPipeline),
+                vkCreateComputePipelines(VK::GetLogicalDevice(), this->pipelineCache, 1, &pipelineCreateInfo, nullptr, &this->vkPipeline),
                 "Failed to create compute pipeline"
             );
 
-            alreadyCreated = true;
+            this->alreadyCreated = true;
         };
     };
 

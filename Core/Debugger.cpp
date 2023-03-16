@@ -22,7 +22,8 @@
     #define RED() (printf("\e[0;31m"))
 #endif
 
-namespace Sierra::Core {
+namespace Sierra::Core
+{
 
 #if DEBUG
     static const bool DEBUG_MODE = true;
@@ -34,35 +35,39 @@ namespace Sierra::Core {
     HANDLE Debugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif
 
-    void Debugger::DisplayInfo(const String &message) {
+    void Debugger::DisplayInfo(const String &message)
+    {
         BLUE();
         std::cout << "[i] " << message << ".\n";
         DEFAULT();
     }
 
-    void Debugger::DisplaySuccess(const String &message) {
+    void Debugger::DisplaySuccess(const String &message)
+    {
         GREEN();
         std::cout << "[+] " << message << ".\n";
         DEFAULT();
     }
 
-    void Debugger::ThrowWarning(const String &message) {
+    void Debugger::ThrowWarning(const String &message)
+    {
         YELLOW();
         std::cout << "[!] " << message << "!\n";
         DEFAULT();
     }
 
-    void Debugger::ThrowError(const String &message) {
+    void Debugger::ThrowError(const String &message)
+    {
         RED();
         std::cout << "[-] " << message << "!\n";
         if (DEBUG_MODE) throw std::runtime_error("Program execution failed miserably!");
         DEFAULT();
     }
 
-    VkBool32 Debugger::ValidationCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                                          VkDebugUtilsMessageTypeFlagsEXT messageType,
-                                          const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData) {
-        switch (messageSeverity) {
+    VkBool32 Debugger::ValidationCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
+    {
+        switch (messageSeverity)
+        {
             case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
                 ThrowWarning(String(pCallbackData->pMessage).substr(0, strlen(pCallbackData->pMessage) - 1));
                 break;
@@ -78,7 +83,8 @@ namespace Sierra::Core {
 
 #ifdef __GNUG__
 
-    String Debugger::Demangle(const char *name) {
+    String Debugger::Demangle(const char *name)
+    {
         int status = -4; // Some arbitrary value to eliminate the compiler warning
 
         std::unique_ptr<char, void (*)(void *)> res
@@ -130,7 +136,7 @@ namespace Sierra::Core {
 
         if (!templateData.empty())
         {
-            uint leftIndex = 0;
+            uint leftIndex;
             uint rightIndex = 0;
 
             String formattedTemplateData = "";

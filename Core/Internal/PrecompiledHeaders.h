@@ -4,8 +4,8 @@
 
 #pragma once
 
-// === Standard Library == //
 #ifdef __cplusplus
+    // === Standard Library == //
     #include <iostream>
     #include <algorithm>
     #include <functional>
@@ -61,11 +61,18 @@
     // === External Libraries == //
 
     // '-- Vulkan
-    #include <vulkan/vulkan.h>
-    #include <vulkan/vk_enum_string_helper.h>
+    #define VK_ENABLE_BETA_EXTENSIONS
+    #include <volk.h>
+    #if DEBUG
+        #include <vulkan/vulkan.hpp>
+        #include <vulkan/vulkan_to_string.hpp>
+    #endif
 
     // '-- Shaderc
     #include <shaderc/shaderc.hpp>
+
+    // '- SPIRV Utilities
+    #include <spirv_reflect.h>
 
     // '-- GLFW
     #include <GLFW/glfw3.h>
@@ -80,10 +87,11 @@
     #include <glm/gtx/matrix_decompose.hpp>
 
     // '-- ImGui
-
     #define IMGUI_DEFINE_MATH_OPERATORS
     #include <imgui.h>
     #include <imgui_internal.h>
+    #define VK_NO_PROTOTYPES
+    #define IMGUI_IMPL_VULKAN_NO_PROTOTYPES
     #include <imgui_impl_glfw.h>
     #include <imgui_impl_vulkan.h>
 

@@ -21,7 +21,7 @@ namespace Sierra::Core::Rendering
         /// @param isFocusRequired Whether the window requires to be focused in order to draw and handle events.
         struct WindowCreateInfo
         {
-            String givenTitle = fmt::format("v{0}.{1}.{2} {3}", Version::MAJOR, Version::MINOR, Version::PATCH, Version::RELEASE_TYPE);
+            String givenTitle = FORMAT_STRING("v{0}.{1}.{2} {3}", Version::MAJOR, Version::MINOR, Version::PATCH, Version::RELEASE_TYPE);
             bool startMaximized = true;
             bool isResizable = true;
             bool isFocusRequired = true;

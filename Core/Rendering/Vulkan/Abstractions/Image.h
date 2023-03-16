@@ -28,8 +28,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Sampling sampling = Sampling::MSAAx1;
 
         ImageUsage usage = ImageUsage::UNDEFINED;
-        ImageCreateFlags createFlags = ImageCreateFlags::NONE;
-        MemoryFlags memoryFlags = MemoryFlags::NONE;
+        ImageCreateFlags createFlags = ImageCreateFlags::UNDEFINED;
+        MemoryFlags memoryFlags = MemoryFlags::UNDEFINED;
     };
 
     struct SwapchainImageCreateInfo
@@ -118,7 +118,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ImageFormat format;
         Sampling sampling;
         ImageLayout layout = ImageLayout::UNDEFINED;
-        ImageAspectFlags aspectFlags = ImageAspectFlags::NONE;
+        ImageAspectFlags aspectFlags = ImageAspectFlags::COLOR;
 
         VkImage vkImage = VK_NULL_HANDLE;
         VkImageView vkImageView = VK_NULL_HANDLE;

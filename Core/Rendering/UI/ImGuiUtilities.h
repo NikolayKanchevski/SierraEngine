@@ -11,12 +11,6 @@ using Sierra::Core::Rendering::Vulkan::Abstractions::Texture;
 
 namespace GUI
 {
-    inline const uint boldFontIndex = 1;
-    inline static int s_UIContextID = 0;
-    inline static int s_Counter = 0;
-    inline char IDBuffer[16];
-    inline static bool setNextItemDisabled = false;
-
     void GenerateID();
 
     void ExternalPushID();
@@ -70,15 +64,15 @@ namespace GUI
     template<typename T>
     inline bool AnyInput(const char* labelID, T &value)
     {
-        if constexpr(std::is_same<T, String>::value) { return StringInput(labelID, value); }
-        else if constexpr(std::is_same<T, int>::value) { return IntInput(labelID, value); }
-        else if constexpr(std::is_same<T, int64>::value) { return Int64Input(labelID, value); }
-        else if constexpr(std::is_same<T, uint>::value) { return UIntInput(labelID, value); }
-        else if constexpr(std::is_same<T, uint64>::value) { return UInt64Input(labelID, value); }
-        else if constexpr(std::is_same<T, float>::value) { return FloatInput(labelID, value); }
-        else if constexpr(std::is_same<T, double>::value) { return DoubleInput(labelID, value); }
-        else if constexpr(std::is_same<T, bool>::value) { return Checkbox(labelID, value); }
-        else if constexpr(std::is_same<T, Vector3>::value) { const float resetValues[3] = { 0.0f, 0.0f, 0.0f }; return Vector3Input(value, resetValues); }
+        if constexpr(std::is_same_v<T, String>) { return StringInput(labelID, value); }
+        else if constexpr(std::is_same_v<T, int>) { return IntInput(labelID, value); }
+        else if constexpr(std::is_same_v<T, int64>) { return Int64Input(labelID, value); }
+        else if constexpr(std::is_same_v<T, uint>) { return UIntInput(labelID, value); }
+        else if constexpr(std::is_same_v<T, uint64>) { return UInt64Input(labelID, value); }
+        else if constexpr(std::is_same_v<T, float>) { return FloatInput(labelID, value); }
+        else if constexpr(std::is_same_v<T, double>) { return DoubleInput(labelID, value); }
+        else if constexpr(std::is_same_v<T, bool>) { return Checkbox(labelID, value); }
+        else if constexpr(std::is_same_v<T, Vector3>) { const float resetValues[3] = { 0.0f, 0.0f, 0.0f }; return Vector3Input(value, resetValues); }
         else return false;
     }
 
@@ -98,15 +92,15 @@ namespace GUI
     template<typename T>
     inline bool AnyPropertyInput(const char* labelID, T &value)
     {
-        if constexpr(std::is_same<T, String>::value) { return StringProperty(labelID, value); }
-        else if constexpr(std::is_same<T, int>::value) { return IntProperty(labelID, value); }
-        else if constexpr(std::is_same<T, int64>::value) { return Int64Property(labelID, value); }
-        else if constexpr(std::is_same<T, uint>::value) { return UIntProperty(labelID, value); }
-        else if constexpr(std::is_same<T, uint64>::value) { return UInt64Property(labelID, value); }
-        else if constexpr(std::is_same<T, float>::value) { return FloatProperty(labelID, value); }
-        else if constexpr(std::is_same<T, double>::value) { return DoubleProperty(labelID, value); }
-        else if constexpr(std::is_same<T, bool>::value) { return CheckboxProperty(labelID, value); }
-        else if constexpr(std::is_same<T, Vector3>::value) { const float resetValues[3] = { 0.0f, 0.0f, 0.0f }; return PropertyVector3(labelID, value, resetValues); }
+        if constexpr(std::is_same_v<T, String>) { return StringProperty(labelID, value); }
+        else if constexpr(std::is_same_v<T, int>) { return IntProperty(labelID, value); }
+        else if constexpr(std::is_same_v<T, int64>) { return Int64Property(labelID, value); }
+        else if constexpr(std::is_same_v<T, uint>) { return UIntProperty(labelID, value); }
+        else if constexpr(std::is_same_v<T, uint64>) { return UInt64Property(labelID, value); }
+        else if constexpr(std::is_same_v<T, float>) { return FloatProperty(labelID, value); }
+        else if constexpr(std::is_same_v<T, double>) { return DoubleProperty(labelID, value); }
+        else if constexpr(std::is_same_v<T, bool>) { return CheckboxProperty(labelID, value); }
+        else if constexpr(std::is_same_v<T, Vector3>) { const float resetValues[3] = { 0.0f, 0.0f, 0.0f }; return PropertyVector3(labelID, value, resetValues); }
         else return false;
     }
 

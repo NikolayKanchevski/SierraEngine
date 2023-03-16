@@ -54,8 +54,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkEndCommandBuffer(vkCommandBuffer);
 
         // Revert all images' initial layouts, as the updated ones are discarded after drawing
-        for (const auto pair : initialImageLayouts)
+        for (auto pair : initialImageLayouts)
         {
+            pair.second.firstTime = true;
             pair.first->layout = pair.second.initialLayout;
         }
     }
@@ -65,15 +66,17 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkResetCommandBuffer(vkCommandBuffer, 0);
     }
 
-    // TODO: TRY AND AUTO PICK STAGE FLAGS
+    void CommandBuffer::Free() const
+    {
+        vkFreeCommandBuffers(VK::GetLogicalDevice(), VK::GetCommandPool(), 1, &vkCommandBuffer);
+    }
 
-    void CommandBuffer::TransitionImageLayout(const UniquePtr<Image> &image, const ImageLayout newLayout, const VkPipelineStageFlags lastUsageStage, const VkPipelineStageFlags expectedUsageStage)
+    void CommandBuffer::TransitionImageLayout(Image *image, const ImageLayout newLayout, const VkPipelineStageFlags srcStage, const VkPipelineStageFlags dstStage)
     {
         // Initialize barrier info
         VkImageMemoryBarrier imageBarrier{};
         imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 
-        // Check if image's layout has changed during command execution
         switch (image->GetLayout())
         {
             case ImageLayout::UNDEFINED:
@@ -110,10 +113,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 imageBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
                 break;
             default:
-                ASSERT_ERROR_FORMATTED("Cannot transition image's layout from [{0}] to [{1}] on the fly", string_VkImageLayout((VkImageLayout) image->GetLayout()), string_VkImageLayout((VkImageLayout) newLayout));
+                ASSERT_ERROR_FORMATTED("Cannot transition image's layout from [{0}] to [{1}] on the fly", VK_TO_STRING(image->GetLayout(), ImageLayout), VK_TO_STRING(newLayout, ImageLayout));
                 break;
         }
 
+        bool transitioningForDepth = false;
         switch (newLayout)
         {
             case ImageLayout::COLOR_ATTACHMENT_OPTIMAL:
@@ -122,10 +126,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             case ImageLayout::DEPTH_ATTACHMENT_OPTIMAL:
             case ImageLayout::STENCIL_ATTACHMENT_OPTIMAL:
             case ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+                transitioningForDepth = true;
                 imageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
                 break;
             case ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL:
             case ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL:
+                transitioningForDepth = true;
                 imageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
                 break;
             case ImageLayout::TRANSFER_SRC_OPTIMAL:
@@ -142,8 +148,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 imageBarrier.dstAccessMask = 0;
                 break;
             default:
-                ASSERT_ERROR_FORMATTED("Cannot transition image's layout from [{0}] to [{1}] on the fly", string_VkImageLayout((VkImageLayout) image->GetLayout()), string_VkImageLayout((VkImageLayout) newLayout));
+                ASSERT_ERROR_FORMATTED("Cannot transition image's layout from [{0}] to [{1}] on the fly", VK_TO_STRING(image->GetLayout(), ImageLayout), VK_TO_STRING(newLayout, ImageLayout));
                 break;
+        }
+
+        // Suit special Vulkan requirements for depth transitions
+        if (transitioningForDepth)
+        {
+            if (image->GetFormat() == ImageFormat::D32_SFLOAT_S8_UINT || image->GetFormat() == ImageFormat::D24_UNORM_S8_UINT)
+                imageBarrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
         }
 
         // Populate rest of barrier info
@@ -156,6 +169,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         imageBarrier.subresourceRange.baseMipLevel = 0;
         imageBarrier.subresourceRange.levelCount = image->GetMipMapLevels();
 
+        // Apply new layout
+        image->layout = newLayout;
+
+        // Record barrier
+        vkCmdPipelineBarrier(
+            vkCommandBuffer, srcStage, dstStage, 0, 0,
+            nullptr, 0, nullptr, 1, &imageBarrier
+        );
+    }
+
+    void CommandBuffer::TransitionImageLayout(const UniquePtr<Image> &image, const ImageLayout newLayout, const VkPipelineStageFlags lastUsageStage, const VkPipelineStageFlags expectedUsageStage)
+    {
         // If first time transitioning the image for frame save its original layout
         auto &imageReference = initialImageLayouts[image.get()];
         if (imageReference.firstTime)
@@ -164,14 +189,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             imageReference.initialLayout = image->GetLayout();
         }
 
-        // Apply new layout
-        image->layout = newLayout;
-
-        // Record barrier
-        vkCmdPipelineBarrier(
-            vkCommandBuffer, lastUsageStage, expectedUsageStage, 0, 0,
-            nullptr, 0, nullptr, 1, &imageBarrier
-        );
+        // Transition layout
+        TransitionImageLayout(image.get(), newLayout, lastUsageStage, expectedUsageStage);
     }
 
     void CommandBuffer::TransitionImageLayouts(const std::vector<ImageReference>& images, const ImageLayout newLayout, const VkPipelineStageFlags lastUsageStage, const VkPipelineStageFlags expectedUsageStage)
@@ -184,7 +203,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void CommandBuffer::BindVertexBuffers(const std::vector<VkBuffer> &vertexBuffers) const
     {
-        VkDeviceSize offsets[] { 0 };
+        static VkDeviceSize offsets[] { 0 };
         vkCmdBindVertexBuffers(vkCommandBuffer, 0, vertexBuffers.size(), vertexBuffers.data(), offsets);
     }
 

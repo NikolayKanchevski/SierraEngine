@@ -31,12 +31,11 @@ namespace Sierra::Core::Rendering::Vulkan
         [[nodiscard]] inline static VkDevice GetLogicalDevice() { return m_Instance.device->GetLogicalDevice(); }
         [[nodiscard]] inline static UniquePtr<Device>& GetDevice() { return m_Instance.device; }
 
-        [[nodiscard]] inline static SharedPtr<DescriptorSetLayout>& GetDescriptorSetLayout() { return m_Instance.globalDescriptorSetLayout; }
-        inline static void SetGlobalDescriptorSetLayout(SharedPtr<DescriptorSetLayout>& givenDescriptorSetLayout) { m_Instance.globalDescriptorSetLayout = givenDescriptorSetLayout; }
+        [[nodiscard]] inline static UniquePtr<DescriptorSetLayout>& GetDescriptorSetLayout() { return *m_Instance.globalDescriptorSetLayout; }
+        inline static void SetGlobalDescriptorSetLayout(UniquePtr<DescriptorSetLayout>& givenDescriptorSetLayout) { m_Instance.globalDescriptorSetLayout = &givenDescriptorSetLayout; }
 
         [[nodiscard]] inline static VkCommandPool GetCommandPool() { return m_Instance.commandPool; }
         [[nodiscard]] inline static UniquePtr<QueryPool>& GetQueryPool() { return m_Instance.queryPool; }
-        [[nodiscard]] inline static UniquePtr<DescriptorPool>& GetDescriptorPool() { return m_Instance.descriptorPool; }
         [[nodiscard]] inline static VkDescriptorPool GetImGuiDescriptorPool() { return m_Instance.imGuiDescriptorPool; }
 
         /* --- DESTRUCTOR --- */
@@ -45,6 +44,9 @@ namespace Sierra::Core::Rendering::Vulkan
     private:
         VK() = default;
         static VK m_Instance;
+
+        /* --- VOLK --- */
+        void InitializeVolk();
 
         /* --- INSTANCE --- */
         VkInstance instance;
@@ -71,10 +73,6 @@ namespace Sierra::Core::Rendering::Vulkan
         UniquePtr<QueryPool> queryPool;
         void CreateQueryPool();
 
-        /* --- DESCRIPTOR POOLS --- */
-        UniquePtr<DescriptorPool> descriptorPool;
-        void CreateDescriptorPool();
-
         VkDescriptorPool imGuiDescriptorPool;
         void CreateImGuiDescriptorPool();
 
@@ -82,7 +80,7 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreateDefaultTextures();
 
         /* --- GLOABAL MESH LAYOUT --- */
-        SharedPtr<DescriptorSetLayout> globalDescriptorSetLayout;
+        UniquePtr<DescriptorSetLayout> *globalDescriptorSetLayout;
 
     private:
         const std::vector<const char*> requiredInstanceExtensions

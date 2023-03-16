@@ -1,5 +1,5 @@
-#ifndef DEPTH_UTILITIES
-#define DEPTH_UTILITIES
+#ifndef DEPTH_UTILITIES_GLSL
+#define DEPTH_UTILITIES_GLSL
 
 vec3 WorldPositionFromDepth(vec2 UV, float depth, mat4 invProjectMatrix, mat4 invViewMatrix)
 {

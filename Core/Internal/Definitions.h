@@ -153,12 +153,6 @@ struct NullType { };
 #define FLOAT_SIZE 4
 #define DOUBLE_SIZE 8
 
-#define ARRAY_SIZE(array) ((uSize)(sizeof(array) / sizeof(*(array))))
-#define MODIFY_CONST(type, name, value) \
-    type *name##Pointer;                \
-    name##Pointer = (type*)(&name);     \
-    *name##Pointer = value;
-
 #define PLATFORM_WINDOWS 0
 #define PLATFORM_LINUX 0
 #define PLATFORM_APPLE 0

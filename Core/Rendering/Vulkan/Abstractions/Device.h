@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../VulkanTypes.h"
+#include "CommandBuffer.h"
 
 #define VALIDATION_ENABLED DEBUG
 
@@ -53,9 +54,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] VkQueue GetComputeQueue() const { return graphicsAndComputeQueue; }
 
         [[nodiscard]] float GetTimestampPeriod() const { return physicalDeviceProperties.limits.timestampPeriod; }
+        [[nodiscard]] bool IsPortabilitySubsetExtensionEnabled() const
+            #if PLATFORM_APPLE
+                { return portabilitySubsetExtensionEnabled; }
+            #else
+                { return false; }
+            #endif
 
-        [[nodiscard]] VkCommandBuffer BeginSingleTimeCommands() const;
-        void EndSingleTimeCommands(VkCommandBuffer commandBuffer) const;
+        [[nodiscard]] UniquePtr<CommandBuffer> BeginSingleTimeCommands() const;
+        void EndSingleTimeCommands(UniquePtr<CommandBuffer> &commandBuffer) const;
 
         /* --- SETTER METHODS --- */
         inline void WaitUntilIdle() { vkDeviceWaitIdle(logicalDevice); };
@@ -114,6 +121,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
         };
 
+        #if PLATFORM_APPLE
+            bool portabilitySubsetExtensionEnabled = false;
+        #endif
     };
 
 }

@@ -6,6 +6,12 @@
 
     using namespace ImGui;
 
+    const uint boldFontIndex = 1;
+    static int s_UIContextID = 0;
+    static int s_Counter = 0;
+    char IDBuffer[16];
+    static bool setNextItemDisabled = false;
+
     static float dataLimitMin = 0.0f;
     static float dataLimitMax = 0.0f;
     static float dataDragSpeed = 0.1f;
@@ -22,7 +28,7 @@
         IDBuffer[1] = '#';
         memset(IDBuffer + 2, 0, 14);
         ++s_Counter;
-        String buffer = fmt::format("##{}", s_Counter);
+        String buffer = FORMAT_STRING("##{0}", s_Counter);
         std::memcpy(&IDBuffer, buffer.data(), 16);
     }
 

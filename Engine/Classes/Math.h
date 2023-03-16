@@ -13,20 +13,20 @@ namespace Sierra::Engine::Classes::Math
     /// @brief A compile-time expression, that checks whether a given type <T> is numeric (int, uint, float, etc.).
     template<typename T>
     inline constexpr bool IsTypeNumeric =
-        std::is_same<T, uint8>::value ||
-        std::is_same<T, uint16>::value ||
-        std::is_same<T, uint32>::value ||
-        std::is_same<T, uint64>::value ||
-        std::is_same<T, uSize>::value ||
-        std::is_same<T, int8>::value ||
-        std::is_same<T, int16>::value ||
-        std::is_same<T, int32>::value ||
-        std::is_same<T, int64>::value ||
-        std::is_same<T, iSize>::value ||
-        std::is_same<T, short>::value ||
-        std::is_same<T, unsigned short>::value ||
-        std::is_same<T, float>::value ||
-        std::is_same<T, double>::value
+        std::is_same_v<T, uint8> ||
+        std::is_same_v<T, uint16> ||
+        std::is_same_v<T, uint32> ||
+        std::is_same_v<T, uint64> ||
+        std::is_same_v<T, uSize> ||
+        std::is_same_v<T, int8> ||
+        std::is_same_v<T, int16> ||
+        std::is_same_v<T, int32> ||
+        std::is_same_v<T, int64> ||
+        std::is_same_v<T, iSize> ||
+        std::is_same_v<T, short> ||
+        std::is_same_v<T, unsigned short> ||
+        std::is_same_v<T, float> ||
+        std::is_same_v<T, double>
     ;
 
     /// @brief A compile-time expression, that checks whether a given type <T> supports mathematical expressions (such as +, -, *, etc.).
@@ -34,17 +34,17 @@ namespace Sierra::Engine::Classes::Math
     template<typename T>
     inline constexpr bool IsTypeMathematical =
         IsTypeNumeric<T> ||
-        std::is_same<T, Vector2>::value ||
-        std::is_same<T, Vector3>::value ||
-        std::is_same<T, Vector4>::value ||
-        std::is_same<T, Vector2Int>::value ||
-        std::is_same<T, Vector3Int>::value ||
-        std::is_same<T, Vector4Int>::value ||
-        std::is_same<T, Quaternion>::value ||
-        std::is_same<T, Matrix3x3>::value ||
-        std::is_same<T, Matrix4x4>::value ||
-        std::is_same<T, Matrix3x3Int>::value ||
-        std::is_same<T, Matrix4x4Int>::value
+        std::is_same_v<T, Vector2> ||
+        std::is_same_v<T, Vector3> ||
+        std::is_same_v<T, Vector4> ||
+        std::is_same_v<T, Vector2Int> ||
+        std::is_same_v<T, Vector3Int> ||
+        std::is_same_v<T, Vector4Int> ||
+        std::is_same_v<T, Quaternion> ||
+        std::is_same_v<T, Matrix3x3> ||
+        std::is_same_v<T, Matrix4x4> ||
+        std::is_same_v<T, Matrix3x3Int> ||
+        std::is_same_v<T, Matrix4x4Int>
     ;
 
     /// @brief Returns the absolute value of a given number.
@@ -68,7 +68,7 @@ namespace Sierra::Engine::Classes::Math
     /// @param y Second value.
     /// @param value Minimum difference (exclusive).
     template<typename T, ENABLE_IF(IsTypeNumeric<T>)>
-    [[nodiscard]] inline bool DifferenceIsBiggerThan(T x, T y, T value)
+    [[nodiscard]] inline bool IsDifferenceBiggerThan(T x, T y, T value)
     {
         return Difference(x, y) > value;
     }

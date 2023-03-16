@@ -46,5 +46,10 @@ namespace Sierra
     {
         selectedEntity = givenEntity;
     }
+
+    void EngineCore::SetMouseHoveredPosition(Vector3 givenPosition)
+    {
+        mouseHoveredPosition = givenPosition;
+    }
 }
 

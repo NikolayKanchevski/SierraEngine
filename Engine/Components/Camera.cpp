@@ -17,11 +17,11 @@ namespace Sierra::Engine::Components
 
     void Camera::OnAddComponent()
     {
-        CalculateViewMatrices();
-        CalculateProjectionMatrices();
+        CalculateViewMatrix();
+        CalculateProjectionMatrix();
 
         GetComponent<Transform>().PushOnChangeCallback([this]{
-            CalculateViewMatrices();
+            CalculateViewMatrix();
         });
 
         if (mainCamera == entt::null) SetAsMain();
@@ -53,10 +53,10 @@ namespace Sierra::Engine::Components
     {
         Transform &transform = GetComponent<Transform>();
 
-        float cosYaw = glm::cos(glm::radians(transform.GetRotation().x));
-        float sinYaw = glm::sin(glm::radians(transform.GetRotation().x));
-        float cosPitch = glm::cos(glm::radians(transform.GetRotation().y));
-        float sinPitch = glm::sin(glm::radians(transform.GetRotation().y));
+        float cosYaw = glm::cos(glm::radians(transform.GetWorldRotation().x));
+        float sinYaw = glm::sin(glm::radians(transform.GetWorldRotation().x));
+        float cosPitch = glm::cos(glm::radians(transform.GetWorldRotation().y));
+        float sinPitch = glm::sin(glm::radians(transform.GetWorldRotation().y));
 
         Vector3 direction;
         direction.x = cosYaw * cosPitch;
@@ -86,7 +86,7 @@ namespace Sierra::Engine::Components
         return GetComponent<Transform>().GetWorldRotation();
     }
 
-    void Camera::CalculateViewMatrices()
+    void Camera::CalculateViewMatrix()
     {
         Transform &transform = GetComponent<Transform>();
         Vector3 frontDirection = GetFrontDirection();
@@ -100,7 +100,7 @@ namespace Sierra::Engine::Components
         inverseViewMatrix = glm::inverse(viewMatrix);
     }
 
-    void Camera::CalculateProjectionMatrices()
+    void Camera::CalculateProjectionMatrix()
     {
         projectionMatrix = glm::perspectiveRH(glm::radians(fov), static_cast<float>(ImGuiCore::GetSceneViewWidth()) / static_cast<float>(ImGuiCore::GetSceneViewHeight()), nearClip, farClip);
         projectionMatrix[1][1] *= -1;

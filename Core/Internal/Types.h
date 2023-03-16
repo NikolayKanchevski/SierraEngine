@@ -12,6 +12,7 @@ typedef uint32_t uint;
 typedef uint64_t uint64;
 typedef uint64_t ulong;
 typedef size_t uSize;
+typedef uSize Hash;
 
 typedef int8_t int8;
 typedef int16_t int16;
@@ -47,6 +48,8 @@ using SharedPtr = std::shared_ptr<T>;
 typedef std::string String;
 typedef std::string_view StringView;
 typedef std::function<void()> Callback;
+template<class T>
+using Optional =  std::optional<T>;
 #define NO_CHANGE std::nullopt
 
 // === Deprecated === //

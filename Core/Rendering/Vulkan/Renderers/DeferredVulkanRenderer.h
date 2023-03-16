@@ -6,6 +6,7 @@
 
 #include "VulkanRenderer.h"
 
+#include "../RenderingUtilities.h"
 #include "../../RenderingTemplates.h"
 #include "../Abstractions/DynamicRenderer.h"
 #include "../../../../Engine/Classes/Mesh.h"
@@ -26,22 +27,19 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             PositionBuffer = 1,
             DiffuseBuffer = 2,
             SpecularBuffer = 3,
-            ShininessBuffer = 5,
-            NormalBuffer = 6,
-            DepthBuffer = 7
+            ShininessBuffer = 4,
+            NormalBuffer = 5,
+            DepthBuffer = 6
         };
 
         struct MergingRendererPushConstant
         {
+            Matrix4x4 skyboxModel;
             RenderedImageValue renderedImageValue = RenderedImageValue::RenderedImage;
-
-            float _align1_;
-            float _align2_;
-            float _align3_;
         };
 
         typedef GraphicsPipeline<MeshPushConstant, UniformData, StorageData> ScenePipeline;
-        typedef GraphicsPipeline<MergingRendererPushConstant, NullType, StorageData> MergingPipeline;
+        typedef GraphicsPipeline<MergingRendererPushConstant, UniformData, StorageData> CompositionPipeline;
         typedef GraphicsPipeline<SkyboxPushConstant, UniformData, NullType> SkyboxPipeline;
     public:
         /* --- CONSTRUCTORS --- */
@@ -52,8 +50,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         void Update() override;
         void DrawUI() override;
         void Render() override;
-
-        /* --- SETTER METHODS --- */
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkDescriptorSet GetRenderedTextureDescriptorSet() const override { return renderedImageDescriptorSets[swapchain->GetCurrentFrameIndex()]; }
@@ -69,18 +65,13 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         UniquePtr<Image> depthStencilBuffer;
         UniquePtr<Image> renderedImage;
 
+        UniquePtr<DynamicRenderer> bufferPass;
         UniquePtr<ScenePipeline> bufferPipeline;
-        UniquePtr<DynamicRenderer> bufferRenderer;
-        SharedPtr<DescriptorSetLayout> bufferDescriptorSetLayout;
 
-        UniquePtr<Mesh> skyboxMesh;
-        UniquePtr<DynamicRenderer> skyboxRenderer;
-        UniquePtr<SkyboxPipeline> skyboxPipeline;
-        SharedPtr<DescriptorSetLayout> skyboxDescriptorSetLayout;
+        UniquePtr<DynamicRenderer> compositionPass;
+        UniquePtr<CompositionPipeline> compositionPipeline;
 
-        UniquePtr<DynamicRenderer> mergingRenderer;
-        UniquePtr<MergingPipeline> mergingPipeline;
-        SharedPtr<DescriptorSetLayout> mergingDescriptorSetLayout;
+        UniquePtr<Raycaster> raycaster;
 
         UniquePtr<Sampler> textureSampler;
         std::vector<VkDescriptorSet> renderedImageDescriptorSets;
@@ -88,7 +79,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         void InitializeRenderer();
         void CreateSceneRenderingObjects();
-        void CreateSkyboxRenderingObjects();
     };
 
 }

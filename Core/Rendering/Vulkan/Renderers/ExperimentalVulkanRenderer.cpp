@@ -31,14 +31,14 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         graphicsPipeline = GraphicsPipeline<>::Create({
             .maxConcurrentFrames = swapchain->GetMaxConcurrentFramesCount(),
             .shaders = { vertexShader, fragmentShader },
-            .renderPass = &swapchain->GetRenderPass(),
-            .createDepthBuffer = false
+            .renderPassInfo = GraphicsPipelineRenderPassInfo {
+                .renderPass = &swapchain->GetRenderPass()
+            }
         });
     }
 
     /* --- POLLING METHODS --- */
 
-    // TODO: REMOVE DYNAMIC RENDERING
     void ExperimentalVulkanRenderer::Render()
     {
         VulkanRenderer::Render();

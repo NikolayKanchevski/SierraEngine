@@ -301,7 +301,7 @@ namespace Sierra::Engine::Classes
             // Create texture
             auto diffuseTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
-                .textureType = TEXTURE_TYPE_DIFFUSE,
+                .textureType = TextureType::DIFFUSE,
                 .imageFormat = ImageFormat::R8G8B8A8_SRGB,
                 .mipMappingEnabled = true
             });
@@ -320,7 +320,7 @@ namespace Sierra::Engine::Classes
             // Create texture
             auto specularTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
-                .textureType = TEXTURE_TYPE_SPECULAR,
+                .textureType = TextureType::SPECULAR,
                 .imageFormat = ImageFormat::R8_UNORM
             });
 
@@ -338,7 +338,7 @@ namespace Sierra::Engine::Classes
             // Create texture
             auto normalTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
-                .textureType = TEXTURE_TYPE_NORMAL_MAP,
+                .textureType = TextureType::NORMAL_MAP,
                 .imageFormat = ImageFormat::R8G8B8A8_UNORM
             });
 
@@ -356,7 +356,7 @@ namespace Sierra::Engine::Classes
             // Create texture
             auto heightMapTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
-                .textureType = TEXTURE_TYPE_HEIGHT_MAP,
+                .textureType = TextureType::HEIGHT_MAP,
                 .imageFormat = ImageFormat::R8_UNORM
             });
 

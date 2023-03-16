@@ -14,7 +14,6 @@ namespace Sierra::Engine::Components {
     /// @brief A component class representing a point light in the scene. Derives from both <see cref="Light"/> and <see cref="Component"/>.
     class PointLight : public Light
     {
-
     public:
         /* --- PROPERTIES --- */
         /// \brief Linear value of the light. See <a href="https://learnopengl.com/Lighting/Light-casters">this link</a>
@@ -79,7 +78,7 @@ namespace Sierra::Engine::Components {
             Vector3 _align_1;
         };
 
-        operator ShaderPointLight() const noexcept { auto position = GetComponent<Transform>().GetPosition(); return
+        operator ShaderPointLight() const noexcept { auto position = GetComponent<Transform>().GetWorldPosition(); return
         {
             .color = this->color,
             .intensity = this->intensity,

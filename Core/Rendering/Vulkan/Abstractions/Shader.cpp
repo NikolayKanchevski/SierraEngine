@@ -17,29 +17,74 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         : filePath(createInfo.filePath), shaderType(createInfo.shaderType != ShaderType::NONE ? createInfo.shaderType : GetShaderTypeFromExtension()), precompiled(true)
     {
         // Save data
-        precompiledData = new PrecompileData();
-        precompiledData->optimization = std::move(createInfo.optimization);
-        precompiledData->entryPoint = std::move(createInfo.entryPoint);
+        precompiledData = new PrecompiledData();
+        precompiledData->optimization = createInfo.optimization;
+        precompiledData->entryPoint = createInfo.entryPoint;
         for (const auto &pair : createInfo.definitions)
         {
             precompiledData->definitions[pair.definitionName] = pair.value;
         }
 
+        // Compile shader to SPIRV
         auto code = CompileShadercShader();
         CreateShaderModule(precompiledData->entryPoint, code.data(), code.size());
+
+        // Generate reflection data for a shader
+        SpvReflectShaderModule module;
+        SpvReflectResult result = spvReflectCreateShaderModule(code.size() * UINT_SIZE, code.data(), &module);
+
+        ASSERT_ERROR_FORMATTED_IF(result != SPV_REFLECT_RESULT_SUCCESS, "Could not create reflection module for shader [{0}]", filePath);
+
+        // Save reflection data
+        precompiledData->reflectionData.descriptorBindings = new std::vector<DescriptorBinding>(module.descriptor_binding_count);
+        for (uint i = module.descriptor_binding_count; i--;)
+        {
+            (*precompiledData->reflectionData.descriptorBindings)[i] = { .binding = module.descriptor_bindings[i].binding, .arraySize = module.descriptor_bindings[i].count, .fieldName = module.descriptor_bindings[i].name, .fieldType = module.descriptor_bindings[i].descriptor_type };
+        }
+
+        // Check if shader is of type vertex and contains attributes
+        if (shaderType == ShaderType::VERTEX && module.input_variable_count > 0)
+        {
+            // Retrieve attributes
+            precompiledData->reflectionData.vertexAttributes = new std::vector<VertexAttribute>();
+            for (uint i = 0; i < module.input_variable_count; i++)
+            {
+                #pragma clang diagnostic push
+                #pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"
+                if (module.input_variables[i]->built_in != -1) continue;
+                #pragma clang diagnostic pop
+
+                precompiledData->reflectionData.vertexAttributes->push_back({ .location = module.input_variables[i]->location, .vertexAttributeType = static_cast<VertexAttributeType>(module.input_variables[i]->format) });
+            }
+
+            // Sort attributes by location
+            std::sort(precompiledData->reflectionData.vertexAttributes->begin(), precompiledData->reflectionData.vertexAttributes->end(),
+            [](const VertexAttribute &left, const VertexAttribute &right)
+            {
+                return left.location < right.location;
+            });
+        }
+
+        /*
+            NOTE: Reflection data must be freed upon pipeline creation!
+        */
+
+        // Destroy reflection module
+        spvReflectDestroyShaderModule(&module);
     }
 
     SharedPtr<Shader> Shader::Create(const ShaderCreateInfo createInfo)
     {
         // Check if shader has already been loaded and return it
-        if (shaderPool.count(createInfo.filePath))
+        Hash hash = GET_HASH(createInfo.filePath);
+        if (shaderPool.count(hash))
         {
-            return shaderPool[createInfo.filePath];
+            return shaderPool[hash];
         }
 
         // Create and store new shader in pool
         auto shader = std::make_shared<Shader>(createInfo);
-        shaderPool[createInfo.filePath] = shader;
+        shaderPool[hash] = shader;
 
         return shader;
     }
@@ -55,14 +100,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     SharedPtr<Shader> Shader::LoadCompiled(CompiledShaderCreateInfo createInfo)
     {
         // Check if shader has already been loaded and return it
-        if (shaderPool.count(createInfo.filePath))
+        Hash hash = GET_HASH(createInfo.filePath);
+        if (shaderPool.count(hash))
         {
-            return shaderPool[createInfo.filePath];
+            return shaderPool[hash];
         }
 
         // Create and store new shader in pool
         auto shader = std::make_shared<Shader>(createInfo);
-        shaderPool[createInfo.filePath] = shader;
+        shaderPool[hash] = shader;
 
         return shader;
     }
@@ -71,7 +117,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Shader::Dispose()
     {
-        shaderPool.erase(filePath);
+        shaderPool.erase(GET_HASH(filePath));
     }
 
     void Shader::DisposePool()
@@ -107,6 +153,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Set options
         shaderc::CompileOptions options;
         options.SetIncluder(std::make_unique<Includer>(filePath));
+        options.SetGenerateDebugInfo();
 
         // Define macros
         for (const auto &pair : precompiledData->definitions)
@@ -119,7 +166,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Read and compile shader
         auto shaderCode = File::ReadFile(filePath);
-        shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(shaderCode.data(), shaderCode.size(),GetShadercShaderType(), File::GetFileNameFromPath(filePath).c_str(), options);
+        shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(shaderCode.data(), shaderCode.size(), GetShadercShaderType(), File::GetFileNameFromPath(filePath).c_str(), options);
 
         // Check for errors
         if (module.GetCompilationStatus() != shaderc_compilation_status_success)
@@ -147,7 +194,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create shader module
         VK_ASSERT(
             vkCreateShaderModule(VK::GetLogicalDevice(), &moduleCreateInfo, nullptr, &shaderModule),
-            fmt::format("Failed to create shader module for [{0}]", filePath)
+            FORMAT_STRING("Failed to create shader module for [{0}]", filePath)
         );
 
         // Setup shader stage creation info

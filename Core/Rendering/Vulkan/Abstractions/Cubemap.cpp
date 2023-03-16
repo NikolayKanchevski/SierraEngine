@@ -4,7 +4,6 @@
 
 #include "Cubemap.h"
 
-
 #include "../VK.h"
 #include "Buffer.h"
 
@@ -21,6 +20,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         for (uint i = 6; i--;)
         {
             // Load image data
+            filePaths[i] = createInfo.filePaths[i];
             stbiImages[i] = stbi_load(createInfo.filePaths[i].c_str(), &width, &height, &colorChannelsCount, channelCount);
 
             // Check if image loading has been successful
@@ -31,13 +31,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         this->sampler = Sampler::Create(createInfo.samplerCreateInfo);
 
         // Calculate the image's memory size
-        this->layerSize = width * height * channelCount;
+        uint64 layerSize = width * height * channelCount;
         this->memorySize = layerSize * 6;
 
         // Create the staging buffer
         auto stagingBuffer = Buffer::Create({
             .memorySize = memorySize,
-            .memoryFlags = MemoryFlags::HOST_VISIBLE | MemoryFlags::HOST_COHERENT,
             .bufferUsage = BufferUsage::TRANSFER_SRC
         });
 
@@ -63,14 +62,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             .layerCount = 6,
             .usage = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
             .createFlags = ImageCreateFlags::CUBE_COMPATIBLE,
-            .memoryFlags = MemoryFlags::DEVICE_LOCAL
         });
 
         // Transition the layout of the image, so it can be used for copying
         image->TransitionLayout(ImageLayout::TRANSFER_DST_OPTIMAL);
 
         // Copy the image to the staging buffer
-        stagingBuffer->CopyImage(*image);
+        stagingBuffer->CopyToImage(*image);
 
         // Destroy the staging buffer and free its memory
         stagingBuffer->Destroy();
@@ -89,8 +87,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             stbi_image_free(stbiImage);
         }
-
-        // TODO: CUBEMAP CACHING
     }
 
     UniquePtr<Cubemap> Cubemap::Create(CubemapCreateInfo createInfo)

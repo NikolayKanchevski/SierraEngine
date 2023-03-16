@@ -21,6 +21,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         RetrievePhysicalDevice();
         CreateLogicalDevice();
         RetrieveBestProperties();
+
+        // Connect device with Volk
+        volkLoadDevice(logicalDevice);
     }
 
     UniquePtr<Device> Device::Create(DeviceCreateInfo createInfo)
@@ -30,42 +33,29 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- GETTER METHODS --- */
 
-    VkCommandBuffer Device::BeginSingleTimeCommands() const
+    UniquePtr<CommandBuffer> Device::BeginSingleTimeCommands() const
     {
-        VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
-        commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        commandBufferAllocateInfo.commandPool = VK::GetCommandPool();
-        commandBufferAllocateInfo.commandBufferCount = 1;
+        UniquePtr<CommandBuffer> commandBuffer = CommandBuffer::Create();
+        commandBuffer->Begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-        VkCommandBuffer commandBuffer;
-        VK_ASSERT(
-            vkAllocateCommandBuffers(VK::GetLogicalDevice(), &commandBufferAllocateInfo, &commandBuffer),
-            "Failed to allocate single time command buffer"
-        );
-
-        VkCommandBufferBeginInfo commandBufferBeginInfo{};
-        commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-        vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
-
-        return commandBuffer;
+        return std::move(commandBuffer);
     }
 
-    void Device::EndSingleTimeCommands(const VkCommandBuffer commandBuffer) const
+    void Device::EndSingleTimeCommands(UniquePtr<CommandBuffer> &commandBuffer) const
     {
-        vkEndCommandBuffer(commandBuffer);
+        commandBuffer->End();
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffer;
+
+        VkCommandBuffer commandBufferPtr = commandBuffer->GetVulkanCommandBuffer();
+        submitInfo.pCommandBuffers = &commandBufferPtr;
 
         vkQueueSubmit(VK::GetDevice()->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
         vkQueueWaitIdle(VK::GetDevice()->GetGraphicsQueue());
 
-        vkFreeCommandBuffers(VK::GetLogicalDevice(), VK::GetCommandPool(), 1, &commandBuffer);
+        commandBuffer->Free();
     }
 
     /* --- SETTER METHODS --- */
@@ -146,8 +136,17 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         deviceDynamicRenderingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
         deviceDynamicRenderingFeatures.dynamicRendering = VK_TRUE;
 
-        // Set descriptor indexing features
-        #if !__APPLE__
+        #if PLATFORM_APPLE
+            // Set apple specific features
+            VkPhysicalDevicePortabilitySubsetFeaturesKHR portabilityFeatures{};
+            if (portabilitySubsetExtensionEnabled)
+            {
+                portabilityFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR;
+                portabilityFeatures.mutableComparisonSamplers = VK_TRUE;
+                deviceDynamicRenderingFeatures.pNext = &portabilityFeatures;
+            }
+        #else
+            // Set descriptor indexing features
             VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
             if (GetDescriptorIndexingSupported())
             {
@@ -292,10 +291,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
         #endif
 
-        #if __APPLE__
-            bool khrPortabilityRequired = false;
-        #endif
-
         // Check if each given extension is in the supported extensions array
         bool allExtensionsSupported = true;
         for (const auto &requiredExtension : requiredDeviceExtensions)
@@ -305,9 +300,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             {
                 #if __APPLE__
                     // Check if Mac's specific extension is supported (required if so)
-                    if (strcmp("VK_KHR_portability_subset", extensionProperty.extensionName) == 0)
+                    if (strcmp(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME, extensionProperty.extensionName) == 0)
                     {
-                        khrPortabilityRequired = true;
+                        portabilitySubsetExtensionEnabled = true;
                         continue;
                     }
                 #endif
@@ -327,7 +322,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         #if __APPLE__
-            if (khrPortabilityRequired) requiredDeviceExtensions.push_back("VK_KHR_portability_subset");
+            if (portabilitySubsetExtensionEnabled) requiredDeviceExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
         #endif
 
         if (GetDescriptorIndexingSupported()) requiredDeviceExtensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);

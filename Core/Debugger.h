@@ -20,10 +20,10 @@ namespace Sierra::Core
 #endif
 
     public:
-        static void DisplayInfo(const std::string&);
-        static void DisplaySuccess(const std::string&);
-        static void ThrowWarning(const std::string&);
-        static void ThrowError(const std::string&);
+        static void DisplayInfo(const String &message);
+        static void DisplaySuccess(const String &message);
+        static void ThrowWarning(const String &message);
+        static void ThrowError(const String &message);
 
         template <typename T>
         static inline std::string TypeToString()
@@ -89,23 +89,27 @@ namespace Sierra::Core
 }
 
 #if DEBUG
-    #define ASSERT_ERROR(MESSAGE) Sierra::Core::Debugger::ThrowError(MESSAGE)
-    #define ASSERT_ERROR_FORMATTED(MESSAGE, ...) ASSERT_ERROR(fmt::format(MESSAGE, ##__VA_ARGS__))
+    #define ASSERT_ERROR(MESSAGE) Sierra::Core::Debugger::ThrowError(FORMAT_STRING("File {0}:{1} encountered an error on line: {2}", THIS_FILE, THIS_LINE, MESSAGE))
+    #define ASSERT_ERROR_FORMATTED(MESSAGE, ...) ASSERT_ERROR(FORMAT_STRING(MESSAGE, ##__VA_ARGS__))
     #define ASSERT_ERROR_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_ERROR(MESSAGE)
     #define ASSERT_ERROR_FORMATTED_IF(EXPRESSION, MESSAGE, ...) if (EXPRESSION) ASSERT_ERROR_FORMATTED(MESSAGE, ##__VA_ARGS__)
 
     #define ASSERT_WARNING(MESSAGE) Sierra::Core::Debugger::ThrowWarning(MESSAGE)
-    #define ASSERT_WARNING_FORMATTED(MESSAGE, ...) ASSERT_WARNING(fmt::format(MESSAGE, ##__VA_ARGS__))
+    #define ASSERT_WARNING_FORMATTED(MESSAGE, ...) ASSERT_WARNING(FORMAT_STRING(MESSAGE, ##__VA_ARGS__))
     #define ASSERT_WARNING_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_WARNING(MESSAGE)
     #define ASSERT_WARNING_FORMATTED_IF(EXPRESSION, MESSAGE, ...) if (EXPRESSION) ASSERT_WARNING_FORMATTED(MESSAGE, ##__VA_ARGS__)
 
     #define ASSERT_SUCCESS(MESSAGE) Sierra::Core::Debugger::DisplaySuccess(MESSAGE)
-    #define ASSERT_SUCCESS_FORMATTED(MESSAGE, ...) ASSERT_SUCCESS(fmt::format(MESSAGE, ##__VA_ARGS__))
+    #define ASSERT_SUCCESS_FORMATTED(MESSAGE, ...) ASSERT_SUCCESS(FORMAT_STRING(MESSAGE, ##__VA_ARGS__))
     #define ASSERT_SUCCESS_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_SUCCESS(MESSAGE)
     #define ASSERT_SUCCESS_FORMATTED_IF(EXPRESSION, MESSAGE, ...) if (EXPRESSION) ASSERT_SUCCESS_FORMATTED(MESSAGE, ##__VA_ARGS__)
 
-    #define VK_ASSERT(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_ERROR_FORMATTED("Vulkan Error: {0}() failed: {1}! Error code: {2}", std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")), MESSAGE, string_VkResult(result))
-    #define VK_VALIDATE(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_WARNING_FORMATTED("Vulkan Error: {0}() failed: {1}! Error code: {2}", std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")), MESSAGE, string_VkResult(result))
+    #define VK_ASSERT(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_ERROR_FORMATTED("Vulkan Error: {0}() failed: {1}! Error code: {2}", std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")), MESSAGE, VK_TO_STRING(result, Result))
+    #define VK_VALIDATE(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_WARNING_FORMATTED("Vulkan Error: {0}() failed: {1}! Error code: {2}", std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")), MESSAGE, VK_TO_STRING(result, Result))
+
+    #define NULL_ASSERT(VALUE) if (VALUE == nullptr) { ASSERT_ERROR(FORMAT_STRING("Value \"{0}\" is null", #VALUE)); }
+
+    #define STATIC_ASSERT_IF(CONDITION, MESSAGE) static_assert(!CONDITION, MESSAGE)
 #else
     #define ASSERT_ERROR(MESSAGE)
     #define ASSERT_ERROR_FORMATTED(MESSAGE, ...)
@@ -135,7 +139,7 @@ namespace Sierra::Core
 
 #if DEBUG || PROFILE_FUNCTIONS_IN_RELEASE
     #define ASSERT_INFO(MESSAGE) Sierra::Core::Debugger::DisplayInfo(MESSAGE)
-    #define ASSERT_INFO_FORMATTED(MESSAGE, ...) ASSERT_INFO(fmt::format(MESSAGE, ##__VA_ARGS__))
+    #define ASSERT_INFO_FORMATTED(MESSAGE, ...) ASSERT_INFO(FORMAT_STRING(MESSAGE, ##__VA_ARGS__))
     #define ASSERT_INFO_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_INFO(MESSAGE)
     #define ASSERT_INFO_FORMATTED_IF(EXPRESSION, MESSAGE, ...) if (EXPRESSION) ASSERT_INFO_FORMATTED(MESSAGE, ##__VA_ARGS__)
 

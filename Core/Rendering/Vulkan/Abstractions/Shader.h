@@ -65,9 +65,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- DESTRUCTOR --- */
         void Destroy();
+        DELETE_COPY(Shader);
+
         template<typename A, typename B, typename C>
         friend class GraphicsPipeline;
-        DELETE_COPY(Shader);
+        template<typename A, typename B, typename C>
+        friend class ComputePipeline;
+        template<typename A, typename B, typename C>
+        friend class Pipeline;
 
     private:
         class Includer : public shaderc::CompileOptions::IncluderInterface
@@ -94,23 +99,42 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ShaderType GetShaderTypeFromExtension();
         shaderc_shader_kind GetShadercShaderType();
 
-        struct PrecompileData
+        struct VertexAttribute
+        {
+            uint location;
+            VertexAttributeType vertexAttributeType;
+        };
+
+        struct DescriptorBinding
+        {
+            uint binding;
+            uint arraySize;
+            const char* fieldName;
+            SpvReflectDescriptorType fieldType;
+        };
+
+        struct ReflectionData
+        {
+            std::vector<VertexAttribute> *vertexAttributes;
+            std::vector<DescriptorBinding> *descriptorBindings;
+        };
+
+        struct PrecompiledData
         {
             // Name | Value
             std::unordered_map<String, String> definitions;
             ShaderOptimization optimization;
             const char* entryPoint;
+            ReflectionData reflectionData;
         };
 
-        PrecompileData* precompiledData;
         bool precompiled;
+        PrecompiledData* precompiledData;
+        bool SetDefinition(const ShaderDefinition &definition);
 
         inline static shaderc::Compiler compiler;
-
         // filePath | Shader object
-        inline static std::unordered_map<String, SharedPtr<Shader>> shaderPool;
-
-        bool SetDefinition(const ShaderDefinition &definition);
+        inline static std::unordered_map<Hash, SharedPtr<Shader>> shaderPool;
     };
 
 }

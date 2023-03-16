@@ -27,6 +27,10 @@ namespace Sierra::Core::Rendering::UI
         imGuiContext = ImGui::CreateContext();
         ImGui::SetCurrentContext(imGuiContext);
 
+        ImGui_ImplVulkan_LoadFunctions([](const char *function_name, void *user_data) {
+            return vkGetInstanceProcAddr(VK::GetInstance(), function_name);
+        });
+
         // Create GLFW backend for context
         ImGui_ImplGlfw_InitForVulkan(createInfo.window->GetCoreWindow(), true);
 
@@ -61,8 +65,8 @@ namespace Sierra::Core::Rendering::UI
             io.FontDefault = io.Fonts->Fonts[0];
 
             // Upload font file to shader
-            VkCommandBuffer commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
-            ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+            auto commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
+            ImGui_ImplVulkan_CreateFontsTexture(commandBuffer->GetVulkanCommandBuffer());
             VK::GetDevice()->EndSingleTimeCommands(commandBuffer);
             ImGui_ImplVulkan_DestroyFontUploadObjects();
         }

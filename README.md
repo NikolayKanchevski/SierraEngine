@@ -1,3 +1,4 @@
+
 <h1 align="center">Sierra Engine</h1>
 <h6 align="center">By: <a>Nikolay Kanchevski</a></h6>
 <br>
@@ -35,8 +36,9 @@ You can then proceed and run the program in your IDE. Make sure you are in <b>RE
     Frameworks used: 
     <ul>
         <li><a href="https://www.vulkan.org/">Vulkan</a> - For both cross-platform and pefromant-friendly rendering.</li>
-        <li><a href="https://github.com/google/shaderc">Shaderc</a> - For the shader compilation and optimization at <runtime></runtime>.</li>
+        <li><a href="https://github.com/zeux/volk/tree/master">Volk</a> - A meta-loader for <a href="https://www.vulkan.org/">Vulkan</a> that reduces CPU overhead and simplifies the loading of extensions.</li>
         <li><a href="https://gpuopen.com/vulkan-memory-allocator/">VMA</a> - For easier and more optimal memory allocation and distribution of <a href="https://www.vulkan.org/">Vulkan</a> objects.</li>
+        <li><a href="https://github.com/google/shaderc">Shaderc</a> - For the shader compilation and optimization at runtime.</li>
         <li><a href="https://github.com/glfw/glfw">GLFW</a> - For creating window interface and connecting it to the <b>Vulkan</b> renderer.</li>
         <li><a href="https://github.com/g-truc/glm">GLM</a> - For all advanced mathematical operations and objects within the engine.</li>
         <li><a href="https://github.com/ocornut/imgui">ImGui</a> - For the user interface implemented.</li>
@@ -63,7 +65,7 @@ You can then proceed and run the program in your IDE. Make sure you are in <b>RE
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 17,237</p>
-<p align="center" id="LastUpdated">Last updated: 04/03/2023</p>
+<p align="center" id="LinesCounter">Total lines of code: 16,807</p>
+<p align="center" id="LastUpdated">Last updated: 16/03/2023</p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

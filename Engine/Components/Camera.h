@@ -27,8 +27,8 @@ namespace Sierra::Engine::Components
 
         /* --- SETTER METHODS --- */
         void SetAsMain();
-        void CalculateViewMatrices();
-        void CalculateProjectionMatrices();
+        void CalculateViewMatrix();
+        void CalculateProjectionMatrix();
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] float GetYaw() const;
@@ -37,12 +37,7 @@ namespace Sierra::Engine::Components
         [[nodiscard]] Vector3 GetYawPitchRoll() const;
 
         [[nodiscard]] inline Matrix4x4 GetViewMatrix() { return viewMatrix; };
-        [[nodiscard]] inline Matrix4x4 GetProjectionMatrix()
-        {
-            // TODO: Add a callback to only recalculate this on resize
-            CalculateProjectionMatrices();
-            return projectionMatrix;
-        };
+        [[nodiscard]] inline Matrix4x4 GetProjectionMatrix() { return projectionMatrix; };
 
         [[nodiscard]] inline Matrix4x4 GetInverseViewMatrix() { return inverseViewMatrix; };
         [[nodiscard]] inline Matrix4x4 GetInverseProjectionMatrix() { return inverseProjectionMatrix; }

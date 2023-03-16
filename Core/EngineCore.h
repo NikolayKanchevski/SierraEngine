@@ -20,12 +20,15 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] static inline Entity& GetSelectedEntity() { return selectedEntity; }
+        [[nodiscard]] static inline Vector3 GetMouseHoveredPosition() { return mouseHoveredPosition; }
 
         /* --- SETTER METHODS --- */
         static void SetSelectedEntity(Entity givenEntity);
+        static void SetMouseHoveredPosition(Vector3 givenPosition);
 
     private:
         static inline Entity selectedEntity;
+        static inline Vector3 mouseHoveredPosition = { 0.0f, 0.0f, 0.0f };
 
     };
 

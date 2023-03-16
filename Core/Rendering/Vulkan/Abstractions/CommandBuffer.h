@@ -20,6 +20,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void Begin(VkCommandBufferUsageFlagBits flags = (VkCommandBufferUsageFlagBits) 0) const;
         void End() const;
         void Reset() const;
+        void Free() const;
+        void TransitionImageLayout(Image *image, ImageLayout newLayout, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage);
         void TransitionImageLayout(const UniquePtr<Image> &image, ImageLayout newLayout, VkPipelineStageFlags lastUsageStage, VkPipelineStageFlags expectedUsageStage);
         void TransitionImageLayouts(const std::vector<ImageReference>& images, ImageLayout newLayout, VkPipelineStageFlags lastUsageStage, VkPipelineStageFlags expectedUsageStage);
         void BindVertexBuffers(const std::vector<VkBuffer> &vertexBuffers) const;
@@ -40,14 +42,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     private:
         VkCommandBuffer vkCommandBuffer;
 
-        // [Pointer to image | Initial image layout before first TransitionLayout() | First time transitioning]
         struct ImageLayoutPair
         {
             ImageLayout initialLayout = ImageLayout::UNDEFINED;
             bool firstTime = false;
         };
-        std::unordered_map<Image*, ImageLayoutPair> initialImageLayouts;
 
+        // [Pointer to image | Initial image layout before first TransitionLayout() | First time transitioning]
+        std::unordered_map<Image*, ImageLayoutPair> initialImageLayouts;
     };
 
 }

@@ -11,7 +11,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     struct BufferCreateInfo
     {
         uint64 memorySize = 0;
-        MemoryFlags memoryFlags = MemoryFlags::NONE;
         BufferUsage bufferUsage = BufferUsage::UNDEFINED;
     };
 
@@ -33,7 +32,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- SETTER METHODS --- */
         void CopyFromPointer(void* pointer);
-        void CopyImage(const Image& givenImage);
+        void CopyToImage(const Image& givenImage);
         void CopyToBuffer(const Buffer *otherBuffer);
 
         /* --- GETTER METHODS --- */
@@ -42,9 +41,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         [[nodiscard]] inline VmaAllocation GetMemory() const
         { return this->vmaBufferAllocation; }
-
-        [[nodiscard]] inline MemoryFlags GetMemoryFlags() const
-        { return this->memoryFlags; }
 
         [[nodiscard]] inline uint64 GetMemorySize() const
         { return this->memorySize; }
@@ -61,7 +57,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VmaAllocation vmaBufferAllocation;
 
         uint64 memorySize;
-        MemoryFlags memoryFlags;
         BufferUsage bufferUsage;
 
         void* data;

@@ -4,9 +4,9 @@
 
 #include "Application.h"
 
-#define MODEL_GRID_SIZE_X 1
-#define MODEL_GRID_SIZE_Y 1
-#define MODEL_GRID_SIZE_Z 1
+#define MODEL_GRID_SIZE_X 3
+#define MODEL_GRID_SIZE_Y 3
+#define MODEL_GRID_SIZE_Z 3
 
 #define MODEL_SPACING_FACTOR_X 10
 #define MODEL_SPACING_FACTOR_Y 10
@@ -27,17 +27,13 @@ void Application::Start()
     // Create camera
     Entity cameraEntity = Entity("Camera");
     camera = cameraEntity.AddComponent<Camera>();
-    cameraEntity.GetComponent<Transform>().SetPosition(-5.0f, -2.5f, 5.0f);
-    cameraEntity.GetComponent<Transform>().SetRotation(270.0f, NO_CHANGE, NO_CHANGE);
+    cameraEntity.GetComponent<Transform>().SetWorldPosition(-5.0f, -2.5f, 5.0f);
+    cameraEntity.GetComponent<Transform>().SetWorldRotation(270.0f, NO_CHANGE, NO_CHANGE);
 
     // Create directional light
     DirectionalLight &directionalLight = Entity("Directional Light").AddComponent<DirectionalLight>();
-    directionalLight.direction = glm::normalize(camera.GetComponent<Transform>().GetPosition() - Vector3(-7, 5, -7));
+    directionalLight.direction = glm::normalize(camera.GetComponent<Transform>().GetWorldPosition() - Vector3(-7, 5, -7));
     directionalLight.intensity = 2.0f;
-
-    // Create point light
-    pointLight = &Entity("Point Light").AddComponent<PointLight>();
-    pointLight->intensity = 3.0f;
 
     // Load 3D models in a grid view
     tankModels.reserve(MODEL_GRID_SIZE_X * MODEL_GRID_SIZE_Y * MODEL_GRID_SIZE_Z);
@@ -54,9 +50,7 @@ void Application::Start()
                 int y = (k * MODEL_SPACING_FACTOR_Y) - (MODEL_GRID_SIZE_Y * MODEL_SPACING_FACTOR_Y) / 2;
 
                 tankModels.push_back(Model::Load(File::OUTPUT_FOLDER_PATH + "Models/Chieftain/T95_FV4201_Chieftain.fbx"));
-                tankModels.back()->GetOriginEntity().GetComponent<Transform>().SetPosition({ x, y, z });
-
-                pointLight->GetComponent<Transform>().SetPosition({ x, y + 3, z });
+                tankModels.back()->GetOriginEntity().GetComponent<Transform>().SetWorldPosition({ x, y, z });
             }
         }
     }
@@ -114,10 +108,6 @@ void Application::UpdateObjects()
         tankModel->GetMesh(3).GetComponent<Transform>().SetRotation(timeSin * 45.0f, NO_CHANGE, NO_CHANGE);
         tankModel->GetMesh(4).GetComponent<Transform>().SetRotation(timeSin * 45.0f, NO_CHANGE, NO_CHANGE);
     }
-
-    // Move point light
-    const static float startingZ = pointLight->GetComponent<Transform>().GetPosition().z;
-    pointLight->GetComponent<Transform>().SetPosition(NO_CHANGE, (2 * timeSin) + startingZ, NO_CHANGE);
 }
 
 void Application::DoCameraMovement()
@@ -126,11 +116,6 @@ void Application::DoCameraMovement()
     if (Input::GetKeyPressed(GLFW_KEY_ESCAPE))
     {
         Cursor::SetCursorVisibility(!Cursor::IsCursorShown());
-    }
-
-    if (Input::GetKeyPressed(GLFW_KEY_B))
-    {
-        camera.GetComponent<Transform>().LookAt(tankModels.back()->GetOriginEntity().GetComponent<Transform>().GetWorldPosition());
     }
 
     // If the cursor is visible return

@@ -5,9 +5,15 @@
 #include "VK.h"
 
 #define VMA_IMPLEMENTATION
+#ifdef VMA_STATS_STRING_ENABLED
+    #undef VMA_STATS_STRING_ENABLED
+#endif
 #define VMA_STATS_STRING_ENABLED 0
-#define VMA_STATIC_VULKAN_FUNCTIONS 0
-#define VMA_DYNAMIC_VULKAN_FUNCTIONS 1
+#define VMA_STATIC_VULKAN_FUNCTIONS 1
+#define VMA_DYNAMIC_VULKAN_FUNCTIONS 0
+
+#define VOLK_IMPLEMENTATION
+#include <volk.h>
 #include <vk_mem_alloc.h>
 
 #include "../../Version.h"
@@ -15,7 +21,7 @@
 #include "Abstractions/Texture.h"
 
 #define VK_VERSION VK_API_VERSION_1_2
-#define MAX_IMGUI_DESCRIPTOR_COUNT 2000
+#define MAX_IMGUI_DESCRIPTOR_COUNT 2048
 
 using namespace Sierra::Engine::Classes;
 
@@ -29,10 +35,11 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         m_Instance.requiredPhysicalDeviceFeatures = givenPhysicalDeviceFeatures;
 
+        m_Instance.InitializeVolk();
         m_Instance.CreateInstance();
 
         #if VALIDATION_ENABLED
-        m_Instance.CreateDebugMessenger();
+            m_Instance.CreateDebugMessenger();
         #endif
 
         m_Instance.CreateDevice();
@@ -41,7 +48,6 @@ namespace Sierra::Core::Rendering::Vulkan
         m_Instance.CreateCommandPool();
         m_Instance.CreateQueryPool();
 
-        m_Instance.CreateDescriptorPool();
         m_Instance.CreateImGuiDescriptorPool();
 
         m_Instance.CreateDefaultTextures();
@@ -50,6 +56,11 @@ namespace Sierra::Core::Rendering::Vulkan
     }
 
     /* --- SETTER METHODS --- */
+
+    void VK::InitializeVolk()
+    {
+        VK_ASSERT(volkInitialize(), "Could not load Volk");
+    }
 
     void VK::CreateInstance()
     {
@@ -112,6 +123,9 @@ namespace Sierra::Core::Rendering::Vulkan
             vkCreateInstance(&instanceCreateInfo, nullptr, &instance),
             "Could not create Vulkan m_Instance"
         );
+
+        // Connect instance with Volk
+        volkLoadInstance(instance);
     }
 
     #if VALIDATION_ENABLED
@@ -135,8 +149,25 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         // Get pointers to required Vulkan methods
         VmaVulkanFunctions vulkanFunctions{};
-        vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
-        vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
+        vulkanFunctions.vkGetInstanceProcAddr               = vkGetInstanceProcAddr;
+        vulkanFunctions.vkGetDeviceProcAddr                 = vkGetDeviceProcAddr;
+        vulkanFunctions.vkAllocateMemory                    = vkAllocateMemory;
+        vulkanFunctions.vkBindBufferMemory                  = vkBindBufferMemory;
+        vulkanFunctions.vkBindImageMemory                   = vkBindImageMemory;
+        vulkanFunctions.vkCreateBuffer                      = vkCreateBuffer;
+        vulkanFunctions.vkCreateImage                       = vkCreateImage;
+        vulkanFunctions.vkDestroyBuffer                     = vkDestroyBuffer;
+        vulkanFunctions.vkDestroyImage                      = vkDestroyImage;
+        vulkanFunctions.vkFlushMappedMemoryRanges           = vkFlushMappedMemoryRanges;
+        vulkanFunctions.vkFreeMemory                        = vkFreeMemory;
+        vulkanFunctions.vkGetBufferMemoryRequirements       = vkGetBufferMemoryRequirements;
+        vulkanFunctions.vkGetImageMemoryRequirements        = vkGetImageMemoryRequirements;
+        vulkanFunctions.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties;
+        vulkanFunctions.vkGetPhysicalDeviceProperties       = vkGetPhysicalDeviceProperties;
+        vulkanFunctions.vkInvalidateMappedMemoryRanges      = vkInvalidateMappedMemoryRanges;
+        vulkanFunctions.vkMapMemory                         = vkMapMemory;
+        vulkanFunctions.vkUnmapMemory                       = vkUnmapMemory;
+        vulkanFunctions.vkCmdCopyBuffer                     = vkCmdCopyBuffer;
 
         // Set up VMA creation info
         VmaAllocatorCreateInfo vmaCreteInfo{};
@@ -169,17 +200,6 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         // Create query pool
         queryPool = QueryPool::Create({ .queryType = VK_QUERY_TYPE_TIMESTAMP });
-    }
-
-    void VK::CreateDescriptorPool()
-    {
-        descriptorPool = DescriptorPool::Builder()
-            .SetMaxSets(32768)
-            .AddPoolSize(DescriptorType::UNIFORM_BUFFER)
-            .AddPoolSize(DescriptorType::STORAGE_BUFFER)
-            .AddPoolSize(DescriptorType::COMBINED_IMAGE_SAMPLER)
-            .AddPoolSize(DescriptorType::INPUT_ATTACHMENT)
-        .Build();
     }
 
     void VK::CreateImGuiDescriptorPool()
@@ -220,7 +240,7 @@ namespace Sierra::Core::Rendering::Vulkan
         // Create default diffuse texture
         Texture::Create({
             .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/DiffuseNull.jpg",
-            .textureType = TEXTURE_TYPE_DIFFUSE,
+            .textureType = TextureType::DIFFUSE,
             .samplerCreateInfo {
                 .applyBilinearFiltering = false
             }
@@ -229,19 +249,19 @@ namespace Sierra::Core::Rendering::Vulkan
         // Create default specular texture
         Texture::Create({
             .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/SpecularNull.jpg",
-            .textureType = TEXTURE_TYPE_SPECULAR
+            .textureType = TextureType::SPECULAR
         }, true);
 
         // Create default specular texture
         Texture::Create({
             .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/NormalMapNull.jpg",
-            .textureType = TEXTURE_TYPE_NORMAL_MAP
+            .textureType = TextureType::NORMAL_MAP
         }, true);
 
         // Create default height map texture
         Texture::Create({
             .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/HeightMapNull.jpg",
-            .textureType = TEXTURE_TYPE_HEIGHT_MAP
+            .textureType = TextureType::HEIGHT_MAP
         }, true);
     }
 
@@ -251,13 +271,13 @@ namespace Sierra::Core::Rendering::Vulkan
     {
         vkDeviceWaitIdle(m_Instance.device->GetLogicalDevice());
 
-        ImGui_ImplVulkan_Shutdown();
+        if (ImGui::GetCurrentContext() != nullptr) ImGui_ImplVulkan_Shutdown();
 
         Sampler::Shutdown();
 
         vkDestroyDescriptorPool(m_Instance.GetLogicalDevice(), m_Instance.imGuiDescriptorPool, nullptr);
 
-        m_Instance.descriptorPool->Destroy();
+        DescriptorPool::DisposePools();
         m_Instance.queryPool->Destroy();
 
         vkDestroyCommandPool(m_Instance.device->GetLogicalDevice(), m_Instance.commandPool, nullptr);
@@ -267,7 +287,7 @@ namespace Sierra::Core::Rendering::Vulkan
         m_Instance.device->Destroy();
 
         #if VALIDATION_ENABLED
-        DestroyDebugUtilsMessengerEXT(m_Instance.instance, m_Instance.debugMessenger, nullptr);
+            DestroyDebugUtilsMessengerEXT(m_Instance.instance, m_Instance.debugMessenger, nullptr);
         #endif
 
         vkDestroyInstance(m_Instance.instance, nullptr);

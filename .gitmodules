@@ -47,3 +47,9 @@
 [submodule "Dependencies/whereami"]
 	path = Dependencies/whereami
 	url = https://github.com/gpakosz/whereami
+[submodule "Dependencies/Volk"]
+	path = Dependencies/Volk
+	url = https://github.com/zeux/volk
+[submodule "Dependencies/SPIRV-Reflect"]
+	path = Dependencies/SPIRV-Reflect
+	url = https://github.com/KhronosGroup/SPIRV-Reflect

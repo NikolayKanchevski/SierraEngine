@@ -30,7 +30,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create the Vulkan framebuffer
         VK_ASSERT(
             vkCreateFramebuffer(VK::GetLogicalDevice(), &framebufferCreateInfo, nullptr, &vkFramebuffer),
-            fmt::format("Failed to create a framebuffer with attachment count of [{0}]", createInfo.attachments.size())
+            FORMAT_STRING("Failed to create a framebuffer with attachment count of [{0}]", createInfo.attachments.size())
         );
 
         delete[] attachmentsPtr;

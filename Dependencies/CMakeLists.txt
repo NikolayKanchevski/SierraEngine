@@ -1,32 +1,28 @@
 set(CMAKE_CXX_STANDARD 20)
 cmake_minimum_required(VERSION 3.20)
 
-include(ExternalProject)
 add_library(Dependencies INTERFACE)
-
-#TODO: CHECK FOR WETHER VK WAS fouND
-
-# ========== VULKAN ========== #
-#if(NOT DEFINED ${VULKAN_SDK})
-#    message(FATAL_ERROR "Did you forget to set the [VULKAN_SDK] CMake variable?")
-#endif()
-
-set(VULKAN_SDK C:/VulkanSDK/1.3.239.0)
-set(Vulkan_LIBRARY "${VULKAN_SDK}/Lib/vulkan-1.lib")
-set(Vulkan_INCLUDE_DIR "${VULKAN_SDK}/Include/vulkan")
-find_package(Vulkan REQUIRED)
-target_include_directories(Dependencies INTERFACE "${VULKAN_SDK}/Include/")
-target_link_libraries(Dependencies INTERFACE Vulkan::Vulkan)
 
 # ========== KHRONOS UTILITIES ========== #
 add_subdirectory(glslang)
-add_subdirectory(SPIRV-Headers)
-set(SPIRV_WERROR OFF)
 add_subdirectory(SPIRV-Tools)
 
+set(SPIRV_WERROR OFF)
+add_subdirectory(SPIRV-Headers)
+
+add_library(SPIRV-Reflect STATIC "SPIRV-Reflect/spirv_reflect.h" "SPIRV-Reflect/spirv_reflect.c")
+target_link_libraries(Dependencies INTERFACE SPIRV-Reflect)
+target_include_directories(Dependencies INTERFACE SPIRV-Reflect)
+
+# ========== VOLK ========== #
+add_subdirectory(Volk)
+target_link_libraries(Dependencies INTERFACE volk::volk)
+target_include_directories(Dependencies INTERFACE Volk/)
+
 # ========== VMA ========== #
+set(VMA_STATIC_VULKAN_FUNCTIONS OFF)
 add_subdirectory(VMA)
-target_include_directories(Dependencies INTERFACE VMA/include)
+target_include_directories(Dependencies SYSTEM INTERFACE "VMA/include" -w)
 
 # ========== SHADERC ========== #
 set(SHADERC_SKIP_TESTS ON)
@@ -43,7 +39,7 @@ set(GLFW_BUILD_DOCS, OFF)
 
 add_subdirectory(GLFW)
 target_link_libraries(Dependencies INTERFACE glfw)
-target_include_directories(Dependencies INTERFACE GLFW/include)
+target_include_directories(Dependencies INTERFACE "GLFW/include")
 
 # ========== GLM ========== #
 add_subdirectory(glm)
@@ -53,7 +49,7 @@ target_include_directories(Dependencies INTERFACE glm)
 # ========== IMGUI ========== #
 add_library(IMGUI STATIC)
 target_sources(IMGUI PRIVATE ImGui/imgui_demo.cpp ImGui/imgui_draw.cpp ImGui/imgui_tables.cpp ImGui/imgui_widgets.cpp ImGui/imgui.cpp ImGui/imgui.h ImGui/imgui_internal.h ImGui/imconfig.h ImGui/imstb_rectpack.h ImGui/imstb_textedit.h ImGui/imstb_truetype.h ImGui/backends/imgui_impl_vulkan.cpp ImGui/backends/imgui_impl_vulkan.h ImGui/backends/imgui_impl_glfw.cpp ImGui/backends/imgui_impl_glfw.h)
-target_include_directories(IMGUI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/GLFW/include/" "${VULKAN_SDK}/include/" "ImGui/backends" "ImGui/")
+target_include_directories(IMGUI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/GLFW/include/" "${Vulkan_INCLUDE_DIR}" "ImGui/backends" "ImGui/" "Volk/")
 target_link_libraries(Dependencies INTERFACE IMGUI)
 target_include_directories(Dependencies INTERFACE ImGui ImGui/backends)
 
@@ -110,22 +106,6 @@ target_link_libraries(Dependencies INTERFACE WHEREAMI)
 target_include_directories(Dependencies INTERFACE ${WHEREAMI_DIR})
 
 # ========== TBB ========== #
-ExternalProject_Add(TBB-project
-    GIT_REPOSITORY https://github.com/oneapi-src/oneTBB
-    GIT_TAG 154cc73ca4d359621202399cc0c3c91058e56e79
-    GIT_SUBMODULES_RECURSE ON
-    GIT_REMOTE_UPDATE_STRATEGY CHECKOUT
-    INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/install"
-    LIST_SEPARATOR |
-    CMAKE_CACHE_ARGS
-    "-DCMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}:STRING=${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}}"
-    "-DCMAKE_C_FLAGS_${CMAKE_BUILD_TYPE_UPPER}:STRING=${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE_UPPER}}"
-    "-DCMAKE_EXE_LINKER_FLAGS_${CMAKE_BUILD_TYPE_UPPER}:STRING=${CMAKE_EXE_LINKER_FLAGS_${CMAKE_BUILD_TYPE_UPPER}}"
-    "-DCMAKE_SHARED_LINKER_FLAGS_${CMAKE_BUILD_TYPE_UPPER}:STRING=${CMAKE_SHARED_LINKER_FLAGS_${CMAKE_BUILD_TYPE_UPPER}}"
-    "-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}"
-    "-DCMAKE_INSTALL_PREFIX:STRING=<INSTALL_DIR>"
-)
-
 # TODO: FIX TBB NOT WORKING
 find_package(TBB)
 target_link_libraries(Dependencies INTERFACE TBB::tbb)

@@ -40,7 +40,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create the Vulkan sampler
         VK_ASSERT(
             vkCreateSampler(VK::GetLogicalDevice(), &vkSamplerCreateInfo, nullptr, &vkSampler),
-            fmt::format("Failed to create sampler with a LOD of [{0}, {1}] and [{2}] max anisotropy", createInfo.minLod, createInfo.maxLod, createInfo.maxAnisotropy)
+            FORMAT_STRING("Failed to create sampler with a LOD of [{0}, {1}] and [{2}] max anisotropy", createInfo.minLod, createInfo.maxLod, createInfo.maxAnisotropy)
         );
     }
 
