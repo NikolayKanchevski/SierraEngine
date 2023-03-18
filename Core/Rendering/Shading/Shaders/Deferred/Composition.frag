@@ -84,7 +84,7 @@ void main()
             position,
             diffuse,
             specular,
-            shininess,
+            shininess * 512.0f,
             normal
         );
     }
@@ -99,7 +99,7 @@ void main()
             position,
             diffuse,
             specular,
-            shininess,
+            shininess * 512.0f,
             normal
         );
     }

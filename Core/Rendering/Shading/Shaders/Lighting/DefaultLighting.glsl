@@ -1,5 +1,5 @@
-#ifndef DEFAULT_LIGHTING
-#define DEFAULT_LIGHTING
+#ifndef DEFAULT_LIGHTING_GLSL
+#define DEFAULT_LIGHTING_GLSL
 
 #include "../Utility/ShaderDefinitions.glsl"
 
@@ -30,12 +30,12 @@ vec3 CalculateDirectionalLight(DirectionalLight directionalLight, vec3 fragmentP
 
     // Calculate diffuse and base specular values
     const float diffuseStrength = max(dot(normalColor, directionalLight.direction), 0.0);
-    const float specularStrength = pow(max(dot(normalColor, halfwayDirection), 0.0), clamp(shininess * 512.0f, 1.0f, 512.0f));
+    const float specularStrength = pow(clamp(dot(normalColor, halfwayDirection), 0.0, 1.0), shininess);
 
     // Calculate light components
     const vec3 ambient = AMBIENT_STRENGTH * diffuseColor;
     const vec3 diffuse = diffuseStrength * directionalLight.intensity * directionalLight.color * diffuseColor;
-    const vec3 specular = specularStrength * directionalLight.color * specularColor;
+    const vec3 specular = specularStrength * directionalLight.intensity * directionalLight.color * specularColor;
 
     return ambient + diffuse + specular;
 }
@@ -58,7 +58,7 @@ vec3 CalculatePointLight(PointLight pointLight, vec3 fragmentPosition, vec3 diff
     // Calculate light components
     const vec3 ambient = AMBIENT_STRENGTH * diffuseColor * attenuation;
     const vec3 diffuse = diffuseStrength * pointLight.intensity * pointLight.color * diffuseColor * attenuation;
-    const vec3 specular = specularStrength * pointLight.color * specularColor                       * attenuation;
+    const vec3 specular = specularStrength * pointLight.intensity * attenuation * pointLight.color * specularColor;
 
     return ambient + diffuse + specular;
 }

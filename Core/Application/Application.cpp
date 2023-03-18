@@ -32,7 +32,7 @@ void Application::Start()
 
     // Create directional light
     DirectionalLight &directionalLight = Entity("Directional Light").AddComponent<DirectionalLight>();
-    directionalLight.direction = glm::normalize(camera.GetComponent<Transform>().GetWorldPosition() - Vector3(-7, 5, -7));
+    directionalLight.direction = Vector3(0.0f, -1.0f, 1.0f);
     directionalLight.intensity = 2.0f;
 
     // Load 3D models in a grid view
@@ -77,9 +77,10 @@ void Application::Start()
     renderer->Destroy();
     window->Destroy();
 
+    // Deallocate world memory
     World::Shutdown();
 
-    // Deallocate world memory
+    // Deallocate other rendering memory
     EngineCore::Terminate();
 }
 

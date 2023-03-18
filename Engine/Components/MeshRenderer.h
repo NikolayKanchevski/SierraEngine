@@ -26,7 +26,7 @@ namespace Sierra::Engine::Components
         void OnDrawUI() override;
 
         /* --- PROPERTIES --- */
-        Material material {};
+        Material material{};
 
         /* --- SETTER METHODS --- */
         void SetTexture(const SharedPtr<Texture>& givenTexture);

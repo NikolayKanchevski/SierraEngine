@@ -139,12 +139,6 @@ namespace Sierra::Core::Rendering::UI
                 }
             }
 
-            // Deselect object on click
-            if (Input::GetMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) && ImGui::IsWindowHovered())
-            {
-                EngineCore::SetSelectedEntity(Entity::Null);
-            }
-
             GUI::EndWindow();
         }
     }

@@ -1,5 +1,5 @@
-#ifndef MESH_PUSH_CONSTANT
-#define MESH_PUSH_CONSTANT
+#ifndef MESH_PUSH_CONSTANT_GLSL
+#define MESH_PUSH_CONSTANT_GLSL
 
 #include "../Types/Material.glsl"
 

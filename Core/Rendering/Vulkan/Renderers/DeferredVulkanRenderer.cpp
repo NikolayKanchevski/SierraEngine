@@ -5,14 +5,12 @@
 #include "DeferredVulkanRenderer.h"
 
 #include "../../../EngineCore.h"
-#include "../RenderingUtilities.h"
 #include "../../Math/MatrixUtilities.h"
 #include "../../../../Engine/Classes/Time.h"
 #include "../../../../Engine/Classes/Input.h"
 #include "../../../../Engine/Components/Camera.h"
 #include "../../../../Engine/Components/MeshRenderer.h"
 #include "../../../../Engine/Components/WorldManager.h"
-#include "../../../../Engine/Components/Model.h"
 
 #define POSITION_BUFFER_BINDING 2
 #define DIFFUSE_BUFFER_BINDING 3
@@ -430,15 +428,28 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         compositionPass->End(commandBuffer);
 
         // End and save GPU timer results
-        renderTimestampQueries[currentFrame]->End(commandBuffer);
-
-        // Update ID buffer on CPU side
         raycaster->UpdateData(commandBuffer);
 
+        // Update ID buffer on CPU side
+        renderTimestampQueries[currentFrame]->End(commandBuffer);
+
         // Handle viewport clicking
-        if (Input::GetMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) && !ImGui::IsAnyItemHovered() && !ImGuizmo::IsOver())
+        static auto sceneWindowHash = ImHashStr("Scene View");
+        if (Input::GetMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) && !ImGuizmo::IsOver())
         {
-            EngineCore::SetSelectedEntity(raycaster->GetHoveredEntityID());
+            entt::entity hoveredEntity = raycaster->GetHoveredEntityID();
+            if (hoveredEntity == entt::null)
+            {
+                if (GImGui->HoveredWindow->ID == sceneWindowHash)
+                {
+                    EngineCore::SetSelectedEntity(hoveredEntity);
+                }
+            }
+            else
+            {
+                EngineCore::SetSelectedEntity(hoveredEntity);
+            }
+
             EngineCore::SetMouseHoveredPosition(raycaster->GetHoveredWorldPosition());
         }
 

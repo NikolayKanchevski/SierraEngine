@@ -88,6 +88,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkResetFences(VK::GetLogicalDevice(), 1, &inFlightFences[currentFrame]);
         VK_ASSERT(vkQueueSubmit(VK::GetDevice()->GetGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]), "Failed to submit draw command buffer");
 
+        // Update VMA frame
+        vmaSetCurrentFrameIndex(VK::GetMemoryAllocator(), currentFrame);
+
         // Set up presentation info
         VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

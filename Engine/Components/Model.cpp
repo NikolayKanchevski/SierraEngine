@@ -366,7 +366,7 @@ namespace Sierra::Engine::Classes
 
         // Get material properties
         aiGetMaterialFloat(assimpMaterial, AI_MATKEY_SHININESS, &meshComponent.material.shininess);
-        meshComponent.material.shininess /= 512.0f;
+        meshComponent.material.shininess *= 3.0f;
 
         aiColor4D assimpColor;
 

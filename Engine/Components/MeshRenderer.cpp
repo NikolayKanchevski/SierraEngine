@@ -65,9 +65,7 @@ namespace Sierra::Engine::Components
 
         if (GUI::BeginTreeProperties("Material"))
         {
-            GUI::SetInputLimits({ 0.0f, 1.0f });
             GUI::FloatProperty("Shininess:", material.shininess, "Some tooltip.");
-            GUI::ResetInputLimits();
 
             GUI::FloatProperty("Vertex Exaggaration:", material.vertexExaggeration, "Some tooltip.");
 

@@ -1,5 +1,5 @@
-#ifndef GLOBAL_UNIFORM_BUFFER
-#define GLOBAL_UNIFORM_BUFFER
+#ifndef GLOBAL_UNIFORM_BUFFER_GLSL
+#define GLOBAL_UNIFORM_BUFFER_GLSL
 
 #include "../Utility/ShaderDefinitions.glsl"
 

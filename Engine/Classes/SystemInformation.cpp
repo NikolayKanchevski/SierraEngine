@@ -4,6 +4,8 @@
 
 #include "SystemInformation.h"
 
+#include "../../../Core/Rendering/Vulkan/VK.h"
+
 namespace Sierra::Engine::Classes
 {
 
@@ -151,9 +153,19 @@ namespace Sierra::Engine::Classes
             externalDevicesInformation = ExternalDevicesInformation{};
             externalDevicesInformation.connectedMicesCount = iware::system::mouse_amount();
             externalDevicesInformation.connectedKeyboardsCount = iware::system::keyboard_amount();
-            externalDevicesInformation.unknownDevicesConnectedCount = iware::system::other_HID_amount();
+            externalDevicesInformation.unknownConnectedDevicesCount = iware::system::other_HID_amount();
         }
 
+    }
+
+    uint64 SystemInformation::GPU::GetUsedVideoMemory() const
+    {
+        using Core::Rendering::Vulkan::VK;
+
+        VmaBudget budget;
+        vmaGetHeapBudgets(VK::GetMemoryAllocator(), &budget);
+
+        return budget.usage;
     }
 
     void SystemInformation::Shutdown()

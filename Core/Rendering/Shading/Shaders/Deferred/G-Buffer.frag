@@ -38,6 +38,6 @@ void main()
     toFramebuffer_ID = pushConstant.entityID;
     toFramebuffer_Position = vec4(fromVert_Position, 1.0f);
     toFramebuffer_Diffuse = vec4(diffuseTextureColor * pushConstant.material.diffuse, 1.0f);
-    toFramebuffer_SpecularAndShininess = vec2(specularTextureColor * pushConstant.material.specular, pushConstant.material.shininess);
+    toFramebuffer_SpecularAndShininess = vec2(specularTextureColor * pushConstant.material.specular, pushConstant.material.shininess / 512.0f);
     toFramebuffer_Normal = vec4(tnorm, 1.0f);
 }

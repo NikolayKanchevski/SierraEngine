@@ -84,6 +84,8 @@ namespace Sierra::Engine::Classes
 
             Vendor vendor;
             PhysicalInformation physicalInformation;
+
+            uint64 GetUsedVideoMemory() const;
         };
 
         struct Memory
@@ -162,7 +164,7 @@ namespace Sierra::Engine::Classes
         {
             uint connectedMicesCount;
             uint connectedKeyboardsCount;
-            uint unknownDevicesConnectedCount;
+            uint unknownConnectedDevicesCount;
         };
 
     public:

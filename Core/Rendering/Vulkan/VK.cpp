@@ -176,6 +176,7 @@ namespace Sierra::Core::Rendering::Vulkan
         vmaCreteInfo.device = device->GetLogicalDevice();
         vmaCreteInfo.vulkanApiVersion = VK_VERSION;
         vmaCreteInfo.pVulkanFunctions = &vulkanFunctions;
+        vmaCreteInfo.flags =  VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
 
         // Create VMA allocator
         vmaCreateAllocator(&vmaCreteInfo, &vmaAllocator);

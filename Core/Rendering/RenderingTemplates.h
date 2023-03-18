@@ -11,19 +11,16 @@
 
 namespace Sierra::Core::Rendering
 {
-
     struct VertexP
     {
         Vector3 position;
     };
-
 
     struct VertexPU
     {
         Vector3 position;
         Vector2 UV;
     };
-
 
     struct VertexPNU
     {

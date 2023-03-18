@@ -1,5 +1,5 @@
-#ifndef GLOABL_STORAGE_BUFFER
-#define GLOABL_STORAGE_BUFFER
+#ifndef GLOABL_STORAGE_BUFFER_GLSL
+#define GLOABL_STORAGE_BUFFER_GLSL
 
 #include "../Utility/ShaderDefinitions.glsl"
 #include "../Lighting/DefaultLighting.glsl"

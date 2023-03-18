@@ -14,7 +14,7 @@ namespace Sierra::Engine::Classes
 {
     struct Material
     {
-        Vector3 diffuse = Vector3(1);
+        Vector3 diffuse = Vector3(1.0f, 1.0f, 1.0f);
         float specular = 1.0f;
 
         float shininess = 0.001953125f;
@@ -45,8 +45,8 @@ namespace Sierra::Engine::Classes
         [[nodiscard]] inline uint GetVertexCount() const { return vertexCount; }
         [[nodiscard]] inline uint GetIndexCount() const { return indexCount; }
 
-        [[nodiscard]] inline SharedPtr<Buffer> GetVertexBuffer() { return vertexBuffer; }
-        [[nodiscard]] inline SharedPtr<Buffer> GetIndexBuffer() { return indexBuffer; }
+        [[nodiscard]] inline UniquePtr<Buffer>& GetVertexBuffer() { return vertexBuffer; }
+        [[nodiscard]] inline UniquePtr<Buffer>& GetIndexBuffer() { return indexBuffer; }
 
         [[nodiscard]] static inline uint GetTotalMeshCount()  { return totalMeshCount; }
         [[nodiscard]] static inline uint GetTotalVertexCount() { return totalVertexCount; }
@@ -63,8 +63,8 @@ namespace Sierra::Engine::Classes
         uint vertexCount;
         uint indexCount;
 
-        SharedPtr<Buffer> vertexBuffer;
-        SharedPtr<Buffer> indexBuffer;
+        UniquePtr<Buffer> vertexBuffer;
+        UniquePtr<Buffer> indexBuffer;
 
         void CreateVertexBuffer(std::vector<VertexP> &givenVertices);
         void CreateVertexBuffer(std::vector<VertexPNU> &givenVertices);

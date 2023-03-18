@@ -49,7 +49,7 @@ namespace Sierra::Engine::Classes
         // Fill the data pointer with the vertices array's information
         stagingBuffer->CopyFromPointer(givenVertices.data());
 
-        vertexBuffer = Buffer::CreateShared({
+        vertexBuffer = Buffer::Create({
            .memorySize = bufferSize,
            .bufferUsage = BufferUsage::TRANSFER_DST | BufferUsage::VERTEX
        });
@@ -58,7 +58,6 @@ namespace Sierra::Engine::Classes
 
         stagingBuffer->Destroy();
     }
-
 
     void Mesh::CreateVertexBuffer(std::vector<VertexPNU> &givenVertices)
     {
@@ -73,7 +72,7 @@ namespace Sierra::Engine::Classes
         // Fill the data pointer with the vertices array's information
         stagingBuffer->CopyFromPointer(givenVertices.data());
 
-        vertexBuffer = Buffer::CreateShared({
+        vertexBuffer = Buffer::Create({
             .memorySize = bufferSize,
             .bufferUsage = BufferUsage::TRANSFER_DST | BufferUsage::VERTEX
         });
@@ -96,7 +95,7 @@ namespace Sierra::Engine::Classes
         // Fill the data pointer with the vertices array's information
         stagingBuffer->CopyFromPointer(givenIndices.data());
 
-        indexBuffer = Buffer::CreateShared({
+        indexBuffer = Buffer::Create({
              .memorySize = bufferSize,
              .bufferUsage = BufferUsage::TRANSFER_DST | BufferUsage::INDEX
          });
