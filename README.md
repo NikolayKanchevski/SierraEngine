@@ -1,17 +1,25 @@
 # Sierra Engine
 
-<div align="center" style="background-color: rgb(171, 189, 217); border-radius: 30px;">
-    <img src="README-Media/SierraLogoText.svg" width="600" height="250" alt="SierraEngineTextLogo">
-</div>
+<p align="center">
+    <img src="README-Media/SierraLogoTextBackground.png" alt="SierraEngineTextLogo">
+</p>
+
+<br>
+<br>
 
 # What is Sierra Engine?
 
 An **open-source** game/rendering engine, which aims to provide users with an all-in-one development kit, suited for any graphics-intesive tasks (such as video games, 3D editors, etc.). It is based solely on the **[Vulkan](https://www.vulkan.org/)** rendering API, which provides suppot for **Windows 7-11**, **macOS**, **Linux**, **Android**, **iOS**, and **[more](https://en.wikipedia.org/wiki/Vulkan#Cross_platform)**, but is planned to also feature native APIs (like **[DirectX](https://developer.nvidia.com/directx)** and **[Metal](https://developer.apple.com/metal/)**) to further improve its already-incredible performance
 
+<br>
+
 ## 🛠️ Building and Running the Engine
 
-### Requirements:
+**Requirements:**
+
 In order to build it successfully, you must first make sure you have the following installed (some of these modules may come with your IDE of choice):
+
+<br>
 
 * A C/C++ compiler (preferably **[CLang](https://clang.llvm.org)** or **[MSVC](https://visualstudio.microsoft.com/downloads/)**)
 * **[CMake](https://cmake.org/download/)** 3.20 or higher
@@ -19,16 +27,23 @@ In order to build it successfully, you must first make sure you have the followi
 * The **[VulkanSDK](https://vulkan.lunarg.com)**
 * **[Python](https://www.python.org/downloads/)**
 
-### Installation:
-Firstly, clone the repository in your favourite IDE (**[Visual Studio](https://visualstudio.microsoft.com)**, **[CLion](https://www.jetbrains.com/clion/)**, etc.). Next, you will have to run a Python script what will configure the project for you. Navigate over to the folder where you cloned the repo and run the following command:
+<br>
 
+**Installation:**
+Firstly, clone the repository in your favourite IDE <b><a href="https://visualstudio.microsoft.com">Visual Studio</a></b>, <b><a href="https://www.jetbrains.com/clion/">CLion</a></b>, etc.). Next, you will have to run a Python script what will configure the project for you. Navigate over to the folder where you cloned the repo and run the following command:
+
+<br>
 
 ```bat
 $ python3 Scripts/UpdateProject.py --Release
 ```
 *Note: You can replace the **--Release** argument with **--Debug**, depending on which configuration you want to be configured.*
 
-<br>And now - time to click build and pray to God 🤞
+<br>
+
+And now - time to click build and pray to God 🤞
+
+<br>
 
 ## 💫 Features
 
@@ -36,11 +51,17 @@ $ python3 Scripts/UpdateProject.py --Release
 // TODO: Add to this section :D
 ```
 
+<br>
+
 ## 📄 Documentation
 
 Wondering how to use the engine? You can check out the online documentation [here](https://nikicha.gitbook.io/sierra-engine-dotnet/) (it was written for the .NET version, but a new website for the C++ version is being worked on), or you can also toy around with the example projects given in the repository, as most of the code is thorougly explained with comments.
 
-Regardless - **have fun reading, mate**! 🤓 
+<br>
+
+Regardless - **have fun reading, mate**! 🤓
+
+<br>
 
 ## 🔮 What's next?
 
@@ -53,9 +74,12 @@ Regardless - **have fun reading, mate**! 🤓
 - [ ] Virtual Texture
 - [ ] Arena Allocator
 
-## 🤓️  About
+<br>
 
-## Frameworks used:
+## 🤓️ About
+
+**Frameworks used:**
+
 * [Vulkan](https://www.vulkan.org/) - For both cross-platform and pefromant-friendly rendering.
 * [Volk](https://github.com/zeux/volk/tree/master/) - A meta-loader for [Vulkan](https://www.vulkan.org/) that reduces CPU overhead and simplifies the loading of extensions.
 * [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For easier and more optimal memory allocation and distribution of [Vulkan](https://www.vulkan.org/) objects.
@@ -74,7 +98,10 @@ Regardless - **have fun reading, mate**! 🤓
 * [TBB](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onetbb.html#gs.m2vcgt/) - For easier and guaranteed-to-be-supported threading.
 * [My Brain](https://ih1.redbubble.net/image.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
 
-## Software used:
+<br>
+
+**Software used:**
+
 * [JetBrains CLion](https://www.jetbrains.com/clion/) - A **cross-platform** IDE used to develop the final C++ version.
 * [JetBrains Rider](https://www.jetbrains.com/rider/) - Another **cross-platform** IDE but for C# which was used to create the .NET 6.0 prototype version of the engine.
 * [Blender](https://www.blender.org/) - For the testing of 3D models and textures functionality.
@@ -88,3 +115,4 @@ Regardless - **have fun reading, mate**! 🤓
 <p align="center" id="LastUpdated">Last updated: 18/03/2023</p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
