@@ -133,6 +133,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         bool SetDefinition(const ShaderDefinition &definition);
 
         inline static shaderc::Compiler compiler;
+        static ShaderDefinition defaultDefinitions[];
+
         // filePath | Shader object
         inline static std::unordered_map<Hash, SharedPtr<Shader>> shaderPool;
     };

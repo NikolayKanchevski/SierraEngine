@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Image.h"
+#include "Buffer.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -24,8 +25,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void TransitionImageLayout(Image *image, ImageLayout newLayout, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage);
         void TransitionImageLayout(const UniquePtr<Image> &image, ImageLayout newLayout, VkPipelineStageFlags lastUsageStage, VkPipelineStageFlags expectedUsageStage);
         void TransitionImageLayouts(const std::vector<ImageReference>& images, ImageLayout newLayout, VkPipelineStageFlags lastUsageStage, VkPipelineStageFlags expectedUsageStage);
-        void BindVertexBuffers(const std::vector<VkBuffer> &vertexBuffers) const;
-        void BindIndexBuffer(const VkBuffer &indexBuffer) const;
+        void BindVertexBuffer(const UniquePtr<Buffer> &vertexBuffer) const;
+        void BindIndexBuffer(const UniquePtr<Buffer> &indexBuffer) const;
         void DrawIndexed(const uint indexCount) const;
         void Draw(const uint vertexCount) const;
         void Dispatch(uint xCount, uint yCount = 1, uint zCount = 1);

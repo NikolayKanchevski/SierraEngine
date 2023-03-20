@@ -4,13 +4,10 @@
 
 #pragma once
 
-namespace Sierra::Engine
+namespace Sierra::Engine::Version
 {
-    struct Version
-    {
-        static inline const char* RELEASE_TYPE = "Pre-Alpha";
-        static inline const uint MAJOR = 1;
-        static inline const uint MINOR = 0;
-        static inline const uint PATCH = 0;
-    };
+    inline const char* RELEASE_TYPE = "Pre-Alpha";
+    inline const uint MAJOR = 1;
+    inline const uint MINOR = 0;
+    inline const uint PATCH = 0;
 }

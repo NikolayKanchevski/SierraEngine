@@ -6,6 +6,7 @@
 
 #include "../../Core/Rendering/RenderingTemplates.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Buffer.h"
+#include "../../Core/Rendering/Vulkan/Abstractions/CommandBuffer.h"
 
 using namespace Sierra::Core::Rendering;
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
@@ -40,6 +41,9 @@ namespace Sierra::Engine::Classes
         /* --- CONSTRUCTORS --- */
         Mesh(std::vector<VertexP> &givenVertices, std::vector<uint> &givenIndices);
         Mesh(std::vector<VertexPNU> &givenVertices, std::vector<uint> &givenIndices);
+
+        /* --- POLLING METHODS --- */
+        void Bind(UniquePtr<CommandBuffer> &commandBuffer);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint GetVertexCount() const { return vertexCount; }

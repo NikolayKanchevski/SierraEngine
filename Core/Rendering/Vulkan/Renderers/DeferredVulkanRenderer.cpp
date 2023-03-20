@@ -10,14 +10,13 @@
 #include "../../../../Engine/Classes/Input.h"
 #include "../../../../Engine/Components/Camera.h"
 #include "../../../../Engine/Components/MeshRenderer.h"
-#include "../../../../Engine/Components/WorldManager.h"
 
 #define POSITION_BUFFER_BINDING 2
 #define DIFFUSE_BUFFER_BINDING 3
 #define SPECULAR_AND_SHININESS_BUFFER_BINDING 4
 #define NORMAL_BUFFER_BINDING 5
 #define DEPTH_BUFFER_BINDING 6
-#define SKYBOX_CUBEMAP_BINDING 7
+#define SKYBOX_BUFFER_BINDING 7
 
 #define USE_THREADED_FOR_EACH
 
@@ -233,17 +232,28 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             .shadingType = ShadingType::FILL
         }, bufferPipeline, PipelineCopyOp::UNIFORM_BUFFERS | PipelineCopyOp::STORAGE_BUFFERS);
 
-        // TODO: Special write method
-        for (const auto &mergingDescriptorSet : compositionPipeline->GetDescriptorSets())
+        // Crete skybox cubemap
+        skyboxCubemap = Cubemap::Create({ .filePaths = {
+            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_right.png",
+            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_left.png",
+            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_top.png",
+            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_bottom.png",
+            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_front.png",
+            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_back.png",
+        }, .cubemapType = CubemapType::SKYBOX });
+
+        // Write external data to pipeline
+        for (const auto &descriptorSet : compositionPipeline->GetDescriptorSets())
         {
-            mergingDescriptorSet->WriteImage(POSITION_BUFFER_BINDING, positionBuffer, textureSampler);
-            mergingDescriptorSet->WriteImage(POSITION_BUFFER_BINDING, positionBuffer, textureSampler);
-            mergingDescriptorSet->WriteImage(DIFFUSE_BUFFER_BINDING, diffuseBuffer, textureSampler);
-            mergingDescriptorSet->WriteImage(SPECULAR_AND_SHININESS_BUFFER_BINDING, specularAndShininessBuffer, textureSampler);
-            mergingDescriptorSet->WriteImage(NORMAL_BUFFER_BINDING, normalBuffer, textureSampler);
-            mergingDescriptorSet->WriteImage(DEPTH_BUFFER_BINDING, depthStencilBuffer, textureSampler);
-            mergingDescriptorSet->WriteCubemap(SKYBOX_CUBEMAP_BINDING, World::GetManager().GetSkyboxSystem().skyboxCubemap);
-            mergingDescriptorSet->Allocate();
+            descriptorSet
+                ->WriteImage(POSITION_BUFFER_BINDING, positionBuffer, textureSampler)
+                ->WriteImage(POSITION_BUFFER_BINDING, positionBuffer, textureSampler)
+                ->WriteImage(DIFFUSE_BUFFER_BINDING, diffuseBuffer, textureSampler)
+                ->WriteImage(SPECULAR_AND_SHININESS_BUFFER_BINDING, specularAndShininessBuffer, textureSampler)
+                ->WriteImage(NORMAL_BUFFER_BINDING, normalBuffer, textureSampler)
+                ->WriteImage(DEPTH_BUFFER_BINDING, depthStencilBuffer, textureSampler)
+                ->WriteCubemap(SKYBOX_BUFFER_BINDING, skyboxCubemap)
+            ->Allocate();
         }
 
         // Create descriptor sets to rendered images
@@ -301,8 +311,9 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             storageData.pointLights[pointLight.GetID()] = pointLight;
         });
 
+        // Rotate skybox
         float timeAngle = std::fmod(Time::GetUpTime(), 360.0f) * 0.8f;
-        compositionPipeline->GetPushConstantData().skyboxModel = MatrixUtilities::CreateModelMatrix({0, 0, 0}, {timeAngle, 0.0f, 0.0f});
+        compositionPipeline->GetPushConstantData().skyboxModel = MatrixUtilities::CreateModelMatrix({ 0.0f, 0.0f, 0.0f }, { timeAngle, 0.0f, 0.0f });
     }
 
     void DeferredVulkanRenderer::DrawUI()
@@ -374,22 +385,13 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         // Bind the pipeline which will draw to the G-Buffer
         bufferPipeline->Bind(commandBuffer);
 
-        // Create a vector to hold vertex buffers of the meshes
-        std::vector<VkBuffer> vertexBuffers(1);
-
         // For each mesh in the world
         auto enttMeshView = World::GetAllComponentsOfType<MeshRenderer>();
         for (auto enttEntity : enttMeshView)
         {
-            // Get current meshRenderer
+            // Bind mesh
             auto &meshRenderer = enttMeshView.get<MeshRenderer>(enttEntity);
-            vertexBuffers[0] = meshRenderer.GetMesh()->GetVertexBuffer()->GetVulkanBuffer();
-
-            // Bind the vertex buffer
-            commandBuffer->BindVertexBuffers(vertexBuffers);
-
-            // Bind the index buffer
-            commandBuffer->BindIndexBuffer(meshRenderer.GetMesh()->GetIndexBuffer()->GetVulkanBuffer());
+            meshRenderer.GetMesh()->Bind(commandBuffer);
 
             // Copy push constant data to pipeline
             bufferPipeline->GetPushConstantData() = meshRenderer.GetPushConstantData();
@@ -486,6 +488,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         raycaster->Destroy();
 
+        skyboxCubemap->Destroy();
         textureSampler->Destroy();
 
         compositionPipeline->Destroy();

@@ -276,7 +276,7 @@
 
     bool GUI::StringInput(const char* labelID, String &value, const ImGuiInputTextFlags inputFlags)
     {
-        return ImGui::InputText(labelID, value.data(), inputFlags);
+        return ImGui::InputText(labelID, &value, 0, nullptr);
     }
 
     template<typename T, ENABLE_IF(std::is_arithmetic_v<T>)>
@@ -403,16 +403,16 @@
                 const bool input_requested_by_tabbing = temp_input_allowed && (g.LastItemData.StatusFlags & ImGuiItemStatusFlags_FocusedByTabbing) != 0;
                 const bool clicked = (hovered && g.IO.MouseClicked[0]);
                 const bool double_clicked = (hovered && g.IO.MouseClickedCount[0] == 2);
-                const bool make_active = (input_requested_by_tabbing || clicked || double_clicked || g.NavActivateId == id || g.NavActivateInputId == id);
+                const bool make_active = (input_requested_by_tabbing || clicked || double_clicked || g.NavActivateId == id);
                 if (make_active && temp_input_allowed)
-                    if (input_requested_by_tabbing || (clicked && g.IO.KeyCtrl) || double_clicked || g.NavActivateInputId == id)
+                    if (input_requested_by_tabbing || (clicked && g.IO.KeyCtrl) || double_clicked || (g.NavActivateId == id && (g.NavActivateFlags & ImGuiActivateFlags_PreferInput)))
                         temp_input_is_active = true;
 
                 // (Optional) simple click (without moving) turns Drag into an InputText
                 if (g.IO.ConfigDragClickToInputText && temp_input_allowed && !temp_input_is_active)
                     if (g.ActiveId == id && hovered && g.IO.MouseReleased[0] && !IsMouseDragPastThreshold(0, g.IO.MouseDragThreshold * 0.50f)) // DRAG_MOUSE_THRESHOLD_FACTOR
                     {
-                        g.NavActivateId = g.NavActivateInputId = id;
+                        g.NavActivateId = id;
                         g.NavActivateFlags = ImGuiActivateFlags_PreferInput;
                         temp_input_is_active = true;
                     }
@@ -525,7 +525,7 @@
             {
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.9f, 0.2f, 0.2f, 1.0f));
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
                 ImGui::PushFont(boldFont);

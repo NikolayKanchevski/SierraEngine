@@ -73,6 +73,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void CommandBuffer::TransitionImageLayout(Image *image, const ImageLayout newLayout, const VkPipelineStageFlags srcStage, const VkPipelineStageFlags dstStage)
     {
+        if (image->GetLayout() == newLayout) return;
+
         // Initialize barrier info
         VkImageMemoryBarrier imageBarrier{};
         imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -201,15 +203,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
     }
 
-    void CommandBuffer::BindVertexBuffers(const std::vector<VkBuffer> &vertexBuffers) const
+    void CommandBuffer::BindVertexBuffer(const UniquePtr<Buffer> &vertexBuffer) const
     {
         static VkDeviceSize offsets[] { 0 };
-        vkCmdBindVertexBuffers(vkCommandBuffer, 0, vertexBuffers.size(), vertexBuffers.data(), offsets);
+
+        VkBuffer vkBuffer = vertexBuffer->GetVulkanBuffer();
+        vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, &vkBuffer, offsets);
     }
 
-    void CommandBuffer::BindIndexBuffer(const VkBuffer &indexBuffer) const
+    void CommandBuffer::BindIndexBuffer(const UniquePtr<Buffer> &indexBuffer) const
     {
-        vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer, 0, INDEX_BUFFER_TYPE);
+        VkBuffer vkBuffer = indexBuffer->GetVulkanBuffer();
+        vkCmdBindIndexBuffer(vkCommandBuffer, vkBuffer, 0, INDEX_BUFFER_TYPE);
     }
 
     void CommandBuffer::DrawIndexed(const uint indexCount) const

@@ -92,6 +92,7 @@
     #include <imgui_internal.h>
     #define VK_NO_PROTOTYPES
     #define IMGUI_IMPL_VULKAN_NO_PROTOTYPES
+    #include <imgui_stdlib.h>
     #include <imgui_impl_glfw.h>
     #include <imgui_impl_vulkan.h>
 

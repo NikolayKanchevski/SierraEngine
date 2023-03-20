@@ -48,10 +48,10 @@ target_include_directories(Dependencies INTERFACE glm)
 
 # ========== IMGUI ========== #
 add_library(IMGUI STATIC)
-target_sources(IMGUI PRIVATE ImGui/imgui_demo.cpp ImGui/imgui_draw.cpp ImGui/imgui_tables.cpp ImGui/imgui_widgets.cpp ImGui/imgui.cpp ImGui/imgui.h ImGui/imgui_internal.h ImGui/imconfig.h ImGui/imstb_rectpack.h ImGui/imstb_textedit.h ImGui/imstb_truetype.h ImGui/backends/imgui_impl_vulkan.cpp ImGui/backends/imgui_impl_vulkan.h ImGui/backends/imgui_impl_glfw.cpp ImGui/backends/imgui_impl_glfw.h)
+target_sources(IMGUI PRIVATE ImGui/imgui_demo.cpp ImGui/imgui_draw.cpp ImGui/imgui_tables.cpp ImGui/imgui_widgets.cpp ImGui/imgui.cpp ImGui/imgui.h ImGui/imgui_internal.h ImGui/imconfig.h ImGui/imstb_rectpack.h ImGui/imstb_textedit.h ImGui/imstb_truetype.h ImGui/backends/imgui_impl_vulkan.cpp ImGui/backends/imgui_impl_vulkan.h ImGui/backends/imgui_impl_glfw.cpp ImGui/backends/imgui_impl_glfw.h ImGui/misc/cpp/imgui_stdlib.h ImGui/misc/cpp/imgui_stdlib.cpp)
 target_include_directories(IMGUI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/GLFW/include/" "${Vulkan_INCLUDE_DIR}" "ImGui/backends" "ImGui/" "Volk/")
 target_link_libraries(Dependencies INTERFACE IMGUI)
-target_include_directories(Dependencies INTERFACE ImGui ImGui/backends)
+target_include_directories(Dependencies INTERFACE ImGui ImGui/backends ImGui/misc/cpp)
 
 # ========== IMGUIZMO ========== #
 add_library(IMGUIZMO STATIC)

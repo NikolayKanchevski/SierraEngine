@@ -42,10 +42,10 @@ namespace Sierra::Engine::Components
         [[nodiscard]] MeshPushConstant GetPushConstantData() const;
 
         /* --- SETTER METHODS --- */
-        void Destroy() const override;
+        void Destroy() override;
 
     private:
-        uint meshID;
+
         SharedPtr<Mesh> coreMesh = nullptr;
 
         UniquePtr<DescriptorSet> descriptorSet;
@@ -55,8 +55,8 @@ namespace Sierra::Engine::Components
 
         void CreateDescriptorSet();
 
-        inline static uint meshSlotsUsed = 0;
-        inline static std::vector<uint> freedMeshSlots;
+        uint meshID;
+        inline static auto IDPool = IdentifierPool<uint>(MAX_MESHES);
     };
 
 }

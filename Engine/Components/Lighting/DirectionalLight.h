@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Light.h"
+#include "../../Classes/IdentifierPool.h"
 #include "../../../Core/Rendering/UI/ImGuiUtilities.h"
 
 namespace Sierra::Engine::Components
@@ -21,18 +22,7 @@ namespace Sierra::Engine::Components
         /* --- CONSTRUCTORS --- */
         inline DirectionalLight()
         {
-            directionalLightCount++;
-
-            if (freedIDs.empty())
-            {
-                this->lightID = currentMaxID;
-                currentMaxID++;
-            }
-            else
-            {
-                this->lightID = freedIDs[0];
-                freedIDs.erase(freedIDs.begin());
-            }
+            this->lightID = IDPool.CreateNewID();
         };
 
         /* --- POLLING METHODS --- */
@@ -53,10 +43,10 @@ namespace Sierra::Engine::Components
         }
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline static uint GetDirectionalLightCount() { return directionalLightCount; }
+        [[nodiscard]] inline static uint GetDirectionalLightCount() { return IDPool.GetTotalIDsCount(); }
 
         /* --- DESTRUCTOR --- */
-        inline void Destroy() const override { freedIDs.push_back(this->lightID); directionalLightCount--; };
+        inline void Destroy() override { IDPool.RemoveID(lightID); };
 
     public:
         struct alignas(16) ShaderDirectionalLight
@@ -75,10 +65,7 @@ namespace Sierra::Engine::Components
         }; }
 
     private:
-        inline static uint currentMaxID = 0;
-
-        inline static std::vector<uint> freedIDs;
-        inline static uint directionalLightCount = 0;
+        inline static auto IDPool = Classes::IdentifierPool<uint>(MAX_DIRECTIONAL_LIGHTS);
     };
 
 }

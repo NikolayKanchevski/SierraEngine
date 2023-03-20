@@ -72,9 +72,6 @@ namespace Sierra::Engine::Classes
                     // Increase vertex count
                     model->vertexCount += mesh.GetMesh()->GetVertexCount();
                     model->meshCount++;
-
-                    Mesh::IncreaseTotalMeshCount();
-
                     model->meshEntities.push_back(entity.GetEnttEntity());
                 }
 

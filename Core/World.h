@@ -4,8 +4,6 @@
 
 #pragma once
 
-FORWARD_DECLARE_COMPONENT(WorldManager);
-
 namespace Sierra::Core
 {
 
@@ -33,7 +31,6 @@ namespace Sierra::Core
         /* --- GETTER METHODS --- */
         [[nodiscard]] static inline entt::entity RegisterEntity() { return enttRegistry->create(); }
         [[nodiscard]] static inline std::unordered_map<uint, entt::entity>& GetOriginEntitiesList() { return originEntities; }
-        [[nodiscard]] static WorldManager& GetManager();
 
         /* --- TEMPLATES --- */
         template <typename T, typename... Args>
@@ -95,7 +92,6 @@ namespace Sierra::Core
 
         /* --- DESTRUCTOR --- */
     private:
-        inline static entt::entity worldManagerEntity = entt::null;
         inline static std::unordered_map<uint, entt::entity> originEntities;
         inline static std::shared_ptr<entt::registry> enttRegistry = std::make_shared<entt::registry>();
     };

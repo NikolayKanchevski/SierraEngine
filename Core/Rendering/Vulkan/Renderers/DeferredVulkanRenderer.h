@@ -40,7 +40,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         typedef GraphicsPipeline<MeshPushConstant, UniformData, StorageData> ScenePipeline;
         typedef GraphicsPipeline<MergingRendererPushConstant, UniformData, StorageData> CompositionPipeline;
-        typedef GraphicsPipeline<SkyboxPushConstant, UniformData, NullType> SkyboxPipeline;
     public:
         /* --- CONSTRUCTORS --- */
         DeferredVulkanRenderer(const VulkanRendererCreateInfo &createInfo);
@@ -68,6 +67,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         UniquePtr<DynamicRenderer> bufferPass;
         UniquePtr<ScenePipeline> bufferPipeline;
 
+        UniquePtr<Cubemap> skyboxCubemap;
         UniquePtr<DynamicRenderer> compositionPass;
         UniquePtr<CompositionPipeline> compositionPipeline;
 

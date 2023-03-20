@@ -113,7 +113,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- SETTER METHODS --- */
         DescriptorSet* WriteBuffer(uint binding, const UniquePtr<Buffer> &buffer);
-        DescriptorSet* WriteImage(uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler, ImageLayout imageLayout = ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+        DescriptorSet* WriteImage(uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler = Sampler::Default , ImageLayout imageLayout = ImageLayout::SHADER_READ_ONLY_OPTIMAL);
         DescriptorSet* WriteTexture(uint binding, const SharedPtr<Texture> &texture);
         DescriptorSet* WriteCubemap(uint binding, const UniquePtr<Cubemap> &cubemap);
         void Allocate();

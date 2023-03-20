@@ -37,7 +37,7 @@ namespace Sierra::Engine::Components
         [[nodiscard]] Vector3 GetYawPitchRoll() const;
 
         [[nodiscard]] inline Matrix4x4 GetViewMatrix() { return viewMatrix; };
-        [[nodiscard]] inline Matrix4x4 GetProjectionMatrix() { return projectionMatrix; };
+        [[nodiscard]] inline Matrix4x4 GetProjectionMatrix() { if (isProjectionDirty) CalculateProjectionMatrix(); return projectionMatrix; };
 
         [[nodiscard]] inline Matrix4x4 GetInverseViewMatrix() { return inverseViewMatrix; };
         [[nodiscard]] inline Matrix4x4 GetInverseProjectionMatrix() { return inverseProjectionMatrix; }
@@ -67,6 +67,8 @@ namespace Sierra::Engine::Components
         Matrix4x4 projectionMatrix;
         Matrix4x4 inverseViewMatrix;
         Matrix4x4 inverseProjectionMatrix;
+
+        bool isProjectionDirty = false;
 
         static inline entt::entity mainCamera = entt::null;
         static inline const Vector3 upDirection = { 0.0f, 1.0f, 0.0f };

@@ -33,9 +33,9 @@ namespace Sierra::Engine::Components
     {
         GUI::BeginProperties();
 
-        GUI::FloatProperty("FOV:", fov);
-        GUI::FloatProperty("Near Clip:", nearClip);
-        GUI::FloatProperty("Far Clip:", farClip);
+        if (GUI::FloatProperty("FOV:", fov, "Some Tooltip")) isProjectionDirty = true;
+        if (GUI::FloatProperty("Near Clip:", nearClip, "Some Tooltip")) isProjectionDirty = true;
+        if (GUI::FloatProperty("Far Clip:", farClip, "Some Tooltip")) isProjectionDirty = true;
 
         GUI::EndProperties();
     }
@@ -105,6 +105,8 @@ namespace Sierra::Engine::Components
         projectionMatrix = glm::perspectiveRH(glm::radians(fov), static_cast<float>(ImGuiCore::GetSceneViewWidth()) / static_cast<float>(ImGuiCore::GetSceneViewHeight()), nearClip, farClip);
         projectionMatrix[1][1] *= -1;
         inverseProjectionMatrix = glm::inverse(projectionMatrix);
+
+        isProjectionDirty = false;
     }
 
 }

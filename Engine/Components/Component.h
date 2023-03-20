@@ -34,7 +34,7 @@ namespace Sierra::Engine::Components
 
         virtual inline void OnDrawUI() { }
         virtual inline void Update() { }
-        virtual inline void Destroy() const { }
+        virtual inline void Destroy() { }
 
     protected:
         entt::entity enttEntity = entt::null;

@@ -32,9 +32,15 @@ namespace Sierra::Engine::Classes
         totalVertexCount += vertexCount;
     }
 
-    /* --- SETTER METHODS --- */
+    /* --- POLLING  METHODS --- */
 
-    // TEMPLATE FOLLOWING 2 FUNCTIONS
+    void Mesh::Bind(UniquePtr<CommandBuffer> &commandBuffer)
+    {
+        commandBuffer->BindVertexBuffer(vertexBuffer);
+        commandBuffer->BindIndexBuffer(indexBuffer);
+    }
+
+    /* --- SETTER METHODS --- */
 
     void Mesh::CreateVertexBuffer(std::vector<VertexP> &givenVertices)
     {

@@ -5,12 +5,33 @@
 #include "Shader.h"
 
 #include "../VK.h"
+#include "../../RenderingSettings.h"
 #include "../../../../Engine/Classes/File.h"
 
 using namespace Sierra::Engine::Classes;
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
+    ShaderDefinition Shader::defaultDefinitions[] =
+    {
+        {
+            .definitionName = "MAX_MESHES",
+            .value = std::to_string(MAX_MESHES)
+        },
+        {
+            .definitionName = "MAX_TEXTURES",
+            .value = std::to_string(MAX_MESHES * TOTAL_TEXTURE_TYPES_COUNT)
+        },
+        {
+            .definitionName = "MAX_POINT_LIGHTS",
+            .value = std::to_string(MAX_POINT_LIGHTS)
+        },
+        {
+            .definitionName = "MAX_DIRECTIONAL_LIGHTS",
+            .value = std::to_string(MAX_DIRECTIONAL_LIGHTS)
+        }
+    };
+
     /* --- CONSTRUCTORS --- */
 
     Shader::Shader(const ShaderCreateInfo &createInfo)
@@ -20,10 +41,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         precompiledData = new PrecompiledData();
         precompiledData->optimization = createInfo.optimization;
         precompiledData->entryPoint = createInfo.entryPoint;
-        for (const auto &pair : createInfo.definitions)
-        {
+
+        // Add definitions to shader
+        for (const auto &pair : defaultDefinitions)
             precompiledData->definitions[pair.definitionName] = pair.value;
-        }
+
+        for (const auto &pair : createInfo.definitions)
+            precompiledData->definitions[pair.definitionName] = pair.value;
 
         // Compile shader to SPIRV
         auto code = CompileShadercShader();

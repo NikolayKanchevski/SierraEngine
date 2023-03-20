@@ -19,34 +19,9 @@ namespace Sierra::Engine::Components
     MeshRenderer::MeshRenderer(SharedPtr<Mesh> givenCorrespondingMesh)
         : coreMesh(givenCorrespondingMesh)
     {
-        ASSERT_ERROR_FORMATTED_IF(meshSlotsUsed >= MAX_MESHES, "Limit of maximum [{0}] meshes reached", MAX_MESHES);
+        ASSERT_ERROR_FORMATTED_IF(IDPool.IsFull(), "Limit of maximum [{0}] meshes reached", MAX_MESHES);
 
-        // Check if there are any freed slots
-        if (freedMeshSlots.empty())
-        {
-            // Create new mesh slot
-            meshID = meshSlotsUsed;
-            meshSlotsUsed++;
-
-            // TODO: BINDLESS
-//            // Check if descriptor indexing is supported
-//            if (VK::GetDevice()->GetDescriptorIndexingSupported())
-//            {
-//                auto &globalBindlessDescriptorSet = VulkanCore::GetGlobalBindlessDescriptorSet();
-//
-//                // Reserve spots for mesh's textures
-//                for (uint i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
-//                {
-//                    globalBindlessDescriptorSet->ReserveIndex(BINDLESS_TEXTURE_BINDING, meshID + i);
-//                }
-//            }
-        }
-        else
-        {
-            // Use first freed slot
-            meshID = freedMeshSlots[0];
-            freedMeshSlots.erase(freedMeshSlots.begin());
-        }
+        meshID = IDPool.CreateNewID();
 
         if (!VK::GetDevice()->GetDescriptorIndexingSupported()) CreateDescriptorSet();
 
@@ -145,9 +120,9 @@ namespace Sierra::Engine::Components
 
     /* --- DESTRUCTOR --- */
 
-    void MeshRenderer::Destroy() const
+    void MeshRenderer::Destroy()
     {
-        freedMeshSlots.push_back(meshID);
+        IDPool.RemoveID(meshID);
 
         for (const auto &texture : textures)
         {

@@ -54,9 +54,4 @@ namespace Sierra::Core::Rendering
         float _align1_;
         float _align2_;
     };
-
-    struct SkyboxPushConstant
-    {
-        glm::mat4x4 model;
-    };
 }

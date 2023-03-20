@@ -7,9 +7,11 @@
 #include "Light.h"
 
 #include "../Transform.h"
+#include "../../Classes/IdentifierPool.h"
 #include "../../../Core/Rendering/UI/ImGuiUtilities.h"
 
-namespace Sierra::Engine::Components {
+namespace Sierra::Engine::Components
+{
 
     /// @brief A component class representing a point light in the scene. Derives from both <see cref="Light"/> and <see cref="Component"/>.
     class PointLight : public Light
@@ -27,18 +29,7 @@ namespace Sierra::Engine::Components {
         /* --- CONSTRUCTORS --- */
         inline PointLight()
         {
-            pointLightCount++;
-
-            if (freedIDs.empty())
-            {
-                this->lightID = currentMaxID;
-                currentMaxID++;
-            }
-            else
-            {
-                this->lightID = freedIDs[0];
-                freedIDs.erase(freedIDs.begin());
-            }
+            this->lightID = IDPool.CreateNewID();
         }
 
         /* --- POLLING METHODS --- */
@@ -60,10 +51,10 @@ namespace Sierra::Engine::Components {
         }
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline static uint GetPointLightCount() { return pointLightCount; }
+        [[nodiscard]] inline static uint GetPointLightCount() { return IDPool.GetTotalIDsCount(); }
 
         /* --- DESTRUCTOR --- */
-        inline void Destroy() const override { freedIDs.push_back(this->lightID); pointLightCount--; };
+        inline void Destroy() override { IDPool.RemoveID(lightID); };
 
     public:
         struct ShaderPointLight
@@ -88,10 +79,7 @@ namespace Sierra::Engine::Components {
         }; }
 
     private:
-        inline static uint currentMaxID = 0;
-
-        inline static std::vector<uint> freedIDs;
-        inline static uint pointLightCount = 0;
+        inline static auto IDPool = Classes::IdentifierPool<uint>(MAX_POINT_LIGHTS);
     };
 
 }

@@ -5,7 +5,6 @@
 </p>
 
 <br>
-<br>
 
 # What is Sierra Engine?
 
@@ -30,7 +29,7 @@ In order to build it successfully, you must first make sure you have the followi
 <br>
 
 **Installation:**
-Firstly, clone the repository in your favourite IDE <b><a href="https://visualstudio.microsoft.com">Visual Studio</a></b>, <b><a href="https://www.jetbrains.com/clion/">CLion</a></b>, etc.). Next, you will have to run a Python script what will configure the project for you. Navigate over to the folder where you cloned the repo and run the following command:
+Firstly, clone the repository in your favourite IDE <b><a href="https://visualstudio.microsoft.com">Visual Studio</a></b>, <b><a href="https://www.jetbrains.com/clion/">CLion</a></b>, etc.). Next, you will have to run a Python script what will configure the project for you. Navigate over to the folder where you cloned the repo, run the command below, hit build, and pray to God that the project compiles. 🤞
 
 <br>
 
@@ -41,38 +40,37 @@ $ python3 Scripts/UpdateProject.py --Release
 
 <br>
 
-And now - time to click build and pray to God 🤞
-
-<br>
-
 ## 💫 Features
 
 ```c++
 // TODO: Add to this section :D
 ```
 
-<br>
-
 ## 📄 Documentation
 
-Wondering how to use the engine? You can check out the online documentation [here](https://nikicha.gitbook.io/sierra-engine-dotnet/) (it was written for the .NET version, but a new website for the C++ version is being worked on), or you can also toy around with the example projects given in the repository, as most of the code is thorougly explained with comments.
+Wondering how to use the engine? You can check out the online documentation [here](https://nikicha.gitbook.io/sierra-engine-dotnet/) (it was written for the .NET version, but a new website for the C++ version is being worked on), or you can also toy around with the example projects given in the repository, as most of the code is thorougly explained with comments. Regardless - have fun reading, mate! 🤓
 
 <br>
 
-Regardless - **have fun reading, mate**! 🤓
+## 🔮 What's to come?
 
-<br>
-
-## 🔮 What's next?
-
+- [ ] HDR
+- [ ] PBR
 - [ ] Culling
 - [ ] Threading
+- [ ] Instancing
 - [ ] C# Scripting
+- [ ] Transparency
 - [ ] Custom Gizmos
 - [ ] Debug Renderer
 - [ ] Shadow Mapping
 - [ ] Virtual Texture
 - [ ] Arena Allocator
+- [ ] Post-Processing
+- [ ] Indirect Drawing
+- [ ] Early Depth Pass
+- [ ] Scene Serialization
+- [ ] Advanced Anti-Aliasing Techniques
 
 <br>
 
@@ -111,8 +109,7 @@ Regardless - **have fun reading, mate**! 🤓
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 16,795</p>
-<p align="center" id="LastUpdated">Last updated: 18/03/2023</p>
+<p align="center" id="LinesCounter">Total lines of code: 17,040</p>
+<p align="center" id="LastUpdated">Last updated: 20/03/2023</p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-

@@ -210,7 +210,6 @@ namespace Sierra::Core::Rendering::UI
 
         // Convert camera's view matrix to array data
         Camera &camera = Camera::GetMainCamera();
-        camera.CalculateProjectionMatrix();
         Matrix4x4 viewMatrix = camera.GetViewMatrix();
         Matrix4x4 projectionMatrix = camera.GetProjectionMatrix();
 
