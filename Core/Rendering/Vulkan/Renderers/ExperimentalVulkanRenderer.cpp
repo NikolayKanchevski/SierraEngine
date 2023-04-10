@@ -11,25 +11,12 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
     ExperimentalVulkanRenderer::ExperimentalVulkanRenderer(const VulkanRendererCreateInfo &createInfo)
         : VulkanRenderer(createInfo)
     {
-        CreateObjects();
-    }
-
-    UniquePtr<ExperimentalVulkanRenderer> ExperimentalVulkanRenderer::Create(const VulkanRendererCreateInfo createInfo)
-    {
-        return std::make_unique<ExperimentalVulkanRenderer>(createInfo);
-    }
-
-    /* --- PRIVATE METHODS --- */
-
-    void ExperimentalVulkanRenderer::CreateObjects()
-    {
         // Create shaders to use in pipeline
         auto vertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Experimental/Experimental.vert", .shaderType = ShaderType::VERTEX });
         auto fragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Experimental/Experimental.frag", .shaderType = ShaderType::FRAGMENT });
 
         // Create pipeline
         graphicsPipeline = GraphicsPipeline<>::Create({
-            .maxConcurrentFrames = swapchain->GetMaxConcurrentFramesCount(),
             .shaders = { vertexShader, fragmentShader },
             .renderPassInfo = GraphicsPipelineRenderPassInfo {
                 .renderPass = &swapchain->GetRenderPass()
@@ -46,10 +33,10 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         // Get next swapchain iamge
         swapchain->AcquireNextImage();
 
-        // Get needed data
+        // Get the command buffer of current frame
         auto &commandBuffer = swapchain->GetCurrentCommandBuffer();
 
-        // Begin recording commands
+        // Begin recording commands to send to GPU
         commandBuffer->Begin();
 
         // Begin rendering
@@ -59,7 +46,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         graphicsPipeline->Bind(commandBuffer);
 
         // Draw 3 vertices
-        commandBuffer->Draw(3);
+        graphicsPipeline->Draw(commandBuffer, 3);
 
         // End rendering
         swapchain->EndRenderPass(commandBuffer);
@@ -67,7 +54,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         // End command recording
         commandBuffer->End();
 
-        // Present to swapchain
+        // Submit commands & present to swapchain
         swapchain->SubmitCommandBuffers();
     }
 
@@ -81,3 +68,10 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
     }
 
 }
+
+
+
+
+
+
+

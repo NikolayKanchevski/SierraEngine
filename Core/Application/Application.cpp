@@ -4,9 +4,9 @@
 
 #include "Application.h"
 
-#define MODEL_GRID_SIZE_X 3
-#define MODEL_GRID_SIZE_Y 3
-#define MODEL_GRID_SIZE_Z 3
+#define MODEL_GRID_SIZE_X 1
+#define MODEL_GRID_SIZE_Y 1
+#define MODEL_GRID_SIZE_Z 1
 
 #define MODEL_SPACING_FACTOR_X 10
 #define MODEL_SPACING_FACTOR_Y 10
@@ -32,8 +32,8 @@ void Application::Start()
 
     // Create directional light
     DirectionalLight &directionalLight = Entity("Directional Light").AddComponent<DirectionalLight>();
-    directionalLight.direction = Vector3(0.0f, -1.0f, 1.0f);
     directionalLight.intensity = 2.0f;
+    directionalLight.GetComponent<Transform>().SetWorldRotation(NO_CHANGE, 90.0f, NO_CHANGE);
 
     // Load 3D models in a grid view
     tankModels.reserve(MODEL_GRID_SIZE_X * MODEL_GRID_SIZE_Y * MODEL_GRID_SIZE_Z);
@@ -54,6 +54,10 @@ void Application::Start()
             }
         }
     }
+
+    auto cubeModel = Model::Load(File::OUTPUT_FOLDER_PATH + "Models/DefaultCube/DefaultCube.fbx");
+    cubeModel->GetMesh(0).GetComponent<Transform>().SetPosition(0.0f, -6.0f, 0.0f);
+    cubeModel->GetMesh(0).GetComponent<Transform>().SetScale(30.0, 1.0f, 30.0f);
 
     // Loop while renderer is active
     while (!window->IsClosed())
@@ -104,8 +108,6 @@ void Application::UpdateObjects()
     // Rotate tank models
     for (const auto &tankModel : tankModels)
     {
-        if (!tankModel->IsLoaded()) continue;
-
         tankModel->GetMesh(3).GetComponent<Transform>().SetRotation(timeSin * 45.0f, NO_CHANGE, NO_CHANGE);
         tankModel->GetMesh(4).GetComponent<Transform>().SetRotation(timeSin * 45.0f, NO_CHANGE, NO_CHANGE);
     }
@@ -154,7 +156,7 @@ void Application::DoCameraMovement()
             newCameraRotation.y += Input::GetVerticalGamePadRightStickAxis() * GAMEPAD_CAMERA_LOOK_SPEED;
 
             // Change camera FOV depending on game pad's right trigger
-            camera.fov = Math::Clamp(Input::GetGamePadRightTriggerAxis() * 90.0f, 45.0f, 90.0f);
+            camera.SetFOV(Math::Clamp(Input::GetGamePadRightTriggerAxis() * 90.0f, 45.0f, 90.0f));
         }
 
         // Clamp camera pith between -85.0f and +85.0f

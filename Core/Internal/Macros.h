@@ -29,6 +29,16 @@ inline constexpr auto HashType(const T &value)
     NAME##Pointer = (TYPE*)(&NAME);     \
     *NAME##Pointer = VALUE;
 
+/* --- GENERATORS --- */
+#define DEFINE_ENUM_FLAG_OPERATORS(ENUM_TYPE) \
+    inline ENUM_TYPE operator~ (ENUM_TYPE a) { return (ENUM_TYPE)~(int)a; } \
+    inline ENUM_TYPE operator| (ENUM_TYPE a, ENUM_TYPE b) { return (ENUM_TYPE)((int)a | (int)b); } \
+    inline ENUM_TYPE operator& (ENUM_TYPE a, ENUM_TYPE b) { return (ENUM_TYPE)((int)a & (int)b); } \
+    inline ENUM_TYPE operator^ (ENUM_TYPE a, ENUM_TYPE b) { return (ENUM_TYPE)((int)a ^ (int)b); } \
+    inline ENUM_TYPE& operator|= (ENUM_TYPE& a, ENUM_TYPE b) { return (ENUM_TYPE&)((int&)a |= (int)b); } \
+    inline ENUM_TYPE& operator&= (ENUM_TYPE& a, ENUM_TYPE b) { return (ENUM_TYPE&)((int&)a &= (int)b); } \
+    inline ENUM_TYPE& operator^= (ENUM_TYPE& a, ENUM_TYPE b) { return (ENUM_TYPE&)((int&)a ^= (int)b); }
+
 /* --- PREPROCESSOR --- */
 #define IS_CPP __cplusplus
 #define THIS_LINE __LINE__

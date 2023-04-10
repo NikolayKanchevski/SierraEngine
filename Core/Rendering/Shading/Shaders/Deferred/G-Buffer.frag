@@ -2,27 +2,28 @@
 
 #include "../Types/MeshPushConstant.glsl"
 #include "../Utility/ShaderDefinitions.glsl"
+#include "../Utility/Shadows.glsl"
 
 layout(location = 0) in vec3 fromVert_Position;
 layout(location = 1) in vec3 fromVert_Normal;
 layout(location = 2) in vec2 fromVert_UV;
+layout(location = 3) in vec4 fromVert_ShadowUV;
 
-layout(set = 1, binding = DIFFUSE_TEXTURE_BINDING) uniform sampler2D diffuseSampler;
-layout(set = 1, binding = SPECULAR_TEXTURE_BINDING) uniform sampler2D specularSampler;
-layout(set = 1, binding = NORMAL_MAP_TEXTURE_BINDING) uniform sampler2D normalSampler;
+layout(set = 1, binding = DIFFUSE_TEXTURE_BINDING) uniform sampler2D fromCode_DiffuseSampler;
+layout(set = 1, binding = SPECULAR_TEXTURE_BINDING) uniform sampler2D fromCode_SpecularSampler;
+layout(set = 1, binding = NORMAL_MAP_TEXTURE_BINDING) uniform sampler2D fromCode_NormalSampler;
 
 layout(location = 0) out uint toFramebuffer_ID;
-layout(location = 1) out vec4 toFramebuffer_Position;
-layout(location = 2) out vec4 toFramebuffer_Diffuse;
-layout(location = 3) out vec2 toFramebuffer_SpecularAndShininess;
-layout(location = 4) out vec4 toFramebuffer_Normal;
+layout(location = 1) out vec4 toFramebuffer_Diffuse;
+layout(location = 2) out vec2 toFramebuffer_SpecularAndShinines;
+layout(location = 3) out vec4 toFramebuffer_Normal;
 
 void main()
 {
     // Read texture colors
-    const vec3 diffuseTextureColor = texture(diffuseSampler, fromVert_UV).rgb;
-    const float specularTextureColor = texture(specularSampler, fromVert_UV).r;
-    const vec3 normalTextureColor = texture(normalSampler, fromVert_UV).rgb;
+    const vec3 diffuseTextureColor = texture(fromCode_DiffuseSampler, fromVert_UV).rgb;
+    const float specularTextureColor = texture(fromCode_SpecularSampler, fromVert_UV).r;
+    const vec3 normalTextureColor = texture(fromCode_NormalSampler, fromVert_UV).rgb;
 
     // Calculate normal in tangent space
     const vec3 Q1  = dFdx(fromVert_Position);
@@ -36,8 +37,7 @@ void main()
 
     // Pass data to framebuffer
     toFramebuffer_ID = pushConstant.entityID;
-    toFramebuffer_Position = vec4(fromVert_Position, 1.0f);
     toFramebuffer_Diffuse = vec4(diffuseTextureColor * pushConstant.material.diffuse, 1.0f);
-    toFramebuffer_SpecularAndShininess = vec2(specularTextureColor * pushConstant.material.specular, pushConstant.material.shininess / 512.0f);
+    toFramebuffer_SpecularAndShinines = vec2(specularTextureColor * pushConstant.material.specular, pushConstant.material.shininess / 512.0f);
     toFramebuffer_Normal = vec4(tnorm, 1.0f);
 }

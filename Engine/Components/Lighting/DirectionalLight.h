@@ -7,6 +7,7 @@
 #include "Light.h"
 #include "../../Classes/IdentifierPool.h"
 #include "../../../Core/Rendering/UI/ImGuiUtilities.h"
+#include "../../../Core/Rendering/Math/MatrixUtilities.h"
 
 namespace Sierra::Engine::Components
 {
@@ -15,15 +16,18 @@ namespace Sierra::Engine::Components
     class DirectionalLight : public Light
     {
     public:
-        /* --- PROPERTIES --- */
-        /// @brief What direction the light casting will follow.
-        Vector3 direction = { 0, -1, 0 };
-
         /* --- CONSTRUCTORS --- */
         inline DirectionalLight()
         {
-            this->lightID = IDPool.CreateNewID();
+            lightID = IDPool.CreateNewID();
         };
+
+        inline void OnAddComponent() override
+        {
+            GetComponent<Transform>().PushOnDirtyCallback([this]{
+                Recalculate();
+            });
+        }
 
         /* --- POLLING METHODS --- */
         inline void OnDrawUI() override
@@ -36,9 +40,6 @@ namespace Sierra::Engine::Components
             static const char* tooltips[3] = { "Some tooltip.", "Some tooltip.", "Some tooltip." };
             GUI::PropertyVector3("Color:", color, resetValues, tooltips);
 
-            GUI::PropertyVector3("Direction:", direction, resetValues, tooltips);
-
-
             GUI::EndProperties();
         }
 
@@ -48,23 +49,47 @@ namespace Sierra::Engine::Components
         /* --- DESTRUCTOR --- */
         inline void Destroy() override { IDPool.RemoveID(lightID); };
 
-    public:
-        struct alignas(16) ShaderDirectionalLight
+        struct ShaderDirectionalLight
         {
+            Matrix4x4 projectionView;
+
             Vector3 direction;
             float intensity;
 
             Vector3 color;
+            float _algin1_;
         };
 
         operator ShaderDirectionalLight() const noexcept { return
         {
-            .direction = this->direction,
-            .intensity = this->intensity,
-            .color = this->color
+            .projectionView = projectionView,
+            .direction = direction,
+            .intensity = intensity,
+            .color = color
         }; }
 
     private:
+        Vector3 direction = { 0.0f, 1.0f, 0.0f };
+
+        inline void Recalculate() override
+        {
+            Transform &transform = GetComponent<Transform>();
+
+            Vector3 rotation = transform.GetWorldRotation();
+            float cosYaw = glm::cos(glm::radians(rotation.x));
+            float sinYaw = glm::sin(glm::radians(rotation.x));
+            float cosPitch = glm::cos(glm::radians(rotation.y));
+            float sinPitch = glm::sin(glm::radians(rotation.y));
+
+            direction.x = cosYaw * cosPitch;
+            direction.y = sinPitch;
+            direction.z = sinYaw * cosPitch;
+            direction = glm::normalize(direction);
+
+            using namespace Core::Rendering;
+            this->projectionView = MatrixUtilities::CreateOrthographicProjectionMatrix(30.0f, -220.0f, 80.0f) * MatrixUtilities::CreateViewMatrix(transform.GetWorldPosition(), direction);
+        }
+
         inline static auto IDPool = Classes::IdentifierPool<uint>(MAX_DIRECTIONAL_LIGHTS);
     };
 

@@ -90,7 +90,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         this->physicalDevice = physicalDevices[0];
 
-        ASSERT_SUCCESS_FORMATTED("Vulkan is supported on your system running [{0}] | [Validation: {1} | CPU: {2} | GPU: {3}]", SystemInformation::GetOperatingSystem().name, VALIDATION_ENABLED, SystemInformation::GetCPU().name, SystemInformation::GetGPU().name);
+        ASSERT_SUCCESS_FORMATTED("Vulkan is supported on your system running [{0}] | [Validation: {1} | CPU: {2} | GPU: {3}]",
+                                 SystemInformation::GetOperatingSystem().name,
+                                 #if DEBUG
+                                 1,
+                                 #else
+                                 0,
+                                 #endif
+                                 SystemInformation::GetCPU().name,
+                                 SystemInformation::GetGPU().name);
 
         // Destroy temporary data
         vkDestroySurfaceKHR(VK::GetInstance(), exampleSurface, nullptr);
@@ -358,6 +366,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             // Check if the current queue supports presentation
             VkBool32 presentationSupported;
             vkGetPhysicalDeviceSurfaceSupportKHR(givenPhysicalDevice, i, exampleSurface, &presentationSupported);
+
+            // Query surface capabilities to save needed data
+            VkSurfaceCapabilitiesKHR surfaceCapabilities;
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(givenPhysicalDevice, exampleSurface, &surfaceCapabilities);
+            maxConcurrentFrames = surfaceCapabilities.maxImageCount > 3 ? 3 : surfaceCapabilities.maxImageCount;
 
             // If so set its presentation family
             if (presentationSupported)

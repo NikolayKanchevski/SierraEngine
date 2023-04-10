@@ -9,14 +9,10 @@
 #include "Abstractions/Texture.h"
 #include "Abstractions/Queries.h"
 
-#define VALIDATION_ENABLED DEBUG
-
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 
 namespace Sierra::Core::Rendering::Vulkan
 {
-    namespace Renderers { class MainVulkanRenderer; class DeferredVulkanRenderer; }
-
     class VK
     {
     public:

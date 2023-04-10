@@ -43,13 +43,21 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void Begin(const UniquePtr<CommandBuffer> &commandBuffer);
         void End(const UniquePtr<CommandBuffer> &commandBuffer);
 
+        /* --- SETTER METHODS --- */
+        void OverloadColorAttachment(uint index, UniquePtr<Image> &image);
+        void OverloadDepthAttachment(UniquePtr<Image> &image);
+
         /* --- DESTRUCTOR --- */
         void Destroy();
         DELETE_COPY(DynamicRenderer);
 
     private:
         VkRenderingInfoKHR renderingInfo{};
+
+        UniquePtr<Image>** colorAttachmentImages = nullptr;
         VkRenderingAttachmentInfoKHR* colorAttachments = nullptr;
+
+        UniquePtr<Image>* depthStencilAttachmentImage = nullptr;
         VkRenderingAttachmentInfoKHR* depthStencilAttachment = nullptr;
 
     };

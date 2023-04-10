@@ -20,17 +20,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void End(const UniquePtr<CommandBuffer> &commandBuffer, VkPipelineStageFlagBits pipelineStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] float GetTimeTaken() const;
-
-        /* --- DESTRUCTORS --- */
-        inline ~TimestampQuery() { delete[] buffer; }
+        [[nodiscard]] float GetTimeTaken();
 
         /* --- OPERATORS --- */
         DELETE_COPY(TimestampQuery);
 
     private:
         uint index;
-        uint64* buffer = new uint64[2];
+        uint64 buffer[2];
 
     };
 

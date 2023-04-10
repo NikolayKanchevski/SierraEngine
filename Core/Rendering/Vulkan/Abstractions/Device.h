@@ -33,28 +33,30 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 //            { return false; }
 //        #endif
 
-        [[nodiscard]] VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
-        [[nodiscard]] VkDevice GetLogicalDevice() const { return logicalDevice; }
+        [[nodiscard]] inline VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
+        [[nodiscard]] inline VkDevice GetLogicalDevice() const { return logicalDevice; }
 
-        [[nodiscard]] VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures() const { return physicalDeviceFeatures; }
-        [[nodiscard]] VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const { return physicalDeviceProperties; }
-        [[nodiscard]] VkPhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties() const { return physicalDeviceMemoryProperties; }
+        [[nodiscard]] inline VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures() const { return physicalDeviceFeatures; }
+        [[nodiscard]] inline VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const { return physicalDeviceProperties; }
+        [[nodiscard]] inline VkPhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties() const { return physicalDeviceMemoryProperties; }
 
-        [[nodiscard]] ImageFormat GetBestColorImageFormat() const { return bestColorImageFormat; }
-        [[nodiscard]] ImageFormat GetBestDepthImageFormat() const { return bestDepthImageFormat; }
+        [[nodiscard]] inline uint GetMaxConcurrentFramesCount() const { return maxConcurrentFrames; }
 
-        [[nodiscard]] Sampling GetHighestMultisampling() const { return highestMultisampling; }
+        [[nodiscard]] inline ImageFormat GetBestColorImageFormat() const { return bestColorImageFormat; }
+        [[nodiscard]] inline ImageFormat GetBestDepthImageFormat() const { return bestDepthImageFormat; }
 
-        [[nodiscard]] uint GetGraphicsQueueFamily() const { return queueFamilyIndices.graphicsAndComputeFamily; }
-        [[nodiscard]] uint GetPresentationQueueFamily() const { return queueFamilyIndices.presentationFamily; }
-        [[nodiscard]] uint GetComputeQueueFamily() const { return queueFamilyIndices.graphicsAndComputeFamily; }
+        [[nodiscard]] inline Sampling GetHighestMultisampling() const { return highestMultisampling; }
 
-        [[nodiscard]] VkQueue GetGraphicsQueue() const { return graphicsAndComputeQueue; }
-        [[nodiscard]] VkQueue GetPresentationQueue() const { return presentationQueue; }
-        [[nodiscard]] VkQueue GetComputeQueue() const { return graphicsAndComputeQueue; }
+        [[nodiscard]] inline uint GetGraphicsQueueFamily() const { return queueFamilyIndices.graphicsAndComputeFamily; }
+        [[nodiscard]] inline uint GetPresentationQueueFamily() const { return queueFamilyIndices.presentationFamily; }
+        [[nodiscard]] inline uint GetComputeQueueFamily() const { return queueFamilyIndices.graphicsAndComputeFamily; }
 
-        [[nodiscard]] float GetTimestampPeriod() const { return physicalDeviceProperties.limits.timestampPeriod; }
-        [[nodiscard]] bool IsPortabilitySubsetExtensionEnabled() const
+        [[nodiscard]] inline VkQueue GetGraphicsQueue() const { return graphicsAndComputeQueue; }
+        [[nodiscard]] inline VkQueue GetPresentationQueue() const { return presentationQueue; }
+        [[nodiscard]] inline VkQueue GetComputeQueue() const { return graphicsAndComputeQueue; }
+
+        [[nodiscard]] inline float GetTimestampPeriod() const { return physicalDeviceProperties.limits.timestampPeriod; }
+        [[nodiscard]] inline bool IsPortabilitySubsetExtensionEnabled() const
             #if PLATFORM_APPLE
                 { return portabilitySubsetExtensionEnabled; }
             #else
@@ -74,6 +76,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     private:
         VkPhysicalDevice physicalDevice;
         VkSurfaceKHR exampleSurface; // An existing surface is required for device creation so one will be created specifically and destroyed after that
+        uint maxConcurrentFrames;
 
         VkDevice logicalDevice;
         VkPhysicalDeviceFeatures physicalDeviceFeatures;

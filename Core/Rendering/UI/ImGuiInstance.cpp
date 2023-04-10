@@ -41,8 +41,8 @@ namespace Sierra::Core::Rendering::UI
         initInfo.Device = VK::GetDevice()->GetLogicalDevice();
         initInfo.Queue = VK::GetDevice()->GetGraphicsQueue();
         initInfo.DescriptorPool = VK::GetImGuiDescriptorPool();
-        initInfo.MinImageCount = createInfo.swapchain->GetMaxConcurrentFramesCount();
-        initInfo.ImageCount = createInfo.swapchain->GetMaxConcurrentFramesCount();
+        initInfo.MinImageCount = VK::GetDevice()->GetMaxConcurrentFramesCount();
+        initInfo.ImageCount = VK::GetDevice()->GetMaxConcurrentFramesCount();
         initInfo.MSAASamples = (VkSampleCountFlagBits) createInfo.sampling;
 
         // Create the Vulkan backend

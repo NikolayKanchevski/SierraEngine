@@ -12,12 +12,6 @@ namespace Sierra::Engine::Components
     class Camera : public Component
     {
     public:
-        /* --- PROPERTIES --- */
-        float fov = 45.0f;
-
-        float nearClip = 0.01f;
-        float farClip = 200.0f;
-
         /* --- CONSTRUCTORS --- */
         Camera() = default;
         void OnAddComponent() override;
@@ -30,7 +24,15 @@ namespace Sierra::Engine::Components
         void CalculateViewMatrix();
         void CalculateProjectionMatrix();
 
+        void SetFOV(float givenFOV);
+        void SetNearClip(float givenClip);
+        void SetFarClip(float givenClip);
+
         /* --- GETTER METHODS --- */
+        [[nodiscard]] inline float GetFOV() const { return FOV; }
+        [[nodiscard]] inline float GetNearClip() const { return nearClip; }
+        [[nodiscard]] inline float GetFarClip() const { return farClip; }
+
         [[nodiscard]] float GetYaw() const;
         [[nodiscard]] float GetPitch() const;
         [[nodiscard]] float GetRoll() const;
@@ -63,6 +65,10 @@ namespace Sierra::Engine::Components
         { return World::GetComponent<Camera>(mainCamera); }
 
     private:
+        float FOV = 45.0f;
+        float nearClip = 0.01f;
+        float farClip = 200.0f;
+
         Matrix4x4 viewMatrix;
         Matrix4x4 projectionMatrix;
         Matrix4x4 inverseViewMatrix;

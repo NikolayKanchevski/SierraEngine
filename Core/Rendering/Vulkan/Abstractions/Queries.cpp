@@ -39,7 +39,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- GETTER METHODS --- */
 
-    float TimestampQuery::GetTimeTaken() const
+    float TimestampQuery::GetTimeTaken()
     {
         // Get results from query
         VkResult result = vkGetQueryPoolResults(VK::GetLogicalDevice(), VK::GetQueryPool()->GetVulkanQueryPool(), index, 2, UINT64_SIZE * 2, buffer, UINT64_SIZE, VK_QUERY_RESULT_64_BIT);

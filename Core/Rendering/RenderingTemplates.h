@@ -11,18 +11,7 @@
 
 namespace Sierra::Core::Rendering
 {
-    struct VertexP
-    {
-        Vector3 position;
-    };
-
-    struct VertexPU
-    {
-        Vector3 position;
-        Vector2 UV;
-    };
-
-    struct VertexPNU
+    struct Vertex
     {
         Vector3 position;
         Vector3 normal;
@@ -51,6 +40,7 @@ namespace Sierra::Core::Rendering
 
         uint directionalLightCount;
         uint pointLightCount;
+
         float _align1_;
         float _align2_;
     };

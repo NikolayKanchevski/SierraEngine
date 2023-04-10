@@ -63,7 +63,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 - [ ] Transparency
 - [ ] Custom Gizmos
 - [ ] Debug Renderer
-- [ ] Shadow Mapping
+- [x] Shadow Mapping
 - [ ] Virtual Texture
 - [ ] Arena Allocator
 - [ ] Post-Processing
@@ -109,7 +109,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 17,040</p>
-<p align="center" id="LastUpdated">Last updated: 20/03/2023</p>
+<p align="center" id="LinesCounter">Total lines of code: 18,148</p>
+<p align="center" id="LastUpdated">Last updated: 10/04/2023</p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

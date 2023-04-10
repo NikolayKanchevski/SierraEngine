@@ -122,7 +122,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] VkDescriptorSet GetVulkanDescriptorSet() const { return this->vkDescriptorSet; }
 
         /* --- DESTRUCTOR --- */
-        ~DescriptorSet();
         DELETE_COPY(DescriptorSet);
 
     private:

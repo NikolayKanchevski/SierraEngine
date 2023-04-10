@@ -11,7 +11,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     /* --- CONSTRUCTORS --- */
 
     Image::Image(const ImageCreateInfo &createInfo)
-        : dimensions(createInfo.dimensions), layerCount(createInfo.layerCount), usage(createInfo.usage), sampling(createInfo.sampling), format(createInfo.format)
+        : dimensions(createInfo.dimensions), layerCount(createInfo.layerCount), usage(createInfo.usage), sampling(createInfo.sampling), format(createInfo.format), imageType(createInfo.imageType), flags(createInfo.createFlags)
     {
         // Set up image creation info
         VkImageCreateInfo vkImageCreateInfo{};
@@ -45,6 +45,50 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             vmaCreateImage(VK::GetMemoryAllocator(), &vkImageCreateInfo, &allocationCreateInfo, &vkImage, &vmaImageAllocation, nullptr),
             FORMAT_STRING("Failed to allocate memory for image with dimensions of [{0}, {1}, {2}], format [{3}], [{4}] mip levels, and sampling of [{5}]", dimensions.width, dimensions.height, dimensions.depth, VK_TO_STRING(format, Format), mipLevels, VK_TO_STRING(sampling, SampleCountFlagBits))
         );
+
+        CreateImageView();
+    }
+
+    void Image::CreateImageView()
+    {
+        // Get aspect flags
+        if (IS_FLAG_PRESENT(usage, ImageUsage::DEPTH_STENCIL_ATTACHMENT))
+        {
+            aspectFlags = ImageAspectFlags::DEPTH;
+        }
+        else if (usage == ImageUsage::UNDEFINED)
+        {
+            aspectFlags = ImageAspectFlags::UNDEFINED;
+        }
+        else
+        {
+            aspectFlags = ImageAspectFlags::COLOR;
+        }
+
+        // Get view type
+        VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_2D;
+        if (IS_FLAG_PRESENT(flags, ImageCreateFlags::CUBE_COMPATIBLE))
+        {
+            imageViewType = VK_IMAGE_VIEW_TYPE_CUBE;
+        }
+
+        // Set up image view creation info
+        VkImageViewCreateInfo imageViewCreateInfo{};
+        imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        imageViewCreateInfo.image = vkImage;
+        imageViewCreateInfo.viewType = imageViewType;
+        imageViewCreateInfo.format = static_cast<VkFormat>(format);
+        imageViewCreateInfo.subresourceRange.aspectMask = static_cast<VkImageAspectFlagBits>(aspectFlags);
+        imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+        imageViewCreateInfo.subresourceRange.levelCount = mipLevels;
+        imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+        imageViewCreateInfo.subresourceRange.layerCount = layerCount;
+
+        // Create the image view
+        VK_ASSERT(
+            vkCreateImageView(VK::GetLogicalDevice(), &imageViewCreateInfo, nullptr, &vkImageView),
+            FORMAT_STRING("Failed to create image view for an image with dimensions of [{0}, {1}, {2}], format [{3}], [{4}] mip levels, and sampling of [{5}]", dimensions.width, dimensions.height, dimensions.depth, static_cast<int>(format), static_cast<int>(mipLevels), static_cast<int>(sampling))
+        );
     }
 
     UniquePtr<Image> Image::Create(ImageCreateInfo imageCreateInfo)
@@ -53,9 +97,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     }
 
     Image::Image(const SwapchainImageCreateInfo &createInfo)
-        : vkImage(createInfo.image), format(createInfo.format), usage(ImageUsage::UNDEFINED), sampling(createInfo.sampling), dimensions(createInfo.dimensions), layout(ImageLayout::UNDEFINED), swapchainImage(true)
+        : vkImage(createInfo.image), format(createInfo.format), usage(ImageUsage::COLOR_ATTACHMENT), sampling(createInfo.sampling), dimensions(createInfo.dimensions), imageType(ImageType::TEXTURE), flags(ImageCreateFlags::UNDEFINED), swapchainImage(true)
     {
-
+        CreateImageView();
     }
 
     UniquePtr<Image> Image::CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo)
@@ -177,96 +221,29 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return true;
     }
 
-    void Image::CreateImageView(const ImageAspectFlags givenAspectFlags, const VkImageViewType imageViewType)
-    {
-        // Check if an image view has already been generated
-        if (imageViewCreated)
-        {
-            ASSERT_WARNING("Trying to create an image view for an image with an already existing view. Process automatically suspended");
-            return;
-        }
-
-        // Set up image view creation info
-        VkImageViewCreateInfo imageViewCreateInfo{};
-        imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        imageViewCreateInfo.image = vkImage;
-        imageViewCreateInfo.viewType = imageViewType;
-        imageViewCreateInfo.format = (VkFormat) format;
-        imageViewCreateInfo.subresourceRange.aspectMask = (VkImageAspectFlagBits) givenAspectFlags;
-        imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-        imageViewCreateInfo.subresourceRange.levelCount = mipLevels;
-        imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-        imageViewCreateInfo.subresourceRange.layerCount = layerCount;
-
-        // Create the image view
-        VK_ASSERT(
-            vkCreateImageView(VK::GetLogicalDevice(), &imageViewCreateInfo, nullptr, &vkImageView),
-            FORMAT_STRING("Failed to create image view for an image with dimensions of [{0}, {1}, {2}], format [{3}], [{4}] mip levels, and sampling of [{5}]", dimensions.width, dimensions.height, dimensions.depth, static_cast<int>(format), static_cast<int>(mipLevels), static_cast<int>(sampling))
-        );
-
-        aspectFlags = givenAspectFlags;
-
-        imageViewCreated = true;
-    }
-
     void Image::TransitionLayout(const ImageLayout newLayout)
     {
+        if (layout == newLayout) return;
+
         // Create a temporary command buffer
         auto commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
 
-        // Set up shader stages
-        VkPipelineStageFlags srcStage = 0;
-        VkPipelineStageFlags dstStage = 0;
-
-        // If transitioning from a new or undefined image to an image that is ready to receive data...
-        if (layout == ImageLayout::UNDEFINED && newLayout == ImageLayout::TRANSFER_DST_OPTIMAL)
-        {
-            srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;  // The stage the transition must occur after
-            dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;     // The stage the transition must occur before
-        }
-        // If transitioning from transfer destination to shader readable...
-        else if (layout == ImageLayout::TRANSFER_DST_OPTIMAL && newLayout == ImageLayout::SHADER_READ_ONLY_OPTIMAL)
-        {
-            srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-            dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        }
-        // If transitioning from an undefined layout to one optimal for depth stencil...
-        else if (layout == ImageLayout::UNDEFINED && newLayout == ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL)
-        {
-            srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-            dstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-        }
-        else
-        {
-            ASSERT_ERROR_FORMATTED("Transitioning images from [{0}] to [{1}] is not supported", static_cast<uint>(layout), static_cast<uint>(newLayout));
-        }
-
         // Record transition command
-        commandBuffer->TransitionImageLayout(this, newLayout, srcStage, dstStage);
+        commandBuffer->TransitionImageLayout(this, newLayout);
 
         // End command buffer
         VK::GetDevice()->EndSingleTimeCommands(commandBuffer);
-    }
-
-    void Image::DestroyImageView()
-    {
-        vkDestroyImageView(VK::GetLogicalDevice(), this->vkImageView, nullptr);
-        imageViewCreated = false;
     }
 
     /* --- DESTRUCTOR --- */
 
     void Image::Destroy()
     {
-        if (vkImage == VK_NULL_HANDLE) return;
+        vkDestroyImageView(VK::GetLogicalDevice(), this->vkImageView, nullptr);
 
         if (!swapchainImage)
         {
             vmaDestroyImage(VK::GetMemoryAllocator(), vkImage, vmaImageAllocation);
         }
-
-        if (imageViewCreated) vkDestroyImageView(VK::GetLogicalDevice(), this->vkImageView, nullptr);
-
-        vkImage = VK_NULL_HANDLE;
     }
 }

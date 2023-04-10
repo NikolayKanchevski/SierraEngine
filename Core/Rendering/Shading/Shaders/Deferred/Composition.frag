@@ -1,15 +1,22 @@
 #version 450
 
+#include "../Utility/Depth.glsl"
+#include "../Utility/Shadows.glsl"
 #include "../Lighting/DefaultLighting.glsl"
 #include "../Types/GlobalStorageBuffer.glsl"
+#include "../Types/GlobalUniformBuffer.glsl"
 
 layout(location = 0) in flat uint fromVert_DrawingSkybox;
 layout(location = 1) in vec3 fromVert_UVW;
 
-layout(set = 0, binding = 2) uniform sampler2D fromCode_PositionBuffer;
-layout(set = 0, binding = 3) uniform sampler2D fromCode_DiffuseBuffer;
-layout(set = 0, binding = 4) uniform sampler2D fromCode_SpecularAndShininess;
-layout(set = 0, binding = 5) uniform sampler2D fromCode_NormalBuffer;
+layout(set = 0, binding = 2) uniform sampler2D fromCode_DiffuseBuffer;
+layout(set = 0, binding = 3) uniform sampler2D toFramebuffer_SpecularAndShinines;
+layout(set = 0, binding = 4) uniform sampler2D fromCode_NormalBuffer;
+#if defined(SETTINGS_USE_POISSON_PCF_SHADOWS) || defined(SETTINGS_USE_PCF_SHADOWS)
+    layout(set = 0, binding = 5) uniform sampler2DShadow fromCode_ShadowMap;
+#else
+    layout(set = 0, binding = 5) uniform sampler2D fromCode_ShadowMap;
+#endif
 layout(set = 0, binding = 6) uniform sampler2D fromCode_DepthBuffer;
 layout(set = 0, binding = 7) uniform samplerCube fromCode_Skybox;
 
@@ -19,13 +26,19 @@ const uint RenderedImageValue_DiffuseBuffer = 2;
 const uint RenderedImageValue_SpecularBuffer = 3;
 const uint RenderedImageValue_ShininessBuffer = 4;
 const uint RenderedImageValue_NormalBuffer = 5;
-const uint RenderedImageValue_DepthBuffer = 6;
+const uint RenderedImageValue_ShadowBuffer = 6;
+const uint RenderedImageValue_DepthBuffer = 7;
 
-layout(push_constant) uniform FinalizationPushConstant
+struct PushConstant
 {
     mat4x4 skyboxModel;
+    mat4x4 lightSpaceMatrix;
+
     uint renderedImageValue;
-} pushConstant;
+    uint enableShadows;
+};
+
+SET_PUSH_CONSTANT(PushConstant);
 
 layout (location = 0) out vec4 toFramebuffer_FinalizedColor;
 
@@ -43,7 +56,7 @@ void main()
 
     // Check if a pixel has been dran in current texel and if not discard it
     const float depth = texture(fromCode_DepthBuffer, sampleUV).r;
-    if (pushConstant.renderedImageValue == RenderedImageValue_DepthBuffer) { toFramebuffer_FinalizedColor = vec4(depth, depth, depth, 1.0); return; }
+    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_DepthBuffer) { toFramebuffer_FinalizedColor = vec4(depth, depth, depth, 1.0); return; }
 
     // Check if fragment we are writing to actually should contain a color
     if (depth >= 1.0f)
@@ -55,21 +68,41 @@ void main()
         Load and store G-Buffer values
     */
 
-    const vec3 position = texture(fromCode_PositionBuffer, sampleUV).xyz;
-    if (pushConstant.renderedImageValue == RenderedImageValue_PositionBuffer) { toFramebuffer_FinalizedColor = vec4(position, 1.0); return; }
+    const vec3 position = GetWorldPositionFromDepth(sampleUV, depth, uniformBuffer.inverseProjection, uniformBuffer.inverseView);
+    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_PositionBuffer) { toFramebuffer_FinalizedColor = vec4(position, 1.0); return; }
 
     const vec3 diffuse = texture(fromCode_DiffuseBuffer, sampleUV).rgb;
-    if (pushConstant.renderedImageValue == RenderedImageValue_DiffuseBuffer) { toFramebuffer_FinalizedColor = vec4(diffuse, 1.0); return; }
+    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_DiffuseBuffer) { toFramebuffer_FinalizedColor = vec4(diffuse, 1.0); return; }
 
-    const vec2 specularAndShininess = texture(fromCode_SpecularAndShininess, sampleUV).rg;
-    if (pushConstant.renderedImageValue == RenderedImageValue_SpecularBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.xxx, 1.0); return; }
-    if (pushConstant.renderedImageValue == RenderedImageValue_ShininessBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.y / 512.0f, specularAndShininess.y / 512.0f, specularAndShininess.y / 512.0f, 1.0); return; }
+    const vec3 specularAndShininess = texture(toFramebuffer_SpecularAndShinines, sampleUV).rgb;
+    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_SpecularBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.rrr, 1.0); return; }
+    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_ShininessBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.ggg, 1.0); return; }
 
-    const float specular = specularAndShininess.x;
-    const float shininess = specularAndShininess.y;
+    const float specular = specularAndShininess.r;
+    const float shininess = specularAndShininess.g;
 
     const vec3 normal = texture(fromCode_NormalBuffer, sampleUV).rgb;
-    if (pushConstant.renderedImageValue == RenderedImageValue_NormalBuffer) { toFramebuffer_FinalizedColor = vec4(normal, 1.0); return; }
+    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_NormalBuffer) { toFramebuffer_FinalizedColor = vec4(normal, 1.0); return; }
+
+    vec4 shadowMapUV = PUSH_CONSTANT.lightSpaceMatrix * vec4(position, 1.0);
+
+    float shadow = 1.0f;
+    if (PUSH_CONSTANT.enableShadows == 1)
+    {
+        #if defined(SETTINGS_USE_PCF_SHADOWS)
+            shadow = CalculateShadowPCF(fromCode_ShadowMap, shadowMapUV);
+        #elif defined(SETTINGS_USE_POISSON_PCF_SHADOWS)
+            shadow = CalculatePoissonShadowPCF(fromCode_ShadowMap, shadowMapUV, position);
+        #elif defined(SETTINGS_USE_VARIANCE_SHADOWS)
+            shadow = CalculateVarianceShadow(fromCode_ShadowMap, shadowMapUV, position);
+        #elif defined(SETTINGS_USE_MOMENT_SHADOWS)
+            shadow = CalculateMomentShadow(fromCode_ShadowMap, shadowMapUV, depth);
+        #else
+            shadow = CalculateShadow(fromCode_ShadowMap, shadowMapUV, vec2(0.0, 0.0));
+        #endif
+    }
+
+    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_ShadowBuffer) { toFramebuffer_FinalizedColor = vec4(shadow, shadow, shadow, 1.0); return; }
 
     // Define the final color
     vec3 calculatedColor = vec3(0, 0, 0);
@@ -105,5 +138,6 @@ void main()
     }
 
     // Submit data to framebuffer
+    calculatedColor *= shadow;
     toFramebuffer_FinalizedColor = vec4(calculatedColor, 1.0);
 }

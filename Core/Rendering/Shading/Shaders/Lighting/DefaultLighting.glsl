@@ -5,6 +5,8 @@
 
 struct DirectionalLight
 {
+    mat4x4 projectionView;
+
     vec3 direction;
     float intensity;
 
@@ -13,6 +15,8 @@ struct DirectionalLight
 
 struct PointLight
 {
+    mat4x4 projectionView;
+
     vec3 color;
     float intensity;
 
@@ -22,45 +26,91 @@ struct PointLight
     float quadratic;
 };
 
-vec3 CalculateDirectionalLight(DirectionalLight directionalLight, vec3 fragmentPosition, vec3 diffuseColor, float specularColor, float shininess, vec3 normalColor)
+const float AMBIENT_STRENGTH = 0.05f;
+
+vec3 CalculateDirectionalLight(DirectionalLight light, vec3 fragmentPosition, vec3 diffuse, float specular, float shininess, vec3 normal)
 {
-    // Calculate required directions
-    const vec3 viewDirection = normalize(-fragmentPosition);
-    const vec3 halfwayDirection = normalize(directionalLight.direction + normalize(viewDirection - fragmentPosition));
+    const vec3 lightDirection = normalize(-light.direction);
+    const vec3 finalAmbient = diffuse * AMBIENT_STRENGTH;
 
-    // Calculate diffuse and base specular values
-    const float diffuseStrength = max(dot(normalColor, directionalLight.direction), 0.0);
-    const float specularStrength = pow(clamp(dot(normalColor, halfwayDirection), 0.0, 1.0), shininess);
+    #if defined(SETTINGS_SHADING_MODEL_PHONG)
+        const vec3 viewDirection = normalize(-fragmentPosition);
 
-    // Calculate light components
-    const vec3 ambient = AMBIENT_STRENGTH * diffuseColor;
-    const vec3 diffuse = diffuseStrength * directionalLight.intensity * directionalLight.color * diffuseColor;
-    const vec3 specular = specularStrength * directionalLight.intensity * directionalLight.color * specularColor;
+        const vec3 finalDiffuse = max(dot(normal, lightDirection), 0.0) * diffuse;
+        const float finalSpecular = pow(max(dot(viewDirection, reflect(-lightDirection, normal)), 0.0), shininess) * specular;
+        return light.intensity * (finalDiffuse + vec3(finalSpecular) + finalAmbient) * light.color;
+    #endif
 
-    return ambient + diffuse + specular;
+    #if defined(SETTINGS_SHADING_MODEL_BLINN_PHONG)
+        const vec3 viewDirection = normalize(-fragmentPosition);
+        const vec3 halfwayDirection = normalize(lightDirection + viewDirection);
+
+        const vec3 finalDiffuse = max(dot(normal, lightDirection), 0.0) * diffuse;
+        const float finalSpecular = clamp(pow(max(dot(normal, halfwayDirection), 0.0), shininess) * specular, 0.0, 1.0);
+        return light.intensity * (finalDiffuse + vec3(finalSpecular) + finalAmbient) * light.color;
+    #endif
+
+    #if defined(SETTINGS_SHADING_MODEL_LAMBERTIAN)
+        vec3 finalDiffuse = light.intensity * max(dot(normal, lightDirection), 0.0) * diffuse * light.color;
+        return finalDiffuse;
+    #endif
+
+    #if defined(SETTINGS_SHADING_MODEL_GAUSSIAN)
+        const vec3 viewDirection = normalize(-fragmentPosition);
+        const vec3 halfwayDirection = normalize(lightDirection + viewDirection);
+
+        const float finalDiffuse = max(dot(normal, lightDirection), 0.0);
+        const float normalHalfway = acos(dot(halfwayDirection, normal));
+        float exponent = normalHalfway / 1.0;
+        exponent = -(exponent * exponent);
+        return light.intensity * light.color * (finalDiffuse + exp(exponent)) * diffuse;
+    #endif
+
+    return vec3(0.0);
 }
 
-vec3 CalculatePointLight(PointLight pointLight, vec3 fragmentPosition, vec3 diffuseColor, float specularColor, float shininess, vec3 normalColor)
+vec3 CalculatePointLight(PointLight light, vec3 fragmentPosition, vec3 diffuse, float specular, float shininess, vec3 normal)
 {
-    // Calculate required directions
-    const vec3 viewDirection = normalize(-fragmentPosition);
-    const vec3 lightDirection = normalize(pointLight.position - fragmentPosition);
-    const vec3 halfwayDirection = normalize(lightDirection + normalize(viewDirection - fragmentPosition));
+    vec3 lightDirection = normalize(light.position - fragmentPosition);
+    float distance = length(light.position - fragmentPosition);
+    float attenuation = 1.0f / (distance * distance);
 
-    // Calculate diffuse and base specular values
-    const float diffuseStrength = max(dot(normalColor, lightDirection), 0.0);
-    const float specularStrength = pow(max(dot(normalColor, halfwayDirection), 0.0), clamp(shininess * 512.0f, 1.0f, 512.0f));
+    vec3 finalAmbient = diffuse * AMBIENT_STRENGTH;
 
-    // Calculate attenuation
-    const float distance = length(pointLight.position - fragmentPosition);
-    const float attenuation = 1.0 / (1.0f + pointLight.linear * distance + pointLight.quadratic * (distance * distance));
+    #if defined(SETTINGS_SHADING_MODEL_PHONG)
+        const vec3 viewDirection = normalize(-fragmentPosition);
 
-    // Calculate light components
-    const vec3 ambient = AMBIENT_STRENGTH * diffuseColor * attenuation;
-    const vec3 diffuse = diffuseStrength * pointLight.intensity * pointLight.color * diffuseColor * attenuation;
-    const vec3 specular = specularStrength * pointLight.intensity * attenuation * pointLight.color * specularColor;
+        const vec3 finalDiffuse = max(dot(normal, lightDirection), 0.0) * diffuse;
+        const float finalSpecular = pow(max(dot(viewDirection, reflect(-lightDirection, normal)), 0.0), shininess) * specular;
+        return light.intensity * attenuation * (finalDiffuse + vec3(finalSpecular) + finalAmbient) * light.color;
+    #endif
 
-    return ambient + diffuse + specular;
+    #if defined(SETTINGS_SHADING_MODEL_BLINN_PHONG)
+        const vec3 viewDirection = normalize(-fragmentPosition);
+        const vec3 halfwayDirection = normalize(lightDirection + viewDirection);
+
+        const vec3 finalDiffuse = max(dot(normal, lightDirection), 0.0) * diffuse;
+        const float finalSpecular = clamp(pow(max(dot(normal, halfwayDirection), 0.0), shininess) * specular, 0.0, 1.0);
+        return light.intensity * attenuation * (finalDiffuse + vec3(finalSpecular) + finalAmbient) * light.color;
+    #endif
+
+    #if defined(SETTINGS_SHADING_MODEL_LAMBERTIAN)
+        const vec3 finalDiffuse = light.intensity * attenuation * max(dot(normal, lightDirection), 0.0) * diffuse * light.color;
+        return finalDiffuse;
+    #endif
+
+    #if defined(SETTINGS_SHADING_MODEL_GAUSSIAN)
+        const vec3 viewDirection = normalize(-fragmentPosition);
+        const vec3 halfwayDirection = normalize(lightDirection + viewDirection);
+
+        const float finalDiffuse = max(dot(normal, lightDirection), 0.0);
+        const float normalHalfway = acos(dot(halfwayDirection, normal));
+        float exponent = normalHalfway / 1.0;
+        exponent = -(exponent * exponent);
+        return light.intensity * attenuation * (finalDiffuse + exp(exponent)) * diffuse * light.color;
+    #endif
+
+    return vec3(0.0);
 }
 
 #endif

@@ -15,19 +15,19 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     ShaderDefinition Shader::defaultDefinitions[] =
     {
         {
-            .definitionName = "MAX_MESHES",
+            .name = "MAX_MESHES",
             .value = std::to_string(MAX_MESHES)
         },
         {
-            .definitionName = "MAX_TEXTURES",
+            .name = "MAX_TEXTURES",
             .value = std::to_string(MAX_MESHES * TOTAL_TEXTURE_TYPES_COUNT)
         },
         {
-            .definitionName = "MAX_POINT_LIGHTS",
+            .name = "MAX_POINT_LIGHTS",
             .value = std::to_string(MAX_POINT_LIGHTS)
         },
         {
-            .definitionName = "MAX_DIRECTIONAL_LIGHTS",
+            .name = "MAX_DIRECTIONAL_LIGHTS",
             .value = std::to_string(MAX_DIRECTIONAL_LIGHTS)
         }
     };
@@ -44,10 +44,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Add definitions to shader
         for (const auto &pair : defaultDefinitions)
-            precompiledData->definitions[pair.definitionName] = pair.value;
+            precompiledData->definitions[pair.name] = pair.value;
 
         for (const auto &pair : createInfo.definitions)
-            precompiledData->definitions[pair.definitionName] = pair.value;
+            precompiledData->definitions[pair.name] = pair.value;
 
         // Compile shader to SPIRV
         auto code = CompileShadercShader();
@@ -164,7 +164,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             return false;
         }
 
-        precompiledData->definitions[definition.definitionName] = definition.value;
+        precompiledData->definitions[definition.name] = definition.value;
 
         auto code = CompileShadercShader();
         CreateShaderModule(precompiledData->entryPoint, code.data(), code.size());
@@ -195,7 +195,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Check for errors
         if (module.GetCompilationStatus() != shaderc_compilation_status_success)
         {
-            ASSERT_ERROR_FORMATTED("Precompiling shader [{0}] failed with an error code of [{1}]: {2}", filePath, module.GetCompilationStatus(), module.GetErrorMessage());
+            ASSERT_ERROR_FORMATTED("Precompiling shader [{0}] failed with an error code of [{1}]: \n{2}", filePath, static_cast<uint>(module.GetCompilationStatus()), module.GetErrorMessage());
         }
 
         return { module.begin(), module.end() };
@@ -269,7 +269,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Shader::Destroy()
     {
-        if (precompiled) delete precompiledData;
+        if (precompiled)
+        {
+            if (precompiledData->reflectionData.vertexAttributes != nullptr) delete precompiledData->reflectionData.vertexAttributes;
+            if (precompiledData->reflectionData.descriptorBindings != nullptr) delete precompiledData->reflectionData.descriptorBindings;
+            delete precompiledData;
+        }
         vkDestroyShaderModule(VK::GetLogicalDevice(), shaderModule, nullptr);
     }
 

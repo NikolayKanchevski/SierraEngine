@@ -34,7 +34,7 @@ namespace GUI
     void CustomLabel(const char* label);
     void ShowTooltip(const char* tooltip);
 
-    bool BeginWindow(const char* title, bool *open = nullptr, ImGuiWindowFlags windowFlags = 0);
+    bool BeginWindow(const char* title = "Test", bool *open = nullptr, ImGuiWindowFlags windowFlags = 0);
     void EndWindow();
 
     void BeginProperties(ImGuiTableFlags tableFlags = ImGuiTableFlags_None);
@@ -57,6 +57,7 @@ namespace GUI
     bool FloatInput(const char* labelID, float &value, bool canDrag = false, ImGuiInputTextFlags inputFlags = ImGuiInputTextFlags_None);
     bool DoubleInput(const char* labelID, double &value, bool canDrag = false, ImGuiInputTextFlags inputFlags = ImGuiInputTextFlags_None);
     bool Checkbox(const char* labelID, bool &value);
+    bool Checkbox(const char* labelID, uint &value);
     bool Vector3Input(Vector3 &value, const float *resetValues, const char** tooltips = nullptr);
     bool Dropdown(const char* labelID, uint &value, const char** options, uint optionsCount, const bool* deactivatedFlags = nullptr);
     bool RoundedButton(const char* label, const ImVec2 &givenSize, ImDrawFlags roundingType, float rounding = GImGui->Style.FrameRounding, ImGuiButtonFlags flags = 0);
@@ -85,6 +86,7 @@ namespace GUI
     bool FloatProperty(const char* label, float &value, const char* tooltip = nullptr, ImGuiInputTextFlags inputFlags = ImGuiInputTextFlags_None);
     bool DoubleProperty(const char* label, double &value, const char* tooltip = nullptr, ImGuiInputTextFlags inputFlags = ImGuiInputTextFlags_None);
     bool CheckboxProperty(const char* label, bool &value, const char* tooltip = nullptr);
+    bool CheckboxProperty(const char* label, uint &value, const char* tooltip = nullptr);
     bool DropdownProperty(const char* label, uint &value, const char** options, uint optionsCount, const bool* deactivatedFlags = nullptr, const char* tooltip = nullptr);
     bool PropertyVector3(const char* label, Vector3 &value, const float *resetValues, const char** tooltips = nullptr);
     bool TextureProperty(const char* label, SharedPtr<Texture> &texture, const char* tooltip = nullptr);

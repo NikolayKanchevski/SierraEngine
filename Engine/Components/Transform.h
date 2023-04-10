@@ -71,8 +71,8 @@ namespace Sierra::Engine::Components
         void UpdateChain();
         void OnDrawUI() override;
 
-        void PushOnChangeCallback(Callback callback);
-        void PopOnChangeCallback();
+        void PushOnDirtyCallback(Callback callback);
+        void PopOnDirtyCallback();
 
         /* --- OPERATORS --- */
         Transform() = default;

@@ -11,8 +11,11 @@
 #include "../VK.h"
 #include "../../RenderingSettings.h"
 #include "../../../Engine/Classes/File.h"
+#include "../../../../Engine/Classes/Mesh.h"
 
 using namespace Sierra::Engine::Classes;
+
+// TODO: COPY SET IF COPYING BOTH UNIFORM AND STORAGE
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -90,10 +93,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 }
             }
 
-            if (bindPoint == VK_PIPELINE_BIND_POINT_GRAPHICS) currentFrame = (currentFrame + 1) % maxConcurrentFrames;
+            if (bindPoint == VK_PIPELINE_BIND_POINT_GRAPHICS)
+            {
+                currentFrame = (currentFrame + 1) % maxConcurrentFrames;
+            }
         };
         inline void BindDescriptorSets(const UniquePtr<CommandBuffer> &givenCommandBuffer, UniquePtr<DescriptorSet> &externalDescriptorSet, const bool forceUpdateUniformBuffers = false, const bool forceUpdateStorageBuffers = false)
         {
+            if (descriptorSets.empty() && externalDescriptorSet == nullptr) return;
+
             if (HasUniformBuffers() && (!uniformBuffers[currentFrame].updatedForFrame || forceUpdateUniformBuffers))
             {
                 uniformBuffers[currentFrame].updatedForFrame = true;
@@ -113,6 +121,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         };
         inline void BindDescriptorSets(const UniquePtr<CommandBuffer> &givenCommandBuffer, const bool forceUpdateUniformBuffers = false, const bool forceUpdateStorageBuffers = false)
         {
+            if (descriptorSets.empty()) return;
+
             if (HasUniformBuffers() && (!uniformBuffers[currentFrame].updatedForFrame || forceUpdateUniformBuffers))
             {
                 uniformBuffers[currentFrame].updatedForFrame = true;
@@ -135,25 +145,16 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             ASSERT_ERROR_IF(pushConstantRange == nullptr, "Trying to push constants in pipeline that was created without support for them in mind");
 
             vkCmdPushConstants(
-                    givenCommandBuffer->GetVulkanCommandBuffer(), vkPipelineLayout,
-                    pushConstantRange->stageFlags, pushConstantRange->offset,
-                    pushConstantRange->size, pushConstantData
+                givenCommandBuffer->GetVulkanCommandBuffer(), vkPipelineLayout,
+                pushConstantRange->stageFlags, pushConstantRange->offset,
+                pushConstantRange->size, pushConstantData
             );
         };
         inline void OverloadShader(SharedPtr<Shader> newShader)
         {
             VK::GetDevice()->WaitUntilIdle();
 
-            for (uint i = (*shaders).size(); i--;)
-            {
-                if ((*shaders)[i]->GetShaderType() == newShader->GetShaderType())
-                {
-                    (*shaders)[i] = newShader;
-                    CreatePipeline();
-
-                    return;
-                }
-            }
+            shaders[newShader->GetShaderType()] = &newShader;
 
             ASSERT_ERROR_FORMATTED("Shader of type [{0}] could not be overloaded because it is not present in the pipeline", VK_TO_STRING(newShader->GetShaderType(), ShaderStageFlagBits));
         };
@@ -250,17 +251,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
             DescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
 
-            for (const auto &shader : *shaders)
+            for (const auto &[type, shader] : shaders)
             {
-                for (const auto &binding : *shader->precompiledData->reflectionData.descriptorBindings)
+                for (const auto &binding : *shader->get()->precompiledData->reflectionData.descriptorBindings)
                 {
                     auto &reference = descriptorSetLayoutCreateInfo.bindings[binding.binding];
-                    reference.shaderStages |= shader->GetShaderType();
+                    reference.shaderStages |= type;
                     reference.descriptorType = static_cast<DescriptorType>(binding.fieldType);
                     reference.arraySize = binding.arraySize;
                 }
-
-                delete shader->precompiledData->reflectionData.descriptorBindings;
             }
 
             if (descriptorSetLayoutCreateInfo.bindings.empty())
@@ -332,9 +331,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 }
             }
 
-            descriptorSets.resize((uint) (HasUniformBuffers() || HasStorageBuffers()) * maxConcurrentFrames);
-            if (!descriptorSets.empty())
+            if (!this->usesExternalDescriptorSets && descriptorSetLayout != nullptr)
             {
+                descriptorSets.resize(maxConcurrentFrames);
                 for (uint i = 0; i < maxConcurrentFrames; i++)
                 {
                     descriptorSets[i] = DescriptorSet::Create(*descriptorSetLayout);
@@ -377,7 +376,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         SB* storageBufferData = nullptr;
         std::vector<BufferData> storageBuffers;
 
-        std::vector<SharedPtr<Shader>>* shaders = nullptr;
+        std::unordered_map<ShaderType, SharedPtr<Shader>*> shaders;
         std::vector<UniquePtr<DescriptorSet>> descriptorSets;
 
         VkPipelineCache pipelineCache = VK_NULL_HANDLE;
@@ -390,6 +389,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         bool usesExternalUniformBuffers = false;
         bool usesExternalStorageBuffers = false;
         bool usesExternalDescriptorSetLayout = false;
+        bool usesExternalDescriptorSets = false;
 
         uint currentFrame = 0;
         uint maxConcurrentFrames = 1;
@@ -402,9 +402,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         inline uSize GetCacheHash()
         {
             String stringToCache;
-            for (const auto &shader : *shaders)
+            for (const auto &shader : shaders)
             {
-                stringToCache += shader->GetFilePath();
+                stringToCache += shader.second->get()->GetFilePath();
             }
 
             return GET_HASH(stringToCache);
@@ -473,13 +473,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     struct GraphicsPipelineCreateInfo
     {
-        uint maxConcurrentFrames;
         std::vector<SharedPtr<Shader>> shaders;
         Optional<GraphicsPipelineShaderData> shaderData;
 
         Optional<GraphicsPipelineDynamicRenderingInfo> dynamicRenderingInfo;
         // OR
         Optional<GraphicsPipelineRenderPassInfo> renderPassInfo;
+
+        bool enableDepthBias = false;
+        bool manuallyHandleDescriptorSets = false;
 
         ShaderType pushConstantShaderStages = ShaderType::VERTEX | ShaderType::FRAGMENT;
         Sampling sampling = Sampling::MSAAx1;
@@ -531,24 +533,51 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline GraphicsPipelineCreateInfo& GetCreateInfo() { return createInfo; }
 
         /* --- SETTER METHODS --- */
+        inline void SetDepthBias(const float depthBias, const float depthSlope, const UniquePtr<CommandBuffer> &commandBuffer)
+        {
+            if (!createInfo.enableDepthBias)
+            {
+                ASSERT_WARNING("Trying to set depth bias for a pipeline which has this feature disabled! Returning");
+                return;
+            }
+
+            vkCmdSetDepthBias(commandBuffer->GetVulkanCommandBuffer(), depthBias, 0.0f, depthSlope);
+        }
+        inline void DrawMesh(const UniquePtr<CommandBuffer> &commandBuffer, const SharedPtr<Mesh> &mesh) const
+        {
+            constexpr static VkDeviceSize offsets[] { 0 };
+
+            VkBuffer vkBuffer;
+
+            vkBuffer = mesh->GetVertexBuffer()->GetVulkanBuffer();
+            vkCmdBindVertexBuffers(commandBuffer->GetVulkanCommandBuffer(), 0, 1, &vkBuffer, offsets);
+
+            vkBuffer = mesh->GetIndexBuffer()->GetVulkanBuffer();
+            vkCmdBindIndexBuffer(commandBuffer->GetVulkanCommandBuffer(), vkBuffer, 0, VK_INDEX_BUFFER_TYPE);
+
+            vkCmdDrawIndexed(commandBuffer->GetVulkanCommandBuffer(), mesh->GetIndexCount(), 1, 0, 0, 0);
+        }
+        inline void Draw(const UniquePtr<CommandBuffer> &commandBuffer, const uint vertexCount) const
+        {
+            vkCmdDraw(commandBuffer->GetVulkanCommandBuffer(), vertexCount, 1, 0, 0);
+        }
+        inline void ClearShaderDefinitionForShader(const ShaderType shaderType, const String &definitionName)
+        {
+            VK::GetDevice()->WaitUntilIdle();
+
+            this->shaders[shaderType]->get()->precompiledData->definitions.erase(definitionName);
+        }
         inline void SetShaderDefinition(const ShaderType shaderType, const ShaderDefinition definition)
         {
             VK::GetDevice()->WaitUntilIdle();
 
-            for (uint i = createInfo.shaders.size(); i--;)
+            if (this->shaders[shaderType]->get()->SetDefinition(definition))
             {
-                if (createInfo.shaders[i]->GetShaderType() == shaderType)
-                {
-                    if (createInfo.shaders[i]->SetDefinition(definition))
-                    {
-                        CreatePipeline();
-                    }
-
-                    return;
-                }
+                CreatePipeline();
+                return;
             }
 
-            ASSERT_ERROR_FORMATTED("Shader of type [{0}] could not be overloaded because it is not present in the pipeline", VK_TO_STRING(shaderType, ShaderStageFlagBits));
+            ASSERT_WARNING_FORMATTED("Could not set shader definition [{0} = {1}] for shader of type [{2}]", definition.name, definition.value, static_cast<uint>(shaderType));
         }
 
         /* --- DESTRUCTOR --- */
@@ -557,10 +586,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         GraphicsPipelineCreateInfo createInfo;
         inline void SaveUniversalInfo() override
         {
-            this->shaders = &createInfo.shaders;
+            for (auto &shader : createInfo.shaders)
+            {
+                this->shaders[shader->GetShaderType()] = &shader;
+            }
             this->bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-            this->maxConcurrentFrames = createInfo.maxConcurrentFrames;
             this->pushConstantShaderStages = createInfo.pushConstantShaderStages;
+            this->maxConcurrentFrames = VK::GetDevice()->GetMaxConcurrentFramesCount();
+            this->usesExternalDescriptorSets = createInfo.manuallyHandleDescriptorSets;
         }
         inline void CreatePipeline() override
         {
@@ -586,7 +619,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             {
                 if (createInfo.shaderData.has_value())
                 {
-                    attributeDescriptions.resize(createInfo.shaderData.value().vertexAttributes.size());
+                        attributeDescriptions.resize(createInfo.shaderData.value().vertexAttributes.size());
 
                     for (uint i = 0; i < attributeDescriptions.size(); i++)
                     {
@@ -614,8 +647,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
                             lastOffset += GetVertexAttributeTypeSize(attributes[i].vertexAttributeType);
                         }
-
-                        delete createInfo.shaders[vertexShaderIndex]->precompiledData->reflectionData.vertexAttributes;
                     }
                 }
             }
@@ -662,7 +693,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
             rasterizationStateCreateInfo.polygonMode = (VkPolygonMode) createInfo.shadingType;
             rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-            rasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
+            rasterizationStateCreateInfo.depthBiasEnable = createInfo.enableDepthBias;
 
             // Set up multi sampling
             VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo{};
@@ -730,22 +761,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             blendingStateCreateInfo.attachmentCount = colorAttachmentStates.size();
             blendingStateCreateInfo.pAttachments = colorAttachmentStates.data();
 
-            // Define dynamic states to use
-            const std::vector<VkDynamicState> dynamicStates
-            {
-                VK_DYNAMIC_STATE_VIEWPORT,
-                VK_DYNAMIC_STATE_SCISSOR
-            };
-
-            // Set up dynamic states
-            VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo{};
-            dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-            dynamicStateCreateInfo.dynamicStateCount = 2;
-            dynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
+            // Set up dynamic rendering
             VkPipelineRenderingCreateInfoKHR graphicsPipelineCreateInfoKHR{};
-            graphicsPipelineCreateInfoKHR.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
-            graphicsPipelineCreateInfoKHR.colorAttachmentCount = colorAttachmentCount;
-
             VkFormat* colorAttachmentFormats;
             if (!usesRenderPasses)
             {
@@ -767,11 +784,31 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                     }
                 }
 
-                // Assign attachment info to pipeline
+                // Fill dynamic rendering info
+                graphicsPipelineCreateInfoKHR.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+                graphicsPipelineCreateInfoKHR.colorAttachmentCount = colorAttachmentCount;
                 graphicsPipelineCreateInfoKHR.pColorAttachmentFormats = colorAttachmentFormats;
                 graphicsPipelineCreateInfoKHR.depthAttachmentFormat = depthAttachmentFormat;
                 graphicsPipelineCreateInfoKHR.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
             }
+
+            // Define dynamic states to use
+            std::vector<VkDynamicState> dynamicStates
+            {
+                VK_DYNAMIC_STATE_VIEWPORT,
+                VK_DYNAMIC_STATE_SCISSOR
+            };
+
+            if (createInfo.enableDepthBias)
+            {
+                dynamicStates.push_back(VK_DYNAMIC_STATE_DEPTH_BIAS);
+            }
+
+            // Set up dynamic states
+            VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo{};
+            dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+            dynamicStateCreateInfo.dynamicStateCount = dynamicStates.size();
+            dynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
 
             // Set up graphics pipeline creation info using all the modules created before
             VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo{};
@@ -914,7 +951,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         };
 
         /* --- SETTER METHODS --- */
-
+        inline void Dispatch(const UniquePtr<CommandBuffer> &commandBuffer, const uint xCount, const uint yCount = 1, const uint zCount = 1)
+        {
+            vkCmdDispatch(commandBuffer->GetVulkanCommandBuffer(), xCount, yCount, zCount);
+        }
         inline void SetShaderDefinition(const ShaderDefinition definition)
         {
             VK::GetDevice()->WaitUntilIdle();
@@ -929,7 +969,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         inline void Destroy() override
         {
             Pipeline<PC, UB, SB>::Destroy();
-            delete this->shaders;
         };
         DELETE_COPY(ComputePipeline);
 
@@ -937,7 +976,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ComputePipelineCreateInfo createInfo;
         void SaveUniversalInfo() override
         {
-            this->shaders = new std::vector<SharedPtr<Shader>> { createInfo.shader };
+            this->shaders[createInfo.shader->GetShaderType()] = &createInfo.shader;
             this->bindPoint = VK_PIPELINE_BIND_POINT_COMPUTE;
             this->maxConcurrentFrames = 1;
             this->pushConstantShaderStages = ShaderType::COMPUTE;

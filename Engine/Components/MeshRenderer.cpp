@@ -48,7 +48,6 @@ namespace Sierra::Engine::Components
             static const char* tooltips[3] = { "Some tooltip.", "Some tooltip.", "Some tooltip." };
             GUI::PropertyVector3("Diffuse:", material.diffuse, resetValues, tooltips);
             GUI::FloatProperty("Specular:", material.specular, "Some tooltip.");
-            GUI::FloatProperty("Ambient:", material.ambient, "Some tooltip.");
 
             GUI::EndTreeProperties();
         }
@@ -115,6 +114,7 @@ namespace Sierra::Engine::Components
 
     MeshPushConstant MeshRenderer::GetPushConstantData() const
     {
+        glm::normalize(material.diffuse);
         return { .material = material, .entityID = static_cast<uint>(enttEntity), .meshID = meshID, .meshTexturesPresence =  meshTexturesPresence };
     }
 
@@ -124,11 +124,7 @@ namespace Sierra::Engine::Components
     {
         IDPool.RemoveID(meshID);
 
-        for (const auto &texture : textures)
-        {
-            if (texture == nullptr) continue;
-            texture->Destroy();
-        }
+        // NOTE: We are not destroying textures as they must remain cached in texture pool
 
         coreMesh->Destroy();
     }

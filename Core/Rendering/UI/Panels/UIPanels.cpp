@@ -15,6 +15,7 @@
 #include "../../Vulkan/Renderers/VulkanRenderer.h"
 #include "../../../../Engine/Components/Relationship.h"
 #include "../../../../Engine/Components/MeshRenderer.h"
+#include "../../../../Engine/Classes/SystemInformation.h"
 
 using namespace Sierra::Engine::Classes;
 using namespace Sierra::Engine::Components;
@@ -279,6 +280,8 @@ namespace Sierra::Core::Rendering::UI
         // Create debug tab
         if (GUI::BeginWindow("Debug Information", nullptr, ImGuiWindowFlags_NoNav))
         {
+            ImGui::Text("Used Video Memory: %llu/%lluMB", SystemInformation::GetGPU().GetUsedVideoMemory() / 1000000, SystemInformation::GetGPU().physicalInformation.totalMemory / 1000000);
+            ImGui::Separator();
             ImGui::Text("CPU Frame Time: %i FPS", Time::GetFPS());
             ImGui::Text("GPU Draw Time: %f ms", renderer.GetTotalDrawTime());
             ImGui::Separator();

@@ -4,10 +4,10 @@
 
 #include "Camera.h"
 
-
 #include "Transform.h"
 #include "../../Core/Rendering/UI/ImGuiCore.h"
 #include "../../Core/Rendering/UI/ImGuiUtilities.h"
+#include "../../Core/Rendering/Math/MatrixUtilities.h"
 
 using Sierra::Core::Rendering::UI::ImGuiCore;
 
@@ -20,7 +20,8 @@ namespace Sierra::Engine::Components
         CalculateViewMatrix();
         CalculateProjectionMatrix();
 
-        GetComponent<Transform>().PushOnChangeCallback([this]{
+        GetComponent<Transform>().PushOnDirtyCallback([this]
+        {
             CalculateViewMatrix();
         });
 
@@ -33,7 +34,7 @@ namespace Sierra::Engine::Components
     {
         GUI::BeginProperties();
 
-        if (GUI::FloatProperty("FOV:", fov, "Some Tooltip")) isProjectionDirty = true;
+        if (GUI::FloatProperty("FOV:", FOV, "Some Tooltip")) isProjectionDirty = true;
         if (GUI::FloatProperty("Near Clip:", nearClip, "Some Tooltip")) isProjectionDirty = true;
         if (GUI::FloatProperty("Far Clip:", farClip, "Some Tooltip")) isProjectionDirty = true;
 
@@ -53,10 +54,11 @@ namespace Sierra::Engine::Components
     {
         Transform &transform = GetComponent<Transform>();
 
-        float cosYaw = glm::cos(glm::radians(transform.GetWorldRotation().x));
-        float sinYaw = glm::sin(glm::radians(transform.GetWorldRotation().x));
-        float cosPitch = glm::cos(glm::radians(transform.GetWorldRotation().y));
-        float sinPitch = glm::sin(glm::radians(transform.GetWorldRotation().y));
+        Vector3 rotation = transform.GetWorldRotation();
+        float cosYaw = glm::cos(glm::radians(rotation.x));
+        float sinYaw = glm::sin(glm::radians(rotation.x));
+        float cosPitch = glm::cos(glm::radians(rotation.y));
+        float sinPitch = glm::sin(glm::radians(rotation.y));
 
         Vector3 direction;
         direction.x = cosYaw * cosPitch;
@@ -92,21 +94,36 @@ namespace Sierra::Engine::Components
         Vector3 frontDirection = GetFrontDirection();
 
         Vector3 rendererCameraPosition = transform.GetWorldPositionUpInverted();
-
         Vector3 rendererCameraFrontDirection = { frontDirection.x, -frontDirection.y, frontDirection.z };
-        Vector3 rendererCameraUpDirection = { upDirection.x, upDirection.y, upDirection.z };
 
-        viewMatrix = glm::lookAtRH(rendererCameraPosition, rendererCameraPosition + rendererCameraFrontDirection, rendererCameraUpDirection);
+        using namespace Core::Rendering;
+        viewMatrix = MatrixUtilities::CreateViewMatrix(rendererCameraPosition, rendererCameraFrontDirection);
         inverseViewMatrix = glm::inverse(viewMatrix);
     }
 
     void Camera::CalculateProjectionMatrix()
     {
-        projectionMatrix = glm::perspectiveRH(glm::radians(fov), static_cast<float>(ImGuiCore::GetSceneViewWidth()) / static_cast<float>(ImGuiCore::GetSceneViewHeight()), nearClip, farClip);
-        projectionMatrix[1][1] *= -1;
+        using namespace Core::Rendering;
+        projectionMatrix = MatrixUtilities::CreateProjectionMatrix(FOV, static_cast<float>(ImGuiCore::GetSceneViewWidth()) / static_cast<float>(ImGuiCore::GetSceneViewHeight()), nearClip, farClip);
         inverseProjectionMatrix = glm::inverse(projectionMatrix);
-
         isProjectionDirty = false;
+    }
+
+    #define CHECK_CHANGE(a, b) if (a == b) return; else { a = b; isProjectionDirty = true; }
+
+    void Camera::SetFOV(const float givenFOV)
+    {
+        CHECK_CHANGE(FOV, givenFOV);
+    }
+
+    void Camera::SetNearClip(const float givenClip)
+    {
+        CHECK_CHANGE(nearClip, givenClip);
+    }
+
+    void Camera::SetFarClip(const float givenClip)
+    {
+        CHECK_CHANGE(farClip, givenClip);
     }
 
 }

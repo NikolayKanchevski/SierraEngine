@@ -54,9 +54,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- SETTER METHODS --- */
         bool GenerateMipMaps();
-        void CreateImageView(ImageAspectFlags givenAspectFlags, VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_2D);
         void TransitionLayout(ImageLayout newLayout);
-        void DestroyImageView();
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline Dimensions GetDimensions() const
@@ -99,7 +97,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         { return this->vkImage; };
 
         [[nodiscard]] inline VkImageView GetVulkanImageView() const
-        { ASSERT_WARNING_IF(!imageViewCreated, "Image view not generated. Returning null"); return vkImageView; }
+        { return vkImageView; }
 
         [[nodiscard]] inline VmaAllocation GetMemory() const
         { return this->vmaImageAllocation; };
@@ -117,17 +115,19 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ImageUsage usage;
         ImageFormat format;
         Sampling sampling;
+        ImageType imageType;
+        ImageAspectFlags aspectFlags;
         ImageLayout layout = ImageLayout::UNDEFINED;
-        ImageAspectFlags aspectFlags = ImageAspectFlags::COLOR;
+        ImageCreateFlags flags;
 
         VkImage vkImage = VK_NULL_HANDLE;
         VkImageView vkImageView = VK_NULL_HANDLE;
         VmaAllocation vmaImageAllocation;
 
-        bool imageViewCreated = false;
         bool mipMapsGenerated = false;
         bool swapchainImage = false;
 
+        void CreateImageView();
         friend class CommandBuffer;
     };
 

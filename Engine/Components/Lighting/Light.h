@@ -22,8 +22,21 @@ namespace Sierra::Engine::Components
         /// @brief Returns the ID of the light within the storage buffer array.
         [[nodiscard]] uint GetID() const { return lightID; }
 
+        // TODO: CACHING
+        [[nodiscard]] inline Matrix4x4 GetViewSpaceMatrix()
+        {
+            Recalculate();
+            return projectionView;
+        }
+
     protected:
         uint lightID;
+        Matrix4x4 projectionView;
+
+        inline virtual void Recalculate()
+        {
+
+        }
     };
 
 }

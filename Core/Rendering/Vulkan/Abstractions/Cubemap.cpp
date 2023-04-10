@@ -74,13 +74,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         stagingBuffer->Destroy();
 
         // Generate mip maps for the current texture
-        if (createInfo.mipMappingEnabled) /* GenerateMipMaps() */;
-
-        // NOTE: Transitioning to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL is not required as it is automatically done during the mip map generation
-        else image->TransitionLayout(ImageLayout::SHADER_READ_ONLY_OPTIMAL);
-
-        // Create the image view using the proper image format
-        image->CreateImageView(ImageAspectFlags::COLOR, VK_IMAGE_VIEW_TYPE_CUBE);
+        if (createInfo.mipMappingEnabled) image->GenerateMipMaps();
+        image->TransitionLayout(ImageLayout::SHADER_READ_ONLY_OPTIMAL);
 
         // Clean up stbi data
         for (const auto &stbiImage : stbiImages)
