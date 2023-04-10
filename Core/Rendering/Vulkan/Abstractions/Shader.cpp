@@ -195,7 +195,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Check for errors
         if (module.GetCompilationStatus() != shaderc_compilation_status_success)
         {
-            ASSERT_ERROR_FORMATTED("Precompiling shader [{0}] failed with an error code of [{1}]: {2}", filePath, module.GetCompilationStatus(), module.GetErrorMessage());
+            ASSERT_ERROR_FORMATTED("Precompiling shader [{0}] failed with an error code of [{1}]: {2}", filePath, static_cast<uint>(module.GetCompilationStatus()), module.GetErrorMessage());
         }
 
         return { module.begin(), module.end() };

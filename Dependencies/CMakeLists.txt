@@ -76,8 +76,8 @@ add_subdirectory(fmt)
 target_link_libraries(Dependencies INTERFACE fmt)
 
 # ========== RARECPP ========== #
-set(RARECPP_DIR "${PROJECT_SOURCE_DIR}/Dependencies/RareCpp/RareCppLib")
-set(RARECPP_SOURCES "${RARECPP_DIR}/Reflect.h")
+set(RARECPP_DIR "${PROJECT_SOURCE_DIR}/Dependencies/RareCpp/include/rarecpp")
+set(RARECPP_SOURCES "${RARECPP_DIR}/reflect.h")
 target_sources(${PROJECT_NAME} PRIVATE ${RARECPP_SOURCES})
 target_include_directories(Dependencies INTERFACE ${RARECPP_DIR})
 
