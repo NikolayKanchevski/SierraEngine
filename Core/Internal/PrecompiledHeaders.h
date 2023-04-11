@@ -63,10 +63,8 @@
     // '-- Vulkan
     #define VK_ENABLE_BETA_EXTENSIONS
     #include <volk.h>
-    #if DEBUG
-        #include <vulkan/vulkan.hpp>
-        #include <vulkan/vulkan_to_string.hpp>
-    #endif
+    #include <vulkan/vulkan.hpp>
+    #include <vulkan/vulkan_to_string.hpp>
 
     // '-- Shaderc
     #include <shaderc/shaderc.hpp>
@@ -78,6 +76,7 @@
     #include <GLFW/glfw3.h>
 
     // '-- GLM
+    #define GLM_DEPTH_ZERO_TO_ONE
     #include <glm/glm.hpp>
     #include <glm/gtc/type_ptr.hpp>
     #include <glm/gtx/quaternion.hpp>

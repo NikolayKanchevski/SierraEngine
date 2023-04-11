@@ -497,6 +497,15 @@
         return ImGui::Checkbox(labelID, &value);
     }
 
+    bool GUI::Checkbox(const char* labelID, uint &value)
+    {
+        bool boolValue;
+        bool modified = ImGui::Checkbox(labelID, &boolValue);
+
+        value = boolValue ? 1 : 0;
+        return modified;
+    }
+
     bool GUI::Vector3Input(Vector3 &value, const float *resetValues, const char** tooltips)
     {
         auto boldFont = ImGui::GetIO().Fonts->Fonts[boldFontIndex];
@@ -525,7 +534,7 @@
             {
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.9f, 0.2f, 0.2f, 1.0f));
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
                 ImGui::PushFont(boldFont);
@@ -742,6 +751,16 @@
     }
 
     bool GUI::CheckboxProperty(const char* label, bool &value, const char* tooltip)
+    {
+        BeginProperty(label);
+        bool modified = Checkbox(IDBuffer, value);
+        ShowTooltip(tooltip);
+        EndProperty();
+
+        return modified;
+    }
+
+    bool GUI::CheckboxProperty(const char* label, uint &value, const char* tooltip)
     {
         BeginProperty(label);
         bool modified = Checkbox(IDBuffer, value);

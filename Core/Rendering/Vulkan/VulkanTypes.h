@@ -5,15 +5,7 @@
 #pragma once
 
 #include "../../Internal/Definitions.h"
-
-#define DEFINE_ENUM_FLAG_OPERATORS(EnumType) \
-    inline EnumType operator~ (EnumType a) { return (EnumType)~(int)a; } \
-    inline EnumType operator| (EnumType a, EnumType b) { return (EnumType)((int)a | (int)b); } \
-    inline EnumType operator& (EnumType a, EnumType b) { return (EnumType)((int)a & (int)b); } \
-    inline EnumType operator^ (EnumType a, EnumType b) { return (EnumType)((int)a ^ (int)b); } \
-    inline EnumType& operator|= (EnumType& a, EnumType b) { return (EnumType&)((int&)a |= (int)b); } \
-    inline EnumType& operator&= (EnumType& a, EnumType b) { return (EnumType&)((int&)a &= (int)b); } \
-    inline EnumType& operator^= (EnumType& a, EnumType b) { return (EnumType&)((int&)a ^= (int)b); }
+#include "../../Internal/Macros.h"
 
 namespace Sierra::Core::Rendering::Vulkan
 {
@@ -706,11 +698,36 @@ namespace Sierra::Core::Rendering::Vulkan
         MAX_ENUM = VK_SAMPLER_ADDRESS_MODE_MAX_ENUM
     };
 
+    enum class SamplerBorderColor
+    {
+        FLOAT_TRANSPARENT_BLACK = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+        INT_TRANSPARENT_BLACK = VK_BORDER_COLOR_INT_TRANSPARENT_BLACK,
+        FLOAT_OPAQUE_BLACK = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
+        INT_OPAQUE_BLACK = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+        FLOAT_OPAQUE_WHITE = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE,
+        INT_OPAQUE_WHITE = VK_BORDER_COLOR_INT_OPAQUE_WHITE,
+        FLOAT_CUSTOM_EXT = VK_BORDER_COLOR_FLOAT_CUSTOM_EXT,
+        INT_CUSTOM_EXT = VK_BORDER_COLOR_INT_CUSTOM_EXT
+    };
+
     enum class SamplerMipMode
     {
         NEAREST = VK_SAMPLER_MIPMAP_MODE_NEAREST,
         LINEAR = VK_SAMPLER_MIPMAP_MODE_LINEAR,
         MAX_ENUM = VK_SAMPLER_MIPMAP_MODE_MAX_ENUM
+    };
+
+    enum class SamplerCompareOp
+    {
+        NEVER = VK_COMPARE_OP_NEVER,
+        LESS = VK_COMPARE_OP_LESS,
+        EQUAL = VK_COMPARE_OP_EQUAL,
+        LESS_OR_EQUAL = VK_COMPARE_OP_LESS_OR_EQUAL,
+        GREATER = VK_COMPARE_OP_GREATER,
+        NOT_EQUAL = VK_COMPARE_OP_NOT_EQUAL,
+        GREATER_OR_EQUAL = VK_COMPARE_OP_GREATER_OR_EQUAL,
+        ALWAYS = VK_COMPARE_OP_ALWAYS,
+        MAX_ENUM = VK_COMPARE_OP_MAX_ENUM
     };
 
     enum class ComponentSwizzle
@@ -890,4 +907,5 @@ namespace Sierra::Core::Rendering::Vulkan
         MAX = VK_RESOLVE_MODE_MAX_BIT
     };
 
+    typedef uint BoolGLSL;
 }

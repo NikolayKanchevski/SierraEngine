@@ -72,6 +72,9 @@ namespace Sierra::Engine::Classes
                     // Increase vertex count
                     model->vertexCount += mesh.GetMesh()->GetVertexCount();
                     model->meshCount++;
+
+                    Mesh::IncreaseTotalMeshCount();
+
                     model->meshEntities.push_back(entity.GetEnttEntity());
                 }
 
@@ -252,15 +255,15 @@ namespace Sierra::Engine::Classes
 
     SharedPtr<Mesh> Model::LoadAssimpMesh(aiMesh *mesh)
     {
-        std::vector<VertexPNU> meshVertices(mesh->mNumVertices);
         std::vector<uint> indices;
+        std::vector<Vertex> vertices(mesh->mNumVertices);
 
         // Load vertex data
         for (uint i = 0; i < mesh->mNumVertices; i++)
         {
-            meshVertices[i].position = {mesh->mVertices[i].x, -mesh->mVertices[i].y, mesh->mVertices[i].z };
-            meshVertices[i].normal = mesh->HasNormals() ? Vector3{mesh->mNormals[i].x, -mesh->mNormals[i].y, mesh->mNormals[i].z } : Vector3{0, 0, 0 };
-            meshVertices[i].UV = mesh->HasTextureCoords(0) ? Vector2{mesh->mTextureCoords[0][i].x, -mesh->mTextureCoords[0][i].y } : Vector2{0, 0 };
+            vertices[i].position = {mesh->mVertices[i].x, -mesh->mVertices[i].y, mesh->mVertices[i].z };
+            vertices[i].normal = mesh->HasNormals() ? Vector3(mesh->mNormals[i].x, -mesh->mNormals[i].y, mesh->mNormals[i].z) : Vector3(0, 0, 0);
+            vertices[i].UV = mesh->HasTextureCoords(0) ? Vector2(mesh->mTextureCoords[0][i].x, -mesh->mTextureCoords[0][i].y) : Vector2(0, 0);
         }
 
         // Iterate over indices through faces and copy across
@@ -281,7 +284,7 @@ namespace Sierra::Engine::Classes
         this->meshCount++;
 
         // Create and return the mesh
-        return std::make_shared<Mesh>(meshVertices, indices);
+        return Mesh::Create({ .vertices = vertices, .indices = indices });
     }
 
     void Model::ApplyAssimpMeshTextures(MeshRenderer &meshComponent, aiMaterial *assimpMaterial)
@@ -318,7 +321,8 @@ namespace Sierra::Engine::Classes
             auto specularTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
                 .textureType = TextureType::SPECULAR,
-                .imageFormat = ImageFormat::R8_UNORM
+                .imageFormat = ImageFormat::R8_UNORM,
+                .mipMappingEnabled = true
             });
 
             // Apply texture
@@ -336,7 +340,8 @@ namespace Sierra::Engine::Classes
             auto normalTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
                 .textureType = TextureType::NORMAL_MAP,
-                .imageFormat = ImageFormat::R8G8B8A8_UNORM
+                .imageFormat = ImageFormat::R8G8B8A8_UNORM,
+                .mipMappingEnabled = true
             });
 
             // Apply texture
@@ -372,8 +377,5 @@ namespace Sierra::Engine::Classes
 
         aiGetMaterialColor(assimpMaterial, AI_MATKEY_COLOR_SPECULAR, &assimpColor);
         meshComponent.material.specular = assimpColor.r;
-
-        aiGetMaterialColor(assimpMaterial, AI_MATKEY_COLOR_AMBIENT, &assimpColor);
-        meshComponent.material.ambient = assimpColor.r;
     }
 }

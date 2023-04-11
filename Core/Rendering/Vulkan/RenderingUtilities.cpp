@@ -4,11 +4,179 @@
 
 #include "../UI/ImGuiCore.h"
 #include "RenderingUtilities.h"
-#include "../../../Engine/Classes/Cursor.h"
 #include "../../../Engine/Classes/Input.h"
+#include "../../../Engine/Classes/Cursor.h"
+#include "../../../Engine/Components/MeshRenderer.h"
 
 namespace Sierra::Core::Rendering::Vulkan
 {
+
+    // ========================== SHADOW MAP RENDERER ========================== \\
+
+    /* --- POLLING METHODS --- */
+
+    void ShadowMapRenderer::Render(const UniquePtr<CommandBuffer> &commandBuffer)
+    {
+        shadowRenderer->Begin(commandBuffer);
+
+        shadowPipeline->Bind(commandBuffer);
+
+        shadowPipeline->BindDescriptorSets(commandBuffer);
+
+        using namespace Components;
+        auto meshMeshView = World::GetAllComponentsOfType<MeshRenderer>();
+        auto directionalLightView = World::GetAllComponentsOfType<DirectionalLight>();
+
+        for (const auto &directionalLightEntity : directionalLightView)
+        {
+            shadowPipeline->GetPushConstantData().directionalLightID = World::GetComponent<DirectionalLight>(directionalLightEntity).GetID();
+
+            for (auto meshEntity : meshMeshView)
+            {
+                auto &meshRenderer = meshMeshView.get<MeshRenderer>(meshEntity);
+
+                shadowPipeline->GetPushConstantData().meshID = meshRenderer.GetMeshID();
+                shadowPipeline->PushConstants(commandBuffer);
+
+                shadowPipeline->DrawMesh(commandBuffer, meshRenderer.GetMesh());
+            }
+        }
+
+        shadowRenderer->End(commandBuffer);
+
+        commandBuffer->TransitionImageLayout(shadowMap, ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+
+
+//        varianceRenderer->Begin(commandBuffer);
+//
+//        variancePipeline->Bind(commandBuffer);
+//
+//        variancePipeline->BindDescriptorSets(commandBuffer);
+//
+//        using namespace Components;
+//        auto meshMeshView = World::GetAllComponentsOfType<MeshRenderer>();
+//        auto directionalLightView = World::GetAllComponentsOfType<DirectionalLight>();
+//
+//        for (const auto &directionalLightEntity : directionalLightView)
+//        {
+//            variancePipeline->GetPushConstantData().directionalLightID = World::GetComponent<DirectionalLight>(directionalLightEntity).GetID();
+//
+//            for (auto meshEntity : meshMeshView)
+//            {
+//                auto &meshRenderer = meshMeshView.get<MeshRenderer>(meshEntity);
+//
+//                variancePipeline->GetPushConstantData().meshID = meshRenderer.GetMeshID();
+//                variancePipeline->PushConstants(commandBuffer);
+//                variancePipeline->DrawMesh(commandBuffer, meshRenderer.GetMesh());
+//            }
+//        }
+//
+//        varianceRenderer->End(commandBuffer);
+//
+//        commandBuffer->TransitionImageLayout(varianceMap, ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+
+//        momentRenderer->Begin(commandBuffer);
+//
+//        momentPipeline->Bind(commandBuffer);
+//
+//        momentPipeline->BindDescriptorSets(commandBuffer);
+//
+//        using namespace Components;
+//        auto meshMeshView = World::GetAllComponentsOfType<MeshRenderer>();
+//        auto directionalLightView = World::GetAllComponentsOfType<DirectionalLight>();
+//
+//        for (const auto &directionalLightEntity : directionalLightView)
+//        {
+//            momentPipeline->GetPushConstantData().directionalLightID = World::GetComponent<DirectionalLight>(directionalLightEntity).GetID();
+//
+//            for (auto meshEntity : meshMeshView)
+//            {
+//                auto &meshRenderer = meshMeshView.get<MeshRenderer>(meshEntity);
+//
+//                momentPipeline->GetPushConstantData().meshID = meshRenderer.GetMeshID();
+//                momentPipeline->PushConstants(commandBuffer);
+//
+//                momentPipeline->DrawMesh(commandBuffer, meshRenderer.GetMesh());
+//            }
+//        }
+//
+//        momentRenderer->End(commandBuffer);
+//
+//        commandBuffer->TransitionImageLayout(momentMap, ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+
+
+//        // Horizontal blur
+//
+//        blurRenderer->OverloadColorAttachment(0, horizontalBlurImage);
+//        blurRenderer->Begin(commandBuffer);
+//
+//        blurPipeline->Bind(commandBuffer);
+//
+//        blurPipeline->GetPushConstantData().blurDirection = BlurDirection::VERTICAL;
+//        blurPipeline->PushConstants(commandBuffer);
+//
+//        blurPipeline->BindDescriptorSets(commandBuffer, horizontalBlurDescriptorSet );
+//
+//        blurPipeline->Draw(commandBuffer, 3);
+//
+//        blurRenderer->End(commandBuffer);
+//
+//        commandBuffer->TransitionImageLayout(horizontalBlurImage, ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+//
+//        // Vertical blur
+//
+//        blurRenderer->OverloadColorAttachment(0, finalBlurImage);
+//        blurRenderer->Begin(commandBuffer);
+//
+//        blurPipeline->Bind(commandBuffer);
+//
+//        blurPipeline->GetPushConstantData().blurDirection = BlurDirection::HORIZONTAL;
+//        blurPipeline->PushConstants(commandBuffer);
+//
+//        blurPipeline->BindDescriptorSets(commandBuffer, finalBlurDescriptorSet);
+//
+//        blurPipeline->Draw(commandBuffer, 3);
+//
+//        blurRenderer->End(commandBuffer);
+    }
+
+    void ShadowMapRenderer::Update()
+    {
+        using namespace Components;
+
+        auto directionalLightEntities = World::GetAllComponentsOfType<DirectionalLight>();
+        auto &storageData = shadowPipeline->GetStorageBufferData();
+        tbb::parallel_for_each(directionalLightEntities.begin(), directionalLightEntities.end(), [&storageData](auto &enttEntity)
+        {
+            DirectionalLight &directionalLight = World::GetComponent<DirectionalLight>(enttEntity);
+            storageData.directionalLights[directionalLight.GetID()].projectionView = directionalLight.GetViewSpaceMatrix();
+        });
+    }
+
+    /* --- DESTRUCTOR --- */
+
+    void ShadowMapRenderer::Destroy()
+    {
+        blurPipeline->Destroy();
+        blurRenderer->Destroy();
+
+        horizontalBlurImage->Destroy();
+        finalBlurImage->Destroy();
+
+        momentPipeline->Destroy();
+        momentRenderer->Destroy();
+        momentMap->Destroy();
+
+        variancePipeline->Destroy();
+        varianceRenderer->Destroy();
+        varianceMap->Destroy();
+
+        shadowPipeline->Destroy();
+        shadowRenderer->Destroy();
+        shadowMap->Destroy();
+
+        sampler->Destroy();
+    }
 
     // ========================== GRID RENDERER ========================== \\
 
@@ -17,22 +185,22 @@ namespace Sierra::Core::Rendering::Vulkan
     void GridRenderer::RenderGrid(const UniquePtr<CommandBuffer> &commandBuffer)
     {
         // Make sure image is suitable for being rendering to
-        commandBuffer->TransitionImageLayout(outputImage, ImageLayout::COLOR_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-        // Begin rendering
-        renderer->Begin(commandBuffer);
-
-        // Fire the pipeline up
-        pipeline->Bind(commandBuffer);
-
-        // Pass data to shaders
-        pipeline->BindDescriptorSets(commandBuffer);
-
-        // Draw grid plane
-        commandBuffer->Draw(6);
-
-        // End rendering
-        renderer->End(commandBuffer);
+//        commandBuffer->TransitionImageLayout(outputImage, ImageLayout::COLOR_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+//
+//        // Begin rendering
+//        renderer->Begin(commandBuffer);
+//
+//        // Fire the pipeline up
+//        pipeline->Bind(commandBuffer);
+//
+//        // Pass data to shaders
+//        pipeline->BindDescriptorSets(commandBuffer);
+//
+//        // Draw grid plane
+//        pipeline->Draw(commandBuffer, 6);
+//
+//        // End rendering
+//        renderer->End(commandBuffer);
     }
 
     /* --- DESTRUCTOR --- */
@@ -77,7 +245,7 @@ namespace Sierra::Core::Rendering::Vulkan
         computePipeline->BindDescriptorSets(commandBuffer);
 
         // Execute compute shader
-        commandBuffer->Dispatch(1, 1, 1);
+        computePipeline->Dispatch(commandBuffer, 1);
 
         // Save new data
         data = *dataBuffer->GetDataAs<WriteBuffer>();

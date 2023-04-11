@@ -18,6 +18,8 @@ layout(std140, set = 0, binding = STORAGE_BUFFER_BINDING) readonly buffer Storag
 
     uint directionalLightCount;
     uint pointLightCount;
+
+    vec2 _align1_;
 } storageBuffer;
 
 #endif

@@ -29,17 +29,22 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             SpecularBuffer = 3,
             ShininessBuffer = 4,
             NormalBuffer = 5,
-            DepthBuffer = 6
+            ShadowBuffer = 6,
+            DepthBuffer = 7
         };
 
         struct MergingRendererPushConstant
         {
             Matrix4x4 skyboxModel;
+            Matrix4x4 lightSpaceMatrix;
+
             RenderedImageValue renderedImageValue = RenderedImageValue::RenderedImage;
+            BoolGLSL enableShadows = true;
         };
 
         typedef GraphicsPipeline<MeshPushConstant, UniformData, StorageData> ScenePipeline;
         typedef GraphicsPipeline<MergingRendererPushConstant, UniformData, StorageData> CompositionPipeline;
+
     public:
         /* --- CONSTRUCTORS --- */
         DeferredVulkanRenderer(const VulkanRendererCreateInfo &createInfo);
@@ -57,7 +62,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         void Destroy() override;
     private:
         UniquePtr<Image> IDBuffer;
-        UniquePtr<Image> positionBuffer;
         UniquePtr<Image> diffuseBuffer;
         UniquePtr<Image> specularAndShininessBuffer;
         UniquePtr<Image> normalBuffer;
@@ -71,14 +75,14 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         UniquePtr<DynamicRenderer> compositionPass;
         UniquePtr<CompositionPipeline> compositionPipeline;
 
+        UniquePtr<ShadowMapRenderer> shadowRenderer;
         UniquePtr<Raycaster> raycaster;
 
-        UniquePtr<Sampler> textureSampler;
+        UniquePtr<Sampler> bufferSampler;
         std::vector<VkDescriptorSet> renderedImageDescriptorSets;
         std::vector<UniquePtr<TimestampQuery>> renderTimestampQueries;
 
         void InitializeRenderer();
-        void CreateSceneRenderingObjects();
     };
 
 }

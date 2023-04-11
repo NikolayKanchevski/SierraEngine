@@ -7,8 +7,6 @@ struct Material
     float specular;
 
     float shininess;
-    float ambient;
-
     float vertexExaggeration;
 };
 

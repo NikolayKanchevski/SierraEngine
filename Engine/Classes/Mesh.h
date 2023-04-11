@@ -19,31 +19,33 @@ namespace Sierra::Engine::Classes
         float specular = 1.0f;
 
         float shininess = 0.001953125f;
-        float ambient = 0.1f;
-
         float vertexExaggeration = 0.0f;
-        float _align1_;
+
+        Vector2 _align1_;
     };
 
     struct MeshPushConstant
     {
         Material material;
 
-        uint entityID;
         uint meshID;
+        uint entityID;
         uint meshTexturesPresence; // Bools encoded as binary indicating whether texture types are bound
-        float _align1_;
+        uint directionalLightID;
+    };
+
+    struct MeshCreateInfo
+    {
+        std::vector<Vertex> &vertices;
+        std::vector<INDEX_BUFFER_TYPE> &indices;
     };
 
     class Mesh
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Mesh(std::vector<VertexP> &givenVertices, std::vector<uint> &givenIndices);
-        Mesh(std::vector<VertexPNU> &givenVertices, std::vector<uint> &givenIndices);
-
-        /* --- POLLING METHODS --- */
-        void Bind(UniquePtr<CommandBuffer> &commandBuffer);
+        Mesh(const MeshCreateInfo &createInfo);
+        static SharedPtr<Mesh> Create(MeshCreateInfo createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint GetVertexCount() const { return vertexCount; }
@@ -70,8 +72,7 @@ namespace Sierra::Engine::Classes
         UniquePtr<Buffer> vertexBuffer;
         UniquePtr<Buffer> indexBuffer;
 
-        void CreateVertexBuffer(std::vector<VertexP> &givenVertices);
-        void CreateVertexBuffer(std::vector<VertexPNU> &givenVertices);
+        void CreateVertexBuffer(std::vector<Vertex> &givenVertices);
         void CreateIndexBuffer(std::vector<uint> &givenIndices);
 
         static inline uint totalMeshCount;

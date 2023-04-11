@@ -29,7 +29,7 @@ namespace Sierra::Engine::Components
         /* --- CONSTRUCTORS --- */
         inline PointLight()
         {
-            this->lightID = IDPool.CreateNewID();
+            lightID = IDPool.CreateNewID();
         }
 
         /* --- POLLING METHODS --- */
@@ -59,6 +59,8 @@ namespace Sierra::Engine::Components
     public:
         struct ShaderPointLight
         {
+            Matrix4x4 projectionView;
+
             Vector3 color;
             float intensity;
 
@@ -71,14 +73,20 @@ namespace Sierra::Engine::Components
 
         operator ShaderPointLight() const noexcept { auto position = GetComponent<Transform>().GetWorldPosition(); return
         {
-            .color = this->color,
-            .intensity = this->intensity,
+            .projectionView = projectionView,
+            .color = color,
+            .intensity = intensity,
             .position = { position.x, -position.y, position.z },
-            .linear = this->linear,
-            .quadratic = this->quadratic
+            .linear = linear,
+            .quadratic = quadratic
         }; }
 
     private:
+        inline void Recalculate() override
+        {
+            printf("NOT IMPLEMENTED FOR POINT LIGHT!");
+        }
+
         inline static auto IDPool = Classes::IdentifierPool<uint>(MAX_POINT_LIGHTS);
     };
 

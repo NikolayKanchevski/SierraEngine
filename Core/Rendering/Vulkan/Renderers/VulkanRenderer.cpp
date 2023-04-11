@@ -14,7 +14,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
     {
         // Create swapchain
         this->swapchain = Swapchain::Create(window);
-        maxConcurrentFrames = swapchain->GetMaxConcurrentFramesCount();
+        maxConcurrentFrames = VK::GetDevice()->GetMaxConcurrentFramesCount();
 
         // Create ImGui instance if requested
         if (createInfo.createImGuiInstance)

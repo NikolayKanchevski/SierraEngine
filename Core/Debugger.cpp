@@ -24,13 +24,6 @@
 
 namespace Sierra::Core
 {
-
-#if DEBUG
-    static const bool DEBUG_MODE = true;
-#else
-    static const bool DEBUG_MODE = false;
-#endif
-
 #if _WIN32
     HANDLE Debugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif
@@ -60,7 +53,9 @@ namespace Sierra::Core
     {
         RED();
         std::cout << "[-] " << message << "!\n";
-        if (DEBUG_MODE) throw std::runtime_error("Program execution failed miserably!");
+        #if DEBUG
+            throw std::runtime_error("Program execution failed miserably!");
+        #endif
         DEFAULT();
     }
 
@@ -117,11 +112,6 @@ namespace Sierra::Core
 
     void Debugger::FunctionProfiler::Stop()
     {
-        auto endTimePoint = std::chrono::steady_clock::now();
-        auto highResStart = std::chrono::duration_cast<std::chrono::milliseconds>(startTimepoint.time_since_epoch()).count();
-        auto highResEnd = std::chrono::duration_cast<std::chrono::milliseconds>(endTimePoint.time_since_epoch()).count();
-        auto elapsedTime = highResEnd - highResStart;
-
         std::string nameString = std::string(name);
 
         String templateData = "";
@@ -187,6 +177,11 @@ namespace Sierra::Core
         braceIndex += templateData.size();
 
         nameString = nameString.substr(j + 1, braceIndex - j) + ')';
+
+        auto endTimePoint = std::chrono::steady_clock::now();
+        uint64 start = std::chrono::duration_cast<std::chrono::milliseconds>(startTimepoint.time_since_epoch()).count();
+        uint64 end = std::chrono::duration_cast<std::chrono::milliseconds>(endTimePoint.time_since_epoch()).count();
+        uint64 elapsedTime = end - start;
 
         ASSERT_INFO_FORMATTED("Method {0} took {1}ms", nameString, elapsedTime);
 

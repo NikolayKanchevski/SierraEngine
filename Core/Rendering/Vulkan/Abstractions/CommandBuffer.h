@@ -22,14 +22,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void End() const;
         void Reset() const;
         void Free() const;
-        void TransitionImageLayout(Image *image, ImageLayout newLayout, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage);
-        void TransitionImageLayout(const UniquePtr<Image> &image, ImageLayout newLayout, VkPipelineStageFlags lastUsageStage, VkPipelineStageFlags expectedUsageStage);
-        void TransitionImageLayouts(const std::vector<ImageReference>& images, ImageLayout newLayout, VkPipelineStageFlags lastUsageStage, VkPipelineStageFlags expectedUsageStage);
-        void BindVertexBuffer(const UniquePtr<Buffer> &vertexBuffer) const;
-        void BindIndexBuffer(const UniquePtr<Buffer> &indexBuffer) const;
-        void DrawIndexed(const uint indexCount) const;
-        void Draw(const uint vertexCount) const;
-        void Dispatch(uint xCount, uint yCount = 1, uint zCount = 1);
+        void TransitionImageLayout(Image *image, ImageLayout newLayout);
+        void TransitionImageLayout(const UniquePtr<Image> &image, ImageLayout newLayout);
+        void TransitionImageLayouts(const std::vector<ImageReference>& images, ImageLayout newLayout);
         void SetViewport(uint width, uint height) const;
         void SetScissor(uint width, uint height, int xOffset = 0, int yOffset = 0) const;
         void SetViewportAndScissor(uint width, uint height, int xOffset = 0, int yOffset = 0) const;

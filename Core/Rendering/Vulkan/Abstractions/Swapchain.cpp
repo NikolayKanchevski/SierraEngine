@@ -12,7 +12,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     /* --- CONSTRUCTORS --- */
 
     Swapchain::Swapchain(UniquePtr<Window> &givenWindow)
-            : window(givenWindow)
+        : window(givenWindow), maxConcurrentFrames(VK::GetDevice()->GetMaxConcurrentFramesCount())
     {
         GetSurfaceData();
         CreateSwapchain();
@@ -156,7 +156,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the extent and retrieve how many frames ahead can be rendered
         extent = GetSwapchainExtent(surfaceCapabilities);
-        maxConcurrentFrames = surfaceCapabilities.maxImageCount > 3 ? 3 : glm::max(surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount);
 
         // Set up swapchain creation info
         VkSwapchainCreateInfoKHR swapchainCreateInfo{};
@@ -239,11 +238,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             swapchainImages[i] = Image::CreateSwapchainImage({
                 .image = swapchainVkImages[i],
                 .format = (ImageFormat) bestSurfaceFormat.format,
-                .sampling = Sampling::MSAAx1,
                 .dimensions = { extent.width, extent.height, 1 }
             });
-
-            swapchainImages[i]->CreateImageView(ImageAspectFlags::COLOR);
         }
 
         delete[] swapchainVkImages;

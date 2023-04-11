@@ -27,7 +27,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
     private:
         UniquePtr<GraphicsPipeline<>> graphicsPipeline;
 
-        void CreateObjects();
     };
 
 }

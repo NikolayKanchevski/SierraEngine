@@ -12,35 +12,35 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- CONSTRUCTORS --- */
 
-    Sampler::Sampler(const SamplerCreateInfo &samplerCreateInfo)
-        : createInfo(samplerCreateInfo)
+    Sampler::Sampler(const SamplerCreateInfo &createInfo)
+        : createInfo(createInfo)
     {
         // Get the sampler filter based on whether bilinear filtering is enabled
-        VkFilter samplerFilter = samplerCreateInfo.applyBilinearFiltering ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+        VkFilter samplerFilter = createInfo.applyBilinearFiltering ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
 
         // Set up the sampler creation info
         VkSamplerCreateInfo vkSamplerCreateInfo{};
         vkSamplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
         vkSamplerCreateInfo.minFilter = samplerFilter;
         vkSamplerCreateInfo.magFilter = samplerFilter;
-        vkSamplerCreateInfo.addressModeU = (VkSamplerAddressMode) samplerAddressMode;
-        vkSamplerCreateInfo.addressModeV = (VkSamplerAddressMode) samplerAddressMode;
-        vkSamplerCreateInfo.addressModeW = (VkSamplerAddressMode) samplerAddressMode;
-        vkSamplerCreateInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+        vkSamplerCreateInfo.addressModeU = static_cast<VkSamplerAddressMode>(createInfo.addressMode);
+        vkSamplerCreateInfo.addressModeV = static_cast<VkSamplerAddressMode>(createInfo.addressMode);
+        vkSamplerCreateInfo.addressModeW = static_cast<VkSamplerAddressMode>(createInfo.addressMode);
+        vkSamplerCreateInfo.borderColor = static_cast<VkBorderColor>(createInfo.borderColor);
         vkSamplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
         vkSamplerCreateInfo.compareEnable = VK_TRUE;
-        vkSamplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+        vkSamplerCreateInfo.compareOp = static_cast<VkCompareOp>(createInfo.compareOp);
         vkSamplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
         vkSamplerCreateInfo.mipLodBias = 0.0f;
-        vkSamplerCreateInfo.minLod = samplerCreateInfo.minLod;
-        vkSamplerCreateInfo.maxLod = samplerCreateInfo.maxLod;
-        vkSamplerCreateInfo.anisotropyEnable = samplerCreateInfo.maxAnisotropy > 0.0f;
-        vkSamplerCreateInfo.maxAnisotropy = samplerCreateInfo.maxAnisotropy;
+        vkSamplerCreateInfo.minLod = createInfo.minLod;
+        vkSamplerCreateInfo.maxLod = createInfo.maxLod;
+        vkSamplerCreateInfo.anisotropyEnable = createInfo.enableAnisotropy;
+        vkSamplerCreateInfo.maxAnisotropy = createInfo.enableAnisotropy ? VK::GetDevice()->GetPhysicalDeviceProperties().limits.maxSamplerAnisotropy : 0.0f;
 
         // Create the Vulkan sampler
         VK_ASSERT(
             vkCreateSampler(VK::GetLogicalDevice(), &vkSamplerCreateInfo, nullptr, &vkSampler),
-            FORMAT_STRING("Failed to create sampler with a LOD of [{0}, {1}] and [{2}] max anisotropy", createInfo.minLod, createInfo.maxLod, createInfo.maxAnisotropy)
+            "Failed to create image sampler"
         );
     }
 

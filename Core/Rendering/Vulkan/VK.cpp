@@ -243,26 +243,39 @@ namespace Sierra::Core::Rendering::Vulkan
             .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/DiffuseNull.jpg",
             .textureType = TextureType::DIFFUSE,
             .samplerCreateInfo {
-                .applyBilinearFiltering = false
+                .applyBilinearFiltering = false,
+                .enableAnisotropy = false
             }
         }, true);
 
         // Create default specular texture
         Texture::Create({
             .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/SpecularNull.jpg",
-            .textureType = TextureType::SPECULAR
+            .textureType = TextureType::SPECULAR,
+            .samplerCreateInfo {
+                .applyBilinearFiltering = false,
+                .enableAnisotropy = false,
+            }
         }, true);
 
         // Create default specular texture
         Texture::Create({
             .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/NormalMapNull.jpg",
-            .textureType = TextureType::NORMAL_MAP
+            .textureType = TextureType::NORMAL_MAP,
+            .samplerCreateInfo {
+                .applyBilinearFiltering = false,
+                .enableAnisotropy = false,
+            }
         }, true);
 
         // Create default height map texture
         Texture::Create({
             .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/HeightMapNull.jpg",
-            .textureType = TextureType::HEIGHT_MAP
+            .textureType = TextureType::HEIGHT_MAP,
+            .samplerCreateInfo {
+                .applyBilinearFiltering = false,
+                .enableAnisotropy = false,
+            }
         }, true);
     }
 

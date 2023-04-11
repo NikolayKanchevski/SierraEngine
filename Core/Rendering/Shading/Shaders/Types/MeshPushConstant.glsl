@@ -7,9 +7,10 @@ layout(push_constant) uniform MeshPushConstant
 {
     Material material;
 
-    uint entityID;
     uint meshID;
+    uint entityID;
     uint meshTexturesPresence;
+    uint directionalLightID;
 } pushConstant;
 
 #endif

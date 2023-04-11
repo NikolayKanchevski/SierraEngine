@@ -12,9 +12,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         float minLod = 0.0f;
         float maxLod = 13.0f;
-        float maxAnisotropy = 0.0f;
+        bool enableAnisotropy = true;
         bool applyBilinearFiltering = true;
-        SamplerAddressMode samplerAddressMode = SamplerAddressMode::REPEAT;
+        SamplerAddressMode addressMode = SamplerAddressMode::REPEAT;
+        SamplerBorderColor borderColor = SamplerBorderColor::FLOAT_OPAQUE_BLACK;
+        SamplerCompareOp compareOp = SamplerCompareOp::ALWAYS;
     };
 
     /// @brief An abstraction for the VkSampler object.
@@ -29,16 +31,17 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         static void Shutdown();
 
         /* --- CONSTRUCTORS --- */
-        Sampler(const SamplerCreateInfo &samplerCreateInfo);
+        Sampler(const SamplerCreateInfo &createInfo);
         static UniquePtr<Sampler> Create(SamplerCreateInfo createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline VkSampler GetVulkanSampler() const { return this->vkSampler; };
-        [[nodiscard]] inline float GetMinLod() const { return this->createInfo.minLod; }
-        [[nodiscard]] inline float GetMaxLod() const { return this->createInfo.maxLod; }
-        [[nodiscard]] inline float GetMaxAnisotropy() const { return this->createInfo.maxAnisotropy; }
-        [[nodiscard]] inline bool IsBilinearFilteringApplied() const { return this->createInfo.applyBilinearFiltering; }
-        [[nodiscard]] inline SamplerAddressMode GetAddressMode() const { return this->samplerAddressMode; }
+        [[nodiscard]] inline VkSampler GetVulkanSampler() const { return vkSampler; };
+        [[nodiscard]] inline float GetMinLod() const { return createInfo.minLod; }
+        [[nodiscard]] inline float GetMaxLod() const { return createInfo.maxLod; }
+        [[nodiscard]] inline bool IsAnisotropyEnabled() const { return createInfo.enableAnisotropy; }
+        [[nodiscard]] inline bool IsBilinearFilteringApplied() const { return createInfo.applyBilinearFiltering; }
+        [[nodiscard]] inline SamplerAddressMode GetAddressMode() const { return createInfo.addressMode; }
+        [[nodiscard]] inline SamplerBorderColor GetBorderColor() const { return createInfo.borderColor; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();
@@ -47,7 +50,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     private:
         VkSampler vkSampler = VK_NULL_HANDLE;
         SamplerCreateInfo createInfo;
-        SamplerAddressMode samplerAddressMode = SamplerAddressMode::REPEAT;
 
     };
 

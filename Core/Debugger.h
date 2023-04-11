@@ -4,6 +4,7 @@
 
 #pragma once
 
+#define ENABLE_DEBUGGING_IN_RELEASE 1
 #define PROFILE_FUNCTIONS_IN_RELEASE 1
 
 #if _WIN32
@@ -88,7 +89,7 @@ namespace Sierra::Core
     };
 }
 
-#if DEBUG
+#if DEBUG || ENABLE_DEBUGGING_IN_RELEASE
     #define ASSERT_ERROR(MESSAGE) Sierra::Core::Debugger::ThrowError(FORMAT_STRING("File {0}:{1} encountered an error on line: {2}", THIS_FILE, THIS_LINE, MESSAGE))
     #define ASSERT_ERROR_FORMATTED(MESSAGE, ...) ASSERT_ERROR(FORMAT_STRING(MESSAGE, ##__VA_ARGS__))
     #define ASSERT_ERROR_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_ERROR(MESSAGE)

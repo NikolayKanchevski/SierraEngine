@@ -26,10 +26,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         OptimizePerformance = shaderc_optimization_level_performance
     };
 
+    DEFINE_ENUM_FLAG_OPERATORS(ShaderOptimization)
+
     struct ShaderDefinition
     {
-        String definitionName;
-        String value;
+        String name;
+        String value = "1";
     };
 
     struct ShaderCreateInfo
@@ -38,7 +40,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ShaderType shaderType = ShaderType::NONE;
 
         std::vector<ShaderDefinition> definitions;
-        ShaderOptimization optimization = ShaderOptimization::OptimizeSize;
+
+        #if DEBUG
+            ShaderOptimization optimization = ShaderOptimization::None;
+        #else
+            ShaderOptimization optimization = ShaderOptimization::OptimizeSize | ShaderOptimization::OptimizePerformance;
+        #endif
 
         const char* entryPoint = "main";
     };
@@ -115,8 +122,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         struct ReflectionData
         {
-            std::vector<VertexAttribute> *vertexAttributes;
-            std::vector<DescriptorBinding> *descriptorBindings;
+            std::vector<VertexAttribute> *vertexAttributes = nullptr;
+            std::vector<DescriptorBinding> *descriptorBindings = nullptr;
         };
 
         struct PrecompiledData

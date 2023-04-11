@@ -343,13 +343,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         writeDescriptorSets[binding] = writeDescriptor;
     }
 
-    /* --- DESTRUCTOR --- */
-
-    DescriptorSet::~DescriptorSet()
-    {
-
-    }
-
     // ********************* Bindless Descriptor Set ********************* \\
 
     /* --- CONSTRUCTORS --- */

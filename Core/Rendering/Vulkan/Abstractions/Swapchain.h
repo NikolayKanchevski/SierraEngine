@@ -42,7 +42,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline UniquePtr<Image>& GetCurrentImage() { return GetImage(currentFrame); }
 
         [[nodiscard]] inline uint GetCurrentFrameIndex() const { return currentFrame; }
-        [[nodiscard]] inline uint GetMaxConcurrentFramesCount() const { return maxConcurrentFrames; }
 
         [[nodiscard]] inline ImageFormat GetBestSwapchainImageFormat() const { return (ImageFormat) bestSurfaceFormat.format; }
         [[nodiscard]] inline VkColorSpaceKHR GetBestColorSpace() const { return bestSurfaceFormat.colorSpace; }

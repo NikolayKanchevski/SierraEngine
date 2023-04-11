@@ -71,48 +71,62 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkFreeCommandBuffers(VK::GetLogicalDevice(), VK::GetCommandPool(), 1, &vkCommandBuffer);
     }
 
-    void CommandBuffer::TransitionImageLayout(Image *image, const ImageLayout newLayout, const VkPipelineStageFlags srcStage, const VkPipelineStageFlags dstStage)
+    void CommandBuffer::TransitionImageLayout(Image *image, const ImageLayout newLayout)
     {
         if (image->GetLayout() == newLayout) return;
 
         // Initialize barrier info
+        VkPipelineStageFlags srcStage = 0;
+        VkPipelineStageFlags dstStage = 0;
+
         VkImageMemoryBarrier imageBarrier{};
         imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 
         switch (image->GetLayout())
         {
             case ImageLayout::UNDEFINED:
+                imageBarrier.srcAccessMask = 0;
+                srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+                break;
             case ImageLayout::PRESENT_SRC:
                 imageBarrier.srcAccessMask = 0;
+                srcStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
                 break;
             case ImageLayout::PREINITIALIZED:
                 imageBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
                 break;
             case ImageLayout::COLOR_ATTACHMENT_OPTIMAL:
                 imageBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                srcStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
                 break;
             case ImageLayout::DEPTH_ATTACHMENT_OPTIMAL:
             case ImageLayout::STENCIL_ATTACHMENT_OPTIMAL:
             case ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
                 imageBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                srcStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
                 break;
             case ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL:
             case ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL:
                 imageBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                srcStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
                 break;
             case ImageLayout::TRANSFER_SRC_OPTIMAL:
                 imageBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+                srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
                 break;
             case ImageLayout::TRANSFER_DST_OPTIMAL:
                 imageBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+                srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
                 break;
             case ImageLayout::SHADER_READ_ONLY_OPTIMAL:
                 imageBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+                srcStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
                 break;
             case ImageLayout::DEPTH_READ_ONLY_OPTIMAL:
             case ImageLayout::STENCIL_READ_ONLY_OPTIMAL:
             case ImageLayout::DEPTH_STENCIL_READ_ONLY_OPTIMAL:
                 imageBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+                srcStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
                 break;
             default:
                 ASSERT_ERROR_FORMATTED("Cannot transition image's layout from [{0}] to [{1}] on the fly", VK_TO_STRING(image->GetLayout(), ImageLayout), VK_TO_STRING(newLayout, ImageLayout));
@@ -124,30 +138,37 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             case ImageLayout::COLOR_ATTACHMENT_OPTIMAL:
                 imageBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                dstStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
                 break;
             case ImageLayout::DEPTH_ATTACHMENT_OPTIMAL:
             case ImageLayout::STENCIL_ATTACHMENT_OPTIMAL:
             case ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
                 transitioningForDepth = true;
                 imageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                dstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
                 break;
             case ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL:
             case ImageLayout::DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL:
                 transitioningForDepth = true;
                 imageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                dstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
                 break;
             case ImageLayout::TRANSFER_SRC_OPTIMAL:
                 imageBarrier.srcAccessMask |= VK_ACCESS_TRANSFER_READ_BIT;
                 imageBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+                dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
                 break;
             case ImageLayout::TRANSFER_DST_OPTIMAL:
                 imageBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+                dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
                 break;
             case ImageLayout::SHADER_READ_ONLY_OPTIMAL:
                 imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+                dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
                 break;
             case ImageLayout::PRESENT_SRC:
                 imageBarrier.dstAccessMask = 0;
+                dstStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
                 break;
             default:
                 ASSERT_ERROR_FORMATTED("Cannot transition image's layout from [{0}] to [{1}] on the fly", VK_TO_STRING(image->GetLayout(), ImageLayout), VK_TO_STRING(newLayout, ImageLayout));
@@ -181,7 +202,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
     }
 
-    void CommandBuffer::TransitionImageLayout(const UniquePtr<Image> &image, const ImageLayout newLayout, const VkPipelineStageFlags lastUsageStage, const VkPipelineStageFlags expectedUsageStage)
+    void CommandBuffer::TransitionImageLayout(const UniquePtr<Image> &image, const ImageLayout newLayout)
     {
         // If first time transitioning the image for frame save its original layout
         auto &imageReference = initialImageLayouts[image.get()];
@@ -192,44 +213,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Transition layout
-        TransitionImageLayout(image.get(), newLayout, lastUsageStage, expectedUsageStage);
+        TransitionImageLayout(image.get(), newLayout);
     }
 
-    void CommandBuffer::TransitionImageLayouts(const std::vector<ImageReference>& images, const ImageLayout newLayout, const VkPipelineStageFlags lastUsageStage, const VkPipelineStageFlags expectedUsageStage)
+    void CommandBuffer::TransitionImageLayouts(const std::vector<ImageReference>& images, const ImageLayout newLayout)
     {
         for (auto &imageReference : images)
         {
-            TransitionImageLayout(imageReference.image, newLayout, lastUsageStage, expectedUsageStage);
+            TransitionImageLayout(imageReference.image, newLayout);
         }
-    }
-
-    void CommandBuffer::BindVertexBuffer(const UniquePtr<Buffer> &vertexBuffer) const
-    {
-        static VkDeviceSize offsets[] { 0 };
-
-        VkBuffer vkBuffer = vertexBuffer->GetVulkanBuffer();
-        vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, &vkBuffer, offsets);
-    }
-
-    void CommandBuffer::BindIndexBuffer(const UniquePtr<Buffer> &indexBuffer) const
-    {
-        VkBuffer vkBuffer = indexBuffer->GetVulkanBuffer();
-        vkCmdBindIndexBuffer(vkCommandBuffer, vkBuffer, 0, INDEX_BUFFER_TYPE);
-    }
-
-    void CommandBuffer::DrawIndexed(const uint indexCount) const
-    {
-        vkCmdDrawIndexed(vkCommandBuffer, indexCount, 1, 0, 0, 0);
-    }
-
-    void CommandBuffer::Draw(const uint vertexCount) const
-    {
-        vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
-    }
-
-    void CommandBuffer::Dispatch(const uint xCount, const uint yCount, const uint zCount)
-    {
-        vkCmdDispatch(vkCommandBuffer, xCount, yCount, zCount);
     }
 
     void CommandBuffer::SetViewport(const uint width, const uint height) const

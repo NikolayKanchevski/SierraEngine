@@ -263,12 +263,12 @@ namespace Sierra::Engine::Components
         GUI::EndProperties();
     }
 
-    void Transform::PushOnChangeCallback(Callback callback)
+    void Transform::PushOnDirtyCallback(Callback callback)
     {
         OnChangeCallbacks.push_back(callback);
     }
 
-    void Transform::PopOnChangeCallback()
+    void Transform::PopOnDirtyCallback()
     {
         OnChangeCallbacks.pop_back();
     }

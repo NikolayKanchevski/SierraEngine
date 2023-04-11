@@ -31,7 +31,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the texture image
         this->image = Image::Create({
-            .dimensions = { width, height, 1 },
+            .dimensions = { width, height },
             .format = createInfo.imageFormat,
             .generateMipMaps = createInfo.mipMappingEnabled,
             .usage = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
@@ -48,12 +48,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Generate mip maps for the current texture
         if (mipMappingEnabled) image->GenerateMipMaps();
-
-        // NOTE: Transitioning to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL is not required as it is automatically done during the mip map generation
-        else image->TransitionLayout(ImageLayout::SHADER_READ_ONLY_OPTIMAL);
-
-        // Create the image view using the proper image format
-        image->CreateImageView(ImageAspectFlags::COLOR);
+        image->TransitionLayout(ImageLayout::SHADER_READ_ONLY_OPTIMAL);
 
         // Create sampler
         if (mipMappingEnabled) createInfo.samplerCreateInfo.maxLod = static_cast<float>(image->GetMipMapLevels());
@@ -68,7 +63,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         {
             // If the same texture file has been used check to see if its sampler is the same as this one
             Sampler *other = (&texturePool[hash]->GetSampler())->get();
-            if (other->IsBilinearFilteringApplied() == createInfo.samplerCreateInfo.applyBilinearFiltering && other->GetMinLod() == createInfo.samplerCreateInfo.minLod && other->GetMaxLod() == createInfo.samplerCreateInfo.maxLod && other->GetMaxAnisotropy() == createInfo.samplerCreateInfo.maxAnisotropy && other->GetAddressMode() == createInfo.samplerCreateInfo.samplerAddressMode)
+            if (other->IsBilinearFilteringApplied() == createInfo.samplerCreateInfo.applyBilinearFiltering && other->GetMinLod() == createInfo.samplerCreateInfo.minLod && other->GetMaxLod() == createInfo.samplerCreateInfo.maxLod && other->IsAnisotropyEnabled() == createInfo.samplerCreateInfo.enableAnisotropy && other->GetAddressMode() == createInfo.samplerCreateInfo.addressMode)
             {
                 // If so return it without creating a new texture
                 auto &foundTexture = texturePool[hash];
@@ -123,9 +118,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Texture::DestroyDefaultTextures()
     {
-        for (const auto &texture : texturePool)
+        for (const auto &texture : defaultTextures)
         {
-            texture.second->Destroy();
+            texture->Destroy();
         }
     }
 
@@ -149,5 +144,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         image->Destroy();
         sampler->Destroy();
+
+        Dispose();
     }
 }

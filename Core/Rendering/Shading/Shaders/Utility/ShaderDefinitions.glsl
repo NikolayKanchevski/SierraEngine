@@ -14,6 +14,12 @@ const uint SPECULAR_TEXTURE_BINDING = 3;
 const uint NORMAL_MAP_TEXTURE_BINDING = 4;
 const uint HEIGHT_MAP_TEXTURE_BINDING = 5;
 
-const float AMBIENT_STRENGTH = 0.05f;
+#define SET_PUSH_CONSTANT(TYPE)                                 \
+    layout(push_constant) uniform _SIERRA_PUSH_CONSTANT         \
+    {                                                           \
+        TYPE pushConstant;                                      \
+    } _sierraPushConstant
+
+#define PUSH_CONSTANT _sierraPushConstant.pushConstant
 
 #endif
