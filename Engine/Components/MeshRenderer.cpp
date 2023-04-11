@@ -115,7 +115,7 @@ namespace Sierra::Engine::Components
     MeshPushConstant MeshRenderer::GetPushConstantData() const
     {
         glm::normalize(material.diffuse);
-        return { .material = material, .entityID = static_cast<uint>(enttEntity), .meshID = meshID, .meshTexturesPresence =  meshTexturesPresence };
+        return { .material = material, .meshID = meshID, .entityID = static_cast<uint>(enttEntity), .meshTexturesPresence =  meshTexturesPresence };
     }
 
     /* --- DESTRUCTOR --- */

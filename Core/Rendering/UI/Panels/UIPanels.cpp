@@ -280,13 +280,13 @@ namespace Sierra::Core::Rendering::UI
         // Create debug tab
         if (GUI::BeginWindow("Debug Information", nullptr, ImGuiWindowFlags_NoNav))
         {
-            ImGui::Text("Used Video Memory: %llu/%lluMB", SystemInformation::GetGPU().GetUsedVideoMemory() / 1000000, SystemInformation::GetGPU().physicalInformation.totalMemory / 1000000);
+//            ImGui::Text("Used Video Memory: %llu/%lluMB", SystemInformation::GetGPU().GetUsedVideoMemory() / 1000000, SystemInformation::GetGPU().physicalInformation.totalMemory / 1000000);
             ImGui::Separator();
             ImGui::Text("CPU Frame Time: %i FPS", Time::GetFPS());
             ImGui::Text("GPU Draw Time: %f ms", renderer.GetTotalDrawTime());
             ImGui::Separator();
             ImGui::Text("Total meshes being drawn: %i", Mesh::GetTotalMeshCount());
-            ImGui::Text("Total vertices in scene: %llu", renderer.GetTotalVerticesDrawn());
+            ImGui::Text("Total vertices in scene: %lu", renderer.GetTotalVerticesDrawn());
 
             GUI::EndWindow();
         }

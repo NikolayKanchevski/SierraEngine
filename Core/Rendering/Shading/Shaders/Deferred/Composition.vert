@@ -25,13 +25,13 @@ void main()
     */
 
     // Check wether fullscreen triangle has been drawn from the current vertex index
-    const bool drawingSkybox = gl_VertexIndex >= 3;
+    const bool drawingSkybox = gl_VertexIndex < 36;
     toFrag_DrawingSkybox = uint(drawingSkybox);
 
     if (drawingSkybox)
     {
         // Get current cube vertex position from cube vertices array in Cube.glsl
-        vec3 vertexPosition = cubeVertices[gl_VertexIndex - 3];
+        vec3 vertexPosition = cubeVertices[gl_VertexIndex];
 
         // Set final world position for vertex
         gl_Position = (uniformBuffer.projection * mat4x4(mat3x3(uniformBuffer.view)) * PUSH_CONSTANT.skyboxModel * vec4(vertexPosition, 1.0)).xyww;

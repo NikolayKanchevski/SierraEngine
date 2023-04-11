@@ -90,15 +90,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         this->physicalDevice = physicalDevices[0];
 
-        ASSERT_SUCCESS_FORMATTED("Vulkan is supported on your system running [{0}] | [Validation: {1} | CPU: {2} | GPU: {3}]",
-                                 SystemInformation::GetOperatingSystem().name,
-                                 #if DEBUG
-                                 1,
-                                 #else
-                                 0,
-                                 #endif
-                                 SystemInformation::GetCPU().name,
-                                 SystemInformation::GetGPU().name);
+        ASSERT_SUCCESS_FORMATTED("Vulkan is supported on your system running [{0}] | [Validation: {1} | CPU: {2} | GPU: {3}]", SystemInformation::GetOperatingSystem().name, VALIDATION_ENABLED, SystemInformation::GetCPU().name, physicalDeviceProperties.deviceName);
 
         // Destroy temporary data
         vkDestroySurfaceKHR(VK::GetInstance(), exampleSurface, nullptr);
@@ -110,7 +102,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Device::CreateLogicalDevice()
     {
         // Filter out repeating indices using a set
-        const std::set<uint> uniqueQueueFamilies {static_cast<uint>(queueFamilyIndices.graphicsAndComputeFamily), static_cast<uint>(queueFamilyIndices.presentationFamily) };
+        const std::set<uint> uniqueQueueFamilies { static_cast<uint>(queueFamilyIndices.graphicsAndComputeFamily), static_cast<uint>(queueFamilyIndices.presentationFamily) };
 
         // Create an empty list to store create infos
         VkDeviceQueueCreateInfo* queueCreateInfos = new VkDeviceQueueCreateInfo[uniqueQueueFamilies.size()];
@@ -370,7 +362,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             // Query surface capabilities to save needed data
             VkSurfaceCapabilitiesKHR surfaceCapabilities;
             vkGetPhysicalDeviceSurfaceCapabilitiesKHR(givenPhysicalDevice, exampleSurface, &surfaceCapabilities);
-            maxConcurrentFrames = surfaceCapabilities.maxImageCount > 3 ? 3 : surfaceCapabilities.maxImageCount;
+            maxConcurrentFrames = glm::max(surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount) > 3 ? 3 : glm::max(surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount);
 
             // If so set its presentation family
             if (presentationSupported)

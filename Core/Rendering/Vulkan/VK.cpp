@@ -243,8 +243,8 @@ namespace Sierra::Core::Rendering::Vulkan
             .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/DiffuseNull.jpg",
             .textureType = TextureType::DIFFUSE,
             .samplerCreateInfo {
-                .applyBilinearFiltering = false,
-                .enableAnisotropy = false
+                .enableAnisotropy = false,
+                .applyBilinearFiltering = false
             }
         }, true);
 
@@ -253,8 +253,8 @@ namespace Sierra::Core::Rendering::Vulkan
             .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/SpecularNull.jpg",
             .textureType = TextureType::SPECULAR,
             .samplerCreateInfo {
-                .applyBilinearFiltering = false,
                 .enableAnisotropy = false,
+                .applyBilinearFiltering = false
             }
         }, true);
 
@@ -263,8 +263,8 @@ namespace Sierra::Core::Rendering::Vulkan
             .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/NormalMapNull.jpg",
             .textureType = TextureType::NORMAL_MAP,
             .samplerCreateInfo {
-                .applyBilinearFiltering = false,
                 .enableAnisotropy = false,
+                .applyBilinearFiltering = false,
             }
         }, true);
 
@@ -273,8 +273,8 @@ namespace Sierra::Core::Rendering::Vulkan
             .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/HeightMapNull.jpg",
             .textureType = TextureType::HEIGHT_MAP,
             .samplerCreateInfo {
-                .applyBilinearFiltering = false,
                 .enableAnisotropy = false,
+                .applyBilinearFiltering = false
             }
         }, true);
     }

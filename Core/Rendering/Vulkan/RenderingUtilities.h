@@ -20,8 +20,8 @@ namespace Sierra::Core::Rendering::Vulkan
             /* --- General Shadow Mapping Objects --- */
 
             sampler = Sampler::Create({
-                .applyBilinearFiltering = true,
                 .enableAnisotropy = false,
+                .applyBilinearFiltering = true,
                 .addressMode = SamplerAddressMode::CLAMP_TO_BORDER,
                 .borderColor = SamplerBorderColor::FLOAT_OPAQUE_WHITE,
                 .compareOp = SamplerCompareOp::LESS

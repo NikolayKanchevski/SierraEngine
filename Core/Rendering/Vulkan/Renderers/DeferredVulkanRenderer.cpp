@@ -141,11 +141,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
                     .image = renderedImage,
                     .loadOp = LoadOp::CLEAR,
                     .storeOp = StoreOp::STORE
-                },
-                {
-                    .image = depthStencilBuffer,
-                    .loadOp = LoadOp::LOAD,
-                    .storeOp = StoreOp::DONT_CARE
                 }
             }
         });
@@ -193,7 +188,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         compositionPipeline = CompositionPipeline::CreateFromAnotherPipeline({
             .shaders = { vertexShader, fragmentShader },
             .dynamicRenderingInfo = GraphicsPipelineDynamicRenderingInfo {
-                .attachments = { { renderedImage }, { depthStencilBuffer } }
+                .attachments = { { renderedImage } }
             },
             .shadingType = ShadingType::FILL
         }, bufferPipeline, PipelineCopyOp::UNIFORM_BUFFERS | PipelineCopyOp::STORAGE_BUFFERS);
@@ -231,7 +226,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         }
 
         // Create modules
-        raycaster = RenderingUtilities::CreateRaycaster(IDBuffer, depthStencilBuffer, bufferPipeline);
+        raycaster = RenderingUtilities::CreateRaycaster(IDBuffer, diffuseBuffer, bufferPipeline);
     }
 
     UniquePtr<DeferredVulkanRenderer> DeferredVulkanRenderer::Create(const VulkanRendererCreateInfo createInfo)
@@ -424,7 +419,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         bufferPass->End(commandBuffer);
 
         // Transition images' layouts to be suitable for reading from in shaders
-        commandBuffer->TransitionImageLayout(depthStencilBuffer, ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+        commandBuffer->TransitionImageLayouts({ { IDBuffer }, { diffuseBuffer }, { specularAndShininessBuffer }, { normalBuffer }, { depthStencilBuffer }  }, ImageLayout::SHADER_READ_ONLY_OPTIMAL);
 
         // Begin combining renderer
         compositionPass->Begin(commandBuffer);
@@ -441,6 +436,9 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         // End rendering
         compositionPass->End(commandBuffer);
+
+        commandBuffer->TransitionImageLayouts({ { IDBuffer }, { diffuseBuffer }, { specularAndShininessBuffer }, { normalBuffer }, { depthStencilBuffer }  }, ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+
 
         // End and save GPU timer results
         raycaster->UpdateData(commandBuffer);
