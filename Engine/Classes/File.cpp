@@ -8,6 +8,8 @@ namespace Sierra::Engine::Classes
 {
     using Core::Debugger;
 
+    const String File::TEMP_FOLDER_PATH = "NULL";
+    const String File::INTERNAL_TEMP_FOLDER_PATH = "NULL";
     const String File::OUTPUT_FOLDER_PATH = "NULL";
 
     bool File::FileExists(const String &filePath)
@@ -346,6 +348,12 @@ namespace Sierra::Engine::Classes
         // Get output directory
         int length, dirnameLength;
         length = wai_getExecutablePath(nullptr, 0, &dirnameLength);
+
+        String tempFolder = std::filesystem::temp_directory_path().string();
+        if (tempFolder.back() != '/') tempFolder += '/';
+        
+        MODIFY_CONST(String, TEMP_FOLDER_PATH, tempFolder);
+        MODIFY_CONST(String, INTERNAL_TEMP_FOLDER_PATH, TEMP_FOLDER_PATH + "com.SierraEngine/");
 
         if (length > 0)
         {

@@ -4,7 +4,7 @@
 
 #include "Debugger.h"
 
-#if __APPLE__
+#ifdef __GNUG__
     #include <cxxabi.h>
 #endif
 

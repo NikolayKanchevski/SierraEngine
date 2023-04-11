@@ -4,6 +4,10 @@
 
 #pragma once
 
+#ifdef linux
+    #undef linux
+#endif
+
 namespace Sierra::Engine::Classes
 {
     class SystemInformation

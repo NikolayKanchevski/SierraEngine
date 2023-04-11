@@ -269,14 +269,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Shader::Destroy()
     {
-        if (precompiled) delete precompiledData;
+        if (precompiled)
+        {
+            if (precompiledData->reflectionData.vertexAttributes != nullptr) delete precompiledData->reflectionData.vertexAttributes;
+            delete precompiledData;
+        }
         vkDestroyShaderModule(VK::GetLogicalDevice(), shaderModule, nullptr);
     }
 
     /* --- INCLUDER --- */
 
     Shader::Includer::Includer(const String givenFilePath)
-            : filePath(givenFilePath)
+        : filePath(givenFilePath)
     {
 
     }

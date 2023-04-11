@@ -8,10 +8,10 @@
 namespace Sierra::Engine::Classes::File
 {
     /// @brief Directory path to the %TEMP% folder.
-    const String TEMP_FOLDER_PATH = std::filesystem::temp_directory_path().string();
+    const extern String TEMP_FOLDER_PATH;
 
     /// @brief Directory path to the folder, where internal engine data is stored (mainly cache data).
-    const String INTERNAL_TEMP_FOLDER_PATH = TEMP_FOLDER_PATH + "com.SierraEngine/";
+    const extern String INTERNAL_TEMP_FOLDER_PATH;
 
     /// @brief Path to the directory where the executable launched (the program) is located.
     const extern String OUTPUT_FOLDER_PATH;

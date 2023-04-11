@@ -614,8 +614,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
                             lastOffset += GetVertexAttributeTypeSize(attributes[i].vertexAttributeType);
                         }
-
-                        delete createInfo.shaders[vertexShaderIndex]->precompiledData->reflectionData.vertexAttributes;
                     }
                 }
             }
@@ -929,7 +927,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         inline void Destroy() override
         {
             Pipeline<PC, UB, SB>::Destroy();
-            delete this->shaders;
         };
         DELETE_COPY(ComputePipeline);
 

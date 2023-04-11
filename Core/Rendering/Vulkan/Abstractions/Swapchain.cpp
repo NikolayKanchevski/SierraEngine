@@ -156,7 +156,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the extent and retrieve how many frames ahead can be rendered
         extent = GetSwapchainExtent(surfaceCapabilities);
-        maxConcurrentFrames = surfaceCapabilities.maxImageCount > 3 ? 3 : surfaceCapabilities.maxImageCount;
+        maxConcurrentFrames = surfaceCapabilities.maxImageCount > 3 ? 3 : glm::max(surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount);
 
         // Set up swapchain creation info
         VkSwapchainCreateInfoKHR swapchainCreateInfo{};

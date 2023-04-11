@@ -4,11 +4,10 @@ cmake_minimum_required(VERSION 3.20)
 add_library(Dependencies INTERFACE)
 
 # ========== KHRONOS UTILITIES ========== #
-add_subdirectory(glslang)
-add_subdirectory(SPIRV-Tools)
-
 set(SPIRV_WERROR OFF)
+add_subdirectory(glslang)
 add_subdirectory(SPIRV-Headers)
+add_subdirectory(SPIRV-Tools)
 
 add_library(SPIRV-Reflect STATIC "SPIRV-Reflect/spirv_reflect.h" "SPIRV-Reflect/spirv_reflect.c")
 target_link_libraries(Dependencies INTERFACE SPIRV-Reflect)
@@ -29,7 +28,7 @@ set(SHADERC_SKIP_TESTS ON)
 set(SHADERC_SKIP_EXAMPLES ON)
 set(SHADERC_ENABLE_TESTS OFF)
 
-add_subdirectory(Shaderc)
+add_subdirectory(shaderc)
 target_link_libraries(Dependencies INTERFACE shaderc)
 
 # ========== GLFW ========== #
@@ -106,6 +105,7 @@ target_link_libraries(Dependencies INTERFACE WHEREAMI)
 target_include_directories(Dependencies INTERFACE ${WHEREAMI_DIR})
 
 # ========== TBB ========== #
-# TODO: FIX TBB NOT WORKING
 find_package(TBB)
 target_link_libraries(Dependencies INTERFACE TBB::tbb)
+
+# TODO: Add TBB and Assimp as static libraries and eliminated the need of vcpkg
