@@ -24,6 +24,10 @@ namespace Sierra::Core::Rendering
         Matrix4x4 projection;
         Matrix4x4 inverseView;
         Matrix4x4 inverseProjection;
+
+        float nearPlane;
+        float farPlane;
+        Vector2 _align_1;
     };
 
     struct ObjectData

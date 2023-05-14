@@ -125,16 +125,23 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Fill in logical device creation info
         VkDeviceCreateInfo logicalDeviceCreateInfo{};
         logicalDeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        logicalDeviceCreateInfo.pEnabledFeatures = requiredFeatures;
+        logicalDeviceCreateInfo.pEnabledFeatures = nullptr;
         logicalDeviceCreateInfo.enabledExtensionCount = static_cast<uint>(requiredDeviceExtensions.size());
         logicalDeviceCreateInfo.ppEnabledExtensionNames = requiredDeviceExtensions.data();
         logicalDeviceCreateInfo.queueCreateInfoCount = static_cast<uint>(uniqueQueueFamilies.size());
         logicalDeviceCreateInfo.pQueueCreateInfos = queueCreateInfos;
 
+        // Set up additional device info features
+        VkPhysicalDeviceFeatures2 deviceFeatures2{};
+        deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        deviceFeatures2.features = *requiredFeatures;
+        logicalDeviceCreateInfo.pNext = &deviceFeatures2;
+
         // Set up dynamic rendering features
-        VkPhysicalDeviceDynamicRenderingFeaturesKHR deviceDynamicRenderingFeatures{};
-        deviceDynamicRenderingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
-        deviceDynamicRenderingFeatures.dynamicRendering = VK_TRUE;
+        VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingFeatures{};
+        dynamicRenderingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
+        dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
+        VK::PushToPNextChain(deviceFeatures2, dynamicRenderingFeatures);
 
         #if PLATFORM_APPLE
             // Set apple specific features
@@ -143,24 +150,21 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             {
                 portabilityFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR;
                 portabilityFeatures.mutableComparisonSamplers = VK_TRUE;
-                deviceDynamicRenderingFeatures.pNext = &portabilityFeatures;
-            }
-        #else
-            // Set descriptor indexing features
-            VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
-            if (GetDescriptorIndexingSupported())
-            {
-                descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
-                descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-                descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
-                descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
-                descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
-                deviceDynamicRenderingFeatures.pNext = &descriptorIndexingFeatures;
+                VK::PushToPNextChain(deviceFeatures2, portabilityFeatures);
             }
         #endif
 
-        // Add chain to device create info
-        logicalDeviceCreateInfo.pNext = &deviceDynamicRenderingFeatures;
+        // Set descriptor indexing features
+        VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
+        if (GetDescriptorIndexingSupported())
+        {
+            descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+            descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+            descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
+            descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
+            descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+            VK::PushToPNextChain(deviceFeatures2, descriptorIndexingFeatures);
+        }
 
         // Create logical device
         VK_ASSERT(
@@ -172,6 +176,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkGetDeviceQueue(logicalDevice, queueFamilyIndices.graphicsAndComputeFamily, 0, &graphicsAndComputeQueue);
         vkGetDeviceQueue(logicalDevice, queueFamilyIndices.presentationFamily, 0, &presentationQueue);
 
+        requiredFeatures = nullptr;
         delete[] queueCreateInfos;
     }
 

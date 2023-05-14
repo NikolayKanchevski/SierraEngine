@@ -9,6 +9,8 @@ layout(set = 0, binding = UNIFORM_BUFFER_BINDING) uniform UniformBuffer
     mat4 projection;
     mat4 inverseView;
     mat4 inverseProjection;
+    float nearClip;
+    float farClip;
 } uniformBuffer;
 
 #endif

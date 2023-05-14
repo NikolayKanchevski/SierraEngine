@@ -3,8 +3,8 @@
 #include "../Utility/Depth.glsl"
 #include "../Utility/Shadows.glsl"
 #include "../Lighting/DefaultLighting.glsl"
-#include "../Types/GlobalStorageBuffer.glsl"
 #include "../Types/GlobalUniformBuffer.glsl"
+#include "../Types/GlobalStorageBuffer.glsl"
 
 layout(location = 0) in flat uint fromVert_DrawingSkybox;
 layout(location = 1) in vec3 fromVert_UVW;
@@ -32,7 +32,6 @@ const uint RenderedImageValue_DepthBuffer = 7;
 struct PushConstant
 {
     mat4x4 skyboxModel;
-    mat4x4 lightSpaceMatrix;
 
     uint renderedImageValue;
     uint enableShadows;
@@ -56,7 +55,12 @@ void main()
 
     // Check if a pixel has been dran in current texel and if not discard it
     const float depth = texture(fromCode_DepthBuffer, sampleUV).r;
-    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_DepthBuffer) { toFramebuffer_FinalizedColor = vec4(depth, depth, depth, 1.0); return; }
+    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_DepthBuffer)
+    {
+        float linearizedDepth = LinearizeDepth(depth, uniformBuffer.nearClip, uniformBuffer.farClip);
+        toFramebuffer_FinalizedColor = vec4(linearizedDepth, linearizedDepth, linearizedDepth, 1.0);
+        return;
+    }
 
     // Check if fragment we are writing to actually should contain a color
     if (depth >= 1.0f)
@@ -84,23 +88,25 @@ void main()
     const vec3 normal = texture(fromCode_NormalBuffer, sampleUV).rgb;
     if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_NormalBuffer) { toFramebuffer_FinalizedColor = vec4(normal, 1.0); return; }
 
-    vec4 shadowMapUV = PUSH_CONSTANT.lightSpaceMatrix * vec4(position, 1.0);
+    vec4 shadowCoordinates = storageBuffer.directionalLights[0].projectionView * vec4(position, 1.0);
 
     float shadow = 1.0f;
     if (PUSH_CONSTANT.enableShadows == 1)
     {
         #if defined(SETTINGS_USE_PCF_SHADOWS)
-            shadow = CalculateShadowPCF(fromCode_ShadowMap, shadowMapUV);
+            shadow = CalculateShadow3x3PCF(fromCode_ShadowMap, shadowCoordinates);
         #elif defined(SETTINGS_USE_POISSON_PCF_SHADOWS)
-            shadow = CalculatePoissonShadowPCF(fromCode_ShadowMap, shadowMapUV, position);
+            shadow = CalculatePoissonShadowPCF(fromCode_ShadowMap, shadowCoordinates, position);
         #elif defined(SETTINGS_USE_VARIANCE_SHADOWS)
-            shadow = CalculateVarianceShadow(fromCode_ShadowMap, shadowMapUV, position);
+            shadow = CalculateVarianceShadow(fromCode_ShadowMap, shadowCoordinates, position);
         #elif defined(SETTINGS_USE_MOMENT_SHADOWS)
-            shadow = CalculateMomentShadow(fromCode_ShadowMap, shadowMapUV, depth);
+            shadow = CalculateMomentShadow(fromCode_ShadowMap, shadowCoordinates, depth);
         #else
-            shadow = CalculateShadow(fromCode_ShadowMap, shadowMapUV, vec2(0.0, 0.0));
+            shadow = CalculateShadow(fromCode_ShadowMap, shadowCoordinates, vec2(0.0, 0.0));
         #endif
     }
+
+    shadow = Normalize(shadow + 0.25);
 
     if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_ShadowBuffer) { toFramebuffer_FinalizedColor = vec4(shadow, shadow, shadow, 1.0); return; }
 

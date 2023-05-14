@@ -33,17 +33,16 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             DepthBuffer = 7
         };
 
-        struct MergingRendererPushConstant
+        struct CompositionPushConstant
         {
             Matrix4x4 skyboxModel;
-            Matrix4x4 lightSpaceMatrix;
 
             RenderedImageValue renderedImageValue = RenderedImageValue::RenderedImage;
             BoolGLSL enableShadows = true;
         };
 
         typedef GraphicsPipeline<MeshPushConstant, UniformData, StorageData> ScenePipeline;
-        typedef GraphicsPipeline<MergingRendererPushConstant, UniformData, StorageData> CompositionPipeline;
+        typedef GraphicsPipeline<CompositionPushConstant, UniformData, StorageData> CompositionPipeline;
 
     public:
         /* --- CONSTRUCTORS --- */

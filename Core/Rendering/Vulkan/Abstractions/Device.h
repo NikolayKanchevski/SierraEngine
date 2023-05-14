@@ -7,7 +7,11 @@
 #include "../VulkanTypes.h"
 #include "CommandBuffer.h"
 
-#define VALIDATION_ENABLED DEBUG
+#ifdef DEBUG
+    #define VALIDATION_ENABLED 1
+#else
+    #define VALIDATION_ENABLED 0
+#endif
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -121,7 +125,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         std::vector<const char*> requiredDeviceExtensions
         {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-            VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
+            VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+            VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
         };
 
         #if PLATFORM_APPLE

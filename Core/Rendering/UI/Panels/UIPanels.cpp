@@ -286,7 +286,7 @@ namespace Sierra::Core::Rendering::UI
             ImGui::Text("GPU Draw Time: %f ms", renderer.GetTotalDrawTime());
             ImGui::Separator();
             ImGui::Text("Total meshes being drawn: %i", Mesh::GetTotalMeshCount());
-            ImGui::Text("Total vertices in scene: %lu", renderer.GetTotalVerticesDrawn());
+            ImGui::Text("Total vertices in scene: %llu", renderer.GetTotalVerticesDrawn());
 
             GUI::EndWindow();
         }

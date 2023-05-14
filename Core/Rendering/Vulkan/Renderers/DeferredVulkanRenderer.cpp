@@ -5,7 +5,6 @@
 #include "DeferredVulkanRenderer.h"
 
 #include "../../../EngineCore.h"
-#include "../../Math/MatrixUtilities.h"
 #include "../../../../Engine/Classes/Time.h"
 #include "../../../../Engine/Classes/Input.h"
 #include "../../../../Engine/Components/Camera.h"
@@ -175,12 +174,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             .shaderType = ShaderType::FRAGMENT,
             .definitions = {
                 { .name = "SETTINGS_SHADING_MODEL_BLINN_PHONG" },
-//                { .name = "SETTINGS_USE_PCF_SHADOWS" },
                 { .name = "SETTINGS_USE_POISSON_PCF_SHADOWS" },
-//                { .name = "SETTINGS_USE_RANDOM_SAMPLE_FOR_POISSON" }
                 { .name = "SETTINGS_USE_GRADIENT_SAMPLING_FOR_POISSON" },
-//                { .name = "SETTINGS_USE_VARIANCE_SHADOWS" },
-//                { .name = "SETTINGS_USE_MOMENT_SHADOWS" },
             }
         });
 
@@ -247,6 +242,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         sceneUniformData.projection = camera.GetProjectionMatrix();
         sceneUniformData.inverseView = camera.GetInverseViewMatrix();
         sceneUniformData.inverseProjection = camera.GetInverseProjectionMatrix();
+        sceneUniformData.nearPlane = camera.GetNearClip();
+        sceneUniformData.farPlane = camera.GetFarClip();
 
         // Update storage data
         auto &storageData = bufferPipeline->GetStorageBufferData();
@@ -277,7 +274,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         // Rotate skybox
         float timeAngle = std::fmod(Time::GetUpTime(), 360.0f) * 0.8f;
         compositionPipeline->GetPushConstantData().skyboxModel = MatrixUtilities::CreateModelMatrix({ 0.0f, 0.0f, 0.0f }, { timeAngle, 0.0f, 0.0f });
-        compositionPipeline->GetPushConstantData().lightSpaceMatrix = World::GetComponent<DirectionalLight>(World::GetAllComponentsOfType<DirectionalLight>()[0]).GetViewSpaceMatrix();
 
         shadowRenderer->Update();
     }
@@ -349,7 +345,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         {
             static bool enableShadows = true;
 
-            MergingRendererPushConstant &pushConstant = compositionPipeline->GetPushConstantData();
+            CompositionPushConstant &pushConstant = compositionPipeline->GetPushConstantData();
             if (GUI::Checkbox("Enable Shadows:", enableShadows))
             {
                 pushConstant.enableShadows = enableShadows;

@@ -24,13 +24,18 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         });
     }
 
+    UniquePtr<ExperimentalVulkanRenderer> ExperimentalVulkanRenderer::Create(VulkanRendererCreateInfo createInfo)
+    {
+        return std::make_unique<ExperimentalVulkanRenderer>(createInfo);
+    }
+
     /* --- POLLING METHODS --- */
 
     void ExperimentalVulkanRenderer::Render()
     {
         VulkanRenderer::Render();
 
-        // Get next swapchain iamge
+        // Get next swapchain image
         swapchain->AcquireNextImage();
 
         // Get the command buffer of current frame

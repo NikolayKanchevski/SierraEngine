@@ -34,6 +34,14 @@ namespace Sierra::Core::Rendering::Vulkan
         [[nodiscard]] inline static UniquePtr<QueryPool>& GetQueryPool() { return m_Instance.queryPool; }
         [[nodiscard]] inline static VkDescriptorPool GetImGuiDescriptorPool() { return m_Instance.imGuiDescriptorPool; }
 
+        /* --- UTILITY METHODS --- */
+        template<typename MainType, typename NewType>
+        static inline void PushToPNextChain(MainType &mainStruct, NewType &newStruct)
+        {
+            newStruct.pNext = mainStruct.pNext;
+            mainStruct.pNext = &newStruct;
+        }
+
         /* --- DESTRUCTOR --- */
         static void Destroy();
 
@@ -85,6 +93,7 @@ namespace Sierra::Core::Rendering::Vulkan
                 VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
             #endif
             VK_KHR_SURFACE_EXTENSION_NAME,
+            VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
             #if PLATFORM_APPLE
                 VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
             #endif
