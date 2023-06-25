@@ -4,6 +4,7 @@
   <component name="CidrRootsConfiguration">
     <excludeRoots>
       <file path="$PROJECT_DIR$/Dependencies" />
+      <file path="$PROJECT_DIR$/Deprecated" />
     </excludeRoots>
   </component>
 </project>

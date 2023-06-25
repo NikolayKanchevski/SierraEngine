@@ -11,7 +11,7 @@ namespace Sierra::Engine::Components
 
     Relationship::Relationship(const entt::entity givenSelf) : self(givenSelf)
     {
-        World::GetOriginEntitiesList()[static_cast<uint32_t>(self)] = self;
+        World::GetOriginEntitiesList()[static_cast<uint>(self)] = self;
     }
 
     void Relationship::SetParent(entt::entity givenParent)
@@ -54,8 +54,8 @@ namespace Sierra::Engine::Components
 
         originParent = currentEntity.GetEnttEntity();
 
-        if (givenParent == entt::null) World::GetOriginEntitiesList()[static_cast<uint32_t>(self)] = self;
-        else { if (World::GetOriginEntitiesList().count(static_cast<uint32_t>(self)) != 0) { World::GetOriginEntitiesList().erase(static_cast<uint32_t>(self)); } }
+        if (givenParent == entt::null) World::GetOriginEntitiesList()[static_cast<uint>(self)] = self;
+        else { if (World::GetOriginEntitiesList().count(static_cast<uint>(self)) != 0) { World::GetOriginEntitiesList().erase(static_cast<uint>(self)); } }
     }
 
 }

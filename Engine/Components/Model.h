@@ -42,7 +42,7 @@ namespace Sierra::Engine::Classes
     public:
         /* --- CONSTRUCTORS --- */
         Model() = default;
-        static UniquePtr<Model> Load(const String filePath);
+        static UniquePtr<Model> Load(const String &filePath);
 
         /* --- SETTER METHODS --- */
         void Dispose();
@@ -55,14 +55,14 @@ namespace Sierra::Engine::Classes
         [[nodiscard]] inline MeshRenderer& GetMesh(const uint meshIndex) const { return Entity(meshEntities[meshIndex]).GetComponent<MeshRenderer>(); }
         [[nodiscard]] inline uint GetMeshCount() const { return meshCount; }
         [[nodiscard]] inline Entity GetOriginEntity() const { return Entity(originEntity); }
-        [[nodiscard]] inline bool IsLoaded() { return loaded; };
+        [[nodiscard]] inline bool IsLoaded() const { return loaded; };
 
         /* --- DESTRUCTOR --- */
         DELETE_COPY(Model);
 
     private:
         bool loaded = false;
-        ModelData *modelData;
+        ModelData *modelData = nullptr;
 
         uint vertexCount = 0;
         uint meshCount = 0;
@@ -73,7 +73,7 @@ namespace Sierra::Engine::Classes
         entt::entity originEntity = entt::null;
         std::vector<entt::entity> meshEntities;
 
-        static void LoadInternal(Model *model, const String filePath);
+        static void LoadInternal(Model *model, const String &filePath);
         SharedPtr<Mesh> LoadAssimpMesh(aiMesh* mesh);
         void ListDeeperNode(aiNode* node, const aiScene* assimpScene, Entity* parentEntity);
         void ApplyAssimpMeshTextures(MeshRenderer &meshComponent, aiMaterial *assimpMaterial);

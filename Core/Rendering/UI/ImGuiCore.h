@@ -11,7 +11,7 @@ namespace Sierra::Core::Rendering::UI
     {
     public:
         /* --- POLLING METHODS --- */
-        static bool SetSceneViewSize(uint newWidth, uint newHeight);
+        static bool SetSceneViewSize(float newWidth, float newHeight);
         static void SetSceneViewPosition(float xPosition, float yPosition);
 
         /* --- GETTER METHODS --- */

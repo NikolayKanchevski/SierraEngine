@@ -5,14 +5,13 @@
 #include "CommandBuffer.h"
 
 #include "../VK.h"
-#include "../../RenderingSettings.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
 
     /* --- CONSTRUCTORS --- */
 
-    CommandBuffer::CommandBuffer()
+    CommandBuffer::CommandBuffer(const UniquePtr<CommandBufferCreateInfo> &createInfo)
     {
         // Set up allocation info
         VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
@@ -29,18 +28,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         Reset();
     }
 
-    UniquePtr<CommandBuffer> CommandBuffer::Create()
+    UniquePtr<CommandBuffer> CommandBuffer::Create(const UniquePtr<CommandBufferCreateInfo> &createInfo)
     {
-        return std::make_unique<CommandBuffer>();
+        return std::make_unique<CommandBuffer>(createInfo);
     }
 
     /* --- POLLING METHODS --- */
 
-    void CommandBuffer::Begin(const VkCommandBufferUsageFlagBits flags) const
+    void CommandBuffer::Begin(const CommandBufferUsage usage) const
     {
         VkCommandBufferBeginInfo bufferBeginInfo{};
         bufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        bufferBeginInfo.flags = flags;
+        bufferBeginInfo.flags = static_cast<VkCommandBufferUsageFlags>(usage);
         bufferBeginInfo.pInheritanceInfo = nullptr;
 
         VK_ASSERT(
@@ -216,11 +215,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         TransitionImageLayout(image.get(), newLayout);
     }
 
-    void CommandBuffer::TransitionImageLayouts(const std::vector<ImageReference>& images, const ImageLayout newLayout)
+    void CommandBuffer::TransitionImageLayouts(const std::vector<ReferenceWrapper<UniquePtr<Image>>> &images, const ImageLayout newLayout)
     {
         for (auto &imageReference : images)
         {
-            TransitionImageLayout(imageReference.image, newLayout);
+            TransitionImageLayout(imageReference.get(), newLayout);
         }
     }
 
@@ -229,8 +228,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkViewport viewport{};
         viewport.x = 0;
         viewport.y = 0;
-        viewport.width = width;
-        viewport.height = height;
+        viewport.width = static_cast<float>(width);
+        viewport.height = static_cast<float>(height);
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
 

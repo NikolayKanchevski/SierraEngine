@@ -28,11 +28,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Create sampler
-        this->sampler = Sampler::Create(createInfo.samplerCreateInfo);
+        sampler = Sampler::Create(createInfo.samplerCreateInfo);
 
         // Calculate the image's memory size
         uint64 layerSize = width * height * channelCount;
-        this->memorySize = layerSize * 6;
+        memorySize = layerSize * 6;
 
         // Create the staging buffer
         auto stagingBuffer = Buffer::Create({
@@ -42,7 +42,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Map memory to buffer
         void *data;
-        vmaMapMemory(VK::GetMemoryAllocator(), stagingBuffer->GetMemory(), &data);
+        vmaMapMemory(VK::GetMemoryAllocator(), stagingBuffer->GetMemoryAllocation(), &data);
 
         // Copy all 6 images to buffer
         for (uint i = 6; i--;)
@@ -52,10 +52,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Unmap buffer memory
-        vmaUnmapMemory(VK::GetMemoryAllocator(), stagingBuffer->GetMemory());
+        vmaUnmapMemory(VK::GetMemoryAllocator(), stagingBuffer->GetMemoryAllocation());
 
         // Create the texture image
-        this->image = Image::Create({
+        image = Image::Create({
             .dimensions = { static_cast<uint>(width), static_cast<uint>(height), 1 },
             .imageType = ImageType::TEXTURE,
             .format = createInfo.imageFormat,
@@ -68,7 +68,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         image->TransitionLayout(ImageLayout::TRANSFER_DST_OPTIMAL);
 
         // Copy the image to the staging buffer
-        stagingBuffer->CopyToImage(*image);
+        stagingBuffer->CopyToImage(image);
 
         // Destroy the staging buffer and free its memory
         stagingBuffer->Destroy();

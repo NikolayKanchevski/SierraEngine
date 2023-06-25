@@ -26,13 +26,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- SETTER METHODS --- */
 
-    void TimestampQuery::Begin(const UniquePtr<CommandBuffer> &commandBuffer, const VkPipelineStageFlagBits pipelineStage)
+    void TimestampQuery::Begin(const UniquePtr<CommandBuffer> &commandBuffer, const VkPipelineStageFlagBits pipelineStage) const
     {
         vkCmdResetQueryPool(commandBuffer->GetVulkanCommandBuffer(), VK::GetQueryPool()->GetVulkanQueryPool(), index, 2);
         vkCmdWriteTimestamp(commandBuffer->GetVulkanCommandBuffer(), pipelineStage, VK::GetQueryPool()->GetVulkanQueryPool(), index);
     }
 
-    void TimestampQuery::End(const UniquePtr<CommandBuffer> &commandBuffer, const VkPipelineStageFlagBits pipelineStage)
+    void TimestampQuery::End(const UniquePtr<CommandBuffer> &commandBuffer, const VkPipelineStageFlagBits pipelineStage) const
     {
         vkCmdWriteTimestamp(commandBuffer->GetVulkanCommandBuffer(), pipelineStage, VK::GetQueryPool()->GetVulkanQueryPool(), index + 1);
     }

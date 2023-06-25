@@ -53,7 +53,7 @@ namespace Sierra::Core::Rendering::UI
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline RendererViewportPanel(Vulkan::Renderers::VulkanRenderer &givenRenderer) : renderer(givenRenderer) { };
+        inline explicit RendererViewportPanel(Vulkan::Renderers::VulkanRenderer &givenRenderer) : renderer(givenRenderer) { };
 
         /* --- POLLING METHODS --- */
         void DrawUI() override;
@@ -67,7 +67,7 @@ namespace Sierra::Core::Rendering::UI
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline DebugPanel(Vulkan::Renderers::VulkanRenderer &givenRenderer) : renderer(givenRenderer) { };
+        inline explicit DebugPanel(Vulkan::Renderers::VulkanRenderer &givenRenderer) : renderer(givenRenderer) { };
 
         /* --- POLLING METHODS --- */
         void DrawUI() override;
@@ -81,7 +81,7 @@ namespace Sierra::Core::Rendering::UI
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline DetailedDebugPanel(Vulkan::Renderers::VulkanRenderer &givenRenderer) : renderer(givenRenderer) { };
+        inline explicit DetailedDebugPanel(Vulkan::Renderers::VulkanRenderer &givenRenderer) : renderer(givenRenderer) { };
 
         /* --- POLLING METHODS --- */
         void DrawUI() override;

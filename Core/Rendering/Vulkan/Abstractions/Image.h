@@ -29,7 +29,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         ImageUsage usage = ImageUsage::UNDEFINED;
         ImageCreateFlags createFlags = ImageCreateFlags::UNDEFINED;
-        MemoryFlags memoryFlags = MemoryFlags::UNDEFINED;
     };
 
     struct SwapchainImageCreateInfo
@@ -45,11 +44,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Image(const ImageCreateInfo &createInfo);
-        static UniquePtr<Image> Create(ImageCreateInfo imageCreateInfo);
+        explicit Image(const ImageCreateInfo &createInfo);
+        static UniquePtr<Image> Create(const ImageCreateInfo &createInfo);
 
         // Only to be used for swapchain images!
-        Image(const SwapchainImageCreateInfo &createInfo);
+        explicit Image(const SwapchainImageCreateInfo &createInfo);
         static UniquePtr<Image> CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo);
 
         /* --- SETTER METHODS --- */
@@ -58,56 +57,56 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline Dimensions GetDimensions() const
-        { return this->dimensions; };
+        { return dimensions; };
 
-        [[nodiscard]] inline float GetWidth() const
-        { return this->dimensions.width; };
+        [[nodiscard]] inline uint GetWidth() const
+        { return dimensions.width; };
 
-        [[nodiscard]] inline float GetHeight() const
-        { return this->dimensions.height; };
+        [[nodiscard]] inline uint GetHeight() const
+        { return dimensions.height; };
 
-        [[nodiscard]] inline float GetDepth() const
-        { return this->dimensions.depth; };
+        [[nodiscard]] inline uint GetDepth() const
+        { return dimensions.depth; };
 
         [[nodiscard]] inline uint GetMipMapLevels() const
-        { return this->mipLevels; };
+        { return mipLevels; };
 
         [[nodiscard]] inline ImageFormat GetFormat() const
-        { return this->format; };
+        { return format; };
 
         [[nodiscard]] inline ImageUsage GetUsage() const
-        { return this->usage; };
+        { return usage; };
 
         [[nodiscard]] inline Sampling GetSampling() const
-        { return this->sampling; };
+        { return sampling; };
 
         [[nodiscard]] inline ImageLayout GetLayout() const
-        { return this->layout; };
+        { return layout; };
 
         [[nodiscard]] inline uint GetLayerCount() const
-        { return this->layerCount; };
+        { return layerCount; };
 
         [[nodiscard]] inline ImageAspectFlags GetAspectFlags() const
-        { return this->aspectFlags; };
+        { return aspectFlags; };
 
-        [[nodiscard]] inline bool IsSwapchainImage() const
+        [[nodiscard]] [[maybe_unused]] inline bool IsSwapchainImage() const
         { return swapchainImage; }
 
         [[nodiscard]] inline VkImage GetVulkanImage() const
-        { return this->vkImage; };
+        { return vkImage; };
 
         [[nodiscard]] inline VkImageView GetVulkanImageView() const
         { return vkImageView; }
 
-        [[nodiscard]] inline VmaAllocation GetMemory() const
-        { return this->vmaImageAllocation; };
+        [[nodiscard]] [[maybe_unused]] inline VmaAllocation GetMemory() const
+        { return vmaImageAllocation; };
 
         /* --- DESTRUCTOR --- */
         void Destroy();
         DELETE_COPY(Image);
 
     private:
-        Dimensions dimensions{};
+        Dimensions dimensions = {};
 
         uint mipLevels = 1;
         uint layerCount = 1;
@@ -116,24 +115,18 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ImageFormat format;
         Sampling sampling;
         ImageType imageType;
-        ImageAspectFlags aspectFlags;
+        ImageAspectFlags aspectFlags = ImageAspectFlags::UNDEFINED;
         ImageLayout layout = ImageLayout::UNDEFINED;
         ImageCreateFlags flags;
 
         VkImage vkImage = VK_NULL_HANDLE;
         VkImageView vkImageView = VK_NULL_HANDLE;
-        VmaAllocation vmaImageAllocation;
+        VmaAllocation vmaImageAllocation = nullptr;
 
-        bool mipMapsGenerated = false;
         bool swapchainImage = false;
 
         void CreateImageView();
         friend class CommandBuffer;
-    };
-
-    struct ImageReference
-    {
-        UniquePtr<Image>& image;
     };
 
 }

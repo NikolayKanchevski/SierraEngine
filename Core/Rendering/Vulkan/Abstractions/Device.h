@@ -25,7 +25,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Device(DeviceCreateInfo &deviceCreateInfo);
+        explicit Device(DeviceCreateInfo &deviceCreateInfo);
         static UniquePtr<Device> Create(DeviceCreateInfo createInfo);
 
         /* --- GETTER METHODS --- */
@@ -46,14 +46,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         [[nodiscard]] inline uint GetMaxConcurrentFramesCount() const { return maxConcurrentFrames; }
 
-        [[nodiscard]] inline ImageFormat GetBestColorImageFormat() const { return bestColorImageFormat; }
         [[nodiscard]] inline ImageFormat GetBestDepthImageFormat() const { return bestDepthImageFormat; }
 
         [[nodiscard]] inline Sampling GetHighestMultisampling() const { return highestMultisampling; }
 
-        [[nodiscard]] inline uint GetGraphicsQueueFamily() const { return queueFamilyIndices.graphicsAndComputeFamily; }
-        [[nodiscard]] inline uint GetPresentationQueueFamily() const { return queueFamilyIndices.presentationFamily; }
-        [[nodiscard]] inline uint GetComputeQueueFamily() const { return queueFamilyIndices.graphicsAndComputeFamily; }
+        [[nodiscard]] inline uint GetGraphicsQueueFamily() const { return queueFamilyIndices.graphicsAndComputeFamily.value(); }
+        [[nodiscard]] inline uint GetPresentationQueueFamily() const { return queueFamilyIndices.presentationFamily.value(); }
+        [[nodiscard]] inline uint GetComputeQueueFamily() const { return queueFamilyIndices.graphicsAndComputeFamily.value(); }
 
         [[nodiscard]] inline VkQueue GetGraphicsQueue() const { return graphicsAndComputeQueue; }
         [[nodiscard]] inline VkQueue GetPresentationQueue() const { return presentationQueue; }
@@ -78,36 +77,34 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         DELETE_COPY(Device);
 
     private:
-        VkPhysicalDevice physicalDevice;
-        VkSurfaceKHR exampleSurface; // An existing surface is required for device creation so one will be created specifically and destroyed after that
-        uint maxConcurrentFrames;
+        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+        VkSurfaceKHR exampleSurface = VK_NULL_HANDLE; // An existing surface is required for device creation so one will be created specifically and destroyed after that
+        uint maxConcurrentFrames = 0;
 
-        VkDevice logicalDevice;
-        VkPhysicalDeviceFeatures physicalDeviceFeatures;
-        VkPhysicalDeviceProperties physicalDeviceProperties;
-        VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+        VkDevice logicalDevice = VK_NULL_HANDLE;
+        VkPhysicalDeviceFeatures physicalDeviceFeatures = {};
+        VkPhysicalDeviceProperties physicalDeviceProperties = {};
+        VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties = {};
 
-        VkQueue graphicsAndComputeQueue;
-        VkQueue presentationQueue;
+        VkQueue graphicsAndComputeQueue = VK_NULL_HANDLE;
+        VkQueue presentationQueue = VK_NULL_HANDLE;
 
         struct QueueFamilyIndices
         {
-            int graphicsAndComputeFamily = -1;
-            int presentationFamily = -1;
+            Optional<uint> graphicsAndComputeFamily;
+            Optional<uint> presentationFamily;
 
             bool IsValid()
             {
-                return graphicsAndComputeFamily >= 0 && presentationFamily >= 0;
+                return graphicsAndComputeFamily.has_value() && presentationFamily.has_value();
             }
         };
 
         QueueFamilyIndices queueFamilyIndices;
         VkPhysicalDeviceFeatures* requiredFeatures;
 
-        ImageFormat bestColorImageFormat;
-        ImageFormat bestDepthImageFormat;
-
-        Sampling highestMultisampling;
+        ImageFormat bestDepthImageFormat = ImageFormat::UNDEFINED;
+        Sampling highestMultisampling = Sampling::MSAAx1;
 
         void RetrievePhysicalDevice();
         void CreateLogicalDevice();
@@ -118,15 +115,15 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         bool PhysicalDeviceSuitable(const VkPhysicalDevice &givenPhysicalDevice);
         QueueFamilyIndices FindQueueFamilies(const VkPhysicalDevice &givenPhysicalDevice);
 
-        ImageFormat GetBestColorBufferFormat(std::vector<ImageFormat> givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags);
-        ImageFormat GetBestDepthBufferFormat(std::vector<ImageFormat> givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags);
-        Sampling RetrieveMaxSampling();
+        ImageFormat GetBestDepthBufferFormat(const std::vector<ImageFormat>& givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags);
+        [[nodiscard]] Sampling RetrieveMaxSampling() const;
 
         std::vector<const char*> requiredDeviceExtensions
         {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
             VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
-            VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
+            VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+            VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME
         };
 
         #if PLATFORM_APPLE

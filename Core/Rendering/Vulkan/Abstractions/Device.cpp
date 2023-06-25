@@ -33,12 +33,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     /* --- GETTER METHODS --- */
 
+    #pragma clang diagnostic push
+    #pragma ide diagnostic ignored "readability-convert-member-functions-to-static"
     UniquePtr<CommandBuffer> Device::BeginSingleTimeCommands() const
     {
-        UniquePtr<CommandBuffer> commandBuffer = CommandBuffer::Create();
-        commandBuffer->Begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+        UniquePtr<CommandBuffer> commandBuffer = CommandBuffer::Create({ });
+        commandBuffer->Begin(CommandBufferUsage::ONE_TIME_SUBMIT);
 
-        return std::move(commandBuffer);
+        return commandBuffer;
     }
 
     void Device::EndSingleTimeCommands(UniquePtr<CommandBuffer> &commandBuffer) const
@@ -57,6 +59,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         commandBuffer->Free();
     }
+    #pragma clang diagnostic pop
 
     /* --- SETTER METHODS --- */
 
@@ -88,7 +91,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ASSERT_ERROR_IF(physicalDeviceCount <= 0, "No GPUs were found on the system");
         ASSERT_ERROR_IF(!PhysicalDeviceSuitable(physicalDevices[0]), "The GPU of your machine is not supported");
 
-        this->physicalDevice = physicalDevices[0];
+        physicalDevice = physicalDevices[0];
 
         ASSERT_SUCCESS_FORMATTED("Vulkan is supported on your system running [{0}] | [Validation: {1} | CPU: {2} | GPU: {3}]", SystemInformation::GetOperatingSystem().name, VALIDATION_ENABLED, SystemInformation::GetCPU().name, physicalDeviceProperties.deviceName);
 
@@ -96,13 +99,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkDestroySurfaceKHR(VK::GetInstance(), exampleSurface, nullptr);
         glfwDestroyWindow(glfwWindow);
 
-        delete[] physicalDevices;
+        delete[](physicalDevices);
     }
 
     void Device::CreateLogicalDevice()
     {
         // Filter out repeating indices using a set
-        const std::set<uint> uniqueQueueFamilies { static_cast<uint>(queueFamilyIndices.graphicsAndComputeFamily), static_cast<uint>(queueFamilyIndices.presentationFamily) };
+        const std::set<uint> uniqueQueueFamilies { static_cast<uint>(queueFamilyIndices.graphicsAndComputeFamily.value()), static_cast<uint>(queueFamilyIndices.presentationFamily.value()) };
 
         // Create an empty list to store create infos
         VkDeviceQueueCreateInfo* queueCreateInfos = new VkDeviceQueueCreateInfo[uniqueQueueFamilies.size()];
@@ -168,33 +171,26 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create logical device
         VK_ASSERT(
-            vkCreateDevice(this->physicalDevice, &logicalDeviceCreateInfo, nullptr, &logicalDevice),
+            vkCreateDevice(physicalDevice, &logicalDeviceCreateInfo, nullptr, &logicalDevice),
             "Failed to create logical device"
         );
 
         // Retrieve queues
-        vkGetDeviceQueue(logicalDevice, queueFamilyIndices.graphicsAndComputeFamily, 0, &graphicsAndComputeQueue);
-        vkGetDeviceQueue(logicalDevice, queueFamilyIndices.presentationFamily, 0, &presentationQueue);
+        vkGetDeviceQueue(logicalDevice, queueFamilyIndices.graphicsAndComputeFamily.value(), 0, &graphicsAndComputeQueue);
+        vkGetDeviceQueue(logicalDevice, queueFamilyIndices.presentationFamily.value(), 0, &presentationQueue);
 
         requiredFeatures = nullptr;
-        delete[] queueCreateInfos;
+        delete[](queueCreateInfos);
     }
 
     void Device::RetrieveBestProperties()
     {
-        this->highestMultisampling = RetrieveMaxSampling();
+        highestMultisampling = RetrieveMaxSampling();
 
-        this->bestColorImageFormat = GetBestColorBufferFormat(
-            { ImageFormat::R8G8B8A8_SRGB, ImageFormat::R8G8B8A8_UNORM },
-            ImageTiling::OPTIMAL,
-            VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT
-        );
-
-        this->bestDepthImageFormat = GetBestDepthBufferFormat(
+        bestDepthImageFormat = GetBestDepthBufferFormat(
             { ImageFormat::D32_SFLOAT, ImageFormat::D16_UNORM },
             ImageTiling::OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
         );
-
     }
 
     /* --- GETTER METHODS --- */
@@ -213,7 +209,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Get the queue indices for it and check if they are valid
         queueFamilyIndices = FindQueueFamilies(givenPhysicalDevice);
 
-        bool indicesValid = this->queueFamilyIndices.IsValid();
+        bool indicesValid = queueFamilyIndices.IsValid();
 
         // Check if all required extensions are supported
         bool extensionsSupported = DeviceExtensionsSupported(givenPhysicalDevice);
@@ -382,37 +378,12 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
         }
 
-        delete[] queueFamilyProperties;
+        delete[](queueFamilyProperties);
 
         return indices;
     }
 
-    ImageFormat Device::GetBestColorBufferFormat(std::vector<ImageFormat> givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags)
-    {
-        for (const auto &givenFormat : givenFormats)
-        {
-            // Get the properties for the current format
-            VkFormatProperties formatProperties;
-            vkGetPhysicalDeviceFormatProperties(physicalDevice, (VkFormat) givenFormat, &formatProperties);
-
-            // Check if the required format properties are supported
-            if (imageTiling == ImageTiling::LINEAR && (formatProperties.linearTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
-            {
-                return givenFormat;
-            }
-            else if (imageTiling == ImageTiling::OPTIMAL && (formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags)
-            {
-                return givenFormat;
-            }
-        }
-
-        // Otherwise throw an error
-        ASSERT_ERROR("No color buffer formats supported");
-
-        return ImageFormat::UNDEFINED;
-    }
-
-    ImageFormat Device::GetBestDepthBufferFormat(std::vector<ImageFormat> givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags)
+    ImageFormat Device::GetBestDepthBufferFormat(const std::vector<ImageFormat>& givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags)
     {
         for (const auto &givenFormat : givenFormats)
         {
@@ -437,7 +408,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return ImageFormat::UNDEFINED;
     }
 
-    Sampling Device::RetrieveMaxSampling()
+    Sampling Device::RetrieveMaxSampling() const
     {
         VkSampleCountFlags countFlags = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
 

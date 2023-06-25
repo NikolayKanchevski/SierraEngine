@@ -19,8 +19,8 @@ namespace Sierra::Engine::Classes
     public:
         /* --- CONSTRUCTORS --- */
         Entity() = default;
-        Entity(const String &givenName);
-        Entity(Entity &givenParent);
+        explicit Entity(const String &givenName);
+        explicit Entity(Entity &givenParent);
         Entity(const String &givenName, Entity &givenParent);
         inline Entity(entt::entity givenEnttEntity) : enttEntity(givenEnttEntity) {  }
 
@@ -28,7 +28,7 @@ namespace Sierra::Engine::Classes
         const static Entity Null;
 
         /* --- SETTER METHODS --- */
-        void SetParent(Entity &givenParent);
+        void SetParent(Entity &givenParent) const;
         void Destroy();
 
         /* --- GETTER METHODS --- */
@@ -46,16 +46,15 @@ namespace Sierra::Engine::Classes
         inline T& AddOrReplaceComponent(Args&&... args) { return World::AddOrReplaceComponent<T>(enttEntity, std::forward<Args>(args)...); }
 
         template<typename T>
-        inline T& GetComponent() const { return World::GetComponent<T>(enttEntity); }
+        [[nodiscard]] inline T& GetComponent() const { return World::GetComponent<T>(enttEntity); }
 
         template<typename T>
-        inline bool HasComponent() const { return World::HasComponent<T>(enttEntity); }
+        [[nodiscard]] inline bool HasComponent() const { return World::HasComponent<T>(enttEntity); }
 
         template<typename T>
         inline void RemoveComponent() const { World::RemoveComponent<T>(enttEntity); }
 
         /* --- DESTRUCTOR --- */
-        ~Entity();
         Entity(const Entity&) = default;
         bool operator==(Entity &right);
         operator entt::entity() const noexcept;

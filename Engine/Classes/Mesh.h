@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../../Core/Rendering/RenderingTemplates.h"
+#include "../../Core/Rendering/RenderingSettings.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Buffer.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/CommandBuffer.h"
 
@@ -13,6 +13,13 @@ using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 
 namespace Sierra::Engine::Classes
 {
+    struct Vertex
+    {
+        Vector3 position;
+        Vector3 normal;
+        Vector2 UV;
+    };
+
     struct Material
     {
         Vector3 diffuse = Vector3(1.0f, 1.0f, 1.0f);
@@ -28,10 +35,10 @@ namespace Sierra::Engine::Classes
     {
         Material material;
 
-        uint meshID;
-        uint entityID;
-        uint meshTexturesPresence; // Bools encoded as binary indicating whether texture types are bound
-        uint directionalLightID;
+        uint meshID = 0;
+        uint entityID = 0;
+        uint meshTexturesPresence = 0; // Bools encoded as binary indicating whether texture types are bound
+        uint directionalLightID = 0;
     };
 
     struct MeshCreateInfo
@@ -44,7 +51,7 @@ namespace Sierra::Engine::Classes
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Mesh(const MeshCreateInfo &createInfo);
+        explicit Mesh(const MeshCreateInfo &createInfo);
         static SharedPtr<Mesh> Create(MeshCreateInfo createInfo);
 
         /* --- GETTER METHODS --- */

@@ -33,9 +33,6 @@ namespace Sierra::Engine::Components
         void SetWorldScale(Vector3 newScale);
         void SetWorldScale(std::optional<float> xScale, std::optional<float> yScale, std::optional<float> zScale);
 
-        void LookAt(Vector3 point);
-        void RotateAround(Vector3 point, Vector3 axis, float angle);
-
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline Vector3 GetPosition() const { return localPosition; }
         [[nodiscard]] inline Vector3 GetRotation() const { return localRotation; }
@@ -71,7 +68,7 @@ namespace Sierra::Engine::Components
         void UpdateChain();
         void OnDrawUI() override;
 
-        void PushOnDirtyCallback(Callback callback);
+        void PushOnDirtyCallback(const Callback &callback);
         void PopOnDirtyCallback();
 
         /* --- OPERATORS --- */
@@ -90,9 +87,9 @@ namespace Sierra::Engine::Components
         bool isDirty = true;
         std::optional<Matrix4x4> modelMatrix;
 
-        Vector3 forwardDirection;
-        Vector3 upDirection;
-        Quaternion quaternion;
+        Vector3 forwardDirection = { 0, 0, 1 };
+        Vector3 upDirection { 0, 1, 0 };
+        Quaternion quaternion = glm::identity<Quaternion>();
 
         std::vector<Callback> OnChangeCallbacks;
 

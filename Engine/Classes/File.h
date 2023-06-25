@@ -43,10 +43,10 @@ namespace Sierra::Engine::Classes::File
     /// @brief Reads data from a spcified file and stores it as a vector of characters.    
     [[nodiscard]] const std::vector<char> ReadFile(const String &directory, const String &fileName);
 
-    /// @brief Reads binary (8-bit) data from a spcified file and stores it as a vector of uint8's.
+    /// @brief Reads binary (8-bit) data from a specified file and stores it as a vector of uint8's.
     [[nodiscard]] const std::vector<uint8> ReadBinaryFile(const String &filePath);
 
-    /// @brief Reads binary (8-bit) data from a spcified file and stores it as a vector of uint8's.
+    /// @brief Reads binary (8-bit) data from a specified file and stores it as a vector of uint8's.
     [[nodiscard]] const std::vector<uint8> ReadBinaryFile(const String &directory, const String &fileName);
 
     /// @brief Writes a char array to a specified file.

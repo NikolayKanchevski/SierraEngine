@@ -5,13 +5,20 @@
 #pragma once
 
 #include "Image.h"
+#include "../../../Engine/Classes/MemoryObject.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     struct BufferCreateInfo
     {
-        uint64 memorySize = 0;
-        BufferUsage bufferUsage = BufferUsage::UNDEFINED;
+        uint64 memorySize;
+        BufferUsage bufferUsage;
+    };
+
+    struct BufferCopyRange
+    {
+        uint offset = 0;
+        uint range = 0;
     };
 
     /// @brief An abstraction class to make managing Vulkan buffers easier.
@@ -19,47 +26,40 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Buffer(const BufferCreateInfo &createInfo);
-        [[nodiscard]] static UniquePtr<Buffer> Create(BufferCreateInfo bufferCreateInfo);
-        [[nodiscard]] static SharedPtr<Buffer> CreateShared(BufferCreateInfo bufferCreateInfo);
+        explicit Buffer(const BufferCreateInfo &createInfo);
+        [[nodiscard]] static UniquePtr<Buffer> Create(const BufferCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         template<typename T>
         inline T* GetDataAs()
         {
-            return reinterpret_cast<T*>(data);
+            return reinterpret_cast<T*>(data.GetData());
         }
 
         /* --- SETTER METHODS --- */
-        void CopyFromPointer(void* pointer);
-        void CopyToImage(const Image& givenImage);
-        void CopyToBuffer(const Buffer *otherBuffer);
+        void Flush();
+        void CopyFromPointer(void* pointer, uint64 offset = 0, uint64 range = 0);
+        void CopyToImage(const UniquePtr<Image> &givenImage);
+        void CopyToBuffer(const UniquePtr<Buffer> &otherBuffer);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline VkBuffer GetVulkanBuffer() const
-        { return this->vkBuffer; }
+        [[nodiscard]] inline uint64 GetMemorySize() const { return data.GetMemorySize(); }
+        [[nodiscard]] inline Engine::Classes::MemoryObject& GetMemory() { return data; }
 
-        [[nodiscard]] inline VmaAllocation GetMemory() const
-        { return this->vmaBufferAllocation; }
-
-        [[nodiscard]] inline uint64 GetMemorySize() const
-        { return this->memorySize; }
-
-        [[nodiscard]] inline BufferUsage GetBufferUsage() const
-        { return this->bufferUsage; }
+        [[nodiscard]] inline VkBuffer GetVulkanBuffer() const { return vkBuffer; }
+        [[nodiscard]] inline VmaAllocation GetMemoryAllocation() const { return vmaBufferAllocation; }
+        [[nodiscard]] inline BufferUsage GetBufferUsage() const { return bufferUsage; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();
         DELETE_COPY(Buffer);
 
     private:
-        VkBuffer vkBuffer;
-        VmaAllocation vmaBufferAllocation;
+        VkBuffer vkBuffer = VK_NULL_HANDLE;
+        VmaAllocation vmaBufferAllocation = nullptr;
 
-        uint64 memorySize;
         BufferUsage bufferUsage;
-
-        void* data;
+        Engine::Classes::MemoryObject data;
     };
 
 }

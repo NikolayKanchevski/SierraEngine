@@ -15,9 +15,9 @@ namespace Sierra::Engine::Components
 
     }
 
-    UUID &UUID::operator=(uint givenValue)
+    UUID &UUID::operator=(const uint givenValue)
     {
-        this->value = givenValue;
+        value = givenValue;
         return *this;
     }
 

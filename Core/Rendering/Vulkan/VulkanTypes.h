@@ -817,7 +817,8 @@ namespace Sierra::Core::Rendering::Vulkan
         NORMAL = VECTOR_3,
         COLOR_RGB = VECTOR_3,
         COLOR_RGBA = VECTOR_4,
-        TEXTURE_COORDINATE = VECTOR_2
+        UV = VECTOR_2,
+        TEXTURE_COORDINATE = UV
     };
 
     constexpr uint GetVertexAttributeTypeSize(const VertexAttributeType vertexAttributeType)
@@ -834,6 +835,17 @@ namespace Sierra::Core::Rendering::Vulkan
                 return FLOAT_SIZE * 4;
         }
     }
+
+    enum class SpecializationConstantType
+    {
+        BOOL = BOOL_SIZE,
+        INT = INT_SIZE,
+        INT32 = INT,
+        UINT = UINT_SIZE,
+        UINT32 = UINT,
+        FLOAT = FLOAT_SIZE,
+        DOUBLE = DOUBLE_SIZE
+    };
 
     enum class FrontFace
     {
@@ -889,6 +901,20 @@ namespace Sierra::Core::Rendering::Vulkan
         MUTABLE_VALVE = VK_DESCRIPTOR_TYPE_MUTABLE_VALVE
     };
 
+    enum class DescriptorSetLayoutFlag
+    {
+        NONE = 0,
+        UPDATE_AFTER_BIND_POOL = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT,
+        PUSH_DESCRIPTOR_KHR = VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR,
+        DESCRIPTOR_BUFFER_EXT = VK_DESCRIPTOR_SET_LAYOUT_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
+        EMBEDDED_IMMUTABLE_SAMPLERS_EXT = VK_DESCRIPTOR_SET_LAYOUT_CREATE_EMBEDDED_IMMUTABLE_SAMPLERS_BIT_EXT,
+        HOST_ONLY_POOL_EXT = VK_DESCRIPTOR_SET_LAYOUT_CREATE_HOST_ONLY_POOL_BIT_EXT,
+        UPDATE_AFTER_BIND_POOL_EXT = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT,
+        HOST_ONLY_POOL = VK_DESCRIPTOR_SET_LAYOUT_CREATE_HOST_ONLY_POOL_BIT_VALVE
+    };
+
+    DEFINE_ENUM_FLAG_OPERATORS(DescriptorSetLayoutFlag)
+
     enum class PipelineCopyOp
     {
         PUSH_CONSTANTS = 0,
@@ -905,6 +931,14 @@ namespace Sierra::Core::Rendering::Vulkan
         AVERAGE = VK_RESOLVE_MODE_AVERAGE_BIT,
         MIN = VK_RESOLVE_MODE_MIN_BIT,
         MAX = VK_RESOLVE_MODE_MAX_BIT
+    };
+
+    enum class CommandBufferUsage
+    {
+        NONE = 0,
+        ONE_TIME_SUBMIT = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        RENDER_PASS_CONTINUE = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
+        SIMULTANEOUS_USE = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT
     };
 
     typedef uint BoolGLSL;

@@ -113,17 +113,17 @@ namespace Sierra::Engine::Components
 
     void Camera::SetFOV(const float givenFOV)
     {
-        CHECK_CHANGE(FOV, givenFOV);
+        CHECK_CHANGE(FOV, givenFOV)
     }
 
     void Camera::SetNearClip(const float givenClip)
     {
-        CHECK_CHANGE(nearClip, givenClip);
+        CHECK_CHANGE(nearClip, givenClip)
     }
 
     void Camera::SetFarClip(const float givenClip)
     {
-        CHECK_CHANGE(farClip, givenClip);
+        CHECK_CHANGE(farClip, givenClip)
     }
 
 }

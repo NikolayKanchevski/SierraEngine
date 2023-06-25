@@ -6,7 +6,6 @@
 
 #include "../../Window.h"
 #include "../../UI/ImGuiInstance.h"
-#include "../Abstractions/Abstractions.h"
 #include "../../UI/Panels/UIPanels.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Renderers
@@ -47,7 +46,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         inline virtual void DrawUI() { for (auto &panel : uiPanels) panel->DrawUI(); };
 
         UniquePtr<Window> &window;
-        UniquePtr<Swapchain> swapchain;
+        UniquePtr<Abstractions::Swapchain> swapchain;
         UniquePtr<ImGuiInstance> imGuiInstance = nullptr;
 
         uint maxConcurrentFrames;

@@ -18,7 +18,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Swapchain(UniquePtr<Window> &givenWindow);
+        explicit Swapchain(UniquePtr<Window> &givenWindow);
         static UniquePtr<Swapchain> Create(UniquePtr<Window> &givenWindow);
 
         /* --- POLLING METHODS --- */
@@ -26,7 +26,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void EndRenderPass(const UniquePtr<CommandBuffer> &givenCommandBuffer);
 
         VkResult AcquireNextImage();
-        VkResult SubmitCommandBuffers();
+        VkResult SwapImage();
 
         /* --- SETTER METHODS --- */
         inline void SetResizeCallback(Callback &methodToCall) { resizeCallback = methodToCall; }

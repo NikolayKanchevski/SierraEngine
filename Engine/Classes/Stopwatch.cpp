@@ -8,12 +8,12 @@ namespace Sierra::Engine::Classes
 {
     Stopwatch::Stopwatch()
     {
-        this->startTime = std::chrono::high_resolution_clock::now();
+        startTime = std::chrono::high_resolution_clock::now();
     }
 
     void Stopwatch::Reset()
     {
-        this->startTime = std::chrono::high_resolution_clock::now();
+        startTime = std::chrono::high_resolution_clock::now();
     }
 
     int Stopwatch::GetElapsedMilliseconds()

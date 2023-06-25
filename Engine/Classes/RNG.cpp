@@ -23,7 +23,7 @@ namespace Sierra::Engine::Classes
 
     uint RNG::GetRandomUInt(uint min, uint max)
     {
-        std::uniform_int_distribution<> distribution(min, max);
+        std::uniform_int_distribution<> distribution(static_cast<uint>(min), static_cast<uint>(max));
         return distribution(randomizer);
     }
 
@@ -34,13 +34,13 @@ namespace Sierra::Engine::Classes
 
     uint64 RNG::GetRandomUInt64(uint64 min, uint64 max)
     {
-        std::uniform_int_distribution<> distribution(min, max);
+        std::uniform_int_distribution<> distribution(static_cast<uint>(min), static_cast<uint>(max));
         return distribution(randomizer);
     }
 
     int RNG::GetRandomInt()
     {
-        return uniformDistribution32(randomizer);
+        return static_cast<int>(uniformDistribution32(randomizer));
     }
 
     int RNG::GetRandomInt(const int min, const int max)
@@ -52,13 +52,13 @@ namespace Sierra::Engine::Classes
     float RNG::GetRandomFloat()
     {
         std::uniform_real_distribution<> distribution(FLOAT_MIN, FLOAT_MAX);
-        return distribution(randomizer);
+        return static_cast<float>(distribution(randomizer));
     }
 
     float RNG::GetRandomFloat(const float min, const float max)
     {
         std::uniform_real_distribution<> distribution(min, max);
-        return distribution(randomizer);
+        return static_cast<float>(distribution(randomizer));
     }
 
     char RNG::GetRandomChar()

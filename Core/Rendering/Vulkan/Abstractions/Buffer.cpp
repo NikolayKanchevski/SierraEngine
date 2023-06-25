@@ -6,57 +6,61 @@
 
 #include "../VK.h"
 
+
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
+    using Engine::Classes::MemoryObject;
 
     /* --- CONSTRUCTORS --- */
 
     Buffer::Buffer(const BufferCreateInfo &createInfo)
-        : memorySize(createInfo.memorySize), bufferUsage(createInfo.bufferUsage)
+        : data(MemoryObject(createInfo.memorySize, 0)), bufferUsage(createInfo.bufferUsage)
     {
         // Set up buffer creation info
         VkBufferCreateInfo vkBufferCreateInfo{};
         vkBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        vkBufferCreateInfo.size = memorySize;
-        vkBufferCreateInfo.usage = (VkBufferUsageFlags) bufferUsage;
+        vkBufferCreateInfo.size = data.GetMemorySize();
+        vkBufferCreateInfo.usage = static_cast<VkBufferUsageFlags>(createInfo.bufferUsage);
         vkBufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
         // Set up buffer allocation info
         VmaAllocationCreateInfo allocationCreateInfo{};
         allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
         allocationCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
-        allocationCreateInfo.memoryTypeBits = UINT_MAX;
+        allocationCreateInfo.memoryTypeBits = 0;
         allocationCreateInfo.priority = 0.5f;
 
         // Create and allocate buffer
         VK_ASSERT(
             vmaCreateBuffer(VK::GetMemoryAllocator(), &vkBufferCreateInfo, &allocationCreateInfo, &vkBuffer, &vmaBufferAllocation, nullptr),
-            FORMAT_STRING("Failed to create buffer with size of [{0}] for [{1}] usage", memorySize, VK_TO_STRING(bufferUsage, BufferUsageFlagBits))
+            FORMAT_STRING("Failed to create buffer with size of [{0}] for [{1}] usage", data.GetMemorySize(), VK_TO_STRING(bufferUsage, BufferUsageFlagBits))
         );
 
         // Map memory
-        vmaMapMemory(VK::GetMemoryAllocator(), vmaBufferAllocation, &data);
+        vmaMapMemory(VK::GetMemoryAllocator(), vmaBufferAllocation, &data.GetData());
+        memset(data.GetData(), 0, data.GetMemorySize());
     }
 
-    UniquePtr<Buffer> Buffer::Create(const BufferCreateInfo bufferCreateInfo)
+    UniquePtr<Buffer> Buffer::Create(const BufferCreateInfo &createInfo)
     {
-        return std::make_unique<Buffer>(bufferCreateInfo);
-    }
-
-    SharedPtr<Buffer> Buffer::CreateShared(const BufferCreateInfo bufferCreateInfo)
-    {
-        return std::make_shared<Buffer>(bufferCreateInfo);
+        return std::make_unique<Buffer>(createInfo);
     }
 
     /* --- SETTER METHODS --- */
 
-    void Buffer::CopyFromPointer(void *pointer)
+    void Buffer::Flush()
     {
-        // Copy memory data to Vulkan buffer
-        memcpy(data, pointer, memorySize);
+        vmaFlushAllocation(VK::GetMemoryAllocator(), vmaBufferAllocation, 0, data.GetMemorySize());
     }
 
-    void Buffer::CopyToImage(const Image& givenImage)
+    void Buffer::CopyFromPointer(void *pointer, const uint64 offset, const uint64 range)
+    {
+        // Copy memory data to Vulkan buffer
+        data.SetDataByOffset(pointer, offset, range != 0 ? range : data.GetMemorySize());
+        Flush();
+    }
+
+    void Buffer::CopyToImage(const UniquePtr<Image> &givenImage)
     {
         // Create a temporary command buffer
         auto commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
@@ -66,35 +70,35 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         copyRegion.bufferOffset = 0;
         copyRegion.bufferRowLength = 0;
         copyRegion.bufferImageHeight = 0;
-        copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        copyRegion.imageSubresource.aspectMask = static_cast<VkImageAspectFlags>(givenImage->GetAspectFlags());
         copyRegion.imageSubresource.mipLevel = 0;
         copyRegion.imageSubresource.baseArrayLayer = 0;
-        copyRegion.imageSubresource.layerCount = givenImage.GetLayerCount();
+        copyRegion.imageSubresource.layerCount = givenImage->GetLayerCount();
         copyRegion.imageOffset.x = 0;
         copyRegion.imageOffset.y = 0;
         copyRegion.imageOffset.z = 0;
-        copyRegion.imageExtent.width = static_cast<uint>(givenImage.GetWidth());
-        copyRegion.imageExtent.height = static_cast<uint>(givenImage.GetHeight());
-        copyRegion.imageExtent.depth = static_cast<uint>(givenImage.GetDepth());
+        copyRegion.imageExtent.width = static_cast<uint>(givenImage->GetWidth());
+        copyRegion.imageExtent.height = static_cast<uint>(givenImage->GetHeight());
+        copyRegion.imageExtent.depth = static_cast<uint>(givenImage->GetDepth());
 
         // Copy the image to the buffer
-        vkCmdCopyBufferToImage(commandBuffer->GetVulkanCommandBuffer(), this->vkBuffer, givenImage.GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+        vkCmdCopyBufferToImage(commandBuffer->GetVulkanCommandBuffer(), vkBuffer, givenImage->GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
         // Destroy the temporary command buffer
         VK::GetDevice()->EndSingleTimeCommands(commandBuffer);
     }
 
-    void Buffer::CopyToBuffer(const Buffer *otherBuffer)
+    void Buffer::CopyToBuffer(const UniquePtr<Buffer> &otherBuffer)
     {
         // Check if the two buffers are compatible
-        ASSERT_ERROR_IF(this->memorySize != otherBuffer->memorySize, "Cannot copy data from one buffer to another with a different memory size!");
+        ASSERT_ERROR_IF(data.GetMemorySize() != otherBuffer->data.GetMemorySize(), "Cannot copy data from one buffer to another with a different memory size!");
 
         // Create a temporary command buffer
         auto commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
 
         // Set up the buffer's copy region
         VkBufferCopy copyRegion{};
-        copyRegion.size = this->memorySize;
+        copyRegion.size = data.GetMemorySize();
 
         // Copy the buffer
         vkCmdCopyBuffer(commandBuffer->GetVulkanCommandBuffer(), vkBuffer, otherBuffer->vkBuffer, 1, &copyRegion);
@@ -109,7 +113,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
         // Unmap the memory
         vmaUnmapMemory(VK::GetMemoryAllocator(), vmaBufferAllocation);
-
         vmaDestroyBuffer(VK::GetMemoryAllocator(), vkBuffer, vmaBufferAllocation);
     }
 }

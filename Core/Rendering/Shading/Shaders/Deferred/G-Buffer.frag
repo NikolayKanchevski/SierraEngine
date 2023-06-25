@@ -1,5 +1,6 @@
 #version 450
 
+/* !COMPILE_TO_BINARY */
 #include "../Types/MeshPushConstant.glsl"
 #include "../Utility/ShaderDefinitions.glsl"
 #include "../Utility/Shadows.glsl"
@@ -9,9 +10,9 @@ layout(location = 1) in vec3 fromVert_Normal;
 layout(location = 2) in vec2 fromVert_UV;
 layout(location = 3) in vec4 fromVert_ShadowUV;
 
-layout(set = 1, binding = DIFFUSE_TEXTURE_BINDING) uniform sampler2D fromCode_DiffuseSampler;
-layout(set = 1, binding = SPECULAR_TEXTURE_BINDING) uniform sampler2D fromCode_SpecularSampler;
-layout(set = 1, binding = NORMAL_MAP_TEXTURE_BINDING) uniform sampler2D fromCode_NormalSampler;
+layout(binding = DIFFUSE_TEXTURE_BINDING) uniform sampler2D fromCode_DiffuseSampler;
+layout(binding = SPECULAR_TEXTURE_BINDING) uniform sampler2D fromCode_SpecularSampler;
+layout(binding = NORMAL_TEXTURE_BINDING) uniform sampler2D fromCode_NormalSampler;
 
 layout(location = 0) out uint toFramebuffer_ID;
 layout(location = 1) out vec4 toFramebuffer_Diffuse;

@@ -80,7 +80,7 @@ namespace Sierra::Core::Rendering::UI
         }
     }
 
-    UniquePtr<ImGuiInstance> ImGuiInstance::Create(ImGuiInstanceCreateInfo createInfo)
+    UniquePtr<ImGuiInstance> ImGuiInstance::Create(const ImGuiInstanceCreateInfo &createInfo)
     {
         return std::make_unique<ImGuiInstance>(createInfo);
     }

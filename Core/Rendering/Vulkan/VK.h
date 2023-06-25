@@ -9,6 +9,8 @@
 #include "Abstractions/Texture.h"
 #include "Abstractions/Queries.h"
 
+#define VK_VERSION VK_API_VERSION_1_2
+
 using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
 
 namespace Sierra::Core::Rendering::Vulkan
@@ -26,9 +28,6 @@ namespace Sierra::Core::Rendering::Vulkan
         [[nodiscard]] inline static VkPhysicalDevice GetPhysicalDevice() { return m_Instance.device->GetPhysicalDevice(); }
         [[nodiscard]] inline static VkDevice GetLogicalDevice() { return m_Instance.device->GetLogicalDevice(); }
         [[nodiscard]] inline static UniquePtr<Device>& GetDevice() { return m_Instance.device; }
-
-        [[nodiscard]] inline static UniquePtr<DescriptorSetLayout>& GetDescriptorSetLayout() { return *m_Instance.globalDescriptorSetLayout; }
-        inline static void SetGlobalDescriptorSetLayout(UniquePtr<DescriptorSetLayout>& givenDescriptorSetLayout) { m_Instance.globalDescriptorSetLayout = &givenDescriptorSetLayout; }
 
         [[nodiscard]] inline static VkCommandPool GetCommandPool() { return m_Instance.commandPool; }
         [[nodiscard]] inline static UniquePtr<QueryPool>& GetQueryPool() { return m_Instance.queryPool; }
@@ -53,11 +52,11 @@ namespace Sierra::Core::Rendering::Vulkan
         void InitializeVolk();
 
         /* --- INSTANCE --- */
-        VkInstance instance;
+        VkInstance instance = VK_NULL_HANDLE;
         #if VALIDATION_ENABLED
-        VkDebugUtilsMessengerEXT debugMessenger;
-        VkDebugUtilsMessengerCreateInfoEXT* debugMessengerCreateInfo;
-        void CreateDebugMessenger();
+            VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
+            VkDebugUtilsMessengerCreateInfoEXT* debugMessengerCreateInfo = nullptr;
+            void CreateDebugMessenger();
         #endif
         void CreateInstance();
 
@@ -66,42 +65,33 @@ namespace Sierra::Core::Rendering::Vulkan
         void CreateDevice();
 
         /* --- VMA --- */
-        VmaAllocator vmaAllocator;
+        VmaAllocator vmaAllocator = nullptr;
         void CreateVulkanMemoryAllocator();
 
         /* --- COMMAND POOL --- */
-        VkCommandPool commandPool;
+        VkCommandPool commandPool = VK_NULL_HANDLE;
         void CreateCommandPool();
 
         /* --- QUERY POOL --- */
         UniquePtr<QueryPool> queryPool;
         void CreateQueryPool();
 
-        VkDescriptorPool imGuiDescriptorPool;
+        VkDescriptorPool imGuiDescriptorPool = VK_NULL_HANDLE;
         void CreateImGuiDescriptorPool();
 
         /* --- DEFAULT TEXTURES --- */
         void CreateDefaultTextures();
 
-        /* --- GLOABAL MESH LAYOUT --- */
-        UniquePtr<DescriptorSetLayout> *globalDescriptorSetLayout;
-
     private:
-        const std::vector<const char*> requiredInstanceExtensions
+        std::vector<const char*> requiredInstanceExtensions
         {
             #if VALIDATION_ENABLED
                 VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
             #endif
             VK_KHR_SURFACE_EXTENSION_NAME,
-            VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
             #if PLATFORM_APPLE
                 VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
             #endif
-        };
-
-        std::vector<const char*> requiredDeviceExtensions
-        {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
         };
 
         VkPhysicalDeviceFeatures requiredPhysicalDeviceFeatures;
@@ -175,7 +165,7 @@ namespace Sierra::Core::Rendering::Vulkan
             vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensionProperties.data());
 
             // Check if each given extension is in the supported array
-            uSize extensionIndex = 0;
+            int64 extensionIndex = 0;
 
             bool success = true;
             for (const auto &requiredExtension : givenExtensions)

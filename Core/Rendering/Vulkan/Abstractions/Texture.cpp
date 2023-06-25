@@ -14,10 +14,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     /* --- CONSTRUCTORS --- */
 
     Texture::Texture(stbi_uc *stbImage, const uint width, const uint height, const uint givenColorChannelsCount, TextureCreateInfo &createInfo)
-        : textureType(createInfo.textureType), mipMappingEnabled(createInfo.mipMappingEnabled), colorChannelsCount(givenColorChannelsCount)
+        : textureType(createInfo.textureType), mipMappingEnabled(createInfo.enableMipMapping), colorChannelsCount(givenColorChannelsCount)
     {
         // Calculate the image's memory size
-        this->memorySize = width * height * GetChannelCountForImageFormat(createInfo.imageFormat);
+        memorySize = width * height * GetChannelCountForImageFormat(createInfo.imageFormat);
 
         // Create the staging buffer
         auto stagingBuffer = Buffer::Create({
@@ -30,10 +30,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         stbi_image_free(stbImage);
 
         // Create the texture image
-        this->image = Image::Create({
+        image = Image::Create({
             .dimensions = { width, height },
             .format = createInfo.imageFormat,
-            .generateMipMaps = createInfo.mipMappingEnabled,
+            .generateMipMaps = createInfo.enableMipMapping,
             .usage = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
         });
 
@@ -41,7 +41,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         image->TransitionLayout(ImageLayout::TRANSFER_DST_OPTIMAL);
 
         // Copy the image to the staging buffer
-        stagingBuffer->CopyToImage(*image);
+        stagingBuffer->CopyToImage(image);
 
         // Destroy the staging buffer and free its memory
         stagingBuffer->Destroy();
@@ -52,13 +52,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create sampler
         if (mipMappingEnabled) createInfo.samplerCreateInfo.maxLod = static_cast<float>(image->GetMipMapLevels());
-        this->sampler = Sampler::Create(createInfo.samplerCreateInfo);
+        sampler = Sampler::Create(createInfo.samplerCreateInfo);
     }
 
     SharedPtr<Texture> Texture::Create(TextureCreateInfo createInfo, const bool setDefaultTexture)
     {
         // Check if the texture file has already been loaded to texture
-        Hash hash = GET_HASH(createInfo.filePath);
+        Hash hash = HashType(createInfo.filePath);
         if (texturePool.count(hash) != 0)
         {
             // If the same texture file has been used check to see if its sampler is the same as this one
@@ -83,14 +83,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         ASSERT_ERROR_FORMATTED_IF(!stbiImage, "Failed to load the texture file [{0}]", createInfo.filePath);
 
         // If texture does not exist already
-        auto &textureReference = texturePool[GET_HASH(createInfo.filePath)];
+        auto &textureReference = texturePool[HashType(createInfo.filePath)];
         textureReference = std::make_shared<Texture>(stbiImage, width, height, channels, createInfo);
         if (setDefaultTexture)
         {
-            ASSERT_ERROR_FORMATTED_IF(createInfo.textureType == TextureType::UNDEFINED_TEXTURE, "Cannot set texture loaded from [{0}] as default texture for its type, as it is of type TEXTURE_TYPE_NONE", createInfo.filePath);
+            ASSERT_ERROR_FORMATTED_IF(createInfo.textureType == TextureType::UNDEFINED, "Cannot set texture loaded from [{0}] as default texture for its type, as it is of type TEXTURE_TYPE_NONE", createInfo.filePath);
 
             textureReference->isDefault = true;
-            defaultTextures[createInfo.textureType] = textureReference;
+            defaultTextures[static_cast<uint>(createInfo.textureType)] = textureReference;
         }
 
         return textureReference;
@@ -101,7 +101,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Texture::Dispose()
     {
         // Remove texture from pool
-        texturePool.erase(GET_HASH(filePath));
+        texturePool.erase(HashType(filePath));
     }
 
     void Texture::DisposePool()

@@ -8,6 +8,7 @@
 
 #include "../Classes/Mesh.h"
 #include "../Classes/Binary.h"
+#include "../Classes/IdentifierPool.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Texture.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Descriptors.h"
 
@@ -20,7 +21,7 @@ namespace Sierra::Engine::Components
     public:
         /* --- CONSTRUCTORS --- */
         MeshRenderer() = default;
-        MeshRenderer(SharedPtr<Mesh> givenCorrespondingMesh);
+        explicit MeshRenderer(SharedPtr<Mesh> givenCorrespondingMesh);
 
         /* --- POLLING METHODS --- */
         void OnDrawUI() override;
@@ -33,10 +34,9 @@ namespace Sierra::Engine::Components
         void ResetTexture(TextureType textureType);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline SharedPtr<Mesh>& GetMesh() { return coreMesh; }
+        [[nodiscard]] inline SharedPtr<Mesh>& GetMesh() { return mesh; }
         [[nodiscard]] inline uint GetMeshID() const { return meshID; }
-        [[nodiscard]] inline UniquePtr<DescriptorSet>& GetDescriptorSet() { return descriptorSet; }
-        [[nodiscard]] inline SharedPtr<Texture> GetTexture(const TextureType textureType) const { return textures[textureType]; }
+        [[nodiscard]] inline SharedPtr<Texture> GetTexture(const TextureType textureType) const { return textures[static_cast<uint>(textureType)]; }
         [[nodiscard]] inline SharedPtr<Texture> *GetTextures() { return textures; }
         [[nodiscard]] Matrix4x4 GetModelMatrix() const;
         [[nodiscard]] MeshPushConstant GetPushConstantData() const;
@@ -45,17 +45,12 @@ namespace Sierra::Engine::Components
         void Destroy() override;
 
     private:
-
-        SharedPtr<Mesh> coreMesh = nullptr;
-
-        UniquePtr<DescriptorSet> descriptorSet;
-        SharedPtr<Texture> textures[TOTAL_TEXTURE_TYPES_COUNT];
+        SharedPtr<Mesh> mesh = nullptr;
 
         Binary meshTexturesPresence = 0;
+        SharedPtr<Texture> textures[static_cast<uint>(TextureType::TOTAL_COUNT)];
 
-        void CreateDescriptorSet();
-
-        uint meshID;
+        uint meshID = 0;
         inline static auto IDPool = IdentifierPool<uint>(MAX_MESHES);
     };
 

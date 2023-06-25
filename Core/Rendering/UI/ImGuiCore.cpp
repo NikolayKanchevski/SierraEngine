@@ -96,7 +96,7 @@ namespace Sierra::Core::Rendering::UI
 
     /* --- POLLING METHODS --- */
 
-    bool ImGuiCore::SetSceneViewSize(const uint newWidth, const uint newHeight)
+    bool ImGuiCore::SetSceneViewSize(const float newWidth, const float newHeight)
     {
         if (instance.sceneViewWidth == newWidth && instance.sceneViewHeight == newHeight) return false;
 

@@ -4,8 +4,12 @@
 
 #include "ExperimentalVulkanRenderer.h"
 
+#include "../VK.h"
+
 namespace Sierra::Core::Rendering::Vulkan::Renderers
 {
+    using namespace Sierra::Engine::Classes;
+
     /* --- CONSTRUCTORS --- */
 
     ExperimentalVulkanRenderer::ExperimentalVulkanRenderer(const VulkanRendererCreateInfo &createInfo)
@@ -16,10 +20,10 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         auto fragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Experimental/Experimental.frag", .shaderType = ShaderType::FRAGMENT });
 
         // Create pipeline
-        graphicsPipeline = GraphicsPipeline<>::Create({
+        graphicsPipeline = GraphicsPipeline::Create({
             .shaders = { vertexShader, fragmentShader },
             .renderPassInfo = GraphicsPipelineRenderPassInfo {
-                .renderPass = &swapchain->GetRenderPass()
+                .renderPass = swapchain->GetRenderPass()
             }
         });
     }
@@ -42,7 +46,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         auto &commandBuffer = swapchain->GetCurrentCommandBuffer();
 
         // Begin recording commands to send to GPU
-        commandBuffer->Begin();
+        commandBuffer->Begin(CommandBufferUsage::ONE_TIME_SUBMIT);
 
         // Begin rendering
         swapchain->BeginRenderPass(commandBuffer);
@@ -53,6 +57,9 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         // Draw 3 vertices
         graphicsPipeline->Draw(commandBuffer, 3);
 
+        // End pipeline
+        graphicsPipeline->End(commandBuffer);
+
         // End rendering
         swapchain->EndRenderPass(commandBuffer);
 
@@ -60,7 +67,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         commandBuffer->End();
 
         // Submit commands & present to swapchain
-        swapchain->SubmitCommandBuffers();
+        swapchain->SwapImage();
     }
 
     void ExperimentalVulkanRenderer::Destroy()

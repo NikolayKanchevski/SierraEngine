@@ -43,6 +43,8 @@ template<class T>
 using UniquePtr = std::unique_ptr<T>;
 template<class T>
 using SharedPtr = std::shared_ptr<T>;
+template<class T>
+using ReferenceWrapper = std::reference_wrapper<T>;
 
 // === Utilities === //
 typedef std::string String;
@@ -51,6 +53,8 @@ typedef std::function<void()> Callback;
 
 template<class T>
 using Optional =  std::optional<T>;
+template<class A, class B>
+using Tuple = std::tuple<A, B>;
 #define NO_CHANGE std::nullopt
 
 // === Deprecated === //

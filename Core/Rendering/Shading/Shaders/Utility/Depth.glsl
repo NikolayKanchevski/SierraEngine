@@ -12,10 +12,10 @@ vec3 GetWorldPositionFromDepth(vec2 UV, float depth, mat4x4 inverseProjectionMat
     return worldSpacePosition.xyz;
 }
 
-vec3 GetViewPositionFromDepth(vec2 UV, float depth, mat4x4 invProjectionMatrix)
+vec3 GetViewPositionFromDepth(vec2 UV, float depth, mat4x4 inverseProjectionMatrix)
 {
     vec4 clipSpacePosition = vec4(UV * 2.0 - 1.0, depth, 1.0);
-    vec4 viewSpacePosition = invProjectionMatrix * clipSpacePosition;
+    vec4 viewSpacePosition = inverseProjectionMatrix * clipSpacePosition;
 
     viewSpacePosition /= viewSpacePosition.w;
 

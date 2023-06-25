@@ -36,8 +36,8 @@ namespace Sierra::Core::Rendering::UI
     {
     public:
         /* --- CONSTRUCTORS --- */
-        ImGuiInstance(const ImGuiInstanceCreateInfo &createInfo);
-        static UniquePtr<ImGuiInstance> Create(ImGuiInstanceCreateInfo createInfo);
+        explicit ImGuiInstance(const ImGuiInstanceCreateInfo &createInfo);
+        static UniquePtr<ImGuiInstance> Create(const ImGuiInstanceCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] ImGuiContext* GetImGuiContext() const { return imGuiContext; };

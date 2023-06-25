@@ -43,6 +43,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         void Begin(const UniquePtr<CommandBuffer> &commandBuffer);
         void End(const UniquePtr<CommandBuffer> &commandBuffer);
 
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] inline uint GetColorAttachmentCount() const { return renderingInfo.colorAttachmentCount; }
+        [[nodiscard]] inline bool HasDepthAttachment() const { return depthStencilAttachment != nullptr; }
+
+        [[nodiscard]] VkFormat* GetColorAttachmentFormats() const { return colorAttachmentFormats; }
+        [[nodiscard]] VkFormat GetDepthStencilAttachmentFormat() { return depthStencilAttachmentFormat; }
+
         /* --- SETTER METHODS --- */
         void OverloadColorAttachment(uint index, UniquePtr<Image> &image);
         void OverloadDepthAttachment(UniquePtr<Image> &image);
@@ -56,10 +63,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         UniquePtr<Image>** colorAttachmentImages = nullptr;
         VkRenderingAttachmentInfoKHR* colorAttachments = nullptr;
+        VkFormat* colorAttachmentFormats = nullptr;
 
         UniquePtr<Image>* depthStencilAttachmentImage = nullptr;
         VkRenderingAttachmentInfoKHR* depthStencilAttachment = nullptr;
-
+        VkFormat depthStencilAttachmentFormat = VK_FORMAT_UNDEFINED;
     };
 
 }

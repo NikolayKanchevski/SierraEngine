@@ -130,6 +130,7 @@
 
     bool GUI::RoundedButton(const char *label, const ImVec2 &givenSize, const ImDrawFlags roundingType, const float rounding, ImGuiButtonFlags flags)
     {
+        // Modified version of built-in ImGui button code:
         ImGuiWindow* window = GetCurrentWindow();
         if (window->SkipItems)
             return false;
@@ -137,7 +138,7 @@
         ImGuiContext& g = *GImGui;
         const ImGuiStyle& style = g.Style;
         const ImGuiID id = window->GetID(label);
-        const ImVec2 label_size = CalcTextSize(label, NULL, true);
+        const ImVec2 label_size = CalcTextSize(label, nullptr, true);
 
         ImVec2 pos = window->DC.CursorPos;
         if ((flags & ImGuiButtonFlags_AlignTextBaseLine) && style.FramePadding.y < window->DC.CurrLineTextBaseOffset) // Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky, since it shouldn't be a flag)
@@ -155,7 +156,6 @@
         bool hovered, held;
         bool pressed = ButtonBehavior(bb, id, &hovered, &held, flags);
 
-        // Render
         const ImU32 col = GetColorU32((held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
         RenderNavHighlight(bb, id);
         ImGui::GetWindowDrawList()->AddRectFilled(bb.Min, bb.Max, col, rounding, roundingType);
@@ -163,7 +163,7 @@
         if (g.LogEnabled)
             LogSetNextTextDecoration("[", "]");
 
-        RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, label, NULL, &label_size, style.ButtonTextAlign, &bb);
+        RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, label, nullptr, &label_size, style.ButtonTextAlign, &bb);
 
         return pressed;
     }
@@ -178,7 +178,7 @@
         }
 
         GenerateID();
-        ImGui::Unindent(GImGui->Style.IndentSpacing * 0.5);
+        ImGui::Unindent(GImGui->Style.IndentSpacing * 0.5f);
         ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { GImGui->Style.CellPadding.x, GImGui->Style.CellPadding.y / 2.0f });
         ImGui::BeginTable(IDBuffer, 2, tableFlags | ImGuiTableFlags_SizingFixedFit);
         ImGui::TableSetupColumn("PropertyName");
@@ -242,7 +242,7 @@
 
         ImGui::Unindent(GImGui->Style.IndentSpacing * 0.5f);
         bool opened = ImGui::TreeNodeEx(label);
-        ImGui::Indent(GImGui->Style.IndentSpacing * 0.5);
+        ImGui::Indent(GImGui->Style.IndentSpacing * 0.5f);
 
         GenerateID();
         BeginProperties();
@@ -304,6 +304,7 @@
     template<typename T, ENABLE_IF(std::is_arithmetic_v<T>)>
     static inline bool NumericInput(const char* labelID, T &valueReference, bool canDrag, bool centerAlign, ImDrawFlags roundingType = ImDrawFlags_RoundCornersAll, float rounding = GImGui->Style.FrameRounding, ImGuiInputTextFlags flags = ImGuiInputTextFlags_None)
     {
+        // Modified combination of built-in ImGui sliders and input code
         ImGuiDataType dataType = GetNumericImGuiDataType<T>();
         auto value = &valueReference;
 
@@ -386,7 +387,7 @@
             const ImGuiID id = window->GetID(labelID);
             const float w = CalcItemWidth();
 
-            const ImVec2 label_size = CalcTextSize(labelID, NULL, true);
+            const ImVec2 label_size = CalcTextSize(labelID, nullptr, true);
             const ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + ImVec2(w, label_size.y + style.FramePadding.y * 2.0f));
             const ImRect total_bb(frame_bb.Min, frame_bb.Max + ImVec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
 
@@ -430,7 +431,7 @@
             {
                 // Only clamp CTRL+Click input when ImGuiSliderFlags_AlwaysClamp is set
                 const bool is_clamp_input = (flags & ImGuiSliderFlags_AlwaysClamp) != 0 && DataTypeCompare(dataType, &dataLimitMin, &dataLimitMax) < 0;
-                return TempInputScalar(frame_bb, id, labelID, dataType, value, localFormat, is_clamp_input ? &dataLimitMin : NULL, is_clamp_input ? &dataLimitMax : NULL);
+                return TempInputScalar(frame_bb, id, labelID, dataType, value, localFormat, is_clamp_input ? &dataLimitMin : nullptr, is_clamp_input ? &dataLimitMax : nullptr);
             }
 
             // Draw frame
@@ -451,7 +452,7 @@
 
             float xAlign = centerAlign ? 0.5f : g.Style.ItemInnerSpacing.x / ImGui::GetItemRectSize().x;
             float yAlign = centerAlign ? 0.5f : 0.0f;
-            RenderTextClipped(frame_bb.Min, frame_bb.Max, value_buf, value_buf_end, NULL, ImVec2(xAlign, yAlign));
+            RenderTextClipped(frame_bb.Min, frame_bb.Max, value_buf, value_buf_end, nullptr, ImVec2(xAlign, yAlign));
 
             if (label_size.x > 0.0f)
                 RenderText(ImVec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y), labelID);
@@ -827,4 +828,3 @@
 
         return changed;
     }
-

@@ -45,23 +45,26 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     public:
         /* --- CONSTRUCTORS --- */
-        RenderPass(const RenderPassCreateInfo &createInfo);
-        static UniquePtr<RenderPass> Create(RenderPassCreateInfo createInfo);
+        explicit RenderPass(const RenderPassCreateInfo &createInfo);
+        static UniquePtr<RenderPass> Create(const RenderPassCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void NextSubpass(const UniquePtr<CommandBuffer> &commandBuffer);
+        static void NextSubpass(const UniquePtr<CommandBuffer> &commandBuffer);
         void Begin(const UniquePtr<Framebuffer> &framebuffer, const UniquePtr<CommandBuffer> &commandBuffer);
         void End(const UniquePtr<CommandBuffer> &commandBuffer);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] inline uint GetColorAttachmentCount() const { return colorAttachmentCount; }
+        [[nodiscard]] inline bool HasDepthAttachment() const { return hasDepthAttachment; }
         [[nodiscard]] inline VkRenderPass GetVulkanRenderPass() const { return renderPass; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();
         DELETE_COPY(RenderPass);
+//        friend class GraphicsPipeline;
 
     private:
-        VkRenderPass renderPass;
+        VkRenderPass renderPass = VK_NULL_HANDLE;
         std::vector<VkClearValue> clearValues;
 
         struct SubpassDescription
@@ -73,6 +76,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             VkSubpassDescription data{};
         };
 
+        uint colorAttachmentCount = 0;
+        bool hasDepthAttachment = false;
     };
 
 }

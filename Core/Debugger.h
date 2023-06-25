@@ -35,7 +35,7 @@ namespace Sierra::Core
 
         static VKAPI_ATTR VkBool32 VKAPI_CALL ValidationCallback(
             VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-            VkDebugUtilsMessageTypeFlagsEXT messageType,
+            [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT messageType,
             const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
             void* pUserData
         );
@@ -72,7 +72,7 @@ namespace Sierra::Core
         class FunctionProfiler
         {
         public:
-            FunctionProfiler(const char* name);
+            explicit FunctionProfiler(const char* name);
 
             void Stop();
             ~FunctionProfiler();
@@ -109,7 +109,6 @@ namespace Sierra::Core
     #define VK_VALIDATE(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_WARNING_FORMATTED("Vulkan Error: {0}() failed: {1}! Error code: {2}", std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")), MESSAGE, VK_TO_STRING(result, Result))
 
     #define NULL_ASSERT(VALUE) if (VALUE == nullptr) { ASSERT_ERROR(FORMAT_STRING("Value \"{0}\" is null", #VALUE)); }
-
     #define STATIC_ASSERT_IF(CONDITION, MESSAGE) static_assert(!CONDITION, MESSAGE)
 #else
     #define ASSERT_ERROR(MESSAGE)

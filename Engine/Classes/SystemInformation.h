@@ -20,7 +20,7 @@ namespace Sierra::Engine::Classes
                 uint physicalCoreCount;
                 uint logicalCoreCount;
                 uint threadsPerCore;
-                double frequency;
+                uint64 frequency;
             };
 
             enum EndiannessType
@@ -73,7 +73,7 @@ namespace Sierra::Engine::Classes
             struct PhysicalInformation
             {
                 uint64 totalMemory;
-                double maxFrequency;
+                uint64 maxFrequency;
             };
 
             struct Vendor
@@ -89,7 +89,7 @@ namespace Sierra::Engine::Classes
             Vendor vendor;
             PhysicalInformation physicalInformation;
 
-            uint64 GetUsedVideoMemory() const;
+            [[nodiscard]] uint64 GetUsedVideoMemory() const;
         };
 
         struct Memory
@@ -97,8 +97,8 @@ namespace Sierra::Engine::Classes
             uint64 totalPhysicalMemory;
             uint64 totalVirtualMemory;
 
-            inline uint64 GetAvailablePhysicalMemory() const { return iware::system::memory().physical_available; }
-            inline uint64 GetAvailableVirtualMemory() const { return iware::system::memory().virtual_available; }
+            [[nodiscard]] inline uint64 GetAvailablePhysicalMemory() const { return iware::system::memory().physical_available; }
+            [[nodiscard]] inline uint64 GetAvailableVirtualMemory() const { return iware::system::memory().virtual_available; }
         };
 
         struct Kernel
@@ -161,7 +161,7 @@ namespace Sierra::Engine::Classes
             Vector2 resolution;
             uint DPI;
             uint bitsPerPixel;
-            float refreshRate;
+            double refreshRate;
         };
 
         struct ExternalDevicesInformation

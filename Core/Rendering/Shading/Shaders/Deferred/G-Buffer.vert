@@ -1,15 +1,16 @@
 #version 450
 
-#include "../Types/MeshPushConstant.glsl"
+/* !COMPILE_TO_BINARY */
 #include "../Types/GlobalUniformBuffer.glsl"
 #include "../Types/GlobalStorageBuffer.glsl"
+#include "../Types/MeshPushConstant.glsl"
 #include "../Utility/ShaderDefinitions.glsl"
 
 layout(location = 0) in vec3 fromCode_Position;
 layout(location = 1) in vec3 fromCode_Normal;
 layout(location = 2) in vec2 fromCode_UV;
 
-layout(set = 1, binding = HEIGHT_MAP_TEXTURE_BINDING) uniform sampler2D heightMapSampler;
+layout(binding = HEIGHT_TEXTURE_BINDING) uniform sampler2D heightMapSampler;
 
 layout(location = 0) out vec3 toFrag_Position;
 layout(location = 1) out vec3 toFrag_Normal;

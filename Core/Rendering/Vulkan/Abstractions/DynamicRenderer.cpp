@@ -4,8 +4,6 @@
 
 #include "DynamicRenderer.h"
 
-#include "../VK.h"
-
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
     /* --- CONSTRUCTORS --- */
@@ -25,17 +23,22 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Store biggest attachment dimensions to use as viewport size and create color attachments array
-        uint biggestWidth = 0, biggestHeight = 0;
-        colorAttachments = new VkRenderingAttachmentInfoKHR[createInfo.attachments.size() - (uint)(hasDepthAttachment)];
-        colorAttachmentImages = new UniquePtr<Image>*[createInfo.attachments.size() - (uint)(hasDepthAttachment)];
+        uint biggestWidth = 0, biggestHeight = 0, colorAttachmentCount = createInfo.attachments.size() - (uint)(hasDepthAttachment);
+
+        // Allocate memory for attachment data
+        colorAttachments = new VkRenderingAttachmentInfoKHR[colorAttachmentCount];
+        colorAttachmentImages = new UniquePtr<Image>*[colorAttachmentCount];
+        colorAttachmentFormats = new VkFormat[colorAttachmentCount];
 
         // Populate color and depth attachments
         uint i = 0;
-        for (const auto attachmentInfo : createInfo.attachments)
+        for (const auto &attachmentInfo : createInfo.attachments)
         {
             if (attachmentInfo.IsDepth())
             {
                 depthStencilAttachmentImage = &attachmentInfo.image;
+                depthStencilAttachmentFormat = static_cast<VkFormat>(depthStencilAttachmentImage->get()->GetFormat());
+
                 depthStencilAttachment->sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
                 depthStencilAttachment->imageView = attachmentInfo.image->GetVulkanImageView();
                 depthStencilAttachment->imageLayout = attachmentInfo.image->GetLayout() != ImageLayout::UNDEFINED ? (VkImageLayout) attachmentInfo.image->GetLayout() : (VkImageLayout) ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -51,6 +54,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             else
             {
                 colorAttachmentImages[i] = &attachmentInfo.image;
+                colorAttachmentFormats[i] = static_cast<VkFormat>(attachmentInfo.image.get()->GetFormat());
+
                 VkRenderingAttachmentInfoKHR &attachment = colorAttachments[i];
                 attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
                 attachment.imageView = attachmentInfo.image->GetVulkanImageView();
@@ -100,6 +105,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             commandBuffer->TransitionImageLayout(*depthStencilAttachmentImage, ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL);
         }
 
+
         vkCmdBeginRenderingKHR(commandBuffer->GetVulkanCommandBuffer(), &renderingInfo);
         commandBuffer->SetViewportAndScissor(renderingInfo.renderArea.extent.width, renderingInfo.renderArea.extent.height);
     }
@@ -127,12 +133,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void DynamicRenderer::Destroy()
     {
-        delete[] colorAttachments;
-        delete[] colorAttachmentImages;
-
-        if (depthStencilAttachment != nullptr)
-        {
-            delete depthStencilAttachment;
-        }
+        delete[](colorAttachments);
+        delete[](colorAttachmentImages);
+        delete[](colorAttachmentFormats);
+        delete(depthStencilAttachment);
     }
 }

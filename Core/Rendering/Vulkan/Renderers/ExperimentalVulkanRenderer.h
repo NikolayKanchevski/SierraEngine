@@ -6,17 +6,18 @@
 
 #include "VulkanRenderer.h"
 
-#define USE_PIPELINE_RENDER_PASS_IMPLEMENTATION
-#include "../Abstractions/Pipelines.h"
+#include "../Abstractions/GraphicsPipeline.h"
+
 
 namespace Sierra::Core::Rendering::Vulkan::Renderers
 {
+    using namespace Vulkan::Abstractions;
 
     class ExperimentalVulkanRenderer : public VulkanRenderer
     {
     public:
         /* --- CONSTRUCTORS --- */
-        ExperimentalVulkanRenderer(const VulkanRendererCreateInfo &createInfo);
+        explicit ExperimentalVulkanRenderer(const VulkanRendererCreateInfo &createInfo);
         static UniquePtr<ExperimentalVulkanRenderer> Create(VulkanRendererCreateInfo createInfo);
 
         /* --- POLLING METHODS --- */
@@ -25,7 +26,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         /* --- DESTRUCTOR --- */
         void Destroy() override;
     private:
-        UniquePtr<GraphicsPipeline<>> graphicsPipeline;
+        UniquePtr<GraphicsPipeline> graphicsPipeline;
 
     };
 

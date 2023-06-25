@@ -69,10 +69,10 @@ namespace Sierra::Engine::Components
         float nearClip = 0.01f;
         float farClip = 200.0f;
 
-        Matrix4x4 viewMatrix;
-        Matrix4x4 projectionMatrix;
-        Matrix4x4 inverseViewMatrix;
-        Matrix4x4 inverseProjectionMatrix;
+        Matrix4x4 viewMatrix = Matrix4x4(1.0f);
+        Matrix4x4 projectionMatrix = Matrix4x4(1.0f);
+        Matrix4x4 inverseViewMatrix = Matrix4x4(1.0f);
+        Matrix4x4 inverseProjectionMatrix = Matrix4x4(1.0f);
 
         bool isProjectionDirty = false;
 

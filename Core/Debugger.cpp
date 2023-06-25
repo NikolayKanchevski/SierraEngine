@@ -59,7 +59,7 @@ namespace Sierra::Core
         DEFAULT();
     }
 
-    VkBool32 Debugger::ValidationCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
+    VkBool32 Debugger::ValidationCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, [[maybe_unused]] void *pUserData)
     {
         switch (messageSeverity)
         {
@@ -84,7 +84,7 @@ namespace Sierra::Core
 
         std::unique_ptr<char, void (*)(void *)> res
         {
-            abi::__cxa_demangle(name, NULL, NULL, &status),
+            abi::__cxa_demangle(name, nullptr, nullptr, &status),
             std::free
         };
 
@@ -114,7 +114,7 @@ namespace Sierra::Core
     {
         std::string nameString = std::string(name);
 
-        String templateData = "";
+        String templateData;
         uint templateIndex = nameString.substr(0, nameString.find_first_of('(')).find_first_of('<');
         if (templateIndex < nameString.size())
         {
@@ -129,7 +129,7 @@ namespace Sierra::Core
             uint leftIndex;
             uint rightIndex = 0;
 
-            String formattedTemplateData = "";
+            String formattedTemplateData;
             while (rightIndex < templateData.size())
             {
                 if (templateData.find(':') >= templateData.size()) break;

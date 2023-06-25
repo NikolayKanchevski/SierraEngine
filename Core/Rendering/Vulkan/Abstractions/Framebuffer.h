@@ -8,37 +8,34 @@
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
-    struct FramebufferAttachment
-    {
-        UniquePtr<Image>& image;
-    };
+    class RenderPass;
 
     struct FramebufferCreateInfo
     {
         uint width = 0;
         uint height = 0;
-        const std::vector<FramebufferAttachment> &attachments;
-        VkRenderPass renderPass = VK_NULL_HANDLE;
+        const UniquePtr<RenderPass> &renderPass;
+        const std::vector<ReferenceWrapper<UniquePtr<Image>>> &attachments;
     };
 
     class Framebuffer
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Framebuffer(const FramebufferCreateInfo &createInfo);
-        static UniquePtr<Framebuffer> Create(FramebufferCreateInfo createInfo);
+        explicit Framebuffer(const FramebufferCreateInfo &createInfo);
+        static UniquePtr<Framebuffer> Create(const FramebufferCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint GetWidth() const { return width; }
         [[nodiscard]] inline uint GetHeight() const { return height; }
-        [[nodiscard]] inline VkFramebuffer GetVulkanFramebuffer() const { return this->vkFramebuffer; }
+        [[nodiscard]] inline VkFramebuffer GetVulkanFramebuffer() const { return vkFramebuffer; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();
         DELETE_COPY(Framebuffer);
 
     private:
-        VkFramebuffer vkFramebuffer;
+        VkFramebuffer vkFramebuffer = VK_NULL_HANDLE;
         uint width, height;
 
     };

@@ -39,7 +39,7 @@ namespace Sierra::Engine::Classes
 
     Binary &Binary::operator=(uint givenValue)
     {
-        this->value = givenValue;
+        value = givenValue;
         return *this;
     }
 }

@@ -29,8 +29,8 @@ namespace Sierra::Core::Rendering
 
         /* --- CONSTRUCTORS --- */
 
-        static UniquePtr<Window> Create(WindowCreateInfo createInfo);
-        Window(const WindowCreateInfo &createInfo);
+        static UniquePtr<Window> Create(const WindowCreateInfo &createInfo);
+        explicit Window(const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
 
@@ -55,23 +55,23 @@ namespace Sierra::Core::Rendering
 
         /// @brief A pointer to the core GLFW window.
         [[nodiscard]] inline GLFWwindow* GetCoreWindow()
-        { return this->glfwWindow; };
+        { return glfwWindow; };
 
         /// @brief Gets the width of the window.
         [[nodiscard]] inline int GetWidth() const
-        { return this->width; };
+        { return width; };
 
         /// @brief Gets the height of the window.
         [[nodiscard]] inline int GetHeight() const
-        { return this->height; };
+        { return height; };
 
         /// @brief Returns the title displayed at the top of the window.
         [[nodiscard]] inline String GetTitle() const
-        { return this->title; };
+        { return title; };
 
         /// @brief Returns the corresponding window surface. Should only be used for inside the core functionalities.
         [[nodiscard]] inline VkSurfaceKHR GetSurface() const
-        { return this->surface; }
+        { return surface; }
 
         /// @brief Checks whether the window is closed.
         [[nodiscard]] inline bool IsClosed() const
@@ -79,32 +79,32 @@ namespace Sierra::Core::Rendering
 
         /// @brief Checks whether the window is minimized and is not shown.
         [[nodiscard]] inline bool IsMinimized() const
-        { return this->minimized; };
+        { return minimized; };
 
         /// @brief Checks whether the window is maximised (uses the whole screen).
         [[nodiscard]] inline bool IsMaximized() const
-        { return this->maximized; };
+        { return maximized; };
 
         /// @brief Checks whether the window is focused (is the one handling input currently).
         [[nodiscard]] inline bool IsFocused() const
-        { return this->focused; };
+        { return focused; };
 
         /// @brief Checks whether the window is hidden from the user.
         [[nodiscard]] inline bool IsHidden() const
-        { return this->hidden; };
+        { return hidden; };
 
         /// @brief Checks if the window requires focus for it to be updated.
         [[nodiscard]] inline bool IsFocusRequired() const
-        { return this->requireFocus; }
+        { return requireFocus; }
 
         /// @brief Checks if the window has been resized. Only true for one frame after every resize.
         [[nodiscard]] inline bool IsResized()
         {
             bool result = false;
-            if (this->resized)
+            if (resized)
             {
                 result = true;
-                this->resized = false;
+                resized = false;
             }
 
             return result;
@@ -112,13 +112,13 @@ namespace Sierra::Core::Rendering
 
         /// @brief Returns the current opacity of the window.
         [[nodiscard]] inline float GetOpacity() const
-        { return this->opacity; };
+        { return opacity; };
 
         /// @brief Returns a bool indicating whether there currently is a focused window.
         [[nodiscard]] static inline bool IsFocusedWindowPresent() { return currentlyFocusedWindow != nullptr; }
 
         /// @brief Returns the currently focused window. Make sure to always check if there is one by calling IsFocusedWindowPresent() before calling this method!
-        [[nodiscard]] static inline Window* GetCurrentlyFocusedWindow() { ASSERT_ERROR_IF(currentlyFocusedWindow == nullptr, "No windows are currently focused. Make sure to first check if return value is not null"); return currentlyFocusedWindow; }
+        [[nodiscard]] static inline Window* GetCurrentlyFocusedWindow() { ASSERT_WARNING_IF(currentlyFocusedWindow == nullptr, "No windows are currently focused. Make sure to first check if return value is not null"); return currentlyFocusedWindow; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();

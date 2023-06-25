@@ -12,7 +12,11 @@ namespace Sierra::Engine::Classes
     public:
         /* --- CONSTRUCTORS --- */
         Binary() = default;
+
+        #pragma clang diagnostic push
+        #pragma ide diagnostic ignored "google-explicit-constructor"
         Binary(uint givenValue);
+        #pragma clang diagnostic pop
 
         /* --- SETTER METHODS --- */
         void SetBit(uint bitIndex, uint newValue);

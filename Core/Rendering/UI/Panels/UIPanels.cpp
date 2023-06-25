@@ -5,17 +5,14 @@
 #include "UIPanels.h"
 
 #include "../ImGuiCore.h"
+#include "../ImGuiUtilities.h"
 #include "../../../EngineCore.h"
 #include "../../Math/MatrixUtilities.h"
-#include "../../../../Engine/Classes/Input.h"
-#include "../../../../Engine/Classes/Math.h"
 #include "../../../../Engine/Classes/Time.h"
-#include "../../../../Engine/Classes/Mesh.h"
-#include "../../../../Engine/Components/Camera.h"
+#include "../../../../Engine/Classes/Math.h"
+#include "../../../../Engine/Classes/Input.h"
 #include "../../Vulkan/Renderers/VulkanRenderer.h"
-#include "../../../../Engine/Components/Relationship.h"
-#include "../../../../Engine/Components/MeshRenderer.h"
-#include "../../../../Engine/Classes/SystemInformation.h"
+#include "../../../../Engine/Components/Components.h"
 
 using namespace Sierra::Engine::Classes;
 using namespace Sierra::Engine::Components;

@@ -64,12 +64,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
             for (uint j = 0; j < subpassInfos[i].renderTargets.size(); j++)
             {
-                uint32_t renderTarget = subpassInfos[i].renderTargets[j];
+                uint renderTarget = subpassInfos[i].renderTargets[j];
                 if (attachments[renderTarget].IsDepth())
                 {
                     subpassDescription.depthReference.attachment = renderTarget;
                     subpassDescription.depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
                     hasDepth = true;
+
+                    hasDepthAttachment = true;
                 }
                 else if (attachments[renderTarget].isResolve)
                 {
@@ -91,12 +93,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                     colorReference.layout = attachmentIsAlsoInput ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                     subpassDescription.colorReferences.push_back(colorReference);
                     hasColor = true;
+
+                    colorAttachmentCount++;
                 }
             }
 
-            for (uint j = 0; j < subpassInfos[i].subpassInputs.size(); j++)
+            for (const auto &renderTarget : subpassInfos[i].subpassInputs)
             {
-                uint renderTarget = subpassInfos[i].subpassInputs[j];
                 VkAttachmentReference inputReference{};
                 inputReference.attachment = renderTarget;
                 inputReference.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -192,11 +195,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         VkRenderPassCreateInfo renderPassInfo = {};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = static_cast<uint32_t>(attachmentDescriptions.size());
+        renderPassInfo.attachmentCount = static_cast<uint>(attachmentDescriptions.size());
         renderPassInfo.pAttachments = attachmentDescriptions.data();
-        renderPassInfo.subpassCount = static_cast<uint32_t>(vkSubpassDescriptions.size());
+        renderPassInfo.subpassCount = static_cast<uint>(vkSubpassDescriptions.size());
         renderPassInfo.pSubpasses = vkSubpassDescriptions.data();
-        renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+        renderPassInfo.dependencyCount = static_cast<uint>(dependencies.size());
         renderPassInfo.pDependencies = dependencies.data();
 
         VK_ASSERT(vkCreateRenderPass(VK::GetLogicalDevice(), &renderPassInfo, nullptr, &renderPass), "Could not create render pass");
@@ -215,7 +218,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
     }
 
-    UniquePtr<RenderPass> RenderPass::Create(const RenderPassCreateInfo renderPassCreateInfo)
+    UniquePtr<RenderPass> RenderPass::Create(const RenderPassCreateInfo &renderPassCreateInfo)
     {
         return std::make_unique<RenderPass>(renderPassCreateInfo);
     }

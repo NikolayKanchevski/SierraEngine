@@ -14,13 +14,13 @@ using Sierra::Core::Rendering::Vulkan::VK;
 namespace Sierra::Core::Rendering
 {
 
-    UniquePtr<Window> Window::Create(WindowCreateInfo createInfo)
+    UniquePtr<Window> Window::Create(const WindowCreateInfo &createInfo)
     {
         return std::make_unique<Window>(createInfo);
     }
 
     Window::Window(const WindowCreateInfo &createInfo)
-        : title(std::move(createInfo.givenTitle)), maximized(createInfo.startMaximized), requireFocus(createInfo.isFocusRequired), resizable(createInfo.isResizable)
+        : title(createInfo.givenTitle), maximized(createInfo.startMaximized), requireFocus(createInfo.isFocusRequired), resizable(createInfo.isResizable)
     {
         PROFILE_FUNCTION();
 
@@ -59,25 +59,25 @@ namespace Sierra::Core::Rendering
 
     void Window::SetTitle(const String& givenTitle)
     {
-        this->title = givenTitle;
+        title = givenTitle;
         glfwSetWindowTitle(glfwWindow, givenTitle.c_str());
     }
 
     void Window::Show()
     {
-        this->hidden = false;
+        hidden = false;
         glfwShowWindow(glfwWindow);
     }
 
     void Window::Hide()
     {
-       this->hidden = true;
+       hidden = true;
         glfwHideWindow(glfwWindow);
     }
 
     void Window::SetOpacity(const float givenOpacity)
     {
-        this->opacity = givenOpacity;
+        opacity = givenOpacity;
         glfwSetWindowOpacity(glfwWindow, givenOpacity);
     }
 
@@ -171,7 +171,7 @@ namespace Sierra::Core::Rendering
         Cursor::ResetCursorOffset();
     }
 
-    void Window::WindowMinimizeCallback(GLFWwindow *windowPtr, int minimized)
+    void Window::WindowMinimizeCallback([[maybe_unused]] GLFWwindow *windowPtr, int minimized)
     {
         auto windowObject = GetGlfwWindowParentClass(windowPtr);
 
@@ -180,7 +180,7 @@ namespace Sierra::Core::Rendering
         Cursor::ResetCursorOffset();
     }
 
-    void Window::WindowMaximizeCallback(GLFWwindow *windowPtr, int maximized)
+    void Window::WindowMaximizeCallback([[maybe_unused]] GLFWwindow *windowPtr, int maximized)
     {
         auto windowObject = GetGlfwWindowParentClass(windowPtr);
 

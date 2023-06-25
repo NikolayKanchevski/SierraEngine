@@ -88,10 +88,10 @@ Wondering how to use the engine? You can check out the online documentation [her
 * [ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo/) - For gizmos in the scene view.
 * [EnTT](https://github.com/skypjack/entt/) - For the easy-to-use and incredibly perfomant [entity component system](https://en.wikipedia.org/wiki/Entity_component_system).
 * [Assimp](https://github.com/assimp/assimp/) - For the loading of all kinds of 3D model formats (.obj, .fbx, .dae, etc.).
-* [Stb](https://github.com/nothings/stb) - For loading image data from all kinds of image formats (.jpg, .png, etc.).
+* [Stb](https://github.com/nothings/stb) - For loading image buffer from all kinds of image formats (.jpg, .png, etc.).
 * [FMT](https://fmt.dev/latest/index.html) - For fast and easy string formatting.
 * [RareCpp](https://github.com/TheNitesWhoSay/RareCpp/) - For reflections and serialization.
-* [Infoware](https://github.com/ThePhD/infoware/) - For the extraction of various system-and-hardware-specific data.
+* [Infoware](https://github.com/ThePhD/infoware/) - For the extraction of various system-and-hardware-specific buffer.
 * [Whereami](https://github.com/gpakosz/whereami/) - For the retrieval of the compiled executable's location within the file system.
 * [TBB](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onetbb.html#gs.m2vcgt/) - For easier and guaranteed-to-be-supported threading.
 * [My Brain](https://ih1.redbubble.net/image.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
@@ -109,7 +109,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 18,033</p>
-<p align="center" id="LastUpdated">Last updated: 15/05/2023</p>
+<p align="center" id="LinesCounter">Total lines of code: 18,119</p>
+<p align="center" id="LastUpdated">Last updated: 25/06/2023 </p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

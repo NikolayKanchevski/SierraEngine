@@ -13,7 +13,7 @@ namespace Sierra::Engine::Classes
 
     /* --- CONSTRUCTORS --- */
 
-    UniquePtr<Model> Model::Load(const String filePath)
+    UniquePtr<Model> Model::Load(const String &filePath)
     {
 //        // NOTE: Logic is working but will wait until thread pool has been implemented
 //        static std::vector<std::future<void>> asyncFutures;
@@ -27,7 +27,7 @@ namespace Sierra::Engine::Classes
         return model;
     }
 
-    void Model::LoadInternal(Model *model, const String filePath)
+    void Model::LoadInternal(Model *model, const String &filePath)
     {
         model->modelName = File::GetFileNameFromPath(filePath);
         model->modelLocation = File::RemoveFileNameFromPath(filePath);
@@ -63,7 +63,7 @@ namespace Sierra::Engine::Classes
                     mesh.material = meshData.material;
 
                     // Apply textures
-                    for (uint i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
+                    for (uint i = static_cast<uint>(TextureType::TOTAL_COUNT); i--;)
                     {
                         if (meshData.textures[i] == nullptr) continue;
                         mesh.SetTexture(meshData.textures[i]);
@@ -119,7 +119,7 @@ namespace Sierra::Engine::Classes
             model->loaded = true;
 
             modelPool[filePath] = *model->modelData;
-            delete model->modelData;
+            delete(model->modelData);
 
             #if DEBUG
                 ASSERT_INFO_FORMATTED("Total vertices count for the model [{0}] containing [{1}] mesh(es): {2}", model->modelName, scene->mNumMeshes, model->vertexCount);
@@ -137,12 +137,12 @@ namespace Sierra::Engine::Classes
         // Remove model from pool
         modelPool.erase(modelLocation + modelName);
 
-        // For each mesh delete their textures
+        // For each mesh delete(their textures
         for (const auto &meshEntity : meshEntities)
         {
             const MeshRenderer &meshRenderer = World::GetComponent<MeshRenderer>(meshEntity);
 
-            for (uint i = TOTAL_TEXTURE_TYPES_COUNT; i--;)
+            for (uint i = static_cast<uint>(TextureType::TOTAL_COUNT); i--;)
             {
                 auto texture = meshRenderer.GetTexture((TextureType) i);
                 if (texture != nullptr) texture->Dispose();
@@ -166,7 +166,7 @@ namespace Sierra::Engine::Classes
     void Model::ListDeeperNode(aiNode *node, const aiScene *assimpScene, Entity* parentEntity)
     {
         Entity nodeEntity = Entity(parentEntity == nullptr ? modelName : node->mName.C_Str());
-        if (!parentEntity) this->originEntity = nodeEntity.GetEnttEntity();
+        if (!parentEntity) originEntity = nodeEntity.GetEnttEntity();
 
         // Find index of parent using a reversed for loop
         int parentID = -1;
@@ -174,7 +174,7 @@ namespace Sierra::Engine::Classes
         {
             nodeEntity.SetParent(*parentEntity);
 
-            for (uint i = modelData->entities.size(); i--;)
+            for (int i = modelData->entities.size(); i--;)
             {
                 if (modelData->entities[i].selfID == static_cast<int>(parentEntity->GetEnttEntity()))
                 {
@@ -280,8 +280,8 @@ namespace Sierra::Engine::Classes
         }
 
         // Increase vertex count
-        this->vertexCount += mesh->mNumVertices;
-        this->meshCount++;
+        vertexCount += mesh->mNumVertices;
+        meshCount++;
 
         // Create and return the mesh
         return Mesh::Create({ .vertices = vertices, .indices = indices });
@@ -303,7 +303,7 @@ namespace Sierra::Engine::Classes
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
                 .textureType = TextureType::DIFFUSE,
                 .imageFormat = ImageFormat::R8G8B8A8_SRGB,
-                .mipMappingEnabled = true
+                .enableMipMapping = true
             });
 
             // Apply texture
@@ -322,7 +322,7 @@ namespace Sierra::Engine::Classes
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
                 .textureType = TextureType::SPECULAR,
                 .imageFormat = ImageFormat::R8_UNORM,
-                .mipMappingEnabled = true
+                .enableMipMapping = true
             });
 
             // Apply texture
@@ -341,7 +341,7 @@ namespace Sierra::Engine::Classes
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
                 .textureType = TextureType::NORMAL_MAP,
                 .imageFormat = ImageFormat::R8G8B8A8_UNORM,
-                .mipMappingEnabled = true
+                .enableMipMapping = true
             });
 
             // Apply texture

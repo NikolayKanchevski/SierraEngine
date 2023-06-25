@@ -8,35 +8,34 @@
 #include "Sampler.h"
 #include "../VulkanTypes.h"
 
-#define TOTAL_TEXTURE_TYPES_COUNT 4
-#define TEXTURE_TYPE_TO_BINDING(textureType)(textureType + 2)
-
 #define BINDLESS_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::DIFFUSE)
+
+#define TEXTURE_TYPE_TO_BINDING(textureType)(static_cast<uint>(textureType) + 2)
 #define DIFFUSE_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::DIFFUSE)
 #define SPECULAR_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::SPECULAR)
-#define NORMAL_MAP_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::NORMAL_MAP)
-#define HEIGHT_MAP_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::HEIGHT_MAP)
+#define NORMAL_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::NORMAL_MAP)
+#define HEIGHT_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::HEIGHT_MAP)
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
 
-    enum TextureType
+    enum class TextureType
     {
-        UNDEFINED_TEXTURE = -1,
+        UNDEFINED = -1,
         DIFFUSE = 0,
         SPECULAR = 1,
         NORMAL_MAP = 2,
-        HEIGHT_MAP = 3
+        HEIGHT_MAP = 3,
+        TOTAL_COUNT = 4
     };
 
     struct TextureCreateInfo
     {
         String filePath;
-        TextureType textureType = TextureType::UNDEFINED_TEXTURE;
+        TextureType textureType = TextureType::UNDEFINED;
+        ImageFormat imageFormat = ImageFormat::R8G8B8A8_UNORM;
 
-        ImageFormat imageFormat = ImageFormat::R8G8B8A8_SRGB;
-
-        bool mipMappingEnabled = false;
+        bool enableMipMapping = false;
         SamplerCreateInfo samplerCreateInfo{};
     };
 
@@ -54,53 +53,31 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         static void DestroyDefaultTextures();
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint GetWidth() const
-        { return this->image->GetWidth(); }
+        [[nodiscard]] inline uint GetWidth() const { return image->GetWidth(); }
+        [[nodiscard]] inline uint GetHeight() const { return image->GetHeight(); }
+        [[nodiscard]] inline uint GetDepth() const { return image->GetDepth(); }
 
-        [[nodiscard]] inline uint GetHeight() const
-        { return this->image->GetHeight(); }
+        [[nodiscard]] inline ImageFormat GetImageFormat() const { return image->GetFormat(); }
+        [[nodiscard]] inline TextureType GetTextureType() const { return textureType; }
 
-        [[nodiscard]] inline uint GetDepth() const
-        { return this->image->GetDepth(); }
+        [[nodiscard]] inline bool GetMipMappingEnabled() const { return mipMappingEnabled; }
+        [[nodiscard]] inline uint GetMipMapLevels() const { return image->GetMipMapLevels(); }
 
-        [[nodiscard]] inline ImageFormat GetImageFormat() const
-        { return this->image->GetFormat(); }
+        [[nodiscard]] inline uint64 GetMemorySize() const{ return memorySize; }
+        [[nodiscard]] inline UniquePtr<Sampler>& GetSampler() { return sampler; }
+        [[nodiscard]] inline UniquePtr<Image>& GetImage() { return image; }
 
-        [[nodiscard]] inline TextureType GetTextureType() const
-        { return this->textureType; }
-
-        [[nodiscard]] inline uint GetMipMapLevels() const
-        { return this->image->GetMipMapLevels(); }
-
-        [[nodiscard]] inline bool GetMipMappingEnabled() const
-        { return this->mipMappingEnabled; }
-
-        [[nodiscard]] inline uint64 GetMemorySize() const
-        { return this->memorySize; }
-
-        [[nodiscard]] inline VkSampler GetVulkanSampler() const
-        { return sampler->GetVulkanSampler(); }
-
-        [[nodiscard]] inline UniquePtr<Image>& GetImage()
-        { return this->image; }
-
-        [[nodiscard]] inline UniquePtr<Sampler>& GetSampler()
-        { return this->sampler; }
-
-        [[nodiscard]] inline String GetFilePath() const
-        { return filePath; }
-
+        [[nodiscard]] inline String GetFilePath() const { return filePath; }
         [[nodiscard]] ImTextureID GetImGuiTextureID();
 
-        [[nodiscard]] static inline SharedPtr<Texture>& GetDefaultTexture(TextureType textureType)
-        { return defaultTextures[textureType]; }
+        [[nodiscard]] static inline SharedPtr<Texture>& GetDefaultTexture(const TextureType textureType) { return defaultTextures[static_cast<uint>(textureType)]; }
 
         /* --- DESTRUCTOR --- */
         void Destroy();
         DELETE_COPY(Texture);
 
     private:
-        String filePath = "";
+        String filePath;
 
         TextureType textureType;
         uint colorChannelsCount;
@@ -116,7 +93,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         bool isDefault = false;
 
-        inline static SharedPtr<Texture> defaultTextures[TOTAL_TEXTURE_TYPES_COUNT];
+        inline static SharedPtr<Texture> defaultTextures[static_cast<uint>(TextureType::TOTAL_COUNT)];
         inline static std::unordered_map<Hash, SharedPtr<Texture>> texturePool;
     };
 

@@ -6,6 +6,10 @@
 
 struct NullType { };
 
+#ifdef BOOL_SIZE
+#undef BOOL_SIZE
+#endif
+
 #ifdef UINT8_MAX
 #undef UINT8_MAX
 #endif
@@ -101,6 +105,8 @@ struct NullType { };
 #ifdef DOUBLE_MIN
 #undef DOUBLE_MIN
 #endif
+
+#define BOOL_SIZE 1
 
 #define UINT8_MAX 255U
 #define UINT8_MIN 0U

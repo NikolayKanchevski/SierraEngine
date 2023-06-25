@@ -1,43 +1,41 @@
 #version 450
 
+/* !COMPILE_TO_BINARY */
+#define SETTINGS_SHADING_MODEL_BLINN_PHONG
+
+#include "../Utility/ShaderDefinitions.glsl"
 #include "../Utility/Depth.glsl"
 #include "../Utility/Shadows.glsl"
 #include "../Lighting/DefaultLighting.glsl"
 #include "../Types/GlobalUniformBuffer.glsl"
 #include "../Types/GlobalStorageBuffer.glsl"
 
+
 layout(location = 0) in flat uint fromVert_DrawingSkybox;
 layout(location = 1) in vec3 fromVert_UVW;
 
-layout(set = 0, binding = 2) uniform sampler2D fromCode_DiffuseBuffer;
-layout(set = 0, binding = 3) uniform sampler2D toFramebuffer_SpecularAndShinines;
-layout(set = 0, binding = 4) uniform sampler2D fromCode_NormalBuffer;
+layout(binding = DIFFUSE_TEXTURE_BINDING) uniform sampler2D fromCode_DiffuseBuffer;
+layout(binding = SPECULAR_TEXTURE_BINDING) uniform sampler2D toFramebuffer_SpecularAndShinines;
+layout(binding = NORMAL_TEXTURE_BINDING) uniform sampler2D fromCode_NormalBuffer;
 #if defined(SETTINGS_USE_POISSON_PCF_SHADOWS) || defined(SETTINGS_USE_PCF_SHADOWS)
-    layout(set = 0, binding = 5) uniform sampler2DShadow fromCode_ShadowMap;
+    layout(binding = 5) uniform sampler2DShadow fromCode_ShadowMap;
 #else
-    layout(set = 0, binding = 5) uniform sampler2D fromCode_ShadowMap;
+    layout(binding = 5) uniform sampler2D fromCode_ShadowMap;
 #endif
-layout(set = 0, binding = 6) uniform sampler2D fromCode_DepthBuffer;
-layout(set = 0, binding = 7) uniform samplerCube fromCode_Skybox;
+layout(binding = 6) uniform sampler2D fromCode_DepthBuffer;
+layout(binding = 7) uniform samplerCube fromCode_Skybox;
 
-const uint RenderedImageValue_RenderedImage = 0;
-const uint RenderedImageValue_PositionBuffer = 1;
-const uint RenderedImageValue_DiffuseBuffer = 2;
-const uint RenderedImageValue_SpecularBuffer = 3;
-const uint RenderedImageValue_ShininessBuffer = 4;
-const uint RenderedImageValue_NormalBuffer = 5;
-const uint RenderedImageValue_ShadowBuffer = 6;
-const uint RenderedImageValue_DepthBuffer = 7;
+const uint RendererOutputValue_RenderedImage = 0;
+const uint RendererOutputValue_PositionBuffer = 1;
+const uint RendererOutputValue_DiffuseBuffer = 2;
+const uint RendererOutputValue_SpecularBuffer = 3;
+const uint RendererOutputValue_ShininessBuffer = 4;
+const uint RendererOutputValue_NormalBuffer = 5;
+const uint RendererOutputValue_ShadowBuffer = 6;
+const uint RendererOutputValue_DepthBuffer = 7;
 
-struct PushConstant
-{
-    mat4x4 skyboxModel;
-
-    uint renderedImageValue;
-    uint enableShadows;
-};
-
-SET_PUSH_CONSTANT(PushConstant);
+layout(constant_id = 0) const uint RENDERER_OUTPUT = RendererOutputValue_RenderedImage;
+layout(constant_id = 1) const bool ENABLE_SHADOWS = true;
 
 layout (location = 0) out vec4 toFramebuffer_FinalizedColor;
 
@@ -55,7 +53,7 @@ void main()
 
     // Check if a pixel has been dran in current texel and if not discard it
     const float depth = texture(fromCode_DepthBuffer, sampleUV).r;
-    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_DepthBuffer)
+    if (RENDERER_OUTPUT == RendererOutputValue_DepthBuffer)
     {
         float linearizedDepth = LinearizeDepth(depth, uniformBuffer.nearClip, uniformBuffer.farClip);
         toFramebuffer_FinalizedColor = vec4(linearizedDepth, linearizedDepth, linearizedDepth, 1.0);
@@ -73,25 +71,25 @@ void main()
     */
 
     const vec3 position = GetWorldPositionFromDepth(sampleUV, depth, uniformBuffer.inverseProjection, uniformBuffer.inverseView);
-    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_PositionBuffer) { toFramebuffer_FinalizedColor = vec4(position, 1.0); return; }
+    if (RENDERER_OUTPUT == RendererOutputValue_PositionBuffer) { toFramebuffer_FinalizedColor = vec4(position, 1.0); return; }
 
     const vec3 diffuse = texture(fromCode_DiffuseBuffer, sampleUV).rgb;
-    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_DiffuseBuffer) { toFramebuffer_FinalizedColor = vec4(diffuse, 1.0); return; }
+    if (RENDERER_OUTPUT == RendererOutputValue_DiffuseBuffer) { toFramebuffer_FinalizedColor = vec4(diffuse, 1.0); return; }
 
     const vec3 specularAndShininess = texture(toFramebuffer_SpecularAndShinines, sampleUV).rgb;
-    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_SpecularBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.rrr, 1.0); return; }
-    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_ShininessBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.ggg, 1.0); return; }
+    if (RENDERER_OUTPUT == RendererOutputValue_SpecularBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.rrr, 1.0); return; }
+    if (RENDERER_OUTPUT == RendererOutputValue_ShininessBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.ggg, 1.0); return; }
 
     const float specular = specularAndShininess.r;
     const float shininess = specularAndShininess.g;
 
     const vec3 normal = texture(fromCode_NormalBuffer, sampleUV).rgb;
-    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_NormalBuffer) { toFramebuffer_FinalizedColor = vec4(normal, 1.0); return; }
+    if (RENDERER_OUTPUT == RendererOutputValue_NormalBuffer) { toFramebuffer_FinalizedColor = vec4(normal, 1.0); return; }
 
     vec4 shadowCoordinates = storageBuffer.directionalLights[0].projectionView * vec4(position, 1.0);
 
     float shadow = 1.0f;
-    if (PUSH_CONSTANT.enableShadows == 1)
+    if (ENABLE_SHADOWS)
     {
         #if defined(SETTINGS_USE_PCF_SHADOWS)
             shadow = CalculateShadow3x3PCF(fromCode_ShadowMap, shadowCoordinates);
@@ -108,7 +106,7 @@ void main()
 
     shadow = Normalize(shadow + 0.25);
 
-    if (PUSH_CONSTANT.renderedImageValue == RenderedImageValue_ShadowBuffer) { toFramebuffer_FinalizedColor = vec4(shadow, shadow, shadow, 1.0); return; }
+    if (RENDERER_OUTPUT == RendererOutputValue_ShadowBuffer) { toFramebuffer_FinalizedColor = vec4(shadow, shadow, shadow, 1.0); return; }
 
     // Define the final color
     vec3 calculatedColor = vec3(0, 0, 0);

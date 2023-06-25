@@ -57,7 +57,7 @@ namespace Sierra::Engine::Components
             float intensity;
 
             Vector3 color;
-            float _algin1_;
+            float _align1_;
         };
 
         operator ShaderDirectionalLight() const noexcept { return
@@ -87,7 +87,7 @@ namespace Sierra::Engine::Components
             direction = glm::normalize(direction);
 
             using namespace Core::Rendering;
-            this->projectionView = MatrixUtilities::CreateOrthographicProjectionMatrix(30.0f, -220.0f, 80.0f) * MatrixUtilities::CreateViewMatrix(transform.GetWorldPosition(), direction);
+            projectionView = MatrixUtilities::CreateOrthographicProjectionMatrix(30.0f, -220.0f, 80.0f) * MatrixUtilities::CreateViewMatrix(transform.GetWorldPosition(), direction);
         }
 
         inline static auto IDPool = Classes::IdentifierPool<uint>(MAX_DIRECTIONAL_LIGHTS);

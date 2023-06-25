@@ -2,7 +2,7 @@
 
 #include "../Utility/Cube.glsl"
 
-layout(set = 0, binding = 0) uniform UniformBuffer
+layout(binding = 0) uniform UniformBuffer
 {
     mat4 view;
     mat4 projection;

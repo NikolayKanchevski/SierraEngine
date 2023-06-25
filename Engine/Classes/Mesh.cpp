@@ -47,7 +47,7 @@ namespace Sierra::Engine::Classes
            .bufferUsage = BufferUsage::TRANSFER_DST | BufferUsage::VERTEX
        });
 
-        stagingBuffer->CopyToBuffer(vertexBuffer.get());
+        stagingBuffer->CopyToBuffer(vertexBuffer);
 
         stagingBuffer->Destroy();
     }
@@ -70,7 +70,7 @@ namespace Sierra::Engine::Classes
              .bufferUsage = BufferUsage::TRANSFER_DST | BufferUsage::INDEX
          });
 
-        stagingBuffer->CopyToBuffer(indexBuffer.get());
+        stagingBuffer->CopyToBuffer(indexBuffer);
 
         stagingBuffer->Destroy();
     }

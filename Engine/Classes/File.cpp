@@ -41,8 +41,7 @@ namespace Sierra::Engine::Classes
             return true;
         }
 
-        bool success = true;
-        success = success && CreateDirectoriesToPath(filePath);
+        bool success = CreateDirectoriesToPath(filePath);
 
         std::ofstream file(filePath);
 
@@ -150,7 +149,7 @@ namespace Sierra::Engine::Classes
         ASSERT_ERROR_FORMATTED_IF(!file.is_open() || file.fail(), "Could not open the file [{0}] for reading from it", filePath);
 
         // Get file size and create resized vector
-        uSize fileSize = static_cast<uSize>(file.tellg());
+        std::streamsize fileSize = static_cast<uSize>(file.tellg());
         std::vector<char> fileBuffer(fileSize);
 
         // Go back to the start of file
@@ -209,7 +208,7 @@ namespace Sierra::Engine::Classes
         bool success = true;
         if (FileExists(filePath))
         {
-            success = success && RemoveFile(filePath);
+            success = RemoveFile(filePath);
         }
 
         success = success && CreateFile(filePath);
@@ -261,7 +260,7 @@ namespace Sierra::Engine::Classes
         bool success = true;
         if (DirectoryExists(directoryPath))
         {
-            success = success && RemoveDirectory(directoryPath);
+            success = RemoveDirectory(directoryPath);
         }
 
         success = success && CreateDirectory(directoryPath);

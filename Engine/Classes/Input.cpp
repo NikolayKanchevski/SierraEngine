@@ -259,12 +259,12 @@ namespace Sierra::Engine::Classes {
 
     /* --- CALLBACKS --- */
 
-    void Input::KeyboardCharacterCallback(GLFWwindow *windowPtr, const uint character)
+    void Input::KeyboardCharacterCallback([[maybe_unused]] GLFWwindow *windowPtr, const uint character)
     {
         enteredCharacters.push_back(UnicodePointToChar(character));
     }
 
-    void Input::KeyboardKeyCallback(GLFWwindow *windowPtr, const int keyCode, const int scanCode, int action, const int mods)
+    void Input::KeyboardKeyCallback([[maybe_unused]] GLFWwindow *windowPtr, const int keyCode, const int scanCode, int action, const int mods)
     {
         if (keyCode == GLFW_KEY_UNKNOWN) { return; }
 
@@ -273,14 +273,14 @@ namespace Sierra::Engine::Classes {
         keySet = true;
     }
 
-    void Input::MouseButtonCallback(GLFWwindow *windowPtr, const int buttonCode, const int action, const int mods)
+    void Input::MouseButtonCallback([[maybe_unused]] GLFWwindow *windowPtr, const int buttonCode, const int action, const int mods)
     {
         mouseButtons[buttonCode] = action + 1;
         lastButtonSet = buttonCode;
         buttonSet = true;
     }
 
-    void Input::MouseScrollCallback(GLFWwindow *windowPtr, double xScroll, double yScroll)
+    void Input::MouseScrollCallback([[maybe_unused]] GLFWwindow *windowPtr, double xScroll, double yScroll)
     {
         if (glm::abs(xScroll) >= glm::abs(yScroll)) yScroll = 0;
         else if (glm::abs(xScroll) < glm::abs(yScroll)) xScroll = 0;

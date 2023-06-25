@@ -121,7 +121,7 @@ namespace GUI
 
             float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
 
-            bool open = ImGui::TreeNodeEx((void*)(typeid(T).hash_code() << static_cast<uint32_t>(entity)), treeNodeFlags, "%s", Debugger::TypeToString<T>().c_str());
+            bool open = ImGui::TreeNodeEx((void*)(typeid(T).hash_code() << static_cast<uint>(entity)), treeNodeFlags, "%s", Debugger::TypeToString<T>().c_str());
             ImGui::PopStyleVar();
 
             ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
@@ -163,7 +163,7 @@ namespace GUI
         bool modified = false;
         T::Class::ForEachField(reference, [&modified](auto & field, auto & value){
             using Type = typename std::remove_reference<decltype(value)>::type;
-            std::string stringName = std::string(field.name);
+            std::string stringName = std::string(field.fieldName);
             stringName[0] = std::toupper(stringName[0]);
             modified = modified || GUI::AnyPropertyInput<Type>(stringName.c_str(), value);
         });

@@ -31,7 +31,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         static void Shutdown();
 
         /* --- CONSTRUCTORS --- */
-        Sampler(const SamplerCreateInfo &createInfo);
+        explicit Sampler(const SamplerCreateInfo &createInfo);
         static UniquePtr<Sampler> Create(SamplerCreateInfo createInfo);
 
         /* --- GETTER METHODS --- */

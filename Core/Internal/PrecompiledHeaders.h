@@ -38,7 +38,7 @@
     #include <filesystem>
     #include <bitset>
     #include <any>
-    #include <stdio.h>
+    #include <cstdio>
 
     #define NOMINMAX
     #include <limits>

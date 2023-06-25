@@ -9,16 +9,16 @@
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
 
-    enum CubemapType
+    enum class CubemapType
     {
-        UNDEFINED_CUBEMAP = -1,
+        UNDEFINED = -1,
         SKYBOX = 0
     };
 
     struct CubemapCreateInfo
     {
         String filePaths[6];
-        CubemapType cubemapType = CubemapType::UNDEFINED_CUBEMAP;
+        CubemapType cubemapType = CubemapType::UNDEFINED;
 
         ImageFormat imageFormat = ImageFormat::R8G8B8A8_SRGB;
         bool mipMappingEnabled = false;
@@ -30,7 +30,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Cubemap(const CubemapCreateInfo &createInfo);
+        explicit Cubemap(const CubemapCreateInfo &createInfo);
         static UniquePtr<Cubemap> Create(CubemapCreateInfo createInfo);
 
         /* --- GETTER METHODS --- */
@@ -52,7 +52,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         int height;
 
         UniquePtr<Image> image;
-        bool mipMappingEnabled;
 
         uint64 memorySize;
         UniquePtr<Sampler> sampler;

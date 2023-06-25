@@ -5,6 +5,7 @@
 #include "Framebuffer.h"
 
 #include "../VK.h"
+#include "RenderPass.h"
 
 namespace Sierra::Core::Rendering::Vulkan::Abstractions
 {
@@ -17,14 +18,14 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Set up the framebuffer creation info
         VkFramebufferCreateInfo framebufferCreateInfo{};
         framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferCreateInfo.renderPass = createInfo.renderPass;
+        framebufferCreateInfo.renderPass = createInfo.renderPass->GetVulkanRenderPass();
         framebufferCreateInfo.attachmentCount = static_cast<uint>(createInfo.attachments.size());
         framebufferCreateInfo.width = createInfo.width;
         framebufferCreateInfo.height = createInfo.height;
         framebufferCreateInfo.layers = 1;
 
         VkImageView* attachmentsPtr = new VkImageView[createInfo.attachments.size()];
-        for (uint i = createInfo.attachments.size(); i--;) attachmentsPtr[i] = createInfo.attachments[i].image->GetVulkanImageView();
+        for (uint i = createInfo.attachments.size(); i--;) attachmentsPtr[i] = createInfo.attachments[i].get()->GetVulkanImageView();
         framebufferCreateInfo.pAttachments = attachmentsPtr;
 
         // Create the Vulkan framebuffer
@@ -33,10 +34,10 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             FORMAT_STRING("Failed to create a framebuffer with attachment count of [{0}]", createInfo.attachments.size())
         );
 
-        delete[] attachmentsPtr;
+        delete[](attachmentsPtr);
     }
 
-    UniquePtr<Framebuffer> Framebuffer::Create(FramebufferCreateInfo createInfo)
+    UniquePtr<Framebuffer> Framebuffer::Create(const FramebufferCreateInfo &createInfo)
     {
         return std::make_unique<Framebuffer>(createInfo);
     }
@@ -46,6 +47,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Framebuffer::Destroy()
     {
         // Destroy the Vulkan framebuffer
-        vkDestroyFramebuffer(VK::GetLogicalDevice(), this->vkFramebuffer, nullptr);
+        vkDestroyFramebuffer(VK::GetLogicalDevice(), vkFramebuffer, nullptr);
     }
 }

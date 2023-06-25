@@ -17,10 +17,9 @@
 #include <vk_mem_alloc.h>
 
 #include "../../Version.h"
-#include "RenderingUtilities.h"
 #include "Abstractions/Texture.h"
+#include "../../../Engine/Classes/File.h"
 
-#define VK_VERSION VK_API_VERSION_1_2
 #define MAX_IMGUI_DESCRIPTOR_COUNT 2048
 
 using namespace Sierra::Engine::Classes;
@@ -73,34 +72,29 @@ namespace Sierra::Core::Rendering::Vulkan
         applicationInfo.applicationVersion = VK_MAKE_VERSION(Version::MAJOR, Version::MINOR, Version::PATCH);
         applicationInfo.pEngineName = "No Engine";
         applicationInfo.engineVersion = VK_VERSION_1_3;
-        applicationInfo.apiVersion = VK_API_VERSION_1_3;
+        applicationInfo.apiVersion = VK_VERSION;
 
         // Get GLFW extensions
         uint glfwExtensionCount;
         auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-        std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
-        for (const auto &requiredExtension : requiredInstanceExtensions)
-        {
-            extensions.push_back(requiredExtension);
-        }
+        requiredInstanceExtensions.insert(requiredInstanceExtensions.end(), glfwExtensions, glfwExtensions + glfwExtensionCount);
 
         // Check whether all extensions are supported
-        ASSERT_WARNING_IF(!ExtensionsSupported(extensions), "Some requested extensions are not supported. They have been automatically disabled but this could lead to issues");
+        ASSERT_WARNING_IF(!ExtensionsSupported(requiredInstanceExtensions), "Some requested extensions are not supported. They have been automatically disabled but this could lead to issues");
 
-        // Set up m_Instance creation info
+        // Set up instance creation info
         VkInstanceCreateInfo instanceCreateInfo{};
         instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         instanceCreateInfo.pApplicationInfo = &applicationInfo;
-        instanceCreateInfo.enabledExtensionCount = static_cast<uint>(extensions.size());
-        instanceCreateInfo.ppEnabledExtensionNames = extensions.data();
+        instanceCreateInfo.enabledExtensionCount = static_cast<uint>(requiredInstanceExtensions.size());
+        instanceCreateInfo.ppEnabledExtensionNames = requiredInstanceExtensions.data();
         instanceCreateInfo.enabledLayerCount = 0;
         #if PLATFORM_APPLE
             instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
         #endif
         instanceCreateInfo.pNext = nullptr;
 
-        // If validation is enabled check validation layers support and bind them to m_Instance
+        // If validation is enabled check validation layers support and bind them to instance
         #if VALIDATION_ENABLED
             ASSERT_ERROR_IF(!ValidationLayersSupported(), "Validation layers requested but are not supported");
 
@@ -112,16 +106,16 @@ namespace Sierra::Core::Rendering::Vulkan
             debugMessengerCreateInfo->pfnUserCallback = Debugger::ValidationCallback;
             debugMessengerCreateInfo->pUserData = nullptr;
 
-            // Set m_Instance to use the debug messenger
+            // Set instance to use the debug messenger
             instanceCreateInfo.enabledLayerCount = static_cast<uint>(validationLayers.size());
             instanceCreateInfo.ppEnabledLayerNames = validationLayers.data();
             instanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) debugMessengerCreateInfo;
         #endif
 
-        // Create m_Instance
+        // Create instance
         VK_ASSERT(
             vkCreateInstance(&instanceCreateInfo, nullptr, &instance),
-            "Could not create Vulkan m_Instance"
+            "Could not create Vulkan instance"
         );
 
         // Connect instance with Volk
@@ -136,7 +130,7 @@ namespace Sierra::Core::Rendering::Vulkan
             "Failed to create validation messenger"
         );
 
-        delete debugMessengerCreateInfo;
+        delete(debugMessengerCreateInfo);
     }
     #endif
 

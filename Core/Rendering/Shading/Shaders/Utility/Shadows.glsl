@@ -2,7 +2,6 @@
 #define SHADOWS_GLSL
 
 #include "../Utility/Math.glsl"
-#include "../Utility/GaussianBlur.glsl"
 
 // NOTE: Shadow maps' dimensions must be in a 1:1 aspect
 

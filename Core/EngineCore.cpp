@@ -31,7 +31,6 @@ namespace Sierra
 
     void EngineCore::Terminate()
     {
-        Shader::DisposePool();
         Texture::DestroyDefaultTextures();
         Texture::DisposePool();
         Model::DisposePool();
@@ -42,7 +41,7 @@ namespace Sierra
 
     /* --- SETTER METHODS --- */
 
-    void EngineCore::SetSelectedEntity(Entity givenEntity)
+    void EngineCore::SetSelectedEntity(const Entity givenEntity)
     {
         selectedEntity = givenEntity;
     }

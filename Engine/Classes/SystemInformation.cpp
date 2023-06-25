@@ -17,7 +17,7 @@ namespace Sierra::Engine::Classes
         {
             cpu = CPU{};
 
-            cpu.name = iware::cpu::model_name().c_str();
+            cpu.name = iware::cpu::model_name();
 
             cpu.architecture = CPU::Architecture{};
             cpu.architecture.type = static_cast<CPU::ArchitectureType>(iware::cpu::architecture());
@@ -47,7 +47,7 @@ namespace Sierra::Engine::Classes
                 auto gpu = &gpus[i];
                 auto gpuQuantity = &iwareGPUs[i];
 
-                gpu->name = gpuQuantity->name.c_str();
+                gpu->name = gpuQuantity->name;
 
                 gpu->vendor = GPU::Vendor{};
                 gpu->vendor.type = static_cast<GPU::VendorType>(gpuQuantity->vendor);
@@ -170,8 +170,8 @@ namespace Sierra::Engine::Classes
 
     void SystemInformation::Shutdown()
     {
-        delete[] gpus;
-        delete[] displays;
+        delete[](gpus);
+        delete[](displays);
     }
 
     /* --- PRIVATE METHODS --- */

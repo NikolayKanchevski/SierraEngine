@@ -84,7 +84,7 @@ namespace Sierra::Engine::Components
     private:
         inline void Recalculate() override
         {
-            printf("NOT IMPLEMENTED FOR POINT LIGHT!");
+
         }
 
         inline static auto IDPool = Classes::IdentifierPool<uint>(MAX_POINT_LIGHTS);

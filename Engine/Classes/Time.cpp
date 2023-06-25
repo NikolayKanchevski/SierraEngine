@@ -17,6 +17,6 @@ namespace Sierra::Engine::Classes
         lastFrameTime = currentFrameTime;
 
         upTime = static_cast<float>(currentFrameTime);
-        FPS = static_cast<uint32_t>(glm::ceil(1.0 / deltaTime));
+        FPS = static_cast<uint>(glm::ceil(1.0 / deltaTime));
     }
 }

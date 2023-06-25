@@ -58,7 +58,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         return result;
     }
 
-    VkResult Swapchain::SubmitCommandBuffers()
+    VkResult Swapchain::SwapImage()
     {
         // If the current image is being processed
         if (imagesInFlight[imageIndex] != VK_NULL_HANDLE)
@@ -214,7 +214,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Create command buffers
         for (uint i = maxConcurrentFrames; i--;)
         {
-            commandBuffers[i] = CommandBuffer::Create();
+            commandBuffers[i] = CommandBuffer::Create({ });
         }
     }
 
@@ -242,7 +242,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             });
         }
 
-        delete[] swapchainVkImages;
+        delete[](swapchainVkImages);
     }
 
     void Swapchain::CreateRenderPass()
@@ -272,8 +272,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             swapchainFramebuffers[i] = Framebuffer::Create({
                 .width = extent.width,
                 .height = extent.height,
-                .attachments = { { this->swapchainImages[i] } },
-                .renderPass = renderPass->GetVulkanRenderPass()
+                .renderPass = renderPass,
+                .attachments = { { swapchainImages[i] } }
             });
         }
     }

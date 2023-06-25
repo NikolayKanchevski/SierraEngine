@@ -68,7 +68,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         if (vkSampler == VK_NULL_HANDLE) return;
 
         // Destroy the Vulkan sampler
-        vkDestroySampler(VK::GetLogicalDevice(), this->vkSampler, nullptr);
+        vkDestroySampler(VK::GetLogicalDevice(), vkSampler, nullptr);
 
         vkSampler = VK_NULL_HANDLE;
     }

@@ -3,7 +3,7 @@
 
 #include "../Types/Material.glsl"
 
-layout(push_constant) uniform MeshPushConstant
+layout(push_constant) uniform PushConstant
 {
     Material material;
 

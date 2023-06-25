@@ -1,17 +1,14 @@
 #version 450
 
+/* !COMPILE_TO_BINARY */
 #include "../Utility/Cube.glsl"
 #include "../Utility/FullscreenTriangle.glsl"
 #include "../Types/GlobalUniformBuffer.glsl"
 
-struct PushConstant
+layout(push_constant) uniform PushConstant
 {
     mat4x4 skyboxModel;
-    mat4x4 lightSpaceMatrix;
-    uint renderedImageValue;
-};
-
-SET_PUSH_CONSTANT(PushConstant);
+} pushConstant;
 
 layout(location = 0) out uint toFrag_DrawingSkybox;
 layout(location = 1) out vec3 toFrag_UVW;
@@ -34,7 +31,7 @@ void main()
         vec3 vertexPosition = cubeVertices[gl_VertexIndex];
 
         // Set final world position for vertex
-        gl_Position = (uniformBuffer.projection * mat4x4(mat3x3(uniformBuffer.view)) * PUSH_CONSTANT.skyboxModel * vec4(vertexPosition, 1.0)).xyww;
+        gl_Position = (uniformBuffer.projection * mat4x4(mat3x3(uniformBuffer.view)) * pushConstant.skyboxModel * vec4(vertexPosition, 1.0)).xyww;
 
         // Send texture coordinates for skubox cubemap
         toFrag_UVW = vertexPosition;

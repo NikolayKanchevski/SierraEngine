@@ -16,8 +16,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         static UniquePtr<TimestampQuery> Create();
 
         /* --- SETTER METHODS --- */
-        void Begin(const UniquePtr<CommandBuffer> &commandBuffer, VkPipelineStageFlagBits pipelineStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
-        void End(const UniquePtr<CommandBuffer> &commandBuffer, VkPipelineStageFlagBits pipelineStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+        void Begin(const UniquePtr<CommandBuffer> &commandBuffer, VkPipelineStageFlagBits pipelineStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT) const;
+        void End(const UniquePtr<CommandBuffer> &commandBuffer, VkPipelineStageFlagBits pipelineStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT) const;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] float GetTimeTaken();
@@ -27,7 +27,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     private:
         uint index;
-        uint64 buffer[2];
+        uint64 buffer[2] = { };
 
     };
 
@@ -53,7 +53,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         DELETE_COPY(QueryPool);
 
     private:
-        VkQueryPool vkQueryPool;
+        VkQueryPool vkQueryPool = VK_NULL_HANDLE;
         static inline uint queryCount = 0;
 
     };

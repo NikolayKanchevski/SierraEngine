@@ -91,9 +91,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
     }
 
-    UniquePtr<Image> Image::Create(ImageCreateInfo imageCreateInfo)
+    UniquePtr<Image> Image::Create(const ImageCreateInfo &createInfo)
     {
-        return std::make_unique<Image>(imageCreateInfo);
+        return std::make_unique<Image>(createInfo);
     }
 
     Image::Image(const SwapchainImageCreateInfo &createInfo)
@@ -144,8 +144,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         barrier.subresourceRange.layerCount = layerCount;
         barrier.subresourceRange.levelCount = 1;
 
-        int mipWidth = dimensions.width;
-        int mipHeight = dimensions.height;
+        int mipWidth = static_cast<int>(dimensions.width);
+        int mipHeight = static_cast<int>(dimensions.height);
 
         for (uint i = 1; i < mipLevels; i++)
         {
@@ -217,7 +217,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Layout has been transitioned automatically
         layout = ImageLayout::SHADER_READ_ONLY_OPTIMAL;
 
-        mipMapsGenerated = true;
         return true;
     }
 
@@ -239,7 +238,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     void Image::Destroy()
     {
-        vkDestroyImageView(VK::GetLogicalDevice(), this->vkImageView, nullptr);
+        vkDestroyImageView(VK::GetLogicalDevice(), vkImageView, nullptr);
 
         if (!swapchainImage)
         {

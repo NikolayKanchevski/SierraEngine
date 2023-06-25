@@ -11,7 +11,7 @@ namespace Sierra::Engine::Components
     class Component
     {
     public:
-        inline void SetEnttEntity(entt::entity givenEntity) { this->enttEntity = givenEntity; }
+        inline void SetEnttEntity(entt::entity givenEntity) { enttEntity = givenEntity; }
         inline entt::entity GetEnttEntity() { return enttEntity; };
 
         template <typename T, ENABLE_IF(std::is_base_of_v<Component, T>), typename... Args>
@@ -21,10 +21,10 @@ namespace Sierra::Engine::Components
         inline T& AddOrReplaceComponent(Args&&... args) { return World::AddOrReplaceComponent<T>(enttEntity, std::forward<Args>(args)...); }
 
         template<typename T>
-        inline T& GetComponent() const { return World::GetComponent<T>(enttEntity); }
+        [[nodiscard]] inline T& GetComponent() const { return World::GetComponent<T>(enttEntity); }
 
         template<typename T>
-        inline bool HasComponent() const { return World::HasComponent<T>(enttEntity); }
+        [[nodiscard]] inline bool HasComponent() const { return World::HasComponent<T>(enttEntity); }
 
         template<typename T>
         inline void RemoveComponent() const { World::RemoveComponent<T>(enttEntity); }

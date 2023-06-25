@@ -49,7 +49,7 @@ namespace Sierra::Engine::Classes
 
     /* --- SETTER METHODS --- */
 
-    void Entity::SetParent(Entity &givenParent)
+    void Entity::SetParent(Entity &givenParent) const
     {
         GetComponent<Relationship>().SetParent(givenParent.enttEntity);
     }
@@ -60,11 +60,6 @@ namespace Sierra::Engine::Classes
     }
 
     /* --- DESTRUCTOR --- */
-
-    Entity::~Entity()
-    {
-
-    }
 
     bool Entity::operator==(Entity &right)
     {

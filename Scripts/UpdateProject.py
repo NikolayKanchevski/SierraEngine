@@ -2,184 +2,118 @@
 
 import os
 import shutil
-import platform
 import sys
-from os.path import exists
-import ReadMeCalculator
+import datetime
+import platform
+from CompileShader import CompileShader
 
-ROOT_DIRECTORY = "../"
-OUTPUT_DIRECTORY = ""
+CMAKE_CALL: bool = len(sys.argv) > 2 and sys.argv[2] == '--CMakeCall'
+ROOT_DIRECTORY: str = os.getcwd() + '/Scripts/' if CMAKE_CALL else os.getcwd() + '/'
+SHADERS_DIRECTORY: str = ROOT_DIRECTORY + '../Core/Rendering/Shading/Shaders/'
 
-DLL_DIRECTORY = ROOT_DIRECTORY + "Core/Dynamic Link Libraries/Windows/"
-TEXTURE_DIRECTORY = ROOT_DIRECTORY + "Core/Rendering/Textures/"
-MODEL_DIRECTORY = ROOT_DIRECTORY + "Core/Rendering/Models/"
-FONT_DIRECTORY = ROOT_DIRECTORY + "Core/Rendering/Fonts/"
-
-SHADERS_DIRECTORY = ROOT_DIRECTORY + "Core/Rendering/Shading/Shaders/"
-TEMPORARY_SHADER_DIRECTORY = SHADERS_DIRECTORY + "Temp/"
-SHADER_FILE_EXTENSIONS = [".vert", ".frag"]
+COUNT_SUBDIRECTORIES: list[str] = ['../Core/', '../Engine/', '../Scripts/']
+COUNT_FILE_EXTENSIONS: list[str] = ['.cpp',  '.h', '.py', '.cs', '.glsl', '.vert', '.frag', '.glsl' '.sh', '.bat', '.txt']
+DEBUG_COUNT: bool = False
 
 def Main():
-    # Check if required arguments are provided
-    if len(sys.argv) <= 1:
-        print("Error: You must run the scripts with either a --Debug or --Release argument!")
-        return
-    else:
-        global OUTPUT_DIRECTORY
+    if len(sys.argv) < 2:
+        print('Usage: <configuration> (--Debug or --Release), --CMakeCall (optional, only to be passed if script is called from CMake).')
+        exit(-1)
 
-        # Check if the required arguments are valid and set the output folder accordingly
-        if sys.argv[1] != "--Debug" and sys.argv[1] != "--Release":
-            print(f"Error: Unrecognized argument: { sys.argv[1] }!")
-            return
-        elif sys.argv[1] == "--Debug":
-            OUTPUT_DIRECTORY = ROOT_DIRECTORY + ("cmake-build-debug/Debug/" if platform.system() == "Windows" else "cmake-build-debug/")
-        else:
-            OUTPUT_DIRECTORY = ROOT_DIRECTORY + ("cmake-build-release/Release/" if platform.system() == "Windows" else "cmake-build-release/")
-
-        # Check if too many arguments are provided
-        if (len(sys.argv) >= 3):
-            print("Error: Too many arguments specified!")
-            return
-
-    try:
-        RemoveDirectory(OUTPUT_DIRECTORY + "Shaders/")
-    except:
-        pass
-
-    # Create temporary shader directory
-    CreateDirectory(TEMPORARY_SHADER_DIRECTORY)
-
-    # Create the required directories in the output folder
-    CreateDirectory(OUTPUT_DIRECTORY + "Shaders/")
-
-    # Copy all required files
-    CopyFolder(TEXTURE_DIRECTORY, OUTPUT_DIRECTORY + "Textures/")
-    CopyFolder(MODEL_DIRECTORY, OUTPUT_DIRECTORY + "Models/")
-    CopyFolder(FONT_DIRECTORY, OUTPUT_DIRECTORY + "Fonts/")
-
-    # Compile shaders
-    # try:
+    # Compile shaders to SPIR-V
     CompileShaders()
-    # except:
-        # pass
 
-    # Remove temporary shader directory
-    RemoveDirectory(TEMPORARY_SHADER_DIRECTORY)
+    # Update README.md line count and date
+    UpdateReadMe()
 
     # Show success message
-    print("Success!")
-
-    # Calculate lines of code
-    calculator = ReadMeCalculator.ReadMeCalculator(False)
-        
+    if not CMAKE_CALL:
+        print('Success!')
 
 def CompileShaders():
-
-    CopyFolder(SHADERS_DIRECTORY, OUTPUT_DIRECTORY + "Shaders/")
-    return
-
-    # Find and compile every shader
-    for root, dirs, files in os.walk(SHADERS_DIRECTORY):
-        for file in os.listdir(root):
-            filePath = root + ("/" if root[-1] != "/" else "") + file
-
-            fileExtensionIndex = file.find(".")
-            if fileExtensionIndex == 0:
-                continue
-            
-            fileExtension = file[fileExtensionIndex:]
-            
-            if (fileExtension in SHADER_FILE_EXTENSIONS):
-                PreCompileShader(filePath)
-                CopyFile(filePath, OUTPUT_DIRECTORY + "/Shaders/")
-            
-
-def PreCompileShader(shaderFilePath):
-    # Load shader data and check if #include is done
-    shaderData = open(shaderFilePath, "r").read()
-    shaderFileName = shaderFilePath[shaderFilePath.rindex("/") + 1:]
-    shaderDirectory = shaderFilePath[:shaderFilePath.rindex("/") + 1]
-    includeIndex = shaderData.find("#include")
-
-    # For each #include
-    while includeIndex != -1 and not (includeIndex > 1 and shaderData[includeIndex - 1] == "/" and shaderData[includeIndex - 2] == "/"):            
-        # Get the starting position of include
-        startIndex = includeIndex
-        while shaderData[startIndex] != "\"" and not (shaderData[startIndex] == "\\" and shaderData[startIndex + 1] == "n"):
-            startIndex += 1
-
-        startIndex += 1
-
-        # Count end position of include
-        endIndex = startIndex
-        while shaderData[endIndex] != "\"" and not (shaderData[endIndex] == "\\" and shaderData[endIndex + 1] == "n"):
-            endIndex += 1
-
-        includedShader = shaderData[startIndex:endIndex]
-
-        # Check if included file is of .glsl format and exists
-        if includedShader.find(".glsl") == -1 or not exists(shaderDirectory + includedShader):
-            print(f"Error: Cannot include [{ includedShader }] in shader [{ shaderFileName }]!")
-            exit(-1)
-
-        # Read included shader
-        includedShaderData = open(shaderDirectory + includedShader, "r").read()
-        includedShaderData = includedShaderData.replace("#version", "//")
-
-        # Append read shader data to original shader
-        shaderData = shaderData[:includeIndex] + shaderData[endIndex + 1:]
-        shaderData = shaderData[:includeIndex] + includedShaderData + shaderData[includeIndex:]
-        
-        # Check if any more includes are done
-        includeIndex = shaderData.find("#include")
-
-    # Create temporary shader file with the newly "compiled" code
-    temporaryShaderPath = TEMPORARY_SHADER_DIRECTORY + shaderFileName
-    temporaryShaderFile = open(temporaryShaderPath, "w+")
-    temporaryShaderFile.write(shaderData)
-    temporaryShaderFile.close()
-
-    # Compile temporary shader
-    operatingSystem = platform.system()
-    if operatingSystem == "Windows":
-        CompileWindowsShaders(temporaryShaderPath)
+    # Get output folder
+    outputDirectory: str = sys.argv[1]
+    if outputDirectory == '--Debug':
+        outputDirectory = ROOT_DIRECTORY + '../' + ('cmake-build-debug/Debug/' if platform.system() == 'Windows' else 'cmake-build-debug/Shaders')
+    elif outputDirectory == '--Release':
+        outputDirectory = ROOT_DIRECTORY + '../' + ('cmake-build-release/Release/' if platform.system() == 'Windows' else 'cmake-build-release/Shaders')
     else:
-        CompileUnixShaders(temporaryShaderPath)
+        outputDirectory = ''
 
+    # For each shader
+    for root, dirs, files in os.walk(SHADERS_DIRECTORY):
+        for file in files:
+            filePath: str = str(os.path.join(root, file))
+            shaderOutputPath: str = outputDirectory + filePath[filePath.index('Shaders/') + 7:filePath.rindex('/')] + '/'
+            try:
+                if '/* !COMPILE_TO_BINARY */' in open(filePath, 'r').read():
+                    # Compile binary shader and delete original one
+                    CompileShader(filePath, shaderOutputPath, ROOT_DIRECTORY + '../Core/Rendering/Shading/Compilers')
+                    os.remove(shaderOutputPath + file)
+                    pass
+                else:
+                    os.makedirs(os.path.dirname(shaderOutputPath), exist_ok=True)
+                    shutil.copy(filePath, shaderOutputPath)
+            except:
+                os.makedirs(os.path.dirname(shaderOutputPath), exist_ok=True)
+                shutil.copy(filePath, shaderOutputPath)
 
-def CompileWindowsShaders(shaderFilePath):
-    shaderFileName = shaderFilePath[shaderFilePath.rindex("/") + 1:]
+def UpdateReadMe():
+    # Define initial line count
+    linesOfCode: int = 0
 
-    command = f"..\Core\Rendering\Shading\Compilers\glslc.exe { shaderFilePath } -o { OUTPUT_DIRECTORY }Shaders\{ shaderFileName }.spv"
+    # For each directory to check
+    for subdirectory in COUNT_SUBDIRECTORIES:
+        # Scan every file inside
+        for root, dirs, files in os.walk(ROOT_DIRECTORY + subdirectory):
+            for file in files:
+                # Check if the extension is inside the target ones
+                for extension in COUNT_FILE_EXTENSIONS:
+                    if file.endswith(extension):
+                        filePath: str = str(os.path.join(root, file))
+                        with open(filePath, 'r') as fp:
+                            for count, line in enumerate(fp):
+                                pass
 
-    os.system(command)
+                        # Update lines of code count and print a message to indicate the current file's count
+                        linesOfCode += count + 1
+                        if DEBUG_COUNT:
+                            print(f'{ filePath } consists of: { count + 1 } lines')
 
+    # Load and count README.md's lines
+    with open(ROOT_DIRECTORY + '../README.md', 'r') as file:
+        for count, line in enumerate(file):
+            pass
+        linesOfCode += count + 1
 
-def CompileUnixShaders(shaderFilePath):
-    shaderFileName = shaderFilePath[shaderFilePath.rindex("/") + 1:]
-    
-    command = f"../Core/Rendering/Shading/Compilers/glslc { shaderFilePath } -o { OUTPUT_DIRECTORY }Shaders/{ shaderFileName }.spv"
+    # Print README.md's line count
+    if DEBUG_COUNT:
+        print(f'\nTotal lines of code: { linesOfCode }.')
 
-    os.system(command)
+    # Format lines of code as a separated number string
+    linesOfCodeString: str = f'{ linesOfCode:,}'
 
+    # Update the README.md's description to have the current date and the just-calculated lines of code count
+    newReadMeData: str = ''
+    with open(ROOT_DIRECTORY + '../README.md', 'r') as file:
+        # Get old README.md file data
+        readMeData = file.read()
+        index = readMeData.index('<p align="center" id="LinesCounter">')
+        readMeData = readMeData[0:index]
 
-def CopyFile(file, destination):
-    shutil.copy(file, destination)
+        # Get current date
+        now = datetime.datetime.now()
+        updated: str = f'{now.day:02}/{now.month:02}/{now.year:02}'
 
+        # Apply date and line count changes
+        linesOfCodeLine: str = f'<p align="center" id="LinesCounter">Total lines of code: { linesOfCodeString }</p>\n'
+        lastUpdatedLine: str = f'<p align="center" id="LastUpdated">Last updated: { updated } </p>\n'
 
-def CopyFolder(folder, destination):
-    shutil.copytree(folder, destination, dirs_exist_ok=True)
+        newReadMeData = readMeData + linesOfCodeLine + lastUpdatedLine + '\n' + ('-' * 171)
 
+    # Write to the README.md
+    with open(ROOT_DIRECTORY + '../README.md', 'w') as file:
+        file.write(newReadMeData)
 
-def CreateDirectory(DIRECTORY_TO_CREATE):
-    os.makedirs(DIRECTORY_TO_CREATE, exist_ok=True)
-
-
-def RemoveDirectory(DIRECTORY_TO_REMOVE):
-    shutil.rmtree(DIRECTORY_TO_REMOVE)
-
-
-def DirectoryExists(DIRECTORY_TO_CHECK):
-    return os.path.isdir(DIRECTORY_TO_CHECK) == False
 
 Main()

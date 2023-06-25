@@ -1,0 +1,29 @@
+#version 450
+
+/* !COMPILE_TO_BINARY */
+#include "../Utility/Depth.glsl"
+#include "../Types/GlobalUniformBuffer.glsl"
+
+layout(binding = 1) writeonly buffer OutputBuffer {
+    vec3 worldPosition;
+    uint entityID;
+} outputBuffer;
+layout(binding = 2) uniform usampler2D IDBuffer;
+layout(binding = 3) uniform sampler2D depthBuffer;
+
+layout(push_constant) uniform PushConstant
+{
+    vec2 mousePosition;
+} pushConstant;
+
+bool IsOutOfSamplerRange(vec2 coord)
+{
+    return coord.x > 1.0 || coord.x < 0.0 || coord.y > 1.0 || coord.y < 0.0;
+}
+
+void main()
+{
+    // Set output data
+    outputBuffer.worldPosition = GetWorldPositionFromDepth(pushConstant.mousePosition, texture(depthBuffer, pushConstant.mousePosition).x, uniformBuffer.inverseProjection,  uniformBuffer.inverseView);
+    outputBuffer.entityID = texture(IDBuffer, pushConstant.mousePosition).x * uint(!IsOutOfSamplerRange(pushConstant.mousePosition)); // Check if mouse is within the viewport;
+}

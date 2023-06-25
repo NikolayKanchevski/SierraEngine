@@ -37,15 +37,15 @@ void Application::Start()
 
     // Load 3D models in a grid view
     tankModels.reserve(MODEL_GRID_SIZE_X * MODEL_GRID_SIZE_Y * MODEL_GRID_SIZE_Z);
-    for (uint i = MODEL_GRID_SIZE_X; i--;)
+    for (int i = MODEL_GRID_SIZE_X; i--;)
     {
         int x = (i * MODEL_SPACING_FACTOR_X) - (MODEL_GRID_SIZE_X * MODEL_SPACING_FACTOR_X) / 2;
 
-        for (uint j = MODEL_GRID_SIZE_Z; j--;)
+        for (int j = MODEL_GRID_SIZE_Z; j--;)
         {
             int z = (j * MODEL_SPACING_FACTOR_Z) - (MODEL_GRID_SIZE_Z * MODEL_SPACING_FACTOR_Z) / 2;
 
-            for (uint k = MODEL_GRID_SIZE_Y; k--;)
+            for (int k = MODEL_GRID_SIZE_Y; k--;)
             {
                 int y = (k * MODEL_SPACING_FACTOR_Y) - (MODEL_GRID_SIZE_Y * MODEL_SPACING_FACTOR_Y) / 2;
 

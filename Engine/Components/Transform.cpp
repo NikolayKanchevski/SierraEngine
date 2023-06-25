@@ -97,16 +97,6 @@ namespace Sierra::Engine::Components
         SetWorldScale({xScale ? xScale.value() : scale.x, yScale ? yScale.value() : scale.y, zScale ? zScale.value() : scale.z });
     }
 
-    void Transform::LookAt(const Vector3 point)
-    {
-
-    }
-
-    void Transform::RotateAround(const Vector3 point, const Vector3 axis, float angle)
-    {
-
-    }
-
     /* --- GETTER  METHODS --- */
 
     Matrix4x4& Transform::GetModelMatrix()
@@ -263,7 +253,7 @@ namespace Sierra::Engine::Components
         GUI::EndProperties();
     }
 
-    void Transform::PushOnDirtyCallback(Callback callback)
+    void Transform::PushOnDirtyCallback(const Callback &callback)
     {
         OnChangeCallbacks.push_back(callback);
     }

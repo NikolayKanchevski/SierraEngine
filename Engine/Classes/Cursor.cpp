@@ -77,12 +77,11 @@ namespace Sierra::Engine::Classes
     void Cursor::ResetCursorOffset()
     {
         cursorOffset = { 0, 0 };
-        lastCursorPosition = cursorPosition;
         cursorPositionSet = true;
     }
 
     /* --- CALLBACKS --- */
-    void Cursor::CursorPositionCallback(GLFWwindow *windowPtr, double xPosition, double yPosition)
+    void Cursor::CursorPositionCallback([[maybe_unused]] GLFWwindow *windowPtr, double xPosition, double yPosition)
     {
         lastCursorPosition = cursorPosition;
 

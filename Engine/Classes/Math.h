@@ -103,4 +103,26 @@ namespace Sierra::Engine::Classes::Math
     {
         return (PI / 180) * degrees;
     }
+
+    /// @brief Finds the closest number that is a multiple of N. Useful for alignment.
+    /// @param number What number to find the closes multiple of.
+    /// @param multiple What multiple to be looking for.
+    [[nodiscard]] inline int FindClosestMultipleOfN(const int number, const int multiple)
+    {
+        return ((number + multiple - 1) / multiple) * multiple;
+    }
+
+    /// @brief Finds the closest number that is a multiple of 4. Useful for alignment.
+    /// @param number What number to find the closes multiple of.
+    [[nodiscard]] inline int FindClosestMultipleOf4(const int number)
+    {
+        return FindClosestMultipleOfN(number, 4);
+    }
+
+    /// @brief Finds the closest number that is a multiple of 16. Useful for alignment.
+    /// @param number What number to find the closes multiple of.
+    [[nodiscard]] inline int FindClosestMultipleOf16(const int number)
+    {
+        return FindClosestMultipleOfN(number, 16);
+    }
 }
