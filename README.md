@@ -79,7 +79,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 **Frameworks used:**
 
 * [Vulkan](https://www.vulkan.org/) - For both cross-platform and pefromant-friendly rendering.
-* [Volk](https://github.com/zeux/volk/tree/master/) - A meta-loader for [Vulkan](https://www.vulkan.org/) that reduces CPU overhead and simplifies the loading of extensions.
+* [Volk](https://github.com/zeux/volk/tree/master/) - For less CPU overhead when working with [Vulkan](https://www.vulkan.org/) and simplified usage of extensions.
 * [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For easier and more optimal memory allocation and distribution of [Vulkan](https://www.vulkan.org/) objects.
 * [Shaderc](https://github.com/google/shaderc/) - For the shader compilation and optimization at runtime.
 * [GLFW](https://github.com/glfw/glfw/) - For creating window interface and connecting it to the **Vulkan** renderer.
@@ -90,6 +90,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 * [Assimp](https://github.com/assimp/assimp/) - For the loading of all kinds of 3D model formats (.obj, .fbx, .dae, etc.).
 * [Stb](https://github.com/nothings/stb) - For loading image buffer from all kinds of image formats (.jpg, .png, etc.).
 * [FMT](https://fmt.dev/latest/index.html) - For fast and easy string formatting.
+* [SPIRV-Reflect](https://github.com/NikichaTV/SPIRV-Reflect) by [NikichaTV](https://github.com/NikichaTV) - For shader reflection and [OpenGL](https://www.opengl.org)-like engine use (this is a custom version of [SPIRV-Reflect](https://github.com/KhronosGroup/SPIRV-Reflect) with extended functionality).
 * [RareCpp](https://github.com/TheNitesWhoSay/RareCpp/) - For reflections and serialization.
 * [Infoware](https://github.com/ThePhD/infoware/) - For the extraction of various system-and-hardware-specific buffer.
 * [Whereami](https://github.com/gpakosz/whereami/) - For the retrieval of the compiled executable's location within the file system.
@@ -109,7 +110,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 18,119</p>
-<p align="center" id="LastUpdated">Last updated: 25/06/2023 </p>
+<p align="center" id="LinesCounter">Total lines of code: 18,118</p>
+<p align="center" id="LastUpdated">Last updated: 26/06/2023 </p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
