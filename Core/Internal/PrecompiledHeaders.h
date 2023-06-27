@@ -61,7 +61,6 @@
     // === External Libraries == //
 
     // '-- Vulkan
-    #define VK_ENABLE_BETA_EXTENSIONS
     #include <volk.h>
     #include <vulkan/vulkan.hpp>
     #include <vulkan/vulkan_to_string.hpp>

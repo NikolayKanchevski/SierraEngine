@@ -9,17 +9,10 @@ from os.path import exists
 ROOT_DIRECTORY: str = '../'
 SHADER_TYPES: list[str] = [ '.vert', '.frag', '.geom', '.tese', '.tesc', '.comp' ]
 
-def CompileWindowsShaders(shaderFilePath: str, outputDirectory: str, compilerPath: str):
-    # Run Windows compiler
+def CompileShaderGLSLC(shaderFilePath: str, outputDirectory: str, compilerPath: str):
+    # Run compilation command
     shaderFileName: str = shaderFilePath[shaderFilePath.rfind('/') + 1:]
-    command: str = f'{ compilerDirectory } { shaderFilePath } -o { outputDirectory }\\{ shaderFileName }.spv'
-    os.system(command)
-
-
-def CompileUnixShaders(shaderFilePath: str, outputDirectory: str, compilerDirectory: str):
-    # Run Unix compiler
-    shaderFileName: str = shaderFilePath[shaderFilePath.rfind('/') + 1:]
-    command: str = f'{ compilerDirectory } { shaderFilePath } -o { outputDirectory }/{ shaderFileName }.spv'
+    command: str = f'{ compilerPath } { shaderFilePath } -o { outputDirectory }/{ shaderFileName }.spv'
     os.system(command)
 
 def CompileShader(shaderPath: str, outputDirectory: str, compilerDirectory: str):
@@ -112,9 +105,14 @@ def CompileShader(shaderPath: str, outputDirectory: str, compilerDirectory: str)
     # Compile temporary shader
     operatingSystem = platform.system()
     if operatingSystem == 'Windows':
-        CompileWindowsShaders(temporaryShaderPath, outputDirectory, compilerDirectory + '/glslc.exe')
+        CompileShaderGLSLC(temporaryShaderPath, outputDirectory, compilerDirectory + '/glslc-win.exe')
+    elif operatingSystem == 'Darwin':
+        CompileShaderGLSLC(temporaryShaderPath, outputDirectory, compilerDirectory + '/glslc-osx')
+    elif operatingSystem == 'Linux':
+        CompileShaderGLSLC(temporaryShaderPath, outputDirectory, compilerDirectory + '/glslc-linux')
     else:
-        CompileUnixShaders(temporaryShaderPath, outputDirectory, compilerDirectory + '/glslc')
+        print(f'Error: shader compilation is not supported on your [{ operatingSystem }] system')
+        exit(-1)
 
     # Delete temporary shader
     os.remove(temporaryShaderPath)

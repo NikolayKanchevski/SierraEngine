@@ -68,15 +68,14 @@ target_include_directories(Dependencies INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/En
 set(ASSIMP_NO_EXPORT ON)
 set(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_INSTALL OFF)
-if (CMAKE_BUILD_TYPE MATCHES Debug)
-    set(ASSIMP_WARNINGS_AS_ERRORS OFF)
-else()
+set(ASSIMP_WARNINGS_AS_ERRORS OFF)
+if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
     set(ASSIMP_INJECT_DEBUG_POSTFIX OFF)
 endif()
 
 add_subdirectory(Assimp)
 target_link_libraries(Dependencies INTERFACE assimp)
-target_include_directories(Dependencies INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/Assimp/include/)
+target_include_directories(Dependencies SYSTEM INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/Assimp/include/)
 
 # ========== STB ========== #
 target_include_directories(Dependencies INTERFACE stb)

@@ -110,7 +110,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 18,118</p>
-<p align="center" id="LastUpdated">Last updated: 26/06/2023 </p>
+<p align="center" id="LinesCounter">Total lines of code: 18,115</p>
+<p align="center" id="LastUpdated">Last updated: 27/06/2023 </p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

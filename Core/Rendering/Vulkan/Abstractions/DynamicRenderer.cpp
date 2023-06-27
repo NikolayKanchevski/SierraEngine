@@ -59,7 +59,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 VkRenderingAttachmentInfoKHR &attachment = colorAttachments[i];
                 attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
                 attachment.imageView = attachmentInfo.image->GetVulkanImageView();
-                attachment.imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL;
+                attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                 attachment.loadOp = (VkAttachmentLoadOp) attachmentInfo.loadOp;
                 attachment.storeOp = (VkAttachmentStoreOp) attachmentInfo.storeOp;
                 attachment.clearValue.color = { attachmentInfo.clearColor.r, attachmentInfo.clearColor.g, attachmentInfo.clearColor.b, attachmentInfo.clearColor.a };

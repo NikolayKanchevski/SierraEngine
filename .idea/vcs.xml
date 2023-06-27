@@ -20,6 +20,5 @@
     <mapping directory="$PROJECT_DIR$/Dependencies/stb" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/whereami" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/cmake-build-debug/Dependencies/Infoware/pciids" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/cmake-build-release/Dependencies/Infoware/pciids" vcs="Git" />
   </component>
 </project>
