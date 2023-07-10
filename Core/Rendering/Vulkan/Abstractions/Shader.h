@@ -9,7 +9,7 @@
 #include "Buffer.h"
 #include "Texture.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
     /* --- DATA TYPES --- */
 
@@ -126,7 +126,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     struct ShaderPushConstantData
     {
         uint memorySize;
-        UniquePtr<Engine::Classes::MemoryObject> data;
+        UniquePtr<Engine::MemoryObject> data;
     };
 
     struct ShaderSpecializationConstantData

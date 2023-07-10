@@ -8,9 +8,7 @@
 #include "../Components/Relationship.h"
 #include "../Components/Transform.h"
 
-using namespace Sierra::Engine::Components;
-
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
     const Entity Entity::Null = Entity((entt::entity)   entt::null);
 
@@ -19,7 +17,7 @@ namespace Sierra::Engine::Classes
     Entity::Entity(const String &givenName)
         : enttEntity(World::RegisterEntity())
     {
-        AddComponent<Components::UUID>();
+        AddComponent<UUID>();
         AddComponent<Transform>();
         AddComponent<Tag>(givenName);
         AddComponent<Relationship>(enttEntity);
@@ -28,7 +26,7 @@ namespace Sierra::Engine::Classes
     Entity::Entity(Entity &givenParent)
         : enttEntity(World::RegisterEntity())
     {
-        AddComponent<Components::UUID>();
+        AddComponent<UUID>();
         AddComponent<Transform>();
         AddComponent<Tag>("Entity");
         AddComponent<Relationship>(enttEntity);
@@ -39,7 +37,7 @@ namespace Sierra::Engine::Classes
     Entity::Entity(const String &givenName, Entity &givenParent)
         : enttEntity(World::RegisterEntity())
     {
-        AddComponent<Components::UUID>();
+        AddComponent<UUID>();
         AddComponent<Transform>();
         AddComponent<Tag>(givenName);
         AddComponent<Relationship>(enttEntity);
@@ -66,13 +64,13 @@ namespace Sierra::Engine::Classes
         return enttEntity == right.enttEntity;
     }
 
-    Entity::operator entt::entity() const noexcept
+    Entity::operator entt::entity() const
     {
         return enttEntity;
     }
 
-    Entity::operator Components::UUID() const noexcept
+    Entity::operator UUID() const
     {
-        return GetComponent<Components::UUID>();
+        return GetComponent<UUID>();
     }
 }

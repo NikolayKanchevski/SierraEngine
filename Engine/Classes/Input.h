@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
 
     /// @brief Contains useful methods for keyboard, mouse, and gamepad input querying.
@@ -12,7 +12,7 @@ namespace Sierra::Engine::Classes
     {
     public:
         /* --- PROPERTIES --- */
-        static uint MAX_GAME_PADS;
+        static constexpr uint MAX_GAME_PADS = 8;
 
         /* --- POLLING METHODS --- */
         static void Start();
@@ -26,19 +26,19 @@ namespace Sierra::Engine::Classes
         /* --- GETTER METHODS --- */
         /// @brief Checks whether a key on the keyboard is pressed.
         /// @param keyCode The key to check.
-        [[nodiscard]] static bool GetKeyPressed(uint keyCode);
+        [[nodiscard]] static bool GetKeyPressed(Key keycode);
 
         /// @brief Checks whether a key on the keyboard is held. Also returns true if pressed.
         /// @param keyCode The key to check.
-        [[nodiscard]] static bool GetKeyHeld(uint keyCode);
+        [[nodiscard]] static bool GetKeyHeld(Key keycode);
 
         /// @brief Checks whether a key on the keyboard is released.
         /// @param keyCode The key to check.
-        [[nodiscard]] static bool GetKeyReleased(uint keyCode);
+        [[nodiscard]] static bool GetKeyReleased(Key keycode);
 
         /// @brief Checks whether a key on the keyboard is resting - is not pressed, held, or released.
         /// @param keyCode The key to check.
-        [[nodiscard]] static bool GetKeyResting(uint keyCode);
+        [[nodiscard]] static bool GetKeyResting(Key keycode);
 
         /// @brief Returns the currently inputted from the keyboard characters.
         [[nodiscard]] static std::vector<String> *GetEnteredCharacters();
@@ -160,21 +160,20 @@ namespace Sierra::Engine::Classes
         static void JoystickCallback(int joystickID, int event);
 
     private:
-        static uint keyboardKeys[349];
-        static uint lastKeySet;
-        static bool keySet;
+        static inline uint keyboardKeys[349];
+        static inline uint lastKeySet = 0;
+        static inline bool keySet = false;
 
-        static std::vector<String> enteredCharacters;
+        static inline std::vector<String> enteredCharacters;
 
-        static uint mouseButtons[349];
-        static uint lastButtonSet;
-        static bool buttonSet;
+        static inline uint mouseButtons[349];
+        static inline uint lastButtonSet = 0;
+        static inline bool buttonSet = false;
 
-        static Vector2 scroll;
-        static bool scrollSet;
+        static inline Vector2 scroll = { 0.0f, 0.0f };
+        static inline bool scrollSet = false;
 
-        static uint gamePadsConnected;
-
+        static inline uint gamePadsConnected = 0;
         static String UnicodePointToChar(uint unicodePoint);
 
         struct GamePad
@@ -182,12 +181,12 @@ namespace Sierra::Engine::Classes
             bool connected;
             String name;
             uint buttons[15];
-            float minimumSensitivities[2] = { 0.2f, 0.2f };
+            float minimumSensitivities[2];
             Vector2 axes[2];
             float triggers[2];
         };
 
-        static GamePad gamePads[];
+        static inline GamePad gamePads[MAX_GAME_PADS];
         static void RegisterGamePad(uint player);
         static bool CheckGamePadConnection(uint player);
     };

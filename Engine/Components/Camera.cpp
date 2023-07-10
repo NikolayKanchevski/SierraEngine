@@ -5,13 +5,11 @@
 #include "Camera.h"
 
 #include "Transform.h"
-#include "../../Core/Rendering/UI/ImGuiCore.h"
+#include "../Classes/Math.h"
+#include "../../Editor/Editor.h"
 #include "../../Core/Rendering/UI/ImGuiUtilities.h"
-#include "../../Core/Rendering/Math/MatrixUtilities.h"
 
-using Sierra::Core::Rendering::UI::ImGuiCore;
-
-namespace Sierra::Engine::Components
+namespace Sierra::Engine
 {
     /* --- CONSTRUCTORS --- */
 
@@ -20,9 +18,9 @@ namespace Sierra::Engine::Components
         CalculateViewMatrix();
         CalculateProjectionMatrix();
 
-        GetComponent<Transform>().PushOnDirtyCallback([this]
+        GetComponent<Transform>().PushOnDirtyCallback([this](const TransformDirtyFlag flag)
         {
-            CalculateViewMatrix();
+            if (IS_FLAG_PRESENT(flag, TransformDirtyFlag::POSITION) || IS_FLAG_PRESENT(flag, TransformDirtyFlag::ROTATION)) CalculateViewMatrix();
         });
 
         if (mainCamera == entt::null) SetAsMain();
@@ -30,6 +28,7 @@ namespace Sierra::Engine::Components
 
     /* --- POLLING METHODS --- */
 
+    using namespace Rendering;
     void Camera::OnDrawUI()
     {
         GUI::BeginProperties();
@@ -88,6 +87,11 @@ namespace Sierra::Engine::Components
         return GetComponent<Transform>().GetWorldRotation();
     }
 
+    Camera& Camera::GetMainCamera()
+    {
+        return World::GetComponent<Camera>(mainCamera);
+    }
+
     void Camera::CalculateViewMatrix()
     {
         Transform &transform = GetComponent<Transform>();
@@ -96,15 +100,14 @@ namespace Sierra::Engine::Components
         Vector3 rendererCameraPosition = transform.GetWorldPositionUpInverted();
         Vector3 rendererCameraFrontDirection = { frontDirection.x, -frontDirection.y, frontDirection.z };
 
-        using namespace Core::Rendering;
-        viewMatrix = MatrixUtilities::CreateViewMatrix(rendererCameraPosition, rendererCameraFrontDirection);
+        viewMatrix = Math::CreateViewMatrix(rendererCameraPosition, rendererCameraFrontDirection);
         inverseViewMatrix = glm::inverse(viewMatrix);
     }
 
     void Camera::CalculateProjectionMatrix()
     {
-        using namespace Core::Rendering;
-        projectionMatrix = MatrixUtilities::CreateProjectionMatrix(FOV, static_cast<float>(ImGuiCore::GetSceneViewWidth()) / static_cast<float>(ImGuiCore::GetSceneViewHeight()), nearClip, farClip);
+        projectionMatrix = Math::CreateProjectionMatrix(FOV, static_cast<float>(Editor::GetSceneViewWidth()) / static_cast<float>(Editor::GetSceneViewHeight()), nearClip, farClip);
+        projectionMatrix[1][1] *= -1; // NOTE: Vulkan-only requirement
         inverseProjectionMatrix = glm::inverse(projectionMatrix);
         isProjectionDirty = false;
     }

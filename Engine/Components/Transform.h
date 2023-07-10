@@ -4,34 +4,42 @@
 
 #pragma once
 
-
 #include "Component.h"
 
-namespace Sierra::Engine::Components
+namespace Sierra::Engine
 {
+
+    enum class TransformDirtyFlag
+    {
+        NONE       = 0b00000000,
+        POSITION   = 0b00000001,
+        ROTATION   = 0b00000010,
+        SCALE      = 0b00000100,
+    };
+
+    DEFINE_ENUM_FLAG_OPERATORS(TransformDirtyFlag);
 
     class Transform : public Component
     {
-
     public:
         /* --- SETTER METHODS --- */
         void SetPosition(Vector3 newPosition);
-        void SetPosition(std::optional<float> xPosition, std::optional<float> yPosition, std::optional<float> zPosition);
+        void SetPosition(Optional<float> xPosition, Optional<float> yPosition, Optional<float> zPosition);
 
         void SetRotation(Vector3 newRotation);
-        void SetRotation(std::optional<float> xRotation, std::optional<float> yRotation, std::optional<float> zRotation);
+        void SetRotation(Optional<float> xRotation, Optional<float> yRotation, Optional<float> zRotation);
 
         void SetScale(Vector3 newScale);
-        void SetScale(std::optional<float> xScale, std::optional<float> yScale, std::optional<float> zScale);
+        void SetScale(Optional<float> xScale, Optional<float> yScale, Optional<float> zScale);
 
         void SetWorldPosition(Vector3 newPosition);
-        void SetWorldPosition(std::optional<float> xPosition, std::optional<float> yPosition, std::optional<float> zPosition);
+        void SetWorldPosition(Optional<float> xPosition, Optional<float> yPosition, Optional<float> zPosition);
 
         void SetWorldRotation(Vector3 newRotation);
-        void SetWorldRotation(std::optional<float> xRotation, std::optional<float> yRotation, std::optional<float> zRotation);
+        void SetWorldRotation(Optional<float> xRotation, Optional<float> yRotation, Optional<float> zRotation);
 
         void SetWorldScale(Vector3 newScale);
-        void SetWorldScale(std::optional<float> xScale, std::optional<float> yScale, std::optional<float> zScale);
+        void SetWorldScale(Optional<float> xScale, Optional<float> yScale, Optional<float> zScale);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline Vector3 GetPosition() const { return localPosition; }
@@ -59,7 +67,7 @@ namespace Sierra::Engine::Components
         [[nodiscard]] inline Vector3 GetDownDirection() const { return -upDirection; }
 
         [[nodiscard]] inline Quaternion GetRotationQuaternion() const { return quaternion; };
-        [[nodiscard]] inline bool IsDirty() const { return isDirty;  }
+        [[nodiscard]] inline bool IsDirty() const { return IS_FLAG_PRESENT(dirtyFlag, TransformDirtyFlag::POSITION) || IS_FLAG_PRESENT(dirtyFlag, TransformDirtyFlag::ROTATION) || IS_FLAG_PRESENT(dirtyFlag, TransformDirtyFlag::SCALE);  }
 
         [[nodiscard]] inline Vector3 GetWorldPositionUpInverted() const { return {position.x, -position.y, position.z }; }
         inline void SetWorldPositionUpInverted(const Vector3 newPosition) { SetWorldPosition({ newPosition.x, -newPosition.y, newPosition.z }); };
@@ -67,9 +75,7 @@ namespace Sierra::Engine::Components
         /* --- POLLING METHODS --- */
         void UpdateChain();
         void OnDrawUI() override;
-
-        void PushOnDirtyCallback(const Callback &callback);
-        void PopOnDirtyCallback();
+        void PushOnDirtyCallback(const std::function<void(TransformDirtyFlag)> &callback);
 
         /* --- OPERATORS --- */
         Transform() = default;
@@ -84,20 +90,19 @@ namespace Sierra::Engine::Components
         Vector3 localRotation = { 0, 0, 0 };
         Vector3 localScale = { 1, 1, 1 };
 
-        bool isDirty = true;
-        std::optional<Matrix4x4> modelMatrix;
+        Optional<Matrix4x4> modelMatrix;
+        TransformDirtyFlag dirtyFlag = TransformDirtyFlag::POSITION | TransformDirtyFlag::ROTATION | TransformDirtyFlag::SCALE;
 
         Vector3 forwardDirection = { 0, 0, 1 };
         Vector3 upDirection { 0, 1, 0 };
         Quaternion quaternion = glm::identity<Quaternion>();
 
-        std::vector<Callback> OnChangeCallbacks;
+        std::vector<std::function<void(TransformDirtyFlag)>> OnChangeCallbacks;
 
         void DoCallbacks();
-        void RecalculateOrigin();
-        void Recalculate(const Transform &parentTransform);
+        static void Recalculate(Transform &tr);
         static void UpdateChainDeeper(entt::entity currentChild);
-        static void RecalculateChainDeeper(entt::entity currentChild, entt::entity parent);
+        static void RecalculateChainDeeper(entt::entity currentChild);
 
     };
 

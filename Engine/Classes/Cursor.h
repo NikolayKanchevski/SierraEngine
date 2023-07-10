@@ -6,9 +6,7 @@
 
 #include "../../Core/Rendering/Window.h"
 
-using Sierra::Core::Rendering::Window;
-
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
     /// @brief A class to interface with the cursor.
     class Cursor
@@ -51,16 +49,7 @@ namespace Sierra::Engine::Classes
         [[nodiscard]] inline static Vector2 GetCursorPosition() { return cursorPosition; }
 
         /// @brief Returns the normalized position of the cursor where both X and Y is a value between 0 and 1.
-        [[nodiscard]] inline static Vector2 GetCursorPositionNormalized()
-        {
-            if (Window::GetCurrentlyFocusedWindow() == nullptr)
-            {
-                ASSERT_WARNING("Trying to get the normalized cursor position within a non-focused window. Since this is not possible and a value of { 0, 0 } has been returned");
-                return { 0, 0 };
-            }
-
-            return {cursorPosition.x / (float) Window::GetCurrentlyFocusedWindow()->GetWidth(), cursorPosition.y / (float) Window::GetCurrentlyFocusedWindow()->GetHeight() };
-        }
+        [[nodiscard]] inline static Vector2 GetCursorPositionNormalized();
 
         /// @brief Returns how much the mouse has been moved horizontally since last frame.
         [[nodiscard]] inline static float GetHorizontalCursorOffset() { return cursorOffset.x; }
@@ -78,12 +67,12 @@ namespace Sierra::Engine::Classes
         static void CursorPositionCallback(GLFWwindow* windowPtr, double xPosition, double yPosition);
 
     private:
-        static Vector2 lastCursorPosition;
-        static Vector2 cursorPosition;
-        static Vector2 cursorOffset;
-        static bool cursorShown;
+        static inline bool cursorPositionSet = false;
+        static inline Vector2 lastCursorPosition = { 0.0f, 0.0f };
+        static inline Vector2 cursorPosition = { 0.0f, 0.0f };
 
-        static bool cursorPositionSet;
+        static inline Vector2 cursorOffset = { 0.0f, 0.0f };
+        static inline bool cursorShown = true;
     };
 
 }

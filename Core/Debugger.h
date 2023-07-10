@@ -11,7 +11,7 @@
     #include <windows.h>
 #endif
 
-namespace Sierra::Core
+namespace Sierra::Internal
 {
     class Debugger
     {
@@ -90,17 +90,17 @@ namespace Sierra::Core
 }
 
 #if DEBUG || ENABLE_DEBUGGING_IN_RELEASE
-    #define ASSERT_ERROR(MESSAGE) Sierra::Core::Debugger::ThrowError(FORMAT_STRING("File {0}:{1} encountered an error on line: {2}", THIS_FILE, THIS_LINE, MESSAGE))
+    #define ASSERT_ERROR(MESSAGE) Sierra::Internal::Debugger::ThrowError(FORMAT_STRING("File {0}:{1} encountered an error on line: {2}", THIS_FILE, THIS_LINE, MESSAGE))
     #define ASSERT_ERROR_FORMATTED(MESSAGE, ...) ASSERT_ERROR(FORMAT_STRING(MESSAGE, ##__VA_ARGS__))
     #define ASSERT_ERROR_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_ERROR(MESSAGE)
     #define ASSERT_ERROR_FORMATTED_IF(EXPRESSION, MESSAGE, ...) if (EXPRESSION) ASSERT_ERROR_FORMATTED(MESSAGE, ##__VA_ARGS__)
 
-    #define ASSERT_WARNING(MESSAGE) Sierra::Core::Debugger::ThrowWarning(MESSAGE)
+    #define ASSERT_WARNING(MESSAGE) Sierra::Internal::Debugger::ThrowWarning(MESSAGE)
     #define ASSERT_WARNING_FORMATTED(MESSAGE, ...) ASSERT_WARNING(FORMAT_STRING(MESSAGE, ##__VA_ARGS__))
     #define ASSERT_WARNING_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_WARNING(MESSAGE)
     #define ASSERT_WARNING_FORMATTED_IF(EXPRESSION, MESSAGE, ...) if (EXPRESSION) ASSERT_WARNING_FORMATTED(MESSAGE, ##__VA_ARGS__)
 
-    #define ASSERT_SUCCESS(MESSAGE) Sierra::Core::Debugger::DisplaySuccess(MESSAGE)
+    #define ASSERT_SUCCESS(MESSAGE) Sierra::Internal::Debugger::DisplaySuccess(MESSAGE)
     #define ASSERT_SUCCESS_FORMATTED(MESSAGE, ...) ASSERT_SUCCESS(FORMAT_STRING(MESSAGE, ##__VA_ARGS__))
     #define ASSERT_SUCCESS_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_SUCCESS(MESSAGE)
     #define ASSERT_SUCCESS_FORMATTED_IF(EXPRESSION, MESSAGE, ...) if (EXPRESSION) ASSERT_SUCCESS_FORMATTED(MESSAGE, ##__VA_ARGS__)
@@ -138,7 +138,7 @@ namespace Sierra::Core
 #endif
 
 #if DEBUG || PROFILE_FUNCTIONS_IN_RELEASE
-    #define ASSERT_INFO(MESSAGE) Sierra::Core::Debugger::DisplayInfo(MESSAGE)
+    #define ASSERT_INFO(MESSAGE) Sierra::Internal::Debugger::DisplayInfo(MESSAGE)
     #define ASSERT_INFO_FORMATTED(MESSAGE, ...) ASSERT_INFO(FORMAT_STRING(MESSAGE, ##__VA_ARGS__))
     #define ASSERT_INFO_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_INFO(MESSAGE)
     #define ASSERT_INFO_FORMATTED_IF(EXPRESSION, MESSAGE, ...) if (EXPRESSION) ASSERT_INFO_FORMATTED(MESSAGE, ##__VA_ARGS__)
@@ -161,8 +161,8 @@ namespace Sierra::Core
             #define FUNC_SIG "FUNC_SIG unknown!"
     #endif
 
-    #define PROFILE_SCOPE_LINE2(name, line) constexpr auto fixedName##line = Sierra::Core::Debugger::CleanupOutputString(name, "__cdecl ");\
-                                                   Sierra::Core::Debugger::FunctionProfiler timer##line(fixedName##line.Data)
+    #define PROFILE_SCOPE_LINE2(name, line) constexpr auto fixedName##line = Sierra::Internal::Debugger::CleanupOutputString(name, "__cdecl ");\
+                                                   Sierra::Internal::Debugger::FunctionProfiler timer##line(fixedName##line.Data)
     #define PROFILE_SCOPE_LINE(name, line) PROFILE_SCOPE_LINE2(name, line)
     #define PROFILE_SCOPE(name) PROFILE_SCOPE_LINE(name, __LINE__)
     #define PROFILE_FUNCTION() PROFILE_SCOPE(FUNC_SIG)

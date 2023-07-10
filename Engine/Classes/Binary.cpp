@@ -4,7 +4,7 @@
 
 #include "Binary.h"
 
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
 
     /* --- CONSTRUCTORS --- */

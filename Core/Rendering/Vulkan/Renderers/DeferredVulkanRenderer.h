@@ -9,17 +9,14 @@
 #include "../../Modules/Raycaster.h"
 #include "../Abstractions/Queries.h"
 #include "../Abstractions/DynamicRenderer.h"
-#include "../Abstractions/GraphicsPipeline.h"
-
 #include "../../../../Engine/Classes/Mesh.h"
+#include "../../../../Editor/Editor.h"
+#include "../Abstractions/GraphicsPipeline.h"
 #include "../../../../Engine/Components/Lighting/PointLight.h"
 #include "../../../../Engine/Components/Lighting/DirectionalLight.h"
 
-using namespace Sierra::Engine::Classes;
-using namespace Sierra::Engine::Components;
-using namespace Sierra::Core::Rendering::Modules;
 
-namespace Sierra::Core::Rendering::Vulkan::Renderers
+namespace Sierra::Rendering
 {
     class DeferredVulkanRenderer : public VulkanRenderer
     {
@@ -45,8 +42,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         {
             ObjectData objectDatas[MAX_MESHES];
 
-            DirectionalLight::ShaderDirectionalLight directionalLights[MAX_DIRECTIONAL_LIGHTS];
-            PointLight::ShaderPointLight pointLights[MAX_POINT_LIGHTS];
+            Engine::DirectionalLight::ShaderDirectionalLight directionalLights[MAX_DIRECTIONAL_LIGHTS];
+            Engine::PointLight::ShaderPointLight pointLights[MAX_POINT_LIGHTS];
 
             uint directionalLightCount;
             uint pointLightCount;
@@ -117,7 +114,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         // Modules
         UniquePtr<Raycaster> raycaster;
 
-        // Rendered image set & timestamp queries
+        // UI-Related resources
         std::vector<VkDescriptorSet> renderedImageDescriptorSets;
         std::vector<UniquePtr<TimestampQuery>> renderTimestampQueries;
 

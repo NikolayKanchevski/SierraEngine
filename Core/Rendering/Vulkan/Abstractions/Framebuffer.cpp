@@ -7,7 +7,7 @@
 #include "../VK.h"
 #include "RenderPass.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
 
     /* --- CONSTRUCTORS --- */
@@ -19,7 +19,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VkFramebufferCreateInfo framebufferCreateInfo{};
         framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferCreateInfo.renderPass = createInfo.renderPass->GetVulkanRenderPass();
-        framebufferCreateInfo.attachmentCount = static_cast<uint>(createInfo.attachments.size());
+        framebufferCreateInfo.attachmentCount = createInfo.attachments.size();
         framebufferCreateInfo.width = createInfo.width;
         framebufferCreateInfo.height = createInfo.height;
         framebufferCreateInfo.layers = 1;

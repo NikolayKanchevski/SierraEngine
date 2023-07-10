@@ -4,11 +4,7 @@
 
 #pragma once
 
-#include "../Version.h"
-
-using namespace Sierra::Engine;
-
-namespace Sierra::Core::Rendering
+namespace Sierra::Rendering
 {
     /// @brief Window manager class. Wraps around a "core" GLFW window and extends its capabilities.
     class Window
@@ -21,7 +17,7 @@ namespace Sierra::Core::Rendering
         /// @param isFocusRequired Whether the window requires to be focused in order to draw and handle events.
         struct WindowCreateInfo
         {
-            String givenTitle = FORMAT_STRING("v{0}.{1}.{2} {3}", Version::MAJOR, Version::MINOR, Version::PATCH, Version::RELEASE_TYPE);
+            String title;
             bool startMaximized = true;
             bool isResizable = true;
             bool isFocusRequired = true;
@@ -128,26 +124,18 @@ namespace Sierra::Core::Rendering
         GLFWwindow *glfwWindow;
         VkSurfaceKHR surface;
 
-        uint xPosition;
-        uint yPosition;
-
         String title;
         int width = 1300, height = 800;
 
         float opacity = 0.0f;
-        bool closed = false, minimized = false, maximized = false, focused = false, hidden = false, resized = false, resizeSet = false, resizable = false, requireFocus = false;
-
-        /* --- SETTER METHODS --- */
-        void Initialize();
-        void CreateSurface();
-        void SetCallbacks();
+        bool minimized = false, maximized = false, focused = false, hidden = false, resized = false, resizeSet = false, resizable = false, requireFocus = false;
 
         /* --- CALLBACKS --- */
         static void GlfwErrorCallback(int errorCode, const char* description);
-        static void WindowResizeCallback(GLFWwindow* windowPtr, int newWidth, int newHeight);
-        static void WindowFocusCallback(GLFWwindow* windowPtr, int focused);
-        static void WindowMinimizeCallback(GLFWwindow* windowPtr, int minimized);
-        static void WindowMaximizeCallback(GLFWwindow* windowPtr, int maximized);
+        static void WindowResizeCallback([[maybe_unused]] GLFWwindow* windowPtr, int newWidth, int newHeight);
+        static void WindowFocusCallback([[maybe_unused]] GLFWwindow* windowPtr, [[maybe_unused]] int focused);
+        static void WindowMinimizeCallback([[maybe_unused]] GLFWwindow* windowPtr, [[maybe_unused]] int minimized);
+        static void WindowMaximizeCallback([[maybe_unused]] GLFWwindow* windowPtr, [[maybe_unused]] int maximized);
         static Window* GetGlfwWindowParentClass(GLFWwindow* windowPtr);
 
         static inline Window* currentlyFocusedWindow;

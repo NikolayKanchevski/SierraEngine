@@ -61,6 +61,10 @@
     // === External Libraries == //
 
     // '-- Vulkan
+    #if __APPLE__
+        // For VkPhysicalDevicePortabilitySubsetFeaturesKHR
+        #define VK_ENABLE_BETA_EXTENSIONS
+    #endif
     #include <volk.h>
     #include <vulkan/vulkan.hpp>
     #include <vulkan/vulkan_to_string.hpp>

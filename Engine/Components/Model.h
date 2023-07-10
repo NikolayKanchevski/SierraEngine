@@ -9,7 +9,7 @@
 #include "../Classes/Entity.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Texture.h"
 
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
 
     /// A wrapper around the Mesh class used for loading 3D objects - collections of meshes.
@@ -21,7 +21,7 @@ namespace Sierra::Engine::Classes
         struct MeshData
         {
             SharedPtr<Mesh> mesh;
-            SharedPtr<Texture>* textures;
+            SharedPtr<Rendering::Texture>* textures;
             Material material {};
         };
 

@@ -6,9 +6,7 @@
 
 #include "../Classes/File.h"
 
-using Sierra::Core::Debugger;
-
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
 
     /* --- CONSTRUCTORS --- */
@@ -27,16 +25,18 @@ namespace Sierra::Engine::Classes
         return model;
     }
 
+    using namespace Rendering;
     void Model::LoadInternal(Model *model, const String &filePath)
     {
         model->modelName = File::GetFileNameFromPath(filePath);
         model->modelLocation = File::RemoveFileNameFromPath(filePath);
 
-        if (modelPool.count(filePath) != 0)
+        auto iterator = modelPool.find(filePath);
+        if (iterator != modelPool.end())
         {
             PROFILE_FUNCTION();
 
-            ModelData &loadedModelData = modelPool[filePath];
+            ModelData &loadedModelData = iterator->second;
 
             // Store pointers to all loaded entities to be able to parent them
             std::vector<Entity> entities;
@@ -144,7 +144,7 @@ namespace Sierra::Engine::Classes
 
             for (uint i = static_cast<uint>(TextureType::TOTAL_COUNT); i--;)
             {
-                auto texture = meshRenderer.GetTexture((TextureType) i);
+                auto texture = meshRenderer.GetTexture(static_cast<TextureType>(i));
                 if (texture != nullptr) texture->Dispose();
             }
         }
@@ -289,8 +289,6 @@ namespace Sierra::Engine::Classes
 
     void Model::ApplyAssimpMeshTextures(MeshRenderer &meshComponent, aiMaterial *assimpMaterial)
     {
-        using Sierra::Core::Rendering::Vulkan::ImageFormat;
-
         // Check if mesh has a diffuse texture
         for (uint i = assimpMaterial->GetTextureCount(aiTextureType_DIFFUSE); i--;)
         {
@@ -339,7 +337,7 @@ namespace Sierra::Engine::Classes
             // Create texture
             auto normalTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
-                .textureType = TextureType::NORMAL_MAP,
+                .textureType = TextureType::NORMAL,
                 .imageFormat = ImageFormat::R8G8B8A8_UNORM,
                 .enableMipMapping = true
             });
@@ -358,7 +356,7 @@ namespace Sierra::Engine::Classes
             // Create texture
             auto heightMapTexture = Texture::Create({
                 .filePath = modelLocation + File::FindInSubdirectories(modelLocation, File::GetFileNameFromPath(textureFilePath.C_Str())),
-                .textureType = TextureType::HEIGHT_MAP,
+                .textureType = TextureType::HEIGHT,
                 .imageFormat = ImageFormat::R8_UNORM
             });
 

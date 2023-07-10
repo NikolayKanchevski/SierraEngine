@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
     class RNG
     {

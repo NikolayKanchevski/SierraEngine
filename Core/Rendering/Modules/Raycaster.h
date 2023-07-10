@@ -8,10 +8,8 @@
 #include "../Vulkan/Abstractions/Buffer.h"
 #include "../Vulkan/Abstractions/ComputePipeline.h"
 
-namespace Sierra::Core::Rendering::Modules
+namespace Sierra::Rendering { inline namespace Modules
 {
-    using namespace Core::Rendering::Vulkan;
-    using namespace Core::Rendering::Vulkan::Abstractions;
 
     struct RaycasterCreateInfo
     {
@@ -54,5 +52,4 @@ namespace Sierra::Core::Rendering::Modules
         };
 
     };
-
-}
+}}

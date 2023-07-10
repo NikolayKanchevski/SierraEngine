@@ -13,10 +13,10 @@
 #define TEXTURE_TYPE_TO_BINDING(textureType)(static_cast<uint>(textureType) + 2)
 #define DIFFUSE_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::DIFFUSE)
 #define SPECULAR_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::SPECULAR)
-#define NORMAL_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::NORMAL_MAP)
-#define HEIGHT_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::HEIGHT_MAP)
+#define NORMAL_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::NORMAL)
+#define HEIGHT_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::HEIGHT)
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
 
     enum class TextureType
@@ -24,9 +24,17 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         UNDEFINED = -1,
         DIFFUSE = 0,
         SPECULAR = 1,
-        NORMAL_MAP = 2,
-        HEIGHT_MAP = 3,
+        NORMAL = 2,
+        HEIGHT = 3,
         TOTAL_COUNT = 4
+    };
+
+    enum class TextureChannels
+    {
+        R = 1,
+        RG = 2,
+        RGB = 3,
+        RGBA = 4
     };
 
     struct TextureCreateInfo
@@ -37,19 +45,38 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         bool enableMipMapping = false;
         SamplerCreateInfo samplerCreateInfo{};
+        bool setDefaultTexture = false;
+    };
+
+    struct BinaryTextureCreateInfo
+    {
+        const void *data = nullptr;
+
+        uint width;
+        uint height;
+        TextureChannels channels;
+
+        TextureType textureType = TextureType::UNDEFINED;
+        ImageFormat imageFormat = ImageFormat::UNDEFINED;
+
+        bool enableMipMapping = false;
+        SamplerCreateInfo samplerCreateInfo{};
+        bool setDefaultTexture = false;
     };
 
     class Texture
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Texture(stbi_uc *stbImage, uint width, uint height, uint givenColorChannelsCount, TextureCreateInfo &createInfo);
-        static SharedPtr<Texture> Create(TextureCreateInfo createInfo, bool setDefaultTexture = false);
+        Texture(const TextureCreateInfo &createInfo);
+        static SharedPtr<Texture> Create(const TextureCreateInfo &createInfo);
+
+        Texture(const BinaryTextureCreateInfo &createInfo);
+        static SharedPtr<Texture> Load(const BinaryTextureCreateInfo &createInfo);
 
         /* --- SETTER METHODS --- */
         void Dispose();
         static void DisposePool();
-
         static void DestroyDefaultTextures();
 
         /* --- GETTER METHODS --- */
@@ -63,7 +90,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         [[nodiscard]] inline bool GetMipMappingEnabled() const { return mipMappingEnabled; }
         [[nodiscard]] inline uint GetMipMapLevels() const { return image->GetMipMapLevels(); }
 
-        [[nodiscard]] inline uint64 GetMemorySize() const{ return memorySize; }
+        [[nodiscard]] inline uint64 GetMemorySize() const{ return GetWidth() * GetHeight() * static_cast<uint>(channels); }
         [[nodiscard]] inline UniquePtr<Sampler>& GetSampler() { return sampler; }
         [[nodiscard]] inline UniquePtr<Image>& GetImage() { return image; }
 
@@ -80,20 +107,17 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         String filePath;
 
         TextureType textureType;
-        uint colorChannelsCount;
-
-        uint64 memorySize;
+        TextureChannels channels;
         UniquePtr<Sampler> sampler;
 
         UniquePtr<Image> image;
         bool mipMappingEnabled = false;
 
-        VkDescriptorSet imGuiDescriptorSet;
-        bool imGuiDescriptorSetCreated = false;
-
         bool isDefault = false;
+        ImTextureID imGuiDescriptorSet = nullptr;
 
         inline static SharedPtr<Texture> defaultTextures[static_cast<uint>(TextureType::TOTAL_COUNT)];
+        // File path hash | Texture pointer
         inline static std::unordered_map<Hash, SharedPtr<Texture>> texturePool;
     };
 

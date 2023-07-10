@@ -5,10 +5,11 @@
 #include "Tag.h"
 #include "../../Core/Rendering/UI/ImGuiUtilities.h"
 
-namespace Sierra::Engine::Components
+namespace Sierra::Engine
 {
     void Tag::OnDrawUI()
     {
+        using namespace Rendering;
         GUI::BeginProperties();
 
         GUI::StringProperty("Tag:", tag, "Some tooltip.");

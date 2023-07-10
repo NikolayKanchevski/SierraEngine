@@ -8,7 +8,7 @@
 #include "Texture.h"
 #include "../VK.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
 
     // ********************* Descriptor Set Layout ********************* \\
@@ -109,7 +109,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         delete[](poolSizes);
     }
 
-    UniquePtr<DescriptorPool> DescriptorPool::Create(DescriptorPoolCreateInfo givenCreateInfo)
+    UniquePtr<DescriptorPool> DescriptorPool::Create(const DescriptorPoolCreateInfo &givenCreateInfo)
     {
         return std::make_unique<DescriptorPool>(givenCreateInfo);
     }

@@ -5,7 +5,7 @@
 #pragma once
 
 
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
     /// @brief A class that imitates a stopwatch functionality and can be used to detect how much time takes a block of code to get executed.
     class Stopwatch

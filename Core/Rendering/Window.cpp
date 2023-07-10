@@ -8,10 +8,7 @@
 #include "../../Engine/Classes/Cursor.h"
 #include "Vulkan/VK.h"
 
-using namespace Sierra::Engine::Classes;
-using Sierra::Core::Rendering::Vulkan::VK;
-
-namespace Sierra::Core::Rendering
+namespace Sierra::Rendering
 {
 
     UniquePtr<Window> Window::Create(const WindowCreateInfo &createInfo)
@@ -20,23 +17,66 @@ namespace Sierra::Core::Rendering
     }
 
     Window::Window(const WindowCreateInfo &createInfo)
-        : title(createInfo.givenTitle), maximized(createInfo.startMaximized), requireFocus(createInfo.isFocusRequired), resizable(createInfo.isResizable)
+        : title(createInfo.title), maximized(createInfo.startMaximized), requireFocus(createInfo.isFocusRequired), resizable(createInfo.isResizable)
     {
         PROFILE_FUNCTION();
 
         ASSERT_ERROR_IF(!glfwInit(), "GLFW could not be started");
-
         ASSERT_ERROR_IF(!glfwVulkanSupported(), "Vulkan not supported on this system");
 
+        // Check if provided settings are legal
         if (maximized && !createInfo.isResizable)
         {
             ASSERT_WARNING("A maximized window cannot be created unless resizing is allowed. Setting was automatically disabled");
             maximized = false;
         }
 
-        Initialize();
-        CreateSurface();
-        SetCallbacks();
+        // Set window creation settings
+        glfwWindowHint(GLFW_RESIZABLE, resizable);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_VISIBLE, 0);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+
+        // Create window
+        glfwWindow = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+        glfwSetWindowUserPointer(glfwWindow, this);
+
+        // If maximized state requested, maximize
+        if (maximized)
+        {
+            glfwMaximizeWindow(glfwWindow);
+            glfwGetWindowSize(glfwWindow, &width, &height);
+        }
+
+        // Set focused window
+        currentlyFocusedWindow = this;
+
+        // Create window surface
+        glfwCreateWindowSurface(VK::GetInstance(), glfwWindow, nullptr, &surface);
+
+        // Set callbacks
+        #if DEBUG
+            glfwSetErrorCallback(GlfwErrorCallback);
+        #endif
+
+        glfwSetWindowSizeCallback(glfwWindow, WindowResizeCallback);
+        glfwSetWindowFocusCallback(glfwWindow, WindowFocusCallback);
+        glfwSetWindowRefreshCallback(glfwWindow, [](GLFWwindow* windowPtr) { WindowFocusCallback(windowPtr, true); });
+        glfwSetWindowIconifyCallback(glfwWindow, WindowMinimizeCallback);
+        glfwSetWindowMaximizeCallback(glfwWindow, WindowMaximizeCallback);
+
+        glfwSetCharCallback(glfwWindow, Engine::Input::KeyboardCharacterCallback);
+        glfwSetKeyCallback(glfwWindow, Engine::Input::KeyboardKeyCallback);
+        glfwSetMouseButtonCallback(glfwWindow, Engine::Input::MouseButtonCallback);
+        glfwSetScrollCallback(glfwWindow, Engine::Input::MouseScrollCallback);
+        glfwSetJoystickCallback(Engine::Input::JoystickCallback);
+
+        // Set initial cursor position
+        double xCursorPosition, yCursorPosition;
+        glfwGetCursorPos(glfwWindow, &xCursorPosition, &yCursorPosition);
+        glfwSetCursorPosCallback(glfwWindow, Engine::Cursor::CursorPositionCallback);
+        Engine::Cursor::SetCursorPosition({ xCursorPosition, yCursorPosition });
     }
 
     /* --- POLLING METHODS --- */
@@ -57,7 +97,7 @@ namespace Sierra::Core::Rendering
 
     /* --- SETTER METHODS --- */
 
-    void Window::SetTitle(const String& givenTitle)
+    void Window::SetTitle(const String &givenTitle)
     {
         title = givenTitle;
         glfwSetWindowTitle(glfwWindow, givenTitle.c_str());
@@ -81,67 +121,6 @@ namespace Sierra::Core::Rendering
         glfwSetWindowOpacity(glfwWindow, givenOpacity);
     }
 
-    /* --- SETTER METHODS --- */
-
-    void Window::Initialize()
-    {
-        glfwWindowHint(GLFW_RESIZABLE, resizable);
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_VISIBLE, 0);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-
-        glfwWindow = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
-
-        if (maximized)
-        {
-            glfwMaximizeWindow(glfwWindow);
-            glfwGetWindowSize(glfwWindow, &width, &height);
-        }
-
-        glfwSetWindowUserPointer(glfwWindow, this);
-
-        currentlyFocusedWindow = this;
-    }
-
-    void Window::CreateSurface()
-    {
-        // Create window surface
-        glfwCreateWindowSurface(VK::GetInstance(), glfwWindow, nullptr, &surface);
-    }
-
-    void Window::SetCallbacks()
-    {
-        #if DEBUG
-            glfwSetErrorCallback(GlfwErrorCallback);
-        #endif
-
-        glfwSetWindowSizeCallback(glfwWindow, WindowResizeCallback);
-
-        glfwSetWindowFocusCallback(glfwWindow, WindowFocusCallback);
-
-        glfwSetWindowRefreshCallback(glfwWindow, [](GLFWwindow* windowPtr) { WindowFocusCallback(windowPtr, true); });
-
-        glfwSetWindowIconifyCallback(glfwWindow, WindowMinimizeCallback);
-
-        glfwSetWindowMaximizeCallback(glfwWindow, WindowMaximizeCallback);
-
-        glfwSetCharCallback(glfwWindow, Input::KeyboardCharacterCallback);
-
-        glfwSetKeyCallback(glfwWindow, Input::KeyboardKeyCallback);
-
-        glfwSetMouseButtonCallback(glfwWindow, Input::MouseButtonCallback);
-
-        glfwSetScrollCallback(glfwWindow, Input::MouseScrollCallback);
-
-        glfwSetJoystickCallback(Input::JoystickCallback);
-
-        double xCursorPosition, yCursorPosition;
-        glfwGetCursorPos(glfwWindow, &xCursorPosition, &yCursorPosition);
-        glfwSetCursorPosCallback(glfwWindow, Cursor::CursorPositionCallback);
-        Cursor::SetCursorPosition({ xCursorPosition, yCursorPosition });
-    }
-
     /* --- CALLBACKS --- */
 
     void Window::GlfwErrorCallback(int errorCode, const char *description)
@@ -157,7 +136,7 @@ namespace Sierra::Core::Rendering
         windowObject->resized = true;
         windowObject->resizeSet = true;
 
-        Cursor::ResetCursorOffset();
+        Engine::Cursor::ResetCursorOffset();
     }
 
     void Window::WindowFocusCallback(GLFWwindow *windowPtr, int focused)
@@ -168,25 +147,25 @@ namespace Sierra::Core::Rendering
 
         windowObject->focused = focused;
 
-        Cursor::ResetCursorOffset();
+        Engine::Cursor::ResetCursorOffset();
     }
 
-    void Window::WindowMinimizeCallback([[maybe_unused]] GLFWwindow *windowPtr, int minimized)
+    void Window::WindowMinimizeCallback(GLFWwindow *windowPtr, int minimized)
     {
         auto windowObject = GetGlfwWindowParentClass(windowPtr);
 
         windowObject->minimized = !windowObject->focused;
 
-        Cursor::ResetCursorOffset();
+        Engine::Cursor::ResetCursorOffset();
     }
 
-    void Window::WindowMaximizeCallback([[maybe_unused]] GLFWwindow *windowPtr, int maximized)
+    void Window::WindowMaximizeCallback(GLFWwindow *windowPtr, int maximized)
     {
         auto windowObject = GetGlfwWindowParentClass(windowPtr);
 
         windowObject->maximized = !windowObject->minimized;
 
-        Cursor::ResetCursorOffset();
+        Engine::Cursor::ResetCursorOffset();
     }
 
     Window *Window::GetGlfwWindowParentClass(GLFWwindow* windowPtr)

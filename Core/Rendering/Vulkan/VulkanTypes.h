@@ -7,7 +7,7 @@
 #include "../../Internal/Definitions.h"
 #include "../../Internal/Macros.h"
 
-namespace Sierra::Core::Rendering::Vulkan
+namespace Sierra::Rendering
 {
 
     enum class ImageFormat
@@ -749,12 +749,12 @@ namespace Sierra::Core::Rendering::Vulkan
         ComponentSwizzle b;
         ComponentSwizzle a;
 
-        operator VkComponentMapping const&() const noexcept
+        operator VkComponentMapping const&() const
         {
             return *reinterpret_cast<const VkComponentMapping*>(this);
         }
 
-        operator VkComponentMapping&() noexcept
+        operator VkComponentMapping&()
         {
             return *reinterpret_cast<VkComponentMapping*>(this);
         }

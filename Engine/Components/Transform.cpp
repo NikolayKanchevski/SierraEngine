@@ -5,32 +5,31 @@
 #include "Transform.h"
 
 #include "Relationship.h"
-#include "../../Core/Rendering/UI/ImGuiUtilities.h"
-#include "../../Core/Rendering/Math/MatrixUtilities.h"
 #include "MeshRenderer.h"
+#include "../Classes/Math.h"
+#include "../../Core/Rendering/UI/ImGuiUtilities.h"
 
-#define CHECK_CHANGE(a, b) if (a == b) return; else { a = b; isDirty = true; }
+#define CHECK_CHANGE(OLD_VALUE, NEW_VALUE, CHANGE) if (OLD_VALUE == NEW_VALUE) { return; } else { OLD_VALUE = NEW_VALUE; dirtyFlag |= CHANGE; }
 
-namespace Sierra::Engine::Components
+namespace Sierra::Engine
 {
-
     /* --- SETTER METHODS --- */
 
-    void Transform::SetPosition(const Vector3 newPosition) { CHECK_CHANGE(localPosition, newPosition) }
-    void Transform::SetRotation(const Vector3 newRotation) { CHECK_CHANGE(localRotation, newRotation) }
-    void Transform::SetScale(const Vector3 newScale) { CHECK_CHANGE(localScale, newScale) }
+    void Transform::SetPosition(const Vector3 newPosition) { CHECK_CHANGE(localPosition, newPosition, TransformDirtyFlag::POSITION) }
+    void Transform::SetRotation(const Vector3 newRotation) { CHECK_CHANGE(localRotation, newRotation, TransformDirtyFlag::ROTATION) }
+    void Transform::SetScale(const Vector3 newScale) { CHECK_CHANGE(localScale, newScale, TransformDirtyFlag::SCALE) }
 
-    void Transform::SetPosition(std::optional<float> xPosition, std::optional<float> yPosition, std::optional<float> zPosition)
+    void Transform::SetPosition(Optional<float> xPosition, Optional<float> yPosition, Optional<float> zPosition)
     {
         SetPosition({ xPosition ? xPosition.value() :  localPosition.x, yPosition ? yPosition.value() : localPosition.y, zPosition ? zPosition.value() : localPosition.z });
     }
 
-    void Transform::SetRotation(const std::optional<float> xRotation, const std::optional<float> yRotation, const std::optional<float> zRotation)
+    void Transform::SetRotation(const Optional<float> xRotation, const Optional<float> yRotation, const Optional<float> zRotation)
     {
         SetRotation({ xRotation ? xRotation.value() :  localRotation.x, yRotation ? yRotation.value() : localRotation.y, zRotation ? zRotation.value() : localRotation.z });
     }
 
-    void Transform::SetScale(const std::optional<float> xScale, const std::optional<float> yScale, const std::optional<float> zScale)
+    void Transform::SetScale(const Optional<float> xScale, const Optional<float> yScale, const Optional<float> zScale)
     {
         SetScale({ xScale ? xScale.value() : localScale.x, yScale ? yScale.value() : localScale.y, zScale ? zScale.value() : localScale.z });
     }
@@ -39,8 +38,7 @@ namespace Sierra::Engine::Components
     {
         if (newPosition == position) return;
 
-        isDirty = true;
-
+        dirtyFlag |= TransformDirtyFlag::POSITION;
         if (HasParentTransform())
         {
             localPosition = newPosition - GetParentTransform().position;
@@ -52,15 +50,16 @@ namespace Sierra::Engine::Components
         }
     }
 
-    void Transform::SetWorldPosition(const std::optional<float> xPosition, const std::optional<float> yPosition, const std::optional<float> zPosition)
+    void Transform::SetWorldPosition(const Optional<float> xPosition, const Optional<float> yPosition, const Optional<float> zPosition)
     {
         SetWorldPosition({ xPosition ? xPosition.value() : position.x, yPosition ? yPosition.value() : position.y, zPosition ? zPosition.value() : position.z });
     }
 
     void Transform::SetWorldRotation(const Vector3 newRotation)
     {
-        isDirty = newRotation != rotation;
+        if (newRotation == rotation) return;
 
+        dirtyFlag |= TransformDirtyFlag::ROTATION;
         if (HasParentTransform())
         {
             localRotation = newRotation - GetParentTransform().rotation;
@@ -72,15 +71,16 @@ namespace Sierra::Engine::Components
         }
     }
 
-    void Transform::SetWorldRotation(const std::optional<float> xRotation, const std::optional<float> yRotation, const std::optional<float> zRotation)
+    void Transform::SetWorldRotation(const Optional<float> xRotation, const Optional<float> yRotation, const Optional<float> zRotation)
     {
         SetWorldRotation({xRotation ? xRotation.value() : rotation.x, yRotation ? yRotation.value() : rotation.y, zRotation ? zRotation.value() : rotation.z });
     }
 
     void Transform::SetWorldScale(const Vector3 newScale)
     {
-        isDirty = newScale != scale;
+        if (newScale == scale) return;
 
+        dirtyFlag |= TransformDirtyFlag::SCALE;
         if (HasParentTransform())
         {
             localScale = newScale / GetParentTransform().scale;
@@ -92,7 +92,7 @@ namespace Sierra::Engine::Components
         }
     }
 
-    void Transform::SetWorldScale(const std::optional<float> xScale, const std::optional<float> yScale, const std::optional<float> zScale)
+    void Transform::SetWorldScale(const Optional<float> xScale, const Optional<float> yScale, const Optional<float> zScale)
     {
         SetWorldScale({xScale ? xScale.value() : scale.x, yScale ? yScale.value() : scale.y, zScale ? zScale.value() : scale.z });
     }
@@ -130,15 +130,13 @@ namespace Sierra::Engine::Components
 
     void Transform::UpdateChain()
     {
-        if (isDirty)
+        if (IsDirty())
         {
-            RecalculateOrigin();
+            Recalculate(*this);
             for (const auto &child : World::GetComponent<Relationship>(enttEntity).GetEnttChildrenEntities())
             {
-                RecalculateChainDeeper(child, enttEntity);
+                RecalculateChainDeeper(child);
             }
-
-            isDirty = false;
         }
         else
         {
@@ -150,19 +148,17 @@ namespace Sierra::Engine::Components
     {
         for (const auto &subChild : World::GetComponent<Relationship>(currentChild).GetEnttChildrenEntities())
         {
-            if (!World::GetComponent<Transform>(subChild).isDirty) UpdateChainDeeper(subChild);
-            else RecalculateChainDeeper(subChild, currentChild);
+            if (!World::GetComponent<Transform>(subChild).IsDirty()) UpdateChainDeeper(subChild);
+            else RecalculateChainDeeper(subChild);
         }
     }
 
-    void Transform::RecalculateChainDeeper(const entt::entity currentChild, const entt::entity parent)
+    void Transform::RecalculateChainDeeper(const entt::entity currentChild)
     {
-        Transform &parentTransform = World::GetComponent<Transform>(parent);
-        World::GetComponent<Transform>(currentChild).Recalculate(parentTransform);
-
+        Recalculate(World::GetComponent<Transform>(currentChild));
         for (const auto &subChild : World::GetComponent<Relationship>(currentChild).GetEnttChildrenEntities())
         {
-            RecalculateChainDeeper(subChild, currentChild);
+            RecalculateChainDeeper(subChild);
         }
     }
 
@@ -170,54 +166,45 @@ namespace Sierra::Engine::Components
     {
         for (const auto &Callback : OnChangeCallbacks)
         {
-            Callback();
+            Callback(dirtyFlag);
         }
     }
 
-    void Transform::Recalculate(const Transform &parentTransform)
+    void Transform::Recalculate(Transform &tr)
     {
-        position = localPosition + parentTransform.position;
-        rotation = localRotation + parentTransform.rotation;
-        scale = localScale * parentTransform.scale;
+        if (tr.HasParentTransform())
+        {
+            auto parentTransform = tr.GetParentTransform();
+            tr.position = tr.localPosition + parentTransform.position;
+            tr.rotation = tr.localRotation + parentTransform.rotation;
+            tr.scale = tr.localScale * parentTransform.scale;
+            tr.dirtyFlag |= parentTransform.dirtyFlag;
+        }
+        else
+        {
+            tr.position = tr.localPosition;
+            tr.rotation = tr.localRotation;
+            tr.scale = tr.localScale;
+        }
 
-        quaternion = Quaternion({glm::radians(-rotation.y), glm::radians(rotation.x), glm::radians(rotation.z) });
-        forwardDirection.x = 2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y);
-        forwardDirection.y = 2 * (quaternion.y * quaternion.z - quaternion.w * quaternion.x);
-        forwardDirection.z = 1 - 2 * (quaternion.x * quaternion.x + quaternion.y * quaternion.y);
+        tr.quaternion = Quaternion({glm::radians(-tr.rotation.y), glm::radians(tr.rotation.x), glm::radians(tr.rotation.z) });
+        tr.forwardDirection.x = 2 * (tr.quaternion.x * tr.quaternion.z + tr.quaternion.w * tr.quaternion.y);
+        tr.forwardDirection.y = 2 * (tr.quaternion.y * tr.quaternion.z - tr.quaternion.w * tr.quaternion.x);
+        tr.forwardDirection.z = 1 - 2 * (tr.quaternion.x * tr.quaternion.x + tr.quaternion.y * tr.quaternion.y);
 
-        upDirection.x = 2 * (quaternion.x * quaternion.y - quaternion.w * quaternion.z);
-        upDirection.y = 1 - 2 * (quaternion.x * quaternion.x + quaternion.z * quaternion.z);
-        upDirection.z = 2 * (quaternion.y * quaternion.z + quaternion.w * quaternion.x);
+        tr.upDirection.x = 2 * (tr.quaternion.x * tr.quaternion.y - tr.quaternion.w * tr.quaternion.z);
+        tr.upDirection.y = 1 - 2 * (tr.quaternion.x * tr.quaternion.x + tr.quaternion.z * tr.quaternion.z);
+        tr.upDirection.z = 2 * (tr.quaternion.y * tr.quaternion.z + tr.quaternion.w * tr.quaternion.x);
 
-        if (HasComponent<MeshRenderer>()) modelMatrix = MatrixUtilities::CreateModelMatrix(GetWorldPositionUpInverted(), rotation, scale);
+        if (tr.HasComponent<MeshRenderer>()) tr.modelMatrix = Math::CreateModelMatrix(tr.GetWorldPositionUpInverted(), tr.rotation, tr.scale);
 
-        DoCallbacks();
-
-        isDirty = false;
-    }
-
-    void Transform::RecalculateOrigin()
-    {
-        position = localPosition;
-        rotation = localRotation;
-        scale = localScale;
-
-        quaternion = Quaternion({glm::radians(-rotation.y), glm::radians(rotation.x), glm::radians(rotation.z) });
-        forwardDirection.x = 2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y);
-        forwardDirection.y = 2 * (quaternion.y * quaternion.z - quaternion.w * quaternion.x);
-        forwardDirection.z = 1 - 2 * (quaternion.x * quaternion.x + quaternion.y * quaternion.y);
-
-        upDirection.x = 2 * (quaternion.x * quaternion.y - quaternion.w * quaternion.z);
-        upDirection.y = 1 - 2 * (quaternion.x * quaternion.x + quaternion.z * quaternion.z);
-        upDirection.z = 2 * (quaternion.y * quaternion.z + quaternion.w * quaternion.x);
-
-        if (HasComponent<MeshRenderer>()) modelMatrix = MatrixUtilities::CreateModelMatrix(GetWorldPositionUpInverted(), rotation, scale);
-
-        DoCallbacks();
+        tr.DoCallbacks();
+        tr.dirtyFlag = TransformDirtyFlag::NONE;
     }
 
     void Transform::OnDrawUI()
     {
+        using namespace Rendering;
         GUI::BeginProperties(ImGuiTableFlags_BordersInnerV);
 
         static float resetValues[3];
@@ -230,7 +217,7 @@ namespace Sierra::Engine::Components
         tooltips[0] = "Some tooltip.";
         tooltips[1] = "Some tooltip.";
         tooltips[2] = "Some tooltip.";
-        if (GUI::PropertyVector3("Position:", localPosition, resetValues, tooltips)) isDirty = true;
+        if (GUI::PropertyVector3("Position:", localPosition, resetValues, tooltips)) dirtyFlag |= TransformDirtyFlag::POSITION;
 
         resetValues[0] = 0.0f;
         resetValues[1] = 0.0f;
@@ -239,7 +226,7 @@ namespace Sierra::Engine::Components
         tooltips[0] = "Some tooltip.";
         tooltips[1] = "Some tooltip.";
         tooltips[2] = "Some tooltip.";
-        if (GUI::PropertyVector3("Rotation:", localRotation, resetValues, tooltips)) isDirty = true;
+        if (GUI::PropertyVector3("Rotation:", localRotation, resetValues, tooltips)) dirtyFlag |= TransformDirtyFlag::ROTATION;
 
         resetValues[0] = 1.0f;
         resetValues[1] = 1.0f;
@@ -248,20 +235,14 @@ namespace Sierra::Engine::Components
         tooltips[0] = "Some tooltip.";
         tooltips[1] = "Some tooltip.";
         tooltips[2] = "Some tooltip.";
-        if (GUI::PropertyVector3("Scale:", localScale, resetValues, tooltips)) isDirty = true;
+        if (GUI::PropertyVector3("Scale:", localScale, resetValues, tooltips)) dirtyFlag |= TransformDirtyFlag::SCALE;
 
         GUI::EndProperties();
     }
 
-    void Transform::PushOnDirtyCallback(const Callback &callback)
+    void Transform::PushOnDirtyCallback(const std::function<void(TransformDirtyFlag)> &callback)
     {
         OnChangeCallbacks.push_back(callback);
     }
-
-    void Transform::PopOnDirtyCallback()
-    {
-        OnChangeCallbacks.pop_back();
-    }
-
 
 }

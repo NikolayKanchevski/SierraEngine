@@ -5,11 +5,10 @@
 #pragma once
 
 #include "../Vulkan/Abstractions/Texture.h"
-using Sierra::Core::Rendering::Vulkan::Abstractions::Texture;
 
 #define HOVER_TIME_THRESHOLD 1.0f
 
-namespace GUI
+namespace Sierra::Rendering::GUI
 {
     void GenerateID();
 
@@ -109,19 +108,17 @@ namespace GUI
     template<typename T>
     inline void DrawComponent(entt::entity entity)
     {
-        using namespace Sierra::Core;
-
         const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
-        if (World::HasComponent<T>(entity))
+        if (Engine::World::HasComponent<T>(entity))
         {
-            auto& component = World::GetComponent<T>(entity);
+            auto& component = Engine::World::GetComponent<T>(entity);
             ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
 
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
 
             float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
 
-            bool open = ImGui::TreeNodeEx((void*)(typeid(T).hash_code() << static_cast<uint>(entity)), treeNodeFlags, "%s", Debugger::TypeToString<T>().c_str());
+            bool open = ImGui::TreeNodeEx((void*)(typeid(T).hash_code() << static_cast<uint>(entity)), treeNodeFlags, "%s", Internal::Debugger::TypeToString<T>().c_str());
             ImGui::PopStyleVar();
 
             ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
@@ -165,7 +162,7 @@ namespace GUI
             using Type = typename std::remove_reference<decltype(value)>::type;
             std::string stringName = std::string(field.fieldName);
             stringName[0] = std::toupper(stringName[0]);
-            modified = modified || GUI::AnyPropertyInput<Type>(stringName.c_str(), value);
+            modified |= GUI::AnyPropertyInput<Type>(stringName.c_str(), value);
         });
 
         GUI::EndProperties();

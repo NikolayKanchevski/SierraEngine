@@ -2,23 +2,33 @@
 // Created by Nikolay Kanchevski on 10.10.22.
 //
 
+#include "Rendering/Vulkan/VK.h"
 #include "../Engine/Classes/Time.h"
-#include "../Engine/Classes/Cursor.h"
+#include "../Engine/Classes/File.h"
 #include "../Engine/Classes/Input.h"
 #include "../Engine/Classes/Entity.h"
+#include "../Engine/Classes/Cursor.h"
+#include "../Engine/Components/Model.h"
 #include "../Engine/Components/Transform.h"
 #include "../Engine/Classes/SystemInformation.h"
 
-using namespace Sierra::Engine::Classes;
-
-namespace Sierra::Core
+namespace Sierra::Engine
 {
+    Entity World::selectedEntity = Entity::Null;
+
     /* --- POLLING METHODS --- */
 
     void World::Start()
     {
+        // Initialize engine resources
+        glfwInit();
         Input::Start();
         Cursor::Start();
+        File::Start();
+        SystemInformation::Start();
+
+        // Initialize rendering resources
+        Rendering::VK::Initialize();
     }
 
     void World::Prepare()
@@ -39,7 +49,31 @@ namespace Sierra::Core
 
     void World::Shutdown()
     {
+        Model::DisposePool();
+        Rendering::Texture::DisposePool();
+        Rendering::Texture::DestroyDefaultTextures();
+
         SystemInformation::Shutdown();
+        glfwTerminate();
+    }
+
+    /* --- SETTER METHODS --- */
+
+    void World::SetSelectedEntity(const Entity entity)
+    {
+        selectedEntity = entity;
+    }
+
+    void World::DestroyEntity(const Entity entity)
+    {
+        enttRegistry->destroy(entity);
+    }
+
+    /* --- GETTER METHODS --- */
+
+    Entity World::GetSelectedEntity()
+    {
+        return selectedEntity;
     }
 
 }

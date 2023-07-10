@@ -5,11 +5,15 @@
 #include "DeferredVulkanRenderer.h"
 
 #include "../VK.h"
+#include "../../../World.h"
+#include "../../UI/ImGuiUtilities.h"
+#include "../../../../Engine/Classes/Math.h"
 #include "../../../../Engine/Classes/Time.h"
 #include "../../../../Engine/Classes/Input.h"
+#include "../../../../Engine/Classes/Entity.h"
+#include "../../../../Engine/Classes/Raycast.h"
 #include "../../../../Engine/Components/Camera.h"
 #include "../../../../Engine/Components/MeshRenderer.h"
-#include "../../../EngineCore.h"
 
 #define DIFFUSE_BUFFER_BINDING 2
 #define SS_BUFFER_BINDING 3          // Specular & Shininess
@@ -26,7 +30,7 @@
     #define FOR_EACH_LOOP std::for_each
 #endif
 
-namespace Sierra::Core::Rendering::Vulkan::Renderers
+namespace Sierra::Rendering
 {
 
     /* --- CONSTRUCTORS --- */
@@ -41,14 +45,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
     void DeferredVulkanRenderer::InitializeRenderer()
     {
-        // Set what UI panels to use
-        PushUIPanel<RendererViewportPanel>(*this);
-        PushUIPanel<PropertiesPanel>();
-        PushUIPanel<HierarchyPanel>();
-        PushUIPanel<DebugPanel>(*this);
-        PushUIPanel<DetailedDebugPanel>(*this);
-        PushUIPanel<GamePadDebugPanel>();
-
         // Create buffers
         uniformBuffers.resize(maxConcurrentFrames);
         storageBuffers.resize(maxConcurrentFrames);
@@ -158,7 +154,7 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         // Load G-Buffer (scene) shaders
         auto vertexShader = Shader::Load({
-            .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/G-Buffer.vert.spv",
+            .filePath = Engine::File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/G-Buffer.vert.spv",
             .shaderType = ShaderType::VERTEX,
             .vertexAttributes = {
                 VertexAttributeType::POSITION,
@@ -166,14 +162,14 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
                 VertexAttributeType::UV
             }
         });
-        auto fragmentShader = Shader::Load({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/G-Buffer.frag.spv", .shaderType = ShaderType::FRAGMENT });
+        auto fragmentShader = Shader::Load({ .filePath = Engine::File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/G-Buffer.frag.spv", .shaderType = ShaderType::FRAGMENT });
 
         // Create scene renderer pipeline
         bufferPipeline = GraphicsPipeline::Create({
             .shaders = { vertexShader, fragmentShader },
             .shaderInfo = CompiledPipelineShaderInfo {
                 .pushConstantData = PushConstantData {
-                    .size = sizeof(MeshPushConstant),
+                    .size = sizeof(Engine::MeshPushConstant),
                     .shaderStages = ShaderType::VERTEX | ShaderType::FRAGMENT
                 },
                 .descriptorSetLayout = &bufferDescriptorSetLayout
@@ -185,12 +181,12 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         // Crete skybox cubemap
         skyboxCubemap = Cubemap::Create({ .filePaths = {
-            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_right.png",
-            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_left.png",
-            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_top.png",
-            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_bottom.png",
-            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_front.png",
-            File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_back.png",
+            Engine::File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_right.png",
+            Engine::File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_left.png",
+            Engine::File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_top.png",
+            Engine::File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_bottom.png",
+            Engine::File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_front.png",
+            Engine::File::OUTPUT_FOLDER_PATH + "Textures/Skyboxes/Default/skybox_back.png",
         }, .cubemapType = CubemapType::SKYBOX });
 
         // Create final rendered image
@@ -227,9 +223,9 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         });
 
         // Load merging shaders
-        vertexShader = Shader::Load({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/Composition.vert.spv", .shaderType = ShaderType::VERTEX });
+        vertexShader = Shader::Load({ .filePath = Engine::File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/Composition.vert.spv", .shaderType = ShaderType::VERTEX });
         fragmentShader = Shader::Load({
-            .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/Composition.frag.spv",
+            .filePath = Engine::File::OUTPUT_FOLDER_PATH + "Shaders/Deferred/Composition.frag.spv",
             .shaderType = ShaderType::FRAGMENT,
             .specializationConstants = {
                 { 0, { .size = UINT_SIZE } },
@@ -253,7 +249,10 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             .shadingType = ShadingType::FILL
         });
 
-        // Create descriptor sets for rendered images & create timestamp queries
+        // Create modules
+        raycaster = Raycaster::Create({ .IDBuffer = IDBuffer, .depthBuffer = depthStencilBuffer });
+
+        // Create UI-related objects
         renderTimestampQueries.resize(maxConcurrentFrames);
         renderedImageDescriptorSets.resize(maxConcurrentFrames);
         for (uint i = maxConcurrentFrames; i--;)
@@ -261,9 +260,6 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
             renderTimestampQueries[i] = TimestampQuery::Create();
             renderedImageDescriptorSets[i] = ImGui_ImplVulkan_AddTexture(bufferSampler->GetVulkanSampler(), renderedImage->GetVulkanImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
-
-        // Create modules
-        raycaster = Raycaster::Create({ .IDBuffer = IDBuffer, .depthBuffer = depthStencilBuffer });
     }
 
     UniquePtr<DeferredVulkanRenderer> DeferredVulkanRenderer::Create(const VulkanRendererCreateInfo createInfo)
@@ -275,6 +271,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
     void DeferredVulkanRenderer::Update()
     {
+        using namespace Engine;
+
         // Get current frame index
         uint currentFrame = swapchain->GetCurrentFrameIndex();
 
@@ -318,13 +316,19 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
         // Rotate skybox
         float timeAngle = std::fmod(Time::GetUpTime(), 360.0f) * 0.8f;
-        compositionPushConstantData.skyboxModel = MatrixUtilities::CreateModelMatrix({ 0.0f, 0.0f, 0.0f }, { timeAngle, 0.0f, 0.0f });
+        compositionPushConstantData.skyboxModel = Engine::Math::CreateModelMatrix({ 0.0f, 0.0f, 0.0f }, { timeAngle, 0.0f, 0.0f });
     }
 
     void DeferredVulkanRenderer::DrawUI()
     {
-        ViewportPanel().DrawUI();
+        // Draw global editor
+        Editor::DrawEditor({
+            .imGuiInstance = imGuiInstance,
+            .renderedTextureDescriptorSet = renderedImageDescriptorSets[swapchain->GetCurrentFrameIndex()],
+            .frameDrawTime = renderTimestampQueries[swapchain->GetCurrentFrameIndex()]->GetTimeTaken()
+        });
 
+        // Draw renderer's window
         GUI::BeginWindow("Renderer's Properties", nullptr, ImGuiWindowFlags_NoNav);
 
         // Rendered image type dropdown
@@ -398,11 +402,11 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         bufferPipeline->SetShaderBinding(STORAGE_BUFFER_BINDING, storageBuffers[currentFrame]);
 
         // For each mesh in the world
-        auto enttMeshView = World::GetAllComponentsOfType<MeshRenderer>();
+        auto enttMeshView = Engine::World::GetAllComponentsOfType<Engine::MeshRenderer>();
         for (auto enttEntity : enttMeshView)
         {
             // Bind mesh
-            auto &meshRenderer = enttMeshView.get<MeshRenderer>(enttEntity);
+            auto &meshRenderer = enttMeshView.get<Engine::MeshRenderer>(enttEntity);
 
             // Send push constant data to shader
             auto pushConstantData = meshRenderer.GetPushConstantData();
@@ -462,42 +466,42 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         // Transition rendered image's layout to be suitable for reading in ImGui shaders
         commandBuffer->TransitionImageLayout(renderedImage, ImageLayout::SHADER_READ_ONLY_OPTIMAL);
 
+        // Get hovered entity
+        Engine::Entity hoveredEntity = Engine::Entity(raycaster->GetHoveredEntityID());
+
         // Handle viewport clicking
         static auto sceneWindowHash = ImHashStr("Scene View");
-        if (Input::GetMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) && !ImGuizmo::IsOver())
+        if (Engine::Input::GetMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) && !ImGuizmo::IsOver())
         {
             // Update selected entity
-            entt::entity hoveredEntity = raycaster->GetHoveredEntityID();
-            if (hoveredEntity == entt::null)
+            if (hoveredEntity.IsNull())
             {
                 if (GImGui->HoveredWindow != nullptr && GImGui->HoveredWindow->ID == sceneWindowHash)
                 {
-                    EngineCore::SetSelectedEntity(hoveredEntity);
+                    Engine::World::SetSelectedEntity(hoveredEntity);
                 }
             }
             else
             {
-                EngineCore::SetSelectedEntity(hoveredEntity);
+                Engine::World::SetSelectedEntity(hoveredEntity);
             }
         }
 
         // Update hovered world position
-        EngineCore::SetMouseHoveredPosition(raycaster->GetHoveredPosition());
+        Engine::Raycast::HoveredEntityCallback(hoveredEntity);
+        Engine::Raycast::HoveredWorldPositionCallback(raycaster->GetHoveredPosition());
 
         // Begin the render pass
         swapchain->BeginRenderPass(commandBuffer);
 
         // Render ImGui UI
-        totalVerticesDrawn = Mesh::GetTotalVertexCount();
         if (ImGui::GetDrawData() != nullptr)
         {
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer->GetVulkanCommandBuffer());
-            totalVerticesDrawn += ImGui::GetDrawData()->TotalVtxCount;
         }
 
         // End the render pass
         swapchain->EndRenderPass(commandBuffer);
-        totalDrawTime = renderTimestampQueries[currentFrame]->GetTimeTaken();
 
         // End the command buffer and check for errors during command execution
         commandBuffer->End();

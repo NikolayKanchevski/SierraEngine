@@ -9,14 +9,11 @@
 
 #define DEBUG_DEVICE_EXTENSIONS 0
 
-using Sierra::Engine::Classes::SystemInformation;
-
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
     /* --- CONSTRUCTORS --- */
 
-    Device::Device(DeviceCreateInfo &deviceCreateInfo)
-        : requiredFeatures(&deviceCreateInfo.requiredFeatures)
+    Device::Device(const DeviceCreateInfo &deviceCreateInfo)
     {
         RetrievePhysicalDevice();
         CreateLogicalDevice();
@@ -26,7 +23,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         volkLoadDevice(logicalDevice);
     }
 
-    UniquePtr<Device> Device::Create(DeviceCreateInfo createInfo)
+    UniquePtr<Device> Device::Create(const DeviceCreateInfo &createInfo)
     {
         return std::make_unique<Device>(createInfo);
     }
@@ -67,6 +64,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     void Device::RetrievePhysicalDevice()
     {
         // Set up example surface parameters
+        glfwInit();
         glfwWindowHint(GLFW_VISIBLE, 0);
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -93,7 +91,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         physicalDevice = physicalDevices[0];
 
-        ASSERT_SUCCESS_FORMATTED("Vulkan is supported on your system running [{0}] | [Validation: {1} | CPU: {2} | GPU: {3}]", SystemInformation::GetOperatingSystem().name, VALIDATION_ENABLED, SystemInformation::GetCPU().name, physicalDeviceProperties.deviceName);
+        ASSERT_SUCCESS_FORMATTED("Vulkan is supported on your system running [{0}] | [Validation: {1} | CPU: {2} | GPU: {3}]", Engine::SystemInformation::GetOperatingSystem().name, VALIDATION_ENABLED, Engine::SystemInformation::GetCPU().name, physicalDeviceProperties.deviceName);
 
         // Destroy temporary data
         vkDestroySurfaceKHR(VK::GetInstance(), exampleSurface, nullptr);
@@ -137,7 +135,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Set up additional device info features
         VkPhysicalDeviceFeatures2 deviceFeatures2{};
         deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        deviceFeatures2.features = *requiredFeatures;
+        deviceFeatures2.features = physicalDeviceFeatures;
         logicalDeviceCreateInfo.pNext = &deviceFeatures2;
 
         // Set up dynamic rendering features
@@ -179,7 +177,6 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkGetDeviceQueue(logicalDevice, queueFamilyIndices.graphicsAndComputeFamily.value(), 0, &graphicsAndComputeQueue);
         vkGetDeviceQueue(logicalDevice, queueFamilyIndices.presentationFamily.value(), 0, &presentationQueue);
 
-        requiredFeatures = nullptr;
         delete[](queueCreateInfos);
     }
 
@@ -209,73 +206,11 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         // Get the queue indices for it and check if they are valid
         queueFamilyIndices = FindQueueFamilies(givenPhysicalDevice);
 
-        bool indicesValid = queueFamilyIndices.IsValid();
-
-        // Check if all required extensions are supported
-        bool extensionsSupported = DeviceExtensionsSupported(givenPhysicalDevice);
-
-        // Check whether all requested features are supported with this monstrosity oof
-        bool featuresSupported =
-            requiredFeatures->robustBufferAccess <= physicalDeviceFeatures.robustBufferAccess &&
-            requiredFeatures->fullDrawIndexUint32 <= physicalDeviceFeatures.fullDrawIndexUint32 &&
-            requiredFeatures->imageCubeArray <= physicalDeviceFeatures.imageCubeArray &&
-            requiredFeatures->independentBlend <= physicalDeviceFeatures.independentBlend &&
-            requiredFeatures->geometryShader <= physicalDeviceFeatures.geometryShader &&
-            requiredFeatures->tessellationShader <= physicalDeviceFeatures.tessellationShader &&
-            requiredFeatures->sampleRateShading <= physicalDeviceFeatures.sampleRateShading &&
-            requiredFeatures->dualSrcBlend <= physicalDeviceFeatures.dualSrcBlend &&
-            requiredFeatures->logicOp <= physicalDeviceFeatures.logicOp &&
-            requiredFeatures->multiDrawIndirect <= physicalDeviceFeatures.multiDrawIndirect &&
-            requiredFeatures->drawIndirectFirstInstance <= physicalDeviceFeatures.drawIndirectFirstInstance &&
-            requiredFeatures->depthClamp <= physicalDeviceFeatures.depthClamp &&
-            requiredFeatures->depthBiasClamp <= physicalDeviceFeatures.depthBiasClamp &&
-            requiredFeatures->fillModeNonSolid <= physicalDeviceFeatures.fillModeNonSolid &&
-            requiredFeatures->depthBounds <= physicalDeviceFeatures.depthBounds &&
-            requiredFeatures->wideLines <= physicalDeviceFeatures.wideLines &&
-            requiredFeatures->largePoints <= physicalDeviceFeatures.largePoints &&
-            requiredFeatures->alphaToOne <= physicalDeviceFeatures.alphaToOne &&
-            requiredFeatures->multiViewport <= physicalDeviceFeatures.multiViewport &&
-            requiredFeatures->samplerAnisotropy <= physicalDeviceFeatures.samplerAnisotropy &&
-            requiredFeatures->textureCompressionETC2 <= physicalDeviceFeatures.textureCompressionETC2 &&
-            requiredFeatures->textureCompressionASTC_LDR <= physicalDeviceFeatures.textureCompressionASTC_LDR &&
-            requiredFeatures->textureCompressionBC <= physicalDeviceFeatures.textureCompressionBC &&
-            requiredFeatures->occlusionQueryPrecise <= physicalDeviceFeatures.occlusionQueryPrecise &&
-            requiredFeatures->pipelineStatisticsQuery <= physicalDeviceFeatures.pipelineStatisticsQuery &&
-            requiredFeatures->vertexPipelineStoresAndAtomics <= physicalDeviceFeatures.vertexPipelineStoresAndAtomics &&
-            requiredFeatures->fragmentStoresAndAtomics <= physicalDeviceFeatures.fragmentStoresAndAtomics &&
-            requiredFeatures->shaderTessellationAndGeometryPointSize <= physicalDeviceFeatures.shaderTessellationAndGeometryPointSize &&
-            requiredFeatures->shaderImageGatherExtended <= physicalDeviceFeatures.shaderImageGatherExtended &&
-            requiredFeatures->shaderStorageImageExtendedFormats <= physicalDeviceFeatures.shaderStorageImageExtendedFormats &&
-            requiredFeatures->shaderStorageImageMultisample <= physicalDeviceFeatures.shaderStorageImageMultisample &&
-            requiredFeatures->shaderStorageImageReadWithoutFormat <= physicalDeviceFeatures.shaderStorageImageReadWithoutFormat &&
-            requiredFeatures->shaderStorageImageWriteWithoutFormat <= physicalDeviceFeatures.shaderStorageImageWriteWithoutFormat &&
-            requiredFeatures->shaderUniformBufferArrayDynamicIndexing <= physicalDeviceFeatures.shaderUniformBufferArrayDynamicIndexing &&
-            requiredFeatures->shaderSampledImageArrayDynamicIndexing <= physicalDeviceFeatures.shaderSampledImageArrayDynamicIndexing &&
-            requiredFeatures->shaderStorageBufferArrayDynamicIndexing <= physicalDeviceFeatures.shaderStorageBufferArrayDynamicIndexing &&
-            requiredFeatures->shaderStorageImageArrayDynamicIndexing <= physicalDeviceFeatures.shaderStorageImageArrayDynamicIndexing &&
-            requiredFeatures->shaderClipDistance <= physicalDeviceFeatures.shaderClipDistance &&
-            requiredFeatures->shaderCullDistance <= physicalDeviceFeatures.shaderCullDistance &&
-            requiredFeatures->shaderFloat64 <= physicalDeviceFeatures.shaderFloat64 &&
-            requiredFeatures->shaderInt64 <= physicalDeviceFeatures.shaderInt64 &&
-            requiredFeatures->shaderInt16 <= physicalDeviceFeatures.shaderInt16 &&
-            requiredFeatures->shaderResourceResidency <= physicalDeviceFeatures.shaderResourceResidency &&
-            requiredFeatures->shaderResourceMinLod <= physicalDeviceFeatures.shaderResourceMinLod &&
-            requiredFeatures->sparseBinding <= physicalDeviceFeatures.sparseBinding &&
-            requiredFeatures->sparseResidencyBuffer <= physicalDeviceFeatures.sparseResidencyBuffer &&
-            requiredFeatures->sparseResidencyImage2D <= physicalDeviceFeatures.sparseResidencyImage2D &&
-            requiredFeatures->sparseResidencyImage3D <= physicalDeviceFeatures.sparseResidencyImage3D &&
-            requiredFeatures->sparseResidency2Samples <= physicalDeviceFeatures.sparseResidency2Samples &&
-            requiredFeatures->sparseResidency4Samples <= physicalDeviceFeatures.sparseResidency4Samples &&
-            requiredFeatures->sparseResidency8Samples <= physicalDeviceFeatures.sparseResidency8Samples &&
-            requiredFeatures->sparseResidency16Samples <= physicalDeviceFeatures.sparseResidency16Samples &&
-            requiredFeatures->sparseResidencyAliased <= physicalDeviceFeatures.sparseResidencyAliased &&
-            requiredFeatures->variableMultisampleRate <= physicalDeviceFeatures.variableMultisampleRate &&
-            requiredFeatures->inheritedQueries <= physicalDeviceFeatures.inheritedQueries;
-
-        return indicesValid && extensionsSupported && featuresSupported;
+        // Check if all support conditions are met
+        return queueFamilyIndices.IsValid() && DeviceExtensionsSupported(givenPhysicalDevice);
     }
 
-    bool Device::DeviceExtensionsSupported(VkPhysicalDevice const &givenPhysicalDevice)
+    bool Device::DeviceExtensionsSupported(const VkPhysicalDevice &givenPhysicalDevice)
     {
         // Get how many extensions are supported in total
         uint extensionCount;

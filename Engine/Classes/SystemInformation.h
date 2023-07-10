@@ -8,7 +8,7 @@
     #undef linux
 #endif
 
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
     class SystemInformation
     {
@@ -23,7 +23,7 @@ namespace Sierra::Engine::Classes
                 uint64 frequency;
             };
 
-            enum EndiannessType
+            enum class EndiannessType
             {
                 Little = (int) iware::cpu::endianness_t::little,
                 Big = (int) iware::cpu::endianness_t::big,
@@ -35,7 +35,7 @@ namespace Sierra::Engine::Classes
                 std::string typeString;
             };
 
-            enum ArchitectureType
+            enum class ArchitectureType
             {
                 x64 = (int) iware::cpu::architecture_t::x64,
                 x86 = (int) iware::cpu::architecture_t::x86,
@@ -59,7 +59,7 @@ namespace Sierra::Engine::Classes
 
         struct GPU
         {
-            enum VendorType
+            enum class VendorType
             {
                 Intel = (int) iware::gpu::vendor_t::intel,
                 AMD = (int) iware::gpu::vendor_t::amd,
@@ -103,7 +103,7 @@ namespace Sierra::Engine::Classes
 
         struct Kernel
         {
-            enum Type
+            enum class Type
             {
                 WindowsNT = (int) iware::system::kernel_t::windows_nt,
                 Linux = (int) iware::system::kernel_t::linux,
@@ -128,7 +128,7 @@ namespace Sierra::Engine::Classes
 
         struct OS
         {
-            enum Type
+            enum class Type
             {
                 Windows,
                 Linux,

@@ -4,9 +4,8 @@
 
 #include "File.h"
 
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
-    using Core::Debugger;
 
     const String File::TEMP_FOLDER_PATH = "NULL";
     const String File::INTERNAL_TEMP_FOLDER_PATH = "NULL";

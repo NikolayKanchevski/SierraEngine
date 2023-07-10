@@ -6,11 +6,10 @@
 
 #include "Light.h"
 
-#include "../Transform.h"
 #include "../../Classes/IdentifierPool.h"
-#include "../../../Core/Rendering/UI/ImGuiUtilities.h"
+#include "../../../Core/Rendering/RenderingSettings.h"
 
-namespace Sierra::Engine::Components
+namespace Sierra::Engine
 {
 
     /// @brief A component class representing a point light in the scene. Derives from both <see cref="Light"/> and <see cref="Component"/>.
@@ -18,45 +17,27 @@ namespace Sierra::Engine::Components
     {
     public:
         /* --- PROPERTIES --- */
-        /// \brief Linear value of the light. See <a href="https://learnopengl.com/Lighting/Light-casters">this link</a>
+        /// @brief Linear value of the light. See <a href="https://learnopengl.com/Lighting/Light-casters">this link</a>
         /// and scroll down to Point Lights if you are not familiar with what this is used for.
         float linear = 0.09f;
 
-        /// \brief Quadratic value of the light. See <a href="https://learnopengl.com/Lighting/Light-casters">this link</a>
+        /// @brief Quadratic value of the light. See <a href="https://learnopengl.com/Lighting/Light-casters">this link</a>
         /// and scroll down to Point Lights if you are not familiar with what this is used for.
         float quadratic = 0.032f;
 
         /* --- CONSTRUCTORS --- */
-        inline PointLight()
-        {
-            lightID = IDPool.CreateNewID();
-        }
+        PointLight();
 
         /* --- POLLING METHODS --- */
-        inline void OnDrawUI() override
-        {
-            GUI::BeginProperties();
-
-            GUI::FloatProperty("Intensity:", intensity);
-
-            static const float resetValues[3] = { 0.0f, 0.0f, 0.0f };
-            static const char* tooltips[3] = { "Some tooltip.", "Some tooltip.", "Some tooltip." };
-            GUI::PropertyVector3("Color:", color, resetValues, tooltips);
-
-            GUI::FloatProperty("Linear:", linear);
-            GUI::FloatProperty("Quadratic:", quadratic);
-
-
-            GUI::EndProperties();
-        }
+        void OnDrawUI() override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline static uint GetPointLightCount() { return IDPool.GetTotalIDsCount(); }
 
         /* --- DESTRUCTOR --- */
-        inline void Destroy() override { IDPool.RemoveID(lightID); };
+        inline void Destroy() override;
 
-    public:
+        /* --- OPERATORS --- */
         struct ShaderPointLight
         {
             Matrix4x4 projectionView;
@@ -70,24 +51,12 @@ namespace Sierra::Engine::Components
             float quadratic;
             Vector3 _align_1;
         };
-
-        operator ShaderPointLight() const noexcept { auto position = GetComponent<Transform>().GetWorldPosition(); return
-        {
-            .projectionView = projectionView,
-            .color = color,
-            .intensity = intensity,
-            .position = { position.x, -position.y, position.z },
-            .linear = linear,
-            .quadratic = quadratic
-        }; }
+        operator ShaderPointLight() const;
 
     private:
-        inline void Recalculate() override
-        {
+        inline void Recalculate() override { }
+        inline static auto IDPool = IdentifierPool<uint>(MAX_POINT_LIGHTS);
 
-        }
-
-        inline static auto IDPool = Classes::IdentifierPool<uint>(MAX_POINT_LIGHTS);
     };
 
 }

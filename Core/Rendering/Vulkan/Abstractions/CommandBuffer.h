@@ -7,7 +7,7 @@
 #include "Image.h"
 #include "Buffer.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
     struct CommandBufferCreateInfo
     {

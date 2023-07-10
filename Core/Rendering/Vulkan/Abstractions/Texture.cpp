@@ -9,19 +9,26 @@
 
 #include "../VK.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
     /* --- CONSTRUCTORS --- */
 
-    Texture::Texture(stbi_uc *stbImage, const uint width, const uint height, const uint givenColorChannelsCount, TextureCreateInfo &createInfo)
-        : textureType(createInfo.textureType), mipMappingEnabled(createInfo.enableMipMapping), colorChannelsCount(givenColorChannelsCount)
+    Texture::Texture(const TextureCreateInfo &createInfo)
+        : textureType(createInfo.textureType), mipMappingEnabled(createInfo.enableMipMapping), isDefault(createInfo.setDefaultTexture)
     {
-        // Calculate the image's memory size
-        memorySize = width * height * GetChannelCountForImageFormat(createInfo.imageFormat);
+        // Load image data
+        int width, height, channelCount;
+        stbi_uc *stbImage = stbi_load(createInfo.filePath.c_str(), &width, &height, &channelCount, GetChannelCountForImageFormat(createInfo.imageFormat));
+
+        // Check if image loading has been successful
+        ASSERT_ERROR_FORMATTED_IF(!stbImage, "Failed to load the binary of texture file: {0}", stbi_failure_reason());
+
+        // Save color channel count
+        channels = static_cast<TextureChannels>(channelCount);
 
         // Create the staging buffer
         auto stagingBuffer = Buffer::Create({
-            .memorySize = memorySize,
+            .memorySize = width * height * GetChannelCountForImageFormat(createInfo.imageFormat),
             .bufferUsage = BufferUsage::TRANSFER_SRC
         });
 
@@ -31,7 +38,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Create the texture image
         image = Image::Create({
-            .dimensions = { width, height },
+            .dimensions = { static_cast<uint>(width), static_cast<uint>(height) },
             .format = createInfo.imageFormat,
             .generateMipMaps = createInfo.enableMipMapping,
             .usage = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
@@ -51,49 +58,99 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         image->TransitionLayout(ImageLayout::SHADER_READ_ONLY_OPTIMAL);
 
         // Create sampler
-        if (mipMappingEnabled) createInfo.samplerCreateInfo.maxLod = static_cast<float>(image->GetMipMapLevels());
-        sampler = Sampler::Create(createInfo.samplerCreateInfo);
+        SamplerCreateInfo samplerCreateInfo = std::move(createInfo.samplerCreateInfo);
+        if (mipMappingEnabled) samplerCreateInfo.maxLod = static_cast<float>(image->GetMipMapLevels());
+        sampler = Sampler::Create(samplerCreateInfo);
     }
 
-    SharedPtr<Texture> Texture::Create(TextureCreateInfo createInfo, const bool setDefaultTexture)
+    SharedPtr<Texture> Texture::Create(const TextureCreateInfo &createInfo)
     {
         // Check if the texture file has already been loaded to texture
-        Hash hash = HashType(createInfo.filePath);
-        if (texturePool.count(hash) != 0)
+        auto iterator = texturePool.find(HashType(createInfo.filePath));
+        if (iterator != texturePool.end())
         {
             // If the same texture file has been used check to see if its sampler is the same as this one
-            Sampler *other = (&texturePool[hash]->GetSampler())->get();
-            if (other->IsBilinearFilteringApplied() == createInfo.samplerCreateInfo.applyBilinearFiltering && other->GetMinLod() == createInfo.samplerCreateInfo.minLod && other->GetMaxLod() == createInfo.samplerCreateInfo.maxLod && other->IsAnisotropyEnabled() == createInfo.samplerCreateInfo.enableAnisotropy && other->GetAddressMode() == createInfo.samplerCreateInfo.addressMode)
+            auto &otherSampler = iterator->second->GetSampler();
+            if (
+                otherSampler->IsBilinearFilteringApplied() == createInfo.samplerCreateInfo.applyBilinearFiltering &&
+                otherSampler->GetMinLod() == createInfo.samplerCreateInfo.minLod &&
+                otherSampler->GetMaxLod() == createInfo.samplerCreateInfo.maxLod &&
+                otherSampler->IsAnisotropyEnabled() == createInfo.samplerCreateInfo.enableAnisotropy &&
+                otherSampler->GetAddressMode() == createInfo.samplerCreateInfo.addressMode
+            )
             {
                 // If so return it without creating a new texture
-                auto &foundTexture = texturePool[hash];
-                defaultTextures[static_cast<uint>(createInfo.textureType)] = foundTexture;
+                auto &foundTexture = iterator->second;
+                if (createInfo.setDefaultTexture)
+                {
+                    defaultTextures[static_cast<uint>(createInfo.textureType)] = foundTexture;
+                }
                 return foundTexture;
             }
         }
 
-        // Number of channels texture has
-        int channels;
-
-        // Load image data
-        int width, height;
-        stbi_uc *stbiImage = stbi_load(createInfo.filePath.c_str(), &width, &height, &channels, GetChannelCountForImageFormat(createInfo.imageFormat));
-
-        // Check if image loading has been successful
-        ASSERT_ERROR_FORMATTED_IF(!stbiImage, "Failed to load the texture file [{0}]", createInfo.filePath);
-
-        // If texture does not exist already
+        // Check if texture is supposed to be default
         auto &textureReference = texturePool[HashType(createInfo.filePath)];
-        textureReference = std::make_shared<Texture>(stbiImage, width, height, channels, createInfo);
-        if (setDefaultTexture)
+        textureReference = std::make_shared<Texture>(createInfo);
+        if (createInfo.setDefaultTexture)
         {
-            ASSERT_ERROR_FORMATTED_IF(createInfo.textureType == TextureType::UNDEFINED, "Cannot set texture loaded from [{0}] as default texture for its type, as it is of type TEXTURE_TYPE_NONE", createInfo.filePath);
-
-            textureReference->isDefault = true;
+            ASSERT_ERROR_FORMATTED_IF(createInfo.textureType == TextureType::UNDEFINED, "Cannot set texture loaded from [{0}] as default for its type, as it is of type TextureType::UNDEFINED", createInfo.filePath);
             defaultTextures[static_cast<uint>(createInfo.textureType)] = textureReference;
         }
 
         return textureReference;
+    }
+
+    Texture::Texture(const BinaryTextureCreateInfo &createInfo)
+        : textureType(createInfo.textureType), channels(createInfo.channels), mipMappingEnabled(createInfo.enableMipMapping), isDefault(createInfo.setDefaultTexture)
+    {
+        // Create the staging buffer
+        auto stagingBuffer = Buffer::Create({
+            .memorySize = createInfo.width * createInfo.height * GetChannelCountForImageFormat(createInfo.imageFormat),
+            .bufferUsage = BufferUsage::TRANSFER_SRC
+        });
+
+        // Copy the image data to the staging buffer
+        stagingBuffer->CopyFromPointer(createInfo.data);
+
+        // Create the texture image
+        image = Image::Create({
+            .dimensions = { createInfo.width, createInfo.height },
+            .format = createInfo.imageFormat,
+            .generateMipMaps = createInfo.enableMipMapping,
+            .usage = ImageUsage::TRANSFER_SRC | ImageUsage::TRANSFER_DST | ImageUsage::SAMPLED,
+        });
+
+        // Transition the layout of the image, so it can be used for copying
+        image->TransitionLayout(ImageLayout::TRANSFER_DST_OPTIMAL);
+
+        // Copy the image to the staging buffer
+        stagingBuffer->CopyToImage(image);
+
+        // Destroy the staging buffer and free its memory
+        stagingBuffer->Destroy();
+
+        // Generate mip maps for the current texture
+        if (mipMappingEnabled) image->GenerateMipMaps();
+        image->TransitionLayout(ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+
+        // Create sampler
+        SamplerCreateInfo samplerCreateInfo = std::move(createInfo.samplerCreateInfo);
+        if (mipMappingEnabled) samplerCreateInfo.maxLod = static_cast<float>(image->GetMipMapLevels());
+        sampler = Sampler::Create(samplerCreateInfo);
+    }
+
+    SharedPtr<Texture> Texture::Load(const BinaryTextureCreateInfo &createInfo)
+    {
+        // Check if texture is supposed to be default
+        auto texture = std::make_shared<Texture>(createInfo);
+        if (createInfo.setDefaultTexture)
+        {
+            ASSERT_ERROR_IF(createInfo.textureType == TextureType::UNDEFINED, "Cannot set binary texture as default for its type, as it is of type TextureType::UNDEFINED");
+            defaultTextures[static_cast<uint>(createInfo.textureType)] = texture;
+        }
+
+        return texture;
     }
 
     /* --- SETTER METHODS --- */
@@ -129,13 +186,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     ImTextureID Texture::GetImGuiTextureID()
     {
         // Create ImGui descriptor set if not created
-        if (!imGuiDescriptorSetCreated)
-        {
-            imGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(sampler->GetVulkanSampler(), image->GetVulkanImageView(), (VkImageLayout) image->GetLayout());
-            imGuiDescriptorSetCreated = true;
-        }
-
-        return (ImTextureID) imGuiDescriptorSet;
+        if (imGuiDescriptorSet == nullptr) imGuiDescriptorSet = ImGui_ImplVulkan_AddTexture(sampler->GetVulkanSampler(), image->GetVulkanImageView(), static_cast<VkImageLayout>(image->GetLayout()));
+        return imGuiDescriptorSet;
     }
 
     /* --- DESTRUCTOR --- */

@@ -9,9 +9,8 @@
 #include "../Abstractions/GraphicsPipeline.h"
 
 
-namespace Sierra::Core::Rendering::Vulkan::Renderers
+namespace Sierra::Rendering
 {
-    using namespace Vulkan::Abstractions;
 
     class ExperimentalVulkanRenderer : public VulkanRenderer
     {

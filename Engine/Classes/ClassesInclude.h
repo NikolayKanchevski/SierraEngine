@@ -16,5 +16,3 @@
 #include "Stopwatch.h"
 #include "MemoryObject.h"
 #include "SystemInformation.h"
-
-using namespace Sierra::Engine::Classes;

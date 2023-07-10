@@ -8,7 +8,7 @@
 #include "Cubemap.h"
 #include "../VulkanTypes.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
     struct DescriptorSetLayoutBinding
     {
@@ -28,7 +28,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTORS --- */
         explicit DescriptorSetLayout(const DescriptorSetLayoutCreateInfo &createInfo);
-        static UniquePtr<DescriptorSetLayout> Create(const DescriptorSetLayoutCreateInfo& createInfo);
+        static UniquePtr<DescriptorSetLayout> Create(const DescriptorSetLayoutCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline bool IsBindingPresent(const uint binding) const { return bindings.count(binding) != 0; }
@@ -55,7 +55,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
     public:
         /* --- CONSTRUCTOR --- */
         explicit DescriptorPool(const DescriptorPoolCreateInfo &givenCreateInfo);
-        static UniquePtr<DescriptorPool> Create(DescriptorPoolCreateInfo givenCreateInfo);
+        static UniquePtr<DescriptorPool> Create(const DescriptorPoolCreateInfo &givenCreateInfo);
 
         /* --- SETTER METHODS --- */
         static void ResetPools();

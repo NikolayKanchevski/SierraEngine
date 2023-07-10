@@ -4,9 +4,8 @@
 
 #pragma once
 
-namespace Sierra::Engine::Components
+namespace Sierra::Engine
 {
-    using Sierra::Core::World;
 
     class Component
     {

@@ -6,7 +6,7 @@
 
 #include "../../../Core/Rendering/Vulkan/VK.h"
 
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
 
     /* --- POLLING METHODS --- */
@@ -160,11 +160,8 @@ namespace Sierra::Engine::Classes
 
     uint64 SystemInformation::GPU::GetUsedVideoMemory() const
     {
-        using Core::Rendering::Vulkan::VK;
-
         VmaBudget budget;
-        vmaGetHeapBudgets(VK::GetMemoryAllocator(), &budget);
-
+        vmaGetHeapBudgets(Rendering::VK::GetMemoryAllocator(), &budget);
         return budget.usage;
     }
 

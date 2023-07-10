@@ -6,7 +6,7 @@
 
 #include "Component.h"
 
-namespace Sierra::Engine::Components
+namespace Sierra::Engine
 {
     class Relationship : public Component
     {

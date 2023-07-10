@@ -5,7 +5,7 @@
 #include "Time.h"
 
 
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
 
     /* --- POLLING METHODS --- */

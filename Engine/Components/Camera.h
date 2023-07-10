@@ -6,7 +6,7 @@
 
 #include "Component.h"
 
-namespace Sierra::Engine::Components
+namespace Sierra::Engine
 {
 
     class Camera : public Component
@@ -61,8 +61,7 @@ namespace Sierra::Engine::Components
         [[nodiscard]] inline Vector3 GetDownDirection() const
         { return -upDirection; }
 
-        [[nodiscard]] static inline Camera& GetMainCamera()
-        { return World::GetComponent<Camera>(mainCamera); }
+        [[nodiscard]] static Camera& GetMainCamera();
 
     private:
         float FOV = 45.0f;

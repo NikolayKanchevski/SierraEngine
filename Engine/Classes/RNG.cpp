@@ -4,7 +4,7 @@
 
 #include "RNG.h"
 
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
     std::random_device RNG::randomDevice;
     std::mt19937_64 RNG::randomizer(randomDevice());

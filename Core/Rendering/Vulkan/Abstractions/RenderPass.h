@@ -9,7 +9,7 @@
 #include "../VulkanTypes.h"
 #include "CommandBuffer.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
 
     struct RenderPassAttachment

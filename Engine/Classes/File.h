@@ -5,7 +5,7 @@
 #pragma once
 
 /// @brief Provides useful methods for working with the file system.
-namespace Sierra::Engine::Classes::File
+namespace Sierra::Engine::File
 {
     /// @brief Directory path to the %TEMP% folder.
     const extern String TEMP_FOLDER_PATH;

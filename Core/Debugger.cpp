@@ -22,7 +22,7 @@
     #define RED() (printf("\e[0;31m"))
 #endif
 
-namespace Sierra::Core
+namespace Sierra::Internal
 {
 #if _WIN32
     HANDLE Debugger::hConsole = GetStdHandle(STD_OUTPUT_HANDLE);

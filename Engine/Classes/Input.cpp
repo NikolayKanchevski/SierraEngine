@@ -4,26 +4,8 @@
 
 #include "Input.h"
 
-using Sierra::Core::Debugger;
-
-namespace Sierra::Engine::Classes {
-
-    /* --- STATIC FIELDS IMPLEMENTATION --- */
-    uint Input::keyboardKeys[349];
-    uint Input::lastKeySet;
-    bool Input::keySet;
-    std::vector<String> Input::enteredCharacters;
-
-    uint Input::mouseButtons[349];
-    uint Input::lastButtonSet;
-    bool Input::buttonSet;
-
-    Vector2 Input::scroll;
-    bool Input::scrollSet;
-
-    uint Input::MAX_GAME_PADS = 8;
-    uint Input::gamePadsConnected = 0;
-    Input::GamePad Input::gamePads[8];
+namespace Sierra::Engine
+{
 
     /* --- POLLING METHODS --- */
 
@@ -121,24 +103,24 @@ namespace Sierra::Engine::Classes {
 
     /* --- GETTER METHODS --- */
 
-    bool Input::GetKeyPressed(const uint keyCode)
+    bool Input::GetKeyPressed(const Key keyCode)
     {
-        return keyboardKeys[keyCode] == 2; // 2 = Press
+        return keyboardKeys[static_cast<uint>(keyCode)] == 2; // 2 = Press
     }
 
-    bool Input::GetKeyHeld(const uint keyCode)
+    bool Input::GetKeyHeld(const Key keyCode)
     {
-        return keyboardKeys[keyCode] == 3 || keyboardKeys[keyCode] == 2; // 3 = Repeat || 2 = Press
+        return keyboardKeys[static_cast<uint>(keyCode)] == 3 || keyboardKeys[static_cast<uint>(keyCode)] == 2; // 3 = Repeat || 2 = Press
     }
 
-    bool Input::GetKeyResting(const uint keyCode)
+    bool Input::GetKeyResting(const Key keyCode)
     {
-        return keyboardKeys[keyCode] == 0; // 0 = Rest
+        return keyboardKeys[static_cast<uint>(keyCode)] == 0; // 0 = Rest
     }
 
-    bool Input::GetKeyReleased(const uint keyCode)
+    bool Input::GetKeyReleased(const Key keyCode)
     {
-        return keyboardKeys[keyCode] == 1; // 1 = Release
+        return keyboardKeys[static_cast<uint>(keyCode)] == 1; // 1 = Release
     }
 
     std::vector<String> *Input::GetEnteredCharacters()
@@ -266,9 +248,9 @@ namespace Sierra::Engine::Classes {
 
     void Input::KeyboardKeyCallback([[maybe_unused]] GLFWwindow *windowPtr, const int keyCode, const int scanCode, int action, const int mods)
     {
-        if (keyCode == GLFW_KEY_UNKNOWN) { return; }
+        if (keyCode == Key::UNKNOWN) return;
 
-        keyboardKeys[keyCode] = action + 1;
+        keyboardKeys[static_cast<uint>(keyCode)] = action + 1;
         lastKeySet = keyCode;
         keySet = true;
     }
@@ -309,13 +291,15 @@ namespace Sierra::Engine::Classes {
     void Input::RegisterGamePad(const uint player)
     {
         gamePads[player].connected = true;
-        gamePads[player].name = glfwGetGamepadName((int) player);
+        gamePads[player].name = glfwGetGamepadName(static_cast<int>(player));
+        gamePads[player].minimumSensitivities[0] = 0.2f;
+        gamePads[player].minimumSensitivities[1] = 0.2f;
     }
 
     /* --- PRIVATE METHODS --- */
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
+    #pragma clang diagnostic push
+    #pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
     String Input::UnicodePointToChar(const uint unicodePoint)
     {
         char character[5] = {0x00, 0x00, 0x00, 0x00, 0x00 };
@@ -326,6 +310,5 @@ namespace Sierra::Engine::Classes {
         else if (unicodePoint <= 0x10FFFF) { character[0] = (unicodePoint >> 18) + 240; character[1] = ((unicodePoint >> 12) & 63) + 128; character[2] = (( unicodePoint >> 6) & 63) + 128; character[3] = (unicodePoint & 63) + 128; }
         return {character };
     }
-
-#pragma clang diagnostic pop
+    #pragma clang diagnostic pop
 }

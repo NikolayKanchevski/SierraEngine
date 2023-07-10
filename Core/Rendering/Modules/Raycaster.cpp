@@ -4,8 +4,8 @@
 
 #include "Raycaster.h"
 
-#include "../UI/ImGuiCore.h"
 #include "../RenderingSettings.h"
+#include "../../../Editor/Editor.h"
 #include "../../../Engine/Classes/File.h"
 #include "../../../Engine/Classes/Input.h"
 #include "../../../Engine/Classes/Cursor.h"
@@ -14,13 +14,7 @@
 #define ID_BUFFER_BINDING 2
 #define DEPTH_BUFFER_BINDING 3
 
-using Sierra::Engine::Classes::Input;
-using Sierra::Engine::Classes::Cursor;
-using namespace Sierra::Core::Rendering::UI;
-
-using namespace Sierra::Engine::Classes;
-
-namespace Sierra::Core::Rendering::Modules
+namespace Sierra::Rendering { inline namespace Modules
 {
 
     /* --- CONSTRUCTORS --- */
@@ -42,7 +36,7 @@ namespace Sierra::Core::Rendering::Modules
         });
 
         // Load shader
-        auto computeShader = Shader::Load({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Raycasting/Raycast.comp.spv", .shaderType = ShaderType::COMPUTE });
+        auto computeShader = Shader::Load({ .filePath = Engine::File::OUTPUT_FOLDER_PATH + "Shaders/Raycasting/Raycast.comp.spv", .shaderType = ShaderType::COMPUTE });
 
         // Create compute pipeline
         computePipeline = ComputePipeline::Create({
@@ -75,11 +69,11 @@ namespace Sierra::Core::Rendering::Modules
         PushConstant pushConstant{};
         if (Window::IsFocusedWindowPresent())
         {
-            Vector2 mousePositionWithinView = Cursor::GetGlfwCursorPosition();
-            mousePositionWithinView.x -= ImGuiCore::GetSceneViewPositionX();
-            mousePositionWithinView.x /= ImGuiCore::GetSceneViewWidth();
-            mousePositionWithinView.y -= ImGuiCore::GetSceneViewPositionY();
-            mousePositionWithinView.y /= ImGuiCore::GetSceneViewHeight();
+            Vector2 mousePositionWithinView = Engine::Cursor::GetGlfwCursorPosition();
+            mousePositionWithinView.x -= Editor::GetSceneViewPositionX();
+            mousePositionWithinView.x /= Editor::GetSceneViewWidth();
+            mousePositionWithinView.y -= Editor::GetSceneViewPositionY();
+            mousePositionWithinView.y /= Editor::GetSceneViewHeight();
             mousePositionWithinView.y = 1.0f - mousePositionWithinView.y;
             pushConstant.mousePosition = mousePositionWithinView;
         }
@@ -108,4 +102,4 @@ namespace Sierra::Core::Rendering::Modules
         computePipeline->Destroy();
     }
 
-}
+}}

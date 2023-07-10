@@ -7,9 +7,7 @@
 #include "../VK.h"
 #include "../../../Engine/Classes/File.h"
 
-using namespace Sierra::Engine::Classes;
-
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
 
     /* --- CONSTRUCTORS --- */
@@ -89,7 +87,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                     pushConstantRange->stageFlags = static_cast<VkShaderStageFlags>(bindingData.shaderStages);
 
                     // Allocate push constant data
-                    bindingData.pushConstantData->data = std::make_unique<MemoryObject>(bindingData.pushConstantData->memorySize);
+                    bindingData.pushConstantData->data = std::make_unique<Engine::MemoryObject>(bindingData.pushConstantData->memorySize);
                     pushConstantMemory = bindingData.pushConstantData->data->GetData();
                     continue;
                 }
@@ -146,9 +144,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         // Load cache if present
         String cachePath = GetPipelineCacheFilePath();
-        if (File::FileExists(cachePath))
+        if (Engine::File::FileExists(cachePath))
         {
-            std::vector<uint8> cacheData = File::ReadBinaryFile(cachePath);
+            std::vector<uint8> cacheData = Engine::File::ReadBinaryFile(cachePath);
 
             VkPipelineCacheCreateInfo cacheCreateInfo{};
             cacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
@@ -570,7 +568,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
     String Pipeline::GetPipelineCacheFilePath() const
     {
-        return File::INTERNAL_TEMP_FOLDER_PATH + "PipelineCache/PipelineCache_" + std::to_string(GetPipelineCacheHash());
+        return Engine::File::INTERNAL_TEMP_FOLDER_PATH + "PipelineCache/PipelineCache_" + std::to_string(GetPipelineCacheHash());
     }
 
     ShaderMember& Pipeline::GetShaderMember(const String &memberName)
@@ -614,7 +612,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             std::vector<uint8> cacheData(cacheSize);
             vkGetPipelineCacheData(VK::GetLogicalDevice(), pipelineCache, &cacheSize, cacheData.data());
 
-            File::WriteBinaryDataToFile(GetPipelineCacheFilePath(), cacheData, true);
+            Engine::File::WriteBinaryDataToFile(GetPipelineCacheFilePath(), cacheData, true);
         }
 
         vkDestroyPipelineCache(VK::GetLogicalDevice(), pipelineCache, nullptr);

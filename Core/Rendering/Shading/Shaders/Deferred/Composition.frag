@@ -37,7 +37,7 @@ const uint RendererOutputValue_DepthBuffer = 7;
 layout(constant_id = 0) const uint RENDERER_OUTPUT = RendererOutputValue_RenderedImage;
 layout(constant_id = 1) const bool ENABLE_SHADOWS = true;
 
-layout (location = 0) out vec4 toFramebuffer_FinalizedColor;
+layout(location = 0) out vec4 toFramebuffer_FinalizedColor;
 
 void main()
 {

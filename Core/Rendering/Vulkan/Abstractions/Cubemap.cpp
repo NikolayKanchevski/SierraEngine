@@ -7,7 +7,7 @@
 #include "../VK.h"
 #include "Buffer.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
     /* --- CONSTRUCTORS --- */
 

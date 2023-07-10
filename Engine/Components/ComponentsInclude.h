@@ -15,5 +15,3 @@
 #include "Lighting/Light.h"
 #include "Lighting/PointLight.h"
 #include "Lighting/DirectionalLight.h"
-
-using namespace Sierra::Engine::Components;

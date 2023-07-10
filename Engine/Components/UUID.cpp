@@ -7,10 +7,10 @@
 #include "../Classes/RNG.h"
 #include "../../Core/Rendering/UI/ImGuiUtilities.h"
 
-namespace Sierra::Engine::Components
+namespace Sierra::Engine
 {
     UUID::UUID()
-        : value(Classes::RNG::GetRandomUInt64())
+        : value(RNG::GetRandomUInt64())
     {
 
     }
@@ -23,6 +23,7 @@ namespace Sierra::Engine::Components
 
     void UUID::OnDrawUI()
     {
+        using namespace Rendering;
         GUI::BeginProperties();
 
         GUI::PushDeactivatedStatus();

@@ -6,7 +6,7 @@
 
 #include "../VulkanTypes.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
     struct SamplerCreateInfo
     {
@@ -32,7 +32,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- CONSTRUCTORS --- */
         explicit Sampler(const SamplerCreateInfo &createInfo);
-        static UniquePtr<Sampler> Create(SamplerCreateInfo createInfo);
+        static UniquePtr<Sampler> Create(const SamplerCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkSampler GetVulkanSampler() const { return vkSampler; };

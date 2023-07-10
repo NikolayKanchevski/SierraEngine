@@ -6,7 +6,7 @@
 
 #include "../Classes/Entity.h"
 
-namespace Sierra::Engine::Components
+namespace Sierra::Engine
 {
 
     Relationship::Relationship(const entt::entity givenSelf) : self(givenSelf)
@@ -41,8 +41,6 @@ namespace Sierra::Engine::Components
 
         // Add "self" to new parent's children
         givenParentRelationship.children.push_back(self);
-
-        using Classes::Entity;
 
         // Retrieve origin parent
         Entity currentEntity = Entity(self);

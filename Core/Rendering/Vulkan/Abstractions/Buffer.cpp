@@ -7,14 +7,13 @@
 #include "../VK.h"
 
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
-    using Engine::Classes::MemoryObject;
 
     /* --- CONSTRUCTORS --- */
 
     Buffer::Buffer(const BufferCreateInfo &createInfo)
-        : data(MemoryObject(createInfo.memorySize, 0)), bufferUsage(createInfo.bufferUsage)
+        : data(Engine::MemoryObject(createInfo.memorySize, 0)), bufferUsage(createInfo.bufferUsage)
     {
         // Set up buffer creation info
         VkBufferCreateInfo vkBufferCreateInfo{};
@@ -53,7 +52,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vmaFlushAllocation(VK::GetMemoryAllocator(), vmaBufferAllocation, 0, data.GetMemorySize());
     }
 
-    void Buffer::CopyFromPointer(void *pointer, const uint64 offset, const uint64 range)
+    void Buffer::CopyFromPointer(const void *pointer, const uint64 offset, const uint64 range)
     {
         // Copy memory data to Vulkan buffer
         data.SetDataByOffset(pointer, offset, range != 0 ? range : data.GetMemorySize());
@@ -77,9 +76,9 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         copyRegion.imageOffset.x = 0;
         copyRegion.imageOffset.y = 0;
         copyRegion.imageOffset.z = 0;
-        copyRegion.imageExtent.width = static_cast<uint>(givenImage->GetWidth());
-        copyRegion.imageExtent.height = static_cast<uint>(givenImage->GetHeight());
-        copyRegion.imageExtent.depth = static_cast<uint>(givenImage->GetDepth());
+        copyRegion.imageExtent.width = givenImage->GetWidth();
+        copyRegion.imageExtent.height = givenImage->GetHeight();
+        copyRegion.imageExtent.depth = givenImage->GetDepth();
 
         // Copy the image to the buffer
         vkCmdCopyBufferToImage(commandBuffer->GetVulkanCommandBuffer(), vkBuffer, givenImage->GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);

@@ -13,20 +13,20 @@
     #define VALIDATION_ENABLED 0
 #endif
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
 
     struct DeviceCreateInfo
     {
-        VkPhysicalDeviceFeatures requiredFeatures{};
+
     };
 
     class Device
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Device(DeviceCreateInfo &deviceCreateInfo);
-        static UniquePtr<Device> Create(DeviceCreateInfo createInfo);
+        explicit Device([[maybe_unused]] const DeviceCreateInfo &deviceCreateInfo);
+        static UniquePtr<Device> Create([[maybe_unused]] const DeviceCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline bool GetDescriptorIndexingSupported() const
@@ -99,9 +99,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
                 return graphicsAndComputeFamily.has_value() && presentationFamily.has_value();
             }
         };
-
         QueueFamilyIndices queueFamilyIndices;
-        VkPhysicalDeviceFeatures* requiredFeatures;
 
         ImageFormat bestDepthImageFormat = ImageFormat::UNDEFINED;
         Sampling highestMultisampling = Sampling::MSAAx1;

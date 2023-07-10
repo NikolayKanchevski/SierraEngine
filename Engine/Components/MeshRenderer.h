@@ -12,9 +12,8 @@
 #include "../../Core/Rendering/Vulkan/Abstractions/Texture.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Descriptors.h"
 
-namespace Sierra::Engine::Components
+namespace Sierra::Engine
 {
-    using namespace Sierra::Engine::Classes;
 
     class MeshRenderer : public Component
     {
@@ -30,14 +29,14 @@ namespace Sierra::Engine::Components
         Material material{};
 
         /* --- SETTER METHODS --- */
-        void SetTexture(const SharedPtr<Texture>& givenTexture);
-        void ResetTexture(TextureType textureType);
+        void SetTexture(const SharedPtr<Rendering::Texture> &givenTexture);
+        void ResetTexture(Rendering::TextureType textureType);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline SharedPtr<Mesh>& GetMesh() { return mesh; }
         [[nodiscard]] inline uint GetMeshID() const { return meshID; }
-        [[nodiscard]] inline SharedPtr<Texture> GetTexture(const TextureType textureType) const { return textures[static_cast<uint>(textureType)]; }
-        [[nodiscard]] inline SharedPtr<Texture> *GetTextures() { return textures; }
+        [[nodiscard]] inline SharedPtr<Rendering::Texture> GetTexture(const Rendering::TextureType textureType) const { return textures[static_cast<uint>(textureType)]; }
+        [[nodiscard]] inline SharedPtr<Rendering::Texture> *GetTextures() { return textures; }
         [[nodiscard]] Matrix4x4 GetModelMatrix() const;
         [[nodiscard]] MeshPushConstant GetPushConstantData() const;
 
@@ -48,7 +47,7 @@ namespace Sierra::Engine::Components
         SharedPtr<Mesh> mesh = nullptr;
 
         Binary meshTexturesPresence = 0;
-        SharedPtr<Texture> textures[static_cast<uint>(TextureType::TOTAL_COUNT)];
+        SharedPtr<Rendering::Texture> textures[static_cast<uint>(Rendering::TextureType::TOTAL_COUNT)];
 
         uint meshID = 0;
         inline static auto IDPool = IdentifierPool<uint>(MAX_MESHES);

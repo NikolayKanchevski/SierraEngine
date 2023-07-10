@@ -16,60 +16,202 @@
 #include <volk.h>
 #include <vk_mem_alloc.h>
 
-#include "../../Version.h"
 #include "Abstractions/Texture.h"
-#include "../../../Engine/Classes/File.h"
+#include "../../../../Engine/Components/Model.h"
 
 #define MAX_IMGUI_DESCRIPTOR_COUNT 2048
 
-using namespace Sierra::Engine::Classes;
-
-namespace Sierra::Core::Rendering::Vulkan
+namespace Sierra::Rendering
 {
-    VK VK::m_Instance;
-
-    /* --- CONSTRUCTORS --- */
-
-    void VK::Initialize(const VkPhysicalDeviceFeatures givenPhysicalDeviceFeatures)
+    struct InstanceVK
     {
-        m_Instance.requiredPhysicalDeviceFeatures = givenPhysicalDeviceFeatures;
-
-        m_Instance.InitializeVolk();
-        m_Instance.CreateInstance();
-
+        VkInstance instance = VK_NULL_HANDLE;
         #if VALIDATION_ENABLED
-            m_Instance.CreateDebugMessenger();
+            VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
+            VkDebugUtilsMessengerCreateInfoEXT* debugMessengerCreateInfo = nullptr;
         #endif
 
-        m_Instance.CreateDevice();
-        m_Instance.CreateVulkanMemoryAllocator();
+        UniquePtr<Device> device = nullptr;
+        VmaAllocator vmaAllocator = VMA_NULL;
 
-        m_Instance.CreateCommandPool();
-        m_Instance.CreateQueryPool();
+        VkCommandPool commandPool = VK_NULL_HANDLE;
+        UniquePtr<QueryPool> queryPool = VK_NULL_HANDLE;
+        VkDescriptorPool imGuiDescriptorPool = VK_NULL_HANDLE;
+    };
+    InstanceVK instance;
 
-        m_Instance.CreateImGuiDescriptorPool();
+    /* --- GETTER METHODS --- */
 
-        m_Instance.CreateDefaultTextures();
+    VkInstance                  VK::GetInstance()                   { return instance.instance; }
+    VmaAllocator&               VK::GetMemoryAllocator()            { return instance.vmaAllocator; }
+    UniquePtr<Device>&          VK::GetDevice()                     { return instance.device; }
+    VkPhysicalDevice            VK::GetPhysicalDevice()             { return instance.device->GetPhysicalDevice(); }
+    VkDevice                    VK::GetLogicalDevice()              { return instance.device->GetLogicalDevice(); }
+    VkCommandPool               VK::GetCommandPool()                { return instance.commandPool; }
+    UniquePtr<QueryPool>&       VK::GetQueryPool()                  { return instance.queryPool; }
+    VkDescriptorPool            VK::GetImGuiDescriptorPool()        { return instance.imGuiDescriptorPool; }
+
+    /* --- METHOD DEFINITIONS --- */
+
+    void InitializeVolk();
+    void CreateInstance();
+    #if VALIDATION_ENABLED
+        void CreateDebugMessenger();
+    #endif
+    void CreateDevice();
+    void CreateVulkanMemoryAllocator();
+    void CreateCommandPool();
+    void CreateQueryPool();
+    void CreateImGuiDescriptorPool();
+    void CreateDefaultTextures();
+
+    /* --- CONSTRUCTOR --- */
+
+    void VK::Initialize()
+    {
+        InitializeVolk();
+        CreateInstance();
+
+        #if VALIDATION_ENABLED
+            CreateDebugMessenger();
+        #endif
+
+        CreateDevice();
+        CreateVulkanMemoryAllocator();
+
+        CreateCommandPool();
+        CreateQueryPool();
+        CreateImGuiDescriptorPool();
 
         Sampler::Initialize();
+        CreateDefaultTextures();
+    }
+
+    /* --- PREDEFINED MEMBERS --- */
+
+    std::vector<const char*> requiredInstanceExtensions
+    {
+        #if VALIDATION_ENABLED
+            VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+        #endif
+        VK_KHR_SURFACE_EXTENSION_NAME,
+        #if PLATFORM_APPLE
+            VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
+        #endif
+    };
+
+    #if VALIDATION_ENABLED
+        const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
+
+        VkResult CreateDebugUtilsMessengerEXT(VkInstance givenInstance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger)
+        {
+            auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(givenInstance, "vkCreateDebugUtilsMessengerEXT");
+            if (func != nullptr)
+            {
+                return func(givenInstance, pCreateInfo, pAllocator, pDebugMessenger);
+            }
+            else
+            {
+                return VK_ERROR_EXTENSION_NOT_PRESENT;
+            }
+        }
+
+        void DestroyDebugUtilsMessengerEXT(VkInstance givenInstance, VkDebugUtilsMessengerEXT givenDebugMessenger, const VkAllocationCallbacks* pAllocator)
+        {
+            auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(givenInstance, "vkDestroyDebugUtilsMessengerEXT");
+            if (func != nullptr)
+            {
+                func(givenInstance, givenDebugMessenger, pAllocator);
+            }
+        }
+
+    bool ValidationLayersSupported()
+    {
+        // Get how many validation layers in total are supported
+        uint layerCount = 0;
+        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+        // Create an array and store the supported layers
+        std::vector<VkLayerProperties> layerProperties(layerCount);
+        vkEnumerateInstanceLayerProperties(&layerCount, layerProperties.data());
+
+        // Check if the given layers are in the supported array
+        for (const auto &requiredLayer : validationLayers)
+        {
+            bool layerFound = false;
+            for (const auto &layerProperty : layerProperties)
+            {
+                if (strcmp(requiredLayer, layerProperty.layerName) == 0)
+                {
+                    layerFound = true;
+                    break;
+                }
+            }
+
+            if (!layerFound)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    #endif
+
+    bool ExtensionsSupported(std::vector<const char*> &givenExtensions)
+    {
+        // Get how many extensions are supported in total
+        uint extensionCount;
+        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+
+        // Create an array to store the supported extensions
+        std::vector<VkExtensionProperties> extensionProperties(extensionCount);
+        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensionProperties.data());
+
+        // Check if each given extension is in the supported array
+        int64 extensionIndex = 0;
+
+        bool success = true;
+        for (const auto &requiredExtension : givenExtensions)
+        {
+            bool extensionFound = false;
+            for (const auto &extensionProperty : extensionProperties)
+            {
+                if (strcmp(requiredExtension, extensionProperty.extensionName) == 0)
+                {
+                    extensionFound = true;
+                    break;
+                }
+            }
+
+            if (!extensionFound)
+            {
+                success = false;
+
+                ASSERT_WARNING_FORMATTED("Instance extension [{0}] not supported", String(requiredExtension));
+                givenExtensions.erase(givenExtensions.begin() + extensionIndex);
+            }
+
+            extensionIndex++;
+        }
+
+        return success;
     }
 
     /* --- SETTER METHODS --- */
 
-    void VK::InitializeVolk()
+    void InitializeVolk()
     {
         VK_ASSERT(volkInitialize(), "Could not load Volk");
     }
 
-    void VK::CreateInstance()
+    void CreateInstance()
     {
-        using namespace Sierra::Engine;
-
         // Create application information
         VkApplicationInfo applicationInfo{};
         applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         applicationInfo.pApplicationName = "Sierra Engine";
-        applicationInfo.applicationVersion = VK_MAKE_VERSION(Version::MAJOR, Version::MINOR, Version::PATCH);
+        applicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
         applicationInfo.pEngineName = "No Engine";
         applicationInfo.engineVersion = VK_VERSION_1_3;
         applicationInfo.apiVersion = VK_VERSION;
@@ -99,47 +241,47 @@ namespace Sierra::Core::Rendering::Vulkan
             ASSERT_ERROR_IF(!ValidationLayersSupported(), "Validation layers requested but are not supported");
 
             // Set up debug messenger info
-            debugMessengerCreateInfo = new VkDebugUtilsMessengerCreateInfoEXT();
-            debugMessengerCreateInfo->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-            debugMessengerCreateInfo->messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-            debugMessengerCreateInfo->messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-            debugMessengerCreateInfo->pfnUserCallback = Debugger::ValidationCallback;
-            debugMessengerCreateInfo->pUserData = nullptr;
+            instance.debugMessengerCreateInfo = new VkDebugUtilsMessengerCreateInfoEXT();
+            instance.debugMessengerCreateInfo->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+            instance.debugMessengerCreateInfo->messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+            instance.debugMessengerCreateInfo->messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+            instance.debugMessengerCreateInfo->pfnUserCallback = Internal::Debugger::ValidationCallback;
+            instance.debugMessengerCreateInfo->pUserData = nullptr;
 
             // Set instance to use the debug messenger
             instanceCreateInfo.enabledLayerCount = static_cast<uint>(validationLayers.size());
             instanceCreateInfo.ppEnabledLayerNames = validationLayers.data();
-            instanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) debugMessengerCreateInfo;
+            instanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) instance.debugMessengerCreateInfo;
         #endif
 
         // Create instance
         VK_ASSERT(
-            vkCreateInstance(&instanceCreateInfo, nullptr, &instance),
+            vkCreateInstance(&instanceCreateInfo, nullptr, &instance.instance),
             "Could not create Vulkan instance"
         );
 
         // Connect instance with Volk
-        volkLoadInstance(instance);
+        volkLoadInstance(instance.instance);
     }
 
     #if VALIDATION_ENABLED
-    void VK::CreateDebugMessenger()
-    {
-        VK_ASSERT(
-            CreateDebugUtilsMessengerEXT(instance, debugMessengerCreateInfo, nullptr, &debugMessenger),
-            "Failed to create validation messenger"
-        );
+        void CreateDebugMessenger()
+        {
+            VK_ASSERT(
+                CreateDebugUtilsMessengerEXT(instance.instance, instance.debugMessengerCreateInfo, nullptr, &instance.debugMessenger),
+                "Failed to create validation messenger"
+            );
 
-        delete(debugMessengerCreateInfo);
-    }
+            delete(instance.debugMessengerCreateInfo);
+        }
     #endif
 
-    void VK::CreateDevice()
+    void CreateDevice()
     {
-        device = Device::Create({ requiredPhysicalDeviceFeatures });
+        instance.device = Device::Create({ });
     }
 
-    void VK::CreateVulkanMemoryAllocator()
+    void CreateVulkanMemoryAllocator()
     {
         // Get pointers to required Vulkan methods
         VmaVulkanFunctions vulkanFunctions{};
@@ -165,39 +307,39 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Set up VMA creation info
         VmaAllocatorCreateInfo vmaCreteInfo{};
-        vmaCreteInfo.instance = instance;
-        vmaCreteInfo.physicalDevice = device->GetPhysicalDevice();
-        vmaCreteInfo.device = device->GetLogicalDevice();
+        vmaCreteInfo.instance = instance.instance;
+        vmaCreteInfo.physicalDevice = instance.device->GetPhysicalDevice();
+        vmaCreteInfo.device = instance.device->GetLogicalDevice();
         vmaCreteInfo.vulkanApiVersion = VK_VERSION;
         vmaCreteInfo.pVulkanFunctions = &vulkanFunctions;
         vmaCreteInfo.flags =  VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
 
         // Create VMA allocator
-        vmaCreateAllocator(&vmaCreteInfo, &vmaAllocator);
+        vmaCreateAllocator(&vmaCreteInfo, &instance.vmaAllocator);
     }
 
-    void VK::CreateCommandPool()
+    void CreateCommandPool()
     {
         // Set up the command pool creation info
         VkCommandPoolCreateInfo commandPoolCreateInfo{};
         commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        commandPoolCreateInfo.queueFamilyIndex = device->GetGraphicsQueueFamily();
+        commandPoolCreateInfo.queueFamilyIndex = instance.device->GetGraphicsQueueFamily();
 
         // Create the command pool
         VK_ASSERT(
-            vkCreateCommandPool(device->GetLogicalDevice(), &commandPoolCreateInfo, nullptr, &commandPool),
+            vkCreateCommandPool(instance.device->GetLogicalDevice(), &commandPoolCreateInfo, nullptr, &instance.commandPool),
             "Failed to create command pool"
         );
     }
 
-    void VK::CreateQueryPool()
+    void CreateQueryPool()
     {
         // Create query pool
-        queryPool = QueryPool::Create({ .queryType = VK_QUERY_TYPE_TIMESTAMP });
+        instance.queryPool = QueryPool::Create({ .queryType = VK_QUERY_TYPE_TIMESTAMP });
     }
 
-    void VK::CreateImGuiDescriptorPool()
+    void CreateImGuiDescriptorPool()
     {
         // Set up example pool sizes
         std::vector<VkDescriptorPoolSize> poolSizes =
@@ -225,80 +367,112 @@ namespace Sierra::Core::Rendering::Vulkan
 
         // Create descriptor pool
         VK_ASSERT(
-            vkCreateDescriptorPool(VK::GetDevice()->GetLogicalDevice(), &imGuiDescriptorPoolCreateInfo, nullptr, &imGuiDescriptorPool),
+            vkCreateDescriptorPool(instance.device->GetLogicalDevice(), &imGuiDescriptorPoolCreateInfo, nullptr, &instance.imGuiDescriptorPool),
             "Could not create ImGui descriptor pool"
         );
     }
 
-    void VK::CreateDefaultTextures()
+    const uint8 DIFFUSE_NULL_TEXTURE_DATA[] = {
+        250, 65, 249, 255,
+        0, 0, 0, 255,
+        0, 0, 0, 255,
+        250, 65, 249, 255
+    };
+
+    const uint8 NORMAL_NULL_TEXTURE_DATA[] = {
+        128, 127, 255, 255
+    };
+
+    const uint8 BLACK_NULL_TEXTURE[] = {
+        0, 0, 0, 255
+    };
+
+    void CreateDefaultTextures()
     {
         // Create default diffuse texture
-        Texture::Create({
-            .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/DiffuseNull.jpg",
+        Texture::Load({
+            .data = DIFFUSE_NULL_TEXTURE_DATA,
+            .width = 2,
+            .height = 2,
+            .channels = TextureChannels::RGBA,
             .textureType = TextureType::DIFFUSE,
+            .imageFormat = ImageFormat::R8G8B8A8_UNORM,
             .samplerCreateInfo {
                 .enableAnisotropy = false,
                 .applyBilinearFiltering = false
-            }
-        }, true);
+            },
+            .setDefaultTexture = true
+        });
 
         // Create default specular texture
-        Texture::Create({
-            .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/SpecularNull.jpg",
+        Texture::Load({
+            .data = BLACK_NULL_TEXTURE,
+            .width = 1,
+            .height = 1,
+            .channels = TextureChannels::RGBA,
             .textureType = TextureType::SPECULAR,
+            .imageFormat = ImageFormat::R8G8B8A8_UNORM,
             .samplerCreateInfo {
                 .enableAnisotropy = false,
                 .applyBilinearFiltering = false
-            }
-        }, true);
+            },
+            .setDefaultTexture = true
+        });
 
-        // Create default specular texture
-        Texture::Create({
-            .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/NormalMapNull.jpg",
-            .textureType = TextureType::NORMAL_MAP,
+        // Create default normal texture
+        Texture::Load({
+            .data = NORMAL_NULL_TEXTURE_DATA,
+            .width = 1,
+            .height = 1,
+            .channels = TextureChannels::RGBA,
+            .textureType = TextureType::NORMAL,
+            .imageFormat = ImageFormat::R8G8B8A8_UNORM,
             .samplerCreateInfo {
                 .enableAnisotropy = false,
-                .applyBilinearFiltering = false,
-            }
-        }, true);
+                .applyBilinearFiltering = false
+            },
+            .setDefaultTexture = true
+        });
 
         // Create default height map texture
-        Texture::Create({
-            .filePath = File::OUTPUT_FOLDER_PATH + "Textures/Null/HeightMapNull.jpg",
-            .textureType = TextureType::HEIGHT_MAP,
+        Texture::Load({
+            .data = BLACK_NULL_TEXTURE,
+            .width = 1,
+            .height = 1,
+            .channels = TextureChannels::RGBA,
+            .textureType = TextureType::HEIGHT,
+            .imageFormat = ImageFormat::R8G8B8A8_UNORM,
             .samplerCreateInfo {
                 .enableAnisotropy = false,
                 .applyBilinearFiltering = false
-            }
-        }, true);
+            },
+            .setDefaultTexture = true
+        });
     }
 
     /* --- DESTRUCTOR --- */
 
     void VK::Destroy()
     {
-        vkDeviceWaitIdle(m_Instance.device->GetLogicalDevice());
-
-        if (ImGui::GetCurrentContext() != nullptr) ImGui_ImplVulkan_Shutdown();
-
+        instance.device->WaitUntilIdle();
+        
+        DescriptorPool::DisposePools();
         Sampler::Shutdown();
 
-        vkDestroyDescriptorPool(m_Instance.GetLogicalDevice(), m_Instance.imGuiDescriptorPool, nullptr);
+        // Destroy local resources
+        if (ImGui::GetCurrentContext() != nullptr) ImGui_ImplVulkan_Shutdown();
+        if (instance.imGuiDescriptorPool != VK_NULL_HANDLE) vkDestroyDescriptorPool(GetLogicalDevice(), instance.imGuiDescriptorPool, nullptr);
 
-        DescriptorPool::DisposePools();
-        m_Instance.queryPool->Destroy();
+        instance.queryPool->Destroy();
+        vkDestroyCommandPool(instance.device->GetLogicalDevice(), instance.commandPool, nullptr);
 
-        vkDestroyCommandPool(m_Instance.device->GetLogicalDevice(), m_Instance.commandPool, nullptr);
-
-        vmaDestroyAllocator(m_Instance.vmaAllocator);
-
-        m_Instance.device->Destroy();
+        vmaDestroyAllocator(instance.vmaAllocator);
+        instance.device->Destroy();
 
         #if VALIDATION_ENABLED
-            DestroyDebugUtilsMessengerEXT(m_Instance.instance, m_Instance.debugMessenger, nullptr);
+            DestroyDebugUtilsMessengerEXT(instance.instance, instance.debugMessenger, nullptr);
         #endif
-
-        vkDestroyInstance(m_Instance.instance, nullptr);
+        vkDestroyInstance(instance.instance, nullptr);
     }
 
 }

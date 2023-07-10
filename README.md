@@ -48,7 +48,7 @@ $ python3 Scripts/UpdateProject.py --Release
 
 ## 📄 Documentation
 
-Wondering how to use the engine? You can check out the online documentation [here](https://nikicha.gitbook.io/sierra-engine-dotnet/) (it was written for the .NET version, but a new website for the C++ version is being worked on), or you can also toy around with the example projects given in the repository, as most of the code is thorougly explained with comments. Regardless - have fun reading, mate! 🤓
+Wondering how to use the engine? You can check out the online documentation [here](https://sierra.nikichatv.com/Documentation/).
 
 <br>
 
@@ -110,7 +110,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 18,115</p>
-<p align="center" id="LastUpdated">Last updated: 27/06/2023 </p>
+<p align="center" id="LinesCounter">Total lines of code: 17,637</p>
+<p align="center" id="LastUpdated">Last updated: 10/07/2023 </p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

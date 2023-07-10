@@ -7,11 +7,7 @@
 #include "../Components/UUID.h"
 #include "../Components/Tag.h"
 
-using Sierra::Core::World;
-using Sierra::Core::Debugger;
-using namespace Sierra::Engine::Components;
-
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
     /// Represents an entity (game object) inside the world. Holds components and has position, rotation and scale in the 3D world space.
     class Entity
@@ -57,8 +53,8 @@ namespace Sierra::Engine::Classes
         /* --- DESTRUCTOR --- */
         Entity(const Entity&) = default;
         bool operator==(Entity &right);
-        operator entt::entity() const noexcept;
-        operator Components::UUID() const noexcept;
+        operator entt::entity() const;
+        operator UUID() const;
 
     private:
         entt::entity enttEntity = entt::null;

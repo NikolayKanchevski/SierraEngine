@@ -6,11 +6,9 @@
 
 #include "../../Window.h"
 #include "../../UI/ImGuiInstance.h"
-#include "../../UI/Panels/UIPanels.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Renderers
+namespace Sierra::Rendering
 {
-    using namespace UI;
 
     struct VulkanRendererCreateInfo
     {
@@ -31,11 +29,9 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         virtual void Render();
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline virtual VkDescriptorSet GetRenderedTextureDescriptorSet() const { return VK_NULL_HANDLE; };
         [[nodiscard]] inline UniquePtr<Window>& GetWindow() const { return window; }
-        [[nodiscard]] float GetTotalDrawTime() const { return totalDrawTime; }
         [[nodiscard]] UniquePtr<ImGuiInstance>& GetImGuiInstance() { return imGuiInstance; }
-        [[nodiscard]] uint64 GetTotalVerticesDrawn() const { return totalVerticesDrawn; }
+        [[nodiscard]] inline virtual VkDescriptorSet GetRenderedTextureDescriptorSet() const { return VK_NULL_HANDLE; };
 
         /* --- DESTRUCTOR --- */
         virtual void Destroy();
@@ -43,25 +39,18 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
 
     protected:
         virtual void Update();
-        inline virtual void DrawUI() { for (auto &panel : uiPanels) panel->DrawUI(); };
+        inline virtual void DrawUI() { };
 
         UniquePtr<Window> &window;
-        UniquePtr<Abstractions::Swapchain> swapchain;
+        UniquePtr<Swapchain> swapchain = nullptr;
         UniquePtr<ImGuiInstance> imGuiInstance = nullptr;
 
         uint maxConcurrentFrames;
 
-        float totalDrawTime = 0.0f;
-        uint64 totalVerticesDrawn = 0;
-
-        template<typename T, std::enable_if_t<std::is_base_of_v<UI::UIPanel, T>, bool> = true, typename... Args>
-        inline void PushUIPanel(Args&&... args) { uiPanels.push_back(std::move(std::make_unique<T>(std::forward<Args>(args)...))); }
-
     private:
         bool prepared = false;
         bool hasImGuiInstance = false;
-        std::vector<UniquePtr<UIPanel>> uiPanels;
 
-};
+    };
 
 }

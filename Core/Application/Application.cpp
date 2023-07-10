@@ -4,9 +4,9 @@
 
 #include "Application.h"
 
-#define MODEL_GRID_SIZE_X 1
-#define MODEL_GRID_SIZE_Y 1
-#define MODEL_GRID_SIZE_Z 1
+#define MODEL_GRID_SIZE_X 3
+#define MODEL_GRID_SIZE_Y 3
+#define MODEL_GRID_SIZE_Z 3
 
 #define MODEL_SPACING_FACTOR_X 10
 #define MODEL_SPACING_FACTOR_Y 10
@@ -15,13 +15,10 @@
 void Application::Start()
 {
     // Start up the engine
-    EngineCore::Initialize();
-
-    // Initialize the world
     World::Start();
 
     // Create renderer
-    UniquePtr<Window> window = Window::Create({ });
+    UniquePtr<Window> window = Window::Create({ .title = "Sierra Engine v1.0.0" });
     UniquePtr<VulkanRenderer> renderer = DeferredVulkanRenderer::Create({ .window = window, .createImGuiInstance = true, .createImGuizmoLayer = true });
 
     // Create camera
@@ -83,9 +80,6 @@ void Application::Start()
 
     // Deallocate world memory
     World::Shutdown();
-
-    // Deallocate other rendering memory
-    EngineCore::Terminate();
 }
 
 void Application::RenderLoop(UniquePtr<VulkanRenderer> &renderer)
@@ -116,7 +110,7 @@ void Application::UpdateObjects()
 void Application::DoCameraMovement()
 {
     // Toggle cursor visibility on every escape key press
-    if (Input::GetKeyPressed(GLFW_KEY_ESCAPE))
+    if (Input::GetKeyPressed(Key::ESCAPE))
     {
         Cursor::SetCursorVisibility(!Cursor::IsCursorShown());
     }
@@ -129,12 +123,12 @@ void Application::DoCameraMovement()
         Vector3 newCameraRotation = cameraTransform.GetRotation();
 
         // Move camera accordingly
-        if (Input::GetKeyHeld(GLFW_KEY_W)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetFrontDirection());
-        if (Input::GetKeyHeld(GLFW_KEY_S)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetBackDirection());
-        if (Input::GetKeyHeld(GLFW_KEY_A)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetLeftDirection());
-        if (Input::GetKeyHeld(GLFW_KEY_D)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetRightDirection());
-        if (Input::GetKeyHeld(GLFW_KEY_E) || Input::GetKeyHeld(GLFW_KEY_SPACE)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection());
-        if (Input::GetKeyHeld(GLFW_KEY_Q) || Input::GetKeyHeld(GLFW_KEY_LEFT_CONTROL)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection());
+        if (Input::GetKeyHeld(Key::W)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetFrontDirection());
+        if (Input::GetKeyHeld(Key::S)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetBackDirection());
+        if (Input::GetKeyHeld(Key::A)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetLeftDirection());
+        if (Input::GetKeyHeld(Key::D)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetRightDirection());
+        if (Input::GetKeyHeld(Key::E) || Input::GetKeyHeld(Key::SPACE)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection());
+        if (Input::GetKeyHeld(Key::Q) || Input::GetKeyHeld(Key::LEFT_CONTROL)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection());
 
         // Apply camera rotation based on mouse movement
         newCameraRotation.x += Cursor::GetHorizontalCursorOffset() * CAMERA_LOOK_SPEED;

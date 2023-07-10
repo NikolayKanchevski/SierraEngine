@@ -8,9 +8,7 @@
 #include "../../RenderingSettings.h"
 #include "../../../../Engine/Classes/File.h"
 
-using namespace Sierra::Engine::Classes;
-
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
     std::unordered_map<String, String> Shader::defaultDefinitions =
     {
@@ -102,7 +100,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             specializationInfo->mapEntryCount = createInfo.specializationConstants.size();
 
             // Allocate data memory
-            MemoryObject specializationData(lastOffset, 1);
+            Engine::MemoryObject specializationData(lastOffset, 1);
             specializationInfo->pData = specializationData.GetData();
         }
 
@@ -134,7 +132,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Create shader module
-        auto code = File::ReadFile(filePath);
+        auto code = Engine::File::ReadFile(filePath);
         CreateShaderModule(createInfo.entryPoint, code);
     }
 
@@ -184,8 +182,8 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         if (precompiledData->optimization != ShaderOptimization::None) options.SetOptimizationLevel((shaderc_optimization_level) precompiledData->optimization);
 
         // Read and compile shader
-        auto shaderCode = File::ReadFile(filePath);
-        shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(shaderCode.data(), shaderCode.size(), GetShadercShaderType(), File::GetFileNameFromPath(filePath).c_str(), options);
+        auto shaderCode = Engine::File::ReadFile(filePath);
+        shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(shaderCode.data(), shaderCode.size(), GetShadercShaderType(), Engine::File::GetFileNameFromPath(filePath).c_str(), options);
 
         // Check for errors
         if (module.GetCompilationStatus() != shaderc_compilation_status_success)
@@ -318,7 +316,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         }
 
         // Specialization constants preparation
-        MemoryObject specializationData;
+        Engine::MemoryObject specializationData;
         uint specializationDataSize = 0;
         if (reflectionModule.specialization_constant_count != 0)
         {
@@ -329,7 +327,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
             }
 
             // Allocate specialization data
-            specializationData = MemoryObject(specializationDataSize, 1);
+            specializationData = Engine::MemoryObject(specializationDataSize, 1);
 
             // Allocate specialization info memory
             specializationInfo = new VkSpecializationInfo();
@@ -483,7 +481,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         const std::string includeReference = std::string(requestedSource);
 
         // Gather its data
-        auto fileData = File::ReadBinaryFile(File::RemoveFileNameFromPath(filePath) + includeReference);
+        auto fileData = Engine::File::ReadBinaryFile(Engine::File::RemoveFileNameFromPath(filePath) + includeReference);
         String includedContents = String(fileData.begin(), fileData.end());
 
         // Assign the pointers of the read data to a container

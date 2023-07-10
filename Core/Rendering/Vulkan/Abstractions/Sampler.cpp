@@ -6,7 +6,7 @@
 
 #include "../VK.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
     const UniquePtr<Sampler> Sampler::Default;
 
@@ -44,7 +44,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         );
     }
 
-    UniquePtr<Sampler> Sampler::Create(const SamplerCreateInfo createInfo)
+    UniquePtr<Sampler> Sampler::Create(const SamplerCreateInfo &createInfo)
     {
         return std::make_unique<Sampler>(createInfo);
     }
@@ -72,4 +72,5 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         vkSampler = VK_NULL_HANDLE;
     }
+
 }

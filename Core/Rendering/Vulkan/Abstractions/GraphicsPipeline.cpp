@@ -6,9 +6,7 @@
 
 #include "../VK.h"
 
-using namespace Sierra::Engine::Classes;
-
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
 
     /* --- CONSTRUCTORS --- */
@@ -271,7 +269,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         vkCmdDraw(commandBuffer->GetVulkanCommandBuffer(), vertexCount, 1, 0, 0);
     }
 
-    void GraphicsPipeline::DrawMesh(const UniquePtr<CommandBuffer> &commandBuffer, const SharedPtr<Mesh> &mesh)
+    void GraphicsPipeline::DrawMesh(const UniquePtr<CommandBuffer> &commandBuffer, const SharedPtr<Engine::Mesh> &mesh)
     {
         BindResources(commandBuffer);
         constexpr static VkDeviceSize offsets[] { 0 };

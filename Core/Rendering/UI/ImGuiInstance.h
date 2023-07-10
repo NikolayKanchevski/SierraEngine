@@ -5,23 +5,22 @@
 #pragma once
 
 #include "../Window.h"
-#include "../Vulkan/Abstractions/Swapchain.h"
 #include "../../../Engine/Classes/File.h"
+#include "../Vulkan/Abstractions/Swapchain.h"
 
-namespace Sierra::Core::Rendering::UI
+namespace Sierra::Rendering
 {
-    using namespace Rendering::Vulkan;
 
     struct FontCreateInfo
     {
-        String fontFilePath = Engine::Classes::File::OUTPUT_FOLDER_PATH + "Fonts/PTSans.ttf";
+        String fontFilePath = Engine::File::OUTPUT_FOLDER_PATH + "Fonts/PTSans.ttf";
         float fontSize = 18.0f;
     };
 
     struct ImGuiInstanceCreateInfo
     {
         UniquePtr<Window> &window;
-        UniquePtr<Vulkan::Abstractions::Swapchain> &swapchain;
+        UniquePtr<Swapchain> &swapchain;
 
         std::vector<FontCreateInfo> fontCreateInfos { FontCreateInfo() };
 

@@ -7,7 +7,7 @@
 #include "Image.h"
 #include "../../../Engine/Classes/MemoryObject.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
     struct BufferCreateInfo
     {
@@ -38,13 +38,13 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- SETTER METHODS --- */
         void Flush();
-        void CopyFromPointer(void* pointer, uint64 offset = 0, uint64 range = 0);
+        void CopyFromPointer(const void *pointer, uint64 offset = 0, uint64 range = 0);
         void CopyToImage(const UniquePtr<Image> &givenImage);
         void CopyToBuffer(const UniquePtr<Buffer> &otherBuffer);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint64 GetMemorySize() const { return data.GetMemorySize(); }
-        [[nodiscard]] inline Engine::Classes::MemoryObject& GetMemory() { return data; }
+        [[nodiscard]] inline Engine::MemoryObject& GetMemory() { return data; }
 
         [[nodiscard]] inline VkBuffer GetVulkanBuffer() const { return vkBuffer; }
         [[nodiscard]] inline VmaAllocation GetMemoryAllocation() const { return vmaBufferAllocation; }
@@ -59,7 +59,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
         VmaAllocation vmaBufferAllocation = nullptr;
 
         BufferUsage bufferUsage;
-        Engine::Classes::MemoryObject data;
+        Engine::MemoryObject data;
     };
 
 }

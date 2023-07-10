@@ -7,17 +7,15 @@
 #include "../VK.h"
 #include "../../../Engine/Classes/File.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Renderers
+namespace Sierra::Rendering
 {
     /* --- CONSTRUCTORS --- */
 
     VulkanRenderer::VulkanRenderer(const VulkanRendererCreateInfo &createInfo)
         : window(createInfo.window)
     {
-        using namespace Engine::Classes;
-
         // Create swapchain
-        swapchain = Abstractions::Swapchain::Create(window);
+        swapchain = Swapchain::Create(window);
         maxConcurrentFrames = VK::GetDevice()->GetMaxConcurrentFramesCount();
 
         // Create ImGui instance if requested
@@ -27,8 +25,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
                 .window = window,
                 .swapchain = swapchain,
                 .fontCreateInfos = {
-                    { .fontFilePath = File::OUTPUT_FOLDER_PATH + "Fonts/PTSans.ttf", .fontSize = 18.0f },
-                    { .fontFilePath = File::OUTPUT_FOLDER_PATH + "Fonts/OpenSans-Bold.ttf", .fontSize = 18.0f },
+                    { .fontFilePath = Engine::File::OUTPUT_FOLDER_PATH + "Fonts/PTSans.ttf", .fontSize = 18.0f },
+                    { .fontFilePath = Engine::File::OUTPUT_FOLDER_PATH + "Fonts/OpenSans-Bold.ttf", .fontSize = 18.0f },
                 },
                 .createImGuizmoLayer = createInfo.createImGuizmoLayer
             });

@@ -4,16 +4,11 @@
 
 #include "Cursor.h"
 
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
-    Vector2 Cursor::lastCursorPosition;
-    Vector2 Cursor::cursorPosition;
-    Vector2 Cursor::cursorOffset;
-    bool Cursor::cursorShown = true;
-
-    bool Cursor::cursorPositionSet;
 
     /* --- POLLING METHODS --- */
+
     void Cursor::Start()
     {
         ResetCursorOffset();
@@ -30,6 +25,8 @@ namespace Sierra::Engine::Classes
     }
 
     /* --- SETTER METHODS --- */
+
+    using Rendering::Window;
     void Cursor::SetCursorPosition(const Vector2 newPosition)
     {
         glfwSetCursorPos(Window::GetCurrentlyFocusedWindow()->GetCoreWindow(), newPosition.x, newPosition.y);
@@ -90,6 +87,19 @@ namespace Sierra::Engine::Classes
 
         cursorOffset = Vector2(-(lastCursorPosition.x - cursorPosition.x), -(lastCursorPosition.y - cursorPosition.y));
         cursorPositionSet = true;
+    }
+
+    /* --- GETTER METHODS --- */
+
+    Vector2 Cursor::GetCursorPositionNormalized()
+    {
+        if (Window::GetCurrentlyFocusedWindow() == nullptr)
+        {
+            ASSERT_WARNING("Trying to get the normalized cursor position within a non-focused window. Since this is not possible and a value of { 0, 0 } has been returned");
+            return { 0, 0 };
+        }
+
+        return {cursorPosition.x / (float) Window::GetCurrentlyFocusedWindow()->GetWidth(), cursorPosition.y / (float) Window::GetCurrentlyFocusedWindow()->GetHeight() };
     }
 
     /* --- PRIVATE METHODS --- */

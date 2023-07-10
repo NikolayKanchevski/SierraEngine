@@ -5,10 +5,10 @@
 #include "ExperimentalVulkanRenderer.h"
 
 #include "../VK.h"
+#include "../../../Engine/Classes/File.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Renderers
+namespace Sierra::Rendering
 {
-    using namespace Sierra::Engine::Classes;
 
     /* --- CONSTRUCTORS --- */
 
@@ -16,8 +16,8 @@ namespace Sierra::Core::Rendering::Vulkan::Renderers
         : VulkanRenderer(createInfo)
     {
         // Create shaders to use in pipeline
-        auto vertexShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Experimental/Experimental.vert", .shaderType = ShaderType::VERTEX });
-        auto fragmentShader = Shader::Create({ .filePath = File::OUTPUT_FOLDER_PATH + "Shaders/Experimental/Experimental.frag", .shaderType = ShaderType::FRAGMENT });
+        auto vertexShader = Shader::Create({ .filePath = Engine::File::OUTPUT_FOLDER_PATH + "Shaders/Experimental/Experimental.vert", .shaderType = ShaderType::VERTEX });
+        auto fragmentShader = Shader::Create({ .filePath = Engine::File::OUTPUT_FOLDER_PATH + "Shaders/Experimental/Experimental.frag", .shaderType = ShaderType::FRAGMENT });
 
         // Create pipeline
         graphicsPipeline = GraphicsPipeline::Create({

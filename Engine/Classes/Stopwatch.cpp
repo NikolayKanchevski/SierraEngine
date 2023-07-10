@@ -4,7 +4,7 @@
 
 #include "Stopwatch.h"
 
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
     Stopwatch::Stopwatch()
     {

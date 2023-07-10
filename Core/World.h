@@ -4,8 +4,11 @@
 
 #pragma once
 
-namespace Sierra::Core
+namespace Sierra::Engine
 {
+
+    // NOTE: Forward declared, as Entity class needs World.h in header, because templates must be inline in Entity.h
+    class Entity;
 
     class World
     {
@@ -26,11 +29,13 @@ namespace Sierra::Core
         static void Shutdown();
 
         /* --- SETTER METHODS --- */
-        static inline void DestroyEntity(const entt::entity enttEntity) { enttRegistry->destroy(enttEntity); }
+        static void SetSelectedEntity(Entity enttEntity);
+        static void DestroyEntity(Entity enttEntity);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] static inline entt::entity RegisterEntity() { return enttRegistry->create(); }
         [[nodiscard]] static inline std::unordered_map<uint, entt::entity>& GetOriginEntitiesList() { return originEntities; }
+        [[nodiscard]] static Entity GetSelectedEntity();
 
         /* --- TEMPLATES --- */
         template <typename T, typename... Args>
@@ -38,7 +43,7 @@ namespace Sierra::Core
         {
             if (HasComponent<T>(enttEntity))
             {
-                ASSERT_WARNING_FORMATTED("Component of type [{0}] already present in entity. New components has been dismissed and instead the old one has been returned", Debugger::TypeToString<T>());
+                ASSERT_WARNING_FORMATTED("Component of type [{0}] already present in entity. New components has been dismissed and instead the old one has been returned", Internal::Debugger::TypeToString<T>());
                 return GetComponent<T>(enttEntity);
             }
 
@@ -60,7 +65,7 @@ namespace Sierra::Core
         template<typename T>
         inline static T& GetComponent(const entt::entity enttEntity)
         {
-            ASSERT_ERROR_FORMATTED_IF(!HasComponent<T>(enttEntity), "Component of type [{0}] does not exist within the entity", Debugger::TypeToString<T>());
+            ASSERT_ERROR_FORMATTED_IF(!HasComponent<T>(enttEntity), "Component of type [{0}] does not exist within the entity", Internal::Debugger::TypeToString<T>());
 
             return enttRegistry->get<T>(enttEntity);
         }
@@ -76,7 +81,7 @@ namespace Sierra::Core
         {
             if (!HasComponent<T>(enttEntity))
             {
-                ASSERT_WARNING_FORMATTED("Component of type [{0}] does not exist within entity. No components were removed", Debugger::TypeToString<T>());
+                ASSERT_WARNING_FORMATTED("Component of type [{0}] does not exist within entity. No components were removed", Internal::Debugger::TypeToString<T>());
                 return;
             }
 
@@ -89,10 +94,10 @@ namespace Sierra::Core
         {
             return enttRegistry->view<T>();
         }
-
-        /* --- DESTRUCTOR --- */
     private:
+        static Entity selectedEntity;
         inline static std::unordered_map<uint, entt::entity> originEntities;
         inline static std::shared_ptr<entt::registry> enttRegistry = std::make_shared<entt::registry>();
+
     };
 }

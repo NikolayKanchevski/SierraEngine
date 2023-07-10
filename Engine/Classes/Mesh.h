@@ -8,10 +8,7 @@
 #include "../../Core/Rendering/Vulkan/Abstractions/Buffer.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/CommandBuffer.h"
 
-using namespace Sierra::Core::Rendering;
-using namespace Sierra::Core::Rendering::Vulkan::Abstractions;
-
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
     struct Vertex
     {
@@ -58,8 +55,8 @@ namespace Sierra::Engine::Classes
         [[nodiscard]] inline uint GetVertexCount() const { return vertexCount; }
         [[nodiscard]] inline uint GetIndexCount() const { return indexCount; }
 
-        [[nodiscard]] inline UniquePtr<Buffer>& GetVertexBuffer() { return vertexBuffer; }
-        [[nodiscard]] inline UniquePtr<Buffer>& GetIndexBuffer() { return indexBuffer; }
+        [[nodiscard]] inline UniquePtr<Rendering::Buffer>& GetVertexBuffer() { return vertexBuffer; }
+        [[nodiscard]] inline UniquePtr<Rendering::Buffer>& GetIndexBuffer() { return indexBuffer; }
 
         [[nodiscard]] static inline uint GetTotalMeshCount()  { return totalMeshCount; }
         [[nodiscard]] static inline uint GetTotalVertexCount() { return totalVertexCount; }
@@ -76,8 +73,8 @@ namespace Sierra::Engine::Classes
         uint vertexCount;
         uint indexCount;
 
-        UniquePtr<Buffer> vertexBuffer;
-        UniquePtr<Buffer> indexBuffer;
+        UniquePtr<Rendering::Buffer> vertexBuffer;
+        UniquePtr<Rendering::Buffer> indexBuffer;
 
         void CreateVertexBuffer(std::vector<Vertex> &givenVertices);
         void CreateIndexBuffer(std::vector<uint> &givenIndices);

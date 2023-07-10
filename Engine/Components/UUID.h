@@ -6,7 +6,7 @@
 
 #include "Component.h"
 
-namespace Sierra::Engine::Components
+namespace Sierra::Engine
 {
 
     class UUID : public Component
@@ -25,7 +25,7 @@ namespace Sierra::Engine::Components
         UUID& operator=(uint givenValue);
 
         UUID(const UUID&) = default;
-        operator uint() const noexcept { return value; }
+        operator uint() const { return value; }
 
     private:
         uint64 value;

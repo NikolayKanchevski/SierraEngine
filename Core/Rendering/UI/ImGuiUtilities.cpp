@@ -4,8 +4,8 @@
 
 #include "ImGuiUtilities.h"
 
-    using namespace ImGui;
-
+namespace Sierra::Rendering
+{
     const uint boldFontIndex = 1;
     static int s_UIContextID = 0;
     static int s_Counter = 0;
@@ -96,12 +96,12 @@
         dataLimitMax = 0.0f;
     }
 
-    void GUI::CustomLabel(const char* label)
+    void GUI::CustomLabel(const char *label)
     {
         ImGui::Text("%s", label);
     }
 
-    void GUI::ShowTooltip(const char* tooltip)
+    void GUI::ShowTooltip(const char *tooltip)
     {
         if (tooltip && ImGui::IsItemHovered() && GImGui->HoveredIdTimer > HOVER_TIME_THRESHOLD)
         {
@@ -111,7 +111,7 @@
         }
     }
 
-    bool GUI::BeginWindow(const char* title, bool *open, const ImGuiWindowFlags windowFlags)
+    bool GUI::BeginWindow(const char *title, bool *open, const ImGuiWindowFlags windowFlags)
     {
         return ImGui::Begin(title, open, windowFlags);
     }
@@ -121,49 +121,55 @@
         ImGui::End();
     }
 
-    void GUI::BoldText(const char* text)
+    void GUI::BoldText(const char *text)
     {
         ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[boldFontIndex]);
         ImGui::Text("%s", text);
         ImGui::PopFont();
     }
 
-    bool GUI::RoundedButton(const char *label, const ImVec2 &givenSize, const ImDrawFlags roundingType, const float rounding, ImGuiButtonFlags flags)
+    bool
+    GUI::RoundedButton(const char *label, const ImVec2 &givenSize, const ImDrawFlags roundingType, const float rounding,
+                       ImGuiButtonFlags flags)
     {
         // Modified version of built-in ImGui button code:
-        ImGuiWindow* window = GetCurrentWindow();
+        ImGuiWindow *window = ImGui::GetCurrentWindow();
         if (window->SkipItems)
             return false;
 
-        ImGuiContext& g = *GImGui;
-        const ImGuiStyle& style = g.Style;
+        ImGuiContext &g = *GImGui;
+        const ImGuiStyle &style = g.Style;
         const ImGuiID id = window->GetID(label);
-        const ImVec2 label_size = CalcTextSize(label, nullptr, true);
+        const ImVec2 label_size = ImGui::CalcTextSize(label, nullptr, true);
 
         ImVec2 pos = window->DC.CursorPos;
-        if ((flags & ImGuiButtonFlags_AlignTextBaseLine) && style.FramePadding.y < window->DC.CurrLineTextBaseOffset) // Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky, since it shouldn't be a flag)
+        if ((flags & ImGuiButtonFlags_AlignTextBaseLine) && style.FramePadding.y <
+                                                            window->DC.CurrLineTextBaseOffset) // Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky, since it shouldn't be a flag)
             pos.y += window->DC.CurrLineTextBaseOffset - style.FramePadding.y;
-        ImVec2 size = CalcItemSize(givenSize, label_size.x + style.FramePadding.x * 2.0f, label_size.y + style.FramePadding.y * 2.0f);
+        ImVec2 size = ImGui::CalcItemSize(givenSize, label_size.x + style.FramePadding.x * 2.0f,
+                                          label_size.y + style.FramePadding.y * 2.0f);
 
         const ImRect bb(pos, pos + size);
-        ItemSize(size, style.FramePadding.y);
-        if (!ItemAdd(bb, id))
+        ImGui::ItemSize(size, style.FramePadding.y);
+        if (!ImGui::ItemAdd(bb, id))
             return false;
 
         if (g.LastItemData.InFlags & ImGuiItemFlags_ButtonRepeat)
             flags |= ImGuiButtonFlags_Repeat;
 
         bool hovered, held;
-        bool pressed = ButtonBehavior(bb, id, &hovered, &held, flags);
+        bool pressed = ImGui::ButtonBehavior(bb, id, &hovered, &held, flags);
 
-        const ImU32 col = GetColorU32((held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
-        RenderNavHighlight(bb, id);
+        const ImU32 col = ImGui::GetColorU32(
+                (held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
+        ImGui::RenderNavHighlight(bb, id);
         ImGui::GetWindowDrawList()->AddRectFilled(bb.Min, bb.Max, col, rounding, roundingType);
 
         if (g.LogEnabled)
-            LogSetNextTextDecoration("[", "]");
+            ImGui::LogSetNextTextDecoration("[", "]");
 
-        RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, label, nullptr, &label_size, style.ButtonTextAlign, &bb);
+        ImGui::RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, label, nullptr, &label_size,
+                                 style.ButtonTextAlign, &bb);
 
         return pressed;
     }
@@ -179,7 +185,8 @@
 
         GenerateID();
         ImGui::Unindent(GImGui->Style.IndentSpacing * 0.5f);
-        ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { GImGui->Style.CellPadding.x, GImGui->Style.CellPadding.y / 2.0f });
+        ImGui::PushStyleVar(ImGuiStyleVar_CellPadding,
+                            {GImGui->Style.CellPadding.x, GImGui->Style.CellPadding.y / 2.0f});
         ImGui::BeginTable(IDBuffer, 2, tableFlags | ImGuiTableFlags_SizingFixedFit);
         ImGui::TableSetupColumn("PropertyName");
         ImGui::TableSetupColumn("PropertyData", ImGuiTableColumnFlags_WidthStretch);
@@ -236,7 +243,7 @@
         ExternalPopID();
     }
 
-    bool GUI::BeginTreeProperties(const char* label)
+    bool GUI::BeginTreeProperties(const char *label)
     {
         GUI::EndProperties();
 
@@ -262,7 +269,7 @@
         BeginProperties(currentPropertyTableFlags);
     }
 
-    void GUI::PropertyTabHeader(const char* label)
+    void GUI::PropertyTabHeader(const char *label)
     {
         bool hadDrawnAnyProperties = drawnAnyProperties;
         EndProperties();
@@ -274,7 +281,7 @@
         BeginProperties(currentPropertyTableFlags);
     }
 
-    bool GUI::StringInput(const char* labelID, String &value, const ImGuiInputTextFlags inputFlags)
+    bool GUI::StringInput(const char *labelID, String &value, const ImGuiInputTextFlags inputFlags)
     {
         return ImGui::InputText(labelID, &value, 0, nullptr);
     }
@@ -302,42 +309,48 @@
     }
 
     template<typename T, ENABLE_IF(std::is_arithmetic_v<T>)>
-    static inline bool NumericInput(const char* labelID, T &valueReference, bool canDrag, bool centerAlign, ImDrawFlags roundingType = ImDrawFlags_RoundCornersAll, float rounding = GImGui->Style.FrameRounding, ImGuiInputTextFlags flags = ImGuiInputTextFlags_None)
+    static inline bool NumericInput(const char *labelID, T &valueReference, bool canDrag, bool centerAlign,
+                                    ImDrawFlags roundingType = ImDrawFlags_RoundCornersAll,
+                                    float rounding = GImGui->Style.FrameRounding,
+                                    ImGuiInputTextFlags flags = ImGuiInputTextFlags_None)
     {
         // Modified combination of built-in ImGui sliders and input code
         ImGuiDataType dataType = GetNumericImGuiDataType<T>();
         auto value = &valueReference;
 
-        ImGuiWindow* window = GetCurrentWindow();
+        ImGuiWindow *window = ImGui::GetCurrentWindow();
         if (window->SkipItems)
             return false;
 
-        ImGuiContext& g = *GImGui;
-        ImGuiStyle& style = g.Style;
+        ImGuiContext &g = *GImGui;
+        ImGuiStyle &style = g.Style;
 
         std::string formatString = GetSuitableFormat<T>();
-        const char* localFormat = formatString.c_str();
+        const char *localFormat = formatString.c_str();
 
         if (!canDrag)
         {
             char buf[64];
-            DataTypeFormatString(buf, IM_ARRAYSIZE(buf), dataType, value, localFormat);
+            ImGui::DataTypeFormatString(buf, IM_ARRAYSIZE(buf), dataType, value, localFormat);
 
-            #pragma clang diagnostic push
-            #pragma clang diagnostic ignored "-Wdeprecated-enum-enum-conversion"
-                flags |= ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_NoMarkEdited; // We call MarkItemEdited() ourselves by comparing the actual data rather than the string.
-            #pragma clang diagnostic pop
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-enum-enum-conversion"
+            flags |= ImGuiInputTextFlags_AutoSelectAll |
+                     ImGuiInputTextFlags_NoMarkEdited; // We call MarkItemEdited() ourselves by comparing the actual data rather than the string.
+#pragma clang diagnostic pop
 
             bool value_changed = false;
             if (step != (T) 0)
             {
-                const float button_size = GetFrameHeight();
+                const float button_size = ImGui::GetFrameHeight();
 
-                BeginGroup(); // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
-                PushID(labelID);
-                SetNextItemWidth(ImMax(1.0f, CalcItemWidth() - (button_size + style.ItemInnerSpacing.x) * 2));
-                if (InputText("", buf, IM_ARRAYSIZE(buf), flags)) // PushId(label) + "" gives us the expected ID from outside point of view
-                    value_changed = DataTypeApplyFromText(buf, dataType, value, localFormat);
+                ImGui::BeginGroup(); // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
+                ImGui::PushID(labelID);
+                ImGui::SetNextItemWidth(
+                        ImMax(1.0f, ImGui::CalcItemWidth() - (button_size + style.ItemInnerSpacing.x) * 2));
+                if (ImGui::InputText("", buf, IM_ARRAYSIZE(buf),
+                                     flags)) // PushId(label) + "" gives us the expected ID from outside point of view
+                    value_changed = ImGui::DataTypeApplyFromText(buf, dataType, value, localFormat);
                 IMGUI_TEST_ENGINE_ITEM_INFO(g.LastItemData.ID, label, g.LastItemData.StatusFlags);
 
                 // Step buttons
@@ -345,73 +358,79 @@
                 style.FramePadding.x = style.FramePadding.y;
                 ImGuiButtonFlags button_flags = ImGuiButtonFlags_Repeat | ImGuiButtonFlags_DontClosePopups;
                 if (flags & ImGuiInputTextFlags_ReadOnly)
-                    BeginDisabled();
-                SameLine(0, style.ItemInnerSpacing.x);
-                if (ButtonEx("-", ImVec2(button_size, button_size), button_flags))
+                    ImGui::BeginDisabled();
+                ImGui::SameLine(0, style.ItemInnerSpacing.x);
+                if (ImGui::ButtonEx("-", ImVec2(button_size, button_size), button_flags))
                 {
                     valueReference -= g.IO.KeyCtrl ? (T) stepFast : (T) step;
                     value_changed = true;
                 }
-                SameLine(0, style.ItemInnerSpacing.x);
-                if (ButtonEx("+", ImVec2(button_size, button_size), button_flags))
+                ImGui::SameLine(0, style.ItemInnerSpacing.x);
+                if (ImGui::ButtonEx("+", ImVec2(button_size, button_size), button_flags))
                 {
                     valueReference += g.IO.KeyCtrl ? (T) stepFast : (T) step;
                     value_changed = true;
                 }
                 if (flags & ImGuiInputTextFlags_ReadOnly)
-                    EndDisabled();
+                    ImGui::EndDisabled();
 
-                const char* label_end = FindRenderedTextEnd(labelID);
+                const char *label_end = ImGui::FindRenderedTextEnd(labelID);
                 if (labelID != label_end)
                 {
-                    SameLine(0, style.ItemInnerSpacing.x);
-                    TextEx(labelID, label_end);
+                    ImGui::SameLine(0, style.ItemInnerSpacing.x);
+                    ImGui::TextEx(labelID, label_end);
                 }
                 style.FramePadding = backup_frame_padding;
 
-                PopID();
-                EndGroup();
-            }
-            else
+                ImGui::PopID();
+                ImGui::EndGroup();
+            } else
             {
-                if (InputText(labelID, buf, IM_ARRAYSIZE(buf), flags))
-                    value_changed = DataTypeApplyFromText(buf, dataType, value, localFormat);
+                if (ImGui::InputText(labelID, buf, IM_ARRAYSIZE(buf), flags))
+                    value_changed = ImGui::DataTypeApplyFromText(buf, dataType, value, localFormat);
             }
             if (value_changed)
-                MarkItemEdited(g.LastItemData.ID);
+                ImGui::MarkItemEdited(g.LastItemData.ID);
 
             return value_changed;
-        }
-        else
+        } else
         {
             const ImGuiID id = window->GetID(labelID);
-            const float w = CalcItemWidth();
+            const float w = ImGui::CalcItemWidth();
 
-            const ImVec2 label_size = CalcTextSize(labelID, nullptr, true);
-            const ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + ImVec2(w, label_size.y + style.FramePadding.y * 2.0f));
-            const ImRect total_bb(frame_bb.Min, frame_bb.Max + ImVec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
+            const ImVec2 label_size = ImGui::CalcTextSize(labelID, nullptr, true);
+            const ImRect frame_bb(window->DC.CursorPos,
+                                  window->DC.CursorPos + ImVec2(w, label_size.y + style.FramePadding.y * 2.0f));
+            const ImRect total_bb(frame_bb.Min, frame_bb.Max +
+                                                ImVec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x
+                                                                           : 0.0f, 0.0f));
 
             const bool temp_input_allowed = (flags & ImGuiSliderFlags_NoInput) == 0;
-            ItemSize(total_bb, style.FramePadding.y);
-            if (!ItemAdd(total_bb, id, &frame_bb, temp_input_allowed ? ImGuiItemFlags_Inputable : 0))
+            ImGui::ItemSize(total_bb, style.FramePadding.y);
+            if (!ImGui::ItemAdd(total_bb, id, &frame_bb, temp_input_allowed ? ImGuiItemFlags_Inputable : 0))
                 return false;
 
-            const bool hovered = ItemHoverable(frame_bb, id);
-            bool temp_input_is_active = temp_input_allowed && TempInputIsActive(id);
+            const bool hovered = ImGui::ItemHoverable(frame_bb, id);
+            bool temp_input_is_active = temp_input_allowed && ImGui::TempInputIsActive(id);
             if (!temp_input_is_active)
             {
                 // Tabbing or CTRL-clicking on Drag turns it into an InputText
-                const bool input_requested_by_tabbing = temp_input_allowed && (g.LastItemData.StatusFlags & ImGuiItemStatusFlags_FocusedByTabbing) != 0;
+                const bool input_requested_by_tabbing =
+                        temp_input_allowed && (g.LastItemData.StatusFlags & ImGuiItemStatusFlags_FocusedByTabbing) != 0;
                 const bool clicked = (hovered && g.IO.MouseClicked[0]);
                 const bool double_clicked = (hovered && g.IO.MouseClickedCount[0] == 2);
-                const bool make_active = (input_requested_by_tabbing || clicked || double_clicked || g.NavActivateId == id);
+                const bool make_active = (input_requested_by_tabbing || clicked || double_clicked ||
+                                          g.NavActivateId == id);
                 if (make_active && temp_input_allowed)
-                    if (input_requested_by_tabbing || (clicked && g.IO.KeyCtrl) || double_clicked || (g.NavActivateId == id && (g.NavActivateFlags & ImGuiActivateFlags_PreferInput)))
+                    if (input_requested_by_tabbing || (clicked && g.IO.KeyCtrl) || double_clicked ||
+                        (g.NavActivateId == id && (g.NavActivateFlags & ImGuiActivateFlags_PreferInput)))
                         temp_input_is_active = true;
 
                 // (Optional) simple click (without moving) turns Drag into an InputText
                 if (g.IO.ConfigDragClickToInputText && temp_input_allowed && !temp_input_is_active)
-                    if (g.ActiveId == id && hovered && g.IO.MouseReleased[0] && !IsMouseDragPastThreshold(0, g.IO.MouseDragThreshold * 0.50f)) // DRAG_MOUSE_THRESHOLD_FACTOR
+                    if (g.ActiveId == id && hovered && g.IO.MouseReleased[0] && !ImGui::IsMouseDragPastThreshold(0,
+                                                                                                                 g.IO.MouseDragThreshold *
+                                                                                                                 0.50f)) // DRAG_MOUSE_THRESHOLD_FACTOR
                     {
                         g.NavActivateId = id;
                         g.NavActivateFlags = ImGuiActivateFlags_PreferInput;
@@ -420,9 +439,9 @@
 
                 if (make_active && !temp_input_is_active)
                 {
-                    SetActiveID(id, window);
-                    SetFocusID(id, window);
-                    FocusWindow(window);
+                    ImGui::SetActiveID(id, window);
+                    ImGui::SetFocusID(id, window);
+                    ImGui::FocusWindow(window);
                     g.ActiveIdUsingNavDirMask = (1 << ImGuiDir_Left) | (1 << ImGuiDir_Right);
                 }
             }
@@ -430,32 +449,42 @@
             if (temp_input_is_active)
             {
                 // Only clamp CTRL+Click input when ImGuiSliderFlags_AlwaysClamp is set
-                const bool is_clamp_input = (flags & ImGuiSliderFlags_AlwaysClamp) != 0 && DataTypeCompare(dataType, &dataLimitMin, &dataLimitMax) < 0;
-                return TempInputScalar(frame_bb, id, labelID, dataType, value, localFormat, is_clamp_input ? &dataLimitMin : nullptr, is_clamp_input ? &dataLimitMax : nullptr);
+                const bool is_clamp_input = (flags & ImGuiSliderFlags_AlwaysClamp) != 0 &&
+                                            ImGui::DataTypeCompare(dataType, &dataLimitMin, &dataLimitMax) < 0;
+                return ImGui::TempInputScalar(frame_bb, id, labelID, dataType, value, localFormat,
+                                              is_clamp_input ? &dataLimitMin : nullptr,
+                                              is_clamp_input ? &dataLimitMax : nullptr);
             }
 
             // Draw frame
-            const ImU32 frame_col = GetColorU32(g.ActiveId == id ? ImGuiCol_FrameBgActive : hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg);
-            RenderNavHighlight(frame_bb, id);
+            const ImU32 frame_col = ImGui::GetColorU32(
+                    g.ActiveId == id ? ImGuiCol_FrameBgActive : hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg);
+            ImGui::RenderNavHighlight(frame_bb, id);
             ImGui::GetWindowDrawList()->AddRectFilled(frame_bb.Min, frame_bb.Max, frame_col, rounding, roundingType);
 
             // Drag behavior
-            const bool value_changed = DragBehavior(id, dataType, value, dataDragSpeed, &dataLimitMin, &dataLimitMax, localFormat, flags);
+            const bool value_changed = ImGui::DragBehavior(id, dataType, value, dataDragSpeed, &dataLimitMin,
+                                                           &dataLimitMax, localFormat, flags);
             if (value_changed)
-                MarkItemEdited(id);
+                ImGui::MarkItemEdited(id);
 
             // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
             char value_buf[64];
-            const char* value_buf_end = value_buf + DataTypeFormatString(value_buf, IM_ARRAYSIZE(value_buf), dataType, value, localFormat);
+            const char *value_buf_end = value_buf +
+                                        ImGui::DataTypeFormatString(value_buf, IM_ARRAYSIZE(value_buf), dataType, value,
+                                                                    localFormat);
             if (g.LogEnabled)
-                LogSetNextTextDecoration("{", "}");
+                ImGui::LogSetNextTextDecoration("{", "}");
 
             float xAlign = centerAlign ? 0.5f : g.Style.ItemInnerSpacing.x / ImGui::GetItemRectSize().x;
             float yAlign = centerAlign ? 0.5f : 0.0f;
-            RenderTextClipped(frame_bb.Min, frame_bb.Max, value_buf, value_buf_end, nullptr, ImVec2(xAlign, yAlign));
+            ImGui::RenderTextClipped(frame_bb.Min, frame_bb.Max, value_buf, value_buf_end, nullptr,
+                                     ImVec2(xAlign, yAlign));
 
             if (label_size.x > 0.0f)
-                RenderText(ImVec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y), labelID);
+                ImGui::RenderText(
+                        ImVec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y),
+                        labelID);
 
             IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags);
             return value_changed;
@@ -463,42 +492,42 @@
 
     }
 
-    bool GUI::IntInput(const char* labelID, int &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
+    bool GUI::IntInput(const char *labelID, int &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
     {
         return NumericInput<int>(labelID, value, canDrag, false, inputFlags);
     }
 
-    bool GUI::Int64Input(const char* labelID, int64 &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
+    bool GUI::Int64Input(const char *labelID, int64 &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
     {
         return NumericInput<int64>(labelID, value, canDrag, false, inputFlags);
     }
 
-    bool GUI::UIntInput(const char* labelID, uint &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
+    bool GUI::UIntInput(const char *labelID, uint &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
     {
         return NumericInput<uint>(labelID, value, canDrag, false, inputFlags);
     }
 
-    bool GUI::UInt64Input(const char* labelID, uint64 &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
+    bool GUI::UInt64Input(const char *labelID, uint64 &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
     {
         return NumericInput<uint64>(labelID, value, canDrag, false, inputFlags);
     }
 
-    bool GUI::FloatInput(const char* labelID, float &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
+    bool GUI::FloatInput(const char *labelID, float &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
     {
         return NumericInput<float>(labelID, value, canDrag, false, inputFlags);
     }
 
-    bool GUI::DoubleInput(const char* labelID, double &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
+    bool GUI::DoubleInput(const char *labelID, double &value, bool canDrag, const ImGuiInputTextFlags inputFlags)
     {
         return NumericInput<double>(labelID, value, canDrag, false, inputFlags);
     }
 
-    bool GUI::Checkbox(const char* labelID, bool &value)
+    bool GUI::Checkbox(const char *labelID, bool &value)
     {
         return ImGui::Checkbox(labelID, &value);
     }
 
-    bool GUI::Checkbox(const char* labelID, uint &value)
+    bool GUI::Checkbox(const char *labelID, uint &value)
     {
         bool boolValue;
         bool modified = ImGui::Checkbox(labelID, &boolValue);
@@ -507,15 +536,16 @@
         return modified;
     }
 
-    bool GUI::Vector3Input(Vector3 &value, const float *resetValues, const char** tooltips)
+    bool GUI::Vector3Input(Vector3 &value, const float *resetValues, const char **tooltips)
     {
         auto boldFont = ImGui::GetIO().Fonts->Fonts[boldFontIndex];
 
         float frameHeight = ImGui::GetFrameHeight();
-        ImVec2 buttonSize = { frameHeight, frameHeight };
+        ImVec2 buttonSize = {frameHeight, frameHeight};
 
         bool drawButtons = true;
-        float inputFieldWidth = (ImGui::GetColumnWidth(1) - 2.0f * ImGui::GetStyle().ItemSpacing.x) / 3.0f - buttonSize.x;
+        float inputFieldWidth =
+                (ImGui::GetColumnWidth(1) - 2.0f * ImGui::GetStyle().ItemSpacing.x) / 3.0f - buttonSize.x;
 
         ImDrawFlags inputFieldRounding = ImDrawFlags_RoundCornersRight;
 
@@ -638,10 +668,11 @@
         return modified;
     }
 
-    bool GUI::Dropdown(const char* labelID, uint &value, const char** options, uint optionsCount, const bool* deactivatedFlags)
+    bool GUI::Dropdown(const char *labelID, uint &value, const char **options, uint optionsCount,
+                       const bool *deactivatedFlags)
     {
         bool modified = false;
-        const char* currentOption = options[value];
+        const char *currentOption = options[value];
 
         if (ImGui::BeginCombo(labelID, currentOption))
         {
@@ -681,7 +712,8 @@
     }
 
 
-    bool GUI::StringProperty(const char* label, String &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
+    bool
+    GUI::StringProperty(const char *label, String &value, const char *tooltip, const ImGuiInputTextFlags inputFlags)
     {
         BeginProperty(label);
         bool modified = StringInput(IDBuffer, value, inputFlags);
@@ -691,57 +723,64 @@
         return modified;
     }
 
-    bool GUI::IntProperty(const char* label, int &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
+    bool GUI::IntProperty(const char *label, int &value, const char *tooltip, const ImGuiInputTextFlags inputFlags)
     {
         BeginProperty(label);
-        bool modified = NumericInput<int>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll, GImGui->Style.FrameRounding, inputFlags);
+        bool modified = NumericInput<int>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll,
+                                          GImGui->Style.FrameRounding, inputFlags);
         ShowTooltip(tooltip);
         EndProperty();
 
         return modified;
     }
 
-    bool GUI::Int64Property(const char* label, int64 &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
+    bool GUI::Int64Property(const char *label, int64 &value, const char *tooltip, const ImGuiInputTextFlags inputFlags)
     {
         BeginProperty(label);
-        bool modified = NumericInput<int64>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll, GImGui->Style.FrameRounding, inputFlags);
+        bool modified = NumericInput<int64>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll,
+                                            GImGui->Style.FrameRounding, inputFlags);
         ShowTooltip(tooltip);
         EndProperty();
 
         return modified;
     }
 
-    bool GUI::UIntProperty(const char* label, uint &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
+    bool GUI::UIntProperty(const char *label, uint &value, const char *tooltip, const ImGuiInputTextFlags inputFlags)
     {
         BeginProperty(label);
-        bool modified = NumericInput<uint>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll, GImGui->Style.FrameRounding, inputFlags);
+        bool modified = NumericInput<uint>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll,
+                                           GImGui->Style.FrameRounding, inputFlags);
         ShowTooltip(tooltip);
         EndProperty();
 
         return modified;
     }
 
-    bool GUI::UInt64Property(const char* label, uint64 &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
+    bool
+    GUI::UInt64Property(const char *label, uint64 &value, const char *tooltip, const ImGuiInputTextFlags inputFlags)
     {
         BeginProperty(label);
-        bool modified = NumericInput<uint64>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll, GImGui->Style.FrameRounding, inputFlags);
+        bool modified = NumericInput<uint64>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll,
+                                             GImGui->Style.FrameRounding, inputFlags);
         ShowTooltip(tooltip);
         EndProperty();
 
         return modified;
     }
 
-    bool GUI::FloatProperty(const char* label, float &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
+    bool GUI::FloatProperty(const char *label, float &value, const char *tooltip, const ImGuiInputTextFlags inputFlags)
     {
         BeginProperty(label);
-        bool modified = NumericInput<float>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll, GImGui->Style.FrameRounding, inputFlags);
+        bool modified = NumericInput<float>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll,
+                                            GImGui->Style.FrameRounding, inputFlags);
         ShowTooltip(tooltip);
         EndProperty();
 
         return modified;
     }
 
-    bool GUI::DoubleProperty(const char* label, double &value, const char* tooltip, const ImGuiInputTextFlags inputFlags)
+    bool
+    GUI::DoubleProperty(const char *label, double &value, const char *tooltip, const ImGuiInputTextFlags inputFlags)
     {
         BeginProperty(label);
         bool modified = NumericInput<double>(IDBuffer, value, true, false, ImDrawFlags_RoundCornersAll, GImGui->Style.FrameRounding, inputFlags);
@@ -751,7 +790,7 @@
         return modified;
     }
 
-    bool GUI::CheckboxProperty(const char* label, bool &value, const char* tooltip)
+    bool GUI::CheckboxProperty(const char *label, bool &value, const char *tooltip)
     {
         BeginProperty(label);
         bool modified = Checkbox(IDBuffer, value);
@@ -761,7 +800,7 @@
         return modified;
     }
 
-    bool GUI::CheckboxProperty(const char* label, uint &value, const char* tooltip)
+    bool GUI::CheckboxProperty(const char *label, uint &value, const char *tooltip)
     {
         BeginProperty(label);
         bool modified = Checkbox(IDBuffer, value);
@@ -771,7 +810,8 @@
         return modified;
     }
 
-    bool GUI::DropdownProperty(const char* label, uint &value, const char** options, const uint optionsCount,  const bool* deactivatedFlags, const char* tooltip)
+    bool GUI::DropdownProperty(const char *label, uint &value, const char **options, const uint optionsCount,
+                               const bool *deactivatedFlags, const char *tooltip)
     {
         BeginProperty(label);
         bool modified = Dropdown(IDBuffer, value, options, optionsCount, deactivatedFlags);
@@ -781,7 +821,7 @@
         return modified;
     }
 
-    bool GUI::PropertyVector3(const char* label, Vector3 &value, const float *resetValues, const char** tooltips)
+    bool GUI::PropertyVector3(const char *label, Vector3 &value, const float *resetValues, const char **tooltips)
     {
         BeginProperty(label);
         bool modified = Vector3Input(value, resetValues, tooltips);
@@ -790,22 +830,23 @@
         return modified;
     }
 
-    bool GUI::TextureProperty(const char* label, SharedPtr<Texture> &texture, const char* tooltip)
+    bool GUI::TextureProperty(const char *label, SharedPtr<Texture> &texture, const char *tooltip)
     {
         BeginProperty(label);
 
         bool changed = false;
 
         float buttonSize = ImGui::GetFrameHeight() * 3.0f;
-        ImVec2 xButtonSize = { buttonSize / 4.0f, buttonSize };
+        ImVec2 xButtonSize = {buttonSize / 4.0f, buttonSize};
 
-        ImGui::SetCursorPos({ ImGui::GetContentRegionMax().x - buttonSize - xButtonSize.x, ImGui::GetCursorPosY() + ImGui::GetStyle().FramePadding.y });
+        ImGui::SetCursorPos({ImGui::GetContentRegionMax().x - buttonSize - xButtonSize.x,
+                             ImGui::GetCursorPosY() + ImGui::GetStyle().FramePadding.y});
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.35f, 0.35f, 0.35f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
 
-        ImGui::ImageButton(texture->GetImGuiTextureID(), { buttonSize, buttonSize }, { 1, 1 }, { 0, 0 }, 0);
+        ImGui::ImageButton(texture->GetImGuiTextureID(), {buttonSize, buttonSize}, {1, 1}, {0, 0}, 0);
         ShowTooltip(tooltip);
 
         ImGui::PopStyleColor(3);
@@ -828,3 +869,4 @@
 
         return changed;
     }
+}

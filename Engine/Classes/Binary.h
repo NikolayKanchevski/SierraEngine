@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
 
     class Binary
@@ -29,7 +29,7 @@ namespace Sierra::Engine::Classes
 
         /* --- OPERATORS --- */
         Binary& operator=(uint givenValue);
-        operator uint() const noexcept { return value; }
+        operator uint() const { return value; }
     private:
         uint value = 0;
 

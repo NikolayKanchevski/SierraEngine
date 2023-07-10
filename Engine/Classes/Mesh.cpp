@@ -4,10 +4,7 @@
 
 #include "Mesh.h"
 
-using Sierra::Core::Debugger;
-using namespace Sierra::Core::Rendering::Vulkan;
-
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
 
     /* --- CONSTRUCTORS --- */
@@ -34,17 +31,17 @@ namespace Sierra::Engine::Classes
         // Calculate the buffer size
         uint64 bufferSize = sizeof(Vertex) * givenVertices.size();
 
-        auto stagingBuffer = Buffer::Create({
+        auto stagingBuffer = Rendering::Buffer::Create({
             .memorySize = bufferSize,
-            .bufferUsage = BufferUsage::TRANSFER_SRC
+            .bufferUsage = Rendering::BufferUsage::TRANSFER_SRC
         });
 
         // Fill the data pointer with the vertices array's information
         stagingBuffer->CopyFromPointer(givenVertices.data());
 
-        vertexBuffer = Buffer::Create({
+        vertexBuffer = Rendering::Buffer::Create({
            .memorySize = bufferSize,
-           .bufferUsage = BufferUsage::TRANSFER_DST | BufferUsage::VERTEX
+           .bufferUsage = Rendering::BufferUsage::TRANSFER_DST | Rendering::BufferUsage::VERTEX
        });
 
         stagingBuffer->CopyToBuffer(vertexBuffer);
@@ -57,17 +54,17 @@ namespace Sierra::Engine::Classes
         // Calculate the buffer size
         uint64 bufferSize = UINT_SIZE * givenIndices.size();
 
-        auto stagingBuffer = Buffer::Create({
+        auto stagingBuffer = Rendering::Buffer::Create({
             .memorySize = bufferSize,
-            .bufferUsage = BufferUsage::TRANSFER_SRC
+            .bufferUsage = Rendering::BufferUsage::TRANSFER_SRC
         });
 
         // Fill the data pointer with the vertices array's information
         stagingBuffer->CopyFromPointer(givenIndices.data());
 
-        indexBuffer = Buffer::Create({
+        indexBuffer = Rendering::Buffer::Create({
              .memorySize = bufferSize,
-             .bufferUsage = BufferUsage::TRANSFER_DST | BufferUsage::INDEX
+             .bufferUsage = Rendering::BufferUsage::TRANSFER_DST | Rendering::BufferUsage::INDEX
          });
 
         stagingBuffer->CopyToBuffer(indexBuffer);

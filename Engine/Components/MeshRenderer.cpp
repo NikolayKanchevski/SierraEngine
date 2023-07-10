@@ -7,13 +7,12 @@
 #include "Transform.h"
 #include "../../Core/Rendering/UI/ImGuiUtilities.h"
 
-using namespace Sierra::Core::Rendering::Vulkan;
-
-namespace Sierra::Engine::Components
+namespace Sierra::Engine
 {
 
     /* --- CONSTRUCTORS --- */
 
+    using namespace Rendering;
     MeshRenderer::MeshRenderer(SharedPtr<Mesh> givenCorrespondingMesh)
         : mesh(std::move(givenCorrespondingMesh))
     {
@@ -23,7 +22,7 @@ namespace Sierra::Engine::Components
         // Assign textures array to use default ones
         for (uint i = static_cast<uint>(TextureType::TOTAL_COUNT); i--;)
         {
-            textures[i] = Texture::GetDefaultTexture((TextureType) i);
+            textures[i] = Texture::GetDefaultTexture(static_cast<TextureType>(i));
         }
     }
 
@@ -49,15 +48,15 @@ namespace Sierra::Engine::Components
 
         if (GUI::TextureProperty("Diffuse Texture:", textures[static_cast<uint>(TextureType::DIFFUSE)], "Some tooltip.")) SetTexture(textures[static_cast<uint>(TextureType::DIFFUSE)]);
         if (GUI::TextureProperty("Specular Texture:", textures[static_cast<uint>(TextureType::SPECULAR)], "Some tooltip.")) SetTexture(textures[static_cast<uint>(TextureType::SPECULAR)]);
-        if (GUI::TextureProperty("Normal Map Texture:", textures[static_cast<uint>(TextureType::NORMAL_MAP)], "Some tooltip.")) SetTexture(textures[static_cast<uint>(TextureType::NORMAL_MAP)]);
-        if (GUI::TextureProperty("Height Map Texture:", textures[static_cast<uint>(TextureType::HEIGHT_MAP)], "Some tooltip.")) SetTexture(textures[static_cast<uint>(TextureType::HEIGHT_MAP)]);
+        if (GUI::TextureProperty("Normal Map Texture:", textures[static_cast<uint>(TextureType::NORMAL)], "Some tooltip.")) SetTexture(textures[static_cast<uint>(TextureType::NORMAL)]);
+        if (GUI::TextureProperty("Height Map Texture:", textures[static_cast<uint>(TextureType::HEIGHT)], "Some tooltip.")) SetTexture(textures[static_cast<uint>(TextureType::HEIGHT)]);
 
         GUI::EndProperties();
     }
 
     /* --- SETTER METHODS --- */
 
-    void MeshRenderer::SetTexture(const SharedPtr<Texture>& givenTexture)
+    void MeshRenderer::SetTexture(const SharedPtr<Texture> &givenTexture)
     {
         ASSERT_ERROR_IF(givenTexture->GetTextureType() == TextureType::UNDEFINED, "In order to bind texture to mesh its texture type must be specified and be different from TextureType::NONE");
         textures[static_cast<uint>(givenTexture->GetTextureType())] = givenTexture;

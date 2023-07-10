@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace Sierra::Engine::Classes
+namespace Sierra::Engine
 {
 
     template<typename T = uint32, ENABLE_IF(std::is_same_v<T, uint8> || std::is_same_v<T, uint16> || std::is_same_v<T, uint32> || std::is_same_v<T, uint64>)>

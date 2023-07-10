@@ -10,9 +10,8 @@
 
 #include "../../../Engine/Classes/Mesh.h"
 
-namespace Sierra::Core::Rendering::Vulkan::Abstractions
+namespace Sierra::Rendering
 {
-    using Engine::Classes::Mesh;
 
     struct GraphicsPipelineDynamicRenderingInfo
     {
@@ -51,7 +50,7 @@ namespace Sierra::Core::Rendering::Vulkan::Abstractions
 
         /* --- POLLING METHODS --- */
         void Draw(const UniquePtr<CommandBuffer> &commandBuffer, uint vertexCount);
-        void DrawMesh(const UniquePtr<CommandBuffer> &commandBuffer, const SharedPtr<Mesh> &mesh);
+        void DrawMesh(const UniquePtr<CommandBuffer> &commandBuffer, const SharedPtr<Engine::Mesh> &mesh);
 
         /* --- SETTER METHODS --- */
         void SetFrontFace(FrontFace givenFrontFace);
