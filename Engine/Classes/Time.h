@@ -16,13 +16,13 @@ namespace Sierra::Engine
 
         /* --- GETTER METHODS --- */
         /// @brief Current FPS of the application. Measured per frame.
-        [[nodiscard]] inline static int const GetFPS() { return FPS; }
+        [[nodiscard]] inline static uint GetFPS() { return FPS; }
 
         /// @brief Time since last frame. Used for <a href="https://www.construct.net/en/tutorials/delta-time-framerate-2">framerate independence</a>.
-        [[nodiscard]] inline static float const GetDeltaTime() { return deltaTime; }
+        [[nodiscard]] inline static float GetDeltaTime() { return deltaTime; }
 
         /// @brief Time in seconds since the program has started. It is never lowered and is increased by <see cref="deltaTime"/> every frame.
-        [[nodiscard]] inline static float const GetUpTime() { return upTime; }
+        [[nodiscard]] inline static float  GetUpTime() { return upTime; }
 
     private:
         static inline uint FPS = 0;

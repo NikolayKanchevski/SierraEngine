@@ -4,11 +4,10 @@ import os
 import shutil
 import sys
 import datetime
-import platform
 from CompileShader import CompileShader
 
 CMAKE_CALL: bool = len(sys.argv) > 2 and sys.argv[2] == '--CMakeCall'
-ROOT_DIRECTORY: str = os.getcwd() + '/Scripts/' if CMAKE_CALL else os.getcwd() + '/'
+ROOT_DIRECTORY: str = os.getcwd().replace('\\', '/') + '/Scripts/' if CMAKE_CALL else os.getcwd().replace('\\', '/') + '/'
 SHADERS_DIRECTORY: str = ROOT_DIRECTORY + '../Core/Rendering/Shading/Shaders/'
 
 COUNT_SUBDIRECTORIES: list[str] = ['../Core/', '../Engine/', '../Scripts/']
@@ -34,27 +33,25 @@ def CompileShaders():
     # Get output folder
     outputDirectory: str = sys.argv[1]
     if outputDirectory == '--Debug':
-        outputDirectory = ROOT_DIRECTORY + '../' + ('cmake-build-debug/Debug/' if platform.system() == 'Windows' else 'cmake-build-debug/Shaders')
+        outputDirectory = ROOT_DIRECTORY + '../cmake-build-debug/Shaders'
     elif outputDirectory == '--Release':
-        outputDirectory = ROOT_DIRECTORY + '../' + ('cmake-build-release/Release/' if platform.system() == 'Windows' else 'cmake-build-release/Shaders')
+        outputDirectory = ROOT_DIRECTORY + '../cmake-build-release/Shaders'
     else:
         outputDirectory = ''
 
     # For each shader
     for root, dirs, files in os.walk(SHADERS_DIRECTORY):
         for file in files:
-            filePath: str = str(os.path.join(root, file))
-            shaderOutputPath: str = outputDirectory + filePath[filePath.index('Shaders/') + 7:filePath.rindex('/')] + '/'
+            filePath: str = str(os.path.join(root, file)).replace('\\', '/')
+            shaderOutputPath: str = outputDirectory + filePath[filePath.index('Shaders/') + 7:filePath.rindex('/')]
             try:
-                if '/* !COMPILE_TO_BINARY */' in open(filePath, 'r').read():
+                if '/* !COMPILE_TO_BINARY */' in open(filePath, 'r', encoding='utf-8').read():
                     # Compile binary shader and delete original one
                     CompileShader(filePath, shaderOutputPath, ROOT_DIRECTORY + '../Core/Rendering/Shading/Compilers')
-                    os.remove(shaderOutputPath + file)
-                    pass
                 else:
                     os.makedirs(os.path.dirname(shaderOutputPath), exist_ok=True)
                     shutil.copy(filePath, shaderOutputPath)
-            except:
+            except Exception as exception:
                 os.makedirs(os.path.dirname(shaderOutputPath), exist_ok=True)
                 shutil.copy(filePath, shaderOutputPath)
 
@@ -81,7 +78,7 @@ def UpdateReadMe():
                             print(f'{ filePath } consists of: { count + 1 } lines')
 
     # Load and count README.md's lines
-    with open(ROOT_DIRECTORY + '../README.md', 'r') as file:
+    with open(ROOT_DIRECTORY + '../README.md', 'r', encoding='utf-8') as file:
         for count, line in enumerate(file):
             pass
         linesOfCode += count + 1
@@ -95,7 +92,7 @@ def UpdateReadMe():
 
     # Update the README.md's description to have the current date and the just-calculated lines of code count
     newReadMeData: str = ''
-    with open(ROOT_DIRECTORY + '../README.md', 'r') as file:
+    with open(ROOT_DIRECTORY + '../README.md', 'r', encoding='utf-8') as file:
         # Get old README.md file data
         readMeData = file.read()
         index = readMeData.index('<p align="center" id="LinesCounter">')
@@ -112,7 +109,7 @@ def UpdateReadMe():
         newReadMeData = readMeData + linesOfCodeLine + lastUpdatedLine + '\n' + ('-' * 171)
 
     # Write to the README.md
-    with open(ROOT_DIRECTORY + '../README.md', 'w') as file:
+    with open(ROOT_DIRECTORY + '../README.md', 'w', encoding='utf-8') as file:
         file.write(newReadMeData)
 
 

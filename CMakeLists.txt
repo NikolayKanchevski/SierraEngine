@@ -7,6 +7,8 @@ set(SOURCE_FILES main.cpp Core/Rendering/Window.cpp Core/Rendering/Window.h Engi
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 # === COMPILER SETTINGS === #
+LIST(APPEND CMAKE_PROGRAM_PATH \"${CMAKE_BINARY_DIR}/DLLs/\")
+message(${CMAKE_PROGRAM_PATH})
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.12.25835)
     set(CMAKE_CXX20_STANDARD_COMPILE_OPTION "-std:c++latest")
     set(CMAKE_CXX20_EXTENSION_COMPILE_OPTION "-std:c++latest")

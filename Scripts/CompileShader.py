@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 import tempfile
 import platform
-import sys
+import subprocess
 from os.path import exists
 
 ROOT_DIRECTORY: str = '../'
@@ -12,14 +13,15 @@ SHADER_TYPES: list[str] = [ '.vert', '.frag', '.geom', '.tese', '.tesc', '.comp'
 def CompileShaderGLSLC(shaderFilePath: str, outputDirectory: str, compilerPath: str):
     # Run compilation command
     shaderFileName: str = shaderFilePath[shaderFilePath.rfind('/') + 1:]
-    command: str = f'{ compilerPath } { shaderFilePath } -o { outputDirectory }/{ shaderFileName }.spv'
-    os.system(command)
+    command: str = f'"{ compilerPath }" "{ shaderFilePath }" -o "{ outputDirectory }/{ shaderFileName }.spv"'
+    subprocess.call(command, shell=True)
 
 def CompileShader(shaderPath: str, outputDirectory: str, compilerDirectory: str):
     # Load shader code
     shaderCode: str = open(shaderPath, 'r').read()
 
     # Get shader file info
+    shaderPath = shaderPath.replace('\\', '/')
     shaderDirectory: str = shaderPath[:shaderPath.rfind("/") + 1]
     shaderName: str = shaderPath[shaderPath.rfind("/") + 1:]
     shaderType: str = shaderPath[shaderPath.rfind('.'):]
@@ -95,7 +97,7 @@ def CompileShader(shaderPath: str, outputDirectory: str, compilerDirectory: str)
             includeIndex = shaderCode.find('#include')
 
     # Create temporary shader file with the new code
-    temporaryShaderPath = tempfile.gettempdir() + '/' + shaderName
+    temporaryShaderPath = tempfile.gettempdir().replace('\\', '/') + '/' + shaderName
     open(temporaryShaderPath, 'w+').write(shaderCode)
 
     # Make directories to output folder
@@ -116,7 +118,6 @@ def CompileShader(shaderPath: str, outputDirectory: str, compilerDirectory: str)
 
     # Delete temporary shader
     os.remove(temporaryShaderPath)
-
 
 def Main():
     # Check for legal usage

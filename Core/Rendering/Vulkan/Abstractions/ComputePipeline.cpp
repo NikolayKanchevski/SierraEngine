@@ -24,7 +24,7 @@ namespace Sierra::Rendering
     void ComputePipeline::CreatePipeline()
     {
         // Check if recreating
-        if (vkPipeline != nullptr)
+        if (vkPipeline != VK_NULL_HANDLE)
         {
             VK::GetDevice()->WaitUntilIdle();
             vkDestroyPipeline(VK::GetLogicalDevice(), vkPipeline, nullptr);

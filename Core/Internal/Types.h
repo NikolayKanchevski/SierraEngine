@@ -58,6 +58,9 @@ using Tuple = std::tuple<A, B>;
 #define NO_CHANGE std::nullopt
 
 // === Engine === //
+#ifdef DELETE
+    #undef DELETE // Screw you Windows!
+#endif
 enum Key
 {
     UNKNOWN = GLFW_KEY_UNKNOWN,
