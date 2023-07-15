@@ -160,7 +160,7 @@ namespace Sierra::Rendering::GUI
         bool modified = false;
         T::Class::ForEachField(reference, [&modified](auto & field, auto & value){
             using Type = typename std::remove_reference<decltype(value)>::type;
-            std::string stringName = std::string(field.fieldName);
+            String stringName = String(field.fieldName);
             stringName[0] = std::toupper(stringName[0]);
             modified |= GUI::AnyPropertyInput<Type>(stringName.c_str(), value);
         });

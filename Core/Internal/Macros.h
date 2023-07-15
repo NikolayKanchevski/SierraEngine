@@ -28,6 +28,7 @@ struct IsSmartPointer<T, typename std::enable_if_t<std::is_same<typename std::de
 
 /* --- SHORTCUTS --- */
 #define PRINT(...) std::cout << __VA_ARGS__ << "\n"
+#define GET_FUNCTION_NAME(FUNCTION) String(#FUNCTION).substr(0, String(#FUNCTION).find_first_of("("))
 #define ENABLE_IF(...) std::enable_if_t<__VA_ARGS__, bool> = true
 #define DELETE_COPY(TYPE) TYPE(const TYPE &) = delete; TYPE &operator=(const TYPE &) = delete
 
@@ -35,6 +36,7 @@ struct IsSmartPointer<T, typename std::enable_if_t<std::is_same<typename std::de
 #define ARRAY_SIZE(ARRAY) ((uSize)(sizeof(ARRAY) / sizeof(*(ARRAY))))
 #define GET_UINT_PTR(VALUE) reinterpret_cast<std::uintptr_t>(&VALUE)
 #define IS_FLAG_PRESENT(VALUE, FLAG) (((uint) VALUE & (uint) FLAG) != 0)
+#define DISABLE_FLAG(VALUE, FLAG) VALUE = static_cast<decltype(VALUE)>(VALUE & static_cast<decltype(VALUE)>(~(1 << (static_cast<uint>(FLAG) - 1)))
 #define FORMAT_STRING(VALUE, ...) fmt::format(VALUE, __VA_ARGS__)
 #define VK_TO_STRING(VALUE, TYPE) vk::to_string((vk::TYPE) VALUE)
 

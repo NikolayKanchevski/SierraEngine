@@ -27,7 +27,7 @@ namespace Sierra::Internal
         static void ThrowError(const String &message);
 
         template <typename T>
-        static inline std::string TypeToString()
+        static inline String TypeToString()
         {
             auto unformatted = Demangle(typeid(T).name());
             return unformatted.substr(unformatted.find_last_of(':') + 1);
@@ -84,7 +84,7 @@ namespace Sierra::Internal
         };
 
     private:
-        static std::string Demangle(const char* name);
+        static String Demangle(const char* name);
 
     };
 }
@@ -105,8 +105,10 @@ namespace Sierra::Internal
     #define ASSERT_SUCCESS_IF(EXPRESSION, MESSAGE) if (EXPRESSION) ASSERT_SUCCESS(MESSAGE)
     #define ASSERT_SUCCESS_FORMATTED_IF(EXPRESSION, MESSAGE, ...) if (EXPRESSION) ASSERT_SUCCESS_FORMATTED(MESSAGE, ##__VA_ARGS__)
 
-    #define VK_ASSERT(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_ERROR_FORMATTED("Vulkan Error: {0}() failed: {1}! Error code: {2}", std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")), MESSAGE, VK_TO_STRING(result, Result))
-    #define VK_VALIDATE(FUNCTION, MESSAGE) if (VkResult result = FUNCTION; result != VK_SUCCESS) ASSERT_WARNING_FORMATTED("Vulkan Error: {0}() failed: {1}! Error code: {2}", std::string(#FUNCTION).substr(0, std::string(#FUNCTION).find_first_of("(")), MESSAGE, VK_TO_STRING(result, Result))
+    #define VK_ASSERT(FUNCTION, MESSAGE) if (VkResult vk_result = FUNCTION; vk_result != VK_SUCCESS) ASSERT_ERROR_FORMATTED("Vulkan Error: {0}() failed: {1}! Error code: {2}", GET_FUNCTION_NAME(FUNCTION), MESSAGE, VK_TO_STRING(vk_result, Result))
+    #define VK_VALIDATE(FUNCTION, MESSAGE) if (VkResult vk_result = FUNCTION; vk_result != VK_SUCCESS) ASSERT_WARNING_FORMATTED("Vulkan Error: {0}() failed: {1}! Error code: {2}", GET_FUNCTION_NAME(FUNCTION), MESSAGE, VK_TO_STRING(vk_result, Result))
+
+    #define DC_VALIDATE(FUNCTION, MESSAGE) if (discord::Result dc_result = FUNCTION; dc_result != discord::Result::Ok) ASSERT_WARNING_FORMATTED("Discord Error: {0}() failed: {1}! Error code: {2}", GET_FUNCTION_NAME(FUNCTION), MESSAGE, std::to_string(static_cast<uint>(dc_result)))
 
     #define NULL_ASSERT(VALUE) if (VALUE == nullptr) { ASSERT_ERROR(FORMAT_STRING("Value \"{0}\" is null", #VALUE)); }
     #define STATIC_ASSERT_IF(CONDITION, MESSAGE) static_assert(!CONDITION, MESSAGE)
@@ -135,6 +137,8 @@ namespace Sierra::Internal
 
     #define VK_ASSERT(FUNCTION, MESSAGE) static_cast<void>(FUNCTION)
     #define VK_VALIDATE(FUNCTION, MESSAGE) static_cast<void>(FUNCTION)
+
+    #define DC_VALIDATE(FUNCTION, MESSAGE) static_cast<void>(FUNCTION)
 #endif
 
 #if DEBUG || PROFILE_FUNCTIONS_IN_RELEASE

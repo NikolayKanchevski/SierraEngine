@@ -478,14 +478,14 @@ namespace Sierra::Rendering
     shaderc_include_result* Shader::Includer::GetInclude(const char* requestedSource, const shaderc_include_type type, const char* requestingSource, const size_t includeDepth)
     {
         // Get which file is requested to be included
-        const std::string includeReference = std::string(requestedSource);
+        const String includeReference = String(requestedSource);
 
         // Gather its data
         auto fileData = Engine::File::ReadBinaryFile(Engine::File::RemoveFileNameFromPath(filePath) + includeReference);
         String includedContents = String(fileData.begin(), fileData.end());
 
         // Assign the pointers of the read data to a container
-        auto container = new std::array<std::string, 2>();
+        auto container = new std::array<String, 2>();
         (*container)[0] = includeReference;
         (*container)[1] = includedContents;
 
@@ -503,7 +503,7 @@ namespace Sierra::Rendering
     void Shader::Includer::ReleaseInclude(shaderc_include_result *data)
     {
         // Deallocate the container allocated in GetInclude()
-        delete(static_cast<std::array<std::string, 2>*>(data->user_data));
+        delete(static_cast<std::array<String, 2>*>(data->user_data));
         delete(data);
     }
 }

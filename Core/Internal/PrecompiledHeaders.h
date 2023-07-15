@@ -148,6 +148,9 @@
     // '-- Whereami
     #include <whereami.h>
 
+    // '-- Discord SDK
+    #include <discord.h>
+
     // === Custom Types === //
     #include "Types.h"
     #include "../Rendering/Vulkan/VulkanTypes.h"

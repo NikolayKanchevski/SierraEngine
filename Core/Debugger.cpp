@@ -112,7 +112,7 @@ namespace Sierra::Internal
 
     void Debugger::FunctionProfiler::Stop()
     {
-        std::string nameString = std::string(name);
+        String nameString = String(name);
 
         String templateData;
         uint templateIndex = nameString.substr(0, nameString.find_first_of('(')).find_first_of('<');

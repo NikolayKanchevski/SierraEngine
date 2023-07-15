@@ -95,8 +95,8 @@ Wondering how to use the engine? You can check out the online documentation [her
 * [Infoware](https://github.com/ThePhD/infoware/) - For the extraction of various system-and-hardware-specific buffer.
 * [Whereami](https://github.com/gpakosz/whereami/) - For the retrieval of the compiled executable's location within the file system.
 * [TBB](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onetbb.html#gs.m2vcgt/) - For easier and guaranteed-to-be-supported threading.
+* [DiscordSDK](https://discord.com/developers/docs/intro) - For integration with the Discord app.
 * [My Brain](https://ih1.redbubble.net/image.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
-
 <br>
 
 **Software used:**
@@ -110,7 +110,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 17,637</p>
-<p align="center" id="LastUpdated">Last updated: 10/07/2023 </p>
+<p align="center" id="LinesCounter">Total lines of code: 17,921</p>
+<p align="center" id="LastUpdated">Last updated: 15/07/2023 </p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

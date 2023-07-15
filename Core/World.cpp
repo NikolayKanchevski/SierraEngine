@@ -8,6 +8,7 @@
 #include "../Engine/Classes/Input.h"
 #include "../Engine/Classes/Entity.h"
 #include "../Engine/Classes/Cursor.h"
+#include "../Engine/Classes/Discord.h"
 #include "../Engine/Components/Model.h"
 #include "../Engine/Components/Transform.h"
 #include "../Engine/Classes/SystemInformation.h"
@@ -20,6 +21,17 @@ namespace Sierra::Engine
 
     void World::Start()
     {
+        Discord::Start(SR_DISCORD_APPLICATION_KEY, [] {
+            ASSERT_INFO_FORMATTED("Discord user picked: {0}", Discord::GetUser().GetUsername());
+            Discord::GetActivity()
+                .SetDetails("Creating AAA games!")
+                .SetLargeImageHoverText("Sierra Engine v1.0.0")
+                .SetLargeImage("https://cdn.discordapp.com/app-icons/1118235723917705230/1cd62012759c1217be085bc595edc892.png?size=512")
+                .SetSmallImageHoverText("Vulkan API v1.3")
+                .SetSmallImage("https://pbs.twimg.com/profile_images/1494006370735067137/2uOq5953_400x400.jpg")
+                .SetType(discord::ActivityType::Playing);
+        });
+
         // Initialize engine resources
         glfwInit();
         Input::Start();
@@ -34,6 +46,7 @@ namespace Sierra::Engine
     void World::Prepare()
     {
         Time::Update();
+        Discord::Update();
         Cursor::Update();
         Input::Update();
     }
@@ -55,6 +68,8 @@ namespace Sierra::Engine
 
         SystemInformation::Shutdown();
         glfwTerminate();
+
+        Discord::Destroy();
     }
 
     /* --- SETTER METHODS --- */

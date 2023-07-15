@@ -169,7 +169,7 @@ namespace Sierra::Editor
         Matrix4x4 projectionMatrix = camera.GetProjectionMatrix();
 
         // Show cube view
-        ImGuizmo::ViewManipulate(glm::value_ptr(viewMatrix), 10.0f, { output.xSceneViewPosition + output.sceneViewWidth - output.sceneViewWidth / 11.25f, output.ySceneViewPosition }, { ImGui::GetWindowSize().x / 11.25f, ImGui::GetWindowSize().x / 11.25f }, 0x0000000);
+        ImGuizmo::ViewManipulate(glm::value_ptr(viewMatrix), 10.0f, { output.xSceneViewPosition + output.sceneViewWidth - ImGui::GetWindowViewport()->Size.x / 11.25f, output.ySceneViewPosition }, { ImGui::GetWindowViewport()->Size.x / 11.25f, ImGui::GetWindowViewport()->Size.x / 11.25f }, 0x0000000);
 
         // Decompose modified view matrix to get new yaw and pitch
         Matrix4x4 inverted = glm::inverse(viewMatrix);

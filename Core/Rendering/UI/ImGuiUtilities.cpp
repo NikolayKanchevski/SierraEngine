@@ -325,7 +325,7 @@ namespace Sierra::Rendering
         ImGuiContext &g = *GImGui;
         ImGuiStyle &style = g.Style;
 
-        std::string formatString = GetSuitableFormat<T>();
+        String formatString = GetSuitableFormat<T>();
         const char *localFormat = formatString.c_str();
 
         if (!canDrag)

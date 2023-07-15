@@ -1,0 +1,8 @@
+macro(LINK_STATIC_LIBRARY TARGET TYPE LIBRARY_PATH)
+    target_link_libraries(${TARGET} ${TYPE} ${LIBRARY_PATH})
+endmacro()
+
+macro(LINK_DYNAMIC_LIBRARY TARGET TYPE LIBRARY_PATH)
+    file(COPY ${LIBRARY_PATH} DESTINATION ${CMAKE_BINARY_DIR}/DLLs/)
+    target_link_libraries(${TARGET} ${TYPE} ${LIBRARY_PATH})
+endmacro()

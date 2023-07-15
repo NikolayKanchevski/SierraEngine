@@ -173,7 +173,7 @@ namespace Sierra::Engine
 
     /* --- PRIVATE METHODS --- */
 
-    void SystemInformation::GetEndiannesName(const CPU::EndiannessType endiannessType, std::string &output)
+    void SystemInformation::GetEndiannesName(const CPU::EndiannessType endiannessType, String &output)
     {
         switch(endiannessType)
         {
@@ -189,7 +189,7 @@ namespace Sierra::Engine
         }
     }
 
-    void SystemInformation::GetArchitectureName(const CPU::ArchitectureType architectureType, std::string &output)
+    void SystemInformation::GetArchitectureName(const CPU::ArchitectureType architectureType, String &output)
     {
         switch(architectureType)
         {
@@ -211,7 +211,7 @@ namespace Sierra::Engine
         }
     }
 
-    void SystemInformation::GetVendorName(const GPU::VendorType vendorType, std::string &output)
+    void SystemInformation::GetVendorName(const GPU::VendorType vendorType, String &output)
     {
         switch (vendorType)
         {
@@ -239,7 +239,7 @@ namespace Sierra::Engine
         }
     }
 
-    void SystemInformation::GetKernelName(const Kernel::Type kernelType, std::string &output)
+    void SystemInformation::GetKernelName(const Kernel::Type kernelType, String &output)
     {
         switch(kernelType) 
         {

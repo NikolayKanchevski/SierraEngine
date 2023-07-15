@@ -32,7 +32,7 @@ namespace Sierra::Engine
             struct Endianness
             {
                 EndiannessType type;
-                std::string typeString;
+                String typeString;
             };
 
             enum class ArchitectureType
@@ -47,10 +47,10 @@ namespace Sierra::Engine
             struct Architecture
             {
                 ArchitectureType type;
-                std::string typeString;
+                String typeString;
             };
 
-            std::string name;
+            String name;
 
             Architecture architecture;
             Endianness endianness;
@@ -78,13 +78,13 @@ namespace Sierra::Engine
 
             struct Vendor
             {
-                std::string name;
+                String name;
 
                 VendorType type;
             };
 
         public:
-            std::string name;
+            String name;
 
             Vendor vendor;
             PhysicalInformation physicalInformation;
@@ -119,7 +119,7 @@ namespace Sierra::Engine
             };
 
         public:
-            std::string name;
+            String name;
 
             Type type;
             Version version;
@@ -149,7 +149,7 @@ namespace Sierra::Engine
             };
 
         public:
-            std::string name;
+            String name;
 
             Type type;
             Version version;
@@ -202,9 +202,9 @@ namespace Sierra::Engine
         static inline Display* displays;
         static inline ExternalDevicesInformation externalDevicesInformation;
 
-        static void GetArchitectureName(CPU::ArchitectureType architectureType, std::string &output);
-        static void GetEndiannesName(CPU::EndiannessType endiannessType, std::string &output);
-        static void GetVendorName(GPU::VendorType vendorType, std::string &output);
-        static void GetKernelName(Kernel::Type kernelType, std::string &output);
+        static void GetArchitectureName(CPU::ArchitectureType architectureType, String &output);
+        static void GetEndiannesName(CPU::EndiannessType endiannessType, String &output);
+        static void GetVendorName(GPU::VendorType vendorType, String &output);
+        static void GetKernelName(Kernel::Type kernelType, String &output);
     };
 }
