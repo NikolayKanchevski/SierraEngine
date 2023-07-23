@@ -21,14 +21,16 @@ namespace Sierra
     void Editor::DrawEditor(const PerFrameEngineEditorData &perFrameData)
     {
         MainViewportPanel::DrawUI();
-        auto rendererViewportOutput = RendererViewportPanel::DrawUI({ .imGuiInstance = perFrameData.imGuiInstance, .renderedTextureDescriptorSet = perFrameData.renderedTextureDescriptorSet });
         HierarchyPanel::DrawUI();
         PropertiesPanel::DrawUI();
         DebugPanel::DrawUI({ .frameDrawTime = perFrameData.frameDrawTime });
         DetailedDebugPanel::DrawUI({ .frameDrawTime = perFrameData.frameDrawTime });
+        SystemDebugPanel::DrawUI();
         GamePadDebugPanel::DrawUI();
+        DiscordDebugPanel::DrawUI();
 
         // Check if a resize was made
+        auto rendererViewportOutput = RendererViewportPanel::DrawUI({ .imGuiInstance = perFrameData.imGuiInstance, .renderedTextureDescriptorSet = perFrameData.renderedTextureDescriptorSet });
         bool resized = sceneViewWidth != rendererViewportOutput.sceneViewWidth || sceneViewHeight != rendererViewportOutput.sceneViewHeight;
 
         // Save new dimensions & position

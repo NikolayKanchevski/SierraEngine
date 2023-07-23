@@ -55,8 +55,8 @@ namespace Sierra::Rendering
         template<typename T, ENABLE_IF(!IsPointer<T>::value && !IsSmartPointer<T>::value)>
         inline void SetSpecializationConstant(const uint constantID, T &value) { SetSpecializationConstant(constantID, &value, sizeof(T)); };
 
-        void SetShaderBinding(uint binding, const UniquePtr<Buffer> &buffer, uint arrayIndex = 0, const BufferCopyRange &copyRange = { });
-        void SetShaderBinding(uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler = Sampler::Default, uint arrayIndex = 0, ImageLayout imageLayoutAtDrawTime = ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+        void SetShaderBinding(uint binding, const UniquePtr<Buffer> &buffer, uint arrayIndex = 0, uint64 size = 0, uint64 offset = 0);
+        void SetShaderBinding(uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler = Sampler::Default, uint arrayIndex = 0);
         void SetShaderBinding(uint binding, const SharedPtr<Texture> &texture, uint arrayIndex = 0);
         void SetShaderBinding(uint binding, const UniquePtr<Cubemap> &cubemap, uint arrayIndex = 0);
 
@@ -64,7 +64,7 @@ namespace Sierra::Rendering
         void SetShaderMember(const String &memberName, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler = Sampler::Default, uint arrayIndex = 0, ImageLayout imageLayoutAtDrawTime = ImageLayout::SHADER_READ_ONLY_OPTIMAL);
         void SetShaderMember(const String &memberName, const SharedPtr<Texture> &texture, uint arrayIndex = 0);
         void SetShaderMember(const String &memberName, const UniquePtr<Cubemap> &cubemap, uint arrayIndex = 0);
-        void SetShaderMember(const String &memberName, void* data, uint range = 0, uint offset = 0);
+        void SetShaderMember(const String &memberName, void* data, uint64 size = 0, uint64 offset = 0);
         template<typename T, ENABLE_IF(!IsPointer<T>::value && !IsSmartPointer<T>::value)>
         inline void SetShaderMember(const String &memberName, T &value, const uint offset = 0) { SetShaderMember(memberName, &value, sizeof(T), offset); }
 

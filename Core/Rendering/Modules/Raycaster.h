@@ -8,7 +8,7 @@
 #include "../Vulkan/Abstractions/Buffer.h"
 #include "../Vulkan/Abstractions/ComputePipeline.h"
 
-namespace Sierra::Rendering { inline namespace Modules
+namespace Sierra::Rendering::Modules
 {
 
     struct RaycasterCreateInfo
@@ -46,10 +46,13 @@ namespace Sierra::Rendering { inline namespace Modules
         UniquePtr<DescriptorSetLayout> descriptorSetLayout;
         UniquePtr<ComputePipeline> computePipeline;
 
+        const UniquePtr<Image> &IDBuffer;
+        const UniquePtr<Image> &depthBuffer;
+
         struct PushConstant
         {
             Vector2 mousePosition;
         };
 
     };
-}}
+}

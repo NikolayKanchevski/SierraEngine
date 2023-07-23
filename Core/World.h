@@ -7,7 +7,7 @@
 namespace Sierra::Engine
 {
 
-    // NOTE: Forward declared, as Entity class needs World.h in header, because templates must be inline in Entity.h
+    // NOTE: Forward declared, as Entity class needs World.h in header, because templates must be inlined in Entity.h
     class Entity;
 
     class World
@@ -29,11 +29,11 @@ namespace Sierra::Engine
         static void Shutdown();
 
         /* --- SETTER METHODS --- */
-        static void SetSelectedEntity(Entity enttEntity);
-        static void DestroyEntity(Entity enttEntity);
+        static void SetSelectedEntity(const Entity &enttEntity);
+        static void DestroyEntity(const Entity &enttEntity);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] static inline entt::entity RegisterEntity() { return enttRegistry->create(); }
+        [[nodiscard]] static inline entt::entity RegisterEntity() { return enttRegistry.create(); }
         [[nodiscard]] static inline std::unordered_map<uint, entt::entity>& GetOriginEntitiesList() { return originEntities; }
         [[nodiscard]] static Entity GetSelectedEntity();
 
@@ -47,7 +47,7 @@ namespace Sierra::Engine
                 return GetComponent<T>(enttEntity);
             }
 
-            T& component = enttRegistry->emplace<T>(enttEntity, std::forward<Args>(args)...);
+            T& component = enttRegistry.emplace<T>(enttEntity, std::forward<Args>(args)...);
             component.SetEnttEntity(enttEntity);
             component.OnAddComponent();
             return component;
@@ -56,7 +56,7 @@ namespace Sierra::Engine
         template <typename T, typename... Args>
         inline static T& AddOrReplaceComponent(const entt::entity enttEntity, Args&&... args)
         {
-            T& component = enttRegistry->emplace_or_replace<T>(enttEntity, std::forward<Args>(args)...);
+            T& component = enttRegistry.emplace_or_replace<T>(enttEntity, std::forward<Args>(args)...);
             component.SetEnttEntity(enttEntity);
             component.OnAddComponent();
             return component;
@@ -67,13 +67,13 @@ namespace Sierra::Engine
         {
             ASSERT_ERROR_FORMATTED_IF(!HasComponent<T>(enttEntity), "Component of type [{0}] does not exist within the entity", Internal::Debugger::TypeToString<T>());
 
-            return enttRegistry->get<T>(enttEntity);
+            return enttRegistry.get<T>(enttEntity);
         }
 
         template<typename T>
         inline static bool HasComponent(const entt::entity enttEntity)
         {
-            return enttRegistry->all_of<T>(enttEntity);
+            return enttRegistry.all_of<T>(enttEntity);
         }
 
         template<typename T>
@@ -86,18 +86,19 @@ namespace Sierra::Engine
             }
 
             GetComponent<T>(enttEntity).OnRemoveComponent();
-            enttRegistry->remove<T>(enttEntity);
+            enttRegistry.remove<T>(enttEntity);
         }
 
         template<typename T>
         inline static auto GetAllComponentsOfType()
         {
-            return enttRegistry->view<T>();
+            return enttRegistry.view<T>();
         }
+
     private:
-        static Entity selectedEntity;
+        inline static entt::registry enttRegistry;
+        inline static entt::entity selectedEntity = entt::null;
         inline static std::unordered_map<uint, entt::entity> originEntities;
-        inline static std::shared_ptr<entt::registry> enttRegistry = std::make_shared<entt::registry>();
 
     };
 }

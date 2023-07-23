@@ -109,21 +109,58 @@ namespace Sierra::Engine
         if (discord::Result result = discord::Core::Create(applicationID, DiscordCreateFlags_NoRequireDiscord, &core); result != discord::Result::Ok)
         {
             ASSERT_WARNING_FORMATTED("Could not create Discord instance! Error code: {0}", static_cast<uint>(result));
+            core = nullptr;
             return;
         }
 
         #if DEBUG
             // Set debug callback
-            core->SetLogHook(discord::LogLevel::Warn, [&](discord::LogLevel log, const char* message) { ASSERT_WARNING_FORMATTED("Discord SDK failed: {0}", message); });
-            core->SetLogHook(discord::LogLevel::Error, [&](discord::LogLevel log, const char* message) { ASSERT_ERROR_FORMATTED("Discord SDK failed: {0}", message); });
+            core->SetLogHook(discord::LogLevel::Warn, [](discord::LogLevel log, const char* message) { ASSERT_WARNING_FORMATTED("Discord SDK failed: {0}", message); });
+            core->SetLogHook(discord::LogLevel::Error, [](discord::LogLevel log, const char* message) { ASSERT_ERROR_FORMATTED("Discord SDK failed: {0}", message); });
         #endif
 
         // Load local user and trigger callback
         core->UserManager().OnCurrentUserUpdate.Connect([OnUserLoadedCallback]
         {
+            // Load user
             discord::User currentDiscordUser{};
             core->UserManager().GetCurrentUser(&currentDiscordUser);
             currentUser = Discord::User(currentDiscordUser);
+
+            // Create reference to user icon
+            discord::ImageHandle userIconHandle{};
+            userIconHandle.SetId(currentUser.GetId());
+            userIconHandle.SetType(discord::ImageType::User);
+            userIconHandle.SetSize(256);
+
+            // Load user icon
+            core->ImageManager().Fetch(userIconHandle, true, [](const discord::Result result, const discord::ImageHandle handle)
+            {
+                if (result != discord::Result::Ok)
+                {
+                    ASSERT_WARNING("Could not retrieve Discord user icon");
+                }
+                else
+                {
+                    // Set up icon dimensions
+                    discord::ImageDimensions iconDimensions{};
+                    core->ImageManager().GetDimensions(handle, &iconDimensions);
+
+                    // Retrieve icon data
+                    std::vector<uint8> iconData;
+                    iconData.resize(iconDimensions.GetWidth() * iconDimensions.GetHeight() * 4);
+                    core->ImageManager().GetData(handle, iconData.data(), static_cast<uint>(iconData.size()));
+
+                    // Create icon texture
+                    currentUser.iconTexture = Rendering::Texture::Load({
+                        .data = iconData.data(),
+                        .width = iconDimensions.GetWidth(),
+                        .height = iconDimensions.GetHeight()
+                    });
+                }
+            });
+
+            // Execute callback
             OnUserLoadedCallback();
         });
 
@@ -151,9 +188,6 @@ namespace Sierra::Engine
 
     bool Discord::IsInitialized()
     {
-        #if !defined(SR_DISCORD_APPLICATION_KEY) || SR_DISCORD_APPLICATION_KEY == 0
-            return false;
-        #endif
         return core != nullptr;
     }
 

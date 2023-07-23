@@ -5,7 +5,7 @@
 #include "UUID.h"
 
 #include "../Classes/RNG.h"
-#include "../../Core/Rendering/UI/ImGuiUtilities.h"
+#include "../../Editor/GUI.h"
 
 namespace Sierra::Engine
 {
@@ -23,11 +23,11 @@ namespace Sierra::Engine
 
     void UUID::OnDrawUI()
     {
-        using namespace Rendering;
+        using namespace Editor;
         GUI::BeginProperties();
 
         GUI::PushDeactivatedStatus();
-        GUI::UInt64Property("Identifier:", value, nullptr, ImGuiInputTextFlags_ReadOnly);
+        GUI::UInt64Property("Identifier:", value, nullptr, InputFlags::READ_ONLY);
         GUI::PopDeactivatedStatus();
 
         GUI::EndProperties();

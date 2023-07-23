@@ -12,7 +12,7 @@ namespace Sierra::Engine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Tag(String givenTag) : tag(std::move(givenTag)) { }
+        Tag(String givenTag) : tag(std::move(givenTag)) { }
 
         /* --- PROPERTIES --- */
         String tag;

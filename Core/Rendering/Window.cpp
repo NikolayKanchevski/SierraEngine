@@ -123,7 +123,7 @@ namespace Sierra::Rendering
 
     /* --- CALLBACKS --- */
 
-    void Window::GlfwErrorCallback(int errorCode, const char *description)
+    void Window::GlfwErrorCallback(int errorCode, const char* description)
     {
         ASSERT_WARNING_FORMATTED("GLFW Error: {0}! Error code: {1}.", description, errorCode);
     }

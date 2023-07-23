@@ -59,7 +59,7 @@ namespace Sierra::Internal
         DEFAULT();
     }
 
-    VkBool32 Debugger::ValidationCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, [[maybe_unused]] void *pUserData)
+    VkBool32 Debugger::ValidationCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, [[maybe_unused]] void* pUserData)
     {
         switch (messageSeverity)
         {
@@ -78,11 +78,11 @@ namespace Sierra::Internal
 
 #ifdef __GNUG__
 
-    String Debugger::Demangle(const char *name)
+    String Debugger::Demangle(const char* name)
     {
         int status = -4; // Some arbitrary value to eliminate the compiler warning
 
-        std::unique_ptr<char, void (*)(void *)> res
+        std::unique_ptr<char, void (*)(void* )> res
         {
             abi::__cxa_demangle(name, nullptr, nullptr, &status),
             std::free
@@ -99,7 +99,7 @@ namespace Sierra::Internal
     }
 #endif
 
-    Debugger::FunctionProfiler::FunctionProfiler(const char *name)
+    Debugger::FunctionProfiler::FunctionProfiler(const char* name)
         : name(name)
     {
         startTimepoint = std::chrono::steady_clock::now();

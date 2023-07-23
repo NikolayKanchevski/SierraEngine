@@ -25,7 +25,7 @@ namespace Sierra::Engine
         uint64 GetMemorySize() const { return memorySize; }
 
         /* --- SETTER METHODS --- */
-        void SetDataByOffset(const void* newData, uint64 offset = 0, uint64 range = 0);
+        void SetDataByOffset(const void* newData, uint64 size = 0, uint64 offset = 0);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline void*& GetData() { return data; }
@@ -38,7 +38,7 @@ namespace Sierra::Engine
 
     private:
         bool managedExternally;
-        void *data = nullptr;
+        void* data = nullptr;
         uint64 memorySize;
 
     };

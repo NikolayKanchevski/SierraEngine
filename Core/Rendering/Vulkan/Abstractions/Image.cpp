@@ -18,19 +18,19 @@ namespace Sierra::Rendering
         vkImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         vkImageCreateInfo.imageType = (VkImageType) createInfo.imageType;
 
-        vkImageCreateInfo.extent.width = static_cast<uint>(dimensions.width);
-        vkImageCreateInfo.extent.height = static_cast<uint>(dimensions.height);
-        vkImageCreateInfo.extent.depth = static_cast<uint>(dimensions.depth);
+        vkImageCreateInfo.extent.width = dimensions.width;
+        vkImageCreateInfo.extent.height = dimensions.height;
+        vkImageCreateInfo.extent.depth = dimensions.depth;
 
         if (createInfo.generateMipMaps) mipLevels = static_cast<uint>(std::floor(std::log2(std::max(dimensions.width, dimensions.height)))) + 1;
 
         vkImageCreateInfo.mipLevels = mipLevels;
         vkImageCreateInfo.arrayLayers = createInfo.layerCount;
-        vkImageCreateInfo.format = (VkFormat) format;
-        vkImageCreateInfo.tiling = (VkImageTiling) createInfo.imageTiling;
-        vkImageCreateInfo.initialLayout = (VkImageLayout) ImageLayout::UNDEFINED;
-        vkImageCreateInfo.usage = (VkImageUsageFlagBits) createInfo.usage;
-        vkImageCreateInfo.samples = (VkSampleCountFlagBits) sampling;
+        vkImageCreateInfo.format = static_cast<VkFormat>(format);
+        vkImageCreateInfo.tiling = static_cast<VkImageTiling>(createInfo.imageTiling);
+        vkImageCreateInfo.initialLayout = static_cast<VkImageLayout>(ImageLayout::UNDEFINED);
+        vkImageCreateInfo.usage = static_cast<VkImageUsageFlagBits>(createInfo.usage);
+        vkImageCreateInfo.samples = static_cast<VkSampleCountFlagBits>(sampling);
         vkImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         vkImageCreateInfo.flags = static_cast<uint>(createInfo.createFlags);
 
@@ -52,25 +52,13 @@ namespace Sierra::Rendering
     void Image::CreateImageView()
     {
         // Get aspect flags
-        if (IS_FLAG_PRESENT(usage, ImageUsage::DEPTH_STENCIL_ATTACHMENT))
-        {
-            aspectFlags = ImageAspectFlags::DEPTH;
-        }
-        else if (usage == ImageUsage::UNDEFINED)
-        {
-            aspectFlags = ImageAspectFlags::UNDEFINED;
-        }
-        else
-        {
-            aspectFlags = ImageAspectFlags::COLOR;
-        }
+        if (usage == ImageUsage::UNDEFINED)                                         aspectFlags = ImageAspectFlags::UNDEFINED;
+        else if (IS_FLAG_PRESENT(usage, ImageUsage::DEPTH_STENCIL_ATTACHMENT))      aspectFlags = ImageAspectFlags::DEPTH;
+        else                                                                        aspectFlags = ImageAspectFlags::COLOR;
 
         // Get view type
         VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_2D;
-        if (IS_FLAG_PRESENT(flags, ImageCreateFlags::CUBE_COMPATIBLE))
-        {
-            imageViewType = VK_IMAGE_VIEW_TYPE_CUBE;
-        }
+        if (IS_FLAG_PRESENT(flags, ImageCreateFlags::CUBE_COMPATIBLE)) imageViewType = VK_IMAGE_VIEW_TYPE_CUBE;
 
         // Set up image view creation info
         VkImageViewCreateInfo imageViewCreateInfo{};

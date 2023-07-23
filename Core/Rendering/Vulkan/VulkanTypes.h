@@ -565,7 +565,7 @@ namespace Sierra::Rendering
         SHADING_RATE = FRAGMENT_SHADING_RATE_ATTACHMENT
     };
 
-    DEFINE_ENUM_FLAG_OPERATORS(ImageUsage)
+    DEFINE_ENUM_FLAG_OPERATORS(ImageUsage);
 
     enum class ImageLayout
     {
@@ -815,6 +815,8 @@ namespace Sierra::Rendering
 
         POSITION = VECTOR_3,
         NORMAL = VECTOR_3,
+        TANGENT = VECTOR_3,
+        BITANGENT = VECTOR_3,
         COLOR_RGB = VECTOR_3,
         COLOR_RGBA = VECTOR_4,
         UV = VECTOR_2,

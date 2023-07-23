@@ -8,13 +8,10 @@
 
 #include "../../Modules/Raycaster.h"
 #include "../Abstractions/Queries.h"
-#include "../Abstractions/DynamicRenderer.h"
-#include "../../../../Engine/Classes/Mesh.h"
-#include "../../../../Editor/Editor.h"
 #include "../Abstractions/GraphicsPipeline.h"
+#include "../../../../Engine/Classes/Material.h"
 #include "../../../../Engine/Components/Lighting/PointLight.h"
 #include "../../../../Engine/Components/Lighting/DirectionalLight.h"
-
 
 namespace Sierra::Rendering
 {
@@ -30,12 +27,13 @@ namespace Sierra::Rendering
 
             float nearPlane;
             float farPlane;
-            Vector2 _align_1;
+            Vector2 _align1_;
         };
 
         struct ObjectData
         {
-            Matrix4x4 model;
+            Matrix4x4 modelMatrix;
+            Matrix4x4 normalMatrix; // A 4x4 matrix instead of a 3x3 for manual memory alignment
         };
 
         struct StorageData
@@ -52,6 +50,16 @@ namespace Sierra::Rendering
             float _align2_;
         };
 
+        struct BufferPushConstant
+        {
+            Engine::Material material;
+
+            uint meshID = 0;
+            uint entityID = 0;
+            uint meshTexturesPresence = 0;
+            float _align1_;
+        };
+
         enum RendererOutput
         {
             RenderedImage = 0,
@@ -60,8 +68,7 @@ namespace Sierra::Rendering
             SpecularBuffer = 3,
             ShininessBuffer = 4,
             NormalBuffer = 5,
-            ShadowBuffer = 6,
-            DepthBuffer = 7
+            DepthBuffer = 6
         };
 
         struct CompositionPushConstant
@@ -72,7 +79,7 @@ namespace Sierra::Rendering
     public:
         /* --- CONSTRUCTORS --- */
         DeferredVulkanRenderer(const VulkanRendererCreateInfo &createInfo);
-        static UniquePtr<DeferredVulkanRenderer> Create(VulkanRendererCreateInfo createInfo);
+        static UniquePtr<DeferredVulkanRenderer> Create(const VulkanRendererCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         void Update() override;
@@ -89,30 +96,32 @@ namespace Sierra::Rendering
         // Global resources
         std::vector<UniquePtr<Buffer>> uniformBuffers;
         std::vector<UniquePtr<Buffer>> storageBuffers;
+        UniquePtr<RenderPass> deferredRenderPass;
+        UniquePtr<Framebuffer> deferredFramebuffer;
+
+        // Early depth pass resources
+        UniquePtr<GraphicsPipeline> earlyDepthPassPipeline;
+        UniquePtr<DescriptorSetLayout> earlyDepthPassDescriptorSetLayout;
 
         // G-Buffer pipeline resources
         UniquePtr<Image> IDBuffer;
         UniquePtr<Image> diffuseBuffer;
         UniquePtr<Image> specularAndShininessBuffer;
         UniquePtr<Image> normalBuffer;
-        UniquePtr<Image> depthStencilBuffer;
-        UniquePtr<Image> renderedImage;
+        UniquePtr<Image> depthBuffer;
+        UniquePtr<Image> compositionImage;
         UniquePtr<Sampler> bufferSampler;
-
-        UniquePtr<DynamicRenderer> bufferPass;
         UniquePtr<GraphicsPipeline> bufferPipeline;
         UniquePtr<DescriptorSetLayout> bufferDescriptorSetLayout;
 
         // Composition pipeline resources
         UniquePtr<Cubemap> skyboxCubemap;
-
         CompositionPushConstant compositionPushConstantData{};
-        UniquePtr<DynamicRenderer> compositionPass;
         UniquePtr<GraphicsPipeline> compositionPipeline;
         UniquePtr<DescriptorSetLayout> compositionDescriptorSetLayout;
 
         // Modules
-        UniquePtr<Raycaster> raycaster;
+        UniquePtr<Modules::Raycaster> raycaster;
 
         // UI-Related resources
         std::vector<VkDescriptorSet> renderedImageDescriptorSets;

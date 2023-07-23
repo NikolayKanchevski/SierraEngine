@@ -37,7 +37,7 @@ namespace Sierra::Rendering
     public:
         /* --- CONSTRUCTORS --- */
         DynamicRenderer(const DynamicRendererCreateInfo &createInfo);
-        static UniquePtr<DynamicRenderer> Create(DynamicRendererCreateInfo createInfo);
+        static UniquePtr<DynamicRenderer> Create(const DynamicRendererCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         void Begin(const UniquePtr<CommandBuffer> &commandBuffer);
@@ -47,8 +47,8 @@ namespace Sierra::Rendering
         [[nodiscard]] inline uint GetColorAttachmentCount() const { return renderingInfo.colorAttachmentCount; }
         [[nodiscard]] inline bool HasDepthAttachment() const { return depthStencilAttachment != nullptr; }
 
-        [[nodiscard]] VkFormat* GetColorAttachmentFormats() const { return colorAttachmentFormats; }
-        [[nodiscard]] VkFormat GetDepthStencilAttachmentFormat() { return depthStencilAttachmentFormat; }
+        [[nodiscard]] ImageFormat* GetColorAttachmentFormats() const { return reinterpret_cast<ImageFormat*>(colorAttachmentFormats); }
+        [[nodiscard]] ImageFormat GetDepthStencilAttachmentFormat() { return static_cast<ImageFormat>(depthStencilAttachmentFormat); }
 
         /* --- SETTER METHODS --- */
         void OverloadColorAttachment(uint index, UniquePtr<Image> &image);

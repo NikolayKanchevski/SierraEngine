@@ -62,7 +62,7 @@ namespace Sierra::Engine
         return CreateFile(directory + fileName);
     }
 
-    bool File::WriteDataToFile(const String &filePath, const char *data, const bool createFile)
+    bool File::WriteDataToFile(const String &filePath, const char* data, const bool createFile)
     {
         if (createFile)
         {
@@ -116,7 +116,7 @@ namespace Sierra::Engine
 
         ASSERT_ERROR_FORMATTED_IF(!file.is_open() || file.fail(), "Could not open the file [{0}] for writing to it", filePath);
 
-        file.write(reinterpret_cast<const char *>(data), dataSize);
+        file.write(reinterpret_cast<const char* >(data), dataSize);
         file.close();
 
         return true;
@@ -181,7 +181,7 @@ namespace Sierra::Engine
         std::vector<uint8> data(fileSize);
 
         file.seekg(0);
-        file.read(reinterpret_cast<char *>(data.data()), fileSize);
+        file.read(reinterpret_cast<char* >(data.data()), fileSize);
         file.close();
 
         return data;

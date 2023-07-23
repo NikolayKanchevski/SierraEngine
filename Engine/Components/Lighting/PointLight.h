@@ -49,7 +49,7 @@ namespace Sierra::Engine
             float linear;
 
             float quadratic;
-            Vector3 _align_1;
+            Vector3 _align1_;
         };
         operator ShaderPointLight() const;
 

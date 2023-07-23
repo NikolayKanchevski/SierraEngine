@@ -59,7 +59,17 @@ namespace Sierra::Editor
         void DrawUI(const DebugPanelInput &input);
     }
 
+    namespace SystemDebugPanel
+    {
+        void DrawUI();
+    }
+
     namespace GamePadDebugPanel
+    {
+        void DrawUI();
+    }
+
+    namespace DiscordDebugPanel
     {
         void DrawUI();
     }

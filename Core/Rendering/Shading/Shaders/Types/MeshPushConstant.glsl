@@ -10,7 +10,7 @@ layout(push_constant) uniform PushConstant
     uint meshID;
     uint entityID;
     uint meshTexturesPresence;
-    uint directionalLightID;
+    float _align1_;
 } pushConstant;
 
 #endif

@@ -28,7 +28,7 @@ namespace Sierra::Rendering
         });
     }
 
-    UniquePtr<ExperimentalVulkanRenderer> ExperimentalVulkanRenderer::Create(VulkanRendererCreateInfo createInfo)
+    UniquePtr<ExperimentalVulkanRenderer> ExperimentalVulkanRenderer::Create(const VulkanRendererCreateInfo &createInfo)
     {
         return std::make_unique<ExperimentalVulkanRenderer>(createInfo);
     }

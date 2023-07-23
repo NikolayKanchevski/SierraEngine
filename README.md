@@ -64,11 +64,11 @@ Wondering how to use the engine? You can check out the online documentation [her
 - [ ] Custom Gizmos
 - [ ] Debug Renderer
 - [ ] Shadow Mapping
-- [ ] Virtual Texture
-- [ ] Arena Allocator
+- [ ] Virtual Texturing
+- [x] Arena Allocator
 - [ ] Post-Processing
 - [ ] Indirect Drawing
-- [ ] Early Depth Pass
+- [x] Early Depth Pass
 - [ ] Scene Serialization
 - [ ] Advanced Anti-Aliasing Techniques
 
@@ -87,7 +87,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 * [ImGui](https://github.com/ocornut/imgui/) - For the user interface implemented.
 * [ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo/) - For gizmos in the scene view.
 * [EnTT](https://github.com/skypjack/entt/) - For the easy-to-use and incredibly perfomant [entity component system](https://en.wikipedia.org/wiki/Entity_component_system).
-* [Assimp](https://github.com/assimp/assimp/) - For the loading of all kinds of 3D model formats (.obj, .fbx, .dae, etc.).
+* [Assimp](https://github.com/assimp/assimp/) - For the loading of all kinds of 3D modelMatrix formats (.obj, .fbx, .dae, etc.).
 * [Stb](https://github.com/nothings/stb) - For loading image buffer from all kinds of image formats (.jpg, .png, etc.).
 * [FMT](https://fmt.dev/latest/index.html) - For fast and easy string formatting.
 * [SPIRV-Reflect](https://github.com/NikichaTV/SPIRV-Reflect) by [NikichaTV](https://github.com/NikichaTV) - For shader reflection and [OpenGL](https://www.opengl.org)-like engine use (this is a custom version of [SPIRV-Reflect](https://github.com/KhronosGroup/SPIRV-Reflect) with extended functionality).
@@ -110,7 +110,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 17,923</p>
-<p align="center" id="LastUpdated">Last updated: 15/07/2023 </p>
+<p align="center" id="LinesCounter">Total lines of code: 17,252</p>
+<p align="center" id="LastUpdated">Last updated: 24/07/2023 </p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

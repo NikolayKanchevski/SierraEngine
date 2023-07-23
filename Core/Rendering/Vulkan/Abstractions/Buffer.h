@@ -15,18 +15,12 @@ namespace Sierra::Rendering
         BufferUsage bufferUsage;
     };
 
-    struct BufferCopyRange
-    {
-        uint offset = 0;
-        uint range = 0;
-    };
-
     /// @brief An abstraction class to make managing Vulkan buffers easier.
     class Buffer
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Buffer(const BufferCreateInfo &createInfo);
+        Buffer(const BufferCreateInfo &createInfo);
         [[nodiscard]] static UniquePtr<Buffer> Create(const BufferCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
@@ -38,9 +32,9 @@ namespace Sierra::Rendering
 
         /* --- SETTER METHODS --- */
         void Flush();
-        void CopyFromPointer(const void *pointer, uint64 offset = 0, uint64 range = 0);
+        void CopyFromPointer(const void* pointer, uint64 size = 0, uint64 offset = 0);
         void CopyToImage(const UniquePtr<Image> &givenImage);
-        void CopyToBuffer(const UniquePtr<Buffer> &otherBuffer);
+        void CopyToBuffer(const UniquePtr<Buffer> &otherBuffer, uint64 size = 0, uint64 sourceOffset = 0, uint64 destinationOffset = 0);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint64 GetMemorySize() const { return data.GetMemorySize(); }

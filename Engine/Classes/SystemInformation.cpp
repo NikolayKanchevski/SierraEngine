@@ -15,20 +15,14 @@ namespace Sierra::Engine
     {
         // CPU
         {
-            cpu = CPU{};
-
-            cpu.name = iware::cpu::model_name();
-
-            cpu.architecture = CPU::Architecture{};
-            cpu.architecture.type = static_cast<CPU::ArchitectureType>(iware::cpu::architecture());
-            GetArchitectureName(cpu.architecture.type, cpu.architecture.typeString);
-
-            cpu.endianness = CPU::Endianness{};
-            cpu.endianness.type = static_cast<CPU::EndiannessType>(iware::cpu::endianness());
-            GetEndiannesName(cpu.endianness.type, cpu.endianness.typeString);
-
             auto iwareCPU = iware::cpu::quantities();
-            cpu.physicalInformation = CPU::PhysicalInformation{};
+
+            cpu = CPU();
+            cpu.name = iware::cpu::model_name();
+            cpu.architecture = static_cast<CPU::ArchitectureType>(iware::cpu::architecture());
+            cpu.endianness = static_cast<CPU::EndiannessType>(iware::cpu::endianness());
+            
+            cpu.physicalInformation = CPU::PhysicalInformation();
             cpu.physicalInformation.physicalCoreCount = iwareCPU.physical;
             cpu.physicalInformation.logicalCoreCount = iwareCPU.logical;
             cpu.physicalInformation.threadsPerCore = cpu.physicalInformation.logicalCoreCount / cpu.physicalInformation.physicalCoreCount;
@@ -37,33 +31,20 @@ namespace Sierra::Engine
 
         // GPU
         {
-            auto iwareGPUs = iware::gpu::device_properties();
+            gpu = GPU();
+            gpu.name = Rendering::VK::GetDevice()->GetPhysicalDeviceProperties().deviceName;
+            gpu.vendor = GetGPUVendor(Rendering::VK::GetDevice()->GetPhysicalDeviceProperties().vendorID);
 
-            gpuCount = iwareGPUs.size();
-            gpus = new GPU[gpuCount];
-
-            for (uint i = gpuCount; i--;)
-            {
-                auto gpu = &gpus[i];
-                auto gpuQuantity = &iwareGPUs[i];
-
-                gpu->name = gpuQuantity->name;
-
-                gpu->vendor = GPU::Vendor{};
-                gpu->vendor.type = static_cast<GPU::VendorType>(gpuQuantity->vendor);
-                GetVendorName(gpu->vendor.type, gpu->vendor.name);
-
-                gpu->physicalInformation = GPU::PhysicalInformation{};
-                gpu->physicalInformation.totalMemory = gpuQuantity->memory_size;
-                gpu->physicalInformation.maxFrequency = gpuQuantity->max_frequency;
-            }
+            VmaBudget budget;
+            vmaGetHeapBudgets(Rendering::VK::GetMemoryAllocator(), &budget);
+            gpu.physicalInformation.totalMemory = budget.budget;
         }
 
         // Memory
         {
             auto iwareMemory = iware::system::memory();
 
-            memory = Memory{};
+            memory = Memory();
             memory.totalPhysicalMemory = iwareMemory.physical_total;
             memory.totalVirtualMemory = iwareMemory.virtual_total;
         }
@@ -72,11 +53,10 @@ namespace Sierra::Engine
         {
             auto iwareKernel = iware::system::kernel_info();
 
-            kernel = Kernel{};
+            kernel = Kernel();
             kernel.type = static_cast<Kernel::Type>(iwareKernel.variant);
-            GetKernelName(kernel.type, kernel.name);
 
-            kernel.version = Kernel::Version{};
+            kernel.version = Kernel::Version();
             kernel.version.major = iwareKernel.major;
             kernel.version.minor = iwareKernel.minor;
             kernel.version.patch = iwareKernel.patch;
@@ -88,19 +68,18 @@ namespace Sierra::Engine
         {
             auto iwareOS = iware::system::OS_info();
 
-            os = OS{};
-
-            os.version = OS::Version{};
+            os = OS();
+            os.version = OS::Version();
             os.version.major = iwareOS.major;
             os.version.minor = iwareOS.minor;
             os.version.patch = iwareOS.patch;
 
             os.buildNumber = iwareOS.build_number;
 
-            #if _WIN32
+            #if PLATFORM_WINDOWS
                 os.type = OS::Type::Windows;
                 os.name = "Windows";
-            #elif __APPLE__
+            #elif PLATFORM_APPLE
                 #if TARGET_OS_IPHONE && TARGET_OS_MACCATALYST
                     os.type = OS::Type::MacCatalyst;
                     os.name = "Mac Catalyst";
@@ -111,7 +90,7 @@ namespace Sierra::Engine
                     os.type = OS::Type::MacOS;
                     os.name = "MacOS";
                 #endif
-            #elif __linux
+            #elif PLATFORM_LINUX
                 os.type = OS::Type::Linux;
                 os.name = "Linux";
             #elif __unix
@@ -120,7 +99,7 @@ namespace Sierra::Engine
             #elif __posix
                 os.type = OS::Type::POSIX;
                 os.name = "POSIX";
-            #elif __ANDROID__
+            #elif PLPLATFORM_ANDROID
                 os.type = OS::Type::Android;
                 os.name = "Android";
             #else
@@ -150,15 +129,15 @@ namespace Sierra::Engine
 
         // HID
         {
-            externalDevicesInformation = ExternalDevicesInformation{};
-            externalDevicesInformation.connectedMicesCount = iware::system::mouse_amount();
+            externalDevicesInformation = ExternalDevicesInformation();
+            externalDevicesInformation.connectedMiceCount = iware::system::mouse_amount();
             externalDevicesInformation.connectedKeyboardsCount = iware::system::keyboard_amount();
             externalDevicesInformation.unknownConnectedDevicesCount = iware::system::other_HID_amount();
         }
 
     }
 
-    uint64 SystemInformation::GPU::GetUsedVideoMemory() const
+    uint64 SystemInformation::GPU::PhysicalInformation::GetUsedVideoMemory() const
     {
         VmaBudget budget;
         vmaGetHeapBudgets(Rendering::VK::GetMemoryAllocator(), &budget);
@@ -167,101 +146,32 @@ namespace Sierra::Engine
 
     void SystemInformation::Shutdown()
     {
-        delete[](gpus);
         delete[](displays);
     }
 
     /* --- PRIVATE METHODS --- */
 
-    void SystemInformation::GetEndiannesName(const CPU::EndiannessType endiannessType, String &output)
+    SystemInformation::GPU::VendorType SystemInformation::GetGPUVendor(const int vendorID)
     {
-        switch(endiannessType)
-        {
-            case CPU::EndiannessType::Little:
-                output = "Little-Endian";
-                break;
-            case CPU::EndiannessType::Big:
-                output = "Big-Endian";
-                break;
-            default:
-                output = "Unknown";
-                break;
-        }
-    }
+        #if PLATFORM_APPLE
+            return vendorID == 0x8086 ? GPU::VendorType::Intel : GPU::VendorType::Apple;
+        #endif
 
-    void SystemInformation::GetArchitectureName(const CPU::ArchitectureType architectureType, String &output)
-    {
-        switch(architectureType)
+        switch (vendorID)
         {
-            case CPU::ArchitectureType::x64:
-                output = "x64";
-                break;
-            case CPU::ArchitectureType::x86:
-                output = "x86";
-                break;
-            case CPU::ArchitectureType::ARM:
-                output = "ARM";
-                break;
-            case CPU::ArchitectureType::Itanium:
-                output = "Itanium";
-                break;
+            case 0x8086:
+                return GPU::VendorType::Intel;
+            case 0x1002:
+                return GPU::VendorType::AMD;
+            case 0x10DE:
+                return GPU::VendorType::Nvidia;
+            case 0x1414:
+                return GPU::VendorType::Microsoft;
+            case 0x5143:
+                return GPU::VendorType::Qualcomm;
             default:
-                output = "Unknown";
-                break;
-        }
-    }
-
-    void SystemInformation::GetVendorName(const GPU::VendorType vendorType, String &output)
-    {
-        switch (vendorType)
-        {
-            case GPU::VendorType::Intel:
-                output = "Intel";
-                break;
-            case GPU::VendorType::AMD:
-                output = "AMD";
-                break;
-            case GPU::VendorType::Nvidia:
-                output = "NVidia";
-                break;
-            case GPU::VendorType::Microsoft:
-                output = "Microsoft";
-                break;
-            case GPU::VendorType::Qualcomm:
-                output = "Qualcomm";
-                break;
-            case GPU::VendorType::Apple:
-                output = "Apple";
-                break;
-            default:
-                output = "Unknown";
-                break;
-        }
-    }
-
-    void SystemInformation::GetKernelName(const Kernel::Type kernelType, String &output)
-    {
-        switch(kernelType) 
-        {
-            case Kernel::Type::WindowsNT:
-                output = "Windows NT";
-                break;
-            case Kernel::Type::Linux:
-                output = "Linux";
-                break;
-            case Kernel::Type::Darwin:
-                output = "Darwin";
-                break;
-            default:
-                output = "Unknown";
-                break;
+                return GPU::VendorType::Unknown;
         }
     }
     
 }
-
-/* --- SETTER METHODS --- */
-
-/* --- GETTER METHODS --- */
-
-/* --- DESTRUCTOR --- */

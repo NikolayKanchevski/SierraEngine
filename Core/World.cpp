@@ -15,7 +15,6 @@
 
 namespace Sierra::Engine
 {
-    Entity World::selectedEntity = Entity::Null;
 
     /* --- POLLING METHODS --- */
 
@@ -37,10 +36,8 @@ namespace Sierra::Engine
         Input::Start();
         Cursor::Start();
         File::Start();
-        SystemInformation::Start();
-
-        // Initialize rendering resources
         Rendering::VK::Initialize();
+        SystemInformation::Start();
     }
 
     void World::Prepare()
@@ -74,14 +71,14 @@ namespace Sierra::Engine
 
     /* --- SETTER METHODS --- */
 
-    void World::SetSelectedEntity(const Entity entity)
+    void World::SetSelectedEntity(const Entity &entity)
     {
         selectedEntity = entity;
     }
 
-    void World::DestroyEntity(const Entity entity)
+    void World::DestroyEntity(const Entity &entity)
     {
-        enttRegistry->destroy(entity);
+        enttRegistry.destroy(entity);
     }
 
     /* --- GETTER METHODS --- */

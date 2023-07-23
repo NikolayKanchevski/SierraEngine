@@ -70,10 +70,103 @@ namespace Sierra::Rendering
         vkFreeCommandBuffers(VK::GetLogicalDevice(), VK::GetCommandPool(), 1, &vkCommandBuffer);
     }
 
-    void CommandBuffer::TransitionImageLayout(Image *image, const ImageLayout newLayout)
+    void CommandBuffer::TransitionImageLayout(const UniquePtr<Image> &image, const ImageLayout newLayout)
     {
         if (image->GetLayout() == newLayout) return;
 
+        // If first time transitioning the image for frame save its original layout
+        auto &imageReference = initialImageLayouts[image.get()];
+        if (imageReference.firstTime)
+        {
+            imageReference.firstTime = false;
+            imageReference.initialLayout = image->GetLayout();
+        }
+
+        // Transition layout
+        TransitionImageLayout(image.get(), newLayout);
+    }
+
+    void CommandBuffer::TransitionImageLayouts(const std::vector<ReferenceWrapper<UniquePtr<Image>>> &images, const ImageLayout newLayout)
+    {
+        for (auto &imageReference : images)
+        {
+            TransitionImageLayout(imageReference.get(), newLayout);
+        }
+    }
+
+    void CommandBuffer::SetViewport(const uint width, const uint height) const
+    {
+        VkViewport viewport{};
+        viewport.x = 0;
+        viewport.y = height;
+        viewport.width = static_cast<float>(width);
+        viewport.height = -static_cast<float>(height);
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+
+        vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+    }
+
+    void CommandBuffer::SetScissor(const uint width, const uint height, const int xOffset, const int yOffset) const
+    {
+        VkRect2D scissor{};
+        scissor.offset = { xOffset, yOffset };
+        scissor.extent = { width, height };
+
+        vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+    }
+
+    void CommandBuffer::SetViewportAndScissor(const uint width, const uint height, const int xOffset, const int yOffset) const
+    {
+        SetViewport(width, height);
+        SetScissor(width, height, xOffset, yOffset);
+    }
+
+    void CommandBuffer::SynchronizeBufferUsage(const UniquePtr<Buffer> &buffer, VkPipelineStageFlags srcStage, VkAccessFlagBits srcAccess, VkPipelineStageFlags dstStage, VkAccessFlagBits dstAccess)
+    {
+        // Set up barrier info
+        VkBufferMemoryBarrier barrier{};
+        barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+        barrier.srcAccessMask = srcAccess;
+        barrier.dstAccessMask = dstAccess;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.buffer = buffer->GetVulkanBuffer();
+        barrier.offset = 0;
+        barrier.size = buffer->GetMemorySize();
+
+        // Execute barrier
+        vkCmdPipelineBarrier(vkCommandBuffer, static_cast<VkShaderStageFlagBits>(srcStage), static_cast<VkShaderStageFlagBits>(dstStage), 0, 0, nullptr, 1, &barrier, 0, nullptr);
+    }
+
+    void CommandBuffer::SynchronizeImageUsage(const UniquePtr<Image> &image, const VkPipelineStageFlags srcStage, const VkAccessFlagBits srcAccess, const VkPipelineStageFlags dstStage, const VkAccessFlagBits dstAccess, const ImageLayout newLayout)
+    {
+        // Set up barrier info
+        VkImageMemoryBarrier barrier{};
+        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barrier.srcAccessMask = srcAccess;
+        barrier.dstAccessMask = dstAccess;
+        barrier.oldLayout = static_cast<VkImageLayout>(image->GetLayout());
+        barrier.newLayout = static_cast<VkImageLayout>(newLayout != ImageLayout::UNDEFINED ? newLayout : image->GetLayout());
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = image->GetVulkanImage();
+        barrier.subresourceRange = {
+            .aspectMask = static_cast<VkImageAspectFlags>(image->GetAspectFlags()),
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = image->GetLayerCount()
+        };
+
+        // Execute barrier
+        vkCmdPipelineBarrier(vkCommandBuffer, static_cast<VkShaderStageFlagBits>(srcStage), static_cast<VkShaderStageFlagBits>(dstStage), 0, 0, nullptr, 0, nullptr, 1, &barrier);
+    }
+
+    /* --- PRIVATE METHODS --- */
+
+    void CommandBuffer::TransitionImageLayout(Image *image, const ImageLayout newLayout)
+    {
         // Initialize barrier info
         VkPipelineStageFlags srcStage = 0;
         VkPipelineStageFlags dstStage = 0;
@@ -163,7 +256,7 @@ namespace Sierra::Rendering
                 break;
             case ImageLayout::SHADER_READ_ONLY_OPTIMAL:
                 imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-                dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                dstStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
                 break;
             case ImageLayout::PRESENT_SRC:
                 imageBarrier.dstAccessMask = 0;
@@ -201,54 +294,20 @@ namespace Sierra::Rendering
         );
     }
 
-    void CommandBuffer::TransitionImageLayout(const UniquePtr<Image> &image, const ImageLayout newLayout)
+    void CommandBuffer::TransitionImageLayoutFromRenderPass(Image *image, const ImageLayout newLayout)
     {
+        if (image->GetLayout() == newLayout) return;
+
         // If first time transitioning the image for frame save its original layout
-        auto &imageReference = initialImageLayouts[image.get()];
+        auto &imageReference = initialImageLayouts[image];
         if (imageReference.firstTime)
         {
             imageReference.firstTime = false;
             imageReference.initialLayout = image->GetLayout();
         }
 
-        // Transition layout
-        TransitionImageLayout(image.get(), newLayout);
-    }
-
-    void CommandBuffer::TransitionImageLayouts(const std::vector<ReferenceWrapper<UniquePtr<Image>>> &images, const ImageLayout newLayout)
-    {
-        for (auto &imageReference : images)
-        {
-            TransitionImageLayout(imageReference.get(), newLayout);
-        }
-    }
-
-    void CommandBuffer::SetViewport(const uint width, const uint height) const
-    {
-        VkViewport viewport{};
-        viewport.x = 0;
-        viewport.y = 0;
-        viewport.width = static_cast<float>(width);
-        viewport.height = static_cast<float>(height);
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-
-        vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
-    }
-
-    void CommandBuffer::SetScissor(const uint width, const uint height, const int xOffset, const int yOffset) const
-    {
-        VkRect2D scissor{};
-        scissor.offset = { xOffset, yOffset };
-        scissor.extent = { width, height };
-
-        vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
-    }
-
-    void CommandBuffer::SetViewportAndScissor(const uint width, const uint height, const int xOffset, const int yOffset) const
-    {
-        SetViewport(width, height);
-        SetScissor(width, height, xOffset, yOffset);
+        // Apply new layout
+        image->layout = newLayout;
     }
 
 }

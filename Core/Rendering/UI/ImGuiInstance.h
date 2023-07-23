@@ -35,7 +35,7 @@ namespace Sierra::Rendering
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit ImGuiInstance(const ImGuiInstanceCreateInfo &createInfo);
+        ImGuiInstance(const ImGuiInstanceCreateInfo &createInfo);
         static UniquePtr<ImGuiInstance> Create(const ImGuiInstanceCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */

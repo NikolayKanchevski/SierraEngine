@@ -41,7 +41,7 @@ namespace Sierra::Rendering
         });
 
         // Map memory to buffer
-        void *data;
+        void* data;
         vmaMapMemory(VK::GetMemoryAllocator(), stagingBuffer->GetMemoryAllocation(), &data);
 
         // Copy all 6 images to buffer
@@ -84,7 +84,7 @@ namespace Sierra::Rendering
         }
     }
 
-    UniquePtr<Cubemap> Cubemap::Create(CubemapCreateInfo createInfo)
+    UniquePtr<Cubemap> Cubemap::Create(const CubemapCreateInfo &createInfo)
     {
         return std::make_unique<Cubemap>(createInfo);
     }

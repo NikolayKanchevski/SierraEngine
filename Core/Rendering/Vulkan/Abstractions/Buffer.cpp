@@ -52,10 +52,10 @@ namespace Sierra::Rendering
         vmaFlushAllocation(VK::GetMemoryAllocator(), vmaBufferAllocation, 0, data.GetMemorySize());
     }
 
-    void Buffer::CopyFromPointer(const void *pointer, const uint64 offset, const uint64 range)
+    void Buffer::CopyFromPointer(const void* pointer, const uint64 size, const uint64 offset)
     {
         // Copy memory data to Vulkan buffer
-        data.SetDataByOffset(pointer, offset, range != 0 ? range : data.GetMemorySize());
+        data.SetDataByOffset(pointer, size != 0 ? size : data.GetMemorySize(), offset);
         Flush();
     }
 
@@ -87,17 +87,16 @@ namespace Sierra::Rendering
         VK::GetDevice()->EndSingleTimeCommands(commandBuffer);
     }
 
-    void Buffer::CopyToBuffer(const UniquePtr<Buffer> &otherBuffer)
+    void Buffer::CopyToBuffer(const UniquePtr<Buffer> &otherBuffer, const uint64 size, const uint64 sourceOffset, const uint64 destinationOffset)
     {
-        // Check if the two buffers are compatible
-        ASSERT_ERROR_IF(data.GetMemorySize() != otherBuffer->data.GetMemorySize(), "Cannot copy data from one buffer to another with a different memory size!");
-
         // Create a temporary command buffer
         auto commandBuffer = VK::GetDevice()->BeginSingleTimeCommands();
 
         // Set up the buffer's copy region
         VkBufferCopy copyRegion{};
-        copyRegion.size = data.GetMemorySize();
+        copyRegion.size = size != 0 ? size : data.GetMemorySize();
+        copyRegion.srcOffset = sourceOffset;
+        copyRegion.dstOffset = destinationOffset;
 
         // Copy the buffer
         vkCmdCopyBuffer(commandBuffer->GetVulkanCommandBuffer(), vkBuffer, otherBuffer->vkBuffer, 1, &copyRegion);

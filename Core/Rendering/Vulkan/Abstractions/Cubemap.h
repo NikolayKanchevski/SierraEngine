@@ -30,8 +30,8 @@ namespace Sierra::Rendering
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Cubemap(const CubemapCreateInfo &createInfo);
-        static UniquePtr<Cubemap> Create(CubemapCreateInfo createInfo);
+        Cubemap(const CubemapCreateInfo &createInfo);
+        static UniquePtr<Cubemap> Create(const CubemapCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] UniquePtr<Image>& GetImage() { return image; }

@@ -55,4 +55,9 @@ vec4 Lerp(vec4 a, vec4 b, float t)
     return a + (b - a) * t;
 }
 
+uint ScaleFloatToUint(float floatValue, uint bits)
+{
+    return uint(floor(floatValue * pow(2, (bits - 1))) + pow(2, (bits - 1)) - 1);
+}
+
 #endif

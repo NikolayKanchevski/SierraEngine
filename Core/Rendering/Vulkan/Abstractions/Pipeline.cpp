@@ -134,6 +134,8 @@ namespace Sierra::Rendering
 
         if (descriptorSetLayout != nullptr)
         {
+            ASSERT_ERROR_FORMATTED_IF(!VK::GetDevice()->IsExtensionLoaded(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME), "Cannot create use push descriptors in pipeline, unless extension [{0}] is supported and loaded", VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
+
             // Create descriptor sets
             descriptorSets.resize(maxConcurrentFrames);
             for (uint i = maxConcurrentFrames; i--;)
@@ -247,7 +249,7 @@ namespace Sierra::Rendering
         }
     }
 
-    void Pipeline::SetPushConstants(const UniquePtr<CommandBuffer> &commandBuffer, const void *data) const
+    void Pipeline::SetPushConstants(const UniquePtr<CommandBuffer> &commandBuffer, const void* data) const
     {
         #if DEBUG
             if (pushConstantRange == nullptr)
@@ -319,29 +321,22 @@ namespace Sierra::Rendering
         ASSERT_WARNING_FORMATTED("Could not find a specialization constant with an ID of [{0}] within the pipeline", constantID);
     }
 
-    void Pipeline::SetShaderBinding(const uint binding, const UniquePtr<Buffer> &buffer, const uint arrayIndex, const BufferCopyRange &copyRange)
+    void Pipeline::SetShaderBinding(const uint binding, const UniquePtr<Buffer> &buffer, const uint arrayIndex, const uint64 size, const uint64 offset)
     {
-        if (bound)
-        {
-            descriptorSets[currentFrame]->SetBuffer(binding, buffer, arrayIndex, copyRange);
-        }
-        else
-        {
-            for (uint i = maxConcurrentFrames; i--;)
-            {
-                descriptorSets[i]->SetBuffer(binding, buffer, arrayIndex, copyRange);
-            }
-        }
+        ASSERT_ERROR_IF(!bound, "Cannot modify shader bindings unless pipeline is bound");
 
+        descriptorSets[currentFrame]->SetBuffer(binding, buffer, arrayIndex, size, offset);
         updatedDescriptorSetForFrame = false;
     }
 
-    void Pipeline::SetShaderBinding(const uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler, const uint arrayIndex, const ImageLayout imageLayoutAtDrawTime)
+    void Pipeline::SetShaderBinding(const uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler, const uint arrayIndex)
     {
+        ASSERT_ERROR_IF(!bound, "Cannot modify shader bindings unless pipeline is bound");
+
         // Save image to descriptor sets
         for (uint i = maxConcurrentFrames; i--;)
         {
-            descriptorSets[i]->SetImage(binding, image, sampler, arrayIndex, imageLayoutAtDrawTime);
+            descriptorSets[i]->SetImage(binding, image, sampler, arrayIndex, descriptorSetLayout->get()->GetDescriptorTypeForBinding(binding));
         }
 
         updatedDescriptorSetForFrame = false;
@@ -349,6 +344,8 @@ namespace Sierra::Rendering
 
     void Pipeline::SetShaderBinding(const uint binding, const SharedPtr<Texture> &texture, const uint arrayIndex)
     {
+        ASSERT_ERROR_IF(!bound, "Cannot modify shader bindings unless pipeline is bound");
+
         // Save texture to descriptor sets
         for (uint i = maxConcurrentFrames; i--;)
         {
@@ -360,6 +357,8 @@ namespace Sierra::Rendering
 
     void Pipeline::SetShaderBinding(const uint binding, const UniquePtr<Cubemap> &cubemap, const uint arrayIndex)
     {
+        ASSERT_ERROR_IF(!bound, "Cannot modify shader bindings unless pipeline is bound");
+
         // Save texture to descriptor sets
         for (uint i = maxConcurrentFrames; i--;)
         {
@@ -371,31 +370,17 @@ namespace Sierra::Rendering
 
     void Pipeline::SetShaderMember(const String &memberName, const UniquePtr<Buffer> &buffer, const uint arrayIndex)
     {
+        ASSERT_ERROR_IF(!bound, "Cannot modify shader bindings unless pipeline is bound");
         ASSERT_ERROR_IF(!usesPrecompiledShaders, "Cannot dynamically modify information on shader members in a pipeline that uses compiled shaders");
 
         ShaderMember &member = GetShaderMember(memberName);
         ASSERT_ERROR_FORMATTED_IF(member.memberType != ShaderMemberType::BUFFER, "Trying to set buffer for member [{0}], but it is not of type ShaderMemberType::BUFFER", memberName);
 
-        if (bound)
+        // If not bound save buffer for current frame only
+        member.bufferData->buffers[currentFrame] = buffer.get();
+        for (const auto binding : member.descriptorData->bindings)
         {
-            // If not bound save buffer for current frame only
-            member.bufferData->buffers[currentFrame] = buffer.get();
-            for (const auto binding : member.descriptorData->bindings)
-            {
-                descriptorSets[currentFrame]->SetBuffer(binding, buffer, arrayIndex);
-            }
-        }
-        else
-        {
-            // Otherwise set it for all frames
-            for (uint i = maxConcurrentFrames; i--;)
-            {
-                member.bufferData->buffers[i] = buffer.get();
-                for (const auto binding : member.descriptorData->bindings)
-                {
-                    descriptorSets[i]->SetBuffer(binding, buffer, arrayIndex);
-                }
-            }
+            descriptorSets[currentFrame]->SetBuffer(binding, buffer, arrayIndex);
         }
 
         updatedDescriptorSetForFrame = false;
@@ -403,6 +388,7 @@ namespace Sierra::Rendering
 
     void Pipeline::SetShaderMember(const String &memberName, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler, const uint arrayIndex, ImageLayout imageLayoutAtDrawTime)
     {
+        ASSERT_ERROR_IF(!bound, "Cannot modify shader bindings unless pipeline is bound");
         ASSERT_ERROR_IF(!usesPrecompiledShaders, "Cannot dynamically modify information on shader members in a pipeline that uses compiled shaders");
 
         ShaderMember &member = GetShaderMember(memberName);
@@ -413,7 +399,7 @@ namespace Sierra::Rendering
         {
             for (const auto binding : member.descriptorData->bindings)
             {
-                descriptorSets[i]->SetImage(binding, image, sampler, arrayIndex, imageLayoutAtDrawTime);
+                descriptorSets[i]->SetImage(binding, image, sampler, arrayIndex);
             }
         }
 
@@ -422,6 +408,7 @@ namespace Sierra::Rendering
 
     void Pipeline::SetShaderMember(const String &memberName, const SharedPtr<Texture> &texture, const uint arrayIndex)
     {
+        ASSERT_ERROR_IF(!bound, "Cannot modify shader bindings unless pipeline is bound");
         ASSERT_ERROR_IF(!usesPrecompiledShaders, "Cannot dynamically modify information on shader members in a pipeline that uses compiled shaders");
 
         ShaderMember &member = GetShaderMember(memberName);
@@ -441,6 +428,7 @@ namespace Sierra::Rendering
 
     void Pipeline::SetShaderMember(const String &memberName, const UniquePtr<Cubemap> &cubemap, const uint arrayIndex)
     {
+        ASSERT_ERROR_IF(!bound, "Cannot modify shader bindings unless pipeline is bound");
         ASSERT_ERROR_IF(!usesPrecompiledShaders, "Cannot dynamically modify information on shader members in a pipeline that uses compiled shaders");
 
         ShaderMember &member = GetShaderMember(memberName);
@@ -458,8 +446,9 @@ namespace Sierra::Rendering
         updatedDescriptorSetForFrame = false;
     }
 
-    void Pipeline::SetShaderMember(const String &memberName, void *data, const uint range, const uint offset)
+    void Pipeline::SetShaderMember(const String &memberName, void* data, const uint64 size, const uint64 offset)
     {
+        ASSERT_ERROR_IF(!bound, "Cannot modify shader bindings unless pipeline is bound");
         ASSERT_ERROR_IF(!usesPrecompiledShaders, "Cannot dynamically modify information on shader members in a pipeline that uses compiled shaders");
 
         const ShaderMember &member = GetShaderMember(memberName);
@@ -472,7 +461,7 @@ namespace Sierra::Rendering
                 if (bound)
                 {
                     ASSERT_ERROR_FORMATTED_IF(member.bufferData->buffers[currentFrame] == nullptr, "Cannot set data of shader member [{0}], as the actual corresponding buffer has not been set with SetShaderMember()", memberName);
-                    member.bufferData->buffers[currentFrame]->CopyFromPointer(data, offset, range == 0 ? member.bufferData->memorySize : range);
+                    member.bufferData->buffers[currentFrame]->CopyFromPointer(data, size == 0 ? member.bufferData->memorySize : size, offset);
                 }
                 else
                 {
@@ -482,7 +471,7 @@ namespace Sierra::Rendering
                         if (lastBuffer == member.bufferData->buffers[i]) continue;
 
                         ASSERT_ERROR_FORMATTED_IF(member.bufferData->buffers[i] == nullptr, "Cannot set data of shader member [{0}], as the actual corresponding buffer has not been set with SetShaderMember()", memberName);
-                        member.bufferData->buffers[i]->CopyFromPointer(data, offset, range == 0 ? member.bufferData->memorySize : range);
+                        member.bufferData->buffers[i]->CopyFromPointer(data, size == 0 ? member.bufferData->memorySize : size, offset);
                         lastBuffer = member.bufferData->buffers[i];
                     }
                 }
@@ -490,7 +479,7 @@ namespace Sierra::Rendering
             }
             case PUSH_CONSTANT:
             {
-                member.pushConstantData->data->SetDataByOffset(data, offset, range == 0 ? member.pushConstantData->memorySize : range);
+                member.pushConstantData->data->SetDataByOffset(data, size == 0 ? member.pushConstantData->memorySize : size, offset);
                 break;
             }
             case SPECIALIZATION_CONSTANT:
@@ -532,7 +521,7 @@ namespace Sierra::Rendering
             }
             default:
             {
-                ASSERT_ERROR_FORMATTED("Cannot get memory information for shader member [{0}] which is neither of type ShaderMemberType::BUFFER, nor of ShaderMemberType::PUSH_CONSTANT! Returning 0", memberName);
+                ASSERT_ERROR_FORMATTED("Cannot get memory information for shader member [{0}], which is neither of type ShaderMemberType::BUFFER, nor of ShaderMemberType::PUSH_CONSTANT! Returning 0", memberName);
                 return 0;
             }
         }
@@ -573,7 +562,7 @@ namespace Sierra::Rendering
 
     ShaderMember& Pipeline::GetShaderMember(const String &memberName)
     {
-        ASSERT_ERROR_IF(!usesPrecompiledShaders, "Functionality only works with pipelines which use compiled (.spv) shaders");
+        ASSERT_ERROR_IF(!usesPrecompiledShaders, "Functionality only works with pipelines, which use compiled (.spv) shaders");
 
         auto iterator = shaderMembers.find({ .memberNameHash = HashType(memberName) });
         ASSERT_ERROR_FORMATTED_IF(iterator == shaderMembers.end(), "Could not find shader member [{0}] in pipeline", memberName);

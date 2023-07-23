@@ -10,7 +10,7 @@
 
 namespace Sierra::Engine
 {
-    const Entity Entity::Null = Entity((entt::entity)   entt::null);
+    const Entity Entity::Null = Entity((entt::entity) entt::null);
 
     /* --- CONSTRUCTORS --- */
 

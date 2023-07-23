@@ -13,15 +13,15 @@ namespace Sierra::Rendering
     /* --- CONSTRUCTORS --- */
 
     Framebuffer::Framebuffer(const FramebufferCreateInfo &createInfo)
-        : width(createInfo.width), height(createInfo.height)
+        : width(createInfo.attachments[0].get()->GetWidth()), height(createInfo.attachments[0].get()->GetHeight())
     {
         // Set up the framebuffer creation info
         VkFramebufferCreateInfo framebufferCreateInfo{};
         framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferCreateInfo.renderPass = createInfo.renderPass->GetVulkanRenderPass();
         framebufferCreateInfo.attachmentCount = createInfo.attachments.size();
-        framebufferCreateInfo.width = createInfo.width;
-        framebufferCreateInfo.height = createInfo.height;
+        framebufferCreateInfo.width = width;
+        framebufferCreateInfo.height = height;
         framebufferCreateInfo.layers = 1;
 
         VkImageView* attachmentsPtr = new VkImageView[createInfo.attachments.size()];

@@ -4,13 +4,13 @@
 
 layout(binding = 0) uniform UniformBuffer
 {
-    mat4 view;
-    mat4 projection;
+    mat4x4 view;
+    mat4x4 projection;
 } uniformBuffer;
 
 layout(push_constant) uniform PushConstant
 {
-    mat4 model;
+    mat4x4 model;
 } pushConstant;
 
 layout(location = 0) out vec3 toFrag_UVW;

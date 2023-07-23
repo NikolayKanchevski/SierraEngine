@@ -26,7 +26,7 @@ namespace Sierra::Rendering
         /* --- CONSTRUCTORS --- */
 
         static UniquePtr<Window> Create(const WindowCreateInfo &createInfo);
-        explicit Window(const WindowCreateInfo &createInfo);
+        Window(const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
 

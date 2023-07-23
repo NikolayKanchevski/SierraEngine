@@ -31,7 +31,7 @@ namespace Sierra::Rendering
         static void Shutdown();
 
         /* --- CONSTRUCTORS --- */
-        explicit Sampler(const SamplerCreateInfo &createInfo);
+        Sampler(const SamplerCreateInfo &createInfo);
         static UniquePtr<Sampler> Create(const SamplerCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */

@@ -8,6 +8,7 @@
 
 #include "../Classes/Mesh.h"
 #include "../Classes/Binary.h"
+#include "../Classes/Material.h"
 #include "../Classes/IdentifierPool.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Texture.h"
 #include "../../Core/Rendering/Vulkan/Abstractions/Descriptors.h"
@@ -20,7 +21,8 @@ namespace Sierra::Engine
     public:
         /* --- CONSTRUCTORS --- */
         MeshRenderer() = default;
-        explicit MeshRenderer(SharedPtr<Mesh> givenCorrespondingMesh);
+        MeshRenderer(SharedPtr<Mesh> givenCorrespondingMesh);
+        void OnAddComponent() override;
 
         /* --- POLLING METHODS --- */
         void OnDrawUI() override;
@@ -35,10 +37,14 @@ namespace Sierra::Engine
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline SharedPtr<Mesh>& GetMesh() { return mesh; }
         [[nodiscard]] inline uint GetMeshID() const { return meshID; }
+
+        [[nodiscard]] inline Matrix4x4 GetModelMatrix() const { return modelMatrix; };
+        [[nodiscard]] inline Matrix3x3 GetNormalMatrix() const { return normalMatrix; };
+
+        [[nodiscard]] inline Material& GetMaterial() { return material; };
+        [[nodiscard]] inline Binary GetTexturePresence() const { return texturePresence; };
         [[nodiscard]] inline SharedPtr<Rendering::Texture> GetTexture(const Rendering::TextureType textureType) const { return textures[static_cast<uint>(textureType)]; }
         [[nodiscard]] inline SharedPtr<Rendering::Texture> *GetTextures() { return textures; }
-        [[nodiscard]] Matrix4x4 GetModelMatrix() const;
-        [[nodiscard]] MeshPushConstant GetPushConstantData() const;
 
         /* --- SETTER METHODS --- */
         void Destroy() override;
@@ -46,7 +52,10 @@ namespace Sierra::Engine
     private:
         SharedPtr<Mesh> mesh = nullptr;
 
-        Binary meshTexturesPresence = 0;
+        Matrix4x4 modelMatrix;
+        Matrix3x3 normalMatrix;
+
+        Binary texturePresence = 0; // A binary string of encoded bools, which indicate wether a given texture type is present
         SharedPtr<Rendering::Texture> textures[static_cast<uint>(Rendering::TextureType::TOTAL_COUNT)];
 
         uint meshID = 0;

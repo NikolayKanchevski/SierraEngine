@@ -5,7 +5,8 @@
 #include "MeshRenderer.h"
 
 #include "Transform.h"
-#include "../../Core/Rendering/UI/ImGuiUtilities.h"
+#include "../Classes/Math.h"
+#include "../../Editor/GUI.h"
 
 namespace Sierra::Engine
 {
@@ -26,24 +27,33 @@ namespace Sierra::Engine
         }
     }
 
+    void MeshRenderer::OnAddComponent()
+    {
+        auto &transform = GetComponent<Transform>();
+        transform.PushOnDirtyCallback([this, &transform](const TransformDirtyFlag dirtyFlag){
+            modelMatrix = Math::CreateModelMatrix(transform.GetWorldPosition(), transform.GetWorldRotation(), transform.GetWorldScale());
+            normalMatrix = glm::transpose(glm::inverse(glm::mat3x3(modelMatrix)));
+        });
+    }
+
     /* --- POLLING METHODS --- */
 
     void MeshRenderer::OnDrawUI()
     {
+        using namespace Sierra::Editor;
         GUI::BeginProperties();
 
-        if (GUI::BeginTreeProperties("Material"))
+        if (GUI::BeginTreeProperty("Material"))
         {
             GUI::FloatProperty("Shininess:", material.shininess, "Some tooltip.");
 
-            GUI::FloatProperty("Vertex Exaggaration:", material.vertexExaggeration, "Some tooltip.");
+            GUI::FloatProperty("Vertex Exaggeration:", material.vertexExaggeration, "Some tooltip.");
 
             static const float resetValues[3] = { 1.0f, 1.0f, 1.0f };
-            static const char* tooltips[3] = { "Some tooltip.", "Some tooltip.", "Some tooltip." };
-            GUI::PropertyVector3("Diffuse:", material.diffuse, resetValues, tooltips);
+            GUI::Vector3Property("Diffuse:", material.diffuse, "Some tooltip.", resetValues);
             GUI::FloatProperty("Specular:", material.specular, "Some tooltip.");
 
-            GUI::EndTreeProperties();
+            GUI::EndTreeProperty();
         }
 
         if (GUI::TextureProperty("Diffuse Texture:", textures[static_cast<uint>(TextureType::DIFFUSE)], "Some tooltip.")) SetTexture(textures[static_cast<uint>(TextureType::DIFFUSE)]);
@@ -60,27 +70,14 @@ namespace Sierra::Engine
     {
         ASSERT_ERROR_IF(givenTexture->GetTextureType() == TextureType::UNDEFINED, "In order to bind texture to mesh its texture type must be specified and be different from TextureType::NONE");
         textures[static_cast<uint>(givenTexture->GetTextureType())] = givenTexture;
-        meshTexturesPresence.SetBit(static_cast<uint>(givenTexture->GetTextureType()), 1);
+        texturePresence.SetBit(static_cast<uint>(givenTexture->GetTextureType()), 1);
     }
 
     void MeshRenderer::ResetTexture(const TextureType textureType)
     {
         ASSERT_ERROR_IF(textureType == TextureType::UNDEFINED, "In order to reset a mesh's texture the texture type must not be TextureType::UNDEFINED_TEXTURE");
         SetTexture(Texture::GetDefaultTexture(textureType));
-        meshTexturesPresence.SetBit(static_cast<uint>(textureType), 0);
-    }
-
-    /* --- GETTER METHODS --- */
-
-    Matrix4x4 MeshRenderer::GetModelMatrix() const
-    {
-        return GetComponent<Transform>().GetModelMatrix();
-    }
-
-    MeshPushConstant MeshRenderer::GetPushConstantData() const
-    {
-        glm::normalize(material.diffuse);
-        return { .material = material, .meshID = meshID, .entityID = static_cast<uint>(enttEntity), .meshTexturesPresence =  meshTexturesPresence };
+        texturePresence.SetBit(static_cast<uint>(textureType), 0);
     }
 
     /* --- DESTRUCTOR --- */

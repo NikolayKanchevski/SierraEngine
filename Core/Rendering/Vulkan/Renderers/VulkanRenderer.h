@@ -22,7 +22,7 @@ namespace Sierra::Rendering
     public:
         /* --- CONSTRUCTORS --- */
         VulkanRenderer(const VulkanRendererCreateInfo &createInfo);
-        static UniquePtr<VulkanRenderer> Create(VulkanRendererCreateInfo createInfo);
+        static UniquePtr<VulkanRenderer> Create(const VulkanRendererCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         void Prepare();

@@ -7,8 +7,6 @@
 #include "../VK.h"
 #include "../../../Engine/Classes/SystemInformation.h"
 
-#define DEBUG_DEVICE_EXTENSIONS 0
-
 namespace Sierra::Rendering
 {
     /* --- CONSTRUCTORS --- */
@@ -36,11 +34,10 @@ namespace Sierra::Rendering
     {
         UniquePtr<CommandBuffer> commandBuffer = CommandBuffer::Create({ });
         commandBuffer->Begin(CommandBufferUsage::ONE_TIME_SUBMIT);
-
         return commandBuffer;
     }
 
-    void Device::EndSingleTimeCommands(UniquePtr<CommandBuffer> &commandBuffer) const
+    void Device::EndSingleTimeCommands(const UniquePtr<CommandBuffer> &commandBuffer) const
     {
         commandBuffer->End();
 
@@ -59,7 +56,6 @@ namespace Sierra::Rendering
     #pragma clang diagnostic pop
 
     /* --- SETTER METHODS --- */
-
 
     void Device::RetrievePhysicalDevice()
     {
@@ -91,7 +87,7 @@ namespace Sierra::Rendering
 
         physicalDevice = physicalDevices[0];
 
-        ASSERT_SUCCESS_FORMATTED("Vulkan is supported on your system running [{0}] | [Validation: {1} | CPU: {2} | GPU: {3}]", Engine::SystemInformation::GetOperatingSystem().name, VALIDATION_ENABLED, Engine::SystemInformation::GetCPU().name, physicalDeviceProperties.deviceName);
+        ASSERT_SUCCESS_FORMATTED("Vulkan is supported on your system [Validation: {0} | GPU: {1}]", VALIDATION_ENABLED, physicalDeviceProperties.deviceName);
 
         // Destroy temporary data
         vkDestroySurfaceKHR(VK::GetInstance(), exampleSurface, nullptr);
@@ -109,63 +105,54 @@ namespace Sierra::Rendering
         VkDeviceQueueCreateInfo* queueCreateInfos = new VkDeviceQueueCreateInfo[uniqueQueueFamilies.size()];
 
         // For each unique family create new create info and add it to the list
-        uint i = 0;
+        uint currentQueueIndex = 0;
         const float queuePriority = 1.0f;
         for (const auto &queueFamily : uniqueQueueFamilies)
         {
-            queueCreateInfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            queueCreateInfos[i].queueFamilyIndex = queueFamily;
-            queueCreateInfos[i].queueCount = 1;
-            queueCreateInfos[i].pQueuePriorities = &queuePriority;
-            queueCreateInfos[i].flags = 0;
-            queueCreateInfos[i].pNext = nullptr;
+            queueCreateInfos[currentQueueIndex] = {
+                .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+                .flags = 0,
+                .queueFamilyIndex = queueFamily,
+                .queueCount = 1,
+                .pQueuePriorities = &queuePriority
+            };
+            currentQueueIndex++;
+        }
 
-            i++;
+        // Get supported extension count
+        uint supportedExtensionCount;
+        std::vector<VkExtensionProperties> supportedExtensions;
+        vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &supportedExtensionCount, nullptr);
+
+        // Get supported extensions
+        supportedExtensions.resize(supportedExtensionCount);
+        vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &supportedExtensionCount, supportedExtensions.data());
+
+        // Set up device features
+        VkPhysicalDeviceFeatures2 deviceFeatures2{};
+        deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        deviceFeatures2.features = physicalDeviceFeatures;
+
+        // Store pointers of each extension's data, as it needs to be deallocated in the end of the function
+        std::vector<void*> pointersToDeallocate;
+        pointersToDeallocate.resize(EXTENSIONS_TO_QUERY.size());
+
+        // Load queried extensions if supported
+        std::vector<const char*> finalExtensions;
+        for (const auto &extension : EXTENSIONS_TO_QUERY)
+        {
+            AddExtensionIfSupported(extension, finalExtensions, supportedExtensions, deviceFeatures2, pointersToDeallocate);
         }
 
         // Fill in logical device creation info
         VkDeviceCreateInfo logicalDeviceCreateInfo{};
         logicalDeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         logicalDeviceCreateInfo.pEnabledFeatures = nullptr;
-        logicalDeviceCreateInfo.enabledExtensionCount = static_cast<uint>(requiredDeviceExtensions.size());
-        logicalDeviceCreateInfo.ppEnabledExtensionNames = requiredDeviceExtensions.data();
+        logicalDeviceCreateInfo.enabledExtensionCount = static_cast<uint>(finalExtensions.size());
+        logicalDeviceCreateInfo.ppEnabledExtensionNames = finalExtensions.data();
         logicalDeviceCreateInfo.queueCreateInfoCount = static_cast<uint>(uniqueQueueFamilies.size());
         logicalDeviceCreateInfo.pQueueCreateInfos = queueCreateInfos;
-
-        // Set up additional device info features
-        VkPhysicalDeviceFeatures2 deviceFeatures2{};
-        deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        deviceFeatures2.features = physicalDeviceFeatures;
         logicalDeviceCreateInfo.pNext = &deviceFeatures2;
-
-        // Set up dynamic rendering features
-        VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingFeatures{};
-        dynamicRenderingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
-        dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
-        VK::PushToPNextChain(deviceFeatures2, dynamicRenderingFeatures);
-
-        #if PLATFORM_APPLE
-            // Set apple specific features
-            VkPhysicalDevicePortabilitySubsetFeaturesKHR portabilityFeatures{};
-            if (portabilitySubsetExtensionEnabled)
-            {
-                portabilityFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR;
-                portabilityFeatures.mutableComparisonSamplers = VK_TRUE;
-                VK::PushToPNextChain(deviceFeatures2, portabilityFeatures);
-            }
-        #endif
-
-        // Set descriptor indexing features
-        VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
-        if (GetDescriptorIndexingSupported())
-        {
-            descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
-            descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-            descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
-            descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
-            descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
-            VK::PushToPNextChain(deviceFeatures2, descriptorIndexingFeatures);
-        }
 
         // Create logical device
         VK_ASSERT(
@@ -177,13 +164,13 @@ namespace Sierra::Rendering
         vkGetDeviceQueue(logicalDevice, queueFamilyIndices.graphicsAndComputeFamily.value(), 0, &graphicsAndComputeQueue);
         vkGetDeviceQueue(logicalDevice, queueFamilyIndices.presentationFamily.value(), 0, &presentationQueue);
 
+        for (const auto &pointer : pointersToDeallocate) free(pointer);
         delete[](queueCreateInfos);
     }
 
     void Device::RetrieveBestProperties()
     {
         highestMultisampling = RetrieveMaxSampling();
-
         bestDepthImageFormat = GetBestDepthBufferFormat(
             { ImageFormat::D32_SFLOAT, ImageFormat::D16_UNORM },
             ImageTiling::OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
@@ -207,63 +194,7 @@ namespace Sierra::Rendering
         queueFamilyIndices = FindQueueFamilies(givenPhysicalDevice);
 
         // Check if all support conditions are met
-        return queueFamilyIndices.IsValid() && DeviceExtensionsSupported(givenPhysicalDevice);
-    }
-
-    bool Device::DeviceExtensionsSupported(const VkPhysicalDevice &givenPhysicalDevice)
-    {
-        // Get how many extensions are supported in total
-        uint extensionCount;
-        vkEnumerateDeviceExtensionProperties(givenPhysicalDevice, nullptr, &extensionCount, nullptr);
-
-        // Create an array to store the supported extensions
-        std::vector<VkExtensionProperties> extensionProperties(extensionCount);
-        vkEnumerateDeviceExtensionProperties(givenPhysicalDevice, nullptr, &extensionCount, extensionProperties.data());
-
-        #if DEBUG_DEVICE_EXTENSIONS
-            for (const auto &extensionProperty : extensionProperties)
-            {
-                ASSERT_INFO_FORMATTED("Device extension found: {0}", extensionProperty.extensionName);
-            }
-        #endif
-
-        // Check if each given extension is in the supported extensions array
-        bool allExtensionsSupported = true;
-        for (const auto &requiredExtension : requiredDeviceExtensions)
-        {
-            bool extensionFound = false;
-            for (const auto &extensionProperty : extensionProperties)
-            {
-                #if __APPLE__
-                    // Check if Mac's specific extension is supported (required if so)
-                    if (strcmp(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME, extensionProperty.extensionName) == 0)
-                    {
-                        portabilitySubsetExtensionEnabled = true;
-                        continue;
-                    }
-                #endif
-
-                if (strcmp(requiredExtension, extensionProperty.extensionName) == 0)
-                {
-                    extensionFound = true;
-                    break;
-                }
-            }
-
-            if (!extensionFound)
-            {
-                allExtensionsSupported = false;
-                ASSERT_WARNING_FORMATTED("Device extension [{0}] is not supported by your [{1}] GPU", requiredExtension, VK::GetDevice()->GetPhysicalDeviceProperties().deviceName);
-            }
-        }
-
-        #if __APPLE__
-            if (portabilitySubsetExtensionEnabled) requiredDeviceExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
-        #endif
-
-        if (GetDescriptorIndexingSupported()) requiredDeviceExtensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
-
-        return allExtensionsSupported;
+        return queueFamilyIndices.IsValid();
     }
 
     Device::QueueFamilyIndices Device::FindQueueFamilies(const VkPhysicalDevice &givenPhysicalDevice)
@@ -314,8 +245,53 @@ namespace Sierra::Rendering
         }
 
         delete[](queueFamilyProperties);
-
         return indices;
+    }
+
+    template<typename T>
+    bool Device::AddExtensionIfSupported(const DeviceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions, T &pNextChain, std::vector<void*> &pointersToDeallocate)
+    {
+        auto &extensionLoadState = loadedExtensions[HashType(String(extension.name))];
+
+        // Check if root extension is found within the supported ones
+        bool extensionSupported = false;
+        for (const auto &supportedExtension : supportedExtensions)
+        {
+            if (strcmp(extension.name, supportedExtension.extensionName) == 0)
+            {
+                if (extension.data != nullptr)
+                {
+                    VK::PushToPNextChain(&pNextChain, extension.data);
+                    pointersToDeallocate.push_back(extension.data);
+                }
+                extensionSupported = true;
+                break;
+            }
+        }
+
+        // If root extension is not found we do not load it
+        if (!extensionSupported)
+        {
+            if (!extension.requiredOnlyIfSupported) ASSERT_WARNING_FORMATTED("Extension [{0}] requested but not supported! Extension will be discarded, but issues may occur if extensions' support is not checked before their usage", extension.name);
+            extensionLoadState = false;
+            return extensionLoadState;
+        }
+
+        // If found, we then check if all required dependency extensions are supported
+        for (const auto &dependencyExtension : extension.dependencies)
+        {
+            if (!AddExtensionIfSupported(dependencyExtension, extensionList, supportedExtensions, pNextChain, pointersToDeallocate))
+            {
+                ASSERT_WARNING_FORMATTED("Extension [{0}] requires the support of an unsupported extension [{1}]! Extensions will be discarded, but the application may continue to run, but issues may occur if extensions' support is not checked before their usage", extension.name, dependencyExtension.name);
+                extensionLoadState = false;
+                return extensionLoadState;
+            }
+        }
+
+        // Add extension to the list and mark it as fully loaded
+        extensionLoadState = true;
+        extensionList.push_back(extension.name);
+        return extensionLoadState;
     }
 
     ImageFormat Device::GetBestDepthBufferFormat(const std::vector<ImageFormat>& givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags)

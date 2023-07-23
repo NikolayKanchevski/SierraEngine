@@ -37,7 +37,7 @@ namespace Sierra::Rendering
         window->Show();
     }
 
-    UniquePtr<VulkanRenderer> VulkanRenderer::Create(VulkanRendererCreateInfo createInfo)
+    UniquePtr<VulkanRenderer> VulkanRenderer::Create(const VulkanRendererCreateInfo &createInfo)
     {
         return std::make_unique<VulkanRenderer>(createInfo);
     }

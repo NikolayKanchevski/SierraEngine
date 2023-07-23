@@ -357,7 +357,7 @@ namespace Sierra::Rendering
             outputSpecializationOutputData.specializationConstantData = new ShaderSpecializationConstantData();
             outputSpecializationOutputData.specializationConstantData->size = specializationConstantBlock.size;
             outputSpecializationOutputData.specializationConstantData->offset = lastOffset;
-            specializationData.SetDataByOffset(&specializationConstantBlock.default_value.float_value, lastOffset, specializationConstantBlock.size);
+            specializationData.SetDataByOffset(&specializationConstantBlock.default_value.float_value, specializationConstantBlock.size, lastOffset);
 
             // Update specialization info
             const_cast<VkSpecializationMapEntry*>(specializationInfo->pMapEntries)->constantID = specializationConstantBlock.constant_id;
@@ -439,7 +439,7 @@ namespace Sierra::Rendering
     }
 
     template<typename T, std::enable_if_t<std::is_same_v<T, uint> || std::is_same_v<T, char>, bool>>
-    void Shader::CreateShaderModule(const char *entryPoint, const std::vector<T> &code)
+    void Shader::CreateShaderModule(const char* entryPoint, const std::vector<T> &code)
     {
         // Destroy module if already created
         if (shaderModule != VK_NULL_HANDLE)
@@ -475,7 +475,7 @@ namespace Sierra::Rendering
 
     }
 
-    shaderc_include_result* Shader::Includer::GetInclude(const char* requestedSource, const shaderc_include_type type, const char* requestingSource, const size_t includeDepth)
+    shaderc_include_result* Shader::Includer::GetInclude(const char* requestedSource, const shaderc_include_type type, const char* requestingSource, const uSize includeDepth)
     {
         // Get which file is requested to be included
         const String includeReference = String(requestedSource);

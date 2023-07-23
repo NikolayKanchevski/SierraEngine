@@ -4,12 +4,16 @@
 
 #include "DynamicRenderer.h"
 
+#include "../VK.h"
+
 namespace Sierra::Rendering
 {
     /* --- CONSTRUCTORS --- */
 
     DynamicRenderer::DynamicRenderer(const DynamicRendererCreateInfo &createInfo)
     {
+        ASSERT_ERROR_FORMATTED_IF(!VK::GetDevice()->IsExtensionLoaded(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME), "Cannot create dynamic renderer, unless extension [{0}] is supported and loaded", VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+
         // Search for a depth attachment first
         bool hasDepthAttachment = false;
         for (const auto &attachment : createInfo.attachments)
@@ -86,7 +90,7 @@ namespace Sierra::Rendering
         renderingInfo.pStencilAttachment = nullptr;
     }
 
-    UniquePtr<DynamicRenderer> DynamicRenderer::Create(const DynamicRendererCreateInfo createInfo)
+    UniquePtr<DynamicRenderer> DynamicRenderer::Create(const DynamicRendererCreateInfo &createInfo)
     {
         return std::make_unique<DynamicRenderer>(createInfo);
     }
@@ -104,7 +108,6 @@ namespace Sierra::Rendering
         {
             commandBuffer->TransitionImageLayout(*depthStencilAttachmentImage, ImageLayout::DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL);
         }
-
 
         vkCmdBeginRenderingKHR(commandBuffer->GetVulkanCommandBuffer(), &renderingInfo);
         commandBuffer->SetViewportAndScissor(renderingInfo.renderArea.extent.width, renderingInfo.renderArea.extent.height);

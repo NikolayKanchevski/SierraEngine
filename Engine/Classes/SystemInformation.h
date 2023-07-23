@@ -29,12 +29,6 @@ namespace Sierra::Engine
                 Big = (int) iware::cpu::endianness_t::big,
             };
 
-            struct Endianness
-            {
-                EndiannessType type;
-                String typeString;
-            };
-
             enum class ArchitectureType
             {
                 x64 = (int) iware::cpu::architecture_t::x64,
@@ -44,52 +38,84 @@ namespace Sierra::Engine
                 Unknown = (int) iware::cpu::architecture_t::unknown
             };
 
-            struct Architecture
-            {
-                ArchitectureType type;
-                String typeString;
-            };
-
             String name;
-
-            Architecture architecture;
-            Endianness endianness;
+            EndiannessType endianness;
+            ArchitectureType architecture;
             PhysicalInformation physicalInformation;
+
+            [[nodiscard]] inline const char* GetEndiannessString()
+            {
+                switch (endianness)
+                {
+                    case EndiannessType::Little:
+                        return "Little";
+                    case EndiannessType::Big:
+                        return "Big";
+                }
+            }
+
+            [[nodiscard]] inline const char* GetArchitectureString()
+            {
+                switch (architecture)
+                {
+                    case ArchitectureType::x64:
+                        return "x64";
+                    case ArchitectureType::x86:
+                        return "x86";
+                    case ArchitectureType::ARM:
+                        return "ARM";
+                    case ArchitectureType::Itanium:
+                        return "Itanium";
+                    case ArchitectureType::Unknown:
+                        return "Unknown";
+                }
+            }
         };
 
         struct GPU
         {
             enum class VendorType
             {
-                Intel = (int) iware::gpu::vendor_t::intel,
-                AMD = (int) iware::gpu::vendor_t::amd,
-                Nvidia = (int) iware::gpu::vendor_t::nvidia,
-                Microsoft = (int) iware::gpu::vendor_t::microsoft,
-                Qualcomm = (int) iware::gpu::vendor_t::qualcomm,
-                Apple = (int) iware::gpu::vendor_t::apple,
-                Unknown = (int) iware::gpu::vendor_t::unknown
+                Intel,
+                AMD,
+                Nvidia,
+                Microsoft,
+                Qualcomm,
+                Apple,
+                Unknown
             };
 
             struct PhysicalInformation
             {
                 uint64 totalMemory;
-                uint64 maxFrequency;
-            };
-
-            struct Vendor
-            {
-                String name;
-
-                VendorType type;
+                [[nodiscard]] uint64 GetUsedVideoMemory() const;
             };
 
         public:
             String name;
-
-            Vendor vendor;
+            VendorType vendor;
             PhysicalInformation physicalInformation;
 
-            [[nodiscard]] uint64 GetUsedVideoMemory() const;
+            [[nodiscard]] inline const char* GetVendorString()
+            {
+                switch (vendor)
+                {
+                    case VendorType::Intel:
+                        return "Intel";
+                    case VendorType::AMD:
+                        return "AMD";
+                    case VendorType::Nvidia:
+                        return "Nvidia";
+                    case VendorType::Microsoft:
+                        return "Microsoft";
+                    case VendorType::Qualcomm:
+                        return "Qualcomm";
+                    case VendorType::Apple:
+                        return "Apple";
+                    case VendorType::Unknown:
+                        return "Unknown";
+                }
+            }
         };
 
         struct Memory
@@ -119,11 +145,24 @@ namespace Sierra::Engine
             };
 
         public:
-            String name;
-
             Type type;
             Version version;
             uint buildNumber;
+
+            [[nodiscard]] inline const char* GetTypeString()
+            {
+                switch (type)
+                {
+                    case Type::WindowsNT:
+                        return "WindowsNT";
+                    case Type::Linux:
+                        return "Linux";
+                    case Type::Darwin:
+                        return "Darwin";
+                    case Type::Unknown:
+                        return "Unknown";
+                }
+            }
         };
 
         struct OS
@@ -149,8 +188,7 @@ namespace Sierra::Engine
             };
 
         public:
-            String name;
-
+            const char* name;
             Type type;
             Version version;
             uint buildNumber;
@@ -158,15 +196,15 @@ namespace Sierra::Engine
 
         struct Display
         {
-            Vector2 resolution;
-            uint DPI;
-            uint bitsPerPixel;
-            double refreshRate;
+            Vector2 resolution = { 0.0f, 0.0f };
+            uint DPI = 0;
+            uint bitsPerPixel = 0;
+            double refreshRate = 0.0;
         };
 
         struct ExternalDevicesInformation
         {
-            uint connectedMicesCount;
+            uint connectedMiceCount;
             uint connectedKeyboardsCount;
             uint unknownConnectedDevicesCount;
         };
@@ -178,33 +216,23 @@ namespace Sierra::Engine
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] static inline CPU& GetCPU() { return cpu; };
-
-        [[nodiscard]] static inline uint GetGPUCount() { return gpuCount; };
-        [[nodiscard]] static inline GPU& GetGPU(const uint index = 0) { return gpus[index]; }
-
+        [[nodiscard]] static inline GPU& GetGPU() { return gpu; }
         [[nodiscard]] static inline Memory& GetMemory() { return memory; };
         [[nodiscard]] static inline Kernel& GetKernel() { return kernel; };
         [[nodiscard]] static inline OS& GetOperatingSystem() { return os; };
-
         [[nodiscard]] static inline uint GetDisplayCount() { return displayCount; };
         [[nodiscard]] static inline Display& GetDisplay(const uint index = 0) { return displays[index]; };
-
         [[nodiscard]] static ExternalDevicesInformation& GetExternalDeviceInformation() { return externalDevicesInformation; }
 
     private:
         static inline CPU cpu;
-        static inline uint gpuCount;
-        static inline GPU* gpus;
+        static inline GPU gpu;
         static inline Memory memory;
         static inline Kernel kernel;
         static inline OS os;
         static inline uint displayCount;
         static inline Display* displays;
         static inline ExternalDevicesInformation externalDevicesInformation;
-
-        static void GetArchitectureName(CPU::ArchitectureType architectureType, String &output);
-        static void GetEndiannesName(CPU::EndiannessType endiannessType, String &output);
-        static void GetVendorName(GPU::VendorType vendorType, String &output);
-        static void GetKernelName(Kernel::Type kernelType, String &output);
+        static GPU::VendorType GetGPUVendor(int vendorID);
     };
 }

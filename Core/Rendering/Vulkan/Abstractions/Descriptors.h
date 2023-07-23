@@ -27,11 +27,12 @@ namespace Sierra::Rendering
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit DescriptorSetLayout(const DescriptorSetLayoutCreateInfo &createInfo);
+        DescriptorSetLayout(const DescriptorSetLayoutCreateInfo &createInfo);
         static UniquePtr<DescriptorSetLayout> Create(const DescriptorSetLayoutCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline bool IsBindingPresent(const uint binding) const { return bindings.count(binding) != 0; }
+        [[nodiscard]] inline DescriptorType GetDescriptorTypeForBinding(const uint binding) const { return bindings.find(binding)->second.descriptorType; }
         [[nodiscard]] inline VkDescriptorSetLayout GetVulkanDescriptorSetLayout() const { return vkDescriptorSetLayout; }
 
         /* --- DESTRUCTOR --- */
@@ -54,8 +55,8 @@ namespace Sierra::Rendering
     {
     public:
         /* --- CONSTRUCTOR --- */
-        explicit DescriptorPool(const DescriptorPoolCreateInfo &givenCreateInfo);
-        static UniquePtr<DescriptorPool> Create(const DescriptorPoolCreateInfo &givenCreateInfo);
+        DescriptorPool(const DescriptorPoolCreateInfo &createInfo);
+        static UniquePtr<DescriptorPool> Create(const DescriptorPoolCreateInfo &createInfo);
 
         /* --- SETTER METHODS --- */
         static void ResetPools();
@@ -72,10 +73,8 @@ namespace Sierra::Rendering
 
     private:
         VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
-        DescriptorPoolCreateInfo createInfo;
 
         static void AllocateDescriptorSet(const UniquePtr<DescriptorSetLayout> &descriptorSetLayout, VkDescriptorSet &descriptorSet);
-
         inline const static std::vector<std::pair<DescriptorType, float>> DEFAULT_POOL_SIZES =
         {
             { DescriptorType::SAMPLER,                  0.5f },
@@ -106,7 +105,7 @@ namespace Sierra::Rendering
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit DescriptorSet(const DescriptorSetCreateInfo &createInfo);
+        DescriptorSet(const DescriptorSetCreateInfo &createInfo);
         [[nodiscard]] static UniquePtr<DescriptorSet> Create(const DescriptorSetCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
@@ -147,31 +146,30 @@ namespace Sierra::Rendering
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit PushDescriptorSet([[maybe_unused]] const PushDescriptorSetCreateInfo &createInfo);
+        PushDescriptorSet([[maybe_unused]] const PushDescriptorSetCreateInfo &createInfo);
         static UniquePtr<PushDescriptorSet> Create([[maybe_unused]] const PushDescriptorSetCreateInfo &createInfo);
 
         /* --- SETTER METHODS --- */
-        PushDescriptorSet* SetBuffer(uint binding, const UniquePtr<Buffer> &buffer, uint arrayIndex = 0, const BufferCopyRange &copyRange = { });
-        PushDescriptorSet* SetImage(uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler = Sampler::Default, uint arrayIndex = 0, ImageLayout imageLayout = ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+        PushDescriptorSet* SetBuffer(uint binding, const UniquePtr<Buffer> &buffer, uint arrayIndex = 0, uint64 size = 0, uint64 offset = 0);
+        PushDescriptorSet* SetImage(uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler = Sampler::Default, uint arrayIndex = 0, DescriptorType descriptorType = DescriptorType::COMBINED_IMAGE_SAMPLER);
         PushDescriptorSet* SetTexture(uint binding, const SharedPtr<Texture> &texture, uint arrayIndex = 0);
         PushDescriptorSet* SetCubemap(uint binding, const UniquePtr<Cubemap> &cubemap, uint arrayIndex = 0);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint GetDescriptorSetIndex() const { return descriptorSetIndex; }
-
-        /* --- GETTER METHODS --- */
         bool IsEmpty() const { return writeDescriptorSets.empty(); }
+        [[nodiscard]] inline uint GetDescriptorSetIndex() const { return descriptorSetIndex; }
 
         /* --- DESTRUCTOR --- */
         friend class Pipeline;
         DELETE_COPY(PushDescriptorSet);
 
     private:
-        uint descriptorSetIndex;
+        uint descriptorSetIndex = 0;
         // Binding | Data
         std::unordered_map<uint, VkWriteDescriptorSet> writeDescriptorSets;
         std::unordered_map<uint, VkDescriptorImageInfo> descriptorImageInfos;
         std::unordered_map<uint, VkDescriptorBufferInfo> descriptorBufferInfos;
-        void SetVulkanImage(uint binding, const VkDescriptorImageInfo *imageInfo, uint arrayIndex);
+        void SetVulkanImage(uint binding, const VkDescriptorImageInfo *imageInfo, uint arrayIndex, DescriptorType descriptorType);
+
     };
 }

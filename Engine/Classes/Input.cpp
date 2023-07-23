@@ -6,6 +6,38 @@
 
 namespace Sierra::Engine
 {
+    
+    /* --- PROPERTIES --- */
+    
+    uint keyboardKeys[349];
+    uint lastKeySet = 0;
+    bool keySet = false;
+
+    uint mouseButtons[349];
+    uint lastButtonSet = 0;
+    bool buttonSet = false;
+
+    Vector2 scroll = { 0.0f, 0.0f };
+    bool scrollSet = false;
+
+    std::vector<String> enteredCharacters;
+    String UnicodePointToChar(uint unicodePoint);
+
+    struct GamePad
+    {
+        bool connected;
+        String name;
+        uint buttons[15];
+        float minimumSensitivities[2];
+        Vector2 axes[2];
+        float triggers[2];
+    };
+
+    GamePad gamePads[Input::MAX_GAME_PADS];
+    uint gamePadsConnected = 0;
+
+    void RegisterGamePad(uint player);
+    bool CheckGamePadConnection(uint player);
 
     /* --- POLLING METHODS --- */
 
@@ -103,24 +135,24 @@ namespace Sierra::Engine
 
     /* --- GETTER METHODS --- */
 
-    bool Input::GetKeyPressed(const Key keyCode)
+    bool Input::GetKeyPressed(const Key key)
     {
-        return keyboardKeys[static_cast<uint>(keyCode)] == 2; // 2 = Press
+        return keyboardKeys[static_cast<uint>(key)] == 2; // 2 = Press
     }
 
-    bool Input::GetKeyHeld(const Key keyCode)
+    bool Input::GetKeyHeld(const Key key)
     {
-        return keyboardKeys[static_cast<uint>(keyCode)] == 3 || keyboardKeys[static_cast<uint>(keyCode)] == 2; // 3 = Repeat || 2 = Press
+        return keyboardKeys[static_cast<uint>(key)] == 3 || keyboardKeys[static_cast<uint>(key)] == 2; // 3 = Repeat || 2 = Press
     }
 
-    bool Input::GetKeyResting(const Key keyCode)
+    bool Input::GetKeyResting(const Key key)
     {
-        return keyboardKeys[static_cast<uint>(keyCode)] == 0; // 0 = Rest
+        return keyboardKeys[static_cast<uint>(key)] == 0; // 0 = Rest
     }
 
-    bool Input::GetKeyReleased(const Key keyCode)
+    bool Input::GetKeyReleased(const Key key)
     {
-        return keyboardKeys[static_cast<uint>(keyCode)] == 1; // 1 = Release
+        return keyboardKeys[static_cast<uint>(key)] == 1; // 1 = Release
     }
 
     std::vector<String> *Input::GetEnteredCharacters()
@@ -128,24 +160,24 @@ namespace Sierra::Engine
         return &enteredCharacters;
     }
 
-    bool Input::GetMouseButtonPressed(const uint buttonCode)
+    bool Input::GetMouseButtonPressed(const MouseButton button)
     {
-        return mouseButtons[buttonCode] == 2; // 2 = Press
+        return mouseButtons[static_cast<uint>(button)] == 2; // 2 = Press
     }
 
-    bool Input::GetMouseButtonHeld(const uint buttonCode)
+    bool Input::GetMouseButtonHeld(const MouseButton button)
     {
-        return mouseButtons[buttonCode] == 3 || mouseButtons[buttonCode] == 2; // 3 = Repeat || 2 = Press
+        return mouseButtons[static_cast<uint>(button)] == 3 || mouseButtons[static_cast<uint>(button)] == 2; // 3 = Repeat || 2 = Press
     }
 
-    bool Input::GetMouseButtonReleased(const uint buttonCode)
+    bool Input::GetMouseButtonReleased(const MouseButton button)
     {
-        return mouseButtons[buttonCode] == 1; // 1 = Release
+        return mouseButtons[static_cast<uint>(button)] == 1; // 1 = Release
     }
 
-    bool Input::GetMouseButtonResting(const uint buttonCode)
+    bool Input::GetMouseButtonResting(const MouseButton button)
     {
-        return mouseButtons[buttonCode] == 0; // 0 = Rest
+        return mouseButtons[static_cast<uint>(button)] == 0; // 0 = Rest
     }
 
     float Input::GetHorizontalMouseScroll()
@@ -163,24 +195,24 @@ namespace Sierra::Engine
         return gamePads[player].name;
     }
 
-    bool Input::GetGamePadButtonPressed(const uint gamePadButton, const uint player)
+    bool Input::GetGamePadButtonPressed(const GamePadButton button, const uint player)
     {
-        return CheckGamePadConnection(player) && gamePads[player].buttons[gamePadButton] == 2; // 2 - Press
+        return CheckGamePadConnection(player) && gamePads[player].buttons[static_cast<uint>(button)] == 2; // 2 - Press
     }
 
-    bool Input::GetGamePadButtonHeld(const uint gamePadButton, const uint player)
+    bool Input::GetGamePadButtonHeld(const GamePadButton button, const uint player)
     {
-        return CheckGamePadConnection(player) && (gamePads[player].buttons[gamePadButton] == 2 || gamePads[player].buttons[gamePadButton] == 3); // 2 - Press || 3 - Hold
+        return CheckGamePadConnection(player) && (gamePads[player].buttons[static_cast<uint>(button)] == 2 || gamePads[player].buttons[static_cast<uint>(button)] == 3); // 2 - Press || 3 - Hold
     }
 
-    bool Input::GetGamePadButtonReleased(const uint gamePadButton, const uint player)
+    bool Input::GetGamePadButtonReleased(const GamePadButton button, const uint player)
     {
-        return CheckGamePadConnection(player) && gamePads[player].buttons[gamePadButton] == 1; // 1 - Press
+        return CheckGamePadConnection(player) && gamePads[player].buttons[static_cast<uint>(button)] == 1; // 1 - Press
     }
 
-    bool Input::GetGamePadButtonResting(const uint gamePadButton, const uint player)
+    bool Input::GetGamePadButtonResting(const GamePadButton button, const uint player)
     {
-        return CheckGamePadConnection(player) && gamePads[player].buttons[gamePadButton] == 0; // 0 - Rest
+        return CheckGamePadConnection(player) && gamePads[player].buttons[static_cast<uint>(button)] == 0; // 0 - Rest
     }
 
     Vector2 Input::GetGamePadLeftStickAxis(const uint player)
@@ -228,9 +260,9 @@ namespace Sierra::Engine
         return player < MAX_GAME_PADS && gamePads[player].connected;
     }
 
-    bool Input::CheckGamePadConnection(uint player)
+    bool CheckGamePadConnection(uint player)
     {
-        if (player >= MAX_GAME_PADS || !gamePads[player].connected)
+        if (player >= Input::MAX_GAME_PADS || !gamePads[player].connected)
         {
             ASSERT_WARNING_FORMATTED("Game pad with an ID of [{0}] is not connected", player);
             return false;
@@ -248,17 +280,17 @@ namespace Sierra::Engine
 
     void Input::KeyboardKeyCallback([[maybe_unused]] GLFWwindow *windowPtr, const int keyCode, const int scanCode, int action, const int mods)
     {
-        if (keyCode == Key::UNKNOWN) return;
+        if (keyCode == static_cast<uint>(Key::UNKNOWN)) return;
 
         keyboardKeys[static_cast<uint>(keyCode)] = action + 1;
         lastKeySet = keyCode;
         keySet = true;
     }
 
-    void Input::MouseButtonCallback([[maybe_unused]] GLFWwindow *windowPtr, const int buttonCode, const int action, const int mods)
+    void Input::MouseButtonCallback([[maybe_unused]] GLFWwindow *windowPtr, const int button, const int action, const int mods)
     {
-        mouseButtons[buttonCode] = action + 1;
-        lastButtonSet = buttonCode;
+        mouseButtons[static_cast<uint>(button)] = action + 1;
+        lastButtonSet = button;
         buttonSet = true;
     }
 
@@ -288,7 +320,7 @@ namespace Sierra::Engine
         }
     }
 
-    void Input::RegisterGamePad(const uint player)
+    void RegisterGamePad(const uint player)
     {
         gamePads[player].connected = true;
         gamePads[player].name = glfwGetGamepadName(static_cast<int>(player));
@@ -300,7 +332,7 @@ namespace Sierra::Engine
 
     #pragma clang diagnostic push
     #pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
-    String Input::UnicodePointToChar(const uint unicodePoint)
+    String UnicodePointToChar(const uint unicodePoint)
     {
         char character[5] = {0x00, 0x00, 0x00, 0x00, 0x00 };
         if      (unicodePoint <= 0x7F) { character[0] = unicodePoint;  }

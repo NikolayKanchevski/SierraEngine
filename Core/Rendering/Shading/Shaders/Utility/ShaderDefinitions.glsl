@@ -9,9 +9,5 @@ const uint MAX_DIRECTIONAL_LIGHTS = 16;
 
 const uint UNIFORM_BUFFER_BINDING = 0;
 const uint STORAGE_BUFFER_BINDING = 1;
-const uint DIFFUSE_TEXTURE_BINDING = 2;
-const uint SPECULAR_TEXTURE_BINDING = 3;
-const uint NORMAL_TEXTURE_BINDING = 4;
-const uint HEIGHT_TEXTURE_BINDING = 5;
 
 #endif

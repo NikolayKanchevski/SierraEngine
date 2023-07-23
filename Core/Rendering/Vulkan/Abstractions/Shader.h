@@ -220,10 +220,10 @@ namespace Sierra::Rendering
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Shader(const CompiledShaderCreateInfo &createInfo);
+        Shader(const CompiledShaderCreateInfo &createInfo);
         static SharedPtr<Shader> Load(const CompiledShaderCreateInfo &createInfo);
 
-        explicit Shader(const ShaderCreateInfo &createInfo);
+        Shader(const ShaderCreateInfo &createInfo);
         static SharedPtr<Shader> Create(const ShaderCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
@@ -299,9 +299,9 @@ namespace Sierra::Rendering
         class Includer : public shaderc::CompileOptions::IncluderInterface
         {
         public:
-            explicit Includer(String  givenFilePath);
+            Includer(String  givenFilePath);
 
-            shaderc_include_result* GetInclude(const char* requestedSource, shaderc_include_type type, const char* requestingSource, size_t includeDepth) override;
+            shaderc_include_result* GetInclude(const char* requestedSource, shaderc_include_type type, const char* requestingSource, uSize includeDepth) override;
             void ReleaseInclude(shaderc_include_result* data) override;
 
         private:

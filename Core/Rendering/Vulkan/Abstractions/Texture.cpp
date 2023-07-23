@@ -197,6 +197,7 @@ namespace Sierra::Rendering
         image->Destroy();
         sampler->Destroy();
 
+        if (imGuiDescriptorSet != nullptr) VK_VALIDATE(vkFreeDescriptorSets(VK::GetLogicalDevice(), VK::GetImGuiDescriptorPool(), 1,reinterpret_cast<VkDescriptorSet const *>(&imGuiDescriptorSet)), "Could not free ImGui texture");
         Dispose();
     }
 }

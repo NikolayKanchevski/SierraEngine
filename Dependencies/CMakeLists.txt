@@ -96,16 +96,7 @@ target_sources(${PROJECT_NAME} PRIVATE ${RARECPP_SOURCES})
 target_include_directories(Dependencies INTERFACE ${RARECPP_DIR})
 
 # ========== INFOWARE ========== #
-if(WIN32)
-    set(INFOWARE_USE_D3D 1)
-    set(INFOWARE_USE_OPENCL 0)
-    set(INFOWARE_USE_OPENGL 0)
-else()
-    set(INFOWARE_USE_OPENCL 1)
-    set(INFOWARE_USE_D3D 0)
-    set(INFOWARE_USE_OPENGL 0)
-endif()
-
+set(INFOWARE_USE_OPENGL 1)
 set(INFOWARE_PCI_IDS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Infoware/pcids/pci.ids)
 
 add_subdirectory(Infoware)
@@ -130,9 +121,14 @@ else()
     set(TBB_STRICT OFF)
 endif()
 
-add_subdirectory(TBB)
+find_package(TBB REQUIRED)
 target_link_libraries(Dependencies INTERFACE TBB::tbb)
 target_compile_options(Dependencies PRIVATE ${TBB_CXX_STD_FLAG})
+
+# TODO: TRY THIS ON WINDOWS ^ ELSE ADD CHECK
+#add_subdirectory(TBB)
+#target_link_libraries(Dependencies INTERFACE TBB::tbb)
+#target_compile_options(Dependencies PRIVATE ${TBB_CXX_STD_FLAG})
 
 # ========== DISCORD SDK ========== #
 add_library(DiscordSDK STATIC)

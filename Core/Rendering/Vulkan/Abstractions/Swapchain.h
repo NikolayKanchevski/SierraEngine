@@ -18,7 +18,7 @@ namespace Sierra::Rendering
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Swapchain(UniquePtr<Window> &givenWindow);
+        Swapchain(UniquePtr<Window> &givenWindow);
         static UniquePtr<Swapchain> Create(UniquePtr<Window> &givenWindow);
 
         /* --- POLLING METHODS --- */
@@ -64,7 +64,7 @@ namespace Sierra::Rendering
 
         std::vector<UniquePtr<CommandBuffer>> commandBuffers;
         std::vector<UniquePtr<Image>> swapchainImages;
-        std::vector<UniquePtr<Framebuffer>> swapchainFramebuffers;
+        std::vector<UniquePtr<Framebuffer>> framebuffers;
         UniquePtr<RenderPass> renderPass;
 
         std::vector<VkSemaphore> imageAvailableSemaphores;

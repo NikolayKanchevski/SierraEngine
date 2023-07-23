@@ -4,28 +4,38 @@
 
 #pragma once
 
+#include "../../Core/Rendering/Vulkan/Abstractions/Texture.h"
+
 namespace Sierra::Engine::Discord
 {
+
+    // Forward declare
+    void Start(uint64 applicationID, const Callback &OnUserLoadedCallback);
+
     /* --- TYPES --- */
     class User
     {
     public:
         /* --- CONSTRUCTORS --- */
         User() = default;
-        explicit User(const discord::User &user);
+        User(const discord::User &user);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline bool IsLoaded() const { return GetId() != 0; }
+        [[nodiscard]] inline bool IsIconTextureLoaded() const { return iconTexture != nullptr; }
         [[nodiscard]] inline int64 GetId() const { return discordUser.GetId(); }
         [[nodiscard]] inline const char* GetUsername() const { return discordUser.GetUsername(); }
         [[nodiscard]] inline const char* GetDiscriminator() const { return discordUser.GetDiscriminator(); }
+        [[nodiscard]] inline SharedPtr<Rendering::Texture>& GetIconTexture() { return iconTexture; }
         [[nodiscard]] inline discord::User& GetDiscordUser() { return discordUser; }
 
         /* --- OPERATORS --- */
         User& operator==(const User &other);
+        friend void Discord::Start(uint64 applicationID, const Callback &OnUserLoadedCallback);
 
     private:
         discord::User discordUser{};
+        SharedPtr<Rendering::Texture> iconTexture;
 
     };
 
@@ -36,7 +46,7 @@ namespace Sierra::Engine::Discord
     public:
         /* --- CONSTRUCTORS --- */
         Activity() = default;
-        explicit Activity(const discord::Activity &activity);
+        Activity(const discord::Activity &activity);
 
         /* --- SETTER METHODS --- */
         Activity& SetType(ActivityType type);

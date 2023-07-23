@@ -42,7 +42,7 @@ namespace Sierra::Rendering
     public:
         /* --- CONSTRUCTORS --- */
         QueryPool(const QueryPoolCreateInfo &createInfo);
-        static UniquePtr<QueryPool> Create(QueryPoolCreateInfo createInfo);
+        static UniquePtr<QueryPool> Create(const QueryPoolCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkQueryPool GetVulkanQueryPool() const { return vkQueryPool; }

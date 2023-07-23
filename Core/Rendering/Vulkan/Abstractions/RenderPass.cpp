@@ -6,232 +6,236 @@
 
 #include "../VK.h"
 
+// TODO: Resolve attachment support
 namespace Sierra::Rendering
 {
     /* --- CONSTRUCTORS --- */
 
     RenderPass::RenderPass(const RenderPassCreateInfo &createInfo)
     {
-        auto &attachments = createInfo.attachments;
-        auto &subpassInfos = createInfo.subpassInfos;
-
+        // Allocate memory for attachments
         std::vector<VkAttachmentDescription> attachmentDescriptions;
-        attachmentDescriptions.resize(attachments.size());
+        attachmentDescriptions.resize(createInfo.attachments.size());
 
-        for (uint i = 0; i < attachments.size(); i++)
+        // Keep track of how many attachments are loaded
+        uint totalColorAttachmentLoadCount = 0;
+        bool loadsDepthAttachment = false;
+        int depthAttachmentIndex = -1;
+
+        // Set up attachments & clear values
+        clearValues.resize(createInfo.attachments.size());
+        for (uint i = createInfo.attachments.size(); i--;)
         {
-            attachmentDescriptions[i].format = (VkFormat) attachments[i].imageAttachment->GetFormat();
-            attachmentDescriptions[i].samples = (VkSampleCountFlagBits) attachments[i].imageAttachment->GetSampling();
-            attachmentDescriptions[i].loadOp = (VkAttachmentLoadOp) attachments[i].loadOp;
-            attachmentDescriptions[i].storeOp = (VkAttachmentStoreOp) attachments[i].storeOp;
-            attachmentDescriptions[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE; // I don't care maybe change this in future
-            attachmentDescriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE; // this too
-            attachmentDescriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            const auto &attachment = createInfo.attachments[i];
 
-            if (attachments[i].IsDepth()) attachmentDescriptions[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-            else attachmentDescriptions[i].finalLayout = (VkImageLayout) attachments[i].finalLayout;
-        }
+            // Add attachment description
+            attachmentDescriptions[i] = {
+                .format = static_cast<VkFormat>(attachment.image->GetFormat()),
+                .samples = static_cast<VkSampleCountFlagBits>(attachment.image->GetSampling()),
+                .loadOp = static_cast<VkAttachmentLoadOp>(attachment.loadOp),
+                .storeOp = static_cast<VkAttachmentStoreOp>(attachment.storeOp),
+                .stencilLoadOp = static_cast<VkAttachmentLoadOp>(LoadOp::DONT_CARE),
+                .stencilStoreOp = static_cast<VkAttachmentStoreOp>(StoreOp::DONT_CARE),
+                .initialLayout = createInfo.attachments[i].loadOp == LoadOp::LOAD ? static_cast<VkImageLayout>(createInfo.attachments[i].image->GetLayout()) : static_cast<VkImageLayout>(VK_IMAGE_LAYOUT_UNDEFINED),
+            };
 
-        // Subpasses
-        std::vector<SubpassDescription> subpassDescriptions{};
-        subpassDescriptions.resize(subpassInfos.size());
-
-        for (uint i = 0; i < subpassInfos.size(); i++)
-        {
-            SubpassDescription &subpassDescription = subpassDescriptions[i];
-            subpassDescription.data.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-            subpassDescription.data.colorAttachmentCount = 0;
-            subpassDescription.data.inputAttachmentCount = 0;
-
-            bool hasDepth = false;
-            bool hasColor = false;
-            bool hasResolve = false;
-            bool hasInput = false;
-
-            for (auto &attachment : attachments)
+            switch (attachment.type)
             {
-                if (attachment.IsDepth())
-                {
-                    hasDepth = true;
-                }
-                else if (attachment.isResolve)
-                {
-                    hasResolve = true;
-                }
-
-                if (hasDepth && hasResolve) break;
+                case RenderPassAttachmentType::SWAPCHAIN:
+                    attachmentDescriptions[i].finalLayout = static_cast<VkImageLayout>(ImageLayout::PRESENT_SRC);
+                    break;
+                case RenderPassAttachmentType::COLOR:
+                    attachmentDescriptions[i].finalLayout = static_cast<VkImageLayout>(ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+                case RenderPassAttachmentType::DEPTH:
+                    attachmentDescriptions[i].finalLayout = static_cast<VkImageLayout>(ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+                    depthAttachmentIndex = i;
+                    break;
             }
 
-            for (uint j = 0; j < subpassInfos[i].renderTargets.size(); j++)
-            {
-                uint renderTarget = subpassInfos[i].renderTargets[j];
-                if (attachments[renderTarget].IsDepth())
-                {
-                    subpassDescription.depthReference.attachment = renderTarget;
-                    subpassDescription.depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-                    hasDepth = true;
-
-                    hasDepthAttachment = true;
-                }
-                else if (attachments[renderTarget].isResolve)
-                {
-                    VkAttachmentReference resolveReference{};
-                    resolveReference.attachment = renderTarget;
-                    resolveReference.attachment = attachments[renderTarget].resolveTarget;
-
-                    resolveReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                    subpassDescription.resolveReferences.push_back(resolveReference);
-                }
-                else
-                {
-                    VkAttachmentReference colorReference{};
-                    colorReference.attachment = renderTarget;
-
-                    bool attachmentIsAlsoInput = false;
-                    for (const auto &input : subpassInfos[i].subpassInputs) { if (input == renderTarget) { attachmentIsAlsoInput = true; break; } }
-
-                    colorReference.layout = attachmentIsAlsoInput ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                    subpassDescription.colorReferences.push_back(colorReference);
-                    hasColor = true;
-
-                    colorAttachmentCount++;
-                }
-            }
-
-            for (const auto &renderTarget : subpassInfos[i].subpassInputs)
-            {
-                VkAttachmentReference inputReference{};
-                inputReference.attachment = renderTarget;
-                inputReference.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                subpassDescription.inputReferences.push_back(inputReference);
-                hasInput = true;
-
-            }
-
-            if (hasDepth)
-            {
-                subpassDescription.data.pDepthStencilAttachment = subpassDescription.depthReference.layout != VK_IMAGE_LAYOUT_UNDEFINED ? &subpassDescription.depthReference : nullptr;
-            }
-
-            if (hasColor)
-            {
-                subpassDescription.data.pColorAttachments = subpassDescription.colorReferences.data();
-                subpassDescription.data.colorAttachmentCount = subpassDescription.colorReferences.size();
-            }
-
-            if (hasResolve)
-            {
-                subpassDescription.data.pResolveAttachments = subpassDescription.resolveReferences.data();
-            }
-
-            if (hasInput)
-            {
-                subpassDescription.data.pInputAttachments = subpassDescription.inputReferences.data();
-                subpassDescription.data.inputAttachmentCount = subpassDescription.inputReferences.size();
-            }
-        }
-
-        // Dependencies
-        std::vector<VkSubpassDependency> dependencies;
-        if (subpassInfos.size() != 1)
-        {
-            dependencies.resize(subpassInfos.size() +  1);
-
-            VkSubpassDependency &firstDependency = dependencies[0];
-            firstDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-            firstDependency.dstSubpass = 0;
-            firstDependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-            firstDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            firstDependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-            firstDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            firstDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            firstDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-            for (uSize i = 1; i < (dependencies.size() - 1); i++)
-            {
-                dependencies[i].srcSubpass = i-1;
-                dependencies[i].dstSubpass = i;
-                dependencies[i].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-                dependencies[i].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-                dependencies[i].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-                dependencies[i].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-                dependencies[i].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-            }
-
-            VkSubpassDependency &lastDependency = *(dependencies.end() - 1);
-            lastDependency.srcSubpass = subpassInfos.size() - 1;
-            lastDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
-            lastDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            lastDependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-            lastDependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            lastDependency.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-            lastDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-        }
-        else
-        {
-            dependencies.resize(2);
-            dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-            dependencies[0].dstSubpass = 0;
-            dependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-            dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-            dependencies[0].srcAccessMask = 0;
-            dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-            dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-            dependencies[1].srcSubpass = 0;
-            dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-            dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-            dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-            dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-            dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-        }
-
-        std::vector<VkSubpassDescription> vkSubpassDescriptions{};
-        for (uint i = 0; i < subpassDescriptions.size(); i++)
-        {
-            vkSubpassDescriptions.push_back(subpassDescriptions[i].data);
-        }
-
-        VkRenderPassCreateInfo renderPassInfo = {};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = static_cast<uint>(attachmentDescriptions.size());
-        renderPassInfo.pAttachments = attachmentDescriptions.data();
-        renderPassInfo.subpassCount = static_cast<uint>(vkSubpassDescriptions.size());
-        renderPassInfo.pSubpasses = vkSubpassDescriptions.data();
-        renderPassInfo.dependencyCount = static_cast<uint>(dependencies.size());
-        renderPassInfo.pDependencies = dependencies.data();
-
-        VK_ASSERT(vkCreateRenderPass(VK::GetLogicalDevice(), &renderPassInfo, nullptr, &renderPass), "Could not create render pass");
-
-        clearValues.resize(attachments.size());
-        for (uint i = 0; i < attachments.size(); i++)
-        {
-            if (attachments[i].IsDepth())
+            // Set clear values
+            if (attachment.type == RenderPassAttachmentType::DEPTH)
             {
                 clearValues[i].depthStencil = { 1.0f, 0 };
+                if (attachment.loadOp == LoadOp::LOAD) loadsDepthAttachment = true;
             }
             else
             {
-                clearValues[i].color = { 0.0f, 0.0f, 0.0f, 0.0f };
+                clearValues[i].color = { attachment.clearColor.x, attachment.clearColor.y, attachment.clearColor.z, attachment.clearColor.w };
+                if (attachment.loadOp == LoadOp::LOAD) totalColorAttachmentLoadCount++;
             }
         }
+
+        // Allocate memory to hold subpass dependencies (we need both, as the VkSubpassDescription vector points to data inside the SubpassDescription vector)
+        std::vector<SubpassDescription> subpassDescriptions;
+        subpassDescriptions.resize(createInfo.subpassInfos.size());
+
+        std::vector<VkSubpassDescription> vkSubpassDescriptions;
+        vkSubpassDescriptions.resize(createInfo.subpassInfos.size());
+
+        // Set up subpasses & transitioning info
+        subpasses.resize(createInfo.subpassInfos.size());
+
+        // Allocate a dependency for each subpass plus one extra and another extra one for depth
+        std::vector<VkSubpassDependency> subpassDependencies;
+        subpassDependencies.reserve(createInfo.subpassInfos.size() + 1 + loadsDepthAttachment);
+
+        // Populate rest of subpass info
+        for (uint i = createInfo.subpassInfos.size(); i--;)
+        {
+            // Set default values
+            const auto &subpassInfo = createInfo.subpassInfos[i];
+            SubpassDescription &subpassDescription = subpassDescriptions[i];
+
+            // Allocate transitioning info data
+            auto &transitionInfo = subpasses[i].attachmentTransitionInfo;
+            transitionInfo.resize(subpassInfo.renderTargets.size());
+
+            // Check if subpass loads depth attachment from another subpass
+            if (subpassInfo.loadDepthAttachment && depthAttachmentIndex != -1)
+            {
+                subpassDescription.SetDepthReference({
+                    .attachment = static_cast<uint>(depthAttachmentIndex),
+                    .layout = static_cast<VkImageLayout>(ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+                });
+                subpasses[i].hasDepthAttachment = true;
+            }
+
+            // Assign attachment references
+            for (uint j = 0; j < subpassInfo.renderTargets.size(); j++)
+            {
+                uint renderTargetIndex = subpassInfo.renderTargets[j];
+                if (createInfo.attachments[renderTargetIndex].type == RenderPassAttachmentType::DEPTH)
+                {
+                    // Set depth reference
+                    subpassDescription.SetDepthReference({
+                        .attachment = renderTargetIndex,
+                        .layout = static_cast<VkImageLayout>(ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+                    });
+
+                    // Save subpass index
+                    subpasses[i].hasDepthAttachment = true;
+                    subpasses[i].writesToDepthAttachment = true;
+                }
+                else
+                {
+                    // Set color references
+                    subpassDescription.AddColorReference({
+                        .attachment = renderTargetIndex,
+                        .layout = static_cast<VkImageLayout>(ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
+                    });
+                    subpasses[i].colorAttachmentCount++;
+                }
+
+                // Save transition info
+                transitionInfo[j] = { .image = createInfo.attachments[renderTargetIndex].image.get(), .finalLayout = static_cast<ImageLayout>(attachmentDescriptions[renderTargetIndex].finalLayout) };
+            }
+
+            for (uint j = 0; j < subpassInfo.subpassInputs.size(); j++)
+            {
+                uint subpassInputIndex = subpassInfo.subpassInputs[j];
+                if (createInfo.attachments[subpassInputIndex].type == RenderPassAttachmentType::DEPTH)
+                {
+                    subpasses[i].hasDepthAttachment = true;
+                }
+
+                // Add input attachment references
+                subpassDescription.AddInputReference({
+                    .attachment = subpassInputIndex,
+                    .layout = static_cast<VkImageLayout>(ImageLayout::SHADER_READ_ONLY_OPTIMAL)
+                });
+            }
+
+            // Create and store VkSubpassDescription
+            vkSubpassDescriptions[i] = subpassDescription.CreateVulkanSubpassDescription();
+
+            // Add dependency between current and previous subpass
+            if (i != 0)
+            {
+                subpassDependencies.push_back({
+                    .srcSubpass = i - 1,
+                    .dstSubpass = i,
+                    .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                    .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                    .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                    .dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT | VK_ACCESS_SHADER_READ_BIT,
+                    .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+                });
+            }
+
+            // Add special dependency between current and previous subpass for depth attachment
+            if (subpasses[i].writesToDepthAttachment)
+            {
+                subpassDependencies.push_back({
+                    .srcSubpass = i == 0 ? VK_SUBPASS_EXTERNAL : i - 1,
+                    .dstSubpass = i,
+                    .srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+                    .dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+                    .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+                    .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+                    .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
+                });
+            }
+        }
+
+        // Set first dependency
+        subpassDependencies.push_back({
+            .srcSubpass = VK_SUBPASS_EXTERNAL,
+            .dstSubpass = 0,
+            .srcStageMask = static_cast<VkPipelineStageFlags>(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | (totalColorAttachmentLoadCount > 0 ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT : 0)),
+            .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+            .srcAccessMask = static_cast<VkAccessFlags>(VK_ACCESS_SHADER_READ_BIT | (totalColorAttachmentLoadCount > 0 ? VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT : 0) | (loadsDepthAttachment ? VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT : 0)),
+            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        });
+
+        // Set last dependency
+        subpassDependencies.push_back({
+            .srcSubpass = static_cast<uint>(createInfo.subpassInfos.size() - 1),
+            .dstSubpass = VK_SUBPASS_EXTERNAL,
+            .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+            .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
+        });
+
+        // Create render pass
+        VkRenderPassCreateInfo renderPassCreateInfo{};
+        renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        renderPassCreateInfo.attachmentCount = static_cast<uint>(attachmentDescriptions.size());
+        renderPassCreateInfo.pAttachments = attachmentDescriptions.data();
+        renderPassCreateInfo.subpassCount = static_cast<uint>(vkSubpassDescriptions.size());
+        renderPassCreateInfo.pSubpasses = vkSubpassDescriptions.data();
+        renderPassCreateInfo.dependencyCount = static_cast<uint>(subpassDependencies.size());
+        renderPassCreateInfo.pDependencies = subpassDependencies.data();
+        VK_ASSERT(vkCreateRenderPass(VK::GetLogicalDevice(), &renderPassCreateInfo, nullptr, &renderPass), "Could not create render pass");
     }
 
-    UniquePtr<RenderPass> RenderPass::Create(const RenderPassCreateInfo &renderPassCreateInfo)
+    UniquePtr<RenderPass> RenderPass::Create(const RenderPassCreateInfo &createInfo)
     {
-        return std::make_unique<RenderPass>(renderPassCreateInfo);
+        return std::make_unique<RenderPass>(createInfo);
     }
 
     /* --- POLLING METHODS --- */
 
     void RenderPass::NextSubpass(const UniquePtr<CommandBuffer> &commandBuffer)
     {
+        // Trigger next subpass
         vkCmdNextSubpass(commandBuffer->GetVulkanCommandBuffer(), VK_SUBPASS_CONTENTS_INLINE);
+        currentSubpass++;
+
+        // Apply layout transitions
+        for (const auto &transition : subpasses[currentSubpass].attachmentTransitionInfo)
+        {
+            commandBuffer->TransitionImageLayoutFromRenderPass(transition.image, transition.finalLayout);
+        }
     }
 
     void RenderPass::Begin(const UniquePtr<Framebuffer> &framebuffer, const UniquePtr<CommandBuffer> &commandBuffer)
     {
+        // Reset subpass index
+        currentSubpass = 0;
+
         // Set up begin info
         VkRenderPassBeginInfo renderPassBeginInfo{};
         renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -247,6 +251,12 @@ namespace Sierra::Rendering
 
         // Set viewport and apply scissoring
         commandBuffer->SetViewportAndScissor(framebuffer->GetWidth(), framebuffer->GetHeight());
+
+        // Apply layout transitions
+        for (const auto &transition : subpasses[currentSubpass].attachmentTransitionInfo)
+        {
+            commandBuffer->TransitionImageLayoutFromRenderPass(transition.image, transition.finalLayout);
+        }
     }
 
     void RenderPass::End(const UniquePtr<CommandBuffer> &commandBuffer)
@@ -254,12 +264,18 @@ namespace Sierra::Rendering
         vkCmdEndRenderPass(commandBuffer->GetVulkanCommandBuffer());
     }
 
+    /* --- SETTER METHODS  --- */
+
+    void RenderPass::SetClearColor(const uint colorAttachmentIndex, const Vector4& color)
+    {
+        clearValues[colorAttachmentIndex].color = { color.x, color.y, color.z, color.w };
+    }
+
     /* --- DESTRUCTOR --- */
 
     void RenderPass::Destroy()
     {
         vkDestroyRenderPass(VK::GetLogicalDevice(), renderPass, nullptr);
-        clearValues.clear();
     }
 }
 

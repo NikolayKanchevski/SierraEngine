@@ -16,6 +16,14 @@
 namespace Sierra::Rendering
 {
 
+    struct DeviceExtension
+    {
+        const char* name;
+        std::vector<DeviceExtension> dependencies;
+        bool requiredOnlyIfSupported = false;
+        void* data = nullptr;
+    };
+
     struct DeviceCreateInfo
     {
 
@@ -25,29 +33,20 @@ namespace Sierra::Rendering
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Device([[maybe_unused]] const DeviceCreateInfo &deviceCreateInfo);
+        Device([[maybe_unused]] const DeviceCreateInfo &deviceCreateInfo);
         static UniquePtr<Device> Create([[maybe_unused]] const DeviceCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline bool GetDescriptorIndexingSupported() const
-        { return false; } // TODO: BINDLESS
-//        #if !__APPLE__
-//            { return physicalDeviceFeatures.shaderSampledImageArrayDynamicIndexing; };
-//        #else
-//            { return false; }
-//        #endif
-
         [[nodiscard]] inline VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
         [[nodiscard]] inline VkDevice GetLogicalDevice() const { return logicalDevice; }
+        [[nodiscard]] inline bool IsExtensionLoaded(const char* extensionName) { auto iterator = loadedExtensions.find(HashType(String(extensionName))); return iterator != loadedExtensions.end() ? iterator->second : false; }
 
-        [[nodiscard]] inline VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures() const { return physicalDeviceFeatures; }
-        [[nodiscard]] inline VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const { return physicalDeviceProperties; }
-        [[nodiscard]] inline VkPhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties() const { return physicalDeviceMemoryProperties; }
+        [[nodiscard]] inline VkPhysicalDeviceFeatures& GetPhysicalDeviceFeatures() { return physicalDeviceFeatures; }
+        [[nodiscard]] inline VkPhysicalDeviceProperties& GetPhysicalDeviceProperties() { return physicalDeviceProperties; }
+        [[nodiscard]] inline VkPhysicalDeviceMemoryProperties& GetPhysicalDeviceMemoryProperties() { return physicalDeviceMemoryProperties; }
 
         [[nodiscard]] inline uint GetMaxConcurrentFramesCount() const { return maxConcurrentFrames; }
-
         [[nodiscard]] inline ImageFormat GetBestDepthImageFormat() const { return bestDepthImageFormat; }
-
         [[nodiscard]] inline Sampling GetHighestMultisampling() const { return highestMultisampling; }
 
         [[nodiscard]] inline uint GetGraphicsQueueFamily() const { return queueFamilyIndices.graphicsAndComputeFamily.value(); }
@@ -59,15 +58,9 @@ namespace Sierra::Rendering
         [[nodiscard]] inline VkQueue GetComputeQueue() const { return graphicsAndComputeQueue; }
 
         [[nodiscard]] inline float GetTimestampPeriod() const { return physicalDeviceProperties.limits.timestampPeriod; }
-        [[nodiscard]] inline bool IsPortabilitySubsetExtensionEnabled() const
-            #if PLATFORM_APPLE
-                { return portabilitySubsetExtensionEnabled; }
-            #else
-                { return false; }
-            #endif
 
         [[nodiscard]] UniquePtr<CommandBuffer> BeginSingleTimeCommands() const;
-        void EndSingleTimeCommands(UniquePtr<CommandBuffer> &commandBuffer) const;
+        void EndSingleTimeCommands(const UniquePtr<CommandBuffer> &commandBuffer) const;
 
         /* --- SETTER METHODS --- */
         inline void WaitUntilIdle() { vkDeviceWaitIdle(logicalDevice); };
@@ -80,6 +73,47 @@ namespace Sierra::Rendering
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
         VkSurfaceKHR exampleSurface = VK_NULL_HANDLE; // An existing surface is required for device creation so one will be created specifically and destroyed after that
         uint maxConcurrentFrames = 0;
+
+        const std::vector<DeviceExtension> EXTENSIONS_TO_QUERY
+        {
+            {
+                .name = VK_KHR_SWAPCHAIN_EXTENSION_NAME
+            },
+            {
+                .name = VK_KHR_MAINTENANCE3_EXTENSION_NAME
+            },
+            {
+                .name = VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME,
+            },
+            {
+                .name = VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+                .dependencies = {
+                    {
+                        .name = VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME,
+                        .dependencies = {
+                            { .name = VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME },
+                        }
+                    }
+                },
+                .data = new VkPhysicalDeviceDynamicRenderingFeaturesKHR {
+                    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
+                    .dynamicRendering = VK_TRUE
+                }
+            },
+            #if PLATFORM_APPLE
+                {
+                    .name = VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME,
+                    .requiredOnlyIfSupported = true,
+                    .data = new VkPhysicalDevicePortabilitySubsetFeaturesKHR {
+                        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR,
+                        .mutableComparisonSamplers = VK_TRUE
+                    }
+                }
+            #endif
+        };
+
+        // [Hash of extension name as a string | Wether or not the extension is supported]
+        std::unordered_map<Hash, bool> loadedExtensions;
 
         VkDevice logicalDevice = VK_NULL_HANDLE;
         VkPhysicalDeviceFeatures physicalDeviceFeatures = {};
@@ -94,39 +128,25 @@ namespace Sierra::Rendering
             Optional<uint> graphicsAndComputeFamily;
             Optional<uint> presentationFamily;
 
-            bool IsValid()
-            {
-                return graphicsAndComputeFamily.has_value() && presentationFamily.has_value();
-            }
+            [[nodiscard]] inline bool IsValid() { return graphicsAndComputeFamily.has_value() && presentationFamily.has_value(); }
         };
         QueueFamilyIndices queueFamilyIndices;
 
         ImageFormat bestDepthImageFormat = ImageFormat::UNDEFINED;
         Sampling highestMultisampling = Sampling::MSAAx1;
 
+        bool PhysicalDeviceSuitable(const VkPhysicalDevice &givenPhysicalDevice);
         void RetrievePhysicalDevice();
+
+        QueueFamilyIndices FindQueueFamilies(const VkPhysicalDevice &givenPhysicalDevice);
+
+        template<typename T>
+        bool AddExtensionIfSupported(const DeviceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions, T &pNextChain, std::vector<void*> &pointersToDeallocate);
         void CreateLogicalDevice();
 
         void RetrieveBestProperties();
-        bool DeviceExtensionsSupported(const VkPhysicalDevice &givenPhysicalDevice);
-
-        bool PhysicalDeviceSuitable(const VkPhysicalDevice &givenPhysicalDevice);
-        QueueFamilyIndices FindQueueFamilies(const VkPhysicalDevice &givenPhysicalDevice);
-
         ImageFormat GetBestDepthBufferFormat(const std::vector<ImageFormat>& givenFormats, ImageTiling imageTiling, VkFormatFeatureFlagBits formatFeatureFlags);
         [[nodiscard]] Sampling RetrieveMaxSampling() const;
-
-        std::vector<const char*> requiredDeviceExtensions
-        {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-            VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
-            VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
-            VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME
-        };
-
-        #if PLATFORM_APPLE
-            bool portabilitySubsetExtensionEnabled = false;
-        #endif
     };
 
 }

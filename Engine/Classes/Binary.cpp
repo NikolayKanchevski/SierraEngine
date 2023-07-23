@@ -26,12 +26,8 @@ namespace Sierra::Engine
 
     uint Binary::GetBitCount(Binary binary)
     {
-        size_t counter = 0;
-
-        for (size_t i = 0; i < 8 * UINT_SIZE; i++) {
-            counter += static_cast<bool>(binary.value & (1 << i));
-        }
-
+        uSize counter = 0;
+        for (uSize i = 0; i < 8 * UINT_SIZE; i++) counter += static_cast<bool>(binary.value & (1 << i));
         return counter;
     }
 

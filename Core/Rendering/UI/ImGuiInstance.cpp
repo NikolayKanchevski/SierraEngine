@@ -107,7 +107,7 @@ namespace Sierra::Rendering
         imGuiContext = ImGui::CreateContext();
         ImGui::SetCurrentContext(imGuiContext);
 
-        ImGui_ImplVulkan_LoadFunctions([](const char *function_name, void *user_data) {
+        ImGui_ImplVulkan_LoadFunctions([](const char* function_name, void* user_data) {
             return vkGetInstanceProcAddr(VK::GetInstance(), function_name);
         });
 

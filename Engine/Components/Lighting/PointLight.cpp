@@ -5,7 +5,7 @@
 #include "PointLight.h"
 
 #include "../Transform.h"
-#include "../../../Core/Rendering/UI/ImGuiUtilities.h"
+#include "../../../Editor/GUI.h"
 
 namespace Sierra::Engine
 {
@@ -20,14 +20,12 @@ namespace Sierra::Engine
 
     void PointLight::OnDrawUI()
     {
-        using namespace Rendering;
+        using namespace Editor;
         GUI::BeginProperties();
 
         GUI::FloatProperty("Intensity:", intensity);
 
-        static const float resetValues[3] = { 0.0f, 0.0f, 0.0f };
-        static const char* tooltips[3] = { "Some tooltip.", "Some tooltip.", "Some tooltip." };
-        GUI::PropertyVector3("Color:", color, resetValues, tooltips);
+        GUI::Vector3Property("Color:", color, "Some Tooltip");
 
         GUI::FloatProperty("Linear:", linear);
         GUI::FloatProperty("Quadratic:", quadratic);
@@ -47,12 +45,12 @@ namespace Sierra::Engine
 
     PointLight::operator ShaderPointLight() const
     {
-        auto position = GetComponent<Transform>().GetWorldPosition(); return
+        return
         {
             .projectionView = projectionView,
             .color = color,
             .intensity = intensity,
-            .position = { position.x, -position.y, position.z },
+            .position = GetComponent<Transform>().GetWorldPosition(),
             .linear = linear,
             .quadratic = quadratic
         };

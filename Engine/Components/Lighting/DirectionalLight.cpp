@@ -6,7 +6,7 @@
 
 #include "../Transform.h"
 #include "../../Classes/Math.h"
-#include "../../../Core/Rendering/UI/ImGuiUtilities.h"
+#include "../../../Editor/GUI.h"
 
 namespace Sierra::Engine
 {
@@ -22,14 +22,12 @@ namespace Sierra::Engine
 
     void DirectionalLight::OnDrawUI()
     {
-        using namespace Rendering;
+        using namespace Editor;
         GUI::BeginProperties();
 
         GUI::FloatProperty("Intensity:", intensity);
 
-        static const float resetValues[3] = { 0.0f, 0.0f, 0.0f };
-        static const char* tooltips[3] = { "Some tooltip.", "Some tooltip.", "Some tooltip." };
-        GUI::PropertyVector3("Color:", color, resetValues, tooltips);
+        GUI::Vector3Property("Color:", color, "Some Tooltip");
 
         GUI::EndProperties();
     }
@@ -45,7 +43,7 @@ namespace Sierra::Engine
         float sinPitch = glm::sin(glm::radians(rotation.y));
 
         direction.x = cosYaw * cosPitch;
-        direction.y = sinPitch;
+        direction.y = -sinPitch;
         direction.z = sinYaw * cosPitch;
         direction = glm::normalize(direction);
 

@@ -44,11 +44,11 @@ namespace Sierra::Rendering
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Image(const ImageCreateInfo &createInfo);
+        Image(const ImageCreateInfo &createInfo);
         static UniquePtr<Image> Create(const ImageCreateInfo &createInfo);
 
         // Only to be used for swapchain images!
-        explicit Image(const SwapchainImageCreateInfo &createInfo);
+        Image(const SwapchainImageCreateInfo &createInfo);
         static UniquePtr<Image> CreateSwapchainImage(SwapchainImageCreateInfo swapchainImageCreateInfo);
 
         /* --- SETTER METHODS --- */

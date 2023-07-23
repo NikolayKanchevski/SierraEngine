@@ -142,8 +142,8 @@ void Application::DoCameraMovement()
             cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * Input::GetHorizontalGamePadLeftStickAxis() * camera.GetRightDirection());
 
             // Depending on what buttons are held move the camera
-            if (Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection());
-            if (Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_X)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection());
+            if (Input::GetGamePadButtonHeld(GamePadButton::A)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetUpDirection());
+            if (Input::GetGamePadButtonHeld(GamePadButton::X)) cameraTransform.SetPosition(cameraTransform.GetPosition() + CAMERA_MOVE_SPEED * Time::GetDeltaTime() * camera.GetDownDirection());
 
             // Rotate the camera based on the right stick's axis
             newCameraRotation.x += Input::GetHorizontalGamePadRightStickAxis() * GAMEPAD_CAMERA_LOOK_SPEED;

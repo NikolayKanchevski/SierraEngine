@@ -14,12 +14,13 @@
 #define ID_BUFFER_BINDING 2
 #define DEPTH_BUFFER_BINDING 3
 
-namespace Sierra::Rendering { inline namespace Modules
+namespace Sierra::Rendering::Modules
 {
 
     /* --- CONSTRUCTORS --- */
 
     Raycaster::Raycaster(const RaycasterCreateInfo &createInfo)
+        : IDBuffer(createInfo.IDBuffer), depthBuffer(createInfo.depthBuffer)
     {
         // Create the buffer where the compute pipeline will be outputting the data
         outputBuffer = Buffer::Create({ .memorySize = sizeof(RaycasterOutputData), .bufferUsage = BufferUsage::STORAGE });
@@ -49,11 +50,6 @@ namespace Sierra::Rendering { inline namespace Modules
                 .descriptorSetLayout = &descriptorSetLayout
             }
         });
-
-        // Set constant shader data
-        computePipeline->SetShaderBinding(OUTPUT_BUFFER_BINDING, outputBuffer);
-        computePipeline->SetShaderBinding(ID_BUFFER_BINDING, createInfo.IDBuffer);
-        computePipeline->SetShaderBinding(DEPTH_BUFFER_BINDING, createInfo.depthBuffer);
     }
 
     UniquePtr<Raycaster> Raycaster::Create(const RaycasterCreateInfo &createInfo)
@@ -65,6 +61,9 @@ namespace Sierra::Rendering { inline namespace Modules
 
     void Raycaster::UpdateData(const UniquePtr<CommandBuffer> &commandBuffer, const UniquePtr<Buffer> &uniformBuffer)
     {
+        commandBuffer->SynchronizeImageUsage(IDBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT);
+        commandBuffer->SynchronizeImageUsage(depthBuffer, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT, ImageLayout::SHADER_READ_ONLY_OPTIMAL);
+
         // Set mouse position, which will later be used as UV in shader
         PushConstant pushConstant{};
         if (Window::IsFocusedWindowPresent())
@@ -74,7 +73,6 @@ namespace Sierra::Rendering { inline namespace Modules
             mousePositionWithinView.x /= Editor::GetSceneViewWidth();
             mousePositionWithinView.y -= Editor::GetSceneViewPositionY();
             mousePositionWithinView.y /= Editor::GetSceneViewHeight();
-            mousePositionWithinView.y = 1.0f - mousePositionWithinView.y;
             pushConstant.mousePosition = mousePositionWithinView;
         }
         else
@@ -85,12 +83,19 @@ namespace Sierra::Rendering { inline namespace Modules
         // Start pipeline
         computePipeline->Bind(commandBuffer);
 
-        // Set dynamic shader data
+        // Set shader data
         computePipeline->SetShaderBinding(UNIFORM_BUFFER_BINDING, uniformBuffer);
+        computePipeline->SetShaderBinding(OUTPUT_BUFFER_BINDING, outputBuffer);
+        computePipeline->SetShaderBinding(ID_BUFFER_BINDING, IDBuffer);
+        computePipeline->SetShaderBinding(DEPTH_BUFFER_BINDING, depthBuffer);
         computePipeline->SetPushConstants(commandBuffer, pushConstant);
 
         // Execute compute shader
         computePipeline->Dispatch(commandBuffer, 1);
+
+        commandBuffer->SynchronizeImageUsage(IDBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+        commandBuffer->SynchronizeImageUsage(depthBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+        commandBuffer->SynchronizeBufferUsage(outputBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT);
     }
 
     /* --- DESTRUCTOR --- */
@@ -102,4 +107,4 @@ namespace Sierra::Rendering { inline namespace Modules
         computePipeline->Destroy();
     }
 
-}}
+}

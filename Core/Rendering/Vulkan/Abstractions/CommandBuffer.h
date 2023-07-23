@@ -26,18 +26,21 @@ namespace Sierra::Rendering
         void End() const;
         void Reset() const;
         void Free() const;
-        void TransitionImageLayout(Image *image, ImageLayout newLayout);
         void TransitionImageLayout(const UniquePtr<Image> &image, ImageLayout newLayout);
         void TransitionImageLayouts(const std::vector<ReferenceWrapper<UniquePtr<Image>>> &images, ImageLayout newLayout);
         void SetViewport(uint width, uint height) const;
         void SetScissor(uint width, uint height, int xOffset = 0, int yOffset = 0) const;
         void SetViewportAndScissor(uint width, uint height, int xOffset = 0, int yOffset = 0) const;
+        void SynchronizeBufferUsage(const UniquePtr<Buffer> &buffer, VkPipelineStageFlags srcStage, VkAccessFlagBits srcAccess, VkPipelineStageFlags dstStage, VkAccessFlagBits dstAccess);
+        void SynchronizeImageUsage(const UniquePtr<Image> &image, VkPipelineStageFlags srcStage, VkAccessFlagBits srcAccess, VkPipelineStageFlags dstStage, VkAccessFlagBits dstAccess, ImageLayout newLayout = ImageLayout::UNDEFINED);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkCommandBuffer GetVulkanCommandBuffer() const { return vkCommandBuffer; };
 
         /* --- OPERATIONS --- */
         DELETE_COPY(CommandBuffer);
+        friend class Image;
+        friend class RenderPass;
 
     private:
         VkCommandBuffer vkCommandBuffer = VK_NULL_HANDLE;
@@ -48,8 +51,10 @@ namespace Sierra::Rendering
             bool firstTime = false;
         };
 
-        // [Pointer to image | Initial image layout before first TransitionLayout() | First time transitioning]
+        // [Pointer to image | Initial image layout before first TransitionLayout() + wether this is first time transitioning]
         std::unordered_map<Image*, ImageLayoutPair> initialImageLayouts;
+        void TransitionImageLayout(Image *image, ImageLayout newLayout);
+        void TransitionImageLayoutFromRenderPass(Image *image, ImageLayout newLayout);
     };
 
 }

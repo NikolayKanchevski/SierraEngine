@@ -165,7 +165,7 @@ namespace Sierra::Rendering
 
         // Check what technology is used
         bool usesRenderPasses = renderPassInfo.has_value();
-        uint colorAttachmentCount = usesRenderPasses ? renderPassInfo.value().renderPass->GetColorAttachmentCount() : dynamicRenderingInfo.value().dynamicRenderer->GetColorAttachmentCount();
+        uint colorAttachmentCount = usesRenderPasses ? renderPassInfo.value().renderPass->GetColorAttachmentCount(renderPassInfo.value().subpass) : dynamicRenderingInfo.value().dynamicRenderer->GetColorAttachmentCount();
 
         // Set up color attachment states
         std::vector<VkPipelineColorBlendAttachmentState> colorAttachmentStates(colorAttachmentCount, blendingAttachmentState);
@@ -184,8 +184,8 @@ namespace Sierra::Rendering
             dynamicRenderingInfoKHR = new VkPipelineRenderingCreateInfoKHR();
             dynamicRenderingInfoKHR->sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
             dynamicRenderingInfoKHR->colorAttachmentCount = colorAttachmentCount;
-            dynamicRenderingInfoKHR->pColorAttachmentFormats = dynamicRenderingInfo.value().dynamicRenderer->GetColorAttachmentFormats();
-            dynamicRenderingInfoKHR->depthAttachmentFormat = dynamicRenderingInfo.value().dynamicRenderer->GetDepthStencilAttachmentFormat();
+            dynamicRenderingInfoKHR->pColorAttachmentFormats = reinterpret_cast<const VkFormat*>(dynamicRenderingInfo.value().dynamicRenderer->GetColorAttachmentFormats());
+            dynamicRenderingInfoKHR->depthAttachmentFormat = static_cast<VkFormat>(dynamicRenderingInfo.value().dynamicRenderer->GetDepthStencilAttachmentFormat());
             dynamicRenderingInfoKHR->stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
             dynamicRenderingInfoKHR->pNext = nullptr;
         }
@@ -237,7 +237,7 @@ namespace Sierra::Rendering
         }
 
         VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{};
-        if ((usesRenderPasses && renderPassInfo.value().renderPass->HasDepthAttachment()) || (!usesRenderPasses && dynamicRenderingInfo.value().dynamicRenderer.get()->GetDepthStencilAttachmentFormat() != VK_FORMAT_UNDEFINED))
+        if ((usesRenderPasses && renderPassInfo.value().renderPass->HasDepthAttachment(renderPassInfo.value().subpass)) || (!usesRenderPasses && dynamicRenderingInfo.value().dynamicRenderer.get()->GetDepthStencilAttachmentFormat() != ImageFormat::UNDEFINED))
         {
             depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
             depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
@@ -247,7 +247,6 @@ namespace Sierra::Rendering
             depthStencilStateCreateInfo.minDepthBounds = 0.0f;
             depthStencilStateCreateInfo.maxDepthBounds = 1.0f;
             depthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;
-
             graphicsPipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
         }
 
@@ -272,15 +271,7 @@ namespace Sierra::Rendering
     void GraphicsPipeline::DrawMesh(const UniquePtr<CommandBuffer> &commandBuffer, const SharedPtr<Engine::Mesh> &mesh)
     {
         BindResources(commandBuffer);
-        constexpr static VkDeviceSize offsets[] { 0 };
-
-        VkBuffer vertexBuffer = mesh->GetVertexBuffer()->GetVulkanBuffer();
-        vkCmdBindVertexBuffers(commandBuffer->GetVulkanCommandBuffer(), 0, 1, &vertexBuffer, offsets);
-
-        VkBuffer indexBuffer = mesh->GetIndexBuffer()->GetVulkanBuffer();
-        vkCmdBindIndexBuffer(commandBuffer->GetVulkanCommandBuffer(), indexBuffer, 0, VK_INDEX_BUFFER_TYPE);
-
-        vkCmdDrawIndexed(commandBuffer->GetVulkanCommandBuffer(), mesh->GetIndexCount(), 1, 0, 0, 0);
+        vkCmdDrawIndexed(commandBuffer->GetVulkanCommandBuffer(), mesh->GetIndexCount(), 1, mesh->GetIndexDataOffset(), mesh->GetVertexDataOffset(), 0);
     }
 
     /* --- SETTER METHODS --- */

@@ -130,7 +130,6 @@
     #include <infoware/system.hpp>
     #include <infoware/version.hpp>
     #include <infoware/cpu.hpp>
-    #include <infoware/gpu.hpp>
     #include <infoware/pci.hpp>
 
     // '-- TBB

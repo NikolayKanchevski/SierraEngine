@@ -50,8 +50,6 @@ namespace Sierra::Engine
         [[nodiscard]] inline Vector3 GetWorldRotation() const { return rotation; }
         [[nodiscard]] inline Vector3 GetWorldScale() const { return scale; }
 
-        [[nodiscard]] Matrix4x4& GetModelMatrix();
-
         [[nodiscard]] bool HasParentTransform() const;
         [[nodiscard]] Transform& GetParentTransform() const;
         [[nodiscard]] Transform& GetChildTransform(uint childIndex) const;
@@ -68,9 +66,6 @@ namespace Sierra::Engine
 
         [[nodiscard]] inline Quaternion GetRotationQuaternion() const { return quaternion; };
         [[nodiscard]] inline bool IsDirty() const { return IS_FLAG_PRESENT(dirtyFlag, TransformDirtyFlag::POSITION) || IS_FLAG_PRESENT(dirtyFlag, TransformDirtyFlag::ROTATION) || IS_FLAG_PRESENT(dirtyFlag, TransformDirtyFlag::SCALE);  }
-
-        [[nodiscard]] inline Vector3 GetWorldPositionUpInverted() const { return {position.x, -position.y, position.z }; }
-        inline void SetWorldPositionUpInverted(const Vector3 newPosition) { SetWorldPosition({ newPosition.x, -newPosition.y, newPosition.z }); };
 
         /* --- POLLING METHODS --- */
         void UpdateChain();
@@ -90,7 +85,6 @@ namespace Sierra::Engine
         Vector3 localRotation = { 0, 0, 0 };
         Vector3 localScale = { 1, 1, 1 };
 
-        Optional<Matrix4x4> modelMatrix;
         TransformDirtyFlag dirtyFlag = TransformDirtyFlag::POSITION | TransformDirtyFlag::ROTATION | TransformDirtyFlag::SCALE;
 
         Vector3 forwardDirection = { 0, 0, 1 };

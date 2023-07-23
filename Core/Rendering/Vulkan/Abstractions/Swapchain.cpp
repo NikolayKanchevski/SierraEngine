@@ -32,7 +32,7 @@ namespace Sierra::Rendering
 
     void Swapchain::BeginRenderPass(const UniquePtr<CommandBuffer> &givenCommandBuffer)
     {
-        renderPass->Begin(swapchainFramebuffers[imageIndex], givenCommandBuffer);
+        renderPass->Begin(framebuffers[imageIndex], givenCommandBuffer);
     }
 
     void Swapchain::EndRenderPass(const UniquePtr<CommandBuffer> &givenCommandBuffer)
@@ -143,7 +143,6 @@ namespace Sierra::Rendering
     void Swapchain::GetSurfaceData()
     {
         SwapchainSupportDetails swapchainSupportDetails = GetSwapchainSupportDetails();
-
         bestSurfaceFormat = ChooseBestSurfaceFormat(swapchainSupportDetails.formats);
         bestPresentMode = ChooseBestSwapchainPresentMode(swapchainSupportDetails.presentModes);
     }
@@ -250,28 +249,25 @@ namespace Sierra::Rendering
         renderPass = RenderPass::Create({
             {
                 {
-                    .imageAttachment = swapchainImages[0],
+                    .image = swapchainImages[0],
                     .loadOp = LoadOp::CLEAR,
                     .storeOp = StoreOp::STORE,
-                    .finalLayout = ImageLayout::PRESENT_SRC
+                    .type = RenderPassAttachmentType::SWAPCHAIN
                 }
-                },
-                { { .renderTargets = { 0 } } }
+            }
         });
     }
 
     void Swapchain::CreateFramebuffers()
     {
         // Resize framebuffers vectors to store one image for each concurrent frame
-        swapchainFramebuffers.resize(maxConcurrentFrames);
+        framebuffers.resize(maxConcurrentFrames);
 
         // Create a framebuffer for each concurrent frame
         for (uint i = maxConcurrentFrames; i--;)
         {
             // Create a framebuffer from the stored attachments
-            swapchainFramebuffers[i] = Framebuffer::Create({
-                .width = extent.width,
-                .height = extent.height,
+            framebuffers[i] = Framebuffer::Create({
                 .renderPass = renderPass,
                 .attachments = { { swapchainImages[i] } }
             });
@@ -329,7 +325,7 @@ namespace Sierra::Rendering
         for (uint i = maxConcurrentFrames; i--;)
         {
             swapchainImages[i]->Destroy();
-            swapchainFramebuffers[i]->Destroy();
+            framebuffers[i]->Destroy();
         }
     }
 
@@ -401,7 +397,7 @@ namespace Sierra::Rendering
             }
         }
 
-        // Otherwise return VK_PRESENT_MODE_FIFO_KHR which is guaranteed to be available
+        // Otherwise return VK_PRESENT_MODE_FIFO_KHR, which is guaranteed to be available
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 

@@ -5,9 +5,7 @@
 #include "Transform.h"
 
 #include "Relationship.h"
-#include "MeshRenderer.h"
-#include "../Classes/Math.h"
-#include "../../Core/Rendering/UI/ImGuiUtilities.h"
+#include "../../Editor/GUI.h"
 
 #define CHECK_CHANGE(OLD_VALUE, NEW_VALUE, CHANGE) if (OLD_VALUE == NEW_VALUE) { return; } else { OLD_VALUE = NEW_VALUE; dirtyFlag |= CHANGE; }
 
@@ -73,7 +71,7 @@ namespace Sierra::Engine
 
     void Transform::SetWorldRotation(const Optional<float> xRotation, const Optional<float> yRotation, const Optional<float> zRotation)
     {
-        SetWorldRotation({xRotation ? xRotation.value() : rotation.x, yRotation ? yRotation.value() : rotation.y, zRotation ? zRotation.value() : rotation.z });
+        SetWorldRotation({ xRotation ? xRotation.value() : rotation.x, yRotation ? yRotation.value() : rotation.y, zRotation ? zRotation.value() : rotation.z });
     }
 
     void Transform::SetWorldScale(const Vector3 newScale)
@@ -94,16 +92,10 @@ namespace Sierra::Engine
 
     void Transform::SetWorldScale(const Optional<float> xScale, const Optional<float> yScale, const Optional<float> zScale)
     {
-        SetWorldScale({xScale ? xScale.value() : scale.x, yScale ? yScale.value() : scale.y, zScale ? zScale.value() : scale.z });
+        SetWorldScale({ xScale ? xScale.value() : scale.x, yScale ? yScale.value() : scale.y, zScale ? zScale.value() : scale.z });
     }
 
     /* --- GETTER  METHODS --- */
-
-    Matrix4x4& Transform::GetModelMatrix()
-    {
-        ASSERT_ERROR_IF(!HasComponent<MeshRenderer>(), "Cannot get a model matrix for an entity that does not contain the MeshRenderer component");
-        return modelMatrix.value();
-    }
 
     bool Transform::HasParentTransform() const
     {
@@ -196,46 +188,19 @@ namespace Sierra::Engine
         tr.upDirection.y = 1 - 2 * (tr.quaternion.x * tr.quaternion.x + tr.quaternion.z * tr.quaternion.z);
         tr.upDirection.z = 2 * (tr.quaternion.y * tr.quaternion.z + tr.quaternion.w * tr.quaternion.x);
 
-        if (tr.HasComponent<MeshRenderer>()) tr.modelMatrix = Math::CreateModelMatrix(tr.GetWorldPositionUpInverted(), tr.rotation, tr.scale);
-
         tr.DoCallbacks();
         tr.dirtyFlag = TransformDirtyFlag::NONE;
     }
 
     void Transform::OnDrawUI()
     {
-        using namespace Rendering;
-        GUI::BeginProperties(ImGuiTableFlags_BordersInnerV);
+        using namespace Editor;
+        GUI::BeginProperties();
 
-        static float resetValues[3];
-        static const char* tooltips[3];
-
-        resetValues[0] = 0.0f;
-        resetValues[1] = 0.0f;
-        resetValues[2] = 0.0f;
-
-        tooltips[0] = "Some tooltip.";
-        tooltips[1] = "Some tooltip.";
-        tooltips[2] = "Some tooltip.";
-        if (GUI::PropertyVector3("Position:", localPosition, resetValues, tooltips)) dirtyFlag |= TransformDirtyFlag::POSITION;
-
-        resetValues[0] = 0.0f;
-        resetValues[1] = 0.0f;
-        resetValues[2] = 0.0f;
-
-        tooltips[0] = "Some tooltip.";
-        tooltips[1] = "Some tooltip.";
-        tooltips[2] = "Some tooltip.";
-        if (GUI::PropertyVector3("Rotation:", localRotation, resetValues, tooltips)) dirtyFlag |= TransformDirtyFlag::ROTATION;
-
-        resetValues[0] = 1.0f;
-        resetValues[1] = 1.0f;
-        resetValues[2] = 1.0f;
-
-        tooltips[0] = "Some tooltip.";
-        tooltips[1] = "Some tooltip.";
-        tooltips[2] = "Some tooltip.";
-        if (GUI::PropertyVector3("Scale:", localScale, resetValues, tooltips)) dirtyFlag |= TransformDirtyFlag::SCALE;
+        if (GUI::Vector3Property("Position:", localPosition, "Some Tooltip")) dirtyFlag |= TransformDirtyFlag::POSITION;
+        if (GUI::Vector3Property("Rotation:", localRotation, "Some Tooltip")) dirtyFlag |= TransformDirtyFlag::ROTATION;
+        static float resetValues[3] = { 1.0f, 1.0f, 1.0f };
+        if (GUI::Vector3Property("Scale:", localScale, "Some Tooltip", resetValues)) dirtyFlag |= TransformDirtyFlag::SCALE;
 
         GUI::EndProperties();
     }

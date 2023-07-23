@@ -15,8 +15,8 @@ namespace Sierra::Engine
     public:
         /* --- CONSTRUCTORS --- */
         Entity() = default;
-        explicit Entity(const String &givenName);
-        explicit Entity(Entity &givenParent);
+        Entity(const String &givenName);
+        Entity(Entity &givenParent);
         Entity(const String &givenName, Entity &givenParent);
         inline Entity(entt::entity givenEnttEntity) : enttEntity(givenEnttEntity) {  }
 

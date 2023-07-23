@@ -37,19 +37,21 @@ namespace Sierra::Rendering
         VkCommandPool commandPool = VK_NULL_HANDLE;
         UniquePtr<QueryPool> queryPool = VK_NULL_HANDLE;
         VkDescriptorPool imGuiDescriptorPool = VK_NULL_HANDLE;
+        UniquePtr<Modules::ArenaAllocator> arenaAllocator;
     };
     InstanceVK instance;
 
     /* --- GETTER METHODS --- */
 
-    VkInstance                  VK::GetInstance()                   { return instance.instance; }
-    VmaAllocator&               VK::GetMemoryAllocator()            { return instance.vmaAllocator; }
-    UniquePtr<Device>&          VK::GetDevice()                     { return instance.device; }
-    VkPhysicalDevice            VK::GetPhysicalDevice()             { return instance.device->GetPhysicalDevice(); }
-    VkDevice                    VK::GetLogicalDevice()              { return instance.device->GetLogicalDevice(); }
-    VkCommandPool               VK::GetCommandPool()                { return instance.commandPool; }
-    UniquePtr<QueryPool>&       VK::GetQueryPool()                  { return instance.queryPool; }
-    VkDescriptorPool            VK::GetImGuiDescriptorPool()        { return instance.imGuiDescriptorPool; }
+    VkInstance                             VK::GetInstance()                   { return instance.instance; }
+    VmaAllocator&                          VK::GetMemoryAllocator()            { return instance.vmaAllocator; }
+    UniquePtr<Device>&                     VK::GetDevice()                     { return instance.device; }
+    VkPhysicalDevice                       VK::GetPhysicalDevice()             { return instance.device->GetPhysicalDevice(); }
+    VkDevice                               VK::GetLogicalDevice()              { return instance.device->GetLogicalDevice(); }
+    VkCommandPool                          VK::GetCommandPool()                { return instance.commandPool; }
+    UniquePtr<QueryPool>&                  VK::GetQueryPool()                  { return instance.queryPool; }
+    VkDescriptorPool                       VK::GetImGuiDescriptorPool()        { return instance.imGuiDescriptorPool; }
+    UniquePtr<Modules::ArenaAllocator>&    VK::GetArenaAllocator()             { return instance.arenaAllocator; }
 
     /* --- METHOD DEFINITIONS --- */
 
@@ -63,6 +65,7 @@ namespace Sierra::Rendering
     void CreateCommandPool();
     void CreateQueryPool();
     void CreateImGuiDescriptorPool();
+    void CreateArenaAllocator();
     void CreateDefaultTextures();
 
     /* --- CONSTRUCTOR --- */
@@ -82,8 +85,9 @@ namespace Sierra::Rendering
         CreateCommandPool();
         CreateQueryPool();
         CreateImGuiDescriptorPool();
-
         Sampler::Initialize();
+
+        CreateArenaAllocator();
         CreateDefaultTextures();
     }
 
@@ -95,6 +99,7 @@ namespace Sierra::Rendering
             VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
         #endif
         VK_KHR_SURFACE_EXTENSION_NAME,
+        VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
         #if PLATFORM_APPLE
             VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
         #endif
@@ -387,6 +392,11 @@ namespace Sierra::Rendering
         0, 0, 0, 255
     };
 
+    void CreateArenaAllocator()
+    {
+        instance.arenaAllocator = Modules::ArenaAllocator::Create({ });
+    }
+
     void CreateDefaultTextures()
     {
         // Create default diffuse texture
@@ -455,13 +465,21 @@ namespace Sierra::Rendering
     void VK::Destroy()
     {
         instance.device->WaitUntilIdle();
-        
-        DescriptorPool::DisposePools();
-        Sampler::Shutdown();
+
+        instance.arenaAllocator->Destroy();
 
         // Destroy local resources
-        if (ImGui::GetCurrentContext() != nullptr) ImGui_ImplVulkan_Shutdown();
-        if (instance.imGuiDescriptorPool != VK_NULL_HANDLE) vkDestroyDescriptorPool(GetLogicalDevice(), instance.imGuiDescriptorPool, nullptr);
+        if (ImGui::GetCurrentContext() != nullptr)
+        {
+            ImGui_ImplVulkan_Shutdown();
+            if (instance.imGuiDescriptorPool != VK_NULL_HANDLE)
+            {
+                vkDestroyDescriptorPool(GetLogicalDevice(), instance.imGuiDescriptorPool, nullptr);
+            }
+        }
+
+        DescriptorPool::DisposePools();
+        Sampler::Shutdown();
 
         instance.queryPool->Destroy();
         vkDestroyCommandPool(instance.device->GetLogicalDevice(), instance.commandPool, nullptr);

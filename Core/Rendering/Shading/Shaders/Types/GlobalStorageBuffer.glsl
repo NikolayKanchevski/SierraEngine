@@ -6,7 +6,8 @@
 
 struct ObjectData
 {
-    mat4 model;
+    mat4x4 modelMatrix;
+    mat4x4 normalMatrix;
 };
 
 layout(std140, set = 0, binding = STORAGE_BUFFER_BINDING) readonly buffer StorageBuffer

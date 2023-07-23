@@ -23,8 +23,6 @@ namespace Sierra::Rendering
         VkDescriptorSetLayoutBinding* layoutBindings = new VkDescriptorSetLayoutBinding[bindings.size()];
 
         // Foreach pair in the provided tuple retrieve the created set layout binding
-        bool containsBindlessDescriptors = false;
-
         uint i = 0;
         for (const auto &pair : bindings)
         {
@@ -44,15 +42,6 @@ namespace Sierra::Rendering
         layoutCreateInfo.bindingCount = createInfo.bindings.size();
         layoutCreateInfo.pBindings = layoutBindings;
         layoutCreateInfo.flags = static_cast<VkDescriptorSetLayoutCreateFlagBits>(createInfo.flags);
-
-        VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsCreateInfo{};
-        if (VK::GetDevice()->GetDescriptorIndexingSupported() && containsBindlessDescriptors)
-        {
-            bindingFlagsCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
-            bindingFlagsCreateInfo.bindingCount = bindings.size();
-            bindingFlagsCreateInfo.pBindingFlags = bindingFlags;
-            layoutCreateInfo.pNext = &bindingFlagsCreateInfo;
-        }
 
         // Create the Vulkan descriptor set layout
         VK_ASSERT(
@@ -81,8 +70,7 @@ namespace Sierra::Rendering
 
     /* --- CONSTRUCTORS --- */
 
-    DescriptorPool::DescriptorPool(const DescriptorPoolCreateInfo &givenCreateInfo)
-        : createInfo(givenCreateInfo)
+    DescriptorPool::DescriptorPool(const DescriptorPoolCreateInfo &createInfo)
     {
         // Set up the descriptor pool creation info
         VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
@@ -109,9 +97,9 @@ namespace Sierra::Rendering
         delete[](poolSizes);
     }
 
-    UniquePtr<DescriptorPool> DescriptorPool::Create(const DescriptorPoolCreateInfo &givenCreateInfo)
+    UniquePtr<DescriptorPool> DescriptorPool::Create(const DescriptorPoolCreateInfo &createInfo)
     {
-        return std::make_unique<DescriptorPool>(givenCreateInfo);
+        return std::make_unique<DescriptorPool>(createInfo);
     }
 
     /* --- GETTER METHODS --- */
@@ -329,12 +317,12 @@ namespace Sierra::Rendering
 
     /* --- SETTER METHODS --- */
 
-    PushDescriptorSet* PushDescriptorSet::SetBuffer(const uint binding, const UniquePtr<Buffer> &buffer, const uint arrayIndex, const BufferCopyRange &copyRange)
+    PushDescriptorSet* PushDescriptorSet::SetBuffer(const uint binding, const UniquePtr<Buffer> &buffer, const uint arrayIndex, const uint64 size, const uint64 offset)
     {
         // Set buffer copy region
         VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.offset = copyRange.offset;
-        bufferInfo.range = copyRange.range != 0 ? copyRange.range : buffer->GetMemorySize();
+        bufferInfo.offset = offset;
+        bufferInfo.range = size != 0 ? size : buffer->GetMemorySize();
         bufferInfo.buffer = buffer->GetVulkanBuffer();
         descriptorBufferInfos[binding] = bufferInfo;
 
@@ -354,17 +342,17 @@ namespace Sierra::Rendering
         return this;
     }
 
-    PushDescriptorSet* PushDescriptorSet::SetImage(const uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler, const uint arrayIndex, const ImageLayout imageLayout)
+    PushDescriptorSet* PushDescriptorSet::SetImage(const uint binding, const UniquePtr<Image> &image, const UniquePtr<Sampler> &sampler, const uint arrayIndex, const DescriptorType descriptorType)
     {
         // Set image info
         VkDescriptorImageInfo imageInfo{};
         imageInfo.sampler = sampler->GetVulkanSampler();
         imageInfo.imageView = image->GetVulkanImageView();
-        imageInfo.imageLayout = static_cast<VkImageLayout>(imageLayout);
+        imageInfo.imageLayout = static_cast<VkImageLayout>(ImageLayout::SHADER_READ_ONLY_OPTIMAL);
 
         // Write image
         descriptorImageInfos[binding] = imageInfo;
-        SetVulkanImage(binding, &descriptorImageInfos[binding], arrayIndex);
+        SetVulkanImage(binding, &descriptorImageInfos[binding], arrayIndex, descriptorType);
 
         return this;
     }
@@ -379,7 +367,7 @@ namespace Sierra::Rendering
 
         // Write texture image
         descriptorImageInfos[binding] = imageInfo;
-        SetVulkanImage(binding, &descriptorImageInfos[binding], arrayIndex);
+        SetVulkanImage(binding, &descriptorImageInfos[binding], arrayIndex, DescriptorType::COMBINED_IMAGE_SAMPLER);
 
         return this;
     }
@@ -394,17 +382,17 @@ namespace Sierra::Rendering
 
         // Write cubemap image
         descriptorImageInfos[binding] = imageInfo;
-        SetVulkanImage(binding, &descriptorImageInfos[binding], arrayIndex);
+        SetVulkanImage(binding, &descriptorImageInfos[binding], arrayIndex, DescriptorType::COMBINED_IMAGE_SAMPLER);
 
         return this;
     }
 
-    void PushDescriptorSet::SetVulkanImage(uint binding, const VkDescriptorImageInfo *imageInfo, const uint arrayIndex)
+    void PushDescriptorSet::SetVulkanImage(const uint binding, const VkDescriptorImageInfo *imageInfo, const uint arrayIndex, const DescriptorType descriptorType)
     {
         // Create write descriptor
         VkWriteDescriptorSet writeDescriptor{};
         writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writeDescriptor.descriptorType = static_cast<VkDescriptorType>(DescriptorType::COMBINED_IMAGE_SAMPLER);
+        writeDescriptor.descriptorType = static_cast<VkDescriptorType>(descriptorType);
         writeDescriptor.dstBinding = binding;
         writeDescriptor.dstArrayElement = arrayIndex;
         writeDescriptor.dstSet = VK_NULL_HANDLE;

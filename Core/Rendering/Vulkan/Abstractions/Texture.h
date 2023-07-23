@@ -8,14 +8,6 @@
 #include "Sampler.h"
 #include "../VulkanTypes.h"
 
-#define BINDLESS_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::DIFFUSE)
-
-#define TEXTURE_TYPE_TO_BINDING(textureType)(static_cast<uint>(textureType) + 2)
-#define DIFFUSE_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::DIFFUSE)
-#define SPECULAR_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::SPECULAR)
-#define NORMAL_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::NORMAL)
-#define HEIGHT_TEXTURE_BINDING TEXTURE_TYPE_TO_BINDING(TextureType::HEIGHT)
-
 namespace Sierra::Rendering
 {
 
@@ -50,14 +42,14 @@ namespace Sierra::Rendering
 
     struct BinaryTextureCreateInfo
     {
-        const void *data = nullptr;
+        const void* data = nullptr;
 
         uint width;
         uint height;
-        TextureChannels channels;
+        TextureChannels channels = TextureChannels::RGBA;
 
         TextureType textureType = TextureType::UNDEFINED;
-        ImageFormat imageFormat = ImageFormat::UNDEFINED;
+        ImageFormat imageFormat = ImageFormat::R8G8B8A8_UNORM;
 
         bool enableMipMapping = false;
         SamplerCreateInfo samplerCreateInfo{};

@@ -3,27 +3,12 @@
 /* !COMPILE_TO_BINARY */
 #define SETTINGS_SHADING_MODEL_BLINN_PHONG
 
-#include "../Utility/ShaderDefinitions.glsl"
 #include "../Utility/Depth.glsl"
-#include "../Utility/Shadows.glsl"
+#include "../Utility/NormalMapping.glsl"
 #include "../Lighting/DefaultLighting.glsl"
+#include "../Utility/ShaderDefinitions.glsl"
 #include "../Types/GlobalUniformBuffer.glsl"
 #include "../Types/GlobalStorageBuffer.glsl"
-
-
-layout(location = 0) in flat uint fromVert_DrawingSkybox;
-layout(location = 1) in vec3 fromVert_UVW;
-
-layout(binding = DIFFUSE_TEXTURE_BINDING) uniform sampler2D fromCode_DiffuseBuffer;
-layout(binding = SPECULAR_TEXTURE_BINDING) uniform sampler2D toFramebuffer_SpecularAndShinines;
-layout(binding = NORMAL_TEXTURE_BINDING) uniform sampler2D fromCode_NormalBuffer;
-#if defined(SETTINGS_USE_POISSON_PCF_SHADOWS) || defined(SETTINGS_USE_PCF_SHADOWS)
-    layout(binding = 5) uniform sampler2DShadow fromCode_ShadowMap;
-#else
-    layout(binding = 5) uniform sampler2D fromCode_ShadowMap;
-#endif
-layout(binding = 6) uniform sampler2D fromCode_DepthBuffer;
-layout(binding = 7) uniform samplerCube fromCode_Skybox;
 
 const uint RendererOutputValue_RenderedImage = 0;
 const uint RendererOutputValue_PositionBuffer = 1;
@@ -31,82 +16,72 @@ const uint RendererOutputValue_DiffuseBuffer = 2;
 const uint RendererOutputValue_SpecularBuffer = 3;
 const uint RendererOutputValue_ShininessBuffer = 4;
 const uint RendererOutputValue_NormalBuffer = 5;
-const uint RendererOutputValue_ShadowBuffer = 6;
-const uint RendererOutputValue_DepthBuffer = 7;
-
+const uint RendererOutputValue_DepthBuffer = 6;
 layout(constant_id = 0) const uint RENDERER_OUTPUT = RendererOutputValue_RenderedImage;
-layout(constant_id = 1) const bool ENABLE_SHADOWS = true;
+
+layout(location = 0) in flat uint fromVert_DrawingSkybox;
+layout(location = 1) in vec3 fromVert_UVW;
+
+const uint DIFFUSE_BUFFER_BINDING   =   2;
+const uint SS_BUFFER_BINDING        =   3;          // Specular & Shininess
+const uint NORMAL_BUFFER_BINDING    =   4;
+const uint DEPTH_BUFFER_BINDING     =   5;
+const uint SKYBOX_BUFFER_BINDING    =   6;
+layout(input_attachment_index = 0, binding = DIFFUSE_BUFFER_BINDING) uniform subpassInput fromSubpass_DiffuseBuffer;
+layout(input_attachment_index = 1, binding = SS_BUFFER_BINDING) uniform subpassInput fromSubpass_SpecularAndShininess;
+layout(input_attachment_index = 2, binding = NORMAL_BUFFER_BINDING) uniform usubpassInput fromSubpass_NormalBuffer;
+layout(input_attachment_index = 3, binding = DEPTH_BUFFER_BINDING) uniform subpassInput fromSubpass_DepthBuffer;
+layout(binding = SKYBOX_BUFFER_BINDING) uniform samplerCube fromCode_Skybox;
 
 layout(location = 0) out vec4 toFramebuffer_FinalizedColor;
 
 void main()
 {
+    // Get depth from G-Buffer to make a manual "depth test"
+    const float depth = subpassLoad(fromSubpass_DepthBuffer).r;
+
     // If we are already drawing skybox there is no need to sample below's textures so we just return skybox color
     if (fromVert_DrawingSkybox == 1)
     {
+        // Check if fragment we are writing to actually should contain a color
+        if (depth < 1.0f)
+        {
+            discard;
+        }
+
+        // Otherwise asign skybox color
         toFramebuffer_FinalizedColor = texture(fromCode_Skybox, fromVert_UVW);
         return;
     }
 
     // A single vec3 UV coordinates are used for both the skybox UVs (vec3) and sampling UVs (vec2) so we just get XY
-    const vec2 sampleUV = fromVert_UVW.xy;
-
-    // Check if a pixel has been dran in current texel and if not discard it
-    const float depth = texture(fromCode_DepthBuffer, sampleUV).r;
-    if (RENDERER_OUTPUT == RendererOutputValue_DepthBuffer)
-    {
-        float linearizedDepth = LinearizeDepth(depth, uniformBuffer.nearClip, uniformBuffer.farClip);
-        toFramebuffer_FinalizedColor = vec4(linearizedDepth, linearizedDepth, linearizedDepth, 1.0);
-        return;
-    }
-
-    // Check if fragment we are writing to actually should contain a color
-    if (depth >= 1.0f)
-    {
-        discard;
-    }
 
     /*
         Load and store G-Buffer values
     */
+    if (RENDERER_OUTPUT == RendererOutputValue_DepthBuffer)
+    {
+        float linearizedDepth = LinearizeDepth(depth, uniformBuffer.nearClip, uniformBuffer.farClip);
+        toFramebuffer_FinalizedColor = vec4(vec3(linearizedDepth), 1.0);
+        return;
+    }
 
+    const vec2 sampleUV = fromVert_UVW.xy;
     const vec3 position = GetWorldPositionFromDepth(sampleUV, depth, uniformBuffer.inverseProjection, uniformBuffer.inverseView);
     if (RENDERER_OUTPUT == RendererOutputValue_PositionBuffer) { toFramebuffer_FinalizedColor = vec4(position, 1.0); return; }
 
-    const vec3 diffuse = texture(fromCode_DiffuseBuffer, sampleUV).rgb;
+    const vec3 diffuse = subpassLoad(fromSubpass_DiffuseBuffer).rgb;
     if (RENDERER_OUTPUT == RendererOutputValue_DiffuseBuffer) { toFramebuffer_FinalizedColor = vec4(diffuse, 1.0); return; }
 
-    const vec3 specularAndShininess = texture(toFramebuffer_SpecularAndShinines, sampleUV).rgb;
+    const vec2 specularAndShininess = subpassLoad(fromSubpass_SpecularAndShininess).rg;
     if (RENDERER_OUTPUT == RendererOutputValue_SpecularBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.rrr, 1.0); return; }
     if (RENDERER_OUTPUT == RendererOutputValue_ShininessBuffer) { toFramebuffer_FinalizedColor = vec4(specularAndShininess.ggg, 1.0); return; }
 
     const float specular = specularAndShininess.r;
     const float shininess = specularAndShininess.g;
 
-    const vec3 normal = texture(fromCode_NormalBuffer, sampleUV).rgb;
+    const vec3 normal = DecompressNormal32(subpassLoad(fromSubpass_NormalBuffer).r);
     if (RENDERER_OUTPUT == RendererOutputValue_NormalBuffer) { toFramebuffer_FinalizedColor = vec4(normal, 1.0); return; }
-
-    vec4 shadowCoordinates = storageBuffer.directionalLights[0].projectionView * vec4(position, 1.0);
-
-    float shadow = 1.0f;
-    if (ENABLE_SHADOWS)
-    {
-        #if defined(SETTINGS_USE_PCF_SHADOWS)
-            shadow = CalculateShadow3x3PCF(fromCode_ShadowMap, shadowCoordinates);
-        #elif defined(SETTINGS_USE_POISSON_PCF_SHADOWS)
-            shadow = CalculatePoissonShadowPCF(fromCode_ShadowMap, shadowCoordinates, position);
-        #elif defined(SETTINGS_USE_VARIANCE_SHADOWS)
-            shadow = CalculateVarianceShadow(fromCode_ShadowMap, shadowCoordinates, position);
-        #elif defined(SETTINGS_USE_MOMENT_SHADOWS)
-            shadow = CalculateMomentShadow(fromCode_ShadowMap, shadowCoordinates, depth);
-        #else
-            shadow = CalculateShadow(fromCode_ShadowMap, shadowCoordinates, vec2(0.0, 0.0));
-        #endif
-    }
-
-    shadow = Normalize(shadow + 0.25);
-
-    if (RENDERER_OUTPUT == RendererOutputValue_ShadowBuffer) { toFramebuffer_FinalizedColor = vec4(shadow, shadow, shadow, 1.0); return; }
 
     // Define the final color
     vec3 calculatedColor = vec3(0, 0, 0);
@@ -142,6 +117,5 @@ void main()
     }
 
     // Submit data to framebuffer
-    calculatedColor *= shadow;
     toFramebuffer_FinalizedColor = vec4(calculatedColor, 1.0);
 }

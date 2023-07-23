@@ -6,8 +6,8 @@
 
 #include "Transform.h"
 #include "../Classes/Math.h"
+#include "../../Editor/GUI.h"
 #include "../../Editor/Editor.h"
-#include "../../Core/Rendering/UI/ImGuiUtilities.h"
 
 namespace Sierra::Engine
 {
@@ -28,7 +28,7 @@ namespace Sierra::Engine
 
     /* --- POLLING METHODS --- */
 
-    using namespace Rendering;
+    using namespace Editor;
     void Camera::OnDrawUI()
     {
         GUI::BeginProperties();
@@ -59,7 +59,7 @@ namespace Sierra::Engine
         float cosPitch = glm::cos(glm::radians(rotation.y));
         float sinPitch = glm::sin(glm::radians(rotation.y));
 
-        Vector3 direction;
+        Vector3 direction{};
         direction.x = cosYaw * cosPitch;
         direction.y = sinPitch;
         direction.z = sinYaw * cosPitch;
@@ -95,19 +95,14 @@ namespace Sierra::Engine
     void Camera::CalculateViewMatrix()
     {
         Transform &transform = GetComponent<Transform>();
-        Vector3 frontDirection = GetFrontDirection();
 
-        Vector3 rendererCameraPosition = transform.GetWorldPositionUpInverted();
-        Vector3 rendererCameraFrontDirection = { frontDirection.x, -frontDirection.y, frontDirection.z };
-
-        viewMatrix = Math::CreateViewMatrix(rendererCameraPosition, rendererCameraFrontDirection);
+        viewMatrix = Math::CreateViewMatrix(transform.GetWorldPosition(), GetFrontDirection());
         inverseViewMatrix = glm::inverse(viewMatrix);
     }
 
     void Camera::CalculateProjectionMatrix()
     {
         projectionMatrix = Math::CreateProjectionMatrix(FOV, static_cast<float>(Editor::GetSceneViewWidth()) / static_cast<float>(Editor::GetSceneViewHeight()), nearClip, farClip);
-        projectionMatrix[1][1] *= -1; // NOTE: Vulkan-only requirement
         inverseProjectionMatrix = glm::inverse(projectionMatrix);
         isProjectionDirty = false;
     }

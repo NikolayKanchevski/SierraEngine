@@ -4,10 +4,11 @@
 
 #include "UIPanels.h"
 
+#include "../Editor/GUI.h"
 #include "../Engine/Classes/Time.h"
 #include "../Engine/Classes/Math.h"
 #include "../Engine/Classes/Input.h"
-#include "../Core/Rendering/UI/ImGuiUtilities.h"
+#include "../Engine/Classes/Discord.h"
 #include "../Engine/Classes/SystemInformation.h"
 #include "../Engine/Components/ComponentsInclude.h"
 
@@ -19,59 +20,54 @@ namespace Sierra::Editor
     void MainViewportPanel::DrawUI()
     {
         // Set up dock space and window flags
-        ImGuiDockNodeFlags dockSpaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
-        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBackground |
-                                       ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-                                       ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+        WindowFlags windowFlags = WindowFlags::MENU_BAR | WindowFlags::NO_DOCKING | WindowFlags::NO_BACKGROUND |
+                                  WindowFlags::NO_TITLE_BAR | WindowFlags::NO_COLLAPSE | WindowFlags::NO_RESIZE | WindowFlags::NO_MOVE |
+                                  WindowFlags::NO_BRING_TO_FRONT_ON_FOCUS | WindowFlags::NO_NAV_FOCUS;
 
         // Get a pointer to the main viewport of ImGui
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
+        const auto viewport = GUI::GetMainViewport();
 
         // Set window sizing properties accordingly
-        ImGui::SetNextWindowPos(viewport->WorkPos);
-        ImGui::SetNextWindowSize(viewport->WorkSize);
-        ImGui::SetNextWindowViewport(viewport->ID);
-
-        // Get the docking of the main viewport
-        ImGuiID dockSpaceID = ImGui::GetID("ViewportDock");
+        GUI::SetNextWindowPosition({ viewport->WorkPos.x, viewport->WorkPos.y });
+        GUI::SetNextWindowSize({ viewport->WorkSize.x, viewport->WorkSize.y });
 
         // Disable window padding
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        GUI::PushStyleVariable(StyleVariable::WINDOW_PADDING, { 0.0f, 0.0f });
 
         // Create main viewport window
-        GUI::BeginWindow("Viewport", nullptr, windowFlags);
-
-        // Use dock space
-        ImGui::DockSpace(dockSpaceID, ImVec2(0.0f, 0.0f), dockSpaceFlags);
-
-        // Create menu bar
-        if (ImGui::BeginMenuBar())
-        {
-            if (ImGui::BeginMenu("File"))
-            {
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("Edit"))
-            {
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("Preferences"))
-            {
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("I wanna die"))
-            {
-                ImGui::EndMenu();
-            }
-
-            ImGui::EndMenuBar();
-        }
+        GUI::BeginWindow("Viewport", windowFlags);
 
         // Remove the overridden window padding
-        ImGui::PopStyleVar(1);
+        GUI::PopStyleVariable();
+
+        // Use dock space
+        GUI::CreateDockSpace("ViewportDock");
+
+        // Create menu bar
+        if (GUI::BeginMenuBar())
+        {
+            if (GUI::BeginMenuBarTab("File"))
+            {
+                GUI::EndMenuBarTab();
+            }
+
+            if (GUI::BeginMenuBarTab("Edit"))
+            {
+                GUI::EndMenuBarTab();
+            }
+
+            if (GUI::BeginMenuBarTab("Preferences"))
+            {
+                GUI::EndMenuBarTab();
+            }
+
+            if (GUI::BeginMenuBarTab("I wanna die"))
+            {
+                GUI::EndMenuBarTab();
+            }
+
+            GUI::EndMenuBar();
+        }
 
         // Finalize main viewport window
         GUI::EndWindow();
@@ -80,27 +76,27 @@ namespace Sierra::Editor
     using namespace Engine;
     void ListDeeper(Relationship &relationship, const uint iteration)
     {
-        ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_SpanAvailWidth;
+        TreeFlags treeFlags = TreeFlags::OPEN_ON_ARROW | TreeFlags::FRAME_PADDING | TreeFlags::SPAN_AVAILABLE_WIDTH;
 
         bool selected = false;
         if (!World::GetSelectedEntity().IsNull() && World::GetSelectedEntity().GetComponent<UUID>() == relationship.GetComponent<UUID>())
         {
             selected = true;
-            treeNodeFlags |= ImGuiTreeNodeFlags_Selected;
-            ImGui::PushStyleColor(ImGuiCol_Header, { 0.11f, 0.32f, 0.5f, 1.0f });
-            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, { 0.1f, 0.26f, 0.45f, 1.0f });
+            treeFlags |= TreeFlags::SELECTED;
+            GUI::PushStyleColor(StyleColor::HEADER,         { 0.11f, 0.32f, 0.50f, 1.00f });
+            GUI::PushStyleColor(StyleColor::HOVERED_HEADER, { 0.10f, 0.26f, 0.45f, 1.00f });
         }
 
-        bool opened = ImGui::TreeNodeEx((void*) relationship.GetComponent<UUID>().GetValue(), treeNodeFlags, "%s", relationship.GetComponent<Tag>().tag.c_str());
+        bool opened = GUI::BeginTree((void*) relationship.GetComponent<UUID>().GetValue(), treeFlags, "%s", relationship.GetComponent<Tag>().tag.c_str());
 
-        if (ImGui::IsItemClicked())
+        if (GUI::IsItemClicked())
         {
             World::SetSelectedEntity(Entity(relationship.GetEnttEntity()));
         }
 
         if (selected)
         {
-            ImGui::PopStyleColor(2);
+            GUI::PopStyleColor(2);
         }
 
         if (opened)
@@ -111,11 +107,11 @@ namespace Sierra::Editor
                 ListDeeper(childRelationship, iteration + 1);
             }
 
-            ImGui::TreePop();
+            GUI::EndTree();
         }
 
 
-        if (iteration == 0) ImGui::Separator();
+        if (iteration == 0) GUI::InsertSeparator();
     }
 
     // ********************* RendererViewport Panel ********************* \\
@@ -127,21 +123,18 @@ namespace Sierra::Editor
 
         // Create scene view tab
         ImDrawList *sceneDrawList;
-        if (GUI::BeginWindow("Scene View", nullptr))
+        if (GUI::BeginWindow("Scene View"))
         {
-            sceneDrawList = ImGui::GetWindowDrawList();
-
-            // Get and show current renderer images
-            ImVec2 freeSpace = ImGui::GetContentRegionAvail();
+            sceneDrawList = GUI::GetCurrentWindow()->DrawList;
 
             // Set output data
-            output.xSceneViewPosition = ImGui::GetCurrentWindow()->WorkRect.GetTL().x;
-            output.ySceneViewPosition = ImGui::GetCurrentWindow()->WorkRect.GetTL().y;
-            output.sceneViewWidth = freeSpace.x;
-            output.sceneViewHeight = freeSpace.y;
+            output.xSceneViewPosition = GUI::GetCurrentWindow()->WorkRect.GetTL().x;
+            output.ySceneViewPosition = GUI::GetCurrentWindow()->WorkRect.GetTL().y;
+            output.sceneViewWidth = GUI::GetRemainingHorizontalSpace();
+            output.sceneViewHeight = GUI::GetRemainingVerticalSpace();
 
             // Flip renderer image
-            if (input.renderedTextureDescriptorSet != VK_NULL_HANDLE) ImGui::Image(static_cast<ImTextureID>(input.renderedTextureDescriptorSet), freeSpace, { 0.0f, 1.0f }, { 1.0f, 0.0f });
+            if (input.renderedTextureDescriptorSet != VK_NULL_HANDLE) GUI::Texture(static_cast<ImTextureID>(input.renderedTextureDescriptorSet), GUI::GetRemainingWindowSpace());
             GUI::EndWindow();
         }
 
@@ -182,8 +175,8 @@ namespace Sierra::Editor
         float deltaYaw = glm::degrees(glm::atan(direction.z, direction.x)) - newYaw;
         newYaw += deltaYaw;
 
-        float deltaPitch = glm::degrees(glm::asin(-direction.y)) - newPitch;
-        newPitch += deltaPitch;
+        float deltaPitch = glm::degrees(glm::asin(-direction.y)) + newPitch;
+        newPitch -= deltaPitch;
 
         newPitch = Math::Clamp(newPitch, -85.0f, 85.0f);
 
@@ -200,7 +193,7 @@ namespace Sierra::Editor
             Transform &transform = World::GetSelectedEntity().GetComponent<Transform>();
 
             // Convert object's transform into an array
-            Matrix4x4 modelMatrix = Math::CreateModelMatrix(transform.GetWorldPositionUpInverted(), transform.GetRotation(), transform.GetScale());
+            Matrix4x4 modelMatrix = Math::CreateModelMatrix(transform.GetWorldPosition(), transform.GetRotation(), transform.GetScale());
 
             // Set snapping
             float snapDeterminant = Input::GetKeyHeld(Key::LEFT_SHIFT) ? (operation == ImGuizmo::OPERATION::ROTATE ? 45.0f : 0.5f) : 0.0f;
@@ -222,7 +215,7 @@ namespace Sierra::Editor
                 rotation.x = y;
 
                 // Apply position, rotation, and scale changes whilst inverting Y position, as it has already been inverted once to suit Vulkan's -Y needs
-                transform.SetWorldPositionUpInverted(translation);
+                transform.SetWorldPosition(translation);
                 transform.SetRotation(rotation);
                 transform.SetScale(scale);
             }
@@ -236,9 +229,9 @@ namespace Sierra::Editor
     void HierarchyPanel::DrawUI()
     {
         // Create hierarchy tab
-        if (GUI::BeginWindow("Hierarchy", nullptr, ImGuiWindowFlags_NoNav | ImGuiWindowFlags_HorizontalScrollbar))
+        if (GUI::BeginWindow("Hierarchy", WindowFlags::NO_NAV | WindowFlags::SHOW_HORIZONTAL_SCROLLBAR))
         {
-            ImGui::Separator();
+            GUI::InsertSeparator();
 
             // Recursively show all entities in the hierarchy
             for (const auto &entityData : World::GetOriginEntitiesList())
@@ -249,16 +242,15 @@ namespace Sierra::Editor
                     ListDeeper(entityRelationship, 0);
                 }
             }
-
-            GUI::EndWindow();
         }
+        GUI::EndWindow();
     }
 
     // ********************* Properties Panel ********************* \\
 
     void PropertiesPanel::DrawUI()
     {
-        if (GUI::BeginWindow("Properties", nullptr, ImGuiWindowFlags_NoNav))
+        if (GUI::BeginWindow("Properties", WindowFlags::NO_NAV))
         {
             Entity selectedEntity = World::GetSelectedEntity();
             if (!selectedEntity.IsNull())
@@ -271,9 +263,8 @@ namespace Sierra::Editor
                 GUI::DrawComponent<DirectionalLight>(selectedEntity);
                 GUI::DrawComponent<PointLight>(selectedEntity);
             }
-
-            GUI::EndWindow();
         }
+        GUI::EndWindow();
     }
 
     // ********************* Debug Panel ********************* \\
@@ -281,20 +272,16 @@ namespace Sierra::Editor
     void DebugPanel::DrawUI(const DebugPanelInput &input)
     {
         // Create debug tab
-        if (GUI::BeginWindow("Debug Information", nullptr, ImGuiWindowFlags_NoNav))
+        if (GUI::BeginWindow("Debug Information", WindowFlags::NO_NAV))
         {
-            #if PLATFORM_APPLE
-                ImGui::Text("Used Video Memory: %llu/%lluMB", SystemInformation::GetGPU().GetUsedVideoMemory() / 1000000, SystemInformation::GetGPU().physicalInformation.totalMemory / 1000000);
-            #endif
-            ImGui::Separator();
-            ImGui::Text("CPU Frame Time: %i FPS", Time::GetFPS());
-            ImGui::Text("GPU Draw Time: %f ms", input.frameDrawTime);
-            ImGui::Separator();
-            ImGui::Text("Total meshes being drawn: %i", Mesh::GetTotalMeshCount());
-            ImGui::Text("Total vertices in scene: %u", Mesh::GetTotalVertexCount() + (ImGui::GetDrawData() != nullptr ? ImGui::GetDrawData()->TotalVtxCount : 0));
-
-            GUI::EndWindow();
+            GUI::InsertSeparator();
+            GUI::Text("CPU Frame Time: %i FPS", Time::GetFPS());
+            GUI::Text("GPU Draw Time: %f ms", input.frameDrawTime);
+            GUI::InsertSeparator();
+            GUI::Text("Total meshes being drawn: %i", Mesh::GetTotalMeshCount());
+            GUI::Text("Total vertices in scene: %u", Mesh::GetTotalVertexCount() + (GUI::GetDrawData() != nullptr ? GUI::GetDrawData()->TotalVtxCount : 0));
         }
+        GUI::EndWindow();
     }
 
     // ********************* Detailed Debug Panel ********************* \\
@@ -303,7 +290,7 @@ namespace Sierra::Editor
     {
         if (GUI::BeginWindow("Detailed Stats"))
         {
-            ImGui::Text("GPU Draw Time: %fms", input.frameDrawTime);
+            GUI::Text("GPU Draw Time: %fms", input.frameDrawTime);
 
             static constexpr uint SAMPLE_COUNT = 200;
             static constexpr uint REFRESH_RATE = 60;
@@ -333,20 +320,95 @@ namespace Sierra::Editor
 
             char drawTimeOverlay[32];
             snprintf(drawTimeOverlay, 32, "Average: %f", averageDrawTime);
-            ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
-            ImGui::PlotLines("Lines", drawTimeSamples, SAMPLE_COUNT, currentSampleIndex, drawTimeOverlay, 0.0f, 100.0f, ImVec2(0, 80.0f));
+            GUI::SetNextItemWidthToFit();
+            GUI::LineDiagram("Lines", drawTimeSamples, SAMPLE_COUNT, currentSampleIndex, drawTimeOverlay, 0.0f, 100.0f, { 0.0f, 80.0f });
 
-            ImGui::Separator();
+            GUI::InsertSeparator();
 
-            ImGui::Text("CPU Frame Time: %i FPS", Time::GetFPS());
+            GUI::Text("CPU Frame Time: %i FPS", Time::GetFPS());
 
             char frameTimeOverlay[32];
             snprintf(frameTimeOverlay, 32, "Average: %f", averageFrameTime);
-            ImGui::SetNextItemWidth(ImGui::GetWindowContentRegionWidth());
-            ImGui::PlotLines("Lines", frameTimeSamples, SAMPLE_COUNT, currentSampleIndex, frameTimeOverlay, 0.0f, 1000.0f, ImVec2(0, 80.0f));
-
-            GUI::EndWindow();
+            GUI::SetNextItemWidthToFit();
+            GUI::LineDiagram("Lines", frameTimeSamples, SAMPLE_COUNT, currentSampleIndex, frameTimeOverlay, 0.0f, 1000.0f, { 0.0f, 80.0f });
         }
+        GUI::EndWindow();
+    }
+
+    // ********************* System Debug Panel ********************* \\
+
+    void SystemDebugPanel::DrawUI()
+    {
+        if (GUI::BeginWindow("System Debugger", WindowFlags::NO_FOCUS_ON_APPEARING))
+        {
+            if (GUI::BeginTree("CPU"))
+            {
+                auto &cpu = SystemInformation::GetCPU();
+                GUI::Text("Name: %s", cpu.name.c_str());
+                GUI::Text("Endianness: %s", cpu.GetEndiannessString());
+                GUI::Text("Architecture: %s", cpu.GetArchitectureString());
+
+                GUI::VerticalIndent(1.0f);
+                if (GUI::BeginTree("Physical Information"))
+                {
+                    GUI::Text("Physical core count: %u", cpu.physicalInformation.physicalCoreCount);
+                    GUI::Text("Logical core count: %u", cpu.physicalInformation.logicalCoreCount);
+                    GUI::Text("Threads per core: %u", cpu.physicalInformation.threadsPerCore);
+                    GUI::Text("Frequency: %llu", cpu.physicalInformation.frequency);
+                    GUI::EndTree();
+                }
+                GUI::EndTree();
+            }
+
+            GUI::VerticalIndent();
+            if (GUI::BeginTree("GPU"))
+            {
+                auto &gpu = SystemInformation::GetGPU();
+                GUI::Text("Name: %s", gpu.name.c_str());
+                GUI::Text("Vendor: %s", gpu.GetVendorString());
+
+                GUI::VerticalIndent(1.0f);
+                if (GUI::BeginTree("Physical Information"))
+                {
+                    GUI::Text("Total VRAM: %lluMB", gpu.physicalInformation.totalMemory / 1000000);
+                    GUI::Text("Used VRAM: %lluMB", SystemInformation::GetGPU().physicalInformation.GetUsedVideoMemory() / 1000000);
+                    GUI::EndTree();
+                }
+                GUI::EndTree();
+            }
+
+            GUI::VerticalIndent();
+            if (GUI::BeginTree("Memory"))
+            {
+                auto &memory = SystemInformation::GetMemory();
+                GUI::Text("Total physical memory: %lluMB", memory.totalPhysicalMemory / 1000000);
+                GUI::Text("Total virtual memory: %lluMB", memory.totalVirtualMemory / 1000000);
+                GUI::Text("Available physical memory: %lluMB", memory.GetAvailablePhysicalMemory() / 1000000);
+                GUI::Text("Available virtual memory: %lluMB", memory.GetAvailableVirtualMemory() / 1000000);
+                GUI::EndTree();
+            }
+
+            GUI::VerticalIndent();
+            if (GUI::BeginTree("Kernel"))
+            {
+                auto &kernel = SystemInformation::GetKernel();
+                GUI::Text("Type: %s", kernel.GetTypeString());
+                GUI::Text("Version: %u.%u.%u", kernel.version.major, kernel.version.minor, kernel.version.patch);
+                GUI::Text("Build number: %u", kernel.buildNumber);
+                GUI::EndTree();
+            }
+
+            GUI::VerticalIndent();
+            if (GUI::BeginTree("Operating System"))
+            {
+                auto &os = SystemInformation::GetOperatingSystem();
+                GUI::Text("Name: %s", os.name);
+                GUI::Text("Version: %u.%u.%u", os.version.major, os.version.minor, os.version.patch);
+                GUI::Text("Build number: %u", os.buildNumber);
+                GUI::EndTree();
+            }
+        }
+        GUI::EndWindow();
     }
 
     // ********************* Game Pad Debug Panel ********************* \\
@@ -357,21 +419,51 @@ namespace Sierra::Editor
         {
             if (Input::GetGamePadConnected(i))
             {
-                bool gamePadInfoOpen = true;
-                if (GUI::BeginWindow((FORMAT_STRING("Game Pad [{0}] Data", i).c_str()), &gamePadInfoOpen, ImGuiWindowFlags_AlwaysAutoResize))
+                if (GUI::BeginWindow((FORMAT_STRING("Game Pad [{0}] Data", i).c_str()), WindowFlags::ALWAYS_AUTO_RESIZE))
                 {
-                    ImGui::Text("%s", ("Game pad [" + Input::GetGamePadName(i) + "] properties:").c_str());
-                    ImGui::Text("%s", FORMAT_STRING("Left gamepad stick: [{0}, {1}]", Input::GetGamePadLeftStickAxis(i).x, Input::GetGamePadLeftStickAxis(i).y).c_str());
-                    ImGui::Text("%s", FORMAT_STRING("Right gamepad stick: [{0}, {1}]", Input::GetGamePadRightStickAxis(i).x, Input::GetGamePadRightStickAxis(i).y).c_str());
-                    ImGui::Text("%s", FORMAT_STRING("Left trigger: [{0}]", Input::GetGamePadLeftTriggerAxis(i)).c_str());
-                    ImGui::Text("%s", FORMAT_STRING("Right trigger: [{0}]", Input::GetGamePadRightTriggerAxis(i)).c_str());
-                    ImGui::RadioButton("\"A\" pressed", Input::GetGamePadButtonPressed(GLFW_GAMEPAD_BUTTON_A, i));
-                    ImGui::RadioButton("\"A\" held", Input::GetGamePadButtonHeld(GLFW_GAMEPAD_BUTTON_A, i));
-                    ImGui::RadioButton("\"A\" released", Input::GetGamePadButtonReleased(GLFW_GAMEPAD_BUTTON_A, i));
-
-                    GUI::EndWindow();
+                    GUI::Text("%s", ("Game pad [" + Input::GetGamePadName(i) + "] properties:").c_str());
+                    GUI::Text("Left gamepad stick: [%f, %f]", Input::GetGamePadLeftStickAxis(i).x, Input::GetGamePadLeftStickAxis(i).y);
+                    GUI::Text("Right gamepad stick: [%f, %f]", Input::GetGamePadRightStickAxis(i).x, Input::GetGamePadRightStickAxis(i).y);
+                    GUI::Text("Left trigger: [%f]", Input::GetGamePadLeftTriggerAxis(i));
+                    GUI::Text("Right trigger: [%f]", Input::GetGamePadRightTriggerAxis(i));
+                    GUI::RadioButton("\"A\" pressed", Input::GetGamePadButtonPressed(GamePadButton::A, i));
+                    GUI::RadioButton("\"A\" held", Input::GetGamePadButtonHeld(GamePadButton::A, i));
+                    GUI::RadioButton("\"A\" released", Input::GetGamePadButtonReleased(GamePadButton::A, i));
                 }
+                GUI::EndWindow();
             }
         }
+    }
+
+    // ********************* Discord Debug Panel ********************* \\
+
+    void DiscordDebugPanel::DrawUI()
+    {
+        if (!Discord::IsInitialized() || !Discord::GetUser().IsLoaded() || !Discord::GetUser().IsIconTextureLoaded()) return;
+
+        if (GUI::BeginWindow("Discord Debugger", WindowFlags::ALWAYS_AUTO_RESIZE | WindowFlags::NO_FOCUS_ON_APPEARING))
+        {
+            GUI::PushBoldFont();
+            GUI::Text("%s", "Detected User:");
+            GUI::PopFont();
+
+            GUI::ContinueOnSameLine();
+            GUI::Text("%s#%s", Discord::GetUser().GetUsername(), Discord::GetUser().GetDiscriminator());
+
+            GUI::Texture(Discord::GetUser().GetIconTexture()->GetImGuiTextureID(), {
+                    GUI::GetRemainingHorizontalSpace() / 3.5f,
+                                                                                     GUI::GetRemainingHorizontalSpace() / 3.5f });
+            GUI::VerticalIndent(5.0f);
+
+            GUI::PushBoldFont();
+            GUI::Text("User Data:");
+            GUI::PopFont();
+
+            GUI::Text("Username: %s", Discord::GetUser().GetUsername());
+            GUI::Text("Discriminator: %s", Discord::GetUser().GetDiscriminator());
+            GUI::Text("ID: %llu", Discord::GetUser().GetId());
+
+        }
+        GUI::EndWindow();
     }
 }

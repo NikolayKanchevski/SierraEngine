@@ -7,12 +7,14 @@
 namespace Sierra::Engine
 {
 
-    void Raycast::HoveredEntityCallback(const Entity entity)
+    /* --- CALLBACKS --- */
+
+    void Raycast::HoveredEntityCallback(const Entity &entity)
     {
         hoveredEntity = entity;
     }
 
-    void Raycast::HoveredWorldPositionCallback(const Vector3 position)
+    void Raycast::HoveredWorldPositionCallback(const Vector3 &position)
     {
         hoveredWorldPosition = position;
     }

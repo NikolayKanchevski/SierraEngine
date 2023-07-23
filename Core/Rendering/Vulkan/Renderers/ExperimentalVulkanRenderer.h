@@ -16,8 +16,8 @@ namespace Sierra::Rendering
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit ExperimentalVulkanRenderer(const VulkanRendererCreateInfo &createInfo);
-        static UniquePtr<ExperimentalVulkanRenderer> Create(VulkanRendererCreateInfo createInfo);
+        ExperimentalVulkanRenderer(const VulkanRendererCreateInfo &createInfo);
+        static UniquePtr<ExperimentalVulkanRenderer> Create(const VulkanRendererCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         void Render() override;

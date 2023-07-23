@@ -12,7 +12,7 @@ namespace Sierra::Engine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Relationship(entt::entity givenSelf);
+        Relationship(entt::entity givenSelf);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline entt::entity& GetEnttParentEntity() { return parent; }

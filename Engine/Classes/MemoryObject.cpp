@@ -16,9 +16,9 @@ namespace Sierra::Engine
 
     /* --- SETTERS --- */
 
-    void MemoryObject::SetDataByOffset(const void* newData, const uint64 offset, const uint64 range)
+    void MemoryObject::SetDataByOffset(const void* newData, const uint64 size, const uint64 offset)
     {
-        memcpy(reinterpret_cast<char*>(data) + offset, newData, range != 0 ? range : memorySize);
+        memcpy(reinterpret_cast<char*>(data) + offset, newData, size != 0 ? size : memorySize);
     }
 
     /* --- DESTRUCTORS --- */

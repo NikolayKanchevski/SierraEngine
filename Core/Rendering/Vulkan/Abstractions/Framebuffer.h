@@ -12,8 +12,6 @@ namespace Sierra::Rendering
 
     struct FramebufferCreateInfo
     {
-        uint width = 0;
-        uint height = 0;
         const UniquePtr<RenderPass> &renderPass;
         const std::vector<ReferenceWrapper<UniquePtr<Image>>> &attachments;
     };
@@ -22,7 +20,7 @@ namespace Sierra::Rendering
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Framebuffer(const FramebufferCreateInfo &createInfo);
+        Framebuffer(const FramebufferCreateInfo &createInfo);
         static UniquePtr<Framebuffer> Create(const FramebufferCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */

@@ -12,7 +12,7 @@ namespace Sierra::Engine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline explicit IdentifierPool(const T capacity = std::numeric_limits<T>::max())
+        inline IdentifierPool(const T capacity = std::numeric_limits<T>::max())
             : maxIDs(capacity)
         {
 

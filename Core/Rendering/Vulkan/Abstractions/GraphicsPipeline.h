@@ -20,8 +20,8 @@ namespace Sierra::Rendering
 
     struct GraphicsPipelineRenderPassInfo
     {
-        UniquePtr<RenderPass> &renderPass;
         uint subpass = 0;
+        UniquePtr<RenderPass> &renderPass;
     };
 
     struct GraphicsPipelineCreateInfo
@@ -37,7 +37,7 @@ namespace Sierra::Rendering
 
         Sampling sampling = Sampling::MSAAx1;
         FrontFace frontFace = FrontFace::COUNTER_CLOCKWISE;
-        CullMode cullMode = CullMode::FRONT;
+        CullMode cullMode = CullMode::BACK;
         ShadingType shadingType = ShadingType::FILL;
     };
 

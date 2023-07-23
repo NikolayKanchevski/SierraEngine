@@ -48,13 +48,13 @@ struct IsSmartPointer<T, typename std::enable_if_t<std::is_same<typename std::de
 
 /* --- GENERATORS --- */
 #define DEFINE_ENUM_FLAG_OPERATORS(ENUM_TYPE) \
-    inline ENUM_TYPE operator~ (ENUM_TYPE a) { return (ENUM_TYPE)~(int)a; } \
-    inline ENUM_TYPE operator| (ENUM_TYPE a, ENUM_TYPE b) { return (ENUM_TYPE)((int)a | (int)b); } \
-    inline ENUM_TYPE operator& (ENUM_TYPE a, ENUM_TYPE b) { return (ENUM_TYPE)((int)a & (int)b); } \
-    inline ENUM_TYPE operator^ (ENUM_TYPE a, ENUM_TYPE b) { return (ENUM_TYPE)((int)a ^ (int)b); } \
-    inline ENUM_TYPE& operator|= (ENUM_TYPE& a, ENUM_TYPE b) { return (ENUM_TYPE&)((int&)a |= (int)b); } \
-    inline ENUM_TYPE& operator&= (ENUM_TYPE& a, ENUM_TYPE b) { return (ENUM_TYPE&)((int&)a &= (int)b); } \
-    inline ENUM_TYPE& operator^= (ENUM_TYPE& a, ENUM_TYPE b) { return (ENUM_TYPE&)((int&)a ^= (int)b); }
+    inline ENUM_TYPE operator~ (ENUM_TYPE a) { return (ENUM_TYPE)~(int) a; } \
+    inline ENUM_TYPE operator| (ENUM_TYPE a, ENUM_TYPE b) { return (ENUM_TYPE)((int) a | (int) b); } \
+    inline bool operator& (ENUM_TYPE a, ENUM_TYPE b) { return ((int) a & (int) b) != 0; } \
+    inline ENUM_TYPE operator^ (ENUM_TYPE a, ENUM_TYPE b) { return (ENUM_TYPE)((int) a ^ (int) b); } \
+    inline ENUM_TYPE& operator|= (ENUM_TYPE& a, ENUM_TYPE b) { return (ENUM_TYPE&)((int&) a |= (int) b); } \
+    inline ENUM_TYPE& operator&= (ENUM_TYPE& a, ENUM_TYPE b) { return (ENUM_TYPE&)((int&) a &= (int) b); } \
+    inline ENUM_TYPE& operator^= (ENUM_TYPE& a, ENUM_TYPE b) { return (ENUM_TYPE&)((int&) a ^= (int) b); }
 
 /* --- PREPROCESSOR --- */
 #define IS_CPP __cplusplus

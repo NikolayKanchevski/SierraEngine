@@ -75,7 +75,7 @@ namespace Sierra::Rendering
         );
     }
 
-    UniquePtr<QueryPool> QueryPool::Create(QueryPoolCreateInfo createInfo)
+    UniquePtr<QueryPool> QueryPool::Create(const QueryPoolCreateInfo &createInfo)
     {
         return std::make_unique<QueryPool>(createInfo);
     }

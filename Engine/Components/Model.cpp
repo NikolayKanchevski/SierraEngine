@@ -25,7 +25,7 @@ namespace Sierra::Engine
         return model;
     }
 
-    using namespace Rendering;
+    using namespace Sierra::Rendering;
     void Model::LoadInternal(Model *model, const String &filePath)
     {
         model->modelName = File::GetFileNameFromPath(filePath);
@@ -94,7 +94,7 @@ namespace Sierra::Engine
             model->loaded = true;
 
             #if DEBUG
-                ASSERT_INFO_FORMATTED("Total vertices count for the model [{0}] containing [{1}] mesh(es): {2}", model->modelName, loadedModelData.meshes.size(), model->vertexCount);
+                ASSERT_INFO_FORMATTED("Total vertex count for the model [{0}] containing [{1}] mesh(es): {2}", model->modelName, loadedModelData.meshes.size(), model->vertexCount);
             #endif
         }
         else
@@ -105,7 +105,7 @@ namespace Sierra::Engine
 
             // Load the model file
             Assimp::Importer importer;
-            const aiScene *scene = importer.ReadFile(filePath.c_str(), aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
+            const aiScene *scene = importer.ReadFile(filePath.c_str(), aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_GenNormals);
 
             if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
             {
@@ -122,7 +122,7 @@ namespace Sierra::Engine
             delete(model->modelData);
 
             #if DEBUG
-                ASSERT_INFO_FORMATTED("Total vertices count for the model [{0}] containing [{1}] mesh(es): {2}", model->modelName, scene->mNumMeshes, model->vertexCount);
+                ASSERT_INFO_FORMATTED("Total vertex count for the model [{0}] containing [{1}] mesh(es): {2}", model->modelName, scene->mNumMeshes, model->vertexCount);
             #endif
 
             // Dispose the importer
@@ -261,9 +261,9 @@ namespace Sierra::Engine
         // Load vertex data
         for (uint i = 0; i < mesh->mNumVertices; i++)
         {
-            vertices[i].position = {mesh->mVertices[i].x, -mesh->mVertices[i].y, mesh->mVertices[i].z };
-            vertices[i].normal = mesh->HasNormals() ? Vector3(mesh->mNormals[i].x, -mesh->mNormals[i].y, mesh->mNormals[i].z) : Vector3(0, 0, 0);
-            vertices[i].UV = mesh->HasTextureCoords(0) ? Vector2(mesh->mTextureCoords[0][i].x, -mesh->mTextureCoords[0][i].y) : Vector2(0, 0);
+            vertices[i].position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
+            vertices[i].normal = mesh->HasNormals() ? Vector3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z) : Vector3(0.5, 0.5, 0.5);
+            vertices[i].UV = mesh->HasTextureCoords(0) ? Vector2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y) : Vector2(0, 0);
         }
 
         // Iterate over indices through faces and copy across
