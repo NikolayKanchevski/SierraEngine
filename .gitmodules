@@ -34,15 +34,15 @@
 [submodule "Dependencies/fmt"]
 	path = Dependencies/fmt
 	url = https://github.com/fmtlib/fmt
-[submodule "Dependencies/TBB"]
-	path = Dependencies/TBB
-	url = https://github.com/oneapi-src/oneTBB
-[submodule "Dependencies/whereami"]
-	path = Dependencies/whereami
-	url = https://github.com/gpakosz/whereami
 [submodule "Dependencies/Volk"]
 	path = Dependencies/Volk
 	url = https://github.com/zeux/volk
 [submodule "Dependencies/SPIRV-Reflect"]
 	path = Dependencies/SPIRV-Reflect
 	url = https://github.com/NikichaTV/SPIRV-Reflect
+[submodule "Dependencies/PlatformFolders"]
+	path = Dependencies/PlatformFolders
+	url = https://github.com/sago007/PlatformFolders
+[submodule "Dependencies/YamlCPP"]
+	path = Dependencies/YamlCPP
+	url = https://github.com/jbeder/yaml-cpp

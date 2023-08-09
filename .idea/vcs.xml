@@ -5,19 +5,19 @@
     <mapping directory="$PROJECT_DIR$/Dependencies/Assimp" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/EnTT" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/GLFW" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/Dependencies/PlatformFolders" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/RareCpp" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/SPIRV-Headers" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/SPIRV-Reflect" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/SPIRV-Reflect/third_party/googletest" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/SPIRV-Tools" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Dependencies/TBB" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/VMA" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/Volk" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/Dependencies/YamlCPP" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/fmt" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/glm" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/glslang" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/shaderc" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Dependencies/stb" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Dependencies/whereami" vcs="Git" />
   </component>
 </project>

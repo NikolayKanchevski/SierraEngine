@@ -3,12 +3,21 @@ set(CMAKE_CXX_STANDARD 20)
 cmake_minimum_required(VERSION 3.20)
 project(SierraEngine)
 
-set(SOURCE_FILES main.cpp Core/Rendering/Window.cpp Core/Rendering/Window.h Engine/Classes/Stopwatch.cpp Engine/Classes/Stopwatch.h Core/Debugger.cpp Core/Debugger.h Core/Application/Application.cpp Core/Application/Application.h Engine/Classes/Time.cpp Engine/Classes/Time.h Engine/Classes/Cursor.cpp Engine/Classes/Cursor.h Engine/Classes/Input.cpp Engine/Classes/Input.h Core/Rendering/Vulkan/Abstractions/Buffer.cpp Core/Rendering/Vulkan/Abstractions/Buffer.h Core/Rendering/Vulkan/Abstractions/Descriptors.cpp Core/Rendering/Vulkan/Abstractions/Descriptors.h Core/Rendering/Vulkan/Abstractions/Framebuffer.cpp Core/Rendering/Vulkan/Abstractions/Framebuffer.h Core/Rendering/Vulkan/Abstractions/Image.cpp Core/Rendering/Vulkan/Abstractions/Image.h Core/Rendering/Vulkan/Abstractions/Sampler.cpp Core/Rendering/Vulkan/Abstractions/Sampler.h Core/Rendering/Vulkan/Abstractions/Texture.cpp Core/Rendering/Vulkan/Abstractions/Texture.h Engine/Classes/Math.h Engine/Classes/File.cpp Engine/Classes/File.h Engine/Components/Lighting/DirectionalLight.h Engine/Components/Lighting/PointLight.h Core/World.cpp Core/World.h Engine/Components/Camera.cpp Engine/Components/Camera.h Engine/Classes/Mesh.cpp Engine/Classes/Mesh.h Engine/Components/Model.cpp Engine/Components/Model.h Engine/Classes/Entity.cpp Engine/Classes/Entity.h Engine/Components/Component.h Engine/Classes/Binary.cpp Engine/Classes/Binary.h Engine/Components/Lighting/Light.h Engine/Components/MeshRenderer.cpp Engine/Components/MeshRenderer.h Core/Rendering/Vulkan/Abstractions/Device.cpp Core/Rendering/Vulkan/Abstractions/Device.h Core/Rendering/Vulkan/Abstractions/RenderPass.cpp Core/Rendering/Vulkan/Abstractions/RenderPass.h Engine/Include.h Core/Rendering/Vulkan/VulkanTypes.h Core/Rendering/Vulkan/Abstractions/Shader.cpp Core/Rendering/Vulkan/Abstractions/Shader.h Core/Rendering/Vulkan/VK.cpp Core/Rendering/Vulkan/VK.h Core/Rendering/Vulkan/Abstractions/Swapchain.cpp Core/Rendering/Vulkan/Abstractions/Swapchain.h Core/Rendering/Vulkan/Abstractions/CommandBuffer.cpp Core/Rendering/Vulkan/Abstractions/CommandBuffer.h Core/Rendering/Vulkan/Renderers/VulkanRenderer.cpp Core/Rendering/Vulkan/Renderers/VulkanRenderer.h Core/Rendering/UI/ImGuiInstance.cpp Core/Rendering/UI/ImGuiInstance.h Core/Rendering/Vulkan/Abstractions/Queries.cpp Core/Rendering/Vulkan/Abstractions/Queries.h Engine/Classes/RNG.cpp Engine/Classes/RNG.h Core/Rendering/Vulkan/Abstractions/Cubemap.cpp Core/Rendering/Vulkan/Abstractions/Cubemap.h Engine/Components/Transform.cpp Engine/Components/Transform.h Engine/Components/UUID.cpp Engine/Components/UUID.h Engine/Components/Tag.cpp Engine/Components/Tag.h Engine/Components/Relationship.cpp Engine/Components/Relationship.h Core/Internal/Types.h Core/Rendering/Vulkan/Renderers/DeferredVulkanRenderer.cpp Core/Rendering/Vulkan/Renderers/DeferredVulkanRenderer.h Core/Internal/Macros.h Core/Rendering/RenderingSettings.h Engine/Components/ComponentsInclude.h Engine/Classes/ClassesInclude.h Engine/Classes/SystemInformation.cpp Engine/Classes/SystemInformation.h Core/Internal/Definitions.h Editor/UIPanels.h Editor/UIPanels.cpp Core/Rendering/Vulkan/Renderers/ExperimentalVulkanRenderer.cpp Core/Rendering/Vulkan/Renderers/ExperimentalVulkanRenderer.h Core/Rendering/Vulkan/Abstractions/DynamicRenderer.cpp Core/Rendering/Vulkan/Abstractions/DynamicRenderer.h Engine/Classes/IdentifierPool.h Engine/Classes/MemoryObject.h Core/Rendering/Vulkan/Abstractions/Pipeline.cpp Core/Rendering/Vulkan/Abstractions/Pipeline.h Core/Rendering/Vulkan/Abstractions/GraphicsPipeline.cpp Core/Rendering/Vulkan/Abstractions/GraphicsPipeline.h Engine/Classes/MemoryObject.cpp Core/Rendering/Vulkan/Abstractions/ComputePipeline.cpp Core/Rendering/Vulkan/Abstractions/ComputePipeline.h Core/Rendering/Modules/Raycaster.cpp Core/Rendering/Modules/Raycaster.h Engine/Components/Lighting/DirectionalLight.cpp Engine/Components/Lighting/PointLight.cpp Engine/Classes/Raycast.h Engine/Classes/Raycast.cpp Engine/Classes/Discord.h Engine/Classes/Discord.cpp Editor/Editor.h Editor/Editor.cpp Engine/Components/Lighting/Light.cpp Engine/Classes/Material.h Editor/GUI.h Editor/GUI.cpp Editor/GUITypes.h Core/Rendering/Modules/ArenaAllocator.cpp Core/Rendering/Modules/ArenaAllocator.h Engine/Classes/Vertex.h)
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+# === EXECUTABLE SETTINGS === #
+set(SOURCE_FILES Source/main.cpp Source/Core/Rendering/Window.cpp Source/Core/Rendering/Window.h Source/Core/Debugger.cpp Source/Core/Debugger.h Source/Core/Application/Application.cpp Source/Core/Application/Application.h Source/Engine/Classes/Time.cpp Source/Engine/Classes/Time.h Source/Engine/Classes/Cursor.cpp Source/Engine/Classes/Cursor.h Source/Engine/Classes/Input.cpp Source/Engine/Classes/Input.h Source/Core/Rendering/Abstractions/Buffer.cpp Source/Core/Rendering/Abstractions/Buffer.h Source/Core/Rendering/Abstractions/Descriptors.cpp Source/Core/Rendering/Abstractions/Descriptors.h Source/Core/Rendering/Abstractions/Framebuffer.cpp Source/Core/Rendering/Abstractions/Framebuffer.h Source/Core/Rendering/Abstractions/Image.cpp Source/Core/Rendering/Abstractions/Image.h Source/Core/Rendering/Abstractions/Sampler.cpp Source/Core/Rendering/Abstractions/Sampler.h Source/Core/Rendering/Abstractions/Texture.cpp Source/Core/Rendering/Abstractions/Texture.h Source/Engine/Classes/Math.h Source/Engine/Classes/File.cpp Source/Engine/Classes/File.h Source/Engine/Components/DirectionalLight.h Source/Engine/Components/PointLight.h Source/Core/World.cpp Source/Core/World.h Source/Engine/Components/Camera.cpp Source/Engine/Components/Camera.h Source/Engine/Classes/Mesh.cpp Source/Engine/Classes/Mesh.h Source/Engine/Classes/Entity.cpp Source/Engine/Classes/Entity.h Source/Engine/Components/Component.h Source/Engine/Classes/Binary.cpp Source/Engine/Classes/Binary.h Source/Engine/Components/Light.h Source/Engine/Components/MeshRenderer.cpp Source/Engine/Components/MeshRenderer.h Source/Core/Rendering/Abstractions/Device.cpp Source/Core/Rendering/Abstractions/Device.h Source/Core/Rendering/Abstractions/RenderPass.cpp Source/Core/Rendering/Abstractions/RenderPass.h Source/Engine/Include.h Source/Core/Rendering/Types.h Source/Core/Rendering/Abstractions/Shader.cpp Source/Core/Rendering/Abstractions/Shader.h Source/Core/Rendering/Bases/VK.cpp Source/Core/Rendering/Bases/VK.h Source/Core/Rendering/Abstractions/Swapchain.cpp Source/Core/Rendering/Abstractions/Swapchain.h Source/Core/Rendering/Abstractions/CommandBuffer.cpp Source/Core/Rendering/Abstractions/CommandBuffer.h Source/Core/Rendering/Renderers/VulkanRenderer.cpp Source/Core/Rendering/Renderers/VulkanRenderer.h Source/Core/Rendering/UI/ImGuiInstance.cpp Source/Core/Rendering/UI/ImGuiInstance.h Source/Core/Rendering/Abstractions/Queries.cpp Source/Core/Rendering/Abstractions/Queries.h Source/Engine/Classes/RNG.cpp Source/Engine/Classes/RNG.h Source/Core/Rendering/Abstractions/Cubemap.cpp Source/Core/Rendering/Abstractions/Cubemap.h Source/Engine/Components/Transform.cpp Source/Engine/Components/Transform.h Source/Engine/Components/UUID.cpp Source/Engine/Components/UUID.h Source/Engine/Components/Tag.cpp Source/Engine/Components/Tag.h Source/Engine/Components/Relationship.cpp Source/Engine/Components/Relationship.h Source/Core/Internal/Types.h Source/Core/Rendering/Renderers/DeferredVulkanRenderer.cpp Source/Core/Rendering/Renderers/DeferredVulkanRenderer.h Source/Core/Internal/Macros.h Source/Core/Rendering/RenderingSettings.h Source/Engine/Components/ComponentsInclude.h Source/Engine/Classes/ClassesInclude.h Source/Engine/Classes/SystemInformation.cpp Source/Engine/Classes/SystemInformation.h Source/Core/Internal/Definitions.h Source/Core/Rendering/Renderers/ExperimentalVulkanRenderer.cpp Source/Core/Rendering/Renderers/ExperimentalVulkanRenderer.h Source/Core/Rendering/Abstractions/DynamicRenderer.cpp Source/Core/Rendering/Abstractions/DynamicRenderer.h Source/Engine/Classes/IdentifierPool.h Source/Engine/Classes/MemoryObject.h Source/Core/Rendering/Abstractions/Pipeline.cpp Source/Core/Rendering/Abstractions/Pipeline.h Source/Core/Rendering/Abstractions/GraphicsPipeline.cpp Source/Core/Rendering/Abstractions/GraphicsPipeline.h Source/Engine/Classes/MemoryObject.cpp Source/Core/Rendering/Abstractions/ComputePipeline.cpp Source/Core/Rendering/Abstractions/ComputePipeline.h Source/Core/Rendering/Modules/Raycaster.cpp Source/Core/Rendering/Modules/Raycaster.h Source/Engine/Components/DirectionalLight.cpp Source/Engine/Components/PointLight.cpp Source/Engine/Classes/Raycast.h Source/Engine/Classes/Raycast.cpp Source/Engine/Classes/Discord.h Source/Engine/Classes/Discord.cpp Source/Editor/Editor.h Source/Editor/Editor.cpp Source/Engine/Components/Light.cpp Source/Engine/Classes/Material.h Source/Editor/GUI.h Source/Editor/GUI.cpp Source/Editor/GUITypes.h Source/Engine/Handlers/Assets/ArenaAllocator.cpp Source/Engine/Handlers/Assets/ArenaAllocator.h Source/Engine/Classes/Vertex.h Source/Engine/Handlers/Assets/AssetManager.cpp Source/Engine/Handlers/Assets/AssetManager.h Source/Engine/Classes/Asset.h Source/Engine/Handlers/Project.h Source/Engine/Handlers/Project.cpp Source/Core/Internal/Version.h Source/Editor/Panels/MainViewportPanel.cpp Source/Editor/Panels/MainViewportPanel.h Source/Editor/Panels/RendererViewportPanel.h Source/Editor/Panels/RendererViewportPanel.cpp Source/Editor/Panels/HierarchyPanel.cpp Source/Editor/Panels/HierarchyPanel.h Source/Editor/Panels/PropertiesPanel.cpp Source/Editor/Panels/PropertiesPanel.h Source/Editor/Panels/DebugPanel.cpp Source/Editor/Panels/DebugPanel.h Source/Editor/Panels/DiscordDebugPanel.cpp Source/Editor/Panels/DiscordDebugPanel.h Source/Editor/Panels/AssetBrowserPanel.cpp Source/Editor/Panels/AssetBrowserPanel.h Source/Engine/Classes/Model.cpp Source/Engine/Classes/Model.h Source/Engine/Classes/Material.cpp Source/Engine/Handlers/Assets/ResourceSystem.h Source/Engine/Handlers/Assets/ResourceSystem.cpp Source/Engine/Types.h Source/Engine/Classes/Asset.cpp Source/Engine/Handlers/Assets/AssetImporter.cpp Source/Engine/Handlers/Assets/AssetImporter.h)
+
+include(Dependencies/AddIconToBinary.cmake)
+AddIconToBinary(SOURCE_FILES ICONS ${CMAKE_SOURCE_DIR}/Media/SierraExecutableIcon.ico ${CMAKE_SOURCE_DIR}/Media/SierraExecutableIcon.icns)
+if (MSVC)
+    add_executable(${PROJECT_NAME} WIN32 ${SOURCE_FILES})
+elseif(APPLE)
+    add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
+else()
+    add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+endif()
 
 # === COMPILER SETTINGS === #
 LIST(APPEND CMAKE_PROGRAM_PATH \"${CMAKE_BINARY_DIR}/DLLs/\")
-message(${CMAKE_PROGRAM_PATH})
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.12.25835)
     set(CMAKE_CXX20_STANDARD_COMPILE_OPTION "-std:c++latest")
     set(CMAKE_CXX20_EXTENSION_COMPILE_OPTION "-std:c++latest")
@@ -19,12 +28,6 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 endif()
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-
-# === RESOURCE COPY TO OUTPUT FOLDER === #
-file(COPY Core/Rendering/Shading/Shaders/ DESTINATION ${CMAKE_BINARY_DIR}/Shaders/)
-file(COPY Core/Rendering/Textures/        DESTINATION ${CMAKE_BINARY_DIR}/Textures/)
-file(COPY Core/Rendering/Models/          DESTINATION ${CMAKE_BINARY_DIR}/Models/)
-file(COPY Core/Rendering/Fonts/           DESTINATION ${CMAKE_BINARY_DIR}/Fonts/)
 
 # === LOCAL SECRETS === #
 if(NOT DEFINED DISCORD_APPLICATION_KEY OR DISCORD_APPLICATION_KEY STREQUAL "")
@@ -39,21 +42,19 @@ add_subdirectory(Dependencies)
 target_link_libraries(${PROJECT_NAME} PRIVATE Dependencies)
 
 # === PRECOMPILED HEADERS LINKAGE === #
-target_precompile_headers(${PROJECT_NAME} PUBLIC Core/Internal/PrecompiledHeaders.h)
+target_precompile_headers(${PROJECT_NAME} PUBLIC Source/Core/Internal/PrecompiledHeaders.h)
 
 # === UPDATE SCRIPT RUNNING === #
+set(CURRENT_PROJECT_PATH "../Example Project/")
 if(PYTHON_EXECUTABLE)
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(CMAKE_BUILD_TYPE_ARGUMENT "--Debug")
+    if(NOT DEFINED CURRENT_PROJECT_PATH OR CURRENT_PROJECT_PATH STREQUAL "")
+        message(WARNING "Cannot automatically update project, as the variable [CURRENT_PROJECT_PATH] has not been se in CMake")
     else()
-        set(CMAKE_BUILD_TYPE_ARGUMENT "--Release")
+        add_custom_target(RunUpdatePythonScript
+            COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/Scripts/UpdateProject.py ${CURRENT_PROJECT_PATH}
+        )
+        add_dependencies(${PROJECT_NAME} RunUpdatePythonScript)
     endif()
-
-    add_custom_target(RunUpdatePythonScript
-        COMMAND ${PYTHON_EXECUTABLE} Scripts/UpdateProject.py ${CMAKE_BUILD_TYPE_ARGUMENT} --CMakeCall
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
-    add_dependencies(${PROJECT_NAME} RunUpdatePythonScript)
 else()
-    message(WARNING "Python install was not found on the machine. Automatic update scripts will not be run!")
+    message(WARNING "Python install was not found on the machine. Automatic update scripts cannot be run!")
 endif()

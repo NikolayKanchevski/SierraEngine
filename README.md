@@ -1,14 +1,16 @@
+[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://bit.ly/3OMysM8)
+
 # Sierra Engine
 
 <p align="center">
-    <img src="README-Media/SierraLogoTextBackground.png" alt="SierraEngineTextLogo">
+    <img src="Media/SierraLogoTextBackground.png" alt="SierraEngineTextLogo">
 </p>
 
 <br>
 
 # What is Sierra Engine?
 
-An **open-source** game/rendering engine, which aims to provide users with an all-in-one development kit, suited for any graphics-intesive tasks (such as video games, 3D editors, etc.). It is based solely on the **[Vulkan](https://www.vulkan.org/)** rendering API, which provides suppot for **Windows 7-11**, **macOS**, **Linux**, **Android**, **iOS**, and **[more](https://en.wikipedia.org/wiki/Vulkan#Cross_platform)**, but is planned to also feature native APIs (like **[DirectX](https://developer.nvidia.com/directx)** and **[Metal](https://developer.apple.com/metal/)**) to further improve its already-incredible performance
+An **open-source** game/rendering engine, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). It is based solely on the **[Vulkan](https://www.vulkan.org/)** rendering API, which provides support for **Windows 7-11**, **macOS**, **Linux**, **Android**, **iOS**, and **[more](https://en.wikipedia.org/wiki/Vulkan#Cross_platform)**, but is planned to also feature native APIs (like **[DirectX](https://developer.nvidia.com/directx)** and **[Metal](https://developer.apple.com/metal/)**) to further improve its already-incredible performance
 
 <br>
 
@@ -78,7 +80,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 **Frameworks used:**
 
-* [Vulkan](https://www.vulkan.org/) - For both cross-platform and pefromant-friendly rendering.
+* [Vulkan](https://www.vulkan.org/) - For both cross-platform and incredibly fast rendering.
 * [Volk](https://github.com/zeux/volk/tree/master/) - For less CPU overhead when working with [Vulkan](https://www.vulkan.org/) and simplified usage of extensions.
 * [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For easier and more optimal memory allocation and distribution of [Vulkan](https://www.vulkan.org/) objects.
 * [Shaderc](https://github.com/google/shaderc/) - For the shader compilation and optimization at runtime.
@@ -86,17 +88,18 @@ Wondering how to use the engine? You can check out the online documentation [her
 * [GLM](https://github.com/g-truc/glm/) - For all advanced mathematical operations and objects within the engine.
 * [ImGui](https://github.com/ocornut/imgui/) - For the user interface implemented.
 * [ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo/) - For gizmos in the scene view.
-* [EnTT](https://github.com/skypjack/entt/) - For the easy-to-use and incredibly perfomant [entity component system](https://en.wikipedia.org/wiki/Entity_component_system).
+* [EnTT](https://github.com/skypjack/entt/) - For the easy-to-use and lightweight [entity component system](https://en.wikipedia.org/wiki/Entity_component_system).
 * [Assimp](https://github.com/assimp/assimp/) - For the loading of all kinds of 3D modelMatrix formats (.obj, .fbx, .dae, etc.).
-* [Stb](https://github.com/nothings/stb) - For loading image buffer from all kinds of image formats (.jpg, .png, etc.).
+* [Stb](https://github.com/nothings/stb) - For loading image data from all kinds of image formats (.jpg, .png, etc.).
 * [FMT](https://fmt.dev/latest/index.html) - For fast and easy string formatting.
 * [SPIRV-Reflect](https://github.com/NikichaTV/SPIRV-Reflect) by [NikichaTV](https://github.com/NikichaTV) - For shader reflection and [OpenGL](https://www.opengl.org)-like engine use (this is a custom version of [SPIRV-Reflect](https://github.com/KhronosGroup/SPIRV-Reflect) with extended functionality).
+* [YamlCPP](https://github.com/jbeder/yaml-cpp) - For generating/parsing configuration and serialization files.
 * [RareCpp](https://github.com/TheNitesWhoSay/RareCpp/) - For reflections and serialization.
-* [Infoware](https://github.com/ThePhD/infoware/) - For the extraction of various system-and-hardware-specific buffer.
-* [Whereami](https://github.com/gpakosz/whereami/) - For the retrieval of the compiled executable's location within the file system.
-* [TBB](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onetbb.html#gs.m2vcgt/) - For easier and guaranteed-to-be-supported threading.
+* [Infoware](https://github.com/ThePhD/infoware/) - For the extraction of various system-and-hardware-specific data. 
+* [PlatformFolders](https://github.com/sago007/PlatformFolders) - For the retrieval of various system-specific folder paths.
 * [DiscordSDK](https://discord.com/developers/docs/intro) - For integration with the Discord app.
 * [My Brain](https://ih1.redbubble.net/image.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
+
 <br>
 
 **Software used:**
@@ -110,7 +113,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LinesCounter">Total lines of code: 17,252</p>
-<p align="center" id="LastUpdated">Last updated: 24/07/2023 </p>
+<p align="center" id="LineCounter">Total lines of code: 18,526</p>
+<p align="center" id="LastUpdated">Last updated: 09/08/2023 </p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

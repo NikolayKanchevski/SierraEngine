@@ -704,6 +704,8 @@ namespace IMGUIZMO_NAMESPACE
       bool mbUsing;
       bool mbEnable;
       bool mbMouseOver;
+      bool mbMouseOverViewManipulate;
+      bool mbUsingViewManipulate;
       bool mReversed; // reversed projection matrix
 
       // translation
@@ -985,9 +987,14 @@ namespace IMGUIZMO_NAMESPACE
       return (gContext.mbUsing && (gContext.mActualID == -1 || gContext.mActualID == gContext.mEditingID)) || gContext.mbUsingBounds;
    }
 
+   bool IsUsingViewManipulate()
+   {
+       return gContext.mbUsingViewManipulate;
+   }
+   
    bool IsOver()
    {
-      return (Intersects(gContext.mOperation, TRANSLATE) && GetMoveType(gContext.mOperation, NULL) != MT_NONE) ||
+      return (gContext.mbMouseOverViewManipulate || Intersects(gContext.mOperation, TRANSLATE) && GetMoveType(gContext.mOperation, NULL) != MT_NONE) ||
          (Intersects(gContext.mOperation, ROTATE) && GetRotateType(gContext.mOperation) != MT_NONE) ||
          (Intersects(gContext.mOperation, SCALE) && GetScaleType(gContext.mOperation) != MT_NONE) || IsUsing();
    }
@@ -2906,6 +2913,7 @@ namespace IMGUIZMO_NAMESPACE
          LookAt(&newEye.x, &camTarget.x, &newUp.x, view);
       }
       isInside = gContext.mbMouseOver && ImRect(position, position + size).Contains(io.MousePos);
+      gContext.mbMouseOverViewManipulate = isInside;
 
       if (io.MouseDown[0] && (fabsf(io.MouseDelta[0]) || fabsf(io.MouseDelta[1])) && isClicking)
       {
@@ -2977,6 +2985,8 @@ namespace IMGUIZMO_NAMESPACE
          vec_t newEye = camTarget + newDir * length;
          LookAt(&newEye.x, &camTarget.x, &referenceUp.x, view);
       }
+
+      gContext.mbUsingViewManipulate = isDraging || isClicking;
 
       // restore view/projection because it was used to compute ray
       ComputeContext(svgView.m16, svgProjection.m16, gContext.mModelSource.m16, gContext.mMode);

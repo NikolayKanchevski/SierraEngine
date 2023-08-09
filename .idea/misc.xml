@@ -5,6 +5,10 @@
     <excludeRoots>
       <file path="$PROJECT_DIR$/Dependencies" />
       <file path="$PROJECT_DIR$/Deprecated" />
+      <file path="$PROJECT_DIR$/Example Project" />
+      <file path="$PROJECT_DIR$/Scripts/.idea" />
+      <file path="$PROJECT_DIR$/Scripts/venv" />
+      <file path="$PROJECT_DIR$/Source/Engine/Handlers/Assets/EmbeddedData" />
     </excludeRoots>
   </component>
 </project>

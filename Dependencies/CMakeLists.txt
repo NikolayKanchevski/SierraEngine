@@ -1,8 +1,6 @@
 set(CMAKE_CXX_STANDARD 20)
 cmake_minimum_required(VERSION 3.20)
 
-include(Macros.cmake)
-include(DeviceInfo.cmake)
 add_library(Dependencies INTERFACE)
 
 # ========== KHRONOS UTILITIES ========== #
@@ -89,6 +87,15 @@ set(FMT_TEST OFF)
 add_subdirectory(fmt)
 target_link_libraries(Dependencies INTERFACE fmt)
 
+# ========== Yaml CPP ========== #
+set(YAML_CPP_BUILD_CONTRIB OFF)
+set(YAML_BUILD_SHARED_LIBS OFF)
+set(YAML_CPP_INSTALL OFF)
+
+add_subdirectory(YamlCPP SYSTEM)
+target_link_libraries(Dependencies INTERFACE SYSTEM yaml-cpp::yaml-cpp)
+target_include_directories(Dependencies INTERFACE YamlCPP/include/yaml-cpp)
+
 # ========== RARECPP ========== #
 set(RARECPP_DIR ${PROJECT_SOURCE_DIR}/Dependencies/RareCpp/include/rarecpp)
 set(RARECPP_SOURCES ${RARECPP_DIR}/reflect.h)
@@ -102,35 +109,17 @@ set(INFOWARE_PCI_IDS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Infoware/pcids/pci.ids)
 add_subdirectory(Infoware)
 target_link_libraries(Dependencies INTERFACE infoware)
 
-# ========== WHEREAMI ========== #
-add_library(WHEREAMI STATIC)
-set(WHEREAMI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/whereami/src)
-target_sources(WHEREAMI PRIVATE ${WHEREAMI_DIR}/whereami.c ${WHEREAMI_DIR}/whereami.h)
-target_include_directories(WHEREAMI PRIVATE ${WHEREAMI_DIR})
-target_link_libraries(Dependencies INTERFACE WHEREAMI)
-target_include_directories(Dependencies INTERFACE ${WHEREAMI_DIR})
+# ========== PLATFORM FOLDERS ========== #
+set(PLATFORMFOLDERS_BUILD_TESTING OFF)
 
-# ========== TBB ========== #
-set(TBB_TEST OFF)
-set(TBBMALLOC_BUILD OFF)
-set(BUILD_SHARED_LIBS OFF)
-set(TBBMALLOC_PROXY_BUILD OFF)
-if (CMAKE_BUILD_TYPE MATCHES Debug)
-    set(TBB_STRICT ON)
-else()
-    set(TBB_STRICT OFF)
-endif()
-
-find_package(TBB REQUIRED)
-target_link_libraries(Dependencies INTERFACE TBB::tbb)
-target_compile_options(Dependencies PRIVATE ${TBB_CXX_STD_FLAG})
-
-# TODO: TRY THIS ON WINDOWS ^ ELSE ADD CHECK
-#add_subdirectory(TBB)
-#target_link_libraries(Dependencies INTERFACE TBB::tbb)
-#target_compile_options(Dependencies PRIVATE ${TBB_CXX_STD_FLAG})
+add_subdirectory(PlatformFolders)
+target_link_libraries(Dependencies INTERFACE SYSTEM sago::platform_folders)
+target_include_directories(Dependencies INTERFACE PlatformFolders/)
 
 # ========== DISCORD SDK ========== #
+include(Macros.cmake)
+include(DeviceInfo.cmake)
+
 add_library(DiscordSDK STATIC)
 file(GLOB_RECURSE DISCORD_SDK_HEADER_FILES DiscordSDK/src/*.h)
 file(GLOB_RECURSE DISCORD_SDK_SOURCE_FILES DiscordSDK/src/*.cpp)
