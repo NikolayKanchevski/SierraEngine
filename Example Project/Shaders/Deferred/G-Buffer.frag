@@ -9,9 +9,9 @@ layout(location = 0) in vec3 fromVert_Position;
 layout(location = 1) in vec3 fromVert_Normal;
 layout(location = 2) in vec2 fromVert_UV;
 
-const uint DIFFUSE_TEXTURE_BINDING     =    2;
-const uint SPECULAR_TEXTURE_BINDING    =    3;
-const uint NORMAL_TEXTURE_BINDING      =    4;
+const uint DIFFUSE_TEXTURE_BINDING  = 2;
+const uint SPECULAR_TEXTURE_BINDING = 3;
+const uint NORMAL_TEXTURE_BINDING   = 4;
 layout(binding = DIFFUSE_TEXTURE_BINDING) uniform sampler2D fromCode_DiffuseSampler;
 layout(binding = SPECULAR_TEXTURE_BINDING) uniform sampler2D fromCode_SpecularSampler;
 layout(binding = NORMAL_TEXTURE_BINDING) uniform sampler2D fromCode_NormalSampler;

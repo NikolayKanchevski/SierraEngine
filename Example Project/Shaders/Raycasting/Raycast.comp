@@ -24,6 +24,6 @@ bool IsOutOfSamplerRange(vec2 coord)
 void main()
 {
     // Set output data
-    outputBuffer.worldPosition = GetWorldPositionFromDepth(pushConstant.mousePosition, texture(depthBuffer, pushConstant.mousePosition).x, uniformBuffer.inverseProjection,  uniformBuffer.inverseView);
-    outputBuffer.entityID = texture(IDBuffer, pushConstant.mousePosition).x * uint(!IsOutOfSamplerRange(pushConstant.mousePosition)); // Check if mouse is within the viewport;
+    outputBuffer.worldPosition = !IsOutOfSamplerRange(pushConstant.mousePosition) ? GetWorldPositionFromDepth(pushConstant.mousePosition, texture(depthBuffer, pushConstant.mousePosition).x, uniformBuffer.inverseProjection,  uniformBuffer.inverseView) : vec3(0.0);
+    outputBuffer.entityID = texture(IDBuffer, pushConstant.mousePosition).x * uint(!IsOutOfSamplerRange(pushConstant.mousePosition));
 }

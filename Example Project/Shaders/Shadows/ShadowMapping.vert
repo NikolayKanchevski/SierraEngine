@@ -16,5 +16,5 @@ layout(push_constant) uniform PushConstant
 
 void main()
 {
-    gl_Position = storageBuffer.directionalLights[pushConstant.directionalLightID].projectionView * storageBuffer.objectDatas[pushConstant.meshID].modelMatrix * vec4(fromCode_Position, 1.0f);
+    gl_Position = storageBuffer.directionalLights[pushConstant.directionalLightID].projectionView * storageBuffer.objectData[pushConstant.meshID].modelMatrix * vec4(fromCode_Position, 1.0f);
 }
