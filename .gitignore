@@ -1,6 +1,7 @@
-cmake-build-debug
-cmake-build-release
-cmake-build-debug-coverage
-cmake-build-relwithdebinfo
-.idea
-Deprecated
+# === IDE CONFIGURATION FILES === #
+.idea/
+Sierra/.idea/
+Sandbox/.idea/
+
+# === BINARY DIRECTORIES ===
+Sandbox/bin/

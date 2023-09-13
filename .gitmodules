@@ -1,48 +1,15 @@
-[submodule "Dependencies/SPIRV-Tools"]
-	path = Dependencies/SPIRV-Tools
-	url = https://github.com/KhronosGroup/SPIRV-Tools
-[submodule "Dependencies/shaderc"]
-	path = Dependencies/shaderc
-	url = https://github.com/google/shaderc
-[submodule "Dependencies/SPIRV-Headers"]
-	path = Dependencies/SPIRV-Headers
-	url = https://github.com/KhronosGroup/SPIRV-Headers
-[submodule "Dependencies/glslang"]
-	path = Dependencies/glslang
-	url = https://github.com/KhronosGroup/glslang
-[submodule "Dependencies/RareCpp"]
-	path = Dependencies/RareCpp
-	url = https://github.com/TheNitesWhoSay/RareCpp
-[submodule "Dependencies/GLFW"]
-	path = Dependencies/GLFW
-	url = https://github.com/glfw/glfw
-[submodule "Dependencies/glm"]
-	path = Dependencies/glm
+[submodule "Sierra/vendor/glm"]
+	path = Sierra/vendor/glm
 	url = https://github.com/g-truc/glm
-[submodule "Dependencies/EnTT"]
-	path = Dependencies/EnTT
-	url = https://github.com/skypjack/entt
-[submodule "Dependencies/VMA"]
-	path = Dependencies/VMA
+[submodule "Sierra/vendor/VMA"]
+	path = Sierra/vendor/VMA
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-[submodule "Dependencies/Assimp"]
-	path = Dependencies/Assimp
-	url = https://github.com/assimp/assimp
-[submodule "Dependencies/stb"]
-	path = Dependencies/stb
-	url = https://github.com/nothings/stb
-[submodule "Dependencies/fmt"]
-	path = Dependencies/fmt
-	url = https://github.com/fmtlib/fmt
-[submodule "Dependencies/TBB"]
-	path = Dependencies/TBB
-	url = https://github.com/oneapi-src/oneTBB
-[submodule "Dependencies/whereami"]
-	path = Dependencies/whereami
-	url = https://github.com/gpakosz/whereami
-[submodule "Dependencies/Volk"]
-	path = Dependencies/Volk
+[submodule "Sierra/vendor/Volk"]
+	path = Sierra/vendor/Volk
 	url = https://github.com/zeux/volk
-[submodule "Dependencies/SPIRV-Reflect"]
-	path = Dependencies/SPIRV-Reflect
-	url = https://github.com/NikichaTV/SPIRV-Reflect
+[submodule "Sierra/vendor/spdlog"]
+	path = Sierra/vendor/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "Sierra/vendor/BetterEnums"]
+	path = Sierra/vendor/BetterEnums
+	url = https://github.com/aantron/better-enums
