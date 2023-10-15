@@ -8,9 +8,6 @@
 #include "VulkanInstance.h"
 
 #include <vk_mem_alloc.h>
-#if PLATFORM_APPLE
-    #include <vulkan/vulkan_beta.h> // For VkPhysicalDevicePortabilitySubsetFeaturesKHR
-#endif
 
 namespace Sierra
 {
@@ -99,20 +96,11 @@ namespace Sierra
                     .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
                     .dynamicRendering = VK_TRUE
                 }
-            },
-            #if PLATFORM_APPLE
-            {
-                .name = VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME,
-                .requiredOnlyIfSupported = true,
-                .data = new VkPhysicalDevicePortabilitySubsetFeaturesKHR {
-                    .sType = static_cast<VkStructureType>(1000163000), // VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR
-                    .mutableComparisonSamplers = VK_TRUE
-                }
             }
-            #endif
         };
         std::vector<Hash> loadedExtensions;
 
+        bool IsExtensionSupported(const char* extensionName, const std::vector<VkExtensionProperties> &supportedExtensions);
         template<typename T>
         bool AddExtensionIfSupported(const DeviceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions, T &pNextChain, std::vector<void*> &extensionDataToFree);
         static PhysicalDeviceInfo GetPhysicalDeviceInfo(const VkPhysicalDevice physicalDevice);

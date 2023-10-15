@@ -13,3 +13,6 @@
 [submodule "Sierra/vendor/BetterEnums"]
 	path = Sierra/vendor/BetterEnums
 	url = https://github.com/aantron/better-enums
+[submodule "Sierra/vendor/ios-cmake"]
+	path = Sierra/vendor/ios-cmake
+	url = https://github.com/leetal/ios-cmake

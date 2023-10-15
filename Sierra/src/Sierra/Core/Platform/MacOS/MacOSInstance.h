@@ -4,24 +4,22 @@
 
 #pragma once
 
-#if !PLATFORM_MACOS
+#if !SR_PLATFORM_MACOS
     #error "Including the MacOSInstance.h file is only allowed in macOS builds!"
 #endif
 
-#include "../../PlatformInstance.h"
 #if !defined(__OBJC__)
     namespace Sierra
     {
-        typedef void CocoaApplication;
+        typedef void NSApplication;
         typedef void CocoaApplicationDelegate;
     }
-
 #else
     #include <Cocoa/Cocoa.h>
-    @class CocoaApplication;
     @class CocoaApplicationDelegate;
-
 #endif
+
+#include "../../PlatformInstance.h"
 
 namespace Sierra
 {
@@ -33,15 +31,16 @@ namespace Sierra
         explicit MacOSInstance(const PlatformInstanceCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] CocoaApplication* GetApplication() const;
+        [[nodiscard]] NSApplication* GetApplication() const;
         [[nodiscard]] uint32 GetMenuBarHeight() const;
+
         [[nodiscard]] inline PlatformType GetType() const override { return PlatformType::MacOS; }
 
         /* --- DESTRUCTOR --- */
-        ~MacOSInstance();
+        ~MacOSInstance() override;
 
     private:
-        CocoaApplication* application;
+        NSApplication* application;
         CocoaApplicationDelegate* applicationDelegate;
 
     };

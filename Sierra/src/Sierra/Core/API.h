@@ -6,15 +6,15 @@
 
 #pragma region API Definitions
     // Only export symbols in debug, as the engine will be built as a shared library
-    #if defined(SIERRA_USE_SHARED_LIBRARY)
+    #if defined(SR_USE_SHARED_LIBRARY)
         #if defined(_WIN32)
-            #if defined(SIERRA_BUILD_SHARED_LIBRARY)
+            #if defined(SR_BUILD_SHARED_LIBRARY)
                 #define SIERRA_API __declspec(dllexport)
             #else
                 #define SIERRA_API __declspec(dllimport)
             #endif
         #elif defined(__GNUC__)
-            #if defined(SIERRA_BUILD_SHARED_LIBRARY)
+            #if defined(SR_BUILD_SHARED_LIBRARY)
                 #define SIERRA_API __attribute__((visibility("default")))
             #else
                 #define SIERRA_API

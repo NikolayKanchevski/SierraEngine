@@ -21,10 +21,12 @@ namespace Sierra
         inline explicit WindowResizeEvent(const Vector2UInt size) : size(size) { }
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline Vector2UInt GetSize() const { return size; }
+        [[nodiscard]] inline const Vector2UInt GetSize() const { return size; }
 
         /* --- PROPERTIES --- */
-        DEFINE_EVENT_CLASS_STRING_OPERATOR("Window Resized - [Width: " << size.x << " | Height: " << size.y << "]");
+        #if SR_ENABLE_LOGGING
+            inline String ToString() const override { return (std::stringstream() << "Window Resized - [Width: " << size.x << " | Height: " << size.y << "]").str(); }
+        #endif
 
     private:
         Vector2UInt size;
@@ -38,7 +40,10 @@ namespace Sierra
         WindowCloseEvent() = default;
 
         /* --- PROPERTIES --- */
-        DEFINE_EVENT_CLASS_STRING_OPERATOR("Window Closed");
+        #if SR_ENABLE_LOGGING
+            inline String ToString() const override { return (std::stringstream() << "Window Closed").str(); }
+        #endif
+
     };
 
     class SIERRA_API WindowMoveEvent final : public WindowEvent
@@ -51,7 +56,9 @@ namespace Sierra
         [[nodiscard]] Vector2Int GetPosition() const { return position; }
 
         /* --- PROPERTIES --- */
-        DEFINE_EVENT_CLASS_STRING_OPERATOR("Window Moved - [X: " << position.x << " | Y: " << position.y << "]");
+        #if SR_ENABLE_LOGGING
+            inline String ToString() const override { return (std::stringstream() << "Window Moved - [X: " << position.x << " | Y: " << position.y << "]").str(); }
+        #endif
 
     private:
         Vector2Int position;
@@ -68,7 +75,9 @@ namespace Sierra
         [[nodiscard]] bool IsFocused() const { return focused; }
 
         /* --- PROPERTIES --- */
-        DEFINE_EVENT_CLASS_STRING_OPERATOR("Window " << (focused ? "Focused" : "Unfocused"));
+        #if SR_ENABLE_LOGGING
+            inline String ToString() const override { return (std::stringstream() << "Window " << (focused ? "Focused" : "Unfocused")).str(); }
+        #endif
 
     private:
         bool focused;
@@ -82,7 +91,9 @@ namespace Sierra
         WindowMinimizeEvent() = default;
 
         /* --- PROPERTIES --- */
-        DEFINE_EVENT_CLASS_STRING_OPERATOR("Window Minimized");
+        #if SR_ENABLE_LOGGING
+            inline String ToString() const override { return (std::stringstream() << "Window Minimized").str(); }
+        #endif
 
     };
 
@@ -93,7 +104,9 @@ namespace Sierra
         inline WindowMaximizeEvent() = default;
 
         /* --- PROPERTIES --- */
-        DEFINE_EVENT_CLASS_STRING_OPERATOR("Window Maximized");
+        #if SR_ENABLE_LOGGING
+            inline String ToString() const override { return (std::stringstream() << "Window Maximized").str(); }
+        #endif
 
     };
 

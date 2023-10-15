@@ -4,14 +4,6 @@
 
 #include "MacOSInstance.h"
 
-@interface CocoaApplication : NSApplication
-
-@end
-
-@implementation CocoaApplication
-
-@end
-
 @interface CocoaApplicationDelegate : NSObject<NSApplicationDelegate>
 
 @end
@@ -20,18 +12,15 @@
 
     /* --- MEMBERS --- */
     {
-        CocoaApplication* application;
+        NSApplication* application;
     }
 
     /* --- CONSTRUCTORS --- */
 
-    - (instancetype) initWithApplication: (CocoaApplication*) initApplication
+    - (instancetype) initWithApplication: (NSApplication*) initApplication
     {
         self = [super init];
-        if (self != nil)
-        {
-            application = initApplication;
-        }
+        application = initApplication;
         return self;
     }
 
@@ -40,10 +29,11 @@
     {
         // Close all windows
         NSArray<NSWindow*>* windows = [application windows];
-        for (uint32 i = [windows count]; i--;)
+        for (ulong i = [windows count]; i--;)
         {
             [windows[i] performClose: nil];
         }
+
         return NSTerminateCancel;
     }
 
@@ -111,8 +101,6 @@
 
 @end
 
-
-
 namespace Sierra
 {
 
@@ -121,13 +109,13 @@ namespace Sierra
     MacOSInstance::MacOSInstance(const PlatformInstanceCreateInfo &createInfo)
         : PlatformInstance(createInfo)
     {
+        // Get application instance
+        application = [NSApplication sharedApplication];
+
         @autoreleasepool
         {
-            // Initialize application
-            application = [CocoaApplication sharedApplication];
-
             // Create delegate
-            applicationDelegate = [[CocoaApplicationDelegate alloc] initWithApplication:application];
+            applicationDelegate = [[CocoaApplicationDelegate alloc] initWithApplication: application];
             SR_ERROR_IF(applicationDelegate == nil, "Could not create MacOS application delegate!");
         }
 
@@ -149,14 +137,14 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    CocoaApplication* MacOSInstance::GetApplication() const
+    NSApplication* MacOSInstance::GetApplication() const
     {
         return application;
     }
 
     uint32 MacOSInstance::GetMenuBarHeight() const
     {
-        return NSHeight([NSScreen mainScreen].frame) - NSHeight([NSScreen mainScreen].visibleFrame);
+        return static_cast<uint32>(NSHeight([NSScreen mainScreen].frame) - NSHeight([NSScreen mainScreen].visibleFrame));
     }
 
     /* --- DESTRUCTOR --- */

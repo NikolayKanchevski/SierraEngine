@@ -405,7 +405,7 @@ namespace Sierra
         CARD32* value = NULL;
         if (GetProperty(linuxInstance.GetAtoms().NET_WM_WINDOW_OPACITY, XA_CARDINAL, reinterpret_cast<uchar**>(&value)))
         {
-            opacity = static_cast<float>(*value / static_cast<double>(UINT32_MAX));
+            opacity = static_cast<float32>(*value / static_cast<double>(UINT32_MAX));
             XFree(value);
         }
 

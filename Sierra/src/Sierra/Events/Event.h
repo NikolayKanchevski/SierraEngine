@@ -7,24 +7,10 @@
 namespace Sierra
 {
 
-    #if SR_DEBUG
-        #define DEFINE_EVENT_CLASS_STRING_OPERATOR(...) \
-            [[nodiscard]] inline String ToString() const override \
-            { \
-                std::stringstream stream; \
-                stream << __VA_ARGS__; \
-                return stream.str(); \
-            }
-
-    #else
-        #define DEFINE_EVENT_CLASS_STRING_OPERATOR(...)
-
-    #endif
-
     class SIERRA_API Event
     {
     public:
-        #if SR_DEBUG
+        #if SR_ENABLE_LOGGING
             /* --- GETTER METHODS --- */
             [[nodiscard]] inline virtual String ToString() const = 0;
         #endif

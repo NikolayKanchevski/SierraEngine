@@ -4,21 +4,20 @@
 
 #include "PlatformInstance.h"
 
-#if PLATFORM_WINDOWS
+#if SR_PLATFORM_WINDOWS
     #include "Platform/Windows/WindowsInstance.h"
     typedef Sierra::WindowsInstance NativeInstance;
-
-#elif PLATFORM_LINUX
+#elif SR_PLATFORM_LINUX
     #include "Platform/Linux/LinuxInstance.h"
     typedef Sierra::LinuxInstance NativeInstance;
-
-#elif PLATFORM_MACOS
+#elif SR_PLATFORM_MACOS
     #include "Platform/MacOS/MacOSInstance.h"
     typedef Sierra::MacOSInstance NativeInstance;
-
+#elif SR_PLATFORM_iOS
+    #include "Platform/iOS/iOSInstance.h"
+    typedef Sierra::iOSInstance NativeInstance;
 #else
-    typedef Sierra::PlatformInstance NativeInstance;
-
+    #error "Platform instance of this system has not been implemented!"
 #endif
 
 namespace Sierra
@@ -34,6 +33,18 @@ namespace Sierra
     UniquePtr<PlatformInstance> PlatformInstance::Create(const PlatformInstanceCreateInfo &createInfo)
     {
         return std::make_unique<NativeInstance>(createInfo);
+    }
+
+    /* --- POLLING METHODS --- */
+
+    void PlatformInstance::RunApplication(const PlatformApplicationRunInfo &runInfo)
+    {
+        runInfo.OnStart();
+        while (!runInfo.OnUpdate())
+        {
+            continue;
+        }
+        runInfo.OnEnd();
     }
 
 }

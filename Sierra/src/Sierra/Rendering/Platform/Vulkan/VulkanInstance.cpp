@@ -4,9 +4,6 @@
 
 #include "VulkanInstance.h"
 
-#define VOLK_IMPLEMENTATION
-#include <volk.h>
-
 namespace Sierra
 {
 
@@ -15,7 +12,9 @@ namespace Sierra
     VulkanInstance::VulkanInstance(const VulkanInstanceCreateInfo &createInfo)
     {
         // Initialize Volk
-        VK_VALIDATE(volkInitialize(), "Could not initialize Volk");
+        #if SR_USING_VOLK
+            VK_VALIDATE(volkInitialize(), "Could not initialize Volk");
+        #endif
 
         // Set up application info
         VkApplicationInfo applicationInfo{};
@@ -51,12 +50,12 @@ namespace Sierra
         instanceCreateInfo.enabledExtensionCount = static_cast<uint32>(extensionsToLoad.size());
         instanceCreateInfo.ppEnabledExtensionNames = extensionsToLoad.data();
         instanceCreateInfo.flags = 0;
-        #if PLATFORM_APPLE
+        #if SR_PLATFORM_APPLE
             if (IsExtensionLoaded(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME)) instanceCreateInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
         #endif
         instanceCreateInfo.pNext = nullptr;
 
-        #if SR_ENABLE_LOGGING
+        #if SR_VALIDATION_ENABLED
             // Define debug messenger info here, so it does not go out of scope
             VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo{};
             const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
@@ -67,8 +66,8 @@ namespace Sierra
             {
                 // Set up debug messenger info
                 debugMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-                debugMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-                debugMessengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+                debugMessengerCreateInfo.messageSeverity =  VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+                debugMessengerCreateInfo.messageType =  VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
                 debugMessengerCreateInfo.pfnUserCallback = [](const VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, [[maybe_unused]] const VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, [[maybe_unused]] void* userData) -> VkBool32
                 {
                     switch (messageSeverity)
@@ -110,10 +109,15 @@ namespace Sierra
         );
 
         // Register instance for Volk
-        volkLoadInstance(instance);
+        #if SR_USING_VOLK
+            volkLoadInstance(instance);
+        #endif
 
-        #if SR_ENABLE_LOGGING
-            if (validationSupported) vkCreateDebugUtilsMessengerEXT(instance, &debugMessengerCreateInfo, nullptr, &debugMessenger);
+        #if SR_VALIDATION_ENABLED
+            #if !SR_USING_VOLK
+               static const auto vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
+            #endif
+            if (validationSupported && vkCreateDebugUtilsMessengerEXT != nullptr) vkCreateDebugUtilsMessengerEXT(instance, &debugMessengerCreateInfo, nullptr, &debugMessenger);
         #endif
     }
 
@@ -131,20 +135,24 @@ namespace Sierra
 
     VulkanAPIVersion VulkanInstance::GetAPIVersion() const
     {
-        if (vkEnumerateInstanceVersion)
+        #if SR_USING_VOLK
+            if (vkEnumerateInstanceVersion != nullptr)
+        #endif
         {
             uint32 version;
             vkEnumerateInstanceVersion(&version);
             version &= 0xFFFFF000;
 
-            #if PLATFORM_APPLE
+            #if SR_PLATFORM_APPLE
                 if (version >= VK_API_VERSION_1_3)
                 {
                     return VK_API_VERSION_1_2;
                 }
             #endif
+
             return version;
         }
+
         return VK_API_VERSION_1_0;
     }
 
@@ -176,7 +184,7 @@ namespace Sierra
         return true;
     }
 
-    #if SR_ENABLE_LOGGING
+    #if SR_VALIDATION_ENABLED
         bool VulkanInstance::ValidationLayersSupported(const std::vector<const char*> &layers)
         {
             // Retrieve supported layer count
@@ -214,8 +222,11 @@ namespace Sierra
 
     void VulkanInstance::Destroy()
     {
-        #if SR_ENABLE_LOGGING
-            vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+        #if SR_VALIDATION_ENABLED
+            #if !SR_USING_VOLK
+                static const auto vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
+            #endif
+            if (debugMessenger != nullptr && vkDestroyDebugUtilsMessengerEXT != nullptr) vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         #endif
         vkDestroyInstance(instance, nullptr);
     }

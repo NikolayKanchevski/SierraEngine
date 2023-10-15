@@ -5,9 +5,9 @@
 #pragma once
 
 #include "../src/srpch.h"
+#include "Sierra/Application.h"
 #include "../src/Sierra/Core/Logger.h"
 #include "../src/Sierra/Core/Window.h"
 #include "../src/Sierra/Core/Version.h"
-#include "Sierra/Application.h"
 #include "../src/Sierra/Core/ScopeProfiler.h"
 using namespace Sierra;

@@ -6,6 +6,8 @@
 
 #include "VulkanResource.h"
 
+#define SR_VALIDATION_ENABLED (SR_ENABLE_LOGGING && !(SR_PLATFORM_APPLE && SR_PLATFORM_iOS)) // Validation layers are not present in mobile Apple devices
+
 namespace Sierra
 {
 
@@ -38,7 +40,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        VulkanInstance(const VulkanInstanceCreateInfo &createInfo);
+        explicit VulkanInstance(const VulkanInstanceCreateInfo &createInfo);
         static UniquePtr<VulkanInstance> Create(const VulkanInstanceCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
@@ -61,10 +63,13 @@ namespace Sierra
         const std::vector<InstanceExtension> INSTANCE_EXTENSIONS_TO_QUERY
         {
             { .name = VK_KHR_SURFACE_EXTENSION_NAME },
-            #if PLATFORM_APPLE
-                { .name = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME },
+            #if SR_PLATFORM_APPLE
+                {
+                    .name = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
+                    .requiredOnlyIfSupported = true
+                },
             #endif
-            #if SR_ENABLE_LOGGING
+            #if SR_VALIDATION_ENABLED
                 {
                     .name = VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
                     .requiredOnlyIfSupported = true
@@ -75,7 +80,7 @@ namespace Sierra
         std::vector<Hash> loadedExtensions;
         bool AddExtensionIfSupported(const InstanceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions);
 
-        #if SR_ENABLE_LOGGING
+        #if SR_VALIDATION_ENABLED
             VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
             static bool ValidationLayersSupported(const std::vector<const char*> &layers);
         #endif

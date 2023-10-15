@@ -26,10 +26,6 @@ namespace Sierra
         /* --- DESTRUCTOR --- */
         void Destroy() override;
 
-        /* --- OPERATORS --- */
-        VulkanContext(const VulkanContext&) = delete;
-        VulkanContext& operator=(const VulkanContext&) = delete;
-
     private:
         UniquePtr<VulkanInstance> instance;
         UniquePtr<VulkanDevice> device;

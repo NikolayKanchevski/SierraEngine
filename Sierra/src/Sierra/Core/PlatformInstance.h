@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "../Engine/Time.h"
+
 namespace Sierra
 {
 
@@ -11,7 +13,9 @@ namespace Sierra
         PlatformType, uint8,
         Windows,
         Linux,
-        MacOS
+        MacOS,
+        iOS,
+        Android
     );
 
     struct PlatformInstanceCreateInfo
@@ -19,11 +23,21 @@ namespace Sierra
 
     };
 
+    struct PlatformApplicationRunInfo
+    {
+        std::function<void()> OnStart;
+        std::function<bool()> OnUpdate;
+        std::function<void()> OnEnd;
+    };
+
     class PlatformInstance
     {
     public:
         /* --- CONSTRUCTORS --- */
         static UniquePtr<PlatformInstance> Create(const PlatformInstanceCreateInfo &createInfo);
+
+        /* --- POLLING METHODS --- */
+        virtual void RunApplication(const PlatformApplicationRunInfo &runInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline virtual PlatformType GetType() const = 0;

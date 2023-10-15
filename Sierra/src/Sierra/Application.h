@@ -11,11 +11,17 @@
 namespace Sierra
 {
 
+    struct ApplicationSettings
+    {
+        GraphicsAPI graphicsAPI = GraphicsAPI::Auto;
+        uint16 maxFrameRate = 0;
+    };
+
     struct ApplicationCreateInfo
     {
-        const String &name;
+        const String &name = "Sierra Application";
+        const ApplicationSettings &settings = { };
         Version version = Version({ 1, 0, 0, VersionState::Experimental });
-        GraphicsAPI graphicsAPI = GraphicsAPI::Auto;
     };
 
     class SIERRA_API Application
@@ -42,17 +48,34 @@ namespace Sierra
         explicit Application(const ApplicationCreateInfo &createInfo);
 
     private:
-        /* --- POLLING METHODS --- */
         virtual void OnStart() = 0;
-        virtual bool OnUpdate() = 0;
+        virtual bool OnUpdate(const TimeStep &timestep) = 0;
 
         String name;
+        ApplicationSettings settings;
         Version version;
 
         UniquePtr<PlatformInstance> platformInstance = nullptr;
         UniquePtr<RenderingContext> renderingContext = nullptr;
 
-        void InitializeEngine();
+        class FrameLimiter
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            FrameLimiter() = default;
+
+            /* --- POLLING METHODS --- */
+            [[nodiscard]] TimeStep BeginFrame();
+            void ThrottleFrame(uint32 targetFrameRate);
+
+        private:
+            TimePoint frameStartTime;
+            TimePoint lastFrameStartTime;
+            TimeStep deltaTime;
+
+        };
+        FrameLimiter frameLimiter{};
+
 
     };
 

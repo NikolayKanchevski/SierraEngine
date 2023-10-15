@@ -27,7 +27,7 @@ namespace Sierra
         [[nodiscard]] inline int GetScreen() const { return screen; }
         [[nodiscard]] inline Display* GetDisplay() { return display; }
         [[nodiscard]] inline XID GetRootWindow() const  { return rootWindow; }
-        [[nodiscard]] inline Vector4Int& GetWindowExtents() { return windowExtents; }
+        [[nodiscard]] inline const Vector4Int& GetWindowExtents() const { return windowExtents; }
         [[nodiscard]] inline auto& GetAtoms() { return atoms; }
 
         [[nodiscard]] int32 GetWindowProperty(XID window, Atom property, Atom type, uchar** value);

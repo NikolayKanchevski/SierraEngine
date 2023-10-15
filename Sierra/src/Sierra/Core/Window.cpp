@@ -4,21 +4,20 @@
 
 #include "Window.h"
 
-#if PLATFORM_WINDOWS
+#if SR_PLATFORM_WINDOWS
     #include "Platform/Windows/Win32Window.h"
     typedef Sierra::Win32Window NativeWindow;
-
-#elif PLATFORM_LINUX
+#elif SR_PLATFORM_LINUX
     #include "Platform/Linux/X11Window.h"
     typedef Sierra::X11Window NativeWindow;
-
-#elif PLATFORM_MACOS
+#elif SR_PLATFORM_MACOS
     #include "Platform/MacOS/CocoaWindow.h"
     typedef Sierra::CocoaWindow NativeWindow;
-
+#elif SR_PLATFORM_iOS
+    #include "Platform/iOS/UIKitWindow.h"
+    typedef Sierra::UIKitWindow NativeWindow;
 #else
     #error "Windowing support for this system has not been implemented!"
-
 #endif
 
 namespace Sierra
@@ -35,6 +34,26 @@ namespace Sierra
     {
         PROFILE_SCOPE();
         return std::make_unique<NativeWindow>(createInfo);
+    }
+
+    /* --- GETTER METHODS --- */
+
+    InputManager& Window::GetInputManager()
+    {
+        static InputManager nullInputManger = InputManager({ });
+        return nullInputManger;
+    }
+
+    CursorManager& Window::GetCursorManager()
+    {
+        static CursorManager nullCursorManager = CursorManager({ });
+        return nullCursorManager;
+    }
+
+    TouchManager& Window::GetTouchManager()
+    {
+        static TouchManager nullTouchManager = TouchManager({ });
+        return nullTouchManager;
     }
 
 }

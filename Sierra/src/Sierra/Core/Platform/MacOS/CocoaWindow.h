@@ -4,12 +4,14 @@
 
 #pragma once
 
-#if !PLATFORM_MACOS
+#if !SR_PLATFORM_MACOS
     #error "Including the CocoaWindow.h file is only allowed in macOS builds!"
 #endif
 
 #include "../../Window.h"
 #include "MacOSInstance.h"
+#include "CocoaInputManager.h"
+#import "CocoaCursorManager.h"
 
 #if !defined(__OBJC__)
     namespace Sierra
@@ -18,13 +20,11 @@
         typedef void CocoaWindowContentView;
         typedef void CocoaWindowImplementation;
     }
-
 #else
     #include <Cocoa/Cocoa.h>
     @class CocoaWindowDelegate;
     @class CocoaWindowContentView;
     @class CocoaWindowImplementation;
-
 #endif
 
 namespace Sierra
@@ -62,6 +62,9 @@ namespace Sierra
         bool IsMaximized() const override;
         bool IsFocused() const override;
         bool IsHidden() const override;
+
+        InputManager& GetInputManager() override;
+        CursorManager& GetCursorManager() override;
         WindowAPI GetAPI() const override;
 
         /* --- EVENTS --- */
@@ -80,13 +83,17 @@ namespace Sierra
     private:
         MacOSInstance &macOSInstance;
 
-        CocoaWindowDelegate* delegate;
-        CocoaWindowContentView* view;
-        CocoaWindowImplementation* window;
+        CocoaInputManager* inputManager; // A raw pointer, as ObjectiveC++ is doing some questionable automatic frees, causing segfaults when not managed manually
+        CocoaCursorManager cursorManager;
 
         bool maximized = false;
         bool closed = false;
-        float GetTitleBarHeight() const;
+
+        CocoaWindowDelegate* delegate = nullptr;
+        CocoaWindowContentView* view = nullptr;
+        CocoaWindowImplementation* window = nullptr;
+
+        float32 GetTitleBarHeight() const;
 
     };
 

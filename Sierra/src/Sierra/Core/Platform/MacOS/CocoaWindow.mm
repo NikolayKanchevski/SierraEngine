@@ -20,10 +20,7 @@
     - (instancetype) initWithWindow: (Sierra::CocoaWindow*) initWindow;
     {
         self = [super init];
-        if (self != nil)
-        {
-            window = initWindow;
-        }
+        window = initWindow;
         return self;
     }
 
@@ -32,7 +29,7 @@
     - (BOOL) windowShouldClose: (id) sender
     {
         window->WindowShouldClose();
-        return YES;
+        return NO;
     }
 
     - (void) windowDidResize: (NSNotification*) notification
@@ -71,34 +68,100 @@
 
 @interface CocoaWindowContentView : NSView<NSTextInputClient>
 
-    /* --- MEMBERS --- */
-    {
-        NSTrackingArea* trackingArea;
-        NSMutableAttributedString* markedText;
-    }
-
 @end
 
 @implementation CocoaWindowContentView
 
+    /* --- MEMBERS --- */
+    {
+        Sierra::CocoaWindow* window;
+        NSTrackingArea* trackingArea;
+        NSMutableAttributedString* markedText;
+    }
+
     /* --- CONSTRUCTORS --- */
 
-    - (instancetype) init
+    - (instancetype) initWithWindow: (Sierra::CocoaWindow*) initWindow;
     {
         self = [super init];
-        if (self != nil)
-        {
-            trackingArea = nil;
-            markedText = [[NSMutableAttributedString alloc] init];
 
-            [self updateTrackingAreas];
-            [self registerForDraggedTypes: @[NSPasteboardTypeURL]];
-        }
+        window = initWindow;
+        trackingArea = nil;
+        markedText = [[NSMutableAttributedString alloc] init];
+        [self updateTrackingAreas];
+        [self registerForDraggedTypes: @[NSPasteboardTypeURL]];
 
         return self;
     }
 
     /* --- POLLING METHODS --- */
+
+    - (void) keyDown: (NSEvent*) event
+    {
+        // No casting error checks are done, since the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
+        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->KeyDown(event);
+        [self interpretKeyEvents: @[event]];
+    }
+
+    - (void) flagsChanged: (NSEvent*) event
+    {
+        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
+        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->FlagsChanged(event);
+    }
+
+    - (void) keyUp: (NSEvent*) event
+    {
+        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
+        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->KeyUp(event);
+    }
+
+    - (void) mouseDown: (NSEvent*) event
+    {
+        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
+        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->MouseDown(event);
+    }
+
+    - (void) rightMouseDown: (NSEvent*) event
+    {
+        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
+        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->RightMouseDown(event);
+    }
+
+    - (void) otherMouseDown: (NSEvent*) event
+    {
+        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
+        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->OtherMouseDown(event);
+    }
+
+    - (void) mouseUp: (NSEvent*) event
+    {
+        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
+        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->MouseUp(event);
+    }
+
+    - (void) rightMouseUp: (NSEvent*) event
+    {
+        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
+        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->RightMouseUp(event);
+    }
+
+    - (void) otherMouseUp: (NSEvent*) event
+    {
+        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
+        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->OtherMouseUp(event);
+    }
+
+    - (void) scrollWheel: (NSEvent*) event
+    {
+        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
+        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->ScrollWheel(event);
+    }
+
+    - (void) mouseMoved: (NSEvent*) event
+    {
+        // Unsafe casting, as the cursor manager type within a CocoaWindow is guaranteed to be CocoaCursorManager
+        static_cast<Sierra::CocoaCursorManager*>(&window->GetCursorManager())->MouseMoved(event);
+    }
 
     - (BOOL) canBecomeKeyView
     {
@@ -185,7 +248,6 @@
 
 @interface CocoaWindowImplementation : NSWindow
 
-
 @end
 
 @implementation CocoaWindowImplementation
@@ -217,23 +279,23 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     CocoaWindow::CocoaWindow(const WindowCreateInfo &createInfo)
-        : Window(createInfo), macOSInstance(*static_cast<MacOSInstance*>(createInfo.platformInstance.get()))
+        : Window(createInfo), macOSInstance(*static_cast<MacOSInstance*>(createInfo.platformInstance.get())), inputManager(new CocoaInputManager({ })), cursorManager({ })
     {
         SR_ERROR_IF(createInfo.platformInstance->GetType() !=+ PlatformType::MacOS, "Cannot create Cocoa window using a platform instance of type [{0}]!", createInfo.platformInstance->GetType()._to_string());
 
         @autoreleasepool
         {
-            // Create view
-            view = [[CocoaWindowContentView alloc] init];
-            SR_ERROR_IF(view == nil, "Could not create Cocoa window view!");
-
             // Create delegate
             delegate = [[CocoaWindowDelegate alloc] initWithWindow: this];
             SR_ERROR_IF(delegate == nil, "Could not create Cocoa window delegate!");
 
             // Create window
-            window = [[CocoaWindowImplementation alloc] initWithContentRect: NSMakeRect(0.0f, 0.0f, static_cast<float>(createInfo.width), static_cast<float>(createInfo.height)) styleMask: NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | (createInfo.resizable ? NSWindowStyleMaskResizable : 0) backing: NSBackingStoreBuffered defer: NO];
+            window = [[CocoaWindowImplementation alloc] initWithContentRect: NSMakeRect(0.0f, 0.0f, static_cast<float32>(createInfo.width), static_cast<float32>(createInfo.height)) styleMask: NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | (createInfo.resizable ? NSWindowStyleMaskResizable : 0) backing: NSBackingStoreBuffered defer: NO];
             SR_ERROR_IF(window == nil, "Could not create Cocoa window!");
+
+            // Create view
+            view = [[CocoaWindowContentView alloc] initWithWindow: this];
+            SR_ERROR_IF(view == nil, "Could not create Cocoa window view!");
         }
 
         // Maximize window manually, or through Cocoa if resizable
@@ -292,7 +354,7 @@ namespace Sierra
     }
 
     /* --- POLLING METHODS --- */
-    
+
     void CocoaWindow::OnUpdate()
     {
         while (true)
@@ -301,6 +363,9 @@ namespace Sierra
             if (event == nil) break;
             [macOSInstance.GetApplication() sendEvent: event];
         }
+
+        inputManager->OnUpdate();
+        cursorManager.OnUpdate();
     }
 
     void CocoaWindow::Minimize()
@@ -378,7 +443,7 @@ namespace Sierra
     {
         // Set new size and move window up, so that it retains its top Y position
         NSRect contentRect = [window contentRectForFrameRect: [window frame]];
-        contentRect.size = NSMakeSize(size.x, size.y - GetTitleBarHeight());
+        contentRect.size = NSMakeSize(size.x, static_cast<float32>(size.y) - GetTitleBarHeight());
         [window setFrame: [window frameRectForContentRect: contentRect] display: YES];
     }
 
@@ -386,7 +451,6 @@ namespace Sierra
     {
         [window setAlphaValue: opacity];
     }
-
 
     /* --- GETTER METHODS --- */
 
@@ -398,7 +462,7 @@ namespace Sierra
     Vector2Int CocoaWindow::GetPosition() const
     {
         const NSRect contentRect = [window frame];
-        return { contentRect.origin.x, -(contentRect.origin.y + contentRect.size.height - [window screen].visibleFrame.size.height) };
+        return { contentRect.origin.x, contentRect.origin.y + contentRect.size.height };
     }
 
     Vector2UInt CocoaWindow::GetSize() const
@@ -414,7 +478,7 @@ namespace Sierra
 
     float32 CocoaWindow::GetOpacity() const
     {
-        return [window alphaValue];
+        return static_cast<float32>([window alphaValue]);
     }
 
     bool CocoaWindow::IsClosed() const
@@ -442,6 +506,16 @@ namespace Sierra
         return ![window isVisible];
     }
 
+    InputManager& CocoaWindow::GetInputManager()
+    {
+        return *inputManager;
+    }
+
+    CursorManager& CocoaWindow::GetCursorManager()
+    {
+        return cursorManager;
+    }
+
     WindowAPI CocoaWindow::GetAPI() const
     {
         return WindowAPI::Cocoa;
@@ -449,59 +523,64 @@ namespace Sierra
 
     /* --- EVENTS --- */
 
-    void CocoaWindow::WindowShouldClose()
-    {
-        Close();
-    }
-
-    void CocoaWindow::WindowDidResize(const NSNotification* notification)
-    {
-        // Get current window size
-        const NSRect contentRect = [view frame];
-
-        // Check if window has been maximized
-        bool nowMaximized = [window isZoomed];
-        if (maximized != nowMaximized)
+    #if defined(__OBJC__)
+        void CocoaWindow::WindowShouldClose()
         {
-            maximized = nowMaximized;
-            if (maximized)
-            {
-                GetWindowMaximizeDispatcher().DispatchEvent();
-                return;
-            }
+            Close();
         }
 
-        // Otherwise handle event like a normal resize
-        GetWindowResizeDispatcher().DispatchEvent(GetSize());
-        GetWindowResizeDispatcher().DispatchEvent(GetFramebufferSize());
-    }
+        void CocoaWindow::WindowDidResize(const NSNotification* notification)
+        {
+            // Get current window size
+            const NSRect contentRect = [view frame];
 
-    void CocoaWindow::WindowDidMove(const NSNotification* notification)
-    {
-        GetWindowMoveDispatcher().DispatchEvent(GetPosition());
-    }
+            // Check if window has been maximized
+            bool nowMaximized = [window isZoomed];
+            if (maximized != nowMaximized)
+            {
+                maximized = nowMaximized;
+                if (maximized)
+                {
+                    GetWindowMaximizeDispatcher().DispatchEvent();
+                    return;
+                }
+            }
 
-    void CocoaWindow::WindowDidMiniaturize(const NSNotification* notification)
-    {
-        GetWindowMinimizeDispatcher().DispatchEvent();
-    }
+            // Otherwise handle event like a normal resize
+            GetWindowResizeDispatcher().DispatchEvent(GetSize());
+            GetWindowResizeDispatcher().DispatchEvent(GetFramebufferSize());
+        }
 
-    void CocoaWindow::WindowDidBecomeKey(const NSNotification* notification)
-    {
-        GetWindowFocusDispatcher().DispatchEvent(true);
-    }
+        void CocoaWindow::WindowDidMove(const NSNotification* notification)
+        {
+            GetWindowMoveDispatcher().DispatchEvent(GetPosition());
+        }
 
-    void CocoaWindow::WindowDidResignKey(const NSNotification* notification)
-    {
-        if (closed) return;
-        GetWindowFocusDispatcher().DispatchEvent(false);
-    }
+        void CocoaWindow::WindowDidMiniaturize(const NSNotification* notification)
+        {
+            GetWindowMinimizeDispatcher().DispatchEvent();
+        }
+
+        void CocoaWindow::WindowDidBecomeKey(const NSNotification* notification)
+        {
+            // MacOS automatically shows cursor when window is unfocused, so we need to manually hide it again when focusing the window
+            if (cursorManager.IsCursorHidden()) cursorManager.HideCursor();
+
+            GetWindowFocusDispatcher().DispatchEvent(true);
+        }
+
+        void CocoaWindow::WindowDidResignKey(const NSNotification* notification)
+        {
+            if (closed) return;
+            GetWindowFocusDispatcher().DispatchEvent(false);
+        }
+    #endif
 
     /* --- PRIVATE METHODS --- */
 
-    float CocoaWindow::GetTitleBarHeight() const
+    float32 CocoaWindow::GetTitleBarHeight() const
     {
-        return window.frame.size.height - [window contentRectForFrameRect: window.frame].size.height;
+        return static_cast<float32>(window.frame.size.height - [window contentRectForFrameRect: window.frame].size.height);
     }
 
     /* --- DESTRUCTOR --- */

@@ -6,57 +6,38 @@
 
 #ifdef __cplusplus
     #pragma region Platform Detection
-        #define PLATFORM_WINDOWS 0
-        #define PLATFORM_LINUX 0
-        #define PLATFORM_APPLE 0
-        #define PLATFORM_MACOS 0
-        #define PLATFORM_MOBILE 0
-        #define PLATFORM_iOS 0
-        #define PLATFORM_ANDROID 0
+        #define SR_PLATFORM_WINDOWS 0
+        #define SR_PLATFORM_LINUX 0
+        #define SR_PLATFORM_MACOS 0
+        #define SR_PLATFORM_iOS 0
+        #define SR_PLATFORM_ANDROID 0
+
+        #define SR_PLATFORM_APPLE (SR_PLATFORM_MACOS || SR_PLATFORM_iOS)
+        #define SR_PLATFORM_MOBILE (SR_PLATFORM_iOS || SR_PLATFORM_ANDROID)
 
         #if _WIN32 || _WIN64
-            #undef PLATFORM_WINDOWS
-            #define PLATFORM_WINDOWS 1
+            #undef SR_PLATFORM_WINDOWS
+            #define SR_PLATFORM_WINDOWS 1
 
         #elif __APPLE__ || __MACH__
-            #include <TargetConditionals.h>
-            #if TARGET_OS_IPHONE && TARGET_OS_MACCATALYST
-                #undef PLATFORM_MACOS
-                #define PLATFORM_MACOS 1
-                #undef PLATFORM_APPLE
-                #define PLATFORM_APPLE 1
-
-            #elif TARGET_OS_IPHONE
-                #undef PLATFORM_iOS
-                #define PLATFORM_iOS 1
-                #undef PLATFORM_APPLE
-                #define PLATFORM_APPLE 1
-                #undef PLATFORM_MOBILE
-                #define PLATFORM_MOBILE 1
-
+            #include "TargetConditionals.h"
+            #if TARGET_OS_IPHONE
+                #undef SR_PLATFORM_iOS
+                #define SR_PLATFORM_iOS 1
             #else
-                #undef PLATFORM_MACOS
-                #define PLATFORM_MACOS 1
-                #undef PLATFORM_APPLE
-                #define PLATFORM_APPLE 1
-
+                #undef SR_PLATFORM_MACOS
+                #define SR_PLATFORM_MACOS 1
             #endif
-
         #elif __ANDROID__
             #undef PLATFORM_ANDROID
             #define PLATFORM_ANDROID 1
-            #undef PLATFORM_MOBILE
-            #define PLATFORM_MOBILE 1
-
         #elif __linux__
-            #undef PLATFORM_LINUX
-            #define PLATFORM_LINUX 1
-
+            #undef SR_PLATFORM_LINUX
+            #define SR_PLATFORM_LINUX 1
         #endif
     #pragma endregion
 
     #pragma region Standard Library
-        #include <iostream>
         #include <algorithm>
         #include <functional>
         #include <memory>
@@ -89,7 +70,7 @@
         #include <any>
         #include <cstdio>
         #include <stdlib.h>
-        #if PLATFORM_WINDOWS
+        #if SR_PLATFORM_WINDOWS
             #define NOMINMAX
         #endif
         #include <limits>
@@ -148,7 +129,7 @@
 	    typedef glm::mat<4, 4, int32> Matrix4x4Int;
 
 	    template<uint32 C, uint32 R>
-	    using Matrix = glm::mat<C, R, float>;
+	    using Matrix = glm::mat<C, R, float32>;
 	    template<uint32 C, uint32 R>
 	    using MatrixInt = glm::mat<C, R, int32>;
 	    template<uint32 C, uint32 R>
@@ -167,6 +148,6 @@
     #pragma region Source Files
         #include "Sierra/Core/API.h"
         #include "Sierra/Core/Logger.h"
-    #include "Sierra/Core/ScopeProfiler.h"
+        #include "Sierra/Core/ScopeProfiler.h"
     #pragma endregion
 #endif

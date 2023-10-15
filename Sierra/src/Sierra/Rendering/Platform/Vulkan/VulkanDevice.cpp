@@ -3,12 +3,17 @@
 //
 
 #include "VulkanDevice.h"
+#if SR_PLATFORM_APPLE
+    #include <vulkan/vulkan_beta.h> // For VK_KHR_PORTABILITY_SUBSET_EXTENSION
+    #define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR static_cast<VkStructureType>(1000163000)
+#endif
 
 #define VMA_IMPLEMENTATION
 #ifdef VMA_STATS_STRING_ENABLED
     #undef VMA_STATS_STRING_ENABLED
     #define VMA_STATS_STRING_ENABLED 0
 #endif
+
 #define VMA_STATIC_VULKAN_FUNCTIONS 1
 #define VMA_DYNAMIC_VULKAN_FUNCTIONS 0
 #include <vk_mem_alloc.h>
@@ -39,14 +44,14 @@ namespace Sierra
                 const PhysicalDeviceInfo currentPhysicalDeviceInfo = GetPhysicalDeviceInfo(physicalDevices[i]);
                 if (currentPhysicalDeviceInfo.rating > physicalDeviceInfo.rating)
                 {
-                    physicalDeviceInfo = std::move(currentPhysicalDeviceInfo);
+                    physicalDeviceInfo = currentPhysicalDeviceInfo;
                     physicalDevice = physicalDevices[i];
                 }
             }
 
             // Save physical device info
-            physicalDeviceProperties = std::move(physicalDeviceInfo.properties);
-            physicalDeviceFeatures = std::move(physicalDeviceInfo.features);
+            physicalDeviceProperties = physicalDeviceInfo.properties;
+            physicalDeviceFeatures = physicalDeviceInfo.features;
         }
 
         // Create logical device from the physical device
@@ -74,12 +79,6 @@ namespace Sierra
                 i++;
             }
 
-            // Set up device features
-            VkPhysicalDeviceFeatures2 physicalDeviceFeatures2{};
-            physicalDeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-            physicalDeviceFeatures2.features = physicalDeviceFeatures;
-            physicalDeviceFeatures2.pNext = nullptr;
-
             // Store pointers of each extension's data, as it needs to be deallocated in the end of the function
             std::vector<void*> extensionDataToFree;
             extensionDataToFree.resize(DEVICE_EXTENSIONS_TO_QUERY.size());
@@ -92,22 +91,51 @@ namespace Sierra
             std::vector<VkExtensionProperties> supportedExtensions(supportedExtensionCount);
             vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &supportedExtensionCount, supportedExtensions.data());
 
+            // Set up device features
+            VkPhysicalDeviceFeatures2 physicalDeviceFeatures2{};
+            physicalDeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+
             // Load queried extensions if supported
             std::vector<const char*> extensionsToLoad;
-            extensionsToLoad.reserve(DEVICE_EXTENSIONS_TO_QUERY.size());
+            #if !SR_PLATFORM_APPLE
+                extensionsToLoad.reserve(DEVICE_EXTENSIONS_TO_QUERY.size());
+            #else
+                extensionsToLoad.reserve(DEVICE_EXTENSIONS_TO_QUERY.size() + 1); // Extra space for VK_KHR_PORTABILITY_SUBSET_EXTENSION
+            #endif
             for (const auto &extension : DEVICE_EXTENSIONS_TO_QUERY)
             {
                 AddExtensionIfSupported(extension, extensionsToLoad, supportedExtensions, physicalDeviceFeatures2, extensionDataToFree);
             }
 
+            #if SR_PLATFORM_APPLE
+                // Set up portability features
+                VkPhysicalDevicePortabilitySubsetFeaturesKHR portabilitySubsetFeatures{};
+                if (IsExtensionSupported(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME, supportedExtensions))
+                {
+                    // Add extension to list
+                    extensionsToLoad.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+
+                    // Configure portability info
+                    portabilitySubsetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR;
+                    portabilitySubsetFeatures.pNext = nullptr;
+
+                    // Retrieve portability features
+                    PushToPNextChain(&physicalDeviceFeatures2, &portabilitySubsetFeatures);
+                    vkGetPhysicalDeviceFeatures2(physicalDevice, &physicalDeviceFeatures2);
+                }
+            #endif
+            
+            // Set to use already defined features
+            physicalDeviceFeatures2.features = physicalDeviceFeatures;
+
             // Set up device create info
             VkDeviceCreateInfo logicalDeviceCreateInfo{};
             logicalDeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-            logicalDeviceCreateInfo.queueCreateInfoCount = queueCreateInfos.size();
+            logicalDeviceCreateInfo.queueCreateInfoCount = static_cast<uint32>(queueCreateInfos.size());
             logicalDeviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
             logicalDeviceCreateInfo.enabledLayerCount = 0;
             logicalDeviceCreateInfo.ppEnabledLayerNames = nullptr;
-            logicalDeviceCreateInfo.enabledExtensionCount = extensionsToLoad.size();
+            logicalDeviceCreateInfo.enabledExtensionCount = static_cast<uint32>(extensionsToLoad.size());
             logicalDeviceCreateInfo.ppEnabledExtensionNames = extensionsToLoad.data();
             logicalDeviceCreateInfo.pEnabledFeatures = nullptr;
             logicalDeviceCreateInfo.flags = 0;
@@ -123,7 +151,11 @@ namespace Sierra
 
             // Deallocate extension data
             for (const auto &data : extensionDataToFree) std::free(data);
-            volkLoadDevice(logicalDevice);
+
+            // Register device for Volk to use
+            #if !SR_PLATFORM_APPLE
+                volkLoadDevice(logicalDevice);
+            #endif
         }
 
         // Create memory allocator
@@ -209,9 +241,9 @@ namespace Sierra
         // Return device info
         PhysicalDeviceInfo info{};
         info.rating = 1.0f; // TODO: Implement actual rating system
-        info.features = std::move(physicalDeviceFeatures);
-        info.properties = std::move(physicalDeviceProperties);
-        info.queueFamilyIndices = std::move(queueFamilyIndices);
+        info.features = physicalDeviceFeatures;
+        info.properties = physicalDeviceProperties;
+        info.queueFamilyIndices = queueFamilyIndices;
         return info;
     }
 
@@ -249,23 +281,28 @@ namespace Sierra
         return indices;
     }
 
+    bool VulkanDevice::IsExtensionSupported(const char* extensionName, const std::vector<VkExtensionProperties> &supportedExtensions)
+    {
+        for (const auto &supportedExtension : supportedExtensions)
+        {
+            if (strcmp(extensionName, supportedExtension.extensionName) == 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     template<typename T>
     bool VulkanDevice::AddExtensionIfSupported(const DeviceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions, T &pNextChain, std::vector<void*> &extensionDataToFree)
     {
         // Check if root extension is found within the supported ones
-        bool extensionSupported = false;
-        for (const auto &supportedExtension : supportedExtensions)
+        bool extensionSupported = IsExtensionSupported(extension.name.c_str(), supportedExtensions);
+        if (extensionSupported && extension.data != nullptr)
         {
-            if (strcmp(extension.name.c_str(), supportedExtension.extensionName) == 0)
-            {
-                if (extension.data != nullptr)
-                {
-                    PushToPNextChain(&pNextChain, extension.data);
-                    extensionDataToFree.push_back(extension.data);
-                }
-                extensionSupported = true;
-                break;
-            }
+            PushToPNextChain(&pNextChain, extension.data);
+            extensionDataToFree.push_back(extension.data);
         }
 
         // If root extension is not found, we do not load it

@@ -15,7 +15,7 @@ namespace Sierra
     X11Instance::X11Instance()
     {
         // Set error handler and initialize X11
-        #if SR_DEBUG
+        #if SR_ENABLE_LOGGING
             XSetErrorHandler([](Display* faultyDisplay, XErrorEvent* errorEvent)
             {
                 // Retrieve error message

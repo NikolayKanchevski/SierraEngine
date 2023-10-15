@@ -42,7 +42,7 @@ In order to build it, you first must make sure you have the following installed 
 
 **Installation:**
 
-First, clone the repository either directly from your favourite IDE (<b><a href="https://visualstudio.microsoft.com">Visual Studio</a></b>, <b><a href="https://www.jetbrains.com/clion/">CLion</a></b>, etc.), or by opening the command line and running:
+Simply clone the repository either directly from your favourite IDE (<b><a href="https://visualstudio.microsoft.com">Visual Studio</a></b>, <b><a href="https://www.jetbrains.com/clion/">CLion</a></b>, etc.), or by opening the command line and running:
 
 ```bat
 $ git clone --recursive https://github.com/NikichaTV/SierraEngine
@@ -50,11 +50,7 @@ $ git clone --recursive https://github.com/NikichaTV/SierraEngine
 
 <br>
 
-All that is left to do is to run a **[Python](https://www.python.org/downloads/)** script to install the core resources the engine needs. You can do it like so:
-
-```bat
-$ python3 Scripts/Setup.py
-```
+And there you have it! You can now play around with the engine itself or create your very own application.
 
 <br>
 
@@ -100,7 +96,9 @@ Wondering how to use the engine? You can check out the online documentation [her
 * [spdlog](https://github.com/gabime/spdlog) - Used for fast, asynchronous debug-only logging.
 * [Vulkan](https://www.vulkan.org/) - Allows for incredibly fast rendering on a wide variety of platforms.
 * [Volk](https://github.com/zeux/volk/tree/master/) - A tool to further optimize [Vulkan](https://www.vulkan.org/)'s CPU overhead.
+* [Glad](https://github.com/Dav1dde/glad) - Dynamic loader for OpenGL.
 * [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For optimal memory management of [Vulkan](https://www.vulkan.org/) objects.
+* [ios-cmake](https://github.com/leetal/ios-cmake) - Essential for building the engine on iOS.
 * [Better Enum](https://github.com/aantron/better-enums) - Compile-time reflected enums.
 * [My Brain](https://ih1.redbubble.net/image.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
 
@@ -108,16 +106,17 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 **Software used:**
 
-* [JetBrains CLion](https://www.jetbrains.com/clion/) - A **cross-platform** IDE used to develop the final C++ version.
-* [JetBrains Rider](https://www.jetbrains.com/rider/) - Another **cross-platform** IDE but for C# which was used to create the .NET 6.0 prototype version of the engine.
-* [Blender](https://www.blender.org/) - For the testing of 3D models and textures functionality.
+* [JetBrains CLion](https://www.jetbrains.com/clion/) - Primary IDE of the project.
+* [JetBrains Rider](https://www.jetbrains.com/rider/) - Another IDE which was used to create the .NET 6.0 prototype version of the engine.
+* [Xcode](https://developer.apple.com/xcode/) - Used to deploy the iOS version on mobile [Apple](https://www.apple.com) devices.
+* [Blender](https://www.blender.org/) - Managing and testing 3D models.
 * [Trello](https://trello.com/b/RMYtZPOg/sierra-engine/) - For pretending to have an organized list of things to implement next.
 
 <br>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LineCounter">Total lines of code: 5,803</p>
-<p align="center" id="LastUpdated">Last updated: 13/09/2023 </p>
+<p align="center" id="LineCounter">Total lines of code: 8,741</p>
+<p align="center" id="LastUpdated">Last updated: 16/10/2023 </p>
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
