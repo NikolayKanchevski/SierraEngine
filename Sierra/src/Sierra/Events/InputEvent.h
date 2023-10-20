@@ -256,16 +256,16 @@ namespace Sierra
             case Key::F23:                      return "F23";
             case Key::F24:                      return "F24";
             case Key::F25:                      return "F25";
-            case Key::KeypadNumber0:            return "Keypad Number0";
-            case Key::KeypadNumber1:            return "Keypad Number1";
-            case Key::KeypadNumber2:            return "Keypad Number2";
-            case Key::KeypadNumber3:            return "Keypad Number3";
-            case Key::KeypadNumber4:            return "Keypad Number4";
-            case Key::KeypadNumber5:            return "Keypad Number5";
-            case Key::KeypadNumber6:            return "Keypad Number6";
-            case Key::KeypadNumber7:            return "Keypad Number7";
-            case Key::KeypadNumber8:            return "Keypad Number8";
-            case Key::KeypadNumber9:            return "Keypad Number9";
+            case Key::KeypadNumber0:            return "Keypad Number 0";
+            case Key::KeypadNumber1:            return "Keypad Number 1";
+            case Key::KeypadNumber2:            return "Keypad Number 2";
+            case Key::KeypadNumber3:            return "Keypad Number 3";
+            case Key::KeypadNumber4:            return "Keypad Number 4";
+            case Key::KeypadNumber5:            return "Keypad Number 5";
+            case Key::KeypadNumber6:            return "Keypad Number 6";
+            case Key::KeypadNumber7:            return "Keypad Number 7";
+            case Key::KeypadNumber8:            return "Keypad Number 8";
+            case Key::KeypadNumber9:            return "Keypad Number 9";
             case Key::KeypadDecimal:            return "Keypad Decimal";
             case Key::KeypadDivide:             return "Keypad Divide";
             case Key::KeypadMultiply:           return "Keypad Multiply";
@@ -296,6 +296,8 @@ namespace Sierra
                 case Key::RightAlt:             return "Right Alt";
             #endif
         }
+
+        return "Unknown";
     }
 
     constexpr static const char* GetMouseButtonName(const MouseButton button)
@@ -306,9 +308,11 @@ namespace Sierra
             case MouseButton::Left:             return "Left";
             case MouseButton::Right:            return "Right";
             case MouseButton::Middle:           return "Middle";
-            case MouseButton::Extra1:           return "Extra1";
-            case MouseButton::Extra2:           return "Extra2";
+            case MouseButton::Extra1:           return "Extra 1";
+            case MouseButton::Extra2:           return "Extra 2";
         }
+
+        return "Unknown";
     }
 
     class SIERRA_API InputEvent : public Event

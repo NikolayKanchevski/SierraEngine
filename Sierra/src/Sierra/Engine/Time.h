@@ -20,7 +20,7 @@ namespace Sierra
     public:
         /* --- CONSTRUCTORS --- */
         TimeStep() = default;
-        explicit TimeStep(const float64 duration, TimeStepType type = TimeStepType::Milliseconds);
+        explicit TimeStep(float64 duration, TimeStepType type = TimeStepType::Milliseconds);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline float64 GetDurationInNanoseconds() const { return duration * 1'000'000.0; }
@@ -29,7 +29,7 @@ namespace Sierra
         [[nodiscard]] inline float64 GetDurationInSeconds() const { return duration / 1'000.0; }
 
         /* --- OPERATORS --- */
-        [[nodiscard]] inline operator float() { return duration; }
+        [[nodiscard]] inline operator float64() const { return duration; }
         [[nodiscard]] inline bool operator <(const TimeStep &other) const { return duration < other.duration; }
         [[nodiscard]] inline bool operator >(const TimeStep &other) const { return duration > other.duration; }
         [[nodiscard]] inline bool operator <=(const TimeStep &other) const { return duration <= other.duration; }
@@ -50,7 +50,7 @@ namespace Sierra
         static TimePoint Now();
 
         /* --- OPERATORS --- */
-        [[nodiscard]] const char* ToString() const;
+        [[nodiscard]] String ToString() const;
         [[nodiscard]] TimeStep operator -(const TimePoint &other) const;
         [[nodiscard]] TimePoint operator +(const TimeStep &duration) const;
         [[nodiscard]] TimePoint operator -(const TimeStep &duration) const;

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#if !PLATFORM_WINDOWS
+#if !SR_PLATFORM_WINDOWS
     #error "Including the WindowsInstance.h file is only allowed in Windows builds!"
 #endif
 
@@ -69,18 +69,22 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        WindowsInstance(const PlatformInstanceCreateInfo &createInfo);
+        explicit WindowsInstance(const PlatformInstanceCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline HINSTANCE GetHInstance() const { return hInstance; }
+        [[nodiscard]] inline HICON GetProcessIcon() const { return processIcon; }
+
         [[nodiscard]] bool IsWindowsVersionOrGreater(DWORD major, DWORD minor, DWORD servicePack) const;
         [[nodiscard]] inline PlatformType GetType() const override { return PlatformType::Windows; }
 
         /* --- DESTRUCTOR --- */
-        ~WindowsInstance();
+        ~WindowsInstance() override;
 
     private:
-        HINSTANCE hInstance;
+        const HINSTANCE hInstance;
+        const HANDLE process;
+        HICON processIcon;
 
     };
 

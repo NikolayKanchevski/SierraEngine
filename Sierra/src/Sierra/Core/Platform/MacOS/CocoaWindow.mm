@@ -357,15 +357,15 @@ namespace Sierra
 
     void CocoaWindow::OnUpdate()
     {
+        inputManager->OnUpdate();
+        cursorManager.OnUpdate();
+
         while (true)
         {
             NSEvent* event = [macOSInstance.GetApplication() nextEventMatchingMask: NSEventMaskAny untilDate: [NSDate distantPast] inMode: NSDefaultRunLoopMode dequeue: YES];
             if (event == nil) break;
             [macOSInstance.GetApplication() sendEvent: event];
         }
-
-        inputManager->OnUpdate();
-        cursorManager.OnUpdate();
     }
 
     void CocoaWindow::Minimize()

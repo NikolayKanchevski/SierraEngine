@@ -51,15 +51,15 @@ namespace Sierra
 
     /* --- OPERATORS --- */
 
-    const char* TimePoint::ToString() const
+    String TimePoint::ToString() const
     {
         const std::time_t time = std::chrono::system_clock::to_time_t(timePoint);
-        return std::asctime(std::localtime(&time));
+        return (std::stringstream() << time).str();
     }
 
     TimeStep TimePoint::operator-(const Sierra::TimePoint &other) const
     {
-        return TimeStep(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<float64>(timePoint - other.timePoint)).count());
+        return TimeStep(static_cast<float64>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<float64>(timePoint - other.timePoint)).count()));
     }
 
     TimePoint TimePoint::operator-(const TimeStep &duration) const

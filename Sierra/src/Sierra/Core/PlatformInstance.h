@@ -30,7 +30,7 @@ namespace Sierra
         std::function<void()> OnEnd;
     };
 
-    class PlatformInstance
+    class SIERRA_API PlatformInstance
     {
     public:
         /* --- CONSTRUCTORS --- */

@@ -5,7 +5,6 @@
 #pragma once
 
 #pragma region API Definitions
-    // Only export symbols in debug, as the engine will be built as a shared library
     #if defined(SR_USE_SHARED_LIBRARY)
         #if defined(_WIN32)
             #if defined(SR_BUILD_SHARED_LIBRARY)
@@ -20,7 +19,7 @@
                 #define SIERRA_API
             #endif
         #else
-            #error "Cannot export symbols for current system!"
+            #error "Cannot export symbols on this system!"
         #endif
     #else
         #define SIERRA_API

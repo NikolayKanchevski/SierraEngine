@@ -17,8 +17,8 @@ namespace Sierra
 
     struct VersionCreateInfo
     {
-        uint16 major;
-        uint16 minor;
+        uint16 major = 0;
+        uint16 minor = 0;
         uint16 patch = 0;
         VersionState state = VersionState::Experimental;
     };

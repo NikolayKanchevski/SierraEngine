@@ -68,4 +68,32 @@ namespace Sierra
         return { 0, 0 };
     }
 
+    /* --- PRIVATE METHODS --- */
+
+    bool InputManager::IsKeyCombinationPressedImplementation(const std::initializer_list<Key> &keys)
+    {
+        bool atLeastOneKeyPressed = false;
+        for (const auto key : keys)
+        {
+            if (IsKeyHeld(key)) continue;
+
+            if (IsKeyPressed(key))
+            {
+                atLeastOneKeyPressed = true;
+                continue;
+            }
+
+            return false;
+        }
+
+        return atLeastOneKeyPressed;
+    }
+
+    bool InputManager::IsKeyCombinationHeldImplementation(const std::initializer_list<Key> &keys)
+    {
+        return std::ranges::all_of(keys, [this](const auto key) {
+            return IsKeyHeld(key);
+        });
+    }
+
 }

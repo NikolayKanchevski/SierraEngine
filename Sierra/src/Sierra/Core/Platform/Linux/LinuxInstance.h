@@ -4,7 +4,7 @@
 
 #pragma once
 
-#if !PLATFORM_LINUX
+#if !SR_PLATFORMLINUX
     #error "Including the LinuxInstance.h file is only allowed in Linux builds!"
 #endif
 
@@ -28,7 +28,7 @@ namespace Sierra
         [[nodiscard]] inline PlatformType GetType() const override { return PlatformType::Linux; }
 
         /* --- DESTRUCTOR --- */
-        ~LinuxInstance();
+        ~LinuxInstance() override;
 
     private:
         Display* display = nullptr;

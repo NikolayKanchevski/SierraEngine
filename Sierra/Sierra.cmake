@@ -44,10 +44,6 @@ option(SIERRA_BUILD_VULKAN "Wether to build Vulkan and its resources." ON)
 if(SIERRA_PLATFORM_APPLE)
     option(SIERRA_BUILD_XCODE_PROJECT "Wether to, instead of building an executable, create an Xcode project, to then use to build for macOS, iOS, iPadOS, watchOS, tvOS, or visionOS" OFF)
 endif()
-if(SIERRA_PLATFORM_WINDOWS)
-    # TODO(Windows): Add support for VS projects
-    option(SIERRA_BUILD_VISUAL_STUDIO_PROJECT "Wether to, instead of building an executable, creat a Visual Studio 2019 project, to then use on and build for Windows or Linux) OFF")
-endif()
 
 function(SierraBuildApplication SOURCE_FILES)
     # === CHECK IF REQUIREMENTS ARE MET === #
@@ -75,43 +71,18 @@ function(SierraBuildApplication SOURCE_FILES)
         message(STATUS "[Sierra]: Building application into an Xcode project...")
     endif()
 
-    # === BINARY GENERATION === #
-    if(SIERRA_PLATFORM_WINDOWS)
-        add_executable(${SIERRA_APPLICATION_NAME} SIERRA_PLATFORM_WINDOWS ${SOURCE_FILES})
-    elseif(SIERRA_PLATFORM_APPLE)
-        add_executable(${SIERRA_APPLICATION_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
-        set_target_properties(${PROJECT_NAME} PROPERTIES
-            BUNDLE TRUE
-            MACOSX_BUNDLE_BUNDLE_NAME ${SIERRA_APPLICATION_NAME}
-            MACOSX_BUNDLE_GUI_IDENTIFIER "com.sierra.${SIERRA_APPLICATION_NAME}"
-            MACOSX_BUNDLE_PRODUCT_IDENTIFIER "com.sierra.${SIERRA_APPLICATION_NAME}"
-            MACOSX_BUNDLE_BUNDLE_VERSION "${SIERRA_VERSION_MAJOR}.${SIERRA_VERSION_MINOR}.${SIERRA_VERSION_PATCH}"
-            MACOSX_BUNDLE_SHORT_VERSION_STRING "${SIERRA_VERSION_MAJOR}"
-        )
-        if (SIERRA_PLATFORM_iOS)
-            set_target_properties(${PROJECT_NAME} PROPERTIES
-                MACOSX_BUNDLE_INFO_PLIST ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/plist.in
-            )
+    # === COMPILER SETTINGS === #
+    if(SIERRA_ENABLE_OPTIMIZATIONS)
+        if(SIERRA_COMPILER_MSVC)
+            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox")
+        elseif(SIERRA_COMPILER_CLANG OR SIERRA_COMPILER_GCC)
+            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
         endif()
-    else()
-        add_executable(${SIERRA_APPLICATION_NAME} ${SOURCE_FILES})
     endif()
 
-    # === SET BINARY ICON === #
-    if(SIERRA_PLATFORM_WINDOWS)
-        # TODO(Windows): Implement
-    elseif(SIERRA_PLATFORM_LINUX)
-        # TODO(Linux): Implement
-    elseif(SIERRA_BUILD_XCODE_PROJECT)
-
-    elseif(SIERRA_PLATFORM_MACOS)
-        # Copy .icns file to application's resources
-        set(ICON_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/${SIERRA_APPLICATION_NAME}.app/Resources/${SIERRA_APPLICATION_NAME}Icon.icns")
-        configure_file(${SIERRA_APPLICATION_ICON_ICNS} ${ICON_OUTPUT_PATH} COPYONLY)
-
-        # Link icon with the application
-        set_source_files_properties(${ICON_OUTPUT_PATH} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-        target_sources(${PROJECT_NAME} PRIVATE ${ICON_OUTPUT_PATH})
+    if (SIERRA_COMPILER_MSVC)
+        add_compile_options(/wd4250)
+        add_compile_options(/wd4251)
     endif()
 
     # === LIBRARY GENERATION === #
@@ -119,8 +90,6 @@ function(SierraBuildApplication SOURCE_FILES)
     if(SIERRA_BUILD_STATIC_LIBRARY)
         message(STATUS "[Sierra]: Building Sierra as static library...")
         add_library(Sierra STATIC)
-
-        target_compile_definitions(${PROJECT_NAME} PRIVATE "SR_BUILD_STATIC_LIBRARY")
     elseif(SIERRA_BUILD_SHARED_LIBRARY)
         message(STATUS "[Sierra]: Building Sierra as dynamic library...")
         add_library(Sierra SHARED)
@@ -131,38 +100,76 @@ function(SierraBuildApplication SOURCE_FILES)
         else()
             set_target_properties(Sierra PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${SIERRA_APPLICATION_NAME}.app/Contents/Frameworks/")
         endif()
-
-        target_compile_definitions(Sierra PRIVATE "SR_USE_SHARED_LIBRARY")
-        target_compile_definitions(${PROJECT_NAME} PRIVATE "SR_USE_SHARED_LIBRARY")
-        target_compile_definitions(Sierra PRIVATE "SR_BUILD_SHARED_LIBRARY")
     else()
         message(FATAL_ERROR "[Sierra]: Incorrect configuration for Sierra - either SIERRA_BUILD_STATIC_LIBRARY, or SIERRA_BUILD_SHARED_LIBRARY must be turned on!")
     endif()
 
-    # === COMPILER SETTINGS === #
-    if(SIERRA_ENABLE_OPTIMIZATIONS)
-        if(SIERRA_COMPILER_MSVC)
-            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox")
-        elseif(SIERRA_COMPILER_CLANG OR SIERRA_COMPILER_GCC)
-            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+    # === BINARY GENERATION === #
+    if(SIERRA_PLATFORM_WINDOWS)
+        # Have a folder for all the temporary resources
+        set(RESOURCES_FOLDER_PATH "${CMAKE_CURRENT_BINARY_DIR}/Resources")
+
+        # Create RC file and link the icon
+        set(RC_FILE_PATH "${RESOURCES_FOLDER_PATH}/Application.rc")
+        file(WRITE ${RC_FILE_PATH} "IDR_MAINFRAME ICON\n\"Icon.ico\"")
+
+        # Copy icon to binary folder
+        set(ICON_OUTPUT_PATH "${RESOURCES_FOLDER_PATH}/Icon.ico")
+        configure_file(${SIERRA_APPLICATION_ICON_ICO} ${ICON_OUTPUT_PATH} COPYONLY)
+
+        # Create executable and delete temporary files
+        add_executable(${SIERRA_APPLICATION_NAME} ${SOURCE_FILES} ${RC_FILE_PATH})
+    elseif(SIERRA_PLATFORM_APPLE)
+        add_executable(${SIERRA_APPLICATION_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
+        set_target_properties(${SIERRA_APPLICATION_NAME} PROPERTIES
+            BUNDLE TRUE
+            MACOSX_BUNDLE_BUNDLE_NAME ${SIERRA_APPLICATION_NAME}
+            MACOSX_BUNDLE_GUI_IDENTIFIER "com.sierra.${SIERRA_APPLICATION_NAME}"
+            MACOSX_BUNDLE_PRODUCT_IDENTIFIER "com.sierra.${SIERRA_APPLICATION_NAME}"
+            MACOSX_BUNDLE_BUNDLE_VERSION "${SIERRA_VERSION_MAJOR}.${SIERRA_VERSION_MINOR}.${SIERRA_VERSION_PATCH}"
+            MACOSX_BUNDLE_SHORT_VERSION_STRING "${SIERRA_VERSION_MAJOR}"
+        )
+
+        # Copy .icns file to application's resources
+        set(ICON_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/${SIERRA_APPLICATION_NAME}.app/Resources/${SIERRA_APPLICATION_NAME}Icon.icns")
+        configure_file(${SIERRA_APPLICATION_ICON_ICNS} ${ICON_OUTPUT_PATH} COPYONLY)
+
+        # Link icon with the application
+        set_source_files_properties(${ICON_OUTPUT_PATH} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+        target_sources(${SIERRA_APPLICATION_NAME} PRIVATE ${ICON_OUTPUT_PATH})
+
+        if (SIERRA_PLATFORM_iOS)
+            # Set Xcode project's info.plist
+            set_target_properties(${SIERRA_APPLICATION_NAME} PROPERTIES
+                MACOSX_BUNDLE_INFO_PLIST ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/plist.in
+            )
         endif()
+    else()
+        add_executable(${SIERRA_APPLICATION_NAME} ${SOURCE_FILES})
+    endif()
+
+    # === EXPORT ENGINE SYMBOLS ===
+    if (SIERRA_BUILD_STATIC_LIBRARY)
+        target_compile_definitions(${SIERRA_APPLICATION_NAME} PRIVATE "SR_BUILD_STATIC_LIBRARY")
+    elseif(SIERRA_BUILD_SHARED_LIBRARY)
+        target_compile_definitions(Sierra PRIVATE "SR_BUILD_SHARED_LIBRARY")
+        target_compile_definitions(Sierra PRIVATE "SR_USE_SHARED_LIBRARY")
+        target_compile_definitions(${SIERRA_APPLICATION_NAME} PRIVATE "SR_USE_SHARED_LIBRARY")
     endif()
 
     # === CREATE DEFINITIONS === #
     if(SIERRA_DEBUG_BUILD)
         target_compile_definitions(Sierra PRIVATE "SR_DEBUG")
-        target_compile_definitions(${PROJECT_NAME} PRIVATE "SR_DEBUG")
+        target_compile_definitions(${SIERRA_APPLICATION_NAME} PRIVATE "SR_DEBUG")
     endif()
 
     if(SIERRA_ENABLE_LOGGING)
         target_compile_definitions(Sierra PRIVATE "SR_ENABLE_LOGGING")
-        target_compile_definitions(${PROJECT_NAME} PRIVATE "SR_ENABLE_LOGGING")
+        target_compile_definitions(${SIERRA_APPLICATION_NAME} PRIVATE "SR_ENABLE_LOGGING")
     endif()
 
     # === PLATFORM-SPECIFIC LIBRARY LINKAGE === #
-    if(SIERRA_PLATFORM_WINDOWS)
-
-    elseif(SIERRA_PLATFORM_LINUX)
+    if(SIERRA_PLATFORM_LINUX)
         find_package(X11 REQUIRED)
         # TODO(Linux): Check if X11 has been found
         target_link_libraries(Sierra PRIVATE ${X11_LIBRARIES})
@@ -220,9 +227,12 @@ function(SierraBuildApplication SOURCE_FILES)
     if(SIERRA_PLATFORM_WINDOWS)
         # Add Windows-only source files
         target_sources(Sierra PRIVATE
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32CursorManager.cpp
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32CursorManager.h
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/WindowsInstance.cpp
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/WindowsInstance.h
-
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32InputManager.cpp
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32InputManager.h
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32Window.cpp
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32Window.h
         )
@@ -319,7 +329,7 @@ function(SierraBuildApplication SOURCE_FILES)
 
                 # Set Vulkan definitions
                 target_compile_definitions(Sierra PRIVATE "SR_VULKAN_SUPPORTED")
-                target_compile_definitions(${PROJECT_NAME} PRIVATE "SR_VULKAN_SUPPORTED")
+                target_compile_definitions(${SIERRA_APPLICATION_NAME} PRIVATE "SR_VULKAN_SUPPORTED")
 
                 # Add Vulkan source files
                 target_sources(Sierra PRIVATE
@@ -383,8 +393,8 @@ function(SierraBuildApplication SOURCE_FILES)
 
     # === LINK ENGINE LIBRARY WITH APPLICATION === #
     target_include_directories(Sierra SYSTEM PRIVATE ${INCLUDE_DIRECTORIES})
-    target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${INCLUDE_DIRECTORIES})
-    target_link_libraries(${PROJECT_NAME} PRIVATE Sierra)
+    target_include_directories(${SIERRA_APPLICATION_NAME} SYSTEM PRIVATE ${INCLUDE_DIRECTORIES})
+    target_link_libraries(${SIERRA_APPLICATION_NAME} PRIVATE Sierra)
 
     # === LINK PRECOMPILED HEADERS === #
     target_precompile_headers(Sierra PRIVATE ${SIERRA_DIRECTORY}/src/srpch.h)
@@ -392,19 +402,16 @@ function(SierraBuildApplication SOURCE_FILES)
     # === RUN UPDATE SCRIPT === #
     find_package(Python)
     if(Python_FOUND)
-        add_custom_target(RunUpdatePythonScript
+        add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} PRE_BUILD
             COMMAND ${Python_EXECUTABLE} ${SIERRA_DIRECTORY}/scripts/UpdateProject.py
-            COMMENT "[Sierra]: Running project update scripts..."
         )
-        add_dependencies(Sierra RunUpdatePythonScript)
+        message(STATUS "[Sierra]: Running project update scripts...")
     else()
         message(WARNING "[Sierra]: Python install was not found on the machine. Project update scripts cannot be run!")
     endif()
 
     # === PROJECT GENERATION CONFIGURATION (LAST BECAUSE WE MAY NEED TO MODIFY ALL EXISTING TARGETS) === #
-    if(SIERRA_BUILD_VISUAL_STUDIO_PROJECT)
-
-    elseif(SIERRA_BUILD_XCODE_PROJECT)
+    if(SIERRA_BUILD_XCODE_PROJECT)
         function(get_all_targets var)
             set(targets)
             get_all_targets_recursive(targets ${CMAKE_CURRENT_SOURCE_DIR})
@@ -449,7 +456,6 @@ function(SierraBuildApplication SOURCE_FILES)
         set_global_xcode_property(MACOSX_DEPLOYMENT_TARGET "10.13.6" "All")
 
         set_xcode_property(Sierra CLANG_ENABLE_OBJC_ARC "NO" "All")
-        set_xcode_property(${PROJECT_NAME} PRODUCT_BUNDLE_IDENTIFIER "com.sierra.${SIERRA_APPLICATION_NAME}" "All")
+        set_xcode_property(${SIERRA_APPLICATION_NAME} PRODUCT_BUNDLE_IDENTIFIER "com.sierra.${SIERRA_APPLICATION_NAME}" "All")
     endif()
-
 endfunction()

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#if !PLATFORM_LINUX
+#if !SR_PLATFORMLINUX
     #error "Including the X11Window.h file is only allowed in Linux builds!"
 #endif
 

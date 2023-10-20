@@ -58,7 +58,7 @@ namespace Sierra
         UniquePtr<PlatformInstance> platformInstance = nullptr;
         UniquePtr<RenderingContext> renderingContext = nullptr;
 
-        class FrameLimiter
+        class SIERRA_API FrameLimiter
         {
         public:
             /* --- CONSTRUCTORS --- */

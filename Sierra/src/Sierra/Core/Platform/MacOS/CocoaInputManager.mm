@@ -22,6 +22,7 @@ namespace Sierra
 
     void CocoaInputManager::OnUpdate()
     {
+        // Swap out current key/mouse states and move them to the array for the last frame
         memcpy(lastKeyStates, keyStates, sizeof(keyStates) / sizeof(keyStates[0]));
         memcpy(lastMouseButtonStates, mouseButtonStates, sizeof(mouseButtonStates) / sizeof(mouseButtonStates[0]));
         mouseScroll = { 0, 0 };
@@ -80,19 +81,11 @@ namespace Sierra
         void CocoaInputManager::KeyDown(const NSEvent* event)
         {
             // Prevent out of bounds error
-            if ([event keyCode] > (sizeof(KEY_TABLE) / sizeof(KEY_TABLE[0]))) return;
+            if ([event keyCode] >= (sizeof(KEY_TABLE) / sizeof(KEY_TABLE[0]))) return;
 
             // Translate key
             const Key key = KEY_TABLE[[event keyCode]];
             if (key == Key::Unknown) return;
-
-            // Translate modifier flags
-            KeyModifierFlags modifierFlags = KEY_MODIFIER_FLAGS_NONE;
-            if ([event modifierFlags] & NSEventModifierFlagShift)    modifierFlags |= KEY_MODIFIER_FLAGS_SHIFT;
-            if ([event modifierFlags] & NSEventModifierFlagControl)  modifierFlags |= KEY_MODIFIER_FLAGS_CONTROL;
-            if ([event modifierFlags] & NSEventModifierFlagOption)   modifierFlags |= KEY_MODIFIER_FLAGS_ALT;
-            if ([event modifierFlags] & NSEventModifierFlagCommand)  modifierFlags |= KEY_MODIFIER_FLAGS_SYSTEM;
-            if ([event modifierFlags] & NSEventModifierFlagCapsLock) modifierFlags |= KEY_MODIFIER_FLAGS_CAPS_LOCK;
 
             // Save key state and trigger events
             keyStates[GET_KEY_INDEX(key)] = InputAction::Press;
@@ -102,7 +95,7 @@ namespace Sierra
         void CocoaInputManager::FlagsChanged(const NSEvent* event)
         {
             // Prevent out of bounds error
-            if ([event keyCode] > (sizeof(KEY_TABLE) / sizeof(KEY_TABLE[0]))) return;
+            if ([event keyCode] >= (sizeof(KEY_TABLE) / sizeof(KEY_TABLE[0]))) return;
 
             // Translate key
             const Key key = KEY_TABLE[[event keyCode]];
@@ -175,19 +168,11 @@ namespace Sierra
         void CocoaInputManager::KeyUp(const NSEvent* event)
         {
             // Prevent out of bounds error
-            if ([event keyCode] > (sizeof(KEY_TABLE) / sizeof(KEY_TABLE[0]))) return;
+            if ([event keyCode] >= (sizeof(KEY_TABLE) / sizeof(KEY_TABLE[0]))) return;
 
             // Translate key
             const Key key = KEY_TABLE[[event keyCode]];
             if (key == Key::Unknown) return;
-
-            // Translate modifier flags
-            KeyModifierFlags modifierFlags = KEY_MODIFIER_FLAGS_NONE;
-            if ([event modifierFlags] & NSEventModifierFlagShift)    modifierFlags |= KEY_MODIFIER_FLAGS_SHIFT;
-            if ([event modifierFlags] & NSEventModifierFlagControl)  modifierFlags |= KEY_MODIFIER_FLAGS_CONTROL;
-            if ([event modifierFlags] & NSEventModifierFlagOption)   modifierFlags |= KEY_MODIFIER_FLAGS_ALT;
-            if ([event modifierFlags] & NSEventModifierFlagCommand)  modifierFlags |= KEY_MODIFIER_FLAGS_SYSTEM;
-            if ([event modifierFlags] & NSEventModifierFlagCapsLock) modifierFlags |= KEY_MODIFIER_FLAGS_CAPS_LOCK;
 
             // Save key state and trigger events
             keyStates[GET_KEY_INDEX(key)] = InputAction::Release;

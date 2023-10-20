@@ -33,7 +33,7 @@ private:
             const String title = "Window #" + std::to_string(i);
             windows[i] = Window::Create({
                 .platformInstance = GetPlatformInstance(),
-                .title = title,        
+                .title = title,
                 .resizable = true,
                 .maximize = false,
                 .hide = false
@@ -66,7 +66,7 @@ private:
         #endif
     }
 
-    bool OnUpdate(const TimeStep &timestep) override
+    bool OnUpdate(const TimeStep &timeStep) override
     {
         bool allWindowsAreClosed = true;
 
@@ -79,6 +79,9 @@ private:
                 allWindowsAreClosed = false;
             }
         }
+
+        if (windows[0]->GetInputManager().IsKeyCombinationPressed(Key::LeftControl, Key::LeftShift, Key::R))
+            printf("YES\n");
 
         return allWindowsAreClosed;
     }

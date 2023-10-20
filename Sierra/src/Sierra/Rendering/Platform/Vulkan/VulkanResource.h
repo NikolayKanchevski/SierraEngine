@@ -33,7 +33,7 @@ namespace Sierra
         [[nodiscard]] inline GraphicsAPI GetAPI() const override { return GraphicsAPI::Vulkan; };
 
     protected:
-        void PushToPNextChain(void* mainStruct, void* newStruct);
+        static void PushToPNextChain(void* mainStruct, void* newStruct);
 
     };
 

@@ -13,7 +13,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     Win32Window::Win32Window(const WindowCreateInfo &createInfo)
-        : Window(createInfo), windowsInstance(*static_cast<WindowsInstance*>(createInfo.platformInstance.get())), title(std::move(createInfo.title))
+        : Window(createInfo), windowsInstance(*static_cast<WindowsInstance*>(createInfo.platformInstance.get())), inputManager(Win32InputManager({ })), cursorManager(Win32CursorManager({ })), title(createInfo.title)
     {
         SR_ERROR_IF(createInfo.platformInstance->GetType() !=+ PlatformType::Windows, "Cannot create Win32 window using a platform instance of type [{0}]!", createInfo.platformInstance->GetType()._to_string());
 
@@ -39,8 +39,8 @@ namespace Sierra
         RECT rect;
         rect.left = 0;
         rect.top = 0;
-        rect.right = createInfo.width;
-        rect.bottom = createInfo.height;
+        rect.right = static_cast<LONG>(createInfo.width);
+        rect.bottom = static_cast<LONG>(createInfo.height);
         AdjustWindowRectEx(&rect, style, FALSE, exStyle);
 
         // Create window
@@ -57,9 +57,12 @@ namespace Sierra
         bool adjustedForDPI = false;
         if (createInfo.maximize && !createInfo.resizable)
         {
+            // Set up monitor info
+            MONITORINFO monitorInfo;
+            ZeroMemory(&monitorInfo, sizeof(MONITORINFO));
+
             // Get monitor & its dimensions
             HMONITOR monitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
-            MONITORINFO monitorInfo { sizeof(MONITORINFO) };
             if (GetMonitorInfo(monitor, &monitorInfo))
             {
                 // Set rect to be the same size as monitor work area, and adjust that to account for DPI scaling
@@ -84,6 +87,9 @@ namespace Sierra
             ChangeWindowMessageFilterEx(window, WM_COPYGLOBALDATA, MSGFLT_ALLOW, NULL);
         }
 
+        // Set window's icon to that of the binary
+        SendMessage(window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(windowsInstance.GetProcessIcon()));
+
         // Connect this window instance to the Windows window handle
         SetWindowLongPtr(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
@@ -96,7 +102,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    LRESULT CALLBACK Win32Window::WindowProc(HWND callingWindow, UINT message, WPARAM wParam, LPARAM lParam)
+    LRESULT CALLBACK Win32Window::WindowProc(const HWND callingWindow, const UINT message, const WPARAM wParam, const LPARAM lParam)
     {
         Win32Window* window = reinterpret_cast<Win32Window*>(GetWindowLongPtr(callingWindow, GWLP_USERDATA));
         if (window != nullptr)
@@ -111,6 +117,10 @@ namespace Sierra
                         case SC_MONITORPOWER:
                         {
                             return 0;
+                        }
+                        default:
+                        {
+                            break;
                         }
                     }
                     break;
@@ -181,6 +191,40 @@ namespace Sierra
                     PostQuitMessage(0);
                     return 0;
                 }
+                case WM_KEYDOWN:
+                case WM_SYSKEYDOWN:
+                case WM_KEYUP:
+                case WM_SYSKEYUP:
+                {
+                    window->inputManager.KeyMessage(message, wParam, lParam);
+                    break;
+                }
+                case WM_LBUTTONDOWN:
+                case WM_LBUTTONUP:
+                case WM_RBUTTONDOWN:
+                case WM_RBUTTONUP:
+                case WM_MBUTTONDOWN:
+                case WM_MBUTTONUP:
+                case WM_XBUTTONDOWN:
+                case WM_XBUTTONUP:
+                {
+                    window->inputManager.MouseButtonMessage(message, wParam, lParam);
+                    break;
+                }
+                case WM_MOUSEHWHEEL:
+                {
+                    window->inputManager.MouseWheelMessage(message, wParam, lParam);
+                    break;
+                }
+                case WM_MOUSEMOVE:
+                {
+                    window->cursorManager.MouseMoveMessage(message, wParam, lParam);
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
             }
         }
 
@@ -189,8 +233,11 @@ namespace Sierra
 
     void Win32Window::OnUpdate()
     {
+        cursorManager.OnUpdate();
+        inputManager.OnUpdate();
+
         MSG message;
-        while (PeekMessage(&message, window, 0u, 0u, PM_REMOVE))
+        while (PeekMessage(&message, window, 0, 0, PM_REMOVE))
         {
             TranslateMessage(&message);
             DispatchMessage(&message);
@@ -331,7 +378,7 @@ namespace Sierra
         // Get alpha
         if ((GetWindowLongW(window, GWL_EXSTYLE) & WS_EX_LAYERED) && GetLayeredWindowAttributes(window, NULL, &alpha, &flags))
         {
-            if (flags & LWA_ALPHA) return alpha / 255.f;
+            if (flags & LWA_ALPHA) return static_cast<float32>(alpha) / 255.f;
         }
 
         return 1.0f;
@@ -360,6 +407,21 @@ namespace Sierra
     bool Win32Window::IsHidden() const
     {
         return !IsWindowVisible(window);
+    }
+
+    InputManager& Win32Window::GetInputManager()
+    {
+        return inputManager;
+    }
+
+    CursorManager& Win32Window::GetCursorManager()
+    {
+        return cursorManager;
+    }
+
+    WindowAPI Win32Window::GetAPI() const
+    {
+        return WindowAPI::Win32;
     }
 
     /* --- PRIVATE METHODS --- */

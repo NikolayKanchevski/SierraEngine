@@ -1,27 +1,26 @@
 //
-// Created by Nikolay Kanchevski on 3.10.23.
+// Created by Nikolay Kanchevski on 10.20.2023.
 //
-
-#if !SR_PLATFORM_MACOS
-    #error "Including the CocoaCursorManager.h file is only allowed in macOS builds!"
-#endif
 
 #pragma once
 
+#if !SR_PLATFORM_WINDOWS
+    #error "Including the Win32CursorManager.h file is only allowed in Windows builds!"
+#endif
+
 #include "../../CursorManager.h"
 
-#if defined(__OBJC__)
-    #include <Cocoa/Cocoa.h>
-#endif
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 
 namespace Sierra
 {
 
-    class SIERRA_API CocoaCursorManager final : public CursorManager
+    class SIERRA_API Win32CursorManager final : public CursorManager
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit CocoaCursorManager(const CursorManagerCreateInfo &createInfo);
+        explicit Win32CursorManager(const CursorManagerCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         void OnUpdate() override;
@@ -40,16 +39,12 @@ namespace Sierra
         float32 GetVerticalDelta() override;
 
         /* --- EVENTS --- */
-        #if defined(__OBJC__)
-            void MouseMoved(const NSEvent* event);
-        #endif
+        void MouseMoveMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
     private:
         Vector2 cursorPosition = { 0, 0 };
         Vector2 lastCursorPosition = { 0, 0 };
         bool cursorShown = true;
-
-        double InvertWindowPositionY(double yPosition);
 
     };
 

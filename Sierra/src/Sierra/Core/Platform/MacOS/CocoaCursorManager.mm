@@ -38,14 +38,14 @@ namespace Sierra
 
     void CocoaCursorManager::ShowCursor()
     {
+        cursorShown = true;
         [NSCursor unhide];
-        cursorHidden = false;
     }
 
     void CocoaCursorManager::HideCursor()
     {
+        cursorShown = false;
         [NSCursor hide];
-        cursorHidden = true;
     }
 
     /* --- GETTER METHODS --- */
@@ -57,20 +57,20 @@ namespace Sierra
 
     bool CocoaCursorManager::IsCursorShown()
     {
-        return !cursorHidden;
+        return cursorShown;
     }
 
     bool CocoaCursorManager::IsCursorHidden()
     {
-        return cursorHidden;
+        return !cursorShown;
     }
 
-    float CocoaCursorManager::GetHorizontalDelta()
+    float32 CocoaCursorManager::GetHorizontalDelta()
     {
         return -(lastCursorPosition.x - cursorPosition.x);
     }
 
-    float CocoaCursorManager::GetVerticalDelta()
+    float32 CocoaCursorManager::GetVerticalDelta()
     {
         return -(lastCursorPosition.y - cursorPosition.y);
     }
@@ -80,7 +80,7 @@ namespace Sierra
     #if defined(__OBJC__)
         void CocoaCursorManager::MouseMoved(const NSEvent* event)
         {
-            // Get position within the window and save new position
+            // Get and save position within the window
             const NSPoint position = [event locationInWindow];
             cursorPosition = { position.x, position.y };
 

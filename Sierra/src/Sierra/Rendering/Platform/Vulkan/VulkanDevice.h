@@ -51,8 +51,8 @@ namespace Sierra
         struct PhysicalDeviceInfo
         {
             float32 rating = -1.0f;
-            VkPhysicalDeviceFeatures features;
-            VkPhysicalDeviceProperties properties;
+            VkPhysicalDeviceFeatures features { };
+            VkPhysicalDeviceProperties properties { };
             QueueFamilyIndices queueFamilyIndices;
         };
 
@@ -103,8 +103,8 @@ namespace Sierra
         bool IsExtensionSupported(const char* extensionName, const std::vector<VkExtensionProperties> &supportedExtensions);
         template<typename T>
         bool AddExtensionIfSupported(const DeviceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions, T &pNextChain, std::vector<void*> &extensionDataToFree);
-        static PhysicalDeviceInfo GetPhysicalDeviceInfo(const VkPhysicalDevice physicalDevice);
-        static QueueFamilyIndices GetQueueFamilyIndices(const VkPhysicalDevice physicalDevice);
+        static PhysicalDeviceInfo GetPhysicalDeviceInfo(VkPhysicalDevice physicalDevice);
+        static QueueFamilyIndices GetQueueFamilyIndices(VkPhysicalDevice physicalDevice);
 
     };
 

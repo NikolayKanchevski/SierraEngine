@@ -33,6 +33,11 @@ namespace Sierra
         [[nodiscard]] virtual bool IsKeyReleased(Key key);
         [[nodiscard]] virtual bool IsKeyResting(Key key);
 
+        template<typename ...Args>
+        [[nodiscard]] inline bool IsKeyCombinationPressed(Key first, Key second, Args... rest) { return IsKeyCombinationPressedImplementation({ first, second, rest... }); };
+        template<typename ...Args>
+        [[nodiscard]] inline bool IsKeyCombinationHeld(Key first, Key second, Args... rest) { return IsKeyCombinationHeldImplementation({ first, second, rest... }); };
+
         [[nodiscard]] virtual bool IsMouseButtonPressed(MouseButton key);
         [[nodiscard]] virtual bool IsMouseButtonHeld(MouseButton key);
         [[nodiscard]] virtual bool IsMouseButtonReleased(MouseButton key);
@@ -56,6 +61,9 @@ namespace Sierra
         [[nodiscard]] inline const EventDispatcher<MouseButtonPressEvent>& GetMouseButtonPressDispatcher() const { return mouseButtonPressDispatcher; }
         [[nodiscard]] inline const EventDispatcher<MouseButtonReleaseEvent>& GetMouseButtonReleaseDispatcher() const { return mouseButtonReleaseDispatcher; }
         [[nodiscard]] inline const EventDispatcher<MouseScrollEvent>& GetMouseScrollDispatcher() const { return mouseScrollDispatcher; }
+
+        constexpr static auto KEY_COUNT = static_cast<std::underlying_type<Key>::type>(Key::RightSystem) + 1;
+        constexpr static auto MOUSE_BUTTON_COUNT = static_cast<std::underlying_type<MouseButton>::type>(MouseButton::Extra2) + 1;
 
         typedef enum
         {
@@ -82,6 +90,9 @@ namespace Sierra
         EventDispatcher<MouseButtonPressEvent> mouseButtonPressDispatcher;
         EventDispatcher<MouseButtonReleaseEvent> mouseButtonReleaseDispatcher;
         EventDispatcher<MouseScrollEvent> mouseScrollDispatcher;
+
+        bool IsKeyCombinationPressedImplementation(const std::initializer_list<Key> &keys);
+        bool IsKeyCombinationHeldImplementation(const std::initializer_list<Key> &keys);
 
     };
 

@@ -55,12 +55,12 @@ namespace Sierra
         return true;
     }
 
-    float CursorManager::GetHorizontalDelta()
+    float32 CursorManager::GetHorizontalDelta()
     {
         return 0.0f;
     }
 
-    float CursorManager::GetVerticalDelta()
+    float32 CursorManager::GetVerticalDelta()
     {
         return 0.0f;
     }

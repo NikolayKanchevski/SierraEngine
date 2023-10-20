@@ -37,8 +37,8 @@ namespace Sierra
         [[nodiscard]] virtual bool IsCursorShown();
         [[nodiscard]] virtual bool IsCursorHidden();
 
-        [[nodiscard]] virtual float GetHorizontalDelta();
-        [[nodiscard]] virtual float GetVerticalDelta();
+        [[nodiscard]] virtual float32 GetHorizontalDelta();
+        [[nodiscard]] virtual float32 GetVerticalDelta();
 
         /* --- EVENTS --- */
         template<typename T> void OnEvent(CursorEventCallback<T>) { static_assert(std::is_base_of_v<CursorEvent, T> && !std::is_same_v<CursorEvent, T>, "Template function accepts derived cursor events only!"); }

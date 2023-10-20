@@ -50,6 +50,12 @@ $ git clone --recursive https://github.com/NikichaTV/SierraEngine
 
 <br>
 
+If you clone the repository directly from an IDE, you may need to also run this:
+
+```bat
+$ git submodule update --init --recursive
+```
+
 And there you have it! You can now play around with the engine itself or create your very own application.
 
 <br>
@@ -116,7 +122,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LineCounter">Total lines of code: 8,741</p>
-<p align="center" id="LastUpdated">Last updated: 16/10/2023 </p>
+<p align="center" id="LineCounter">Total lines of code: 9,607</p>
+<p align="center" id="LastUpdated">Last updated: 20/10/2023 </p>
 
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

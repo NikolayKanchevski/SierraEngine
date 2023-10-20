@@ -17,7 +17,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        VulkanContext(const RenderingContextCreateInfo &createInfo);
+        explicit VulkanContext(const RenderingContextCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline UniquePtr<VulkanInstance>& GetInstance() { return instance; }

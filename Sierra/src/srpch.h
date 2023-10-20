@@ -37,6 +37,10 @@
         #endif
     #pragma endregion
 
+    #pragma region Symbol Definitions
+        #include "Sierra/Core/API.h"
+    #pragma endregion
+
     #pragma region Standard Library
         #include <algorithm>
         #include <functional>
@@ -78,6 +82,7 @@
 
     #pragma region External Libraries
         /* --- Better Enums --- */
+        #define BETTER_ENUMS_EXPORT SIERRA_API
         #include <enum.h>
 
         /* --- GLM --- */
@@ -146,7 +151,6 @@
     #pragma endregion
 
     #pragma region Source Files
-        #include "Sierra/Core/API.h"
         #include "Sierra/Core/Logger.h"
         #include "Sierra/Core/ScopeProfiler.h"
     #pragma endregion

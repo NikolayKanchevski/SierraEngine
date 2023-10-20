@@ -5,12 +5,14 @@
 
 #pragma once
 
-#if !PLATFORM_WINDOWS
-    #error "Including the WindowsInstance.h file is only allowed in Windows builds!"
+#if !SR_PLATFORM_WINDOWS
+    #error "Including the Win32Window.h file is only allowed in Windows builds!"
 #endif
 
 #include "../../Window.h"
 #include "WindowsInstance.h"
+#include "Win32InputManager.h"
+#include "Win32CursorManager.h"
 
 namespace Sierra
 {
@@ -47,7 +49,10 @@ namespace Sierra
         bool IsMaximized() const override;
         bool IsFocused() const override;
         bool IsHidden() const override;
-        inline WindowAPI GetAPI() const override { return WindowAPI::Win32; };
+
+        InputManager& GetInputManager() override;
+        CursorManager& GetCursorManager() override;
+        WindowAPI GetAPI() const override;
 
         /* --- DESTRUCTOR --- */
         ~Win32Window() override;
@@ -55,6 +60,9 @@ namespace Sierra
     private:
         WindowsInstance &windowsInstance;
         HWND window;
+
+        Win32InputManager inputManager;
+        Win32CursorManager cursorManager;
 
         String title;
         bool closed = false;
