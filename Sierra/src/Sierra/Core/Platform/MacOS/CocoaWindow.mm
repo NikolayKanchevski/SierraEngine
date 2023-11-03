@@ -349,6 +349,7 @@ namespace Sierra
         {
             NSEvent* event = [macOSInstance.GetApplication() nextEventMatchingMask: NSEventMaskAny untilDate: [NSDate distantPast] inMode: NSDefaultRunLoopMode dequeue: YES];
             if (event == nil) break;
+
             [macOSInstance.GetApplication() sendEvent: event];
         }
     }
@@ -357,6 +358,7 @@ namespace Sierra
 
     void CocoaWindow::OnUpdate()
     {
+        // TODO: TRY NO POINTER ON INPUT MANAGER
         inputManager->OnUpdate();
         cursorManager.OnUpdate();
 

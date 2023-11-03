@@ -4,9 +4,6 @@
 
 #include "CocoaInputManager.h"
 
-#define GET_KEY_INDEX(KEY) static_cast<std::underlying_type<Key>::type>(KEY)
-#define GET_MOUSE_BUTTON_INDEX(MOUSE_BUTTON) static_cast<std::underlying_type<MouseButton>::type>(MOUSE_BUTTON)
-
 namespace Sierra
 {
 
@@ -32,42 +29,42 @@ namespace Sierra
 
     bool CocoaInputManager::IsKeyPressed(const Key key)
     {
-        return lastKeyStates[GET_KEY_INDEX(key)] == InputAction::Release && keyStates[GET_KEY_INDEX(key)] == InputAction::Press;
+        return lastKeyStates[GetKeyIndex(key)] == InputAction::Release && keyStates[GetKeyIndex(key)] == InputAction::Press;
     }
 
     bool CocoaInputManager::IsKeyHeld(const Key key)
     {
-        return lastKeyStates[GET_KEY_INDEX(key)] == InputAction::Press && keyStates[GET_KEY_INDEX(key)] == InputAction::Press;
+        return lastKeyStates[GetKeyIndex(key)] == InputAction::Press && keyStates[GetKeyIndex(key)] == InputAction::Press;
     }
 
     bool CocoaInputManager::IsKeyReleased(const Key key)
     {
-        return lastKeyStates[GET_KEY_INDEX(key)] == InputAction::Press && keyStates[GET_KEY_INDEX(key)] == InputAction::Release;
+        return lastKeyStates[GetKeyIndex(key)] == InputAction::Press && keyStates[GetKeyIndex(key)] == InputAction::Release;
     }
 
     bool CocoaInputManager::IsKeyResting(const Key key)
     {
-        return lastKeyStates[GET_KEY_INDEX(key)] == InputAction::Release && keyStates[GET_KEY_INDEX(key)] == InputAction::Release;
+        return lastKeyStates[GetKeyIndex(key)] == InputAction::Release && keyStates[GetKeyIndex(key)] == InputAction::Release;
     }
 
     bool CocoaInputManager::IsMouseButtonPressed(const MouseButton mouseButton)
     {
-        return lastMouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Release && mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Press;
+        return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press;
     }
 
     bool CocoaInputManager::IsMouseButtonHeld(const MouseButton mouseButton)
     {
-        return lastMouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Press && mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Press;
+        return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press;
     }
 
     bool CocoaInputManager::IsMouseButtonReleased(const MouseButton mouseButton)
     {
-        return lastMouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Press && mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Release;
+        return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release;
     }
 
     bool CocoaInputManager::IsMouseButtonResting(const MouseButton mouseButton)
     {
-        return lastMouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Release && mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Release;
+        return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release;
     }
 
     Vector2 CocoaInputManager::GetMouseScroll()
@@ -81,6 +78,7 @@ namespace Sierra
         void CocoaInputManager::KeyDown(const NSEvent* event)
         {
             // Prevent out of bounds error
+            // TODO: ALL SIZEOF
             if ([event keyCode] >= (sizeof(KEY_TABLE) / sizeof(KEY_TABLE[0]))) return;
 
             // Translate key
@@ -88,7 +86,7 @@ namespace Sierra
             if (key == Key::Unknown) return;
 
             // Save key state and trigger events
-            keyStates[GET_KEY_INDEX(key)] = InputAction::Press;
+            keyStates[GetKeyIndex(key)] = InputAction::Press;
             GetKeyPressDispatcher().DispatchEvent(key);
         }
 
@@ -152,7 +150,7 @@ namespace Sierra
             InputAction action;
             if (nsModifierFlags & ([event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask))
             {
-                action = keyStates[GET_KEY_INDEX(key)] == InputAction::Press ? InputAction::Release : InputAction::Press;
+                action = keyStates[GetKeyIndex(key)] == InputAction::Press ? InputAction::Release : InputAction::Press;
             }
             else
             {
@@ -160,7 +158,7 @@ namespace Sierra
             }
 
             // Save key state and trigger events
-            keyStates[GET_KEY_INDEX(key)] = action;
+            keyStates[GetKeyIndex(key)] = action;
             if (action == InputAction::Press) GetKeyPressDispatcher().DispatchEvent(key);
             else if (action == InputAction::Release) GetKeyReleaseDispatcher().DispatchEvent(key);
         }
@@ -175,7 +173,7 @@ namespace Sierra
             if (key == Key::Unknown) return;
 
             // Save key state and trigger events
-            keyStates[GET_KEY_INDEX(key)] = InputAction::Release;
+            keyStates[GetKeyIndex(key)] = InputAction::Release;
             GetKeyReleaseDispatcher().DispatchEvent(key);
         }
 
@@ -185,7 +183,7 @@ namespace Sierra
             const MouseButton mouseButton = MouseButton::Left;
 
             // Save mouse button state and trigger events
-            mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] = InputAction::Press;
+            mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Press;
             GetMouseButtonPressDispatcher().DispatchEvent(mouseButton);
         }
 
@@ -195,20 +193,20 @@ namespace Sierra
             const MouseButton mouseButton = MouseButton::Right;
 
             // Save mouse button state and trigger events
-            mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] = InputAction::Press;
+            mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Press;
             GetMouseButtonPressDispatcher().DispatchEvent(mouseButton);
         }
 
         void CocoaInputManager::OtherMouseDown(const NSEvent* event)
         {
             // Prevent out of bounds error
-            if ([event buttonNumber] > GET_MOUSE_BUTTON_INDEX(MouseButton::Extra2)) return;
+            if ([event buttonNumber] > GetMouseButtonIndex(MouseButton::Extra2)) return;
 
             // Save mouse button
             const MouseButton mouseButton = static_cast<MouseButton>([event buttonNumber] + 1);
 
             // Save mouse button state and trigger events
-            mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] = InputAction::Press;
+            mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Press;
             GetMouseButtonPressDispatcher().DispatchEvent(mouseButton);
         }
 
@@ -218,7 +216,7 @@ namespace Sierra
             const MouseButton mouseButton = MouseButton::Left;
 
             // Save mouse button state and trigger events
-            mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] = InputAction::Release;
+            mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Release;
             GetMouseButtonReleaseDispatcher().DispatchEvent(mouseButton);
         }
 
@@ -228,31 +226,30 @@ namespace Sierra
             const MouseButton mouseButton = MouseButton::Right;
 
             // Save mouse button state and trigger events
-            mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] = InputAction::Release;
+            mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Release;
             GetMouseButtonReleaseDispatcher().DispatchEvent(mouseButton);
         }
 
         void CocoaInputManager::OtherMouseUp(const NSEvent* event)
         {
             // Prevent out of bounds error
-            if ([event buttonNumber] > GET_MOUSE_BUTTON_INDEX(MouseButton::Extra2)) return;
+            if ([event buttonNumber] > GetMouseButtonIndex(MouseButton::Extra2)) return;
 
             // Save mouse button
             const MouseButton mouseButton = static_cast<MouseButton>([event buttonNumber] + 1);
 
             // Save mouse button state and trigger events
-            mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] = InputAction::Release;
+            mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Release;
             GetMouseButtonReleaseDispatcher().DispatchEvent(mouseButton);
         }
 
         void CocoaInputManager::ScrollWheel(const NSEvent* event)
         {
+            // Save scroll inertia
             mouseScroll = { [event deltaX], [event scrollingDeltaY] };
-            if ([event hasPreciseScrollingDeltas])
-            {
-                mouseScroll *= 0.1;
-            }
+            if ([event hasPreciseScrollingDeltas]) mouseScroll *= 0.1;
 
+            // Trigger events
             GetMouseScrollDispatcher().DispatchEvent(mouseScroll);
         }
     #endif

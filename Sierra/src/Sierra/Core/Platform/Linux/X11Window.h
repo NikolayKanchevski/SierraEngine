@@ -4,12 +4,15 @@
 
 #pragma once
 
-#if !SR_PLATFORMLINUX
+#if !SR_PLATFORM_LINUX
     #error "Including the X11Window.h file is only allowed in Linux builds!"
 #endif
 
 #include "../../Window.h"
-#include "LinuxInstance.h"
+#include "X11Context.h"
+#include "X11Screen.h"
+#include "X11InputManager.h"
+#include "X11CursorManager.h"
 
 namespace Sierra
 {
@@ -46,27 +49,40 @@ namespace Sierra
         bool IsMaximized() const override;
         bool IsFocused() const override;
         bool IsHidden() const override;
+
+        Screen& GetScreen() override;
+        InputManager& GetInputManager() override;
+        CursorManager& GetCursorManager() override;
         WindowAPI GetAPI() const override;
 
         /* --- DESTRUCTOR --- */
         ~X11Window() override;
 
     private:
-        LinuxInstance &linuxInstance;
-
+        const X11Context &x11Context;
         XID window;
-        String title;
+
+        X11Screen* screen = nullptr;
+        X11InputManager inputManager;
+        X11CursorManager cursorManager;
+
         Vector4Int extents = { 0, 0, 0, 0 }; // [ Left | Right | Top | Bottom ]
         bool closed = false;
 
-        Vector2Int position = { std::numeric_limits<int32>::max(), std::numeric_limits<int32>::max() };
-        Vector2UInt size = { std::numeric_limits<uint32>::max(), std::numeric_limits<uint32>::max() };
-        bool minimized = false;
-        bool maximized = false;
+        Vector2Int lastPosition = { std::numeric_limits<int32>::max(), std::numeric_limits<int32>::max() };
+        Vector2UInt lastSize = { std::numeric_limits<uint32>::max(), std::numeric_limits<uint32>::max() };
 
-        int32 GetProperty(Atom property, Atom type, uchar** value) const;
-        int32 GetRootProperty(Atom property, Atom type, uchar** value) const;
-        void RegisterX11Event(const Atom type, const long a = 0, const long b = 0, const long c = 0, const long d = 0, const int eventMask = NoEventMask);
+        bool lastMinimizedState = false;
+        bool lastMaximizedState = false;
+
+        bool resizable = false;
+        bool shouldMaximizeOnShow = false;
+
+        /*
+         * Since you cannot get events for a specific window with X11 (you instead get all pending events for all windows),
+         * we store the events, which are not for the current window, so they can be handled later - when the corresponding window is updated
+        */
+        static inline std::unordered_map<XID, std::vector<XEvent>> unhandledEvents;
         void HandleX11Event(XEvent &event);
 
     };

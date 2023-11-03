@@ -30,7 +30,11 @@ namespace Sierra
 #if SR_ENABLE_LOGGING
     #define SR_INFO_IF(EXPRESSION, ...) if (EXPRESSION) { ::Sierra::Logger::GetEngineLogger()->info(__VA_ARGS__); }
     #define SR_WARNING_IF(EXPRESSION, ...) if (EXPRESSION) { ::Sierra::Logger::GetEngineLogger()->warn(__VA_ARGS__); }
-    #define SR_ERROR_IF(EXPRESSION, ...) if (EXPRESSION) { ::Sierra::Logger::GetEngineLogger()->error(__VA_ARGS__); throw std::runtime_error("Program execution failed miserably!"); }
+    #if SR_DEBUG
+        #define SR_ERROR_IF(EXPRESSION, ...) if (EXPRESSION) { ::Sierra::Logger::GetEngineLogger()->error(__VA_ARGS__); throw std::runtime_error("Program execution failed miserably!"); }
+    #else
+        #define SR_ERROR_IF(EXPRESSION, ...) if (EXPRESSION) { ::Sierra::Logger::GetEngineLogger()->error(__VA_ARGS__); }
+    #endif
 
     #define SR_INFO(...) SR_INFO_IF(true, __VA_ARGS__)
     #define SR_WARNING(...) SR_WARNING_IF(true, __VA_ARGS__)
@@ -50,7 +54,11 @@ namespace Sierra
 #if SR_ENABLE_LOGGING
     #define APP_INFO_IF(EXPRESSION, ...) if (EXPRESSION) { ::Sierra::Logger::GetApplicationLogger()->info(__VA_ARGS__); }
     #define APP_WARNING_IF(EXPRESSION, ...) if (EXPRESSION) { ::Sierra::Logger::GetApplicationLogger()->warn(__VA_ARGS__); }
-    #define APP_ERROR_IF(EXPRESSION, ...) if (EXPRESSION) { ::Sierra::Logger::GetApplicationLogger()->error(__VA_ARGS__); throw std::runtime_error("Program execution failed miserably!"); }
+    #if SR_DEBUG
+        #define APP_ERROR_IF(EXPRESSION, ...) if (EXPRESSION) { ::Sierra::Logger::GetApplicationLogger()->error(__VA_ARGS__); throw std::runtime_error("Program execution failed miserably!"); }
+    #else
+        #define APP_ERROR_IF(EXPRESSION, ...) if (EXPRESSION) { ::Sierra::Logger::GetApplicationLogger()->error(__VA_ARGS__); }
+    #endif
 
     #define APP_INFO(...) APP_INFO_IF(true, __VA_ARGS__)
     #define APP_WARNING(...) APP_WARNING_IF(true, __VA_ARGS__)

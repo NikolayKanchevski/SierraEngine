@@ -25,7 +25,6 @@ namespace Sierra
 }
 
 #if SR_ENABLE_LOGGING
-
     #if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600)) || defined(__ghs__)
         #define __FUNC_SIG__ __PRETTY_FUNCTION__
 
@@ -53,8 +52,6 @@ namespace Sierra
     #endif
     
     #define PROFILE_SCOPE() ::Sierra::ScopeProfiler profilerLine##__LINE__(__FUNC_SIG__)
-
 #else
     #define PROFILE_SCOPE()
-
 #endif

@@ -7,6 +7,7 @@
 #include "PlatformInstance.h"
 #include "../Events/WindowEvent.h"
 
+#include "Screen.h"
 #include "InputManager.h"
 #include "CursorManager.h"
 #include "TouchManager.h"
@@ -70,6 +71,7 @@ namespace Sierra
         [[nodiscard]] virtual bool IsFocused() const = 0;
         [[nodiscard]] virtual bool IsHidden() const = 0;
 
+        [[nodiscard]] virtual Screen& GetScreen() = 0;
         [[nodiscard]] virtual InputManager& GetInputManager();
         [[nodiscard]] virtual CursorManager& GetCursorManager();
         [[nodiscard]] virtual TouchManager& GetTouchManager();

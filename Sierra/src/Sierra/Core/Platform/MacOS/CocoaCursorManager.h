@@ -2,11 +2,11 @@
 // Created by Nikolay Kanchevski on 3.10.23.
 //
 
+#pragma once
+
 #if !SR_PLATFORM_MACOS
     #error "Including the CocoaCursorManager.h file is only allowed in macOS builds!"
 #endif
-
-#pragma once
 
 #include "../../CursorManager.h"
 
@@ -24,7 +24,7 @@ namespace Sierra
         explicit CocoaCursorManager(const CursorManagerCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void OnUpdate() override;
+        void OnUpdate();
 
         /* --- SETTER METHODS --- */
         void SetCursorPosition(const Vector2 &position) override;

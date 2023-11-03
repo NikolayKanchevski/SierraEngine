@@ -24,9 +24,6 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         explicit CursorManager(const CursorManagerCreateInfo &createInfo);
 
-        /* --- POLLING METHODS --- */
-        virtual void OnUpdate();
-
         /* --- SETTER METHODS --- */
         virtual void SetCursorPosition(const Vector2 &position);
         virtual void ShowCursor();
@@ -34,11 +31,9 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual Vector2 GetCursorPosition();
-        [[nodiscard]] virtual bool IsCursorShown();
-        [[nodiscard]] virtual bool IsCursorHidden();
-
         [[nodiscard]] virtual float32 GetHorizontalDelta();
         [[nodiscard]] virtual float32 GetVerticalDelta();
+        [[nodiscard]] virtual bool IsCursorHidden();
 
         /* --- EVENTS --- */
         template<typename T> void OnEvent(CursorEventCallback<T>) { static_assert(std::is_base_of_v<CursorEvent, T> && !std::is_same_v<CursorEvent, T>, "Template function accepts derived cursor events only!"); }

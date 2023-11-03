@@ -14,63 +14,56 @@ namespace Sierra
 
     }
 
-    /* --- POLLING METHODS --- */
-
-    void InputManager::OnUpdate()
-    {
-
-    }
-
     /* --- GETTER METHODS --- */
 
-    bool InputManager::IsKeyPressed(const Key)
+    bool InputManager::IsKeyPressed(const Key) const
     {
         return false;
     }
 
-    bool InputManager::IsKeyHeld(const Key)
+    bool InputManager::IsKeyHeld(const Key) const
     {
         return false;
     }
 
-    bool InputManager::IsKeyReleased(const Key)
+    bool InputManager::IsKeyReleased(const Key) const
     {
         return false;
     }
 
-    bool InputManager::IsKeyResting(const Key)
+    bool InputManager::IsKeyResting(const Key) const
     {
         return false;
     }
 
-    bool InputManager::IsMouseButtonPressed(const MouseButton)
+    bool InputManager::IsMouseButtonPressed(const MouseButton) const
     {
         return false;
     }
 
-    bool InputManager::IsMouseButtonHeld(const MouseButton)
+    bool InputManager::IsMouseButtonHeld(const MouseButton) const
     {
         return false;
     }
 
-    bool InputManager::IsMouseButtonReleased(const MouseButton)
+    bool InputManager::IsMouseButtonReleased(const MouseButton) const
     {
         return false;
     }
 
-    bool InputManager::IsMouseButtonResting(const MouseButton)
+    bool InputManager::IsMouseButtonResting(const MouseButton) const
     {
         return false;
     }
 
-    Vector2 InputManager::GetMouseScroll()
+    Vector2 InputManager::GetMouseScroll() const
     {
         return { 0, 0 };
     }
 
     /* --- PRIVATE METHODS --- */
 
-    bool InputManager::IsKeyCombinationPressedImplementation(const std::initializer_list<Key> &keys)
+    bool InputManager::IsKeyCombinationPressedImplementation(const std::initializer_list<Key> &keys) const
     {
         bool atLeastOneKeyPressed = false;
         for (const auto key : keys)
@@ -89,9 +82,10 @@ namespace Sierra
         return atLeastOneKeyPressed;
     }
 
-    bool InputManager::IsKeyCombinationHeldImplementation(const std::initializer_list<Key> &keys)
+    bool InputManager::IsKeyCombinationHeldImplementation(const std::initializer_list<Key> &keys) const
     {
-        return std::ranges::all_of(keys, [this](const auto key) {
+        return std::ranges::all_of(keys, [this](const auto key)
+        {
             return IsKeyHeld(key);
         });
     }

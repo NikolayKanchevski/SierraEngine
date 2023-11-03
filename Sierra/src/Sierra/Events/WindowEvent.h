@@ -101,7 +101,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline WindowMaximizeEvent() = default;
+        WindowMaximizeEvent() = default;
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING

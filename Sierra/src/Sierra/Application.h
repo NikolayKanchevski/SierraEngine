@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Engine/Time.h"
 #include "Core/Version.h"
 #include "Core/PlatformInstance.h"
 #include "Rendering/RenderingContext.h"
@@ -31,7 +32,7 @@ namespace Sierra
         void Run();
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline String GetName() { return name; }
+        [[nodiscard]] inline const String& GetName() const { return name; }
         [[nodiscard]] inline Version GetVersion() { return version; }
 
         [[nodiscard]] inline UniquePtr<PlatformInstance>& GetPlatformInstance() { return platformInstance; }

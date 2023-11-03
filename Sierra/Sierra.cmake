@@ -80,7 +80,7 @@ function(SierraBuildApplication SOURCE_FILES)
         endif()
     endif()
 
-    if (SIERRA_COMPILER_MSVC)
+    if(SIERRA_COMPILER_MSVC)
         add_compile_options(/wd4250)
         add_compile_options(/wd4251)
     endif()
@@ -106,20 +106,53 @@ function(SierraBuildApplication SOURCE_FILES)
 
     # === BINARY GENERATION === #
     if(SIERRA_PLATFORM_WINDOWS)
-        # Have a folder for all the temporary resources
+        # Have a folder for all temporary resources
         set(RESOURCES_FOLDER_PATH "${CMAKE_CURRENT_BINARY_DIR}/Resources")
 
-        # Create RC file and link the icon
-        set(RC_FILE_PATH "${RESOURCES_FOLDER_PATH}/Application.rc")
-        file(WRITE ${RC_FILE_PATH} "IDR_MAINFRAME ICON\n\"Icon.ico\"")
-
-        # Copy icon to binary folder
-        set(ICON_OUTPUT_PATH "${RESOURCES_FOLDER_PATH}/Icon.ico")
+        # Copy icon to resources folder
+        set(ICON_OUTPUT_PATH "${RESOURCES_FOLDER_PATH}/${SIERRA_APPLICATION_NAME}Icon.ico")
         configure_file(${SIERRA_APPLICATION_ICON_ICO} ${ICON_OUTPUT_PATH} COPYONLY)
 
-        # Create executable and delete temporary files
+        # Define RC file data
+        set(RC_FILE_DATA "
+            IDR_MAINFRAME ICON
+            \"${SIERRA_APPLICATION_NAME}Icon.ico\"
+        ")
+
+        # Create and write to RC file
+        set(RC_FILE_PATH "${RESOURCES_FOLDER_PATH}/Application.rc")
+        file(WRITE ${RC_FILE_PATH} "\n")
+
+        # Create executable
         add_executable(${SIERRA_APPLICATION_NAME} ${SOURCE_FILES} ${RC_FILE_PATH})
+    elseif(SIERRA_PLATFORM_LINUX)
+        # Have a folder for all temporary resources
+        set(RESOURCES_FOLDER_PATH "${CMAKE_CURRENT_BINARY_DIR}/Resources")
+
+        # Copy icon to resources folder
+        set(ICON_OUTPUT_PATH "${RESOURCES_FOLDER_PATH}/${SIERRA_APPLICATION_NAME}Icon.ico")
+        configure_file(${SIERRA_APPLICATION_ICON_ICO} ${ICON_OUTPUT_PATH} COPYONLY)
+
+        # Define desktop file data
+        set(DESKTOP_FILE_DATA "
+            [Desktop Entry]
+            Encoding=UTF-8
+            Version=${SIERRA_VERSION_MAJOR}.${SIERRA_VERSION_MINOR}.${SIERRA_VERSION_PATCH}
+            Type=Application
+            Terminal=false
+            Exec=${CMAKE_CURRENT_BINARY_DIR}/${SIERRA_APPLICATION_NAME}
+            Name=${SIERRA_APPLICATION_NAME}
+            Icon=${ICON_OUTPUT_PATH}
+        ")
+
+        # Create and write to desktop file
+        set(DESKTOP_FILE_PATH "$ENV{HOME}/.local/share/applications/${SIERRA_APPLICATION_NAME}.desktop")
+        file(WRITE ${DESKTOP_FILE_PATH} ${DESKTOP_FILE_DATA})
+
+        # Create executable
+        add_executable(${SIERRA_APPLICATION_NAME} ${SOURCE_FILES})
     elseif(SIERRA_PLATFORM_APPLE)
+        # Create executable and set its properties
         add_executable(${SIERRA_APPLICATION_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
         set_target_properties(${SIERRA_APPLICATION_NAME} PROPERTIES
             BUNDLE TRUE
@@ -138,7 +171,7 @@ function(SierraBuildApplication SOURCE_FILES)
         set_source_files_properties(${ICON_OUTPUT_PATH} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
         target_sources(${SIERRA_APPLICATION_NAME} PRIVATE ${ICON_OUTPUT_PATH})
 
-        if (SIERRA_PLATFORM_iOS)
+        if(SIERRA_PLATFORM_iOS)
             # Set Xcode project's info.plist
             set_target_properties(${SIERRA_APPLICATION_NAME} PROPERTIES
                 MACOSX_BUNDLE_INFO_PLIST ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/plist.in
@@ -149,7 +182,7 @@ function(SierraBuildApplication SOURCE_FILES)
     endif()
 
     # === EXPORT ENGINE SYMBOLS ===
-    if (SIERRA_BUILD_STATIC_LIBRARY)
+    if(SIERRA_BUILD_STATIC_LIBRARY)
         target_compile_definitions(${SIERRA_APPLICATION_NAME} PRIVATE "SR_BUILD_STATIC_LIBRARY")
     elseif(SIERRA_BUILD_SHARED_LIBRARY)
         target_compile_definitions(Sierra PRIVATE "SR_BUILD_SHARED_LIBRARY")
@@ -171,8 +204,19 @@ function(SierraBuildApplication SOURCE_FILES)
     # === PLATFORM-SPECIFIC LIBRARY LINKAGE === #
     if(SIERRA_PLATFORM_LINUX)
         find_package(X11 REQUIRED)
-        # TODO(Linux): Check if X11 has been found
-        target_link_libraries(Sierra PRIVATE ${X11_LIBRARIES})
+        if(NOT ${X11_FOUND})
+            message(FATAL_ERROR "[Sierra]: Could not find base X11 library!")
+        endif()
+        if(NOT ${X11_xcb_xkb_FOUND})
+            message(FATAL_ERROR "[Sierra]: Could not find Xkb extension of the X11 library!")
+        endif()
+        if(NOT ${X11_Xcursor_FOUND})
+            message(FATAL_ERROR "[Sierra]: Could not find Xcursor extension of the X11 library!")
+        endif()
+        if(NOT ${X11_Xrandr_FOUND})
+            message(FATAL_ERROR "[Sierra]: Could not find Xrandr extension of the X11 library!")
+        endif()
+        target_link_libraries(Sierra PRIVATE ${X11_LIBRARIES} ${X11_xcb_xkb_LIB} ${X11_Xcursor_LIB} ${X11_Xrandr_LIB})
     elseif(SIERRA_PLATFORM_MACOS)
         target_link_libraries(Sierra PRIVATE "-framework Cocoa")
     elseif(SIERRA_PLATFORM_iOS)
@@ -190,14 +234,18 @@ function(SierraBuildApplication SOURCE_FILES)
         ${SIERRA_DIRECTORY}/src/Sierra/Core/CursorManager.h
         ${SIERRA_DIRECTORY}/src/Sierra/Core/InputManager.cpp
         ${SIERRA_DIRECTORY}/src/Sierra/Core/InputManager.h
+        ${SIERRA_DIRECTORY}/src/Sierra/Core/Key.h
         ${SIERRA_DIRECTORY}/src/Sierra/Application.cpp
         ${SIERRA_DIRECTORY}/src/Sierra/Application.h
         ${SIERRA_DIRECTORY}/src/Sierra/Core/Logger.cpp
         ${SIERRA_DIRECTORY}/src/Sierra/Core/Logger.h
+        ${SIERRA_DIRECTORY}/src/Sierra/Core/MouseButton.h
         ${SIERRA_DIRECTORY}/src/Sierra/Core/PlatformInstance.cpp
         ${SIERRA_DIRECTORY}/src/Sierra/Core/PlatformInstance.h
         ${SIERRA_DIRECTORY}/src/Sierra/Core/ScopeProfiler.cpp
         ${SIERRA_DIRECTORY}/src/Sierra/Core/ScopeProfiler.h
+        ${SIERRA_DIRECTORY}/src/Sierra/Core/Screen.cpp
+        ${SIERRA_DIRECTORY}/src/Sierra/Core/Screen.h
         ${SIERRA_DIRECTORY}/src/Sierra/Core/Touch.cpp
         ${SIERRA_DIRECTORY}/src/Sierra/Core/Touch.h
         ${SIERRA_DIRECTORY}/src/Sierra/Core/TouchManager.cpp
@@ -241,7 +289,16 @@ function(SierraBuildApplication SOURCE_FILES)
         target_sources(Sierra PRIVATE
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Linux/LinuxInstance.cpp
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Linux/LinuxInstance.h
-
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Linux/X11Context.cpp
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Linux/X11Context.h
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Linux/X11CursorManager.cpp
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Linux/X11CursorManager.h
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Linux/X11Extensions.cpp
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Linux/X11Extensions.h
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Linux/X11InputManager.cpp
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Linux/X11InputManager.h
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Linux/X11Screen.cpp
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Linux/X11Screen.h
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Linux/X11Window.cpp
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Linux/X11Window.h
         )
@@ -309,7 +366,7 @@ function(SierraBuildApplication SOURCE_FILES)
                     message(FATAL_ERROR "[Sierra]: When building an Xcode project, VULKAN_SDK_PATH must be set manually!")
                 else()
                     set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/MoltenVK/include/")
-                    if (${PLATFORM} STREQUAL "OS64")
+                    if(${PLATFORM} STREQUAL "OS64")
                         list(APPEND Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/MoltenVK/MoltenVK.xcframework/ios-arm64/libMoltenVK.a")
                     elseif(${PLATFORM} STREQUAL "SIMULATORARM64" OR ${PLATFORM} STREQUAL "SIMULATOR64COMBINED")
                         list(APPEND Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/MoltenVK/MoltenVK.xcframework/ios-arm64_x86_64-simulator/libMoltenVK.a")

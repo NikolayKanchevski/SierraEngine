@@ -4,9 +4,6 @@
 
 #include "Win32InputManager.h"
 
-#define GET_KEY_INDEX(KEY) static_cast<std::underlying_type<Key>::type>(KEY)
-#define GET_MOUSE_BUTTON_INDEX(MOUSE_BUTTON) static_cast<std::underlying_type<MouseButton>::type>(MOUSE_BUTTON)
-
 namespace Sierra
 {
 
@@ -23,6 +20,7 @@ namespace Sierra
     void Win32InputManager::OnUpdate()
     {
         // Swap out current key/mouse states and move them to the array for the last frame
+        // TODO:
         memcpy(lastKeyStates, keyStates, sizeof(keyStates) / sizeof(keyStates[0]));
         memcpy(lastMouseButtonStates, mouseButtonStates, sizeof(mouseButtonStates) / sizeof(mouseButtonStates[0]));
         mouseScroll = { 0, 0 };
@@ -32,42 +30,42 @@ namespace Sierra
 
     bool Win32InputManager::IsKeyPressed(const Key key)
     {
-        return lastKeyStates[GET_KEY_INDEX(key)] == InputAction::Release && keyStates[GET_KEY_INDEX(key)] == InputAction::Press;
+        return lastKeyStates[GetKeyIndex(key)] == InputAction::Release && keyStates[GetKeyIndex(key)] == InputAction::Press;
     }
 
     bool Win32InputManager::IsKeyHeld(const Key key)
     {
-        return lastKeyStates[GET_KEY_INDEX(key)] == InputAction::Press && keyStates[GET_KEY_INDEX(key)] == InputAction::Press;
+        return lastKeyStates[GetKeyIndex(key)] == InputAction::Press && keyStates[GetKeyIndex(key)] == InputAction::Press;
     }
 
     bool Win32InputManager::IsKeyReleased(const Key key)
     {
-        return lastKeyStates[GET_KEY_INDEX(key)] == InputAction::Press && keyStates[GET_KEY_INDEX(key)] == InputAction::Release;
+        return lastKeyStates[GetKeyIndex(key)] == InputAction::Press && keyStates[GetKeyIndex(key)] == InputAction::Release;
     }
 
     bool Win32InputManager::IsKeyResting(const Key key)
     {
-        return lastKeyStates[GET_KEY_INDEX(key)] == InputAction::Release && keyStates[GET_KEY_INDEX(key)] == InputAction::Release;
+        return lastKeyStates[GetKeyIndex(key)] == InputAction::Release && keyStates[GetKeyIndex(key)] == InputAction::Release;
     }
 
     bool Win32InputManager::IsMouseButtonPressed(const MouseButton mouseButton)
     {
-        return lastMouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Release && mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Press;
+        return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press;
     }
 
     bool Win32InputManager::IsMouseButtonHeld(const MouseButton mouseButton)
     {
-        return lastMouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Press && mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Press;
+        return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press;
     }
 
     bool Win32InputManager::IsMouseButtonReleased(const MouseButton mouseButton)
     {
-        return lastMouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Press && mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Release;
+        return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release;
     }
 
     bool Win32InputManager::IsMouseButtonResting(const MouseButton mouseButton)
     {
-        return lastMouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Release && mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] == InputAction::Release;
+        return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release;
     }
 
     Vector2 Win32InputManager::GetMouseScroll()
@@ -155,8 +153,8 @@ namespace Sierra
         if (key == Key::PrintScreen)
         {
             // Save key states
-            lastKeyStates[GET_KEY_INDEX(key)] = InputAction::Press;
-            keyStates[GET_KEY_INDEX(key)] = InputAction::Release;
+            lastKeyStates[GetKeyIndex(key)] = InputAction::Press;
+            keyStates[GetKeyIndex(key)] = InputAction::Release;
 
             // Trigger events
             GetKeyPressDispatcher().DispatchEvent(key);
@@ -170,13 +168,13 @@ namespace Sierra
             {
                 if (GetKeyState(VK_LSHIFT) & KF_UP)
                 {
-                    keyStates[GET_KEY_INDEX(Key::LeftShift)] = InputAction::Press;
+                    keyStates[GetKeyIndex(Key::LeftShift)] = InputAction::Press;
                     GetKeyPressDispatcher().DispatchEvent(Key::LeftShift);
                     return;
                 }
                 else if (GetKeyState(VK_RSHIFT) & KF_UP)
                 {
-                    keyStates[GET_KEY_INDEX(Key::RightShift)] = InputAction::Press;
+                    keyStates[GetKeyIndex(Key::RightShift)] = InputAction::Press;
                     GetKeyPressDispatcher().DispatchEvent(Key::RightShift);
                     return;
                 }
@@ -185,13 +183,13 @@ namespace Sierra
             {
                 if (IsKeyPressed(Key::LeftShift) || IsKeyHeld(Key::LeftShift) && !(GetKeyState(VK_LSHIFT) & KF_UP))
                 {
-                    keyStates[GET_KEY_INDEX(Key::LeftShift)] = InputAction::Release;
+                    keyStates[GetKeyIndex(Key::LeftShift)] = InputAction::Release;
                     GetKeyPressDispatcher().DispatchEvent(Key::LeftShift);
                     return;
                 }
                 if (!IsKeyPressed(Key::LeftShift) && !IsKeyHeld(Key::LeftShift) && !(GetKeyState(VK_RSHIFT) & KF_UP))
                 {
-                    keyStates[GET_KEY_INDEX(Key::RightShift)] = InputAction::Release;
+                    keyStates[GetKeyIndex(Key::RightShift)] = InputAction::Release;
                     GetKeyReleaseDispatcher().DispatchEvent(Key::RightShift);
                     return;
                 }
@@ -202,7 +200,7 @@ namespace Sierra
         const InputAction action = HIWORD(lParam) & KF_UP ? InputAction::Release : InputAction::Press;
 
         // Save key state and trigger events
-        keyStates[GET_KEY_INDEX(key)] = action;
+        keyStates[GetKeyIndex(key)] = action;
         action == InputAction::Press ? GetKeyPressDispatcher().DispatchEvent(key) : GetKeyReleaseDispatcher().DispatchEvent(key);
     }
 
@@ -214,7 +212,7 @@ namespace Sierra
             {
                 // Save mouse button state and trigger events
                 const MouseButton mouseButton = MouseButton::Left;
-                mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] = InputAction::Press;
+                mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Press;
                 GetMouseButtonPressDispatcher().DispatchEvent(mouseButton);
                 break;
             }
@@ -222,7 +220,7 @@ namespace Sierra
             {
                 // Save mouse button state and trigger events
                 const MouseButton mouseButton = MouseButton::Left;
-                mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] = InputAction::Release;
+                mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Release;
                 GetMouseButtonReleaseDispatcher().DispatchEvent(mouseButton);
                 break;
             }
@@ -230,7 +228,7 @@ namespace Sierra
             {
                 // Save mouse button state and trigger events
                 const MouseButton mouseButton = MouseButton::Right;
-                mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] = InputAction::Press;
+                mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Press;
                 GetMouseButtonPressDispatcher().DispatchEvent(mouseButton);
                 break;
             }
@@ -238,7 +236,7 @@ namespace Sierra
             {
                 // Save mouse button state and trigger events
                 const MouseButton mouseButton = MouseButton::Right;
-                mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] = InputAction::Release;
+                mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Release;
                 GetMouseButtonReleaseDispatcher().DispatchEvent(mouseButton);
                 break;
             }
@@ -246,7 +244,7 @@ namespace Sierra
             {
                 // Save mouse button state and trigger events
                 const MouseButton mouseButton = MouseButton::Middle;
-                mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] = InputAction::Press;
+                mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Press;
                 GetMouseButtonPressDispatcher().DispatchEvent(mouseButton);
                 break;
             }
@@ -254,7 +252,7 @@ namespace Sierra
             {
                 // Save mouse button state and trigger events
                 const MouseButton mouseButton = MouseButton::Middle;
-                mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] = InputAction::Release;
+                mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Release;
                 GetMouseButtonReleaseDispatcher().DispatchEvent(mouseButton);
                 break;
             }
@@ -262,7 +260,7 @@ namespace Sierra
             {
                 // Save mouse button state and trigger events
                 const MouseButton mouseButton = GET_XBUTTON_WPARAM(wParam) == XBUTTON1 ? MouseButton::Extra1 : MouseButton::Extra2;
-                mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] = InputAction::Press;
+                mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Press;
                 GetMouseButtonPressDispatcher().DispatchEvent(mouseButton);
                 break;
             }
@@ -270,7 +268,7 @@ namespace Sierra
             {
                 // Save mouse button state and trigger events
                 const MouseButton mouseButton = GET_XBUTTON_WPARAM(wParam) == XBUTTON1 ? MouseButton::Extra1 : MouseButton::Extra2;
-                mouseButtonStates[GET_MOUSE_BUTTON_INDEX(mouseButton)] = InputAction::Release;
+                mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Release;
                 GetMouseButtonReleaseDispatcher().DispatchEvent(mouseButton);
                 break;
             }
@@ -284,8 +282,8 @@ namespace Sierra
     void Win32InputManager::MouseWheelMessage(const UINT message, const WPARAM wParam, const LPARAM)
     {
         // We apply division, so scrolling feels similar to that of the rest of the platforms
-        if (message == WM_MOUSEWHEEL) mouseScroll.y = GET_WHEEL_DELTA_WPARAM(wParam) / 1'200.0f;
-        else if (message == WM_MOUSEHWHEEL) mouseScroll.x = GET_WHEEL_DELTA_WPARAM(wParam) / 1'200.0f;
+        if (message == WM_MOUSEWHEEL) mouseScroll.y = GET_WHEEL_DELTA_WPARAM(wParam) / 1200.0f;
+        else if (message == WM_MOUSEHWHEEL) mouseScroll.x = GET_WHEEL_DELTA_WPARAM(wParam) / 1200.0f;
 
         // Dispatch events
         GetMouseScrollDispatcher().DispatchEvent(mouseScroll);

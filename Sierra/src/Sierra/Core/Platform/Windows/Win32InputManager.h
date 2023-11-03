@@ -23,7 +23,7 @@ namespace Sierra
         explicit Win32InputManager(const InputManagerCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void OnUpdate() override;
+        void OnUpdate();
 
         /* --- GETTER METHODS --- */
         bool IsKeyPressed(Key key) override;
@@ -270,6 +270,7 @@ namespace Sierra
             Key::Apostrophe
         };
 
+        // TODO: STD::ARRAY
         InputAction lastKeyStates[KEY_COUNT] { };
         InputAction keyStates[KEY_COUNT] { };
 

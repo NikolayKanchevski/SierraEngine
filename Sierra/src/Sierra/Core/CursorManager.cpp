@@ -14,13 +14,6 @@ namespace Sierra
 
     }
 
-    /* --- POLLING METHODS --- */
-
-    void CursorManager::OnUpdate()
-    {
-
-    }
-
     /* --- SETTER METHODS --- */
 
     void CursorManager::SetCursorPosition(const Vector2 &position)
@@ -45,16 +38,6 @@ namespace Sierra
         return { std::numeric_limits<float32>::min(), std::numeric_limits<float32>::min() };
     }
 
-    bool CursorManager::IsCursorShown()
-    {
-        return false;
-    }
-
-    bool CursorManager::IsCursorHidden()
-    {
-        return true;
-    }
-
     float32 CursorManager::GetHorizontalDelta()
     {
         return 0.0f;
@@ -63,6 +46,11 @@ namespace Sierra
     float32 CursorManager::GetVerticalDelta()
     {
         return 0.0f;
+    }
+
+    bool CursorManager::IsCursorHidden()
+    {
+        return true;
     }
 
 }

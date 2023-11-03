@@ -75,6 +75,8 @@ namespace Sierra
         return -(lastCursorPosition.y - cursorPosition.y);
     }
 
+    // TODO: MAKE SCROLLING SAME
+
     /* --- EVENTS --- */
 
     #if defined(__OBJC__)

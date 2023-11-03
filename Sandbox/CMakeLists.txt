@@ -6,6 +6,7 @@ project(Sandbox)
 include(../Sierra/Sierra.cmake)
 
 # === SET ENGINE BUILD SETTINGS === #
+set(SIERRA_ENABLE_LOGGING ON)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(SIERRA_BUILD_SHARED_LIBRARY ON)
 else()

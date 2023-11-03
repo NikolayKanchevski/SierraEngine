@@ -94,7 +94,6 @@
         #include <glm/ext/matrix_transform.hpp>
         #include <glm/ext/matrix_clip_space.hpp>
         #include <glm/gtx/matrix_decompose.hpp>
-
     #pragma endregion
 
     #pragma region Type Definitions
@@ -118,9 +117,9 @@
         typedef size_t size;
         typedef size Hash;
 
-	    typedef glm::vec2 Vector2;
-	    typedef glm::vec3 Vector3;
-	    typedef glm::vec4 Vector4;
+	    typedef glm::vec<2, float32> Vector2;
+	    typedef glm::vec<3, float32> Vector3;
+	    typedef glm::vec<4, float32> Vector4;
 	    typedef glm::vec<2, int32> Vector2Int;
 	    typedef glm::vec<3, int32> Vector3Int;
 	    typedef glm::vec<4, int32> Vector4Int;
@@ -128,8 +127,8 @@
 	    typedef glm::vec<3, uint32> Vector3UInt;
 	    typedef glm::vec<4, uint32> Vector4UInt;
 	    typedef glm::quat Quaternion;
-	    typedef glm::mat3x3 Matrix3x3;
-	    typedef glm::mat4x4 Matrix4x4;
+	    typedef glm::mat<3, 3, float32> Matrix3x3;
+	    typedef glm::mat<4, 4, float32> Matrix4x4;
 	    typedef glm::mat<3, 3, int32> Matrix3x3Int;
 	    typedef glm::mat<4, 4, int32> Matrix4x4Int;
 

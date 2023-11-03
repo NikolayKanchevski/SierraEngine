@@ -23,7 +23,7 @@ namespace Sierra
         explicit Win32CursorManager(const CursorManagerCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void OnUpdate() override;
+        void OnUpdate();
 
         /* --- SETTER METHODS --- */
         void SetCursorPosition(const Vector2 &position) override;

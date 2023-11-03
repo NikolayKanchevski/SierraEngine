@@ -17,11 +17,7 @@ public:
     }
 
 private:
-    #if !SR_PLATFORM_MOBILE
-        const uint8 TEST_WINDOW_COUNT = 2;
-    #else
-        const uint8 TEST_WINDOW_COUNT = 1;
-    #endif
+    const uint8 TEST_WINDOW_COUNT = !SR_PLATFORM_MOBILE + 1;
     std::vector<UniquePtr<Window>> windows;
 
     void OnStart() override
@@ -79,9 +75,6 @@ private:
                 allWindowsAreClosed = false;
             }
         }
-
-        if (windows[0]->GetInputManager().IsKeyCombinationPressed(Key::LeftControl, Key::LeftShift, Key::R))
-            printf("YES\n");
 
         return allWindowsAreClosed;
     }

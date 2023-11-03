@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "../Engine/Time.h"
-
 namespace Sierra
 {
 
@@ -40,7 +38,7 @@ namespace Sierra
         virtual void RunApplication(const PlatformApplicationRunInfo &runInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline virtual PlatformType GetType() const = 0;
+        [[nodiscard]] virtual PlatformType GetType() const = 0;
 
         /* --- DESTRUCTOR --- */
         virtual ~PlatformInstance() = default;

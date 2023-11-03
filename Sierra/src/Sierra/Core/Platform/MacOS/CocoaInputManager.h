@@ -23,7 +23,7 @@ namespace Sierra
         explicit CocoaInputManager(const InputManagerCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void OnUpdate() override;
+        void OnUpdate();
 
         /* --- GETTER METHODS --- */
         bool IsKeyPressed(Key key) override;
@@ -191,6 +191,7 @@ namespace Sierra
         InputAction mouseButtonStates[MOUSE_BUTTON_COUNT] { };
 
         Vector2 mouseScroll = { 0, 0 };
+
     };
 
 }
