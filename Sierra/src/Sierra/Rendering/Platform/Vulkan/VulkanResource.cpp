@@ -4,11 +4,6 @@
 
 #include "VulkanResource.h"
 
-#if !SR_PLATFORM_APPLE
-    #define VOLK_IMPLEMENTATION
-    #include <volk.h>
-#endif
-
 namespace Sierra
 {
 

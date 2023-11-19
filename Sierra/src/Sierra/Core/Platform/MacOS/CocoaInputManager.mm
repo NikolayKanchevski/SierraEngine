@@ -19,55 +19,54 @@ namespace Sierra
 
     void CocoaInputManager::OnUpdate()
     {
-        // Swap out current key/mouse states and move them to the array for the last frame
-        memcpy(lastKeyStates, keyStates, sizeof(keyStates) / sizeof(keyStates[0]));
-        memcpy(lastMouseButtonStates, mouseButtonStates, sizeof(mouseButtonStates) / sizeof(mouseButtonStates[0]));
+        std::copy(keyStates.begin(), keyStates.end(), lastKeyStates.begin());
+        std::copy(mouseButtonStates.begin(), mouseButtonStates.end(), lastMouseButtonStates.begin());
         mouseScroll = { 0, 0 };
     }
 
     /* --- GETTER METHODS --- */
 
-    bool CocoaInputManager::IsKeyPressed(const Key key)
+    bool CocoaInputManager::IsKeyPressed(const Key key) const
     {
         return lastKeyStates[GetKeyIndex(key)] == InputAction::Release && keyStates[GetKeyIndex(key)] == InputAction::Press;
     }
 
-    bool CocoaInputManager::IsKeyHeld(const Key key)
+    bool CocoaInputManager::IsKeyHeld(const Key key) const
     {
         return lastKeyStates[GetKeyIndex(key)] == InputAction::Press && keyStates[GetKeyIndex(key)] == InputAction::Press;
     }
 
-    bool CocoaInputManager::IsKeyReleased(const Key key)
+    bool CocoaInputManager::IsKeyReleased(const Key key) const
     {
         return lastKeyStates[GetKeyIndex(key)] == InputAction::Press && keyStates[GetKeyIndex(key)] == InputAction::Release;
     }
 
-    bool CocoaInputManager::IsKeyResting(const Key key)
+    bool CocoaInputManager::IsKeyResting(const Key key) const
     {
         return lastKeyStates[GetKeyIndex(key)] == InputAction::Release && keyStates[GetKeyIndex(key)] == InputAction::Release;
     }
 
-    bool CocoaInputManager::IsMouseButtonPressed(const MouseButton mouseButton)
+    bool CocoaInputManager::IsMouseButtonPressed(const MouseButton mouseButton) const
     {
         return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press;
     }
 
-    bool CocoaInputManager::IsMouseButtonHeld(const MouseButton mouseButton)
+    bool CocoaInputManager::IsMouseButtonHeld(const MouseButton mouseButton) const
     {
         return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press;
     }
 
-    bool CocoaInputManager::IsMouseButtonReleased(const MouseButton mouseButton)
+    bool CocoaInputManager::IsMouseButtonReleased(const MouseButton mouseButton) const
     {
         return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release;
     }
 
-    bool CocoaInputManager::IsMouseButtonResting(const MouseButton mouseButton)
+    bool CocoaInputManager::IsMouseButtonResting(const MouseButton mouseButton) const
     {
         return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release;
     }
 
-    Vector2 CocoaInputManager::GetMouseScroll()
+    Vector2 CocoaInputManager::GetMouseScroll() const
     {
         return mouseScroll;
     }
@@ -78,8 +77,7 @@ namespace Sierra
         void CocoaInputManager::KeyDown(const NSEvent* event)
         {
             // Prevent out of bounds error
-            // TODO: ALL SIZEOF
-            if ([event keyCode] >= (sizeof(KEY_TABLE) / sizeof(KEY_TABLE[0]))) return;
+            if ([event keyCode] >= KEY_TABLE.size()) return;
 
             // Translate key
             const Key key = KEY_TABLE[[event keyCode]];
@@ -93,19 +91,11 @@ namespace Sierra
         void CocoaInputManager::FlagsChanged(const NSEvent* event)
         {
             // Prevent out of bounds error
-            if ([event keyCode] >= (sizeof(KEY_TABLE) / sizeof(KEY_TABLE[0]))) return;
+            if ([event keyCode] >= KEY_TABLE.size()) return;
 
             // Translate key
             const Key key = KEY_TABLE[[event keyCode]];
             if (key == Key::Unknown) return;
-
-            // Translate modifier flags
-            KeyModifierFlags modifierFlags = KEY_MODIFIER_FLAGS_NONE;
-            if ([event modifierFlags] & NSEventModifierFlagShift)    modifierFlags |= KEY_MODIFIER_FLAGS_SHIFT;
-            if ([event modifierFlags] & NSEventModifierFlagControl)  modifierFlags |= KEY_MODIFIER_FLAGS_CONTROL;
-            if ([event modifierFlags] & NSEventModifierFlagOption)   modifierFlags |= KEY_MODIFIER_FLAGS_ALT;
-            if ([event modifierFlags] & NSEventModifierFlagCommand)  modifierFlags |= KEY_MODIFIER_FLAGS_SYSTEM;
-            if ([event modifierFlags] & NSEventModifierFlagCapsLock) modifierFlags |= KEY_MODIFIER_FLAGS_CAPS_LOCK;
 
             // Modifier keys need to be registered as pressed manually, so we get modifier flags of the modifier key... fun stuff!
             NSEventModifierFlags nsModifierFlags = 0;
@@ -166,7 +156,7 @@ namespace Sierra
         void CocoaInputManager::KeyUp(const NSEvent* event)
         {
             // Prevent out of bounds error
-            if ([event keyCode] >= (sizeof(KEY_TABLE) / sizeof(KEY_TABLE[0]))) return;
+            if ([event keyCode] >= KEY_TABLE.size()) return;
 
             // Translate key
             const Key key = KEY_TABLE[[event keyCode]];
@@ -247,7 +237,6 @@ namespace Sierra
         {
             // Save scroll inertia
             mouseScroll = { [event deltaX], [event scrollingDeltaY] };
-            if ([event hasPreciseScrollingDeltas]) mouseScroll *= 0.1;
 
             // Trigger events
             GetMouseScrollDispatcher().DispatchEvent(mouseScroll);

@@ -9,26 +9,10 @@
 #endif
 
 #include "../../PlatformInstance.h"
+#include "UIKitContext.h"
 
-#if !defined(__OBJC__)
-    namespace Sierra
-    {
-        typedef void UIKitApplicationRunLoopConnector;
-    }
-#else
+#if defined(__OBJC__)
     #include <UIKit/UIKit.h>
-    @class UIKitApplicationRunLoopConnector;
-
-    @interface UIKitApplicationDelegate : UIResponder<UIApplicationDelegate>
-
-        /* --- POLLING METHODS --- */
-        - (BOOL) applicationShouldUpdate;
-
-        /* --- GETTER METHODS --- */
-        - (UIWindowScene*) GetActiveWindowScene;
-
-    @end
-
 #endif
 
 namespace Sierra
@@ -40,17 +24,16 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         explicit iOSInstance(const PlatformInstanceCreateInfo &createInfo);
 
-        /* --- POLLING METHODS --- */
-        void RunApplication(const PlatformApplicationRunInfo &runInfo) override;
-
         /* --- GETTER METHODS --- */
+        [[nodiscard]] inline const UIKitContext& GetUIKitContext() const { return uiKitContext; }
         [[nodiscard]] inline PlatformType GetType() const override { return PlatformType::iOS; }
 
         /* --- DESTRUCTOR --- */
-        ~iOSInstance() override;
+        ~iOSInstance() = default;
 
     private:
-        UIKitApplicationRunLoopConnector* applicationRunLoopConnector;
+        UIKitContext uiKitContext;
+        void RunApplication(const PlatformApplicationRunInfo &runInfo) override;
 
     };
 

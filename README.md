@@ -101,11 +101,9 @@ Wondering how to use the engine? You can check out the online documentation [her
 * [GLM](https://github.com/g-truc/glm/) - Provides the engine with a powerful set of tools for solving linear algebra problems.
 * [spdlog](https://github.com/gabime/spdlog) - Used for fast, asynchronous debug-only logging.
 * [Vulkan](https://www.vulkan.org/) - Allows for incredibly fast rendering on a wide variety of platforms.
-* [Volk](https://github.com/zeux/volk/tree/master/) - A tool to further optimize [Vulkan](https://www.vulkan.org/)'s CPU overhead.
-* [Glad](https://github.com/Dav1dde/glad) - Dynamic loader for OpenGL.
 * [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For optimal memory management of [Vulkan](https://www.vulkan.org/) objects.
-* [ios-cmake](https://github.com/leetal/ios-cmake) - Essential for building the engine on iOS.
 * [Better Enum](https://github.com/aantron/better-enums) - Compile-time reflected enums.
+* [ios-cmake](https://github.com/leetal/ios-cmake) - Essential for building the engine on iOS.
 * [My Brain](https://ih1.redbubble.net/image.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
 
 <br>
@@ -122,7 +120,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LineCounter">Total lines of code: 10,570</p>
-<p align="center" id="LastUpdated">Last updated: 03/11/2023 </p>
+<p align="center" id="LineCounter">Total lines of code: 15,519</p>
+<p align="center" id="LastUpdated">Last updated: 19/11/2023 </p>
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -3,7 +3,12 @@
 //
 
 #include "UIKitWindow.h"
+
 #include "iOSInstance.h"
+
+@interface UIKitWindowViewController : UIViewController
+
+@end
 
 @implementation UIKitWindowViewController
 
@@ -22,15 +27,6 @@
     }
 
     /* --- POLLING METHODS --- */
-
-    - (void) viewDidLoad
-    {
-        [super viewDidLoad];
-
-        // Observe events
-        [[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(applicationDidEnterBackground) name: UIApplicationDidEnterBackgroundNotification object: nil];
-        [[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(applicationWillEnterForeground) name: UIApplicationWillEnterForegroundNotification object: nil];
-    }
 
     - (void) touchesBegan: (NSSet<UITouch*>*) touches withEvent: (UIEvent*) event
     {
@@ -64,35 +60,6 @@
         static_cast<Sierra::UIKitTouchManager*>(&window->GetTouchManager())->TouchesCancelled(touches, event);
     }
 
-    - (void) applicationDidEnterBackground
-    {
-        window->ApplicationDidEnterBackground();
-    }
-
-    - (void) applicationWillEnterForeground
-    {
-        window->ApplicationWillEnterForeground();
-    }
-
-    - (void) applicationWillTerminate
-    {
-        window->ApplicationWillTerminate();
-    }
-
-    - (void) dealloc
-    {
-        [[NSNotificationCenter defaultCenter] removeObserver: self];
-        [super dealloc];
-    }
-
-@end
-
-@interface UIKitWindowImplementation : UIWindow
-
-@end
-
-@implementation UIKitWindowImplementation
-
 @end
 
 namespace Sierra
@@ -100,26 +67,23 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    UIKitWindow::UIKitWindow(const Sierra::WindowCreateInfo &createInfo)
-        : Window(createInfo), title(createInfo.title), iOSInstance(*static_cast<class iOSInstance*>(createInfo.platformInstance.get())), touchManager(UIKitTouchManager({ }))
+    UIKitWindow::UIKitWindow(const UIKitContext &uiKitContext, const WindowCreateInfo &createInfo)
+        : Window(createInfo), title(createInfo.title), uiKitContext(uiKitContext), touchManager(UIKitTouchManager({ }))
     {
-        SR_ERROR_IF(createInfo.platformInstance->GetType() !=+ PlatformType::iOS, "Cannot create UIKit window using a platform instance of type [{0}]!", createInfo.platformInstance->GetType()._to_string());
-        
-        @autoreleasepool
-        {
-            // Create window
-            window = [[UIKitWindowImplementation alloc] initWithWindowScene: [reinterpret_cast<UIKitApplicationDelegate*>([[UIApplication sharedApplication] delegate]) GetActiveWindowScene]];
-            SR_ERROR_IF(window == nil, "Could not create UIKit window!");
+        // Create window
+        window = uiKitContext.CreateWindow();
 
-            // Create view controller
-            viewController = [[UIKitWindowViewController alloc] initWithWindow: this];
-            SR_ERROR_IF(viewController == nil, "Could not create Cocoa UIKit view controller!");
-
-        }
+        // Create view controller
+        viewController = [[UIKitWindowViewController alloc] initWithWindow: this];
 
         // Assign window handlers and set background color
         [window setRootViewController: viewController];
         [window setBackgroundColor: [UIColor whiteColor]];
+
+        // Observe UIKit events
+        applicationDidEnterBackgroundBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UIApplicationDidEnterBackgroundNotification, [this] { ApplicationDidEnterBackground(); });
+        applicationWillEnterForegroundBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UIApplicationWillEnterForegroundNotification, [this] { ApplicationWillEnterForeground(); });
+        applicationWillTerminateBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UISceneDidDisconnectNotification, [this] { ApplicationWillTerminate(); });
 
         // Show and assign window
         [window makeKeyAndVisible];
@@ -159,8 +123,21 @@ namespace Sierra
 
     void UIKitWindow::Close()
     {
+        if (closed) return;
         closed = true;
+
         GetWindowCloseDispatcher().DispatchEvent();
+        uiKitContext.DestroyWindow(window);
+
+        applicationDidEnterBackgroundBridge.Invalidate();
+        applicationWillEnterForegroundBridge.Invalidate();
+        applicationWillTerminateBridge.Invalidate();
+
+        [viewController release];
+        viewController = nil;
+
+        [window release];
+        window = nil;
     }
 
     /* --- SETTER METHODS --- */
@@ -199,14 +176,12 @@ namespace Sierra
 
     Vector2UInt UIKitWindow::GetSize() const
     {
-        CGRect bounds = [[UIScreen mainScreen] nativeBounds];
-        return { CGRectGetWidth(bounds), CGRectGetHeight(bounds) };
+        return uiKitContext.GetPrimaryScreen().GetSize();
     }
 
     Vector2UInt UIKitWindow::GetFramebufferSize() const
     {
-        CGRect bounds = [[UIScreen mainScreen] nativeBounds];
-        return { CGRectGetWidth(bounds), CGRectGetHeight(bounds) };
+        return uiKitContext.GetPrimaryScreen().GetSize();
     }
 
     float32 UIKitWindow::GetOpacity() const
@@ -239,6 +214,11 @@ namespace Sierra
         return minimized;
     }
 
+    Screen& UIKitWindow::GetScreen()
+    {
+        return uiKitContext.GetPrimaryScreen();
+    }
+
     TouchManager& UIKitWindow::GetTouchManager()
     {
         return touchManager;
@@ -251,39 +231,43 @@ namespace Sierra
 
     /* --- EVENTS --- */
 
-    #if defined(__OBJC__)
-        void UIKitWindow::ApplicationDidEnterBackground()
-        {
-            minimized = true;
-            GetWindowFocusDispatcher().DispatchEvent(false);
-            GetWindowMinimizeDispatcher().DispatchEvent();
-        }
+    void UIKitWindow::ApplicationDidEnterBackground()
+    {
+        minimized = true;
+        GetWindowFocusDispatcher().DispatchEvent(false);
+        GetWindowMinimizeDispatcher().DispatchEvent();
+    }
 
-        void UIKitWindow::ApplicationWillEnterForeground()
-        {
-            minimized = false;
-            GetWindowFocusDispatcher().DispatchEvent(true);
-        }
+    void UIKitWindow::ApplicationWillEnterForeground()
+    {
+        minimized = false;
+        GetWindowFocusDispatcher().DispatchEvent(true);
+    }
 
-        void UIKitWindow::ApplicationWillTerminate()
-        {
-            Close();
-        }
-    #endif
+    void UIKitWindow::ApplicationWillTerminate()
+    {
+        Close();
+    }
 
     /* --- DESTRUCTOR --- */
 
     UIKitWindow::~UIKitWindow()
     {
-        @autoreleasepool
-        {
-            [window setRootViewController: nil];
-            [viewController release];
-            viewController = nil;
+        if (closed) return;
+        closed = true;
+        
+        applicationDidEnterBackgroundBridge.Invalidate();
+        applicationWillEnterForegroundBridge.Invalidate();
+        applicationWillTerminateBridge.Invalidate();
 
-            [window release];
-            window = nil;
-        }
+        GetWindowCloseDispatcher().DispatchEvent();
+        uiKitContext.DestroyWindow(window);
+
+        [viewController release];
+        viewController = nil;
+
+        [window release];
+        window = nil;
     }
 
 }

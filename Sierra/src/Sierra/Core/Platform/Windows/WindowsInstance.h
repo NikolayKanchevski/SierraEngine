@@ -79,7 +79,7 @@ namespace Sierra
         [[nodiscard]] inline PlatformType GetType() const override { return PlatformType::Windows; }
 
         /* --- DESTRUCTOR --- */
-        ~WindowsInstance() override;
+        ~WindowsInstance();
 
     private:
         const HINSTANCE hInstance;

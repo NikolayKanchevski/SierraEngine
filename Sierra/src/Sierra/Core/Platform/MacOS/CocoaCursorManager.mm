@@ -9,8 +9,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    CocoaCursorManager::CocoaCursorManager(const CursorManagerCreateInfo &createInfo)
-        : CursorManager(createInfo)
+    CocoaCursorManager::CocoaCursorManager(const CocoaCursorManagerCreateInfo &createInfo)
+        : CursorManager(createInfo), window(createInfo.window), cursorPosition({ [window mouseLocationOutsideOfEventStream].x, [window mouseLocationOutsideOfEventStream].y }), lastCursorPosition(cursorPosition)
     {
 
     }
@@ -22,29 +22,47 @@ namespace Sierra
         lastCursorPosition = cursorPosition;
     }
 
+    void CocoaCursorManager::OnUpdateEnd()
+    {
+        if (!cursorHidden || ![window isKeyWindow]) return;
+
+        const Vector2 cocoaCenter = Vector2([window frame].size.width, [window frame].size.height) / 2.0f;
+        if (cursorPosition != cocoaCenter)
+        {
+            // Move cursor to center
+            SetCursorPosition(cocoaCenter);
+
+            // Update mouse position
+            lastCursorPosition = cursorPosition;
+            cursorPosition = cocoaCenter;
+
+            // Reset mouse delta when re-centering for the first time
+            if (justHidCursor)
+            {
+                lastCursorPosition = cursorPosition;
+                justHidCursor = false;
+            }
+        }
+    }
+
     /* --- SETTER METHODS --- */
 
     void CocoaCursorManager::SetCursorPosition(const Vector2 &position)
     {
-        // Get window position
-        const NSRect windowRect = [[[NSApplication sharedApplication] keyWindow] frame];
-
-        // Create point in -Y coordinate system
-        const CGPoint point = CGPointMake(windowRect.origin.x + position.x, InvertWindowPositionY(windowRect.origin.y + position.y));
-
-        // Set mouse position
-        CGWarpMouseCursorPosition(point);
+        // Set mouse position (method takes -Y screen coordinates)
+        CGWarpMouseCursorPosition(CGPointMake([window frame].origin.x + position.x, [[window screen] frame].size.height - [window frame].origin.y - position.y));
     }
 
     void CocoaCursorManager::ShowCursor()
     {
-        cursorShown = true;
+        cursorHidden = false;
         [NSCursor unhide];
     }
 
     void CocoaCursorManager::HideCursor()
     {
-        cursorShown = false;
+        cursorHidden = true;
+        justHidCursor = true;
         [NSCursor hide];
     }
 
@@ -55,27 +73,20 @@ namespace Sierra
         return cursorPosition;
     }
 
-    bool CocoaCursorManager::IsCursorShown()
-    {
-        return cursorShown;
-    }
-
     bool CocoaCursorManager::IsCursorHidden()
     {
-        return !cursorShown;
+        return cursorHidden;
     }
 
     float32 CocoaCursorManager::GetHorizontalDelta()
     {
-        return -(lastCursorPosition.x - cursorPosition.x);
+        return lastCursorPosition.x - cursorPosition.x;
     }
 
     float32 CocoaCursorManager::GetVerticalDelta()
     {
-        return -(lastCursorPosition.y - cursorPosition.y);
+        return lastCursorPosition.y - cursorPosition.y;
     }
-
-    // TODO: MAKE SCROLLING SAME
 
     /* --- EVENTS --- */
 
@@ -87,15 +98,8 @@ namespace Sierra
             cursorPosition = { position.x, position.y };
 
             // Dispatch events
-            GetCursorMoveDispatcher().DispatchEvent(cursorPosition);
+            if (!cursorHidden) GetCursorMoveDispatcher().DispatchEvent(cursorPosition);
         }
     #endif
-
-    /* --- PRIVATE METHODS --- */
-
-    double CocoaCursorManager::InvertWindowPositionY(const double yPosition)
-    {
-        return CGDisplayBounds(CGMainDisplayID()).size.height - yPosition;
-    }
 
 }

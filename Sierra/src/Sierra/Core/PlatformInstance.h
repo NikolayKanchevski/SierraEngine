@@ -23,20 +23,14 @@ namespace Sierra
 
     struct PlatformApplicationRunInfo
     {
-        std::function<void()> OnStart;
-        std::function<bool()> OnUpdate;
-        std::function<void()> OnEnd;
+        std::function<void()> OnStart = [](){  };
+        std::function<bool()> OnUpdate = [](){ return false; };
+        std::function<void()> OnEnd = [](){  };
     };
 
     class SIERRA_API PlatformInstance
     {
     public:
-        /* --- CONSTRUCTORS --- */
-        static UniquePtr<PlatformInstance> Create(const PlatformInstanceCreateInfo &createInfo);
-
-        /* --- POLLING METHODS --- */
-        virtual void RunApplication(const PlatformApplicationRunInfo &runInfo);
-
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual PlatformType GetType() const = 0;
 
@@ -49,6 +43,12 @@ namespace Sierra
 
     protected:
         explicit PlatformInstance(const PlatformInstanceCreateInfo &createInfo);
+
+    private:
+        friend class Application;
+        static UniquePtr<PlatformInstance> Load(const PlatformInstanceCreateInfo &createInfo);
+
+        virtual void RunApplication(const PlatformApplicationRunInfo &runInfo);
 
     };
 

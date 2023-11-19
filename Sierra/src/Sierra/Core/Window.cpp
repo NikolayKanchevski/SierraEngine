@@ -30,12 +30,6 @@ namespace Sierra
         SR_ERROR_IF(createInfo.title.empty(), "Window title must not be empty!");
     }
 
-    UniquePtr<Window> Window::Create(const WindowCreateInfo &createInfo)
-    {
-        PROFILE_SCOPE();
-        return std::make_unique<NativeWindow>(createInfo);
-    }
-
     /* --- GETTER METHODS --- */
 
     InputManager& Window::GetInputManager()

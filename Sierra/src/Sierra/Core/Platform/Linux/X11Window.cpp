@@ -12,12 +12,12 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     X11Window::X11Window(const WindowCreateInfo &createInfo)
-        : Window(createInfo), x11Context(static_cast<LinuxInstance*>(createInfo.platformInstance.get())->GetX11Context()), window(x11Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height)), screen(&x11Context.GetWindowScreen(window)),
+        : Window(createInfo), x11Context((SR_ERROR_IF(createInfo.platformInstance->GetType() !=+ PlatformType::Linux, "Cannot create X11 window using a platform instance of type [{0}]!", createInfo.platformInstance->GetType()._to_string()), static_cast<LinuxInstance*>(createInfo.platformInstance.get())->GetX11Context())),
+          window(x11Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
+          screen(&x11Context.GetWindowScreen(window)),
           inputManager({ .xkbExtension = x11Context.GetXkbExtension() }), cursorManager({ .window = window, .x11Context = x11Context }),
           extents(x11Context.GetWindowExtents(window)), lastMaximizedState(createInfo.maximize), resizable(createInfo.resizable)
     {
-        SR_ERROR_IF(createInfo.platformInstance->GetType() !=+ PlatformType::Linux, "Cannot create X11 window using a platform instance of type [{0}]!", createInfo.platformInstance->GetType()._to_string());
-
         if (!createInfo.hide) x11Context.ShowWindow(window);
 
         // Handle resizing and maximizing

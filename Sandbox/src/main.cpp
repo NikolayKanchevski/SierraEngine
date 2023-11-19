@@ -27,8 +27,7 @@ private:
         for (uint32 i = 0; i < TEST_WINDOW_COUNT; i++)
         {
             const String title = "Window #" + std::to_string(i);
-            windows[i] = Window::Create({
-                .platformInstance = GetPlatformInstance(),
+            windows[i] = GetWindowManager()->CreateWindow({
                 .title = title,
                 .resizable = true,
                 .maximize = false,
@@ -84,9 +83,7 @@ private:
 int32 main()
 {
     // Create and run application
-    SandboxApplication* application = new SandboxApplication({ .name = "Sandbox" });
+    UniquePtr<SandboxApplication> application = UniquePtr<SandboxApplication>(new SandboxApplication({ .name = "Sandbox" }));
     application->Run();
-
-    delete(application);
     return 0;
 }

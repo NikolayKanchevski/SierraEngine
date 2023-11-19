@@ -9,8 +9,9 @@
 #endif
 
 #include "../../Window.h"
-#import "iOSInstance.h"
-#import "UIKitTouchManager.h"
+#include "UIKitContext.h"
+#include "UIKitTouchManager.h"
+#include "UIKitSelectorBridge.h"
 
 #if !defined(__OBJC__)
     namespace Sierra
@@ -20,14 +21,7 @@
     }
 #else
     #include <UIKit/UIKit.h>
-    @class UIKitWindowImplementation;
-
-    @interface UIKitWindowViewController : UIViewController
-
-        /* --- POLLING METHODS --- */
-        - (void) applicationWillTerminate;
-
-    @end
+    @class UIKitWindowViewController;
 #endif
 
 namespace Sierra
@@ -37,7 +31,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit UIKitWindow(const WindowCreateInfo &createInfo);
+        explicit UIKitWindow(const UIKitContext &uiKitContext, const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         void OnUpdate() override;
@@ -55,39 +49,43 @@ namespace Sierra
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
-        String GetTitle() const override;
-        Vector2Int GetPosition() const override;
-        Vector2UInt GetSize() const override;
-        Vector2UInt GetFramebufferSize() const override;
-        float32 GetOpacity() const override;
-        bool IsClosed() const override;
-        bool IsMinimized() const override;
-        bool IsMaximized() const override;
-        bool IsFocused() const override;
-        bool IsHidden() const override;
-        TouchManager& GetTouchManager() override;
-        WindowAPI GetAPI() const override;
+        [[nodiscard]] String GetTitle() const override;
+        [[nodiscard]] Vector2Int GetPosition() const override;
+        [[nodiscard]] Vector2UInt GetSize() const override;
+        [[nodiscard]] Vector2UInt GetFramebufferSize() const override;
+        [[nodiscard]] float32 GetOpacity() const override;
+        [[nodiscard]] bool IsClosed() const override;
+        [[nodiscard]] bool IsMinimized() const override;
+        [[nodiscard]] bool IsMaximized() const override;
+        [[nodiscard]] bool IsFocused() const override;
+        [[nodiscard]] bool IsHidden() const override;
 
-        /* --- EVENTS --- */
-        #if defined(__OBJC__)
-            void ApplicationDidEnterBackground();
-            void ApplicationWillEnterForeground();
-            void ApplicationWillTerminate();
-        #endif
+        [[nodiscard]] Screen& GetScreen() override;
+        [[nodiscard]] TouchManager& GetTouchManager() override;
+        [[nodiscard]] WindowAPI GetAPI() const override;
 
         /* --- DESTRUCTOR --- */
         ~UIKitWindow();
 
     private:
-        iOSInstance &iOSInstance;
+        const UIKitContext &uiKitContext;
         UIKitTouchManager touchManager;
+        
+        UIWindow* window = nullptr;
+        UIKitWindowViewController* viewController = nullptr;
         
         String title;
         bool minimized = false;
         bool closed = false;
 
-        UIKitWindowViewController* viewController = nullptr;
-        UIKitWindowImplementation* window = nullptr;
+        UIKitSelectorBridge applicationDidEnterBackgroundBridge;
+        UIKitSelectorBridge applicationWillEnterForegroundBridge;
+        UIKitSelectorBridge applicationWillTerminateBridge;
+        
+        /* --- EVENTS --- */
+        void ApplicationDidEnterBackground();
+        void ApplicationWillEnterForeground();
+        void ApplicationWillTerminate();
 
     };
 

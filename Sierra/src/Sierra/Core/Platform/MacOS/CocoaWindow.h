@@ -9,9 +9,9 @@
 #endif
 
 #include "../../Window.h"
-#include "MacOSInstance.h"
+#include "CocoaContext.h"
 #include "CocoaInputManager.h"
-#import "CocoaCursorManager.h"
+#include "CocoaCursorManager.h"
 
 #if !defined(__OBJC__)
     namespace Sierra
@@ -34,7 +34,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit CocoaWindow(const WindowCreateInfo &createInfo);
+        explicit CocoaWindow(const CocoaContext &cocoaContext, const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         void OnUpdate() override;
@@ -52,20 +52,21 @@ namespace Sierra
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
-        String GetTitle() const override;
-        Vector2Int GetPosition() const override;
-        Vector2UInt GetSize() const override;
-        Vector2UInt GetFramebufferSize() const override;
-        float32 GetOpacity() const override;
-        bool IsClosed() const override;
-        bool IsMinimized() const override;
-        bool IsMaximized() const override;
-        bool IsFocused() const override;
-        bool IsHidden() const override;
+        [[nodiscard]] String GetTitle() const override;
+        [[nodiscard]] Vector2Int GetPosition() const override;
+        [[nodiscard]] Vector2UInt GetSize() const override;
+        [[nodiscard]] Vector2UInt GetFramebufferSize() const override;
+        [[nodiscard]] float32 GetOpacity() const override;
+        [[nodiscard]] bool IsClosed() const override;
+        [[nodiscard]] bool IsMinimized() const override;
+        [[nodiscard]] bool IsMaximized() const override;
+        [[nodiscard]] bool IsFocused() const override;
+        [[nodiscard]] bool IsHidden() const override;
 
-        InputManager& GetInputManager() override;
-        CursorManager& GetCursorManager() override;
-        WindowAPI GetAPI() const override;
+        [[nodiscard]] Screen& GetScreen() override;
+        [[nodiscard]] InputManager& GetInputManager() override;
+        [[nodiscard]] CursorManager& GetCursorManager() override;
+        [[nodiscard]] WindowAPI GetAPI() const override;
 
         /* --- EVENTS --- */
         #if defined(__OBJC__)
@@ -75,23 +76,25 @@ namespace Sierra
             void WindowDidMiniaturize(const NSNotification* notification);
             void WindowDidBecomeKey(const NSNotification* notification);
             void WindowDidResignKey(const NSNotification* notification);
+            void WindowDidChangeScreen(const NSNotification* notification);
         #endif
 
         /* --- DESTRUCTOR --- */
         ~CocoaWindow();
 
     private:
-        MacOSInstance &macOSInstance;
+        const CocoaContext &cocoaContext;
 
-        CocoaInputManager* inputManager; // A raw pointer, as ObjectiveC++ is doing some questionable automatic frees, causing segfaults when not managed manually
+        NSWindow* window = nullptr;
+        CocoaWindowDelegate* delegate = nullptr;
+        CocoaWindowContentView* view = nullptr;
+
+        CocoaScreen* screen = nullptr;
+        CocoaInputManager inputManager;
         CocoaCursorManager cursorManager;
 
         bool maximized = false;
         bool closed = false;
-
-        CocoaWindowDelegate* delegate = nullptr;
-        CocoaWindowContentView* view = nullptr;
-        CocoaWindowImplementation* window = nullptr;
 
         float32 GetTitleBarHeight() const;
 

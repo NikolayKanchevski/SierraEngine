@@ -411,6 +411,11 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
+    X11Screen& X11Context::GetPrimaryScreen() const
+    {
+        return screens[0];
+    }
+
     X11Screen& X11Context::GetWindowScreen(const XID window) const
     {
         const Vector2Int windowPosition = GetWindowPosition(window);

@@ -270,7 +270,7 @@ namespace Sierra
             Key::Apostrophe
         };
 
-        // TODO: STD::ARRAY
+        // TODO: Use std::array
         InputAction lastKeyStates[KEY_COUNT] { };
         InputAction keyStates[KEY_COUNT] { };
 

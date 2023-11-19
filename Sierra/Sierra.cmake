@@ -254,6 +254,8 @@ function(SierraBuildApplication SOURCE_FILES)
         ${SIERRA_DIRECTORY}/src/Sierra/Core/Version.h
         ${SIERRA_DIRECTORY}/src/Sierra/Core/Window.cpp
         ${SIERRA_DIRECTORY}/src/Sierra/Core/Window.h
+        ${SIERRA_DIRECTORY}/src/Sierra/Core/WindowManager.cpp
+        ${SIERRA_DIRECTORY}/src/Sierra/Core/WindowManager.h
 
         ${SIERRA_DIRECTORY}/src/Sierra/Engine/RNG.cpp
         ${SIERRA_DIRECTORY}/src/Sierra/Engine/RNG.h
@@ -305,10 +307,14 @@ function(SierraBuildApplication SOURCE_FILES)
     elseif(SIERRA_PLATFORM_MACOS)
         # Add macOS-only source files
         target_sources(Sierra PRIVATE
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/MacOS/CocoaContext.mm
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/MacOS/CocoaContext.h
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/MacOS/CocoaCursorManager.mm
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/MacOS/CocoaCursorManager.h
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/MacOS/CocoaInputManager.mm
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/MacOS/CocoaInputManager.h
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/MacOS/CocoaScreen.mm
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/MacOS/CocoaScreen.h
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/MacOS/CocoaWindow.mm
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/MacOS/CocoaWindow.h
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/MacOS/MacOSInstance.mm
@@ -319,6 +325,14 @@ function(SierraBuildApplication SOURCE_FILES)
         target_sources(Sierra PRIVATE
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/iOSInstance.mm
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/iOSInstance.h
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/UIKitContext.mm
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/UIKitContext.h
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/UIKitScreen.mm
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/UIKitScreen.h
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/UIKitSelectorBridge.mm
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/UIKitSelectorBridge.h
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/UIKitTemporaryCreateInfoStorage.mm
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/UIKitTemporaryCreateInfoStorage.h
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/UIKitTouchManager.mm
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/UIKitTouchManager.h
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/iOS/UIKitWindow.mm
@@ -400,15 +414,6 @@ function(SierraBuildApplication SOURCE_FILES)
                     ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanResource.h
                 )
 
-                # Link Volk if platform supports it
-                if(SIERRA_PLATFORM_MACOS OR NOT SIERRA_PLATFORM_APPLE)
-                    set(VOLK_PULL_IN_VULKAN OFF)
-                    add_subdirectory(${SIERRA_DIRECTORY}/vendor/Volk ${SIERRA_DIRECTORY}/vendor/Volk)
-                    target_include_directories(volk PRIVATE ${Vulkan_INCLUDE_DIRS})
-                    target_link_libraries(Sierra PRIVATE volk)
-                    list(APPEND INCLUDE_DIRECTORIES ${SIERRA_DIRECTORY}/vendor/Volk/)
-                endif()
-
                 # Link VMA
                 set(VMA_STATIC_VULKAN_FUNCTIONS OFF)
                 add_subdirectory(${SIERRA_DIRECTORY}/vendor/VMA ${SIERRA_DIRECTORY}/vendor/VMA)
@@ -433,15 +438,18 @@ function(SierraBuildApplication SOURCE_FILES)
     target_link_libraries(Sierra PRIVATE glm)
     list(APPEND INCLUDE_DIRECTORIES ${SIERRA_DIRECTORY}/vendor/glm/)
 
-    # Linkg SPDLOG
-    set(SPDLOG_ENABLE_PCH ON)
-    set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-    add_subdirectory(${SIERRA_DIRECTORY}/vendor/spdlog ${SIERRA_DIRECTORY}/vendor/spdlog)
-    if(SIERRA_BUILD_SHARED_LIBRARY AND SIERRA_PLATFORM_LINUX)
-        set_target_properties(spdlog PROPERTIES COMPILE_FLAGS "-fPIC" LINK_FLAGS "-fPIC")
+    # Linkg spdlog
+    if (SIERRA_ENABLE_LOGGING)
+        set(SPDLOG_ENABLE_PCH ON)
+        set(SPDLOG_USE_STD_FORMAT OFF)
+        set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+        add_subdirectory(${SIERRA_DIRECTORY}/vendor/spdlog ${SIERRA_DIRECTORY}/vendor/spdlog)
+        if(SIERRA_BUILD_SHARED_LIBRARY AND SIERRA_PLATFORM_LINUX)
+            set_target_properties(spdlog PROPERTIES COMPILE_FLAGS "-fPIC" LINK_FLAGS "-fPIC")
+        endif()
+        target_link_libraries(Sierra PUBLIC spdlog)
+        list(APPEND INCLUDE_DIRECTORIES ${SIERRA_DIRECTORY}/vendor/spdlog/include/)
     endif()
-    target_link_libraries(Sierra PUBLIC spdlog)
-    list(APPEND INCLUDE_DIRECTORIES ${SIERRA_DIRECTORY}/vendor/spdlog/include/)
 
     # Link BetterEnums
     set(BETTER_ENUMS_DIRECTORY ${SIERRA_DIRECTORY}/vendor/BetterEnums)

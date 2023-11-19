@@ -6,6 +6,7 @@
 
 #include "Engine/Time.h"
 #include "Core/Version.h"
+#include "Core/WindowManager.h"
 #include "Core/PlatformInstance.h"
 #include "Rendering/RenderingContext.h"
 
@@ -35,8 +36,10 @@ namespace Sierra
         [[nodiscard]] inline const String& GetName() const { return name; }
         [[nodiscard]] inline Version GetVersion() { return version; }
 
-        [[nodiscard]] inline UniquePtr<PlatformInstance>& GetPlatformInstance() { return platformInstance; }
-        [[nodiscard]] inline UniquePtr<RenderingContext>& GetRenderingContext() { return renderingContext; }
+        [[nodiscard]] inline const UniquePtr<PlatformInstance>& GetPlatformInstance() { return platformInstance; }
+        [[nodiscard]] inline const UniquePtr<WindowManager>& GetWindowManager() { return windowManager; }
+
+        [[nodiscard]] inline const UniquePtr<RenderingContext>& GetRenderingContext() { return renderingContext; }
 
         /* --- DESTRUCTOR --- */
         virtual ~Application();
@@ -53,10 +56,12 @@ namespace Sierra
         virtual bool OnUpdate(const TimeStep &timestep) = 0;
 
         String name;
-        ApplicationSettings settings;
         Version version;
+        ApplicationSettings settings;
 
         UniquePtr<PlatformInstance> platformInstance = nullptr;
+        UniquePtr<WindowManager> windowManager = nullptr;
+
         UniquePtr<RenderingContext> renderingContext = nullptr;
 
         class SIERRA_API FrameLimiter

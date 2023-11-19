@@ -1,35 +1,38 @@
 //
-// Created by Nikolay Kanchevski on 10.31.23.
+// Created by Nikolay Kanchevski on 10.11.23.
 //
 
 #pragma once
 
-#if !SR_PLATFORM_LINUX
-    #error "Including the X11Screen.h file is only allowed in Linux builds!"
+#if !SR_PLATFORM_iOS
+    #error "Including the UIKitScreen.h file is only allowed in iOS builds!"
 #endif
 
 #include "../../Screen.h"
+#include "UIKitSelectorBridge.h"
 
-#include <X11/Xlib.h>
-#include <X11/extensions/Xrandr.h>
+#if !defined(__OBJC__)
+    namespace Sierra
+    {
+        typedef void UIScreen;
+    }
+#else
+    #include <UIKit/UIKit.h>
+#endif
 
 namespace Sierra
 {
 
-    struct X11ScreenCreateInfo
+    struct UIKitScreenCreatInfo
     {
-        const XRRScreenResources* screenResources;
-        const XRRCrtcInfo* crtcInfo;
-        const XRROutputInfo* outputInfo;
-        const Vector4UInt &workAreaExtents;
+        const UIScreen* uiScreen;
     };
 
-    class SIERRA_API X11Screen final : public Screen
+    class SIERRA_API UIKitScreen : public Screen
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit X11Screen(X11Screen&& other);
-        explicit X11Screen(const X11ScreenCreateInfo &createInfo);
+        explicit UIKitScreen(const UIKitScreenCreatInfo &creatInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline String GetName() const override { return name; };
@@ -37,8 +40,8 @@ namespace Sierra
         [[nodiscard]] inline Vector2UInt GetSize() const override { return size; };
         [[nodiscard]] inline Vector2Int GetWorkAreaOrigin() const override { return workAreaOrigin; };
         [[nodiscard]] inline Vector2UInt GetWorkAreaSize() const override { return workAreaSize; };
-        // TODO: Detect refresh rate
         [[nodiscard]] inline uint32 GetRefreshRate() const override { return refreshRate; };
+        [[nodiscard]] ScreenOrientation GetOrientation() const override;
 
     private:
         String name;

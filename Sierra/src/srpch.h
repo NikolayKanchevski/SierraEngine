@@ -4,7 +4,7 @@
 
 #pragma once
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
     #pragma region Platform Detection
         #define SR_PLATFORM_WINDOWS 0
         #define SR_PLATFORM_LINUX 0
@@ -18,7 +18,6 @@
         #if _WIN32 || _WIN64
             #undef SR_PLATFORM_WINDOWS
             #define SR_PLATFORM_WINDOWS 1
-
         #elif __APPLE__ || __MACH__
             #include "TargetConditionals.h"
             #if TARGET_OS_IPHONE
@@ -66,6 +65,7 @@
         #include <string_view>
         #include <sstream>
         #include <stack>
+        #include <queue>
         #include <deque>
         #include <optional>
         #include <fstream>
@@ -73,7 +73,6 @@
         #include <bitset>
         #include <any>
         #include <cstdio>
-        #include <stdlib.h>
         #if SR_PLATFORM_WINDOWS
             #define NOMINMAX
         #endif
@@ -147,6 +146,17 @@
 	    typedef std::string String;
 	    typedef std::string_view StringView;
 	    typedef std::filesystem::path FilePath;
+    #pragma endregion
+
+    #pragma region Macros
+        #define SR_DEFINE_ENUM_FLAG_OPERATORS(T)                                                                                                                                                      \
+            inline constexpr T operator~ (const T a) { return static_cast<T>(~static_cast<std::underlying_type<T>::type>(a)); }                                                                       \
+            inline constexpr T operator| (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type<T>::type>(a) | static_cast<std::underlying_type<T>::type>(b)); }             \
+            inline constexpr std::underlying_type<T>::type operator& (const T a, const T b) { return static_cast<std::underlying_type<T>::type>(a) & static_cast<std::underlying_type<T>::type>(b); } \
+            inline constexpr T operator^ (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type<T>::type>(a) ^ static_cast<std::underlying_type<T>::type>(b)); }             \
+            inline T& operator|= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type<T>::type&>(a) |= static_cast<std::underlying_type<T>::type>(b)); }             \
+            inline T& operator&= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type<T>::type&>(a) &= static_cast<std::underlying_type<T>::type>(b)); }             \
+            inline T& operator^= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type<T>::type&>(a) ^= static_cast<std::underlying_type<T>::type>(b)); }
     #pragma endregion
 
     #pragma region Source Files

@@ -30,11 +30,6 @@ namespace Sierra
 
     }
 
-    UniquePtr<PlatformInstance> PlatformInstance::Create(const PlatformInstanceCreateInfo &createInfo)
-    {
-        return std::make_unique<NativeInstance>(createInfo);
-    }
-
     /* --- POLLING METHODS --- */
 
     void PlatformInstance::RunApplication(const PlatformApplicationRunInfo &runInfo)
@@ -45,6 +40,13 @@ namespace Sierra
             continue;
         }
         runInfo.OnEnd();
+    }
+
+    /* --- PRIVATE METHODS --- */
+
+    UniquePtr<PlatformInstance> PlatformInstance::Load(const PlatformInstanceCreateInfo &createInfo)
+    {
+        return std::make_unique<NativeInstance>(createInfo);
     }
 
 }

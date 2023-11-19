@@ -10,21 +10,32 @@
 
 #include "../../CursorManager.h"
 
-#if defined(__OBJC__)
+#if !defined(__OBJC__)
+    namespace Sierra
+    {
+        typedef void NSWindow;
+    }
+#else
     #include <Cocoa/Cocoa.h>
 #endif
 
 namespace Sierra
 {
 
+    struct CocoaCursorManagerCreateInfo final : public CursorManagerCreateInfo
+    {
+        const NSWindow* window;
+    };
+
     class SIERRA_API CocoaCursorManager final : public CursorManager
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit CocoaCursorManager(const CursorManagerCreateInfo &createInfo);
+        explicit CocoaCursorManager(const CocoaCursorManagerCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         void OnUpdate();
+        void OnUpdateEnd();
 
         /* --- SETTER METHODS --- */
         void SetCursorPosition(const Vector2 &position) override;
@@ -33,7 +44,6 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         Vector2 GetCursorPosition() override;
-        bool IsCursorShown() override;
         bool IsCursorHidden() override;
 
         float32 GetHorizontalDelta() override;
@@ -45,11 +55,13 @@ namespace Sierra
         #endif
 
     private:
+        const NSWindow* window;
+
         Vector2 cursorPosition = { 0, 0 };
         Vector2 lastCursorPosition = { 0, 0 };
-        bool cursorShown = true;
 
-        double InvertWindowPositionY(double yPosition);
+        bool cursorHidden = false;
+        bool justHidCursor = false;
 
     };
 

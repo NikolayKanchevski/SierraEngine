@@ -15,6 +15,8 @@
 namespace Sierra
 {
 
+    // TODO: No default constructors
+
     struct XkbExtensionCreateInfo
     {
         Display* display;

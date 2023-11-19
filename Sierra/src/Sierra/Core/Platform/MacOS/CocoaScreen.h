@@ -1,35 +1,38 @@
 //
-// Created by Nikolay Kanchevski on 10.31.23.
+// Created by Nikolay Kanchevski on 4.11.23.
 //
 
 #pragma once
 
-#if !SR_PLATFORM_LINUX
-    #error "Including the X11Screen.h file is only allowed in Linux builds!"
+#if !SR_PLATFORM_MACOS
+    #error "Including the CocoaScreen.h file is only allowed in macOS builds!"
 #endif
 
 #include "../../Screen.h"
 
-#include <X11/Xlib.h>
-#include <X11/extensions/Xrandr.h>
+#if !defined(__OBJC__)
+    namespace Sierra
+    {
+        typedef void NSScreen;
+    }
+#else
+    #include <Cocoa/Cocoa.h>
+#endif
 
 namespace Sierra
 {
 
-    struct X11ScreenCreateInfo
+    struct CocoaScreenCreateInfo
     {
-        const XRRScreenResources* screenResources;
-        const XRRCrtcInfo* crtcInfo;
-        const XRROutputInfo* outputInfo;
-        const Vector4UInt &workAreaExtents;
+        const NSScreen* nsScreen;
     };
 
-    class SIERRA_API X11Screen final : public Screen
+    class SIERRA_API CocoaScreen final : public Screen
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit X11Screen(X11Screen&& other);
-        explicit X11Screen(const X11ScreenCreateInfo &createInfo);
+        explicit CocoaScreen(const CocoaScreenCreateInfo &createInfo);
+        explicit CocoaScreen(CocoaScreen&& other);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline String GetName() const override { return name; };
@@ -37,8 +40,8 @@ namespace Sierra
         [[nodiscard]] inline Vector2UInt GetSize() const override { return size; };
         [[nodiscard]] inline Vector2Int GetWorkAreaOrigin() const override { return workAreaOrigin; };
         [[nodiscard]] inline Vector2UInt GetWorkAreaSize() const override { return workAreaSize; };
-        // TODO: Detect refresh rate
         [[nodiscard]] inline uint32 GetRefreshRate() const override { return refreshRate; };
+        [[nodiscard]] inline ScreenOrientation GetOrientation() const override { return size.x >= size.y ? ScreenOrientation::LandscapeNormal : ScreenOrientation::PortraitNormal; }
 
     private:
         String name;

@@ -25,7 +25,6 @@ namespace Sierra
 
     struct WindowCreateInfo
     {
-        const UniquePtr<PlatformInstance> &platformInstance;
         const String &title = "Sierra Application";
         uint32 width = 1280;
         uint32 height = 780;
@@ -40,9 +39,6 @@ namespace Sierra
         /* --- TYPE DEFINITIONS --- */
         template<typename T>
         using WindowEventCallback = std::function<bool(const T&)>;
-
-        /* --- CONSTRUCTORS --- */
-        static UniquePtr<Window> Create(const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         virtual void OnUpdate() = 0;

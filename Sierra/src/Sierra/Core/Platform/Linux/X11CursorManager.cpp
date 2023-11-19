@@ -32,7 +32,7 @@ namespace Sierra
 
     void X11CursorManager::OnUpdateEnd()
     {
-        if (!cursorHidden) return;
+        if (!cursorHidden || !x11Context.IsWindowFocused(window)) return;
 
         // Manually re-center cursor after all window events have been polled (so none more would be handled and SetWindowCursorPosition() produces one)
         const Vector2Int x11Center = static_cast<Vector2Int>(x11Context.GetWindowSize(window)) / 2;
@@ -43,7 +43,7 @@ namespace Sierra
 
             // Update mouse position
             lastCursorPosition = cursorPosition;
-            cursorPosition = { x11Center.x, static_cast<int32>(x11Context.GetWindowSize(window).y) - x11Center.y };
+            cursorPosition = x11Center;
 
             // Reset mouse delta when re-centering for the first time
             if (justHidCursor)

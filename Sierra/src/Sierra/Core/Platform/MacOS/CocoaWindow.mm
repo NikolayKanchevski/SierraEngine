@@ -57,6 +57,11 @@
         window->WindowDidResignKey(notification);
     }
 
+    - (void) windowDidChangeScreen: (NSNotification*) notification
+    {
+        window->WindowDidChangeScreen(notification);
+    }
+
     /* --- DESTRUCTOR --- */
 
     - (void) dealloc
@@ -246,58 +251,19 @@
 
 @end
 
-@interface CocoaWindowImplementation : NSWindow
-
-@end
-
-@implementation CocoaWindowImplementation
-
-    /* --- GETTER METHODS --- */
-
-    - (BOOL) canBecomeKeyWindow
-    {
-        return YES;
-    }
-
-    - (BOOL) canBecomeMainWindow
-    {
-        return YES;
-    }
-
-    /* --- DESTRUCTOR --- */
-
-    - (void) dealloc
-    {
-        [super dealloc];
-    }
-
-@end
-
 namespace Sierra
 {
 
     /* --- CONSTRUCTORS --- */
 
-    CocoaWindow::CocoaWindow(const WindowCreateInfo &createInfo)
-        : Window(createInfo), macOSInstance(*static_cast<MacOSInstance*>(createInfo.platformInstance.get())), inputManager(new CocoaInputManager({ })), cursorManager({ })
+    CocoaWindow::CocoaWindow(const CocoaContext &cocoaContext, const WindowCreateInfo &createInfo)
+        : Window(createInfo),
+          cocoaContext(cocoaContext),
+          window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
+          delegate([[CocoaWindowDelegate alloc] initWithWindow: this]), view([[CocoaWindowContentView alloc] initWithWindow: this]),
+          screen(&cocoaContext.GetWindowScreen(window)),
+          inputManager(CocoaInputManager({ })), cursorManager({ .window = window })
     {
-        SR_ERROR_IF(createInfo.platformInstance->GetType() !=+ PlatformType::MacOS, "Cannot create Cocoa window using a platform instance of type [{0}]!", createInfo.platformInstance->GetType()._to_string());
-
-        @autoreleasepool
-        {
-            // Create delegate
-            delegate = [[CocoaWindowDelegate alloc] initWithWindow: this];
-            SR_ERROR_IF(delegate == nil, "Could not create Cocoa window delegate!");
-
-            // Create window
-            window = [[CocoaWindowImplementation alloc] initWithContentRect: NSMakeRect(0.0f, 0.0f, static_cast<float32>(createInfo.width), static_cast<float32>(createInfo.height)) styleMask: NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | (createInfo.resizable ? NSWindowStyleMaskResizable : 0) backing: NSBackingStoreBuffered defer: NO];
-            SR_ERROR_IF(window == nil, "Could not create Cocoa window!");
-
-            // Create view
-            view = [[CocoaWindowContentView alloc] initWithWindow: this];
-            SR_ERROR_IF(view == nil, "Could not create Cocoa window view!");
-        }
-
         // Maximize window manually, or through Cocoa if resizable
         if (createInfo.maximize)
         {
@@ -307,31 +273,27 @@ namespace Sierra
             }
             else
             {
-                const NSScreen* screen = [window screen];
-                NSRect newFrame = NSMakeRect(screen.frame.origin.x, screen.frame.origin.y, screen.frame.size.width, screen.frame.size.height - macOSInstance.GetMenuBarHeight());
+                const NSRect newFrame = NSMakeRect(screen->GetOrigin().x, screen->GetOrigin().y, screen->GetWorkAreaSize().x, screen->GetWorkAreaSize().y);
                 [window setFrame: newFrame display: YES animate: YES];
             }
         }
 
-        // Set window properties
-        [window center];
-        [window setTitle: @(createInfo.title.c_str())];
-        [window setCollectionBehavior: createInfo.resizable ? (NSWindowCollectionBehaviorFullScreenPrimary | NSWindowCollectionBehaviorManaged) : (NSWindowCollectionBehaviorFullScreenNone)];
-        [window setAcceptsMouseMovedEvents: YES];
-        [window setRestorable: NO];
+        // Disable resizing
+        if (!createInfo.resizable)
+        {
+            [window setCollectionBehavior: NSWindowCollectionBehaviorFullScreenNone];
+            [window setStyleMask: [window styleMask] & ~NSWindowStyleMaskResizable];
+        }
 
         // Assign window handlers
+        [window setDelegate: delegate];
         [window setContentView: view];
         [window makeFirstResponder: view];
-        [window setDelegate: delegate];
-        #if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
-            if ([window respondsToSelector: @selector(setTabbingMode:)]) [window setTabbingMode: NSWindowTabbingModeDisallowed];
-        #endif
 
         if (!createInfo.hide)
         {
             // Show and focus window
-            [macOSInstance.GetApplication() activateIgnoringOtherApps: YES];
+            [cocoaContext.GetApplication() activateIgnoringOtherApps: YES];
             [window orderFrontRegardless];
             [window makeKeyWindow];
         }
@@ -345,12 +307,9 @@ namespace Sierra
         }
 
         // Poll creation events
-        while (true)
+        while (!cocoaContext.IsEventQueueEmpty())
         {
-            NSEvent* event = [macOSInstance.GetApplication() nextEventMatchingMask: NSEventMaskAny untilDate: [NSDate distantPast] inMode: NSDefaultRunLoopMode dequeue: YES];
-            if (event == nil) break;
-
-            [macOSInstance.GetApplication() sendEvent: event];
+            cocoaContext.PollNextEvent();
         }
     }
 
@@ -358,16 +317,15 @@ namespace Sierra
 
     void CocoaWindow::OnUpdate()
     {
-        // TODO: TRY NO POINTER ON INPUT MANAGER
-        inputManager->OnUpdate();
+        inputManager.OnUpdate();
         cursorManager.OnUpdate();
 
-        while (true)
+        while (!cocoaContext.IsEventQueueEmpty())
         {
-            NSEvent* event = [macOSInstance.GetApplication() nextEventMatchingMask: NSEventMaskAny untilDate: [NSDate distantPast] inMode: NSDefaultRunLoopMode dequeue: YES];
-            if (event == nil) break;
-            [macOSInstance.GetApplication() sendEvent: event];
+            cocoaContext.PollNextEvent();
         }
+
+        cursorManager.OnUpdateEnd();
     }
 
     void CocoaWindow::Minimize()
@@ -389,7 +347,7 @@ namespace Sierra
 
     void CocoaWindow::Show()
     {
-        [macOSInstance.GetApplication() activateIgnoringOtherApps: YES];
+        [cocoaContext.GetApplication() activateIgnoringOtherApps: YES];
         [window orderFrontRegardless];
         [window makeKeyWindow];
     }
@@ -401,7 +359,7 @@ namespace Sierra
 
     void CocoaWindow::Focus()
     {
-        [macOSInstance.GetApplication() activateIgnoringOtherApps: YES];
+        [cocoaContext.GetApplication() activateIgnoringOtherApps: YES];
         [window orderFrontRegardless];
         [window makeKeyWindow];
     }
@@ -412,21 +370,10 @@ namespace Sierra
         closed = true;
 
         GetWindowCloseDispatcher().DispatchEvent();
-        [window performClose: nil];
+        cocoaContext.DestroyWindow(window);
 
-        @autoreleasepool
-        {
-            [window setDelegate: nil];
-            [delegate release];
-            delegate = nil;
-
-            [window setContentView: nil];
-            [view release];
-            view = nil;
-
-            [window release];
-            window = nil;
-        }
+        [window release];
+        window = nil;
     }
 
     /* --- SETTER METHODS --- */
@@ -508,9 +455,14 @@ namespace Sierra
         return ![window isVisible];
     }
 
+    Screen& CocoaWindow::GetScreen()
+    {
+        return *screen;
+    }
+
     InputManager& CocoaWindow::GetInputManager()
     {
-        return *inputManager;
+        return inputManager;
     }
 
     CursorManager& CocoaWindow::GetCursorManager()
@@ -537,7 +489,7 @@ namespace Sierra
             const NSRect contentRect = [view frame];
 
             // Check if window has been maximized
-            bool nowMaximized = [window isZoomed];
+            const bool nowMaximized = [window isZoomed];
             if (maximized != nowMaximized)
             {
                 maximized = nowMaximized;
@@ -576,6 +528,11 @@ namespace Sierra
             if (closed) return;
             GetWindowFocusDispatcher().DispatchEvent(false);
         }
+
+        void CocoaWindow::WindowDidChangeScreen(const NSNotification* notification)
+        {
+            screen = &cocoaContext.GetWindowScreen(window);
+        }
     #endif
 
     /* --- PRIVATE METHODS --- */
@@ -590,6 +547,6 @@ namespace Sierra
     CocoaWindow::~CocoaWindow()
     {
         if (closed) return;
-        [window performClose: nil];
+        cocoaContext.DestroyWindow(window);
     }
 }

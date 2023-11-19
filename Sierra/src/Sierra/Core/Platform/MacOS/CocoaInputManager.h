@@ -26,16 +26,16 @@ namespace Sierra
         void OnUpdate();
 
         /* --- GETTER METHODS --- */
-        bool IsKeyPressed(Key key) override;
-        bool IsKeyHeld(Key key) override;
-        bool IsKeyReleased(Key key) override;
-        bool IsKeyResting(Key key) override;
+        bool IsKeyPressed(Key key) const override;
+        bool IsKeyHeld(Key key) const override;
+        bool IsKeyReleased(Key key) const override;
+        bool IsKeyResting(Key key) const override;
 
-        bool IsMouseButtonPressed(MouseButton mouseButton) override;
-        bool IsMouseButtonHeld(MouseButton mouseButton) override;
-        bool IsMouseButtonReleased(MouseButton mouseButton) override;
-        bool IsMouseButtonResting(MouseButton mouseButton) override;
-        Vector2 GetMouseScroll() override;
+        bool IsMouseButtonPressed(MouseButton mouseButton) const override;
+        bool IsMouseButtonHeld(MouseButton mouseButton) const override;
+        bool IsMouseButtonReleased(MouseButton mouseButton) const override;
+        bool IsMouseButtonResting(MouseButton mouseButton) const override;
+        Vector2 GetMouseScroll() const override;
 
         /* --- EVENTS --- */
         #if defined(__OBJC__)
@@ -53,7 +53,7 @@ namespace Sierra
         #endif
 
     private:
-        constexpr static Key KEY_TABLE[]
+        constexpr static std::array<Key, 127> KEY_TABLE
         {
             Key::A,
             Key::S,
@@ -184,11 +184,11 @@ namespace Sierra
             Key::UpArrow
         };
 
-        InputAction lastKeyStates[KEY_COUNT] { };
-        InputAction keyStates[KEY_COUNT] { };
+        std::array<InputAction, KEY_COUNT> lastKeyStates { };
+        std::array<InputAction, KEY_COUNT> keyStates { };
 
-        InputAction lastMouseButtonStates[MOUSE_BUTTON_COUNT] { };
-        InputAction mouseButtonStates[MOUSE_BUTTON_COUNT] { };
+        std::array<InputAction, MOUSE_BUTTON_COUNT> lastMouseButtonStates { };
+        std::array<InputAction, MOUSE_BUTTON_COUNT> mouseButtonStates { };
 
         Vector2 mouseScroll = { 0, 0 };
 

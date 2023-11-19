@@ -20,15 +20,15 @@ namespace Sierra
         explicit VulkanContext(const RenderingContextCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline UniquePtr<VulkanInstance>& GetInstance() { return instance; }
-        [[nodiscard]] inline UniquePtr<VulkanDevice>& GetDevice() { return device; }
+        [[nodiscard]] inline const VulkanInstance& GetInstance() const { return instance; }
+        [[nodiscard]] inline const VulkanDevice& GetDevice() const { return device; }
 
         /* --- DESTRUCTOR --- */
         void Destroy() override;
 
     private:
-        UniquePtr<VulkanInstance> instance;
-        UniquePtr<VulkanDevice> device;
+        VulkanInstance instance;
+        VulkanDevice device;
 
     };
 

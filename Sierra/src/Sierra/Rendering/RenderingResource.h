@@ -37,8 +37,8 @@ namespace Sierra
         [[nodiscard]] inline virtual GraphicsAPI GetAPI() const = 0;
 
         /* --- DESTRUCTOR --- */
-        virtual ~RenderingResource() = default;
         virtual void Destroy() { }
+        virtual ~RenderingResource() = default;
 
         /* --- OPERATORS --- */
         RenderingResource(const RenderingResource&) = delete;

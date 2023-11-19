@@ -18,12 +18,11 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit LinuxInstance(const PlatformInstanceCreateInfo &createInfo);
+        LinuxInstance();
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const X11Context& GetX11Context() const { return x11Context; }
-
-        PlatformType GetType() const override { return PlatformType::Linux; }
+        [[nodiscard]] inline PlatformType GetType() const override { return PlatformType::Linux; }
 
     private:
         X11Context x11Context;

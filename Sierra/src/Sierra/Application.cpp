@@ -12,13 +12,14 @@ namespace Sierra
     Application::Application(const ApplicationCreateInfo &createInfo)
         : name(createInfo.name), settings(createInfo.settings), version(createInfo.version)
     {
-        // Logger is initialized first, prior to even creating the application
         Logger::Initialize(name);
-
         SR_ERROR_IF(createInfo.name.empty(), "Application title must not be empty!");
 
-        // Create application resources
-        platformInstance = PlatformInstance::Create({ });
+        // Create platform objects
+        platformInstance = PlatformInstance::Load({ });
+        windowManager = WindowManager::Create({ .platformInstance = platformInstance });
+
+        // Create rendering objects
         renderingContext = RenderingContext::Create({ .graphicsAPI = createInfo.settings.graphicsAPI });
     }
 

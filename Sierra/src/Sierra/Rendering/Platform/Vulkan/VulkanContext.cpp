@@ -10,12 +10,9 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanContext::VulkanContext(const RenderingContextCreateInfo &createInfo)
-        : RenderingContext(createInfo)
+        : RenderingContext(createInfo), instance(VulkanInstance({ })), device(VulkanDevice({ .instance = instance }))
     {
-        instance = VulkanInstance::Create({ });
-        device = VulkanDevice::Create({ .instance = instance });
-
-        SR_INFO("Vulkan context created successfully! Device in use: [{0}].", device->GetPhysicalDeviceProperties().deviceName);
+        SR_INFO("Vulkan context created successfully! Device in use: [{0}].", device.GetPhysicalDeviceProperties().deviceName);
     }
 
     /* --- DESTRUCTOR --- */
@@ -24,8 +21,8 @@ namespace Sierra
     {
         RenderingContext::Destroy();
 
-        device->Destroy();
-        instance->Destroy();
+        device.Destroy();
+        instance.Destroy();
     }
 
 }

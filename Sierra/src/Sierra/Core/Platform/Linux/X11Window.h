@@ -10,7 +10,6 @@
 
 #include "../../Window.h"
 #include "X11Context.h"
-#include "X11Screen.h"
 #include "X11InputManager.h"
 #include "X11CursorManager.h"
 
