@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include "../../Device.h"
 #include "VulkanResource.h"
 #include "VulkanInstance.h"
-
 #include <vk_mem_alloc.h>
 
 namespace Sierra
@@ -17,21 +17,20 @@ namespace Sierra
         const VulkanInstance &instance;
     };
 
-    class SIERRA_API VulkanDevice final : public VulkanResource
+    class SIERRA_API VulkanDevice final : public Device, public VulkanResource
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit VulkanDevice(const VulkanDeviceCreateInfo &createInfo);
+        VulkanDevice(const VulkanDeviceCreateInfo &createInfo, const DeviceCreateInfo &baseCreateInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] inline const char* GetName() const override { return physicalDeviceProperties.deviceName; }
+
         [[nodiscard]] inline VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
         [[nodiscard]] inline VkDevice GetLogicalDevice() const { return logicalDevice; }
-        [[nodiscard]] inline VmaAllocator GetAllocator() const { return vmaAllocator; }
-        [[nodiscard]] inline auto& GetFunctionTable() const { return functionTable; }
 
-        [[nodiscard]] inline const VkPhysicalDeviceProperties& GetPhysicalDeviceProperties() const { return physicalDeviceProperties; }
-        [[nodiscard]] inline const VkPhysicalDeviceFeatures& GetPhysicalDeviceFeatures() const { return physicalDeviceFeatures; }
-        [[nodiscard]] bool IsExtensionLoaded(const String &extensionName) const;
+        [[nodiscard]] bool IsExtensionLoaded(const std::string &extensionName) const;
+        [[nodiscard]] inline auto& GetFunctionTable() const { return functionTable; }
 
         /* --- DESTRUCTOR --- */
         void Destroy() override;
@@ -863,7 +862,7 @@ namespace Sierra
 
         struct DeviceExtension
         {
-            String name;
+            std::string name;
             std::vector<DeviceExtension> dependencies;
             bool requiredOnlyIfSupported = false;
             void* data = nullptr;

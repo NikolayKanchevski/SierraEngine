@@ -21,7 +21,7 @@ namespace Sierra
 
     struct ApplicationCreateInfo
     {
-        const String &name = "Sierra Application";
+        const std::string &name = "Sierra Application";
         const ApplicationSettings &settings = { };
         Version version = Version({ 1, 0, 0, VersionState::Experimental });
     };
@@ -33,12 +33,11 @@ namespace Sierra
         void Run();
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const String& GetName() const { return name; }
+        [[nodiscard]] inline const std::string& GetName() const { return name; }
         [[nodiscard]] inline Version GetVersion() { return version; }
 
         [[nodiscard]] inline const UniquePtr<PlatformInstance>& GetPlatformInstance() { return platformInstance; }
         [[nodiscard]] inline const UniquePtr<WindowManager>& GetWindowManager() { return windowManager; }
-
         [[nodiscard]] inline const UniquePtr<RenderingContext>& GetRenderingContext() { return renderingContext; }
 
         /* --- DESTRUCTOR --- */
@@ -55,13 +54,12 @@ namespace Sierra
         virtual void OnStart() = 0;
         virtual bool OnUpdate(const TimeStep &timestep) = 0;
 
-        String name;
+        std::string name;
         Version version;
         ApplicationSettings settings;
 
         UniquePtr<PlatformInstance> platformInstance = nullptr;
         UniquePtr<WindowManager> windowManager = nullptr;
-
         UniquePtr<RenderingContext> renderingContext = nullptr;
 
         class SIERRA_API FrameLimiter

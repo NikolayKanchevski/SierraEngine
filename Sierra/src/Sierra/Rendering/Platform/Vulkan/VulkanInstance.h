@@ -43,7 +43,7 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkInstance GetVulkanInstance() const { return instance; }
         [[nodiscard]] inline auto& GetFunctionTable() const { return functionTable; }
-        [[nodiscard]] bool IsExtensionLoaded(const String &extensionName) const;
+        [[nodiscard]] bool IsExtensionLoaded(const std::string &extensionName) const;
         [[nodiscard]] VulkanAPIVersion GetAPIVersion() const;
 
         /* --- DESTRUCTOR --- */
@@ -263,7 +263,7 @@ namespace Sierra
 
         struct InstanceExtension
         {
-            String name;
+            std::string name;
             bool requiredOnlyIfSupported = false;
         };
 

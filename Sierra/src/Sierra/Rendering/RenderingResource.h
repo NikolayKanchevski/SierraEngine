@@ -26,7 +26,7 @@ namespace Sierra
         DirectX,
         Metal,
         OpenGL,
-        Auto = Vulkan
+        Auto = GRAPHICS_API_AUTO
     );
     #undef GRAPHICS_API_AUTO
 

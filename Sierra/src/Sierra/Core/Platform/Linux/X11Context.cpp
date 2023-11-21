@@ -98,7 +98,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    XID X11Context::CreateWindow(const String &title, const uint32 width, const uint32 height) const
+    XID X11Context::CreateWindow(const std::string &title, const uint32 width, const uint32 height) const
     {
         // Assign attributes
         XSetWindowAttributes setAttributes = { 0 };
@@ -371,7 +371,7 @@ namespace Sierra
         Flush();
     }
 
-    void X11Context::SetWindowTitle(const XID window, const String &title) const
+    void X11Context::SetWindowTitle(const XID window, const std::string &title) const
     {
         XStoreName(display, window, title.c_str());
     }
@@ -440,12 +440,12 @@ namespace Sierra
         return focusedWindow;
     }
 
-    String X11Context::GetWindowTitle(const XID window) const
+    std::string X11Context::GetWindowTitle(const XID window) const
     {
         char* title = nullptr;
         XFetchName(display, window, &title);
 
-        auto result = String(title);
+        auto result = std::string(title);
         XFree(title);
 
         return result;

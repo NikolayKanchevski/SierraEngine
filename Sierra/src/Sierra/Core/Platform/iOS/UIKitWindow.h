@@ -43,13 +43,13 @@ namespace Sierra
         void Close() override;
 
         /* --- SETTER METHODS --- */
-        void SetTitle(const String &title) override;
+        void SetTitle(const std::string &title) override;
         void SetPosition(const Vector2Int &position) override;
         void SetSize(const Vector2UInt &size) override;
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] String GetTitle() const override;
+        [[nodiscard]] std::string GetTitle() const override;
         [[nodiscard]] Vector2Int GetPosition() const override;
         [[nodiscard]] Vector2UInt GetSize() const override;
         [[nodiscard]] Vector2UInt GetFramebufferSize() const override;
@@ -74,7 +74,7 @@ namespace Sierra
         UIWindow* window = nullptr;
         UIKitWindowViewController* viewController = nullptr;
         
-        String title;
+        std::string title;
         bool minimized = false;
         bool closed = false;
 

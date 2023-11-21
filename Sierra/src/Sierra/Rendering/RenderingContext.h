@@ -5,6 +5,7 @@
 #pragma once
 
 #include "RenderingResource.h"
+#include "Device.h"
 
 namespace Sierra
 {
@@ -17,14 +18,17 @@ namespace Sierra
     class SIERRA_API RenderingContext : public virtual RenderingResource
     {
     public:
-        /* --- CONSTRUCTORS --- */
-        static UniquePtr<RenderingContext> Create(const RenderingContextCreateInfo &createInfo);
-
-        /* --- DESTRUCTOR --- */
-        void Destroy() override;
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] virtual const Device& GetDevice() const = 0;
 
     protected:
         explicit RenderingContext(const RenderingContextCreateInfo &createInfo);
+
+    private:
+        friend class Application;
+        static UniquePtr<RenderingContext> Create(const RenderingContextCreateInfo &createInfo);
+
+        void Destroy() override;
 
     };
 

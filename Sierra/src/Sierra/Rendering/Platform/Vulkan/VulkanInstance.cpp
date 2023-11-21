@@ -320,9 +320,9 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    bool VulkanInstance::IsExtensionLoaded(const String &extensionName) const
+    bool VulkanInstance::IsExtensionLoaded(const std::string &extensionName) const
     {
-        return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<String>{}(extensionName)) != loadedExtensions.end();
+        return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<std::string>{}(extensionName)) != loadedExtensions.end();
     }
 
     VulkanAPIVersion VulkanInstance::GetAPIVersion() const
@@ -364,7 +364,7 @@ namespace Sierra
         }
 
         // Add extension to the list
-        loadedExtensions.push_back(std::hash<String>{}(extension.name));
+        loadedExtensions.push_back(std::hash<std::string>{}(extension.name));
         extensionList.push_back(extension.name.c_str());
         return true;
     }

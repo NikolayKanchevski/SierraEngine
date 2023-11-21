@@ -94,7 +94,7 @@ namespace Sierra
 
     private:
         friend class Application;
-        static void Initialize(const String &applicationName);
+        static void Initialize(const std::string &applicationName);
 
         inline static SharedPtr<spdlog::logger> engineLogger = nullptr;
         inline static SharedPtr<spdlog::logger> applicationLogger = nullptr;

@@ -25,7 +25,7 @@ namespace Sierra
 
     struct WindowCreateInfo
     {
-        const String &title = "Sierra Application";
+        const std::string &title = "Sierra Application";
         uint32 width = 1280;
         uint32 height = 780;
         bool resizable = true;
@@ -50,13 +50,13 @@ namespace Sierra
         virtual void Close() = 0;
 
         /* --- SETTER METHODS --- */
-        virtual void SetTitle(const String &title) = 0;
+        virtual void SetTitle(const std::string &title) = 0;
         virtual void SetPosition(const Vector2Int &position) = 0;
         virtual void SetSize(const Vector2UInt &size) = 0;
         virtual void SetOpacity(float32 opacity) = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual String GetTitle() const = 0;
+        [[nodiscard]] virtual std::string GetTitle() const = 0;
         [[nodiscard]] virtual Vector2Int GetPosition() const = 0;
         [[nodiscard]] virtual Vector2UInt GetSize() const = 0;
         [[nodiscard]] virtual Vector2UInt GetFramebufferSize() const = 0;

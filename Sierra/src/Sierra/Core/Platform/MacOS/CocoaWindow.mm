@@ -378,7 +378,7 @@ namespace Sierra
 
     /* --- SETTER METHODS --- */
 
-    void CocoaWindow::SetTitle(const String &newTitle)
+    void CocoaWindow::SetTitle(const std::string &newTitle)
     {
         [window setTitle: @(newTitle.c_str())];
     }
@@ -403,7 +403,7 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    String CocoaWindow::GetTitle() const
+    std::string CocoaWindow::GetTitle() const
     {
         return window.title.UTF8String;
     }

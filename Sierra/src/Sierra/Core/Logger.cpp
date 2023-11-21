@@ -9,7 +9,7 @@
 namespace Sierra
 {
 
-    void Logger::Initialize(const String &applicationName)
+    void Logger::Initialize(const std::string &applicationName)
     {
         // Set global logging pattern [Time / Logger Name / Arguments]
         spdlog::set_pattern("%^[%T] %n: %v%$");

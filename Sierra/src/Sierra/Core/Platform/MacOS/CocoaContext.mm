@@ -113,7 +113,7 @@
 
     /* --- CONSTRUCTORS --- */
 
-    - (instancetype) initWithTitle: (const String&) title width: (const uint32) width height: (const uint32) height
+    - (instancetype)initWithTitle: (const std::string&) title width: (const uint32) width height: (const uint32) height
     {
         self = [self initWithContentRect: NSMakeRect(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height)) styleMask: NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable backing: NSBackingStoreBuffered defer: NO];
         [self setTitle: @(title.c_str())];
@@ -190,7 +190,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    NSWindow* CocoaContext::CreateWindow(const String &title, uint32 width, uint32 height) const
+    NSWindow* CocoaContext::CreateWindow(const std::string &title, uint32 width, uint32 height) const
     {
         NSWindow* window = [[CocoaWindow alloc] initWithTitle: title width: width height: height];
         [window center];

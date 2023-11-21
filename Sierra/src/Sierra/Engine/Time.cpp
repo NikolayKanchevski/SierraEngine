@@ -51,7 +51,7 @@ namespace Sierra
 
     /* --- OPERATORS --- */
 
-    String TimePoint::ToString() const
+    std::string TimePoint::ToString() const
     {
         const std::time_t time = std::chrono::system_clock::to_time_t(timePoint);
         return (std::stringstream() << time).str();

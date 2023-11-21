@@ -142,10 +142,6 @@
 	    using UniquePtr = std::unique_ptr<T>;
 	    template<class T>
 	    using SharedPtr = std::shared_ptr<T>;
-
-	    typedef std::string String;
-	    typedef std::string_view StringView;
-	    typedef std::filesystem::path FilePath;
     #pragma endregion
 
     #pragma region Macros

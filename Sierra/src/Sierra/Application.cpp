@@ -15,11 +15,9 @@ namespace Sierra
         Logger::Initialize(name);
         SR_ERROR_IF(createInfo.name.empty(), "Application title must not be empty!");
 
-        // Create platform objects
+        // Create objects
         platformInstance = PlatformInstance::Load({ });
         windowManager = WindowManager::Create({ .platformInstance = platformInstance });
-
-        // Create rendering objects
         renderingContext = RenderingContext::Create({ .graphicsAPI = createInfo.settings.graphicsAPI });
     }
 
@@ -52,7 +50,7 @@ namespace Sierra
 
     Application::~Application()
     {
-
+        renderingContext->Destroy();
     }
 
     /* --- POLLING METHODS --- */

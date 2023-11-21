@@ -28,7 +28,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline String ToString() const override { return (std::stringstream() << "Cursor Moved - [X: " << position.x << " | Y: " << position.y << "]").str(); }
+            inline std::string ToString() const override { return (std::stringstream() << "Cursor Moved - [X: " << position.x << " | Y: " << position.y << "]").str(); }
         #endif
 
     private:

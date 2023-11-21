@@ -50,7 +50,7 @@ namespace Sierra
         static TimePoint Now();
 
         /* --- OPERATORS --- */
-        [[nodiscard]] String ToString() const;
+        [[nodiscard]] std::string ToString() const;
         [[nodiscard]] TimeStep operator -(const TimePoint &other) const;
         [[nodiscard]] TimePoint operator +(const TimeStep &duration) const;
         [[nodiscard]] TimePoint operator -(const TimeStep &duration) const;

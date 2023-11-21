@@ -62,7 +62,7 @@ namespace Sierra
         explicit X11Context(const X11ContextCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] XID CreateWindow(const String &title, uint32 width, uint32 height) const;
+        [[nodiscard]] XID CreateWindow(const std::string &title, uint32 width, uint32 height) const;
         XEvent DestroyWindow(XID window) const;
 
         [[nodiscard]] bool IsEventQueueEmpty() const;
@@ -83,7 +83,7 @@ namespace Sierra
         void CloseWindow(XID window) const;
 
         /* --- SETTER METHODS --- */
-        void SetWindowTitle(XID window, const String &title) const;
+        void SetWindowTitle(XID window, const std::string &title) const;
         void SetWindowPosition(XID window, const Vector2Int &position) const;
         void SetWindowSize(XID window, const Vector2UInt &size) const;
         void SetWindowSizeLimits(XID window, const Vector2UInt &minimumSize, const Vector2UInt &maximumSize) const;
@@ -98,7 +98,7 @@ namespace Sierra
         [[nodiscard]] X11Screen& GetWindowScreen(XID window) const;
         [[nodiscard]] std::optional<XID> GetFocusedWindow() const;
 
-        [[nodiscard]] String GetWindowTitle(XID window) const;
+        [[nodiscard]] std::string GetWindowTitle(XID window) const;
         [[nodiscard]] Vector2Int GetWindowPosition(XID window) const;
         [[nodiscard]] Vector2UInt GetWindowSize(XID window) const;
         [[nodiscard]] float32 GetWindowOpacity(XID window) const;

@@ -20,8 +20,8 @@ namespace Sierra
         explicit VulkanContext(const RenderingContextCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] const VulkanDevice& GetDevice() const override { return device; };
         [[nodiscard]] inline const VulkanInstance& GetInstance() const { return instance; }
-        [[nodiscard]] inline const VulkanDevice& GetDevice() const { return device; }
 
         /* --- DESTRUCTOR --- */
         void Destroy() override;

@@ -24,7 +24,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanDevice::VulkanDevice(const VulkanDeviceCreateInfo &createInfo)
+    VulkanDevice::VulkanDevice(const VulkanDeviceCreateInfo &createInfo, const DeviceCreateInfo &baseCreateInfo)
+        : Device(baseCreateInfo)
     {
         // Retrieve physical device
         PhysicalDeviceInfo physicalDeviceInfo{};
@@ -936,7 +937,7 @@ namespace Sierra
 
         // Create memory allocator
         {
-            // Get pointers to required Vulkan methods
+            // Get Vulkan function pointers
             VmaVulkanFunctions vulkanFunctions{};
             vulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
             vulkanFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
@@ -987,9 +988,9 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    bool VulkanDevice::IsExtensionLoaded(const String &extensionName) const
+    bool VulkanDevice::IsExtensionLoaded(const std::string &extensionName) const
     {
-        return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<String>{}(extensionName)) != loadedExtensions.end();
+        return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<std::string>{}(extensionName)) != loadedExtensions.end();
     }
 
     /* --- PRIVATE METHODS --- */
@@ -1108,7 +1109,7 @@ namespace Sierra
         }
 
         // Add extension to the list
-        loadedExtensions.push_back(std::hash<String>{}(extension.name));
+        loadedExtensions.push_back(std::hash<std::string>{}(extension.name));
         extensionList.push_back(extension.name.c_str());
         return true;
     }

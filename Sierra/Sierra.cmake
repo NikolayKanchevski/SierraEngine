@@ -38,8 +38,12 @@ else()
     option(SIERRA_ENABLE_OPTIMIZATIONS "Wether to enable speed optimizations." ON)
 endif()
 
-option(SIERRA_BUILD_VULKAN "Wether to build Vulkan and its resources." ON)
-# option(SIERRA_BUILD_OPENGL "Wether to build OpenGL and its resources." OFF) #  TODO: Build OpenGL
+if(SIERRA_PLATFORM_WINDOWS OR SIERRA_PLATFORM_MACOS OR SIERRA_PLATFORM_LINUX OR SIERRA_PLATFORM_iOS)
+    option(SIERRA_BUILD_VULKAN "Wether to build Vulkan and its resources." ON)
+endif()
+if(SIERRA_PLATFORM_MACOS OR SIERRA_PLATFORM_iOS)
+    option(SIERRA_BUILD_METAL "Wether to build Metal and its resources." ON)
+endif()
 
 if(SIERRA_PLATFORM_APPLE)
     option(SIERRA_BUILD_XCODE_PROJECT "Wether to, instead of building an executable, create an Xcode project, to then use to build for macOS, iOS, iPadOS, watchOS, tvOS, or visionOS" OFF)
@@ -268,6 +272,8 @@ function(SierraBuildApplication SOURCE_FILES)
         ${SIERRA_DIRECTORY}/src/Sierra/Events/TouchEvent.h
         ${SIERRA_DIRECTORY}/src/Sierra/Events/WindowEvent.h
 
+        ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Device.cpp
+        ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Device.h
         ${SIERRA_DIRECTORY}/src/Sierra/Rendering/RenderingContext.cpp
         ${SIERRA_DIRECTORY}/src/Sierra/Rendering/RenderingContext.h
         ${SIERRA_DIRECTORY}/src/Sierra/Rendering/RenderingResource.h
@@ -346,83 +352,109 @@ function(SierraBuildApplication SOURCE_FILES)
 
     if(SIERRA_BUILD_VULKAN)
         set(NO_GRAPHICS_API_SPECIFIED FALSE)
-        if(
-            SIERRA_PLATFORM_WINDOWS OR
-            SIERRA_PLATFORM_MACOS OR
-            SIERRA_PLATFORM_LINUX OR
-            SIERRA_PLATFORM_iOS
-        )
-            if(NOT SIERRA_BUILD_XCODE_PROJECT)
-                find_package(Vulkan QUIET)
-                if(SIERRA_PLATFORM_MACOS)
-                    find_library(MoltenVK_LIBRARIES NAMES MoltenVK)
-                    if(MoltenVKLibrary)
-                        list(APPEND Vulkan_LIBRARIES ${MoltenVK_LIBRARIES})
-                    endif()
-                endif()
-            else()
-                # Add MoltenVK's prerequisites
-                set(Vulkan_LIBRARIES
-                    "-framework CoreGraphics"
-                    "-framework Metal"
-                    "-framework Foundation"
-                    "-framework QuartzCore"
-                    "-framework IOSurface"
-                )
-                if(SIERRA_PLATFORM_MACOS)
-                    list(APPEND Vulkan_LIBRARIES "-framework IOKit")
-                elseif(SIERRA_PLATFORM_iOS)
-                    list(APPEND Vulkan_LIBRARIES "-framework UIKit")
-                endif()
-
-                # Manually link MoltenVK, because find_package and find_library do not work in Xcode environment
-                if(NOT DEFINED VULKAN_SDK_PATH)
-                    message(FATAL_ERROR "[Sierra]: When building an Xcode project, VULKAN_SDK_PATH must be set manually!")
-                else()
-                    set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/MoltenVK/include/")
-                    if(${PLATFORM} STREQUAL "OS64")
-                        list(APPEND Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/MoltenVK/MoltenVK.xcframework/ios-arm64/libMoltenVK.a")
-                    elseif(${PLATFORM} STREQUAL "SIMULATORARM64" OR ${PLATFORM} STREQUAL "SIMULATOR64COMBINED")
-                        list(APPEND Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/MoltenVK/MoltenVK.xcframework/ios-arm64_x86_64-simulator/libMoltenVK.a")
-                    elseif(${PLATFORM} STREQUAL "MAC" OR ${PLATFORM} STREQUAL "MAC_ARM64" OR ${PLATFORM} STREQUAL "MAC_UNIVERSAL" OR ${PLATFORM} STREQUAL "MAC_CATALYST" OR ${PLATFORM} STREQUAL "MAC_CATALYST_ARM64")
-                        list(APPEND Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/MoltenVK/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a")
-                    endif()
+        if(NOT SIERRA_BUILD_XCODE_PROJECT)
+            find_package(Vulkan QUIET)
+            if(SIERRA_PLATFORM_MACOS)
+                find_library(MoltenVK_LIBRARIES NAMES MoltenVK)
+                if(MoltenVKLibrary)
+                    list(APPEND Vulkan_LIBRARIES ${MoltenVK_LIBRARIES})
                 endif()
             endif()
+        else()
+            # Add MoltenVK's prerequisites
+            set(Vulkan_LIBRARIES
+                "-framework CoreGraphics"
+                "-framework Metal"
+                "-framework Foundation"
+                "-framework QuartzCore"
+                "-framework IOSurface"
+            )
+            if(SIERRA_PLATFORM_MACOS)
+                list(APPEND Vulkan_LIBRARIES "-framework IOKit")
+            elseif(SIERRA_PLATFORM_iOS)
+                list(APPEND Vulkan_LIBRARIES "-framework UIKit")
+            endif()
 
-            if(Vulkan_LIBRARIES AND Vulkan_INCLUDE_DIRS)
-                set(NO_GRAPHICS_API_SUPPORTED FALSE)
-                message(STATUS "[Sierra]: Building Vulkan...")
-
-                # Link Vulkan
-                target_link_libraries(Sierra PRIVATE ${Vulkan_LIBRARIES})
-                list(APPEND INCLUDE_DIRECTORIES ${Vulkan_INCLUDE_DIRS})
-
-                # Set Vulkan definitions
-                target_compile_definitions(Sierra PRIVATE "SR_VULKAN_SUPPORTED")
-                target_compile_definitions(${SIERRA_APPLICATION_NAME} PRIVATE "SR_VULKAN_SUPPORTED")
-
-                # Add Vulkan source files
-                target_sources(Sierra PRIVATE
-                    ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanContext.cpp
-                    ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanContext.h
-                    ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanDevice.cpp
-                    ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanDevice.h
-                    ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanInstance.cpp
-                    ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanInstance.h
-                    ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanResource.cpp
-                    ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanResource.h
-                )
-
-                # Link VMA
-                set(VMA_STATIC_VULKAN_FUNCTIONS OFF)
-                add_subdirectory(${SIERRA_DIRECTORY}/vendor/VMA ${SIERRA_DIRECTORY}/vendor/VMA)
-                target_link_libraries(Sierra PRIVATE VulkanMemoryAllocator)
-                list(APPEND INCLUDE_DIRECTORIES ${SIERRA_DIRECTORY}/vendor/VMA/include/)
+            # Manually link MoltenVK, because find_package and find_library do not work in Xcode environment
+            if(NOT DEFINED VULKAN_SDK_PATH)
+                message(FATAL_ERROR "[Sierra]: When building an Xcode project, VULKAN_SDK_PATH must be set manually!")
             else()
-                message(WARNING "[Sierra]: Vulkan is supported on the system and was requested to be built, but it could not be found! Did you install the Vulkan SDK from https://vulkan.lunarg.com/sdk/home#mac?")
+                set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/MoltenVK/include/")
+                if(${PLATFORM} STREQUAL "OS64")
+                    list(APPEND Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/MoltenVK/MoltenVK.xcframework/ios-arm64/libMoltenVK.a")
+                elseif(${PLATFORM} STREQUAL "SIMULATORARM64" OR ${PLATFORM} STREQUAL "SIMULATOR64COMBINED")
+                    list(APPEND Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/MoltenVK/MoltenVK.xcframework/ios-arm64_x86_64-simulator/libMoltenVK.a")
+                elseif(${PLATFORM} STREQUAL "MAC" OR ${PLATFORM} STREQUAL "MAC_ARM64" OR ${PLATFORM} STREQUAL "MAC_UNIVERSAL" OR ${PLATFORM} STREQUAL "MAC_CATALYST" OR ${PLATFORM} STREQUAL "MAC_CATALYST_ARM64")
+                    list(APPEND Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/MoltenVK/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a")
+                endif()
             endif()
         endif()
+
+        if(Vulkan_LIBRARIES AND Vulkan_INCLUDE_DIRS)
+            set(NO_GRAPHICS_API_SUPPORTED FALSE)
+            message(STATUS "[Sierra]: Building Vulkan...")
+
+            # Link Vulkan
+            target_link_libraries(Sierra PRIVATE ${Vulkan_LIBRARIES})
+            list(APPEND INCLUDE_DIRECTORIES ${Vulkan_INCLUDE_DIRS})
+
+            # Set Vulkan definitions
+            target_compile_definitions(Sierra PRIVATE "SR_VULKAN_SUPPORTED")
+            target_compile_definitions(${SIERRA_APPLICATION_NAME} PRIVATE "SR_VULKAN_SUPPORTED")
+
+            # Add Vulkan source files
+            target_sources(Sierra PRIVATE
+                ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanContext.cpp
+                ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanContext.h
+                ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanDevice.cpp
+                ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanDevice.h
+                ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanInstance.cpp
+                ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanInstance.h
+                ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanResource.cpp
+                ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Vulkan/VulkanResource.h
+            )
+
+            # Link VMA
+            set(VMA_STATIC_VULKAN_FUNCTIONS OFF)
+            add_subdirectory(${SIERRA_DIRECTORY}/vendor/VMA ${SIERRA_DIRECTORY}/vendor/VMA)
+            target_link_libraries(Sierra PRIVATE VulkanMemoryAllocator)
+            list(APPEND INCLUDE_DIRECTORIES ${SIERRA_DIRECTORY}/vendor/VMA/include/)
+        else()
+            message(WARNING "[Sierra]: Vulkan is supported on the system and was requested to be built, but it could not be found! Did you install the Vulkan SDK from https://vulkan.lunarg.com/sdk/home#mac?")
+        endif()
+    endif()
+
+    if(SIERRA_BUILD_METAL)
+        set(NO_GRAPHICS_API_SPECIFIED FALSE)
+        set(Metal_LIBRARIES
+            "-framework Metal"
+            "-framework QuartzCore"
+            "-framework Foundation"
+        )
+
+        # Metal is guaranteed to be found
+        set(NO_GRAPHICS_API_SUPPORTED FALSE)
+        message(STATUS "[Sierra]: Building Metal...")
+
+        # Link Metal
+        target_link_libraries(Sierra PRIVATE ${Metal_LIBRARIES})
+
+        # Set Metal definitions
+        target_compile_definitions(Sierra PRIVATE "SR_METAL_SUPPORTED")
+        target_compile_definitions(${SIERRA_APPLICATION_NAME} PRIVATE "SR_METAL_SUPPORTED")
+
+        # Add Metal source files
+        target_sources(Sierra PRIVATE
+            ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Metal/MetalContext.cpp
+            ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Metal/MetalContext.h
+            ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Metal/MetalDevice.cpp
+            ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Metal/MetalDevice.h
+            ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Metal/MetalResource.cpp
+            ${SIERRA_DIRECTORY}/src/Sierra/Rendering/Platform/Metal/MetalResource.h
+        )
+
+        # Link metal-cpp
+        list(APPEND INCLUDE_DIRECTORIES ${SIERRA_DIRECTORY}/vendor/metal-cpp)
     endif()
 
     # === GRAPHICS API VALIDATION === #
@@ -433,7 +465,8 @@ function(SierraBuildApplication SOURCE_FILES)
     endif()
 
     # === EXTERNAL LIBRARY LINKAGE ===
-    # Link GLM
+
+    # Link glm
     add_subdirectory(${SIERRA_DIRECTORY}/vendor/glm ${SIERRA_DIRECTORY}/vendor/glm)
     target_link_libraries(Sierra PRIVATE glm)
     list(APPEND INCLUDE_DIRECTORIES ${SIERRA_DIRECTORY}/vendor/glm/)

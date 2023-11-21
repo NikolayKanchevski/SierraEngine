@@ -142,7 +142,7 @@ namespace Sierra
 
     /* --- SETTER METHODS --- */
 
-    void UIKitWindow::SetTitle(const String &newTitle)
+    void UIKitWindow::SetTitle(const std::string &newTitle)
     {
         title = newTitle;
     }
@@ -164,7 +164,7 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    String UIKitWindow::GetTitle() const
+    std::string UIKitWindow::GetTitle() const
     {
         return title;
     }

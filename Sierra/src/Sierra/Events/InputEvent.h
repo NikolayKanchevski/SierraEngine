@@ -38,7 +38,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline String ToString() const override { return (std::stringstream() << "Key Pressed - [Key Name: " << GetKeyName(GetKey()) << " | Key Code: " << static_cast<int16>(GetKey()) << "]").str(); }
+            inline std::string ToString() const override { return (std::stringstream() << "Key Pressed - [Key Name: " << GetKeyName(GetKey()) << " | Key Code: " << static_cast<int16>(GetKey()) << "]").str(); }
         #endif
 
     };
@@ -51,7 +51,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline String ToString() const override { return (std::stringstream() << "Key Released - [Key Name: " << GetKeyName(GetKey()) << " | Key Code: " << static_cast<int16>(GetKey()) << "]").str(); }
+            inline std::string ToString() const override { return (std::stringstream() << "Key Released - [Key Name: " << GetKeyName(GetKey()) << " | Key Code: " << static_cast<int16>(GetKey()) << "]").str(); }
         #endif
 
     };
@@ -78,7 +78,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline String ToString() const override { return (std::stringstream() << "Mouse Button Pressed - [Button Name: " << GetMouseButtonName(GetMouseButton()) << " | Button Code: " << static_cast<uint32>(GetMouseButton()) << "]").str(); }
+            inline std::string ToString() const override { return (std::stringstream() << "Mouse Button Pressed - [Button Name: " << GetMouseButtonName(GetMouseButton()) << " | Button Code: " << static_cast<uint32>(GetMouseButton()) << "]").str(); }
         #endif
 
     };
@@ -91,7 +91,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline String ToString() const override { return (std::stringstream() << "Mouse Button Released - [Button Name: " << GetMouseButtonName(GetMouseButton()) << " | Button Code: " << static_cast<uint32>(GetMouseButton()) << "]").str(); }
+            inline std::string ToString() const override { return (std::stringstream() << "Mouse Button Released - [Button Name: " << GetMouseButtonName(GetMouseButton()) << " | Button Code: " << static_cast<uint32>(GetMouseButton()) << "]").str(); }
         #endif
 
     };
@@ -108,7 +108,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline String ToString() const override { return (std::stringstream() << "Mouse Scrolled - [Horizontal Delta: " << scroll.x << " | Vertical Delta: " << scroll.y << "]").str(); }
+            inline std::string ToString() const override { return (std::stringstream() << "Mouse Scrolled - [Horizontal Delta: " << scroll.x << " | Vertical Delta: " << scroll.y << "]").str(); }
         #endif
 
     private:

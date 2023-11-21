@@ -33,13 +33,13 @@ namespace Sierra
         void Close() override;
 
         /* --- SETTER METHODS --- */
-        void SetTitle(const String &title) override;
+        void SetTitle(const std::string &title) override;
         void SetPosition(const Vector2Int &position) override;
         void SetSize(const Vector2UInt &size) override;
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
-        String GetTitle() const override;
+        std::string GetTitle() const override;
         Vector2Int GetPosition() const override;
         Vector2UInt GetSize() const override;
         Vector2UInt GetFramebufferSize() const override;
@@ -64,7 +64,7 @@ namespace Sierra
         Win32InputManager inputManager;
         Win32CursorManager cursorManager;
 
-        String title;
+        std::string title;
         bool closed = false;
 
         bool justBecameShown = false; // This is to prevent all the made up events the window manager sends when showing a hidden window

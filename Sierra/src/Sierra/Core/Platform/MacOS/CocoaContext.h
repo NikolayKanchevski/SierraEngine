@@ -41,7 +41,7 @@ namespace Sierra
         explicit CocoaContext(const CocoaContextCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] NSWindow* CreateWindow(const String &title, uint32 width, uint32 height) const;
+        [[nodiscard]] NSWindow* CreateWindow(const std::string &title, uint32 width, uint32 height) const;
         void DestroyWindow(NSWindow* window) const;
 
         [[nodiscard]] bool IsEventQueueEmpty() const;

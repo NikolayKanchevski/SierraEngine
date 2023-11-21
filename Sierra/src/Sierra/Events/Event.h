@@ -12,7 +12,7 @@ namespace Sierra
     public:
         #if SR_ENABLE_LOGGING
             /* --- GETTER METHODS --- */
-            [[nodiscard]] inline virtual String ToString() const = 0;
+            [[nodiscard]] inline virtual std::string ToString() const = 0;
         #endif
 
     };

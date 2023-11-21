@@ -35,7 +35,7 @@ namespace Sierra
         explicit UIKitScreen(const UIKitScreenCreatInfo &creatInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline String GetName() const override { return name; };
+        [[nodiscard]] inline std::string GetName() const override { return name; };
         [[nodiscard]] inline Vector2Int GetOrigin() const override { return origin; };
         [[nodiscard]] inline Vector2UInt GetSize() const override { return size; };
         [[nodiscard]] inline Vector2Int GetWorkAreaOrigin() const override { return workAreaOrigin; };
@@ -44,7 +44,7 @@ namespace Sierra
         [[nodiscard]] ScreenOrientation GetOrientation() const override;
 
     private:
-        String name;
+        std::string name;
         Vector2Int origin = { 0, 0 };
         Vector2UInt size = { 0, 0 };
         Vector2Int workAreaOrigin = { 0, 0 };
