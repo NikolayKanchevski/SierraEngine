@@ -27,18 +27,17 @@ namespace Sierra
         [[nodiscard]] uint32 GetTouchCount() override;
         [[nodiscard]] std::optional<Touch> GetTouch(uint32 touchIndex) override;
 
-        /* --- EVENTS --- */
-        #if defined(__OBJC__)
-            // TODO(iOS): Hide these away
-            void TouchesBegan(const NSSet<UITouch*>* touches, const UIEvent* event);
-            void TouchesMoved(const NSSet<UITouch*>* touches, const UIEvent* event);
-            void TouchesEnded(const NSSet<UITouch*>* touches, const UIEvent* event);
-            void TouchesCancelled(const NSSet<UITouch*>* touches, const UIEvent* event);
-        #endif
-
     private:
         std::vector<Touch> activeTouches;
 
+        #if defined(__OBJC__) && (defined(UIKIT_TOUCH_MANAGER_IMPLEMENTATION) || defined(UIKIT_WINDOW_IMPLEMENTATION))
+            public:
+                /* --- EVENTS --- */
+                void TouchesBegan(const NSSet<UITouch*>* touches, const UIEvent* event);
+                void TouchesMoved(const NSSet<UITouch*>* touches, const UIEvent* event);
+                void TouchesEnded(const NSSet<UITouch*>* touches, const UIEvent* event);
+                void TouchesCancelled(const NSSet<UITouch*>* touches, const UIEvent* event);
+        #endif
     };
 
 }

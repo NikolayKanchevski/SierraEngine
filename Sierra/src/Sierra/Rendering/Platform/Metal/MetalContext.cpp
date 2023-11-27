@@ -18,7 +18,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalContext::MetalContext(const RenderingContextCreateInfo &createInfo)
-        : RenderingContext(createInfo), device({ }, { })
+        : RenderingContext(createInfo), device({ })
     {
         SR_INFO("Metal context created successfully! Device in use: [{0}].", device.GetName());
     }

@@ -2,6 +2,7 @@
 // Created by Nikolay Kanchevski on 19.09.23.
 //
 
+#define COCOA_INPUT_MANAGER_IMPLEMENTATION
 #include "CocoaInputManager.h"
 
 namespace Sierra
@@ -73,7 +74,7 @@ namespace Sierra
 
     /* --- EVENTS --- */
 
-    #if defined(__OBJC__)
+    #if defined(__OBJC__) && (defined(COCOA_INPUT_MANAGER_IMPLEMENTATION) || defined(COCOA_WINDOW_IMPLEMENTATION))
         void CocoaInputManager::KeyDown(const NSEvent* event)
         {
             // Prevent out of bounds error

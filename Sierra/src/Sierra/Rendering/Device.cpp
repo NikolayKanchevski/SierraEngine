@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Device::Device(const Sierra::DeviceCreateInfo &createInfo)
+    Device::Device(const DeviceCreateInfo &createInfo)
     {
 
     }

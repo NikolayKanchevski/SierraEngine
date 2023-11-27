@@ -68,17 +68,6 @@ namespace Sierra
         [[nodiscard]] CursorManager& GetCursorManager() override;
         [[nodiscard]] WindowAPI GetAPI() const override;
 
-        /* --- EVENTS --- */
-        #if defined(__OBJC__)
-            // TODO(macOS): Hide these away
-            void WindowShouldClose();
-            void WindowDidResize(const NSNotification* notification);
-            void WindowDidMove(const NSNotification* notification);
-            void WindowDidMiniaturize(const NSNotification* notification);
-            void WindowDidBecomeKey(const NSNotification* notification);
-            void WindowDidResignKey(const NSNotification* notification);
-        #endif
-
         /* --- DESTRUCTOR --- */
         ~CocoaWindow();
 
@@ -92,10 +81,22 @@ namespace Sierra
         CocoaInputManager inputManager;
         CocoaCursorManager cursorManager;
 
+        std::string title;
         bool maximized = false;
         bool closed = false;
 
         float32 GetTitleBarHeight() const;
+
+        #if defined(__OBJC__) && defined(COCOA_WINDOW_IMPLEMENTATION)
+            public:
+                /* --- EVENTS --- */
+                void WindowShouldClose();
+                void WindowDidResize(const NSNotification* notification);
+                void WindowDidMove(const NSNotification* notification);
+                void WindowDidMiniaturize(const NSNotification* notification);
+                void WindowDidBecomeKey(const NSNotification* notification);
+                void WindowDidResignKey(const NSNotification* notification);
+        #endif
 
     };
 

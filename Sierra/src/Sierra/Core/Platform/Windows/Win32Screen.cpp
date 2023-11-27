@@ -58,7 +58,7 @@ namespace Sierra
 
     /* --- PRIVATE METHODS --- */
 
-    Win32Screen::Win32Screen(Sierra::Win32Screen &other)
+    Win32Screen::Win32Screen(Win32Screen &other)
     {
         name = other.name;
         origin = other.origin;

@@ -2,6 +2,7 @@
 // Created by Nikolay Kanchevski on 3.10.23.
 //
 
+#define COCOA_CURSOR_MANAGER_IMPLEMENTATION
 #include "CocoaCursorManager.h"
 
 namespace Sierra
@@ -38,22 +39,22 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    bool CocoaCursorManager::IsCursorHidden()
+    bool CocoaCursorManager::IsCursorHidden() const
     {
         return cursorHidden;
     }
 
-    Vector2 CocoaCursorManager::GetCursorPosition()
+    Vector2 CocoaCursorManager::GetCursorPosition() const
     {
         return cursorPosition;
     }
 
-    float32 CocoaCursorManager::GetHorizontalDelta()
+    float32 CocoaCursorManager::GetHorizontalDelta() const
     {
         return lastCursorPosition.x - cursorPosition.x;
     }
 
-    float32 CocoaCursorManager::GetVerticalDelta()
+    float32 CocoaCursorManager::GetVerticalDelta() const
     {
         return lastCursorPosition.y - cursorPosition.y;
     }
@@ -90,7 +91,7 @@ namespace Sierra
 
     /* --- EVENTS --- */
 
-    #if defined(__OBJC__)
+    #if defined(__OBJC__) && (defined(COCOA_CURSOR_MANAGER_IMPLEMENTATION) || defined(COCOA_WINDOW_IMPLEMENTATION))
         void CocoaCursorManager::MouseMoved(const NSEvent* event)
         {
             // Get and save position within the window

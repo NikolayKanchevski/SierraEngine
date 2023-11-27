@@ -177,19 +177,20 @@ namespace Sierra
 
         Vector2 mouseScroll = { 0, 0 };
 
-        friend class CocoaWindow;
-        #if defined(__OBJC__)
-            void KeyDown(const NSEvent* event);
-            void FlagsChanged(const NSEvent* event);
-            void KeyUp(const NSEvent* event);
+        #if defined(__OBJC__) && (defined(COCOA_INPUT_MANAGER_IMPLEMENTATION) || defined(COCOA_WINDOW_IMPLEMENTATION))
+            public:
+                /* --- EVENTS --- */
+                void KeyDown(const NSEvent* event);
+                void FlagsChanged(const NSEvent* event);
+                void KeyUp(const NSEvent* event);
 
-            void MouseDown(const NSEvent* event);
-            void RightMouseDown(const NSEvent* event);
-            void OtherMouseDown(const NSEvent* event);
-            void MouseUp(const NSEvent* event);
-            void RightMouseUp(const NSEvent* event);
-            void OtherMouseUp(const NSEvent* event);
-            void ScrollWheel(const NSEvent* event);
+                void MouseDown(const NSEvent* event);
+                void RightMouseDown(const NSEvent* event);
+                void OtherMouseDown(const NSEvent* event);
+                void MouseUp(const NSEvent* event);
+                void RightMouseUp(const NSEvent* event);
+                void OtherMouseUp(const NSEvent* event);
+                void ScrollWheel(const NSEvent* event);
         #endif
 
     };

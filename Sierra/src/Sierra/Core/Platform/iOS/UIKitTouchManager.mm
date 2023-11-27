@@ -2,6 +2,7 @@
 // Created by Nikolay Kanchevski on 8.10.23.
 //
 
+#define UIKIT_TOUCH_MANAGER_IMPLEMENTATION
 #include "UIKitTouchManager.h"
 
 namespace Sierra
@@ -34,7 +35,7 @@ namespace Sierra
 
     /* --- EVENTS --- */
 
-    #if defined(__OBJC__)
+    #if defined(__OBJC__) && (defined(UIKIT_TOUCH_MANAGER_IMPLEMENTATION) || defined(UIKIT_WINDOW_IMPLEMENTATION))
         void UIKitTouchManager::TouchesBegan(const NSSet<UITouch*>* touches, const UIEvent* event)
         {
             for (UITouch* rawTouch in touches)

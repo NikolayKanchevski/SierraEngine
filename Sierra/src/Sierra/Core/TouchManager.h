@@ -40,9 +40,9 @@ namespace Sierra
         TouchManager& operator=(const TouchManager&) = delete;
 
     protected:
-        [[nodiscard]] inline const EventDispatcher<TouchBeginEvent>& GetTouchTapDispatcher() const { return touchBeginDispatcher; };
-        [[nodiscard]] inline const EventDispatcher<TouchMoveEvent>& GetTouchMoveDispatcher() const { return touchMoveDispatcher; };
-        [[nodiscard]] inline const EventDispatcher<TouchEndEvent>& GetTouchEndDispatcher() const { return touchEndDispatcher; };
+        [[nodiscard]] inline EventDispatcher<TouchBeginEvent>& GetTouchTapDispatcher() { return touchBeginDispatcher; };
+        [[nodiscard]] inline EventDispatcher<TouchMoveEvent>& GetTouchMoveDispatcher() { return touchMoveDispatcher; };
+        [[nodiscard]] inline EventDispatcher<TouchEndEvent>& GetTouchEndDispatcher() { return touchEndDispatcher; };
 
     private:
         EventDispatcher<TouchBeginEvent> touchBeginDispatcher;

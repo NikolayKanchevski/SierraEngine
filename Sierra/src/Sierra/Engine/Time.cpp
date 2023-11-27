@@ -57,7 +57,7 @@ namespace Sierra
         return (std::stringstream() << time).str();
     }
 
-    TimeStep TimePoint::operator-(const Sierra::TimePoint &other) const
+    TimeStep TimePoint::operator-(const TimePoint &other) const
     {
         return TimeStep(static_cast<float64>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<float64>(timePoint - other.timePoint)).count()));
     }

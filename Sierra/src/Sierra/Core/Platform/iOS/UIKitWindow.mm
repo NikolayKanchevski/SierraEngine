@@ -2,6 +2,7 @@
 // Created by Nikolay Kanchevski on 26.09.23.
 //
 
+#define UIKIT_WINDOW_IMPLEMENTATION
 #include "UIKitWindow.h"
 
 #include "iOSInstance.h"

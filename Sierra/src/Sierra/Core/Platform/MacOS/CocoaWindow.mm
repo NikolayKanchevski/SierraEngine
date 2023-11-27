@@ -2,6 +2,7 @@
 // Created by Nikolay Kanchevski on 17.08.23.
 //
 
+#define COCOA_WINDOW_IMPLEMENTATION
 #include "CocoaWindow.h"
 
 @interface CocoaWindowDelegate : NSObject<NSWindowDelegate>
@@ -254,7 +255,8 @@ namespace Sierra
     CocoaWindow::CocoaWindow(const CocoaContext &cocoaContext, const WindowCreateInfo &createInfo)
         : Window(createInfo), cocoaContext(cocoaContext),
           window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)), delegate([[CocoaWindowDelegate alloc] initWithWindow: this]), view([[CocoaWindowContentView alloc] initWithWindow: this]),
-          inputManager(CocoaInputManager({ })), cursorManager({ .window = window })
+          inputManager(CocoaInputManager({ })), cursorManager({ .window = window }),
+          title(createInfo.title)
     {
         // Maximize window manually, or through Cocoa if resizable
         if (createInfo.maximize)
@@ -266,7 +268,7 @@ namespace Sierra
             else
             {
                 const CocoaScreen &screen = cocoaContext.GetWindowScreen(window);
-                const NSRect newFrame = NSMakeRect(screen.GetOrigin().x, screen.GetOrigin().y, screen.>GetWorkAreaSize().x, screen.GetWorkAreaSize().y);
+                const NSRect newFrame = NSMakeRect(screen.GetOrigin().x, screen.GetOrigin().y, screen.GetWorkAreaSize().x, screen.GetWorkAreaSize().y);
                 [window setFrame: newFrame display: YES animate: YES];
             }
         }
@@ -373,6 +375,7 @@ namespace Sierra
 
     void CocoaWindow::SetTitle(const std::string &newTitle)
     {
+        title = newTitle;
         [window setTitle: @(newTitle.c_str())];
     }
 
@@ -396,9 +399,9 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    std::string CocoaWindow::GetTitle() const
+    const std::string& CocoaWindow::GetTitle() const
     {
-        return window.title.UTF8String;
+        return title;
     }
 
     Vector2Int CocoaWindow::GetPosition() const
@@ -470,7 +473,7 @@ namespace Sierra
 
     /* --- EVENTS --- */
 
-    #if defined(__OBJC__)
+    #if defined(__OBJC__) && defined(COCOA_WINDOW_IMPLEMENTATION)
         void CocoaWindow::WindowShouldClose()
         {
             Close();

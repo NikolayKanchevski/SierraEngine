@@ -39,10 +39,10 @@ namespace Sierra
         void SetCursorPosition(const Vector2 &position) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] bool IsCursorHidden() override;
-        [[nodiscard]] Vector2 GetCursorPosition() override;
-        [[nodiscard]] float32 GetHorizontalDelta() override;
-        [[nodiscard]] float32 GetVerticalDelta() override;
+        [[nodiscard]] bool IsCursorHidden() const override;
+        [[nodiscard]] Vector2 GetCursorPosition() const override;
+        [[nodiscard]] float32 GetHorizontalDelta() const override;
+        [[nodiscard]] float32 GetVerticalDelta() const override;
 
     private:
         const NSWindow* window;
@@ -56,8 +56,11 @@ namespace Sierra
         friend class CocoaWindow;
         void OnUpdate();
         void OnUpdateEnd();
-        #if defined(__OBJC__)
-            void MouseMoved(const NSEvent* event);
+
+        #if defined(__OBJC__) && (defined(COCOA_CURSOR_MANAGER_IMPLEMENTATION) || defined(COCOA_WINDOW_IMPLEMENTATION))
+            /* --- EVENTS --- */
+            public:
+                void MouseMoved(const NSEvent* event);
         #endif
     };
 
