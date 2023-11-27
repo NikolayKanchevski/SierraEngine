@@ -12,24 +12,24 @@ namespace Sierra
 
     struct WindowManagerCreateInfo
     {
-        const UniquePtr<PlatformInstance> &platformInstance;
+        const std::unique_ptr<PlatformInstance> &platformInstance;
     };
 
     class SIERRA_API WindowManager
     {
     public:
         /* --- CONSTRUCTORS --- */
-        static UniquePtr<WindowManager> Create(const WindowManagerCreateInfo &createInfo);
+        static std::unique_ptr<WindowManager> Create(const WindowManagerCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        UniquePtr<Window> CreateWindow(const WindowCreateInfo &createInfo) const;
+        std::unique_ptr<Window> CreateWindow(const WindowCreateInfo &createInfo) const;
 
         /* --- OPERATORS --- */
         WindowManager(const WindowManager&) = delete;
         WindowManager& operator=(const WindowManager&) = delete;
 
     private:
-        const UniquePtr<PlatformInstance> &platformInstance;
+        const std::unique_ptr<PlatformInstance> &platformInstance;
         explicit WindowManager(const WindowManagerCreateInfo &createInfo);
 
     };

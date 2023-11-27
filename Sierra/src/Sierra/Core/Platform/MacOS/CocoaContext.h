@@ -51,8 +51,8 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const CocoaApplication* GetApplication() const { return application; }
 
-        [[nodiscard]] CocoaScreen& GetPrimaryScreen() const;
-        [[nodiscard]] CocoaScreen& GetWindowScreen(const NSWindow* window) const;
+        [[nodiscard]] const CocoaScreen& GetPrimaryScreen() const;
+        [[nodiscard]] const CocoaScreen& GetWindowScreen(const NSWindow* window) const;
 
         /* --- EVENTS --- */
         #if defined(__OBJC__)
@@ -71,7 +71,7 @@ namespace Sierra
             const NSScreen* nsScreen;
             CocoaScreen cocoaScreen;
         };
-        mutable std::vector<CocoaScreenPair> screens;
+        std::vector<CocoaScreenPair> screens;
         void ReloadScreens();
 
     };

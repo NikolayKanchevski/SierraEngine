@@ -49,7 +49,7 @@ namespace Sierra
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string GetTitle() const override;
+        [[nodiscard]] const std::string& GetTitle() const override;
         [[nodiscard]] Vector2Int GetPosition() const override;
         [[nodiscard]] Vector2UInt GetSize() const override;
         [[nodiscard]] Vector2UInt GetFramebufferSize() const override;
@@ -60,7 +60,7 @@ namespace Sierra
         [[nodiscard]] bool IsFocused() const override;
         [[nodiscard]] bool IsHidden() const override;
 
-        [[nodiscard]] Screen& GetScreen() override;
+        [[nodiscard]] const Screen& GetScreen() const override;
         [[nodiscard]] TouchManager& GetTouchManager() override;
         [[nodiscard]] WindowAPI GetAPI() const override;
 

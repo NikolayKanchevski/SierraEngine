@@ -23,9 +23,9 @@ namespace Sierra
 
     struct PlatformApplicationRunInfo
     {
-        std::function<void()> OnStart = [](){  };
-        std::function<bool()> OnUpdate = [](){ return false; };
-        std::function<void()> OnEnd = [](){  };
+        std::function<void()> OnStart = [] {  };
+        std::function<bool()> OnUpdate = [] { return false; };
+        std::function<void()> OnEnd = [] {  };
     };
 
     class SIERRA_API PlatformInstance
@@ -46,7 +46,7 @@ namespace Sierra
 
     private:
         friend class Application;
-        static UniquePtr<PlatformInstance> Load(const PlatformInstanceCreateInfo &createInfo);
+        static std::unique_ptr<PlatformInstance> Load(const PlatformInstanceCreateInfo &createInfo);
 
         virtual void RunApplication(const PlatformApplicationRunInfo &runInfo);
 

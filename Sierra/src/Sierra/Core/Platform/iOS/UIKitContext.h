@@ -45,14 +45,14 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const UIKitApplication* GetApplication() const { return application; }
-        [[nodiscard]] inline UIKitScreen& GetPrimaryScreen() const { return primaryScreen; }
+        [[nodiscard]] inline const UIKitScreen& GetPrimaryScreen() const { return primaryScreen; }
 
         /* --- DESTRUCTOR --- */
         ~UIKitContext();
 
     private:
         UIKitApplication* application = nullptr;
-        mutable UIKitScreen primaryScreen;
+        UIKitScreen primaryScreen;
 
         UIKitSelectorBridge applicationDidFinishLaunchingBridge;
         UIKitSelectorBridge applicationWillTerminateBridge;

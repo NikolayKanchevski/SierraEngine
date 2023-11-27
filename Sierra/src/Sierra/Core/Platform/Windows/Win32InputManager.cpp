@@ -15,62 +15,61 @@ namespace Sierra
 
     }
 
-    /* --- POLLING METHODS --- */
-
-    void Win32InputManager::OnUpdate()
-    {
-        // Swap out current key/mouse states and move them to the array for the last frame
-        // TODO:
-        memcpy(lastKeyStates, keyStates, sizeof(keyStates) / sizeof(keyStates[0]));
-        memcpy(lastMouseButtonStates, mouseButtonStates, sizeof(mouseButtonStates) / sizeof(mouseButtonStates[0]));
-        mouseScroll = { 0, 0 };
-    }
-
     /* --- GETTER METHODS --- */
 
-    bool Win32InputManager::IsKeyPressed(const Key key)
+    bool Win32InputManager::IsKeyPressed(const Key key) const
     {
         return lastKeyStates[GetKeyIndex(key)] == InputAction::Release && keyStates[GetKeyIndex(key)] == InputAction::Press;
     }
 
-    bool Win32InputManager::IsKeyHeld(const Key key)
+    bool Win32InputManager::IsKeyHeld(const Key key) const
     {
         return lastKeyStates[GetKeyIndex(key)] == InputAction::Press && keyStates[GetKeyIndex(key)] == InputAction::Press;
     }
 
-    bool Win32InputManager::IsKeyReleased(const Key key)
+    bool Win32InputManager::IsKeyReleased(const Key key) const
     {
         return lastKeyStates[GetKeyIndex(key)] == InputAction::Press && keyStates[GetKeyIndex(key)] == InputAction::Release;
     }
 
-    bool Win32InputManager::IsKeyResting(const Key key)
+    bool Win32InputManager::IsKeyResting(const Key key) const
     {
         return lastKeyStates[GetKeyIndex(key)] == InputAction::Release && keyStates[GetKeyIndex(key)] == InputAction::Release;
     }
 
-    bool Win32InputManager::IsMouseButtonPressed(const MouseButton mouseButton)
+    bool Win32InputManager::IsMouseButtonPressed(const MouseButton mouseButton) const
     {
         return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press;
     }
 
-    bool Win32InputManager::IsMouseButtonHeld(const MouseButton mouseButton)
+    bool Win32InputManager::IsMouseButtonHeld(const MouseButton mouseButton) const
     {
         return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press;
     }
 
-    bool Win32InputManager::IsMouseButtonReleased(const MouseButton mouseButton)
+    bool Win32InputManager::IsMouseButtonReleased(const MouseButton mouseButton) const
     {
         return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Press && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release;
     }
 
-    bool Win32InputManager::IsMouseButtonResting(const MouseButton mouseButton)
+    bool Win32InputManager::IsMouseButtonResting(const MouseButton mouseButton) const
     {
         return lastMouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release && mouseButtonStates[GetMouseButtonIndex(mouseButton)] == InputAction::Release;
     }
 
-    Vector2 Win32InputManager::GetMouseScroll()
+    Vector2 Win32InputManager::GetMouseScroll() const
     {
         return mouseScroll;
+    }
+
+    /* --- PRIVATE METHODS --- */
+
+    void Win32InputManager::OnUpdate()
+    {
+        // Swap out current key/mouse states and move them to the array for the last frame
+        std::copy(keyStates.begin(), keyStates.end(), lastKeyStates.begin());
+        std::copy(mouseButtonStates.begin(), mouseButtonStates.end(), lastMouseButtonStates.begin());
+        mouseScroll = { 0, 0 };
     }
 
     /* --- EVENTS --- */
@@ -282,8 +281,8 @@ namespace Sierra
     void Win32InputManager::MouseWheelMessage(const UINT message, const WPARAM wParam, const LPARAM)
     {
         // We apply division, so scrolling feels similar to that of the rest of the platforms
-        if (message == WM_MOUSEWHEEL) mouseScroll.y = GET_WHEEL_DELTA_WPARAM(wParam) / 1200.0f;
-        else if (message == WM_MOUSEHWHEEL) mouseScroll.x = GET_WHEEL_DELTA_WPARAM(wParam) / 1200.0f;
+        if (message == WM_MOUSEWHEEL) mouseScroll.y = static_cast<float32>(static_cast<SHORT>(HIWORD(wParam))) / WHEEL_DELTA;
+        else if (message == WM_MOUSEHWHEEL) mouseScroll.x = -static_cast<float32>(static_cast<SHORT>(HIWORD(wParam))) / WHEEL_DELTA;
 
         // Dispatch events
         GetMouseScrollDispatcher().DispatchEvent(mouseScroll);

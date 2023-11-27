@@ -28,24 +28,16 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         explicit X11CursorManager(const X11CursorManagerCreateInfo &createInfo);
 
-        /* --- POLLING METHODS --- */
-        void OnWindowInitialize();
-        void OnUpdate();
-        void OnUpdateEnd();
-
         /* --- SETTER METHODS --- */
-        void SetCursorPosition(const Vector2 &position) override;
         void ShowCursor() override;
         void HideCursor() override;
+        void SetCursorPosition(const Vector2 &position) override;
 
         /* --- GETTER METHODS --- */
-        Vector2 GetCursorPosition() override;
-        float32 GetHorizontalDelta() override;
-        float32 GetVerticalDelta() override;
-        bool IsCursorHidden() override;
-
-        /* --- EVENTS --- */
-        void MotionNotifyEvent(const XEvent &event);
+        [[nodiscard]] bool IsCursorHidden() const override;
+        [[nodiscard]] Vector2 GetCursorPosition() const override;
+        [[nodiscard]] float32 GetHorizontalDelta() const override;
+        [[nodiscard]] float32 GetVerticalDelta() const override;
 
     private:
         const XID window;
@@ -55,6 +47,12 @@ namespace Sierra
         Vector2Int lastCursorPosition = { 0, 0 };
         bool cursorHidden = false;
         bool justHidCursor = false;
+
+        friend class X11Window;
+        void OnWindowInitialize();
+        void OnUpdate();
+        void OnUpdateEnd();
+        void MotionNotifyEvent(const XEvent &event);
 
     };
 

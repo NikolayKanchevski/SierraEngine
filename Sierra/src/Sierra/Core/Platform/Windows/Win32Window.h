@@ -10,7 +10,7 @@
 #endif
 
 #include "../../Window.h"
-#include "WindowsInstance.h"
+#include "Win32Context.h"
 #include "Win32InputManager.h"
 #include "Win32CursorManager.h"
 
@@ -21,7 +21,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Win32Window(const WindowCreateInfo &createInfo);
+        explicit Win32Window(const Win32Context &win32Context, const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         void OnUpdate() override;
@@ -39,26 +39,28 @@ namespace Sierra
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
-        std::string GetTitle() const override;
-        Vector2Int GetPosition() const override;
-        Vector2UInt GetSize() const override;
-        Vector2UInt GetFramebufferSize() const override;
-        float32 GetOpacity() const override;
-        bool IsClosed() const override;
-        bool IsMinimized() const override;
-        bool IsMaximized() const override;
-        bool IsFocused() const override;
-        bool IsHidden() const override;
+        [[nodiscard]] const std::string& GetTitle() const override;
+        [[nodiscard]] Vector2Int GetPosition() const override;
+        [[nodiscard]] Vector2UInt GetSize() const override;
+        [[nodiscard]] Vector2UInt GetFramebufferSize() const override;
+        [[nodiscard]] float32 GetOpacity() const override;
+        [[nodiscard]] bool IsClosed() const override;
+        [[nodiscard]] bool IsMinimized() const override;
+        [[nodiscard]] bool IsMaximized() const override;
+        [[nodiscard]] bool IsFocused() const override;
+        [[nodiscard]] bool IsHidden() const override;
 
-        InputManager& GetInputManager() override;
-        CursorManager& GetCursorManager() override;
-        WindowAPI GetAPI() const override;
+        [[nodiscard]] const Screen& GetScreen() const override;
+        [[nodiscard]] InputManager& GetInputManager() override;
+        [[nodiscard]] CursorManager& GetCursorManager() override;
+        [[nodiscard]] WindowAPI GetAPI() const override;
 
         /* --- DESTRUCTOR --- */
-        ~Win32Window() override;
+        ~Win32Window();
 
     private:
-        WindowsInstance &windowsInstance;
+        const Win32Context &win32Context;
+
         HWND window;
 
         Win32InputManager inputManager;
@@ -67,11 +69,8 @@ namespace Sierra
         std::string title;
         bool closed = false;
 
-        bool justBecameShown = false; // This is to prevent all the made up events the window manager sends when showing a hidden window
+        bool justBecameShown = false;      // This is to prevent all the made up events the window manager sends when showing a hidden window
         bool nextMoveEventBlocked = false; // This is to prevent detecting when window manager moves window to [x: ~-32000, y: ~-32000] when hiding/minimizing it
-
-        void AdjustWindowSizeForDPI(RECT &rect);
-        static uint16 GetTitleBarHeight() { return GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYBORDER) + GetSystemMetrics(SM_CYFRAME); }
         static LRESULT CALLBACK WindowProc(HWND callingWindow, UINT message, WPARAM wParam, LPARAM lParam);
 
     };

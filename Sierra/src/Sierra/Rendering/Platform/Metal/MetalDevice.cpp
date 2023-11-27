@@ -9,8 +9,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    MetalDevice::MetalDevice(const MetalDeviceCreateInfo &createInfo, const DeviceCreateInfo &baseCreateInfo)
-        : Device(baseCreateInfo), device(MTL::CreateSystemDefaultDevice())
+    MetalDevice::MetalDevice(const MetalDeviceCreateInfo &createInfo)
+        : Device(createInfo), device(MTL::CreateSystemDefaultDevice())
     {
 
     }

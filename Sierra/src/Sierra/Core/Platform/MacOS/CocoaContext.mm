@@ -230,14 +230,14 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    CocoaScreen& CocoaContext::GetPrimaryScreen() const
+    const CocoaScreen& CocoaContext::GetPrimaryScreen() const
     {
         return screens[0].cocoaScreen;
     }
 
-    CocoaScreen& CocoaContext::GetWindowScreen(const NSWindow* window) const
+    const CocoaScreen& CocoaContext::GetWindowScreen(const NSWindow* window) const
     {
-        return std::find_if(screens.begin(), screens.end(), [window](const CocoaScreenPair &pair){ return pair.nsScreen == [window screen]; })->cocoaScreen;
+        return std::find_if(screens.begin(), screens.end(), [window](const CocoaScreenPair &pair) { return pair.nsScreen == [window screen]; })->cocoaScreen;
     }
 
     /* --- EVENTS --- */
@@ -257,6 +257,7 @@ namespace Sierra
         {
             screens.emplace_back(CocoaScreenPair{ screen, CocoaScreen({ .nsScreen = screen })});
         }
+        screens.shrink_to_fit();
     }
 
     /* --- DESTRUCTOR --- */

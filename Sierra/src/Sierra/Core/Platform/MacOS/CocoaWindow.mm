@@ -57,11 +57,6 @@
         window->WindowDidResignKey(notification);
     }
 
-    - (void) windowDidChangeScreen: (NSNotification*) notification
-    {
-        window->WindowDidChangeScreen(notification);
-    }
-
     /* --- DESTRUCTOR --- */
 
     - (void) dealloc
@@ -257,11 +252,8 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     CocoaWindow::CocoaWindow(const CocoaContext &cocoaContext, const WindowCreateInfo &createInfo)
-        : Window(createInfo),
-          cocoaContext(cocoaContext),
-          window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
-          delegate([[CocoaWindowDelegate alloc] initWithWindow: this]), view([[CocoaWindowContentView alloc] initWithWindow: this]),
-          screen(&cocoaContext.GetWindowScreen(window)),
+        : Window(createInfo), cocoaContext(cocoaContext),
+          window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)), delegate([[CocoaWindowDelegate alloc] initWithWindow: this]), view([[CocoaWindowContentView alloc] initWithWindow: this]),
           inputManager(CocoaInputManager({ })), cursorManager({ .window = window })
     {
         // Maximize window manually, or through Cocoa if resizable
@@ -273,7 +265,8 @@ namespace Sierra
             }
             else
             {
-                const NSRect newFrame = NSMakeRect(screen->GetOrigin().x, screen->GetOrigin().y, screen->GetWorkAreaSize().x, screen->GetWorkAreaSize().y);
+                const CocoaScreen &screen = cocoaContext.GetWindowScreen(window);
+                const NSRect newFrame = NSMakeRect(screen.GetOrigin().x, screen.GetOrigin().y, screen.>GetWorkAreaSize().x, screen.GetWorkAreaSize().y);
                 [window setFrame: newFrame display: YES animate: YES];
             }
         }
@@ -455,9 +448,9 @@ namespace Sierra
         return ![window isVisible];
     }
 
-    Screen& CocoaWindow::GetScreen()
+    const Screen& CocoaWindow::GetScreen() const
     {
-        return *screen;
+        return cocoaContext.GetWindowScreen(window);
     }
 
     InputManager& CocoaWindow::GetInputManager()
@@ -527,11 +520,6 @@ namespace Sierra
         {
             if (closed) return;
             GetWindowFocusDispatcher().DispatchEvent(false);
-        }
-
-        void CocoaWindow::WindowDidChangeScreen(const NSNotification* notification)
-        {
-            screen = &cocoaContext.GetWindowScreen(window);
         }
     #endif
 

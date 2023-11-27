@@ -185,16 +185,18 @@ function(SierraBuildApplication SOURCE_FILES)
         add_executable(${SIERRA_APPLICATION_NAME} ${SOURCE_FILES})
     endif()
 
-    # === EXPORT ENGINE SYMBOLS ===
+    # === EXPORT ENGINE SYMBOLS
     if(SIERRA_BUILD_STATIC_LIBRARY)
         target_compile_definitions(${SIERRA_APPLICATION_NAME} PRIVATE "SR_BUILD_STATIC_LIBRARY")
     elseif(SIERRA_BUILD_SHARED_LIBRARY)
         target_compile_definitions(Sierra PRIVATE "SR_BUILD_SHARED_LIBRARY")
+
         target_compile_definitions(Sierra PRIVATE "SR_USE_SHARED_LIBRARY")
         target_compile_definitions(${SIERRA_APPLICATION_NAME} PRIVATE "SR_USE_SHARED_LIBRARY")
     endif()
 
-    # === CREATE DEFINITIONS === #
+    # === CREATE DEFINITIONS === #===
+    target_compile_definitions(Sierra PRIVATE "SR_LIBRARY_IMPLEMENTATION")
     if(SIERRA_DEBUG_BUILD)
         target_compile_definitions(Sierra PRIVATE "SR_DEBUG")
         target_compile_definitions(${SIERRA_APPLICATION_NAME} PRIVATE "SR_DEBUG")
@@ -283,14 +285,18 @@ function(SierraBuildApplication SOURCE_FILES)
     if(SIERRA_PLATFORM_WINDOWS)
         # Add Windows-only source files
         target_sources(Sierra PRIVATE
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32Context.cpp
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32Context.h
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32CursorManager.cpp
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32CursorManager.h
-            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/WindowsInstance.cpp
-            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/WindowsInstance.h
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32InputManager.cpp
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32InputManager.h
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32Window.cpp
             ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32Window.h
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32Screen.cpp
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/Win32Screen.h
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/WindowsInstance.cpp
+            ${SIERRA_DIRECTORY}/src/Sierra/Core/Platform/Windows/WindowsInstance.h
         )
     elseif(SIERRA_PLATFORM_LINUX)
         # Add Linux-only source files

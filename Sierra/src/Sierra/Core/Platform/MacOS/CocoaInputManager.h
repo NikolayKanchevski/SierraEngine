@@ -26,31 +26,16 @@ namespace Sierra
         void OnUpdate();
 
         /* --- GETTER METHODS --- */
-        bool IsKeyPressed(Key key) const override;
-        bool IsKeyHeld(Key key) const override;
-        bool IsKeyReleased(Key key) const override;
-        bool IsKeyResting(Key key) const override;
+        [[nodiscard]] bool IsKeyPressed(Key key) const override;
+        [[nodiscard]] bool IsKeyHeld(Key key) const override;
+        [[nodiscard]] bool IsKeyReleased(Key key) const override;
+        [[nodiscard]] bool IsKeyResting(Key key) const override;
 
-        bool IsMouseButtonPressed(MouseButton mouseButton) const override;
-        bool IsMouseButtonHeld(MouseButton mouseButton) const override;
-        bool IsMouseButtonReleased(MouseButton mouseButton) const override;
-        bool IsMouseButtonResting(MouseButton mouseButton) const override;
-        Vector2 GetMouseScroll() const override;
-
-        /* --- EVENTS --- */
-        #if defined(__OBJC__)
-            void KeyDown(const NSEvent* event);
-            void FlagsChanged(const NSEvent* event);
-            void KeyUp(const NSEvent* event);
-
-            void MouseDown(const NSEvent* event);
-            void RightMouseDown(const NSEvent* event);
-            void OtherMouseDown(const NSEvent* event);
-            void MouseUp(const NSEvent* event);
-            void RightMouseUp(const NSEvent* event);
-            void OtherMouseUp(const NSEvent* event);
-            void ScrollWheel(const NSEvent* event);
-        #endif
+        [[nodiscard]] bool IsMouseButtonPressed(MouseButton mouseButton) const override;
+        [[nodiscard]] bool IsMouseButtonHeld(MouseButton mouseButton) const override;
+        [[nodiscard]] bool IsMouseButtonReleased(MouseButton mouseButton) const override;
+        [[nodiscard]] bool IsMouseButtonResting(MouseButton mouseButton) const override;
+        [[nodiscard]] Vector2 GetMouseScroll() const override;
 
     private:
         constexpr static std::array<Key, 127> KEY_TABLE
@@ -191,6 +176,21 @@ namespace Sierra
         std::array<InputAction, MOUSE_BUTTON_COUNT> mouseButtonStates { };
 
         Vector2 mouseScroll = { 0, 0 };
+
+        friend class CocoaWindow;
+        #if defined(__OBJC__)
+            void KeyDown(const NSEvent* event);
+            void FlagsChanged(const NSEvent* event);
+            void KeyUp(const NSEvent* event);
+
+            void MouseDown(const NSEvent* event);
+            void RightMouseDown(const NSEvent* event);
+            void OtherMouseDown(const NSEvent* event);
+            void MouseUp(const NSEvent* event);
+            void RightMouseUp(const NSEvent* event);
+            void OtherMouseUp(const NSEvent* event);
+            void ScrollWheel(const NSEvent* event);
+        #endif
 
     };
 

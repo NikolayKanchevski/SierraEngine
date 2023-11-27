@@ -5,7 +5,9 @@
 #include "WindowManager.h"
 
 #if SR_PLATFORM_WINDOWS
+    #include "Platform/Windows/WindowsInstance.h"
     #include "Platform/Windows/Win32Window.h"
+    #undef CreateWindow
 #elif SR_PLATFORM_LINUX
     #include "Platform/Linux/X11Window.h"
 #elif SR_PLATFORM_MACOS
@@ -23,17 +25,18 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    UniquePtr<WindowManager> WindowManager::Create(const WindowManagerCreateInfo &createInfo)
+    std::unique_ptr<WindowManager> WindowManager::Create(const WindowManagerCreateInfo &createInfo)
     {
-        return UniquePtr<WindowManager>(new WindowManager(createInfo));
+        return std::unique_ptr<WindowManager>(new WindowManager(createInfo));
     }
 
     /* --- POLLING METHODS --- */
 
-    UniquePtr<Window> WindowManager::CreateWindow(const WindowCreateInfo &createInfo) const
+    std::unique_ptr<Window> WindowManager::CreateWindow(const WindowCreateInfo &createInfo) const
     {
         #if SR_PLATFORM_WINDOWS
-            #error "Unimplemented!"
+            SR_ERROR_IF(platformInstance->GetType() !=+ PlatformType::Windows, "Cannot create Win32 window using a platform instance of type [{0}] when it must be [{1}]!", platformInstance->GetType()._to_string(), PlatformType(PlatformType::Windows)._to_string());
+            return std::make_unique<Win32Window>(static_cast<const WindowsInstance*>(platformInstance.get())->GetWin32Context(), createInfo);
         #elif SR_PLATFORM_LINUX
             #error "Unimplemented!"
         #elif SR_PLATFORM_MACOS

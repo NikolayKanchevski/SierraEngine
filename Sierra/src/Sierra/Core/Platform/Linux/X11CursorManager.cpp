@@ -15,6 +15,58 @@ namespace Sierra
 
     }
 
+    /* --- SETTER METHODS --- */
+
+    void X11CursorManager::ShowCursor()
+    {
+        cursorHidden = false;
+        x11Context.ShowWindowCursor(window);
+    }
+
+    void X11CursorManager::HideCursor()
+    {
+        cursorHidden = true;
+        justHidCursor = true;
+        x11Context.HideWindowCursor(window);
+    }
+
+    void X11CursorManager::SetCursorPosition(const Vector2 &position)
+    {
+        // Get X11-suited position and move cursor
+        const Vector2Int x11Position = { position.x, static_cast<int32>(x11Context.GetWindowSize(window).y) - static_cast<int32>(position.y) };
+        x11Context.SetWindowCursorPosition(window, x11Position);
+
+        // Reset mouse delta
+        lastCursorPosition = cursorPosition;
+        cursorPosition = position;
+    }
+
+    /* --- GETTER METHODS --- */
+
+    bool X11CursorManager::IsCursorHidden() const
+    {
+        return cursorHidden;
+    }
+
+    Vector2 X11CursorManager::GetCursorPosition() const
+    {
+        return cursorPosition;
+    }
+
+    float32 X11CursorManager::GetHorizontalDelta() const
+    {
+        float32 delta = static_cast<float32>(cursorPosition.x) - static_cast<float32>(lastCursorPosition.x);
+        if (cursorHidden) delta *= -1;
+        return delta;
+    }
+
+    float32 X11CursorManager::GetVerticalDelta() const
+    {
+        float32 delta = static_cast<float32>(cursorPosition.y) - static_cast<float32>(lastCursorPosition.y);
+        if (cursorHidden) delta *= -1;
+        return delta;
+    }
+
     void X11CursorManager::OnWindowInitialize()
     {
         // Retrieve initial cursor position (not done in constructor, as X11 is async and window may not be initialized there)
@@ -23,7 +75,7 @@ namespace Sierra
         lastCursorPosition = cursorPosition;
     }
 
-    /* --- POLLING METHODS --- */
+    /* --- PRIVATE METHODS --- */
 
     void X11CursorManager::OnUpdate()
     {
@@ -52,58 +104,6 @@ namespace Sierra
                 justHidCursor = false;
             }
         }
-    }
-
-    /* --- SETTER METHODS --- */
-
-    void X11CursorManager::SetCursorPosition(const Vector2 &position)
-    {
-        // Get X11-suited position and move cursor
-        const Vector2Int x11Position = { position.x, static_cast<int32>(x11Context.GetWindowSize(window).y) - static_cast<int32>(position.y) };
-        x11Context.SetWindowCursorPosition(window, x11Position);
-
-        // Reset mouse delta
-        lastCursorPosition = cursorPosition;
-        cursorPosition = position;
-    }
-
-    void X11CursorManager::ShowCursor()
-    {
-        cursorHidden = false;
-        x11Context.ShowWindowCursor(window);
-    }
-
-    void X11CursorManager::HideCursor()
-    {
-        cursorHidden = true;
-        justHidCursor = true;
-        x11Context.HideWindowCursor(window);
-    }
-
-    /* --- GETTER METHODS --- */
-
-    Vector2 X11CursorManager::GetCursorPosition()
-    {
-        return cursorPosition;
-    }
-
-    float32 X11CursorManager::GetHorizontalDelta()
-    {
-        float32 delta = static_cast<float32>(cursorPosition.x) - static_cast<float32>(lastCursorPosition.x);
-        if (cursorHidden) delta *= -1;
-        return delta;
-    }
-
-    float32 X11CursorManager::GetVerticalDelta()
-    {
-        float32 delta = static_cast<float32>(cursorPosition.y) - static_cast<float32>(lastCursorPosition.y);
-        if (cursorHidden) delta *= -1;
-        return delta;
-    }
-
-    bool X11CursorManager::IsCursorHidden()
-    {
-        return cursorHidden;
     }
 
     /* --- EVENTS --- */

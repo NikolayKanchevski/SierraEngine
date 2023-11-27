@@ -164,7 +164,7 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    std::string UIKitWindow::GetTitle() const
+    const std::string& UIKitWindow::GetTitle() const
     {
         return title;
     }
@@ -214,7 +214,7 @@ namespace Sierra
         return minimized;
     }
 
-    Screen& UIKitWindow::GetScreen()
+    const Screen& UIKitWindow::GetScreen() const
     {
         return uiKitContext.GetPrimaryScreen();
     }

@@ -4,10 +4,10 @@
 
 #include "X11InputManager.h"
 
-#define Button6            (Button5 + 1)
-#define Button7            (Button5 + 2)
-#define Button8            (Button5 + 3)
-#define Button9            (Button5 + 4)
+#define Button6 (Button5 + 1)
+#define Button7 (Button5 + 2)
+#define Button8 (Button5 + 3)
+#define Button9 (Button5 + 4)
 
 namespace Sierra
 {
@@ -17,15 +17,6 @@ namespace Sierra
         : InputManager(createInfo), xkbExtension(createInfo.xkbExtension)
     {
 
-    }
-
-    /* --- POLLING METHODS --- */
-
-    void X11InputManager::OnUpdate()
-    {
-        std::copy(keyStates.begin(), keyStates.end(), lastKeyStates.begin());
-        std::copy(mouseButtonStates.begin(), mouseButtonStates.end(), lastMouseButtonStates.begin());
-        mouseScroll = { 0, 0 };
     }
 
     /* --- GETTER METHODS --- */
@@ -73,6 +64,15 @@ namespace Sierra
     Vector2 X11InputManager::GetMouseScroll() const
     {
         return mouseScroll;
+    }
+
+    /* --- PRIVATE METHODS --- */
+
+    void X11InputManager::OnUpdate()
+    {
+        std::copy(keyStates.begin(), keyStates.end(), lastKeyStates.begin());
+        std::copy(mouseButtonStates.begin(), mouseButtonStates.end(), lastMouseButtonStates.begin());
+        mouseScroll = { 0, 0 };
     }
 
     /* --- EVENTS --- */

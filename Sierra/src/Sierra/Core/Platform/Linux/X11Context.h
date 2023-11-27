@@ -124,8 +124,6 @@ namespace Sierra
         XID rootWindow = 0;
         XID invisibleCursor = 0;
 
-        mutable std::vector<X11Screen> screens;
-
         XkbExtension xkbExtension;
         XrandrExtension xrandrExtension;
 
@@ -133,6 +131,7 @@ namespace Sierra
         Atom TryRetrieveAtom(const Atom* supportedAtoms, const ulong atomCount, const char* atomName);
         [[nodiscard]] inline constexpr std::underlying_type<AtomType>::type GetAtomTypeIndex(const AtomType atomType) const { return static_cast<std::underlying_type<AtomType>::type>(atomType); }
 
+        mutable std::vector<X11Screen> screens;
         void ReloadScreens(XEvent* notifyEvent = nullptr) const;
         [[nodiscard]] int32 GetWindowProperty(XID window, Atom property, Atom type, uchar** value) const;
 

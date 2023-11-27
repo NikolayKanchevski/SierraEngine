@@ -21,7 +21,7 @@ namespace Sierra
 
     }
 
-    UniquePtr<RenderingContext> RenderingContext::Create(const RenderingContextCreateInfo &createInfo)
+    std::unique_ptr<RenderingContext> RenderingContext::Create(const RenderingContextCreateInfo &createInfo)
     {
         SR_ERROR_IF(createInfo.graphicsAPI ==+ GraphicsAPI::Undefined, "Cannot create a rendering context with graphics API set to [{0}]!", createInfo.graphicsAPI._to_string());
         switch (createInfo.graphicsAPI)
@@ -44,6 +44,7 @@ namespace Sierra
             {
                 #if !defined(SR_METAL_SUPPORTED)
                     SR_ERROR("Cannot create rendering context using the Metal API, as it is unsupported on the system!");
+                    return nullptr;
                 #else
                     return std::make_unique<MetalContext>(createInfo);
                 #endif
@@ -53,6 +54,7 @@ namespace Sierra
                 SR_ERROR("Cannot create rendering context using OpenGL, as it has not been implemented yet!");
                 return nullptr;
             }
+            default:
             case GraphicsAPI::Undefined:
             {
                 SR_ERROR("Cannot create rendering context using an undefined GraphicsAPI!");

@@ -33,9 +33,9 @@ namespace Sierra
         [[nodiscard]] virtual bool IsKeyResting(Key key) const;
 
         template<typename ...Args>
-        [[nodiscard]] inline bool IsKeyCombinationPressed(const Key first, const Key second, const Args... rest) const { return IsKeyCombinationPressedImplementation({ first, second, rest... }); };
+        [[nodiscard]] inline bool IsKeyCombinationPressed(const Key first, const Args... rest) const { return IsKeyCombinationPressedImplementation({ first, rest... }); };
         template<typename ...Args>
-        [[nodiscard]] inline bool IsKeyCombinationHeld(const Key first, const Key second, const Args... rest) const { return IsKeyCombinationHeldImplementation({ first, second, rest... }); };
+        [[nodiscard]] inline bool IsKeyCombinationHeld(const Key first, const Args... rest) const { return IsKeyCombinationHeldImplementation({ first, rest... }); };
 
         [[nodiscard]] virtual bool IsMouseButtonPressed(MouseButton key) const;
         [[nodiscard]] virtual bool IsMouseButtonHeld(MouseButton key) const;
@@ -66,12 +66,12 @@ namespace Sierra
         [[nodiscard]] inline constexpr auto GetKeyIndex(const Key key) const { return static_cast<std::underlying_type<Key>::type>(key); }
         [[nodiscard]] inline constexpr auto GetMouseButtonIndex(const MouseButton mouseButton) const { return static_cast<std::underlying_type<MouseButton>::type>(mouseButton); }
 
-        [[nodiscard]] inline const EventDispatcher<KeyPressEvent>& GetKeyPressDispatcher() const { return keyPressDispatcher; }
-        [[nodiscard]] inline const EventDispatcher<KeyReleaseEvent>& GetKeyReleaseDispatcher() const { return keyReleaseDispatcher; }
+        [[nodiscard]] inline EventDispatcher<KeyPressEvent>& GetKeyPressDispatcher() { return keyPressDispatcher; }
+        [[nodiscard]] inline EventDispatcher<KeyReleaseEvent>& GetKeyReleaseDispatcher() { return keyReleaseDispatcher; }
 
-        [[nodiscard]] inline const EventDispatcher<MouseButtonPressEvent>& GetMouseButtonPressDispatcher() const { return mouseButtonPressDispatcher; }
-        [[nodiscard]] inline const EventDispatcher<MouseButtonReleaseEvent>& GetMouseButtonReleaseDispatcher() const { return mouseButtonReleaseDispatcher; }
-        [[nodiscard]] inline const EventDispatcher<MouseScrollEvent>& GetMouseScrollDispatcher() const { return mouseScrollDispatcher; }
+        [[nodiscard]] inline EventDispatcher<MouseButtonPressEvent>& GetMouseButtonPressDispatcher() { return mouseButtonPressDispatcher; }
+        [[nodiscard]] inline EventDispatcher<MouseButtonReleaseEvent>& GetMouseButtonReleaseDispatcher() { return mouseButtonReleaseDispatcher; }
+        [[nodiscard]] inline EventDispatcher<MouseScrollEvent>& GetMouseScrollDispatcher() { return mouseScrollDispatcher; }
 
     private:
         EventDispatcher<KeyPressEvent> keyPressDispatcher;

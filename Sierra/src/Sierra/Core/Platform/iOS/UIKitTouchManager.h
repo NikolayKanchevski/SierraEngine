@@ -24,11 +24,12 @@ namespace Sierra
         explicit UIKitTouchManager(const TouchManagerCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        uint32 GetTouchCount() override;
-        std::optional<Touch> GetTouch(uint32 touchIndex) override;
+        [[nodiscard]] uint32 GetTouchCount() override;
+        [[nodiscard]] std::optional<Touch> GetTouch(uint32 touchIndex) override;
 
         /* --- EVENTS --- */
         #if defined(__OBJC__)
+            // TODO(iOS): Hide these away
             void TouchesBegan(const NSSet<UITouch*>* touches, const UIEvent* event);
             void TouchesMoved(const NSSet<UITouch*>* touches, const UIEvent* event);
             void TouchesEnded(const NSSet<UITouch*>* touches, const UIEvent* event);

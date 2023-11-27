@@ -39,6 +39,7 @@ namespace Sierra
         [[nodiscard]] inline Vector2UInt GetWorkAreaSize() const override { return workAreaSize; };
         // TODO: Detect refresh rate
         [[nodiscard]] inline uint32 GetRefreshRate() const override { return refreshRate; };
+        [[nodiscard]] inline ScreenOrientation GetOrientation() const override { return size.x >= size.y ? ScreenOrientation::LandscapeNormal : ScreenOrientation::PortraitNormal; }
 
     private:
         String name;

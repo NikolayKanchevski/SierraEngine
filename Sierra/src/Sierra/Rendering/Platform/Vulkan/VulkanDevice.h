@@ -12,7 +12,7 @@
 namespace Sierra
 {
 
-    struct VulkanDeviceCreateInfo
+    struct VulkanDeviceCreateInfo final : public DeviceCreateInfo
     {
         const VulkanInstance &instance;
     };
@@ -21,7 +21,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        VulkanDevice(const VulkanDeviceCreateInfo &createInfo, const DeviceCreateInfo &baseCreateInfo);
+        explicit VulkanDevice(const VulkanDeviceCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const char* GetName() const override { return physicalDeviceProperties.deviceName; }

@@ -25,15 +25,15 @@ namespace Sierra
         explicit CursorManager(const CursorManagerCreateInfo &createInfo);
 
         /* --- SETTER METHODS --- */
-        virtual void SetCursorPosition(const Vector2 &position);
         virtual void ShowCursor();
         virtual void HideCursor();
+        virtual void SetCursorPosition(const Vector2 &position);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual Vector2 GetCursorPosition();
-        [[nodiscard]] virtual float32 GetHorizontalDelta();
-        [[nodiscard]] virtual float32 GetVerticalDelta();
-        [[nodiscard]] virtual bool IsCursorHidden();
+        [[nodiscard]] virtual bool IsCursorHidden() const;
+        [[nodiscard]] virtual Vector2 GetCursorPosition() const;
+        [[nodiscard]] virtual float32 GetHorizontalDelta() const;
+        [[nodiscard]] virtual float32 GetVerticalDelta() const;
 
         /* --- EVENTS --- */
         template<typename T> void OnEvent(CursorEventCallback<T>) { static_assert(std::is_base_of_v<CursorEvent, T> && !std::is_same_v<CursorEvent, T>, "Template function accepts derived cursor events only!"); }
@@ -46,7 +46,7 @@ namespace Sierra
         CursorManager& operator=(const CursorManager&) = delete;
 
     protected:
-        [[nodiscard]] inline const EventDispatcher<CursorMoveEvent>& GetCursorMoveDispatcher() const { return cursorMoveDispatcher; }
+        [[nodiscard]] inline EventDispatcher<CursorMoveEvent>& GetCursorMoveDispatcher() { return cursorMoveDispatcher; }
 
     private:
         EventDispatcher<CursorMoveEvent> cursorMoveDispatcher;

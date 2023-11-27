@@ -33,26 +33,16 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         explicit CocoaCursorManager(const CocoaCursorManagerCreateInfo &createInfo);
 
-        /* --- POLLING METHODS --- */
-        void OnUpdate();
-        void OnUpdateEnd();
-
         /* --- SETTER METHODS --- */
-        void SetCursorPosition(const Vector2 &position) override;
         void ShowCursor() override;
         void HideCursor() override;
+        void SetCursorPosition(const Vector2 &position) override;
 
         /* --- GETTER METHODS --- */
-        Vector2 GetCursorPosition() override;
-        bool IsCursorHidden() override;
-
-        float32 GetHorizontalDelta() override;
-        float32 GetVerticalDelta() override;
-
-        /* --- EVENTS --- */
-        #if defined(__OBJC__)
-            void MouseMoved(const NSEvent* event);
-        #endif
+        [[nodiscard]] bool IsCursorHidden() override;
+        [[nodiscard]] Vector2 GetCursorPosition() override;
+        [[nodiscard]] float32 GetHorizontalDelta() override;
+        [[nodiscard]] float32 GetVerticalDelta() override;
 
     private:
         const NSWindow* window;
@@ -63,6 +53,12 @@ namespace Sierra
         bool cursorHidden = false;
         bool justHidCursor = false;
 
+        friend class CocoaWindow;
+        void OnUpdate();
+        void OnUpdateEnd();
+        #if defined(__OBJC__)
+            void MouseMoved(const NSEvent* event);
+        #endif
     };
 
 }

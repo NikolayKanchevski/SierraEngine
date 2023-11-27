@@ -44,7 +44,7 @@ namespace Sierra
 
     /* --- PRIVATE METHODS --- */
 
-    UniquePtr<PlatformInstance> PlatformInstance::Load(const PlatformInstanceCreateInfo &createInfo)
+    std::unique_ptr<PlatformInstance> PlatformInstance::Load(const PlatformInstanceCreateInfo &createInfo)
     {
         return std::make_unique<NativeInstance>(createInfo);
     }

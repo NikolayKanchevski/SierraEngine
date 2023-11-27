@@ -28,9 +28,6 @@ namespace Sierra
         [[nodiscard]] inline const UIKitContext& GetUIKitContext() const { return uiKitContext; }
         [[nodiscard]] inline PlatformType GetType() const override { return PlatformType::iOS; }
 
-        /* --- DESTRUCTOR --- */
-        ~iOSInstance() = default;
-
     private:
         UIKitContext uiKitContext;
         void RunApplication(const PlatformApplicationRunInfo &runInfo) override;

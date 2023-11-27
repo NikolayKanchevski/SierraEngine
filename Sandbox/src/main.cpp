@@ -18,7 +18,7 @@ public:
 
 private:
     const uint8 TEST_WINDOW_COUNT = !SR_PLATFORM_MOBILE + 1;
-    std::vector<UniquePtr<Window>> windows;
+    std::vector<std::unique_ptr<Window>> windows;
 
     void OnStart() override
     {
@@ -83,7 +83,7 @@ private:
 int32 main()
 {
     // Create and run application
-    UniquePtr<SandboxApplication> application = UniquePtr<SandboxApplication>(new SandboxApplication({ .name = "Sandbox" }));
+    std::unique_ptr<SandboxApplication> application = std::make_unique<SandboxApplication>(ApplicationCreateInfo{ .name = "Sandbox" });
     application->Run();
     return 0;
 }

@@ -52,7 +52,7 @@ namespace Sierra
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string GetTitle() const override;
+        [[nodiscard]] const std::string& GetTitle() const override;
         [[nodiscard]] Vector2Int GetPosition() const override;
         [[nodiscard]] Vector2UInt GetSize() const override;
         [[nodiscard]] Vector2UInt GetFramebufferSize() const override;
@@ -63,20 +63,20 @@ namespace Sierra
         [[nodiscard]] bool IsFocused() const override;
         [[nodiscard]] bool IsHidden() const override;
 
-        [[nodiscard]] Screen& GetScreen() override;
+        [[nodiscard]] const Screen& GetScreen() const override;
         [[nodiscard]] InputManager& GetInputManager() override;
         [[nodiscard]] CursorManager& GetCursorManager() override;
         [[nodiscard]] WindowAPI GetAPI() const override;
 
         /* --- EVENTS --- */
         #if defined(__OBJC__)
+            // TODO(macOS): Hide these away
             void WindowShouldClose();
             void WindowDidResize(const NSNotification* notification);
             void WindowDidMove(const NSNotification* notification);
             void WindowDidMiniaturize(const NSNotification* notification);
             void WindowDidBecomeKey(const NSNotification* notification);
             void WindowDidResignKey(const NSNotification* notification);
-            void WindowDidChangeScreen(const NSNotification* notification);
         #endif
 
         /* --- DESTRUCTOR --- */
@@ -89,7 +89,6 @@ namespace Sierra
         CocoaWindowDelegate* delegate = nullptr;
         CocoaWindowContentView* view = nullptr;
 
-        CocoaScreen* screen = nullptr;
         CocoaInputManager inputManager;
         CocoaCursorManager cursorManager;
 

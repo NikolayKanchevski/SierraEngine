@@ -24,8 +24,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanDevice::VulkanDevice(const VulkanDeviceCreateInfo &createInfo, const DeviceCreateInfo &baseCreateInfo)
-        : Device(baseCreateInfo)
+    VulkanDevice::VulkanDevice(const VulkanDeviceCreateInfo &createInfo)
+        : Device(createInfo)
     {
         // Retrieve physical device
         PhysicalDeviceInfo physicalDeviceInfo{};

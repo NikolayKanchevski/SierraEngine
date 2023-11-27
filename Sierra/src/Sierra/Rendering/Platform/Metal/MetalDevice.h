@@ -10,7 +10,7 @@
 namespace Sierra
 {
 
-    struct MetalDeviceCreateInfo
+    struct MetalDeviceCreateInfo final : public DeviceCreateInfo
     {
 
     };
@@ -19,7 +19,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        MetalDevice(const MetalDeviceCreateInfo &createInfo, const DeviceCreateInfo &baseCreateInfo);
+        explicit MetalDevice(const MetalDeviceCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const char* GetName() const override { return device->name()->utf8String(); }

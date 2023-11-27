@@ -26,7 +26,7 @@ namespace Sierra
 
     private:
         friend class Application;
-        static UniquePtr<RenderingContext> Create(const RenderingContextCreateInfo &createInfo);
+        static std::unique_ptr<RenderingContext> Create(const RenderingContextCreateInfo &createInfo);
 
         void Destroy() override;
 

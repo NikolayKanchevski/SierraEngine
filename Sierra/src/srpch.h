@@ -137,11 +137,6 @@
 	    using MatrixInt = glm::mat<C, R, int32>;
 	    template<uint32 C, uint32 R>
 	    using MatrixUInt = glm::mat<C, R, uint32>;
-
-	    template<class T>
-	    using UniquePtr = std::unique_ptr<T>;
-	    template<class T>
-	    using SharedPtr = std::shared_ptr<T>;
     #pragma endregion
 
     #pragma region Macros

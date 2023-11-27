@@ -1,4 +1,4 @@
-//
+ //
 // Created by Nikolay Kanchevski on 3.10.23.
 //
 
@@ -16,11 +16,6 @@ namespace Sierra
 
     /* --- SETTER METHODS --- */
 
-    void CursorManager::SetCursorPosition(const Vector2 &position)
-    {
-
-    }
-
     void CursorManager::ShowCursor()
     {
 
@@ -31,26 +26,31 @@ namespace Sierra
 
     }
 
+    void CursorManager::SetCursorPosition(const Vector2 &position)
+    {
+
+    }
+
     /* --- GETTER METHODS --- */
 
-    Vector2 CursorManager::GetCursorPosition()
+    bool CursorManager::IsCursorHidden() const
+    {
+        return true;
+    }
+
+    Vector2 CursorManager::GetCursorPosition() const
     {
         return { std::numeric_limits<float32>::min(), std::numeric_limits<float32>::min() };
     }
 
-    float32 CursorManager::GetHorizontalDelta()
+    float32 CursorManager::GetHorizontalDelta() const
     {
         return 0.0f;
     }
 
-    float32 CursorManager::GetVerticalDelta()
+    float32 CursorManager::GetVerticalDelta() const
     {
         return 0.0f;
-    }
-
-    bool CursorManager::IsCursorHidden()
-    {
-        return true;
     }
 
 }

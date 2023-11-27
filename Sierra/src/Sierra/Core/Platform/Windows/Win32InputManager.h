@@ -22,25 +22,17 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         explicit Win32InputManager(const InputManagerCreateInfo &createInfo);
 
-        /* --- POLLING METHODS --- */
-        void OnUpdate();
-
         /* --- GETTER METHODS --- */
-        bool IsKeyPressed(Key key) override;
-        bool IsKeyHeld(Key key) override;
-        bool IsKeyReleased(Key key) override;
-        bool IsKeyResting(Key key) override;
+        [[nodiscard]] bool IsKeyPressed(Key key) const override;
+        [[nodiscard]] bool IsKeyHeld(Key key) const override;
+        [[nodiscard]] bool IsKeyReleased(Key key) const override;
+        [[nodiscard]] bool IsKeyResting(Key key) const override;
 
-        bool IsMouseButtonPressed(MouseButton mouseButton) override;
-        bool IsMouseButtonHeld(MouseButton mouseButton) override;
-        bool IsMouseButtonReleased(MouseButton mouseButton) override;
-        bool IsMouseButtonResting(MouseButton mouseButton) override;
-        Vector2 GetMouseScroll() override;
-
-        /* --- EVENTS --- */
-        void KeyMessage(UINT message, WPARAM wParam, LPARAM lParam);
-        void MouseButtonMessage(UINT message, WPARAM wParam, LPARAM lParam);
-        void MouseWheelMessage(UINT message, WPARAM wParam, LPARAM lParam);
+        [[nodiscard]] bool IsMouseButtonPressed(MouseButton mouseButton) const override;
+        [[nodiscard]] bool IsMouseButtonHeld(MouseButton mouseButton) const override;
+        [[nodiscard]] bool IsMouseButtonReleased(MouseButton mouseButton) const override;
+        [[nodiscard]] bool IsMouseButtonResting(MouseButton mouseButton) const override;
+        [[nodiscard]] Vector2 GetMouseScroll() const override;
 
     private:
         constexpr static Key KEY_TABLE[]
@@ -270,14 +262,19 @@ namespace Sierra
             Key::Apostrophe
         };
 
-        // TODO: Use std::array
-        InputAction lastKeyStates[KEY_COUNT] { };
-        InputAction keyStates[KEY_COUNT] { };
+        std::array<InputAction, KEY_COUNT> lastKeyStates { };
+        std::array<InputAction, KEY_COUNT> keyStates { };
 
-        InputAction lastMouseButtonStates[MOUSE_BUTTON_COUNT] { };
-        InputAction mouseButtonStates[MOUSE_BUTTON_COUNT] { };
+        std::array<InputAction, MOUSE_BUTTON_COUNT> lastMouseButtonStates { };
+        std::array<InputAction, MOUSE_BUTTON_COUNT> mouseButtonStates { };
 
         Vector2 mouseScroll = { 0, 0 };
+
+        friend class Win32Window;
+        void OnUpdate();
+        void KeyMessage(UINT message, WPARAM wParam, LPARAM lParam);
+        void MouseButtonMessage(UINT message, WPARAM wParam, LPARAM lParam);
+        void MouseWheelMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
     };
 

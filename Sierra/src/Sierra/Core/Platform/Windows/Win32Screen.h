@@ -1,38 +1,32 @@
 //
-// Created by Nikolay Kanchevski on 4.11.23.
+// Created by Nikolay Kanchevski on 11.25.2023.
 //
 
 #pragma once
 
-#if !SR_PLATFORM_MACOS
-    #error "Including the CocoaScreen.h file is only allowed in macOS builds!"
+#if !SR_PLATFORM_WINDOWS
+    #error "Including the Win32Screen.h file is only allowed in Windows builds!"
 #endif
 
 #include "../../Screen.h"
 
-#if !defined(__OBJC__)
-    namespace Sierra
-    {
-        typedef void NSScreen;
-    }
-#else
-    #include <Cocoa/Cocoa.h>
-#endif
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 
 namespace Sierra
 {
 
-    struct CocoaScreenCreateInfo
+    struct Win32ScreenCreateInfo
     {
-        const NSScreen* nsScreen;
+        HMONITOR hMonitor;
     };
 
-    class SIERRA_API CocoaScreen final : public Screen
+    class SIERRA_API Win32Screen final : public Screen
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit CocoaScreen(const CocoaScreenCreateInfo &createInfo);
-        explicit CocoaScreen(CocoaScreen&& other);
+        explicit Win32Screen(const Win32ScreenCreateInfo &createInfo);
+        explicit Win32Screen(Win32Screen&& other);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const std::string& GetName() const override { return name; };
@@ -50,6 +44,11 @@ namespace Sierra
         Vector2Int workAreaOrigin = { 0, 0 };
         Vector2UInt workAreaSize = { 0, 0 };
         uint32 refreshRate = 0;
+
+        // On MSVC, only a move constructor is not enough to allow Win32Context to hold a std::vector<Win32Screen>
+        friend class Win32Context;
+        explicit Win32Screen(Win32Screen& other);
+        Win32Screen& operator=(const Win32Screen &other);
 
     };
 

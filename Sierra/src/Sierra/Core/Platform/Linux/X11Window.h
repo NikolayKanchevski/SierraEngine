@@ -38,21 +38,21 @@ namespace Sierra
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
-        std::string GetTitle() const override;
-        Vector2Int GetPosition() const override;
-        Vector2UInt GetSize() const override;
-        Vector2UInt GetFramebufferSize() const override;
-        float32 GetOpacity() const override;
-        bool IsClosed() const override;
-        bool IsMinimized() const override;
-        bool IsMaximized() const override;
-        bool IsFocused() const override;
-        bool IsHidden() const override;
+        [[nodiscard]] const std::string& GetTitle() const override;
+        [[nodiscard]] Vector2Int GetPosition() const override;
+        [[nodiscard]] Vector2UInt GetSize() const override;
+        [[nodiscard]] Vector2UInt GetFramebufferSize() const override;
+        [[nodiscard]] float32 GetOpacity() const override;
+        [[nodiscard]] bool IsClosed() const override;
+        [[nodiscard]] bool IsMinimized() const override;
+        [[nodiscard]] bool IsMaximized() const override;
+        [[nodiscard]] bool IsFocused() const override;
+        [[nodiscard]] bool IsHidden() const override;
 
-        Screen& GetScreen() override;
-        InputManager& GetInputManager() override;
-        CursorManager& GetCursorManager() override;
-        WindowAPI GetAPI() const override;
+        [[nodiscard]] const Screen& GetScreen() const override;
+        [[nodiscard]] InputManager& GetInputManager() override;
+        [[nodiscard]] CursorManager& GetCursorManager() override;
+        [[nodiscard]] WindowAPI GetAPI() const override;
 
         /* --- DESTRUCTOR --- */
         ~X11Window() override;
@@ -61,10 +61,10 @@ namespace Sierra
         const X11Context &x11Context;
         XID window;
 
-        X11Screen* screen = nullptr;
         X11InputManager inputManager;
         X11CursorManager cursorManager;
 
+        std::string title;
         Vector4Int extents = { 0, 0, 0, 0 }; // [ Left | Right | Top | Bottom ]
         bool closed = false;
 

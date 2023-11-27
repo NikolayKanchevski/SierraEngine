@@ -56,7 +56,7 @@ namespace Sierra
         virtual void SetOpacity(float32 opacity) = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual std::string GetTitle() const = 0;
+        [[nodiscard]] virtual const std::string& GetTitle() const = 0;
         [[nodiscard]] virtual Vector2Int GetPosition() const = 0;
         [[nodiscard]] virtual Vector2UInt GetSize() const = 0;
         [[nodiscard]] virtual Vector2UInt GetFramebufferSize() const = 0;
@@ -67,7 +67,7 @@ namespace Sierra
         [[nodiscard]] virtual bool IsFocused() const = 0;
         [[nodiscard]] virtual bool IsHidden() const = 0;
 
-        [[nodiscard]] virtual Screen& GetScreen() = 0;
+        [[nodiscard]] virtual const Screen& GetScreen() const = 0;
         [[nodiscard]] virtual InputManager& GetInputManager();
         [[nodiscard]] virtual CursorManager& GetCursorManager();
         [[nodiscard]] virtual TouchManager& GetTouchManager();
@@ -86,12 +86,12 @@ namespace Sierra
     protected:
         explicit Window(const WindowCreateInfo &createInfo);
 
-        [[nodiscard]] inline const EventDispatcher<WindowMoveEvent>& GetWindowMoveDispatcher() const { return windowMoveDispatcher; };
-        [[nodiscard]] inline const EventDispatcher<WindowResizeEvent>& GetWindowResizeDispatcher() const { return windowResizeDispatcher; };
-        [[nodiscard]] inline const EventDispatcher<WindowFocusEvent>& GetWindowFocusDispatcher() const { return windowFocusDispatcher; };
-        [[nodiscard]] inline const EventDispatcher<WindowMinimizeEvent>& GetWindowMinimizeDispatcher() const { return windowMinimizeDispatcher; };
-        [[nodiscard]] inline const EventDispatcher<WindowMaximizeEvent>& GetWindowMaximizeDispatcher() const { return windowMaximizeDispatcher; };
-        [[nodiscard]] inline const EventDispatcher<WindowCloseEvent>& GetWindowCloseDispatcher() const { return windowCloseDispatcher; };
+        [[nodiscard]] inline EventDispatcher<WindowMoveEvent>& GetWindowMoveDispatcher() { return windowMoveDispatcher; };
+        [[nodiscard]] inline EventDispatcher<WindowResizeEvent>& GetWindowResizeDispatcher() { return windowResizeDispatcher; };
+        [[nodiscard]] inline EventDispatcher<WindowFocusEvent>& GetWindowFocusDispatcher() { return windowFocusDispatcher; };
+        [[nodiscard]] inline EventDispatcher<WindowMinimizeEvent>& GetWindowMinimizeDispatcher() { return windowMinimizeDispatcher; };
+        [[nodiscard]] inline EventDispatcher<WindowMaximizeEvent>& GetWindowMaximizeDispatcher() { return windowMaximizeDispatcher; };
+        [[nodiscard]] inline EventDispatcher<WindowCloseEvent>& GetWindowCloseDispatcher() { return windowCloseDispatcher; };
 
     private:
         EventDispatcher<WindowMoveEvent> windowMoveDispatcher;

@@ -14,9 +14,8 @@ namespace Sierra
     X11Window::X11Window(const WindowCreateInfo &createInfo)
         : Window(createInfo), x11Context((SR_ERROR_IF(createInfo.platformInstance->GetType() !=+ PlatformType::Linux, "Cannot create X11 window using a platform instance of type [{0}]!", createInfo.platformInstance->GetType()._to_string()), static_cast<LinuxInstance*>(createInfo.platformInstance.get())->GetX11Context())),
           window(x11Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
-          screen(&x11Context.GetWindowScreen(window)),
           inputManager({ .xkbExtension = x11Context.GetXkbExtension() }), cursorManager({ .window = window, .x11Context = x11Context }),
-          extents(x11Context.GetWindowExtents(window)), lastMaximizedState(createInfo.maximize), resizable(createInfo.resizable)
+          title(createInfo.title), extents(x11Context.GetWindowExtents(window)), lastMaximizedState(createInfo.maximize), resizable(createInfo.resizable)
     {
         if (!createInfo.hide) x11Context.ShowWindow(window);
 
@@ -25,7 +24,8 @@ namespace Sierra
         {
             if (createInfo.maximize)
             {
-                const Vector2UInt sizeLimits = screen->GetWorkAreaSize() - Vector2UInt(extents.x, extents.z);
+                const X11Screen &screen = x11Context.GetWindowScreen(window);
+                const Vector2UInt sizeLimits = screen.GetWorkAreaSize() - Vector2UInt(extents.x, extents.z);
                 x11Context.SetWindowSizeLimits(window, sizeLimits, sizeLimits);
             }
             else
@@ -145,6 +145,7 @@ namespace Sierra
 
     void X11Window::SetTitle(const std::string &newTitle)
     {
+        title = newTitle;
         x11Context.SetWindowTitle(window, newTitle);
     }
 
@@ -165,18 +166,20 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    std::string X11Window::GetTitle() const
+    const std::string& X11Window::GetTitle() const
     {
-        return x11Context.GetWindowTitle(window);
+        return title;
     }
 
     Vector2Int X11Window::GetPosition() const
     {
+        const X11Screen &screen = x11Context.GetWindowScreen(window)
+        
         // X11 does not take window extents into account when not maximized and uses -Y, so we manually handle that
         Vector2Int position = x11Context.GetWindowPosition(window);
         position.x -= !IsMaximized() * extents.x;
         position.y -= !IsMaximized() * extents.z;
-        position.y = static_cast<int32>(screen->GetSize().y) - position.y;
+        position.y = static_cast<int32>(screen.GetSize().y) - position.y;
         return position;
     }
 
@@ -220,9 +223,9 @@ namespace Sierra
         return x11Context.IsWindowHidden(window);
     }
 
-    Screen& X11Window::GetScreen()
+    const Screen& X11Window::GetScreen() const
     {
-        return *screen;
+        return x11Context.GetWindowScreen(window);
     }
 
     InputManager& X11Window::GetInputManager()
@@ -292,7 +295,6 @@ namespace Sierra
                         // This is just to check if size has not been set yet, because resize event is called upon creation, and we do not want it to be registered
                         if (lastSize.y != std::numeric_limits<uint32>::max())
                         {
-                            screen = &x11Context.GetWindowScreen(window);
                             GetWindowResizeDispatcher().DispatchEvent(GetSize());
                         }
 
@@ -309,7 +311,6 @@ namespace Sierra
                         // This is just to check if position has not been set yet, because position event is called upon creation, and we do not want it to be registered
                         if (lastPosition.y != std::numeric_limits<int32>::max())
                         {
-                            screen = &x11Context.GetWindowScreen(window);
                             GetWindowMoveDispatcher().DispatchEvent(GetPosition());
                         }
 

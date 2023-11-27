@@ -9,16 +9,20 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Win32CursorManager::Win32CursorManager(const CursorManagerCreateInfo &createInfo)
-        : CursorManager(createInfo)
+    Win32CursorManager::Win32CursorManager(const Win32CursorManagerCreateInfo &createInfo)
+        : CursorManager(createInfo), window(createInfo.window)
     {
+        // Get cursor position
+        POINT cursorPoint = { };
+        GetCursorPos(&cursorPoint);
+        ScreenToClient(window, &cursorPoint);
 
-    }
+        // Get window's dimensions
+        RECT rect = { };
+        GetClientRect(window, &rect);
 
-    /* --- POLLING METHODS  --- */
-
-    void Win32CursorManager::OnUpdate()
-    {
+        // Reset mouse delta
+        cursorPosition = { cursorPoint.x, rect.bottom - rect.top - cursorPoint.y };
         lastCursorPosition = cursorPosition;
     }
 
@@ -27,68 +31,94 @@ namespace Sierra
     void Win32CursorManager::SetCursorPosition(const Vector2 &position)
     {
         // Get window's dimensions
-        RECT rect;
-        GetWindowRect(GetForegroundWindow(), &rect);
+        RECT rect = { };
+        GetClientRect(window, &rect);
+
+        // Get window's position
+        POINT windowPosition = { };
+        ClientToScreen(window, &windowPosition);
 
         // Set mouse position
-        SetCursorPos(rect.left + static_cast<LONG>(position.x), rect.bottom - static_cast<LONG>(position.y));
+        SetCursorPos(windowPosition.x + static_cast<LONG>(position.x), windowPosition.y + (rect.bottom - rect.top - static_cast<LONG>(position.y)));
+
+        // Reset mouse delta
+        lastCursorPosition = cursorPosition;
+        cursorPosition = position;
     }
 
     void Win32CursorManager::ShowCursor()
     {
-        cursorShown = true;
+        // Show cursor
         ::ShowCursor(true);
-
-        // Allow cursor to move
-        ClipCursor(nullptr);
+        cursorHidden = false;
     }
 
     void Win32CursorManager::HideCursor()
     {
-        cursorShown = false;
         ::ShowCursor(false);
+        cursorHidden = true;
+        justHidCursor = true;
+    }
+
+    /* --- PRIVATE METHODS  --- */
+
+    void Win32CursorManager::OnUpdate()
+    {
+        lastCursorPosition = cursorPosition;
+    }
+
+    void Win32CursorManager::OnUpdateEnd()
+    {
+        if (!cursorHidden) return;
 
         // Get window dimensions
-        RECT constraint;
-        GetWindowRect(GetForegroundWindow(), &constraint);
+        RECT rect = { };
+        GetClientRect(window, &rect);
 
-        // Calculate center X
-        constraint.left = (constraint.left + constraint.right) / 2;
-        constraint.right = constraint.left;
+        // Manually re-center cursor after all window events have been polled (so none more would be handled and SetWindowCursorPosition() produces one)
+        const Vector2Int win32Center = Vector2Int(rect.left + rect.right, rect.top + rect.bottom) / 2;
+        if (static_cast<Vector2Int>(cursorPosition) != win32Center)
+        {
+            // Move cursor to center
+            SetCursorPosition(win32Center);
 
-        // Calculate center Y
-        constraint.bottom = (constraint.top + constraint.bottom) / 2;
-        constraint.top = constraint.bottom;
+            // Update mouse position
+            lastCursorPosition = cursorPosition;
+            cursorPosition = { win32Center.x, win32Center.y };
 
-        // Stick cursor to center
-        ClipCursor(&constraint);
+            // Reset mouse delta when re-centering for the first time
+            if (justHidCursor)
+            {
+                lastCursorPosition = cursorPosition;
+                justHidCursor = false;
+            }
+        }
     }
 
     /* --- GETTER METHODS --- */
 
-    Vector2 Win32CursorManager::GetCursorPosition()
+    bool Win32CursorManager::IsCursorHidden() const
+    {
+        return cursorHidden;
+    }
+
+    Vector2 Win32CursorManager::GetCursorPosition() const
     {
         return cursorPosition;
     }
 
-    bool Win32CursorManager::IsCursorShown()
+    float32 Win32CursorManager::GetHorizontalDelta() const
     {
-        return cursorShown;
+        float32 delta = cursorPosition.x - lastCursorPosition.x;
+        if (cursorHidden) delta *= -1;
+        return delta;
     }
 
-    bool Win32CursorManager::IsCursorHidden()
+    float32 Win32CursorManager::GetVerticalDelta() const
     {
-        return !cursorShown;
-    }
-
-    float32 Win32CursorManager::GetHorizontalDelta()
-    {
-        return -(lastCursorPosition.x - cursorPosition.x);
-    }
-
-    float32 Win32CursorManager::GetVerticalDelta()
-    {
-        return -(lastCursorPosition.y - cursorPosition.y);
+        float32 delta = cursorPosition.y - lastCursorPosition.y;
+        if (cursorHidden) delta *= -1;
+        return delta;
     }
 
     /* --- EVENTS --- */
@@ -96,16 +126,14 @@ namespace Sierra
     void Win32CursorManager::MouseMoveMessage(const UINT, const WPARAM, const LPARAM lParam)
     {
         // Get window's dimensions
-        RECT framebufferRect;
-        GetClientRect(GetForegroundWindow(), &framebufferRect);
+        RECT rect = { };
+        GetClientRect(window, &rect);
 
-        // Get and save position within the window and flip to +Y coordinates
-        cursorPosition = { LOWORD(lParam), framebufferRect.bottom - framebufferRect.top - HIWORD(lParam) };
-
-        // Mouse messages with same position are still sent when cursor is clipped
-        if (cursorPosition == lastCursorPosition) return;
+        // Get and save position within the window
+        cursorPosition = { LOWORD(lParam), rect.bottom - rect.top - HIWORD(lParam) };
 
         // Dispatch events
-        GetCursorMoveDispatcher().DispatchEvent(cursorPosition);
+        if (!cursorHidden && cursorPosition != lastCursorPosition) GetCursorMoveDispatcher().DispatchEvent(cursorPosition);
     }
+
 }

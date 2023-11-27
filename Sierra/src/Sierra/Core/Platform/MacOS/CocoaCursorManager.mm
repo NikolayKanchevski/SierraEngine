@@ -15,7 +15,50 @@ namespace Sierra
 
     }
 
-    /* --- POLLING METHODS --- */
+    /* --- SETTER METHODS --- */
+
+    void CocoaCursorManager::ShowCursor()
+    {
+        cursorHidden = false;
+        [NSCursor unhide];
+    }
+
+    void CocoaCursorManager::HideCursor()
+    {
+        cursorHidden = true;
+        justHidCursor = true;
+        [NSCursor hide];
+    }
+
+    void CocoaCursorManager::SetCursorPosition(const Vector2 &position)
+    {
+        // Set mouse position (method takes -Y screen coordinates)
+        CGWarpMouseCursorPosition(CGPointMake([window frame].origin.x + position.x, [[window screen] frame].size.height - [window frame].origin.y - position.y));
+    }
+
+    /* --- GETTER METHODS --- */
+
+    bool CocoaCursorManager::IsCursorHidden()
+    {
+        return cursorHidden;
+    }
+
+    Vector2 CocoaCursorManager::GetCursorPosition()
+    {
+        return cursorPosition;
+    }
+
+    float32 CocoaCursorManager::GetHorizontalDelta()
+    {
+        return lastCursorPosition.x - cursorPosition.x;
+    }
+
+    float32 CocoaCursorManager::GetVerticalDelta()
+    {
+        return lastCursorPosition.y - cursorPosition.y;
+    }
+
+    /* --- PRIVATE METHODS --- */
 
     void CocoaCursorManager::OnUpdate()
     {
@@ -43,49 +86,6 @@ namespace Sierra
                 justHidCursor = false;
             }
         }
-    }
-
-    /* --- SETTER METHODS --- */
-
-    void CocoaCursorManager::SetCursorPosition(const Vector2 &position)
-    {
-        // Set mouse position (method takes -Y screen coordinates)
-        CGWarpMouseCursorPosition(CGPointMake([window frame].origin.x + position.x, [[window screen] frame].size.height - [window frame].origin.y - position.y));
-    }
-
-    void CocoaCursorManager::ShowCursor()
-    {
-        cursorHidden = false;
-        [NSCursor unhide];
-    }
-
-    void CocoaCursorManager::HideCursor()
-    {
-        cursorHidden = true;
-        justHidCursor = true;
-        [NSCursor hide];
-    }
-
-    /* --- GETTER METHODS --- */
-
-    Vector2 CocoaCursorManager::GetCursorPosition()
-    {
-        return cursorPosition;
-    }
-
-    bool CocoaCursorManager::IsCursorHidden()
-    {
-        return cursorHidden;
-    }
-
-    float32 CocoaCursorManager::GetHorizontalDelta()
-    {
-        return lastCursorPosition.x - cursorPosition.x;
-    }
-
-    float32 CocoaCursorManager::GetVerticalDelta()
-    {
-        return lastCursorPosition.y - cursorPosition.y;
     }
 
     /* --- EVENTS --- */

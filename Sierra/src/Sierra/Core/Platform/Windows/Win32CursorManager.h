@@ -16,14 +16,16 @@
 namespace Sierra
 {
 
+    struct Win32CursorManagerCreateInfo final : public CursorManagerCreateInfo
+    {
+        HWND window;
+    };
+
     class SIERRA_API Win32CursorManager final : public CursorManager
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Win32CursorManager(const CursorManagerCreateInfo &createInfo);
-
-        /* --- POLLING METHODS --- */
-        void OnUpdate();
+        explicit Win32CursorManager(const Win32CursorManagerCreateInfo &createInfo);
 
         /* --- SETTER METHODS --- */
         void SetCursorPosition(const Vector2 &position) override;
@@ -31,20 +33,23 @@ namespace Sierra
         void HideCursor() override;
 
         /* --- GETTER METHODS --- */
-        Vector2 GetCursorPosition() override;
-        bool IsCursorShown() override;
-        bool IsCursorHidden() override;
-
-        float32 GetHorizontalDelta() override;
-        float32 GetVerticalDelta() override;
-
-        /* --- EVENTS --- */
-        void MouseMoveMessage(UINT message, WPARAM wParam, LPARAM lParam);
+        [[nodiscard]] bool IsCursorHidden() const override;
+        [[nodiscard]] Vector2 GetCursorPosition() const override;
+        [[nodiscard]] float32 GetHorizontalDelta() const override;
+        [[nodiscard]] float32 GetVerticalDelta() const override;
 
     private:
+        HWND window;
         Vector2 cursorPosition = { 0, 0 };
         Vector2 lastCursorPosition = { 0, 0 };
-        bool cursorShown = true;
+
+        bool cursorHidden = false;
+        bool justHidCursor = false;
+
+        friend class Win32Window;
+        void OnUpdate();
+        void OnUpdateEnd();
+        void MouseMoveMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
     };
 

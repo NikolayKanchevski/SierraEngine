@@ -27,9 +27,6 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         explicit X11InputManager(const X11InputManagerCreateInfo &createInfo);
 
-        /* --- POLLING METHODS --- */
-        void OnUpdate();
-
         /* --- GETTER METHODS --- */
         bool IsKeyPressed(Key key) const override;
         bool IsKeyHeld(Key key) const override;
@@ -42,12 +39,6 @@ namespace Sierra
         bool IsMouseButtonResting(MouseButton mouseButton) const override;
         Vector2 GetMouseScroll() const override;
 
-        /* --- EVENTS --- */
-        void KeyPressEvent(const XEvent &event);
-        void KeyReleaseEvent(const XEvent &event);
-        void ButtonPressEvent(const XEvent &event);
-        void ButtonReleaseEvent(const XEvent &event);
-
     private:
         const XkbExtension &xkbExtension;
 
@@ -58,6 +49,13 @@ namespace Sierra
         std::array<InputAction, MOUSE_BUTTON_COUNT> mouseButtonStates { };
 
         Vector2 mouseScroll = { 0, 0 };
+
+        friend class X11Window;
+        void OnUpdate();
+        void KeyPressEvent(const XEvent &event);
+        void KeyReleaseEvent(const XEvent &event);
+        void ButtonPressEvent(const XEvent &event);
+        void ButtonReleaseEvent(const XEvent &event);
 
     };
 

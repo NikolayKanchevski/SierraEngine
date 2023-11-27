@@ -12,7 +12,7 @@ namespace Sierra
     public:
         #if SR_ENABLE_LOGGING
             /* --- GETTER METHODS --- */
-            [[nodiscard]] inline virtual std::string ToString() const = 0;
+            [[nodiscard]] inline virtual std::string ToString() const { return ""; };
         #endif
 
     };
@@ -54,11 +54,7 @@ namespace Sierra
         bool Unsubscribe(const EventSubscriptionID ID)
         {
             // Check if ID has been registered
-            if (ID >= Callbacks.size())
-            {
-                SR_WARNING("Trying to unsubscribe an event callback with an ID of [{0}], but it has not yet been registered! Returning...");
-                return false;
-            }
+            if (ID >= Callbacks.size()) return false;
 
             // Remove callback reference
             Callbacks.erase(ID);
@@ -69,7 +65,7 @@ namespace Sierra
         }
 
         template<typename... Args>
-        void DispatchEvent(Args&&... args) const
+        void DispatchEvent(Args&&... args)
         {
             // Immediately handle requested event
             T event = T(std::forward<Args>(args)...);
@@ -84,7 +80,7 @@ namespace Sierra
         }
 
         template<typename... Args>
-        void QueueEvent(Args&&... args)
+        void QueueEvent(Args&&... args) const
         {
             queue.push_back(new T(std::forward<Args>(args))...);
         }
