@@ -1,19 +1,8 @@
-# === BUILD DIRECTORIES === #
-cmake-build-debug
-cmake-build-release
-cmake-build-debug-coverage
-cmake-build-relwithdebinfo
+.vs/
+.idea/
 
-# === SUPER CONFIDENTIAL & SECRET LOCAL FBI DATA FILES === #
-Deprecated
-.idea
+bin/
+out/
 
-# === PYTHON SCRIPT ENVIRONMENT & IDE DATA === #
-Scripts/.idea
-Scripts/venv
-
-# === EXAMPLE PROJECT ASSETS === #
-Example Project/**/*.texture
-Example Project/**/*.model
-Example Project/**/*.data
-Example Project/**/*.cache
+CMakeFiles/
+cmake_install.cmake

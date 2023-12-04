@@ -1,27 +1,37 @@
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://bit.ly/3OMysM8)
 
-# Sierra Engine
+# Sierra Engine [![License](https://img.shields.io/github/license/NikichaTV/SierraEngine.svg)](https://github.com/NikichaTV/SierraEngine/blob/master/LICENSE)
 
-<p align="center">
-    <img src="Media/SierraLogoTextBackground.png" alt="SierraEngineTextLogo">
-</p>
+![Sierra](Media/SierraLogoTextBackground.png?raw=true "Sierra")
 
 <br>
 
 # What is Sierra Engine?
 
-An **open-source** game/rendering engine, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). It is based solely on the **[Vulkan](https://www.vulkan.org/)** rendering API, which provides support for **Windows 7-11**, **macOS**, **Linux**, **Android**, **iOS**, and **[more](https://en.wikipedia.org/wiki/Vulkan#Cross_platform)**, but is planned to also feature native APIs (like **[DirectX](https://developer.nvidia.com/directx)** and **[Metal](https://developer.apple.com/metal/)**) to further improve its already-incredible performance
+An **open-source** rendering engine based on **[C++ 20](https://en.cppreference.com/w/cpp/20/)**, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). Built on top of the **[Vulkan](https://www.vulkan.org/)** and [Metal](https://developer.apple.com/metal/) rendering APIs, it provides support for **Windows 7-11**, **macOS**, **Linux** and **iOS**, but is planned to also feature other native APIs (like **[DirectX](https://developer.nvidia.com/directx)**) and support consoles.
 
 <br>
 
 ## 🛠️ Building and Running the Engine
 
-**Requirements:**
+**Compatible compilers:**
 
-In order to build it successfully, you must first make sure you have the following installed (some of these modules may come with your IDE of choice):
+These are the compilers, which are tested and confirmed to be able to build the project. Some other compilers may still be used, though there could be issues.
+
+* [![MSVC Compiler Status](https://img.shields.io/badge/MSVC-2019\/2022-blue.svg)](https://visualstudio.microsoft.com/vs/)
+* [![Clang LLVM Compiler Status](https://img.shields.io/badge/Clang-LLVM-blue.svg)](https://clang.llvm.org/)
+* [![Clang Apple Compiler Status](https://img.shields.io/badge/Clang-Apple-blue.svg)](https://developer.apple.com/xcode/)
+* [![GCC Compiler Status](https://img.shields.io/badge/GCC-Unix-blue.svg)](https://gcc.gnu.org/)
 
 <br>
 
+**Requirements:**
+
+In order to build it, you first must make sure you have the following installed (some of these modules may come with your IDE of choice):
+
+<br>
+
+* **[Git](https://git-scm.com/downloads/)**
 * A C/C++ compiler (preferably **[CLang](https://clang.llvm.org)** or **[MSVC](https://visualstudio.microsoft.com/downloads/)**)
 * **[CMake](https://cmake.org/download/)** 3.20 or higher
 * **[Ninja](https://ninja-build.org)** build tool
@@ -31,14 +41,22 @@ In order to build it successfully, you must first make sure you have the followi
 <br>
 
 **Installation:**
-Firstly, clone the repository in your favourite IDE <b><a href="https://visualstudio.microsoft.com">Visual Studio</a></b>, <b><a href="https://www.jetbrains.com/clion/">CLion</a></b>, etc.). Next, you will have to run a Python script what will configure the project for you. Navigate over to the folder where you cloned the repo, run the command below, hit build, and pray to God that the project compiles. 🤞
+
+Simply clone the repository either directly from your favourite IDE (<b><a href="https://visualstudio.microsoft.com">Visual Studio</a></b>, <b><a href="https://www.jetbrains.com/clion/">CLion</a></b>, etc.), or by opening the command line and running:
+
+```bat
+$ git clone --recursive https://github.com/NikichaTV/SierraEngine
+```
 
 <br>
 
+If you clone the repository directly from an IDE, you may need to also run this:
+
 ```bat
-$ python3 Scripts/UpdateProject.py --Release
+$ git submodule update --init --recursive
 ```
-*Note: You can replace the **--Release** argument with **--Debug**, depending on which configuration you want to be configured.*
+
+And there you have it! You can now play around with the engine itself or create your very own application.
 
 <br>
 
@@ -80,40 +98,31 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 **Frameworks used:**
 
-* [Vulkan](https://www.vulkan.org/) - For both cross-platform and incredibly fast rendering.
-* [Volk](https://github.com/zeux/volk/tree/master/) - For less CPU overhead when working with [Vulkan](https://www.vulkan.org/) and simplified usage of extensions.
-* [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For easier and more optimal memory allocation and distribution of [Vulkan](https://www.vulkan.org/) objects.
-* [Shaderc](https://github.com/google/shaderc/) - For the shader compilation and optimization at runtime.
-* [GLFW](https://github.com/glfw/glfw/) - For creating window interface and connecting it to the **Vulkan** renderer.
-* [GLM](https://github.com/g-truc/glm/) - For all advanced mathematical operations and objects within the engine.
-* [ImGui](https://github.com/ocornut/imgui/) - For the user interface implemented.
-* [ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo/) - For gizmos in the scene view.
-* [EnTT](https://github.com/skypjack/entt/) - For the easy-to-use and lightweight [entity component system](https://en.wikipedia.org/wiki/Entity_component_system).
-* [Assimp](https://github.com/assimp/assimp/) - For the loading of all kinds of 3D modelMatrix formats (.obj, .fbx, .dae, etc.).
-* [Stb](https://github.com/nothings/stb) - For loading image data from all kinds of image formats (.jpg, .png, etc.).
-* [FMT](https://fmt.dev/latest/index.html) - For fast and easy string formatting.
-* [SPIRV-Reflect](https://github.com/NikichaTV/SPIRV-Reflect) by [NikichaTV](https://github.com/NikichaTV) - For shader reflection and [OpenGL](https://www.opengl.org)-like engine use (this is a custom version of [SPIRV-Reflect](https://github.com/KhronosGroup/SPIRV-Reflect) with extended functionality).
-* [YamlCPP](https://github.com/jbeder/yaml-cpp) - For generating/parsing configuration and serialization files.
-* [RareCpp](https://github.com/TheNitesWhoSay/RareCpp/) - For reflections and serialization.
-* [Infoware](https://github.com/ThePhD/infoware/) - For the extraction of various system-and-hardware-specific data. 
-* [PlatformFolders](https://github.com/sago007/PlatformFolders) - For the retrieval of various system-specific folder paths.
-* [DiscordSDK](https://discord.com/developers/docs/intro) - For integration with the Discord app.
+* [GLM](https://github.com/g-truc/glm/) - Provides the engine with a powerful set of tools for solving linear algebra problems.
+* [spdlog](https://github.com/gabime/spdlog) - Used for fast, asynchronous debug-only logging.
+* [Better Enum](https://github.com/aantron/better-enums) - Compile-time reflected enums.
+* [Vulkan](https://www.vulkan.org/) - Allows for incredibly fast rendering on a wide variety of platforms.
+* [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For optimal memory management of [Vulkan](https://www.vulkan.org/) objects.
+* [Metal](https://developer.apple.com/metal/) - Being their native rendering API, it is used for fast, hardware-accelerated rendering on [Apple](https://www.apple.com) platforms.
+* [metal-cpp](https://developer.apple.com/metal/cpp/) - Convenient C++ layer for [Metal](https://developer.apple.com/metal/), made by [Apple](https://www.apple.com). 
+* [ios-cmake](https://github.com/leetal/ios-cmake) - Essential for building the engine on iOS.
 * [My Brain](https://ih1.redbubble.net/image.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
 
 <br>
 
 **Software used:**
 
-* [JetBrains CLion](https://www.jetbrains.com/clion/) - A **cross-platform** IDE used to develop the final C++ version.
-* [JetBrains Rider](https://www.jetbrains.com/rider/) - Another **cross-platform** IDE but for C# which was used to create the .NET 6.0 prototype version of the engine.
-* [Blender](https://www.blender.org/) - For the testing of 3D models and textures functionality.
+* [JetBrains CLion](https://www.jetbrains.com/clion/) - Primary IDE of the project.
+* [JetBrains Rider](https://www.jetbrains.com/rider/) - Another IDE which was used to create the .NET 6.0 prototype version of the engine.
+* [Xcode](https://developer.apple.com/xcode/) - Used to deploy the iOS version on mobile [Apple](https://www.apple.com) devices.
+* [Blender](https://www.blender.org/) - Managing and testing 3D models.
 * [Trello](https://trello.com/b/RMYtZPOg/sierra-engine/) - For pretending to have an organized list of things to implement next.
 
 <br>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LineCounter">Total lines of code: 18,526</p>
-<p align="center" id="LastUpdated">Last updated: 09/08/2023 </p>
+<p align="center" id="LineCounter">Total lines of code: 13,283</p>
+<p align="center" id="LastUpdated">Last updated: 30/11/2023 </p>
 
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
