@@ -8,7 +8,7 @@
 
 # What is Sierra Engine?
 
-An **open-source** game/rendering engine, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). It is based solely on the **[Vulkan](https://www.vulkan.org/)** rendering API, which provides support for **Windows 7-11**, **macOS**, **Linux**, **Android**, **iOS**, and **[more](https://en.wikipedia.org/wiki/Vulkan#Cross_platform)**, but is planned to also feature native APIs (like **[DirectX](https://developer.nvidia.com/directx)** and **[Metal](https://developer.apple.com/metal/)**) to further improve its already-incredible performance
+An **open-source** rendering engine based on **[C++ 20](https://en.cppreference.com/w/cpp/20/)**, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). Built on top of the **[Vulkan](https://www.vulkan.org/)** and [Metal](https://developer.apple.com/metal/) rendering APIs, it provides support for **Windows 7-11**, **macOS**, **Linux** and **iOS**, but is planned to also feature other native APIs (like **[DirectX](https://developer.nvidia.com/directx)**) and support consoles.
 
 <br>
 
@@ -31,7 +31,7 @@ In order to build it, you first must make sure you have the following installed 
 
 <br>
 
-* **[Git](https://git-scm.com/downloads)**
+* **[Git](https://git-scm.com/downloads/)**
 * A C/C++ compiler (preferably **[CLang](https://clang.llvm.org)** or **[MSVC](https://visualstudio.microsoft.com/downloads/)**)
 * **[CMake](https://cmake.org/download/)** 3.20 or higher
 * **[Ninja](https://ninja-build.org)** build tool
@@ -42,7 +42,7 @@ In order to build it, you first must make sure you have the following installed 
 
 **Installation:**
 
-First, clone the repository either directly from your favourite IDE (<b><a href="https://visualstudio.microsoft.com">Visual Studio</a></b>, <b><a href="https://www.jetbrains.com/clion/">CLion</a></b>, etc.), or by opening the command line and running:
+Simply clone the repository either directly from your favourite IDE (<b><a href="https://visualstudio.microsoft.com">Visual Studio</a></b>, <b><a href="https://www.jetbrains.com/clion/">CLion</a></b>, etc.), or by opening the command line and running:
 
 ```bat
 $ git clone --recursive https://github.com/NikichaTV/SierraEngine
@@ -50,11 +50,13 @@ $ git clone --recursive https://github.com/NikichaTV/SierraEngine
 
 <br>
 
-All that is left to do is to run a **[Python](https://www.python.org/downloads/)** script to install the core resources the engine needs. You can do it like so:
+If you clone the repository directly from an IDE, you may need to also run this:
 
 ```bat
-$ python3 Scripts/Setup.py
+$ git submodule update --init --recursive
 ```
+
+And there you have it! You can now play around with the engine itself or create your very own application.
 
 <br>
 
@@ -98,26 +100,29 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 * [GLM](https://github.com/g-truc/glm/) - Provides the engine with a powerful set of tools for solving linear algebra problems.
 * [spdlog](https://github.com/gabime/spdlog) - Used for fast, asynchronous debug-only logging.
-* [Vulkan](https://www.vulkan.org/) - Allows for incredibly fast rendering on a wide variety of platforms.
-* [Volk](https://github.com/zeux/volk/tree/master/) - A tool to further optimize [Vulkan](https://www.vulkan.org/)'s CPU overhead.
-* [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For optimal memory management of [Vulkan](https://www.vulkan.org/) objects.
 * [Better Enum](https://github.com/aantron/better-enums) - Compile-time reflected enums.
+* [Vulkan](https://www.vulkan.org/) - Allows for incredibly fast rendering on a wide variety of platforms.
+* [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For optimal memory management of [Vulkan](https://www.vulkan.org/) objects.
+* [Metal](https://developer.apple.com/metal/) - Being their native rendering API, it is used for fast, hardware-accelerated rendering on [Apple](https://www.apple.com) platforms.
+* [metal-cpp](https://developer.apple.com/metal/cpp/) - Convenient C++ layer for [Metal](https://developer.apple.com/metal/), made by [Apple](https://www.apple.com). 
+* [ios-cmake](https://github.com/leetal/ios-cmake) - Essential for building the engine on iOS.
 * [My Brain](https://ih1.redbubble.net/image.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
 
 <br>
 
 **Software used:**
 
-* [JetBrains CLion](https://www.jetbrains.com/clion/) - A **cross-platform** IDE used to develop the final C++ version.
-* [JetBrains Rider](https://www.jetbrains.com/rider/) - Another **cross-platform** IDE but for C# which was used to create the .NET 6.0 prototype version of the engine.
-* [Blender](https://www.blender.org/) - For the testing of 3D models and textures functionality.
+* [JetBrains CLion](https://www.jetbrains.com/clion/) - Primary IDE of the project.
+* [JetBrains Rider](https://www.jetbrains.com/rider/) - Another IDE which was used to create the .NET 6.0 prototype version of the engine.
+* [Xcode](https://developer.apple.com/xcode/) - Used to deploy the iOS version on mobile [Apple](https://www.apple.com) devices.
+* [Blender](https://www.blender.org/) - Managing and testing 3D models.
 * [Trello](https://trello.com/b/RMYtZPOg/sierra-engine/) - For pretending to have an organized list of things to implement next.
 
 <br>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LineCounter">Total lines of code: 5,803</p>
-<p align="center" id="LastUpdated">Last updated: 13/09/2023 </p>
+<p align="center" id="LineCounter">Total lines of code: 13,283</p>
+<p align="center" id="LastUpdated">Last updated: 30/11/2023 </p>
 
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

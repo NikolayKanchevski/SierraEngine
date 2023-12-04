@@ -1,18 +1,19 @@
-# === PROJECT & CMAKE SETTINGS === #
-cmake_minimum_required(VERSION 3.20)
+# === PROJECT SETTINGS === #
+cmake_minimum_required(VERSION 3.14)
 project(Sandbox)
+
+# === INCLUDE SIERRA === #
+include(../Sierra/Sierra.cmake)
+
+# === SET ENGINE BUILD SETTINGS === #
 set(CMAKE_CXX_STANDARD 20)
-
-# === EXECUTABLE GENERATION === #
-set(SOURCE_FILES src/main.cpp)
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-
-# === LINKING THE ENGINE === #
-if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    set(SIERRA_BUILD_SHARED_LIBRARY ON)
-else()
+set(SIERRA_ENABLE_LOGGING ON)
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(SIERRA_BUILD_STATIC_LIBRARY ON)
+else()
+    set(SIERRA_BUILD_SHARED_LIBRARY ON)
 endif()
 
-add_subdirectory(../Sierra ${CMAKE_CURRENT_BINARY_DIR}/Sierra)
-target_link_libraries(${PROJECT_NAME} PRIVATE Sierra)
+# === GENERATE EXECUTABLE === #
+set(SOURCE_FILES src/main.cpp)
+SierraBuildApplication(${SOURCE_FILES})

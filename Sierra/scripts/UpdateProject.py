@@ -24,17 +24,17 @@ def UpdateReadMe() -> None:
         for root, dirs, files in os.walk(ENGINE_ROOT_DIRECTORY + subdirectory):
             for file in files:
                 for extension in SOURCE_FILE_EXTENSIONS:
-                    if 'bin' in root or 'vendor' in root:
+                    if 'bin' in root or 'vendor' in root or 'config' in root:
                         continue
 
                     if file.endswith(extension):
-                        with open(os.path.join(root, file), 'r') as fp:
-                            for count, line in enumerate(fp):
+                        with open(os.path.join(root, file), 'r') as file:
+                            for count, line in enumerate(file):
                                 pass
                             linesOfCode += count + 1
 
                             # print(file + ": " + str(count + 1))
-                            fp.close()
+                            file.close()
 
     with open(ENGINE_ROOT_DIRECTORY + 'README.md', 'r+') as file:
         # Count README.md's lines as well (gotta look like there's a lot of code, innit :D) and write total count & date
@@ -45,7 +45,6 @@ def UpdateReadMe() -> None:
 
         # Get old README.md file data
         readMeData: str = file.read()
-        file.seek(0)
 
         index: int = readMeData.index('<p align="center" id="LineCounter">')
         readMeData = readMeData[0:index]
@@ -61,6 +60,7 @@ def UpdateReadMe() -> None:
 
         # Get new data and write to README.md file
         newReadMeData = readMeData + linesOfCodeLine + lastUpdatedLine + '\n' + ('-' * 171)
+        file.seek(0)
         file.write(newReadMeData)
         file.close()
 

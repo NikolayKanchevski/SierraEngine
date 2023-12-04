@@ -4,12 +4,15 @@
 [submodule "Sierra/vendor/VMA"]
 	path = Sierra/vendor/VMA
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-[submodule "Sierra/vendor/Volk"]
-	path = Sierra/vendor/Volk
-	url = https://github.com/zeux/volk
 [submodule "Sierra/vendor/spdlog"]
 	path = Sierra/vendor/spdlog
 	url = https://github.com/gabime/spdlog
 [submodule "Sierra/vendor/BetterEnums"]
 	path = Sierra/vendor/BetterEnums
 	url = https://github.com/aantron/better-enums
+[submodule "Sierra/vendor/ios-cmake"]
+	path = Sierra/vendor/ios-cmake
+	url = https://github.com/leetal/ios-cmake
+[submodule "Sierra/vendor/metal-cpp"]
+	path = Sierra/vendor/metal-cpp
+	url = https://github.com/bkaradzic/metal-cpp
