@@ -39,10 +39,6 @@ if(SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_iOS)
     option(SIERRA_BUILD_METAL "Wether to build Metal and its resources." ON)
 endif()
 
-if(SIERRA_PLATFORM_APPLE)
-    option(SIERRA_BUILD_XCODE_PROJECT "Wether to, instead of building an executable, create an Xcode project, to then use to build for macOS, iOS, iPadOS, watchOS, tvOS, or visionOS." OFF)
-endif()
-
 function(SierraBuildApplication SOURCE_FILES)
     # === CHECK IF REQUIREMENTS ARE MET === #
     if(CMAKE_CXX_STANDARD LESS 20)

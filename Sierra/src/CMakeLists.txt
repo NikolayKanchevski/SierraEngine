@@ -1,23 +1,28 @@
 # Generate library
+if((SIERRA_BUILD_STATIC_LIBRARY AND SIERRA_BUILD_SHARED_LIBRARY) OR (NOT SIERRA_BUILD_STATIC_LIBRARY AND NOT SIERRA_BUILD_SHARED_LIBRARY))
+    message(FATAL_ERROR "[Sierra]: Illegal build configuration! You must compile with either SIERRA_BUILD_STATIC_LIBRARY or SIERRA_BUILD_SHARED_LIBRARY set, but not both!")
+endif()
+
 if(SIERRA_BUILD_STATIC_LIBRARY)
     message(STATUS "[Sierra]: Building Sierra as static library...")
     add_library(Sierra STATIC)
 elseif(SIERRA_BUILD_SHARED_LIBRARY)
     message(STATUS "[Sierra]: Building Sierra as dynamic library...")
     add_library(Sierra SHARED)
-else()
-    message(FATAL_ERROR "[Sierra]: Incorrect configuration for Sierra - either SIERRA_BUILD_STATIC_LIBRARY, or SIERRA_BUILD_SHARED_LIBRARY must be turned on!")
 endif()
 
-# Set library output path
-if(NOT SIERRA_PLATFORM_APPLE)
-    set_target_properties(Sierra PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/")
-    set_target_properties(Sierra PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/")
-elseif(SIERRA_PLATFORM_macOS)
-    set_target_properties(Sierra PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${SIERRA_APPLICATION_NAME}.app/Contents/Frameworks/")
-elseif(SIERRA_BUILD_XCODE_PROJECT)
-    set_target_properties(Sierra PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/")
+# Set up library output path
+set(SIERRA_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/")
+if(SIERRA_PLATFORM_macOS)
+    set(SIERRA_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/${SIERRA_APPLICATION_NAME}.app/Contents/Frameworks/")
+elseif(SIERRA_PLATFORM_iOS)
+    set(SIERRA_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin/")
 endif()
+
+# Assign library output path
+set_target_properties(Sierra PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${SIERRA_LIBRARY_OUTPUT_PATH})
+set_target_properties(Sierra PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${SIERRA_LIBRARY_OUTPUT_PATH})
+set_target_properties(Sierra PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${SIERRA_LIBRARY_OUTPUT_PATH})
 
 # Link engine modules
 add_subdirectory(Core)

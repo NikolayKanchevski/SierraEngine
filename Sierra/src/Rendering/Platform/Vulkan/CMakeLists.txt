@@ -1,5 +1,5 @@
 # Try to link Vulkan
-if(NOT SIERRA_BUILD_XCODE_PROJECT)
+if(NOT SIERRA_PLATFORM_iOS)
     find_package(Vulkan QUIET)
     if(SIERRA_PLATFORM_macOS)
         find_library(MoltenVK_LIBRARIES NAMES MoltenVK)
@@ -15,16 +15,12 @@ else()
         "-framework Foundation"
         "-framework QuartzCore"
         "-framework IOSurface"
+        "-framework UIKit"
     )
-    if(SIERRA_PLATFORM_macOS)
-        list(APPEND Vulkan_LIBRARIES "-framework IOKit")
-    elseif(SIERRA_PLATFORM_iOS)
-        list(APPEND Vulkan_LIBRARIES "-framework UIKit")
-    endif()
 
     # Manually link MoltenVK, because find_package and find_library do not work in Xcode environment
     if(NOT DEFINED VULKAN_SDK_PATH)
-        message(FATAL_ERROR "[Sierra]: When building an Xcode project, VULKAN_SDK_PATH must be set manually!")
+        message(FATAL_ERROR "[Sierra]: When building Vulkan for iOS, VULKAN_SDK_PATH must be set manually!")
     else()
         set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/MoltenVK/include/")
         if(${PLATFORM} STREQUAL "OS64")

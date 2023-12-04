@@ -1,3 +1,4 @@
+enable_language(OBJCXX)
 function(BuildMacOSExecutable)
     # Create executable and set its properties
     add_executable(${SIERRA_APPLICATION_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
