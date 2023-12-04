@@ -1,7 +1,8 @@
-# === IDE CONFIGURATION FILES === #
+.vs/
 .idea/
-Sierra/.idea/
-Sandbox/.idea/
 
-# === BINARY DIRECTORIES ===
-Sandbox/bin/
+bin/
+out/
+
+CMakeFiles/
+cmake_install.cmake

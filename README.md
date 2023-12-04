@@ -8,7 +8,7 @@
 
 # What is Sierra Engine?
 
-An **open-source** rendering engine, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). Built on top of the **[Vulkan](https://www.vulkan.org/)** and [Metal](https://developer.apple.com/metal/) rendering APIs, it provides support for **Windows 7-11**, **macOS**, **Linux** and **iOS**, but is planned to also feature other native APIs (like **[DirectX](https://developer.nvidia.com/directx)**) and support consoles.
+An **open-source** rendering engine based on **[C++ 20](https://en.cppreference.com/w/cpp/20/)**, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). Built on top of the **[Vulkan](https://www.vulkan.org/)** and [Metal](https://developer.apple.com/metal/) rendering APIs, it provides support for **Windows 7-11**, **macOS**, **Linux** and **iOS**, but is planned to also feature other native APIs (like **[DirectX](https://developer.nvidia.com/directx)**) and support consoles.
 
 <br>
 
@@ -31,7 +31,7 @@ In order to build it, you first must make sure you have the following installed 
 
 <br>
 
-* **[Git](https://git-scm.com/downloads)**
+* **[Git](https://git-scm.com/downloads/)**
 * A C/C++ compiler (preferably **[CLang](https://clang.llvm.org)** or **[MSVC](https://visualstudio.microsoft.com/downloads/)**)
 * **[CMake](https://cmake.org/download/)** 3.20 or higher
 * **[Ninja](https://ninja-build.org)** build tool
@@ -122,7 +122,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LineCounter">Total lines of code: 13,848</p>
-<p align="center" id="LastUpdated">Last updated: 27/11/2023 </p>
+<p align="center" id="LineCounter">Total lines of code: 13,283</p>
+<p align="center" id="LastUpdated">Last updated: 30/11/2023 </p>
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

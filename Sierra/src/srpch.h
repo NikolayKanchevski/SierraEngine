@@ -8,11 +8,11 @@
     #pragma region Platform Detection
         #define SR_PLATFORM_WINDOWS 0
         #define SR_PLATFORM_LINUX 0
-        #define SR_PLATFORM_MACOS 0
+        #define SR_PLATFORM_macOS 0
         #define SR_PLATFORM_iOS 0
         #define SR_PLATFORM_ANDROID 0
 
-        #define SR_PLATFORM_APPLE (SR_PLATFORM_MACOS || SR_PLATFORM_iOS)
+        #define SR_PLATFORM_APPLE (SR_PLATFORM_macOS || SR_PLATFORM_iOS)
         #define SR_PLATFORM_MOBILE (SR_PLATFORM_iOS || SR_PLATFORM_ANDROID)
 
         #if _WIN32 || _WIN64
@@ -24,8 +24,8 @@
                 #undef SR_PLATFORM_iOS
                 #define SR_PLATFORM_iOS 1
             #else
-                #undef SR_PLATFORM_MACOS
-                #define SR_PLATFORM_MACOS 1
+                #undef SR_PLATFORM_macOS
+                #define SR_PLATFORM_macOS 1
             #endif
         #elif __ANDROID__
             #undef PLATFORM_ANDROID
@@ -37,7 +37,7 @@
     #pragma endregion
 
     #pragma region Symbol Definitions
-        #include "Sierra/Core/API.h"
+        #include "Core/API.h"
     #pragma endregion
 
     #pragma region Standard Library
@@ -151,7 +151,7 @@
     #pragma endregion
 
     #pragma region Source Files
-        #include "Sierra/Core/Logger.h"
-        #include "Sierra/Core/ScopeProfiler.h"
+        #include "Core/Logger.h"
+        #include "Core/ScopeProfiler.h"
     #pragma endregion
 #endif
