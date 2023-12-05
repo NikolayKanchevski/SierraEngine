@@ -1,3 +1,6 @@
+# Enable ObjectiveC++
+enable_language(OBJCXX)
+
 # Link source files
 target_sources(Sierra PRIVATE
     CocoaContext.mm

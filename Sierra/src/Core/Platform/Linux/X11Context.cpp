@@ -19,6 +19,8 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     X11Context::X11Context(const X11ContextCreateInfo &createInfo)
+        : display(XOpenDisplay(nullptr)), screen((SR_ERROR_IF(display == nullptr, "Could not open X11 display!"), XDefaultScreen(display))), rootWindow(XRootWindow(display, screen)),
+          xkbExtension(XkbExtension({ .display = display })), xrandrExtension(XrandrExtension({ .display = display }))
     {
         // Set error handler and initialize X11
         #if SR_ENABLE_LOGGING
@@ -34,14 +36,6 @@ namespace Sierra
             });
         #endif
         XInitThreads();
-
-        // Create display
-        display = XOpenDisplay(nullptr);
-        SR_ERROR_IF(display == nullptr, "Could not open X11 display!");
-
-        // Retrieve remaining internal objects
-        screen = XDefaultScreen(display);
-        rootWindow = XRootWindow(display, screen);
 
         // Declare supported atoms
         ulong supportedAtomCount = 0;
@@ -82,10 +76,6 @@ namespace Sierra
 
         // Deallocate atom data
         if (supportedAtomCount > 0) XFree(supportedAtoms);
-
-        // Load extensions
-        xkbExtension = XkbExtension({ .display = display });
-        xrandrExtension = XrandrExtension({ .display = display });
 
         // Detect screens
         ReloadScreens();
@@ -411,12 +401,12 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    X11Screen& X11Context::GetPrimaryScreen() const
+    const X11Screen& X11Context::GetPrimaryScreen() const
     {
         return screens[0];
     }
 
-    X11Screen& X11Context::GetWindowScreen(const XID window) const
+    const X11Screen& X11Context::GetWindowScreen(const XID window) const
     {
         const Vector2Int windowPosition = GetWindowPosition(window);
         for (auto &screen : screens)

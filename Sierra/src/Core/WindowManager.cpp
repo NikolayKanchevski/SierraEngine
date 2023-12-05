@@ -9,6 +9,7 @@
     #include "Platform/Windows/Win32Window.h"
     #undef CreateWindow
 #elif SR_PLATFORM_LINUX
+    #include "Platform/Linux/LinuxInstance.h"
     #include "Platform/Linux/X11Window.h"
 #elif SR_PLATFORM_macOS
     #include "Platform/macOS/macOSInstance.h"
@@ -36,7 +37,8 @@ namespace Sierra
             SR_ERROR_IF(platformInstance->GetType() !=+ PlatformType::Windows, "Cannot create Win32 window using a platform instance of type [{0}] when it must be [{1}]!", platformInstance->GetType()._to_string(), PlatformType(PlatformType::Windows)._to_string());
             return std::make_unique<Win32Window>(static_cast<const WindowsInstance*>(platformInstance.get())->GetWin32Context(), createInfo);
         #elif SR_PLATFORM_LINUX
-            #error "Unimplemented!"
+            SR_ERROR_IF(platformInstance->GetType() !=+ PlatformType::Linux, "Cannot create X11 window using a platform instance of type [{0}] when it must be [{1}]!", platformInstance->GetType()._to_string(), PlatformType(PlatformType::Linux)._to_string());
+            return std::make_unique<X11Window>(static_cast<const LinuxInstance*>(platformInstance.get())->GetX11Context(), createInfo);
         #elif SR_PLATFORM_macOS
             SR_ERROR_IF(platformInstance->GetType() !=+ PlatformType::macOS, "Cannot create Cocoa window using a platform instance of type [{0}] when it must be [{1}]!", platformInstance->GetType()._to_string(), PlatformType(PlatformType::macOS)._to_string());
             return std::make_unique<CocoaWindow>(static_cast<const macOSInstance*>(platformInstance.get())->GetCocoaContext(), createInfo);

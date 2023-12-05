@@ -94,8 +94,8 @@ namespace Sierra
         void SetWindowCursorPosition(XID window, const Vector2Int &position) const;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] X11Screen& GetPrimaryScreen() const;
-        [[nodiscard]] X11Screen& GetWindowScreen(XID window) const;
+        [[nodiscard]] const X11Screen& GetPrimaryScreen() const;
+        [[nodiscard]] const X11Screen& GetWindowScreen(XID window) const;
         [[nodiscard]] std::optional<XID> GetFocusedWindow() const;
 
         [[nodiscard]] std::string GetWindowTitle(XID window) const;

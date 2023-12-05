@@ -11,8 +11,8 @@ namespace Sierra
 {
     /* --- CONSTRUCTORS --- */
 
-    X11Window::X11Window(const WindowCreateInfo &createInfo)
-        : Window(createInfo), x11Context((SR_ERROR_IF(createInfo.platformInstance->GetType() !=+ PlatformType::Linux, "Cannot create X11 window using a platform instance of type [{0}]!", createInfo.platformInstance->GetType()._to_string()), static_cast<LinuxInstance*>(createInfo.platformInstance.get())->GetX11Context())),
+    X11Window::X11Window(const X11Context &context, const WindowCreateInfo &createInfo)
+        : Window(createInfo), x11Context(context),
           window(x11Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
           inputManager({ .xkbExtension = x11Context.GetXkbExtension() }), cursorManager({ .window = window, .x11Context = x11Context }),
           title(createInfo.title), extents(x11Context.GetWindowExtents(window)), lastMaximizedState(createInfo.maximize), resizable(createInfo.resizable)
@@ -173,7 +173,7 @@ namespace Sierra
 
     Vector2Int X11Window::GetPosition() const
     {
-        const X11Screen &screen = x11Context.GetWindowScreen(window)
+        const X11Screen &screen = x11Context.GetWindowScreen(window);
         
         // X11 does not take window extents into account when not maximized and uses -Y, so we manually handle that
         Vector2Int position = x11Context.GetWindowPosition(window);

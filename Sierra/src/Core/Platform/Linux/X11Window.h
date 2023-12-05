@@ -20,7 +20,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit X11Window(const WindowCreateInfo &createInfo);
+        explicit X11Window(const X11Context &context, const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         void OnUpdate() override;

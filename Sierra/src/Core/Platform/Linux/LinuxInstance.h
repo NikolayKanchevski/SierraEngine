@@ -18,7 +18,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        LinuxInstance();
+        explicit LinuxInstance(const PlatformInstanceCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const X11Context& GetX11Context() const { return x11Context; }

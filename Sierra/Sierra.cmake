@@ -55,25 +55,6 @@ function(SierraBuildApplication SOURCE_FILES)
         message(FATAL_ERROR "[Sierra]: Sierra cannot be built for current platform [${CMAKE_SYSTEM_NAME}]!")
     endif()
 
-    if(SIERRA_BUILD_XCODE_PROJECT)
-        set(XCODE_CMAKE_TOOL_CHAIN_FILE_PATH "${SIERRA_DIRECTORY}/vendor/ios-cmake/ios.toolchain.cmake")
-        if(NOT "${CMAKE_TOOLCHAIN_FILE}" STREQUAL XCODE_CMAKE_TOOL_CHAIN_FILE_PATH)
-            message(FATAL_ERROR "[Sierra]: In order to build an Xcode project, you must compile with -DCMAKE_TOOLCHAIN_FILE=${XCODE_CMAKE_TOOL_CHAIN_FILE_PATH}!")
-        endif()
-        if(NOT PLATFORM)
-            message(FATAL_ERROR "[Sierra]: In order to build an Xcode project, you must compile with -DPLATFORM={TARGET_PLATFORM}!")
-        endif()
-        if(XCODE_VERSION LESS 14.0)
-            message(FATAL_ERROR "[Sierra]: In order to build an Xcode project, your Xcode version must be 14.0 or newer!")
-        endif()
-        message(STATUS "[Sierra]: Building application into an Xcode project...")
-    endif()
-
-    # === ENABLE ADDITIONAL LANGUAGES === #
-    if(SIERRA_PLATFORM_APPLE)
-        enable_language(OBJCXX)
-    endif()
-
     # === COMPILER SETTINGS === #
     if(SIERRA_ENABLE_OPTIMIZATIONS)
         if(SIERRA_COMPILER_MSVC)
@@ -89,78 +70,20 @@ function(SierraBuildApplication SOURCE_FILES)
     endif()
 
     # == OUTPUT GENERATION === #
+    add_subdirectory(${SIERRA_DIRECTORY}/src ${SIERRA_DIRECTORY}/src)
     if(SIERRA_PLATFORM_WINDOWS)
-        # Have a folder for all temporary resources
-        set(RESOURCES_FOLDER_PATH "${CMAKE_CURRENT_BINARY_DIR}/Resources")
-
-        # Copy icon to resources folder
-        set(ICON_OUTPUT_PATH "${RESOURCES_FOLDER_PATH}/${SIERRA_APPLICATION_NAME}Icon.ico")
-        configure_file(${SIERRA_APPLICATION_ICON_ICO} ${ICON_OUTPUT_PATH} COPYONLY)
-
-        # Define RC file data
-        set(RC_FILE_DATA "
-            IDR_MAINFRAME ICON
-            \"${SIERRA_APPLICATION_NAME}Icon.ico\"
-        ")
-
-        # Create and write to RC file
-        set(RC_FILE_PATH "${RESOURCES_FOLDER_PATH}/Application.rc")
-        file(WRITE ${RC_FILE_PATH} ${RC_FILE_DATA})
-
-        # Create executable
-        add_executable(${SIERRA_APPLICATION_NAME} ${SOURCE_FILES} ${RC_FILE_PATH})
+        BuildWindowsExecutable()
     elseif(SIERRA_PLATFORM_LINUX)
-        # Have a folder for all temporary resources
-        set(RESOURCES_FOLDER_PATH "${CMAKE_CURRENT_BINARY_DIR}/Resources")
-
-        # Copy icon to resources folder
-        set(ICON_OUTPUT_PATH "${RESOURCES_FOLDER_PATH}/${SIERRA_APPLICATION_NAME}Icon.ico")
-        configure_file(${SIERRA_APPLICATION_ICON_ICO} ${ICON_OUTPUT_PATH} COPYONLY)
-
-        # Define desktop file data
-        set(DESKTOP_FILE_DATA "
-            [Desktop Entry]
-            Encoding=UTF-8
-            Version=${SIERRA_APPLICATION_VERSION_MAJOR}.${SIERRA_APPLICATION_VERSION_MINOR}.${SIERRA_APPLICATION_VERSION_PATCH}
-            Type=Application
-            Terminal=false
-            Exec=${CMAKE_CURRENT_BINARY_DIR}/${SIERRA_APPLICATION_NAME}
-            Name=${SIERRA_APPLICATION_NAME}
-            Icon=${ICON_OUTPUT_PATH}
-        ")
-
-        # Create and write to desktop file
-        set(DESKTOP_FILE_PATH "$ENV{HOME}/.local/share/applications/${SIERRA_APPLICATION_NAME}.desktop")
-        file(WRITE ${DESKTOP_FILE_PATH} ${DESKTOP_FILE_DATA})
-
-        # Create executable
-        add_executable(${SIERRA_APPLICATION_NAME} ${SOURCE_FILES})
-    elseif(SIERRA_PLATFORM_APPLE)
-        # Create executable and set its properties
-        add_executable(${SIERRA_APPLICATION_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
-        set_target_properties(${SIERRA_APPLICATION_NAME} PROPERTIES
-            BUNDLE TRUE
-            MACOSX_BUNDLE_BUNDLE_NAME ${SIERRA_APPLICATION_NAME}
-            MACOSX_BUNDLE_GUI_IDENTIFIER "com.sierra.${SIERRA_APPLICATION_NAME}"
-            MACOSX_BUNDLE_PRODUCT_IDENTIFIER "com.sierra.${SIERRA_APPLICATION_NAME}"
-            MACOSX_BUNDLE_BUNDLE_VERSION "${SIERRA_APPLICATION_VERSION_MAJOR}.${SIERRA_APPLICATION_VERSION_MINOR}.${SIERRA_APPLICATION_VERSION_PATCH}"
-            MACOSX_BUNDLE_SHORT_VERSION_STRING "${SIERRA_APPLICATION_VERSION_MAJOR}"
-        )
-
-        # Link icon with the application
-        set_source_files_properties(${SIERRA_APPLICATION_ICON_ICNS} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-        target_sources(${SIERRA_APPLICATION_NAME} PRIVATE ${SIERRA_APPLICATION_ICON_ICNS})
-
-        if(SIERRA_PLATFORM_iOS)
-            # Set Xcode project's info.plist
-            set_target_properties(${SIERRA_APPLICATION_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${SIERRA_DIRECTORY}/src/Core/Platform/iOS/config/plist.in)
-        endif()
+        BuildLinuxExecutable()
+    elseif(SIERRA_PLATFORM_macOS)
+        BuildMacOSExecutable()
     elseif(SIERRA_PLATFORM_ANDROID)
-        add_library(${SIERRA_APPLICATION_NAME} SHARED ${SOURCE_FILES})
+        BuildAndroidApplication()
+    elseif(SIERRA_PLATFORM_iOS)
+        BuildIOSApplication()
     endif()
 
     # === ENGINE LINKING === #
-    add_subdirectory(${SIERRA_DIRECTORY}/src ${SIERRA_DIRECTORY}/src)
     target_link_libraries(${SIERRA_APPLICATION_NAME} PRIVATE Sierra)
     target_include_directories(${SIERRA_APPLICATION_NAME} PRIVATE ${SIERRA_DIRECTORY}/include/)
 
@@ -171,54 +94,5 @@ function(SierraBuildApplication SOURCE_FILES)
         message(STATUS "[Sierra]: Running project update scripts...")
     else()
         message(WARNING "[Sierra]: Python install was not found on the machine. Project update scripts cannot be run!")
-    endif()
-
-    # === PROJECT GENERATION (DONE LAST, AS WE MAY NEED TO MODIFY ALL EXISTING TARGETS) === #
-    if(SIERRA_BUILD_XCODE_PROJECT)
-        function(get_all_targets var)
-            set(targets)
-            get_all_targets_recursive(targets ${CMAKE_CURRENT_SOURCE_DIR})
-            set(${var} ${targets} PARENT_SCOPE)
-        endfunction()
-
-        macro(get_all_targets_recursive targets dir)
-            get_property(subdirectories DIRECTORY ${dir} PROPERTY SUBDIRECTORIES)
-            foreach(subdir ${subdirectories})
-                get_all_targets_recursive(${targets} ${subdir})
-            endforeach()
-
-            get_property(current_targets DIRECTORY ${dir} PROPERTY BUILDSYSTEM_TARGETS)
-            list(APPEND ${targets} ${current_targets})
-        endmacro()
-
-        get_all_targets(ALL_TARGETS)
-        macro(set_global_xcode_property XCODE_PROPERTY XCODE_VALUE XCODE_VARIANT)
-            foreach(TARGET ${ALL_TARGETS})
-                set_xcode_property(${TARGET} ${XCODE_PROPERTY} ${XCODE_VALUE} ${XCODE_VARIANT})
-            endforeach()
-        endmacro()
-
-        set_global_xcode_property(GCC_GENERATE_DEBUGGING_SYMBOLS "YES" "Debug")
-        set_global_xcode_property(GCC_GENERATE_DEBUGGING_SYMBOLS "NO" "MinSizeRel")
-        set_global_xcode_property(GCC_GENERATE_DEBUGGING_SYMBOLS "YES" "RelWithDebInfo")
-        set_global_xcode_property(GCC_GENERATE_DEBUGGING_SYMBOLS "NO" "Release")
-
-        set_global_xcode_property(COPY_PHASE_STRIP "NO" "Debug")
-        set_global_xcode_property(COPY_PHASE_STRIP "YES" "MinSizeRel")
-        set_global_xcode_property(COPY_PHASE_STRIP "NO" "RelWithDebInfo")
-        set_global_xcode_property(COPY_PHASE_STRIP "YES" "Release")
-
-        if(SIERRA_ENABLE_OPTIMIZATIONS)
-            set_global_xcode_property(GCC_OPTIMIZATION_LEVEL "0" "Debug")
-            set_global_xcode_property(GCC_OPTIMIZATION_LEVEL "s" "MinSizeRel")
-            set_global_xcode_property(GCC_OPTIMIZATION_LEVEL "3" "RelWithDebInfo")
-            set_global_xcode_property(GCC_OPTIMIZATION_LEVEL "3" "Release")
-        endif()
-
-        set_global_xcode_property(IPHONEOS_DEPLOYMENT_TARGET "13.0" "All")
-        set_global_xcode_property(MACOSX_DEPLOYMENT_TARGET "10.13.6" "All")
-
-        set_xcode_property(Sierra CLANG_ENABLE_OBJC_ARC "NO" "All")
-        set_xcode_property(${SIERRA_APPLICATION_NAME} PRODUCT_BUNDLE_IDENTIFIER "com.sierra.${SIERRA_APPLICATION_NAME}" "All")
     endif()
 endfunction()

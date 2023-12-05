@@ -15,8 +15,6 @@
 namespace Sierra
 {
 
-    // TODO: No default constructors
-
     struct XkbExtensionCreateInfo
     {
         Display* display;
@@ -29,7 +27,6 @@ namespace Sierra
 
     public:
         /* --- CONSTRUCTORS --- */
-        XkbExtension() = default;
         explicit XkbExtension(const XkbExtensionCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
@@ -52,8 +49,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        XrandrExtension() = default;
-        XrandrExtension(const XrandrExtensionCreateInfo &createInfo);
+        explicit XrandrExtension(const XrandrExtensionCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline int GetEventBase() const { return eventBase; }
