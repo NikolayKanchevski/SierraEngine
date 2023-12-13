@@ -10,10 +10,8 @@ namespace Sierra
     class SIERRA_API Event
     {
     public:
-        #if SR_ENABLE_LOGGING
-            /* --- GETTER METHODS --- */
-            [[nodiscard]] inline virtual std::string ToString() const { return ""; };
-        #endif
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] inline virtual std::string GetLogString() const { return ""; };
 
     };
 
@@ -103,6 +101,9 @@ namespace Sierra
             queue.clear();
         }
 
+        /* --- OPERATORS --- */
+        EventDispatcher(const EventDispatcher&) = delete;
+        EventDispatcher& operator=(const EventDispatcher&) = delete;
 
         /* --- DESTRUCTOR --- */
         ~EventDispatcher()
@@ -113,10 +114,6 @@ namespace Sierra
             }
             queue.clear();
         }
-
-        /* --- OPERATORS --- */
-        EventDispatcher(const EventDispatcher&) = delete;
-        EventDispatcher& operator=(const EventDispatcher&) = delete;
 
     private:
         std::deque<T*> queue;

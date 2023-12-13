@@ -6,28 +6,42 @@
 
 #include "../../Device.h"
 #include "VulkanResource.h"
-#include "VulkanInstance.h"
+
+#include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
+#include "VulkanInstance.h"
 
 namespace Sierra
 {
-
-    struct VulkanDeviceCreateInfo final : public DeviceCreateInfo
-    {
-        const VulkanInstance &instance;
-    };
 
     class SIERRA_API VulkanDevice final : public Device, public VulkanResource
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit VulkanDevice(const VulkanDeviceCreateInfo &createInfo);
+        VulkanDevice(const VulkanInstance &instance, const DeviceCreateInfo &createInfo);
+
+        /* --- POLLING METHODS --- */
+        void SubmitCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
+        void SubmitAndWaitCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const char* GetName() const override { return physicalDeviceProperties.deviceName; }
+        [[nodiscard]] inline const char* GetDeviceName() const override { return physicalDeviceProperties.deviceName; }
+
+        [[nodiscard]] bool IsImageConfigurationSupported(ImageFormat format, ImageUsage usage) const override;
+
+        [[nodiscard]] bool IsColorSamplingSupported(ImageSampling sampling) const override;
+        [[nodiscard]] bool IsDepthSamplingSupported(ImageSampling sampling) const override;
+
+        [[nodiscard]] ImageSampling GetHighestColorSampling() const override;
+        [[nodiscard]] ImageSampling GetHighestDepthSampling() const override;
 
         [[nodiscard]] inline VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
         [[nodiscard]] inline VkDevice GetLogicalDevice() const { return logicalDevice; }
+        [[nodiscard]] inline VmaAllocator GetMemoryAllocator() const { return vmaAllocator; }
+
+        [[nodiscard]] inline uint32 GetGeneralQueueFamily() const { return generalQueueFamily; }
+        [[nodiscard]] inline VkQueue GetGeneralQueue() const { return generalQueue; }
+        [[nodiscard]] inline VkCommandPool GetCommandPool() const { return commandPool; }
 
         [[nodiscard]] bool IsExtensionLoaded(const std::string &extensionName) const;
         [[nodiscard]] inline auto& GetFunctionTable() const { return functionTable; }
@@ -836,29 +850,15 @@ namespace Sierra
             #if (defined(VK_KHR_device_group) && defined(VK_KHR_swapchain)) || (defined(VK_KHR_swapchain) && defined(VK_VERSION_1_1))
                 PFN_vkAcquireNextImage2KHR vkAcquireNextImage2KHR;
             #endif
-        } functionTable{};
-
-        struct QueueFamilyIndices
-        {
-            std::optional<uint> transferFamily;
-            std::optional<uint> computeFamily;
-            std::optional<uint> graphicsFamily;
-        };
-
-        struct PhysicalDeviceInfo
-        {
-            float32 rating = -1.0f;
-            VkPhysicalDeviceFeatures features { };
-            VkPhysicalDeviceProperties properties { };
-            QueueFamilyIndices queueFamilyIndices;
-        };
+        } functionTable = { };
 
         VkDevice logicalDevice = VK_NULL_HANDLE;
         VmaAllocator vmaAllocator = VK_NULL_HANDLE;
+        VkCommandPool commandPool = VK_NULL_HANDLE;
 
-        VkQueue transferQueue = VK_NULL_HANDLE;
-        VkQueue computeQueue = VK_NULL_HANDLE;
-        VkQueue graphicsQueue = VK_NULL_HANDLE;
+        uint32 generalQueueFamily = 0;
+        VkQueue generalQueue = VK_NULL_HANDLE;
+        VkFence sharedCommandBufferFence = VK_NULL_HANDLE;
 
         struct DeviceExtension
         {
@@ -875,33 +875,13 @@ namespace Sierra
             },
             {
                 .name = VK_KHR_MAINTENANCE3_EXTENSION_NAME
-            },
-            {
-                .name = VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME,
-            },
-            {
-                .name = VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
-                .dependencies = {
-                    {
-                        .name = VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME,
-                        .dependencies = {
-                            { .name = VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME },
-                        }
-                    }
-                },
-                .data = new VkPhysicalDeviceDynamicRenderingFeaturesKHR {
-                    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
-                    .dynamicRendering = VK_TRUE
-                }
             }
         };
         std::vector<Hash> loadedExtensions;
 
-        bool IsExtensionSupported(const char* extensionName, const std::vector<VkExtensionProperties> &supportedExtensions);
+        static bool IsExtensionSupported(const char* extensionName, const std::vector<VkExtensionProperties> &supportedExtensions);
         template<typename T>
         bool AddExtensionIfSupported(const DeviceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions, T &pNextChain, std::vector<void*> &extensionDataToFree);
-        static PhysicalDeviceInfo GetPhysicalDeviceInfo(const VulkanInstance &instance, VkPhysicalDevice physicalDevice);
-        static QueueFamilyIndices GetQueueFamilyIndices(const VulkanInstance &instance, VkPhysicalDevice physicalDevice);
 
     };
 

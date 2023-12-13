@@ -7,6 +7,65 @@
 
 #include "iOSInstance.h"
 
+@interface UIKitWindowView : UIView<CALayerDelegate>
+
+@end
+
+@implementation UIKitWindowView
+
+    /* --- POLLING METHODS --- */
+
+    + (Class) layerClass
+    {
+        return [CAMetalLayer class];
+    }
+
+    - (void) resizeDrawable: (CGFloat) scaleFactor
+    {
+        // Set new size
+        CGSize newSize = self.bounds.size;
+        newSize.width *= scaleFactor;
+        newSize.height *= scaleFactor;
+        if (newSize.width <= 0 || newSize.height <= 0) return;
+        
+        // Assign new size if it differs
+        CAMetalLayer* metalLayer = reinterpret_cast<CAMetalLayer*>(self.layer);
+        if (newSize.width == metalLayer.drawableSize.width && newSize.height == metalLayer.drawableSize.height) return;
+        metalLayer.drawableSize = newSize;
+    }
+
+    - (void) didMoveToWindow
+    {
+        [super didMoveToWindow];
+        [self resizeDrawable: self.window.screen.nativeScale];
+    }
+
+    - (void) setContentScaleFactor: (CGFloat) contentScaleFactor
+    {
+        [super setContentScaleFactor:contentScaleFactor];
+        [self resizeDrawable: self.window.screen.nativeScale];
+    }
+
+    - (void) layoutSubviews
+    {
+        [super layoutSubviews];
+        [self resizeDrawable: self.window.screen.nativeScale];
+    }
+
+    - (void) setFrame: (CGRect) frame
+    {
+        [super setFrame:frame];
+        [self resizeDrawable: self.window.screen.nativeScale];
+    }
+
+    - (void) setBounds: (CGRect) bounds
+    {
+        [super setBounds:bounds];
+        [self resizeDrawable: self.window.screen.nativeScale];
+    }
+
+@end
+
 @interface UIKitWindowViewController : UIViewController
 
 @end
@@ -24,6 +83,7 @@
     {
         self = [super init];
         window = initWindow;
+        self.view = [[UIKitWindowView alloc] initWithFrame: self.view.bounds];
         return self;
     }
 
@@ -76,6 +136,7 @@ namespace Sierra
 
         // Create view controller
         viewController = [[UIKitWindowViewController alloc] initWithWindow: this];
+        view = [viewController view];
 
         // Assign window handlers and set background color
         [window setRootViewController: viewController];
@@ -225,9 +286,9 @@ namespace Sierra
         return touchManager;
     }
 
-    WindowAPI UIKitWindow::GetAPI() const
+    PlatformAPI UIKitWindow::GetAPI() const
     {
-        return WindowAPI::UIKit;
+        return PlatformAPI::UIKit;
     }
 
     /* --- EVENTS --- */

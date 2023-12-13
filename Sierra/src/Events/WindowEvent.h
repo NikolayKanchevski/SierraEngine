@@ -25,7 +25,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline std::string ToString() const override { return (std::stringstream() << "Window Resized - [Width: " << size.x << " | Height: " << size.y << "]").str(); }
+            [[nodiscard]] inline std::string GetLogString() const override { return (std::stringstream() << "Window Resized - [Width: " << size.x << " | Height: " << size.y << "]").str(); }
         #endif
 
     private:
@@ -41,7 +41,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline std::string ToString() const override { return (std::stringstream() << "Window Closed").str(); }
+            [[nodiscard]] inline std::string GetLogString() const override { return (std::stringstream() << "Window Closed").str(); }
         #endif
 
     };
@@ -57,7 +57,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline std::string ToString() const override { return (std::stringstream() << "Window Moved - [X: " << position.x << " | Y: " << position.y << "]").str(); }
+            [[nodiscard]] inline std::string GetLogString() const override { return (std::stringstream() << "Window Moved - [X: " << position.x << " | Y: " << position.y << "]").str(); }
         #endif
 
     private:
@@ -76,7 +76,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline std::string ToString() const override { return (std::stringstream() << "Window " << (focused ? "Focused" : "Unfocused")).str(); }
+            [[nodiscard]] inline std::string GetLogString() const override { return (std::stringstream() << "Window " << (focused ? "Focused" : "Unfocused")).str(); }
         #endif
 
     private:
@@ -92,7 +92,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline std::string ToString() const override { return (std::stringstream() << "Window Minimized").str(); }
+            [[nodiscard]] inline std::string GetLogString() const override { return (std::stringstream() << "Window Minimized").str(); }
         #endif
 
     };
@@ -105,7 +105,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline std::string ToString() const override { return (std::stringstream() << "Window Maximized").str(); }
+            [[nodiscard]] inline std::string GetLogString() const override { return (std::stringstream() << "Window Maximized").str(); }
         #endif
 
     };

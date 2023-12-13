@@ -52,7 +52,7 @@ namespace Sierra
         [[nodiscard]] const Screen& GetScreen() const override;
         [[nodiscard]] InputManager& GetInputManager() override;
         [[nodiscard]] CursorManager& GetCursorManager() override;
-        [[nodiscard]] WindowAPI GetAPI() const override;
+        [[nodiscard]] PlatformAPI GetAPI() const override;
 
         /* --- DESTRUCTOR --- */
         ~X11Window() override;
@@ -81,6 +81,7 @@ namespace Sierra
          * Since you cannot get events for a specific window with X11 (you instead get all pending events for all windows),
          * we store the events, which are not for the current window, so they can be handled later - when the corresponding window is updated
         */
+        // TODO: Make use of queues
         static inline std::unordered_map<XID, std::vector<XEvent>> unhandledEvents;
         void HandleX11Event(XEvent &event);
 

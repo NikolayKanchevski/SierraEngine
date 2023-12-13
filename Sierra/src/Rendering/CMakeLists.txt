@@ -1,10 +1,20 @@
 # Link source files
 target_sources(Sierra PRIVATE
+    Buffer.cpp
+    Buffer.h
+    CommandBuffer.cpp
+    CommandBuffer.h
     Device.cpp
     Device.h
+    Image.cpp
+    Image.h
     RenderingContext.cpp
     RenderingContext.h
+    RenderPass.cpp
+    RenderPass.h
     RenderingResource.h
+    Swapchain.cpp
+    Swapchain.h
 )
 
 # Link platform-specific source files and libraries

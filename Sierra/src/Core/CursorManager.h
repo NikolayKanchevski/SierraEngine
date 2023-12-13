@@ -38,12 +38,12 @@ namespace Sierra
         /* --- EVENTS --- */
         template<typename T> void OnEvent(CursorEventCallback<T>) { static_assert(std::is_base_of_v<CursorEvent, T> && !std::is_same_v<CursorEvent, T>, "Template function accepts derived cursor events only!"); }
 
-        /* --- DESTRUCTORS --- */
-        virtual ~CursorManager() = default;
-
         /* --- OPERATORS --- */
         CursorManager(const CursorManager&) = delete;
         CursorManager& operator=(const CursorManager&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        virtual ~CursorManager() = default;
 
     protected:
         [[nodiscard]] inline EventDispatcher<CursorMoveEvent>& GetCursorMoveDispatcher() { return cursorMoveDispatcher; }

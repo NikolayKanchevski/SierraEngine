@@ -22,16 +22,11 @@
 namespace Sierra
 {
 
-    struct CocoaCursorManagerCreateInfo final : public CursorManagerCreateInfo
-    {
-        const NSWindow* window;
-    };
-
     class SIERRA_API CocoaCursorManager final : public CursorManager
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit CocoaCursorManager(const CocoaCursorManagerCreateInfo &createInfo);
+        explicit CocoaCursorManager(const NSWindow* window, const CursorManagerCreateInfo &createInfo);
 
         /* --- SETTER METHODS --- */
         void ShowCursor() override;

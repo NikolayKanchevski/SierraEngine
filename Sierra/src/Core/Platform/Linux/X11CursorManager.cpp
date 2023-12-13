@@ -9,8 +9,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    X11CursorManager::X11CursorManager(const X11CursorManagerCreateInfo &createInfo)
-        : CursorManager(createInfo), window(createInfo.window), x11Context(createInfo.x11Context)
+    X11CursorManager::X11CursorManager(const X11Context &x11Context, const XID window, const CursorManagerCreateInfo &createInfo)
+        : CursorManager(createInfo), x11Context(x11Context), window(window)
     {
 
     }

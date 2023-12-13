@@ -154,7 +154,6 @@
     - (void) drain
     {
         [super drain];
-        printf("RELEASE\n");
     }
 @end
 

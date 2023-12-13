@@ -16,7 +16,7 @@ namespace Sierra
     Win32Window::Win32Window(const Win32Context &win32Context, const WindowCreateInfo &createInfo)
         : Window(createInfo), win32Context(win32Context),
           window(win32Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | (createInfo.resizable ? (WS_SIZEBOX | WS_MAXIMIZEBOX) : 0) | (createInfo.maximize && createInfo.resizable ? WS_MAXIMIZE : 0), WindowProc)),
-          inputManager(Win32InputManager({ })), cursorManager(Win32CursorManager({ .window = window })),
+          inputManager(Win32InputManager({ })), cursorManager(Win32CursorManager(window, { })),
           title(createInfo.title)
     {
         // Manually maximize window if not resizable
@@ -229,9 +229,9 @@ namespace Sierra
         return cursorManager;
     }
 
-    WindowAPI Win32Window::GetAPI() const
+    PlatformAPI Win32Window::GetAPI() const
     {
-        return WindowAPI::Win32;
+        return PlatformAPI::Win32;
     }
 
     /* --- PRIVATE METHODS --- */

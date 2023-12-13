@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "MetalResource.h"
 #include "../../RenderingContext.h"
+#include "MetalResource.h"
 
 #include "MetalDevice.h"
 
@@ -18,8 +18,15 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         explicit MetalContext(const RenderingContextCreateInfo &createInfo);
 
+        /* --- POLLING METHODS --- */
+        [[nodiscard]] std::unique_ptr<Buffer> CreateBuffer(const BufferCreateInfo &createInfo) const override;
+        [[nodiscard]] std::unique_ptr<Image> CreateImage(const ImageCreateInfo &createInfo) const override;
+        [[nodiscard]] std::unique_ptr<RenderPass> CreateRenderPass(const RenderPassCreateInfo &createInfo) const override;
+        [[nodiscard]] std::unique_ptr<Swapchain> CreateSwapchain(const SwapchainCreateInfo &createInfo) const override;
+        [[nodiscard]] std::unique_ptr<CommandBuffer> CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const override;
+
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const MetalDevice& GetDevice() const override { return device; }
+        [[nodiscard]] inline const Device& GetDevice() const override { return device; }
 
         /* --- DESTRUCTOR --- */
         void Destroy() override;

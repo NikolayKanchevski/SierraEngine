@@ -16,10 +16,20 @@ target_compile_definitions(Sierra PUBLIC "SR_METAL_SUPPORTED")
 
 # Add Metal source files
 target_sources(Sierra PRIVATE
+    MetalBuffer.cpp
+    MetalBuffer.h
+    MetalCommandBuffer.cpp
+    MetalCommandBuffer.h
     MetalContext.cpp
     MetalContext.h
     MetalDevice.cpp
     MetalDevice.h
+    MetalImage.cpp
+    MetalImage.h
+    MetalRenderPass.cpp
+    MetalRenderPass.h
     MetalResource.cpp
     MetalResource.h
+    MetalSwapchain.mm
+    MetalSwapchain.h
 )

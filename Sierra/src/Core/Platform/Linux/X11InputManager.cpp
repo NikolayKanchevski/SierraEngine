@@ -13,8 +13,8 @@ namespace Sierra
 {
     /* --- CONSTRUCTORS --- */
 
-    X11InputManager::X11InputManager(const X11InputManagerCreateInfo &createInfo)
-        : InputManager(createInfo), xkbExtension(createInfo.xkbExtension)
+    X11InputManager::X11InputManager(const XkbExtension &xkbExtension, const InputManagerCreateInfo &createInfo)
+        : InputManager(createInfo), xkbExtension(xkbExtension)
     {
 
     }

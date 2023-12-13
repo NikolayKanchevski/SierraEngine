@@ -26,7 +26,6 @@ namespace Sierra
     public:
         /* --- CONSTRUCTORS --- */
         explicit Win32Screen(const Win32ScreenCreateInfo &createInfo);
-        explicit Win32Screen(Win32Screen&& other);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const std::string& GetName() const override { return name; };
@@ -36,6 +35,9 @@ namespace Sierra
         [[nodiscard]] inline Vector2UInt GetWorkAreaSize() const override { return workAreaSize; };
         [[nodiscard]] inline uint32 GetRefreshRate() const override { return refreshRate; };
         [[nodiscard]] inline ScreenOrientation GetOrientation() const override { return size.x >= size.y ? ScreenOrientation::LandscapeNormal : ScreenOrientation::PortraitNormal; }
+
+        /* --- MOVE SEMANTICS --- */
+        Win32Screen(Win32Screen &&other);
 
     private:
         std::string name;

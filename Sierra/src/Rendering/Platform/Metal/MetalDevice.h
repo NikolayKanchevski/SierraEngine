@@ -4,33 +4,42 @@
 
 #pragma once
 
-#include "MetalResource.h"
 #include "../../Device.h"
+#include "MetalResource.h"
 
 namespace Sierra
 {
-
-    struct MetalDeviceCreateInfo final : public DeviceCreateInfo
-    {
-
-    };
 
     class SIERRA_API MetalDevice final : public Device, public MetalResource
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit MetalDevice(const MetalDeviceCreateInfo &createInfo);
+        explicit MetalDevice(const DeviceCreateInfo &createInfo);
+
+        /* --- POLLING METHODS --- */
+        void SubmitCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
+        void SubmitAndWaitCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const char* GetName() const override { return device->name()->utf8String(); }
+        [[nodiscard]] inline const char* GetDeviceName() const override { return device->name()->utf8String(); }
+        [[nodiscard]] bool IsImageConfigurationSupported(ImageFormat format, ImageUsage usage) const override;
 
-        [[nodiscard]] inline const MTL::Device* GetMetalDevice() const { return device; }
+        [[nodiscard]] bool IsColorSamplingSupported(ImageSampling sampling) const override;
+        [[nodiscard]] bool IsDepthSamplingSupported(ImageSampling sampling) const override;
+
+        [[nodiscard]] ImageSampling GetHighestColorSampling() const override;
+        [[nodiscard]] ImageSampling GetHighestDepthSampling() const override;
+
+        [[nodiscard]] inline MTL::Device* GetMetalDevice() const { return device; }
+        [[nodiscard]] inline MTL::CommandQueue* GetCommandQueue() const { return commandQueue; }
 
         /* --- DESTRUCTOR --- */
         void Destroy() override;
 
     private:
-        MTL::Device* device;
+        MTL::Device* device = nullptr;
+        MTL::CommandQueue* commandQueue = nullptr;
+        dispatch_semaphore_t sharedCommandBufferSemaphore = nullptr;
 
     };
 

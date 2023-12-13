@@ -46,15 +46,32 @@ if(Vulkan_LIBRARIES AND Vulkan_INCLUDE_DIRS)
 
     # Add Vulkan source files
     target_sources(Sierra PRIVATE
+        VulkanBuffer.cpp
+        VulkanBuffer.h
+        VulkanCommandBuffer.cpp
+        VulkanCommandBuffer.h
         VulkanContext.cpp
         VulkanContext.h
         VulkanDevice.cpp
         VulkanDevice.h
+        VulkanImage.cpp
+        VulkanImage.h
         VulkanInstance.cpp
         VulkanInstance.h
+        VulkanRenderPass.cpp
+        VulkanRenderPass.h
         VulkanResource.cpp
         VulkanResource.h
+        VulkanSwapchain.cpp
+        VulkanSwapchain.h
     )
+
+    # Add per-platform source files
+    if (SIERRA_PLATFORM_macOS)
+        add_subdirectory(Platform/macOS)
+    elseif(SIERRA_PLATFORM_iOS)
+        add_subdirectory(Platform/iOS)
+    endif()
 
     # Link VMA
     set(VMA_DIRECTORY ../../../../vendor/VMA)

@@ -18,7 +18,7 @@ namespace Sierra
         // Create objects
         platformInstance = PlatformInstance::Load({ });
         windowManager = WindowManager::Create({ .platformInstance = platformInstance });
-        renderingContext = RenderingContext::Create({ .graphicsAPI = createInfo.settings.graphicsAPI });
+        renderingContext = RenderingContext::Create({ .name = "Application Context", .graphicsAPI = createInfo.settings.graphicsAPI });
     }
 
     void Application::Run()

@@ -100,7 +100,6 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 * [GLM](https://github.com/g-truc/glm/) - Provides the engine with a powerful set of tools for solving linear algebra problems.
 * [spdlog](https://github.com/gabime/spdlog) - Used for fast, asynchronous debug-only logging.
-* [Better Enum](https://github.com/aantron/better-enums) - Compile-time reflected enums.
 * [Vulkan](https://www.vulkan.org/) - Allows for incredibly fast rendering on a wide variety of platforms.
 * [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For optimal memory management of [Vulkan](https://www.vulkan.org/) objects.
 * [Metal](https://developer.apple.com/metal/) - Being their native rendering API, it is used for fast, hardware-accelerated rendering on [Apple](https://www.apple.com) platforms.
@@ -122,7 +121,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LineCounter">Total lines of code: 13,283</p>
-<p align="center" id="LastUpdated">Last updated: 30/11/2023 </p>
+<p align="center" id="LineCounter">Total lines of code: 17,732</p>
+<p align="center" id="LastUpdated">Last updated: 13/12/2023 </p>
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -23,13 +23,13 @@ namespace Sierra
 
     std::unique_ptr<RenderingContext> RenderingContext::Create(const RenderingContextCreateInfo &createInfo)
     {
-        SR_ERROR_IF(createInfo.graphicsAPI ==+ GraphicsAPI::Undefined, "Cannot create a rendering context with graphics API set to [{0}]!", createInfo.graphicsAPI._to_string());
+        SR_ERROR_IF(createInfo.graphicsAPI == GraphicsAPI::Undefined, "Cannot create a rendering context with graphics API set to [GraphicsAPI::Undefined]!");
         switch (createInfo.graphicsAPI)
         {
             case GraphicsAPI::Vulkan:
             {
                 #if !defined(SR_VULKAN_SUPPORTED)
-                    SR_ERROR("Cannot create rendering context using the Vulkan API, as it is unsupported on the system, or the CMake option [\"SIERRA_BUILD_VULKAN\"] hast not been turned on!");
+                    SR_ERROR("Cannot create rendering context [{0}] using the Vulkan API, as it is unsupported on the system, or the CMake option [\"SIERRA_BUILD_VULKAN\"] hast not been turned on!", createInfo.name);
                     return nullptr;
                 #else
                     return std::make_unique<VulkanContext>(createInfo);
@@ -43,7 +43,7 @@ namespace Sierra
             case GraphicsAPI::Metal:
             {
                 #if !defined(SR_METAL_SUPPORTED)
-                    SR_ERROR("Cannot create rendering context using the Metal API, as it is unsupported on the system, or the CMake option [\"SIERRA_BUILD_METAL\"] hast not been turned on!");
+                    SR_ERROR("Cannot create rendering context [{0}] using the Metal API, as it is unsupported on the system, or the CMake option [\"SIERRA_BUILD_METAL\"] hast not been turned on!", name);
                     return nullptr;
                 #else
                     return std::make_unique<MetalContext>(createInfo);
@@ -51,13 +51,13 @@ namespace Sierra
             }
             case GraphicsAPI::OpenGL:
             {
-                SR_ERROR("Cannot create rendering context using OpenGL, as it has not been implemented yet!");
+                SR_ERROR("Cannot create rendering context [{0}] using OpenGL, as it has not been implemented yet!", createInfo.name);
                 return nullptr;
             }
             default:
             case GraphicsAPI::Undefined:
             {
-                SR_ERROR("Cannot create rendering context using an undefined GraphicsAPI!");
+                SR_ERROR("Cannot create rendering context [{0}] using an undefined GraphicsAPI!", createInfo.name);
                 return nullptr;
             }
         }

@@ -16,8 +16,8 @@
 #if !defined(__OBJC__)
     namespace Sierra
     {
-        typedef void UIKitWindowImplementation;
         typedef void UIKitWindowViewController;
+        typedef void UIView;
     }
 #else
     #include <UIKit/UIKit.h>
@@ -62,7 +62,10 @@ namespace Sierra
 
         [[nodiscard]] const Screen& GetScreen() const override;
         [[nodiscard]] TouchManager& GetTouchManager() override;
-        [[nodiscard]] WindowAPI GetAPI() const override;
+        [[nodiscard]] PlatformAPI GetAPI() const override;
+
+        [[nodiscard]] UIWindow* GetUIWindow() const { return window; }
+        [[nodiscard]] UIView* GetUIView() const { return view; }
 
         /* --- DESTRUCTOR --- */
         ~UIKitWindow();
@@ -73,7 +76,8 @@ namespace Sierra
         
         UIWindow* window = nullptr;
         UIKitWindowViewController* viewController = nullptr;
-        
+        UIView* view = nullptr;
+
         std::string title;
         bool minimized = false;
         bool closed = false;

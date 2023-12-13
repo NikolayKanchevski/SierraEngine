@@ -15,7 +15,7 @@ namespace Sierra
 {
 
     // We must store the data which the application will need to pick up globally, since data cannot in any way be passed directly to it,
-    // as upon creation it will block the whole thread and only the run loop will continue to execute. Due to that, for each application,
+    // as upon create it will block the whole thread and only the run loop will continue to execute. Due to that, for each application,
     // we push its data to a queue, and, once it has been created we simply retrieve and move it out of the queue.
 
     struct UIKitApplicationCreateInfo

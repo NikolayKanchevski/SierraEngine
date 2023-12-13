@@ -15,13 +15,13 @@
 namespace Sierra
 {
 
-    BETTER_ENUM(
-        WindowAPI, uint8,
+    enum class PlatformAPI : uint8
+    {
         Win32,
         X11,
         Cocoa,
         UIKit
-    );
+    };
 
     struct WindowCreateInfo
     {
@@ -71,17 +71,17 @@ namespace Sierra
         [[nodiscard]] virtual InputManager& GetInputManager();
         [[nodiscard]] virtual CursorManager& GetCursorManager();
         [[nodiscard]] virtual TouchManager& GetTouchManager();
-        [[nodiscard]] virtual WindowAPI GetAPI() const = 0;
+        [[nodiscard]] virtual PlatformAPI GetAPI() const = 0;
 
         /* --- EVENTS --- */
         template<typename T> void OnEvent(WindowEventCallback<T>) { static_assert(std::is_base_of_v<WindowEvent, T> && !std::is_same_v<WindowEvent, T>, "Template function accepts derived window events only!"); }
-
-        /* --- DESTRUCTOR --- */
-        virtual ~Window() = default;
         
         /* --- OPERATORS --- */
         Window(const Window&) = delete;
         Window& operator=(const Window&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        virtual ~Window() = default;
 
     protected:
         explicit Window(const WindowCreateInfo &createInfo);

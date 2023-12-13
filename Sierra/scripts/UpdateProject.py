@@ -27,7 +27,7 @@ def UpdateReadMe() -> None:
                     if 'bin' in root or 'vendor' in root or 'config' in root:
                         continue
 
-                    if file.endswith(extension):
+                    if str(file).endswith(extension):
                         with open(os.path.join(root, file), 'r') as file:
                             for count, line in enumerate(file):
                                 pass

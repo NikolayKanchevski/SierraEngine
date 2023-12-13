@@ -10,8 +10,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    CocoaCursorManager::CocoaCursorManager(const CocoaCursorManagerCreateInfo &createInfo)
-        : CursorManager(createInfo), window(createInfo.window), cursorPosition({ [window mouseLocationOutsideOfEventStream].x, [window mouseLocationOutsideOfEventStream].y }), lastCursorPosition(cursorPosition)
+    CocoaCursorManager::CocoaCursorManager(const NSWindow* window, const CursorManagerCreateInfo &createInfo)
+        : CursorManager(createInfo), window(window), cursorPosition({ [window mouseLocationOutsideOfEventStream].x, [window mouseLocationOutsideOfEventStream].y }), lastCursorPosition(cursorPosition)
     {
 
     }

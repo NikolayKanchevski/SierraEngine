@@ -31,7 +31,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline std::string ToString() const override { return (std::stringstream() << "Screen touch began - [Taps: " << GetTouch().GetTapCount() << " | Force: " << GetTouch().GetForce() << " | X: " << GetTouch().GetPosition().x << " | Y: " << GetTouch().GetPosition().y << "]").str(); }
+            [[nodiscard]] inline std::string GetLogString() const override { return (std::stringstream() << "Screen touch began - [Taps: " << GetTouch().GetTapCount() << " | Force: " << GetTouch().GetForce() << " | X: " << GetTouch().GetPosition().x << " | Y: " << GetTouch().GetPosition().y << "]").str(); }
         #endif
     };
 
@@ -43,7 +43,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline std::string ToString() const override { return (std::stringstream() << "Screen touch moved - [X: " << GetTouch().GetPosition().x << " | Y: " << GetTouch().GetPosition().y << "]").str(); }
+            [[nodiscard]] inline std::string GetLogString() const override { return (std::stringstream() << "Screen touch moved - [X: " << GetTouch().GetPosition().x << " | Y: " << GetTouch().GetPosition().y << "]").str(); }
         #endif
 
     };
@@ -56,7 +56,7 @@ namespace Sierra
 
         /* --- PROPERTIES --- */
         #if SR_ENABLE_LOGGING
-            inline std::string ToString() const override { return (std::stringstream() << "Screen touch ended - [X: " << GetTouch().GetPosition().x << " | Y: " << GetTouch().GetPosition().y << "]").str(); }
+            [[nodiscard]] inline std::string GetLogString() const override { return (std::stringstream() << "Screen touch ended - [X: " << GetTouch().GetPosition().x << " | Y: " << GetTouch().GetPosition().y << "]").str(); }
         #endif
     };
 

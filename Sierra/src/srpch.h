@@ -80,10 +80,6 @@
     #pragma endregion
 
     #pragma region External Libraries
-        /* --- Better Enums --- */
-        #define BETTER_ENUMS_EXPORT SIERRA_API
-        #include <enum.h>
-
         /* --- GLM --- */
         #define GLM_DEPTH_ZERO_TO_ONE
         #include <glm/glm.hpp>
@@ -147,7 +143,7 @@
             inline constexpr T operator^ (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type<T>::type>(a) ^ static_cast<std::underlying_type<T>::type>(b)); }             \
             inline T& operator|= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type<T>::type&>(a) |= static_cast<std::underlying_type<T>::type>(b)); }             \
             inline T& operator&= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type<T>::type&>(a) &= static_cast<std::underlying_type<T>::type>(b)); }             \
-            inline T& operator^= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type<T>::type&>(a) ^= static_cast<std::underlying_type<T>::type>(b)); }
+            inline T& operator^= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type<T>::type&>(a) ^= static_cast<std::underlying_type<T>::type>(b)); }             
     #pragma endregion
 
     #pragma region Source Files

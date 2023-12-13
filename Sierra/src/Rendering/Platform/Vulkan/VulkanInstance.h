@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <vulkan/vulkan.h>
 #include "VulkanResource.h"
 
 namespace Sierra
@@ -11,7 +12,7 @@ namespace Sierra
 
     struct VulkanInstanceCreateInfo
     {
-
+        const std::string &name = "Vulkan Instance";
     };
 
     class SIERRA_API VulkanAPIVersion
@@ -37,9 +38,6 @@ namespace Sierra
     class SIERRA_API VulkanInstance final : public VulkanResource
     {
     public:
-        /* --- CONSTRUCTORS --- */
-        explicit VulkanInstance(const VulkanInstanceCreateInfo &createInfo);
-
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkInstance GetVulkanInstance() const { return instance; }
         [[nodiscard]] inline auto& GetFunctionTable() const { return functionTable; }
@@ -50,6 +48,9 @@ namespace Sierra
         void Destroy() override;
 
     private:
+        friend class VulkanContext;
+        explicit VulkanInstance(const VulkanInstanceCreateInfo &createInfo);
+
         VkInstance instance = VK_NULL_HANDLE;
         struct
         {
@@ -259,7 +260,7 @@ namespace Sierra
             #if (defined(VK_KHR_device_group) && defined(VK_KHR_surface)) || (defined(VK_KHR_swapchain) && defined(VK_VERSION_1_1))
                 PFN_vkGetPhysicalDevicePresentRectanglesKHR vkGetPhysicalDevicePresentRectanglesKHR = nullptr;
             #endif
-        } functionTable{};
+        } functionTable = { };
 
         struct InstanceExtension
         {
@@ -270,13 +271,24 @@ namespace Sierra
         const std::vector<InstanceExtension> INSTANCE_EXTENSIONS_TO_QUERY
         {
             { .name = VK_KHR_SURFACE_EXTENSION_NAME },
+            #if SR_PLATFORM_WINDOWS
+                { .name = "VK_KHR_win32_surface" },
+            #elif SR_PLATFORM_LINUX
+                { .name = "VK_KHR_xcb_surface" },
+            #elif SR_PLATFORM_macOS
+                { .name = VK_MVK_MACOS_SURFACE_EXTENSION_NAME },
+            #elif SR_PLATFORM_ANDROID
+                { .name = "VK_KHR_android_surface" },
+            #elif SR_PLATFORM_iOS
+                { .name = VK_MVK_IOS_SURFACE_EXTENSION_NAME },
+            #endif
             #if SR_PLATFORM_APPLE
                 {
                     .name = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
                     .requiredOnlyIfSupported = true
                 },
             #endif
-            #if SR_ENABLE_LOGGING && !SR_PLATFORM_MOBILE
+            #if SR_ENABLE_LOGGING && !SR_PLATFORM_iOS
                 {
                     .name = VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
                     .requiredOnlyIfSupported = true
@@ -287,7 +299,7 @@ namespace Sierra
         std::vector<Hash> loadedExtensions;
         bool AddExtensionIfSupported(const InstanceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions);
 
-        #if SR_ENABLE_LOGGING && !SR_PLATFORM_MOBILE
+        #if SR_ENABLE_LOGGING && !SR_PLATFORM_iOS
             VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
             static bool ValidationLayersSupported(const std::vector<const char*> &layers);
         #endif

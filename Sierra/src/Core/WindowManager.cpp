@@ -34,16 +34,16 @@ namespace Sierra
     std::unique_ptr<Window> WindowManager::CreateWindow(const WindowCreateInfo &createInfo) const
     {
         #if SR_PLATFORM_WINDOWS
-            SR_ERROR_IF(platformInstance->GetType() !=+ PlatformType::Windows, "Cannot create Win32 window using a platform instance of type [{0}] when it must be [{1}]!", platformInstance->GetType()._to_string(), PlatformType(PlatformType::Windows)._to_string());
+            SR_ERROR_IF(platformInstance->GetType() != PlatformType::Windows, "Cannot create Win32 window using a platform instance of type, which differs from [PlatformType::Windows]!");
             return std::make_unique<Win32Window>(static_cast<const WindowsInstance*>(platformInstance.get())->GetWin32Context(), createInfo);
         #elif SR_PLATFORM_LINUX
-            SR_ERROR_IF(platformInstance->GetType() !=+ PlatformType::Linux, "Cannot create X11 window using a platform instance of type [{0}] when it must be [{1}]!", platformInstance->GetType()._to_string(), PlatformType(PlatformType::Linux)._to_string());
+            SR_ERROR_IF(platformInstance->GetType() != PlatformType::Linux, "Cannot create X11 window using a platform instance of type, which differs from [PlatformType::Linux]!");
             return std::make_unique<X11Window>(static_cast<const LinuxInstance*>(platformInstance.get())->GetX11Context(), createInfo);
         #elif SR_PLATFORM_macOS
-            SR_ERROR_IF(platformInstance->GetType() !=+ PlatformType::macOS, "Cannot create Cocoa window using a platform instance of type [{0}] when it must be [{1}]!", platformInstance->GetType()._to_string(), PlatformType(PlatformType::macOS)._to_string());
+            SR_ERROR_IF(platformInstance->GetType() != PlatformType::macOS, "Cannot create Cocoa window using a platform instance of type, which differs from [PlatformType::macOS]!");
             return std::make_unique<CocoaWindow>(static_cast<const macOSInstance*>(platformInstance.get())->GetCocoaContext(), createInfo);
         #elif SR_PLATFORM_iOS
-            SR_ERROR_IF(platformInstance->GetType() !=+ PlatformType::iOS, "Cannot create UIKit window using a platform instance of type [{0}] when it must be [{1}]!", platformInstance->GetType()._to_string(), PlatformType(PlatformType::iOS)._to_string());
+            SR_ERROR_IF(platformInstance->GetType() != PlatformType::iOS, "Cannot create UIKit window using a platform instance of type, which differs from [PlatformType::iOS]!");
             return std::make_unique<UIKitWindow>(static_cast<const iOSInstance*>(platformInstance.get())->GetUIKitContext(), createInfo);
         #else
             SR_ERROR("Cannot create window on unrecognized operating system!");

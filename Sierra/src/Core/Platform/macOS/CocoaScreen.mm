@@ -20,6 +20,8 @@ namespace Sierra
 
     }
 
+    /* --- MOVE SEMANTICS --- */
+
     CocoaScreen::CocoaScreen(CocoaScreen &&other)
         : name(std::move(other.name)), origin(other.origin), size(other.size), workAreaOrigin(other.workAreaOrigin), workAreaSize(other.workAreaSize), refreshRate(other.refreshRate)
     {

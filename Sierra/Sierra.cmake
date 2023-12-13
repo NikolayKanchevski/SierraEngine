@@ -36,7 +36,7 @@ if(SIERRA_PLATFORM_WINDOWS OR SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_LINUX OR 
     option(SIERRA_BUILD_VULKAN "Wether to build Vulkan and its resources." ON)
 endif()
 if(SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_iOS)
-    option(SIERRA_BUILD_METAL "Wether to build Metal and its resources." ON)
+     option(SIERRA_BUILD_METAL "Wether to build Metal and its resources." ON)
 endif()
 
 function(SierraBuildApplication SOURCE_FILES)

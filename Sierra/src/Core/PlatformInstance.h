@@ -7,14 +7,14 @@
 namespace Sierra
 {
 
-    BETTER_ENUM(
-        PlatformType, uint8,
+    enum class PlatformType : uint8
+    {
         Windows,
         Linux,
         macOS,
         Android,
         iOS
-    );
+    };
 
     struct PlatformInstanceCreateInfo
     {
@@ -34,12 +34,12 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual PlatformType GetType() const = 0;
 
-        /* --- DESTRUCTOR --- */
-        virtual ~PlatformInstance() = default;
-
         /* --- OPERATORS --- */
         PlatformInstance(const PlatformInstance&) = delete;
         PlatformInstance& operator=(const PlatformInstance&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        virtual ~PlatformInstance() = default;
 
     protected:
         explicit PlatformInstance(const PlatformInstanceCreateInfo &createInfo);

@@ -46,7 +46,7 @@ namespace Sierra
                 const char* name;
             };
 
-            static constexpr KeyNameEntry keyNameTable[] =
+            constexpr static KeyNameEntry keyNameTable[] =
             {
                 { Key::Grave, "TLDE" },
                 { Key::Number1, "AE01" },

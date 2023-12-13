@@ -46,12 +46,12 @@ namespace Sierra
         /* --- EVENTS --- */
         template<typename T> void OnEvent(InputEventCallback<T>) { static_assert(std::is_base_of_v<InputEvent, T> && !std::is_same_v<InputEvent, T>, "Template function accepts derived input events only!"); }
 
-        /* --- DESTRUCTORS --- */
-        virtual ~InputManager() = default;
-
         /* --- OPERATORS --- */
         InputManager(const InputManager&) = delete;
         InputManager& operator=(const InputManager&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        virtual ~InputManager() = default;
 
     protected:
         enum class InputAction : bool

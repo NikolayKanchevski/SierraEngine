@@ -32,7 +32,7 @@ namespace Sierra
         /* --- EVENTS --- */
         template<typename T> void OnEvent(TouchEventCallback<T>) { static_assert(std::is_base_of_v<TouchEvent, T> && !std::is_same_v<TouchEvent, T>, "Template function accepts derived touch events only!"); }
 
-        /* --- DESTRUCTORS --- */
+        /* --- DESTRUCTOR --- */
         virtual ~TouchManager() = default;
 
         /* --- OPERATORS --- */

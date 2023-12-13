@@ -14,7 +14,7 @@ namespace Sierra
     X11Window::X11Window(const X11Context &context, const WindowCreateInfo &createInfo)
         : Window(createInfo), x11Context(context),
           window(x11Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
-          inputManager({ .xkbExtension = x11Context.GetXkbExtension() }), cursorManager({ .window = window, .x11Context = x11Context }),
+          inputManager(x11Context.GetXkbExtension(), { }), cursorManager(x11Context, window, { }),
           title(createInfo.title), extents(x11Context.GetWindowExtents(window)), lastMaximizedState(createInfo.maximize), resizable(createInfo.resizable)
     {
         if (!createInfo.hide) x11Context.ShowWindow(window);
@@ -238,9 +238,9 @@ namespace Sierra
         return cursorManager;
     }
 
-    WindowAPI X11Window::GetAPI() const
+    PlatformAPI X11Window::GetAPI() const
     {
-        return WindowAPI::X11;
+        return PlatformAPI::X11;
     }
 
     /* --- PRIVATE METHODS --- */

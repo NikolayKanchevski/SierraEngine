@@ -5,6 +5,8 @@
 #define COCOA_WINDOW_IMPLEMENTATION
 #include "CocoaWindow.h"
 
+#include <QuartzCore/QuartzCore.h>
+
 @interface CocoaWindowDelegate : NSObject<NSWindowDelegate>
 
 @end
@@ -67,11 +69,11 @@
 
 @end
 
-@interface CocoaWindowContentView : NSView<NSTextInputClient>
+@interface CocoaWindowView : NSView<NSTextInputClient>
 
 @end
 
-@implementation CocoaWindowContentView
+@implementation CocoaWindowView
 
     /* --- MEMBERS --- */
     {
@@ -240,6 +242,9 @@
 
     - (void) dealloc
     {
+        [self setLayer: nil];
+        [self setWantsLayer: NO];
+
         [trackingArea release];
         [markedText release];
         [super dealloc];
@@ -254,10 +259,18 @@ namespace Sierra
 
     CocoaWindow::CocoaWindow(const CocoaContext &cocoaContext, const WindowCreateInfo &createInfo)
         : Window(createInfo), cocoaContext(cocoaContext),
-          window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)), delegate([[CocoaWindowDelegate alloc] initWithWindow: this]), view([[CocoaWindowContentView alloc] initWithWindow: this]),
-          inputManager(CocoaInputManager({ })), cursorManager({ .window = window }),
+          window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)), delegate([[CocoaWindowDelegate alloc] initWithWindow: this]), view([[CocoaWindowView alloc] initWithWindow: this]),
+          inputManager(CocoaInputManager({ })), cursorManager(window, { }),
           title(createInfo.title)
     {
+        // Create Metal layer
+        CAMetalLayer* metalLayer = [CAMetalLayer layer];
+        SR_ERROR_IF(metalLayer == nullptr, "Could not create Metal layer for window [{0}]!", createInfo.title);
+
+        // Assign Metal layer
+        [view setLayer: metalLayer];
+        [view setWantsLayer: YES];
+
         // Maximize window manually, or through Cocoa if resizable
         if (createInfo.maximize)
         {
@@ -301,7 +314,7 @@ namespace Sierra
             [window setFrame: [window frameRectForContentRect: contentRect] display: YES];
         }
 
-        // Poll creation events
+        // Poll create events
         while (!cocoaContext.IsEventQueueEmpty())
         {
             cocoaContext.PollNextEvent();
@@ -466,9 +479,9 @@ namespace Sierra
         return cursorManager;
     }
 
-    WindowAPI CocoaWindow::GetAPI() const
+    PlatformAPI CocoaWindow::GetAPI() const
     {
-        return WindowAPI::Cocoa;
+        return PlatformAPI::Cocoa;
     }
 
     /* --- EVENTS --- */

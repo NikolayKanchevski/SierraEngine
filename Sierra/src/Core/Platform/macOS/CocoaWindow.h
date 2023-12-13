@@ -17,14 +17,14 @@
     namespace Sierra
     {
         typedef void CocoaWindowDelegate;
-        typedef void CocoaWindowContentView;
-        typedef void CocoaWindowImplementation;
+        typedef void CocoaWindowView;
+        typedef void NSView;
+        typedef void CAMetalLayer;
     }
 #else
     #include <Cocoa/Cocoa.h>
     @class CocoaWindowDelegate;
-    @class CocoaWindowContentView;
-    @class CocoaWindowImplementation;
+    @class CocoaWindowView;
 #endif
 
 namespace Sierra
@@ -66,7 +66,10 @@ namespace Sierra
         [[nodiscard]] const Screen& GetScreen() const override;
         [[nodiscard]] InputManager& GetInputManager() override;
         [[nodiscard]] CursorManager& GetCursorManager() override;
-        [[nodiscard]] WindowAPI GetAPI() const override;
+        [[nodiscard]] PlatformAPI GetAPI() const override;
+
+        [[nodiscard]] inline const NSWindow* GetNSWindow() const { return window; }
+        [[nodiscard]] inline const NSView* GetNSView() const { return reinterpret_cast<NSView*>(view); }
 
         /* --- DESTRUCTOR --- */
         ~CocoaWindow();
@@ -76,7 +79,7 @@ namespace Sierra
 
         NSWindow* window = nullptr;
         CocoaWindowDelegate* delegate = nullptr;
-        CocoaWindowContentView* view = nullptr;
+        CocoaWindowView* view = nullptr;
 
         CocoaInputManager inputManager;
         CocoaCursorManager cursorManager;
@@ -87,16 +90,16 @@ namespace Sierra
 
         float32 GetTitleBarHeight() const;
 
-        #if defined(__OBJC__) && defined(COCOA_WINDOW_IMPLEMENTATION)
-            public:
-                /* --- EVENTS --- */
-                void WindowShouldClose();
-                void WindowDidResize(const NSNotification* notification);
-                void WindowDidMove(const NSNotification* notification);
-                void WindowDidMiniaturize(const NSNotification* notification);
-                void WindowDidBecomeKey(const NSNotification* notification);
-                void WindowDidResignKey(const NSNotification* notification);
-        #endif
+    #if defined(__OBJC__) && defined(COCOA_WINDOW_IMPLEMENTATION)
+        public:
+            /* --- EVENTS --- */
+            void WindowShouldClose();
+            void WindowDidResize(const NSNotification* notification);
+            void WindowDidMove(const NSNotification* notification);
+            void WindowDidMiniaturize(const NSNotification* notification);
+            void WindowDidBecomeKey(const NSNotification* notification);
+            void WindowDidResignKey(const NSNotification* notification);
+    #endif
 
     };
 

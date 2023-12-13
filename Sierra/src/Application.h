@@ -40,12 +40,12 @@ namespace Sierra
         [[nodiscard]] inline const WindowManager& GetWindowManager() { return *windowManager.get(); }
         [[nodiscard]] inline const RenderingContext& GetRenderingContext() { return *renderingContext.get(); }
 
-        /* --- DESTRUCTOR --- */
-        virtual ~Application();
-
         /* --- OPERATORS --- */
         Application(const Application&) = delete;
         Application& operator=(const Application&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        virtual ~Application();
 
     protected:
         explicit Application(const ApplicationCreateInfo &createInfo);
@@ -78,7 +78,7 @@ namespace Sierra
             TimeStep deltaTime;
 
         };
-        FrameLimiter frameLimiter{};
+        FrameLimiter frameLimiter = { };
 
     };
 
