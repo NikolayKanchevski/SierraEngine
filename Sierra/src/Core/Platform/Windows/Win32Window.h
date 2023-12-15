@@ -55,6 +55,9 @@ namespace Sierra
         [[nodiscard]] CursorManager& GetCursorManager() override;
         [[nodiscard]] PlatformAPI GetAPI() const override;
 
+        [[nodiscard]] inline HWND GetHwnd() const { return window; }
+        [[nodiscard]] inline HINSTANCE GetHInstance() const { return win32Context.GetHInstance(); }
+
         /* --- DESTRUCTOR --- */
         ~Win32Window();
 

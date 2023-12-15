@@ -272,7 +272,7 @@ namespace Sierra
         {
             { .name = VK_KHR_SURFACE_EXTENSION_NAME },
             #if SR_PLATFORM_WINDOWS
-                { .name = "VK_KHR_win32_surface" },
+                { .name = VK_KHR_WIN32_SURFACE_EXTENSION_NAME },
             #elif SR_PLATFORM_LINUX
                 { .name = VK_KHR_XLIB_SURFACE_EXTENSION_NAME },
             #elif SR_PLATFORM_macOS

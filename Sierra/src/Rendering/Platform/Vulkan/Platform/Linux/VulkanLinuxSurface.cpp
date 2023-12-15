@@ -24,7 +24,6 @@ namespace Sierra
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create Linux surface for window [{0}]! Error code: {1}.", window->GetTitle(), result);
 
         return surface;
-
     }
 
 }

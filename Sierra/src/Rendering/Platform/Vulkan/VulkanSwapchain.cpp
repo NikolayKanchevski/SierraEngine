@@ -6,7 +6,8 @@
 
 #include "VulkanCommandBuffer.h"
 #if SR_PLATFORM_WINDOWS
-
+    #include "Platform/Windows/VulkanWindowsSurface.h"
+    typedef Sierra::VulkanWindowsSurface NativeSurface;
 #elif SR_PLATFORM_macOS
     #include "Platform/macOS/VulkanMacOSSurface.h"
     typedef Sierra::VulkanMacOSSurface NativeSurface;

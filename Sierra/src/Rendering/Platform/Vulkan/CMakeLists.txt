@@ -71,7 +71,7 @@ if(Vulkan_LIBRARIES)
 
     # Add per-platform source files
     if(SIERRA_PLATFORM_WINDOWS)
-
+        add_subdirectory(Platform/Windows)
     elseif(SIERRA_PLATFORM_LINUX)
         add_subdirectory(Platform/Linux)
     elseif(SIERRA_PLATFORM_macOS)

@@ -9,6 +9,10 @@
 #include "../../RenderingResource.h"
 
 #if SR_PLATFORM_WINDOWS
+    #if !defined(WIN32_LEAN_AND_MEAN)
+        #define WIN32_LEAN_AND_MEAN
+    #endif
+    #include <windows.h>
     #include <vulkan/vulkan_win32.h>
 #elif SR_PLATFORM_macOS
     #include <vulkan/vulkan_macos.h>
