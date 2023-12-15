@@ -26,8 +26,8 @@ namespace Sierra
         explicit TouchManager(const TouchManagerCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual uint32 GetTouchCount();
-        [[nodiscard]] virtual std::optional<Touch> GetTouch(uint32 touchIndex);
+        [[nodiscard]] virtual uint32 GetTouchCount() const  ;
+        [[nodiscard]] virtual const Touch& GetTouch(uint32 touchIndex) const    ;
 
         /* --- EVENTS --- */
         template<typename T> void OnEvent(TouchEventCallback<T>) { static_assert(std::is_base_of_v<TouchEvent, T> && !std::is_same_v<TouchEvent, T>, "Template function accepts derived touch events only!"); }

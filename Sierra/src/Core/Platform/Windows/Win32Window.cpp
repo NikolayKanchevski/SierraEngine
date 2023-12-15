@@ -4,7 +4,7 @@
 
 #include "Win32Window.h"
 
-#include "WindowsInstance.h"
+#include "WindowsContext.h"
 
 #include "Win32Screen.h"
 

@@ -8,9 +8,9 @@ function(BuildWindowsExecutable)
 
     # Define RC file data
     set(RC_FILE_DATA "
-            IDR_MAINFRAME ICON
-            \"${SIERRA_APPLICATION_NAME}Icon.ico\"
-        ")
+        IDR_MAINFRAME ICON
+        \"${SIERRA_APPLICATION_NAME}Icon.ico\"
+    ")
 
     # Create and write to RC file
     set(RC_FILE_PATH "${RESOURCES_FOLDER_PATH}/Application.rc")

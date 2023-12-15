@@ -4,6 +4,7 @@
 
 #include "X11Context.h"
 
+#include <unistd.h>
 #include <X11/Xmd.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -333,13 +334,6 @@ namespace Sierra
             return;
         }
 
-        Flush();
-    }
-
-    void X11Context::CloseWindow(const XID window) const
-    {
-        HideWindow(window);
-        XDestroyWindow(display, window);
         Flush();
     }
 

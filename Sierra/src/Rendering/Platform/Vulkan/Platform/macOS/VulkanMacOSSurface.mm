@@ -4,7 +4,6 @@
 
 #include "VulkanMacOSSurface.h"
 
-#include <vulkan/vulkan_macos.h>
 #include <QuartzCore/QuartzCore.h>
 
 namespace Sierra

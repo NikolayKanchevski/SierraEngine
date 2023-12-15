@@ -5,20 +5,20 @@
 #pragma once
 
 #if !SR_PLATFORM_LINUX
-    #error "Including the LinuxInstance.h file is only allowed in Linux builds!"
+    #error "Including the LinuxContext.h file is only allowed in Linux builds!"
 #endif
 
-#include "../../PlatformInstance.h"
+#include "../../PlatformContext.h"
 #include "X11Context.h"
 
 namespace Sierra
 {
 
-    class SIERRA_API LinuxInstance final : public PlatformInstance
+    class SIERRA_API LinuxContext final : public PlatformContext
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit LinuxInstance(const PlatformInstanceCreateInfo &createInfo);
+        explicit LinuxContext(const PlatformContextCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const X11Context& GetX11Context() const { return x11Context; }

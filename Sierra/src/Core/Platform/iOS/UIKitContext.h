@@ -36,9 +36,6 @@ namespace Sierra
     class SIERRA_API UIKitContext
     {
     public:
-        /* --- CONSTRUCTORS --- */
-        explicit UIKitContext(const UIKitContextCreateInfo &createInfo);
-
         /* --- POLLING METHODS --- */
         [[nodiscard]] UIWindow* CreateWindow() const;
         void DestroyWindow(UIWindow* window) const;
@@ -51,6 +48,9 @@ namespace Sierra
         ~UIKitContext();
 
     private:
+        friend class iOSContext;
+        explicit UIKitContext(const UIKitContextCreateInfo &createInfo);
+
         UIKitApplication* application = nullptr;
         UIKitScreen primaryScreen;
 

@@ -43,7 +43,7 @@ namespace Sierra
             case GraphicsAPI::Metal:
             {
                 #if !defined(SR_METAL_SUPPORTED)
-                    SR_ERROR("Cannot create rendering context [{0}] using the Metal API, as it is unsupported on the system, or the CMake option [\"SIERRA_BUILD_METAL\"] hast not been turned on!", name);
+                    SR_ERROR("Cannot create rendering context using the Metal API, as it is unsupported on the system, or the CMake option [\"SIERRA_BUILD_METAL\"] hast not been turned on!");
                     return nullptr;
                 #else
                     return std::make_unique<MetalContext>(createInfo);

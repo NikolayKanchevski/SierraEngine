@@ -5,17 +5,20 @@
 #include "WindowManager.h"
 
 #if SR_PLATFORM_WINDOWS
-    #include "Platform/Windows/WindowsInstance.h"
+    #include "Platform/Windows/WindowsContext.h"
     #include "Platform/Windows/Win32Window.h"
     #undef CreateWindow
 #elif SR_PLATFORM_LINUX
-    #include "Platform/Linux/LinuxInstance.h"
+    #include "Platform/Linux/LinuxContext.h"
     #include "Platform/Linux/X11Window.h"
 #elif SR_PLATFORM_macOS
-    #include "Platform/macOS/macOSInstance.h"
+    #include "Platform/macOS/macOSContext.h"
     #include "Platform/macOS/CocoaWindow.h"
+#elif SR_PLATFORM_ANDROID
+    #include "Platform/Android/AndroidContext.h"
+    #include "Platform/Android/GameActivityWindow.h"
 #elif SR_PLATFORM_iOS
-    #include "Platform/iOS/iOSInstance.h"
+    #include "Platform/iOS/iOSContext.h"
     #include "Platform/iOS/UIKitWindow.h"
 #endif
 
@@ -34,17 +37,20 @@ namespace Sierra
     std::unique_ptr<Window> WindowManager::CreateWindow(const WindowCreateInfo &createInfo) const
     {
         #if SR_PLATFORM_WINDOWS
-            SR_ERROR_IF(platformInstance->GetType() != PlatformType::Windows, "Cannot create Win32 window using a platform instance of type, which differs from [PlatformType::Windows]!");
-            return std::make_unique<Win32Window>(static_cast<const WindowsInstance*>(platformInstance.get())->GetWin32Context(), createInfo);
+            SR_ERROR_IF(platformContext->GetType() != PlatformType::Windows, "Cannot create Win32 window using a platform context of type, which differs from [PlatformType::Windows]!");
+            return std::make_unique<Win32Window>(static_cast<const WindowsContext&>(*platformContext).GetWin32Context(), createInfo);
         #elif SR_PLATFORM_LINUX
-            SR_ERROR_IF(platformInstance->GetType() != PlatformType::Linux, "Cannot create X11 window using a platform instance of type, which differs from [PlatformType::Linux]!");
-            return std::make_unique<X11Window>(static_cast<const LinuxInstance*>(platformInstance.get())->GetX11Context(), createInfo);
+            SR_ERROR_IF(platformContext->GetType() != PlatformType::Linux, "Cannot create X11 window using a platform context of type, which differs from [PlatformType::Linux]!");
+            return std::make_unique<X11Window>(static_cast<const LinuxContext&>(*platformContext).GetX11Context(), createInfo);
         #elif SR_PLATFORM_macOS
-            SR_ERROR_IF(platformInstance->GetType() != PlatformType::macOS, "Cannot create Cocoa window using a platform instance of type, which differs from [PlatformType::macOS]!");
-            return std::make_unique<CocoaWindow>(static_cast<const macOSInstance*>(platformInstance.get())->GetCocoaContext(), createInfo);
+            SR_ERROR_IF(platformContext->GetType() != PlatformType::macOS, "Cannot create Cocoa window using a platform context of type, which differs from [PlatformType::macOS]!");
+            return std::make_unique<CocoaWindow>(static_cast<const macOSContext&>(*platformContext).GetCocoaContext(), createInfo);
+        #elif SR_PLATFORM_ANDROID
+            SR_ERROR_IF(platformContext->GetType() != PlatformType::Android, "Cannot create Native window using a platform context of type, which differs from [PlatformType::Android]!");
+            return std::make_unique<GameActivityWindow>(static_cast<const AndroidContext&>(*platformContext).GetGameActivityContext(), createInfo);
         #elif SR_PLATFORM_iOS
-            SR_ERROR_IF(platformInstance->GetType() != PlatformType::iOS, "Cannot create UIKit window using a platform instance of type, which differs from [PlatformType::iOS]!");
-            return std::make_unique<UIKitWindow>(static_cast<const iOSInstance*>(platformInstance.get())->GetUIKitContext(), createInfo);
+            SR_ERROR_IF(platformContext->GetType() != PlatformType::iOS, "Cannot create UIKit window using a platform context of type, which differs from [PlatformType::iOS]!");
+            return std::make_unique<UIKitWindow>(static_cast<const iOSContext&>(*platformContext).GetUIKitContext(), createInfo);
         #else
             SR_ERROR("Cannot create window on unrecognized operating system!");
             return nullptr;
@@ -54,7 +60,7 @@ namespace Sierra
     /* --- PRIVATE METHODS --- */
 
     WindowManager::WindowManager(const WindowManagerCreateInfo &createInfo)
-        : platformInstance(createInfo.platformInstance)
+        : platformContext(createInfo.platformContext)
     {
 
     }

@@ -5,7 +5,7 @@
 #define UIKIT_WINDOW_IMPLEMENTATION
 #include "UIKitWindow.h"
 
-#include "iOSInstance.h"
+#include "iOSContext.h"
 
 @interface UIKitWindowView : UIView<CALayerDelegate>
 

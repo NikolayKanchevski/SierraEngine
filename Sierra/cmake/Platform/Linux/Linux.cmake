@@ -8,14 +8,14 @@ function(BuildLinuxExecutable)
 
     # Define desktop file data
     set(DESKTOP_FILE_DATA "
-            [Desktop Entry]
-            Encoding=UTF-8
-            Version=${SIERRA_APPLICATION_VERSION_MAJOR}.${SIERRA_APPLICATION_VERSION_MINOR}.${SIERRA_APPLICATION_VERSION_PATCH}
-            Type=Application
-            Terminal=false
-            Exec=${CMAKE_CURRENT_BINARY_DIR}/${SIERRA_APPLICATION_NAME}
-            Name=${SIERRA_APPLICATION_NAME}
-            Icon=${ICON_OUTPUT_PATH}
+        [Desktop Entry]
+        Encoding=UTF-8
+        Version=${SIERRA_APPLICATION_VERSION_MAJOR}.${SIERRA_APPLICATION_VERSION_MINOR}.${SIERRA_APPLICATION_VERSION_PATCH}
+        Type=Application
+        Terminal=false
+        Exec=${CMAKE_CURRENT_BINARY_DIR}/${SIERRA_APPLICATION_NAME}
+        Name=${SIERRA_APPLICATION_NAME}
+        Icon=${ICON_OUTPUT_PATH}
     ")
 
     # Create and write to desktop file

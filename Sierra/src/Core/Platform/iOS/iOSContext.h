@@ -5,10 +5,10 @@
 #pragma once
 
 #if !SR_PLATFORM_iOS
-    #error "Including the iOSInstance.h file is only allowed in iOS builds!"
+    #error "Including the iOSContext.h file is only allowed in iOS builds!"
 #endif
 
-#include "../../PlatformInstance.h"
+#include "../../PlatformContext.h"
 #include "UIKitContext.h"
 
 #if defined(__OBJC__)
@@ -18,11 +18,11 @@
 namespace Sierra
 {
 
-    class SIERRA_API iOSInstance final : public PlatformInstance
+    class SIERRA_API iOSContext final : public PlatformContext
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit iOSInstance(const PlatformInstanceCreateInfo &createInfo);
+        explicit iOSContext(const PlatformContextCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const UIKitContext& GetUIKitContext() const { return uiKitContext; }

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import re
 import sys
 import tempfile
 import datetime
@@ -24,7 +25,7 @@ def UpdateReadMe() -> None:
         for root, dirs, files in os.walk(ENGINE_ROOT_DIRECTORY + subdirectory):
             for file in files:
                 for extension in SOURCE_FILE_EXTENSIONS:
-                    if 'bin' in root or 'vendor' in root or 'config' in root:
+                    if 'bin' in root or 'vendor' in root or 'config' in root or any(re.compile(r'\.[a-zA-Z]').match(item) for item in root.split('/')):
                         continue
 
                     if str(file).endswith(extension):
@@ -33,7 +34,7 @@ def UpdateReadMe() -> None:
                                 pass
                             linesOfCode += count + 1
 
-                            # print(file + ": " + str(count + 1))
+                            # print(str(file) + ": " + str(count + 1))
                             file.close()
 
     with open(ENGINE_ROOT_DIRECTORY + 'README.md', 'r+') as file:

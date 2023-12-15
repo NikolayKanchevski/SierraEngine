@@ -16,14 +16,14 @@ namespace Sierra
         SR_ERROR_IF(createInfo.name.empty(), "Application title must not be empty!");
 
         // Create objects
-        platformInstance = PlatformInstance::Load({ });
-        windowManager = WindowManager::Create({ .platformInstance = platformInstance });
+        platformContext = PlatformContext::Load({ });
+        windowManager = WindowManager::Create({ .platformContext = platformContext });
         renderingContext = RenderingContext::Create({ .name = "Application Context", .graphicsAPI = createInfo.settings.graphicsAPI });
     }
 
     void Application::Run()
     {
-        platformInstance->RunApplication({
+        platformContext->RunApplication({
             .OnStart = [this] {
                 OnStart();
             },

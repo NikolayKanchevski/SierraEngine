@@ -7,9 +7,6 @@
 [submodule "Sierra/vendor/spdlog"]
 	path = Sierra/vendor/spdlog
 	url = https://github.com/gabime/spdlog
-[submodule "Sierra/vendor/ios-cmake"]
-	path = Sierra/vendor/ios-cmake
-	url = https://github.com/leetal/ios-cmake
 [submodule "Sierra/vendor/metal-cpp"]
 	path = Sierra/vendor/metal-cpp
 	url = https://github.com/bkaradzic/metal-cpp

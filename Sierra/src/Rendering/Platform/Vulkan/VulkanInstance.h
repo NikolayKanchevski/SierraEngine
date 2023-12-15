@@ -274,11 +274,11 @@ namespace Sierra
             #if SR_PLATFORM_WINDOWS
                 { .name = "VK_KHR_win32_surface" },
             #elif SR_PLATFORM_LINUX
-                { .name = "VK_KHR_xcb_surface" },
+                { .name = VK_KHR_XLIB_SURFACE_EXTENSION_NAME },
             #elif SR_PLATFORM_macOS
                 { .name = VK_MVK_MACOS_SURFACE_EXTENSION_NAME },
             #elif SR_PLATFORM_ANDROID
-                { .name = "VK_KHR_android_surface" },
+                { .name = VK_KHR_ANDROID_SURFACE_EXTENSION_NAME },
             #elif SR_PLATFORM_iOS
                 { .name = VK_MVK_IOS_SURFACE_EXTENSION_NAME },
             #endif
@@ -288,7 +288,7 @@ namespace Sierra
                     .requiredOnlyIfSupported = true
                 },
             #endif
-            #if SR_ENABLE_LOGGING && !SR_PLATFORM_iOS
+            #if SR_ENABLE_LOGGING && !SR_PLATFORM_MOBILE
                 {
                     .name = VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
                     .requiredOnlyIfSupported = true
@@ -299,7 +299,7 @@ namespace Sierra
         std::vector<Hash> loadedExtensions;
         bool AddExtensionIfSupported(const InstanceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions);
 
-        #if SR_ENABLE_LOGGING && !SR_PLATFORM_iOS
+        #if SR_ENABLE_LOGGING && !SR_PLATFORM_MOBILE
             VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
             static bool ValidationLayersSupported(const std::vector<const char*> &layers);
         #endif

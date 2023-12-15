@@ -10,7 +10,11 @@
         #define SR_PLATFORM_LINUX 0
         #define SR_PLATFORM_macOS 0
         #define SR_PLATFORM_iOS 0
-        #define SR_PLATFORM_ANDROID 0
+        #if defined(__ANDROID__)
+            #define SR_PLATFORM_ANDROID __ANDROID__ // This is necessary due to a bug in Android's precompiled headers
+        #else
+            #define SR_PLATFORM_ANDROID 0
+        #endif
 
         #define SR_PLATFORM_APPLE (SR_PLATFORM_macOS || SR_PLATFORM_iOS)
         #define SR_PLATFORM_MOBILE (SR_PLATFORM_iOS || SR_PLATFORM_ANDROID)

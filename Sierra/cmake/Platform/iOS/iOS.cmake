@@ -1,10 +1,6 @@
 enable_language(OBJCXX)
 function(BuildIOSApplication)
     # Validate Xcode settings
-    set(XCODE_CMAKE_TOOL_CHAIN_FILE_PATH "${SIERRA_DIRECTORY}/vendor/ios-cmake/ios.toolchain.cmake")
-    if(NOT "${CMAKE_TOOLCHAIN_FILE}" STREQUAL XCODE_CMAKE_TOOL_CHAIN_FILE_PATH)
-        message(FATAL_ERROR "[Sierra]: In order to build an Xcode project for iOS, you must compile with -DCMAKE_TOOLCHAIN_FILE=${XCODE_CMAKE_TOOL_CHAIN_FILE_PATH}!")
-    endif()
     if(NOT PLATFORM)
         message(FATAL_ERROR "[Sierra]: In order to build an Xcode project for iOS, you must compile with -DPLATFORM={TARGET_PLATFORM}!")
     endif()

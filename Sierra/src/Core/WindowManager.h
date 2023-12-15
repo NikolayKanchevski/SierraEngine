@@ -5,14 +5,14 @@
 #pragma once
 
 #include "Window.h"
-#include "PlatformInstance.h"
+#include "PlatformContext.h"
 
 namespace Sierra
 {
 
     struct WindowManagerCreateInfo
     {
-        const std::unique_ptr<PlatformInstance> &platformInstance;
+        const std::unique_ptr<PlatformContext> &platformContext;
     };
 
     class SIERRA_API WindowManager
@@ -29,7 +29,7 @@ namespace Sierra
         WindowManager& operator=(const WindowManager&) = delete;
 
     private:
-        const std::unique_ptr<PlatformInstance> &platformInstance;
+        const std::unique_ptr<PlatformContext> &platformContext;
         explicit WindowManager(const WindowManagerCreateInfo &createInfo);
 
     };

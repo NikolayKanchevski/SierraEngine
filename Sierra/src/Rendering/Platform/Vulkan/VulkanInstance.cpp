@@ -52,7 +52,7 @@ namespace Sierra
         #endif
         instanceCreateInfo.pNext = nullptr;
 
-        #if SR_ENABLE_LOGGING && !SR_PLATFORM_iOS
+        #if SR_ENABLE_LOGGING && !SR_PLATFORM_MOBILE
             // Define debug messenger info here, so it does not go out of scope
             VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo{};
             const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
@@ -312,7 +312,7 @@ namespace Sierra
         #endif
 
         // Enable validation if supported
-        #if SR_ENABLE_LOGGING && !SR_PLATFORM_iOS
+        #if SR_ENABLE_LOGGING && !SR_PLATFORM_MOBILE
             if (validationSupported && functionTable.vkCreateDebugUtilsMessengerEXT != nullptr) functionTable.vkCreateDebugUtilsMessengerEXT(instance, &debugMessengerCreateInfo, nullptr, &debugMessenger);
         #endif
     }
@@ -368,7 +368,7 @@ namespace Sierra
         return true;
     }
 
-    #if SR_ENABLE_LOGGING && !SR_PLATFORM_iOS
+    #if SR_ENABLE_LOGGING && !SR_PLATFORM_MOBILE
         bool VulkanInstance::ValidationLayersSupported(const std::vector<const char*> &layers)
         {
             // Retrieve supported layer count
@@ -406,7 +406,7 @@ namespace Sierra
 
     void VulkanInstance::Destroy()
     {
-        #if SR_ENABLE_LOGGING && !SR_PLATFORM_iOS
+        #if SR_ENABLE_LOGGING && !SR_PLATFORM_MOBILE
             if (debugMessenger != nullptr && functionTable.vkDestroyDebugUtilsMessengerEXT != nullptr) functionTable.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         #endif
         functionTable.vkDestroyInstance(instance, nullptr);

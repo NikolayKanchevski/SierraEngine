@@ -5,20 +5,20 @@
 #pragma once
 
 #if !SR_PLATFORM_macOS
-    #error "Including the macOSInstance.h file is only allowed in macOS builds!"
+    #error "Including the macOSContext.h file is only allowed in macOS builds!"
 #endif
 
-#include "../../PlatformInstance.h"
+#include "../../PlatformContext.h"
 #include "CocoaContext.h"
 
 namespace Sierra
 {
 
-    class SIERRA_API macOSInstance final : public PlatformInstance
+    class SIERRA_API macOSContext final : public PlatformContext
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit macOSInstance(const PlatformInstanceCreateInfo &createInfo);
+        explicit macOSContext(const PlatformContextCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const CocoaContext& GetCocoaContext() const { return cocoaContext; }

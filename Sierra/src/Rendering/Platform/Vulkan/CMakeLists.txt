@@ -1,13 +1,16 @@
 # Try to link Vulkan
-if(NOT SIERRA_PLATFORM_iOS)
+if(SIERRA_PLATFORM_WINDOWS OR SIERRA_PLATFORM_LINUX)
     find_package(Vulkan QUIET)
-    if(SIERRA_PLATFORM_macOS)
-        find_library(MoltenVK_LIBRARIES NAMES MoltenVK)
-        if(MoltenVKLibrary)
-            list(APPEND Vulkan_LIBRARIES ${MoltenVK_LIBRARIES})
-        endif()
+elseif(SIERRA_PLATFORM_macOS)
+    find_package(Vulkan QUIET)
+    find_library(MoltenVK_LIBRARIES NAMES MoltenVK)
+    if(MoltenVKLibrary)
+        list(APPEND Vulkan_LIBRARIES ${MoltenVK_LIBRARIES})
     endif()
-else()
+elseif(SIERRA_PLATFORM_ANDROID)
+    add_definitions(-DVK_USE_PLATFORM_ANDROID_KHR=1)
+    list(APPEND Vulkan_LIBRARIES vulkan)
+elseif(SIERRA_PLATFORM_iOS)
     # Add MoltenVK's prerequisites
     set(Vulkan_LIBRARIES
         "-framework CoreGraphics"
@@ -34,7 +37,7 @@ else()
 endif()
 
 # Check if it succeeded and proceed
-if(Vulkan_LIBRARIES AND Vulkan_INCLUDE_DIRS)
+if(Vulkan_LIBRARIES)
     message(STATUS "[Sierra]: Building Vulkan...")
 
     # Link Vulkan
@@ -67,8 +70,14 @@ if(Vulkan_LIBRARIES AND Vulkan_INCLUDE_DIRS)
     )
 
     # Add per-platform source files
-    if (SIERRA_PLATFORM_macOS)
+    if(SIERRA_PLATFORM_WINDOWS)
+
+    elseif(SIERRA_PLATFORM_LINUX)
+        add_subdirectory(Platform/Linux)
+    elseif(SIERRA_PLATFORM_macOS)
         add_subdirectory(Platform/macOS)
+    elseif(SIERRA_PLATFORM_ANDROID)
+        add_subdirectory(Platform/Android)
     elseif(SIERRA_PLATFORM_iOS)
         add_subdirectory(Platform/iOS)
     endif()
@@ -76,7 +85,7 @@ if(Vulkan_LIBRARIES AND Vulkan_INCLUDE_DIRS)
     # Link VMA
     set(VMA_DIRECTORY ../../../../vendor/VMA)
     set(VMA_STATIC_VULKAN_FUNCTIONS OFF)
-    add_subdirectory(${VMA_DIRECTORY} SYSTEM ${VMA_DIRECTORY})
+    add_subdirectory(${VMA_DIRECTORY} ${VMA_DIRECTORY})
     target_link_libraries(Sierra PRIVATE VulkanMemoryAllocator)
     target_include_directories(Sierra SYSTEM PRIVATE ${VMA_DIRECTORY}/include/)
 else()

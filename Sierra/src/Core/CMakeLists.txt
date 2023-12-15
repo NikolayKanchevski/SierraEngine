@@ -8,8 +8,8 @@ target_sources(Sierra PRIVATE
     Logger.cpp
     Logger.h
     MouseButton.h
-    PlatformInstance.cpp
-    PlatformInstance.h
+    PlatformContext.cpp
+    PlatformContext.h
     ScopeProfiler.cpp
     ScopeProfiler.h
     Screen.cpp

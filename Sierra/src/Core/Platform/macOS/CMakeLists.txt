@@ -10,8 +10,8 @@ target_sources(Sierra PRIVATE
     CocoaScreen.h
     CocoaWindow.mm
     CocoaWindow.h
-    macOSInstance.mm
-    macOSInstance.h
+    macOSContext.mm
+    macOSContext.h
 )
 
 # Link libraries

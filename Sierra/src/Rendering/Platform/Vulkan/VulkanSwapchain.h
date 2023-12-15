@@ -37,6 +37,7 @@ namespace Sierra
     private:
         const VulkanInstance &instance;
         const VulkanDevice &device;
+        const std::unique_ptr<Window> &window;
 
         VkSurfaceKHR surface = VK_NULL_HANDLE;
         VkQueue presentationQueue = VK_NULL_HANDLE;
@@ -49,7 +50,7 @@ namespace Sierra
         VkRenderPass renderPass = VK_NULL_HANDLE;
         std::vector<VkFramebuffer> framebuffers;
 
-        std::vector<VkSemaphore> isImageAvailableSemaphores;
+        std::vector<VkSemaphore> isImageFreeSemaphores;
         std::vector<VkSemaphore> isImageRenderedSemaphores;
         std::vector<VkFence> isImageUnderWorkFences;
 
@@ -57,6 +58,7 @@ namespace Sierra
         uint32 currentFrame = 0; // On the CPU
         uint32 currentImage = 0; // On the GPU
 
+        void Recreate();
         void CreateTemporaryObjects();
         void DestroyTemporaryObjects();
 

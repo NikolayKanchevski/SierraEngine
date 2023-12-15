@@ -52,18 +52,12 @@ namespace Sierra
 
     };
 
-    // NOTE:
-    //  This is a simple abstraction layer for X11, and as such, it complies with X11's design, and not with that of the engine.
-    //  For example, returned window coordinates are in -Y coordinates, even though the engine makes use of +Y, meaning it is up to the user to convert them.
     class SIERRA_API X11Context
     {
     public:
-        /* --- CONSTRUCTORS --- */
-        explicit X11Context(const X11ContextCreateInfo &createInfo);
-
         /* --- POLLING METHODS --- */
         [[nodiscard]] XID CreateWindow(const std::string &title, uint32 width, uint32 height) const;
-        XEvent DestroyWindow(XID window) const;
+        XEvent DestroyWindow(const XID window) const;
 
         [[nodiscard]] bool IsEventQueueEmpty() const;
         XEvent PollNextEvent() const;
@@ -80,7 +74,6 @@ namespace Sierra
         void ShowWindow(XID window) const;
         void HideWindow(XID window) const;
         void FocusWindow(XID window) const;
-        void CloseWindow(XID window) const;
 
         /* --- SETTER METHODS --- */
         void SetWindowTitle(XID window, const std::string &title) const;
@@ -112,6 +105,7 @@ namespace Sierra
         [[nodiscard]] Vector4UInt GetWindowExtents(XID window) const;
         [[nodiscard]] inline Atom GetAtom(const AtomType atomType) const { return atomTable[GetAtomTypeIndex(atomType)]; }
 
+        [[nodiscard]] inline Display* GetDisplay() const { return display; }
         [[nodiscard]] inline const XkbExtension& GetXkbExtension() const { return xkbExtension; }
         [[nodiscard]] inline const XrandrExtension& GetXrandrExtension() const { return xrandrExtension; }
 
@@ -119,6 +113,9 @@ namespace Sierra
         ~X11Context();
 
     private:
+        friend class LinuxContext;
+        explicit X11Context(const X11ContextCreateInfo &createInfo);
+
         Display* display = nullptr;
         int screen = 0;
         XID rootWindow = 0;

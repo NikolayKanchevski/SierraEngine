@@ -18,18 +18,14 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    uint32 UIKitTouchManager::GetTouchCount()
+    uint32 UIKitTouchManager::GetTouchCount() const
     {
         return static_cast<uint32>(activeTouches.size());
     }
 
-    std::optional<Touch> UIKitTouchManager::GetTouch(const uint32 touchIndex)
-    {
-        if (activeTouches.size() < touchIndex + 1) 
+    const Touch& UIKitTouchManager::GetTouch(const uint32 touchIndex) const
         {
-            return std::nullopt;
-        }
-        
+            if (touchIndex >= activeTouches.size()) SR_ERROR("Touch index [{0}] out of range! Make sure to use TouchManager::GetTouchCount() and retrieve touches within the returned range.", touchIndex);
         return activeTouches[touchIndex];
     }
 

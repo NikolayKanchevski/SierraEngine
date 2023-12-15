@@ -5,20 +5,20 @@
 #pragma once
 
 #if !SR_PLATFORM_WINDOWS
-    #error "Including the WindowsInstance.h file is only allowed in Windows builds!"
+    #error "Including the WindowsContext.h file is only allowed in Windows builds!"
 #endif
 
-#include "../../PlatformInstance.h"
+#include "../../PlatformContext.h"
 #include "Win32Context.h"
 
 namespace Sierra
 {
 
-    class SIERRA_API WindowsInstance final : public PlatformInstance
+    class SIERRA_API WindowsContext final : public PlatformContext
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit WindowsInstance(const PlatformInstanceCreateInfo &createInfo);
+        explicit WindowsContext(const PlatformContextCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const Win32Context& GetWin32Context() const { return win32Context; }

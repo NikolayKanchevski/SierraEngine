@@ -16,14 +16,17 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    uint32 TouchManager::GetTouchCount()
+    uint32 TouchManager::GetTouchCount() const
     {
         return 0;
     }
 
-    std::optional<Touch> TouchManager::GetTouch(const uint32 touchIndex)
+    const Touch& TouchManager::GetTouch(const uint32 touchIndex) const
     {
-        return std::nullopt;
+        SR_ERROR("Touch index [{0}] out of range! Make sure to use TouchManager::GetTouchCount() and retrieve touches within the returned range.", touchIndex);
+
+        static Touch touch = Touch({ });
+        return touch;
     }
 
 }

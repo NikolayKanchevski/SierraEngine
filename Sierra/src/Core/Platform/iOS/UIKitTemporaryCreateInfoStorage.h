@@ -9,7 +9,7 @@
 #endif
 
 #include "UIKitContext.h"
-#include "../../PlatformInstance.h" // For Sierra::PlatformApplicationRunInfo
+#include "../../PlatformContext.h" // For Sierra::PlatformApplicationRunInfo
 
 namespace Sierra
 {

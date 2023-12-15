@@ -37,9 +37,6 @@ namespace Sierra
     class CocoaContext
     {
     public:
-        /* --- CONSTRUCTORS --- */
-        explicit CocoaContext(const CocoaContextCreateInfo &createInfo);
-
         /* --- POLLING METHODS --- */
         [[nodiscard]] NSWindow* CreateWindow(const std::string &title, uint32 width, uint32 height) const;
         void DestroyWindow(NSWindow* window) const;
@@ -54,15 +51,13 @@ namespace Sierra
         [[nodiscard]] const CocoaScreen& GetPrimaryScreen() const;
         [[nodiscard]] const CocoaScreen& GetWindowScreen(const NSWindow* window) const;
 
-        /* --- EVENTS --- */
-        #if defined(__OBJC__)
-            void ApplicationDidChangeScreenParameters(const NSNotification* notification);
-        #endif
-
         /* --- DESTRUCTOR --- */
         ~CocoaContext();
 
     private:
+        friend class macOSContext;
+        explicit CocoaContext(const CocoaContextCreateInfo &createInfo);
+
         CocoaApplication* application;
         CocoaApplicationDelegate* applicationDelegate;
 
@@ -73,6 +68,12 @@ namespace Sierra
         };
         std::vector<CocoaScreenPair> screens;
         void ReloadScreens();
+
+        #if defined(__OBJC__) && defined(COCOA_CONTEXT_IMPLEMENTATION)
+            public:
+                /* --- EVENTS --- */
+                void ApplicationDidChangeScreenParameters(const NSNotification* notification);
+        #endif
 
     };
 

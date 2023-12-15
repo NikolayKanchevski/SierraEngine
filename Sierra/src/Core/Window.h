@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "PlatformInstance.h"
+#include "PlatformContext.h"
 #include "../Events/WindowEvent.h"
 
 #include "Screen.h"
@@ -20,6 +20,7 @@ namespace Sierra
         Win32,
         X11,
         Cocoa,
+        GameActivity,
         UIKit
     };
 

@@ -34,7 +34,7 @@ namespace Sierra
         // Retrieve number of GPUs found
         uint32 physicalDeviceCount = 0;
         VkResult result = instance.GetFunctionTable().vkEnumeratePhysicalDevices(instance.GetVulkanInstance(), &physicalDeviceCount, nullptr);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not enumerate physical devices! Error code: {1}.", result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not enumerate physical devices! Error code: {0}.", result);
         SR_ERROR_IF(physicalDeviceCount <= 0, "[Vulkan]: Could not find any supported physical devices!");
 
         // Retrieve GPUs

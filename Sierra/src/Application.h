@@ -7,7 +7,7 @@
 #include "Engine/Time.h"
 #include "Core/Version.h"
 #include "Core/WindowManager.h"
-#include "Core/PlatformInstance.h"
+#include "Core/PlatformContext.h"
 #include "Rendering/RenderingContext.h"
 
 namespace Sierra
@@ -16,7 +16,7 @@ namespace Sierra
     struct ApplicationSettings
     {
         GraphicsAPI graphicsAPI = GraphicsAPI::Auto;
-        uint16 maxFrameRate = 0;
+        uint16 maxFrameRate = SR_PLATFORM_MOBILE * 60;
     };
 
     struct ApplicationCreateInfo
@@ -36,7 +36,7 @@ namespace Sierra
         [[nodiscard]] inline const std::string& GetName() const { return name; }
         [[nodiscard]] inline const Version& GetVersion() { return version; }
 
-        [[nodiscard]] inline const PlatformInstance& GetPlatformInstance() { return *platformInstance.get(); }
+        [[nodiscard]] inline const PlatformContext& GetPlatformContext() { return *platformContext.get(); }
         [[nodiscard]] inline const WindowManager& GetWindowManager() { return *windowManager.get(); }
         [[nodiscard]] inline const RenderingContext& GetRenderingContext() { return *renderingContext.get(); }
 
@@ -58,7 +58,7 @@ namespace Sierra
         Version version;
         ApplicationSettings settings;
 
-        std::unique_ptr<PlatformInstance> platformInstance = nullptr;
+        std::unique_ptr<PlatformContext> platformContext = nullptr;
         std::unique_ptr<WindowManager> windowManager = nullptr;
         std::unique_ptr<RenderingContext> renderingContext = nullptr;
 

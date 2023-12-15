@@ -1,7 +1,7 @@
 # Link source files
 target_sources(Sierra PRIVATE
-    LinuxInstance.cpp
-    LinuxInstance.h
+    LinuxContext.cpp
+    LinuxContext.h
     X11Context.cpp
     X11Context.h
     X11CursorManager.cpp

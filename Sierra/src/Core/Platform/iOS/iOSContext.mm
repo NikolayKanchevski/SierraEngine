@@ -2,7 +2,7 @@
 // Created by Nikolay Kanchevski on 26.09.23.
 //
 
-#include "iOSInstance.h"
+#include "iOSContext.h"
 
 #include "UIKitTemporaryCreateInfoStorage.h"
 
@@ -11,15 +11,15 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    iOSInstance::iOSInstance(const PlatformInstanceCreateInfo &createInfo)
-        : PlatformInstance(createInfo), uiKitContext(UIKitContext({ }))
+    iOSContext::iOSContext(const PlatformContextCreateInfo &createInfo)
+        : PlatformContext(createInfo), uiKitContext(UIKitContext({ }))
     {
         
     }
 
     /* --- POLLING METHODS --- */
 
-    void iOSInstance::RunApplication(const PlatformApplicationRunInfo &runInfo)
+    void iOSContext::RunApplication(const PlatformApplicationRunInfo &runInfo)
     {
         // Save current run info
         Sierra::UIKitTemporaryCreateInfoStorage::Push({ .context = &uiKitContext, .runInfo = runInfo });

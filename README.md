@@ -8,7 +8,7 @@
 
 # What is Sierra Engine?
 
-An **open-source** rendering engine based on **[C++ 20](https://en.cppreference.com/w/cpp/20/)**, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). Built on top of the **[Vulkan](https://www.vulkan.org/)** and [Metal](https://developer.apple.com/metal/) rendering APIs, it provides support for **Windows 7-11**, **macOS**, **Linux** and **iOS**, but is planned to also feature other native APIs (like **[DirectX](https://developer.nvidia.com/directx)**) and support consoles.
+An **open-source** rendering engine based on **[C++ 17](https://en.cppreference.com/w/cpp/17/)**, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). Built on top of the **[Vulkan](https://www.vulkan.org/)** and [Metal](https://developer.apple.com/metal/) rendering APIs, it provides support for **Windows 7-11**, **macOS**, **Linux** and **iOS**, but is planned to also feature other native APIs (like **[DirectX](https://developer.nvidia.com/directx)**) and support consoles.
 
 <br>
 
@@ -114,6 +114,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 * [JetBrains CLion](https://www.jetbrains.com/clion/) - Primary IDE of the project.
 * [JetBrains Rider](https://www.jetbrains.com/rider/) - Another IDE which was used to create the .NET 6.0 prototype version of the engine.
 * [Xcode](https://developer.apple.com/xcode/) - Used to deploy the iOS version on mobile [Apple](https://www.apple.com) devices.
+* [Android Studio](https://developer.android.com/studio/) - Deployment of [Android](https://www.android.com) version.
 * [Blender](https://www.blender.org/) - Managing and testing 3D models.
 * [Trello](https://trello.com/b/RMYtZPOg/sierra-engine/) - For pretending to have an organized list of things to implement next.
 
@@ -121,7 +122,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LineCounter">Total lines of code: 17,732</p>
-<p align="center" id="LastUpdated">Last updated: 13/12/2023 </p>
+<p align="center" id="LineCounter">Total lines of code: 19,568</p>
+<p align="center" id="LastUpdated">Last updated: 15/12/2023 </p>
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

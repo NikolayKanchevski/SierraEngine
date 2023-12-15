@@ -16,7 +16,7 @@ namespace Sierra
         iOS
     };
 
-    struct PlatformInstanceCreateInfo
+    struct PlatformContextCreateInfo
     {
 
     };
@@ -28,25 +28,25 @@ namespace Sierra
         std::function<void()> OnEnd = [] {  };
     };
 
-    class SIERRA_API PlatformInstance
+    class SIERRA_API PlatformContext
     {
     public:
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual PlatformType GetType() const = 0;
 
         /* --- OPERATORS --- */
-        PlatformInstance(const PlatformInstance&) = delete;
-        PlatformInstance& operator=(const PlatformInstance&) = delete;
+        PlatformContext(const PlatformContext&) = delete;
+        PlatformContext& operator=(const PlatformContext&) = delete;
 
         /* --- DESTRUCTOR --- */
-        virtual ~PlatformInstance() = default;
+        virtual ~PlatformContext() = default;
 
     protected:
-        explicit PlatformInstance(const PlatformInstanceCreateInfo &createInfo);
+        explicit PlatformContext(const PlatformContextCreateInfo &createInfo);
 
-    private:
+//    private:
         friend class Application;
-        static std::unique_ptr<PlatformInstance> Load(const PlatformInstanceCreateInfo &createInfo);
+        static std::unique_ptr<PlatformContext> Load(const PlatformContextCreateInfo &createInfo);
 
         virtual void RunApplication(const PlatformApplicationRunInfo &runInfo);
 

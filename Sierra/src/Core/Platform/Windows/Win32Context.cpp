@@ -13,7 +13,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     Win32Context::Win32Context(const Win32ContextCreateInfo &createInfo)
-            : hInstance(GetModuleHandle(nullptr)), process(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, createInfo.processID))
+            : hInstance(GetModuleHandle(nullptr)), process(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId()))
     {
         // Get binary name
         CHAR executableName[MAX_PATH];
