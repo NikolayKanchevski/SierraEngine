@@ -1,3 +1,6 @@
+# Disable automatic reference counting
+set_xcode_property(Sierra CLANG_ENABLE_OBJC_ARC "NO" "All")
+
 # Link source files
 target_sources(Sierra PRIVATE
     iOSContext.mm

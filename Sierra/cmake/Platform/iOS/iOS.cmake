@@ -70,7 +70,6 @@ function(BuildIOSApplication)
 
     set_global_xcode_property(IPHONEOS_DEPLOYMENT_TARGET "13.0" "All")
     set_global_xcode_property(MACOSX_DEPLOYMENT_TARGET "10.13.6" "All")
-
-    set_xcode_property(Sierra CLANG_ENABLE_OBJC_ARC "NO" "All")
+    
     set_xcode_property(${SIERRA_APPLICATION_NAME} PRODUCT_BUNDLE_IDENTIFIER "com.sierra.${SIERRA_APPLICATION_NAME}" "All")
 endfunction()

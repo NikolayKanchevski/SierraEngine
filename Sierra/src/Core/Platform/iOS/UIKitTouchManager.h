@@ -24,8 +24,8 @@ namespace Sierra
         explicit UIKitTouchManager(const TouchManagerCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] uint32 GetTouchCount() override const;
-        [[nodiscard]] const Touch& GetTouch(uint32 touchIndex) override const;
+        [[nodiscard]] uint32 GetTouchCount() const override;
+        [[nodiscard]] const Touch& GetTouch(uint32 touchIndex) const override;
 
     private:
         std::vector<Touch> activeTouches;

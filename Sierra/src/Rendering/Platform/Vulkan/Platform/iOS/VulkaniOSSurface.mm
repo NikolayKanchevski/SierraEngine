@@ -17,7 +17,7 @@ namespace Sierra
         // Set up surface create info
         VkIOSSurfaceCreateInfoMVK surfaceCreateInfo = { };
         surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
-        surfaceCreateInfo.pView = uiKitWindow.GetUIView();
+        surfaceCreateInfo.pView = (__bridge const void*) uiKitWindow.GetUIView();
 
         // Create surface
         VkSurfaceKHR surface;

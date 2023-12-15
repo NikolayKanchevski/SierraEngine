@@ -73,7 +73,7 @@ namespace Sierra
             for (UITouch* rawTouch in touches)
             {
                 // Check if touch has been stored before
-                auto iterator = std::find_if(activeTouches.begin(), activeTouches.end(), [&rawTouch](const Touch &item) { return item.GetID() == rawTouch; });
+                auto iterator = std::find_if(activeTouches.begin(), activeTouches.end(), [&rawTouch](const Touch &item) { return item.GetID() == (__bridge void*) rawTouch; });
                 if (iterator == activeTouches.end()) continue;
                 
                 // Get position within the screen and flip Y coordinate
