@@ -26,10 +26,11 @@ namespace Sierra
         [[nodiscard]] inline VkCommandBuffer GetVulkanCommandBuffer() const { return commandBuffer; }
 
         /* --- DESTRUCTOR --- */
-        void Destroy() override;
+        ~VulkanCommandBuffer();
 
     private:
         const VulkanDevice &device;
+        VkCommandPool commandPool = VK_NULL_HANDLE;
         VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 
     };

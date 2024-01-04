@@ -39,6 +39,7 @@ namespace Sierra
                 break;
             }
             case ImageChannels::RGBA:
+            case ImageChannels::BGRA:
             {
                 memorySize *= 4;
                 break;
@@ -48,6 +49,7 @@ namespace Sierra
         {
             case ImageMemoryType::Int8:
             case ImageMemoryType::UInt8:
+            case ImageMemoryType::UNorm8:
             case ImageMemoryType::SRGB8:
             {
                 memorySize *= 1;

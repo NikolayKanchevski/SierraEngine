@@ -45,12 +45,13 @@ namespace Sierra
         [[nodiscard]] VulkanAPIVersion GetAPIVersion() const;
 
         /* --- DESTRUCTOR --- */
-        void Destroy() override;
+        ~VulkanInstance();
 
     private:
         friend class VulkanContext;
         explicit VulkanInstance(const VulkanInstanceCreateInfo &createInfo);
 
+        #define ENABLE_VALIDATION true
         VkInstance instance = VK_NULL_HANDLE;
         struct
         {
@@ -275,14 +276,10 @@ namespace Sierra
                 { .name = VK_KHR_WIN32_SURFACE_EXTENSION_NAME },
             #elif SR_PLATFORM_LINUX
                 { .name = VK_KHR_XLIB_SURFACE_EXTENSION_NAME },
-            #elif SR_PLATFORM_macOS
-                { .name = VK_MVK_MACOS_SURFACE_EXTENSION_NAME },
             #elif SR_PLATFORM_ANDROID
                 { .name = VK_KHR_ANDROID_SURFACE_EXTENSION_NAME },
-            #elif SR_PLATFORM_iOS
-                { .name = VK_MVK_IOS_SURFACE_EXTENSION_NAME },
-            #endif
-            #if SR_PLATFORM_APPLE
+            #elif SR_PLATFORM_APPLE
+                { .name = VK_EXT_METAL_SURFACE_EXTENSION_NAME },
                 {
                     .name = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
                     .requiredOnlyIfSupported = true

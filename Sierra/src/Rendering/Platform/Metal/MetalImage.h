@@ -19,11 +19,10 @@ namespace Sierra
         MetalImage(const MetalDevice &device, const ImageCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline ImageSampling GetSampling() const override { return sampling; }
         [[nodiscard]] inline const MTL::Texture* GetMetalTexture() const { return texture; }
 
         /* --- DESTRUCTOR --- */
-        void Destroy() override;
+        ~MetalImage();
 
         /* --- CONVERSIONS --- */
         static MTL::TextureType ImageSettingsToTextureType(ImageSampling sampling, uint32 layerCount);
@@ -35,7 +34,21 @@ namespace Sierra
 
     private:
         MTL::Texture* texture = nullptr;
-        ImageSampling sampling = ImageSampling::x1;
+
+        friend class MetalSwapchain;
+        struct SwapchainImageCreateInfo
+        {
+            const std::string &name = "Swapchain Image";
+            MTL::Texture* texture = nullptr;
+
+            uint32 width = 0;
+            uint32 height = 0;
+            MTL::PixelFormat format = MTL::PixelFormatInvalid;
+        };
+
+        bool swapchainImage = false;
+        MetalImage(const MetalDevice &device, const SwapchainImageCreateInfo &createInfo);
+        [[nodiscard]] static ImageFormat SwapchainPixelFormatToImageFormat(MTL::PixelFormat format);
 
     };
 

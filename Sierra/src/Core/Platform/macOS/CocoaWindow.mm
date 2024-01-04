@@ -268,6 +268,7 @@ namespace Sierra
         SR_ERROR_IF(metalLayer == nullptr, "Could not create Metal layer for window [{0}]!", createInfo.title);
 
         // Assign Metal layer
+        [metalLayer setContentsScale: [window backingScaleFactor]];
         [view setLayer: metalLayer];
         [view setWantsLayer: YES];
 
@@ -425,12 +426,12 @@ namespace Sierra
 
     Vector2UInt CocoaWindow::GetSize() const
     {
-        return { [view frame].size.width, [view frame].size.height + GetTitleBarHeight() };
+        return { [window frame].size.width, [window frame].size.height + GetTitleBarHeight() };
     }
 
     Vector2UInt CocoaWindow::GetFramebufferSize() const
     {
-        const NSRect contentRect = [window contentRectForFrameRect: [[window contentView] frame]];
+        const NSRect contentRect = [window convertRectToBacking: window.frame];
         return { contentRect.size.width, contentRect.size.height };
     }
 

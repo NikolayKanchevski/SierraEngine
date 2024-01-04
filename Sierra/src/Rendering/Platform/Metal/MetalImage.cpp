@@ -12,19 +12,12 @@ namespace Sierra
     MetalImage::MetalImage(const MetalDevice &device, const ImageCreateInfo &createInfo)
         : Image(createInfo), MetalResource(createInfo.name)
     {
-        // Get device's sampling support
-        const ImageSampling highestSampling = device.GetHighestColorSampling();
-        if (static_cast<uint32>(createInfo.sampling) > static_cast<uint32>(highestSampling))
-        {
-            sampling = highestSampling;
-            SR_WARNING("[Metal]: Cannot create image [{0}] with sampling of [{1}], as the highest supported is [{2}]! Sampling was automatically lowered.", GetName(), static_cast<uint32>(createInfo.sampling), static_cast<uint32>(highestSampling));
-        }
-
+        SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Metal]: Cannot create image [{0}] with unsupported sampling! Make sure to use Device::IsImageSamplingSupported() to query image sampling support.");
         SR_ERROR_IF(!device.IsImageConfigurationSupported(createInfo.format, createInfo.usage), "[Metal]: Cannot create image with unsupported format! Use Device::IsImageConfigurationSupported() to query format support.");
 
         // Set up texture descriptor
         MTL::TextureDescriptor* textureDescriptor = MTL::TextureDescriptor::alloc()->init();
-        textureDescriptor->setTextureType(ImageSettingsToTextureType(sampling, createInfo.layerCount));
+        textureDescriptor->setTextureType(ImageSettingsToTextureType(GetSampling(), createInfo.layerCount));
         textureDescriptor->setWidth(GetWidth());
         textureDescriptor->setHeight(GetHeight());
         textureDescriptor->setDepth(1);
@@ -42,15 +35,37 @@ namespace Sierra
         SR_ERROR_IF(texture == nullptr, "[Metal]: Could not create image!");
         MTL_SET_RESOURCE_NAME(texture, GetName().c_str());
 
-        // Free create info
         textureDescriptor->release();
+    }
+
+    MetalImage::MetalImage(const MetalDevice &device, const SwapchainImageCreateInfo &createInfo)
+        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainPixelFormatToImageFormat(createInfo.format), .memoryLocation = ImageMemoryLocation::Device, .usage = ImageUsage::ColorAttachment }), MetalResource(createInfo.name),
+          texture(createInfo.texture), swapchainImage(true)
+    {
+        MTL_SET_RESOURCE_NAME(texture, GetName().c_str());
     }
 
     /* --- DESTRUCTOR --- */
 
-    void MetalImage::Destroy()
+    MetalImage::~MetalImage()
     {
-        texture->release();
+        if (!swapchainImage) texture->release();
+    }
+
+    /* --- PRIVATE METHODS --- */
+
+    ImageFormat MetalImage::SwapchainPixelFormatToImageFormat(const MTL::PixelFormat format)
+    {
+        switch (format)
+        {
+            case MTL::PixelFormatBGRA8Unorm:        { return { .channels = ImageChannels::BGRA, .memoryType = ImageMemoryType::UNorm8 };  break; }
+            case MTL::PixelFormatBGRA8Unorm_sRGB:   { return { .channels = ImageChannels::BGRA, .memoryType = ImageMemoryType::SRGB8 };   break; }
+            case MTL::PixelFormatRGBA16Float:       { return { .channels = ImageChannels::BGRA, .memoryType = ImageMemoryType::Float16 }; break; }
+            default:                                break;
+        }
+
+        SR_ERROR("[Metal]: Cannot determine image format of invalid swapchain MTLPixelFormat!");
+        return { };
     }
 
     /* --- CONVERSIONS --- */
@@ -58,8 +73,8 @@ namespace Sierra
     MTL::TextureType MetalImage::ImageSettingsToTextureType(const ImageSampling sampling, const uint32 layerCount)
     {
         if (sampling == ImageSampling::x1 && layerCount == 1) return MTL::TextureType::TextureType2D;
-        else if (sampling == ImageSampling::x1 && layerCount >  1) return MTL::TextureType::TextureType2DArray;
-        else if (sampling != ImageSampling::x1 && layerCount >  1) return MTL::TextureType::TextureType2DMultisampleArray;
+        else if (sampling == ImageSampling::x1 && layerCount > 1) return MTL::TextureType::TextureType2DArray;
+        else if (sampling != ImageSampling::x1 && layerCount > 1) return MTL::TextureType::TextureType2DMultisampleArray;
 
         return MTL::TextureType::TextureType2D;
     }
@@ -74,6 +89,7 @@ namespace Sierra
                 {
                     case ImageMemoryType::Int8:         return MTL::PixelFormatR8Sint;
                     case ImageMemoryType::UInt8:        return MTL::PixelFormatR8Uint;
+                    case ImageMemoryType::UNorm8:       return MTL::PixelFormatR8Unorm;
                     case ImageMemoryType::SRGB8:        return MTL::PixelFormatR8Unorm_sRGB;
                     case ImageMemoryType::Int16:        return MTL::PixelFormatR16Sint;
                     case ImageMemoryType::UInt16:       return MTL::PixelFormatR16Uint;
@@ -95,6 +111,7 @@ namespace Sierra
                 {
                     case ImageMemoryType::Int8:         return MTL::PixelFormatRG8Sint;
                     case ImageMemoryType::UInt8:        return MTL::PixelFormatRG8Uint;
+                    case ImageMemoryType::UNorm8:       return MTL::PixelFormatRG8Unorm;
                     case ImageMemoryType::SRGB8:        return MTL::PixelFormatRG8Unorm_sRGB;
                     case ImageMemoryType::Int16:        return MTL::PixelFormatRG16Sint;
                     case ImageMemoryType::UInt16:       return MTL::PixelFormatRG16Uint;
@@ -117,6 +134,7 @@ namespace Sierra
                 {
                     case ImageMemoryType::Int8:         return MTL::PixelFormatRGBA8Sint;
                     case ImageMemoryType::UInt8:        return MTL::PixelFormatRGBA8Uint;
+                    case ImageMemoryType::UNorm8:       return MTL::PixelFormatRGBA8Unorm;
                     case ImageMemoryType::SRGB8:        return MTL::PixelFormatRGBA8Unorm_sRGB;
                     case ImageMemoryType::Int16:        return MTL::PixelFormatRGBA16Sint;
                     case ImageMemoryType::UInt16:       return MTL::PixelFormatRGBA16Uint;
@@ -130,6 +148,15 @@ namespace Sierra
                     case ImageMemoryType::Float32:
                     case ImageMemoryType::Float64:      return MTL::PixelFormatRGBA32Float;
                     default:                            break;
+                }
+            }
+            case ImageChannels::BGRA:
+            {
+                switch (format.memoryType)
+                {
+                    case ImageMemoryType::UNorm8:    return MTL::PixelFormatBGRA8Unorm;
+                    case ImageMemoryType::SRGB8:     return MTL::PixelFormatBGRA8Unorm_sRGB;
+                    default:                         break;
                 }
             }
         }

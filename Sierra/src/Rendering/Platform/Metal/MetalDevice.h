@@ -17,24 +17,22 @@ namespace Sierra
         explicit MetalDevice(const DeviceCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void SubmitCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
-        void SubmitAndWaitCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
+        void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const override;
+        void SubmitAndWaitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const override;
+        void WaitUntilIdle() const override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const char* GetDeviceName() const override { return device->name()->utf8String(); }
+
         [[nodiscard]] bool IsImageConfigurationSupported(ImageFormat format, ImageUsage usage) const override;
-
-        [[nodiscard]] bool IsColorSamplingSupported(ImageSampling sampling) const override;
-        [[nodiscard]] bool IsDepthSamplingSupported(ImageSampling sampling) const override;
-
-        [[nodiscard]] ImageSampling GetHighestColorSampling() const override;
-        [[nodiscard]] ImageSampling GetHighestDepthSampling() const override;
+        [[nodiscard]] bool IsImageSamplingSupported(ImageSampling sampling) const override;
+        [[nodiscard]] ImageSampling GetHighestImageSamplingSupported() const override;
 
         [[nodiscard]] inline MTL::Device* GetMetalDevice() const { return device; }
         [[nodiscard]] inline MTL::CommandQueue* GetCommandQueue() const { return commandQueue; }
 
         /* --- DESTRUCTOR --- */
-        void Destroy() override;
+        ~MetalDevice();
 
     private:
         MTL::Device* device = nullptr;

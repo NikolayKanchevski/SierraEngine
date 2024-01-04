@@ -20,13 +20,15 @@ namespace Sierra
         R,
         RG,
         RGB,
-        RGBA
+        RGBA,
+        BGRA
     };
 
     enum class ImageMemoryType : uint8
     {
         Int8,
         UInt8,
+        UNorm8,
         SRGB8,
         Int16,
         UInt16,
@@ -60,8 +62,7 @@ namespace Sierra
         DepthAttachment             = 0x0040,
         InputAttachment             = 0x0080,
         ResolveAttachment           = 0x0100,
-        TransientAttachment         = 0x0200,
-        SwapchainAttachment         = 0x0400
+        TransientAttachment         = 0x0200
     };
     SR_DEFINE_ENUM_FLAG_OPERATORS(ImageUsage);
 
@@ -110,7 +111,7 @@ namespace Sierra
         [[nodiscard]] inline uint32 GetMipLevels() const { return mipLevels; }
         [[nodiscard]] inline uint32 GetLayerCount() const { return layerCount; }
 
-        [[nodiscard]] virtual ImageSampling GetSampling() const = 0;
+        [[nodiscard]] inline ImageSampling GetSampling() const { return sampling; };
         [[nodiscard]] inline ImageFormat GetFormat() const { return format; }
         [[nodiscard]] inline ImageUsage GetUsage() const { return usage; }
 
@@ -125,6 +126,7 @@ namespace Sierra
         uint32 mipLevels = 1;
         uint32 layerCount = 1;
 
+        ImageSampling sampling = ImageSampling::x1;
         ImageFormat format = { };
         ImageUsage usage = ImageUsage::Undefined;
 

@@ -26,7 +26,7 @@ namespace Sierra
         [[nodiscard]] inline MTL::Buffer* GetMetalBuffer() { return buffer; }
 
         /* --- DESTRUCTOR --- */
-        void Destroy() override;
+        ~MetalBuffer();
 
         /* --- CONVERSIONS --- */
         static MTL::ResourceOptions BufferMemoryLocationToResourceOptions(BufferMemoryLocation memoryLocation);

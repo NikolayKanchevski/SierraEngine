@@ -143,6 +143,7 @@ namespace Sierra
         [window setBackgroundColor: [UIColor whiteColor]];
 
         // Observe UIKit events
+        deviceOrientationDidChangeBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UIDeviceOrientationDidChangeNotification, [this] { DeviceOrientationDidChange(); });
         applicationDidEnterBackgroundBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UIApplicationDidEnterBackgroundNotification, [this] { ApplicationDidEnterBackground(); });
         applicationWillEnterForegroundBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UIApplicationWillEnterForegroundNotification, [this] { ApplicationWillEnterForeground(); });
         applicationWillTerminateBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UISceneDidDisconnectNotification, [this] { ApplicationWillTerminate(); });
@@ -238,12 +239,12 @@ namespace Sierra
 
     Vector2UInt UIKitWindow::GetSize() const
     {
-        return uiKitContext.GetPrimaryScreen().GetSize();
+        return uiKitContext.GetPrimaryScreen().GetOrientation() & ScreenOrientation::Portrait ? uiKitContext.GetPrimaryScreen().GetSize() : Vector2UInt(uiKitContext.GetPrimaryScreen().GetSize().y, uiKitContext.GetPrimaryScreen().GetSize().x);
     }
 
     Vector2UInt UIKitWindow::GetFramebufferSize() const
     {
-        return uiKitContext.GetPrimaryScreen().GetSize();
+        return GetSize();
     }
 
     float32 UIKitWindow::GetOpacity() const
@@ -293,6 +294,15 @@ namespace Sierra
 
     /* --- EVENTS --- */
 
+    void UIKitWindow::DeviceOrientationDidChange()
+    {
+        // Check if orientation has actually changed
+        if ((lastOrientation & ScreenOrientation::Landscape && uiKitContext.GetPrimaryScreen().GetOrientation() & ScreenOrientation::Landscape) || (lastOrientation & ScreenOrientation::Portrait && uiKitContext.GetPrimaryScreen().GetOrientation() & ScreenOrientation::Portrait)) return;
+
+        GetWindowResizeDispatcher().DispatchEvent(GetSize());
+        lastOrientation = uiKitContext.GetPrimaryScreen().GetOrientation();
+    }
+
     void UIKitWindow::ApplicationDidEnterBackground()
     {
         minimized = true;
@@ -317,7 +327,8 @@ namespace Sierra
     {
         if (closed) return;
         closed = true;
-        
+
+        deviceOrientationDidChangeBridge.Invalidate();
         applicationDidEnterBackgroundBridge.Invalidate();
         applicationWillEnterForegroundBridge.Invalidate();
         applicationWillTerminateBridge.Invalidate();

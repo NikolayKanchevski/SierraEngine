@@ -6,6 +6,8 @@ target_sources(Sierra PRIVATE
     CommandBuffer.h
     Device.cpp
     Device.h
+    GraphicsPipeline.cpp
+    GraphicsPipeline.h
     Image.cpp
     Image.h
     RenderingContext.cpp
@@ -13,6 +15,8 @@ target_sources(Sierra PRIVATE
     RenderPass.cpp
     RenderPass.h
     RenderingResource.h
+    Shader.cpp
+    Shader.h
     Swapchain.cpp
     Swapchain.h
 )

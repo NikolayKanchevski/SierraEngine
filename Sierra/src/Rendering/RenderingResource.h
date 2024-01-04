@@ -46,7 +46,6 @@ namespace Sierra
         RenderingResource& operator=(const RenderingResource&) = delete;
 
         /* --- DESTRUCTOR --- */
-        virtual void Destroy() { }
         virtual ~RenderingResource() = default;
 
     protected:

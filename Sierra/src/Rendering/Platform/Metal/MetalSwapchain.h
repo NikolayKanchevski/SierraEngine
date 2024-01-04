@@ -10,17 +10,6 @@
 #include "MetalDevice.h"
 #include "../../../Core/Window.h"
 
-#if !defined(__OBJC__)
-    namespace Sierra
-    {
-        typedef void CAMetalLayer;
-        typedef void MetalView;
-    }
-#else
-    #include <QuartzCore/QuartzCore.h>
-    @class MetalView;
-#endif
-
 namespace Sierra
 {
 
@@ -31,19 +20,18 @@ namespace Sierra
         MetalSwapchain(const MetalDevice &device, const SwapchainCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void Begin(const std::unique_ptr<CommandBuffer> &commandBuffer) override;
-        void End(const std::unique_ptr<CommandBuffer> &commandBuffer) override;
-        void SubmitCommandBufferAndPresent(const std::unique_ptr<CommandBuffer> &commandBuffer) override;
+        void AcquireNextImage() override;
+        void SubmitCommandBufferAndPresent(std::unique_ptr<CommandBuffer> &commandBuffer) override;
 
         /* -- GETTER METHODS --- */
         [[nodiscard]] inline uint32 GetCurrentFrame() const override { return currentFrame; }
         [[nodiscard]] inline uint32 GetConcurrentFrameCount() const override { return CONCURRENT_FRAME_COUNT; }
 
-        [[nodiscard]] inline uint32 GetWidth() const override { return static_cast<uint32>(metalLayer->drawableSize().width); }
-        [[nodiscard]] inline uint32 GetHeight() const override { return static_cast<uint32>(metalLayer->drawableSize().height); }
+        [[nodiscard]] inline const std::unique_ptr<Image>& GetCurrentImage() const override { return swapchainImage; };
+        [[nodiscard]] inline const std::unique_ptr<Image>& GetImage(const uint32 frameIndex) const override { SR_ERROR_IF(frameIndex >= CONCURRENT_FRAME_COUNT, "[Metal]: Cannot return image with an index [{0}] of swapchain [{1}], as index is out of bounds! Use Swapchain::GetConcurrentFrameCount() to query image count.", frameIndex, GetName()); return swapchainImage; };
 
         /* --- DESTRUCTOR --- */
-        void Destroy() override;
+        ~MetalSwapchain();
 
     private:
         const MetalDevice &device;
@@ -52,12 +40,12 @@ namespace Sierra
         CA::MetalLayer* metalLayer = nullptr;
         CA::MetalDrawable* metalDrawable = nullptr;
 
-        MTL::RenderPassDescriptor* renderPass = nullptr;
-        MTL::RenderCommandEncoder* currentRenderCommandEncoder = nullptr;
+        std::unique_ptr<Image> swapchainImage;
         dispatch_semaphore_t isFrameRenderedSemaphores = nullptr;
 
         uint32 currentFrame = 0;
         constexpr static NS::UInteger CONCURRENT_FRAME_COUNT = 3;
+        void Recreate();
 
     };
 

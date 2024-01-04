@@ -6,6 +6,9 @@
 
 #include "RenderingResource.h"
 #include "../Core/Window.h"
+#include "../Events/SwapchainEvent.h"
+
+#include "RenderPass.h"
 #include "CommandBuffer.h"
 
 namespace Sierra
@@ -17,27 +20,44 @@ namespace Sierra
         VSync
     };
 
+    enum class SwapchainImageMemoryType
+    {
+        UNorm8,
+        SRGB8,
+        UNorm16
+    };
+
     struct SwapchainCreateInfo
     {
         const std::string &name = "Swapchain";
         std::unique_ptr<Window> &window;
         SwapchainPresentationMode preferredPresentationMode = SwapchainPresentationMode::VSync;
+        SwapchainImageMemoryType preferredImageMemoryType = SwapchainImageMemoryType::UNorm8;
     };
 
     class SIERRA_API Swapchain : public virtual RenderingResource
     {
     public:
+        /* --- TYPE DEFINITIONS --- */
+        template<typename T>
+        using SwapchainEventCallback = std::function<bool(const T&)>;
+
         /* --- POLLING METHODS --- */
-        virtual void Begin(const std::unique_ptr<CommandBuffer> &commandBuffer) = 0;
-        virtual void End(const std::unique_ptr<CommandBuffer> &commandBuffer) = 0;
-        virtual void SubmitCommandBufferAndPresent(const std::unique_ptr<CommandBuffer> &commandBuffer) = 0;
+        virtual void AcquireNextImage() = 0;
+        virtual void SubmitCommandBufferAndPresent(std::unique_ptr<CommandBuffer> &commandBuffer) = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual uint32 GetCurrentFrame() const = 0;
         [[nodiscard]] virtual uint32 GetConcurrentFrameCount() const = 0;
 
-        [[nodiscard]] virtual uint32 GetWidth() const = 0;
-        [[nodiscard]] virtual uint32 GetHeight() const = 0;
+        [[nodiscard]] virtual const std::unique_ptr<Image>& GetCurrentImage() const = 0;
+        [[nodiscard]] virtual const std::unique_ptr<Image>& GetImage(uint32 frameIndex) const = 0;
+
+        [[nodiscard]] inline uint32 GetWidth() const { return GetImage(0)->GetWidth(); };
+        [[nodiscard]] inline uint32 GetHeight() const { return GetImage(0)->GetHeight(); };
+
+        /* --- EVENTS --- */
+        template<typename T> void OnEvent(SwapchainEventCallback<T>) { static_assert(std::is_base_of_v<SwapchainEvent, T> && !std::is_same_v<SwapchainEvent, T>, "Template function accepts derived swapchain events only!"); }
 
         /* --- OPERATORS --- */
         Swapchain(const Swapchain&) = delete;
@@ -45,7 +65,13 @@ namespace Sierra
 
     protected:
         explicit Swapchain(const SwapchainCreateInfo &createInfo);
+        [[nodiscard]] inline EventDispatcher<SwapchainResizeEvent>& GetSwapchainResizeDispatcher() { return swapchainResizeDispatcher; };
+
+    private:
+        EventDispatcher<SwapchainResizeEvent> swapchainResizeDispatcher;
 
     };
+
+    template<> inline void Swapchain::OnEvent<SwapchainResizeEvent>(SwapchainEventCallback<SwapchainResizeEvent> Callback) { swapchainResizeDispatcher.Subscribe(Callback); }
 
 }

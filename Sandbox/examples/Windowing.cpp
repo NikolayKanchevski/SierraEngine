@@ -38,24 +38,24 @@ private:
         // Log every window event (will only log information if SIERRA_ENABLE_LOGGING is set)
         for (const auto &window : windows)
         {
-            window->OnEvent<WindowMoveEvent>                                ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
-            window->OnEvent<WindowResizeEvent>                              ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
-            window->OnEvent<WindowFocusEvent>                               ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
-            window->OnEvent<WindowMinimizeEvent>                            ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
-            window->OnEvent<WindowMaximizeEvent>                            ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
-            window->OnEvent<WindowCloseEvent>                               ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
+            window->OnEvent<WindowMoveEvent>                                ([&window](const auto &event) { APP_INFO("{0} - WindowMoveEvent",     window->GetTitle()); return true; });
+            window->OnEvent<WindowResizeEvent>                              ([&window](const auto &event) { APP_INFO("{0} - WindowResizeEvent",   window->GetTitle()); return true; });
+            window->OnEvent<WindowFocusEvent>                               ([&window](const auto &event) { APP_INFO("{0} - WindowFocusEvent",    window->GetTitle()); return true; });
+            window->OnEvent<WindowMinimizeEvent>                            ([&window](const auto &event) { APP_INFO("{0} - WindowMinimizeEvent", window->GetTitle()); return true; });
+            window->OnEvent<WindowMaximizeEvent>                            ([&window](const auto &event) { APP_INFO("{0} - WindowMaximizeEvent", window->GetTitle()); return true; });
+            window->OnEvent<WindowCloseEvent>                               ([&window](const auto &event) { APP_INFO("{0} - WindowCloseEvent",    window->GetTitle()); return true; });
 
-            window->GetInputManager().OnEvent<KeyPressEvent>                ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
-            window->GetInputManager().OnEvent<KeyReleaseEvent>              ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
-            window->GetInputManager().OnEvent<MouseButtonPressEvent>        ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
-            window->GetInputManager().OnEvent<MouseButtonReleaseEvent>      ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
-            window->GetInputManager().OnEvent<MouseScrollEvent>             ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
+            window->GetInputManager().OnEvent<KeyPressEvent>                ([&window](const auto &event) { APP_INFO("{0} - KeyPressEvent",           window->GetTitle()); return true; });
+            window->GetInputManager().OnEvent<KeyReleaseEvent>              ([&window](const auto &event) { APP_INFO("{0} - KeyReleaseEvent",         window->GetTitle()); return true; });
+            window->GetInputManager().OnEvent<MouseButtonPressEvent>        ([&window](const auto &event) { APP_INFO("{0} - MouseButtonPressEvent",   window->GetTitle()); return true; });
+            window->GetInputManager().OnEvent<MouseButtonReleaseEvent>      ([&window](const auto &event) { APP_INFO("{0} - MouseButtonReleaseEvent", window->GetTitle()); return true; });
+            window->GetInputManager().OnEvent<MouseScrollEvent>             ([&window](const auto &event) { APP_INFO("{0} - MouseScrollEvent",        window->GetTitle()); return true; });
 
-            window->GetCursorManager().OnEvent<CursorMoveEvent>             ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
+            window->GetCursorManager().OnEvent<CursorMoveEvent>             ([&window](const auto &event) { APP_INFO("{0} - CursorMoveEvent", window->GetTitle()); return true; });
 
-            window->GetTouchManager().OnEvent<TouchBeginEvent>              ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
-            window->GetTouchManager().OnEvent<TouchMoveEvent>               ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
-            window->GetTouchManager().OnEvent<TouchEndEvent>                ([&window](const auto &event) { APP_INFO("{0} - {1}", window->GetTitle(), event.GetLogString()); return true; });
+            window->GetTouchManager().OnEvent<TouchBeginEvent>              ([&window](const auto &event) { APP_INFO("{0} - TouchBeginEvent", window->GetTitle()); return true; });
+            window->GetTouchManager().OnEvent<TouchMoveEvent>               ([&window](const auto &event) { APP_INFO("{0} - TouchMoveEvent",  window->GetTitle()); return true; });
+            window->GetTouchManager().OnEvent<TouchEndEvent>                ([&window](const auto &event) { APP_INFO("{0} - TouchEndEvent",   window->GetTitle()); return true; });
         }
     }
 

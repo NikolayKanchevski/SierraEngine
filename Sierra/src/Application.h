@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Engine/Time.h"
+#include "Engine/File.h"
 #include "Core/Version.h"
 #include "Core/WindowManager.h"
 #include "Core/PlatformContext.h"
@@ -36,19 +37,23 @@ namespace Sierra
         [[nodiscard]] inline const std::string& GetName() const { return name; }
         [[nodiscard]] inline const Version& GetVersion() { return version; }
 
-        [[nodiscard]] inline const PlatformContext& GetPlatformContext() { return *platformContext.get(); }
-        [[nodiscard]] inline const WindowManager& GetWindowManager() { return *windowManager.get(); }
-        [[nodiscard]] inline const RenderingContext& GetRenderingContext() { return *renderingContext.get(); }
-
         /* --- OPERATORS --- */
         Application(const Application&) = delete;
         Application& operator=(const Application&) = delete;
 
         /* --- DESTRUCTOR --- */
-        virtual ~Application();
+        virtual ~Application() = default;
 
     protected:
         explicit Application(const ApplicationCreateInfo &createInfo);
+
+        [[nodiscard]] inline const PlatformContext& GetPlatformContext() { return *platformContext; }
+        [[nodiscard]] inline const WindowManager& GetWindowManager() { return *windowManager; }
+        [[nodiscard]] inline const RenderingContext& GetRenderingContext() { return *renderingContext; }
+
+        [[nodiscard]] const std::filesystem::path& GetApplicationDataDirectoryPath();
+        [[nodiscard]] const std::filesystem::path& GetApplicationCachesDirectoryPath();
+        [[nodiscard]] const std::filesystem::path& GetApplicationTemporaryDirectoryPath();
 
     private:
         virtual void OnStart() = 0;
@@ -56,7 +61,7 @@ namespace Sierra
 
         std::string name;
         Version version;
-        ApplicationSettings settings;
+        uint16 maxFrameRate = 0;
 
         std::unique_ptr<PlatformContext> platformContext = nullptr;
         std::unique_ptr<WindowManager> windowManager = nullptr;

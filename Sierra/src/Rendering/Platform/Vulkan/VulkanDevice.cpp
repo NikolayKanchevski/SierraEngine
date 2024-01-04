@@ -87,8 +87,6 @@ namespace Sierra
             queueCreateInfos[i].queueFamilyIndex = queueFamily;
             queueCreateInfos[i].queueCount = 1;
             queueCreateInfos[i].pQueuePriorities = &QUEUE_PRIORITY;
-            queueCreateInfos[i].flags = 0;
-            queueCreateInfos[i].pNext = nullptr;
             i++;
         }
 
@@ -126,7 +124,6 @@ namespace Sierra
 
                 // Configure portability info
                 portabilitySubsetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR;
-                portabilitySubsetFeatures.pNext = nullptr;
 
                 // Retrieve portability features
                 PushToPNextChain(&physicalDeviceFeatures2, &portabilitySubsetFeatures);
@@ -147,7 +144,6 @@ namespace Sierra
         logicalDeviceCreateInfo.enabledExtensionCount = static_cast<uint32>(extensionsToLoad.size());
         logicalDeviceCreateInfo.ppEnabledExtensionNames = extensionsToLoad.data();
         logicalDeviceCreateInfo.pEnabledFeatures = nullptr;
-        logicalDeviceCreateInfo.flags = 0;
         logicalDeviceCreateInfo.pNext = &physicalDeviceFeatures2;
 
         // Create logical device
@@ -998,19 +994,11 @@ namespace Sierra
 
         // Create allocator
         vmaCreateAllocator(&vmaCreteInfo, &vmaAllocator);
-
-        // Create command pool
-        VkCommandPoolCreateInfo commandPoolCreateInfo = { };
-        commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        commandPoolCreateInfo.queueFamilyIndex = generalQueueFamily;
-        result = functionTable.vkCreateCommandPool(logicalDevice, &commandPoolCreateInfo, nullptr, &commandPool);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create command pool for device [{0}]! Error code: {1}.", GetName(), result);
     }
 
     /* --- POLLING METHODS --- */
 
-    void VulkanDevice::SubmitCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const
+    void VulkanDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit command buffer [{1}] with a graphics API, that is not [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
         const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);
@@ -1027,7 +1015,7 @@ namespace Sierra
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Submission of command buffer [{0}] from device [{1}] failed! Error code: {2}.", vulkanCommandBuffer.GetName(), GetName(), result);
     }
 
-    void VulkanDevice::SubmitAndWaitCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const
+    void VulkanDevice::SubmitAndWaitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit and wait for command buffer [{1}] with a graphics API, that is not [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
         const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);
@@ -1045,6 +1033,11 @@ namespace Sierra
 
         // Wait for execution
         functionTable.vkWaitForFences(logicalDevice, 1, &sharedCommandBufferFence, VK_TRUE, std::numeric_limits<uint64>::max());
+    }
+
+    void VulkanDevice::WaitUntilIdle() const
+    {
+        functionTable.vkDeviceWaitIdle(logicalDevice);
     }
 
     /* --- GETTER METHODS --- */
@@ -1068,37 +1061,19 @@ namespace Sierra
         return true;
     }
 
-    bool VulkanDevice::IsColorSamplingSupported(const ImageSampling sampling) const
+    bool VulkanDevice::IsImageSamplingSupported(Sierra::ImageSampling sampling) const
     {
-        const VkSampleCountFlags countFlags = physicalDeviceProperties.limits.framebufferColorSampleCounts;
-        return countFlags & VulkanImage::ImageSamplingToVkSampleCountFlags(sampling);
+        return (physicalDeviceProperties.limits.framebufferDepthSampleCounts & VulkanImage::ImageSamplingToVkSampleCountFlags(sampling)) && (physicalDeviceProperties.limits.sampledImageDepthSampleCounts & VulkanImage::ImageSamplingToVkSampleCountFlags(sampling));
     }
 
-    bool VulkanDevice::IsDepthSamplingSupported(const ImageSampling sampling) const
+    ImageSampling VulkanDevice::GetHighestImageSamplingSupported() const
     {
-        const VkSampleCountFlags countFlags = physicalDeviceProperties.limits.framebufferDepthSampleCounts;
-        return countFlags & VulkanImage::ImageSamplingToVkSampleCountFlags(sampling);
-    }
-
-    ImageSampling VulkanDevice::GetHighestColorSampling() const
-    {
-        if (IsColorSamplingSupported(ImageSampling::x64)) return ImageSampling::x64;
-        if (IsColorSamplingSupported(ImageSampling::x32)) return ImageSampling::x32;
-        if (IsColorSamplingSupported(ImageSampling::x16)) return ImageSampling::x16;
-        if (IsColorSamplingSupported(ImageSampling::x8)) return ImageSampling::x8;
-        if (IsColorSamplingSupported(ImageSampling::x4)) return ImageSampling::x4;
-        if (IsColorSamplingSupported(ImageSampling::x2)) return ImageSampling::x2;
-        return ImageSampling::x1;
-    }
-
-    ImageSampling VulkanDevice::GetHighestDepthSampling() const
-    {
-        if (IsDepthSamplingSupported(ImageSampling::x64)) return ImageSampling::x64;
-        if (IsDepthSamplingSupported(ImageSampling::x32)) return ImageSampling::x32;
-        if (IsDepthSamplingSupported(ImageSampling::x16)) return ImageSampling::x16;
-        if (IsDepthSamplingSupported(ImageSampling::x8)) return ImageSampling::x8;
-        if (IsDepthSamplingSupported(ImageSampling::x4)) return ImageSampling::x4;
-        if (IsDepthSamplingSupported(ImageSampling::x2)) return ImageSampling::x2;
+        if (IsImageSamplingSupported(ImageSampling::x64)) return ImageSampling::x64;
+        if (IsImageSamplingSupported(ImageSampling::x32)) return ImageSampling::x32;
+        if (IsImageSamplingSupported(ImageSampling::x16)) return ImageSampling::x16;
+        if (IsImageSamplingSupported(ImageSampling::x8)) return ImageSampling::x8;
+        if (IsImageSamplingSupported(ImageSampling::x4)) return ImageSampling::x4;
+        if (IsImageSamplingSupported(ImageSampling::x2)) return ImageSampling::x2;
         return ImageSampling::x1;
     }
 
@@ -1170,11 +1145,10 @@ namespace Sierra
 
     /* --- DESTRUCTOR --- */
 
-    void VulkanDevice::Destroy()
+    VulkanDevice::~VulkanDevice()
     {
         functionTable.vkDestroyFence(logicalDevice, sharedCommandBufferFence, nullptr);
         vmaDestroyAllocator(vmaAllocator);
-        functionTable.vkDestroyCommandPool(logicalDevice, commandPool, nullptr);
         functionTable.vkDestroyDevice(logicalDevice, nullptr);
     }
 

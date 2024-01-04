@@ -45,7 +45,7 @@ namespace Sierra
 
     /* --- DESTRUCTOR --- */
 
-    void VulkanBuffer::Destroy()
+    VulkanBuffer::~VulkanBuffer()
     {
         vmaUnmapMemory(device.GetMemoryAllocator(), allocation);
         vmaDestroyBuffer(device.GetMemoryAllocator(), buffer, allocation);

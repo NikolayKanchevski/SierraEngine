@@ -23,9 +23,9 @@ namespace Sierra
 
     struct PlatformApplicationRunInfo
     {
-        std::function<void()> OnStart = [] {  };
+        std::function<void()> OnStart = [] { };
         std::function<bool()> OnUpdate = [] { return false; };
-        std::function<void()> OnEnd = [] {  };
+        std::function<void()> OnEnd = [] { };
     };
 
     class SIERRA_API PlatformContext

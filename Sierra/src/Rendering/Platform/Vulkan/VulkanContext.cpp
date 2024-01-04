@@ -8,6 +8,8 @@
 #include "VulkanImage.h"
 #include "VulkanRenderPass.h"
 #include "VulkanSwapchain.h"
+#include "VulkanShader.h"
+#include "VulkanGraphicsPipeline.h"
 #include "VulkanCommandBuffer.h"
 
 namespace Sierra
@@ -43,17 +45,19 @@ namespace Sierra
         return std::make_unique<VulkanSwapchain>(instance, device, createInfo);
     }
 
+    std::unique_ptr<Shader> VulkanContext::CreateShader(const ShaderCreateInfo &createInfo) const
+    {
+        return std::make_unique<VulkanShader>(device, createInfo);
+    }
+
+    std::unique_ptr<GraphicsPipeline> VulkanContext::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo &createInfo) const
+    {
+        return std::make_unique<VulkanGraphicsPipeline>(device, createInfo);
+    }
+
     std::unique_ptr<CommandBuffer> VulkanContext::CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const
     {
         return std::make_unique<VulkanCommandBuffer>(device, createInfo);
-    }
-
-    /* --- DESTRUCTOR --- */
-
-    void VulkanContext::Destroy()
-    {
-        device.Destroy();
-        instance.Destroy();
     }
 
 }

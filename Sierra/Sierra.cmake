@@ -84,6 +84,11 @@ function(SierraBuildApplication SOURCE_FILES)
         BuildIOSApplication()
     endif()
 
+    # Delete static library after build
+    if(SIERRA_BUILD_STATIC_LIBRARY)
+        add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:Sierra>)
+    endif()
+
     # === ENGINE LINKING === #
     add_subdirectory(${SIERRA_DIRECTORY}/src ${SIERRA_DIRECTORY}/src)
     target_link_libraries(${SIERRA_APPLICATION_NAME} PRIVATE Sierra)

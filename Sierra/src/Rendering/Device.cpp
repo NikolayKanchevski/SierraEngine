@@ -19,8 +19,8 @@ namespace Sierra
     ImageFormat Device::GetSupportedImageFormat(const ImageChannels preferredChannels, const ImageMemoryType preferredMemoryType, const ImageUsage usage) const
     {
         // NOTE: Though looking complex and heavy, realistically, the function should return almost immediately, and a format is pretty much guaranteed to be found
-        std::vector<ImageChannels> channelsToTry;
-        std::vector<ImageMemoryType> memoryTypesToTry;
+        std::initializer_list<ImageChannels> channelsToTry;
+        std::initializer_list<ImageMemoryType> memoryTypesToTry;
         
         switch (preferredChannels)
         {
@@ -66,6 +66,19 @@ namespace Sierra
                 memoryTypesToTry =
                 {
                     ImageMemoryType::SRGB8,
+                    ImageMemoryType::UNorm16,
+                    ImageMemoryType::Float16,
+                    ImageMemoryType::Float32,
+                    ImageMemoryType::Float64,
+                    ImageMemoryType::Norm16
+                };
+                break;
+            }
+            case ImageMemoryType::UNorm8:
+            {
+                memoryTypesToTry =
+                {
+                    ImageMemoryType::UNorm8,
                     ImageMemoryType::UNorm16,
                     ImageMemoryType::Float16,
                     ImageMemoryType::Float32,

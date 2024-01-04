@@ -10,7 +10,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     Application::Application(const ApplicationCreateInfo &createInfo)
-        : name(createInfo.name), settings(createInfo.settings), version(createInfo.version)
+        : name(createInfo.name), version(createInfo.version), maxFrameRate(createInfo.settings.maxFrameRate)
     {
         Logger::Initialize(name);
         SR_ERROR_IF(createInfo.name.empty(), "Application title must not be empty!");
@@ -33,7 +33,7 @@ namespace Sierra
                     return true;
                 }
 
-                frameLimiter.ThrottleFrame(settings.maxFrameRate);
+                frameLimiter.ThrottleFrame(maxFrameRate);
                 return false;
             },
             .OnEnd = [this] {
@@ -44,13 +44,6 @@ namespace Sierra
                 #endif
             }
         });
-    }
-
-    /* --- DESTRUCTOR --- */
-
-    Application::~Application()
-    {
-        renderingContext->Destroy();
     }
 
     /* --- POLLING METHODS --- */
@@ -84,6 +77,41 @@ namespace Sierra
 
         // Assign current start frame time to last
         lastFrameStartTime = frameStartTime;
+    }
+
+    /* --- PROTECTED METHODS --- */
+
+    // NOTE: When querying application folders on Apple platforms, we do not create directories ourselves,
+    //       as OS automatically makes them for the application, and restricts access to others (on iOS).
+
+    const std::filesystem::path& Application::GetApplicationDataDirectoryPath()
+    {
+        static auto path = File::GetApplicationDataDirectoryPath()
+           #if !SR_PLATFORM_APPLE
+               / name
+           #elif SR_PLATFORM_macOS
+               / "Contents" / "Resources"  // NOTE: iOS restricts us to putting application data in the bundle directly, so we do the same for macOS (but there we can use the Contents/Resources folder)
+           #endif
+        ;
+        return path;
+    }
+    const std::filesystem::path& Application::GetApplicationCachesDirectoryPath()
+    {
+        static auto path = File::GetCachesDirectoryPath()
+           #if !SR_PLATFORM_APPLE
+               / name
+           #endif
+        ;
+        return path;
+    }
+    const std::filesystem::path& Application::GetApplicationTemporaryDirectoryPath()
+    {
+        static auto path = File::GetTemporaryDirectoryPath()
+           #if !SR_PLATFORM_APPLE
+               / name
+           #endif
+        ;
+        return path;
     }
 
 }

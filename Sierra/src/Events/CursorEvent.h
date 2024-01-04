@@ -26,11 +26,6 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const Vector2& GetPosition() const { return position; }
 
-        /* --- PROPERTIES --- */
-        #if SR_ENABLE_LOGGING
-            [[nodiscard]] inline std::string GetLogString() const override { return (std::stringstream() << "Cursor Moved - [X: " << position.x << " | Y: " << position.y << "]").str(); }
-        #endif
-
     private:
         Vector2 position;
 

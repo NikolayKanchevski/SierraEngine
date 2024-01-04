@@ -18,7 +18,7 @@
         CADisplayLink* runLoopDisplayLink;
 
         Sierra::PlatformApplicationRunInfo runInfo;
-        bool firstScene;
+        UIScene* scene;
     }
 
     /* --- POLLING METHODS --- */
@@ -28,25 +28,26 @@
         // Retrieve application create info
         auto createInfo = Sierra::UIKitTemporaryCreateInfoStorage::MoveFront();
         runInfo = std::move(createInfo.runInfo);
-        firstScene = true;
-
-        // Connect custom run loop to application
-        runLoopDisplayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(applicationShouldUpdate)];
-        [runLoopDisplayLink addToRunLoop: [NSRunLoop mainRunLoop] forMode: NSDefaultRunLoopMode];
 
         return YES;
     }
 
-    - (void) sceneDidBecomeActive: (UIScene*) scene
+    - (void) sceneDidBecomeActive: (UIScene*) activeScene
     {
         // If this is the first scene to be activated
-        if (firstScene)
+        if (scene == nil)
         {
             // This is the actual entrypoint of the engine (not the UIApplication), as we have to wait until a scene has been created automatically,
             // and we cannot wait for that, due to the single-threaded design of UIKit and its callback-based protocols
             runInfo.OnStart();
-            firstScene = false;
+            
+            // Connect custom run loop to application
+            runLoopDisplayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(applicationShouldUpdate)];
+            [runLoopDisplayLink addToRunLoop: [NSRunLoop mainRunLoop] forMode: NSDefaultRunLoopMode];
         }
+        
+        // Update scene
+        scene = activeScene;
     }
 
     - (void) applicationShouldUpdate

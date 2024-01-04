@@ -32,10 +32,9 @@ namespace Sierra
 
     /* --- DESTRUCTOR --- */
 
-    void MetalBuffer::Destroy()
+    MetalBuffer::~MetalBuffer()
     {
         buffer->release();
-        buffer = nullptr;
     }
 
     /* --- CONVERSIONS --- */

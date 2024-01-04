@@ -7,13 +7,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API Event
-    {
-    public:
-        /* --- GETTER METHODS --- */
-        [[nodiscard]] inline virtual std::string GetLogString() const { return ""; };
-
-    };
+    class SIERRA_API Event  {  };
 
     template<typename T>
     class SIERRA_API EventDispatcher

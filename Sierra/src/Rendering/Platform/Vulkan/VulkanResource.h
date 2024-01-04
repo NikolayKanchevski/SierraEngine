@@ -14,15 +14,13 @@
     #endif
     #include <windows.h>
     #include <vulkan/vulkan_win32.h>
-#elif SR_PLATFORM_macOS
-    #include <vulkan/vulkan_macos.h>
+#elif SR_PLATFORM_APPLE
+    #include <vulkan/vulkan_metal.h>
 #elif SR_PLATFORM_LINUX
     #include <X11/Xlib.h>
     #include <vulkan/vulkan_xlib.h>
 #elif SR_PLATFORM_ANDROID
     #include <vulkan/vulkan_android.h>
-#elif SR_PLATFORM_iOS
-    #include <vulkan/vulkan_ios.h>
 #endif
 
 

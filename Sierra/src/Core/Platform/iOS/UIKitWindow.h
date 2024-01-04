@@ -81,12 +81,15 @@ namespace Sierra
         std::string title;
         bool minimized = false;
         bool closed = false;
+        ScreenOrientation lastOrientation = ScreenOrientation::Portrait;
 
+        UIKitSelectorBridge deviceOrientationDidChangeBridge;
         UIKitSelectorBridge applicationDidEnterBackgroundBridge;
         UIKitSelectorBridge applicationWillEnterForegroundBridge;
         UIKitSelectorBridge applicationWillTerminateBridge;
         
         /* --- EVENTS --- */
+        void DeviceOrientationDidChange();
         void ApplicationDidEnterBackground();
         void ApplicationWillEnterForeground();
         void ApplicationWillTerminate();

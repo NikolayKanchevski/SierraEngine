@@ -57,6 +57,8 @@ if(Vulkan_LIBRARIES)
         VulkanContext.h
         VulkanDevice.cpp
         VulkanDevice.h
+        VulkanGraphicsPipeline.cpp
+        VulkanGraphicsPipeline.h
         VulkanImage.cpp
         VulkanImage.h
         VulkanInstance.cpp
@@ -65,6 +67,8 @@ if(Vulkan_LIBRARIES)
         VulkanRenderPass.h
         VulkanResource.cpp
         VulkanResource.h
+        VulkanShader.cpp
+        VulkanShader.h
         VulkanSwapchain.cpp
         VulkanSwapchain.h
     )

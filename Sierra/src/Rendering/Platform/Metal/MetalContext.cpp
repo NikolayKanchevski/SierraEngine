@@ -16,6 +16,8 @@
 #include "MetalImage.h"
 #include "MetalRenderPass.h"
 #include "MetalSwapchain.h"
+#include "MetalShader.h"
+#include "MetalGraphicsPipeline.h"
 #include "MetalCommandBuffer.h"
 
 namespace Sierra
@@ -51,16 +53,19 @@ namespace Sierra
         return std::make_unique<MetalSwapchain>(device, createInfo);
     }
 
+    std::unique_ptr<Shader> MetalContext::CreateShader(const ShaderCreateInfo &createInfo) const
+    {
+        return std::make_unique<MetalShader>(device, createInfo);
+    }
+
+    std::unique_ptr<GraphicsPipeline> MetalContext::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo &createInfo) const
+    {
+        return std::make_unique<MetalGraphicsPipeline>(device, createInfo);
+    }
+
     std::unique_ptr<CommandBuffer> MetalContext::CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const
     {
         return std::make_unique<MetalCommandBuffer>(device, createInfo);
-    }
-
-    /* --- DESTRUCTOR --- */
-
-    void MetalContext::Destroy()
-    {
-        device.Destroy();
     }
 
 }

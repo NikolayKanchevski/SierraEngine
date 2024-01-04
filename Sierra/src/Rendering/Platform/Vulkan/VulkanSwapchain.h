@@ -20,19 +20,18 @@ namespace Sierra
         VulkanSwapchain(const VulkanInstance &instance, const VulkanDevice &device, const SwapchainCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void Begin(const std::unique_ptr<CommandBuffer> &commandBuffer) override;
-        void End(const std::unique_ptr<CommandBuffer> &commandBuffer) override;
-        void SubmitCommandBufferAndPresent(const std::unique_ptr<CommandBuffer> &commandBuffer) override;
+        void AcquireNextImage() override;
+        void SubmitCommandBufferAndPresent(std::unique_ptr<CommandBuffer> &commandBuffer) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint32 GetCurrentFrame() const override { return currentFrame; }
         [[nodiscard]] inline uint32 GetConcurrentFrameCount() const override { return concurrentFrameCount; }
 
-        [[nodiscard]] inline uint32 GetWidth() const override { return swapchainCreateInfo.imageExtent.width; }
-        [[nodiscard]] inline uint32 GetHeight() const override { return swapchainCreateInfo.imageExtent.height; }
+        [[nodiscard]] inline const std::unique_ptr<Image>& GetCurrentImage() const override { return swapchainImages[currentImage]; }
+        [[nodiscard]] inline const std::unique_ptr<Image>& GetImage(const uint32 frameIndex) const override { SR_ERROR_IF(frameIndex >= concurrentFrameCount, "[Vulkan]: Cannot return image with an index [{0}] of swapchain [{1}], as index is out of bounds! Use Swapchain::GetConcurrentFrameCount() to query image count.", frameIndex, GetName()); return swapchainImages[frameIndex]; }
 
         /* --- DESTRUCTOR --- */
-        void Destroy() override;
+        ~VulkanSwapchain();
 
     private:
         const VulkanInstance &instance;
@@ -42,13 +41,12 @@ namespace Sierra
         VkSurfaceKHR surface = VK_NULL_HANDLE;
         VkQueue presentationQueue = VK_NULL_HANDLE;
 
+        SwapchainPresentationMode preferredPresentationMode = SwapchainPresentationMode::Immediate;
+        SwapchainImageMemoryType preferredImageMemoryType = SwapchainImageMemoryType::UNorm8;
         VkSwapchainCreateInfoKHR swapchainCreateInfo = { };
-        VkSwapchainKHR swapchain = VK_NULL_HANDLE;
-        std::vector<VkImage> swapchainImages;
-        std::vector<VkImageView> swapchainImageViews;
 
-        VkRenderPass renderPass = VK_NULL_HANDLE;
-        std::vector<VkFramebuffer> framebuffers;
+        VkSwapchainKHR swapchain = VK_NULL_HANDLE;
+        std::vector<std::unique_ptr<Image>> swapchainImages;
 
         std::vector<VkSemaphore> isImageFreeSemaphores;
         std::vector<VkSemaphore> isImageRenderedSemaphores;
@@ -58,9 +56,11 @@ namespace Sierra
         uint32 currentFrame = 0; // On the CPU
         uint32 currentImage = 0; // On the GPU
 
+        void RetrieveConstantSettings();
+        void CreateSwapchain();
+        void CreateImages();
+        void CreateSynchronization();
         void Recreate();
-        void CreateTemporaryObjects();
-        void DestroyTemporaryObjects();
 
     };
 

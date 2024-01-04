@@ -19,12 +19,11 @@ namespace Sierra
         VulkanImage(const VulkanDevice &device, const ImageCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline ImageSampling GetSampling() const override { return sampling; }
         [[nodiscard]] inline VkImage GetVulkanImage() const { return image; }
         [[nodiscard]] inline VkImageView GetVulkanImageView() const { return imageView; }
 
         /* --- DESTRUCTOR --- */
-        void Destroy() override;
+        ~VulkanImage();
 
         /* --- CONVERSIONS --- */
         static VkFormat ImageFormatToVkFormat(ImageFormat format);
@@ -39,7 +38,20 @@ namespace Sierra
         VkImageView imageView = VK_NULL_HANDLE;
         VmaAllocation allocation = nullptr;
 
-        ImageSampling sampling = ImageSampling::x1;
+        friend class VulkanSwapchain;
+        struct SwapchainImageCreateInfo
+        {
+            const std::string &name = "Swapchain Image";
+            VkImage image = VK_NULL_HANDLE;
+
+            uint32 width = 0;
+            uint32 height = 0;
+            VkFormat format = VK_FORMAT_UNDEFINED;
+        };
+
+        bool swapchainImage = false;
+        VulkanImage(const VulkanDevice &device, const SwapchainImageCreateInfo &createInfo);
+        [[nodiscard]] static ImageFormat SwapchainVkFormatToImageFormat(VkFormat format);
 
     };
 

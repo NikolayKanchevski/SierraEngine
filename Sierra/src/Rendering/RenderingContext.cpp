@@ -63,11 +63,4 @@ namespace Sierra
         }
     }
 
-    /* --- DESTRUCTOR --- */
-
-    void RenderingContext::Destroy()
-    {
-
-    }
-
 }

@@ -27,7 +27,7 @@ namespace Sierra
         [[nodiscard]] inline VkBuffer GetVulkanBuffer() const { return buffer; }
 
         /* --- DESTRUCTOR --- */
-        void Destroy() override;
+        ~VulkanBuffer();
 
         /* --- CONVERSIONS --- */
         static VkBufferUsageFlags BufferUsageToVkBufferUsageFlags(BufferUsage bufferType);

@@ -11,6 +11,8 @@
 #include "Image.h"
 #include "RenderPass.h"
 #include "Swapchain.h"
+#include "Shader.h"
+#include "GraphicsPipeline.h"
 #include "CommandBuffer.h"
 
 namespace Sierra
@@ -30,6 +32,8 @@ namespace Sierra
         [[nodiscard]] virtual std::unique_ptr<Image> CreateImage(const ImageCreateInfo &createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<RenderPass> CreateRenderPass(const RenderPassCreateInfo &createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<Swapchain> CreateSwapchain(const SwapchainCreateInfo &createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(const ShaderCreateInfo &createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(const GraphicsPipelineCreateInfo &createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<CommandBuffer> CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const = 0;
 
         /* --- GETTER METHODS --- */
@@ -41,8 +45,6 @@ namespace Sierra
     private:
         friend class Application;
         static std::unique_ptr<RenderingContext> Create(const RenderingContextCreateInfo &createInfo);
-
-        void Destroy() override;
 
     };
 

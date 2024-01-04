@@ -15,7 +15,7 @@ def Main() -> None:
     UpdateReadMe()
 
 def UpdateReadMe() -> None:
-    SOURCE_FILE_EXTENSIONS: [str] = ['.cpp', '.h', '.mm', '.cs', '.py', '.cmake', '.glsl', '.vert', '.frag', 'comp', '.geom', '.tesc', '.tese', '.sh', '.bat']
+    SOURCE_FILE_EXTENSIONS: [str] = ['.cpp', '.h', '.mm', '.cs', '.py', '.glsl', '.hlsl', '.msl' '.cmake', '.txt']
 
     # Define initial line count
     linesOfCode: int = 0

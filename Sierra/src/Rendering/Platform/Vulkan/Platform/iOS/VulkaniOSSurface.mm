@@ -15,13 +15,13 @@ namespace Sierra
         const UIKitWindow &uiKitWindow = static_cast<UIKitWindow&>(*window);
 
         // Set up surface create info
-        VkIOSSurfaceCreateInfoMVK surfaceCreateInfo = { };
-        surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
-        surfaceCreateInfo.pView = (__bridge const void*) uiKitWindow.GetUIView();
+        VkMetalSurfaceCreateInfoEXT surfaceCreateInfo = { };
+        surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
+        surfaceCreateInfo.pLayer = reinterpret_cast<CAMetalLayer*>(uiKitWindow.GetUIView().layer);
 
         // Create surface
         VkSurfaceKHR surface;
-        const VkResult result = instance.GetFunctionTable().vkCreateIOSSurfaceMVK(instance.GetVulkanInstance(), &surfaceCreateInfo, nullptr, &surface);
+        const VkResult result = instance.GetFunctionTable().vkCreateMetalSurfaceEXT(instance.GetVulkanInstance(), &surfaceCreateInfo, nullptr, &surface);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create iOS surface for window [{0}]! Error code: {1}.", window->GetTitle(), result);
 
         return surface;

@@ -29,10 +29,6 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         explicit TouchBeginEvent(const Touch &touch) : TouchEvent(touch) { }
 
-        /* --- PROPERTIES --- */
-        #if SR_ENABLE_LOGGING
-            [[nodiscard]] inline std::string GetLogString() const override { return (std::stringstream() << "Screen touch began - [Taps: " << GetTouch().GetTapCount() << " | Force: " << GetTouch().GetForce() << " | X: " << GetTouch().GetPosition().x << " | Y: " << GetTouch().GetPosition().y << "]").str(); }
-        #endif
     };
 
     class SIERRA_API TouchMoveEvent : public TouchEvent
@@ -40,11 +36,6 @@ namespace Sierra
     public:
         /* --- CONSTRUCTORS --- */
         explicit TouchMoveEvent(const Touch &touch) : TouchEvent(touch) { }
-
-        /* --- PROPERTIES --- */
-        #if SR_ENABLE_LOGGING
-            [[nodiscard]] inline std::string GetLogString() const override { return (std::stringstream() << "Screen touch moved - [X: " << GetTouch().GetPosition().x << " | Y: " << GetTouch().GetPosition().y << "]").str(); }
-        #endif
 
     };
 
@@ -54,10 +45,6 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         explicit TouchEndEvent(const Touch &touch) : TouchEvent(touch) { }
 
-        /* --- PROPERTIES --- */
-        #if SR_ENABLE_LOGGING
-            [[nodiscard]] inline std::string GetLogString() const override { return (std::stringstream() << "Screen touch ended - [X: " << GetTouch().GetPosition().x << " | Y: " << GetTouch().GetPosition().y << "]").str(); }
-        #endif
     };
 
 }

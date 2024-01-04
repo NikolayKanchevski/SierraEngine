@@ -24,13 +24,19 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline MTL::CommandBuffer* GetMetalCommandBuffer() const { return commandBuffer; }
+        [[nodiscard]] inline MTL::RenderCommandEncoder* GetCurrentRenderEncoder() const { return currentRenderEncoder; }
 
         /* --- DESTRUCTOR --- */
-        void Destroy() override;
+        ~MetalCommandBuffer() = default;
 
     private:
         const MetalDevice &device;
         MTL::CommandBuffer* commandBuffer = nullptr;
+        MTL::RenderCommandEncoder* currentRenderEncoder = nullptr;
+
+        friend class MetalRenderPass;
+        void PushRenderEncoder(MTL::RenderCommandEncoder* renderCommandEncoder);
+        void PopRenderEncoder();
 
     };
 

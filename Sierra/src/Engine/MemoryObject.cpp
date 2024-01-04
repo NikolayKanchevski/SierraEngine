@@ -45,7 +45,6 @@ namespace Sierra
     MemoryObject::~MemoryObject()
     {
         if (!managedExternally) std::free(data);
-        data = nullptr;
     }
 
     /* --- MOVE SEMANTICS --- */

@@ -7,7 +7,6 @@ include(../Sierra/Sierra.cmake)
 
 # === SET ENGINE BUILD SETTINGS === #
 set(CMAKE_CXX_STANDARD 20)
-set(SIERRA_ENABLE_LOGGING ON)
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(SIERRA_BUILD_STATIC_LIBRARY ON)
 else()

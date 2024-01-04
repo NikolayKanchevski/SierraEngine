@@ -24,7 +24,7 @@ namespace Sierra
         void CopyFromMemory(const MemoryObject &source, uint64 memorySize = 0, uint64 sourceOffset = 0, uint64 destinationOffset = 0);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const uint64 GetMemorySize() const { return memorySize; }
+        [[nodiscard]] inline uint64 GetMemorySize() const { return memorySize; }
         [[nodiscard]] inline void*& GetData() { return data; }
 
         template<typename T>

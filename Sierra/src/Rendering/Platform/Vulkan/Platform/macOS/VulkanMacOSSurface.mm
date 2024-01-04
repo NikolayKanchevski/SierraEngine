@@ -18,13 +18,13 @@ namespace Sierra
 
         #if MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
             // Set up surface create info
-            VkMacOSSurfaceCreateInfoMVK surfaceCreateInfo = { };
-            surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
-            surfaceCreateInfo.pView = cocoaWindow.GetNSView().layer;
+            VkMetalSurfaceCreateInfoEXT surfaceCreateInfo = { };
+            surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
+            surfaceCreateInfo.pLayer = reinterpret_cast<CAMetalLayer*>(cocoaWindow.GetNSView().layer);
 
             // Create surface
             VkSurfaceKHR surface;
-            const VkResult result = instance.GetFunctionTable().vkCreateMacOSSurfaceMVK(instance.GetVulkanInstance(), &surfaceCreateInfo, nullptr, &surface);
+            const VkResult result = instance.GetFunctionTable().vkCreateMetalSurfaceEXT(instance.GetVulkanInstance(), &surfaceCreateInfo, nullptr, &surface);
             SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create macOS surface for window [{0}]! Error code: {1}.", window->GetTitle(), result);
 
             return surface;

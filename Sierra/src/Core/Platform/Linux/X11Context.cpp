@@ -387,9 +387,9 @@ namespace Sierra
         Flush();
     }
 
-    void X11Context::SetWindowOpacity(const XID window, float32 opacity) const
+    void X11Context::SetWindowOpacity(const XID window, const float32 opacity) const
     {
-        CARD32 value = static_cast<CARD32>(std::numeric_limits<uint32>::max() * static_cast<double>(opacity));
+        CARD32 value = static_cast<CARD32>(std::numeric_limits<uint32>::max() * static_cast<float64>(opacity));
         XChangeProperty(display, window, GetAtom(AtomType::NET_WM_WINDOW_OPACITY), XA_CARDINAL, 32, PropModeReplace, reinterpret_cast<uchar*>(&value), 1);
     }
 
@@ -462,7 +462,7 @@ namespace Sierra
         CARD32* value = nullptr;
         if (GetWindowProperty(window, GetAtom(AtomType::NET_WM_WINDOW_OPACITY), XA_CARDINAL, reinterpret_cast<uchar**>(&value)))
         {
-            opacity = static_cast<float32>(*value / static_cast<double>(std::numeric_limits<uint32>::max()));
+            opacity = static_cast<float32>(*value / static_cast<float64>(std::numeric_limits<uint32>::max()));
             XFree(value);
         }
 

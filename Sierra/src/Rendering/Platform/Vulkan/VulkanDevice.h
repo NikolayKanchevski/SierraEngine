@@ -21,19 +21,16 @@ namespace Sierra
         VulkanDevice(const VulkanInstance &instance, const DeviceCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void SubmitCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
-        void SubmitAndWaitCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
+        void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const override;
+        void SubmitAndWaitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const override;
+        void WaitUntilIdle() const override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const char* GetDeviceName() const override { return physicalDeviceProperties.deviceName; }
 
         [[nodiscard]] bool IsImageConfigurationSupported(ImageFormat format, ImageUsage usage) const override;
-
-        [[nodiscard]] bool IsColorSamplingSupported(ImageSampling sampling) const override;
-        [[nodiscard]] bool IsDepthSamplingSupported(ImageSampling sampling) const override;
-
-        [[nodiscard]] ImageSampling GetHighestColorSampling() const override;
-        [[nodiscard]] ImageSampling GetHighestDepthSampling() const override;
+        [[nodiscard]] bool IsImageSamplingSupported(ImageSampling sampling) const override;
+        [[nodiscard]] ImageSampling GetHighestImageSamplingSupported() const override;
 
         [[nodiscard]] inline VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
         [[nodiscard]] inline VkDevice GetLogicalDevice() const { return logicalDevice; }
@@ -41,13 +38,12 @@ namespace Sierra
 
         [[nodiscard]] inline uint32 GetGeneralQueueFamily() const { return generalQueueFamily; }
         [[nodiscard]] inline VkQueue GetGeneralQueue() const { return generalQueue; }
-        [[nodiscard]] inline VkCommandPool GetCommandPool() const { return commandPool; }
 
         [[nodiscard]] bool IsExtensionLoaded(const std::string &extensionName) const;
         [[nodiscard]] inline auto& GetFunctionTable() const { return functionTable; }
 
         /* --- DESTRUCTOR --- */
-        void Destroy() override;
+        ~VulkanDevice();
 
     private:
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -854,7 +850,6 @@ namespace Sierra
 
         VkDevice logicalDevice = VK_NULL_HANDLE;
         VmaAllocator vmaAllocator = VK_NULL_HANDLE;
-        VkCommandPool commandPool = VK_NULL_HANDLE;
 
         uint32 generalQueueFamily = 0;
         VkQueue generalQueue = VK_NULL_HANDLE;
@@ -863,7 +858,7 @@ namespace Sierra
         struct DeviceExtension
         {
             std::string name;
-            std::vector<DeviceExtension> dependencies;
+            std::initializer_list<DeviceExtension> dependencies;
             bool requiredOnlyIfSupported = false;
             void* data = nullptr;
         };
@@ -874,7 +869,14 @@ namespace Sierra
                 .name = VK_KHR_SWAPCHAIN_EXTENSION_NAME
             },
             {
-                .name = VK_KHR_MAINTENANCE3_EXTENSION_NAME
+                .name = VK_KHR_MAINTENANCE_1_EXTENSION_NAME
+            },
+            {
+                .name = VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME,
+                .data = new VkPhysicalDeviceImagelessFramebufferFeatures {
+                    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES,
+                    .imagelessFramebuffer = VK_TRUE
+                }
             }
         };
         std::vector<Hash> loadedExtensions;

@@ -17,7 +17,7 @@ namespace Sierra
         : Device(createInfo), MetalResource(createInfo.name)
     {
         // Create device
-        device =  MTL::CreateSystemDefaultDevice();
+        device = MTL::CreateSystemDefaultDevice();
         SR_ERROR_IF(device == nullptr, "[Metal]: Could not create default system device for device [{0}]!", GetName());
 
         // Create command queue
@@ -30,7 +30,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void MetalDevice::SubmitCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const
+    void MetalDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}] with a graphics API, that is not [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
         const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
@@ -39,7 +39,7 @@ namespace Sierra
         metalCommandBuffer.GetMetalCommandBuffer()->commit();
     }
 
-    void MetalDevice::SubmitAndWaitCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const
+    void MetalDevice::SubmitAndWaitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}] with a graphics API, that is not [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
         const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
@@ -50,6 +50,11 @@ namespace Sierra
 
         // Wait for command buffer
         dispatch_semaphore_wait(sharedCommandBufferSemaphore, DISPATCH_TIME_FOREVER);
+    }
+
+    void MetalDevice::WaitUntilIdle() const
+    {
+
     }
 
     /* --- GETTER METHODS --- */
@@ -79,6 +84,7 @@ namespace Sierra
         {
             case MTL::PixelFormatR8Sint:                return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filtered);
             case MTL::PixelFormatR8Uint:                return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filtered);
+            case MTL::PixelFormatR8Unorm:               return true;
             case MTL::PixelFormatR8Unorm_sRGB:          return true;
             case MTL::PixelFormatR16Sint:               return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filtered);
             case MTL::PixelFormatR16Uint:               return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filtered);
@@ -90,6 +96,8 @@ namespace Sierra
             case MTL::PixelFormatR32Float:              return device->supportsFamily(MTL::GPUFamilyApple8) || !(usage & ImageUsage::Filtered);
             case MTL::PixelFormatRG8Sint:               return !(usage & ImageUsage::Filtered);
             case MTL::PixelFormatRG8Uint:               return !(usage & ImageUsage::Filtered);
+            case MTL::PixelFormatRG8Unorm:              return true;
+            case MTL::PixelFormatRG8Unorm_sRGB:         return device->supportsFamily(MTL::GPUFamilyApple2);
             case MTL::PixelFormatRG16Sint:              return !(usage & ImageUsage::Filtered);
             case MTL::PixelFormatRG16Uint:              return !(usage & ImageUsage::Filtered);
             case MTL::PixelFormatRG16Snorm:             return !(usage & ImageUsage::ResolveAttachment);
@@ -100,6 +108,8 @@ namespace Sierra
             case MTL::PixelFormatRG32Float:             return device->supportsFamily(MTL::GPUFamilyApple9);
             case MTL::PixelFormatRGBA8Sint:             return !(usage & ImageUsage::Filtered);
             case MTL::PixelFormatRGBA8Uint:             return !(usage & ImageUsage::Filtered);
+            case MTL::PixelFormatRGBA8Unorm:            return true;
+            case MTL::PixelFormatRGBA8Unorm_sRGB:       return true;
             case MTL::PixelFormatRGBA16Sint:            return !(usage & ImageUsage::ColorAttachment) && !(usage & ImageUsage::DepthAttachment) && !(usage & ImageUsage::ResolveAttachment);
             case MTL::PixelFormatRGBA16Uint:            return !(usage & ImageUsage::ColorAttachment) && !(usage & ImageUsage::DepthAttachment) && !(usage & ImageUsage::ResolveAttachment);
             case MTL::PixelFormatRGBA16Snorm:           return !(usage & ImageUsage::ResolveAttachment);
@@ -116,29 +126,19 @@ namespace Sierra
 
     #pragma clang diagnostic pop
 
-    bool MetalDevice::IsColorSamplingSupported(const ImageSampling sampling) const
+    bool MetalDevice::IsImageSamplingSupported(const ImageSampling sampling) const
     {
         return device->supportsTextureSampleCount(MetalImage::ImageSamplingToUInteger(sampling));
     }
 
-    bool MetalDevice::IsDepthSamplingSupported(const ImageSampling sampling) const
+    ImageSampling MetalDevice::GetHighestImageSamplingSupported() const
     {
-        return IsColorSamplingSupported(sampling);
-    }
-
-    ImageSampling MetalDevice::GetHighestColorSampling() const
-    {
-        return IsColorSamplingSupported(ImageSampling::x8) ? ImageSampling::x8 : ImageSampling::x4;
-    }
-
-    ImageSampling MetalDevice::GetHighestDepthSampling() const
-    {
-        return GetHighestColorSampling();
+        return IsImageSamplingSupported(ImageSampling::x8) ? ImageSampling::x8 : ImageSampling::x4;
     }
 
     /* --- DESTRUCTOR --- */
 
-    void MetalDevice::Destroy()
+    MetalDevice::~MetalDevice()
     {
         device->release();
     }

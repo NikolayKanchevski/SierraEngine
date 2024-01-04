@@ -8,7 +8,7 @@
 
 # What is Sierra Engine?
 
-An **open-source** rendering engine based on **[C++ 17](https://en.cppreference.com/w/cpp/17/)**, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). Built on top of the **[Vulkan](https://www.vulkan.org/)** and [Metal](https://developer.apple.com/metal/) rendering APIs, it provides support for **Windows 7-11**, **macOS**, **Linux** and **iOS**, but is planned to also feature other native APIs (like **[DirectX](https://developer.nvidia.com/directx)**) and support consoles.
+An **open-source** rendering engine based on **[C++17](https://en.cppreference.com/w/cpp/17/)**, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). Built on top of the **[Vulkan](https://www.vulkan.org/)** and [Metal](https://developer.apple.com/metal/) rendering APIs, it provides support for **Windows 7-11**, **macOS**, **Linux**, **Android** and **iOS**, but is planned to also feature other native APIs (like **[DirectX](https://developer.nvidia.com/directx)**) and support consoles.
 
 <br>
 
@@ -34,7 +34,6 @@ In order to build it, you first must make sure you have the following installed 
 * **[Git](https://git-scm.com/downloads/)**
 * A C/C++ compiler (preferably **[CLang](https://clang.llvm.org)** or **[MSVC](https://visualstudio.microsoft.com/downloads/)**)
 * **[CMake](https://cmake.org/download/)** 3.20 or higher
-* **[Ninja](https://ninja-build.org)** build tool
 * The **[VulkanSDK](https://vulkan.lunarg.com)**
 * **[Python](https://www.python.org/downloads/)**
 
@@ -56,7 +55,7 @@ If you clone the repository directly from an IDE, you may need to also run this:
 $ git submodule update --init --recursive
 ```
 
-And there you have it! You can now play around with the engine itself or create your very own application.
+And there you have it! You can now create your very own application or play around with the engine itself.
 
 <br>
 
@@ -105,7 +104,8 @@ Wondering how to use the engine? You can check out the online documentation [her
 * [Metal](https://developer.apple.com/metal/) - Being their native rendering API, it is used for fast, hardware-accelerated rendering on [Apple](https://www.apple.com) platforms.
 * [metal-cpp](https://developer.apple.com/metal/cpp/) - Convenient C++ layer for [Metal](https://developer.apple.com/metal/), made by [Apple](https://www.apple.com). 
 * [ios-cmake](https://github.com/leetal/ios-cmake) - Essential for building the engine on iOS.
-* [My Brain](https://ih1.redbubble.net/image.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
+* [whereami](https://github.com/gpakosz/whereami/) - Temporarily needed to retrieve binary folder, where shaders will be located until a project system is in place.
+* [My Brain](https://ih1.redbubble.net/templateImage.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
 
 <br>
 
@@ -122,7 +122,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LineCounter">Total lines of code: 19,463</p>
-<p align="center" id="LastUpdated">Last updated: 15/12/2023 </p>
+<p align="center" id="LineCounter">Total lines of code: 19,897</p>
+<p align="center" id="LastUpdated">Last updated: 04/01/2024 </p>
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

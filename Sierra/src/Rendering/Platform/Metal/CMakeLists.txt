@@ -24,12 +24,16 @@ target_sources(Sierra PRIVATE
     MetalContext.h
     MetalDevice.cpp
     MetalDevice.h
+    MetalGraphicsPipeline.cpp
+    MetalGraphicsPipeline.h
     MetalImage.cpp
     MetalImage.h
-    MetalRenderPass.cpp
+        MetalRenderPass.cpp
     MetalRenderPass.h
     MetalResource.cpp
     MetalResource.h
+    MetalShader.cpp
+    MetalShader.h
     MetalSwapchain.mm
     MetalSwapchain.h
 )
