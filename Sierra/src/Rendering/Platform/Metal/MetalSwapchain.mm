@@ -57,7 +57,7 @@ namespace Sierra
         // Create swapchain image (unnecessary on Metal, but needs to comply with Vulkan design)
         @autoreleasepool { metalDrawable = metalLayer->nextDrawable()->retain(); }
         swapchainImage = std::unique_ptr<MetalImage>(new MetalImage(device, MetalImage::SwapchainImageCreateInfo {
-            .name = "Swapchain [" + GetName() + "]'s image",
+            .name = "Image of [" + GetName() + "]",
             .texture = metalDrawable->texture(),
             .width = static_cast<uint32>(metalLayer->drawableSize().width),
             .height = static_cast<uint32>(metalLayer->drawableSize().height),
@@ -127,7 +127,7 @@ namespace Sierra
     {
         // Recreate image with new dimensions
         swapchainImage = std::unique_ptr<MetalImage>(new MetalImage(this->device, MetalImage::SwapchainImageCreateInfo {
-            .name = "Swapchain [" + GetName() + "]'s image",
+            .name = "Image of [" + GetName() + "]",
             .width = static_cast<uint32>(metalLayer->drawableSize().width),
             .height = static_cast<uint32>(metalLayer->drawableSize().height),
             .format = metalLayer->pixelFormat()

@@ -63,6 +63,9 @@ namespace Sierra
         Swapchain(const Swapchain&) = delete;
         Swapchain& operator=(const Swapchain&) = delete;
 
+        /* --- DESTRUCTOR --- */
+        virtual ~Swapchain() = default;
+
     protected:
         explicit Swapchain(const SwapchainCreateInfo &createInfo);
         [[nodiscard]] inline EventDispatcher<SwapchainResizeEvent>& GetSwapchainResizeDispatcher() { return swapchainResizeDispatcher; };

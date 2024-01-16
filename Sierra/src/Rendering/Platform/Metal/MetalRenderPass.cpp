@@ -62,10 +62,7 @@ namespace Sierra
                 }
             }
 
-            for (const auto inputIndex : subpass.inputs)
-            {
-                // TODO: Handle input attachments
-            }
+            // NOTE: Input attachments are not applicable in Metal, so instead a simple regular resource binding is done during command rendering
         }
     }
 
@@ -89,7 +86,7 @@ namespace Sierra
         {
             const RenderPassBeginAttachment &attachment = *(attachments.begin() + i);
             SR_ERROR_IF(attachment.image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), attachment.image->GetName(), i);
-            const MetalImage &metalImage = static_cast<MetalImage&>(*attachment.image);
+            const MetalImage &metalImage = static_cast<const MetalImage&>(*attachment.image);
 
             // Update texture & clear color
             attachmentTable[i].attachmentDescriptor->setTexture(metalImage.GetMetalTexture());
@@ -101,6 +98,7 @@ namespace Sierra
 
         // Begin recording rendering commands
         MTL::RenderCommandEncoder* renderCommandEncoder = metalCommandBuffer.GetMetalCommandBuffer()->renderCommandEncoder(renderPassDescriptors[0]);
+        MTL_SET_OBJECT_NAME(renderCommandEncoder, (GetName() + " Subpass " + std::to_string(currentSubpass)).c_str());
 
         // Define viewport
         MTL::Viewport viewport = { };
@@ -139,6 +137,7 @@ namespace Sierra
 
         // Begin recording rendering commands for next subpass
         MTL::RenderCommandEncoder* renderCommandEncoder = metalCommandBuffer.GetMetalCommandBuffer()->renderCommandEncoder(renderPassDescriptors[currentSubpass]);
+        MTL_SET_OBJECT_NAME(renderCommandEncoder, (GetName() + " Subpass " + std::to_string(currentSubpass)).c_str());
 
         // Define viewport
         MTL::Viewport viewport = { };

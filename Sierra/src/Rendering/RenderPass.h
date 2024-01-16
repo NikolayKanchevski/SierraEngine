@@ -49,14 +49,14 @@ namespace Sierra
     struct RenderPassCreateInfo
     {
         const std::string &name = "Render Pass";
-        const std::initializer_list<RenderPassAttachment> &attachments;
-        const std::initializer_list<SubpassDescription> &subpassDescriptions;
+        const std::initializer_list<RenderPassAttachment> &attachments = { };
+        const std::initializer_list<SubpassDescription> &subpassDescriptions = { };
     };
 
     struct RenderPassBeginAttachment
     {
         const std::unique_ptr<Image> &image;
-        const Vector4 &clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+        const Color &clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
     };
 
     class SIERRA_API RenderPass : public virtual RenderingResource
@@ -75,6 +75,9 @@ namespace Sierra
         /* --- OPERATORS --- */
         RenderPass(const RenderPass&) = delete;
         RenderPass& operator=(const RenderPass&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        virtual ~RenderPass() = default;
 
     protected:
         explicit RenderPass(const RenderPassCreateInfo &createInfo);

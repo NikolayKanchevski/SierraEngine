@@ -9,6 +9,7 @@
 #include "VulkanRenderPass.h"
 #include "VulkanSwapchain.h"
 #include "VulkanShader.h"
+#include "VulkanPipelineLayout.h"
 #include "VulkanGraphicsPipeline.h"
 #include "VulkanCommandBuffer.h"
 
@@ -48,6 +49,11 @@ namespace Sierra
     std::unique_ptr<Shader> VulkanContext::CreateShader(const ShaderCreateInfo &createInfo) const
     {
         return std::make_unique<VulkanShader>(device, createInfo);
+    }
+
+    std::unique_ptr<PipelineLayout> VulkanContext::CreatePipelineLayout(const PipelineLayoutCreateInfo &createInfo) const
+    {
+        return std::make_unique<VulkanPipelineLayout>(device, createInfo);
     }
 
     std::unique_ptr<GraphicsPipeline> VulkanContext::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo &createInfo) const

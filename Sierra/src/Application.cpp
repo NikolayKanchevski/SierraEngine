@@ -84,9 +84,9 @@ namespace Sierra
     // NOTE: When querying application folders on Apple platforms, we do not create directories ourselves,
     //       as OS automatically makes them for the application, and restricts access to others (on iOS).
 
-    const std::filesystem::path& Application::GetApplicationDataDirectoryPath()
+    const std::filesystem::path& Application::GetResourcesDirectoryPath()
     {
-        static auto path = File::GetApplicationDataDirectoryPath()
+        static auto path = File::GetResourcesDirectoryPath()
            #if !SR_PLATFORM_APPLE
                / name
            #elif SR_PLATFORM_macOS

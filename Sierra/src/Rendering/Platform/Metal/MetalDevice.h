@@ -22,7 +22,7 @@ namespace Sierra
         void WaitUntilIdle() const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const char* GetDeviceName() const override { return device->name()->utf8String(); }
+        [[nodiscard]] inline const std::string& GetDeviceName() const override { return deviceName; }
 
         [[nodiscard]] bool IsImageConfigurationSupported(ImageFormat format, ImageUsage usage) const override;
         [[nodiscard]] bool IsImageSamplingSupported(ImageSampling sampling) const override;
@@ -32,10 +32,12 @@ namespace Sierra
         [[nodiscard]] inline MTL::CommandQueue* GetCommandQueue() const { return commandQueue; }
 
         /* --- DESTRUCTOR --- */
-        ~MetalDevice();
+        ~MetalDevice() override;
 
     private:
         MTL::Device* device = nullptr;
+        std::string deviceName;
+
         MTL::CommandQueue* commandQueue = nullptr;
         dispatch_semaphore_t sharedCommandBufferSemaphore = nullptr;
 

@@ -34,19 +34,12 @@ namespace Sierra
     {
     public:
         /* --- GETTER METHODS --- */
-        #if SR_DEBUG
+        #if SR_ENABLE_LOGGING
             [[nodiscard]] inline const std::string& GetName() const { return name; }
         #else
             [[nodiscard]] inline const std::string& GetName() const { static std::string name = ""; return name; }
         #endif
         [[nodiscard]] inline virtual GraphicsAPI GetAPI() const = 0;
-
-        /* --- OPERATORS --- */
-        RenderingResource(const RenderingResource&) = delete;
-        RenderingResource& operator=(const RenderingResource&) = delete;
-
-        /* --- DESTRUCTOR --- */
-        virtual ~RenderingResource() = default;
 
     protected:
         #if SR_ENABLE_LOGGING

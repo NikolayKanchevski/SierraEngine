@@ -30,15 +30,10 @@ namespace Sierra
     VulkanSwapchain::VulkanSwapchain(const VulkanInstance &instance, const VulkanDevice &device, const SwapchainCreateInfo &createInfo)
         : Swapchain(createInfo), VulkanResource(createInfo.name), instance(instance), device(device), window(createInfo.window), preferredPresentationMode(createInfo.preferredPresentationMode), preferredImageMemoryType(createInfo.preferredImageMemoryType)
     {
+        SR_ERROR_IF(!device.IsExtensionLoaded(VK_KHR_SWAPCHAIN_EXTENSION_NAME), "[Vulkan]: Cannot create swapchain [{0}], as the provided device [{1}] does not support the {2} extension!", GetName(), device.GetName(), VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
         // Create surface
         surface = NativeSurface::Create(instance, createInfo.window);
-
-        // Handle window resizing
-        createInfo.window->OnEvent<WindowResizeEvent>([this](const WindowResizeEvent &event) {
-            Recreate();
-            GetSwapchainResizeDispatcher().DispatchEvent(Vector2UInt(swapchainCreateInfo.imageExtent.width, swapchainCreateInfo.imageExtent.height));
-            return false;
-        });
 
         RetrieveConstantSettings();
         CreateSwapchain();
@@ -114,7 +109,7 @@ namespace Sierra
     {
         device.GetFunctionTable().vkDestroySwapchainKHR(device.GetLogicalDevice(), swapchain, nullptr);
 
-        for (uint i = 0; i < concurrentFrameCount; i++)
+        for (uint32 i = 0; i < concurrentFrameCount; i++)
         {
             device.GetFunctionTable().vkDestroySemaphore(device.GetLogicalDevice(), isImageFreeSemaphores[i], nullptr);
             device.GetFunctionTable().vkDestroySemaphore(device.GetLogicalDevice(), isImageRenderedSemaphores[i], nullptr);
@@ -129,7 +124,7 @@ namespace Sierra
     void VulkanSwapchain::RetrieveConstantSettings()
     {
         // Get count of all present queues
-        uint queueFamilyPropertiesCount = 0;
+        uint32 queueFamilyPropertiesCount = 0;
         instance.GetFunctionTable().vkGetPhysicalDeviceQueueFamilyProperties(device.GetPhysicalDevice(), &queueFamilyPropertiesCount, nullptr);
 
         // Retrieve queue properties
@@ -139,7 +134,7 @@ namespace Sierra
         // Try to find a queue family, which supports presentation
         bool presentationFamilyFound = false;
         uint32 presentationQueueFamily = 0;
-        for (uint i = 0; i < queueFamilyPropertiesCount; i++)
+        for (uint32 i = 0; i < queueFamilyPropertiesCount; i++)
         {
             // Check if current family supports presentation
             VkBool32 presentationSupported = VK_FALSE;
@@ -264,6 +259,9 @@ namespace Sierra
         VkResult result = device.GetFunctionTable().vkCreateSwapchainKHR(device.GetLogicalDevice(), &swapchainCreateInfo, nullptr, &swapchain);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create swapchain [{0}]! Error code: {1}.", GetName(), result);
 
+        // Set object name
+        device.SetObjectName(swapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, GetName());
+
         // If an old swapchain was reused, destroy that
         if (swapchainCreateInfo.oldSwapchain != VK_NULL_HANDLE)
         {
@@ -284,10 +282,10 @@ namespace Sierra
 
         // Create image implementations
         swapchainImages.resize(concurrentFrameCount);
-        for (uint i = 0; i < concurrentFrameCount; i++)
+        for (uint32 i = 0; i < concurrentFrameCount; i++)
         {
             swapchainImages[i] = std::unique_ptr<VulkanImage>(new VulkanImage(device, VulkanImage::SwapchainImageCreateInfo {
-                .name = "Swapchain [" + GetName() + "]'s image [" + std::to_string(i) + "]",
+                .name = "Image " + std::to_string(i) + " of [" + GetName() + "]",
                 .image = vulkanSwapchainImages[i],
                 .width = swapchainCreateInfo.imageExtent.width,
                 .height = swapchainCreateInfo.imageExtent.height,
@@ -311,7 +309,7 @@ namespace Sierra
         isImageFreeSemaphores.resize(concurrentFrameCount);
         isImageRenderedSemaphores.resize(concurrentFrameCount);
         isImageUnderWorkFences.resize(concurrentFrameCount);
-        for (uint i = concurrentFrameCount; i--;)
+        for (uint32 i = concurrentFrameCount; i--;)
         {
             SR_ERROR_IF(device.GetFunctionTable().vkCreateSemaphore(device.GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &isImageFreeSemaphores[i]) != VK_SUCCESS ||
                 device.GetFunctionTable().vkCreateSemaphore(device.GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &isImageRenderedSemaphores[i]) != VK_SUCCESS ||
@@ -328,9 +326,12 @@ namespace Sierra
         }
 
         device.GetFunctionTable().vkDeviceWaitIdle(device.GetLogicalDevice());
+        const VkExtent2D lastExtent = swapchainCreateInfo.imageExtent;
 
         CreateSwapchain();
         CreateImages();
+
+        if (lastExtent.width != swapchainCreateInfo.imageExtent.width || lastExtent.height != swapchainCreateInfo.imageExtent.height) GetSwapchainResizeDispatcher().DispatchEvent(Vector2UInt(swapchainCreateInfo.imageExtent.width, swapchainCreateInfo.imageExtent.height));
     }
 
 }

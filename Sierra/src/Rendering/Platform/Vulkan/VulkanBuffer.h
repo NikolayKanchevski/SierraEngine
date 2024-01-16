@@ -9,7 +9,6 @@
 
 #include <vk_mem_alloc.h>
 #include "VulkanDevice.h"
-#include "../../../Engine/MemoryObject.h"
 
 namespace Sierra
 {
@@ -21,13 +20,14 @@ namespace Sierra
         VulkanBuffer(const VulkanDevice &device, const BufferCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void CopyFromMemory(const void* memoryPointer, uint64 memorySize = 0, uint64 sourceOffset = 0, uint64 destinationOffset = 0) override;
+        void CopyFromMemory(const void* memoryPointer, uint64 memoryRange = 0, uint64 sourceOffset = 0, uint64 destinationOffset = 0) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkBuffer GetVulkanBuffer() const { return buffer; }
+        [[nodiscard]] inline VkBufferUsageFlags GetVulkanUsageFlags() const { return usageFlags; }
 
         /* --- DESTRUCTOR --- */
-        ~VulkanBuffer();
+        ~VulkanBuffer() override;
 
         /* --- CONVERSIONS --- */
         static VkBufferUsageFlags BufferUsageToVkBufferUsageFlags(BufferUsage bufferType);
@@ -36,8 +36,8 @@ namespace Sierra
     private:
         const VulkanDevice &device;
 
-        MemoryObject data;
         VkBuffer buffer = VK_NULL_HANDLE;
+        VkBufferUsageFlags usageFlags = 0;
         VmaAllocation allocation = VK_NULL_HANDLE;
 
     };

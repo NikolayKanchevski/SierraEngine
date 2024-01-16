@@ -28,8 +28,10 @@ def CompileShader(inputShaderFilePath: str, outputShaderDirectoryPath: str) -> N
     compilerFilePath: str = CURRENT_DIRECTORY + 'Platform/'
     if operatingSystem == OperatingSystem.Windows:
         compilerFilePath += 'Windows/'
-    else:
-        compilerFilePath += 'Unix/'
+    elif operatingSystem == OperatingSystem.Linux:
+        compilerFilePath += 'Linux/'
+    elif operatingSystem == OperatingSystem.macOS:
+        compilerFilePath += 'macOS/'
     compilerFilePath += 'ShaderConnect'
     if operatingSystem == OperatingSystem.Windows:
         compilerFilePath += '.exe'
@@ -49,7 +51,7 @@ def CompileShader(inputShaderFilePath: str, outputShaderDirectoryPath: str) -> N
     if operatingSystem == OperatingSystem.Windows:
         targetLanguages = ['spir-v', 'hlsl']
     elif operatingSystem == OperatingSystem.macOS:
-        targetLanguages = ['spir-v', 'macos-msl', 'ios-msl']
+        targetLanguages = ['spir-v', 'macos-metallib', 'ios-metallib', 'ios-simulator-metallib', 'macos-metalsl', 'ios-metalsl']
     elif operatingSystem == OperatingSystem.Linux:
         targetLanguages = ['spir-v']
 

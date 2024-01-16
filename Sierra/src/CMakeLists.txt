@@ -35,7 +35,7 @@ target_sources(Sierra PRIVATE
     srpch.h
     Application.h
     Application.cpp
-    ../include/Sierra.h
+        ../include/Sierra.h
 )
 
 # Export engine module symbols
@@ -46,13 +46,6 @@ endif()
 
 # Compile definitions
 target_compile_definitions(Sierra PRIVATE "SR_LIBRARY_IMPLEMENTATION")
-if(SIERRA_DEBUG_BUILD)
-    target_compile_definitions(Sierra PUBLIC "SR_DEBUG")
-endif()
-
 if(SIERRA_ENABLE_LOGGING)
     target_compile_definitions(Sierra PUBLIC "SR_ENABLE_LOGGING")
 endif()
-
-# Link precompiled headers
-target_precompile_headers(Sierra PUBLIC srpch.h)

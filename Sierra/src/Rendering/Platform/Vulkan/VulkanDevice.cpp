@@ -29,7 +29,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanDevice::VulkanDevice(const VulkanInstance &instance, const DeviceCreateInfo &createInfo)
-        : Device(createInfo), VulkanResource(createInfo.name)
+        : Device(createInfo), VulkanResource(createInfo.name), instance(instance)
     {
         // Retrieve number of GPUs found
         uint32 physicalDeviceCount = 0;
@@ -44,7 +44,9 @@ namespace Sierra
         // Use first found device
         physicalDevice = physicalDevices[0];
         vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
-        vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
+
+        // Save device name
+        deviceName = physicalDeviceProperties.deviceName;
 
         // Get count of all present queue families
         uint32 queueFamilyPropertiesCount = 0;
@@ -994,6 +996,10 @@ namespace Sierra
 
         // Create allocator
         vmaCreateAllocator(&vmaCreteInfo, &vmaAllocator);
+
+        // Set device names
+        SetObjectName(physicalDevice, VK_OBJECT_TYPE_PHYSICAL_DEVICE, "Physical device of [" + GetName() + "]");
+        SetObjectName(logicalDevice, VK_OBJECT_TYPE_DEVICE, "Logical device of [" + GetName() + "]");
     }
 
     /* --- POLLING METHODS --- */
@@ -1040,6 +1046,23 @@ namespace Sierra
         functionTable.vkDeviceWaitIdle(logicalDevice);
     }
 
+    void VulkanDevice::SetObjectName(const void* object, const VkObjectType objectType, const std::string &name) const
+    {
+        #if SR_ENABLE_LOGGING
+            if (!instance.IsExtensionLoaded(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) return;
+
+            // Set up object name info
+            VkDebugUtilsObjectNameInfoEXT objectNameInfo = { };
+            objectNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+            objectNameInfo.objectType = objectType;
+            objectNameInfo.objectHandle = (uint64) object;
+            objectNameInfo.pObjectName = name.c_str();
+
+            // Assign resource name
+            instance.GetFunctionTable().vkSetDebugUtilsObjectNameEXT(logicalDevice, &objectNameInfo);
+        #endif
+    }
+
     /* --- GETTER METHODS --- */
 
     bool VulkanDevice::IsImageConfigurationSupported(const ImageFormat format, const ImageUsage usage) const
@@ -1061,7 +1084,7 @@ namespace Sierra
         return true;
     }
 
-    bool VulkanDevice::IsImageSamplingSupported(Sierra::ImageSampling sampling) const
+    bool VulkanDevice::IsImageSamplingSupported(ImageSampling sampling) const
     {
         return (physicalDeviceProperties.limits.framebufferDepthSampleCounts & VulkanImage::ImageSamplingToVkSampleCountFlags(sampling)) && (physicalDeviceProperties.limits.sampledImageDepthSampleCounts & VulkanImage::ImageSamplingToVkSampleCountFlags(sampling));
     }
@@ -1132,7 +1155,7 @@ namespace Sierra
         {
             if (!AddExtensionIfSupported(dependencyExtension, extensionList, supportedExtensions, pNextChain, extensionDataToFree))
             {
-                SR_WARNING("Device extension [{0}] requires the support of an unsupported extension [{1}]! Extensions will be discarded and the application may continue to run, but issues may occur if extensions' support is not checked before their usage!", extension.name, dependencyExtension.name);
+                if (!extension.requiredOnlyIfSupported) SR_WARNING("Device extension [{0}] requires the support of an unsupported extension [{1}]! Extensions will be discarded and the application may continue to run, but issues may occur if extensions' support is not checked before their usage!", extension.name, dependencyExtension.name);
                 return false;
             }
         }

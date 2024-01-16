@@ -10,20 +10,21 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanBuffer::VulkanBuffer(const VulkanDevice &device, const BufferCreateInfo &createInfo)
-        : Buffer(createInfo), VulkanResource(createInfo.name), device(device), data(createInfo.memorySize, 0)
+        : Buffer(createInfo), VulkanResource(createInfo.name), device(device), usageFlags(BufferUsageToVkBufferUsageFlags(createInfo.usage))
     {
         // Set up buffer create info
         VkBufferCreateInfo bufferCreateInfo = { };
         bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferCreateInfo.size = createInfo.memorySize;
-        bufferCreateInfo.usage = BufferUsageToVkBufferUsageFlags(createInfo.usage);
+        bufferCreateInfo.usage = usageFlags;
         bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
         // Set up buffer allocation info
-        VmaAllocationCreateInfo allocationCreateInfo= { };
+        VmaAllocationCreateInfo allocationCreateInfo = { };
         allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
         allocationCreateInfo.usage = BufferMemoryLocationToVmaMemoryUsage(createInfo.memoryLocation);
         allocationCreateInfo.memoryTypeBits = std::numeric_limits<uint32>::max();
+        allocationCreateInfo.memoryTypeBits = 0;
         allocationCreateInfo.priority = 0.5f;
 
         // Create and allocate buffer
@@ -31,16 +32,17 @@ namespace Sierra
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create buffer [{0}]! Error code: {1}.", GetName(), result);
 
         // Map and reset memory
-        vmaMapMemory(device.GetMemoryAllocator(), allocation, &data.GetData());
-        data.SetMemory(0);
+        vmaMapMemory(device.GetMemoryAllocator(), allocation, &data);
+        memset(data, 0, createInfo.memorySize);
     }
 
     /* --- POLLING METHODS --- */
 
-    void VulkanBuffer::CopyFromMemory(const void* memoryPointer, const uint64 memorySize, const uint64 sourceOffset, const uint64 destinationOffset)
+    void VulkanBuffer::CopyFromMemory(const void* memoryPointer, const uint64 memoryRange, const uint64 sourceOffset, const uint64 destinationOffset)
     {
-        data.CopyFromMemory(memoryPointer, memorySize, sourceOffset, destinationOffset);
-        vmaFlushAllocation(device.GetMemoryAllocator(), allocation, 0, data.GetMemorySize());
+        SR_ERROR_IF(destinationOffset + memoryRange > GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, destinationOffset, GetName(), destinationOffset + memoryRange, GetMemorySize());
+        memcpy(reinterpret_cast<char*>(data) + destinationOffset, reinterpret_cast<const char*>(memoryPointer) + sourceOffset, memoryRange != 0 ? memoryRange : GetMemorySize());
+        vmaFlushAllocation(device.GetMemoryAllocator(), allocation, destinationOffset, memoryRange);
     }
 
     /* --- DESTRUCTOR --- */
@@ -49,8 +51,6 @@ namespace Sierra
     {
         vmaUnmapMemory(device.GetMemoryAllocator(), allocation);
         vmaDestroyBuffer(device.GetMemoryAllocator(), buffer, allocation);
-        buffer = VK_NULL_HANDLE;
-        allocation = VK_NULL_HANDLE;
     }
 
     /* --- CONVERSIONS --- */

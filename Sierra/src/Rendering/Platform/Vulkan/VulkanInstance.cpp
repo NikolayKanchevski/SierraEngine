@@ -11,16 +11,19 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanInstance::VulkanInstance(const VulkanInstanceCreateInfo &createInfo)
-        : VulkanResource(createInfo.name)
     {
         // Set up application info
         VkApplicationInfo applicationInfo = { };
         applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        applicationInfo.pApplicationName = "Sierra Engine Application";
+        applicationInfo.pApplicationName = "Sierra Application";
         applicationInfo.applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
-        applicationInfo.pEngineName = "Sierra Engine";
+        applicationInfo.pEngineName = "Sierra";
         applicationInfo.engineVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
-        applicationInfo.apiVersion = GetAPIVersion();
+
+        // Query version
+        const auto vulkanAPIVersion = GetAPIVersion();
+        SR_ERROR_IF(vulkanAPIVersion < VK_API_VERSION_1_2, "[Vulkan]: Cannot create Vulkan instance, as the required Vulkan 1.2 API version is not supported on this machine!");
+        applicationInfo.apiVersion = vulkanAPIVersion;
 
         // Retrieve supported extension count
         uint32 supportedExtensionCount = 0;
@@ -51,56 +54,60 @@ namespace Sierra
         #endif
         instanceCreateInfo.pNext = nullptr;
 
-         #if SR_ENABLE_LOGGING && !SR_PLATFORM_MOBILE && ENABLE_VALIDATION
+         #if SR_ENABLE_LOGGING
             // Define debug messenger info here, so it does not go out of scope
             VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo = { };
             const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 
             // Handle validation
-            bool validationSupported = ValidationLayersSupported(validationLayers);
-            if (validationSupported)
+            bool validationSupported = false;
+            if (IsExtensionLoaded(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
             {
-                // Set up debug messenger info
-                debugMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-                debugMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-                debugMessengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-                debugMessengerCreateInfo.pfnUserCallback = [](const VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, const VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void*) -> VkBool32
+                validationSupported = ValidationLayersSupported(validationLayers);
+                if (validationSupported)
                 {
-                    switch (messageSeverity)
+                    // Set up debug messenger info
+                    debugMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+                    debugMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+                    debugMessengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+                    debugMessengerCreateInfo.pfnUserCallback = [](const VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, const VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void*) -> VkBool32
                     {
-                        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+                        switch (messageSeverity)
                         {
-                            SR_WARNING("Vulkan warning: {0}", callbackData->pMessage);
-                            break;
+                            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+                            {
+                                SR_WARNING("[Vulkan]: Warning - {0}", callbackData->pMessage);
+                                break;
+                            }
+                            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+                            {
+                                SR_ERROR("[Vulkan]: Error - {0}", callbackData->pMessage);
+                                break;
+                            }
+                            default:
+                            {
+                                break;
+                            }
                         }
-                        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-                        {
-                            SR_ERROR("Vulkan error: {0}", callbackData->pMessage);
-                            break;
-                        }
-                        default:
-                        {
-                            break;
-                        }
-                    }
 
-                    return VK_FALSE;
-                };
+                        return VK_FALSE;
+                    };
 
-                // Re-assign layer information in instance info
-                instanceCreateInfo.enabledLayerCount = static_cast<uint32>(validationLayers.size());
-                instanceCreateInfo.ppEnabledLayerNames = validationLayers.data();
-                instanceCreateInfo.pNext = &debugMessengerCreateInfo;
-            }
-            else
-            {
-                SR_WARNING("Vulkan validation layers requested, but none are supported!");
+                    // Re-assign layer information in instance info
+                    instanceCreateInfo.enabledLayerCount = static_cast<uint32>(validationLayers.size());
+                    instanceCreateInfo.ppEnabledLayerNames = validationLayers.data();
+                    instanceCreateInfo.pNext = &debugMessengerCreateInfo;
+                }
+                else
+                {
+                    SR_WARNING("[Vulkan]: Vulkan validation layers requested, but none are supported!");
+                }
             }
         #endif
 
         // Create instance
         const VkResult result = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
-        SR_ERROR_IF(result != VK_SUCCESS, "Could not create instance [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create instance! Error code: {0}.", result);
 
         // Load function pointers
         #if defined(VK_VERSION_1_0)
@@ -311,8 +318,8 @@ namespace Sierra
         #endif
 
         // Enable validation if supported
-         #if SR_ENABLE_LOGGING && !SR_PLATFORM_MOBILE && ENABLE_VALIDATION
-            if (validationSupported && functionTable.vkCreateDebugUtilsMessengerEXT != nullptr) functionTable.vkCreateDebugUtilsMessengerEXT(instance, &debugMessengerCreateInfo, nullptr, &debugMessenger);
+         #if SR_ENABLE_LOGGING
+            if (validationSupported && IsExtensionLoaded(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) functionTable.vkCreateDebugUtilsMessengerEXT(instance, &debugMessengerCreateInfo, nullptr, &debugMessenger);
         #endif
     }
 
@@ -367,7 +374,7 @@ namespace Sierra
         return true;
     }
 
-     #if SR_ENABLE_LOGGING && !SR_PLATFORM_MOBILE && ENABLE_VALIDATION
+    #if SR_ENABLE_LOGGING
         bool VulkanInstance::ValidationLayersSupported(const std::vector<const char*> &layers)
         {
             // Retrieve supported layer count
@@ -405,8 +412,8 @@ namespace Sierra
 
     VulkanInstance::~VulkanInstance()
     {
-         #if SR_ENABLE_LOGGING && !SR_PLATFORM_MOBILE && ENABLE_VALIDATION
-            if (debugMessenger != nullptr && functionTable.vkDestroyDebugUtilsMessengerEXT != nullptr) functionTable.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+         #if SR_ENABLE_LOGGING
+            if (debugMessenger != nullptr) functionTable.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         #endif
         functionTable.vkDestroyInstance(instance, nullptr);
     }

@@ -20,6 +20,9 @@ namespace Sierra
         device = MTL::CreateSystemDefaultDevice();
         SR_ERROR_IF(device == nullptr, "[Metal]: Could not create default system device for device [{0}]!", GetName());
 
+        // Save device name
+        deviceName = device->name()->utf8String();
+
         // Create command queue
         commandQueue = device->newCommandQueue();
         SR_ERROR_IF(commandQueue == nullptr, "[Metal]: Could not create command queue for device [{0}]!", GetName());

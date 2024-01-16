@@ -22,14 +22,19 @@ namespace Sierra
         void Begin() override;
         void End() override;
 
+        void BeginDebugRegion(const std::string &regionName, const Color &color = Color(1.0f, 1.0f, 0.0f, 1.0f)) const override;
+        void InsertDebugMarker(const std::string &markerName, const Color &color = Color(1.0f, 1.0f, 0.0f, 1.0f)) const override;
+        void EndDebugRegion() const override;
+
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkCommandBuffer GetVulkanCommandBuffer() const { return commandBuffer; }
 
         /* --- DESTRUCTOR --- */
-        ~VulkanCommandBuffer();
+        ~VulkanCommandBuffer() override;
 
     private:
         const VulkanDevice &device;
+
         VkCommandPool commandPool = VK_NULL_HANDLE;
         VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 

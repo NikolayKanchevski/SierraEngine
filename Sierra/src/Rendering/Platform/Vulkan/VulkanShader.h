@@ -22,7 +22,7 @@ namespace Sierra
         [[nodiscard]] inline VkShaderModule GetVulkanShaderModule() const { return shaderModule; }
 
         /* --- DESTRUCTOR --- */
-        ~VulkanShader();
+        ~VulkanShader() override;
 
         /* --- CONVERSIONS --- */
         [[nodiscard]] static VkShaderStageFlags ShaderTypeToVkShaderStageFlags(ShaderType shaderType);

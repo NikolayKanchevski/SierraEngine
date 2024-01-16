@@ -46,11 +46,6 @@ if(SIERRA_ENABLE_LOGGING)
     target_include_directories(Sierra PRIVATE ${SPDLOG_DIRECTORY}/include)
 endif()
 
-# Link whereami
-set(WHEREAMI_DIR ../../vendor/whereami/src/)
-target_sources(Sierra PRIVATE ${WHEREAMI_DIR}/whereami.c ${WHEREAMI_DIR}/whereami.h)
-target_include_directories(Sierra PRIVATE ${WHEREAMI_DIR})
-
 # Link platform-specific source files and libraries
 if(SIERRA_PLATFORM_WINDOWS)
     add_subdirectory(Platform/Windows)
@@ -67,3 +62,6 @@ endif()
 if(SIERRA_PLATFORM_iOS)
     add_subdirectory(Platform/iOS)
 endif()
+
+# Link precompiled headers
+target_precompile_headers(Sierra PUBLIC ../srpch.h)

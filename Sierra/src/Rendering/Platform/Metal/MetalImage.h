@@ -22,7 +22,7 @@ namespace Sierra
         [[nodiscard]] inline const MTL::Texture* GetMetalTexture() const { return texture; }
 
         /* --- DESTRUCTOR --- */
-        ~MetalImage();
+        ~MetalImage() override;
 
         /* --- CONVERSIONS --- */
         static MTL::TextureType ImageSettingsToTextureType(ImageSampling sampling, uint32 layerCount);

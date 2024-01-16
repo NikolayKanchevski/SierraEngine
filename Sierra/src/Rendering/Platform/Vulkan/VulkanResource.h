@@ -23,6 +23,16 @@
     #include <vulkan/vulkan_android.h>
 #endif
 
+#if SR_ENABLE_LOGGING
+    #define VK_SET_RESOURCE_NAME(DEVICE, RESOURCE, NAME)                \
+        if (DEVICE.IsExtensionLoaded(VK_EXT_DEBUG_MARKER_EXTENSION_NAME)) \
+        {                                                               \
+                                                                            \
+        }
+
+#else
+    #define VK_SET_RESOURCE_NAME(RESOURCE, NAME)
+#endif
 
 namespace Sierra
 {

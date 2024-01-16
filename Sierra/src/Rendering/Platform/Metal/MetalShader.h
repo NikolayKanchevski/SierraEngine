@@ -22,7 +22,7 @@ namespace Sierra
         [[nodiscard]] inline MTL::Function* GetEntryFunction() const { return entryFunction; }
 
         /* --- DESTRUCTOR --- */
-        ~MetalShader();
+        ~MetalShader() override;
 
     private:
         MTL::Library* library = nullptr;

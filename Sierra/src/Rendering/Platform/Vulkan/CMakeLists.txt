@@ -55,6 +55,8 @@ if(Vulkan_LIBRARIES)
         VulkanCommandBuffer.h
         VulkanContext.cpp
         VulkanContext.h
+            VulkanDescriptorSets.cpp
+            VulkanDescriptorSets.h
         VulkanDevice.cpp
         VulkanDevice.h
         VulkanGraphicsPipeline.cpp
@@ -63,6 +65,10 @@ if(Vulkan_LIBRARIES)
         VulkanImage.h
         VulkanInstance.cpp
         VulkanInstance.h
+        VulkanPipeline.cpp
+        VulkanPipeline.h
+        VulkanPipelineLayout.cpp
+        VulkanPipelineLayout.h
         VulkanRenderPass.cpp
         VulkanRenderPass.h
         VulkanResource.cpp

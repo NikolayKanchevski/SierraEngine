@@ -40,17 +40,26 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
+        template<typename T>
+        inline void CopyFromMemory(const T &memory, const uint64 sourceOffset = 0, const uint64 destinationOffset = 0) { CopyFromMemory(&memory, sizeof(T), sourceOffset, destinationOffset); }
         virtual void CopyFromMemory(const void* memoryPointer, uint64 memorySize = 0, uint64 sourceOffset = 0, uint64 destinationOffset = 0) = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint64 GetMemorySize() const { return memorySize; };
+        [[nodiscard]] inline const void* GetData() const { return data; }
+        template<typename T>
+        [[nodiscard]] inline const T& GetDataAs() const { return *reinterpret_cast<T*>(data); }
 
         /* --- OPERATORS --- */
         Buffer(const Buffer&) = delete;
         Buffer& operator=(const Buffer&) = delete;
 
+        /* --- DESTRUCTOR --- */
+        virtual ~Buffer() = default;
+
     protected:
         explicit Buffer(const BufferCreateInfo &createInfo);
+        void* data = nullptr;
 
     private:
         uint64 memorySize = 0;

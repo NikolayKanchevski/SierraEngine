@@ -26,14 +26,18 @@ namespace Sierra
         textureDescriptor->setPixelFormat(ImageFormatToPixelFormat(createInfo.format));
         textureDescriptor->setUsage(ImageUsageToTextureUsage(createInfo.usage));
         textureDescriptor->setSampleCount(ImageSamplingToUInteger(createInfo.sampling));
-        textureDescriptor->setStorageMode(ImageMemoryLocationToStorageMode(createInfo.memoryLocation));
+        #if SR_PLATFORM_macOS
+            textureDescriptor->setStorageMode(ImageMemoryLocationToStorageMode(createInfo.memoryLocation));
+        #else
+            textureDescriptor->setStorageMode(createInfo.usage & ImageUsage::TransientAttachment ? MTL::StorageModeMemoryless : ImageMemoryLocationToStorageMode(createInfo.memoryLocation));
+        #endif
         textureDescriptor->setCpuCacheMode(ImageMemoryLocationToCPUCacheMode(createInfo.memoryLocation));
         textureDescriptor->setHazardTrackingMode(MTL::HazardTrackingModeUntracked);
 
         // Allocate texture
         texture = device.GetMetalDevice()->newTexture(textureDescriptor);
         SR_ERROR_IF(texture == nullptr, "[Metal]: Could not create image!");
-        MTL_SET_RESOURCE_NAME(texture, GetName().c_str());
+        MTL_SET_OBJECT_NAME(texture, GetName().c_str());
 
         textureDescriptor->release();
     }
@@ -42,7 +46,7 @@ namespace Sierra
         : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainPixelFormatToImageFormat(createInfo.format), .memoryLocation = ImageMemoryLocation::Device, .usage = ImageUsage::ColorAttachment }), MetalResource(createInfo.name),
           texture(createInfo.texture), swapchainImage(true)
     {
-        MTL_SET_RESOURCE_NAME(texture, GetName().c_str());
+        MTL_SET_OBJECT_NAME(texture, GetName().c_str());
     }
 
     /* --- DESTRUCTOR --- */

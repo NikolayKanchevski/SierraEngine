@@ -10,6 +10,3 @@
 [submodule "Sierra/vendor/metal-cpp"]
 	path = Sierra/vendor/metal-cpp
 	url = https://github.com/bkaradzic/metal-cpp
-[submodule "Sierra/vendor/whereami"]
-	path = Sierra/vendor/whereami
-	url = https://github.com/gpakosz/whereami/

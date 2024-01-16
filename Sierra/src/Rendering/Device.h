@@ -27,12 +27,19 @@ namespace Sierra
         virtual void WaitUntilIdle() const = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual const char* GetDeviceName() const = 0;
+        [[nodiscard]] virtual const std::string& GetDeviceName() const = 0;
 
         [[nodiscard]] ImageFormat GetSupportedImageFormat(ImageChannels preferredChannels, ImageMemoryType preferredMemoryType, ImageUsage usage) const;
         [[nodiscard]] virtual bool IsImageConfigurationSupported(ImageFormat format, ImageUsage usage) const = 0;
         [[nodiscard]] virtual bool IsImageSamplingSupported(ImageSampling sampling) const = 0;
         [[nodiscard]] virtual ImageSampling GetHighestImageSamplingSupported() const = 0;
+
+        /* --- OPERATORS --- */
+        Device(const Device&) = delete;
+        Device &operator=(const Device&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        virtual ~Device() = default;
 
     protected:
         explicit Device(const DeviceCreateInfo &createInfo);

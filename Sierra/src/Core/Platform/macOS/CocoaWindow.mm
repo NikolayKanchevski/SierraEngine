@@ -316,10 +316,7 @@ namespace Sierra
         }
 
         // Poll create events
-        while (!cocoaContext.IsEventQueueEmpty())
-        {
-            cocoaContext.PollNextEvent();
-        }
+        while (cocoaContext.PollNextEvent() != nullptr);
     }
 
     /* --- POLLING METHODS --- */
@@ -329,10 +326,8 @@ namespace Sierra
         inputManager.OnUpdate();
         cursorManager.OnUpdate();
 
-        while (!cocoaContext.IsEventQueueEmpty())
-        {
-            cocoaContext.PollNextEvent();
-        }
+        // Poll events
+        while (cocoaContext.PollNextEvent() != nullptr);
 
         cursorManager.OnUpdateEnd();
     }
@@ -431,7 +426,7 @@ namespace Sierra
 
     Vector2UInt CocoaWindow::GetFramebufferSize() const
     {
-        const NSRect contentRect = [window convertRectToBacking: window.frame];
+        const NSRect contentRect = [window convertRectToBacking: view.frame];
         return { contentRect.size.width, contentRect.size.height };
     }
 
@@ -506,13 +501,11 @@ namespace Sierra
                 if (maximized)
                 {
                     GetWindowMaximizeDispatcher().DispatchEvent();
-                    return;
                 }
             }
 
             // Otherwise handle event like a normal resize
             GetWindowResizeDispatcher().DispatchEvent(GetSize());
-            GetWindowResizeDispatcher().DispatchEvent(GetFramebufferSize());
         }
 
         void CocoaWindow::WindowDidMove(const NSNotification* notification)

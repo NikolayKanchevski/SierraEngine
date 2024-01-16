@@ -8,7 +8,6 @@
 #include "MetalResource.h"
 
 #include "MetalDevice.h"
-#include "../../../Engine/MemoryObject.h"
 
 namespace Sierra
 {
@@ -20,19 +19,18 @@ namespace Sierra
         MetalBuffer(const MetalDevice &device, const BufferCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void CopyFromMemory(const void* memoryPointer, uint64 memorySize = 0, uint64 sourceOffset = 0, uint64 destinationOffset = 0) override;
+        void CopyFromMemory(const void* memoryPointer, uint64 memoryRange = 0, uint64 sourceOffset = 0, uint64 destinationOffset = 0) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline MTL::Buffer* GetMetalBuffer() { return buffer; }
+        [[nodiscard]] inline MTL::Buffer* GetMetalBuffer() const { return buffer; }
 
         /* --- DESTRUCTOR --- */
-        ~MetalBuffer();
+        ~MetalBuffer() override;
 
         /* --- CONVERSIONS --- */
         static MTL::ResourceOptions BufferMemoryLocationToResourceOptions(BufferMemoryLocation memoryLocation);
 
     private:
-        MemoryObject data;
         MTL::Buffer* buffer = nullptr;
 
     };

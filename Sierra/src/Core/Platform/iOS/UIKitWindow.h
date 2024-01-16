@@ -68,7 +68,7 @@ namespace Sierra
         [[nodiscard]] UIView* GetUIView() const { return view; }
 
         /* --- DESTRUCTOR --- */
-        ~UIKitWindow();
+        ~UIKitWindow() override;
 
     private:
         const UIKitContext &uiKitContext;

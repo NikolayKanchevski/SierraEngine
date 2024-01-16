@@ -10,7 +10,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     Image::Image(const ImageCreateInfo &createInfo)
-        : width(createInfo.width), height(createInfo.height), layerCount(createInfo.layerCount), format(createInfo.format), usage(createInfo.usage)
+        : width(createInfo.width), height(createInfo.height), layerCount(createInfo.layerCount), format(createInfo.format)
     {
         SR_ERROR_IF(createInfo.width == 0 || createInfo.height == 0, "Width and height of image [{0}] must not be [0]!", createInfo.name);
         SR_ERROR_IF(createInfo.layerCount == 0, "Layer count of image [{0}] must not be [0]!", createInfo.name);

@@ -36,7 +36,7 @@ namespace Sierra
         [[nodiscard]] inline android_app* GetApp() const { return app; }
 
         /* --- DESTRUCTOR --- */
-        ~GameActivityContext();
+        ~GameActivityContext() override;
 
     private:
         friend class AndroidContext;

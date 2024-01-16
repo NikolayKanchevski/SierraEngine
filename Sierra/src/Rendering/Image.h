@@ -113,7 +113,13 @@ namespace Sierra
 
         [[nodiscard]] inline ImageSampling GetSampling() const { return sampling; };
         [[nodiscard]] inline ImageFormat GetFormat() const { return format; }
-        [[nodiscard]] inline ImageUsage GetUsage() const { return usage; }
+
+        /* --- OPERATORS --- */
+        Image(const Image&) = delete;
+        Image& operator=(const Image&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        virtual ~Image() = default;
 
     protected:
         explicit Image(const ImageCreateInfo &createInfo);
@@ -128,7 +134,6 @@ namespace Sierra
 
         ImageSampling sampling = ImageSampling::x1;
         ImageFormat format = { };
-        ImageUsage usage = ImageUsage::Undefined;
 
     };
 

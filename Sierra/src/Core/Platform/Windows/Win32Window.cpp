@@ -291,7 +291,6 @@ namespace Sierra
                     if (wParam == SIZE_MAXIMIZED)
                     {
                         window->GetWindowMaximizeDispatcher().DispatchEvent();
-                        break;
                     }
 
                     if (window->nextMoveEventBlocked)

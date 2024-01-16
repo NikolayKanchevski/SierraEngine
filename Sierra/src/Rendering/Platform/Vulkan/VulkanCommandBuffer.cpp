@@ -32,6 +32,10 @@ namespace Sierra
         // Allocate command buffer
         result = device.GetFunctionTable().vkAllocateCommandBuffers(device.GetLogicalDevice(), &allocateInfo, &commandBuffer);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create command buffer [{0}]! Error code: {1}.", GetName(), result);
+
+        // Set object names
+        device.SetObjectName(commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, GetName());
+        device.SetObjectName(commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Command pool of [" + GetName() + "]");
     }
 
     /* --- POLLING METHODS --- */
@@ -55,6 +59,50 @@ namespace Sierra
         // End command buffer
         const VkResult result = device.GetFunctionTable().vkEndCommandBuffer(commandBuffer);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not end command buffer [{0}]! Error code: {1}.", GetName(), result);
+    }
+
+    void VulkanCommandBuffer::BeginDebugRegion(const std::string &regionName, const Color &color) const
+    {
+        #if !SR_ENABLE_LOGGING
+            return;
+        #endif
+        if (!device.IsExtensionLoaded(VK_EXT_DEBUG_MARKER_EXTENSION_NAME)) return;
+
+        // Set up marker info
+        VkDebugMarkerMarkerInfoEXT markerInfo = { };
+        markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+        markerInfo.pMarkerName = regionName.c_str();
+        SR_ERROR_IF(sizeof(Color) != sizeof(VkDebugMarkerMarkerInfoEXT::color), "[Vulkan]: Memory size of Color does not match that of VkDebugMarkerMarkerInfoEXT::color, so a memcpy operation is forbidden!");
+        memcpy(markerInfo.color, &color, sizeof(Color));
+
+        // Bind marker
+        device.GetFunctionTable().vkCmdDebugMarkerBeginEXT(commandBuffer, &markerInfo);
+    }
+
+    void VulkanCommandBuffer::InsertDebugMarker(const std::string &markerName, const Color &color) const
+    {
+        #if !SR_ENABLE_LOGGING
+            return;
+        #endif
+        if (!device.IsExtensionLoaded(VK_EXT_DEBUG_MARKER_EXTENSION_NAME)) return;
+
+        // Set up marker info
+        VkDebugMarkerMarkerInfoEXT markerInfo = { };
+        markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+        markerInfo.pMarkerName = markerName.c_str();
+        SR_ERROR_IF(sizeof(Color) != sizeof(VkDebugMarkerMarkerInfoEXT::color), "[Vulkan]: Memory size of Color does not match that of VkDebugMarkerMarkerInfoEXT::color, so a memcpy operation is forbidden!");
+        memcpy(markerInfo.color, &color, sizeof(Color));
+
+        // Bind marker
+        device.GetFunctionTable().vkCmdDebugMarkerInsertEXT(commandBuffer, &markerInfo);
+    }
+
+    void VulkanCommandBuffer::EndDebugRegion() const
+    {
+        #if !SR_ENABLE_LOGGING
+            return;
+        #endif
+        device.GetFunctionTable().vkCmdDebugMarkerEndEXT(commandBuffer);
     }
 
     /* --- DESTRUCTOR --- */

@@ -31,7 +31,7 @@ namespace Sierra
         [[nodiscard]] inline const std::unique_ptr<Image>& GetImage(const uint32 frameIndex) const override { SR_ERROR_IF(frameIndex >= concurrentFrameCount, "[Vulkan]: Cannot return image with an index [{0}] of swapchain [{1}], as index is out of bounds! Use Swapchain::GetConcurrentFrameCount() to query image count.", frameIndex, GetName()); return swapchainImages[frameIndex]; }
 
         /* --- DESTRUCTOR --- */
-        ~VulkanSwapchain();
+        ~VulkanSwapchain() override;
 
     private:
         const VulkanInstance &instance;

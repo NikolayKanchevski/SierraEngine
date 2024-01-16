@@ -4,8 +4,15 @@
 
 #include "File.h"
 
-#include <whereami.h>
-#if SR_PLATFORM_APPLE
+#if SR_PLATFORM_WINDOWS
+    #define WIN32_LEAN_AND_MEAN
+    #include <Windows.h>
+
+    #undef CreateFile
+    #undef CreateDirectory
+    #undef DeleteFile
+    #undef DeleteDirectory
+#elif SR_PLATFORM_APPLE
     #include "Platform/Apple/NSFilePaths.h"
 #endif
 
@@ -94,36 +101,21 @@ namespace Sierra
         return std::filesystem::exists(directoryPath);
     }
 
-    const std::filesystem::path& File::GetBinaryDirectoryPath()
+    const std::filesystem::path& File::GetResourcesDirectoryPath()
     {
-        static std::filesystem::path binaryDirectoryPath;
-        if (binaryDirectoryPath.empty())
+        static std::filesystem::path resourcesDirectoryPath;
+        if (resourcesDirectoryPath.empty())
         {
-            // Get binary directory length
-            int length = 0, dirnameLength = 0;
-            length = wai_getExecutablePath(nullptr, 0, &dirnameLength);
-
-            // Load binary's path
-            char* path = new char[length + 1];
-            wai_getExecutablePath(path, length, &dirnameLength);
-            path[dirnameLength] = '\0';
-
-            // Save directory
-            binaryDirectoryPath = path;
-            delete[](path);
-        }
-        return binaryDirectoryPath;
-    }
-
-    const std::filesystem::path& File::GetApplicationDataDirectoryPath()
-    {
-        static const std::filesystem::path applicationDataDirectoryPath =
             #if SR_PLATFORM_WINDOWS || SR_PLATFORM_LINUX || SR_PLATFORM_ANDROID
-                GetTemporaryDirectoryPath(); // TODO: Query platform folder, instead of using %TEMP%
+                CHAR path[MAX_PATH];
+                GetModuleFileNameA(nullptr, path, MAX_PATH);
+                resourcesDirectoryPath = path;
+                resourcesDirectoryPath = resourcesDirectoryPath.parent_path() / "Resources";
             #elif SR_PLATFORM_APPLE
-                NSFilePaths::GetApplicationDirectoryPath();
+                resourcesDirectoryPath = NSFilePaths::GetApplicationDirectoryPath();
             #endif
-        return applicationDataDirectoryPath;
+        }
+        return resourcesDirectoryPath;
     }
 
     const std::filesystem::path& File::GetCachesDirectoryPath()

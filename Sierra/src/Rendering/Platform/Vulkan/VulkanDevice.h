@@ -25,8 +25,10 @@ namespace Sierra
         void SubmitAndWaitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const override;
         void WaitUntilIdle() const override;
 
+        void SetObjectName(const void* object, VkObjectType objectType, const std::string &name) const;
+
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const char* GetDeviceName() const override { return physicalDeviceProperties.deviceName; }
+        [[nodiscard]] inline const std::string& GetDeviceName() const override { return deviceName; }
 
         [[nodiscard]] bool IsImageConfigurationSupported(ImageFormat format, ImageUsage usage) const override;
         [[nodiscard]] bool IsImageSamplingSupported(ImageSampling sampling) const override;
@@ -43,12 +45,16 @@ namespace Sierra
         [[nodiscard]] inline auto& GetFunctionTable() const { return functionTable; }
 
         /* --- DESTRUCTOR --- */
-        ~VulkanDevice();
+        ~VulkanDevice() override;
 
     private:
+        const VulkanInstance &instance;
+
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-        VkPhysicalDeviceProperties physicalDeviceProperties;
-        VkPhysicalDeviceFeatures physicalDeviceFeatures;
+        VkPhysicalDeviceProperties physicalDeviceProperties = { };
+        VkPhysicalDeviceFeatures physicalDeviceFeatures = { };
+        std::string deviceName;
+
         struct
         {
             #if defined(VK_VERSION_1_0)
@@ -858,25 +864,47 @@ namespace Sierra
         struct DeviceExtension
         {
             std::string name;
-            std::initializer_list<DeviceExtension> dependencies;
-            bool requiredOnlyIfSupported = false;
             void* data = nullptr;
+            std::vector<DeviceExtension> dependencies = { };
+            bool requiredOnlyIfSupported = false;
         };
 
         const std::vector<DeviceExtension> DEVICE_EXTENSIONS_TO_QUERY
         {
+            #if SR_ENABLE_LOGGING
+            {
+                .name = VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
+                .dependencies = {
+                    {
+                        .name = VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+                        .requiredOnlyIfSupported = true
+                    }
+                },
+                .requiredOnlyIfSupported = true
+            },
+            #endif
             {
                 .name = VK_KHR_SWAPCHAIN_EXTENSION_NAME
             },
             {
+                // Core in Vulkan 1.1
                 .name = VK_KHR_MAINTENANCE_1_EXTENSION_NAME
             },
             {
+                // Core in Vulkan 1.2
                 .name = VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME,
                 .data = new VkPhysicalDeviceImagelessFramebufferFeatures {
                     .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES,
                     .imagelessFramebuffer = VK_TRUE
+                },
+                .dependencies = {
+                    {
+                        .name = VK_KHR_IMAGE_FORMAT_LIST_EXTENSION_NAME
+                    }
                 }
+            },
+            {
+                .name = VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME
             }
         };
         std::vector<Hash> loadedExtensions;

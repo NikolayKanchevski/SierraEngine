@@ -13,7 +13,7 @@ function(BuildMacOSExecutable)
     )
 
     # Copy resources to bundle
-    add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/resources" "${CMAKE_BINARY_DIR}/${SIERRA_APPLICATION_NAME}.app/Contents/Resources")
+    add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/resources" "${CMAKE_BINARY_DIR}/${SIERRA_APPLICATION_NAME}.app/Contents/Resources")
 
     # Link icon with the application
     set_source_files_properties(${SIERRA_APPLICATION_ICON_ICNS} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)

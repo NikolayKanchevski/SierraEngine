@@ -57,7 +57,7 @@ namespace Sierra
         [[nodiscard]] inline ANativeWindow* GetNativeWindow() const { return window; }
 
         /* --- DESTRUCTOR --- */
-        ~GameActivityWindow();
+        ~GameActivityWindow() override;
 
     private:
         const GameActivityContext &gameActivityContext;

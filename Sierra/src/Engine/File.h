@@ -24,8 +24,7 @@ namespace Sierra
         [[nodiscard]] static bool FileExists(const std::filesystem::path &filePath);
         [[nodiscard]] static bool DirectoryExists(const std::filesystem::path &directoryPath);
 
-        [[nodiscard]] static const std::filesystem::path& GetBinaryDirectoryPath();
-        [[nodiscard]] static const std::filesystem::path& GetApplicationDataDirectoryPath();
+        [[nodiscard]] static const std::filesystem::path& GetResourcesDirectoryPath();
         [[nodiscard]] static const std::filesystem::path& GetCachesDirectoryPath();
         [[nodiscard]] static const std::filesystem::path& GetTemporaryDirectoryPath();
 

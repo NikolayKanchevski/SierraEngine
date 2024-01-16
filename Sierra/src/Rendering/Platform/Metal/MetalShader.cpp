@@ -28,7 +28,7 @@ namespace Sierra
         NS::Error* error = nullptr;
         library = device.GetMetalDevice()->newLibrary(NS::String::string(shaderLibraryFilePath.string().c_str(), NS::ASCIIStringEncoding), &error);
         SR_ERROR_IF(error != nullptr, "Could not load Metal shader library [{0} - {1}]! Error: {2}.", GetName(), shaderLibraryFilePath.string().c_str(), error->localizedDescription()->cString(NS::ASCIIStringEncoding));
-        MTL_SET_RESOURCE_NAME(library, GetName().c_str());
+        MTL_SET_OBJECT_NAME(library, GetName().c_str());
 
         // Load entry point
         entryFunction = library->newFunction(NS::String::string("main0", NS::ASCIIStringEncoding));

@@ -58,11 +58,11 @@ namespace Sierra
 
         // Create window
         HWND window = CreateWindowEx(
-                exStyle, className,
-                title.c_str(), style,
-                CW_USEDEFAULT, CW_USEDEFAULT,
-                rect.right - rect.left, rect.bottom - rect.top,
-                NULL, NULL, hInstance, NULL
+            exStyle, className,
+            title.c_str(), style,
+            CW_USEDEFAULT, CW_USEDEFAULT,
+            rect.right - rect.left, rect.bottom - rect.top,
+            NULL, NULL, hInstance, NULL
         );
         SR_ERROR_IF(window == nullptr, "Could not create Win32 window!");
 

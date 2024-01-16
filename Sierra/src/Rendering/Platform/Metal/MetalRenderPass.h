@@ -31,7 +31,7 @@ namespace Sierra
         [[nodiscard]] inline const auto& GetAttachmentTable() const { return attachmentTable; }
 
         /* --- DESTRUCTOR --- */
-        ~MetalRenderPass();
+        ~MetalRenderPass() override;
 
         /* --- CONVERSIONS --- */
         static MTL::LoadAction AttachmentLoadOperationToLoadAction(AttachmentLoadOperation loadOperation);

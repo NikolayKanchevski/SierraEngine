@@ -20,7 +20,6 @@
 #include "../src/Core/Window.h"
 #include "../src/Core/WindowManager.h"
 #include "../src/Engine/File.h"
-#include "../src/Engine/MemoryObject.h"
 #include "../src/Engine/RNG.h"
 #include "../src/Engine/Time.h"
 using namespace Sierra;

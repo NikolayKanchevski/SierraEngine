@@ -21,9 +21,10 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkImage GetVulkanImage() const { return image; }
         [[nodiscard]] inline VkImageView GetVulkanImageView() const { return imageView; }
+        [[nodiscard]] inline VkImageUsageFlags GetVulkanUsageFlags() const { return usageFlags; }
 
         /* --- DESTRUCTOR --- */
-        ~VulkanImage();
+        ~VulkanImage() override;
 
         /* --- CONVERSIONS --- */
         static VkFormat ImageFormatToVkFormat(ImageFormat format);
@@ -36,6 +37,8 @@ namespace Sierra
 
         VkImage image = VK_NULL_HANDLE;
         VkImageView imageView = VK_NULL_HANDLE;
+
+        VkImageUsageFlags usageFlags = 0;
         VmaAllocation allocation = nullptr;
 
         friend class VulkanSwapchain;

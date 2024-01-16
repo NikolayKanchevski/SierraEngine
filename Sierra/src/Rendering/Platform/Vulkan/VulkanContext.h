@@ -25,6 +25,7 @@ namespace Sierra
         [[nodiscard]] std::unique_ptr<RenderPass> CreateRenderPass(const RenderPassCreateInfo &createInfo) const override;
         [[nodiscard]] std::unique_ptr<Swapchain> CreateSwapchain(const SwapchainCreateInfo &createInfo) const override;
         [[nodiscard]] std::unique_ptr<Shader> CreateShader(const ShaderCreateInfo &createInfo) const override;
+        [[nodiscard]] std::unique_ptr<PipelineLayout> CreatePipelineLayout(const PipelineLayoutCreateInfo &createInfo) const override;
         [[nodiscard]] std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(const GraphicsPipelineCreateInfo &createInfo) const override;
         [[nodiscard]] std::unique_ptr<CommandBuffer> CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const override;
 
@@ -32,7 +33,7 @@ namespace Sierra
         [[nodiscard]] const Device& GetDevice() const override { return device; };
 
         /* --- DESTRUCTOR --- */
-        ~VulkanContext() = default;
+        ~VulkanContext() override = default;
 
     private:
         VulkanInstance instance;

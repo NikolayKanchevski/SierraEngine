@@ -59,7 +59,7 @@ namespace Sierra
         [[nodiscard]] inline HINSTANCE GetHInstance() const { return win32Context.GetHInstance(); }
 
         /* --- DESTRUCTOR --- */
-        ~Win32Window();
+        ~Win32Window() override;
 
     private:
         const Win32Context &win32Context;

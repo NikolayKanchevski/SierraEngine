@@ -15,6 +15,8 @@ namespace Sierra
     VulkanRenderPass::VulkanRenderPass(const VulkanDevice &device, const RenderPassCreateInfo &createInfo)
         : RenderPass(createInfo), VulkanResource(createInfo.name), device(device)
     {
+        SR_ERROR_IF(!device.IsExtensionLoaded(VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME), "[Vulkan]: Cannot create render pass [{0}], as the provided device [{1}] does not support the {2} extension!", GetName(), device.GetName(), VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME);
+
         // Allocate attachment data
         framebufferImageAttachmentFormats.resize(createInfo.attachments.size());
         framebufferImageAttachments.resize(createInfo.attachments.size());
@@ -25,11 +27,12 @@ namespace Sierra
         {
             const RenderPassAttachment &attachment = *(createInfo.attachments.begin() + i);
             SR_ERROR_IF(attachment.templateImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not use image of attachment [{0}] in render pass [{1}] with a graphics API, which differs from [GraphicsAPI::Vulkan]!", i, GetName());
+            const VulkanImage &vulkanTemplateImage = static_cast<VulkanImage&>(*attachment.templateImage);
 
             // Set up framebuffer attachment
             framebufferImageAttachmentFormats[i] = VulkanImage::ImageFormatToVkFormat(attachment.templateImage->GetFormat());
             framebufferImageAttachments[i].sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENT_IMAGE_INFO;
-            framebufferImageAttachments[i].usage = VulkanImage::ImageUsageToVkImageUsageFlags(attachment.templateImage->GetUsage());
+            framebufferImageAttachments[i].usage = vulkanTemplateImage.GetVulkanUsageFlags();
             framebufferImageAttachments[i].width = attachment.templateImage->GetWidth();
             framebufferImageAttachments[i].height = attachment.templateImage->GetHeight();
             framebufferImageAttachments[i].layerCount = attachment.templateImage->GetLayerCount();
@@ -234,6 +237,10 @@ namespace Sierra
         // Recreate framebuffer
         const VkResult result = device.GetFunctionTable().vkCreateFramebuffer(device.GetLogicalDevice(), &framebufferCreateInfo, nullptr, &framebuffer);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not resize framebuffer of render pass [{0}]! Error code: {1}.", GetName(), result);
+
+        // Set object names
+        device.SetObjectName(renderPass, VK_OBJECT_TYPE_RENDER_PASS, GetName());
+        device.SetObjectName(framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Framebuffer of [" + GetName() + "]");
     }
 
     void VulkanRenderPass::Begin(std::unique_ptr<CommandBuffer> &commandBuffer, const std::initializer_list<RenderPassBeginAttachment> &attachments) const

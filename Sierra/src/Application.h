@@ -51,7 +51,7 @@ namespace Sierra
         [[nodiscard]] inline const WindowManager& GetWindowManager() { return *windowManager; }
         [[nodiscard]] inline const RenderingContext& GetRenderingContext() { return *renderingContext; }
 
-        [[nodiscard]] const std::filesystem::path& GetApplicationDataDirectoryPath();
+        [[nodiscard]] const std::filesystem::path& GetResourcesDirectoryPath();
         [[nodiscard]] const std::filesystem::path& GetApplicationCachesDirectoryPath();
         [[nodiscard]] const std::filesystem::path& GetApplicationTemporaryDirectoryPath();
 

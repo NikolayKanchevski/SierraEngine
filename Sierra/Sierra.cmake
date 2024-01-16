@@ -16,21 +16,15 @@ set(SIERRA_APPLICATION_ICON_ICO "../Media/SierraExecutableIcon.ico" CACHE FILEPA
 set(SIERRA_APPLICATION_ICON_ICNS "../Media/SierraExecutableIcon.icns" CACHE FILEPATH "Absolute path to an .icns image to use as an icon for the generated binary on Apple platforms.")
 set(SIERRA_APPLICATION_ICON_PNG "../Media/SierraExecutableIcon.png" CACHE FILEPATH "Absolute path to an .icns image to use as an icon for the generated binary on Apple platforms.")
 
-if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Debug")
-    option(SIERRA_DEBUG_BUILD "Wether to compile a debug build." ON)
-else()
-    option(SIERRA_DEBUG_BUILD "Wether to compile a debug build." OFF)
-endif()
-
 option(SIERRA_BUILD_STATIC_LIBRARY "Wether to build the engine as a static library, which is embedded in the application." OFF)
 option(SIERRA_BUILD_SHARED_LIBRARY "Wether to build the engine as a shared library, which is shipped as a separate file (.dll, .dylib, etc.)" OFF)
 
-if(SIERRA_DEBUG_BUILD)
+if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Debug")
     option(SIERRA_ENABLE_LOGGING "Wether to enable Application and Engine logging." ON)
-    option(SIERRA_ENABLE_OPTIMIZATIONS "Wether to enable speed optimizations."  OFF)
+    option(SIERRA_ENABLE_OPTIMIZATIONS "Wether to enable optimizations." OFF)
 else()
     option(SIERRA_ENABLE_LOGGING "Wether to enable both Application and Engine logging." OFF)
-    option(SIERRA_ENABLE_OPTIMIZATIONS "Wether to enable speed optimizations." ON)
+    option(SIERRA_ENABLE_OPTIMIZATIONS "Wether to enable optimizations." ON)
 endif()
 
 if(SIERRA_PLATFORM_WINDOWS OR SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_LINUX OR SIERRA_PLATFORM_ANDROID OR SIERRA_PLATFORM_iOS)
@@ -40,18 +34,21 @@ if(SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_iOS)
      option(SIERRA_BUILD_METAL "Wether to build Metal and its resources." ON)
 endif()
 
-function(SierraBuildApplication SOURCE_FILES)
-    # === CHECK IF REQUIREMENTS ARE MET === #
-    if(CMAKE_CXX_STANDARD LESS 17)
-        message(FATAL_ERROR "[Sierra]: Sierra requires C++ 17!")
-    endif()
-    if(SIERRA_COMPILER_UNKNOWN)
-        message(FATAL_ERROR "[Sierra]: Sierra cannot be built with unrecognized compiler [${CMAKE_CXX_COMPILER_ID}]!")
-    endif()
-    if(SIERRA_PLATFORM_UNKNOWN)
-        message(FATAL_ERROR "[Sierra]: Sierra cannot be built for current platform [${CMAKE_SYSTEM_NAME}]!")
-    endif()
+# === CHECK IF REQUIREMENTS ARE MET === #
+if(NOT CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 20)
+    message(FATAL_ERROR "[Sierra]: Sierra requires C++ 20 to be explicitly selected before including Sierra.cmake!")
+endif()
+if(SIERRA_COMPILER_UNKNOWN)
+    message(FATAL_ERROR "[Sierra]: Sierra cannot be built with unrecognized compiler [${CMAKE_CXX_COMPILER_ID}]!")
+endif()
+if(SIERRA_PLATFORM_UNKNOWN)
+    message(FATAL_ERROR "[Sierra]: Sierra cannot be built for current platform [${CMAKE_SYSTEM_NAME}]!")
+endif()
 
+# === BUILD API LIBRARY === #
+add_subdirectory(${SIERRA_DIRECTORY}/src ${SIERRA_DIRECTORY}/src)
+
+function(SierraBuildApplication SOURCE_FILES)
     # === COMPILER SETTINGS === #
     if(SIERRA_ENABLE_OPTIMIZATIONS)
         if(SIERRA_COMPILER_MSVC)
@@ -90,7 +87,6 @@ function(SierraBuildApplication SOURCE_FILES)
     endif()
 
     # === ENGINE LINKING === #
-    add_subdirectory(${SIERRA_DIRECTORY}/src ${SIERRA_DIRECTORY}/src)
     target_link_libraries(${SIERRA_APPLICATION_NAME} PRIVATE Sierra)
     target_include_directories(${SIERRA_APPLICATION_NAME} PRIVATE ${SIERRA_DIRECTORY}/include/)
 

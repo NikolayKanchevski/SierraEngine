@@ -12,7 +12,7 @@ namespace Sierra
 
     struct VulkanInstanceCreateInfo
     {
-        const std::string &name = "Vulkan Instance";
+
     };
 
     class SIERRA_API VulkanAPIVersion
@@ -35,7 +35,7 @@ namespace Sierra
 
     };
 
-    class SIERRA_API VulkanInstance final : public VulkanResource
+    class SIERRA_API VulkanInstance
     {
     public:
         /* --- GETTER METHODS --- */
@@ -51,7 +51,6 @@ namespace Sierra
         friend class VulkanContext;
         explicit VulkanInstance(const VulkanInstanceCreateInfo &createInfo);
 
-        #define ENABLE_VALIDATION true
         VkInstance instance = VK_NULL_HANDLE;
         struct
         {
@@ -285,7 +284,7 @@ namespace Sierra
                     .requiredOnlyIfSupported = true
                 },
             #endif
-            #if SR_ENABLE_LOGGING && !SR_PLATFORM_MOBILE
+            #if SR_ENABLE_LOGGING
                 {
                     .name = VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
                     .requiredOnlyIfSupported = true
@@ -296,7 +295,7 @@ namespace Sierra
         std::vector<Hash> loadedExtensions;
         bool AddExtensionIfSupported(const InstanceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions);
 
-        #if SR_ENABLE_LOGGING && !SR_PLATFORM_MOBILE
+        #if SR_ENABLE_LOGGING
             VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
             static bool ValidationLayersSupported(const std::vector<const char*> &layers);
         #endif

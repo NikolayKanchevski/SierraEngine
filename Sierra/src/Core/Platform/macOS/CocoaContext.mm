@@ -116,7 +116,7 @@
 
     - (instancetype)initWithTitle: (const std::string&) title width: (const uint32) width height: (const uint32) height
     {
-        self = [self initWithContentRect: NSMakeRect(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height)) styleMask: NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable backing: NSBackingStoreBuffered defer: NO];
+        self = [self initWithContentRect: NSMakeRect(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height)) styleMask: NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable backing: NSBackingStoreBuffered defer: NO];
         [self setTitle: @(title.c_str())];
         return self;
     }
@@ -140,22 +140,6 @@
         [super dealloc];
     }
 
-@end
-
-@interface Pool : NSAutoreleasePool
-@end
-
-@implementation Pool
-    - (instancetype) init
-    {
-        self = [super init];
-        return self;
-    }
-
-    - (void) drain
-    {
-        [super drain];
-    }
 @end
 
 namespace Sierra
@@ -211,21 +195,11 @@ namespace Sierra
         [window setContentView: nil];
     }
 
-    bool CocoaContext::IsEventQueueEmpty() const
-    {
-        return PeekNextEvent() == nil;
-    }
-
     NSEvent* CocoaContext::PollNextEvent() const
     {
         NSEvent* event = [application nextEventMatchingMask: NSEventMaskAny untilDate: [NSDate distantPast] inMode: NSDefaultRunLoopMode dequeue: YES];
         if (event != nil) [application sendEvent: event];
         return event;
-    }
-
-    NSEvent* CocoaContext::PeekNextEvent() const
-    {
-        return [application nextEventMatchingMask: NSEventMaskAny untilDate: [NSDate distantPast] inMode: NSDefaultRunLoopMode dequeue: NO];
     }
 
     /* --- GETTER METHODS --- */

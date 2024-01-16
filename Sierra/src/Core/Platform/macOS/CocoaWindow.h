@@ -72,7 +72,7 @@ namespace Sierra
         [[nodiscard]] inline const NSView* GetNSView() const { return reinterpret_cast<NSView*>(view); }
 
         /* --- DESTRUCTOR --- */
-        ~CocoaWindow();
+        ~CocoaWindow() override;
 
     private:
         const CocoaContext &cocoaContext;

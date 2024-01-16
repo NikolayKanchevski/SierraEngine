@@ -28,7 +28,9 @@ target_sources(Sierra PRIVATE
     MetalGraphicsPipeline.h
     MetalImage.cpp
     MetalImage.h
-        MetalRenderPass.cpp
+    MetalPipelineLayout.cpp
+    MetalPipelineLayout.h
+    MetalRenderPass.cpp
     MetalRenderPass.h
     MetalResource.cpp
     MetalResource.h
