@@ -23,6 +23,8 @@ private:
 
     std::unique_ptr<Shader> vertexShader = nullptr;
     std::unique_ptr<Shader> fragmentShader = nullptr;
+
+    std::unique_ptr<PipelineLayout> pipelineLayout = nullptr;
     std::unique_ptr<GraphicsPipeline> graphicsPipeline = nullptr;
     std::vector<std::unique_ptr<CommandBuffer>> commandBuffers;
 
@@ -37,37 +39,34 @@ private:
 
         // Create render pass
         renderPass = GetRenderingContext().CreateRenderPass({
-            .name = "Render Pass",
+            .name = "Swapchain Render Pass",
             .attachments = {
-                {
-                    .templateImage = swapchain->GetImage(0),
-                    .type = AttachmentType::Color
-                }
+                { .templateImage = swapchain->GetImage(0), .type = AttachmentType::Color }
             },
             .subpassDescriptions = {
-                {
-                    .renderTargets = { 0 }
-                }
+                { .renderTargets = { 0 } }
             }
         });
 
         // Load shaders
-        vertexShader = GetRenderingContext().CreateShader({ .name = "Triangle Vertex Shader", .shaderBundlePath = GetApplicationDataDirectoryPath() / "shaders/TriangleShader.vert.shader", .shaderType = ShaderType::Vertex });
-        fragmentShader = GetRenderingContext().CreateShader({ .name = "Triangle Fragment Shader", .shaderBundlePath = GetApplicationDataDirectoryPath() / "shaders/TriangleShader.frag.shader", .shaderType = ShaderType::Fragment });
+        vertexShader = GetRenderingContext().CreateShader({ .name = "Triangle Vertex Shader", .shaderBundlePath = GetResourcesDirectoryPath() / "shaders/TriangleShader.vert.shader", .shaderType = ShaderType::Vertex });
+        fragmentShader = GetRenderingContext().CreateShader({ .name = "Triangle Fragment Shader", .shaderBundlePath = GetResourcesDirectoryPath() / "shaders/TriangleShader.frag.shader", .shaderType = ShaderType::Fragment });
 
         // Create graphics pipeline
+        pipelineLayout = GetRenderingContext().CreatePipelineLayout({ .name = "Triangle Graphics Pipeline Layout" });
         graphicsPipeline = GetRenderingContext().CreateGraphicsPipeline({
-           .name = "Triangle Graphics Pipeline",
-           .vertexShader = vertexShader,
-           .fragmentShader = fragmentShader,
-           .renderPass = renderPass
+            .name = "Triangle Graphics Pipeline",
+            .vertexShader = vertexShader,
+            .fragmentShader = fragmentShader,
+            .layout = pipelineLayout,
+            .renderPass = renderPass
         });
 
         // Create a command buffer for every concurrent frame
         commandBuffers.resize(swapchain->GetConcurrentFrameCount());
         for (uint32 i = swapchain->GetConcurrentFrameCount(); i--;)
         {
-            commandBuffers[i] = GetRenderingContext().CreateCommandBuffer({ .name = "Command Buffer " + std::to_string(i) });
+            commandBuffers[i] = GetRenderingContext().CreateCommandBuffer({ .name = "General Command Buffer " + std::to_string(i) });
         }
     }
 
@@ -81,7 +80,7 @@ private:
         swapchain->AcquireNextImage();
 
         // Begin rendering to current swapchain image
-        renderPass->Begin(commandBuffer, { swapchain->GetCurrentImage() });
+        renderPass->Begin(commandBuffer, { { .image = swapchain->GetCurrentImage() } });
 
         // Start graphics pipeline
         graphicsPipeline->Begin(commandBuffer);
@@ -108,7 +107,7 @@ private:
     }
 
 public:
-    ~SandboxApplication()
+    ~SandboxApplication() override
     {
         // Before deallocating rendering resources, make sure device is not using them
         GetRenderingContext().GetDevice().WaitUntilIdle();
