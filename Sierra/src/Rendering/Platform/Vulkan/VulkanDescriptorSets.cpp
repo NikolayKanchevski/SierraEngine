@@ -10,7 +10,6 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanPushDescriptorSet::VulkanPushDescriptorSet(const VulkanDescriptorSetCreateInfo &createInfo)
-        : VulkanResource(createInfo.name)
     {
 
     }

@@ -196,7 +196,7 @@ namespace Sierra
 
         SR_ERROR_IF(offset > vertexBuffer->GetMemorySize(), "[Vulkan]: Cannot bind vertex buffer [{0}] to graphics pipeline [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", vertexBuffer->GetName(), GetName(), offset, vertexBuffer->GetMemorySize());
 
-        VkBuffer vkBuffer = vulkanVertexBuffer.GetVulkanBuffer();
+        const VkBuffer vkBuffer = vulkanVertexBuffer.GetVulkanBuffer();
         device.GetFunctionTable().vkCmdBindVertexBuffers(vulkanCommandBuffer.GetVulkanCommandBuffer(), 0, 1, &vkBuffer, &offset);
     }
 

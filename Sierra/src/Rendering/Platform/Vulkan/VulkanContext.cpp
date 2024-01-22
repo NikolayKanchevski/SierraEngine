@@ -19,7 +19,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanContext::VulkanContext(const RenderingContextCreateInfo &createInfo)
-        : RenderingContext(createInfo), VulkanResource(createInfo.name), instance(VulkanInstance({ })), device(VulkanDevice(instance, { .name = "Default Vulkan Device" }))
+        : RenderingContext(createInfo), VulkanResource(createInfo.name), instance(VulkanInstance({ })), device(instance, { .name = "Default Vulkan Device" })
     {
         SR_INFO("Vulkan context created successfully! Device in use: [{0}].", device.GetDeviceName());
     }

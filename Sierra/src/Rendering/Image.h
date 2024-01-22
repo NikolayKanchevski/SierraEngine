@@ -91,7 +91,6 @@ namespace Sierra
 
         ImageType type = ImageType::Plane;
         uint32 layerCount = 1;
-        bool enableMipMapping = false;
 
         ImageFormat format = { };
         ImageMemoryLocation memoryLocation = ImageMemoryLocation::Auto;
@@ -108,7 +107,7 @@ namespace Sierra
         [[nodiscard]] inline uint32 GetHeight() const { return height; }
         [[nodiscard]] inline uint64 GetMemorySize() const { return memorySize; }
 
-        [[nodiscard]] inline uint32 GetMipLevels() const { return mipLevels; }
+        [[nodiscard]] inline uint32 GetMipLevelCount() const { return mipLevelCount; }
         [[nodiscard]] inline uint32 GetLayerCount() const { return layerCount; }
 
         [[nodiscard]] inline ImageSampling GetSampling() const { return sampling; };
@@ -129,7 +128,7 @@ namespace Sierra
         uint32 height = 0;
         uint64 memorySize = 0;
 
-        uint32 mipLevels = 1;
+        uint32 mipLevelCount = 1;
         uint32 layerCount = 1;
 
         ImageSampling sampling = ImageSampling::x1;

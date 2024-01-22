@@ -24,7 +24,7 @@ namespace Sierra
         imageCreateInfo.extent.width = GetWidth();
         imageCreateInfo.extent.height = GetHeight();
         imageCreateInfo.extent.depth = 1;
-        imageCreateInfo.mipLevels = GetMipLevels();
+        imageCreateInfo.mipLevels = GetMipLevelCount();
         imageCreateInfo.arrayLayers = GetLayerCount();
         imageCreateInfo.samples = ImageSamplingToVkSampleCountFlags(GetSampling());
         imageCreateInfo.tiling = createInfo.usage != ImageUsage::SourceTransfer ? VK_IMAGE_TILING_OPTIMAL : VK_IMAGE_TILING_LINEAR;
@@ -43,7 +43,6 @@ namespace Sierra
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create image [{0}]! Error code: {1}.", GetName(), result);
 
         // Determine aspect flags
-        VkImageAspectFlags aspectFlags = 0;
         if (createInfo.usage & ImageUsage::DepthAttachment) aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
         else aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
@@ -63,7 +62,7 @@ namespace Sierra
         imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
         imageViewCreateInfo.subresourceRange.aspectMask = aspectFlags;
         imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-        imageViewCreateInfo.subresourceRange.levelCount = GetMipLevels();
+        imageViewCreateInfo.subresourceRange.levelCount = GetMipLevelCount();
         imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
         imageViewCreateInfo.subresourceRange.layerCount = GetLayerCount();
 
@@ -78,7 +77,7 @@ namespace Sierra
 
     VulkanImage::VulkanImage(const VulkanDevice &device, const SwapchainImageCreateInfo &createInfo)
         : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainVkFormatToImageFormat(createInfo.format), .memoryLocation = ImageMemoryLocation::Device, .usage = ImageUsage::SourceTransfer | ImageUsage::ColorAttachment }), VulkanResource(createInfo.name),
-          device(device), image(createInfo.image), usageFlags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT), swapchainImage(true)
+          device(device), image(createInfo.image), usageFlags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT), aspectFlags(VK_IMAGE_ASPECT_COLOR_BIT), swapchainImage(true)
     {
         SR_ERROR_IF(createInfo.image == VK_NULL_HANDLE, "[Vulkan]: Null texture pointer passed upon swapchain image [{0}] creation!", GetName());
 
@@ -92,7 +91,7 @@ namespace Sierra
         imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
         imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        imageViewCreateInfo.subresourceRange.aspectMask = aspectFlags;
         imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
         imageViewCreateInfo.subresourceRange.levelCount = 1;
         imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;

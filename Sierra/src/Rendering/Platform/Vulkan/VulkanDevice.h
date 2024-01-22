@@ -21,11 +21,8 @@ namespace Sierra
         VulkanDevice(const VulkanInstance &instance, const DeviceCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const override;
-        void SubmitAndWaitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const override;
-        void WaitUntilIdle() const override;
-
-        void SetObjectName(const void* object, VkObjectType objectType, const std::string &name) const;
+        void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::initializer_list<std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait = { }) const override;
+        void WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const std::string& GetDeviceName() const override { return deviceName; }
@@ -41,8 +38,14 @@ namespace Sierra
         [[nodiscard]] inline uint32 GetGeneralQueueFamily() const { return generalQueueFamily; }
         [[nodiscard]] inline VkQueue GetGeneralQueue() const { return generalQueue; }
 
+        [[nodiscard]] inline VkSemaphore GetSharedTimelineSemaphore() const { return sharedTimelineSemaphore; }
+        [[nodiscard]] inline uint64 GetNewSignalValue() const { lastReservedSignalValue++; return lastReservedSignalValue; }
+
         [[nodiscard]] bool IsExtensionLoaded(const std::string &extensionName) const;
         [[nodiscard]] inline auto& GetFunctionTable() const { return functionTable; }
+
+        /* --- SETTER METHODS --- */
+        void SetObjectName(VkHandle object, VkObjectType objectType, const std::string &name) const;
 
         /* --- DESTRUCTOR --- */
         ~VulkanDevice() override;
@@ -51,8 +54,6 @@ namespace Sierra
         const VulkanInstance &instance;
 
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-        VkPhysicalDeviceProperties physicalDeviceProperties = { };
-        VkPhysicalDeviceFeatures physicalDeviceFeatures = { };
         std::string deviceName;
 
         struct
@@ -656,7 +657,7 @@ namespace Sierra
             #endif
             #if defined(VK_KHR_video_encode_queue)
                 PFN_vkCmdEncodeVideoKHR vkCmdEncodeVideoKHR;
-            PFN_vkGetEncodedVideoSessionParametersKHR vkGetEncodedVideoSessionParametersKHR;
+                PFN_vkGetEncodedVideoSessionParametersKHR vkGetEncodedVideoSessionParametersKHR;
             #endif
             #if defined(VK_KHR_video_queue)
                 PFN_vkBindVideoSessionMemoryKHR vkBindVideoSessionMemoryKHR;
@@ -859,17 +860,18 @@ namespace Sierra
 
         uint32 generalQueueFamily = 0;
         VkQueue generalQueue = VK_NULL_HANDLE;
-        VkFence sharedCommandBufferFence = VK_NULL_HANDLE;
 
-        struct DeviceExtension
+        mutable uint64 lastReservedSignalValue = 0;
+        VkSemaphore sharedTimelineSemaphore = VK_NULL_HANDLE;
+
+        struct VulkanDeviceExtension
         {
             std::string name;
             void* data = nullptr;
-            std::vector<DeviceExtension> dependencies = { };
+            std::vector<VulkanDeviceExtension> dependencies = { };
             bool requiredOnlyIfSupported = false;
         };
-
-        const std::vector<DeviceExtension> DEVICE_EXTENSIONS_TO_QUERY
+        const std::vector<VulkanDeviceExtension> DEVICE_EXTENSIONS_TO_QUERY
         {
             #if SR_ENABLE_LOGGING
             {
@@ -883,18 +885,23 @@ namespace Sierra
                 .requiredOnlyIfSupported = true
             },
             #endif
+            #if SR_PLATFORM_APPLE
             {
-                .name = VK_KHR_SWAPCHAIN_EXTENSION_NAME
+                .name = VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME,
+                .data = new VkPhysicalDevicePortabilitySubsetFeaturesKHR {
+                    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR
+                },
+                .requiredOnlyIfSupported = true
             },
+            #endif
             {
                 // Core in Vulkan 1.1
                 .name = VK_KHR_MAINTENANCE_1_EXTENSION_NAME
             },
             {
-                // Core in Vulkan 1.2
                 .name = VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME,
-                .data = new VkPhysicalDeviceImagelessFramebufferFeatures {
-                    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES,
+                .data = new VkPhysicalDeviceImagelessFramebufferFeaturesKHR {
+                    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES_KHR,
                     .imagelessFramebuffer = VK_TRUE
                 },
                 .dependencies = {
@@ -905,13 +912,23 @@ namespace Sierra
             },
             {
                 .name = VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME
-            }
+            },
+            {
+                // Core in Vulkan 1.2
+                .name = VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME,
+                .data = new VkPhysicalDeviceTimelineSemaphoreFeaturesKHR {
+                    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR,
+                    .timelineSemaphore = VK_TRUE
+                }
+            },
+            {
+                .name = VK_KHR_SWAPCHAIN_EXTENSION_NAME
+            },
         };
         std::vector<Hash> loadedExtensions;
 
         static bool IsExtensionSupported(const char* extensionName, const std::vector<VkExtensionProperties> &supportedExtensions);
-        template<typename T>
-        bool AddExtensionIfSupported(const DeviceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions, T &pNextChain, std::vector<void*> &extensionDataToFree);
+        bool AddExtensionIfSupported(const VulkanDeviceExtension &extension, const std::vector<VkExtensionProperties> &supportedExtensions, void* pNextChain, std::vector<const char*> &extensionList, std::vector<void*> &extensionDataToFree);
 
     };
 

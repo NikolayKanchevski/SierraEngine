@@ -12,7 +12,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API MetalPipelineLayout : public PipelineLayout, public MetalResource
+    class SIERRA_API MetalPipelineLayout final : public PipelineLayout, public MetalResource
     {
     public:
         /* --- CONSTRUCTORS --- */

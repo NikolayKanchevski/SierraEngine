@@ -12,7 +12,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API MetalImage : public Image, public MetalResource
+    class SIERRA_API MetalImage final : public Image, public MetalResource
     {
     public:
         /* --- CONSTRUCTORS --- */

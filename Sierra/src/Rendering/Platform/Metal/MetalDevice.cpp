@@ -33,31 +33,31 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void MetalDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const
+    void MetalDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::initializer_list<std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait) const
     {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}] with a graphics API, that is not [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
+        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}] with a graphics API, that differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
         const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
+
+        for (uint32 i = 0; i < commandBuffersToWait.size(); i++)
+        {
+            const auto &commandBufferToWait = (commandBuffersToWait.begin() + i)->get();
+            SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName(), commandBufferToWait->GetName(), i);
+
+            const MetalCommandBuffer &metalCommandBufferToWait = static_cast<const MetalCommandBuffer&>(*commandBufferToWait);
+            dispatch_semaphore_wait(metalCommandBufferToWait.GetCompletionSemaphore(), DISPATCH_TIME_FOREVER);
+        }
 
         // Submit command buffer
         metalCommandBuffer.GetMetalCommandBuffer()->commit();
     }
 
-    void MetalDevice::SubmitAndWaitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const
+    void MetalDevice::WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const
     {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}] with a graphics API, that is not [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
+        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], wait for command buffer [{1}] with a graphics API, that differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
         const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
 
-        // Submit command buffer
-        metalCommandBuffer.GetMetalCommandBuffer()->addCompletedHandler(^(MTL::CommandBuffer*) { dispatch_semaphore_signal(sharedCommandBufferSemaphore); });
-        metalCommandBuffer.GetMetalCommandBuffer()->commit();
-
-        // Wait for command buffer
-        dispatch_semaphore_wait(sharedCommandBufferSemaphore, DISPATCH_TIME_FOREVER);
-    }
-
-    void MetalDevice::WaitUntilIdle() const
-    {
-
+        // Wait for completion semaphore
+        dispatch_semaphore_wait(metalCommandBuffer.GetCompletionSemaphore(), DISPATCH_TIME_FOREVER);
     }
 
     /* --- GETTER METHODS --- */

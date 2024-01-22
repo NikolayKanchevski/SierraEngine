@@ -87,28 +87,33 @@ namespace Sierra
 
     void MetalSwapchain::AcquireNextImage()
     {
-        // Wait until GPU is done with the frame
+        // Wait until current frame has been presented
         dispatch_semaphore_wait(isFrameRenderedSemaphores, DISPATCH_TIME_FOREVER);
 
         // Acquire next drawable
         metalDrawable->release();
         @autoreleasepool { metalDrawable = metalLayer->nextDrawable()->retain(); }
 
-        // Update actual swapchain image's texture
-        static_cast<MetalImage&>(*swapchainImage).texture = metalDrawable->texture();
+        // Update image
+        MTL::Texture* drawableTexture = metalDrawable->texture();
+        MTL_SET_OBJECT_NAME(drawableTexture, "Texture for current Metal drawable of swapchain [" + GetName() + "]");
+        static_cast<MetalImage&>(*swapchainImage).texture = drawableTexture;
     }
 
-    void MetalSwapchain::SubmitCommandBufferAndPresent(std::unique_ptr<CommandBuffer> &commandBuffer)
+    void MetalSwapchain::Present(std::unique_ptr<CommandBuffer> &commandBuffer)
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot present swapchain [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
         const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
 
-        // Record presentation commands
-        metalCommandBuffer.GetMetalCommandBuffer()->presentDrawable(metalDrawable);
-        metalCommandBuffer.GetMetalCommandBuffer()->addCompletedHandler(^(MTL::CommandBuffer*) { dispatch_semaphore_signal(isFrameRenderedSemaphores); });
+        // Wait until drawing command buffer has finished execution
+        dispatch_semaphore_wait(metalCommandBuffer.GetCompletionSemaphore(), DISPATCH_TIME_FOREVER);
 
-        // Submit command buffer
-        metalCommandBuffer.GetMetalCommandBuffer()->commit();
+        // Record presentation commands to a new command buffer
+        MTL::CommandBuffer* presentationCommandBuffer = device.GetCommandQueue()->commandBuffer();
+        MTL_SET_OBJECT_NAME(presentationCommandBuffer, "Presentation command buffer of swapchain [" + GetName() + "]");
+        presentationCommandBuffer->addCompletedHandler(^(MTL::CommandBuffer*) { dispatch_semaphore_signal(isFrameRenderedSemaphores); });
+        presentationCommandBuffer->presentDrawable(metalDrawable);
+        presentationCommandBuffer->commit();
 
         // Increment current frame
         currentFrame = (currentFrame + 1) % CONCURRENT_FRAME_COUNT;

@@ -271,6 +271,12 @@ namespace Sierra
         const std::vector<InstanceExtension> INSTANCE_EXTENSIONS_TO_QUERY
         {
             { .name = VK_KHR_SURFACE_EXTENSION_NAME },
+            #if SR_ENABLE_LOGGING
+            {
+                .name = VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+                .requiredOnlyIfSupported = true
+            },
+            #endif
             #if SR_PLATFORM_WINDOWS
                 { .name = VK_KHR_WIN32_SURFACE_EXTENSION_NAME },
             #elif SR_PLATFORM_LINUX
@@ -281,12 +287,6 @@ namespace Sierra
                 { .name = VK_EXT_METAL_SURFACE_EXTENSION_NAME },
                 {
                     .name = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
-                    .requiredOnlyIfSupported = true
-                },
-            #endif
-            #if SR_ENABLE_LOGGING
-                {
-                    .name = VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
                     .requiredOnlyIfSupported = true
                 },
             #endif

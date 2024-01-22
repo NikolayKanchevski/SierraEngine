@@ -17,9 +17,8 @@ namespace Sierra
         explicit MetalDevice(const DeviceCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const override;
-        void SubmitAndWaitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer) const override;
-        void WaitUntilIdle() const override;
+        void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::initializer_list<std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait = { }) const override;
+        void WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const std::string& GetDeviceName() const override { return deviceName; }

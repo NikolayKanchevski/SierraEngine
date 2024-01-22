@@ -98,7 +98,7 @@ namespace Sierra
 
         // Begin recording rendering commands
         MTL::RenderCommandEncoder* renderCommandEncoder = metalCommandBuffer.GetMetalCommandBuffer()->renderCommandEncoder(renderPassDescriptors[0]);
-        MTL_SET_OBJECT_NAME(renderCommandEncoder, (GetName() + " Subpass " + std::to_string(currentSubpass)).c_str());
+        MTL_SET_OBJECT_NAME(renderCommandEncoder, GetName() + " Subpass " + std::to_string(currentSubpass));
 
         // Define viewport
         MTL::Viewport viewport = { };
@@ -137,7 +137,7 @@ namespace Sierra
 
         // Begin recording rendering commands for next subpass
         MTL::RenderCommandEncoder* renderCommandEncoder = metalCommandBuffer.GetMetalCommandBuffer()->renderCommandEncoder(renderPassDescriptors[currentSubpass]);
-        MTL_SET_OBJECT_NAME(renderCommandEncoder, (GetName() + " Subpass " + std::to_string(currentSubpass)).c_str());
+        MTL_SET_OBJECT_NAME(renderCommandEncoder, GetName() + " Subpass " + std::to_string(currentSubpass));
 
         // Define viewport
         MTL::Viewport viewport = { };

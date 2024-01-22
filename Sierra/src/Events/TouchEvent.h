@@ -23,7 +23,7 @@ namespace Sierra
 
     };
 
-    class SIERRA_API TouchBeginEvent : public TouchEvent
+    class SIERRA_API TouchBeginEvent final : public TouchEvent
     {
     public:
         /* --- CONSTRUCTORS --- */
@@ -31,7 +31,7 @@ namespace Sierra
 
     };
 
-    class SIERRA_API TouchMoveEvent : public TouchEvent
+    class SIERRA_API TouchMoveEvent final : public TouchEvent
     {
     public:
         /* --- CONSTRUCTORS --- */
@@ -39,7 +39,7 @@ namespace Sierra
 
     };
 
-    class SIERRA_API TouchEndEvent : public TouchEvent
+    class SIERRA_API TouchEndEvent final : public TouchEvent
     {
     public:
         /* --- CONSTRUCTORS --- */

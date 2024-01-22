@@ -13,7 +13,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API VulkanSwapchain : public Swapchain, public VulkanResource
+    class SIERRA_API VulkanSwapchain final : public Swapchain, public VulkanResource
     {
     public:
         /* --- CONSTRUCTORS --- */
@@ -21,7 +21,7 @@ namespace Sierra
 
         /* --- POLLING METHODS --- */
         void AcquireNextImage() override;
-        void SubmitCommandBufferAndPresent(std::unique_ptr<CommandBuffer> &commandBuffer) override;
+        void Present(std::unique_ptr<CommandBuffer> &commandBuffer) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint32 GetCurrentFrame() const override { return currentFrame; }
@@ -43,22 +43,18 @@ namespace Sierra
 
         SwapchainPresentationMode preferredPresentationMode = SwapchainPresentationMode::Immediate;
         SwapchainImageMemoryType preferredImageMemoryType = SwapchainImageMemoryType::UNorm8;
-        VkSwapchainCreateInfoKHR swapchainCreateInfo = { };
 
         VkSwapchainKHR swapchain = VK_NULL_HANDLE;
         std::vector<std::unique_ptr<Image>> swapchainImages;
 
-        std::vector<VkSemaphore> isImageFreeSemaphores;
-        std::vector<VkSemaphore> isImageRenderedSemaphores;
-        std::vector<VkFence> isImageUnderWorkFences;
+        std::vector<VkSemaphore> isImageAcquiredSemaphores;
+        std::vector<VkSemaphore> isImagePresentedSemaphores;
 
         uint32 concurrentFrameCount = 0;
         uint32 currentFrame = 0; // On the CPU
         uint32 currentImage = 0; // On the GPU
 
-        void RetrieveConstantSettings();
         void CreateSwapchain();
-        void CreateImages();
         void CreateSynchronization();
         void Recreate();
 

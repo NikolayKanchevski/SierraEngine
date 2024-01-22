@@ -16,22 +16,22 @@ set(SIERRA_APPLICATION_ICON_ICO "../Media/SierraExecutableIcon.ico" CACHE FILEPA
 set(SIERRA_APPLICATION_ICON_ICNS "../Media/SierraExecutableIcon.icns" CACHE FILEPATH "Absolute path to an .icns image to use as an icon for the generated binary on Apple platforms.")
 set(SIERRA_APPLICATION_ICON_PNG "../Media/SierraExecutableIcon.png" CACHE FILEPATH "Absolute path to an .icns image to use as an icon for the generated binary on Apple platforms.")
 
-option(SIERRA_BUILD_STATIC_LIBRARY "Wether to build the engine as a static library, which is embedded in the application." OFF)
-option(SIERRA_BUILD_SHARED_LIBRARY "Wether to build the engine as a shared library, which is shipped as a separate file (.dll, .dylib, etc.)" OFF)
+option(SIERRA_BUILD_STATIC_LIBRARY "Whether to build the engine as a static library, which is embedded in the application." OFF)
+option(SIERRA_BUILD_SHARED_LIBRARY "Whether to build the engine as a shared library, which is shipped as a separate file (.dll, .dylib, etc.)" OFF)
 
 if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Debug")
-    option(SIERRA_ENABLE_LOGGING "Wether to enable Application and Engine logging." ON)
-    option(SIERRA_ENABLE_OPTIMIZATIONS "Wether to enable optimizations." OFF)
+    option(SIERRA_ENABLE_LOGGING "Whether to enable Application and Engine logging." ON)
+    option(SIERRA_ENABLE_OPTIMIZATIONS "Whether to enable optimizations." OFF)
 else()
-    option(SIERRA_ENABLE_LOGGING "Wether to enable both Application and Engine logging." OFF)
-    option(SIERRA_ENABLE_OPTIMIZATIONS "Wether to enable optimizations." ON)
+    option(SIERRA_ENABLE_LOGGING "Whether to enable both Application and Engine logging." OFF)
+    option(SIERRA_ENABLE_OPTIMIZATIONS "Whether to enable optimizations." ON)
 endif()
 
 if(SIERRA_PLATFORM_WINDOWS OR SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_LINUX OR SIERRA_PLATFORM_ANDROID OR SIERRA_PLATFORM_iOS)
-    option(SIERRA_BUILD_VULKAN "Wether to build Vulkan and its resources." ON)
+    option(SIERRA_BUILD_VULKAN "Whether to build Vulkan and its resources." ON)
 endif()
 if(SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_iOS)
-     option(SIERRA_BUILD_METAL "Wether to build Metal and its resources." ON)
+     option(SIERRA_BUILD_METAL "Whether to build Metal and its resources." ON)
 endif()
 
 # === CHECK IF REQUIREMENTS ARE MET === #

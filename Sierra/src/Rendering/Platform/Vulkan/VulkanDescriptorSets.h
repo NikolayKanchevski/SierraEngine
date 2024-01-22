@@ -8,17 +8,16 @@
 
 #include "VulkanBuffer.h"
 #include "VulkanImage.h"
-#include "VulkanCommandBuffer.h"
 
 namespace Sierra
 {
 
     struct VulkanDescriptorSetCreateInfo
     {
-        const std::string &name = "Descriptor Set";
+
     };
 
-    class SIERRA_API VulkanPushDescriptorSet : public VulkanResource
+    class SIERRA_API VulkanPushDescriptorSet
     {
     public:
         /* --- CONSTRUCTORS --- */

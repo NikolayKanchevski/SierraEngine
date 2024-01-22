@@ -81,7 +81,7 @@ namespace Sierra
         }
 
         // Calculate mip levels
-        if (createInfo.enableMipMapping) mipLevels = static_cast<uint32>(std::floor(std::log2(std::max(createInfo.width, createInfo.height)))) + 1;
+        // if (createInfo.enableMipMapping) mipLevelCount = static_cast<uint32>(std::floor(std::log2(std::max(createInfo.width, createInfo.height)))) + 1;
     }
 
 }

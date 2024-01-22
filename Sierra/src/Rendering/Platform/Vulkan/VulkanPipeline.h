@@ -13,6 +13,7 @@
 #include "VulkanDevice.h"
 #include "VulkanPipelineLayout.h"
 #include "VulkanDescriptorSets.h"
+#include "VulkanCommandBuffer.h"
 
 namespace Sierra
 {

@@ -14,8 +14,8 @@ namespace Sierra
     {
         // Create buffer
         buffer = device.GetMetalDevice()->newBuffer(createInfo.memorySize, BufferMemoryLocationToResourceOptions(createInfo.memoryLocation));
-        SR_ERROR_IF(buffer == nullptr, "[Metal]: Could not create buffer!");
-        MTL_SET_OBJECT_NAME(buffer, GetName().c_str());
+        SR_ERROR_IF(buffer == nullptr, "[Metal]: Failed to create buffer [{0}]!", GetName());
+        MTL_SET_OBJECT_NAME(buffer, GetName());
 
         // Map and reset memory
         data = buffer->contents();

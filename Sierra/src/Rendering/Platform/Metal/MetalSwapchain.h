@@ -13,7 +13,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API MetalSwapchain : public Swapchain, public MetalResource
+    class SIERRA_API MetalSwapchain final : public Swapchain, public MetalResource
     {
     public:
         /* --- CONSTRUCTORS --- */
@@ -21,7 +21,7 @@ namespace Sierra
 
         /* --- POLLING METHODS --- */
         void AcquireNextImage() override;
-        void SubmitCommandBufferAndPresent(std::unique_ptr<CommandBuffer> &commandBuffer) override;
+        void Present(std::unique_ptr<CommandBuffer> &commandBuffer) override;
 
         /* -- GETTER METHODS --- */
         [[nodiscard]] inline uint32 GetCurrentFrame() const override { return currentFrame; }

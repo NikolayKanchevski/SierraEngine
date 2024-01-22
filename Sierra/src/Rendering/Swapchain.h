@@ -44,7 +44,7 @@ namespace Sierra
 
         /* --- POLLING METHODS --- */
         virtual void AcquireNextImage() = 0;
-        virtual void SubmitCommandBufferAndPresent(std::unique_ptr<CommandBuffer> &commandBuffer) = 0;
+        virtual void Present(std::unique_ptr<CommandBuffer> &commandBuffer) = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual uint32 GetCurrentFrame() const = 0;

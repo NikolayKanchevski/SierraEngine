@@ -18,8 +18,8 @@ namespace Sierra
         SR_ERROR_IF(!device.IsExtensionLoaded(VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME), "[Vulkan]: Cannot create render pass [{0}], as the provided device [{1}] does not support the {2} extension!", GetName(), device.GetName(), VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME);
 
         // Allocate attachment data
-        framebufferImageAttachmentFormats.resize(createInfo.attachments.size());
         framebufferImageAttachments.resize(createInfo.attachments.size());
+        framebufferImageAttachmentFormats.resize(createInfo.attachments.size());
         std::vector<VkAttachmentDescription> attachmentDescriptions(createInfo.attachments.size());
 
         // Set attachment descriptions
@@ -27,10 +27,10 @@ namespace Sierra
         {
             const RenderPassAttachment &attachment = *(createInfo.attachments.begin() + i);
             SR_ERROR_IF(attachment.templateImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not use image of attachment [{0}] in render pass [{1}] with a graphics API, which differs from [GraphicsAPI::Vulkan]!", i, GetName());
+
             const VulkanImage &vulkanTemplateImage = static_cast<VulkanImage&>(*attachment.templateImage);
 
             // Set up framebuffer attachment
-            framebufferImageAttachmentFormats[i] = VulkanImage::ImageFormatToVkFormat(attachment.templateImage->GetFormat());
             framebufferImageAttachments[i].sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENT_IMAGE_INFO;
             framebufferImageAttachments[i].usage = vulkanTemplateImage.GetVulkanUsageFlags();
             framebufferImageAttachments[i].width = attachment.templateImage->GetWidth();
@@ -38,6 +38,7 @@ namespace Sierra
             framebufferImageAttachments[i].layerCount = attachment.templateImage->GetLayerCount();
             framebufferImageAttachments[i].viewFormatCount = 1;
             framebufferImageAttachments[i].pViewFormats = &framebufferImageAttachmentFormats[i];
+            framebufferImageAttachmentFormats[i] = VulkanImage::ImageFormatToVkFormat(attachment.templateImage->GetFormat());
 
             // Set up render pass attachment
             attachmentDescriptions[i].format = VulkanImage::ImageFormatToVkFormat(attachment.templateImage->GetFormat());
@@ -47,7 +48,7 @@ namespace Sierra
             attachmentDescriptions[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
             attachmentDescriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
             attachmentDescriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            attachmentDescriptions[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // TODO: Specify in attachment info
+            attachmentDescriptions[i].finalLayout = VK_IMAGE_LAYOUT_GENERAL;
             colorAttachmentCount += (attachment.type == AttachmentType::Color) * 1;
         }
 
@@ -246,7 +247,7 @@ namespace Sierra
     void VulkanRenderPass::Begin(std::unique_ptr<CommandBuffer> &commandBuffer, const std::initializer_list<RenderPassBeginAttachment> &attachments) const
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
-        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
+        VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
 
         // Collect attachment views
         std::vector<VkClearValue> clearValues(attachments.size());
@@ -273,6 +274,9 @@ namespace Sierra
                     break;
                 }
             }
+
+            // Apply layout changes to images
+            vulkanCommandBuffer.imageLayouts[vulkanImage.GetVulkanImage()] = VK_IMAGE_LAYOUT_GENERAL; // NOTE: While this should really be done on End(), we do it here, as user must not synchronize images during Render Pass recording
         }
 
         // Set up dynamic attachments

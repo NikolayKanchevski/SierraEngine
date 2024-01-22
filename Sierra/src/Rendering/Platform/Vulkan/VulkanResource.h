@@ -16,6 +16,31 @@
     #include <vulkan/vulkan_win32.h>
 #elif SR_PLATFORM_APPLE
     #include <vulkan/vulkan_metal.h>
+
+    #define VK_KHR_portability_subset 1
+    #define VK_KHR_PORTABILITY_SUBSET_SPEC_VERSION 1
+    #define VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME "VK_KHR_portability_subset"
+
+    #define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR static_cast<VkStructureType>(1000163000)
+    typedef struct VkPhysicalDevicePortabilitySubsetFeaturesKHR {
+        VkStructureType    sType;
+        void*              pNext;
+        VkBool32           constantAlphaColorBlendFactors;
+        VkBool32           events;
+        VkBool32           imageViewFormatReinterpretation;
+        VkBool32           imageViewFormatSwizzle;
+        VkBool32           imageView2DOn3DImage;
+        VkBool32           multisampleArrayImage;
+        VkBool32           mutableComparisonSamplers;
+        VkBool32           pointPolygons;
+        VkBool32           samplerMipLodBias;
+        VkBool32           separateStencilMaskRef;
+        VkBool32           shaderSampleRateInterpolationFunctions;
+        VkBool32           tessellationIsolines;
+        VkBool32           tessellationPointMode;
+        VkBool32           triangleFans;
+        VkBool32           vertexAttributeAccessBeyondStride;
+    } VkPhysicalDevicePortabilitySubsetFeaturesKHR;
 #elif SR_PLATFORM_LINUX
     #include <X11/Xlib.h>
     #include <vulkan/vulkan_xlib.h>
@@ -23,19 +48,13 @@
     #include <vulkan/vulkan_android.h>
 #endif
 
-#if SR_ENABLE_LOGGING
-    #define VK_SET_RESOURCE_NAME(DEVICE, RESOURCE, NAME)                \
-        if (DEVICE.IsExtensionLoaded(VK_EXT_DEBUG_MARKER_EXTENSION_NAME)) \
-        {                                                               \
-                                                                            \
-        }
-
-#else
-    #define VK_SET_RESOURCE_NAME(RESOURCE, NAME)
-#endif
-
 namespace Sierra
 {
+    #if VK_USE_64_BIT_PTR_DEFINES
+        typedef void* VkHandle;
+    #else
+        typedef uint64 VkHandle;
+    #endif
 
     class SIERRA_API VulkanResource : public virtual RenderingResource
     {

@@ -12,7 +12,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API MetalRenderPass : public RenderPass, public MetalResource
+    class SIERRA_API MetalRenderPass final : public RenderPass, public MetalResource
     {
     public:
         /* --- CONSTRUCTORS --- */

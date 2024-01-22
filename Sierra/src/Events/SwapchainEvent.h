@@ -12,7 +12,7 @@ namespace Sierra
 
     };
 
-    class SIERRA_API SwapchainResizeEvent : public SwapchainEvent
+    class SIERRA_API SwapchainResizeEvent final : public SwapchainEvent
     {
     public:
         /* --- CONSTRUCTORS --- */

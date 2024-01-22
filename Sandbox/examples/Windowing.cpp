@@ -28,11 +28,11 @@ private:
         {
             const std::string title = "Window #" + std::to_string(i);
             windows[i] = GetWindowManager().CreateWindow({
-                                                                 .title = title,
-                                                                 .resizable = true,
-                                                                 .maximize = false,
-                                                                 .hide = false
-                                                         });
+                .title = title,
+                .resizable = true,
+                .maximize = false,
+                .hide = false
+            });
         }
 
         // Log every window event (will only log information if SIERRA_ENABLE_LOGGING is set)

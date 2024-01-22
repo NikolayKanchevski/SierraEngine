@@ -64,7 +64,7 @@ private:
 
         // Create a command buffer for every concurrent frame
         commandBuffers.resize(swapchain->GetConcurrentFrameCount());
-        for (uint32 i = swapchain->GetConcurrentFrameCount(); i--;)
+        for (uint32 i = 0; i < swapchain->GetConcurrentFrameCount(); i++)
         {
             commandBuffers[i] = GetRenderingContext().CreateCommandBuffer({ .name = "General Command Buffer " + std::to_string(i) });
         }
@@ -72,8 +72,13 @@ private:
 
     bool OnUpdate(const TimeStep &timeStep) override
     {
-        // Begin recording GPU commands on current command buffer
+        // Get command buffer for current frame
         auto &commandBuffer = commandBuffers[swapchain->GetCurrentFrame()];
+
+        // Wait until it is no longer in use
+        GetRenderingContext().GetDevice().WaitForCommandBuffer(commandBuffer);
+
+        // Begin recording commands to GPU
         commandBuffer->Begin();
 
         // Swap out old swapchain image
@@ -94,11 +99,17 @@ private:
         // End render pass
         renderPass->End(commandBuffer);
 
+        // Wait until image is written to before presenting it to screen
+        commandBuffer->SynchronizeImageUsage(swapchain->GetCurrentImage(), ImageCommandUsage::AttachmentWrite, ImageCommandUsage::Present);
+
         // End recording commands
         commandBuffer->End();
 
+        // Submit command buffer to GPU
+        GetRenderingContext().GetDevice().SubmitCommandBuffer(commandBuffer);
+
         // Draw to window
-        swapchain->SubmitCommandBufferAndPresent(commandBuffer);
+        swapchain->Present(commandBuffer);
 
         // Update window
         window->OnUpdate();
@@ -110,7 +121,10 @@ public:
     ~SandboxApplication() override
     {
         // Before deallocating rendering resources, make sure device is not using them
-        GetRenderingContext().GetDevice().WaitUntilIdle();
+        for (const auto &commandBuffer : commandBuffers)
+        {
+            GetRenderingContext().GetDevice().WaitForCommandBuffer(commandBuffer);
+        }
     }
 
 };

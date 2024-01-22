@@ -28,7 +28,7 @@ namespace Sierra
 
         // Configure pipeline descriptor's shaders
         MTL::RenderPipelineDescriptor* renderPipelineDescriptor = MTL::RenderPipelineDescriptor::alloc()->init();
-        MTL_SET_OBJECT_NAME(renderPipelineDescriptor, GetName().c_str());
+        MTL_SET_OBJECT_NAME(renderPipelineDescriptor, GetName());
         renderPipelineDescriptor->setVertexFunction(metalVertexShader.GetEntryFunction());
         if (createInfo.fragmentShader.has_value())
         {

@@ -12,7 +12,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API VulkanRenderPass : public RenderPass, public VulkanResource
+    class SIERRA_API VulkanRenderPass final : public RenderPass, public VulkanResource
     {
     public:
         /* --- CONSTRUCTORS --- */
@@ -32,7 +32,7 @@ namespace Sierra
         [[nodiscard]] VkRenderPass GetVulkanRenderPass() const { return renderPass; }
 
         /* --- DESTRUCTOR --- */
-        ~VulkanRenderPass();
+        ~VulkanRenderPass() override;
 
         /* --- CONVERSIONS --- */
         static VkAttachmentLoadOp AttachmentLoadOperationToVkAttachmentLoadOp(AttachmentLoadOperation loadOperation);

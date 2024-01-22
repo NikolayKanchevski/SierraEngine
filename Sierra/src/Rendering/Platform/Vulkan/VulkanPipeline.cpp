@@ -24,7 +24,7 @@ namespace Sierra
             {
                 for (uint32 j = 0; j < pipelineLayout.GetBindings().size(); j++)
                 {
-                    descriptorSets[i] = std::make_unique<VulkanPushDescriptorSet>(VulkanDescriptorSetCreateInfo { .name = GetName() + "'s descriptor set [" + std::to_string(i) + "]" });
+                    descriptorSets[i] = std::make_unique<VulkanPushDescriptorSet>(VulkanDescriptorSetCreateInfo());
                 }
             }
         }
