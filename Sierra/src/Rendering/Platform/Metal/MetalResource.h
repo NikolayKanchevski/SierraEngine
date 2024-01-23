@@ -8,12 +8,6 @@
 #include <QuartzCore/QuartzCore.hpp>
 #include "../../RenderingResource.h"
 
-#if SR_ENABLE_LOGGING
-    #define MTL_SET_OBJECT_NAME(RESOURCE, NAME) const std::string stringName_##RESOURCE = NAME; RESOURCE->setLabel(NS::String::string(stringName_##RESOURCE.c_str(), NS::ASCIIStringEncoding))
-#else
-    #define MTL_SET_OBJECT_NAME(RESOURCE, NAME)
-#endif
-
 namespace Sierra
 {
 

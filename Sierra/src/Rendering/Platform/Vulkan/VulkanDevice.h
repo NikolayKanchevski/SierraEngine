@@ -7,7 +7,6 @@
 #include "../../Device.h"
 #include "VulkanResource.h"
 
-#include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 #include "VulkanInstance.h"
 

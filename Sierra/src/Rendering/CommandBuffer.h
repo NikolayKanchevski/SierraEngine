@@ -9,10 +9,13 @@
 #include "Buffer.h"
 #include "Image.h"
 
+#include "RenderPass.h"
+#include "GraphicsPipeline.h"
+
 namespace Sierra
 {
 
-    enum class BufferCommandUsage
+    enum class BufferCommandUsage : uint8
     {
         MemoryRead,
         MemoryWrite,
@@ -24,7 +27,7 @@ namespace Sierra
         ComputeWrite
     };
 
-    enum class ImageCommandUsage
+    enum class ImageCommandUsage : uint8
     {
         MemoryRead,
         MemoryWrite,
@@ -54,9 +57,31 @@ namespace Sierra
         virtual void SynchronizeBufferUsage(const std::unique_ptr<Buffer> &buffer, BufferCommandUsage previousUsage, BufferCommandUsage nextUsage, uint64 memorySize = 0, uint64 offset = 0) = 0;
         virtual void SynchronizeImageUsage(const std::unique_ptr<Image> &image, ImageCommandUsage previousUsage, ImageCommandUsage nextUsage, uint32 baseMipLevel = 0, uint32 mipLevelCount = 0, uint32 baseLayer = 0, uint32 layerCount = 0) = 0;
 
-        virtual void BeginDebugRegion(const std::string &regionName, const Color &color = Color(1.0f, 1.0f, 0.0f, 1.0f)) const = 0;
-        virtual void InsertDebugMarker(const std::string &markerName, const Color &color = Color(1.0f, 1.0f, 0.0f, 1.0f)) const = 0;
-        virtual void EndDebugRegion() const = 0;
+        virtual void CopyBufferToBuffer(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Buffer> &destinationBuffer, uint64 memoryRange = 0, uint64 sourceOffset = 0, uint64 destinationOffset = 0) = 0;
+        virtual void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const Vector2UInt &pixelRange = { 0, 0 }, uint32 sourceOffset = 0, const Vector2UInt &destinationOffset = { 0, 0 }, uint32 mipLevel = 0, uint32 baseLayer = 0, uint32 layerCount = 0) = 0;
+
+        virtual void BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments) = 0;
+        virtual void BeginNextSubpass(const std::unique_ptr<RenderPass> &renderPass) = 0;
+        virtual void EndRenderPass(const std::unique_ptr<RenderPass> &renderPass) = 0;
+
+        virtual void BeginGraphicsPipeline(const std::unique_ptr<GraphicsPipeline> &graphicsPipeline) = 0;
+        virtual void EndGraphicsPipeline(const std::unique_ptr<GraphicsPipeline> &graphicsPipeline) = 0;
+
+        virtual void BindVertexBuffer(const std::unique_ptr<Buffer> &vertexBuffer, uint64 offset = 0) = 0;
+        virtual void BindIndexBuffer(const std::unique_ptr<Buffer> &indexBuffer, uint64 offset = 0) = 0;
+
+        virtual void Draw(uint32 vertexCount) = 0;
+        virtual void DrawIndexed(uint32 indexCount, uint64 indexOffset = 0, uint64 vertexOffset = 0) = 0;
+
+        template<class T>
+        inline void PushConstants(const T &data, uint16 offset = 0) { PushConstants(&data, sizeof(T), offset); }
+        virtual void PushConstants(const void* data, uint16 memoryRange, uint16 offset = 0) = 0;
+        virtual void BindBuffer(uint32 binding, const std::unique_ptr<Buffer> &buffer, uint32 arrayIndex = 0, uint64 memoryRange = 0, uint64 offset = 0) = 0;
+        virtual void BindImage(uint32 binding, const std::unique_ptr<Image> &image, uint32 arrayIndex = 0) = 0;
+
+        virtual void BeginDebugRegion(const std::string &regionName, const Color &color = Color(1.0f, 1.0f, 0.0f, 1.0f)) = 0;
+        virtual void InsertDebugMarker(const std::string &markerName, const Color &color = Color(1.0f, 1.0f, 0.0f, 1.0f)) = 0;
+        virtual void EndDebugRegion() = 0;
 
         /* --- OPERATORS --- */
         CommandBuffer(const CommandBuffer&) = delete;

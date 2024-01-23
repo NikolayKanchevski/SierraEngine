@@ -6,7 +6,6 @@
 
 #include "RenderingResource.h"
 
-#include "Pipeline.h"
 #include "Shader.h"
 #include "PipelineLayout.h"
 #include "RenderPass.h"
@@ -67,18 +66,15 @@ namespace Sierra
         FrontFaceMode frontFaceMode = FrontFaceMode::CounterClockwise;
     };
 
-    class SIERRA_API GraphicsPipeline : public virtual Pipeline, public virtual RenderingResource
+    class SIERRA_API GraphicsPipeline : public virtual RenderingResource
     {
     public:
-        /* --- POLLING METHODS --- */
-        virtual void BindVertexBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::unique_ptr<Buffer> &vertexBuffer, uint64 offset = 0) const = 0;
-        virtual void BindIndexBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::unique_ptr<Buffer> &indexBuffer, uint64 offset = 0) const = 0;
-
-        virtual void Draw(std::unique_ptr<CommandBuffer> &commandBuffer, uint32 vertexCount) const = 0;
-        virtual void DrawIndexed(std::unique_ptr<CommandBuffer> &commandBuffer, uint32 indexCount, uint64 indexOffset = 0, uint64 vertexOffset = 0) const = 0;
+        /* --- OPERATORS --- */
+        GraphicsPipeline(const GraphicsPipeline&) = delete;
+        GraphicsPipeline &operator=(const GraphicsPipeline&) = delete;
 
         /* --- DESTRUCTOR --- */
-        ~GraphicsPipeline() override = default;
+        virtual ~GraphicsPipeline() = default;
 
     protected:
         explicit GraphicsPipeline(const GraphicsPipelineCreateInfo &createInfo);

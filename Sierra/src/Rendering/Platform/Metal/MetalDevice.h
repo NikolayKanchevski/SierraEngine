@@ -30,6 +30,10 @@ namespace Sierra
         [[nodiscard]] inline MTL::Device* GetMetalDevice() const { return device; }
         [[nodiscard]] inline MTL::CommandQueue* GetCommandQueue() const { return commandQueue; }
 
+        /* --- SETTER METHODS --- */
+        template<typename T>
+        inline void SetResourceName(T* resource, const std::string &name) const { resource->setLabel(NS::String::string(name.c_str(), NS::ASCIIStringEncoding)); }
+
         /* --- DESTRUCTOR --- */
         ~MetalDevice() override;
 

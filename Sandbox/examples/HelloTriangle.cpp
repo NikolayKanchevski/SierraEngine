@@ -85,19 +85,19 @@ private:
         swapchain->AcquireNextImage();
 
         // Begin rendering to current swapchain image
-        renderPass->Begin(commandBuffer, { { .image = swapchain->GetCurrentImage() } });
+        commandBuffer->BeginRenderPass(renderPass, { { .image = swapchain->GetCurrentImage() } });
 
         // Start graphics pipeline
-        graphicsPipeline->Begin(commandBuffer);
+        commandBuffer->BeginGraphicsPipeline(graphicsPipeline);
 
         // Draw the 3 vertices of the triangle
-        graphicsPipeline->Draw(commandBuffer, 3);
+        commandBuffer->Draw(3);
 
         // End pipeline
-        graphicsPipeline->End(commandBuffer);
+        commandBuffer->EndGraphicsPipeline(graphicsPipeline);
 
         // End render pass
-        renderPass->End(commandBuffer);
+        commandBuffer->EndRenderPass(renderPass);
 
         // Wait until image is written to before presenting it to screen
         commandBuffer->SynchronizeImageUsage(swapchain->GetCurrentImage(), ImageCommandUsage::AttachmentWrite, ImageCommandUsage::Present);

@@ -65,8 +65,6 @@ if(Vulkan_LIBRARIES)
         VulkanImage.h
         VulkanInstance.cpp
         VulkanInstance.h
-        VulkanPipeline.cpp
-        VulkanPipeline.h
         VulkanPipelineLayout.cpp
         VulkanPipelineLayout.h
         VulkanRenderPass.cpp

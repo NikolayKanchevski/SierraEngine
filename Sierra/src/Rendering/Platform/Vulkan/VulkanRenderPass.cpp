@@ -49,7 +49,6 @@ namespace Sierra
             attachmentDescriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
             attachmentDescriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             attachmentDescriptions[i].finalLayout = VK_IMAGE_LAYOUT_GENERAL;
-            colorAttachmentCount += (attachment.type == AttachmentType::Color) * 1;
         }
 
         // Allocate subpass descriptions
@@ -242,104 +241,6 @@ namespace Sierra
         // Set object names
         device.SetObjectName(renderPass, VK_OBJECT_TYPE_RENDER_PASS, GetName());
         device.SetObjectName(framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Framebuffer of [" + GetName() + "]");
-    }
-
-    void VulkanRenderPass::Begin(std::unique_ptr<CommandBuffer> &commandBuffer, const std::initializer_list<RenderPassBeginAttachment> &attachments) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
-        VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
-
-        // Collect attachment views
-        std::vector<VkClearValue> clearValues(attachments.size());
-        std::vector<VkImageView> attachmentViews(attachments.size());
-        for (uint32 i = 0; i < attachments.size(); i++)
-        {
-            const RenderPassBeginAttachment &attachment = *(attachments.begin() + i);
-            SR_ERROR_IF(attachment.image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), attachment.image->GetName(), i);
-            const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*attachment.image);
-
-            // Configure attachment info
-            attachmentViews[i] = vulkanImage.GetVulkanImageView();
-            switch (framebufferImageAttachmentFormats[i])
-            {
-                case VK_FORMAT_D16_UNORM:
-                case VK_FORMAT_D32_SFLOAT:
-                {
-                    clearValues[i].depthStencil = { 1.0f, 0 };
-                    break;
-                }
-                default:
-                {
-                    clearValues[i].color = { attachment.clearColor.r, attachment.clearColor.g, attachment.clearColor.b, attachment.clearColor.a };
-                    break;
-                }
-            }
-
-            // Apply layout changes to images
-            vulkanCommandBuffer.imageLayouts[vulkanImage.GetVulkanImage()] = VK_IMAGE_LAYOUT_GENERAL; // NOTE: While this should really be done on End(), we do it here, as user must not synchronize images during Render Pass recording
-        }
-
-        // Set up dynamic attachments
-        VkRenderPassAttachmentBeginInfo attachmentBeginInfo = { };
-        attachmentBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_ATTACHMENT_BEGIN_INFO;
-        attachmentBeginInfo.attachmentCount = static_cast<uint32>(attachmentViews.size());
-        attachmentBeginInfo.pAttachments = attachmentViews.data();
-
-        // Set up begin info
-        VkRenderPassBeginInfo beginInfo = { };
-        beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        beginInfo.renderPass = renderPass;
-        beginInfo.framebuffer = framebuffer;
-        beginInfo.renderArea.extent.width = attachments.begin()->image->GetWidth();
-        beginInfo.renderArea.extent.height = attachments.begin()->image->GetHeight();
-        beginInfo.renderArea.offset.x = 0;
-        beginInfo.renderArea.offset.y = 0;
-        beginInfo.clearValueCount = static_cast<uint32>(clearValues.size());
-        beginInfo.pClearValues = clearValues.data();
-        beginInfo.pNext = &attachmentBeginInfo;
-
-        // Begin render pass
-        device.GetFunctionTable().vkCmdBeginRenderPass(vulkanCommandBuffer.GetVulkanCommandBuffer(), &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-        // Define viewport
-        VkViewport viewport = { };
-        viewport.x = 0;
-        viewport.y = static_cast<float32>(beginInfo.renderArea.extent.height);
-        viewport.width = static_cast<float32>(beginInfo.renderArea.extent.width);
-        viewport.height = -static_cast<float32>(beginInfo.renderArea.extent.height);
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-
-        // Set viewport
-        device.GetFunctionTable().vkCmdSetViewport(vulkanCommandBuffer.GetVulkanCommandBuffer(), 0, 1, &viewport);
-
-        // Define scissor
-        VkRect2D scissor = { };
-        scissor.offset.x = 0;
-        scissor.offset.y = 0;
-        scissor.extent.width = beginInfo.renderArea.extent.width;
-        scissor.extent.height = beginInfo.renderArea.extent.height;
-
-        // Set scissor
-        device.GetFunctionTable().vkCmdSetScissor(vulkanCommandBuffer.GetVulkanCommandBuffer(), 0, 1, &scissor);
-    }
-
-    void VulkanRenderPass::BeginNextSubpass(std::unique_ptr<CommandBuffer> &commandBuffer) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin next subpass of render pass [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
-        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);
-
-        // Begin next subpass
-        device.GetFunctionTable().vkCmdNextSubpass(vulkanCommandBuffer.GetVulkanCommandBuffer(), VK_SUBPASS_CONTENTS_INLINE);
-    }
-
-    void VulkanRenderPass::End(std::unique_ptr<CommandBuffer> &commandBuffer) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot end render pass [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
-        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
-
-        // Begin render pass
-        device.GetFunctionTable().vkCmdEndRenderPass(vulkanCommandBuffer.GetVulkanCommandBuffer());
     }
 
     /* --- DESTRUCTOR --- */

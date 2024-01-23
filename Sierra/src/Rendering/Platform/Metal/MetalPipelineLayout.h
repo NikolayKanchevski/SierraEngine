@@ -23,6 +23,9 @@ namespace Sierra
         [[nodiscard]] inline uint32 GetPushConstantIndex() const { return pushConstantIndex; };
         [[nodiscard]] inline uint16 GetPushConstantSize() const { return pushConstantSize; }
 
+        /* --- CONSTANTS --- */
+        constexpr static NS::UInteger VERTEX_BUFFER_SHADER_INDEX = 30;
+
         /* --- DESTRUCTOR --- */
         ~MetalPipelineLayout() override = default;
 

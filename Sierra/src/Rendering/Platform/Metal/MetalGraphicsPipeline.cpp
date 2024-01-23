@@ -16,7 +16,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalGraphicsPipeline::MetalGraphicsPipeline(const MetalDevice &device, const Sierra::GraphicsPipelineCreateInfo &createInfo)
-        : GraphicsPipeline(createInfo), MetalResource(createInfo.name), pipelineLayout(static_cast<MetalPipelineLayout&>(*createInfo.layout)), cullMode(CullModeToCullMode(createInfo.cullMode)), triangleFillMode(ShadeModeToTriangleFillMode(createInfo.shadeMode)), frontFacingWinding(FrontFaceModeToWinding(createInfo.frontFaceMode))
+        : GraphicsPipeline(createInfo), MetalResource(createInfo.name), layout(static_cast<MetalPipelineLayout&>(*createInfo.layout)), cullMode(CullModeToCullMode(createInfo.cullMode)), triangleFillMode(ShadeModeToTriangleFillMode(createInfo.shadeMode)), winding(FrontFaceModeToWinding(createInfo.frontFaceMode))
     {
         SR_ERROR_IF(createInfo.layout->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create pipeline [{0}] using pipeline layout [{1}], as its graphics API differs from [GraphicsAPI::Metal]!");
 
@@ -26,9 +26,11 @@ namespace Sierra
         SR_ERROR_IF(createInfo.renderPass->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with render pass [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.renderPass->GetName());
         const MetalRenderPass &metalRenderPass = static_cast<MetalRenderPass&>(*createInfo.renderPass);
 
-        // Configure pipeline descriptor's shaders
+        // Allocate pipeline descriptor
         MTL::RenderPipelineDescriptor* renderPipelineDescriptor = MTL::RenderPipelineDescriptor::alloc()->init();
-        MTL_SET_OBJECT_NAME(renderPipelineDescriptor, GetName());
+        device.SetResourceName(renderPipelineDescriptor, GetName());
+
+        // Configure pipeline descriptor's shaders
         renderPipelineDescriptor->setVertexFunction(metalVertexShader.GetEntryFunction());
         if (createInfo.fragmentShader.has_value())
         {
@@ -42,19 +44,14 @@ namespace Sierra
         // Set sample count
         renderPipelineDescriptor->setSampleCount(MetalImage::ImageSamplingToUInteger(createInfo.sampling));
 
-        // Configure attachments
-        uint32 colorAttachmentIndex = 0;
-        for (const auto &attachment : metalRenderPass.GetAttachmentTable())
+        // Configure pixel formats
+        for (uint32 i = 0; i < metalRenderPass.GetColorAttachmentCount(); i++)
         {
-            if (attachment.attachmentType == AttachmentType::Color)
-            {
-                renderPipelineDescriptor->colorAttachments()->object(colorAttachmentIndex)->setPixelFormat(attachment.attachmentDescriptor->texture()->pixelFormat());
-                colorAttachmentIndex++;
-            }
-            else
-            {
-                renderPipelineDescriptor->setDepthAttachmentPixelFormat(attachment.attachmentDescriptor->texture()->pixelFormat());
-            }
+            renderPipelineDescriptor->colorAttachments()->object(i)->setPixelFormat(metalRenderPass.GetSubpass(createInfo.subpassIndex)->colorAttachments()->object(i)->texture()->pixelFormat());
+        }
+        if (metalRenderPass.HasDepthAttachment())
+        {
+            renderPipelineDescriptor->setDepthAttachmentPixelFormat(metalRenderPass.GetSubpass(createInfo.subpassIndex)->depthAttachment()->texture()->pixelFormat());
         }
 
         // Set up vertex attributes
@@ -62,7 +59,7 @@ namespace Sierra
         MTL::VertexDescriptor* vertexDescriptor = MTL::VertexDescriptor::alloc()->init();
         for (uint32 i = 0; i < createInfo.vertexInputs.size(); i++)
         {
-            vertexDescriptor->attributes()->object(i)->setBufferIndex(VERTEX_BUFFER_INDEX);
+            vertexDescriptor->attributes()->object(i)->setBufferIndex(MetalPipelineLayout::VERTEX_BUFFER_SHADER_INDEX);
             vertexDescriptor->attributes()->object(i)->setOffset(vertexDataSize);
             switch (*(createInfo.vertexInputs.begin() + i))
             {
@@ -92,7 +89,7 @@ namespace Sierra
                 }
             }
         }
-        vertexDescriptor->layouts()->object(VERTEX_BUFFER_INDEX)->setStride(vertexDataSize);
+        vertexDescriptor->layouts()->object(MetalPipelineLayout::VERTEX_BUFFER_SHADER_INDEX)->setStride(vertexDataSize);
         renderPipelineDescriptor->setVertexDescriptor(vertexDescriptor);
 
         // Create pipeline
@@ -102,103 +99,6 @@ namespace Sierra
 
         renderPipelineDescriptor->release();
         vertexDescriptor->release();
-    }
-
-    /* --- POLLING METHODS --- */
-
-    void MetalGraphicsPipeline::Begin(std::unique_ptr<CommandBuffer> &commandBuffer) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin graphics pipeline [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
-
-        // Begin pipeline
-        MTL::RenderCommandEncoder* renderCommandEncoder = metalCommandBuffer.GetCurrentRenderEncoder();
-        renderCommandEncoder->setCullMode(cullMode);
-        renderCommandEncoder->setTriangleFillMode(triangleFillMode);
-        renderCommandEncoder->setFrontFacingWinding(frontFacingWinding);
-        renderCommandEncoder->setRenderPipelineState(renderPipelineState);
-    }
-
-    void MetalGraphicsPipeline::End(std::unique_ptr<CommandBuffer> &commandBuffer) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot end graphics pipeline [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
-    }
-
-    void MetalGraphicsPipeline::PushConstants(std::unique_ptr<CommandBuffer> &commandBuffer, const void* data, const uint16 memoryRange, const uint16 offset) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot push constants to pipeline [{0}] using command buffer [{1}] as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
-
-        SR_ERROR_IF(memoryRange > pipelineLayout.GetPushConstantSize(), "[Metal]: Cannot push [{0}] bytes of push constant data to pipeline [{1}], as specified memory range is bigger than specified in the corresponding pipeline layout, which is [{2}] bytes!", memoryRange, GetName(), pipelineLayout.GetPushConstantSize());
-
-        metalCommandBuffer.GetCurrentRenderEncoder()->setVertexBytes(data, memoryRange, pipelineLayout.GetPushConstantIndex());
-        if (hasFragmentShader) metalCommandBuffer.GetCurrentRenderEncoder()->setFragmentBytes(data, memoryRange, pipelineLayout.GetPushConstantIndex());
-    }
-
-    void MetalGraphicsPipeline::BindBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const uint32 binding, const std::unique_ptr<Buffer> &buffer, const uint32 arrayIndex, const uint64 memoryRange, const uint64 offset) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind buffer [{0}] to binding [{1}] within pipeline [{2}] using command buffer [{3}] as its graphics API differs from [GraphicsAPI::Metal]!", buffer->GetName(), binding, GetName(), commandBuffer->GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
-
-        SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind buffer [{0}] to binding [{1}] within pipeline [{2}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer->GetName(), binding, GetName());
-        const MetalBuffer &metalBuffer = static_cast<const MetalBuffer&>(*buffer);
-
-        SR_ERROR_IF(offset + memoryRange > buffer->GetMemorySize(), "[Metal]: Cannot bind [{0}] bytes (offset by another [{1}] bytes) from buffer [{2}] to pipeline [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, offset, buffer->GetName(), GetName(), offset + memoryRange, buffer->GetMemorySize());
-
-        metalCommandBuffer.GetCurrentRenderEncoder()->setVertexBuffer(metalBuffer.GetMetalBuffer(), offset, pipelineLayout.GetBindingIndex(binding, arrayIndex));
-        if (hasFragmentShader) metalCommandBuffer.GetCurrentRenderEncoder()->setFragmentBuffer(metalBuffer.GetMetalBuffer(), offset, pipelineLayout.GetBindingIndex(binding, arrayIndex));
-    }
-
-    void MetalGraphicsPipeline::BindImage(std::unique_ptr<CommandBuffer> &commandBuffer, const uint32 binding, const std::unique_ptr<Image> &image, const uint32 arrayIndex) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind image [{0}] to binding [{1}] within pipeline [{2}] using command buffer [{3}] as its graphics API differs from [GraphicsAPI::Metal]!", image->GetName(), binding, GetName(), commandBuffer->GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
-
-        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind image [{0}] to binding [{1}] within pipeline [{2}], as its graphics API differs from [GraphicsAPI::Metal]!", image->GetName(), binding, GetName());
-        const MetalImage &metalImage = static_cast<const MetalImage&>(*image);
-
-        metalCommandBuffer.GetCurrentRenderEncoder()->setVertexTexture(metalImage.GetMetalTexture(), pipelineLayout.GetBindingIndex(binding, arrayIndex));
-        if (hasFragmentShader) metalCommandBuffer.GetCurrentRenderEncoder()->setFragmentTexture(metalImage.GetMetalTexture(), pipelineLayout.GetBindingIndex(binding, arrayIndex));
-    }
-
-    void MetalGraphicsPipeline::BindVertexBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::unique_ptr<Buffer> &vertexBuffer, const uint64 offset) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind vertex buffer [{0}] to graphics pipeline [{1}] using command buffer [{2}], as its graphics API differs from [GraphicsAPI::Metal]!", vertexBuffer->GetName(), GetName(), commandBuffer->GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
-
-        SR_ERROR_IF(vertexBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind vertex buffer [{0}] to graphics pipeline [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", vertexBuffer->GetName(), GetName());
-        const MetalBuffer &metalVertexBuffer = static_cast<const MetalBuffer&>(*vertexBuffer);
-
-        SR_ERROR_IF(offset > vertexBuffer->GetMemorySize(), "[Metal]: Cannot bind vertex buffer [{0}] to graphics pipeline [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", vertexBuffer->GetName(), GetName(), offset, vertexBuffer->GetMemorySize());
-        metalCommandBuffer.GetCurrentRenderEncoder()->setVertexBuffer(metalVertexBuffer.GetMetalBuffer(), offset, VERTEX_BUFFER_INDEX);
-    }
-
-    void MetalGraphicsPipeline::BindIndexBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::unique_ptr<Buffer> &indexBuffer, const uint64 offset) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind index buffer [{0}] to graphics pipeline [{1}] using command buffer [{2}], as its graphics API differs from [GraphicsAPI::Metal]!", indexBuffer->GetName(), GetName(), commandBuffer->GetName());
-        MetalCommandBuffer &metalCommandBuffer = static_cast<MetalCommandBuffer&>(*commandBuffer);
-
-        SR_ERROR_IF(indexBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind index buffer [{0}] to graphics pipeline [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", indexBuffer->GetName(), GetName());
-        const MetalBuffer &metalIndexBuffer = static_cast<const MetalBuffer&>(*indexBuffer);
-
-        SR_ERROR_IF(offset > indexBuffer->GetMemorySize(), "[Metal]: Cannot bind index buffer [{0}] to graphics pipeline [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", indexBuffer->GetName(), GetName(), offset, indexBuffer->GetMemorySize());
-        metalCommandBuffer.BindIndexBuffer(metalIndexBuffer.GetMetalBuffer(), offset);
-    }
-    
-    void MetalGraphicsPipeline::Draw(std::unique_ptr<CommandBuffer> &commandBuffer, const uint32 vertexCount) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot issue a draw call on graphics pipeline [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
-
-        metalCommandBuffer.GetCurrentRenderEncoder()->drawPrimitives(MTL::PrimitiveTypeTriangle, NS::UInteger(0), vertexCount);
-    }
-
-    void MetalGraphicsPipeline::DrawIndexed(std::unique_ptr<CommandBuffer> &commandBuffer, const uint32 indexCount, const uint64 indexOffset, const uint64 vertexOffset) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot issue an indexed draw call on graphics pipeline [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
-
-        metalCommandBuffer.GetCurrentRenderEncoder()->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, indexCount, MTL::IndexTypeUInt32, metalCommandBuffer.GetCurrentIndexBuffer(), metalCommandBuffer.GetCurrentIndexBufferOffset() + indexOffset, 1, static_cast<int32>(vertexOffset), 0);
     }
     
     /* --- DESTRUCTOR --- */

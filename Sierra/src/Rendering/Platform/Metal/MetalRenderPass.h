@@ -20,15 +20,14 @@ namespace Sierra
 
         /* --- POLLING METHODS --- */
         void Resize(uint32 width, uint32 height) override;
-        void Begin(std::unique_ptr<CommandBuffer> &commandBuffer, const std::initializer_list<RenderPassBeginAttachment> &attachments) const override;
-        void BeginNextSubpass(std::unique_ptr<CommandBuffer> &commandBuffer) const override;
-        void End(std::unique_ptr<CommandBuffer> &commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] uint32 GetColorAttachmentCount() const override { return static_cast<uint32>(attachmentTable.size()) - hasDepthAttachment; };
-        [[nodiscard]] bool HasDepthAttachment() const override { return hasDepthAttachment; };
+        [[nodiscard]] uint32 GetColorAttachmentCount() const override { return colorAttachmentCount; };
+        [[nodiscard]] bool HasDepthAttachment() const override { return depthAttachmentIndex.has_value(); };
+        [[nodiscard]] inline const std::optional<uint32>& GetDepthAttachmentIndex() const { return depthAttachmentIndex; }
 
-        [[nodiscard]] inline const auto& GetAttachmentTable() const { return attachmentTable; }
+        [[nodiscard]] inline MTL::RenderPassDescriptor* GetSubpass(const uint32 subpassIndex) const { return renderPassDescriptors[subpassIndex]; }
+        [[nodiscard]] inline uint32 GetSubpassCount() const { return renderPassDescriptors.size(); }
 
         /* --- DESTRUCTOR --- */
         ~MetalRenderPass() override;
@@ -40,15 +39,8 @@ namespace Sierra
     private:
         std::vector<MTL::RenderPassDescriptor*> renderPassDescriptors;
 
-        struct AttachmentTableEntry
-        {
-            MTL::RenderPassAttachmentDescriptor* attachmentDescriptor = nullptr;
-            AttachmentType attachmentType = AttachmentType::Undefined;
-        };
-        std::vector<AttachmentTableEntry> attachmentTable; // Attachment index tells to which subpass it is tied
-        bool hasDepthAttachment = false;
-
-        mutable uint32 currentSubpass = 0;
+        std::optional<uint32> depthAttachmentIndex = std::nullopt;
+        uint32 colorAttachmentCount = 0;
 
     };
 

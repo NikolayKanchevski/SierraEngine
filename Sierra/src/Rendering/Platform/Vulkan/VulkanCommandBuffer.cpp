@@ -7,13 +7,15 @@
 #include "VulkanBuffer.h"
 #include "VulkanImage.h"
 
+#include "VulkanRenderPass.h"
+
 namespace Sierra
 {
 
     /* --- CONSTRUCTORS --- */
 
     VulkanCommandBuffer::VulkanCommandBuffer(const VulkanDevice &device, const CommandBufferCreateInfo &createInfo)
-        : CommandBuffer(createInfo), VulkanResource(createInfo.name), device(device)
+        : CommandBuffer(createInfo), VulkanResource(createInfo.name), device(device), pushDescriptorSet({ })
     {
         // Set up pool create info
         VkCommandPoolCreateInfo commandPoolCreateInfo = { };
@@ -69,8 +71,8 @@ namespace Sierra
 
     void VulkanCommandBuffer::SynchronizeBufferUsage(const std::unique_ptr<Buffer> &buffer, const BufferCommandUsage previousUsage, const BufferCommandUsage nextUsage, const uint64 memorySize, const uint64 offset)
     {
-        SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not synchronize usage of buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), buffer->GetName());
-        const VulkanBuffer &vulkanBuffer = static_cast<VulkanBuffer&>(*buffer);
+        SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not synchronize usage of buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer->GetName(), GetName());
+        const VulkanBuffer &vulkanBuffer = static_cast<const VulkanBuffer&>(*buffer);
 
         // Set up pipeline barrier
         VkBufferMemoryBarrier pipelineBarrier = { };
@@ -89,10 +91,15 @@ namespace Sierra
 
     void VulkanCommandBuffer::SynchronizeImageUsage(const std::unique_ptr<Image> &image, const ImageCommandUsage previousUsage, const ImageCommandUsage nextUsage, const uint32 baseMipLevel, const uint32 mipLevelCount, const uint32 baseLayer, const uint32 layerCount)
     {
-        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not synchronize usage of image [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), image->GetName());
-        const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
+        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not synchronize usage of image [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image->GetName(), GetName());
+        const VulkanImage &vulkanImage = static_cast<const VulkanImage&>(*image);
 
-        // If layout has not been changed yet, insert it as UNDEFINED
+        SR_ERROR_IF(baseMipLevel >= image->GetMipLevelCount(), "[Vulkan]: Cannot synchronize mip level [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseMipLevel, image->GetName(), GetName());
+        SR_ERROR_IF(baseMipLevel + mipLevelCount >= image->GetMipLevelCount(), "[Vulkan]: Cannot synchronize mip levels [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's mip level count - [{4}]!", baseMipLevel, baseMipLevel + mipLevelCount, image->GetName(), GetName(), image->GetMipLevelCount());
+        SR_ERROR_IF(baseLayer >= image->GetLayerCount(), "[Vulkan]: Cannot synchronize layer [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseLayer, image->GetName(), GetName());
+        SR_ERROR_IF(baseLayer + layerCount >= image->GetLayerCount(), "[Vulkan]: Cannot synchronize layers [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's layer count - [{4}]!", baseLayer, baseLayer + layerCount, image->GetName(), GetName(), image->GetLayerCount());
+
+        // If layout of image has not been recorded yet, insert it as undefined
         auto iterator = imageLayouts.find(vulkanImage.GetVulkanImage());
         if (iterator == imageLayouts.end()) iterator = imageLayouts.emplace(vulkanImage.GetVulkanImage(), VK_IMAGE_LAYOUT_UNDEFINED).first;
 
@@ -117,7 +124,232 @@ namespace Sierra
         imageLayouts[vulkanImage.GetVulkanImage()] = pipelineBarrier.newLayout;
     }
 
-    void VulkanCommandBuffer::BeginDebugRegion(const std::string &regionName, const Color &color) const
+    void VulkanCommandBuffer::CopyBufferToBuffer(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Buffer> &destinationBuffer, const uint64 memoryRange, const uint64 sourceOffset, const uint64 destinationOffset)
+    {
+        SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not copy from buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", sourceBuffer->GetName(), GetName());
+        const VulkanBuffer &vulkanSourceBuffer = static_cast<const VulkanBuffer&>(*sourceBuffer);
+
+        SR_ERROR_IF(destinationBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not copy to buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", destinationBuffer->GetName(), GetName());
+        const VulkanBuffer &vulkanDestinationBuffer = static_cast<const VulkanBuffer&>(*destinationBuffer);
+
+        VkBufferCopy region = { };
+        region.srcOffset = sourceOffset;
+        region.dstOffset = destinationOffset;
+        region.size = memoryRange != 0 ? memoryRange : sourceBuffer->GetMemorySize();
+
+        SR_ERROR_IF(sourceOffset + region.size > sourceBuffer->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, sourceOffset, GetName(), sourceOffset + memoryRange, sourceBuffer->GetMemorySize());
+        SR_ERROR_IF(destinationOffset + region.size > destinationBuffer->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, destinationOffset, GetName(), destinationOffset + memoryRange, destinationBuffer->GetMemorySize());
+
+        // Record copy
+        device.GetFunctionTable().vkCmdCopyBuffer(commandBuffer, vulkanSourceBuffer.GetVulkanBuffer(), vulkanDestinationBuffer.GetVulkanBuffer(), 1, &region);
+    }
+
+    void VulkanCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const Vector2UInt &pixelRange, const uint32 sourceOffset, const Vector2UInt &destinationOffset, const uint32 mipLevel, const uint32 baseLayer, const uint32 layerCount)
+    {
+        SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not copy from buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], to image [{1}] within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
+        const VulkanBuffer &vulkanSourceBuffer = static_cast<const VulkanBuffer&>(*sourceBuffer);
+
+        SR_ERROR_IF(destinationImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not from buffer [{0}] to image [{1}], graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
+        const VulkanImage &vulkanDestinationImage = static_cast<const VulkanImage&>(*destinationImage);
+
+        SR_ERROR_IF(mipLevel >= destinationImage->GetMipLevelCount(), "[Vulkan]: Cannot copy from buffer [{0}] to mip level [{1}] of image [{2}] within command buffer [{3}], as it does not have it!", sourceBuffer->GetName(), mipLevel, destinationImage->GetName(), GetName());
+        SR_ERROR_IF(baseLayer >= destinationImage->GetLayerCount(), "[Vulkan]: Cannot copy from buffer [{0}] to layer [{1}] of image [{2}] within command buffer [{3}], as it does not have it!", sourceBuffer->GetName(), baseLayer, destinationImage->GetName(), GetName());
+        SR_ERROR_IF(baseLayer + layerCount >= destinationImage->GetLayerCount(), "[Vulkan]: Cannot copy from buffer [{0}] to layers [{1}-{2}] of image [{3}] within command buffer [{4}], as they exceed image's layer count - [{5}]!", sourceBuffer->GetName(), baseLayer, baseLayer + layerCount, destinationImage->GetName(), GetName(), destinationImage->GetLayerCount());
+        SR_ERROR_IF((destinationOffset + pixelRange).x >= destinationImage->GetWidth() || (destinationOffset + pixelRange).y >= destinationImage->GetHeight(), "[Vulkan]: Cannot copy from buffer [{0}] pixel range [{1}x{2}], which is offset by another [{3}x{4}] pixels to image [{5}] within command buffer [{6}], as resulting pixel range of a total of [{7}x{8}] pixels is outside of image's dimensions - [{9}x{10}] !", sourceBuffer->GetName(), pixelRange.x, pixelRange.y, destinationOffset.x, destinationOffset.y, destinationImage->GetName(), GetName(), (destinationOffset + pixelRange).x, (destinationOffset + pixelRange).y, destinationImage->GetWidth(), destinationImage->GetHeight());
+
+        // Set copy region
+        VkBufferImageCopy region = { };
+        region.bufferOffset = static_cast<uint64>(sourceOffset) * destinationImage->GetPixelSize();
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+        region.imageSubresource.aspectMask = vulkanDestinationImage.GetVulkanAspectFlags();
+        region.imageSubresource.mipLevel = mipLevel;
+        region.imageSubresource.baseArrayLayer = baseLayer;
+        region.imageSubresource.layerCount = layerCount != 0 ? layerCount : destinationImage->GetLayerCount();
+        region.imageOffset.x = static_cast<int32>(destinationOffset.x);
+        region.imageOffset.y = static_cast<int32>(destinationOffset.y);
+        region.imageOffset.z = 0;
+        region.imageExtent.width = pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth();
+        region.imageExtent.height = pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight();
+        region.imageExtent.depth = 1;
+
+        SR_ERROR_IF(region.bufferOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()) > sourceBuffer->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), sourceOffset, GetName(), region.bufferOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()), sourceBuffer->GetMemorySize());
+        SR_ERROR_IF((static_cast<uint64>(destinationOffset.x) + destinationOffset.y + pixelRange.x + pixelRange.y) * destinationImage->GetPixelSize() > destinationImage->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to image [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the image - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), (destinationOffset.x + destinationOffset.y) * destinationImage->GetPixelSize(), GetName(), (static_cast<uint64>(destinationOffset.x) + destinationOffset.y + pixelRange.x + pixelRange.y) * destinationImage->GetPixelSize(), destinationImage->GetMemorySize());
+
+        // Copy data and change layout
+        device.GetFunctionTable().vkCmdCopyBufferToImage(commandBuffer, vulkanSourceBuffer.GetVulkanBuffer(), vulkanDestinationImage.GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    }
+
+    void VulkanCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments)
+    {
+        SR_ERROR_IF(renderPass->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], from command buffer [{1}]!", renderPass->GetName(), GetName());
+        const VulkanRenderPass &vulkanRenderPass = static_cast<const VulkanRenderPass&>(*renderPass);
+
+        SR_ERROR_IF(attachments.size() != vulkanRenderPass.GetAttachmentCount(), "[Vulkan]: Cannot begin render pass [{0}] from command buffer [{1}] with [{2}] attachments, as it was created to hold [{3}]!", renderPass->GetName(), GetName(), attachments.size(), vulkanRenderPass.GetAttachmentCount());
+
+        // Collect attachment views
+        std::vector<VkClearValue> clearValues(attachments.size());
+        std::vector<VkImageView> attachmentViews(attachments.size());
+        for (uint32 i = 0; i < attachments.size(); i++)
+        {
+            const RenderPassBeginAttachment &attachment = *(attachments.begin() + i);
+            SR_ERROR_IF(attachment.image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), attachment.image->GetName(), i);
+            const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*attachment.image);
+
+            // Configure attachment info
+            attachmentViews[i] = vulkanImage.GetVulkanImageView();
+            switch (vulkanRenderPass.GetFormatOfAttachment(i))
+            {
+                case VK_FORMAT_D16_UNORM:
+                case VK_FORMAT_D32_SFLOAT:
+                {
+                    clearValues[i].depthStencil = { 1.0f, 0 };
+                    break;
+                }
+                default:
+                {
+                    clearValues[i].color = { attachment.clearColor.r, attachment.clearColor.g, attachment.clearColor.b, attachment.clearColor.a };
+                    break;
+                }
+            }
+
+            // Apply layout changes to images
+            imageLayouts[vulkanImage.GetVulkanImage()] = VK_IMAGE_LAYOUT_GENERAL; // NOTE: While this should really be done on End(), we do it here, as user must not synchronize images during Render Pass recording
+        }
+
+        // Set up dynamic attachments
+        VkRenderPassAttachmentBeginInfo attachmentBeginInfo = { };
+        attachmentBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_ATTACHMENT_BEGIN_INFO;
+        attachmentBeginInfo.attachmentCount = static_cast<uint32>(attachmentViews.size());
+        attachmentBeginInfo.pAttachments = attachmentViews.data();
+
+        // Set up begin info
+        VkRenderPassBeginInfo beginInfo = { };
+        beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        beginInfo.renderPass = vulkanRenderPass.GetVulkanRenderPass();
+        beginInfo.framebuffer = vulkanRenderPass.GetVulkanFramebuffer();
+        beginInfo.renderArea.extent.width = attachments.begin()->image->GetWidth();
+        beginInfo.renderArea.extent.height = attachments.begin()->image->GetHeight();
+        beginInfo.renderArea.offset.x = 0;
+        beginInfo.renderArea.offset.y = 0;
+        beginInfo.clearValueCount = static_cast<uint32>(clearValues.size());
+        beginInfo.pClearValues = clearValues.data();
+        beginInfo.pNext = &attachmentBeginInfo;
+
+        // Begin render pass
+        device.GetFunctionTable().vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        // Define viewport
+        VkViewport viewport = { };
+        viewport.x = 0;
+        viewport.y = static_cast<float32>(beginInfo.renderArea.extent.height);
+        viewport.width = static_cast<float32>(beginInfo.renderArea.extent.width);
+        viewport.height = -static_cast<float32>(beginInfo.renderArea.extent.height);
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+
+        // Set viewport
+        device.GetFunctionTable().vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+        // Define scissor
+        VkRect2D scissor = { };
+        scissor.offset.x = 0;
+        scissor.offset.y = 0;
+        scissor.extent.width = beginInfo.renderArea.extent.width;
+        scissor.extent.height = beginInfo.renderArea.extent.height;
+
+        // Set scissor
+        device.GetFunctionTable().vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+    }
+
+    void VulkanCommandBuffer::BeginNextSubpass(const std::unique_ptr<RenderPass> &renderPass)
+    {
+        SR_ERROR_IF(renderPass->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin next subpass of render pass [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], from command buffer [{1}]!", renderPass->GetName(), GetName());
+        device.GetFunctionTable().vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+    }
+
+    void VulkanCommandBuffer::EndRenderPass(const std::unique_ptr<RenderPass> &renderPass)
+    {
+        SR_ERROR_IF(renderPass->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot end render pass [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], from command buffer [{1}]!", renderPass->GetName(), GetName());
+        device.GetFunctionTable().vkCmdEndRenderPass(commandBuffer);
+    }
+
+    void VulkanCommandBuffer::BeginGraphicsPipeline(const std::unique_ptr<GraphicsPipeline> &graphicsPipeline)
+    {
+        SR_ERROR_IF(graphicsPipeline->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin graphics graphicsPipeline [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], from command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
+        const VulkanGraphicsPipeline &vulkanGraphicsPipeline = static_cast<VulkanGraphicsPipeline&>(*graphicsPipeline);
+
+        device.GetFunctionTable().vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanGraphicsPipeline.GetVulkanPipeline());
+        currentGraphicsPipeline = &vulkanGraphicsPipeline;
+    }
+
+    void VulkanCommandBuffer::EndGraphicsPipeline(const std::unique_ptr<GraphicsPipeline> &graphicsPipeline)
+    {
+        SR_ERROR_IF(graphicsPipeline->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot end graphics graphicsPipeline [{0}], from command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
+        currentGraphicsPipeline = nullptr;
+    }
+
+    void VulkanCommandBuffer::BindVertexBuffer(const std::unique_ptr<Buffer> &vertexBuffer, const uint64 offset)
+    {
+        SR_ERROR_IF(vertexBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind vertex buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{1}]!", vertexBuffer->GetName(), GetName());
+        const VulkanBuffer &vulkanVertexBuffer = static_cast<const VulkanBuffer&>(*vertexBuffer);
+
+        SR_ERROR_IF(offset > vertexBuffer->GetMemorySize(), "[Vulkan]: Cannot bind vertex buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", vertexBuffer->GetName(), GetName(), offset, vertexBuffer->GetMemorySize());
+
+        VkBuffer vkBuffer = vulkanVertexBuffer.GetVulkanBuffer();
+        device.GetFunctionTable().vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vkBuffer, &offset);
+    }
+
+    void VulkanCommandBuffer::BindIndexBuffer(const std::unique_ptr<Buffer> &indexBuffer, const uint64 offset)
+    {
+        SR_ERROR_IF(indexBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind index buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{1}]!", indexBuffer->GetName(), GetName());
+        const VulkanBuffer &vulkanIndexBuffer = static_cast<const VulkanBuffer&>(*indexBuffer);
+
+        SR_ERROR_IF(offset > indexBuffer->GetMemorySize(), "[Vulkan]: Cannot bind index buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", indexBuffer->GetName(), GetName(), offset, indexBuffer->GetMemorySize());
+        device.GetFunctionTable().vkCmdBindIndexBuffer(commandBuffer, vulkanIndexBuffer.GetVulkanBuffer(), offset, VK_INDEX_TYPE_UINT32); // 32-bit indices are required, due to Metal shaders enforcing it
+    }
+
+    void VulkanCommandBuffer::Draw(const uint32 vertexCount)
+    {
+        BindResources();
+        device.GetFunctionTable().vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
+    }
+
+    void VulkanCommandBuffer::DrawIndexed(const uint32 indexCount, const uint64 indexOffset, const uint64 vertexOffset)
+    {
+        BindResources();
+        device.GetFunctionTable().vkCmdDrawIndexed(commandBuffer, indexCount, 1, indexOffset, static_cast<int32>(vertexOffset), 0);
+    }
+
+    void VulkanCommandBuffer::PushConstants(const void* data, const uint16 memoryRange, const uint16 offset)
+    {
+        const VulkanPipelineLayout &currentPipelineLayout = currentGraphicsPipeline->GetLayout();
+
+        SR_ERROR_IF(memoryRange > currentPipelineLayout.GetPushConstantSize(), "[Vulkan]: Cannot push [{0}] bytes of push constant data within command buffer [{1}], as specified memory range is bigger than specified in the current pipeline's layout, which is [{2}] bytes!", memoryRange, GetName(), currentPipelineLayout.GetPushConstantSize());
+        device.GetFunctionTable().vkCmdPushConstants(commandBuffer, currentPipelineLayout.GetVulkanPipelineLayout(), VK_SHADER_STAGE_ALL_GRAPHICS, offset, memoryRange, data);
+    }
+
+    void VulkanCommandBuffer::BindBuffer(const uint32 binding, const std::unique_ptr<Buffer> &buffer, const uint32 arrayIndex, const uint64 memoryRange, const uint64 offset)
+    {
+        SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], to binding [{1}] within command buffer [{2}]!", buffer->GetName(), binding, GetName());
+        const VulkanBuffer &vulkanBuffer = static_cast<const VulkanBuffer&>(*buffer);
+
+        SR_ERROR_IF(offset + memoryRange > buffer->GetMemorySize(), "[Vulkan]: Cannot bind [{0}] bytes (offset by another [{1}] bytes) from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, offset, buffer->GetName(), GetName(), offset + memoryRange, buffer->GetMemorySize());
+
+        pushDescriptorSet.BindBuffer(binding, vulkanBuffer, arrayIndex, memoryRange != 0 ? memoryRange : buffer->GetMemorySize(), offset);
+        resourcesBound = false;
+    }
+
+    void VulkanCommandBuffer::BindImage(const uint32 binding, const std::unique_ptr<Image> &image, const uint32 arrayIndex)
+    {
+        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind image [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], to binding [{1}] within command buffer [{2}]!", image->GetName(), binding, GetName());
+        const VulkanImage &vulkanImage = static_cast<const VulkanImage&>(*image);
+
+        pushDescriptorSet.BindImage(binding, vulkanImage, arrayIndex);
+        resourcesBound = false;
+    }
+
+    void VulkanCommandBuffer::BeginDebugRegion(const std::string &regionName, const Color &color)
     {
         #if !SR_ENABLE_LOGGING
             return;
@@ -134,7 +366,7 @@ namespace Sierra
         device.GetFunctionTable().vkCmdDebugMarkerBeginEXT(commandBuffer, &markerInfo);
     }
 
-    void VulkanCommandBuffer::InsertDebugMarker(const std::string &markerName, const Color &color) const
+    void VulkanCommandBuffer::InsertDebugMarker(const std::string &markerName, const Color &color)
     {
         #if !SR_ENABLE_LOGGING
             return;
@@ -151,7 +383,7 @@ namespace Sierra
         device.GetFunctionTable().vkCmdDebugMarkerInsertEXT(commandBuffer, &markerInfo);
     }
 
-    void VulkanCommandBuffer::EndDebugRegion() const
+    void VulkanCommandBuffer::EndDebugRegion()
     {
         #if !SR_ENABLE_LOGGING
             return;
@@ -165,6 +397,16 @@ namespace Sierra
     {
         device.GetFunctionTable().vkFreeCommandBuffers(device.GetLogicalDevice(), commandPool, 1, &commandBuffer);
         device.GetFunctionTable().vkDestroyCommandPool(device.GetLogicalDevice(), commandPool, nullptr);
+    }
+
+    /* --- PRIVATE METHODS --- */
+
+    void VulkanCommandBuffer::BindResources()
+    {
+        if (resourcesBound) return;
+
+        if (!pushDescriptorSet.GetWriteDescriptorSets().empty()) device.GetFunctionTable().vkCmdPushDescriptorSetKHR(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, currentGraphicsPipeline->GetLayout().GetVulkanPipelineLayout(), 0, pushDescriptorSet.GetWriteDescriptorSets().size(), pushDescriptorSet.GetWriteDescriptorSets().data());
+        resourcesBound = true;
     }
 
     /* --- CONVERSIONS --- */

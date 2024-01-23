@@ -38,10 +38,12 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void VulkanBuffer::CopyFromMemory(const void* memoryPointer, const uint64 memoryRange, const uint64 sourceOffset, const uint64 destinationOffset)
+    void VulkanBuffer::CopyFromMemory(const void* memoryPointer, uint64 memoryRange, const uint64 sourceOffset, const uint64 destinationOffset)
     {
+        memoryRange = memoryRange != 0 ? memoryRange : GetMemorySize();
         SR_ERROR_IF(destinationOffset + memoryRange > GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, destinationOffset, GetName(), destinationOffset + memoryRange, GetMemorySize());
-        memcpy(reinterpret_cast<char*>(data) + destinationOffset, reinterpret_cast<const char*>(memoryPointer) + sourceOffset, memoryRange != 0 ? memoryRange : GetMemorySize());
+
+        std::memcpy(reinterpret_cast<char*>(data) + destinationOffset, reinterpret_cast<const char*>(memoryPointer) + sourceOffset, memoryRange);
         vmaFlushAllocation(device.GetMemoryAllocator(), allocation, destinationOffset, memoryRange);
     }
 

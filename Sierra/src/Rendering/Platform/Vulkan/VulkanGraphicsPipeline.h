@@ -5,24 +5,23 @@
 #pragma once
 
 #include "../../GraphicsPipeline.h"
+#include "VulkanResource.h"
 
 #include "VulkanDevice.h"
-#include "VulkanPipeline.h"
+#include "VulkanPipelineLayout.h"
 
 namespace Sierra
 {
 
-    class SIERRA_API VulkanGraphicsPipeline final : public GraphicsPipeline, public VulkanPipeline
+    class SIERRA_API VulkanGraphicsPipeline final : public GraphicsPipeline, public VulkanResource
     {
     public:
         /* --- CONSTRUCTORS --- */
         VulkanGraphicsPipeline(const VulkanDevice &device, const GraphicsPipelineCreateInfo &createInfo);
 
-        /* --- POLLING METHODS --- */
-        void BindVertexBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::unique_ptr<Buffer> &vertexBuffer, uint64 offset = 0) const override;
-        void BindIndexBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::unique_ptr<Buffer> &indexBuffer, uint64 offset = 0) const override;
-        void Draw(std::unique_ptr<CommandBuffer> &commandBuffer, uint32 vertexCount) const override;
-        void DrawIndexed(std::unique_ptr<CommandBuffer> &commandBuffer, uint32 indexCount, uint64 indexOffset = 0, uint64 vertexOffset = 0) const override;
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] inline VkPipeline GetVulkanPipeline() const { return pipeline; }
+        [[nodiscard]] inline const VulkanPipelineLayout& GetLayout() const { return layout; }
 
         /* --- DESTRUCTOR --- */
         ~VulkanGraphicsPipeline() override;
@@ -31,6 +30,12 @@ namespace Sierra
         [[nodiscard]] static VkCullModeFlags CullModeToVkCullMode(CullMode cullMode);
         [[nodiscard]] static VkPolygonMode ShadeModeToVkPolygonMode(ShadeMode shadeMode);
         [[nodiscard]] static VkFrontFace FrontFaceModeToVkFrontFace(FrontFaceMode frontFaceMode);
+
+    private:
+        const VulkanDevice &device;
+        const VulkanPipelineLayout &layout;
+
+        VkPipeline pipeline = VK_NULL_HANDLE;
 
     };
 

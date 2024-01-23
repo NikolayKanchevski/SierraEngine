@@ -20,18 +20,14 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         MetalGraphicsPipeline(const MetalDevice &device, const GraphicsPipelineCreateInfo &createInfo);
 
-        /* --- POLLING METHODS --- */
-        void Begin(std::unique_ptr<CommandBuffer> &commandBuffer) const override;
-        void End(std::unique_ptr<CommandBuffer> &commandBuffer) const override;
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] inline MTL::RenderPipelineState* GetRenderPipelineState() const { return renderPipelineState; }
+        [[nodiscard]] inline const MetalPipelineLayout& GetLayout() const { return layout; }
+        [[nodiscard]] inline bool HasFragmentShader() const { return hasFragmentShader; }
 
-        void PushConstants(std::unique_ptr<CommandBuffer> &commandBuffer, const void* data, uint16 memoryRange, uint16 offset = 0) const override;
-        void BindBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, uint32 binding, const std::unique_ptr<Buffer> &buffer, uint32 arrayIndex = 0, uint64 memoryRange = 0, uint64 offset = 0) const override;
-        void BindImage(std::unique_ptr<CommandBuffer> &commandBuffer, uint32 binding, const std::unique_ptr<Image> &image, uint32 arrayIndex = 0) const override;
-
-        void BindVertexBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::unique_ptr<Buffer> &vertexBuffer, uint64 offset = 0) const override;
-        void BindIndexBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::unique_ptr<Buffer> &indexBuffer, uint64 offset = 0) const override;
-        void Draw(std::unique_ptr<CommandBuffer> &commandBuffer, uint32 vertexCount) const override;
-        void DrawIndexed(std::unique_ptr<CommandBuffer> &commandBuffer, uint32 indexCount, uint64 indexOffset = 0, uint64 vertexOffset = 0) const override;
+        [[nodiscard]] inline MTL::CullMode GetCullMode() const { return cullMode; }
+        [[nodiscard]] inline MTL::TriangleFillMode GetTriangleFillMode() const { return triangleFillMode; }
+        [[nodiscard]] inline MTL::Winding GetWinding() const { return winding; }
 
         /* --- DESTRUCTOR --- */
         ~MetalGraphicsPipeline() override;
@@ -42,16 +38,14 @@ namespace Sierra
         [[nodiscard]] static MTL::Winding FrontFaceModeToWinding(FrontFaceMode frontFaceMode);
 
     private:
-        const MetalPipelineLayout &pipelineLayout;
+        const MetalPipelineLayout &layout;
 
         MTL::RenderPipelineState* renderPipelineState = nullptr;
-        std::optional<MetalBuffer> pushConstantBuffer;
         bool hasFragmentShader = false;
 
-        const MTL::CullMode cullMode;
-        const MTL::TriangleFillMode triangleFillMode;
-        const MTL::Winding frontFacingWinding;
-        const NS::UInteger VERTEX_BUFFER_INDEX = 30;
+        MTL::CullMode cullMode;
+        MTL::TriangleFillMode triangleFillMode;
+        MTL::Winding winding;
 
     };
 

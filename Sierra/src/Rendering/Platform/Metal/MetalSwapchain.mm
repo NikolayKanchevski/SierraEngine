@@ -96,7 +96,7 @@ namespace Sierra
 
         // Update image
         MTL::Texture* drawableTexture = metalDrawable->texture();
-        MTL_SET_OBJECT_NAME(drawableTexture, "Texture for current Metal drawable of swapchain [" + GetName() + "]");
+        device.SetResourceName(drawableTexture, "Texture for current Metal drawable of swapchain [" + GetName() + "]");
         static_cast<MetalImage&>(*swapchainImage).texture = drawableTexture;
     }
 
@@ -110,7 +110,7 @@ namespace Sierra
 
         // Record presentation commands to a new command buffer
         MTL::CommandBuffer* presentationCommandBuffer = device.GetCommandQueue()->commandBuffer();
-        MTL_SET_OBJECT_NAME(presentationCommandBuffer, "Presentation command buffer of swapchain [" + GetName() + "]");
+        device.SetResourceName(presentationCommandBuffer, "Presentation command buffer of swapchain [" + GetName() + "]");
         presentationCommandBuffer->addCompletedHandler(^(MTL::CommandBuffer*) { dispatch_semaphore_signal(isFrameRenderedSemaphores); });
         presentationCommandBuffer->presentDrawable(metalDrawable);
         presentationCommandBuffer->commit();

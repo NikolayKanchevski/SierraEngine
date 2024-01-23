@@ -15,8 +15,10 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanGraphicsPipeline::VulkanGraphicsPipeline(const VulkanDevice &device, const GraphicsPipelineCreateInfo &createInfo)
-        : GraphicsPipeline(createInfo), VulkanPipeline(device, { .name = createInfo.name, .layout = createInfo.layout, .bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS })
+        : GraphicsPipeline(createInfo), VulkanResource(createInfo.name), device(device), layout(static_cast<VulkanPipelineLayout&>(*createInfo.layout))
     {
+        SR_ERROR_IF(createInfo.layout->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with pipeline layout [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.layout->GetName());
+
         SR_ERROR_IF(createInfo.vertexShader->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.vertexShader->GetName());
         const VulkanShader &vulkanVertexShader = static_cast<VulkanShader&>(*createInfo.vertexShader);
 
@@ -170,7 +172,7 @@ namespace Sierra
         graphicsPipelineCreateInfo.pMultisampleState = &multisampleStateCreateInfo;
         graphicsPipelineCreateInfo.pColorBlendState = &blendingStateCreateInfo;
         graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
-        graphicsPipelineCreateInfo.layout = pipelineLayout.GetVulkanPipelineLayout();
+        graphicsPipelineCreateInfo.layout = layout.GetVulkanPipelineLayout();
         graphicsPipelineCreateInfo.renderPass = vulkanRenderPass.GetVulkanRenderPass();
         graphicsPipelineCreateInfo.subpass = createInfo.subpassIndex;
         graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
@@ -182,52 +184,6 @@ namespace Sierra
 
         // Set object name
         device.SetObjectName(pipeline, VK_OBJECT_TYPE_PIPELINE, GetName());
-    }
-
-    /* --- POLLING METHODS --- */
-
-    void VulkanGraphicsPipeline::BindVertexBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::unique_ptr<Buffer> &vertexBuffer, const uint64 offset) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind vertex buffer [{0}] to graphics pipeline [{1}] using command buffer [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", vertexBuffer->GetName(), GetName(), commandBuffer->GetName());
-        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);
-
-        SR_ERROR_IF(vertexBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind vertex buffer [{0}] to graphics pipeline [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", vertexBuffer->GetName(), GetName());
-        const VulkanBuffer &vulkanVertexBuffer = static_cast<const VulkanBuffer&>(*vertexBuffer);
-
-        SR_ERROR_IF(offset > vertexBuffer->GetMemorySize(), "[Vulkan]: Cannot bind vertex buffer [{0}] to graphics pipeline [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", vertexBuffer->GetName(), GetName(), offset, vertexBuffer->GetMemorySize());
-
-        const VkBuffer vkBuffer = vulkanVertexBuffer.GetVulkanBuffer();
-        device.GetFunctionTable().vkCmdBindVertexBuffers(vulkanCommandBuffer.GetVulkanCommandBuffer(), 0, 1, &vkBuffer, &offset);
-    }
-
-    void VulkanGraphicsPipeline::BindIndexBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::unique_ptr<Buffer> &indexBuffer, const uint64 offset) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind index buffer [{0}] to graphics pipeline [{1}] using command buffer [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", indexBuffer->GetName(), GetName(), commandBuffer->GetName());
-        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);
-
-        SR_ERROR_IF(indexBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind index buffer [{0}] to graphics pipeline [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", indexBuffer->GetName(), GetName());
-        const VulkanBuffer &vulkanIndexBuffer = static_cast<const VulkanBuffer&>(*indexBuffer);
-
-        SR_ERROR_IF(offset > indexBuffer->GetMemorySize(), "[Vulkan]: Cannot bind index buffer [{0}] to graphics pipeline [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", indexBuffer->GetName(), GetName(), offset, indexBuffer->GetMemorySize());
-        device.GetFunctionTable().vkCmdBindIndexBuffer(vulkanCommandBuffer.GetVulkanCommandBuffer(), vulkanIndexBuffer.GetVulkanBuffer(), offset, VK_INDEX_TYPE_UINT32); // 32-bit indices are required due to Metal shaders enforcing it
-    }
-
-    void VulkanGraphicsPipeline::Draw(std::unique_ptr<CommandBuffer> &commandBuffer, const uint32 vertexCount) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot issue a draw call on graphics pipeline [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
-        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);
-
-        BindResources(vulkanCommandBuffer);
-        device.GetFunctionTable().vkCmdDraw(vulkanCommandBuffer.GetVulkanCommandBuffer(), vertexCount, 1, 0, 0);
-    }
-
-    void VulkanGraphicsPipeline::DrawIndexed(std::unique_ptr<CommandBuffer> &commandBuffer, uint32 indexCount, const uint64 indexOffset, const uint64 vertexOffset) const
-    {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot issue an indexed draw call on graphics pipeline [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
-        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);
-
-        BindResources(vulkanCommandBuffer);
-        device.GetFunctionTable().vkCmdDrawIndexed(vulkanCommandBuffer.GetVulkanCommandBuffer(), indexCount, 1, indexOffset, static_cast<int32>(vertexOffset), 0);
     }
 
     /* --- DESTRUCTOR --- */

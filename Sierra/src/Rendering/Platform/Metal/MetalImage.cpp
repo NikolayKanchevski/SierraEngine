@@ -37,7 +37,7 @@ namespace Sierra
         // Allocate texture
         texture = device.GetMetalDevice()->newTexture(textureDescriptor);
         SR_ERROR_IF(texture == nullptr, "[Metal]: Could not create image!");
-        MTL_SET_OBJECT_NAME(texture, GetName());
+        device.SetResourceName(texture, GetName());
 
         textureDescriptor->release();
     }
@@ -46,7 +46,7 @@ namespace Sierra
         : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainPixelFormatToImageFormat(createInfo.format), .memoryLocation = ImageMemoryLocation::Device, .usage = ImageUsage::ColorAttachment }), MetalResource(createInfo.name),
           texture(createInfo.texture), swapchainImage(true)
     {
-        MTL_SET_OBJECT_NAME(texture, GetName());
+        device.SetResourceName(texture, GetName());
     }
 
     /* --- DESTRUCTOR --- */

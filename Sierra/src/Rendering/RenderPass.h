@@ -7,7 +7,6 @@
 #include "RenderingResource.h"
 
 #include "Image.h"
-#include "CommandBuffer.h"
 
 namespace Sierra
 {
@@ -64,11 +63,10 @@ namespace Sierra
     public:
         /* --- POLLING METHODS --- */
         virtual void Resize(uint32 width, uint32 height) = 0;
-        virtual void Begin(std::unique_ptr<CommandBuffer> &commandBuffer, const std::initializer_list<RenderPassBeginAttachment> &attachments) const = 0;
-        virtual void BeginNextSubpass(std::unique_ptr<CommandBuffer> &commandBuffer) const = 0;
-        virtual void End(std::unique_ptr<CommandBuffer> &commandBuffer) const = 0;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] inline uint32 GetAttachmentCount() const { return GetColorAttachmentCount() + HasDepthAttachment(); }
+
         [[nodiscard]] virtual uint32 GetColorAttachmentCount() const = 0;
         [[nodiscard]] virtual bool HasDepthAttachment() const = 0;
 

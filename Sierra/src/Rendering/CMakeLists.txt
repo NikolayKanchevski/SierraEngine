@@ -10,8 +10,6 @@ target_sources(Sierra PRIVATE
     GraphicsPipeline.h
     Image.cpp
     Image.h
-    Pipeline.cpp
-    Pipeline.h
     PipelineLayout.cpp
     PipelineLayout.h
     RenderingContext.cpp
