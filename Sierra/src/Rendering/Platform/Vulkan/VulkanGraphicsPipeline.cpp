@@ -127,6 +127,17 @@ namespace Sierra
         multisampleStateCreateInfo.alphaToCoverageEnable = VK_FALSE;
         multisampleStateCreateInfo.alphaToOneEnable = VK_FALSE;
 
+        // Set up combined depth and stencil state
+        VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = { };
+        depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+        depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
+        depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
+        depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+        depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
+        depthStencilStateCreateInfo.minDepthBounds = 0.0f;
+        depthStencilStateCreateInfo.maxDepthBounds = 1.0f;
+        depthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;
+
         // Set up attachment color blending state
         VkPipelineColorBlendAttachmentState blendingAttachmentState = { };
         blendingAttachmentState.blendEnable = VK_FALSE;
@@ -170,6 +181,7 @@ namespace Sierra
         graphicsPipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
         graphicsPipelineCreateInfo.pRasterizationState = &rasterizationStateCreateInfo;
         graphicsPipelineCreateInfo.pMultisampleState = &multisampleStateCreateInfo;
+        graphicsPipelineCreateInfo.pDepthStencilState = vulkanRenderPass.HasDepthAttachment() ? &depthStencilStateCreateInfo : nullptr;
         graphicsPipelineCreateInfo.pColorBlendState = &blendingStateCreateInfo;
         graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
         graphicsPipelineCreateInfo.layout = layout.GetVulkanPipelineLayout();
@@ -200,8 +212,8 @@ namespace Sierra
         switch (cullMode)
         {
             case CullMode::None:        return VK_CULL_MODE_NONE;
-            case CullMode::Front:       return VK_CULL_MODE_FRONT_BIT;
-            case CullMode::Back:        return VK_CULL_MODE_BACK_BIT;
+            case CullMode::Front:       return VK_CULL_MODE_FRONT_BIT;   // NOTE: These are inverted, because we are using negative framebuffer viewports to flip
+            case CullMode::Back:        return VK_CULL_MODE_BACK_BIT;  //       output through the VK_KHR_MAINTENANCE_1 extension, which inverts culling
         }
 
         return VK_CULL_MODE_NONE;

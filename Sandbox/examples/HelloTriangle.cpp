@@ -5,7 +5,7 @@
 #include <Sierra.h>
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-/////                   Simple Cross-Platform Multi-API Rendering Test                  //////
+/////                Simple Cross-Platform Multi-API 2D Rendering Test                  //////
 //////////////////////////////////////////////////////////////////////////////////////////////
 class SandboxApplication final : public Application
 {
@@ -35,7 +35,12 @@ private:
 
         // Create swapchain
         swapchain = GetRenderingContext().CreateSwapchain({ .name = "Test Swapchain", .window = window, .preferredPresentationMode = SwapchainPresentationMode::VSync });
-        swapchain->OnEvent<SwapchainResizeEvent>([this](const SwapchainResizeEvent &event) { renderPass->Resize(event.GetSize().x, event.GetSize().y); return false; });
+
+        // Handle swapchain resizing
+        swapchain->OnEvent<SwapchainResizeEvent>([this](const SwapchainResizeEvent &event) {
+            GetRenderingContext().GetDevice().WaitForCommandBuffer(commandBuffers[swapchain->GetCurrentFrame()]);
+            renderPass->Resize(event.GetSize().x, event.GetSize().y); return false;
+        });
 
         // Create render pass
         renderPass = GetRenderingContext().CreateRenderPass({

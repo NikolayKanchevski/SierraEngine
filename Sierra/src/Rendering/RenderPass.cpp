@@ -21,7 +21,6 @@ namespace Sierra
                 for (const auto renderTargetIndex : (createInfo.subpassDescriptions.begin() + i)->renderTargets)
                 {
                     const RenderPassAttachment &attachment = *(createInfo.attachments.begin() + renderTargetIndex);
-                    SR_ERROR_IF(attachment.type == AttachmentType::Undefined, "Could not create render pass [{0}], as attachment type of attachment [{1}] with image [{2}] must not be [AttachmentType::Undefined]!", createInfo.name, renderTargetIndex, attachment.templateImage->GetName());
                     SR_ERROR_IF(attachment.templateImage->GetWidth() != expectedWidth || attachment.templateImage->GetHeight() != expectedHeight, "Could not create render pass [{0}], because not all attachments share the same dimensions, and they must!", createInfo.name);
 
                     const SubpassDescription &subpassDescription = *(createInfo.subpassDescriptions.begin() + i);

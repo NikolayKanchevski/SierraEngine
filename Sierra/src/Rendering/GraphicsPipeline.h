@@ -28,20 +28,20 @@ namespace Sierra
         UV              = Float2
     };
 
-    enum class ShadeMode
+    enum class ShadeMode : uint8
     {
         Fill,
         Wireframe
     };
 
-    enum class CullMode
+    enum class CullMode : uint8
     {
         None,
         Front,
         Back
     };
 
-    enum class FrontFaceMode
+    enum class FrontFaceMode : uint8
     {
         Clockwise,
         CounterClockwise

@@ -28,8 +28,8 @@ namespace Sierra
     struct PipelineLayoutCreateInfo
     {
         const std::string &name = "Pipeline Layout";
-        uint16 pushConstantSize = 0;
         const std::initializer_list<PipelineBinding> &bindings = { };
+        uint16 pushConstantSize = 0;
     };
 
     class SIERRA_API PipelineLayout : public virtual RenderingResource

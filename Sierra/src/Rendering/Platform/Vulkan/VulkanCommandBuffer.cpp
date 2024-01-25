@@ -198,19 +198,13 @@ namespace Sierra
 
             // Configure attachment info
             attachmentViews[i] = vulkanImage.GetVulkanImageView();
-            switch (vulkanRenderPass.GetFormatOfAttachment(i))
+            if (attachment.image->GetFormat().channels == ImageChannels::D)
             {
-                case VK_FORMAT_D16_UNORM:
-                case VK_FORMAT_D32_SFLOAT:
-                {
-                    clearValues[i].depthStencil = { 1.0f, 0 };
-                    break;
-                }
-                default:
-                {
-                    clearValues[i].color = { attachment.clearColor.r, attachment.clearColor.g, attachment.clearColor.b, attachment.clearColor.a };
-                    break;
-                }
+                clearValues[i].depthStencil = { 1.0f, 0 };
+            }
+            else
+            {
+                clearValues[i].color = { attachment.clearColor.r, attachment.clearColor.g, attachment.clearColor.b, attachment.clearColor.a };
             }
 
             // Apply layout changes to images
@@ -326,7 +320,7 @@ namespace Sierra
         const VulkanPipelineLayout &currentPipelineLayout = currentGraphicsPipeline->GetLayout();
 
         SR_ERROR_IF(memoryRange > currentPipelineLayout.GetPushConstantSize(), "[Vulkan]: Cannot push [{0}] bytes of push constant data within command buffer [{1}], as specified memory range is bigger than specified in the current pipeline's layout, which is [{2}] bytes!", memoryRange, GetName(), currentPipelineLayout.GetPushConstantSize());
-        device.GetFunctionTable().vkCmdPushConstants(commandBuffer, currentPipelineLayout.GetVulkanPipelineLayout(), VK_SHADER_STAGE_ALL_GRAPHICS, offset, memoryRange, data);
+        device.GetFunctionTable().vkCmdPushConstants(commandBuffer, currentPipelineLayout.GetVulkanPipelineLayout(), VK_SHADER_STAGE_ALL, offset, memoryRange, data);
     }
 
     void VulkanCommandBuffer::BindBuffer(const uint32 binding, const std::unique_ptr<Buffer> &buffer, const uint32 arrayIndex, const uint64 memoryRange, const uint64 offset)
@@ -415,13 +409,12 @@ namespace Sierra
     {
         switch (bufferCommandUsage)
         {
-            case BufferCommandUsage::MemoryRead:        return VK_ACCESS_MEMORY_READ_BIT;
-            case BufferCommandUsage::VertexRead:
-            case BufferCommandUsage::IndexRead:         return VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+            case BufferCommandUsage::MemoryRead:        return VK_ACCESS_TRANSFER_READ_BIT;
+            case BufferCommandUsage::MemoryWrite:       return VK_ACCESS_TRANSFER_WRITE_BIT;
+            case BufferCommandUsage::VertexRead:        return VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+            case BufferCommandUsage::IndexRead:         return VK_ACCESS_INDEX_READ_BIT;
             case BufferCommandUsage::GraphicsRead:
             case BufferCommandUsage::ComputeRead:       return VK_ACCESS_SHADER_READ_BIT;
-
-            case BufferCommandUsage::MemoryWrite:       return VK_ACCESS_MEMORY_WRITE_BIT;
             case BufferCommandUsage::GraphicsWrite:
             case BufferCommandUsage::ComputeWrite:      return VK_ACCESS_SHADER_WRITE_BIT;
         }
@@ -438,7 +431,6 @@ namespace Sierra
             case BufferCommandUsage::MemoryRead:
             case BufferCommandUsage::MemoryWrite:      return VK_PIPELINE_STAGE_TRANSFER_BIT;
             case BufferCommandUsage::GraphicsRead:
-
             case BufferCommandUsage::GraphicsWrite:    return VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
             case BufferCommandUsage::ComputeRead:
             case BufferCommandUsage::ComputeWrite:     return VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;

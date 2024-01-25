@@ -54,8 +54,8 @@ namespace Sierra
                 SR_ERROR("Cannot create rendering context [{0}] using OpenGL, as it has not been implemented yet!", createInfo.name);
                 return nullptr;
             }
-            default:
             case GraphicsAPI::Undefined:
+            default:
             {
                 SR_ERROR("Cannot create rendering context [{0}] using an undefined GraphicsAPI!", createInfo.name);
                 return nullptr;

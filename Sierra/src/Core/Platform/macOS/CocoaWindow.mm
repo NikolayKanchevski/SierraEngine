@@ -264,7 +264,7 @@ namespace Sierra
           title(createInfo.title)
     {
         // Create Metal layer
-        CAMetalLayer* metalLayer = [CAMetalLayer layer];
+        CAMetalLayer* const metalLayer = [CAMetalLayer layer];
         SR_ERROR_IF(metalLayer == nullptr, "Could not create Metal layer for window [{0}]!", createInfo.title);
 
         // Assign Metal layer
@@ -490,9 +490,6 @@ namespace Sierra
 
         void CocoaWindow::WindowDidResize(const NSNotification* notification)
         {
-            // Get current window size
-            const NSRect contentRect = [view frame];
-
             // Check if window has been maximized
             const bool nowMaximized = [window isZoomed];
             if (maximized != nowMaximized)

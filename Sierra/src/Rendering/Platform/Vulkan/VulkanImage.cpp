@@ -158,7 +158,6 @@ namespace Sierra
                     case ImageMemoryType::Int64:        return VK_FORMAT_R64_SINT;
                     case ImageMemoryType::UInt64:       return VK_FORMAT_R64_UINT;
                     case ImageMemoryType::Float64:      return VK_FORMAT_R64_SFLOAT;
-                    default:                            break;
                 }
             }
             case ImageChannels::RG:
@@ -180,7 +179,6 @@ namespace Sierra
                     case ImageMemoryType::Int64:        return VK_FORMAT_R64G64_SINT;
                     case ImageMemoryType::UInt64:       return VK_FORMAT_R64G64_UINT;
                     case ImageMemoryType::Float64:      return VK_FORMAT_R64G64_SFLOAT;
-                    default:                            break;
                 }
             }
             case ImageChannels::RGB:
@@ -203,7 +201,6 @@ namespace Sierra
                     case ImageMemoryType::Int64:        return VK_FORMAT_R64G64B64_SINT;
                     case ImageMemoryType::UInt64:       return VK_FORMAT_R64G64B64_UINT;
                     case ImageMemoryType::Float64:      return VK_FORMAT_R64G64B64_SFLOAT;
-                    default:                            break;
                 }
             }
             case ImageChannels::RGBA:
@@ -225,7 +222,6 @@ namespace Sierra
                     case ImageMemoryType::Int64:        return VK_FORMAT_R64G64B64A64_SINT;
                     case ImageMemoryType::UInt64:       return VK_FORMAT_R64G64B64A64_UINT;
                     case ImageMemoryType::Float64:      return VK_FORMAT_R64G64B64A64_SFLOAT;
-                    default:                            break;
                 }
             }
             case ImageChannels::BGRA:
@@ -237,9 +233,14 @@ namespace Sierra
                     default:                            break;
                 }
             }
-            default:
+            case ImageChannels::D:
             {
-                break;
+                switch (format.memoryType)
+                {
+                    case ImageMemoryType::UNorm16:   return VK_FORMAT_D16_UNORM;
+                    case ImageMemoryType::Float32:   return VK_FORMAT_D32_SFLOAT;
+                    default:                         break;
+                }
             }
         }
 
@@ -258,7 +259,6 @@ namespace Sierra
             case ImageSampling::x16:        return VK_SAMPLE_COUNT_16_BIT;
             case ImageSampling::x32:        return VK_SAMPLE_COUNT_32_BIT;
             case ImageSampling::x64:        return VK_SAMPLE_COUNT_64_BIT;
-            default:                        break;
         }
 
         return VK_SAMPLE_COUNT_1_BIT;
@@ -285,7 +285,6 @@ namespace Sierra
             case ImageMemoryLocation::Host:         return VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
             case ImageMemoryLocation::Device:       return VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
             case ImageMemoryLocation::Auto:         return VMA_MEMORY_USAGE_AUTO;
-            default:                                break;
         }
 
         return VMA_MEMORY_USAGE_AUTO;

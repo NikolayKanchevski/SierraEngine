@@ -44,7 +44,6 @@ namespace Sierra
             case SwapchainImageMemoryType::UNorm8:      { [caMetalLayer setPixelFormat: MTLPixelFormatBGRA8Unorm ];      break; }
             case SwapchainImageMemoryType::SRGB8:       { [caMetalLayer setPixelFormat: MTLPixelFormatBGRA8Unorm_sRGB ]; break; }
             case SwapchainImageMemoryType::UNorm16:     { [caMetalLayer setPixelFormat: MTLPixelFormatRGBA16Float];      break; }
-            default:                                    break;
         }
         [caMetalLayer setMaximumDrawableCount: CONCURRENT_FRAME_COUNT];
         [caMetalLayer setDrawsAsynchronously: YES];
@@ -106,7 +105,7 @@ namespace Sierra
         const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
 
         // Wait until drawing command buffer has finished execution
-        dispatch_semaphore_wait(metalCommandBuffer.GetCompletionSemaphore(), DISPATCH_TIME_FOREVER);
+        while (!metalCommandBuffer.HasFinishedExecution()) { }
 
         // Record presentation commands to a new command buffer
         MTL::CommandBuffer* presentationCommandBuffer = device.GetCommandQueue()->commandBuffer();

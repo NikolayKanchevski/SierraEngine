@@ -73,8 +73,6 @@ namespace Sierra
         virtual void Draw(uint32 vertexCount) = 0;
         virtual void DrawIndexed(uint32 indexCount, uint64 indexOffset = 0, uint64 vertexOffset = 0) = 0;
 
-        template<class T>
-        inline void PushConstants(const T &data, uint16 offset = 0) { PushConstants(&data, sizeof(T), offset); }
         virtual void PushConstants(const void* data, uint16 memoryRange, uint16 offset = 0) = 0;
         virtual void BindBuffer(uint32 binding, const std::unique_ptr<Buffer> &buffer, uint32 arrayIndex = 0, uint64 memoryRange = 0, uint64 offset = 0) = 0;
         virtual void BindImage(uint32 binding, const std::unique_ptr<Image> &image, uint32 arrayIndex = 0) = 0;

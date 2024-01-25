@@ -19,16 +19,17 @@ namespace Sierra
     ImageFormat Device::GetSupportedImageFormat(const ImageChannels preferredChannels, const ImageMemoryType preferredMemoryType, const ImageUsage usage) const
     {
         // NOTE: Though looking complex and heavy, realistically, the function should return almost immediately, and a format is pretty much guaranteed to be found
-        std::initializer_list<ImageChannels> channelsToTry;
-        std::initializer_list<ImageMemoryType> memoryTypesToTry;
+        std::vector<ImageChannels> channelsToTry;
+        std::vector<ImageMemoryType> memoryTypesToTry;
         
         switch (preferredChannels)
         {
-            case ImageChannels::RGBA:       channelsToTry = { ImageChannels::RGBA }; break;
-            case ImageChannels::RG:         channelsToTry = { ImageChannels::RG, ImageChannels::RGB, ImageChannels::RGBA }; break;
             case ImageChannels::R:          channelsToTry = { ImageChannels::R, ImageChannels::RG, ImageChannels::RGB, ImageChannels::RGBA }; break;
+            case ImageChannels::RG:         channelsToTry = { ImageChannels::RG, ImageChannels::RGB, ImageChannels::RGBA }; break;
             case ImageChannels::RGB:        channelsToTry = { ImageChannels::RGB, ImageChannels::RGBA }; break;
-            default:                        break;
+            case ImageChannels::RGBA:       channelsToTry = { ImageChannels::RGBA }; break;
+            case ImageChannels::BGRA:       channelsToTry = { ImageChannels::BGRA }; break;
+            case ImageChannels::D:          channelsToTry = { ImageChannels::D }; break;
         }
 
         switch (preferredMemoryType)
@@ -69,8 +70,7 @@ namespace Sierra
                     ImageMemoryType::UNorm16,
                     ImageMemoryType::Float16,
                     ImageMemoryType::Float32,
-                    ImageMemoryType::Float64,
-                    ImageMemoryType::Norm16
+                    ImageMemoryType::Float64
                 };
                 break;
             }
@@ -82,8 +82,7 @@ namespace Sierra
                     ImageMemoryType::UNorm16,
                     ImageMemoryType::Float16,
                     ImageMemoryType::Float32,
-                    ImageMemoryType::Float64,
-                    ImageMemoryType::Norm16
+                    ImageMemoryType::Float64
                 };
                 break;
             }
@@ -96,8 +95,7 @@ namespace Sierra
                     ImageMemoryType::Int64,
                     ImageMemoryType::Float16,
                     ImageMemoryType::Float32,
-                    ImageMemoryType::Float64,
-                    ImageMemoryType::Int8
+                    ImageMemoryType::Float64
                 };
                 break;
             }
@@ -111,8 +109,7 @@ namespace Sierra
                     ImageMemoryType::UInt64,
                     ImageMemoryType::Float16,
                     ImageMemoryType::Float32,
-                    ImageMemoryType::Float64,
-                    ImageMemoryType::UInt8
+                    ImageMemoryType::Float64
                 };
                 break;
             }
@@ -128,8 +125,7 @@ namespace Sierra
             {
                 memoryTypesToTry =
                 {
-                    ImageMemoryType::UNorm16,
-                    ImageMemoryType::Norm16
+                    ImageMemoryType::UNorm16
                 };
                 break;
             }
@@ -139,11 +135,7 @@ namespace Sierra
                 {
                     ImageMemoryType::Float16,
                     ImageMemoryType::Float32,
-                    ImageMemoryType::Float64,
-                    ImageMemoryType::Int32,
-                    ImageMemoryType::Int64,
-                    ImageMemoryType::Int16,
-                    ImageMemoryType::Int8
+                    ImageMemoryType::Float64
                 };
                 break;
             }
@@ -154,10 +146,7 @@ namespace Sierra
                     ImageMemoryType::Int32,
                     ImageMemoryType::Int64,
                     ImageMemoryType::Float32,
-                    ImageMemoryType::Float64,
-                    ImageMemoryType::Int16,
-                    ImageMemoryType::Float16,
-                    ImageMemoryType::Int8
+                    ImageMemoryType::Float64
                 };
                 break;
             }
@@ -168,10 +157,7 @@ namespace Sierra
                     ImageMemoryType::UInt32,
                     ImageMemoryType::UInt64,
                     ImageMemoryType::Float32,
-                    ImageMemoryType::Float64,
-                    ImageMemoryType::UInt16,
-                    ImageMemoryType::Float16,
-                    ImageMemoryType::UInt8
+                    ImageMemoryType::Float64
                 };
                 break;
             }
@@ -180,12 +166,7 @@ namespace Sierra
                 memoryTypesToTry =
                 {
                     ImageMemoryType::Float32,
-                    ImageMemoryType::Float64,
-                    ImageMemoryType::Int64,
-                    ImageMemoryType::Float16,
-                    ImageMemoryType::Int32,
-                    ImageMemoryType::Int16,
-                    ImageMemoryType::Int8
+                    ImageMemoryType::Float64
                 };
                 break;
             }
@@ -194,12 +175,7 @@ namespace Sierra
                 memoryTypesToTry =
                 {
                     ImageMemoryType::Int64,
-                    ImageMemoryType::Float64,
-                    ImageMemoryType::Int32,
-                    ImageMemoryType::Float32,
-                    ImageMemoryType::Int16,
-                    ImageMemoryType::Float16,
-                    ImageMemoryType::Int8
+                    ImageMemoryType::Float64
                 };
                 break;
             }
@@ -208,12 +184,7 @@ namespace Sierra
                 memoryTypesToTry =
                 {
                     ImageMemoryType::UInt64,
-                    ImageMemoryType::Float64,
-                    ImageMemoryType::UInt32,
-                    ImageMemoryType::Float32,
-                    ImageMemoryType::UInt16,
-                    ImageMemoryType::Float16,
-                    ImageMemoryType::UInt8
+                    ImageMemoryType::Float64
                 };
                 break;
             }
@@ -222,12 +193,7 @@ namespace Sierra
                 memoryTypesToTry =
                 {
                     ImageMemoryType::Float64,
-                    ImageMemoryType::Int64,
-                    ImageMemoryType::Float32,
-                    ImageMemoryType::Int32,
-                    ImageMemoryType::Float16,
-                    ImageMemoryType::Int16,
-                    ImageMemoryType::Int8
+                    ImageMemoryType::Int64
                 };
                 break;
             }

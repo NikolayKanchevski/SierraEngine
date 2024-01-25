@@ -21,7 +21,8 @@ namespace Sierra
         RG,
         RGB,
         RGBA,
-        BGRA
+        BGRA,
+        D
     };
 
     enum class ImageMemoryType : uint8
@@ -106,7 +107,7 @@ namespace Sierra
         [[nodiscard]] inline uint32 GetWidth() const { return width; }
         [[nodiscard]] inline uint32 GetHeight() const { return height; }
 
-        [[nodiscard]] inline uint8 GetPixelSize() const { return memorySize / (width * height); }
+        [[nodiscard]] inline uint32 GetPixelSize() const { return memorySize / (static_cast<uint64>(width) * height); }
         [[nodiscard]] inline uint64 GetMemorySize() const { return memorySize; }
 
         [[nodiscard]] inline uint32 GetMipLevelCount() const { return mipLevelCount; }

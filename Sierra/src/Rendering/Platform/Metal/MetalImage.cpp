@@ -62,9 +62,9 @@ namespace Sierra
     {
         switch (format)
         {
-            case MTL::PixelFormatBGRA8Unorm:        { return { .channels = ImageChannels::BGRA, .memoryType = ImageMemoryType::UNorm8 };  break; }
-            case MTL::PixelFormatBGRA8Unorm_sRGB:   { return { .channels = ImageChannels::BGRA, .memoryType = ImageMemoryType::SRGB8 };   break; }
-            case MTL::PixelFormatRGBA16Float:       { return { .channels = ImageChannels::BGRA, .memoryType = ImageMemoryType::Float16 }; break; }
+            case MTL::PixelFormatBGRA8Unorm:        return { .channels = ImageChannels::BGRA, .memoryType = ImageMemoryType::UNorm8 };
+            case MTL::PixelFormatBGRA8Unorm_sRGB:   return { .channels = ImageChannels::BGRA, .memoryType = ImageMemoryType::SRGB8 };
+            case MTL::PixelFormatRGBA16Float:       return { .channels = ImageChannels::BGRA, .memoryType = ImageMemoryType::Float16 };
             default:                                break;
         }
 
@@ -77,8 +77,8 @@ namespace Sierra
     MTL::TextureType MetalImage::ImageSettingsToTextureType(const ImageSampling sampling, const uint32 layerCount)
     {
         if (sampling == ImageSampling::x1 && layerCount == 1) return MTL::TextureType::TextureType2D;
-        else if (sampling == ImageSampling::x1 && layerCount > 1) return MTL::TextureType::TextureType2DArray;
-        else if (sampling != ImageSampling::x1 && layerCount > 1) return MTL::TextureType::TextureType2DMultisampleArray;
+        if (sampling == ImageSampling::x1 && layerCount > 1) return MTL::TextureType::TextureType2DArray;
+        if (sampling != ImageSampling::x1 && layerCount > 1) return MTL::TextureType::TextureType2DMultisampleArray;
 
         return MTL::TextureType::TextureType2D;
     }
@@ -106,7 +106,6 @@ namespace Sierra
                     case ImageMemoryType::UInt64:       return MTL::PixelFormatR32Uint;
                     case ImageMemoryType::Float32:
                     case ImageMemoryType::Float64:      return MTL::PixelFormatR32Float;
-                    default:                            break;
                 }
             }
             case ImageChannels::RG:
@@ -128,7 +127,6 @@ namespace Sierra
                     case ImageMemoryType::UInt64:       return MTL::PixelFormatRG32Uint;
                     case ImageMemoryType::Float32:
                     case ImageMemoryType::Float64:      return MTL::PixelFormatRG32Float;
-                    default:                            break;
                 }
             }
             case ImageChannels::RGB:
@@ -151,7 +149,6 @@ namespace Sierra
                     case ImageMemoryType::UInt64:       return MTL::PixelFormatRGBA32Uint;
                     case ImageMemoryType::Float32:
                     case ImageMemoryType::Float64:      return MTL::PixelFormatRGBA32Float;
-                    default:                            break;
                 }
             }
             case ImageChannels::BGRA:
@@ -160,6 +157,15 @@ namespace Sierra
                 {
                     case ImageMemoryType::UNorm8:    return MTL::PixelFormatBGRA8Unorm;
                     case ImageMemoryType::SRGB8:     return MTL::PixelFormatBGRA8Unorm_sRGB;
+                    default:                         break;
+                }
+            }
+            case ImageChannels::D:
+            {
+                switch (format.memoryType)
+                {
+                    case ImageMemoryType::UNorm16:   return MTL::PixelFormatDepth16Unorm;
+                    case ImageMemoryType::Float32:   return MTL::PixelFormatDepth32Float;
                     default:                         break;
                 }
             }
@@ -194,7 +200,6 @@ namespace Sierra
             case ImageSampling::x16:        return 16;
             case ImageSampling::x32:        return 32;
             case ImageSampling::x64:        return 64;
-            default:                        break;
         }
 
         return 1;
@@ -207,7 +212,6 @@ namespace Sierra
             case ImageMemoryLocation::Host:        return MTL::StorageModeManaged;
             case ImageMemoryLocation::Device:      return MTL::StorageModePrivate;
             case ImageMemoryLocation::Auto:        return MTL::StorageModeManaged;
-            default:                               break;
         }
 
         return MTL::StorageModeManaged;
@@ -220,7 +224,6 @@ namespace Sierra
             case ImageMemoryLocation::Host:        return MTL::CPUCacheModeDefaultCache;
             case ImageMemoryLocation::Device:      return MTL::CPUCacheModeWriteCombined;
             case ImageMemoryLocation::Auto:        return MTL::CPUCacheModeDefaultCache;
-            default:                               break;
         }
 
         return MTL::CPUCacheModeDefaultCache;

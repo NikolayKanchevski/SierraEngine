@@ -26,9 +26,6 @@ namespace Sierra
         // Create command queue
         commandQueue = device->newCommandQueue();
         SR_ERROR_IF(commandQueue == nullptr, "[Metal]: Could not create command queue for device [{0}]!", GetName());
-
-        // Create shared command buffer semaphore
-        sharedCommandBufferSemaphore = dispatch_semaphore_create(1);
     }
 
     /* --- POLLING METHODS --- */
@@ -44,7 +41,7 @@ namespace Sierra
             SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName(), commandBufferToWait->GetName(), i);
 
             const MetalCommandBuffer &metalCommandBufferToWait = static_cast<const MetalCommandBuffer&>(*commandBufferToWait);
-            dispatch_semaphore_wait(metalCommandBufferToWait.GetCompletionSemaphore(), DISPATCH_TIME_FOREVER);
+            while (!metalCommandBufferToWait.HasFinishedExecution()) { }
         }
 
         // Submit command buffer
@@ -56,8 +53,8 @@ namespace Sierra
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], wait for command buffer [{1}] with a graphics API, that differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
         const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
 
-        // Wait for completion semaphore
-        dispatch_semaphore_wait(metalCommandBuffer.GetCompletionSemaphore(), DISPATCH_TIME_FOREVER);
+        // Wait for completion
+        while (!metalCommandBuffer.HasFinishedExecution()) { }
     }
 
     /* --- GETTER METHODS --- */
@@ -121,6 +118,10 @@ namespace Sierra
             case MTL::PixelFormatRGBA32Sint:            return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filtered);
             case MTL::PixelFormatRGBA32Uint:            return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filtered);
             case MTL::PixelFormatRGBA32Float:           return device->supportsFamily(MTL::GPUFamilyApple9) || (!(usage & ImageUsage::Filtered) && !(usage & ImageUsage::ResolveAttachment));
+            case MTL::PixelFormatBGRA8Unorm:            return true;
+            case MTL::PixelFormatBGRA8Unorm_sRGB:       return true;
+            case MTL::PixelFormatDepth16Unorm:          return device->supportsFamily(MTL::GPUFamilyApple3) || !(usage & ImageUsage::ResolveAttachment);
+            case MTL::PixelFormatDepth32Float:          return (device->supportsFamily(MTL::GPUFamilyApple3) || !(usage & ImageUsage::ResolveAttachment)) && (device->supportsFamily(MTL::GPUFamilyMac2) || !(usage & ImageUsage::Filtered));
             default:                                    break;
         }
 

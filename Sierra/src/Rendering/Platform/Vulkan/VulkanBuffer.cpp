@@ -10,7 +10,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanBuffer::VulkanBuffer(const VulkanDevice &device, const BufferCreateInfo &createInfo)
-        : Buffer(createInfo), VulkanResource(createInfo.name), device(device), usageFlags(BufferUsageToVkBufferUsageFlags(createInfo.usage))
+        : Buffer(createInfo), VulkanResource(createInfo.name), device(device), usageFlags(BufferUsageToVkBufferUsageFlags(createInfo.usage)), memorySize(createInfo.memorySize), memoryLocation(createInfo.memoryLocation)
     {
         // Set up buffer create info
         VkBufferCreateInfo bufferCreateInfo = { };
@@ -31,9 +31,12 @@ namespace Sierra
         const VkResult result = vmaCreateBuffer(device.GetMemoryAllocator(), &bufferCreateInfo, &allocationCreateInfo, &buffer, &allocation, nullptr);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create buffer [{0}]! Error code: {1}.", GetName(), result);
 
-        // Map and reset memory
-        vmaMapMemory(device.GetMemoryAllocator(), allocation, &data);
-        memset(data, 0, createInfo.memorySize);
+        // Map and reset memory if CPU-visible
+        if (createInfo.memoryLocation == BufferMemoryLocation::CPU)
+        {
+            vmaMapMemory(device.GetMemoryAllocator(), allocation, &data);
+            std::memset(data, 0, createInfo.memorySize);
+        }
     }
 
     /* --- POLLING METHODS --- */
@@ -41,6 +44,7 @@ namespace Sierra
     void VulkanBuffer::CopyFromMemory(const void* memoryPointer, uint64 memoryRange, const uint64 sourceOffset, const uint64 destinationOffset)
     {
         memoryRange = memoryRange != 0 ? memoryRange : GetMemorySize();
+        SR_ERROR_IF(memoryLocation != BufferMemoryLocation::CPU, "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as it is not CPU-visible!", memoryRange, destinationOffset, GetName());
         SR_ERROR_IF(destinationOffset + memoryRange > GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, destinationOffset, GetName(), destinationOffset + memoryRange, GetMemorySize());
 
         std::memcpy(reinterpret_cast<char*>(data) + destinationOffset, reinterpret_cast<const char*>(memoryPointer) + sourceOffset, memoryRange);
@@ -51,7 +55,7 @@ namespace Sierra
 
     VulkanBuffer::~VulkanBuffer()
     {
-        vmaUnmapMemory(device.GetMemoryAllocator(), allocation);
+        if (memoryLocation == BufferMemoryLocation::CPU) vmaUnmapMemory(device.GetMemoryAllocator(), allocation);
         vmaDestroyBuffer(device.GetMemoryAllocator(), buffer, allocation);
     }
 
@@ -73,10 +77,9 @@ namespace Sierra
     {
         switch (memoryLocation)
         {
-            case BufferMemoryLocation::Host:        return VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
-            case BufferMemoryLocation::Device:      return VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
-            case BufferMemoryLocation::Auto:        return VMA_MEMORY_USAGE_AUTO;
-            default:                                break;
+            case BufferMemoryLocation::CPU:       return VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+            case BufferMemoryLocation::GPU:       return VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+            default:                              break;
         }
         
         return VMA_MEMORY_USAGE_AUTO;

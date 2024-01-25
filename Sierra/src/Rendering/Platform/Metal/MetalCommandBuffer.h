@@ -52,7 +52,7 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline MTL::CommandBuffer* GetMetalCommandBuffer() const { return commandBuffer; }
-        [[nodiscard]] inline dispatch_semaphore_t GetCompletionSemaphore() const { return completionSemaphore; }
+        [[nodiscard]] inline bool HasFinishedExecution() const { return finishedExecution; }
         [[nodiscard]] inline MTL::RenderCommandEncoder* GetCurrentRenderEncoder() const { return currentRenderEncoder; }
 
         [[nodiscard]] inline MTL::Buffer* GetCurrentIndexBuffer() const { return currentIndexBuffer; }
@@ -68,7 +68,7 @@ namespace Sierra
     private:
         const MetalDevice &device;
         MTL::CommandBuffer* commandBuffer = nullptr;
-        dispatch_semaphore_t completionSemaphore = nullptr;
+        std::atomic<bool> finishedExecution = true;
 
         MTL::RenderCommandEncoder* currentRenderEncoder = nullptr;
         uint32 currentSubpass = 0;

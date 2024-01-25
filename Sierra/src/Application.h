@@ -16,8 +16,8 @@ namespace Sierra
 
     struct ApplicationSettings
     {
-        GraphicsAPI graphicsAPI = GraphicsAPI::Auto;
         uint16 maxFrameRate = SR_PLATFORM_MOBILE * 60;
+        GraphicsAPI graphicsAPI = GraphicsAPI::Auto;
     };
 
     struct ApplicationCreateInfo
@@ -61,30 +61,13 @@ namespace Sierra
 
         std::string name;
         Version version;
+
         uint16 maxFrameRate = 0;
+        TimePoint lastFrameStartTime = TimePoint::Now();
 
         std::unique_ptr<PlatformContext> platformContext = nullptr;
         std::unique_ptr<WindowManager> windowManager = nullptr;
         std::unique_ptr<RenderingContext> renderingContext = nullptr;
-
-        class SIERRA_API FrameLimiter
-        {
-        public:
-            /* --- CONSTRUCTORS --- */
-            FrameLimiter() = default;
-
-            /* --- POLLING METHODS --- */
-            [[nodiscard]] TimeStep BeginFrame();
-            void ThrottleFrame(uint32 targetFrameRate);
-
-        private:
-            TimePoint frameStartTime;
-            TimePoint lastFrameStartTime;
-            TimeStep deltaTime;
-
-        };
-        FrameLimiter frameLimiter = { };
-
     };
 
 }

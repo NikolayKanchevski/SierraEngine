@@ -117,7 +117,6 @@ namespace Sierra
             case CullMode::None:        return MTL::CullModeNone;
             case CullMode::Front:       return MTL::CullModeFront;
             case CullMode::Back:        return MTL::CullModeBack;
-            default:                    break;
         }
 
         return MTL::CullModeNone;
@@ -129,7 +128,6 @@ namespace Sierra
         {
             case ShadeMode::Fill:           return MTL::TriangleFillModeFill;
             case ShadeMode::Wireframe:      return MTL::TriangleFillModeLines;
-            default:                        break;
         }
 
         return MTL::TriangleFillModeFill;
@@ -141,7 +139,6 @@ namespace Sierra
         {
             case FrontFaceMode::Clockwise:              return MTL::WindingClockwise;
             case FrontFaceMode::CounterClockwise:       return MTL::WindingCounterClockwise;
-            default:                                    break;
         }
         
         return MTL::WindingClockwise;

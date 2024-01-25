@@ -20,3 +20,4 @@ endmacro()
 
 BuildExample(Windowing)
 BuildExample(HelloTriangle)
+BuildExample(HelloCube)

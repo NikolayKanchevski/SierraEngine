@@ -24,6 +24,7 @@ namespace Sierra
         switch (createInfo.format.channels)
         {
             case ImageChannels::R:
+            case ImageChannels::D:
             {
                 memorySize *= 1;
                 break;

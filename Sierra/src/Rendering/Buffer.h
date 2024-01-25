@@ -21,11 +21,10 @@ namespace Sierra
     };
     SR_DEFINE_ENUM_FLAG_OPERATORS(BufferUsage);
 
-    enum class BufferMemoryLocation : uint8
+    enum class BufferMemoryLocation : bool
     {
-        Host,
-        Device,
-        Auto
+        CPU,
+        GPU
     };
 
     struct BufferCreateInfo
@@ -33,22 +32,21 @@ namespace Sierra
         const std::string &name = "Buffer";
         uint64 memorySize = 0;
         BufferUsage usage = BufferUsage::Undefined;
-        BufferMemoryLocation memoryLocation = BufferMemoryLocation::Auto;
+        BufferMemoryLocation memoryLocation = BufferMemoryLocation::CPU;
     };
 
     class SIERRA_API Buffer : public virtual RenderingResource
     {
     public:
         /* --- POLLING METHODS --- */
-        template<typename T>
-        inline void CopyFromMemory(const T &memory, const uint64 sourceOffset = 0, const uint64 destinationOffset = 0) { CopyFromMemory(&memory, sizeof(T), sourceOffset, destinationOffset); }
         virtual void CopyFromMemory(const void* memoryPointer, uint64 memorySize = 0, uint64 sourceOffset = 0, uint64 destinationOffset = 0) = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint64 GetMemorySize() const { return memorySize; };
-        [[nodiscard]] inline const void* GetData() const { return data; }
+        [[nodiscard]] virtual const void* GetData() const = 0;
         template<typename T>
-        [[nodiscard]] inline const T& GetDataAs() const { return *reinterpret_cast<T*>(data); }
+        [[nodiscard]] inline const T& GetDataAs() const { return *reinterpret_cast<T*>(GetData()); }
+        [[nodiscard]] virtual uint64 GetMemorySize() const = 0;
+        [[nodiscard]] virtual BufferMemoryLocation GetMemoryLocation() const = 0;
 
         /* --- OPERATORS --- */
         Buffer(const Buffer&) = delete;
@@ -59,10 +57,6 @@ namespace Sierra
 
     protected:
         explicit Buffer(const BufferCreateInfo &createInfo);
-        void* data = nullptr;
-
-    private:
-        uint64 memorySize = 0;
 
     };
 

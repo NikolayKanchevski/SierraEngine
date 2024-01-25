@@ -14,13 +14,13 @@
 namespace Sierra
 {
 
-    enum class SwapchainPresentationMode
+    enum class SwapchainPresentationMode : bool
     {
         Immediate,
         VSync
     };
 
-    enum class SwapchainImageMemoryType
+    enum class SwapchainImageMemoryType : uint8
     {
         UNorm8,
         SRGB8,

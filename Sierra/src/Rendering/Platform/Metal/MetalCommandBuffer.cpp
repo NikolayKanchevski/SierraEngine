@@ -18,10 +18,6 @@ namespace Sierra
         : CommandBuffer(createInfo), MetalResource(createInfo.name), device(device)
     {
         // Since in Metal you cannot reuse a command buffer after submitting it, one is created upon every Begin() call
-
-        // Create and signal completion semaphore
-        completionSemaphore = dispatch_semaphore_create(1);
-        dispatch_semaphore_signal(completionSemaphore);
     }
 
     /* --- POLLING METHODS --- */
@@ -43,8 +39,11 @@ namespace Sierra
         device.SetResourceName(commandBuffer, GetName());
 
         // Create completion semaphore
-        completionSemaphore = dispatch_semaphore_create(1);
-        commandBuffer->addCompletedHandler(^(MTL::CommandBuffer*) { dispatch_semaphore_signal(completionSemaphore); });
+        finishedExecution = false;
+        commandBuffer->addCompletedHandler(^(MTL::CommandBuffer*) { finishedExecution = true; });
+
+        // Release command buffer descriptor memory
+        commandBufferDescriptor->release();
     }
 
     void MetalCommandBuffer::End()

@@ -34,7 +34,7 @@ namespace Sierra
                 SR_ERROR_IF(renderTarget.templateImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not use image of attachment [{0}] in subpass [{1}] within render pass [{2}] with a graphics API, which differs from [GraphicsAPI::Metal]!", renderTargetIndex, i, GetName());
 
                 const MetalImage &metalImage = static_cast<MetalImage&>(*renderTarget.templateImage);
-                if (renderTarget.type & AttachmentType::Color)
+                if (renderTarget.type == AttachmentType::Color)
                 {
                     // Add color attachment
                     MTL::RenderPassColorAttachmentDescriptor* colorAttachment = renderPassDescriptors[i]->colorAttachments()->object(subpassColorAttachmentCount);
@@ -45,14 +45,14 @@ namespace Sierra
                     subpassColorAttachmentCount++;
 
                 }
-                else if (renderTarget.type & AttachmentType::Depth)
+                else if (renderTarget.type == AttachmentType::Depth)
                 {
                     // Set depth attachment
                     MTL::RenderPassDepthAttachmentDescriptor* depthAttachment = renderPassDescriptors[i]->depthAttachment();
                     depthAttachment->setTexture(metalImage.GetMetalTexture()); // NOTE: We assign texture here, even though it will be overwritten at Begin(), so that pipeline can query its pixel format
                     depthAttachment->setLoadAction(AttachmentLoadOperationToLoadAction(renderTarget.loadOperation));
                     depthAttachment->setStoreAction(AttachmentStoreOperationToStoreAction(renderTarget.storeOperation));
-                    depthAttachmentIndex = i;
+                    depthAttachmentIndex = renderTargetIndex;
                 }
             }
             colorAttachmentCount += subpassColorAttachmentCount;
@@ -90,7 +90,6 @@ namespace Sierra
         {
             case AttachmentLoadOperation::Clear:        return MTL::LoadActionClear;
             case AttachmentLoadOperation::Load:         return MTL::LoadActionLoad;
-            default:                                    break;
         }
 
         return MTL::LoadActionDontCare;
@@ -102,7 +101,6 @@ namespace Sierra
         {
             case AttachmentStoreOperation::Store:       return MTL::StoreActionStore;
             case AttachmentStoreOperation::Discard:     return MTL::StoreActionDontCare;
-            default:                                    break;
         }
 
         return MTL::StoreActionDontCare;

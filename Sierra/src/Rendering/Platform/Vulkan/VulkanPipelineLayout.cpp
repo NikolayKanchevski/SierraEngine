@@ -81,7 +81,7 @@ namespace Sierra
             case PipelineBindingType::InputAttachment:      return VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
             case PipelineBindingType::UniformBuffer:        return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             case PipelineBindingType::StorageBuffer:        return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            default:                                        break;
+            case PipelineBindingType::Undefined:            break;
         }
 
         return VK_DESCRIPTOR_TYPE_MAX_ENUM;

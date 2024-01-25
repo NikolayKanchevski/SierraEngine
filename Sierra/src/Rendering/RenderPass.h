@@ -23,18 +23,17 @@ namespace Sierra
         Discard
     };
 
-    enum class AttachmentType : uint8
+    enum class AttachmentType : bool
     {
-        Undefined      = 0x0000,
-        Color          = 0x0001,
-        Depth          = 0x0002
+        Color,
+        Depth
     };
     SR_DEFINE_ENUM_FLAG_OPERATORS(AttachmentType);
 
     struct RenderPassAttachment
     {
         const std::unique_ptr<Image> &templateImage;
-        AttachmentType type = AttachmentType::Undefined;
+        AttachmentType type = AttachmentType::Color;
         AttachmentLoadOperation loadOperation = AttachmentLoadOperation::Clear;
         AttachmentStoreOperation storeOperation = AttachmentStoreOperation::Store;
     };

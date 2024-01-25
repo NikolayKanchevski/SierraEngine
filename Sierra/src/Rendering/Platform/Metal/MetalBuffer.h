@@ -22,6 +22,10 @@ namespace Sierra
         void CopyFromMemory(const void* memoryPointer, uint64 memoryRange = 0, uint64 sourceOffset = 0, uint64 destinationOffset = 0) override;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] inline const void* GetData() const override { SR_ERROR_IF(memoryLocation != BufferMemoryLocation::CPU, "[Metal]: Cannot get data pointer of buffer [{0}], as it is not CPU-visible!", GetName()); return buffer->contents(); }
+        [[nodiscard]] inline uint64 GetMemorySize() const override { return buffer->length(); }
+        [[nodiscard]] inline BufferMemoryLocation GetMemoryLocation() const override { return memoryLocation; }
+
         [[nodiscard]] inline MTL::Buffer* GetMetalBuffer() const { return buffer; }
 
         /* --- DESTRUCTOR --- */
@@ -32,6 +36,7 @@ namespace Sierra
 
     private:
         MTL::Buffer* buffer = nullptr;
+        BufferMemoryLocation memoryLocation = BufferMemoryLocation::CPU;
 
     };
 

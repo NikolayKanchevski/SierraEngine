@@ -42,7 +42,7 @@
 
     - (void) setContentScaleFactor: (CGFloat) contentScaleFactor
     {
-        [super setContentScaleFactor:contentScaleFactor];
+        [super setContentScaleFactor: contentScaleFactor];
         [self resizeDrawable: self.window.screen.nativeScale];
     }
 
@@ -121,6 +121,14 @@
         static_cast<Sierra::UIKitTouchManager*>(&window->GetTouchManager())->TouchesCancelled(touches, event);
     }
 
+    /* --- DESTRUCTOR --- */
+
+    - (void) dealloc
+    {
+        [self.view release];
+        [super dealloc];
+    }
+
 @end
 
 namespace Sierra
@@ -136,7 +144,10 @@ namespace Sierra
 
         // Create view controller
         viewController = [[UIKitWindowViewController alloc] initWithWindow: this];
+
+        // Set up view
         view = [viewController view];
+        [view setContentScaleFactor: window.screen.nativeScale];
 
         // Assign window handlers and set background color
         [window setRootViewController: viewController];
