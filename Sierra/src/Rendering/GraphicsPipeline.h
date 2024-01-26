@@ -50,7 +50,6 @@ namespace Sierra
     struct GraphicsPipelineCreateInfo
     {
         const std::string &name = "Graphics Pipeline";
-        uint32 concurrentFrameCount = 1;
 
         const std::initializer_list<VertexInput> &vertexInputs = { };
         const std::unique_ptr<Shader> &vertexShader;

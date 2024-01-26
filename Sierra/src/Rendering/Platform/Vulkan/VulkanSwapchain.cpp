@@ -66,7 +66,7 @@ namespace Sierra
     void VulkanSwapchain::Present(std::unique_ptr<CommandBuffer> &commandBuffer)
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot present swapchain [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
-        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);
+        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
 
         // Set up semaphore submit info
         const uint64 waitValue = vulkanCommandBuffer.GetSignalValue();

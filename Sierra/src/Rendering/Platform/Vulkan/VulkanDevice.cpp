@@ -1001,7 +1001,7 @@ namespace Sierra
     void VulkanDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::initializer_list<std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait) const
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit for command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
-        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);
+        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
 
         // See what value to wait for
         uint64 waitValue = 0;
@@ -1010,7 +1010,7 @@ namespace Sierra
             const auto &commandBufferToWait = (commandBuffersToWait.begin() + i)->get();
             SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName(), commandBufferToWait->GetName(), i);
 
-            const VulkanCommandBuffer &vulkanCommandBufferToWait = static_cast<const VulkanCommandBuffer&>(*commandBufferToWait);
+            const VulkanCommandBuffer &vulkanCommandBufferToWait = static_cast<VulkanCommandBuffer&>(*commandBufferToWait);
             waitValue = std::max(waitValue, vulkanCommandBufferToWait.GetSignalValue());
         }
 
@@ -1043,7 +1043,7 @@ namespace Sierra
     void VulkanDevice::WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, on device [{0}], wait for command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
-        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);
+        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
 
         // Set up wait info
         const uint64 waitValue = vulkanCommandBuffer.GetSignalValue();

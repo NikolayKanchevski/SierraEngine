@@ -23,11 +23,15 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint32 GetColorAttachmentCount() const override { return colorAttachmentCount; };
+        [[nodiscard]] uint32 GetResolveAttachmentCount() const override { return resolvedColorAttachmentIndices.size(); };
         [[nodiscard]] bool HasDepthAttachment() const override { return depthAttachmentIndex.has_value(); };
+
         [[nodiscard]] inline const std::optional<uint32>& GetDepthAttachmentIndex() const { return depthAttachmentIndex; }
 
-        [[nodiscard]] inline MTL::RenderPassDescriptor* GetSubpass(const uint32 subpassIndex) const { return renderPassDescriptors[subpassIndex]; }
         [[nodiscard]] inline uint32 GetSubpassCount() const { return renderPassDescriptors.size(); }
+        [[nodiscard]] inline MTL::RenderPassDescriptor* GetSubpass(const uint32 subpassIndex) const { return renderPassDescriptors[subpassIndex]; }
+        [[nodiscard]] inline const std::vector<uint32>& GetSubpassRenderTargets(const uint32 subpassIndex) const { return subpassRenderTargets[subpassIndex]; }
+        [[nodiscard]] inline const std::vector<uint32>& GetResolvedColorAttachmentIndices() const { return resolvedColorAttachmentIndices; }
 
         /* --- DESTRUCTOR --- */
         ~MetalRenderPass() override;
@@ -38,9 +42,11 @@ namespace Sierra
 
     private:
         std::vector<MTL::RenderPassDescriptor*> renderPassDescriptors;
+        std::vector<std::vector<uint32>> subpassRenderTargets;
 
-        std::optional<uint32> depthAttachmentIndex = std::nullopt;
         uint32 colorAttachmentCount = 0;
+        std::optional<uint32> depthAttachmentIndex = std::nullopt;
+        std::vector<uint32> resolvedColorAttachmentIndices;
 
     };
 

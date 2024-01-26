@@ -5,7 +5,6 @@
 #include "VulkanRenderPass.h"
 
 #include "VulkanImage.h"
-#include "VulkanCommandBuffer.h"
 
 namespace Sierra
 {
@@ -19,36 +18,76 @@ namespace Sierra
 
         // Allocate attachment data
         framebufferImageAttachments.resize(createInfo.attachments.size());
-        framebufferImageAttachmentFormats.resize(createInfo.attachments.size());
+        framebufferImageAttachments.reserve(createInfo.attachments.size() * 2);
+
+        framebufferAttachmentImageFormats.resize(createInfo.attachments.size());
+
         std::vector<VkAttachmentDescription> attachmentDescriptions(createInfo.attachments.size());
+        attachmentDescriptions.reserve(createInfo.attachments.size() * 2);
 
         // Set attachment descriptions
         for (uint32 i = 0; i < createInfo.attachments.size(); i++)
         {
             const RenderPassAttachment &attachment = *(createInfo.attachments.begin() + i);
-            SR_ERROR_IF(attachment.templateImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not use image of attachment [{0}] in render pass [{1}] with a graphics API, which differs from [GraphicsAPI::Vulkan]!", i, GetName());
 
+            SR_ERROR_IF(attachment.templateImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not use image [{0}] of attachment [10}] in render pass [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.templateImage->GetName(), i, GetName());
             const VulkanImage &vulkanTemplateImage = static_cast<VulkanImage&>(*attachment.templateImage);
 
+            // Set up framebuffer attachment format
+            VkFormat &framebufferAttachmentImageFormat = framebufferAttachmentImageFormats[i];
+            framebufferAttachmentImageFormat = VulkanImage::ImageFormatToVkFormat(vulkanTemplateImage.GetFormat());
+
             // Set up framebuffer attachment
-            framebufferImageAttachments[i].sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENT_IMAGE_INFO;
-            framebufferImageAttachments[i].usage = vulkanTemplateImage.GetVulkanUsageFlags();
-            framebufferImageAttachments[i].width = attachment.templateImage->GetWidth();
-            framebufferImageAttachments[i].height = attachment.templateImage->GetHeight();
-            framebufferImageAttachments[i].layerCount = attachment.templateImage->GetLayerCount();
-            framebufferImageAttachments[i].viewFormatCount = 1;
-            framebufferImageAttachments[i].pViewFormats = &framebufferImageAttachmentFormats[i];
-            framebufferImageAttachmentFormats[i] = VulkanImage::ImageFormatToVkFormat(attachment.templateImage->GetFormat());
+            VkFramebufferAttachmentImageInfo &framebufferAttachment = framebufferImageAttachments[i];
+            framebufferAttachment.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENT_IMAGE_INFO;
+            framebufferAttachment.usage = vulkanTemplateImage.GetVulkanUsageFlags();
+            framebufferAttachment.width = vulkanTemplateImage.GetWidth();
+            framebufferAttachment.height = vulkanTemplateImage.GetHeight();
+            framebufferAttachment.layerCount = vulkanTemplateImage.GetLayerCount();
+            framebufferAttachment.viewFormatCount = 1;
+            framebufferAttachment.pViewFormats = &framebufferAttachmentImageFormat;
 
             // Set up render pass attachment
-            attachmentDescriptions[i].format = VulkanImage::ImageFormatToVkFormat(attachment.templateImage->GetFormat());
-            attachmentDescriptions[i].samples = VulkanImage::ImageSamplingToVkSampleCountFlags(attachment.templateImage->GetSampling());
-            attachmentDescriptions[i].loadOp = AttachmentLoadOperationToVkAttachmentLoadOp(attachment.loadOperation);
-            attachmentDescriptions[i].storeOp = AttachmentStoreOperationToVkAttachmentStoreOp(attachment.storeOperation);
-            attachmentDescriptions[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-            attachmentDescriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-            attachmentDescriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            attachmentDescriptions[i].finalLayout = VK_IMAGE_LAYOUT_GENERAL;
+            VkAttachmentDescription &attachmentDescription = attachmentDescriptions[i];
+            attachmentDescription.format = VulkanImage::ImageFormatToVkFormat(vulkanTemplateImage.GetFormat());
+            attachmentDescription.samples = VulkanImage::ImageSamplingToVkSampleCountFlags(attachment.resolveImage.has_value() ? attachment.resolveImage->get()->GetSampling() : vulkanTemplateImage.GetSampling());
+            attachmentDescription.loadOp = AttachmentLoadOperationToVkAttachmentLoadOp(attachment.loadOperation);
+            attachmentDescription.storeOp = AttachmentStoreOperationToVkAttachmentStoreOp(attachment.storeOperation);
+            attachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            attachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            attachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_GENERAL;
+
+            // Handle resolve attachment
+            if (attachment.resolveImage.has_value())
+            {
+                SR_ERROR_IF(attachment.resolveImage->get()->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not use image [{0}] of attachment [{1}] in render pass [{2}] for resolving, as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.resolveImage->get()->GetName(), i, GetName());
+                const VulkanImage &vulkanResolveImage = static_cast<VulkanImage&>(*attachment.resolveImage->get());
+
+                // Add resolve attachment
+                VkAttachmentDescription &resolveAttachmentDescription = attachmentDescriptions.emplace_back();
+                resolveAttachmentDescription.format = VulkanImage::ImageFormatToVkFormat(vulkanResolveImage.GetFormat());
+                resolveAttachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
+                resolveAttachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                resolveAttachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+                resolveAttachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                resolveAttachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                resolveAttachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                resolveAttachmentDescription.finalLayout = VK_IMAGE_LAYOUT_GENERAL;
+                attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // Resolving an image requires it
+
+                // Set up framebuffer resolve attachment
+                VkFramebufferAttachmentImageInfo &framebufferResolveAttachmentInfo = framebufferImageAttachments.emplace_back();
+                framebufferResolveAttachmentInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENT_IMAGE_INFO;
+                framebufferResolveAttachmentInfo.usage = vulkanTemplateImage.GetVulkanUsageFlags();
+                framebufferResolveAttachmentInfo.width = vulkanResolveImage.GetWidth();
+                framebufferResolveAttachmentInfo.height = vulkanResolveImage.GetHeight();
+                framebufferResolveAttachmentInfo.layerCount = vulkanResolveImage.GetLayerCount();
+                framebufferResolveAttachmentInfo.viewFormatCount = 1;
+                framebufferResolveAttachmentInfo.pViewFormats = &framebufferAttachmentImageFormat;
+
+                resolveAttachmentCount++;
+            }
         }
 
         // Allocate subpass descriptions
@@ -62,6 +101,9 @@ namespace Sierra
         VkAttachmentReference depthAttachmentReference = { };
         depthAttachmentReference.attachment = 0;
         depthAttachmentReference.layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+        std::vector<std::vector<VkAttachmentReference>> resolveAttachmentReferences;
+        resolveAttachmentReferences.resize(createInfo.subpassDescriptions.size());
 
         std::vector<std::vector<VkAttachmentReference>> inputAttachmentReferences;
         inputAttachmentReferences.resize(createInfo.subpassDescriptions.size());
@@ -87,6 +129,11 @@ namespace Sierra
                     depthAttachmentReference = { .attachment = renderTargetIndex, .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
                     hasDepthAttachment = true;
                 }
+
+                if (renderTarget.resolveImage.has_value())
+                {
+                    resolveAttachmentReferences[i].push_back({ .attachment = static_cast<uint32>(createInfo.attachments.size()) + renderTargetIndex, .layout = VK_IMAGE_LAYOUT_GENERAL });
+                }
             }
 
             // Create input attachment references
@@ -101,6 +148,7 @@ namespace Sierra
             subpassDescriptions[i].colorAttachmentCount = static_cast<uint32>(colorAttachmentReferences[i].size());
             subpassDescriptions[i].pColorAttachments = colorAttachmentReferences[i].data();
             subpassDescriptions[i].pDepthStencilAttachment = hasDepthAttachment ? &depthAttachmentReference : nullptr;
+            subpassDescriptions[i].pResolveAttachments = resolveAttachmentReferences[i].data();
         }
 
         // Create subpass dependencies

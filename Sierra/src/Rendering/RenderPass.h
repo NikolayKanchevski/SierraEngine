@@ -32,6 +32,7 @@ namespace Sierra
 
     struct RenderPassAttachment
     {
+        const std::optional<std::reference_wrapper<std::unique_ptr<Image>>> resolveImage;
         const std::unique_ptr<Image> &templateImage;
         AttachmentType type = AttachmentType::Color;
         AttachmentLoadOperation loadOperation = AttachmentLoadOperation::Clear;
@@ -64,10 +65,11 @@ namespace Sierra
         virtual void Resize(uint32 width, uint32 height) = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetAttachmentCount() const { return GetColorAttachmentCount() + HasDepthAttachment(); }
-
         [[nodiscard]] virtual uint32 GetColorAttachmentCount() const = 0;
+        [[nodiscard]] virtual uint32 GetResolveAttachmentCount() const = 0;
         [[nodiscard]] virtual bool HasDepthAttachment() const = 0;
+
+        [[nodiscard]] inline uint32 GetAttachmentCount() const { return GetColorAttachmentCount() + GetResolveAttachmentCount() + HasDepthAttachment(); }
 
         /* --- OPERATORS --- */
         RenderPass(const RenderPass&) = delete;

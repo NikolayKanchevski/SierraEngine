@@ -95,13 +95,18 @@
     - (void) applicationDidFinishLaunching: (NSNotification*) notification
     {
         NSEvent* event = [NSEvent otherEventWithType: NSEventTypeApplicationDefined location: NSMakePoint(0, 0) modifierFlags: 0 timestamp: 0 windowNumber: 0 context: nil subtype: 0 data1: 0 data2: 0];
-        [cocoaContext->GetApplication() postEvent:event atStart: YES];
+        [cocoaContext->GetApplication() postEvent: event atStart: YES];
         [cocoaContext->GetApplication() stop: nil];
     }
 
     - (void) applicationDidChangeScreenParameters: (NSNotification*) notification
     {
         cocoaContext->ApplicationDidChangeScreenParameters(notification);
+    }
+
+    - (BOOL) applicationSupportsSecureRestorableState: (NSApplication*) application
+    {
+        return YES;
     }
 
 @end

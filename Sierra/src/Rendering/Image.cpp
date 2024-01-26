@@ -10,14 +10,14 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     Image::Image(const ImageCreateInfo &createInfo)
-        : width(createInfo.width), height(createInfo.height), layerCount(createInfo.layerCount), format(createInfo.format)
+        : width(createInfo.width), height(createInfo.height), layerCount(createInfo.layerCount), sampling(createInfo.sampling), format(createInfo.format)
     {
         SR_ERROR_IF(createInfo.width == 0 || createInfo.height == 0, "Width and height of image [{0}] must not be [0]!", createInfo.name);
         SR_ERROR_IF(createInfo.layerCount == 0, "Layer count of image [{0}] must not be [0]!", createInfo.name);
         SR_ERROR_IF(createInfo.usage == ImageUsage::Undefined, "Usage of image [{0}] must not be [ImageUsage::Undefined]!", createInfo.name);
         SR_ERROR_IF(createInfo.usage & ImageUsage::ColorAttachment && createInfo.usage & ImageUsage::DepthAttachment, "Usage of image [{0}] must not include both [ImageUsage::ColorAttachment] & [ImageUsage::DepthAttachment]!", createInfo.name);
         SR_ERROR_IF(createInfo.usage & ImageUsage::Filtered && !(createInfo.usage & ImageUsage::Sampled), "Usage of image [{0}] must also include [ImageUsage::Sampled] if [ImageUsage::Filtered] is present!", createInfo.name);
-        SR_ERROR_IF(createInfo.usage & ImageUsage::ResolveAttachment && createInfo.sampling != ImageSampling::x1, "Image [{0}], which includes [ImageUsage::ResolveAttachment] must be created with sampling of [ImageSampling::x1]!", createInfo.name);
+        SR_ERROR_IF(createInfo.usage & ImageUsage::ResolvedAttachment && createInfo.sampling != ImageSampling::x1, "Image [{0}], which includes [ImageUsage::ResolveAttachment] must be created with sampling of [ImageSampling::x1]!", createInfo.name);
 
         // Calculate memory size
         memorySize = createInfo.width * createInfo.height;

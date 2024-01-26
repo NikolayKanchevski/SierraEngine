@@ -10,7 +10,7 @@ namespace Sierra
     VkSurfaceKHR VulkanLinuxSurface::Create(const VulkanInstance &instance, const std::unique_ptr<Window> &window)
     {
         SR_ERROR_IF(window->GetAPI() != PlatformAPI::X11, "[Vulkan]: Cannot create a Linux surface for Vulkan using window [{0}], which has a platform API, that differs from from [PlatformAPI::X11]!", window->GetTitle());
-        const X11Window &x11Window = static_cast<X11Window&>(*window);
+        const X11Window &x11Window = static_cast<const X11Window&>(*window);
 
         // Set up surface create info
         VkXlibSurfaceCreateInfoKHR surfaceCreateInfo = { };

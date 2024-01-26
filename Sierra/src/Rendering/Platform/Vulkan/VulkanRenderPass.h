@@ -22,12 +22,13 @@ namespace Sierra
         void Resize(uint32 width, uint32 height) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetColorAttachmentCount() const override { return framebufferImageAttachmentFormats.size() - hasDepthAttachment; }
+        [[nodiscard]] inline uint32 GetColorAttachmentCount() const override { return framebufferImageAttachments.size() - (resolveAttachmentCount + hasDepthAttachment); }
+        [[nodiscard]] inline uint32 GetResolveAttachmentCount() const override { return resolveAttachmentCount; }
         [[nodiscard]] inline bool HasDepthAttachment() const override { return hasDepthAttachment; };
 
         [[nodiscard]] inline VkFramebuffer GetVulkanFramebuffer() const { return framebuffer; }
         [[nodiscard]] inline VkRenderPass GetVulkanRenderPass() const { return renderPass; }
-        [[nodiscard]] inline VkFormat GetFormatOfAttachment(const uint32 attachmentIndex) const { return framebufferImageAttachmentFormats[attachmentIndex]; }
+        [[nodiscard]] inline VkFormat GetFormatOfAttachment(const uint32 attachmentIndex) const { return framebufferAttachmentImageFormats[attachmentIndex]; }
 
         /* --- DESTRUCTOR --- */
         ~VulkanRenderPass() override;
@@ -39,12 +40,14 @@ namespace Sierra
     private:
         const VulkanDevice &device;
 
-        std::vector<VkFormat> framebufferImageAttachmentFormats;
+        std::vector<VkFormat> framebufferAttachmentImageFormats;
         std::vector<VkFramebufferAttachmentImageInfo> framebufferImageAttachments;
 
         VkFramebuffer framebuffer = VK_NULL_HANDLE;
         VkRenderPass renderPass = VK_NULL_HANDLE;
+
         bool hasDepthAttachment = false;
+        uint32 resolveAttachmentCount = 0;
 
     };
 

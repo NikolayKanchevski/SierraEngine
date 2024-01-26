@@ -12,7 +12,7 @@ namespace Sierra
     VkSurfaceKHR VulkanWindowsSurface::Create(const VulkanInstance &instance, const std::unique_ptr<Window> &window)
     {
         SR_ERROR_IF(window->GetAPI() != PlatformAPI::Win32, "[Vulkan]: Cannot create a Windows surface for Vulkan using window [{0}], which has a platform API, that differs from from [PlatformAPI::Win32]!", window->GetTitle());
-        const Win32Window &win32Window = static_cast<Win32Window&>(*window);
+        const Win32Window &win32Window = static_cast<const Win32Window&>(*window);
 
         // Set up surface create info
         VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = { };

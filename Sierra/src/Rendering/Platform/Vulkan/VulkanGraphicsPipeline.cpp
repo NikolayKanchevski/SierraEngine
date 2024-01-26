@@ -33,8 +33,8 @@ namespace Sierra
         shaderStages[0].pName = "main";
         if (createInfo.fragmentShader.has_value())
         {
-            SR_ERROR_IF(createInfo.fragmentShader.value().get()->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.vertexShader->GetName());
-            const VulkanShader &vulkanFragmentShader = static_cast<VulkanShader&>(*createInfo.fragmentShader.value().get());
+            SR_ERROR_IF(createInfo.fragmentShader->get()->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.vertexShader->GetName());
+            const VulkanShader &vulkanFragmentShader = static_cast<VulkanShader&>(*createInfo.fragmentShader->get());
             shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
             shaderStages[1].module = vulkanFragmentShader.GetVulkanShaderModule();

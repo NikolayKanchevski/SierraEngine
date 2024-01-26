@@ -34,8 +34,8 @@ namespace Sierra
         renderPipelineDescriptor->setVertexFunction(metalVertexShader.GetEntryFunction());
         if (createInfo.fragmentShader.has_value())
         {
-            SR_ERROR_IF(createInfo.fragmentShader.value().get()->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.fragmentShader.value().get()->GetName());
-            const MetalShader &metalFragmentShader = static_cast<MetalShader&>(*createInfo.fragmentShader.value().get());
+            SR_ERROR_IF(createInfo.fragmentShader->get()->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.fragmentShader->get()->GetName());
+            const MetalShader &metalFragmentShader = static_cast<MetalShader&>(*createInfo.fragmentShader->get());
 
             renderPipelineDescriptor->setFragmentFunction(metalFragmentShader.GetEntryFunction());
             hasFragmentShader = true;

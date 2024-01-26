@@ -62,7 +62,7 @@ namespace Sierra
         ColorAttachment             = 0x0020,
         DepthAttachment             = 0x0040,
         InputAttachment             = 0x0080,
-        ResolveAttachment           = 0x0100,
+        ResolvedAttachment           = 0x0100,
         TransientAttachment         = 0x0200
     };
     SR_DEFINE_ENUM_FLAG_OPERATORS(ImageUsage);
@@ -94,9 +94,9 @@ namespace Sierra
         uint32 layerCount = 1;
 
         ImageFormat format = { };
-        ImageMemoryLocation memoryLocation = ImageMemoryLocation::Auto;
-
         ImageUsage usage = ImageUsage::Undefined;
+
+        ImageMemoryLocation memoryLocation = ImageMemoryLocation::Auto;
         ImageSampling sampling = ImageSampling::x1;
     };
 

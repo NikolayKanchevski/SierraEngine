@@ -15,20 +15,42 @@ namespace Sierra
     MetalRenderPass::MetalRenderPass(const MetalDevice &device, const RenderPassCreateInfo &createInfo)
         : RenderPass(createInfo), MetalResource(createInfo.name)
     {
+        // Save attachment information
+        resolvedColorAttachmentIndices.reserve(createInfo.attachments.size());
+        for (uint32 i = 0; i < createInfo.attachments.size(); i++)
+        {
+            const RenderPassAttachment &attachment = *(createInfo.attachments.begin() + i);
+
+            if (attachment.type == AttachmentType::Depth)
+            {
+                depthAttachmentIndex = i;
+            }
+            else if (attachment.type == AttachmentType::Color)
+            {
+                if (attachment.resolveImage.has_value()) resolvedColorAttachmentIndices.emplace_back(i);
+                colorAttachmentCount++;
+            }
+        }
+
         // Create a render pass for every subpass (Metal does not have subpasses)
         renderPassDescriptors.resize(createInfo.subpassDescriptions.size());
+        subpassRenderTargets.resize(createInfo.subpassDescriptions.size());
         for (uint32 i = 0; i < createInfo.subpassDescriptions.size(); i++)
         {
-            const SubpassDescription &subpass = *(createInfo.subpassDescriptions.begin() + i);
+            const SubpassDescription &subpassDescription = *(createInfo.subpassDescriptions.begin() + i);
 
             // Allocate render pass descriptor
-            renderPassDescriptors[i] = MTL::RenderPassDescriptor::alloc()->init()->retain();
-            renderPassDescriptors[i]->setRenderTargetWidth(createInfo.attachments.begin()->templateImage->GetWidth());
-            renderPassDescriptors[i]->setRenderTargetHeight(createInfo.attachments.begin()->templateImage->GetHeight());
+            MTL::RenderPassDescriptor* &subpass = renderPassDescriptors[i];
+            subpass = MTL::RenderPassDescriptor::alloc()->init()->retain();
+            subpass->setRenderTargetWidth(createInfo.attachments.begin()->templateImage->GetWidth());
+            subpass->setRenderTargetHeight(createInfo.attachments.begin()->templateImage->GetHeight());
+
+            // Save render targets
+            subpassRenderTargets[i] = subpassDescription.renderTargets;
 
             // Reference render targets
             uint32 subpassColorAttachmentCount = 0;
-            for (const auto renderTargetIndex : subpass.renderTargets)
+            for (const auto renderTargetIndex : subpassDescription.renderTargets)
             {
                 const RenderPassAttachment &renderTarget = *(createInfo.attachments.begin() + renderTargetIndex);
                 SR_ERROR_IF(renderTarget.templateImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not use image of attachment [{0}] in subpass [{1}] within render pass [{2}] with a graphics API, which differs from [GraphicsAPI::Metal]!", renderTargetIndex, i, GetName());
@@ -37,25 +59,34 @@ namespace Sierra
                 if (renderTarget.type == AttachmentType::Color)
                 {
                     // Add color attachment
-                    MTL::RenderPassColorAttachmentDescriptor* colorAttachment = renderPassDescriptors[i]->colorAttachments()->object(subpassColorAttachmentCount);
+                    MTL::RenderPassColorAttachmentDescriptor* colorAttachment = subpass->colorAttachments()->object(subpassColorAttachmentCount);
                     colorAttachment->setTexture(metalImage.GetMetalTexture()); // NOTE: We assign texture here, even though it will be overwritten at Begin(), so that pipeline can query its pixel format
-                    colorAttachment->setClearColor(MTL::ClearColor(1.0f, 0.0f, 0.0f, 1.0f));
                     colorAttachment->setLoadAction(AttachmentLoadOperationToLoadAction(renderTarget.loadOperation));
-                    colorAttachment->setStoreAction(AttachmentStoreOperationToStoreAction(renderTarget.storeOperation));
-                    subpassColorAttachmentCount++;
+                    if (!renderTarget.resolveImage.has_value())
+                    {
+                        colorAttachment->setStoreAction(AttachmentStoreOperationToStoreAction(renderTarget.storeOperation));
+                        subpassColorAttachmentCount++;
+                    }
+                    else
+                    {
+                        SR_ERROR_IF(renderTarget.resolveImage->get()->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not use image [{0}] of attachment [{1}] in render pass [{2}] for resolving, as its graphics API differs from [GraphicsAPI::Metal]!", renderTarget.resolveImage->get()->GetName(), renderTargetIndex, GetName());
+                        const MetalImage &metalResolveImage = static_cast<MetalImage&>(*renderTarget.resolveImage->get());
+
+                        colorAttachment->setStoreAction(renderTarget.storeOperation == AttachmentStoreOperation::Store ? MTL::StoreActionStoreAndMultisampleResolve : MTL::StoreActionDontCare);
+                        colorAttachment->setResolveTexture(metalResolveImage.GetMetalTexture());  // NOTE: We assign texture here, even though it will be overwritten at Begin(), so that pipeline can query its pixel format
+                    }
 
                 }
                 else if (renderTarget.type == AttachmentType::Depth)
                 {
                     // Set depth attachment
-                    MTL::RenderPassDepthAttachmentDescriptor* depthAttachment = renderPassDescriptors[i]->depthAttachment();
+                    MTL::RenderPassDepthAttachmentDescriptor* depthAttachment = subpass->depthAttachment();
                     depthAttachment->setTexture(metalImage.GetMetalTexture()); // NOTE: We assign texture here, even though it will be overwritten at Begin(), so that pipeline can query its pixel format
                     depthAttachment->setLoadAction(AttachmentLoadOperationToLoadAction(renderTarget.loadOperation));
                     depthAttachment->setStoreAction(AttachmentStoreOperationToStoreAction(renderTarget.storeOperation));
                     depthAttachmentIndex = renderTargetIndex;
                 }
             }
-            colorAttachmentCount += subpassColorAttachmentCount;
 
             // NOTE: Input attachments are not applicable in Metal, so instead a simple regular resource binding is done during command rendering
         }

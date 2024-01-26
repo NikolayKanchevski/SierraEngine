@@ -17,11 +17,11 @@ namespace Sierra
 
         // Set up texture descriptor
         MTL::TextureDescriptor* textureDescriptor = MTL::TextureDescriptor::alloc()->init();
-        textureDescriptor->setTextureType(ImageSettingsToTextureType(GetSampling(), createInfo.layerCount));
-        textureDescriptor->setWidth(GetWidth());
-        textureDescriptor->setHeight(GetHeight());
+        textureDescriptor->setTextureType(ImageSettingsToTextureType(createInfo.sampling, createInfo.layerCount));
+        textureDescriptor->setWidth(createInfo.width);
+        textureDescriptor->setHeight(createInfo.height);
         textureDescriptor->setDepth(1);
-        textureDescriptor->setMipmapLevelCount(GetMipLevelCount());
+        textureDescriptor->setMipmapLevelCount(1);
         textureDescriptor->setArrayLength(createInfo.layerCount);
         textureDescriptor->setPixelFormat(ImageFormatToPixelFormat(createInfo.format));
         textureDescriptor->setUsage(ImageUsageToTextureUsage(createInfo.usage));
@@ -77,8 +77,9 @@ namespace Sierra
     MTL::TextureType MetalImage::ImageSettingsToTextureType(const ImageSampling sampling, const uint32 layerCount)
     {
         if (sampling == ImageSampling::x1 && layerCount == 1) return MTL::TextureType::TextureType2D;
-        if (sampling == ImageSampling::x1 && layerCount > 1) return MTL::TextureType::TextureType2DArray;
-        if (sampling != ImageSampling::x1 && layerCount > 1) return MTL::TextureType::TextureType2DMultisampleArray;
+        if (sampling != ImageSampling::x1 && layerCount == 1) return MTL::TextureType::TextureType2DMultisample;
+        if (sampling == ImageSampling::x1 && layerCount > 1)  return MTL::TextureType::TextureType2DArray;
+        if (sampling != ImageSampling::x1 && layerCount > 1)  return MTL::TextureType::TextureType2DMultisampleArray;
 
         return MTL::TextureType::TextureType2D;
     }

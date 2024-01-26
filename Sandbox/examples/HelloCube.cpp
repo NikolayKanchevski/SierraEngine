@@ -58,8 +58,8 @@ private:
             .width = swapchain->GetWidth(),
             .height = swapchain->GetHeight(),
             .format = GetRenderingContext().GetDevice().GetSupportedImageFormat(ImageChannels::D, ImageMemoryType::UNorm16, ImageUsage::DepthAttachment),
-            .memoryLocation = ImageMemoryLocation::Device,
-            .usage = ImageUsage::DepthAttachment
+            .usage = ImageUsage::DepthAttachment,
+            .memoryLocation = ImageMemoryLocation::Device
         });
 
         // Create render pass
