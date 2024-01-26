@@ -70,9 +70,7 @@ namespace Sierra
     const std::filesystem::path& Application::GetResourcesDirectoryPath()
     {
         static auto path = File::GetResourcesDirectoryPath()
-           #if !SR_PLATFORM_APPLE
-               / name
-           #elif SR_PLATFORM_macOS
+           #if SR_PLATFORM_macOS
                / "Contents" / "Resources"  // NOTE: iOS restricts us to putting application data in the bundle directly, so we do the same for macOS (but there we can use the Contents/Resources folder)
            #endif
         ;

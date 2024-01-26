@@ -12,7 +12,7 @@ namespace Sierra
     VulkanImage::VulkanImage(const VulkanDevice &device, const ImageCreateInfo &createInfo)
         : Image(createInfo), VulkanResource(createInfo.name), device(device), usageFlags(ImageUsageToVkImageUsageFlags(createInfo.usage))
     {
-        SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Metal]: Cannot create image [{0}] with unsupported sampling! Make sure to use Device::IsImageSamplingSupported() to query image sampling support.");
+        SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Vulkan]: Cannot create image [{0}] with unsupported sampling! Make sure to use Device::IsImageSamplingSupported() to query image sampling support.", GetName());
         SR_ERROR_IF(!device.IsImageConfigurationSupported(createInfo.format, createInfo.usage), "[Vulkan]: Cannot create image [{0}] with unsupported format! Use Device::IsImageConfigurationSupported() to query format support.", GetName());
 
         // Set up image create info

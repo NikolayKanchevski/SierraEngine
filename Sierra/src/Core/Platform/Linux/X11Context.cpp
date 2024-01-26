@@ -161,17 +161,17 @@ namespace Sierra
         return window;
     }
 
-    XEvent X11Context::DestroyWindow(const XID window) const
+     void X11Context::DestroyWindow(const XID window) const
+    {
+        // Hide window away
+        XUnmapWindow(display, window);
+        Flush();
+    }
+
+    XEvent X11Context::QueryWindowDestruction(const XID window) const
     {
         // Register window closing
         XEvent event = RegisterWindowEvent(window, GetAtom(AtomType::WM_PROTOCOLS), GetAtom(AtomType::WM_DELETE_WINDOW), CurrentTime);
-
-        // Hide and destroy window
-        XUnmapWindow(display, window);
-        XDestroyWindow(display, window);
-
-        // Dispatch all queried X11 events
-        Flush();
         return event;
     }
 
@@ -292,14 +292,8 @@ namespace Sierra
             Flush();
         }
 
-        // Construct data struct to use when checking events
-        struct ConfigureNotifyEventData
-        {
-            XID window;
-        };
-        ConfigureNotifyEventData configureNotifyEventData = { .window = window };
-
         // Wait until request has been processed
+        struct ConfigureNotifyEventData { XID window; } configureNotifyEventData = { .window = window };
         WaitForEvent(&configureNotifyEventData, [](Display*, XEvent* event, XPointer configureNotifyEventDataPtr) -> int
         {
             return event->type == ConfigureNotify && event->xproperty.window == reinterpret_cast<ConfigureNotifyEventData*>(configureNotifyEventDataPtr)->window;

@@ -12,8 +12,8 @@ namespace Sierra
     MetalImage::MetalImage(const MetalDevice &device, const ImageCreateInfo &createInfo)
         : Image(createInfo), MetalResource(createInfo.name)
     {
-        SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Metal]: Cannot create image [{0}] with unsupported sampling! Make sure to use Device::IsImageSamplingSupported() to query image sampling support.");
-        SR_ERROR_IF(!device.IsImageConfigurationSupported(createInfo.format, createInfo.usage), "[Metal]: Cannot create image with unsupported format! Use Device::IsImageConfigurationSupported() to query format support.");
+        SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Metal]: Cannot create image [{0}] with unsupported sampling! Make sure to use Device::IsImageSamplingSupported() to query image sampling support.", GetName());
+        SR_ERROR_IF(!device.IsImageConfigurationSupported(createInfo.format, createInfo.usage), "[Metal]: Cannot create [{0}] image with unsupported format! Use Device::IsImageConfigurationSupported() to query format support.", GetName());
 
         // Set up texture descriptor
         MTL::TextureDescriptor* textureDescriptor = MTL::TextureDescriptor::alloc()->init();

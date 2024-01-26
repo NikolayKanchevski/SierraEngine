@@ -81,7 +81,7 @@ private:
         // Define pipeline layout
         pipelineLayout = GetRenderingContext().CreatePipelineLayout({
             .name = "Cube Graphics Pipeline Layout",
-            .bindings = { PipelineBindingType::UniformBuffer },
+            .bindings = { { .type = PipelineBindingType::UniformBuffer } },
             .pushConstantSize = sizeof(PushConstantData)
         });
 

@@ -24,4 +24,7 @@ function(BuildLinuxExecutable)
 
     # Create executable
     add_executable(${SIERRA_APPLICATION_NAME} ${SOURCE_FILES})
+
+    # Copy resources to resources folder
+    add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/resources" "${CMAKE_BINARY_DIR}/Resources")
 endfunction()

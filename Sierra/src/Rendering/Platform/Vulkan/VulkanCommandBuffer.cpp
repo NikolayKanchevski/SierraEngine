@@ -56,7 +56,8 @@ namespace Sierra
         beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
         // Begin command buffer
-        device.GetFunctionTable().vkBeginCommandBuffer(commandBuffer, &beginInfo);
+        const VkResult result = device.GetFunctionTable().vkBeginCommandBuffer(commandBuffer, &beginInfo);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not begin command buffer [{0}]! Error code: {1}.", GetName(), result);
 
         // Get new code
         signalValue = device.GetNewSignalValue();
@@ -137,8 +138,8 @@ namespace Sierra
         region.dstOffset = destinationOffset;
         region.size = memoryRange != 0 ? memoryRange : sourceBuffer->GetMemorySize();
 
-        SR_ERROR_IF(sourceOffset + region.size > sourceBuffer->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, sourceOffset, GetName(), sourceOffset + memoryRange, sourceBuffer->GetMemorySize());
-        SR_ERROR_IF(destinationOffset + region.size > destinationBuffer->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, destinationOffset, GetName(), destinationOffset + memoryRange, destinationBuffer->GetMemorySize());
+        SR_ERROR_IF(sourceOffset + region.size > sourceBuffer->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, sourceOffset, sourceBuffer->GetName(), GetName(), sourceOffset + memoryRange, sourceBuffer->GetMemorySize());
+        SR_ERROR_IF(destinationOffset + region.size > destinationBuffer->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, destinationOffset, destinationBuffer->GetName(), GetName(), destinationOffset + memoryRange, destinationBuffer->GetMemorySize());
 
         // Record copy
         device.GetFunctionTable().vkCmdCopyBuffer(commandBuffer, vulkanSourceBuffer.GetVulkanBuffer(), vulkanDestinationBuffer.GetVulkanBuffer(), 1, &region);
@@ -173,8 +174,8 @@ namespace Sierra
         region.imageExtent.height = pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight();
         region.imageExtent.depth = 1;
 
-        SR_ERROR_IF(region.bufferOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()) > sourceBuffer->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), sourceOffset, GetName(), region.bufferOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()), sourceBuffer->GetMemorySize());
-        SR_ERROR_IF((static_cast<uint64>(destinationOffset.x) + destinationOffset.y + pixelRange.x + pixelRange.y) * destinationImage->GetPixelSize() > destinationImage->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to image [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the image - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), (destinationOffset.x + destinationOffset.y) * destinationImage->GetPixelSize(), GetName(), (static_cast<uint64>(destinationOffset.x) + destinationOffset.y + pixelRange.x + pixelRange.y) * destinationImage->GetPixelSize(), destinationImage->GetMemorySize());
+        SR_ERROR_IF(region.bufferOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()) > sourceBuffer->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), sourceOffset, sourceBuffer->GetName(), GetName(), region.bufferOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()), sourceBuffer->GetMemorySize());
+        SR_ERROR_IF((static_cast<uint64>(destinationOffset.x) + destinationOffset.y + pixelRange.x + pixelRange.y) * destinationImage->GetPixelSize() > destinationImage->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to image [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the image - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), (destinationOffset.x + destinationOffset.y) * destinationImage->GetPixelSize(), destinationImage->GetName(), GetName(), (static_cast<uint64>(destinationOffset.x) + destinationOffset.y + pixelRange.x + pixelRange.y) * destinationImage->GetPixelSize(), destinationImage->GetMemorySize());
 
         // Copy data and change layout
         device.GetFunctionTable().vkCmdCopyBufferToImage(commandBuffer, vulkanSourceBuffer.GetVulkanBuffer(), vulkanDestinationImage.GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);

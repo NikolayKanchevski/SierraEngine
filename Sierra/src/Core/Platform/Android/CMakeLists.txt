@@ -17,9 +17,7 @@ find_package(game-activity REQUIRED CONFIG)
 get_target_property(game-activity_INCLUDE_DIRECTORIES game-activity::game-activity INTERFACE_INCLUDE_DIRECTORIES)
 
 # Enable native activity
-set(CMAKE_SHARED_LINKER_FLAGS
-        "${CMAKE_SHARED_LINKER_FLAGS} -u \
-    Java_com_google_androidgamesdk_GameActivity_initializeNativeCode")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u \ Java_com_google_androidgamesdk_GameActivity_initializeNativeCode")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Build app_glue

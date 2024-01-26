@@ -57,7 +57,8 @@ namespace Sierra
     public:
         /* --- POLLING METHODS --- */
         [[nodiscard]] XID CreateWindow(const std::string &title, uint32 width, uint32 height) const;
-        XEvent DestroyWindow(const XID window) const;
+        XEvent QueryWindowDestruction(XID window) const;
+        void DestroyWindow(XID window) const;
 
         [[nodiscard]] bool IsEventQueueEmpty() const;
         XEvent PollNextEvent() const;

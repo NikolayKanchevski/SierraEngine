@@ -413,7 +413,7 @@ namespace Sierra
         if (closed) return;
 
         // Destroy window
-        XEvent closeEvent = x11Context.DestroyWindow(window);
+        XEvent closeEvent = x11Context.QueryWindowDestruction(window);
         HandleX11Event(closeEvent);
     }
 }

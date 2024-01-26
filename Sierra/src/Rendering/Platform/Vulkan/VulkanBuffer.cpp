@@ -45,7 +45,7 @@ namespace Sierra
     {
         memoryRange = memoryRange != 0 ? memoryRange : GetMemorySize();
         SR_ERROR_IF(memoryLocation != BufferMemoryLocation::CPU, "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as it is not CPU-visible!", memoryRange, destinationOffset, GetName());
-        SR_ERROR_IF(destinationOffset + memoryRange > GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, destinationOffset, GetName(), destinationOffset + memoryRange, GetMemorySize());
+        SR_ERROR_IF(destinationOffset + memoryRange > GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{3}] bytes is bigger than the size of the buffer - [{4}]!", memoryRange, destinationOffset, GetName(), destinationOffset + memoryRange, GetMemorySize());
 
         std::memcpy(reinterpret_cast<char*>(data) + destinationOffset, reinterpret_cast<const char*>(memoryPointer) + sourceOffset, memoryRange);
         vmaFlushAllocation(device.GetMemoryAllocator(), allocation, destinationOffset, memoryRange);

@@ -106,9 +106,14 @@ namespace Sierra
         static std::filesystem::path resourcesDirectoryPath;
         if (resourcesDirectoryPath.empty())
         {
-            #if SR_PLATFORM_WINDOWS || SR_PLATFORM_LINUX || SR_PLATFORM_ANDROID
+            #if SR_PLATFORM_WINDOWS
                 CHAR path[MAX_PATH];
                 GetModuleFileNameA(nullptr, path, MAX_PATH);
+                resourcesDirectoryPath = path;
+                resourcesDirectoryPath = resourcesDirectoryPath.parent_path() / "Resources";
+            #elif SR_PLATFORM_LINUX || SR_PLATFORM_ANDROID
+                char path[4096];
+                SR_ERROR_IF( readlink("/proc/self/exe", path, 4096) == -1, "Could not extract Linux binary folder!");
                 resourcesDirectoryPath = path;
                 resourcesDirectoryPath = resourcesDirectoryPath.parent_path() / "Resources";
             #elif SR_PLATFORM_APPLE
