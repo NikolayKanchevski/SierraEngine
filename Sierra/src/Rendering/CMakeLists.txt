@@ -16,9 +16,11 @@ target_sources(Sierra PRIVATE
     PipelineLayout.h
     RenderingContext.cpp
     RenderingContext.h
+    RenderingResource.h
     RenderPass.cpp
     RenderPass.h
-    RenderingResource.h
+    Sampler.cpp
+    Sampler.h
     Shader.cpp
     Shader.h
     Swapchain.cpp

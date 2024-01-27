@@ -27,8 +27,12 @@ namespace Sierra
         [[nodiscard]] inline const std::string& GetDeviceName() const override { return deviceName; }
 
         [[nodiscard]] bool IsImageConfigurationSupported(ImageFormat format, ImageUsage usage) const override;
+
         [[nodiscard]] bool IsImageSamplingSupported(ImageSampling sampling) const override;
         [[nodiscard]] ImageSampling GetHighestImageSamplingSupported() const override;
+
+        [[nodiscard]] bool IsSamplerAnisotropySupported(SamplerAnisotropy anisotropy) const override;
+        [[nodiscard]] SamplerAnisotropy GetHighestSamplerAnisotropySupported() const override;
 
         [[nodiscard]] inline VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
         [[nodiscard]] inline VkDevice GetLogicalDevice() const { return logicalDevice; }
@@ -39,6 +43,9 @@ namespace Sierra
 
         [[nodiscard]] inline VkSemaphore GetSharedTimelineSemaphore() const { return sharedTimelineSemaphore; }
         [[nodiscard]] inline uint64 GetNewSignalValue() const { lastReservedSignalValue++; return lastReservedSignalValue; }
+
+        [[nodiscard]] inline VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const;
+        [[nodiscard]] inline VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures() const;
 
         [[nodiscard]] bool IsExtensionLoaded(const std::string &extensionName) const;
         [[nodiscard]] inline auto& GetFunctionTable() const { return functionTable; }

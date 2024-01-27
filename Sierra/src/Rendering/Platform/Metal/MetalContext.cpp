@@ -14,6 +14,7 @@
 
 #include "MetalBuffer.h"
 #include "MetalImage.h"
+#include "MetalSampler.h"
 #include "MetalRenderPass.h"
 #include "MetalSwapchain.h"
 #include "MetalShader.h"
@@ -43,6 +44,11 @@ namespace Sierra
     std::unique_ptr<Image> MetalContext::CreateImage(const ImageCreateInfo &createInfo) const
     {
         return std::make_unique<MetalImage>(device, createInfo);
+    }
+
+    std::unique_ptr<Sampler> MetalContext::CreateSampler(const SamplerCreateInfo &createInfo) const
+    {
+        return std::make_unique<MetalSampler>(device, createInfo);
     }
 
     std::unique_ptr<RenderPass> MetalContext::CreateRenderPass(const RenderPassCreateInfo &createInfo) const

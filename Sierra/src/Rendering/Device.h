@@ -7,6 +7,7 @@
 #include "RenderingResource.h"
 
 #include "Image.h"
+#include "Sampler.h"
 #include "CommandBuffer.h"
 #include "Swapchain.h"
 
@@ -30,8 +31,12 @@ namespace Sierra
 
         [[nodiscard]] ImageFormat GetSupportedImageFormat(ImageChannels preferredChannels, ImageMemoryType preferredMemoryType, ImageUsage usage) const;
         [[nodiscard]] virtual bool IsImageConfigurationSupported(ImageFormat format, ImageUsage usage) const = 0;
+
         [[nodiscard]] virtual bool IsImageSamplingSupported(ImageSampling sampling) const = 0;
         [[nodiscard]] virtual ImageSampling GetHighestImageSamplingSupported() const = 0;
+
+        [[nodiscard]] virtual bool IsSamplerAnisotropySupported(SamplerAnisotropy anisotropy) const = 0;
+        [[nodiscard]] virtual SamplerAnisotropy GetHighestSamplerAnisotropySupported() const = 0;
 
         /* --- OPERATORS --- */
         Device(const Device&) = delete;

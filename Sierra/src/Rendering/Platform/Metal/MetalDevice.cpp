@@ -140,6 +140,32 @@ namespace Sierra
         return IsImageSamplingSupported(ImageSampling::x8) ? ImageSampling::x8 : ImageSampling::x4;
     }
 
+    bool MetalDevice::IsSamplerAnisotropySupported(const SamplerAnisotropy anisotropy) const
+    {
+        switch (anisotropy)
+        {
+            case SamplerAnisotropy::x1:         return true;
+            case SamplerAnisotropy::x2:         return true;
+            case SamplerAnisotropy::x4:         return true;
+            case SamplerAnisotropy::x8:         return true;
+            case SamplerAnisotropy::x16:        return true;
+            default:                            return false;
+        }
+
+        return anisotropy == SamplerAnisotropy::x1;
+    }
+
+    SamplerAnisotropy MetalDevice::GetHighestSamplerAnisotropySupported() const
+    {
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x64)) return SamplerAnisotropy::x64;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x32)) return SamplerAnisotropy::x32;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x16)) return SamplerAnisotropy::x16;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x8)) return SamplerAnisotropy::x8;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x4)) return SamplerAnisotropy::x4;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x2)) return SamplerAnisotropy::x2;
+        return SamplerAnisotropy::x1;
+    }
+
     /* --- DESTRUCTOR --- */
 
     MetalDevice::~MetalDevice()

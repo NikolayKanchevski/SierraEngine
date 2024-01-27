@@ -24,8 +24,12 @@ namespace Sierra
         [[nodiscard]] inline const std::string& GetDeviceName() const override { return deviceName; }
 
         [[nodiscard]] bool IsImageConfigurationSupported(ImageFormat format, ImageUsage usage) const override;
+
         [[nodiscard]] bool IsImageSamplingSupported(ImageSampling sampling) const override;
         [[nodiscard]] ImageSampling GetHighestImageSamplingSupported() const override;
+
+        [[nodiscard]] bool IsSamplerAnisotropySupported(SamplerAnisotropy anisotropy) const override;
+        [[nodiscard]] SamplerAnisotropy GetHighestSamplerAnisotropySupported() const override;
 
         [[nodiscard]] inline MTL::Device* GetMetalDevice() const { return device; }
         [[nodiscard]] inline MTL::CommandQueue* GetCommandQueue() const { return commandQueue; }

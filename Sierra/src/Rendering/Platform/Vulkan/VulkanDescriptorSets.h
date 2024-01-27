@@ -8,6 +8,7 @@
 
 #include "VulkanBuffer.h"
 #include "VulkanImage.h"
+#include "VulkanSampler.h"
 
 namespace Sierra
 {
@@ -25,7 +26,7 @@ namespace Sierra
 
         /* --- POLLING METHODS --- */
         void BindBuffer(uint32 binding, const VulkanBuffer &buffer, uint32 arrayIndex = 0, uint64 memoryRange = 0, uint64 offset = 0);
-        void BindImage(uint32 binding, const VulkanImage &image, uint32 arrayIndex = 0);
+        void BindImage(uint32 binding, const VulkanImage &image, const VulkanSampler* sampler, const VkImageLayout imageLayout, uint32 arrayIndex = 0);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] const std::vector<VkWriteDescriptorSet>& GetWriteDescriptorSets() const { return writeDescriptorSets; }

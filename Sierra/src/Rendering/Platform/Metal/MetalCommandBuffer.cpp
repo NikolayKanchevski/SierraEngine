@@ -6,6 +6,7 @@
 
 #include "MetalBuffer.h"
 #include "MetalImage.h"
+#include "MetalSampler.h"
 
 #include "MetalRenderPass.h"
 
@@ -262,13 +263,17 @@ namespace Sierra
         if (currentComputeEncoder != nullptr)
         {
             const MetalPipelineLayout &pipelineLayout = currentComputePipeline->GetLayout();
-            currentComputeEncoder->setBuffer(metalBuffer.GetMetalBuffer(), offset, pipelineLayout.GetBindingIndex(binding, arrayIndex));
+            const uint32 index = pipelineLayout.GetBindingIndex(binding, index);
+
+            currentComputeEncoder->setBuffer(metalBuffer.GetMetalBuffer(), offset, index);
         }
         else
         {
             const MetalPipelineLayout &pipelineLayout = currentGraphicsPipeline->GetLayout();
-            currentRenderEncoder->setVertexBuffer(metalBuffer.GetMetalBuffer(), offset, pipelineLayout.GetBindingIndex(binding, arrayIndex));
-            if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentBuffer(metalBuffer.GetMetalBuffer(), offset, pipelineLayout.GetBindingIndex(binding, arrayIndex));
+            const uint32 index = pipelineLayout.GetBindingIndex(binding, index);
+
+            currentRenderEncoder->setVertexBuffer(metalBuffer.GetMetalBuffer(), offset, index);
+            if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentBuffer(metalBuffer.GetMetalBuffer(), offset, index);
         }
     }
 
@@ -281,13 +286,51 @@ namespace Sierra
         if (currentComputeEncoder != nullptr)
         {
             const MetalPipelineLayout &pipelineLayout = currentComputePipeline->GetLayout();
-            currentComputeEncoder->setTexture(metalImage.GetMetalTexture(), pipelineLayout.GetBindingIndex(binding, arrayIndex));
+            const uint32 index = pipelineLayout.GetBindingIndex(binding, index);
+
+            currentComputeEncoder->setTexture(metalImage.GetMetalTexture(), index);
         }
         else
         {
             const MetalPipelineLayout &pipelineLayout = currentGraphicsPipeline->GetLayout();
-            currentRenderEncoder->setVertexTexture(metalImage.GetMetalTexture(), pipelineLayout.GetBindingIndex(binding, arrayIndex));
-            if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentTexture(metalImage.GetMetalTexture(), pipelineLayout.GetBindingIndex(binding, arrayIndex));
+            const uint32 index = pipelineLayout.GetBindingIndex(binding, index);
+
+            currentRenderEncoder->setVertexTexture(metalImage.GetMetalTexture(), index);
+            if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentTexture(metalImage.GetMetalTexture(), index);
+        }
+    }
+
+    void MetalCommandBuffer::BindImage(const uint32 binding, const std::unique_ptr<Image> &image, const std::unique_ptr<Sampler> &sampler, const uint32 arrayIndex)
+    {
+        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind image [{0}], whose graphics API differs from [GraphicsAPI::Metal], to binding [{1}] within command buffer [{2}]!", image->GetName(), binding, GetName());
+        const MetalImage &metalImage = static_cast<MetalImage&>(*image);
+
+        SR_ERROR_IF(sampler->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind image [{0}] using sampler [{1}], whose graphics API differs from [GraphicsAPI::Metal], to binding [{2}] within command buffer [{3}]!", image->GetName(), sampler->GetName(), binding, GetName());
+        const MetalSampler &metalSampler = static_cast<MetalSampler&>(*sampler);
+
+        SR_ERROR_IF(currentRenderEncoder == nullptr && currentComputeEncoder == nullptr, "[Metal]: Cannot bind image [{0}] if no encoder is active within command buffer [{1}]!", image->GetName(), GetName());
+
+        if (currentComputeEncoder != nullptr)
+        {
+            const MetalPipelineLayout &pipelineLayout = currentComputePipeline->GetLayout();
+            const uint32 index = pipelineLayout.GetBindingIndex(binding, index);
+
+            currentComputeEncoder->setTexture(metalImage.GetMetalTexture(), index);
+            currentComputeEncoder->setSamplerState(metalSampler.GetSamplerState(), index);
+        }
+        else
+        {
+            const MetalPipelineLayout &pipelineLayout = currentGraphicsPipeline->GetLayout();
+            const uint32 index = pipelineLayout.GetBindingIndex(binding, index);
+            
+            currentRenderEncoder->setVertexTexture(metalImage.GetMetalTexture(), index);
+            currentRenderEncoder->setVertexSamplerState(metalSampler.GetSamplerState(), index);
+
+            if (currentGraphicsPipeline->HasFragmentShader())
+            {
+                currentRenderEncoder->setFragmentTexture(metalImage.GetMetalTexture(), index);
+                currentRenderEncoder->setFragmentSamplerState(metalSampler.GetSamplerState(), index);
+            }
         }
     }
 

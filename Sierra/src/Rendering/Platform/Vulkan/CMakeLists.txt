@@ -73,6 +73,8 @@ if(Vulkan_LIBRARIES)
         VulkanRenderPass.h
         VulkanResource.cpp
         VulkanResource.h
+        VulkanSampler.cpp
+        VulkanSampler.h
         VulkanShader.cpp
         VulkanShader.h
         VulkanSwapchain.cpp

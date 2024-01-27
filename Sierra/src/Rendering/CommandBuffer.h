@@ -8,6 +8,7 @@
 
 #include "Buffer.h"
 #include "Image.h"
+#include "Sampler.h"
 
 #include "RenderPass.h"
 #include "GraphicsPipeline.h"
@@ -82,6 +83,7 @@ namespace Sierra
         virtual void PushConstants(const void* data, uint16 memoryRange, uint16 offset = 0) = 0;
         virtual void BindBuffer(uint32 binding, const std::unique_ptr<Buffer> &buffer, uint32 arrayIndex = 0, uint64 memoryRange = 0, uint64 offset = 0) = 0;
         virtual void BindImage(uint32 binding, const std::unique_ptr<Image> &image, uint32 arrayIndex = 0) = 0;
+        virtual void BindImage(uint32 binding, const std::unique_ptr<Image> &image, const std::unique_ptr<Sampler> &sampler, uint32 arrayIndex = 0) = 0;
 
         virtual void BeginDebugRegion(const std::string &regionName, const Color &color = Color(1.0f, 1.0f, 0.0f, 1.0f)) = 0;
         virtual void InsertDebugMarker(const std::string &markerName, const Color &color = Color(1.0f, 1.0f, 0.0f, 1.0f)) = 0;

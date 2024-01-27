@@ -6,6 +6,7 @@
 
 #include "VulkanBuffer.h"
 #include "VulkanImage.h"
+#include "VulkanSampler.h"
 #include "VulkanRenderPass.h"
 #include "VulkanSwapchain.h"
 #include "VulkanShader.h"
@@ -35,6 +36,11 @@ namespace Sierra
     std::unique_ptr<Image> VulkanContext::CreateImage(const ImageCreateInfo &createInfo) const
     {
         return std::make_unique<VulkanImage>(device, createInfo);
+    }
+
+    std::unique_ptr<Sampler> VulkanContext::CreateSampler(const SamplerCreateInfo &createInfo) const
+    {
+        return std::make_unique<VulkanSampler>(device, createInfo);
     }
 
     std::unique_ptr<RenderPass> VulkanContext::CreateRenderPass(const RenderPassCreateInfo &createInfo) const

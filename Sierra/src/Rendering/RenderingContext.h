@@ -9,6 +9,7 @@
 #include "Device.h"
 #include "Buffer.h"
 #include "Image.h"
+#include "Sampler.h"
 #include "RenderPass.h"
 #include "Swapchain.h"
 #include "Shader.h"
@@ -32,6 +33,7 @@ namespace Sierra
         /* --- POLLING METHODS --- */
         [[nodiscard]] virtual std::unique_ptr<Buffer> CreateBuffer(const BufferCreateInfo &createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<Image> CreateImage(const ImageCreateInfo &createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<Sampler> CreateSampler(const SamplerCreateInfo &createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<RenderPass> CreateRenderPass(const RenderPassCreateInfo &createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<Swapchain> CreateSwapchain(const SwapchainCreateInfo &createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(const ShaderCreateInfo &createInfo) const = 0;

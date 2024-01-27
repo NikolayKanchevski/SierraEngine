@@ -6,6 +6,7 @@
 
 #include "VulkanBuffer.h"
 #include "VulkanImage.h"
+#include "VulkanSampler.h"
 
 #include "VulkanRenderPass.h"
 
@@ -368,7 +369,19 @@ namespace Sierra
         SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind image [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], to binding [{1}] within command buffer [{2}]!", image->GetName(), binding, GetName());
         const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
 
-        pushDescriptorSet.BindImage(binding, vulkanImage, arrayIndex);
+        pushDescriptorSet.BindImage(binding, vulkanImage, nullptr, imageLayouts[vulkanImage.GetVulkanImage()], arrayIndex);
+        resourcesBound = false;
+    }
+
+    void VulkanCommandBuffer::BindImage(const uint32 binding, const std::unique_ptr<Image> &image, const std::unique_ptr<Sampler> &sampler, const uint32 arrayIndex)
+    {
+        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind image [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], to binding [{1}] within command buffer [{2}]!", image->GetName(), binding, GetName());
+        const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
+
+        SR_ERROR_IF(sampler->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind image [{0}] using sampler [{1}], whose graphics API differs from [GraphicsAPI::Vulkan], to binding [{2}] within command buffer [{3}]!", image->GetName(), sampler->GetName(), binding, GetName());
+        const VulkanSampler &vulkanSampler = static_cast<VulkanSampler&>(*sampler);
+
+        pushDescriptorSet.BindImage(binding, vulkanImage, &vulkanSampler, imageLayouts[vulkanImage.GetVulkanImage()], arrayIndex);
         resourcesBound = false;
     }
 

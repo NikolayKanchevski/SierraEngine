@@ -42,7 +42,7 @@ namespace Sierra
         descriptorSetIterator->pBufferInfo = bufferInfo;
     }
 
-    void VulkanPushDescriptorSet::BindImage(const uint32 binding, const VulkanImage &image, const uint32 arrayIndex)
+    void VulkanPushDescriptorSet::BindImage(const uint32 binding, const VulkanImage &image, const VulkanSampler* sampler, const VkImageLayout imageLayout, const uint32 arrayIndex)
     {
         // Check if resource has already been bound
         auto descriptorSetIterator = std::find_if(writeDescriptorSets.begin(), writeDescriptorSets.end(), [binding, arrayIndex](const VkWriteDescriptorSet &item) { return item.dstBinding == binding && item.dstArrayElement == arrayIndex; });
@@ -62,9 +62,9 @@ namespace Sierra
 
         // Set up buffer info
         VkDescriptorImageInfo* imageInfo = descriptorSetIterator->pImageInfo != nullptr ? const_cast<VkDescriptorImageInfo*>(descriptorSetIterator->pImageInfo) : &imageInfos.emplace_back();
-        imageInfo->sampler = VK_NULL_HANDLE;
+        imageInfo->sampler = sampler != nullptr ? sampler->GetVulkanSampler() : VK_NULL_HANDLE;
         imageInfo->imageView = image.GetVulkanImageView();
-        imageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+        imageInfo->imageLayout = imageLayout;
         descriptorSetIterator->pImageInfo = imageInfo;
     }
 

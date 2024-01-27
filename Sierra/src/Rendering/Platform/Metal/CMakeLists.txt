@@ -35,7 +35,8 @@ target_sources(Sierra PRIVATE
     MetalRenderPass.cpp
     MetalRenderPass.h
     MetalResource.cpp
-    MetalResource.h
+    MetalSampler.h
+    MetalSampler.cpp
     MetalShader.cpp
     MetalShader.h
     MetalSwapchain.mm

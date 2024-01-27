@@ -1080,8 +1080,7 @@ namespace Sierra
 
     bool VulkanDevice::IsImageSamplingSupported(const ImageSampling sampling) const
     {
-        VkPhysicalDeviceProperties physicalDeviceProperties = { };
-        instance.GetFunctionTable().vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+        const VkPhysicalDeviceProperties physicalDeviceProperties = GetPhysicalDeviceProperties();
         return (physicalDeviceProperties.limits.framebufferDepthSampleCounts & VulkanImage::ImageSamplingToVkSampleCountFlags(sampling)) && (physicalDeviceProperties.limits.sampledImageDepthSampleCounts & VulkanImage::ImageSamplingToVkSampleCountFlags(sampling));
     }
 
@@ -1096,9 +1095,53 @@ namespace Sierra
         return ImageSampling::x1;
     }
 
+    bool VulkanDevice::IsSamplerAnisotropySupported(const SamplerAnisotropy anisotropy) const
+    {
+        const VkPhysicalDeviceProperties physicalDeviceProperties = GetPhysicalDeviceProperties();
+        if (!GetPhysicalDeviceFeatures().samplerAnisotropy) return anisotropy == SamplerAnisotropy::x1;
+
+        switch (anisotropy)
+        {
+            case SamplerAnisotropy::x64:    return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 64.0f;
+            case SamplerAnisotropy::x32:    return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 32.0f;
+            case SamplerAnisotropy::x16:    return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 16.0f;
+            case SamplerAnisotropy::x8:     return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 8.0f;
+            case SamplerAnisotropy::x4:     return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 4.0f;
+            case SamplerAnisotropy::x2:     return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 2.0f;
+            case SamplerAnisotropy::x1:     return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 1.0f;
+        }
+
+        return anisotropy == SamplerAnisotropy::x1;
+    }
+
+    SamplerAnisotropy VulkanDevice::GetHighestSamplerAnisotropySupported() const
+    {
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x64)) return SamplerAnisotropy::x64;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x32)) return SamplerAnisotropy::x32;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x16)) return SamplerAnisotropy::x16;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x8)) return SamplerAnisotropy::x8;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x4)) return SamplerAnisotropy::x4;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x2)) return SamplerAnisotropy::x2;
+        return SamplerAnisotropy::x1;
+    }
+
     bool VulkanDevice::IsExtensionLoaded(const std::string &extensionName) const
     {
         return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<std::string>{}(extensionName)) != loadedExtensions.end();
+    }
+
+    VkPhysicalDeviceProperties VulkanDevice::GetPhysicalDeviceProperties() const
+    {
+        VkPhysicalDeviceProperties physicalDeviceProperties = { };
+        instance.GetFunctionTable().vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+        return physicalDeviceProperties;
+    }
+
+    VkPhysicalDeviceFeatures VulkanDevice::GetPhysicalDeviceFeatures() const
+    {
+        VkPhysicalDeviceFeatures physicalDeviceFeatures = { };
+        instance.GetFunctionTable().vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
+        return physicalDeviceFeatures;
     }
 
     /* --- SETTER METHODS --- */
