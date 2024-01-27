@@ -15,10 +15,10 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    MetalGraphicsPipeline::MetalGraphicsPipeline(const MetalDevice &device, const Sierra::GraphicsPipelineCreateInfo &createInfo)
+    MetalGraphicsPipeline::MetalGraphicsPipeline(const MetalDevice &device, const GraphicsPipelineCreateInfo &createInfo)
         : GraphicsPipeline(createInfo), MetalResource(createInfo.name), layout(static_cast<MetalPipelineLayout&>(*createInfo.layout)), cullMode(CullModeToCullMode(createInfo.cullMode)), triangleFillMode(ShadeModeToTriangleFillMode(createInfo.shadeMode)), winding(FrontFaceModeToWinding(createInfo.frontFaceMode))
     {
-        SR_ERROR_IF(createInfo.layout->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create pipeline [{0}] using pipeline layout [{1}], as its graphics API differs from [GraphicsAPI::Metal]!");
+        SR_ERROR_IF(createInfo.layout->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] using pipeline layout [{1}], as its graphics API differs from [GraphicsAPI::Metal]!");
 
         SR_ERROR_IF(createInfo.vertexShader->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.vertexShader->GetName());
         const MetalShader &metalVertexShader = static_cast<MetalShader&>(*createInfo.vertexShader);
@@ -95,7 +95,7 @@ namespace Sierra
         // Create pipeline
         NS::Error* error = nullptr;
         renderPipelineState = device.GetMetalDevice()->newRenderPipelineState(renderPipelineDescriptor, &error);
-        SR_ERROR_IF(error != nullptr, "Could not create Metal graphics pipeline [{0}]! Error: {1}.", GetName(), error->localizedDescription()->cString(NS::ASCIIStringEncoding));
+        SR_ERROR_IF(error != nullptr, "[Metal]: Could not create graphics pipeline [{0}]! Error: {1}.", GetName(), error->localizedDescription()->cString(NS::ASCIIStringEncoding));
 
         renderPipelineDescriptor->release();
         vertexDescriptor->release();

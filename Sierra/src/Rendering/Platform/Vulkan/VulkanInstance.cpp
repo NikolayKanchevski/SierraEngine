@@ -411,7 +411,7 @@ namespace Sierra
     VulkanInstance::~VulkanInstance()
     {
          #if SR_ENABLE_LOGGING
-            if (debugMessenger != nullptr) functionTable.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+            if (debugMessenger != VK_NULL_HANDLE) functionTable.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         #endif
         functionTable.vkDestroyInstance(instance, nullptr);
     }

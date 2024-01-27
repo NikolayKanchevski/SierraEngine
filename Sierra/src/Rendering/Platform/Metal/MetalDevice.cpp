@@ -41,7 +41,7 @@ namespace Sierra
             SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName(), commandBufferToWait->GetName(), i);
 
             const MetalCommandBuffer &metalCommandBufferToWait = static_cast<MetalCommandBuffer&>(*commandBufferToWait);
-            while (!metalCommandBufferToWait.HasFinishedExecution()) { }
+            while (!metalCommandBufferToWait.HasFinishedExecution());
         }
 
         // Submit command buffer
@@ -54,7 +54,7 @@ namespace Sierra
         const MetalCommandBuffer &metalCommandBuffer = static_cast<MetalCommandBuffer&>(*commandBuffer);
 
         // Wait for completion
-        while (!metalCommandBuffer.HasFinishedExecution()) { }
+        while (!metalCommandBuffer.HasFinishedExecution());
     }
 
     /* --- GETTER METHODS --- */

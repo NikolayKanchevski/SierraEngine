@@ -120,11 +120,11 @@ namespace Sierra
                 const RenderPassAttachment &renderTarget = *(createInfo.attachments.begin() + renderTargetIndex);
 
                 // Check attachment type, then create and assign a VkAttachmentReference
-                if (renderTarget.type == AttachmentType::Color)
+                if (renderTarget.type == RenderPassAttachmentType::Color)
                 {
                     colorAttachmentReferences[i].push_back({ .attachment = renderTargetIndex, .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
                 }
-                else if (renderTarget.type == AttachmentType::Depth)
+                else if (renderTarget.type == RenderPassAttachmentType::Depth)
                 {
                     depthAttachmentReference = { .attachment = renderTargetIndex, .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
                     hasDepthAttachment = true;
@@ -301,23 +301,23 @@ namespace Sierra
 
     /* --- CONVERSIONS --- */
 
-    VkAttachmentLoadOp VulkanRenderPass::AttachmentLoadOperationToVkAttachmentLoadOp(const AttachmentLoadOperation loadOperation)
+    VkAttachmentLoadOp VulkanRenderPass::AttachmentLoadOperationToVkAttachmentLoadOp(const RenderPassAttachmentLoadOperation loadOperation)
     {
         switch (loadOperation)
         {
-            case AttachmentLoadOperation::Clear:        return VK_ATTACHMENT_LOAD_OP_CLEAR;
-            case AttachmentLoadOperation::Load:         return VK_ATTACHMENT_LOAD_OP_LOAD;
+            case RenderPassAttachmentLoadOperation::Clear:        return VK_ATTACHMENT_LOAD_OP_CLEAR;
+            case RenderPassAttachmentLoadOperation::Load:         return VK_ATTACHMENT_LOAD_OP_LOAD;
         }
 
         return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     }
 
-    VkAttachmentStoreOp VulkanRenderPass::AttachmentStoreOperationToVkAttachmentStoreOp(const AttachmentStoreOperation storeOperation)
+    VkAttachmentStoreOp VulkanRenderPass::AttachmentStoreOperationToVkAttachmentStoreOp(const RenderPassAttachmentStoreOperation storeOperation)
     {
         switch (storeOperation)
         {
-            case AttachmentStoreOperation::Store:       return VK_ATTACHMENT_STORE_OP_STORE;
-            case AttachmentStoreOperation::Discard:     return VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            case RenderPassAttachmentStoreOperation::Store:       return VK_ATTACHMENT_STORE_OP_STORE;
+            case RenderPassAttachmentStoreOperation::Discard:     return VK_ATTACHMENT_STORE_OP_DONT_CARE;
         }
 
         return VK_ATTACHMENT_STORE_OP_DONT_CARE;

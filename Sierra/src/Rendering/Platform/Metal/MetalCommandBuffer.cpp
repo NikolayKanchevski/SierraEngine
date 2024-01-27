@@ -105,6 +105,7 @@ namespace Sierra
 
         // Begin encoding next subpass
         currentRenderEncoder = commandBuffer->renderCommandEncoder(metalRenderPass.GetSubpass(currentSubpass));
+        device.SetResourceName(currentComputeEncoder, "Render encoder for render pass [" + renderPass->GetName() + "]");
 
         // Define viewport
         MTL::Viewport viewport = { };
@@ -148,7 +149,7 @@ namespace Sierra
         SR_ERROR_IF(graphicsPipeline->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin graphics pipeline [{0}], whose graphics API differs from [GraphicsAPI::Metal], from command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
         const MetalGraphicsPipeline &metalGraphicsPipeline = static_cast<MetalGraphicsPipeline&>(*graphicsPipeline);
 
-        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot begin graphics pipeline [{0}] if no render pass is active within command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
+        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot begin graphics pipeline [{0}] if no render encoder is active within command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
 
         // Bind pipeline and set appropriate settings
         currentRenderEncoder->setCullMode(metalGraphicsPipeline.GetCullMode());
@@ -164,7 +165,7 @@ namespace Sierra
     {
         SR_ERROR_IF(graphicsPipeline->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot end graphics pipeline [{0}], from command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
 
-        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot end graphics pipeline [{0}] if no render pass is active within command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
+        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot end graphics pipeline [{0}] if no render encoder is active within command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
         currentGraphicsPipeline = nullptr;
     }
 
@@ -173,7 +174,7 @@ namespace Sierra
         SR_ERROR_IF(vertexBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind vertex buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", vertexBuffer->GetName(), GetName());
         const MetalBuffer &metalVertexBuffer = static_cast<MetalBuffer&>(*vertexBuffer);
 
-        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot bind vertex buffer [{0}] if no render pass is active within command buffer [{1}]!", vertexBuffer->GetName(), GetName());
+        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot bind vertex buffer [{0}] if no render encoder is active within command buffer [{1}]!", vertexBuffer->GetName(), GetName());
 
         SR_ERROR_IF(offset > vertexBuffer->GetMemorySize(), "[Metal]: Cannot bind vertex buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", vertexBuffer->GetName(), GetName(), offset, vertexBuffer->GetMemorySize());
         currentRenderEncoder->setVertexBuffer(metalVertexBuffer.GetMetalBuffer(), offset, MetalPipelineLayout::VERTEX_BUFFER_SHADER_INDEX);
@@ -185,7 +186,7 @@ namespace Sierra
         const MetalBuffer &metalIndexBuffer = static_cast<MetalBuffer&>(*indexBuffer);
 
         SR_ERROR_IF(offset > indexBuffer->GetMemorySize(), "[Metal]: Cannot bind index buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", indexBuffer->GetName(), GetName(), offset, indexBuffer->GetMemorySize());
-        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot bind index buffer [{0}] if no render pass is active within command buffer [{1}]!", indexBuffer->GetName(), GetName());
+        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot bind index buffer [{0}] if no render encoder is active within command buffer [{1}]!", indexBuffer->GetName(), GetName());
 
         currentIndexBuffer = metalIndexBuffer.GetMetalBuffer();
         currentIndexBufferOffset = offset;
@@ -193,24 +194,61 @@ namespace Sierra
 
     void MetalCommandBuffer::Draw(const uint32 vertexCount)
     {
-        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot draw if no render pass is active within command buffer [{0}]!", GetName());
+        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot draw if no render encoder is active within command buffer [{0}]!", GetName());
         currentRenderEncoder->drawPrimitives(MTL::PrimitiveTypeTriangle, NS::UInteger(0), vertexCount);
     }
 
     void MetalCommandBuffer::DrawIndexed(const uint32 indexCount, const uint64 indexOffset, const uint64 vertexOffset)
     {
-        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot draw indexed if no render pass is active within command buffer [{0}]!", GetName());
+        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot draw indexed if no render encoder is active within command buffer [{0}]!", GetName());
         currentRenderEncoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, indexCount, MTL::IndexTypeUInt32, currentIndexBuffer, currentIndexBufferOffset + indexOffset, 1, static_cast<int32>(vertexOffset), 0);
+    }
+
+    void MetalCommandBuffer::BeginComputePipeline(const std::unique_ptr<ComputePipeline> &computePipeline)
+    {
+        SR_ERROR_IF(computePipeline->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin compute graphicsPipeline [{0}], whose graphics API differs from [GraphicsAPI::Metal], from command buffer [{1}]!", computePipeline->GetName(), GetName());
+        const MetalComputePipeline &metalComputePipeline = static_cast<MetalComputePipeline&>(*computePipeline);
+
+        // Begin encoding compute commands
+        currentComputeEncoder = commandBuffer->computeCommandEncoder(MTL::DispatchTypeConcurrent);
+        device.SetResourceName(currentComputeEncoder, "Compute encoder for pipeline [" + computePipeline->GetName() + "]");
+
+        // Assign provided compute pipeline
+        currentComputeEncoder->setComputePipelineState(metalComputePipeline.GetComputePipelineState());
+        currentComputePipeline = &metalComputePipeline;
+    }
+
+    void MetalCommandBuffer::EndComputePipeline(const std::unique_ptr<ComputePipeline> &computePipeline)
+    {
+        SR_ERROR_IF(computePipeline->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot end compute pipeline [{0}], from command buffer [{1}]!", computePipeline->GetName(), GetName());
+
+        currentComputeEncoder->endEncoding();
+        currentComputeEncoder = nullptr;
+    }
+
+    void MetalCommandBuffer::Dispatch(const uint32 xWorkGroupCount, const uint32 yWorkGroupCount, const uint32 zWorkGroupCount)
+    {
+        SR_ERROR_IF(currentComputeEncoder == nullptr, "[Metal]: Cannot dispatch if no compute pipeline is active within command buffer [{0}]!", GetName());
+
+        // Dispatch work groups
+        currentComputeEncoder->dispatchThreadgroups(MTL::Size(xWorkGroupCount, yWorkGroupCount, zWorkGroupCount), MTL::Size(1, 1, 1));
     }
 
     void MetalCommandBuffer::PushConstants(const void* data, const uint16 memoryRange, const uint16 offset)
     {
         const MetalPipelineLayout &currentPipelineLayout = currentGraphicsPipeline->GetLayout();
         SR_ERROR_IF(memoryRange > currentPipelineLayout.GetPushConstantSize(), "[Metal]: Cannot push [{0}] bytes of push constant data within command buffer [{1}], as specified memory range is bigger than specified in the current pipeline's layout, which is [{2}] bytes!", memoryRange, GetName(), currentPipelineLayout.GetPushConstantSize());
-        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot push constants if no render pass is active within command buffer [{0}]!", GetName());
 
-        currentRenderEncoder->setVertexBytes(data, memoryRange, currentPipelineLayout.GetPushConstantIndex());
-        if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentBytes(data, memoryRange, currentPipelineLayout.GetPushConstantIndex());
+        SR_ERROR_IF(currentRenderEncoder == nullptr && currentComputeEncoder == nullptr, "[Metal]: Cannot push constants if no encoder is active within command buffer [{0}]!", GetName());
+        if (currentComputeEncoder != nullptr)
+        {
+            currentComputeEncoder->setBytes(data, memoryRange, currentPipelineLayout.GetPushConstantIndex());
+        }
+        else
+        {
+            currentRenderEncoder->setVertexBytes(data, memoryRange, currentPipelineLayout.GetPushConstantIndex());
+            if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentBytes(data, memoryRange, currentPipelineLayout.GetPushConstantIndex());
+        }
     }
 
     void MetalCommandBuffer::BindBuffer(const uint32 binding, const std::unique_ptr<Buffer> &buffer, const uint32 arrayIndex, const uint64 memoryRange, const uint64 offset)
@@ -219,11 +257,19 @@ namespace Sierra
         const MetalBuffer &metalBuffer = static_cast<MetalBuffer&>(*buffer);
 
         SR_ERROR_IF(offset + memoryRange > buffer->GetMemorySize(), "[Metal]: Cannot bind [{0}] bytes (offset by another [{1}] bytes) from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, offset, buffer->GetName(), GetName(), offset + memoryRange, buffer->GetMemorySize());
-        const MetalPipelineLayout &currentPipelineLayout = currentGraphicsPipeline->GetLayout();
 
-        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot bind buffer [{0}] if no render pass is active within command buffer [{1}]!", buffer->GetName(), GetName());
-        currentRenderEncoder->setVertexBuffer(metalBuffer.GetMetalBuffer(), offset, currentPipelineLayout.GetBindingIndex(binding, arrayIndex));
-        if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentBuffer(metalBuffer.GetMetalBuffer(), offset, currentPipelineLayout.GetBindingIndex(binding, arrayIndex));
+        SR_ERROR_IF(currentRenderEncoder == nullptr && currentComputeEncoder == nullptr, "[Metal]: Cannot bind buffer [{0}] if no encoder is active within command buffer [{1}]!", buffer->GetName(), GetName());
+        if (currentComputeEncoder != nullptr)
+        {
+            const MetalPipelineLayout &pipelineLayout = currentComputePipeline->GetLayout();
+            currentComputeEncoder->setBuffer(metalBuffer.GetMetalBuffer(), offset, pipelineLayout.GetBindingIndex(binding, arrayIndex));
+        }
+        else
+        {
+            const MetalPipelineLayout &pipelineLayout = currentGraphicsPipeline->GetLayout();
+            currentRenderEncoder->setVertexBuffer(metalBuffer.GetMetalBuffer(), offset, pipelineLayout.GetBindingIndex(binding, arrayIndex));
+            if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentBuffer(metalBuffer.GetMetalBuffer(), offset, pipelineLayout.GetBindingIndex(binding, arrayIndex));
+        }
     }
 
     void MetalCommandBuffer::BindImage(const uint32 binding, const std::unique_ptr<Image> &image, const uint32 arrayIndex)
@@ -231,11 +277,18 @@ namespace Sierra
         SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind image [{0}], whose graphics API differs from [GraphicsAPI::Metal], to binding [{1}] within command buffer [{2}]!", image->GetName(), binding, GetName());
         const MetalImage &metalImage = static_cast<MetalImage&>(*image);
 
-        const MetalPipelineLayout &currentPipelineLayout = currentGraphicsPipeline->GetLayout();
-        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot bind image [{0}] if no render pass is active within command buffer [{1}]!", image->GetName(), GetName());
-
-        currentRenderEncoder->setVertexTexture(metalImage.GetMetalTexture(), currentPipelineLayout.GetBindingIndex(binding, arrayIndex));
-        if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentTexture(metalImage.GetMetalTexture(), currentPipelineLayout.GetBindingIndex(binding, arrayIndex));
+        SR_ERROR_IF(currentRenderEncoder == nullptr && currentComputeEncoder == nullptr, "[Metal]: Cannot bind image [{0}] if no encoder is active within command buffer [{1}]!", image->GetName(), GetName());
+        if (currentComputeEncoder != nullptr)
+        {
+            const MetalPipelineLayout &pipelineLayout = currentComputePipeline->GetLayout();
+            currentComputeEncoder->setTexture(metalImage.GetMetalTexture(), pipelineLayout.GetBindingIndex(binding, arrayIndex));
+        }
+        else
+        {
+            const MetalPipelineLayout &pipelineLayout = currentGraphicsPipeline->GetLayout();
+            currentRenderEncoder->setVertexTexture(metalImage.GetMetalTexture(), pipelineLayout.GetBindingIndex(binding, arrayIndex));
+            if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentTexture(metalImage.GetMetalTexture(), pipelineLayout.GetBindingIndex(binding, arrayIndex));
+        }
     }
 
     void MetalCommandBuffer::BeginDebugRegion(const std::string &regionName, const Color &color)
@@ -296,8 +349,11 @@ namespace Sierra
         memoryRange = memoryRange != 0 ? memoryRange : sourceBuffer->GetMemorySize();
         SR_ERROR_IF(sourceOffset + memoryRange > sourceBuffer->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, sourceOffset, sourceBuffer->GetName(), GetName(), sourceOffset + memoryRange, sourceBuffer->GetMemorySize());
         SR_ERROR_IF(destinationOffset + memoryRange > destinationBuffer->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, destinationOffset, destinationBuffer->GetName(), GetName(), destinationOffset + memoryRange, destinationBuffer->GetMemorySize());
+
         // Record copy
         MTL::BlitCommandEncoder* blitEncoder = commandBuffer->blitCommandEncoder();
+        device.SetResourceName(blitEncoder, "Transfer encoder");
+
         blitEncoder->copyFromBuffer(metalSourceBuffer.GetMetalBuffer(), sourceOffset, metalDestinationBuffer.GetMetalBuffer(), destinationOffset, memoryRange);
         blitEncoder->endEncoding();
     }
@@ -323,6 +379,13 @@ namespace Sierra
         MTL::BlitCommandEncoder* blitEncoder = commandBuffer->blitCommandEncoder();
         blitEncoder->copyFromBuffer(metalSourceBuffer.GetMetalBuffer(), sourceOffset, static_cast<uint64>(destinationImage->GetWidth()) * destinationImage->GetPixelSize(), 0, MTL::Size(destinationImage->GetWidth(), destinationImage->GetHeight(), 1), metalDestinationImage.GetMetalTexture(), memoryRange, mipLevel, MTL::Origin(destinationOffset.x, destinationOffset.y, 0));
         blitEncoder->endEncoding();
+    }
+
+    /* --- DESTRUCTOR --- */
+
+    MetalCommandBuffer::~MetalCommandBuffer()
+    {
+        commandBuffer->release();
     }
 
     /* --- CONVERSIONS --- */

@@ -314,9 +314,6 @@ namespace Sierra
             contentRect.size = NSMakeSize([view frame].size.width, [view frame].size.height - GetTitleBarHeight());
             [window setFrame: [window frameRectForContentRect: contentRect] display: YES];
         }
-
-        // Poll create events
-        while (cocoaContext.PollNextEvent() != nullptr);
     }
 
     /* --- POLLING METHODS --- */

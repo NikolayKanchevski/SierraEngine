@@ -37,8 +37,8 @@ namespace Sierra
         ~MetalRenderPass() override;
 
         /* --- CONVERSIONS --- */
-        static MTL::LoadAction AttachmentLoadOperationToLoadAction(AttachmentLoadOperation loadOperation);
-        static MTL::StoreAction AttachmentStoreOperationToStoreAction(AttachmentStoreOperation storeOperation);
+        static MTL::LoadAction AttachmentLoadOperationToLoadAction(RenderPassAttachmentLoadOperation loadOperation);
+        static MTL::StoreAction AttachmentStoreOperationToStoreAction(RenderPassAttachmentStoreOperation storeOperation);
 
     private:
         std::vector<MTL::RenderPassDescriptor*> renderPassDescriptors;

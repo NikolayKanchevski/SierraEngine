@@ -66,8 +66,8 @@ private:
         renderPass = GetRenderingContext().CreateRenderPass({
             .name = "Swapchain Render Pass",
             .attachments = {
-                { .templateImage = swapchain->GetImage(0), .type = AttachmentType::Color },
-                { .templateImage = depthBuffer, .type = AttachmentType::Depth }
+                { .templateImage = swapchain->GetImage(0), .type = RenderPassAttachmentType::Color },
+                { .templateImage = depthBuffer, .type = RenderPassAttachmentType::Depth }
             },
             .subpassDescriptions = {
                 { .renderTargets = { 0, 1 } }
@@ -253,7 +253,7 @@ public:
 int main()
 {
     // Create and run application
-    std::unique_ptr<SandboxApplication> application = std::make_unique<SandboxApplication>(ApplicationCreateInfo{ .name = "Sandbox",.settings={.graphicsAPI=Sierra::GraphicsAPI::Vulkan} });
+    std::unique_ptr<SandboxApplication> application = std::make_unique<SandboxApplication>(ApplicationCreateInfo{ .name = "Sandbox" });
     application->Run();
     return 0;
 }

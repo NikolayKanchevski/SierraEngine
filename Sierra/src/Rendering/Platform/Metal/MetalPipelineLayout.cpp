@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    MetalPipelineLayout::MetalPipelineLayout(const Sierra::MetalDevice &metalDevice, const Sierra::PipelineLayoutCreateInfo &createInfo)
+    MetalPipelineLayout::MetalPipelineLayout(const MetalDevice &metalDevice, const PipelineLayoutCreateInfo &createInfo)
         : PipelineLayout(createInfo), MetalResource(createInfo.name), pushConstantSize(createInfo.pushConstantSize)
     {
         // Calculate binding index offsets (indexing on Metal is not supported, so a separate resource for every entry in the array is created, and its index is "global")

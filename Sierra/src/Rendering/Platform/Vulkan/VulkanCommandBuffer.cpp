@@ -280,7 +280,7 @@ namespace Sierra
 
     void VulkanCommandBuffer::EndGraphicsPipeline(const std::unique_ptr<GraphicsPipeline> &graphicsPipeline)
     {
-        SR_ERROR_IF(graphicsPipeline->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot end graphics graphicsPipeline [{0}], from command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
+        SR_ERROR_IF(graphicsPipeline->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot end graphics pipeline [{0}], from command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
         currentGraphicsPipeline = nullptr;
     }
 
@@ -306,7 +306,7 @@ namespace Sierra
 
     void VulkanCommandBuffer::Draw(const uint32 vertexCount)
     {
-        SR_ERROR_IF(currentGraphicsPipeline == nullptr, "[Vulkan]: Cannot draw if no pipeline is active within command buffer [{0}]!", GetName());
+        SR_ERROR_IF(currentGraphicsPipeline == nullptr, "[Vulkan]: Cannot draw if no graphics pipeline is active within command buffer [{0}]!", GetName());
 
         BindResources();
         device.GetFunctionTable().vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
@@ -320,10 +320,33 @@ namespace Sierra
         device.GetFunctionTable().vkCmdDrawIndexed(commandBuffer, indexCount, 1, indexOffset, static_cast<int32>(vertexOffset), 0);
     }
 
+    void VulkanCommandBuffer::BeginComputePipeline(const std::unique_ptr<ComputePipeline> &computePipeline)
+    {
+        SR_ERROR_IF(computePipeline->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin compute graphicsPipeline [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], from command buffer [{1}]!", computePipeline->GetName(), GetName());
+        const VulkanComputePipeline &vulkanComputePipeline = static_cast<VulkanComputePipeline&>(*computePipeline);
+
+        device.GetFunctionTable().vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, vulkanComputePipeline.GetVulkanPipeline());
+        currentComputePipeline = &vulkanComputePipeline;
+    }
+
+    void VulkanCommandBuffer::EndComputePipeline(const std::unique_ptr<ComputePipeline> &computePipeline)
+    {
+        SR_ERROR_IF(computePipeline->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot end compute pipeline [{0}], from command buffer [{1}]!", computePipeline->GetName(), GetName());
+        currentComputePipeline = nullptr;
+    }
+
+    void VulkanCommandBuffer::Dispatch(const uint32 xWorkGroupCount, const uint32 yWorkGroupCount, const uint32 zWorkGroupCount)
+    {
+        SR_ERROR_IF(currentComputePipeline == nullptr, "[Vulkan]: Cannot dispatch if no compute pipeline is active within command buffer [{0}]!", GetName());
+
+        BindResources();
+        device.GetFunctionTable().vkCmdDispatch(commandBuffer, xWorkGroupCount, yWorkGroupCount, zWorkGroupCount);
+    }
+
     void VulkanCommandBuffer::PushConstants(const void* data, const uint16 memoryRange, const uint16 offset)
     {
-        SR_ERROR_IF(currentGraphicsPipeline == nullptr, "[Vulkan]: Cannot push constants if no pipeline is active within command buffer [{0}]!", GetName());
-        const VulkanPipelineLayout &currentPipelineLayout = currentGraphicsPipeline->GetLayout();
+        SR_ERROR_IF(currentGraphicsPipeline == nullptr && currentComputePipeline == nullptr, "[Vulkan]: Cannot push constants if no pipeline is active within command buffer [{0}]!", GetName());
+        const VulkanPipelineLayout &currentPipelineLayout = currentComputePipeline != nullptr ? currentComputePipeline->GetLayout() : currentGraphicsPipeline->GetLayout();
 
         SR_ERROR_IF(memoryRange > currentPipelineLayout.GetPushConstantSize(), "[Vulkan]: Cannot push [{0}] bytes of push constant data within command buffer [{1}], as specified memory range is bigger than specified in the current pipeline's layout, which is [{2}] bytes!", memoryRange, GetName(), currentPipelineLayout.GetPushConstantSize());
         device.GetFunctionTable().vkCmdPushConstants(commandBuffer, currentPipelineLayout.GetVulkanPipelineLayout(), VK_SHADER_STAGE_ALL, offset, memoryRange, data);
@@ -405,7 +428,10 @@ namespace Sierra
     {
         if (resourcesBound) return;
 
-        if (!pushDescriptorSet.GetWriteDescriptorSets().empty()) device.GetFunctionTable().vkCmdPushDescriptorSetKHR(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, currentGraphicsPipeline->GetLayout().GetVulkanPipelineLayout(), 0, pushDescriptorSet.GetWriteDescriptorSets().size(), pushDescriptorSet.GetWriteDescriptorSets().data());
+        const VkPipelineBindPoint bindPoint = currentComputePipeline != nullptr ? VK_PIPELINE_BIND_POINT_COMPUTE : VK_PIPELINE_BIND_POINT_GRAPHICS;
+        const VulkanPipelineLayout &currentPipelineLayout = currentComputePipeline != nullptr ? currentComputePipeline->GetLayout() : currentGraphicsPipeline->GetLayout();
+
+        if (!pushDescriptorSet.GetWriteDescriptorSets().empty()) device.GetFunctionTable().vkCmdPushDescriptorSetKHR(commandBuffer, bindPoint, currentPipelineLayout.GetVulkanPipelineLayout(), 0, pushDescriptorSet.GetWriteDescriptorSets().size(), pushDescriptorSet.GetWriteDescriptorSets().data());
         resourcesBound = true;
     }
 

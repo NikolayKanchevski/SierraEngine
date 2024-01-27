@@ -46,7 +46,7 @@ private:
         renderPass = GetRenderingContext().CreateRenderPass({
             .name = "Swapchain Render Pass",
             .attachments = {
-                { .templateImage = swapchain->GetImage(0), .type = AttachmentType::Color }
+                { .templateImage = swapchain->GetImage(0), .type = RenderPassAttachmentType::Color }
             },
             .subpassDescriptions = {
                 { .renderTargets = { 0 } }

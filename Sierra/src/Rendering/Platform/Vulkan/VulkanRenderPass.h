@@ -34,8 +34,8 @@ namespace Sierra
         ~VulkanRenderPass() override;
 
         /* --- CONVERSIONS --- */
-        static VkAttachmentLoadOp AttachmentLoadOperationToVkAttachmentLoadOp(AttachmentLoadOperation loadOperation);
-        static VkAttachmentStoreOp AttachmentStoreOperationToVkAttachmentStoreOp(AttachmentStoreOperation storeOperation);
+        static VkAttachmentLoadOp AttachmentLoadOperationToVkAttachmentLoadOp(RenderPassAttachmentLoadOperation loadOperation);
+        static VkAttachmentStoreOp AttachmentStoreOperationToVkAttachmentStoreOp(RenderPassAttachmentStoreOperation storeOperation);
 
     private:
         const VulkanDevice &device;

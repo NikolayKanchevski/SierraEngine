@@ -53,6 +53,8 @@ if(Vulkan_LIBRARIES)
         VulkanBuffer.h
         VulkanCommandBuffer.cpp
         VulkanCommandBuffer.h
+        VulkanComputePipeline.cpp
+        VulkanComputePipeline.h
         VulkanContext.cpp
         VulkanContext.h
         VulkanDescriptorSets.cpp

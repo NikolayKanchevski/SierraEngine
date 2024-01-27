@@ -9,6 +9,7 @@
 
 #include "MetalDevice.h"
 #include "MetalGraphicsPipeline.h"
+#include "MetalComputePipeline.h"
 
 namespace Sierra
 {
@@ -42,6 +43,11 @@ namespace Sierra
         void Draw(uint32 vertexCount) override;
         void DrawIndexed(uint32 indexCount, uint64 indexOffset = 0, uint64 vertexOffset = 0) override;
 
+        void BeginComputePipeline(const std::unique_ptr<ComputePipeline> &computePipeline) override;
+        void EndComputePipeline(const std::unique_ptr<ComputePipeline> &computePipeline) override;
+
+        void Dispatch(uint32 xWorkGroupCount, uint32 yWorkGroupCount, uint32 zWorkGroupCount) override;
+
         void PushConstants(const void* data, uint16 memoryRange, uint16 offset = 0) override;
         void BindBuffer(uint32 binding, const std::unique_ptr<Buffer> &buffer, uint32 arrayIndex = 0, uint64 memoryRange = 0, uint64 offset = 0) override;
         void BindImage(uint32 binding, const std::unique_ptr<Image> &image, uint32 arrayIndex = 0) override;
@@ -53,17 +59,13 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline MTL::CommandBuffer* GetMetalCommandBuffer() const { return commandBuffer; }
         [[nodiscard]] inline bool HasFinishedExecution() const { return finishedExecution; }
-        [[nodiscard]] inline MTL::RenderCommandEncoder* GetCurrentRenderEncoder() const { return currentRenderEncoder; }
-
-        [[nodiscard]] inline MTL::Buffer* GetCurrentIndexBuffer() const { return currentIndexBuffer; }
-        [[nodiscard]] inline uint64 GetCurrentIndexBufferOffset() const { return currentIndexBufferOffset; }
 
         /* --- CONVERSIONS --- */
         [[nodiscard]] static MTL::RenderStages BufferCommandUsageToRenderStages(BufferCommandUsage bufferCommandUsage);
         [[nodiscard]] static MTL::RenderStages ImageCommandUsageToRenderStages(ImageCommandUsage imageCommandUsage);
 
         /* --- DESTRUCTOR --- */
-        ~MetalCommandBuffer() override = default;
+        ~MetalCommandBuffer() override;
 
     private:
         const MetalDevice &device;
@@ -71,9 +73,11 @@ namespace Sierra
         std::atomic<bool> finishedExecution = true;
 
         MTL::RenderCommandEncoder* currentRenderEncoder = nullptr;
+        MTL::ComputeCommandEncoder* currentComputeEncoder = nullptr;
         uint32 currentSubpass = 0;
 
         const MetalGraphicsPipeline* currentGraphicsPipeline = nullptr;
+        const MetalComputePipeline* currentComputePipeline = nullptr;
 
         MTL::Buffer* currentIndexBuffer = nullptr;
         uint64 currentIndexBufferOffset = 0;

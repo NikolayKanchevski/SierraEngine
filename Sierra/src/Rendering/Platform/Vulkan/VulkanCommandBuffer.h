@@ -11,6 +11,7 @@
 #include "VulkanDescriptorSets.h"
 
 #include "VulkanGraphicsPipeline.h"
+#include "VulkanComputePipeline.h"
 
 namespace Sierra
 {
@@ -44,6 +45,11 @@ namespace Sierra
         void Draw(uint32 vertexCount) override;
         void DrawIndexed(uint32 indexCount, uint64 indexOffset = 0, uint64 vertexOffset = 0) override;
 
+        void BeginComputePipeline(const std::unique_ptr<ComputePipeline> &computePipeline) override;
+        void EndComputePipeline(const std::unique_ptr<ComputePipeline> &computePipeline) override;
+
+        void Dispatch(uint32 xWorkGroupCount, uint32 yWorkGroupCount, uint32 zWorkGroupCount) override;
+
         void PushConstants(const void* data, uint16 memoryRange, uint16 offset = 0) override;
         void BindBuffer(uint32 binding, const std::unique_ptr<Buffer> &buffer, uint32 arrayIndex = 0, uint64 memoryRange = 0, uint64 offset = 0) override;
         void BindImage(uint32 binding, const std::unique_ptr<Image> &image, uint32 arrayIndex = 0) override;
@@ -74,6 +80,7 @@ namespace Sierra
         uint64 signalValue = 0;
 
         const VulkanGraphicsPipeline* currentGraphicsPipeline = nullptr;
+        const VulkanComputePipeline* currentComputePipeline = nullptr;
 
         VulkanPushDescriptorSet pushDescriptorSet;
         bool resourcesBound = false;

@@ -11,32 +11,31 @@
 namespace Sierra
 {
 
-    enum class AttachmentLoadOperation : bool
+    enum class RenderPassAttachmentLoadOperation : bool
     {
         Clear,
         Load
     };
 
-    enum class AttachmentStoreOperation : bool
+    enum class RenderPassAttachmentStoreOperation : bool
     {
         Store,
         Discard
     };
 
-    enum class AttachmentType : bool
+    enum class RenderPassAttachmentType : bool
     {
         Color,
         Depth
     };
-    SR_DEFINE_ENUM_FLAG_OPERATORS(AttachmentType);
 
     struct RenderPassAttachment
     {
         const std::optional<std::reference_wrapper<std::unique_ptr<Image>>> resolveImage;
         const std::unique_ptr<Image> &templateImage;
-        AttachmentType type = AttachmentType::Color;
-        AttachmentLoadOperation loadOperation = AttachmentLoadOperation::Clear;
-        AttachmentStoreOperation storeOperation = AttachmentStoreOperation::Store;
+        RenderPassAttachmentType type = RenderPassAttachmentType::Color;
+        RenderPassAttachmentLoadOperation loadOperation = RenderPassAttachmentLoadOperation::Clear;
+        RenderPassAttachmentStoreOperation storeOperation = RenderPassAttachmentStoreOperation::Store;
     };
 
     struct SubpassDescription

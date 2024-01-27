@@ -11,6 +11,7 @@
 
 #include "RenderPass.h"
 #include "GraphicsPipeline.h"
+#include "ComputePipeline.h"
 
 namespace Sierra
 {
@@ -72,6 +73,11 @@ namespace Sierra
 
         virtual void Draw(uint32 vertexCount) = 0;
         virtual void DrawIndexed(uint32 indexCount, uint64 indexOffset = 0, uint64 vertexOffset = 0) = 0;
+
+        virtual void BeginComputePipeline(const std::unique_ptr<ComputePipeline> &computePipeline) = 0;
+        virtual void EndComputePipeline(const std::unique_ptr<ComputePipeline> &computePipeline) = 0;
+
+        virtual void Dispatch(uint32 xWorkGroupCount, uint32 yWorkGroupCount, uint32 zWorkGroupCount) = 0;
 
         virtual void PushConstants(const void* data, uint16 memoryRange, uint16 offset = 0) = 0;
         virtual void BindBuffer(uint32 binding, const std::unique_ptr<Buffer> &buffer, uint32 arrayIndex = 0, uint64 memoryRange = 0, uint64 offset = 0) = 0;

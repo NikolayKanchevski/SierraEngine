@@ -4,6 +4,8 @@ target_sources(Sierra PRIVATE
     Buffer.h
     CommandBuffer.cpp
     CommandBuffer.h
+    ComputePipeline.cpp
+    ComputePipeline.h
     Device.cpp
     Device.h
     GraphicsPipeline.cpp

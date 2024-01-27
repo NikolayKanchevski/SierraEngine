@@ -21,11 +21,11 @@ namespace Sierra
         {
             const RenderPassAttachment &attachment = *(createInfo.attachments.begin() + i);
 
-            if (attachment.type == AttachmentType::Depth)
+            if (attachment.type == RenderPassAttachmentType::Depth)
             {
                 depthAttachmentIndex = i;
             }
-            else if (attachment.type == AttachmentType::Color)
+            else if (attachment.type == RenderPassAttachmentType::Color)
             {
                 if (attachment.resolveImage.has_value()) resolvedColorAttachmentIndices.emplace_back(i);
                 colorAttachmentCount++;
@@ -56,7 +56,7 @@ namespace Sierra
                 SR_ERROR_IF(renderTarget.templateImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not use image of attachment [{0}] in subpass [{1}] within render pass [{2}] with a graphics API, which differs from [GraphicsAPI::Metal]!", renderTargetIndex, i, GetName());
 
                 const MetalImage &metalImage = static_cast<MetalImage&>(*renderTarget.templateImage);
-                if (renderTarget.type == AttachmentType::Color)
+                if (renderTarget.type == RenderPassAttachmentType::Color)
                 {
                     // Add color attachment
                     MTL::RenderPassColorAttachmentDescriptor* colorAttachment = subpass->colorAttachments()->object(subpassColorAttachmentCount);
@@ -72,12 +72,12 @@ namespace Sierra
                         SR_ERROR_IF(renderTarget.resolveImage->get()->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not use image [{0}] of attachment [{1}] in render pass [{2}] for resolving, as its graphics API differs from [GraphicsAPI::Metal]!", renderTarget.resolveImage->get()->GetName(), renderTargetIndex, GetName());
                         const MetalImage &metalResolveImage = static_cast<MetalImage&>(*renderTarget.resolveImage->get());
 
-                        colorAttachment->setStoreAction(renderTarget.storeOperation == AttachmentStoreOperation::Store ? MTL::StoreActionStoreAndMultisampleResolve : MTL::StoreActionDontCare);
+                        colorAttachment->setStoreAction(renderTarget.storeOperation == RenderPassAttachmentStoreOperation::Store ? MTL::StoreActionStoreAndMultisampleResolve : MTL::StoreActionDontCare);
                         colorAttachment->setResolveTexture(metalResolveImage.GetMetalTexture());  // NOTE: We assign texture here, even though it will be overwritten at Begin(), so that pipeline can query its pixel format
                     }
 
                 }
-                else if (renderTarget.type == AttachmentType::Depth)
+                else if (renderTarget.type == RenderPassAttachmentType::Depth)
                 {
                     // Set depth attachment
                     MTL::RenderPassDepthAttachmentDescriptor* depthAttachment = subpass->depthAttachment();
@@ -115,23 +115,23 @@ namespace Sierra
 
     /* --- CONVERSIONS --- */
 
-    MTL::LoadAction MetalRenderPass::AttachmentLoadOperationToLoadAction(const AttachmentLoadOperation loadOperation)
+    MTL::LoadAction MetalRenderPass::AttachmentLoadOperationToLoadAction(const RenderPassAttachmentLoadOperation loadOperation)
     {
         switch (loadOperation)
         {
-            case AttachmentLoadOperation::Clear:        return MTL::LoadActionClear;
-            case AttachmentLoadOperation::Load:         return MTL::LoadActionLoad;
+            case RenderPassAttachmentLoadOperation::Clear:        return MTL::LoadActionClear;
+            case RenderPassAttachmentLoadOperation::Load:         return MTL::LoadActionLoad;
         }
 
         return MTL::LoadActionDontCare;
     }
 
-    MTL::StoreAction MetalRenderPass::AttachmentStoreOperationToStoreAction(const AttachmentStoreOperation storeOperation)
+    MTL::StoreAction MetalRenderPass::AttachmentStoreOperationToStoreAction(const RenderPassAttachmentStoreOperation storeOperation)
     {
         switch (storeOperation)
         {
-            case AttachmentStoreOperation::Store:       return MTL::StoreActionStore;
-            case AttachmentStoreOperation::Discard:     return MTL::StoreActionDontCare;
+            case RenderPassAttachmentStoreOperation::Store:       return MTL::StoreActionStore;
+            case RenderPassAttachmentStoreOperation::Discard:     return MTL::StoreActionDontCare;
         }
 
         return MTL::StoreActionDontCare;

@@ -20,6 +20,8 @@ target_sources(Sierra PRIVATE
     MetalBuffer.h
     MetalCommandBuffer.cpp
     MetalCommandBuffer.h
+    MetalComputePipeline.cpp
+    MetalComputePipeline.h
     MetalContext.cpp
     MetalContext.h
     MetalDevice.cpp
