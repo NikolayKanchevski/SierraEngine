@@ -5,13 +5,13 @@
 #include <Sierra.h>
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-/////                Simple Cross-Platform Multi-API 2D Rendering Test                  //////
+/////                  Simple Cross-Platform ImGui UI Rendering Test                    //////
 //////////////////////////////////////////////////////////////////////////////////////////////
 class SandboxApplication final : public Application
 {
 public:
     explicit SandboxApplication(const ApplicationCreateInfo &createInfo)
-        : Application(createInfo)
+            : Application(createInfo)
     {
         APP_INFO("Application launched.");
     }
@@ -19,13 +19,8 @@ public:
 private:
     std::unique_ptr<Window> window = nullptr;
     std::unique_ptr<Swapchain> swapchain = nullptr;
-    std::unique_ptr<RenderPass> renderPass = nullptr;
 
-    std::unique_ptr<Shader> vertexShader = nullptr;
-    std::unique_ptr<Shader> fragmentShader = nullptr;
-
-    std::unique_ptr<PipelineLayout> pipelineLayout = nullptr;
-    std::unique_ptr<GraphicsPipeline> graphicsPipeline = nullptr;
+    std::unique_ptr<ImGuiRenderTask> imGuiTask = nullptr;
     std::vector<std::unique_ptr<CommandBuffer>> commandBuffers;
 
     void OnStart() override
@@ -39,33 +34,14 @@ private:
         // Handle swapchain resizing
         swapchain->OnEvent<SwapchainResizeEvent>([this](const SwapchainResizeEvent &event) {
             GetRenderingContext()->GetDevice().WaitForCommandBuffer(commandBuffers[swapchain->GetCurrentFrame()]);
-            renderPass->Resize(event.GetSize().x, event.GetSize().y);
+            imGuiTask->Resize(event.GetSize().x, event.GetSize().y);
             return false;
         });
 
-        // Create render pass
-        renderPass = GetRenderingContext()->CreateRenderPass({
-            .name = "Swapchain Render Pass",
-            .attachments = {
-                { .templateImage = swapchain->GetImage(0), .type = RenderPassAttachmentType::Color }
-            },
-            .subpassDescriptions = {
-                { .renderTargets = { 0 } }
-            }
-        });
-
-        // Load shaders
-        vertexShader = GetRenderingContext()->CreateShader({ .name = "Triangle Vertex Shader", .shaderBundlePath = GetResourcesDirectoryPath() / "shaders/TriangleShader.vert.shader", .shaderType = ShaderType::Vertex });
-        fragmentShader = GetRenderingContext()->CreateShader({ .name = "Triangle Fragment Shader", .shaderBundlePath = GetResourcesDirectoryPath() / "shaders/TriangleShader.frag.shader", .shaderType = ShaderType::Fragment });
-
-        // Create graphics pipeline
-        pipelineLayout = GetRenderingContext()->CreatePipelineLayout({ .name = "Triangle Graphics Pipeline Layout" });
-        graphicsPipeline = GetRenderingContext()->CreateGraphicsPipeline({
-            .name = "Triangle Graphics Pipeline",
-            .vertexShader = vertexShader,
-            .fragmentShader = fragmentShader,
-            .layout = pipelineLayout,
-            .renderPass = renderPass
+        // Create ImGui context
+        imGuiTask = GetRenderingContext()->CreateImGuiRenderTask({
+            .templateImage = swapchain->GetImage(0),
+            .scaling = static_cast<float32>(swapchain->GetImage(0)->GetWidth() / window->GetSize().x)
         });
 
         // Create a command buffer for every concurrent frame
@@ -90,20 +66,14 @@ private:
         // Swap out old swapchain image
         swapchain->AcquireNextImage();
 
-        // Begin rendering to current swapchain image
-        commandBuffer->BeginRenderPass(renderPass, { { .image = swapchain->GetCurrentImage() } });
+        // Begin ImGui frame
+        imGuiTask->BeginFrame( window->GetInputManager(), window->GetCursorManager());
 
-        // Start graphics pipeline
-        commandBuffer->BeginGraphicsPipeline(graphicsPipeline);
+        // End ImGui frame
+        imGuiTask->EndFrame();
 
-        // Draw the 3 vertices of the triangle
-        commandBuffer->Draw(3);
-
-        // End pipeline
-        commandBuffer->EndGraphicsPipeline(graphicsPipeline);
-
-        // End render pass
-        commandBuffer->EndRenderPass(renderPass);
+        // Execute ImGui task, which is to render to window
+        imGuiTask->Render(commandBuffer, swapchain->GetCurrentImage());
 
         // Wait until image is written to before presenting it to screen
         commandBuffer->SynchronizeImageUsage(swapchain->GetCurrentImage(), ImageCommandUsage::AttachmentWrite, ImageCommandUsage::Present);

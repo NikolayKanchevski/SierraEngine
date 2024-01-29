@@ -29,6 +29,8 @@ namespace Sierra
             if (commandBuffer != nullptr) commandBuffer->release(); // NOTE: For some reason not calling this causes a memory leak on macOS (despite spec stating manual release is unnecessary, and thus, and a crash on iOS)
         #endif
 
+        FreeQueuedResources();
+
         // Set up command buffer descriptor
         MTL::CommandBufferDescriptor* commandBufferDescriptor = MTL::CommandBufferDescriptor::alloc()->init();
         #if SR_ENABLE_LOGGING
@@ -51,6 +53,83 @@ namespace Sierra
     {
         currentIndexBuffer = nullptr;
         currentIndexBufferOffset = 0;
+    }
+
+    void MetalCommandBuffer::SynchronizeBufferUsage(const std::unique_ptr<Buffer> &buffer, const BufferCommandUsage previousUsage, const BufferCommandUsage nextUsage, const uint64 memorySize, const uint64 offset)
+    {
+        SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not synchronize usage of buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer->GetName(), GetName());
+        const MetalBuffer &metalBuffer = static_cast<MetalBuffer&>(*buffer);
+
+        const MTL::Resource* bufferResource = metalBuffer.GetMetalBuffer();
+        currentRenderEncoder->memoryBarrier(&bufferResource, 1, BufferCommandUsageToRenderStages(previousUsage), BufferCommandUsageToRenderStages(nextUsage));
+    }
+
+    void MetalCommandBuffer::SynchronizeImageUsage(const std::unique_ptr<Image> &image, const ImageCommandUsage previousUsage, const ImageCommandUsage nextUsage, const uint32 baseMipLevel, const uint32 mipLevelCount, const uint32 baseLayer, const uint32 layerCount)
+    {
+        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not synchronize usage of image [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image->GetName(), GetName());
+        const MetalImage &metalImage = static_cast<MetalImage&>(*image);
+
+        SR_ERROR_IF(baseMipLevel >= image->GetMipLevelCount(), "[Metal]: Cannot synchronize mip level [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseMipLevel, image->GetName(), GetName());
+        SR_ERROR_IF(baseMipLevel + mipLevelCount >= image->GetMipLevelCount(), "[Metal]: Cannot synchronize mip levels [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's mip level count - [{4}]!", baseMipLevel, baseMipLevel + mipLevelCount, image->GetName(), GetName(), image->GetMipLevelCount());
+        SR_ERROR_IF(baseLayer >= image->GetLayerCount(), "[Metal]: Cannot synchronize layer [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseLayer, image->GetName(), GetName());
+        SR_ERROR_IF(baseLayer + layerCount >= image->GetLayerCount(), "[Metal]: Cannot synchronize layers [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's layer count - [{4}]!", baseLayer, baseLayer + layerCount, image->GetName(), GetName(), image->GetLayerCount());
+
+        const MTL::Resource* textureResource = metalImage.GetMetalTexture();
+        currentRenderEncoder->memoryBarrier(&textureResource, 1, ImageCommandUsageToRenderStages(previousUsage), ImageCommandUsageToRenderStages(nextUsage));
+    }
+
+    void MetalCommandBuffer::CopyBufferToBuffer(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Buffer> &destinationBuffer, uint64 memoryRange, const uint64 sourceOffset, const uint64 destinationOffset)
+    {
+        SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy from buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", sourceBuffer->GetName(), GetName());
+        const MetalBuffer &metalSourceBuffer = static_cast<MetalBuffer&>(*sourceBuffer);
+
+        SR_ERROR_IF(destinationBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy to buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", destinationBuffer->GetName(), GetName());
+        const MetalBuffer &metalDestinationBuffer = static_cast<MetalBuffer&>(*destinationBuffer);
+
+        memoryRange = memoryRange != 0 ? memoryRange : sourceBuffer->GetMemorySize();
+        SR_ERROR_IF(sourceOffset + memoryRange > sourceBuffer->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, sourceOffset, sourceBuffer->GetName(), GetName(), sourceOffset + memoryRange, sourceBuffer->GetMemorySize());
+        SR_ERROR_IF(destinationOffset + memoryRange > destinationBuffer->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, destinationOffset, destinationBuffer->GetName(), GetName(), destinationOffset + memoryRange, destinationBuffer->GetMemorySize());
+
+        // Record copy
+        MTL::BlitCommandEncoder* blitEncoder = commandBuffer->blitCommandEncoder();
+        device.SetResourceName(blitEncoder, "Transfer encoder");
+
+        blitEncoder->copyFromBuffer(metalSourceBuffer.GetMetalBuffer(), sourceOffset, metalDestinationBuffer.GetMetalBuffer(), destinationOffset, memoryRange);
+        blitEncoder->endEncoding();
+    }
+
+    void MetalCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const Vector2UInt &pixelRange, const uint32 sourcePixelOffset, const Vector2UInt &destinationOffset, const uint32 mipLevel, const uint32 baseLayer, const uint32 layerCount)
+    {
+        SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy from buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], to image [{1}] within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
+        const MetalBuffer &metalSourceBuffer = static_cast<MetalBuffer&>(*sourceBuffer);
+
+        SR_ERROR_IF(destinationImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not from buffer [{0}] to image [{1}], graphics API differs from [GraphicsAPI::Metal], within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
+        const MetalImage &metalDestinationImage = static_cast<MetalImage&>(*destinationImage);
+
+        SR_ERROR_IF(mipLevel >= destinationImage->GetMipLevelCount(), "[Metal]: Cannot copy from buffer [{0}] to mip level [{1}] of image [{2}] within command buffer [{3}], as it does not have it!", sourceBuffer->GetName(), mipLevel, destinationImage->GetName(), GetName());
+        SR_ERROR_IF(baseLayer >= destinationImage->GetLayerCount(), "[Metal]: Cannot copy from buffer [{0}] to layer [{1}] of image [{2}] within command buffer [{3}], as it does not have it!", sourceBuffer->GetName(), baseLayer, destinationImage->GetName(), GetName());
+        SR_ERROR_IF(baseLayer + layerCount >= destinationImage->GetLayerCount(), "[Metal]: Cannot copy from buffer [{0}] to layers [{1}-{2}] of image [{3}] within command buffer [{4}], as they exceed image's layer count - [{5}]!", sourceBuffer->GetName(), baseLayer, baseLayer + layerCount, destinationImage->GetName(), GetName(), destinationImage->GetLayerCount());
+        SR_ERROR_IF((destinationOffset + pixelRange).x >= destinationImage->GetWidth() || (destinationOffset + pixelRange).y >= destinationImage->GetHeight(), "[Metal]: Cannot copy from buffer [{0}] pixel range [{1}x{2}], which is offset by another [{3}x{4}] pixels to image [{5}] within command buffer [{6}], as resulting pixel range of a total of [{7}x{8}] pixels is outside of image's dimensions - [{9}x{10}] !", sourceBuffer->GetName(), pixelRange.x, pixelRange.y, destinationOffset.x, destinationOffset.y, destinationImage->GetName(), GetName(), (destinationOffset + pixelRange).x, (destinationOffset + pixelRange).y, destinationImage->GetWidth(), destinationImage->GetHeight());
+
+        const uint64 memoryRange = static_cast<uint64>(pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth()) * (pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight()) * destinationImage->GetPixelSize();
+        SR_ERROR_IF(sourcePixelOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()) > sourceBuffer->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), sourcePixelOffset, sourceBuffer->GetName(), GetName(), sourcePixelOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()), sourceBuffer->GetMemorySize());
+        SR_ERROR_IF((static_cast<uint64>(destinationOffset.x) + destinationOffset.y + pixelRange.x + pixelRange.y) * destinationImage->GetPixelSize() > destinationImage->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to image [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the image - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), (destinationOffset.x + destinationOffset.y) * destinationImage->GetPixelSize(), destinationImage->GetName(), GetName(), (static_cast<uint64>(destinationOffset.x) + destinationOffset.y + pixelRange.x + pixelRange.y) * destinationImage->GetPixelSize(), destinationImage->GetMemorySize());
+
+        // Record copy
+        MTL::BlitCommandEncoder* blitEncoder = commandBuffer->blitCommandEncoder();
+        blitEncoder->copyFromBuffer(metalSourceBuffer.GetMetalBuffer(), sourcePixelOffset, static_cast<uint64>(destinationImage->GetWidth()) * destinationImage->GetPixelSize(), 0, MTL::Size(destinationImage->GetWidth(), destinationImage->GetHeight(), layerCount), metalDestinationImage.GetMetalTexture(), memoryRange, mipLevel, MTL::Origin(destinationOffset.x, destinationOffset.y, baseLayer));
+        blitEncoder->endEncoding();
+    }
+
+    void MetalCommandBuffer::BlitImage(const std::unique_ptr<Image> &image)
+    {
+        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not blit image [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", image->GetName(), GetName());
+        const MetalImage &metalImage = static_cast<MetalImage&>(*image);
+
+        // Record blit
+        MTL::BlitCommandEncoder* blitEncoder = commandBuffer->blitCommandEncoder();
+        blitEncoder->generateMipmaps(metalImage.GetMetalTexture());
+        blitEncoder->endEncoding();
     }
 
     void MetalCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments)
@@ -322,7 +401,7 @@ namespace Sierra
         {
             const MetalPipelineLayout &pipelineLayout = currentGraphicsPipeline->GetLayout();
             const uint32 index = pipelineLayout.GetBindingIndex(binding, index);
-            
+
             currentRenderEncoder->setVertexTexture(metalImage.GetMetalTexture(), index);
             currentRenderEncoder->setVertexSamplerState(metalSampler.GetSamplerState(), index);
 
@@ -358,72 +437,6 @@ namespace Sierra
         commandBuffer->popDebugGroup();
     }
 
-    void MetalCommandBuffer::SynchronizeBufferUsage(const std::unique_ptr<Buffer> &buffer, const BufferCommandUsage previousUsage, const BufferCommandUsage nextUsage, const uint64 memorySize, const uint64 offset)
-    {
-        SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not synchronize usage of buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer->GetName(), GetName());
-        const MetalBuffer &metalBuffer = static_cast<MetalBuffer&>(*buffer);
-
-        const MTL::Resource* bufferResource = metalBuffer.GetMetalBuffer();
-        currentRenderEncoder->memoryBarrier(&bufferResource, 1, BufferCommandUsageToRenderStages(previousUsage), BufferCommandUsageToRenderStages(nextUsage));
-    }
-
-    void MetalCommandBuffer::SynchronizeImageUsage(const std::unique_ptr<Image> &image, const ImageCommandUsage previousUsage, const ImageCommandUsage nextUsage, const uint32 baseMipLevel, const uint32 mipLevelCount, const uint32 baseLayer, const uint32 layerCount)
-    {
-        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not synchronize usage of image [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image->GetName(), GetName());
-        const MetalImage &metalImage = static_cast<MetalImage&>(*image);
-
-        SR_ERROR_IF(baseMipLevel >= image->GetMipLevelCount(), "[Metal]: Cannot synchronize mip level [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseMipLevel, image->GetName(), GetName());
-        SR_ERROR_IF(baseMipLevel + mipLevelCount >= image->GetMipLevelCount(), "[Metal]: Cannot synchronize mip levels [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's mip level count - [{4}]!", baseMipLevel, baseMipLevel + mipLevelCount, image->GetName(), GetName(), image->GetMipLevelCount());
-        SR_ERROR_IF(baseLayer >= image->GetLayerCount(), "[Metal]: Cannot synchronize layer [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseLayer, image->GetName(), GetName());
-        SR_ERROR_IF(baseLayer + layerCount >= image->GetLayerCount(), "[Metal]: Cannot synchronize layers [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's layer count - [{4}]!", baseLayer, baseLayer + layerCount, image->GetName(), GetName(), image->GetLayerCount());
-
-        const MTL::Resource* textureResource = metalImage.GetMetalTexture();
-        currentRenderEncoder->memoryBarrier(&textureResource, 1, ImageCommandUsageToRenderStages(previousUsage), ImageCommandUsageToRenderStages(nextUsage));
-    }
-
-    void MetalCommandBuffer::CopyBufferToBuffer(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Buffer> &destinationBuffer, uint64 memoryRange, const uint64 sourceOffset, const uint64 destinationOffset)
-    {
-        SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy from buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", sourceBuffer->GetName(), GetName());
-        const MetalBuffer &metalSourceBuffer = static_cast<MetalBuffer&>(*sourceBuffer);
-
-        SR_ERROR_IF(destinationBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy to buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", destinationBuffer->GetName(), GetName());
-        const MetalBuffer &metalDestinationBuffer = static_cast<MetalBuffer&>(*destinationBuffer);
-
-        memoryRange = memoryRange != 0 ? memoryRange : sourceBuffer->GetMemorySize();
-        SR_ERROR_IF(sourceOffset + memoryRange > sourceBuffer->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, sourceOffset, sourceBuffer->GetName(), GetName(), sourceOffset + memoryRange, sourceBuffer->GetMemorySize());
-        SR_ERROR_IF(destinationOffset + memoryRange > destinationBuffer->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, destinationOffset, destinationBuffer->GetName(), GetName(), destinationOffset + memoryRange, destinationBuffer->GetMemorySize());
-
-        // Record copy
-        MTL::BlitCommandEncoder* blitEncoder = commandBuffer->blitCommandEncoder();
-        device.SetResourceName(blitEncoder, "Transfer encoder");
-
-        blitEncoder->copyFromBuffer(metalSourceBuffer.GetMetalBuffer(), sourceOffset, metalDestinationBuffer.GetMetalBuffer(), destinationOffset, memoryRange);
-        blitEncoder->endEncoding();
-    }
-
-    void MetalCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const Vector2UInt &pixelRange, const uint32 sourceOffset, const Vector2UInt &destinationOffset, const uint32 mipLevel, const uint32 baseLayer, const uint32 layerCount)
-    {
-        SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy from buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], to image [{1}] within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
-        const MetalBuffer &metalSourceBuffer = static_cast<MetalBuffer&>(*sourceBuffer);
-
-        SR_ERROR_IF(destinationImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not from buffer [{0}] to image [{1}], graphics API differs from [GraphicsAPI::Metal], within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
-        const MetalImage &metalDestinationImage = static_cast<MetalImage&>(*destinationImage);
-
-        SR_ERROR_IF(mipLevel >= destinationImage->GetMipLevelCount(), "[Metal]: Cannot copy from buffer [{0}] to mip level [{1}] of image [{2}] within command buffer [{3}], as it does not have it!", sourceBuffer->GetName(), mipLevel, destinationImage->GetName(), GetName());
-        SR_ERROR_IF(baseLayer >= destinationImage->GetLayerCount(), "[Metal]: Cannot copy from buffer [{0}] to layer [{1}] of image [{2}] within command buffer [{3}], as it does not have it!", sourceBuffer->GetName(), baseLayer, destinationImage->GetName(), GetName());
-        SR_ERROR_IF(baseLayer + layerCount >= destinationImage->GetLayerCount(), "[Metal]: Cannot copy from buffer [{0}] to layers [{1}-{2}] of image [{3}] within command buffer [{4}], as they exceed image's layer count - [{5}]!", sourceBuffer->GetName(), baseLayer, baseLayer + layerCount, destinationImage->GetName(), GetName(), destinationImage->GetLayerCount());
-        SR_ERROR_IF((destinationOffset + pixelRange).x >= destinationImage->GetWidth() || (destinationOffset + pixelRange).y >= destinationImage->GetHeight(), "[Metal]: Cannot copy from buffer [{0}] pixel range [{1}x{2}], which is offset by another [{3}x{4}] pixels to image [{5}] within command buffer [{6}], as resulting pixel range of a total of [{7}x{8}] pixels is outside of image's dimensions - [{9}x{10}] !", sourceBuffer->GetName(), pixelRange.x, pixelRange.y, destinationOffset.x, destinationOffset.y, destinationImage->GetName(), GetName(), (destinationOffset + pixelRange).x, (destinationOffset + pixelRange).y, destinationImage->GetWidth(), destinationImage->GetHeight());
-
-        const uint64 memoryRange = static_cast<uint64>(pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth()) * (pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight()) * destinationImage->GetPixelSize();
-        SR_ERROR_IF(sourceOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()) > sourceBuffer->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), sourceOffset, sourceBuffer->GetName(), GetName(), sourceOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()), sourceBuffer->GetMemorySize());
-        SR_ERROR_IF((static_cast<uint64>(destinationOffset.x) + destinationOffset.y + pixelRange.x + pixelRange.y) * destinationImage->GetPixelSize() > destinationImage->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to image [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the image - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), (destinationOffset.x + destinationOffset.y) * destinationImage->GetPixelSize(), destinationImage->GetName(), GetName(), (static_cast<uint64>(destinationOffset.x) + destinationOffset.y + pixelRange.x + pixelRange.y) * destinationImage->GetPixelSize(), destinationImage->GetMemorySize());
-
-        // Record copy
-        MTL::BlitCommandEncoder* blitEncoder = commandBuffer->blitCommandEncoder();
-        blitEncoder->copyFromBuffer(metalSourceBuffer.GetMetalBuffer(), sourceOffset, static_cast<uint64>(destinationImage->GetWidth()) * destinationImage->GetPixelSize(), 0, MTL::Size(destinationImage->GetWidth(), destinationImage->GetHeight(), 1), metalDestinationImage.GetMetalTexture(), memoryRange, mipLevel, MTL::Origin(destinationOffset.x, destinationOffset.y, 0));
-        blitEncoder->endEncoding();
-    }
-
     /* --- DESTRUCTOR --- */
 
     MetalCommandBuffer::~MetalCommandBuffer()
@@ -437,6 +450,7 @@ namespace Sierra
     {
         switch (bufferCommandUsage)
         {
+            case BufferCommandUsage::None:
             case BufferCommandUsage::MemoryRead:
             case BufferCommandUsage::MemoryWrite:
             case BufferCommandUsage::ComputeRead:
@@ -452,6 +466,7 @@ namespace Sierra
     {
         switch (imageCommandUsage)
         {
+            case ImageCommandUsage::None:
             case ImageCommandUsage::MemoryRead:
             case ImageCommandUsage::MemoryWrite:
             case ImageCommandUsage::ComputeRead:

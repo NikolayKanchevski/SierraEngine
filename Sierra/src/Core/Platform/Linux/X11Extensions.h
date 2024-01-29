@@ -20,7 +20,7 @@ namespace Sierra
         Display* display;
     };
 
-    class SIERRA_API XkbExtension
+    class SIERRA_API XkbExtension final
     {
     private:
         constexpr static uint32 X11_KEY_ENTRY_COUNT = 256;
@@ -45,7 +45,7 @@ namespace Sierra
         Display* display;
     };
 
-    class SIERRA_API XrandrExtension
+    class SIERRA_API XrandrExtension final
     {
     public:
         /* --- CONSTRUCTORS --- */

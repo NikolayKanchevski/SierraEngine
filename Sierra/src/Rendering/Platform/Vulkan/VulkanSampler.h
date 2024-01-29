@@ -12,7 +12,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API VulkanSampler : public Sampler, public VulkanResource
+    class SIERRA_API VulkanSampler final : public Sampler, public VulkanResource
     {
     public:
         /* --- CONSTRUCTORS --- */

@@ -15,7 +15,7 @@ namespace Sierra
         Seconds = 1
     };
 
-    class SIERRA_API TimeStep
+    class SIERRA_API TimeStep final
     {
     public:
         /* --- CONSTRUCTORS --- */
@@ -42,7 +42,7 @@ namespace Sierra
 
     };
 
-    class SIERRA_API TimePoint
+    class SIERRA_API TimePoint final
     {
     public:
         /* --- CONSTRUCTORS --- */

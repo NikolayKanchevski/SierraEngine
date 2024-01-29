@@ -49,21 +49,21 @@ private:
     void OnStart() override
     {
         // Create window and swapchain for it
-        window = GetWindowManager().CreateWindow({ .title = "Hello, Cube!", .resizable = false });
-        swapchain = GetRenderingContext().CreateSwapchain({ .name = "Cube Swapchain", .window = window, .preferredPresentationMode = SwapchainPresentationMode::VSync });
+        window = GetWindowManager()->CreateWindow({ .title = "Hello, Cube!", .resizable = false });
+        swapchain = GetRenderingContext()->CreateSwapchain({ .name = "Cube Swapchain", .window = window, .preferredPresentationMode = SwapchainPresentationMode::VSync });
 
         // Create depth image to properly order 3D meshes
-        depthBuffer = GetRenderingContext().CreateImage({
+        depthBuffer = GetRenderingContext()->CreateImage({
             .name = "Depth Buffer Image",
             .width = swapchain->GetWidth(),
             .height = swapchain->GetHeight(),
-            .format = GetRenderingContext().GetDevice().GetSupportedImageFormat(ImageChannels::D, ImageMemoryType::UNorm16, ImageUsage::DepthAttachment),
+            .format = GetRenderingContext()->GetDevice().GetSupportedImageFormat(ImageChannels::D, ImageMemoryType::UNorm16, ImageUsage::DepthAttachment),
             .usage = ImageUsage::DepthAttachment,
             .memoryLocation = ImageMemoryLocation::Device
         });
 
         // Create render pass
-        renderPass = GetRenderingContext().CreateRenderPass({
+        renderPass = GetRenderingContext()->CreateRenderPass({
             .name = "Swapchain Render Pass",
             .attachments = {
                 { .templateImage = swapchain->GetImage(0), .type = RenderPassAttachmentType::Color },
@@ -75,18 +75,18 @@ private:
         });
 
         // Load shaders
-        vertexShader = GetRenderingContext().CreateShader({ .name = "Cube Vertex Shader", .shaderBundlePath = GetResourcesDirectoryPath() / "shaders/CubeShader.vert.shader", .shaderType = ShaderType::Vertex });
-        fragmentShader = GetRenderingContext().CreateShader({ .name = "Cube Fragment Shader", .shaderBundlePath = GetResourcesDirectoryPath() / "shaders/CubeShader.frag.shader", .shaderType = ShaderType::Fragment });
+        vertexShader = GetRenderingContext()->CreateShader({ .name = "Cube Vertex Shader", .shaderBundlePath = GetResourcesDirectoryPath() / "shaders/CubeShader.vert.shader", .shaderType = ShaderType::Vertex });
+        fragmentShader = GetRenderingContext()->CreateShader({ .name = "Cube Fragment Shader", .shaderBundlePath = GetResourcesDirectoryPath() / "shaders/CubeShader.frag.shader", .shaderType = ShaderType::Fragment });
 
         // Define pipeline layout
-        pipelineLayout = GetRenderingContext().CreatePipelineLayout({
+        pipelineLayout = GetRenderingContext()->CreatePipelineLayout({
             .name = "Cube Graphics Pipeline Layout",
             .bindings = { { .type = PipelineBindingType::UniformBuffer } },
             .pushConstantSize = sizeof(PushConstantData)
         });
 
         // Create graphics pipeline
-        graphicsPipeline = GetRenderingContext().CreateGraphicsPipeline({
+        graphicsPipeline = GetRenderingContext()->CreateGraphicsPipeline({
             .name = "Cube Graphics Pipeline",
             .vertexInputs = { VertexInput::Position3D },
             .vertexShader = vertexShader,
@@ -100,11 +100,11 @@ private:
         commandBuffers.resize(swapchain->GetConcurrentFrameCount());
         for (uint32 i = 0; i < swapchain->GetConcurrentFrameCount(); i++)
         {
-            commandBuffers[i] = GetRenderingContext().CreateCommandBuffer({ .name = "General Command Buffer " + std::to_string(i) });
+            commandBuffers[i] = GetRenderingContext()->CreateCommandBuffer({ .name = "General Command Buffer " + std::to_string(i) });
         }
 
         // Create uniform buffer to hold view data
-        uniformBuffer = GetRenderingContext().CreateBuffer({
+        uniformBuffer = GetRenderingContext()->CreateBuffer({
             .name = "Uniform Buffer",
             .memorySize = sizeof(UniformData),
             .usage = BufferUsage::Uniform,
@@ -112,11 +112,11 @@ private:
         });
 
         // Create a temporary command buffer to use to upload resources to GPU
-        auto transferCommandBuffer = GetRenderingContext().CreateCommandBuffer({ .name = "Transfer Command Buffer" });
+        auto transferCommandBuffer = GetRenderingContext()->CreateCommandBuffer({ .name = "Transfer Command Buffer" });
         transferCommandBuffer->Begin();
 
         // Create staging buffer on CPU side to write data to, to then copy its memory to the actual GPU-side vertex buffer
-        auto vertexStagingBuffer = GetRenderingContext().CreateBuffer({
+        auto vertexStagingBuffer = GetRenderingContext()->CreateBuffer({
             .name = "Cube Vertex Staging Buffer",
             .memorySize = sizeof(CUBE_VERTICES),
             .usage = BufferUsage::Vertex | BufferUsage::SourceTransfer,
@@ -124,7 +124,7 @@ private:
         });
 
         // Create final vertex buffer on the GPU
-        vertexBuffer = GetRenderingContext().CreateBuffer({
+        vertexBuffer = GetRenderingContext()->CreateBuffer({
             .name = "Cube Vertex Buffer",
             .memorySize = sizeof(CUBE_VERTICES),
             .usage = BufferUsage::Vertex | BufferUsage::DestinationTransfer,
@@ -134,9 +134,10 @@ private:
         // Copy vertex data to staging buffer and record a buffer copy operation
         vertexStagingBuffer->CopyFromMemory(CUBE_VERTICES.data(), CUBE_VERTICES.size() * sizeof(Vector3));
         transferCommandBuffer->CopyBufferToBuffer(vertexStagingBuffer, vertexBuffer);
+        transferCommandBuffer->QueueBufferForDestruction(std::move(vertexStagingBuffer));
 
         // Create staging buffer on CPU side to write data to, to then copy its memory to the actual GPU-side index buffer
-        auto indexStagingBuffer = GetRenderingContext().CreateBuffer({
+        auto indexStagingBuffer = GetRenderingContext()->CreateBuffer({
             .name = "Cube Index Staging Buffer",
             .memorySize = sizeof(CUBE_INDICES),
             .usage = BufferUsage::Index | BufferUsage::SourceTransfer,
@@ -144,7 +145,7 @@ private:
         });
 
         // Create final index buffer on the GPU
-        indexBuffer = GetRenderingContext().CreateBuffer({
+        indexBuffer = GetRenderingContext()->CreateBuffer({
             .name = "Cube Index Buffer",
             .memorySize = sizeof(CUBE_INDICES),
             .usage = BufferUsage::Index | BufferUsage::DestinationTransfer,
@@ -154,13 +155,14 @@ private:
         // Copy index data to staging buffer and record a buffer copy operation
         indexStagingBuffer->CopyFromMemory(CUBE_INDICES.data(), CUBE_INDICES.size() * sizeof(uint32));
         transferCommandBuffer->CopyBufferToBuffer(indexStagingBuffer, indexBuffer);
+        transferCommandBuffer->QueueBufferForDestruction(std::move(indexStagingBuffer));
 
         // Submit command buffer
         transferCommandBuffer->End();
-        GetRenderingContext().GetDevice().SubmitCommandBuffer(transferCommandBuffer);
+        GetRenderingContext()->GetDevice().SubmitCommandBuffer(transferCommandBuffer);
 
         // Wait on CPU until it has finished execution, so staging resources are not released early by destructors
-        GetRenderingContext().GetDevice().WaitForCommandBuffer(transferCommandBuffer);
+        GetRenderingContext()->GetDevice().WaitForCommandBuffer(transferCommandBuffer);
     }
 
     bool OnUpdate(const TimeStep &timeStep) override
@@ -179,7 +181,7 @@ private:
         auto &commandBuffer = commandBuffers[swapchain->GetCurrentFrame()];
 
         // Wait until it is no longer in use
-        GetRenderingContext().GetDevice().WaitForCommandBuffer(commandBuffer);
+        GetRenderingContext()->GetDevice().WaitForCommandBuffer(commandBuffer);
 
         // Begin recording commands to GPU
         commandBuffer->Begin();
@@ -227,7 +229,7 @@ private:
         commandBuffer->End();
 
         // Submit command buffer to GPU
-        GetRenderingContext().GetDevice().SubmitCommandBuffer(commandBuffer);
+        GetRenderingContext()->GetDevice().SubmitCommandBuffer(commandBuffer);
 
         // Draw to window
         swapchain->Present(commandBuffer);
@@ -244,7 +246,7 @@ public:
         // Before deallocating rendering resources, make sure device is not using them
         for (const auto &commandBuffer : commandBuffers)
         {
-            GetRenderingContext().GetDevice().WaitForCommandBuffer(commandBuffer);
+            GetRenderingContext()->GetDevice().WaitForCommandBuffer(commandBuffer);
         }
     }
 

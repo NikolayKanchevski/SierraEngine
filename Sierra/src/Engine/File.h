@@ -7,7 +7,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API File
+    class SIERRA_API File final
     {
     public:
         /* --- POLLING METHODS --- */

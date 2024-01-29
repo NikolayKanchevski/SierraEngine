@@ -7,7 +7,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API ScopeProfiler
+    class SIERRA_API ScopeProfiler final
     {
     public:
         /* --- CONSTRUCTORS --- */

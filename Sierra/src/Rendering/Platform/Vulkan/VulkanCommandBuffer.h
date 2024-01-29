@@ -8,7 +8,7 @@
 #include "VulkanResource.h"
 
 #include "VulkanDevice.h"
-#include "VulkanDescriptorSets.h"
+#include "VulkanDescriptors.h"
 
 #include "VulkanGraphicsPipeline.h"
 #include "VulkanComputePipeline.h"
@@ -30,7 +30,8 @@ namespace Sierra
         void SynchronizeImageUsage(const std::unique_ptr<Image> &image, ImageCommandUsage previousUsage, ImageCommandUsage nextUsage, uint32 baseMipLevel = 0, uint32 mipLevelCount = 0, uint32 baseLayer = 0, uint32 layerCount = 0) override;
 
         void CopyBufferToBuffer(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Buffer> &destinationBuffer, uint64 memoryRange = 0, uint64 sourceOffset = 0, uint64 destinationOffset = 0) override;
-        void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const Vector2UInt &pixelRange = { 0, 0 }, uint32 sourceOffset = 0, const Vector2UInt &destinationOffset = { 0, 0 }, uint32 mipLevel = 0, uint32 baseLayer = 0, uint32 layerCount = 0) override;
+        void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const Vector2UInt &pixelRange = { 0, 0 }, uint32 sourcePixelOffset = 0, const Vector2UInt &destinationOffset = { 0, 0 }, uint32 mipLevel = 0, uint32 baseLayer = 0, uint32 layerCount = 0) override;
+        void BlitImage(const std::unique_ptr<Image> &image) override;
 
         void BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments) override;
         void BeginNextSubpass(const std::unique_ptr<RenderPass> &renderPass) override;

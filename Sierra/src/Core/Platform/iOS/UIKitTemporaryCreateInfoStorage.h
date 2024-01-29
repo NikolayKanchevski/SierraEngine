@@ -24,7 +24,7 @@ namespace Sierra
         PlatformApplicationRunInfo runInfo = { };
     };
 
-    class SIERRA_API UIKitTemporaryCreateInfoStorage
+    class SIERRA_API UIKitTemporaryCreateInfoStorage final
     {
     public:
         /* --- SETTER METHODS --- */

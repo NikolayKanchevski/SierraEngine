@@ -7,7 +7,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API RNG
+    class SIERRA_API RNG final
     {
     public:
         /* --- CONSTRUCTORS --- */

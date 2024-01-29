@@ -29,8 +29,8 @@ namespace Sierra
             EventSubscriptionID ID;
             if (!freedIDs.empty())
             {
-                ID = freedIDs.back();
-                freedIDs.pop_back();
+                ID = freedIDs.front();
+                freedIDs.pop();
             }
             else
             {
@@ -52,7 +52,7 @@ namespace Sierra
             Callbacks.erase(ID);
 
             // Recycle ID
-            freedIDs.push_back(ID);
+            freedIDs.push(ID);
             return true;
         }
 
@@ -63,7 +63,7 @@ namespace Sierra
             T event = T(std::forward<Args>(args)...);
             for (const auto Callback : Callbacks)
             {
-                // If event is handled, we break, so that older subscribers do not register it
+                // If event is handled, we break, so that deeper subscribers do not register it
                 if (Callback(event))
                 {
                     break;
@@ -74,7 +74,7 @@ namespace Sierra
         template<typename... Args>
         void QueueEvent(Args&&... args) const
         {
-            queue.push_back(new T(std::forward<Args>(args))...);
+            queue.push(new T(std::forward<Args>(args))...);
         }
 
         void DispatchQueue()
@@ -92,7 +92,7 @@ namespace Sierra
                 }
                 delete(event);
             }
-            queue.clear();
+            queue = std::queue<T*>();
         }
 
         /* --- OPERATORS --- */
@@ -102,19 +102,19 @@ namespace Sierra
         /* --- DESTRUCTOR --- */
         ~EventDispatcher()
         {
-            for (const auto event : queue)
+            while (!queue.empty())
             {
-                delete(event);
+                delete(queue.front());
+                queue.pop();
             }
-            queue.clear();
         }
 
     private:
-        std::deque<T*> queue;
-        std::vector<EventCallback> Callbacks;
+        std::queue<T*> queue;
+        std::deque<EventCallback> Callbacks;
 
         uint32 totalIDs = 0;
-        std::vector<EventSubscriptionID> freedIDs;
+        std::queue<EventSubscriptionID> freedIDs;
 
     };
 

@@ -52,7 +52,7 @@ namespace Sierra
 
     };
 
-    class SIERRA_API X11Context
+    class SIERRA_API X11Context final
     {
     public:
         /* --- POLLING METHODS --- */

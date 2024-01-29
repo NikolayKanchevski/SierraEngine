@@ -47,9 +47,9 @@ namespace Sierra
     protected:
         explicit Application(const ApplicationCreateInfo &createInfo);
 
-        [[nodiscard]] inline const PlatformContext& GetPlatformContext() { return *platformContext; }
-        [[nodiscard]] inline const WindowManager& GetWindowManager() { return *windowManager; }
-        [[nodiscard]] inline const RenderingContext& GetRenderingContext() { return *renderingContext; }
+        [[nodiscard]] inline const std::unique_ptr<WindowManager>& GetWindowManager() { return windowManager; }
+        [[nodiscard]] inline const std::unique_ptr<PlatformContext>& GetPlatformContext() { return platformContext; }
+        [[nodiscard]] inline const std::unique_ptr<RenderingContext>& GetRenderingContext() { return renderingContext; }
 
         [[nodiscard]] const std::filesystem::path& GetResourcesDirectoryPath();
         [[nodiscard]] const std::filesystem::path& GetApplicationCachesDirectoryPath();
@@ -65,8 +65,8 @@ namespace Sierra
         uint16 maxFrameRate = 0;
         TimePoint lastFrameStartTime = TimePoint::Now();
 
-        std::unique_ptr<PlatformContext> platformContext = nullptr;
         std::unique_ptr<WindowManager> windowManager = nullptr;
+        std::unique_ptr<PlatformContext> platformContext = nullptr;
         std::unique_ptr<RenderingContext> renderingContext = nullptr;
     };
 

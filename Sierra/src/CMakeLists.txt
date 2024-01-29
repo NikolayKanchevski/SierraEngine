@@ -35,7 +35,7 @@ target_sources(Sierra PRIVATE
     srpch.h
     Application.h
     Application.cpp
-        ../include/Sierra.h
+    ../include/Sierra.h
 )
 
 # Export engine module symbols

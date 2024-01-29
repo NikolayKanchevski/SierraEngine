@@ -15,7 +15,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API VulkanWindowsSurface
+    class SIERRA_API VulkanWindowsSurface final
     {
     private:
         static VkSurfaceKHR Create(const VulkanInstance &instance,  const std::unique_ptr<Window> &window);

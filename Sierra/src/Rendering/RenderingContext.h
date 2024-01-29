@@ -17,6 +17,7 @@
 #include "GraphicsPipeline.h"
 #include "ComputePipeline.h"
 #include "CommandBuffer.h"
+#include "ImGuiRenderTask.h"
 
 namespace Sierra
 {
@@ -41,6 +42,7 @@ namespace Sierra
         [[nodiscard]] virtual std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(const GraphicsPipelineCreateInfo &createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo &createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<CommandBuffer> CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<ImGuiRenderTask> CreateImGuiRenderTask(const ImGuiRenderTaskCreateInfo &createInfo) const = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual const Device& GetDevice() const = 0;

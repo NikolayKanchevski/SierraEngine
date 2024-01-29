@@ -30,6 +30,7 @@ namespace Sierra
         [[nodiscard]] std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(const GraphicsPipelineCreateInfo &createInfo) const override;
         [[nodiscard]] std::unique_ptr<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo &createInfo) const override;
         [[nodiscard]] std::unique_ptr<CommandBuffer> CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const override;
+        [[nodiscard]] std::unique_ptr<ImGuiRenderTask> CreateImGuiRenderTask(const ImGuiRenderTaskCreateInfo &createInfo) const override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] const Device& GetDevice() const override { return device; };

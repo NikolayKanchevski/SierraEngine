@@ -43,7 +43,7 @@ namespace Sierra
     }
 
     MetalImage::MetalImage(const MetalDevice &device, const SwapchainImageCreateInfo &createInfo)
-        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainPixelFormatToImageFormat(createInfo.format), .memoryLocation = ImageMemoryLocation::Device, .usage = ImageUsage::ColorAttachment }), MetalResource(createInfo.name),
+        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainPixelFormatToImageFormat(createInfo.format), .usage = ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::Device }), MetalResource(createInfo.name),
           texture(createInfo.texture), swapchainImage(true)
     {
         device.SetResourceName(texture, GetName());

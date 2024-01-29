@@ -23,7 +23,7 @@ namespace Sierra
         VersionState state = VersionState::Experimental;
     };
 
-    class SIERRA_API Version
+    class SIERRA_API Version final
     {
     public:
         /* --- CONSTRUCTORS --- */

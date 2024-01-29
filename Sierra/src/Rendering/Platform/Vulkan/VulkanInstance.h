@@ -15,7 +15,7 @@ namespace Sierra
 
     };
 
-    class SIERRA_API VulkanAPIVersion
+    class SIERRA_API VulkanAPIVersion final
     {
     public:
         /* --- CONSTRUCTORS --- */
@@ -35,7 +35,7 @@ namespace Sierra
 
     };
 
-    class SIERRA_API VulkanInstance
+    class SIERRA_API VulkanInstance final
     {
     public:
         /* --- GETTER METHODS --- */

@@ -71,7 +71,7 @@ namespace Sierra
 
     };
 
-    class SIERRA_API Win32Context
+    class SIERRA_API Win32Context final
     {
     public:
         /* --- POLLING METHODS --- */

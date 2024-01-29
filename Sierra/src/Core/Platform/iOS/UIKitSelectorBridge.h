@@ -23,7 +23,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API UIKitSelectorBridge
+    class SIERRA_API UIKitSelectorBridge final
     {
     public:
         /* --- CONSTRUCTORS --- */

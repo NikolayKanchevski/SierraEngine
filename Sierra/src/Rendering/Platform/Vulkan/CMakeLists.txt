@@ -57,14 +57,16 @@ if(Vulkan_LIBRARIES)
         VulkanComputePipeline.h
         VulkanContext.cpp
         VulkanContext.h
-        VulkanDescriptorSets.cpp
-        VulkanDescriptorSets.h
+            VulkanDescriptors.cpp
+            VulkanDescriptors.h
         VulkanDevice.cpp
         VulkanDevice.h
         VulkanGraphicsPipeline.cpp
         VulkanGraphicsPipeline.h
         VulkanImage.cpp
         VulkanImage.h
+        VulkanImGuiRenderTask.cpp
+        VulkanImGuiRenderTask.h
         VulkanInstance.cpp
         VulkanInstance.h
         VulkanPipelineLayout.cpp

@@ -11,7 +11,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API NSFilePaths
+    class SIERRA_API NSFilePaths final
     {
     public:
         /* --- GETTER METHODS --- */

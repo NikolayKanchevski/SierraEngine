@@ -63,8 +63,8 @@ namespace Sierra
         constexpr static auto KEY_COUNT = static_cast<std::underlying_type<Key>::type>(Key::RightSystem) + 1;
         constexpr static auto MOUSE_BUTTON_COUNT = static_cast<std::underlying_type<MouseButton>::type>(MouseButton::Extra2) + 1;
 
-        [[nodiscard]] inline constexpr auto GetKeyIndex(const Key key) const { return static_cast<std::underlying_type<Key>::type>(key); }
-        [[nodiscard]] inline constexpr auto GetMouseButtonIndex(const MouseButton mouseButton) const { return static_cast<std::underlying_type<MouseButton>::type>(mouseButton); }
+        [[nodiscard]] inline constexpr static auto GetKeyIndex(const Key key) { return static_cast<std::underlying_type<Key>::type>(key); }
+        [[nodiscard]] inline constexpr static auto GetMouseButtonIndex(const MouseButton mouseButton) { return static_cast<std::underlying_type<MouseButton>::type>(mouseButton); }
 
         [[nodiscard]] inline EventDispatcher<KeyPressEvent>& GetKeyPressDispatcher() { return keyPressDispatcher; }
         [[nodiscard]] inline EventDispatcher<KeyReleaseEvent>& GetKeyReleaseDispatcher() { return keyReleaseDispatcher; }
@@ -81,9 +81,10 @@ namespace Sierra
         EventDispatcher<MouseButtonReleaseEvent> mouseButtonReleaseDispatcher;
         EventDispatcher<MouseScrollEvent> mouseScrollDispatcher;
 
-        bool IsKeyCombinationPressedImplementation(const std::initializer_list<Key> &keys) const;
-        bool IsKeyCombinationHeldImplementation(const std::initializer_list<Key> &keys) const;
+       [[nodiscard]] bool IsKeyCombinationPressedImplementation(const std::initializer_list<Key> &keys) const;
+       [[nodiscard]] bool IsKeyCombinationHeldImplementation(const std::initializer_list<Key> &keys) const;
 
+        std::queue<char> enteredCharacters;
     };
 
     template<> inline void InputManager::OnEvent<KeyPressEvent>(InputEventCallback<KeyPressEvent> Callback) { keyPressDispatcher.Subscribe(Callback); }

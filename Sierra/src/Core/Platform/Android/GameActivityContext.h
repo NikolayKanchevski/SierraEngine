@@ -21,7 +21,7 @@ namespace Sierra
         android_app* app = nullptr;
     };
 
-    class SIERRA_API GameActivityContext
+    class SIERRA_API GameActivityContext final
     {
     public:
         /* --- POLLING METHODS --- */

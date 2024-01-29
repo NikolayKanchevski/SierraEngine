@@ -14,6 +14,7 @@
 #include "VulkanGraphicsPipeline.h"
 #include "VulkanComputePipeline.h"
 #include "VulkanCommandBuffer.h"
+#include "VulkanImGuiRenderTask.h"
 
 namespace Sierra
 {
@@ -76,6 +77,11 @@ namespace Sierra
     std::unique_ptr<CommandBuffer> VulkanContext::CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const
     {
         return std::make_unique<VulkanCommandBuffer>(device, createInfo);
+    }
+
+    std::unique_ptr<ImGuiRenderTask> VulkanContext::CreateImGuiRenderTask(const ImGuiRenderTaskCreateInfo &createInfo) const
+    {
+        return std::make_unique<VulkanImGuiRenderTask>(instance, device, createInfo);
     }
 
 }

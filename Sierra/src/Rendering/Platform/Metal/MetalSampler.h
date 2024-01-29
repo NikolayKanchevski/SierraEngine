@@ -12,7 +12,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API MetalSampler : public Sampler, public MetalResource
+    class SIERRA_API MetalSampler final : public Sampler, public MetalResource
     {
     public:
         /* --- CONSTRUCTORS --- */

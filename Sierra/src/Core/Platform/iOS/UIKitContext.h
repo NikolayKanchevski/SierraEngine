@@ -33,7 +33,7 @@ namespace Sierra
 
     };
 
-    class SIERRA_API UIKitContext
+    class SIERRA_API UIKitContext final
     {
     public:
         /* --- POLLING METHODS --- */

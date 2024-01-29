@@ -19,6 +19,7 @@ namespace Sierra
 
     enum class BufferCommandUsage : uint8
     {
+        None,
         MemoryRead,
         MemoryWrite,
         VertexRead,
@@ -31,6 +32,7 @@ namespace Sierra
 
     enum class ImageCommandUsage : uint8
     {
+        None,
         MemoryRead,
         MemoryWrite,
         AttachmentRead,
@@ -60,7 +62,8 @@ namespace Sierra
         virtual void SynchronizeImageUsage(const std::unique_ptr<Image> &image, ImageCommandUsage previousUsage, ImageCommandUsage nextUsage, uint32 baseMipLevel = 0, uint32 mipLevelCount = 0, uint32 baseLayer = 0, uint32 layerCount = 0) = 0;
 
         virtual void CopyBufferToBuffer(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Buffer> &destinationBuffer, uint64 memoryRange = 0, uint64 sourceOffset = 0, uint64 destinationOffset = 0) = 0;
-        virtual void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const Vector2UInt &pixelRange = { 0, 0 }, uint32 sourceOffset = 0, const Vector2UInt &destinationOffset = { 0, 0 }, uint32 mipLevel = 0, uint32 baseLayer = 0, uint32 layerCount = 0) = 0;
+        virtual void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const Vector2UInt &pixelRange = { 0, 0 }, uint32 sourcePixelOffset = 0, const Vector2UInt &destinationOffset = { 0, 0 }, uint32 mipLevel = 0, uint32 baseLayer = 0, uint32 layerCount = 0) = 0;
+        virtual void BlitImage(const std::unique_ptr<Image> &image) = 0;
 
         virtual void BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments) = 0;
         virtual void BeginNextSubpass(const std::unique_ptr<RenderPass> &renderPass) = 0;
@@ -89,6 +92,9 @@ namespace Sierra
         virtual void InsertDebugMarker(const std::string &markerName, const Color &color = Color(1.0f, 1.0f, 0.0f, 1.0f)) = 0;
         virtual void EndDebugRegion() = 0;
 
+        inline void QueueBufferForDestruction(std::unique_ptr<Buffer> &&buffer) { queriedBuffers.emplace(std::move(buffer)); }
+        inline void QueueImageForDestruction(std::unique_ptr<Image> &&image) { queriedImages.emplace(std::move(image)); }
+
         /* --- OPERATORS --- */
         CommandBuffer(const CommandBuffer&) = delete;
         CommandBuffer& operator=(const CommandBuffer&) = delete;
@@ -98,6 +104,11 @@ namespace Sierra
 
     protected:
         explicit CommandBuffer(const CommandBufferCreateInfo &createInfo);
+        void FreeQueuedResources();
+
+    private:
+        std::queue<std::unique_ptr<Buffer>> queriedBuffers;
+        std::queue<std::unique_ptr<Image>> queriedImages;
 
     };
 

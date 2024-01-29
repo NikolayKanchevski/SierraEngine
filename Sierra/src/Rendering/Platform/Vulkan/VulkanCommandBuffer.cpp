@@ -48,6 +48,8 @@ namespace Sierra
 
     void VulkanCommandBuffer::Begin()
     {
+        FreeQueuedResources();
+
         // Reset command buffer
         device.GetFunctionTable().vkResetCommandPool(device.GetLogicalDevice(), commandPool, 0);
 
@@ -76,6 +78,8 @@ namespace Sierra
         SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not synchronize usage of buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer->GetName(), GetName());
         const VulkanBuffer &vulkanBuffer = static_cast<VulkanBuffer&>(*buffer);
 
+        SR_ERROR_IF(nextUsage == BufferCommandUsage::None, "[Vulkan]: Cannot synchronize buffer [{0}], as specified next usage must not be BufferCommandUsage::None!", buffer->GetName());
+
         // Set up pipeline barrier
         VkBufferMemoryBarrier pipelineBarrier = { };
         pipelineBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
@@ -95,6 +99,8 @@ namespace Sierra
     {
         SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not synchronize usage of image [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image->GetName(), GetName());
         const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
+
+        SR_ERROR_IF(nextUsage == ImageCommandUsage::None, "[Vulkan]: Cannot synchronize image [{0}], as specified next usage must not be ImageCommandUsage::None!", image->GetName());
 
         SR_ERROR_IF(baseMipLevel >= image->GetMipLevelCount(), "[Vulkan]: Cannot synchronize mip level [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseMipLevel, image->GetName(), GetName());
         SR_ERROR_IF(baseMipLevel + mipLevelCount >= image->GetMipLevelCount(), "[Vulkan]: Cannot synchronize mip levels [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's mip level count - [{4}]!", baseMipLevel, baseMipLevel + mipLevelCount, image->GetName(), GetName(), image->GetMipLevelCount());
@@ -146,7 +152,7 @@ namespace Sierra
         device.GetFunctionTable().vkCmdCopyBuffer(commandBuffer, vulkanSourceBuffer.GetVulkanBuffer(), vulkanDestinationBuffer.GetVulkanBuffer(), 1, &region);
     }
 
-    void VulkanCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const Vector2UInt &pixelRange, const uint32 sourceOffset, const Vector2UInt &destinationOffset, const uint32 mipLevel, const uint32 baseLayer, const uint32 layerCount)
+    void VulkanCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const Vector2UInt &pixelRange, const uint32 sourcePixelOffset, const Vector2UInt &destinationOffset, const uint32 mipLevel, const uint32 baseLayer, const uint32 layerCount)
     {
         SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not copy from buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], to image [{1}] within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
         const VulkanBuffer &vulkanSourceBuffer = static_cast<VulkanBuffer&>(*sourceBuffer);
@@ -161,7 +167,7 @@ namespace Sierra
 
         // Set copy region
         VkBufferImageCopy region = { };
-        region.bufferOffset = static_cast<uint64>(sourceOffset) * destinationImage->GetPixelSize();
+        region.bufferOffset = static_cast<uint64>(sourcePixelOffset) * destinationImage->GetPixelSize();
         region.bufferRowLength = 0;
         region.bufferImageHeight = 0;
         region.imageSubresource.aspectMask = vulkanDestinationImage.GetVulkanAspectFlags();
@@ -175,11 +181,48 @@ namespace Sierra
         region.imageExtent.height = pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight();
         region.imageExtent.depth = 1;
 
-        SR_ERROR_IF(region.bufferOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()) > sourceBuffer->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), sourceOffset, sourceBuffer->GetName(), GetName(), region.bufferOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()), sourceBuffer->GetMemorySize());
+        SR_ERROR_IF(region.bufferOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()) > sourceBuffer->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), sourcePixelOffset, sourceBuffer->GetName(), GetName(), region.bufferOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()), sourceBuffer->GetMemorySize());
         SR_ERROR_IF((static_cast<uint64>(destinationOffset.x) + destinationOffset.y + pixelRange.x + pixelRange.y) * destinationImage->GetPixelSize() > destinationImage->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to image [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the image - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), (destinationOffset.x + destinationOffset.y) * destinationImage->GetPixelSize(), destinationImage->GetName(), GetName(), (static_cast<uint64>(destinationOffset.x) + destinationOffset.y + pixelRange.x + pixelRange.y) * destinationImage->GetPixelSize(), destinationImage->GetMemorySize());
 
         // Copy data and change layout
         device.GetFunctionTable().vkCmdCopyBufferToImage(commandBuffer, vulkanSourceBuffer.GetVulkanBuffer(), vulkanDestinationImage.GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    }
+
+    void VulkanCommandBuffer::BlitImage(const std::unique_ptr<Image> &image)
+    {
+        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not blit image [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{1}]!", image->GetName(), GetName());
+        const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
+
+        // Set initial mip sizes
+        uint32 mipWidth = image->GetWidth();
+        uint32 mipHeight = image->GetHeight();
+        for (uint32_t i = 0; i < image->GetMipLevelCount() - 1; i++)
+        {
+            // Set up blit command
+            VkImageBlit blit = { };
+            blit.srcOffsets[0] = { 0, 0, 0 };
+            blit.srcOffsets[1] = { static_cast<int32>(mipWidth), static_cast<int32>(mipHeight), 1 };
+            blit.srcSubresource.aspectMask = vulkanImage.GetVulkanAspectFlags();
+            blit.srcSubresource.mipLevel = i;
+            blit.srcSubresource.baseArrayLayer = 0;
+            blit.srcSubresource.layerCount = 1;
+            blit.dstOffsets[0] = { 0, 0, 0 };
+            blit.dstOffsets[1] = { static_cast<int32>(mipWidth > 1 ? mipWidth / 2 : 1), static_cast<int32>(mipHeight > 1 ? mipHeight / 2 : 1), 1 };
+            blit.dstSubresource.aspectMask = vulkanImage.GetVulkanAspectFlags();
+            blit.dstSubresource.mipLevel = i + 1;
+            blit.dstSubresource.baseArrayLayer = 0;
+            blit.dstSubresource.layerCount = image->GetLayerCount();
+
+            // Enqueue blit
+            device.GetFunctionTable().vkCmdBlitImage(commandBuffer, vulkanImage.GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, vulkanImage.GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+
+            // Calculate next mip level's dimension (they are twice as low-res as current)
+            if (mipWidth > 1) mipWidth /= 2;
+            if (mipHeight > 1) mipHeight /= 2;
+        }
+
+        // Mark image as just-written-to
+        imageLayouts[vulkanImage.GetVulkanImage()] = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     }
 
     void VulkanCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments)
@@ -454,6 +497,7 @@ namespace Sierra
     {
         switch (bufferCommandUsage)
         {
+            case BufferCommandUsage::None:              return VK_ACCESS_NONE;
             case BufferCommandUsage::MemoryRead:        return VK_ACCESS_TRANSFER_READ_BIT;
             case BufferCommandUsage::MemoryWrite:       return VK_ACCESS_TRANSFER_WRITE_BIT;
             case BufferCommandUsage::VertexRead:        return VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
@@ -471,6 +515,7 @@ namespace Sierra
     {
         switch (bufferCommandUsage)
         {
+            case BufferCommandUsage::None:             return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             case BufferCommandUsage::VertexRead:
             case BufferCommandUsage::IndexRead:        return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
             case BufferCommandUsage::MemoryRead:
@@ -488,6 +533,7 @@ namespace Sierra
     {
         switch (imageCommandUsage)
         {
+            case ImageCommandUsage::None:               return VK_IMAGE_LAYOUT_UNDEFINED;
             case ImageCommandUsage::MemoryRead:         return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
             case ImageCommandUsage::MemoryWrite:        return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             case ImageCommandUsage::AttachmentRead:
@@ -508,6 +554,7 @@ namespace Sierra
     {
         switch (imageCommandUsage)
         {
+            case ImageCommandUsage::None:              return VK_ACCESS_NONE;
             case ImageCommandUsage::MemoryRead:        return VK_ACCESS_MEMORY_READ_BIT;
             case ImageCommandUsage::AttachmentRead:    return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
             case ImageCommandUsage::DepthRead:         return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
@@ -530,6 +577,8 @@ namespace Sierra
     {
         switch (imageCommandUsage)
         {
+            case ImageCommandUsage::None:              return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
             case ImageCommandUsage::MemoryRead:
             case ImageCommandUsage::MemoryWrite:       return VK_PIPELINE_STAGE_TRANSFER_BIT;
 

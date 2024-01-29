@@ -18,7 +18,7 @@ namespace Sierra
         Error
     };
 
-    class SIERRA_API Logger
+    class SIERRA_API Logger final
     {
     public:
         /* --- POLLING METHODS --- */

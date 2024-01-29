@@ -13,7 +13,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API VulkanComputePipeline : public ComputePipeline, public VulkanResource
+    class SIERRA_API VulkanComputePipeline final : public ComputePipeline, public VulkanResource
     {
     public:
         /* --- CONSTRUCTORS --- */

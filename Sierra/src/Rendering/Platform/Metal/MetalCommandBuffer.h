@@ -28,7 +28,8 @@ namespace Sierra
         void SynchronizeImageUsage(const std::unique_ptr<Image> &image, ImageCommandUsage previousUsage, ImageCommandUsage nextUsage, uint32 baseMipLevel = 0, uint32 mipLevelCount = 0, uint32 baseLayer = 0, uint32 layerCount = 0) override;
 
         void CopyBufferToBuffer(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Buffer> &destinationBuffer, uint64 memoryRange = 0, uint64 sourceOffset = 0, uint64 destinationOffset = 0) override;
-        void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const Vector2UInt &pixelRange = { 0, 0 }, uint32 sourceOffset = 0, const Vector2UInt &destinationOffset = { 0, 0 }, uint32 mipLevel = 0, uint32 baseLayer = 0, uint32 layerCount = 0) override;
+        void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const Vector2UInt &pixelRange = { 0, 0 }, uint32 sourcePixelOffset = 0, const Vector2UInt &destinationOffset = { 0, 0 }, uint32 mipLevel = 0, uint32 baseLayer = 0, uint32 layerCount = 0) override;
+        void BlitImage(const std::unique_ptr<Image> &image) override;
 
         void BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments) override;
         void BeginNextSubpass(const std::unique_ptr<RenderPass> &renderPass) override;
@@ -61,6 +62,9 @@ namespace Sierra
         [[nodiscard]] inline MTL::CommandBuffer* GetMetalCommandBuffer() const { return commandBuffer; }
         [[nodiscard]] inline bool HasFinishedExecution() const { return finishedExecution; }
 
+        [[nodiscard]] inline MTL::RenderCommandEncoder* GetCurrentRenderCommandEncoder() const { return currentRenderEncoder; }
+        [[nodiscard]] inline MTL::ComputeCommandEncoder* GetCurrentComputeCommandEncoder() const { return currentComputeEncoder; }
+
         /* --- CONVERSIONS --- */
         [[nodiscard]] static MTL::RenderStages BufferCommandUsageToRenderStages(BufferCommandUsage bufferCommandUsage);
         [[nodiscard]] static MTL::RenderStages ImageCommandUsageToRenderStages(ImageCommandUsage imageCommandUsage);
@@ -70,6 +74,7 @@ namespace Sierra
 
     private:
         const MetalDevice &device;
+
         MTL::CommandBuffer* commandBuffer = nullptr;
         std::atomic<bool> finishedExecution = true;
 

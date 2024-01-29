@@ -15,14 +15,11 @@ namespace Sierra
         const std::unique_ptr<PlatformContext> &platformContext;
     };
 
-    class SIERRA_API WindowManager
+    class SIERRA_API WindowManager final
     {
     public:
-        /* --- CONSTRUCTORS --- */
-        static std::unique_ptr<WindowManager> Create(const WindowManagerCreateInfo &createInfo);
-
         /* --- POLLING METHODS --- */
-        std::unique_ptr<Window> CreateWindow(const WindowCreateInfo &createInfo) const;
+        [[nodiscard]] std::unique_ptr<Window> CreateWindow(const WindowCreateInfo &createInfo) const;
 
         /* --- OPERATORS --- */
         WindowManager(const WindowManager&) = delete;
@@ -30,7 +27,10 @@ namespace Sierra
 
     private:
         const std::unique_ptr<PlatformContext> &platformContext;
+
+        friend class Application;
         explicit WindowManager(const WindowManagerCreateInfo &createInfo);
+        static std::unique_ptr<WindowManager> Create(const WindowManagerCreateInfo &createInfo);
 
     };
 

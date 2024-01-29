@@ -99,36 +99,36 @@ namespace Sierra
             if (key == Key::Unknown) return;
 
             // Modifier keys need to be registered as pressed manually, so we get modifier flags of the modifier key... fun stuff!
-            NSEventModifierFlags nsModifierFlags = 0;
+            NSEventModifierFlags keyModifierFlag = 0;
             switch (key)
             {
                 case Key::LeftShift:
                 case Key::RightShift:
                 {
-                    nsModifierFlags = NSEventModifierFlagShift;
+                    keyModifierFlag = NSEventModifierFlagShift;
                     break;
                 }
                 case Key::LeftControl:
                 case Key::RightControl:
                 {
-                    nsModifierFlags = NSEventModifierFlagControl;
+                    keyModifierFlag = NSEventModifierFlagControl;
                     break;
                 }
                 case Key::LeftOption:
                 case Key::RightOption:
                 {
-                    nsModifierFlags = NSEventModifierFlagOption;
+                    keyModifierFlag = NSEventModifierFlagOption;
                     break;
                 }
                 case Key::LeftCommand:
                 case Key::RightCommand:
                 {
-                    nsModifierFlags = NSEventModifierFlagCommand;
+                    keyModifierFlag = NSEventModifierFlagCommand;
                     break;
                 }
                 case Key::CapsLock:
                 {
-                    nsModifierFlags = NSEventModifierFlagCapsLock;
+                    keyModifierFlag = NSEventModifierFlagCapsLock;
                     break;
                 }
                 default:
@@ -139,7 +139,7 @@ namespace Sierra
 
             // Determine key action
             InputAction action;
-            if (nsModifierFlags & ([event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask))
+            if (keyModifierFlag & [event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask)
             {
                 action = keyStates[GetKeyIndex(key)] == InputAction::Press ? InputAction::Release : InputAction::Press;
             }

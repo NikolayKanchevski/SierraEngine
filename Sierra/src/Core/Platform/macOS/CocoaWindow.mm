@@ -91,8 +91,18 @@
         window = initWindow;
         trackingArea = nil;
         markedText = [[NSMutableAttributedString alloc] init];
+
         [self updateTrackingAreas];
         [self registerForDraggedTypes: @[NSPasteboardTypeURL]];
+
+        // Modifiers prevent keyUp from being called, so we intercept such events and handle them manually
+        [NSEvent addLocalMonitorForEventsMatchingMask: (NSEventMaskKeyUp) handler: ^(NSEvent* event)
+        {
+            [self keyUp: event];
+            event = nil;
+
+            return event;
+        }];
 
         return self;
     }
@@ -102,68 +112,73 @@
     - (void) keyDown: (NSEvent*) event
     {
         // No casting error checks are done, since the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->KeyDown(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).KeyDown(event);
         [self interpretKeyEvents: @[event]];
     }
 
     - (void) flagsChanged: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->FlagsChanged(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).FlagsChanged(event);
     }
 
     - (void) keyUp: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->KeyUp(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).KeyUp(event);
     }
 
     - (void) mouseDown: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->MouseDown(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).MouseDown(event);
     }
 
     - (void) rightMouseDown: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->RightMouseDown(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RightMouseDown(event);
     }
 
     - (void) otherMouseDown: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->OtherMouseDown(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).OtherMouseDown(event);
     }
 
     - (void) mouseUp: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->MouseUp(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).MouseUp(event);
     }
 
     - (void) rightMouseUp: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->RightMouseUp(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RightMouseUp(event);
     }
 
     - (void) otherMouseUp: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->OtherMouseUp(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).OtherMouseUp(event);
     }
 
     - (void) scrollWheel: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->ScrollWheel(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).ScrollWheel(event);
+    }
+
+    - (void) mouseDragged: (NSEvent*) event
+    {
+        [self mouseMoved: event];
     }
 
     - (void) mouseMoved: (NSEvent*) event
     {
         // Unsafe casting, as the cursor manager type within a CocoaWindow is guaranteed to be CocoaCursorManager
-        static_cast<Sierra::CocoaCursorManager*>(&window->GetCursorManager())->MouseMoved(event);
+        static_cast<Sierra::CocoaCursorManager&>(window->GetCursorManager()).MouseMoved(event);
     }
 
     - (BOOL) canBecomeKeyView
