@@ -1,7 +1,10 @@
 # Link source files
 target_sources(Sierra PRIVATE
+    Application.cpp
+    Application.h
     CursorManager.cpp
     CursorManager.h
+    EventDispatcher.h
     InputManager.cpp
     InputManager.h
     Key.h

@@ -13,7 +13,7 @@ namespace Sierra
         : Image(createInfo), MetalResource(createInfo.name)
     {
         SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Metal]: Cannot create image [{0}] with unsupported sampling! Make sure to use Device::IsImageSamplingSupported() to query image sampling support.", GetName());
-        SR_ERROR_IF(!device.IsImageConfigurationSupported(createInfo.format, createInfo.usage), "[Metal]: Cannot create [{0}] image with unsupported format! Use Device::IsImageConfigurationSupported() to query format support.", GetName());
+        SR_ERROR_IF(!device.IsImageFormatSupported(createInfo.format, createInfo.usage), "[Metal]: Cannot create [{0}] image with unsupported format! Use Device::IsImageFormatSupported() to query format support.", GetName());
 
         // Set up texture descriptor
         MTL::TextureDescriptor* textureDescriptor = MTL::TextureDescriptor::alloc()->init();
@@ -21,18 +21,15 @@ namespace Sierra
         textureDescriptor->setWidth(createInfo.width);
         textureDescriptor->setHeight(createInfo.height);
         textureDescriptor->setDepth(1);
-        textureDescriptor->setMipmapLevelCount(1);
+        textureDescriptor->setMipmapLevelCount(createInfo.mipLevelCount);
         textureDescriptor->setArrayLength(createInfo.layerCount);
         textureDescriptor->setPixelFormat(ImageFormatToPixelFormat(createInfo.format));
         textureDescriptor->setUsage(ImageUsageToTextureUsage(createInfo.usage));
         textureDescriptor->setSampleCount(ImageSamplingToUInteger(createInfo.sampling));
-        #if SR_PLATFORM_macOS
-            textureDescriptor->setStorageMode(ImageMemoryLocationToStorageMode(createInfo.memoryLocation));
-        #else
-            textureDescriptor->setStorageMode(createInfo.usage & ImageUsage::TransientAttachment ? MTL::StorageModeMemoryless : ImageMemoryLocationToStorageMode(createInfo.memoryLocation));
-        #endif
+        textureDescriptor->setStorageMode(createInfo.usage & ImageUsage::TransientAttachment ? MTL::StorageModeMemoryless : ImageMemoryLocationToStorageMode(createInfo.memoryLocation));
         textureDescriptor->setCpuCacheMode(ImageMemoryLocationToCPUCacheMode(createInfo.memoryLocation));
         textureDescriptor->setHazardTrackingMode(MTL::HazardTrackingModeUntracked);
+        auto a = ImageMemoryLocationToStorageMode(createInfo.memoryLocation);
 
         // Allocate texture
         texture = device.GetMetalDevice()->newTexture(textureDescriptor);
@@ -46,7 +43,7 @@ namespace Sierra
         : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainPixelFormatToImageFormat(createInfo.format), .usage = ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::Device }), MetalResource(createInfo.name),
           texture(createInfo.texture), swapchainImage(true)
     {
-        device.SetResourceName(texture, GetName());
+
     }
 
     /* --- DESTRUCTOR --- */
@@ -94,6 +91,7 @@ namespace Sierra
                 {
                     case ImageMemoryType::Int8:         return MTL::PixelFormatR8Sint;
                     case ImageMemoryType::UInt8:        return MTL::PixelFormatR8Uint;
+                    case ImageMemoryType::Norm8:        return MTL::PixelFormatR8Snorm;
                     case ImageMemoryType::UNorm8:       return MTL::PixelFormatR8Unorm;
                     case ImageMemoryType::SRGB8:        return MTL::PixelFormatR8Unorm_sRGB;
                     case ImageMemoryType::Int16:        return MTL::PixelFormatR16Sint;
@@ -115,6 +113,7 @@ namespace Sierra
                 {
                     case ImageMemoryType::Int8:         return MTL::PixelFormatRG8Sint;
                     case ImageMemoryType::UInt8:        return MTL::PixelFormatRG8Uint;
+                    case ImageMemoryType::Norm8:        return MTL::PixelFormatRG8Snorm;
                     case ImageMemoryType::UNorm8:       return MTL::PixelFormatRG8Unorm;
                     case ImageMemoryType::SRGB8:        return MTL::PixelFormatRG8Unorm_sRGB;
                     case ImageMemoryType::Int16:        return MTL::PixelFormatRG16Sint;
@@ -137,6 +136,7 @@ namespace Sierra
                 {
                     case ImageMemoryType::Int8:         return MTL::PixelFormatRGBA8Sint;
                     case ImageMemoryType::UInt8:        return MTL::PixelFormatRGBA8Uint;
+                    case ImageMemoryType::Norm8:        return MTL::PixelFormatRGBA8Snorm;
                     case ImageMemoryType::UNorm8:       return MTL::PixelFormatRGBA8Unorm;
                     case ImageMemoryType::SRGB8:        return MTL::PixelFormatRGBA8Unorm_sRGB;
                     case ImageMemoryType::Int16:        return MTL::PixelFormatRGBA16Sint;
@@ -179,10 +179,10 @@ namespace Sierra
     MTL::TextureUsage MetalImage::ImageUsageToTextureUsage(const ImageUsage usage)
     {
         MTL::TextureUsage usageFlags = MTL::TextureUsageUnknown;
-        if (usage & ImageUsage::SourceTransfer)             usageFlags |= MTL::TextureUsageUnknown;
-        if (usage & ImageUsage::DestinationTransfer)        usageFlags |= MTL::TextureUsageUnknown;
+        if (usage & ImageUsage::SourceMemory) usageFlags |= MTL::TextureUsageUnknown;
+        if (usage & ImageUsage::DestinationMemory) usageFlags |= MTL::TextureUsageUnknown;
         if (usage & ImageUsage::Storage)                    usageFlags |= MTL::TextureUsageShaderRead | MTL::TextureUsageShaderWrite;
-        if (usage & ImageUsage::Sampled)                    usageFlags |= MTL::TextureUsageShaderRead;
+        if (usage & ImageUsage::Sample) usageFlags |= MTL::TextureUsageShaderRead;
         if (usage & ImageUsage::ColorAttachment ||
             usage & ImageUsage::DepthAttachment ||
             usage & ImageUsage::InputAttachment ||
@@ -210,9 +210,9 @@ namespace Sierra
     {
         switch (memoryLocation)
         {
-            case ImageMemoryLocation::Host:        return MTL::StorageModeManaged;
+            case ImageMemoryLocation::Host:        return MTL::StorageModeShared;
             case ImageMemoryLocation::Device:      return MTL::StorageModePrivate;
-            case ImageMemoryLocation::Auto:        return MTL::StorageModeManaged;
+            case ImageMemoryLocation::Auto:        return MTL::StorageModeShared;
         }
 
         return MTL::StorageModeManaged;

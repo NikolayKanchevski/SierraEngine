@@ -18,7 +18,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void CocoaInputManager::OnUpdate()
+    void CocoaInputManager::Update()
     {
         std::copy(keyStates.begin(), keyStates.end(), lastKeyStates.begin());
         std::copy(mouseButtonStates.begin(), mouseButtonStates.end(), lastMouseButtonStates.begin());

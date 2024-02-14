@@ -18,7 +18,7 @@ namespace Sierra
         SR_ERROR_IF(createInfo.name.empty(), "Application title must not be empty!");
 
         // Create objects
-        platformContext = PlatformContext::Load({ });
+        platformContext = PlatformContext::Create({ });
         windowManager = WindowManager::Create({ .platformContext = platformContext });
         renderingContext = RenderingContext::Create({ .name = "Application Context", .graphicsAPI = createInfo.settings.graphicsAPI });
     }
@@ -27,11 +27,11 @@ namespace Sierra
     {
         platformContext->RunApplication({
             .OnStart = [this] {
-                OnStart();
+                Start();
             },
             .OnUpdate = [this] {
                 const TimePoint frameStartTime = TimePoint::Now();
-                if (OnUpdate(frameStartTime - lastFrameStartTime))
+                if (Update(frameStartTime - lastFrameStartTime))
                 {
                     return true;
                 }
@@ -67,15 +67,6 @@ namespace Sierra
     // NOTE: When querying application folders on Apple platforms, we do not create directories ourselves,
     //       as OS automatically makes them for the application, and restricts access to others (on iOS).
 
-    const std::filesystem::path& Application::GetResourcesDirectoryPath()
-    {
-        static auto path = File::GetResourcesDirectoryPath()
-           #if SR_PLATFORM_macOS
-               / "Contents" / "Resources"  // NOTE: iOS restricts us to putting application data in the bundle directly, so we do the same for macOS (but there we can use the Contents/Resources folder)
-           #endif
-        ;
-        return path;
-    }
     const std::filesystem::path& Application::GetApplicationCachesDirectoryPath()
     {
         static auto path = File::GetCachesDirectoryPath()

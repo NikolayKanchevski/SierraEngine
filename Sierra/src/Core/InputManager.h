@@ -6,10 +6,89 @@
 
 #include "Key.h"
 #include "MouseButton.h"
-#include "../Events/InputEvent.h"
+#include "EventDispatcher.h"
 
 namespace Sierra
 {
+
+    #pragma region Events
+        class SIERRA_API InputEvent : public Event { };
+
+        class SIERRA_API KeyEvent : public InputEvent
+        {
+        public:
+            /* --- GETTER METHODS --- */
+            [[nodiscard]] inline Key GetKey() const { return key; }
+
+        protected:
+            inline explicit KeyEvent(const Key key) : key(key) { }
+
+        private:
+            Key key = Key::Unknown;
+
+        };
+
+        class SIERRA_API KeyPressEvent final : public KeyEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            inline explicit KeyPressEvent(const Key pressedKey) : KeyEvent(pressedKey) { }
+
+        };
+
+        class SIERRA_API KeyReleaseEvent final : public KeyEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            inline explicit KeyReleaseEvent(const Key releasedKey) : KeyEvent(releasedKey) { }
+
+        };
+
+        class SIERRA_API MouseButtonEvent : public InputEvent
+        {
+        public:
+            /* --- GETTER METHODS --- */
+            [[nodiscard]] inline MouseButton GetMouseButton() const { return mouseButton; }
+
+        protected:
+            inline explicit MouseButtonEvent(const MouseButton mouseButton) : mouseButton(mouseButton) { }
+
+        private:
+            MouseButton mouseButton = MouseButton::Unknown;
+
+        };
+
+        class SIERRA_API MouseButtonPressEvent final : public MouseButtonEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            inline explicit MouseButtonPressEvent(const MouseButton mouseButton) : MouseButtonEvent(mouseButton) { }
+
+        };
+
+        class SIERRA_API MouseButtonReleaseEvent final : public MouseButtonEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            inline explicit MouseButtonReleaseEvent(const MouseButton mouseButton) : MouseButtonEvent(mouseButton) { }
+
+        };
+
+        class SIERRA_API MouseScrollEvent final : public InputEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            inline explicit MouseScrollEvent(const Vector2 scroll) : scroll(scroll) { }
+
+            /* --- GETTER METHODS --- */
+            [[nodiscard]] inline float32 GetHorizontalScroll() const { return scroll.x; }
+            [[nodiscard]] inline float32 GetVerticalScroll() const { return scroll.y; }
+
+        private:
+            Vector2 scroll;
+
+        };
+    #pragma endregion
 
     struct InputManagerCreateInfo
     {
@@ -44,7 +123,7 @@ namespace Sierra
         [[nodiscard]] virtual Vector2 GetMouseScroll() const;
 
         /* --- EVENTS --- */
-        template<typename T> void OnEvent(InputEventCallback<T>) { static_assert(std::is_base_of_v<InputEvent, T> && !std::is_same_v<InputEvent, T>, "Template function accepts derived input events only!"); }
+        template<typename T> void OnEvent(InputEventCallback<T> Callback) { static_assert(std::is_base_of_v<InputEvent, T> && !std::is_same_v<InputEvent, T>, "Template function accepts derived input events only!"); }
 
         /* --- OPERATORS --- */
         InputManager(const InputManager&) = delete;
@@ -60,11 +139,11 @@ namespace Sierra
             Press = 1
         };
 
-        constexpr static auto KEY_COUNT = static_cast<std::underlying_type<Key>::type>(Key::RightSystem) + 1;
-        constexpr static auto MOUSE_BUTTON_COUNT = static_cast<std::underlying_type<MouseButton>::type>(MouseButton::Extra2) + 1;
+        constexpr static uint32 KEY_COUNT = static_cast<uint32>(Key::RightSystem) + 1;
+        constexpr static uint32 MOUSE_BUTTON_COUNT = static_cast<uint32>(MouseButton::Extra2) + 1;
 
-        [[nodiscard]] inline constexpr static auto GetKeyIndex(const Key key) { return static_cast<std::underlying_type<Key>::type>(key); }
-        [[nodiscard]] inline constexpr static auto GetMouseButtonIndex(const MouseButton mouseButton) { return static_cast<std::underlying_type<MouseButton>::type>(mouseButton); }
+        [[nodiscard]] inline constexpr static auto GetKeyIndex(const Key key) { return static_cast<uint32>(key); }
+        [[nodiscard]] inline constexpr static auto GetMouseButtonIndex(const MouseButton mouseButton) { return static_cast<uint32>(mouseButton); }
 
         [[nodiscard]] inline EventDispatcher<KeyPressEvent>& GetKeyPressDispatcher() { return keyPressDispatcher; }
         [[nodiscard]] inline EventDispatcher<KeyReleaseEvent>& GetKeyReleaseDispatcher() { return keyReleaseDispatcher; }

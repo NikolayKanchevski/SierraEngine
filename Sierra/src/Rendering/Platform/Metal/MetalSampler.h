@@ -25,8 +25,8 @@ namespace Sierra
         ~MetalSampler() override;
 
         /* --- CONVERSIONS --- */
-        [[nodiscard]] static MTL::SamplerMinMagFilter SamplerSampleModeToSamplerMinMagFilter(SamplerSampleMode sampleMode);
-        [[nodiscard]] static MTL::SamplerAddressMode SamplerExtendModeToSamplerAddressMode(SamplerExtendMode extendMode);
+        [[nodiscard]] static MTL::SamplerMinMagFilter SamplerSampleModeToSamplerMinMagFilter(SamplerFilter sampleMode);
+        [[nodiscard]] static MTL::SamplerAddressMode SamplerExtendModeToSamplerAddressMode(SamplerAddressMode extendMode);
         [[nodiscard]] static NS::UInteger SamplerAnisotropyToUInteger(SamplerAnisotropy anisotropy);
         [[nodiscard]] static MTL::CompareFunction SamplerCompareOperationToCompareFunction(SamplerCompareOperation compareOperation);
         [[nodiscard]] static MTL::SamplerBorderColor SamplerBorderColorToSamplerBorderColor(SamplerBorderColor borderColor);

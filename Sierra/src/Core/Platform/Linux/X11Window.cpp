@@ -51,12 +51,12 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void X11Window::OnUpdate()
+    void X11Window::Update()
     {
         if (closed) return;
 
-        inputManager.OnUpdate();
-        cursorManager.OnUpdate();
+        inputManager.Update();
+        cursorManager.Update();
 
         // Continue handling events until there are none queried
         while (!x11Context.IsEventQueueEmpty())
@@ -87,7 +87,7 @@ namespace Sierra
         }
 
         // A closing event may have been handled, so we need to check again
-        if (!closed) cursorManager.OnUpdateEnd();
+        if (!closed) cursorManager.UpdateEnd();
 
         x11Context.Flush();
     }

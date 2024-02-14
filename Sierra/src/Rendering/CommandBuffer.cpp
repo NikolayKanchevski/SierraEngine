@@ -14,12 +14,4 @@ namespace Sierra
 
     }
 
-    /* --- PROTECTED METHODS --- */
-
-    void CommandBuffer::FreeQueuedResources()
-    {
-        queriedBuffers = std::queue<std::unique_ptr<Buffer>>();
-        queriedImages = std::queue<std::unique_ptr<Image>>();
-    }
-
 }

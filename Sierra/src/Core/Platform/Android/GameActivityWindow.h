@@ -24,7 +24,7 @@ namespace Sierra
         GameActivityWindow(const GameActivityContext &gameActivityContext, const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void OnUpdate() override;
+        void Update() override;
         void Minimize() override;
         void Maximize() override;
         void Show() override;

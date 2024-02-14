@@ -289,7 +289,7 @@ namespace Sierra
         for (uint32 i = 0; i < concurrentFrameCount; i++)
         {
             swapchainImages[i] = std::unique_ptr<VulkanImage>(new VulkanImage(device, VulkanImage::SwapchainImageCreateInfo {
-                .name = "Image " + std::to_string(i) + " of [" + GetName() + "]",
+                .name = "Image " + std::to_string(i) + " of swapchain [" + GetName() + "]",
                 .image = vulkanSwapchainImages[i],
                 .width = swapchainCreateInfo.imageExtent.width,
                 .height = swapchainCreateInfo.imageExtent.height,
@@ -318,11 +318,11 @@ namespace Sierra
         {
             result = device.GetFunctionTable().vkCreateSemaphore(device.GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &isImageAcquiredSemaphores[i]);
             SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create semaphore [{0}], indicating whether corresponding swapchain image of swapchain [{1}] is free for use!", i, GetName());
-            device.SetObjectName(isImageAcquiredSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "Image free semaphore " + std::to_string(i) + " of [" + GetName() + "]");
+            device.SetObjectName(isImageAcquiredSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "Image free semaphore [" + std::to_string(i) + "] of swapchain [" + GetName() + "]");
 
             result = device.GetFunctionTable().vkCreateSemaphore(device.GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &isImagePresentedSemaphores[i]);
             SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create semaphore [{0}], indicating whether corresponding swapchain image of swapchain [{1}] is free for presenting!", i, GetName());
-            device.SetObjectName(isImagePresentedSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "Image rendered semaphore " + std::to_string(i) + " of [" + GetName() + "]");
+            device.SetObjectName(isImagePresentedSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "Image rendered semaphore [" + std::to_string(i) + "] of swapchain [" + GetName() + "]");
         }
     }
 
@@ -330,7 +330,7 @@ namespace Sierra
     {
         while (window->IsMinimized())
         {
-            window->OnUpdate();
+            window->Update();
         }
 
         device.GetFunctionTable().vkDeviceWaitIdle(device.GetLogicalDevice());

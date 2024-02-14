@@ -20,21 +20,21 @@ elseif(SIERRA_PLATFORM_iOS)
 endif()
 
 # Assign library output path
-set_target_properties(Sierra PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${SIERRA_LIBRARY_OUTPUT_PATH})
-set_target_properties(Sierra PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${SIERRA_LIBRARY_OUTPUT_PATH})
-set_target_properties(Sierra PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${SIERRA_LIBRARY_OUTPUT_PATH})
+set_target_properties(Sierra PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY ${SIERRA_LIBRARY_OUTPUT_PATH}
+    LIBRARY_OUTPUT_DIRECTORY ${SIERRA_LIBRARY_OUTPUT_PATH}
+    RUNTIME_OUTPUT_DIRECTORY ${SIERRA_LIBRARY_OUTPUT_PATH}
+)
 
 # Link engine modules
 add_subdirectory(Core)
-add_subdirectory(Engine)
-add_subdirectory(Events)
+add_subdirectory(Utilities)
 add_subdirectory(Rendering)
+add_subdirectory(Extensions)
 
-# Link engine entry point
+# Link include files
 target_sources(Sierra PRIVATE
     srpch.h
-    Application.h
-    Application.cpp
     ../include/Sierra.h
 )
 

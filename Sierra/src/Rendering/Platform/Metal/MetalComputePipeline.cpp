@@ -26,7 +26,7 @@ namespace Sierra
         // Create pipeline
         NS::Error* error = nullptr;
         computePipelineState = device.GetMetalDevice()->newComputePipelineState(metalComputeShader.GetEntryFunction(), &error);
-        SR_ERROR_IF(error != nullptr, "[Metal]: Could not create compute pipeline [{0}]! Error: {1}.", GetName(), error->localizedDescription()->cString(NS::ASCIIStringEncoding));
+        SR_ERROR_IF(error != nullptr, "[Metal]: Could not create compute pipeline [{0}]! Error: {1}.", GetName(), error->description()->cString(NS::ASCIIStringEncoding));
 
         computePipelineDescriptor->release();
     }

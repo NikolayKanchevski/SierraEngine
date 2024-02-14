@@ -62,12 +62,12 @@ namespace Sierra
 
     /* --- PRIVATE METHODS  --- */
 
-    void Win32CursorManager::OnUpdate()
+    void Win32CursorManager::Update()
     {
         lastCursorPosition = cursorPosition;
     }
 
-    void Win32CursorManager::OnUpdateEnd()
+    void Win32CursorManager::UpdateEnd()
     {
         if (!cursorHidden) return;
 

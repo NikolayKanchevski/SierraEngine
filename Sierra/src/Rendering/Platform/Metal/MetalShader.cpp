@@ -4,8 +4,6 @@
 
 #include "MetalShader.h"
 
-#include "../../../Engine/File.h"
-
 namespace Sierra
 {
 
@@ -27,7 +25,7 @@ namespace Sierra
         // Load library
         NS::Error* error = nullptr;
         library = device.GetMetalDevice()->newLibrary(NS::String::string(shaderLibraryFilePath.string().c_str(), NS::ASCIIStringEncoding), &error);
-        SR_ERROR_IF(error != nullptr, "Could not load Metal shader library [{0} - {1}]! Error: {2}.", GetName(), shaderLibraryFilePath.string().c_str(), error->localizedDescription()->cString(NS::ASCIIStringEncoding));
+        SR_ERROR_IF(error != nullptr, "Could not load Metal shader library [{0} - {1}]! Error: {2}.", GetName(), shaderLibraryFilePath.string().c_str(), error->description()->cString(NS::ASCIIStringEncoding));
         device.SetResourceName(library, GetName());
 
         // Load entry point

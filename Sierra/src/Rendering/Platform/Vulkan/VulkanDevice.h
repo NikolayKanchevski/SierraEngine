@@ -20,19 +20,15 @@ namespace Sierra
         VulkanDevice(const VulkanInstance &instance, const DeviceCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::initializer_list<std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait = { }) const override;
+        void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer,  const std::initializer_list<std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait = { }) const override;
         void WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const std::string& GetDeviceName() const override { return deviceName; }
 
-        [[nodiscard]] bool IsImageConfigurationSupported(ImageFormat format, ImageUsage usage) const override;
-
+        [[nodiscard]] bool IsImageFormatSupported(ImageFormat format, ImageUsage usage) const override;
         [[nodiscard]] bool IsImageSamplingSupported(ImageSampling sampling) const override;
-        [[nodiscard]] ImageSampling GetHighestImageSamplingSupported() const override;
-
         [[nodiscard]] bool IsSamplerAnisotropySupported(SamplerAnisotropy anisotropy) const override;
-        [[nodiscard]] SamplerAnisotropy GetHighestSamplerAnisotropySupported() const override;
 
         [[nodiscard]] inline VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
         [[nodiscard]] inline VkDevice GetLogicalDevice() const { return logicalDevice; }

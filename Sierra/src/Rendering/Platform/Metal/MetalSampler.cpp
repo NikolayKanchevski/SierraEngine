@@ -17,7 +17,7 @@ namespace Sierra
         // Set up sampler descriptor
         MTL::SamplerDescriptor* samplerDescriptor = MTL::SamplerDescriptor::alloc()->init();
         device.SetResourceName(samplerDescriptor, GetName());
-        samplerDescriptor->setMagFilter(SamplerSampleModeToSamplerMinMagFilter(createInfo.sampleMode));
+        samplerDescriptor->setMagFilter(SamplerSampleModeToSamplerMinMagFilter(createInfo.filter));
         samplerDescriptor->setMinFilter(samplerDescriptor->magFilter());
         samplerDescriptor->setRAddressMode(SamplerExtendModeToSamplerAddressMode(createInfo.extendMode));
         samplerDescriptor->setSAddressMode(samplerDescriptor->rAddressMode());
@@ -45,25 +45,25 @@ namespace Sierra
 
     /* --- CONVERSIONS --- */
 
-    MTL::SamplerMinMagFilter MetalSampler::SamplerSampleModeToSamplerMinMagFilter(const SamplerSampleMode sampleMode)
+    MTL::SamplerMinMagFilter MetalSampler::SamplerSampleModeToSamplerMinMagFilter(const SamplerFilter sampleMode)
     {
         switch (sampleMode)
         {
-            case SamplerSampleMode::Smooth:     return MTL::SamplerMinMagFilterLinear;
-            case SamplerSampleMode::Pixelize:   return MTL::SamplerMinMagFilterNearest;
+            case SamplerFilter::Linear:     return MTL::SamplerMinMagFilterLinear;
+            case SamplerFilter::Nearest:    return MTL::SamplerMinMagFilterNearest;
         }
 
         return MTL::SamplerMinMagFilterNearest;
     }
 
-    MTL::SamplerAddressMode MetalSampler::SamplerExtendModeToSamplerAddressMode(const SamplerExtendMode extendMode)
+    MTL::SamplerAddressMode MetalSampler::SamplerExtendModeToSamplerAddressMode(const SamplerAddressMode extendMode)
     {
         switch (extendMode)
         {
-            case SamplerExtendMode::Repeat:             return MTL::SamplerAddressModeRepeat;
-            case SamplerExtendMode::MirroredRepeat:     return MTL::SamplerAddressModeMirrorRepeat;
-            case SamplerExtendMode::ClampToEdge:        return MTL::SamplerAddressModeClampToEdge;
-            case SamplerExtendMode::ClampToBorder:      return MTL::SamplerAddressModeClampToBorderColor;
+            case SamplerAddressMode::Repeat:             return MTL::SamplerAddressModeRepeat;
+            case SamplerAddressMode::MirroredRepeat:     return MTL::SamplerAddressModeMirrorRepeat;
+            case SamplerAddressMode::ClampToEdge:        return MTL::SamplerAddressModeClampToEdge;
+            case SamplerAddressMode::ClampToBorder:      return MTL::SamplerAddressModeClampToBorderColor;
         }
 
         return MTL::SamplerAddressModeRepeat;

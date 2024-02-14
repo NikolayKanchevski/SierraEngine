@@ -1,7 +1,10 @@
 #version 450
 
-layout(location = 0) in vec3 fromCode_VertexPosition;
-layout(location = 0) out vec3 toFrag_Color;
+layout(location = 0) in vec3 position;
+layout(location = 0) out struct
+{
+    vec3 color;
+} Out;
 
 vec3 colors[] = {
     vec3(0.583f,  0.771f,  0.014f),
@@ -55,6 +58,6 @@ layout(push_constant) uniform PushConstant
 
 void main()
 {
-    gl_Position = uniformBuffer.projection * uniformBuffer.view * pushConstant.model * vec4(fromCode_VertexPosition, 1.0);
-    toFrag_Color = colors[gl_VertexIndex];
+    gl_Position = uniformBuffer.projection * uniformBuffer.view * pushConstant.model * vec4(position, 1.0);
+    Out.color = colors[gl_VertexIndex];
 }

@@ -127,7 +127,7 @@ namespace Sierra
 
         std::array<Atom, static_cast<uint32>(AtomType::NET_REQUEST_FRAME_EXTENTS) + 1> atomTable { 0 };
         Atom TryRetrieveAtom(const Atom* supportedAtoms, const ulong atomCount, const char* atomName);
-        [[nodiscard]] inline constexpr std::underlying_type<AtomType>::type GetAtomTypeIndex(const AtomType atomType) const { return static_cast<std::underlying_type<AtomType>::type>(atomType); }
+        [[nodiscard]] inline constexpr std::underlying_type<AtomType>::type GetAtomTypeIndex(const AtomType atomType) const { return static_cast<uint32>(atomType); }
 
         mutable std::vector<X11Screen> screens;
         void ReloadScreens(XEvent* notifyEvent = nullptr) const;

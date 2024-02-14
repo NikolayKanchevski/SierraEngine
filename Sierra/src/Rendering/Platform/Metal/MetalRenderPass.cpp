@@ -5,7 +5,6 @@
 #include "MetalRenderPass.h"
 
 #include "MetalImage.h"
-#include "MetalCommandBuffer.h"
 
 namespace Sierra
 {

@@ -4,7 +4,6 @@
 
 #include "UIKitContext.h"
 
-#include "UIKitWindow.h"
 #include "UIKitTemporaryCreateInfoStorage.h"
 
 @interface UIKitApplicationDelegate : UIResponder<UIApplicationDelegate>
@@ -30,6 +29,11 @@
         runInfo = std::move(createInfo.runInfo);
 
         return YES;
+    }
+
+    - (UIInterfaceOrientationMask) application: (UIApplication*) application supportedInterfaceOrientationsForWindow: (UIWindow*) window
+    {
+        return window.rootViewController.supportedInterfaceOrientations;
     }
 
     - (void) sceneDidBecomeActive: (UIScene*) activeScene

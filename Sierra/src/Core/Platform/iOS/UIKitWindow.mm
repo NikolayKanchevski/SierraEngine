@@ -20,50 +20,6 @@
         return [CAMetalLayer class];
     }
 
-    - (void) resizeDrawable: (CGFloat) scaleFactor
-    {
-        // Set new size
-        CGSize newSize = self.bounds.size;
-        newSize.width *= scaleFactor;
-        newSize.height *= scaleFactor;
-        if (newSize.width <= 0 || newSize.height <= 0) return;
-        
-        // Assign new size if it differs
-        CAMetalLayer* metalLayer = reinterpret_cast<CAMetalLayer*>(self.layer);
-        if (newSize.width == metalLayer.drawableSize.width && newSize.height == metalLayer.drawableSize.height) return;
-        metalLayer.drawableSize = newSize;
-    }
-
-    - (void) didMoveToWindow
-    {
-        [super didMoveToWindow];
-        [self resizeDrawable: self.window.screen.nativeScale];
-    }
-
-    - (void) setContentScaleFactor: (CGFloat) contentScaleFactor
-    {
-        [super setContentScaleFactor: contentScaleFactor];
-        [self resizeDrawable: self.window.screen.nativeScale];
-    }
-
-    - (void) layoutSubviews
-    {
-        [super layoutSubviews];
-        [self resizeDrawable: self.window.screen.nativeScale];
-    }
-
-    - (void) setFrame: (CGRect) frame
-    {
-        [super setFrame:frame];
-        [self resizeDrawable: self.window.screen.nativeScale];
-    }
-
-    - (void) setBounds: (CGRect) bounds
-    {
-        [super setBounds:bounds];
-        [self resizeDrawable: self.window.screen.nativeScale];
-    }
-
 @end
 
 @interface UIKitWindowViewController : UIViewController
@@ -88,6 +44,11 @@
     }
 
     /* --- POLLING METHODS --- */
+
+    - (UIInterfaceOrientationMask) supportedInterfaceOrientations
+    {
+        return window->AllowsOrientationChange() ? UIInterfaceOrientationMaskAll : UIInterfaceOrientationMaskPortrait;
+    }
 
     - (void) touchesBegan: (NSSet<UITouch*>*) touches withEvent: (UIEvent*) event
     {
@@ -137,7 +98,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     UIKitWindow::UIKitWindow(const UIKitContext &uiKitContext, const WindowCreateInfo &createInfo)
-        : Window(createInfo), title(createInfo.title), uiKitContext(uiKitContext), touchManager(UIKitTouchManager({ }))
+        : Window(createInfo), title(createInfo.title), allowsOrientationChange(createInfo.resizable), uiKitContext(uiKitContext), touchManager(UIKitTouchManager({ }))
     {
         // Create window
         window = uiKitContext.CreateWindow();
@@ -146,12 +107,10 @@ namespace Sierra
         viewController = [[UIKitWindowViewController alloc] initWithWindow: this];
 
         // Set up view
-        view = [viewController view];
-        [view setContentScaleFactor: window.screen.nativeScale];
+        view = viewController.view;
 
-        // Assign window handlers and set background color
+        // Assign window handlers
         [window setRootViewController: viewController];
-        [window setBackgroundColor: [UIColor whiteColor]];
 
         // Observe UIKit events
         deviceOrientationDidChangeBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UIDeviceOrientationDidChangeNotification, [this] { DeviceOrientationDidChange(); });
@@ -165,9 +124,9 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void UIKitWindow::OnUpdate()
+    void UIKitWindow::Update()
     {
-        // Not applicable
+        touchManager.Update();
     }
 
     void UIKitWindow::Minimize()
@@ -250,12 +209,12 @@ namespace Sierra
 
     Vector2UInt UIKitWindow::GetSize() const
     {
-        return uiKitContext.GetPrimaryScreen().GetOrientation() & ScreenOrientation::Portrait ? uiKitContext.GetPrimaryScreen().GetSize() : Vector2UInt(uiKitContext.GetPrimaryScreen().GetSize().y, uiKitContext.GetPrimaryScreen().GetSize().x);
+        return uiKitContext.GetPrimaryScreen().GetSize();
     }
 
     Vector2UInt UIKitWindow::GetFramebufferSize() const
     {
-        return GetSize();
+        return GetSize() * static_cast<uint32>([window contentScaleFactor]);
     }
 
     float32 UIKitWindow::GetOpacity() const
@@ -310,8 +269,8 @@ namespace Sierra
         // Check if orientation has actually changed
         if ((lastOrientation & ScreenOrientation::Landscape && uiKitContext.GetPrimaryScreen().GetOrientation() & ScreenOrientation::Landscape) || (lastOrientation & ScreenOrientation::Portrait && uiKitContext.GetPrimaryScreen().GetOrientation() & ScreenOrientation::Portrait)) return;
 
-        GetWindowResizeDispatcher().DispatchEvent(GetSize());
         lastOrientation = uiKitContext.GetPrimaryScreen().GetOrientation();
+        GetWindowResizeDispatcher().DispatchEvent(GetSize());
     }
 
     void UIKitWindow::ApplicationDidEnterBackground()

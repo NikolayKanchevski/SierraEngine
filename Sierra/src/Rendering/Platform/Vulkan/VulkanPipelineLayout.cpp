@@ -20,7 +20,9 @@ namespace Sierra
             std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings(createInfo.bindings.size());
             for (uint32 i = 0; i < createInfo.bindings.size(); i++)
             {
-                const auto &binding = *(createInfo.bindings.begin() + i);
+                const PipelineBinding &binding = *(createInfo.bindings.begin() + i);
+                SR_ERROR_IF(binding.type == PipelineBindingType::Undefined, "[Vulkan]: Cannot create pipeline layout [{0}], as binding [{1}] must not be of type [PipelineBindingType::Undefined]!", GetName(), i);
+
                 descriptorSetLayoutBindings[i].binding = i;
                 descriptorSetLayoutBindings[i].descriptorType = PipelineBindingTypeToVkDescriptorType(binding.type);
                 descriptorSetLayoutBindings[i].descriptorCount = binding.arraySize;

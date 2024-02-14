@@ -22,7 +22,10 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline MTL::RenderPipelineState* GetRenderPipelineState() const { return renderPipelineState; }
+        [[nodiscard]] inline MTL::DepthStencilState* GetDepthStencilState() const { return depthStencilState; }
         [[nodiscard]] inline const MetalPipelineLayout& GetLayout() const { return layout; }
+
+        [[nodiscard]] inline uint32 GetVertexByteStride() const { return vertexByteStride; }
         [[nodiscard]] inline bool HasFragmentShader() const { return hasFragmentShader; }
 
         [[nodiscard]] inline MTL::CullMode GetCullMode() const { return cullMode; }
@@ -41,6 +44,9 @@ namespace Sierra
         const MetalPipelineLayout &layout;
 
         MTL::RenderPipelineState* renderPipelineState = nullptr;
+        MTL::DepthStencilState* depthStencilState = nullptr;
+
+        uint32 vertexByteStride = 0;
         bool hasFragmentShader = false;
 
         MTL::CullMode cullMode;

@@ -12,15 +12,15 @@ namespace Sierra
     class SIERRA_API CommandTask
     {
     public:
+        /* --- CONSTRUCTORS --- */
+        CommandTask() = default;
+
         /* --- OPERATORS --- */
         CommandTask(const CommandTask&) = delete;
         CommandTask &operator=(const CommandTask&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~CommandTask() = default;
-
-    protected:
-        CommandTask() = default;
 
     };
 

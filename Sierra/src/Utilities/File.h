@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "../Rendering/Image.h"
+
 namespace Sierra
 {
 

@@ -34,6 +34,8 @@ if(SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_iOS)
      option(SIERRA_BUILD_METAL "Whether to build Metal and its resources." ON)
 endif()
 
+option(SIERRA_BUILD_IMGUI "Whether to build native ImGui support." ON)
+
 # === CHECK IF REQUIREMENTS ARE MET === #
 if(NOT CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 20)
     message(FATAL_ERROR "[Sierra]: Sierra requires C++ 20 to be explicitly selected before including Sierra.cmake!")
@@ -70,15 +72,15 @@ function(SierraBuildApplication SOURCE_FILES)
 
     # == OUTPUT GENERATION === #
     if(SIERRA_PLATFORM_WINDOWS)
-        BuildWindowsExecutable()
+        BuildWindowsExecutable(${SOURCE_FILES})
     elseif(SIERRA_PLATFORM_LINUX)
-        BuildLinuxExecutable()
+        BuildLinuxExecutable(${SOURCE_FILES})
     elseif(SIERRA_PLATFORM_macOS)
-        BuildMacOSExecutable()
+        BuildMacOSExecutable(${SOURCE_FILES})
     elseif(SIERRA_PLATFORM_ANDROID)
-        BuildAndroidApplication()
+        BuildAndroidApplication(${SOURCE_FILES})
     elseif(SIERRA_PLATFORM_iOS)
-        BuildIOSApplication()
+        BuildIOSApplication(${SOURCE_FILES})
     endif()
 
     # Delete static library after build

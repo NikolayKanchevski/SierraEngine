@@ -278,13 +278,8 @@ namespace Sierra
           inputManager(CocoaInputManager({ })), cursorManager(window, { }),
           title(createInfo.title)
     {
-        // Create Metal layer
-        CAMetalLayer* const metalLayer = [CAMetalLayer layer];
-        SR_ERROR_IF(metalLayer == nullptr, "Could not create Metal layer for window [{0}]!", createInfo.title);
-
         // Assign Metal layer
-        [metalLayer setContentsScale: [window backingScaleFactor]];
-        [view setLayer: metalLayer];
+        [view setLayer: [CAMetalLayer layer]];
         [view setWantsLayer: YES];
 
         // Maximize window manually, or through Cocoa if resizable
@@ -333,15 +328,15 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void CocoaWindow::OnUpdate()
+    void CocoaWindow::Update()
     {
-        inputManager.OnUpdate();
-        cursorManager.OnUpdate();
+        inputManager.Update();
+        cursorManager.Update();
 
         // Poll events
         while (cocoaContext.PollNextEvent() != nullptr);
 
-        cursorManager.OnUpdateEnd();
+        cursorManager.UpdateEnd();
     }
 
     void CocoaWindow::Minimize()

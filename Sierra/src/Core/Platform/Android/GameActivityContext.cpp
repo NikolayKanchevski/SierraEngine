@@ -38,7 +38,7 @@ namespace Sierra
                 android_app_clear_motion_events(inputBuffer);
             }
 
-            // Now that Android has loaded a window, it is up to GameActivityWindow::OnUpdate() to poll events
+            // Now that Android has loaded a window, it is up to GameActivityWindow::Update() to poll events
             if (initialized)
             {
                 window = app->window;

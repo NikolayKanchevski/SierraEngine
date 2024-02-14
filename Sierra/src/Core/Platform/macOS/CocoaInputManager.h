@@ -23,7 +23,7 @@ namespace Sierra
         explicit CocoaInputManager(const InputManagerCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void OnUpdate();
+        void Update();
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] bool IsKeyPressed(Key key) const override;

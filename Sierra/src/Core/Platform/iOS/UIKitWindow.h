@@ -34,7 +34,7 @@ namespace Sierra
         explicit UIKitWindow(const UIKitContext &uiKitContext, const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void OnUpdate() override;
+        void Update() override;
         void Minimize() override;
         void Maximize() override;
         void Show() override;
@@ -66,6 +66,7 @@ namespace Sierra
 
         [[nodiscard]] UIWindow* GetUIWindow() const { return window; }
         [[nodiscard]] UIView* GetUIView() const { return view; }
+        [[nodiocard]] bool AllowsOrientationChange() const { return allowsOrientationChange; }
 
         /* --- DESTRUCTOR --- */
         ~UIKitWindow() override;
@@ -81,6 +82,8 @@ namespace Sierra
         std::string title;
         bool minimized = false;
         bool closed = false;
+
+        bool allowsOrientationChange = false;
         ScreenOrientation lastOrientation = ScreenOrientation::Portrait;
 
         UIKitSelectorBridge deviceOrientationDidChangeBridge;

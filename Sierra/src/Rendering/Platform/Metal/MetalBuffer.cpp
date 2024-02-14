@@ -26,12 +26,12 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void MetalBuffer::CopyFromMemory(const void* memoryPointer, uint64 memoryRange, const uint64 sourceOffset, const uint64 destinationOffset)
+    void MetalBuffer::CopyFromMemory(const void* memoryPointer, uint64 memoryRange, const uint64 sourceByteOffset, const uint64 destinationByteOffset)
     {
         memoryRange = memoryRange != 0 ? memoryRange : GetMemorySize();
-        SR_ERROR_IF(memoryLocation != BufferMemoryLocation::CPU, "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as it is not CPU-visible!", memoryRange, destinationOffset, GetName());
-        SR_ERROR_IF(destinationOffset + memoryRange > GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, destinationOffset, GetName(), destinationOffset + memoryRange, GetMemorySize());
-        std::memcpy(reinterpret_cast<char*>(buffer->contents()) + destinationOffset, reinterpret_cast<const char*>(memoryPointer) + sourceOffset, memoryRange);
+        SR_ERROR_IF(memoryLocation != BufferMemoryLocation::CPU, "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as it is not CPU-visible!", memoryRange, destinationByteOffset, GetName());
+        SR_ERROR_IF(destinationByteOffset + memoryRange > GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{3}] bytes is bigger than the size of the buffer - [{4}]!", memoryRange, destinationByteOffset, GetName(), destinationByteOffset + memoryRange, GetMemorySize());
+        std::memcpy(reinterpret_cast<char*>(buffer->contents()) + destinationByteOffset, reinterpret_cast<const char*>(memoryPointer) + sourceByteOffset, memoryRange);
     }
 
     /* --- DESTRUCTOR --- */

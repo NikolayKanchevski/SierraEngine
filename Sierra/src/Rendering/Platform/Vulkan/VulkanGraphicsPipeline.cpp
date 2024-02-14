@@ -7,7 +7,6 @@
 #include "VulkanImage.h"
 #include "VulkanShader.h"
 #include "VulkanRenderPass.h"
-#include "VulkanCommandBuffer.h"
 
 namespace Sierra
 {
@@ -22,8 +21,8 @@ namespace Sierra
         SR_ERROR_IF(createInfo.vertexShader->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.vertexShader->GetName());
         const VulkanShader &vulkanVertexShader = static_cast<VulkanShader&>(*createInfo.vertexShader);
 
-        SR_ERROR_IF(createInfo.renderPass->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with render pass [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.renderPass->GetName());
-        const VulkanRenderPass &vulkanRenderPass = static_cast<VulkanRenderPass&>(*createInfo.renderPass);
+        SR_ERROR_IF(createInfo.templateRenderPass->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with render pass [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.templateRenderPass->GetName());
+        const VulkanRenderPass &vulkanRenderPass = static_cast<VulkanRenderPass&>(*createInfo.templateRenderPass);
 
         // Set up shader stages
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages(1 + createInfo.fragmentShader.has_value());
@@ -46,35 +45,62 @@ namespace Sierra
         std::vector<VkVertexInputAttributeDescription> vertexInputAttributes(createInfo.vertexInputs.size());
         for (uint32 i = 0; i < createInfo.vertexInputs.size(); i++)
         {
-            vertexInputAttributes[i].location = 0;
-            vertexInputAttributes[i].binding = i;
+            vertexInputAttributes[i].binding = 0;
+            vertexInputAttributes[i].location = i;
             vertexInputAttributes[i].offset = vertexDataSize;
             switch (*(createInfo.vertexInputs.begin() + i))
             {
-                case VertexInput::Float:
-                {
-                    vertexInputAttributes[i].format = VK_FORMAT_R32_SFLOAT;
-                    vertexDataSize += sizeof(float32) * 1;
-                    break;
-                }
-                case VertexInput::Float2:
-                {
-                    vertexInputAttributes[i].format = VK_FORMAT_R32G32_SFLOAT;
-                    vertexDataSize += sizeof(float32) * 2;
-                    break;
-                }
-                case VertexInput::Float3:
-                {
-                    vertexInputAttributes[i].format = VK_FORMAT_R32G32B32_SFLOAT;
-                    vertexDataSize += sizeof(float32) * 3;
-                    break;
-                }
-                case VertexInput::Float4:
-                {
-                    vertexInputAttributes[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-                    vertexDataSize += sizeof(float32) * 4;
-                    break;
-                }
+                case VertexInput::Int8:          { vertexInputAttributes[i].format = VK_FORMAT_R8_SINT;    vertexDataSize += 1 * 1; break; }
+                case VertexInput::UInt8:         { vertexInputAttributes[i].format = VK_FORMAT_R8_UINT;    vertexDataSize += 1 * 1; break; }
+                case VertexInput::Norm8:         { vertexInputAttributes[i].format = VK_FORMAT_R8_SNORM;   vertexDataSize += 1 * 1; break; }
+                case VertexInput::UNorm8:        { vertexInputAttributes[i].format = VK_FORMAT_R8_UNORM;   vertexDataSize += 1 * 1; break; }
+                case VertexInput::Int16:         { vertexInputAttributes[i].format = VK_FORMAT_R16_SINT;   vertexDataSize += 1 * 2; break; }
+                case VertexInput::UInt16:        { vertexInputAttributes[i].format = VK_FORMAT_R16_UINT;   vertexDataSize += 1 * 2; break; }
+                case VertexInput::Norm16:        { vertexInputAttributes[i].format = VK_FORMAT_R16_SNORM;  vertexDataSize += 1 * 2; break; }
+                case VertexInput::UNorm16:       { vertexInputAttributes[i].format = VK_FORMAT_R16_UNORM;  vertexDataSize += 1 * 2; break; }
+                case VertexInput::Float16:       { vertexInputAttributes[i].format = VK_FORMAT_R16_SFLOAT; vertexDataSize += 1 * 4; break; }
+                case VertexInput::Int32:         { vertexInputAttributes[i].format = VK_FORMAT_R32_SINT;   vertexDataSize += 1 * 4; break; }
+                case VertexInput::UInt32:        { vertexInputAttributes[i].format = VK_FORMAT_R32_UINT;   vertexDataSize += 1 * 4; break; }
+                case VertexInput::Float32:       { vertexInputAttributes[i].format = VK_FORMAT_R32_SFLOAT; vertexDataSize += 1 * 4; break; }
+
+                case VertexInput::Int8_2D:       { vertexInputAttributes[i].format = VK_FORMAT_R8G8_SINT;     vertexDataSize += 2 * 1; break; }
+                case VertexInput::UInt8_2D:      { vertexInputAttributes[i].format = VK_FORMAT_R8G8_UINT;     vertexDataSize += 2 * 1; break; }
+                case VertexInput::Norm8_2D:      { vertexInputAttributes[i].format = VK_FORMAT_R8G8_SNORM;    vertexDataSize += 2 * 1; break; }
+                case VertexInput::UNorm8_2D:     { vertexInputAttributes[i].format = VK_FORMAT_R8G8_UNORM;    vertexDataSize += 2 * 1; break; }
+                case VertexInput::Int16_2D:      { vertexInputAttributes[i].format = VK_FORMAT_R16G16_SINT;   vertexDataSize += 2 * 2; break; }
+                case VertexInput::UInt16_2D:     { vertexInputAttributes[i].format = VK_FORMAT_R16G16_UINT;   vertexDataSize += 2 * 2; break; }
+                case VertexInput::Norm16_2D:     { vertexInputAttributes[i].format = VK_FORMAT_R16G16_SNORM;  vertexDataSize += 2 * 2; break; }
+                case VertexInput::UNorm16_2D:    { vertexInputAttributes[i].format = VK_FORMAT_R16G16_UNORM;  vertexDataSize += 2 * 2; break; }
+                case VertexInput::Float16_2D:    { vertexInputAttributes[i].format = VK_FORMAT_R16G16_SFLOAT; vertexDataSize += 2 * 2; break; }
+                case VertexInput::Int32_2D:      { vertexInputAttributes[i].format = VK_FORMAT_R32G32_SINT;   vertexDataSize += 2 * 4; break; }
+                case VertexInput::UInt32_2D:     { vertexInputAttributes[i].format = VK_FORMAT_R32G32_UINT;   vertexDataSize += 2 * 4; break; }
+                case VertexInput::Float32_2D:    { vertexInputAttributes[i].format = VK_FORMAT_R32G32_SFLOAT; vertexDataSize += 2 * 4; break; }
+
+                case VertexInput::Int8_3D:       { vertexInputAttributes[i].format = VK_FORMAT_R8G8B8_SINT;      vertexDataSize += 3 * 1; break; }
+                case VertexInput::UInt8_3D:      { vertexInputAttributes[i].format = VK_FORMAT_R8G8B8_UINT;      vertexDataSize += 3 * 1; break; }
+                case VertexInput::Norm8_3D:      { vertexInputAttributes[i].format = VK_FORMAT_R8G8B8_SNORM;     vertexDataSize += 3 * 1; break; }
+                case VertexInput::UNorm8_3D:     { vertexInputAttributes[i].format = VK_FORMAT_R8G8B8_UNORM;     vertexDataSize += 3 * 1; break; }
+                case VertexInput::Int16_3D:      { vertexInputAttributes[i].format = VK_FORMAT_R16G16B16_SINT;   vertexDataSize += 3 * 2; break; }
+                case VertexInput::UInt16_3D:     { vertexInputAttributes[i].format = VK_FORMAT_R16G16B16_UINT;   vertexDataSize += 3 * 2; break; }
+                case VertexInput::Norm16_3D:     { vertexInputAttributes[i].format = VK_FORMAT_R16G16B16_SNORM;  vertexDataSize += 3 * 2; break; }
+                case VertexInput::UNorm16_3D:    { vertexInputAttributes[i].format = VK_FORMAT_R16G16B16_UNORM;  vertexDataSize += 3 * 2; break; }
+                case VertexInput::Float16_3D:    { vertexInputAttributes[i].format = VK_FORMAT_R16G16B16_SFLOAT; vertexDataSize += 3 * 2; break; }
+                case VertexInput::Int32_3D:      { vertexInputAttributes[i].format = VK_FORMAT_R32G32B32_SINT;   vertexDataSize += 3 * 4; break; }
+                case VertexInput::UInt32_3D:     { vertexInputAttributes[i].format = VK_FORMAT_R32G32B32_UINT;   vertexDataSize += 3 * 4; break; }
+                case VertexInput::Float32_3D:    { vertexInputAttributes[i].format = VK_FORMAT_R32G32B32_SFLOAT; vertexDataSize += 3 * 4; break; }
+
+                case VertexInput::Int8_4D:       { vertexInputAttributes[i].format = VK_FORMAT_R8G8B8A8_SINT;       vertexDataSize += 4 * 1; break; }
+                case VertexInput::UInt8_4D:      { vertexInputAttributes[i].format = VK_FORMAT_R8G8B8A8_UINT;       vertexDataSize += 4 * 1; break; }
+                case VertexInput::Norm8_4D:      { vertexInputAttributes[i].format = VK_FORMAT_R8G8B8A8_SNORM;      vertexDataSize += 4 * 1; break; }
+                case VertexInput::UNorm8_4D:     { vertexInputAttributes[i].format = VK_FORMAT_R8G8B8A8_UNORM;      vertexDataSize += 4 * 1; break; }
+                case VertexInput::Int16_4D:      { vertexInputAttributes[i].format = VK_FORMAT_R16G16B16A16_SINT;   vertexDataSize += 4 * 2; break; }
+                case VertexInput::UInt16_4D:     { vertexInputAttributes[i].format = VK_FORMAT_R16G16B16A16_UINT;   vertexDataSize += 4 * 2; break; }
+                case VertexInput::Norm16_4D:     { vertexInputAttributes[i].format = VK_FORMAT_R16G16B16A16_SNORM;  vertexDataSize += 4 * 2; break; }
+                case VertexInput::UNorm16_4D:    { vertexInputAttributes[i].format = VK_FORMAT_R16G16B16A16_UNORM;  vertexDataSize += 4 * 2; break; }
+                case VertexInput::Float16_4D:    { vertexInputAttributes[i].format = VK_FORMAT_R16G16B16A16_SFLOAT; vertexDataSize += 4 * 2; break; }
+                case VertexInput::Int32_4D:      { vertexInputAttributes[i].format = VK_FORMAT_R32G32B32A32_SINT;   vertexDataSize += 4 * 4; break; }
+                case VertexInput::UInt32_4D:     { vertexInputAttributes[i].format = VK_FORMAT_R32G32B32A32_UINT;   vertexDataSize += 4 * 4; break; }
+                case VertexInput::Float32_4D:    { vertexInputAttributes[i].format = VK_FORMAT_R32G32B32A32_SFLOAT; vertexDataSize += 4 * 4; break; }
             }
         }
 
@@ -130,8 +156,8 @@ namespace Sierra
         // Set up combined depth and stencil state
         VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = { };
         depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-        depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
-        depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
+        depthStencilStateCreateInfo.depthTestEnable = vulkanRenderPass.HasDepthAttachment();
+        depthStencilStateCreateInfo.depthWriteEnable = createInfo.depthMode == DepthMode::WriteDepth;
         depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
         depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
         depthStencilStateCreateInfo.minDepthBounds = 0.0f;
@@ -140,15 +166,15 @@ namespace Sierra
 
         // Set up attachment color blending state
         VkPipelineColorBlendAttachmentState blendingAttachmentState = { };
-        blendingAttachmentState.blendEnable = VK_FALSE;
+        blendingAttachmentState.blendEnable = createInfo.blendMode != BlendMode::None;
         blendingAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
         blendingAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
         blendingAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
         blendingAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-        blendingAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        blendingAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
         blendingAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
         blendingAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        std::vector<VkPipelineColorBlendAttachmentState> colorAttachmentStates(createInfo.renderPass->GetColorAttachmentCount(), blendingAttachmentState);
+        std::vector<VkPipelineColorBlendAttachmentState> colorAttachmentStates(createInfo.templateRenderPass->GetColorAttachmentCount(), blendingAttachmentState);
 
         // Set up color blending state
         VkPipelineColorBlendStateCreateInfo blendingStateCreateInfo = { };

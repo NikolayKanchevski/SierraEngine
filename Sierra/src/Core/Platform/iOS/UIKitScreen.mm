@@ -11,13 +11,12 @@ namespace Sierra
 
     UIKitScreen::UIKitScreen(const UIKitScreenCreatInfo &createInfo)
         : Screen(), name([[UIDevice currentDevice] name].UTF8String),
-          origin(createInfo.uiScreen.nativeBounds.origin.x, createInfo.uiScreen.nativeBounds.origin.y),
-          size(createInfo.uiScreen.nativeBounds.size.width, createInfo.uiScreen.nativeBounds.size.height),
+          origin(createInfo.uiScreen.bounds.origin.x, createInfo.uiScreen.bounds.origin.y),
+          size(createInfo.uiScreen.bounds.size.width, createInfo.uiScreen.bounds.size.height),
           refreshRate(static_cast<uint32>(createInfo.uiScreen.maximumFramesPerSecond))
     {
         // Create temporary window to get its extents
-        UIWindow* temporaryWindow = [[UIWindow alloc] init];
-        const auto safeAreaInsets = temporaryWindow.safeAreaInsets;
+        const auto safeAreaInsets = [UIApplication sharedApplication].windows.firstObject.safeAreaInsets;
         
         // Add up extents to get work area origin
         workAreaOrigin = origin;
@@ -28,10 +27,6 @@ namespace Sierra
         workAreaSize = size;
         workAreaSize.x -= static_cast<uint32>(safeAreaInsets.left + safeAreaInsets.right);
         workAreaSize.y -= static_cast<uint32>(safeAreaInsets.top + safeAreaInsets.bottom);
-
-        // Deallocate temporary window
-        [temporaryWindow removeFromSuperview];
-        [temporaryWindow release];
     }
 
     /* --- GETTER METHODS --- */
@@ -40,26 +35,11 @@ namespace Sierra
     {
         switch ([[UIApplication sharedApplication].windows.firstObject.windowScene interfaceOrientation])
         {
-            case UIInterfaceOrientationPortrait:
-            {   
-                return ScreenOrientation::PortraitNormal;
-            }
-            case UIInterfaceOrientationPortraitUpsideDown:
-            {
-                return ScreenOrientation::PortraitFlipped;
-            }
-            case UIInterfaceOrientationLandscapeLeft:
-            {
-                return ScreenOrientation::LandscapeNormal;
-            }
-            case UIInterfaceOrientationLandscapeRight:
-            {
-                return ScreenOrientation::LandscapeFlipped;
-            }
-            default:
-            {
-                return ScreenOrientation::Unknown;
-            }
+            case UIInterfaceOrientationPortrait:           return ScreenOrientation::PortraitNormal;
+            case UIInterfaceOrientationPortraitUpsideDown: return ScreenOrientation::PortraitFlipped;
+            case UIInterfaceOrientationLandscapeLeft:      return ScreenOrientation::LandscapeNormal;
+            case UIInterfaceOrientationLandscapeRight:     return ScreenOrientation::LandscapeFlipped;
+            default:                                       return ScreenOrientation::Unknown;
         }
 
         return ScreenOrientation::Unknown;

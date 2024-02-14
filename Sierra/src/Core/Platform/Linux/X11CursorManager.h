@@ -44,8 +44,8 @@ namespace Sierra
 
         friend class X11Window;
         void OnWindowInitialize();
-        void OnUpdate();
-        void OnUpdateEnd();
+        void Update();
+        void UpdateEnd();
         void MotionNotifyEvent(const XEvent &event);
 
     };

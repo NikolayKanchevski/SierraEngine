@@ -13,51 +13,7 @@
 namespace Sierra
 {
 
-    struct VulkanDescriptorPoolCreateInfo
-    {
-        const std::string &name;
-        uint32 initialImageCount = 16;
-        uint32 initialTextureCount = 128;
-        uint32 initialUniformBufferCount = 8;
-        uint32 initialStorageBufferCount = 16;
-    };
-
-    class SIERRA_API VulkanDescriptorPool final : public VulkanResource
-    {
-    public:
-        /* --- CONSTRUCTORS --- */
-        VulkanDescriptorPool(const VulkanDevice &device, const VulkanDescriptorPoolCreateInfo &createInfo);
-
-        /* --- GETTER METHODS --- */
-        [[nodiscard]] VkDescriptorPool GetVulkanDescriptorPool() const { return freePools.front(); }
-
-        /* --- OPERATORS --- */
-        VulkanDescriptorPool(const VulkanDescriptorPool&) = delete;
-        VulkanDescriptorPool &operator=(const VulkanDescriptorPool&) = delete;
-
-        /* --- DESTRUCTOR --- */
-        ~VulkanDescriptorPool();
-
-    private:
-        const VulkanDevice &device;
-
-        std::queue<VkDescriptorPool> freePools;
-        std::queue<VkDescriptorPool> fullPools;
-
-        uint32 initialImageCount = 0;
-        uint32 initialTextureCount = 0;
-        uint32 initialUniformBufferCount = 0;
-        uint32 initialStorageBufferCount = 0;
-        uint32 poolCount = 0;
-
-        [[nodiscard]] VkDescriptorPool CreateNewDescriptorPool();
-
-        friend class VulkanImGuiRenderTask;
-        void Reallocate();
-
-    };
-
-    struct VulkanDescriptorSetCreateInfo
+    struct VulkanPushDescriptorSetCreateInfo
     {
 
     };
@@ -66,10 +22,10 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit VulkanPushDescriptorSet(const VulkanDescriptorSetCreateInfo &createInfo);
+        explicit VulkanPushDescriptorSet(const VulkanPushDescriptorSetCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void BindBuffer(uint32 binding, const VulkanBuffer &buffer, uint32 arrayIndex = 0, uint64 memoryRange = 0, uint64 offset = 0);
+        void BindBuffer(uint32 binding, const VulkanBuffer &buffer, uint32 arrayIndex = 0, uint64 memoryRange = 0, uint64 byteOffset = 0);
         void BindImage(uint32 binding, const VulkanImage &image, const VulkanSampler* sampler, VkImageLayout imageLayout, uint32 arrayIndex = 0);
 
         /* --- GETTER METHODS --- */

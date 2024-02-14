@@ -9,13 +9,13 @@
 namespace Sierra
 {
 
-    enum class SamplerSampleMode : bool
+    enum class SamplerFilter : bool
     {
-        Smooth,
-        Pixelize
+        Nearest,
+        Linear
     };
 
-    enum class SamplerExtendMode : uint8
+    enum class SamplerAddressMode : uint8
     {
         Repeat,
         MirroredRepeat,
@@ -55,8 +55,8 @@ namespace Sierra
     struct SamplerCreateInfo
     {
         const std::string &name = "Sampler";
-        SamplerSampleMode sampleMode = SamplerSampleMode::Smooth;
-        SamplerExtendMode extendMode = SamplerExtendMode::Repeat;
+        SamplerFilter filter = SamplerFilter::Nearest;
+        SamplerAddressMode extendMode = SamplerAddressMode::Repeat;
         SamplerCompareOperation compareOperation = SamplerCompareOperation::None;
 
         uint32 highestSampledMipLevel = 1;

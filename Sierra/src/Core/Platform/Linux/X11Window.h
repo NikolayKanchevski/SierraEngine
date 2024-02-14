@@ -23,7 +23,7 @@ namespace Sierra
         explicit X11Window(const X11Context &x11Context, const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void OnUpdate() override;
+        void Update() override;
         void Minimize() override;
         void Maximize() override;
         void Show() override;

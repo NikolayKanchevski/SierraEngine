@@ -12,7 +12,7 @@ class MainActivity : GameActivity()
         super.onCreate(savedInstanceState)
     }
 
-    // Load application library
+    // Create application library
     companion object { init { System.loadLibrary("${APPLICATION_NAME}") } }
 
 }

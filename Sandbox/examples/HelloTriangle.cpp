@@ -28,23 +28,16 @@ private:
     std::unique_ptr<GraphicsPipeline> graphicsPipeline = nullptr;
     std::vector<std::unique_ptr<CommandBuffer>> commandBuffers;
 
-    void OnStart() override
+    void Start() override
     {
         // Create window
-        window = GetWindowManager()->CreateWindow({ .title = "Hello, Triangle!" });
+        window = GetWindowManager().CreateWindow({ .title = "Hello, Triangle!" });
 
         // Create swapchain
-        swapchain = GetRenderingContext()->CreateSwapchain({ .name = "Test Swapchain", .window = window, .preferredPresentationMode = SwapchainPresentationMode::VSync });
-
-        // Handle swapchain resizing
-        swapchain->OnEvent<SwapchainResizeEvent>([this](const SwapchainResizeEvent &event) {
-            GetRenderingContext()->GetDevice().WaitForCommandBuffer(commandBuffers[swapchain->GetCurrentFrame()]);
-            renderPass->Resize(event.GetSize().x, event.GetSize().y);
-            return false;
-        });
+        swapchain = GetRenderingContext().CreateSwapchain({ .name = "Test Swapchain", .window = window, .preferredPresentationMode = SwapchainPresentationMode::VSync });
 
         // Create render pass
-        renderPass = GetRenderingContext()->CreateRenderPass({
+        renderPass = GetRenderingContext().CreateRenderPass({
             .name = "Swapchain Render Pass",
             .attachments = {
                 { .templateImage = swapchain->GetImage(0), .type = RenderPassAttachmentType::Color }
@@ -55,34 +48,35 @@ private:
         });
 
         // Load shaders
-        vertexShader = GetRenderingContext()->CreateShader({ .name = "Triangle Vertex Shader", .shaderBundlePath = GetResourcesDirectoryPath() / "shaders/TriangleShader.vert.shader", .shaderType = ShaderType::Vertex });
-        fragmentShader = GetRenderingContext()->CreateShader({ .name = "Triangle Fragment Shader", .shaderBundlePath = GetResourcesDirectoryPath() / "shaders/TriangleShader.frag.shader", .shaderType = ShaderType::Fragment });
+        vertexShader = GetRenderingContext().CreateShader({ .name = "Triangle Vertex Shader", .shaderBundlePath = File::GetResourcesDirectoryPath() / "shaders/TriangleShader.vert.shader", .shaderType = ShaderType::Vertex });
+        fragmentShader = GetRenderingContext().CreateShader({ .name = "Triangle Fragment Shader", .shaderBundlePath = File::GetResourcesDirectoryPath() / "shaders/TriangleShader.frag.shader", .shaderType = ShaderType::Fragment });
 
         // Create graphics pipeline
-        pipelineLayout = GetRenderingContext()->CreatePipelineLayout({ .name = "Triangle Graphics Pipeline Layout" });
-        graphicsPipeline = GetRenderingContext()->CreateGraphicsPipeline({
+        pipelineLayout = GetRenderingContext().CreatePipelineLayout({ .name = "Triangle Graphics Pipeline Layout" });
+        graphicsPipeline = GetRenderingContext().CreateGraphicsPipeline({
             .name = "Triangle Graphics Pipeline",
             .vertexShader = vertexShader,
             .fragmentShader = fragmentShader,
             .layout = pipelineLayout,
-            .renderPass = renderPass
+            .templateRenderPass = renderPass,
+            .cullMode = CullMode::Back
         });
 
         // Create a command buffer for every concurrent frame
         commandBuffers.resize(swapchain->GetConcurrentFrameCount());
         for (uint32 i = 0; i < swapchain->GetConcurrentFrameCount(); i++)
         {
-            commandBuffers[i] = GetRenderingContext()->CreateCommandBuffer({ .name = "General Command Buffer " + std::to_string(i) });
+            commandBuffers[i] = GetRenderingContext().CreateCommandBuffer({ .name = "General Command Buffer " + std::to_string(i) });
         }
     }
 
-    bool OnUpdate(const TimeStep &timeStep) override
+    bool Update(const TimeStep &timeStep) override
     {
         // Get command buffer for current frame
         auto &commandBuffer = commandBuffers[swapchain->GetCurrentFrame()];
 
         // Wait until it is no longer in use
-        GetRenderingContext()->GetDevice().WaitForCommandBuffer(commandBuffer);
+        GetRenderingContext().GetDevice().WaitForCommandBuffer(commandBuffer);
 
         // Begin recording commands to GPU
         commandBuffer->Begin();
@@ -106,19 +100,19 @@ private:
         commandBuffer->EndRenderPass(renderPass);
 
         // Wait until image is written to before presenting it to screen
-        commandBuffer->SynchronizeImageUsage(swapchain->GetCurrentImage(), ImageCommandUsage::AttachmentWrite, ImageCommandUsage::Present);
+        commandBuffer->SynchronizeImageUsage(swapchain->GetCurrentImage(), ImageCommandUsage::ColorWrite, ImageCommandUsage::Present);
 
         // End recording commands
         commandBuffer->End();
 
         // Submit command buffer to GPU
-        GetRenderingContext()->GetDevice().SubmitCommandBuffer(commandBuffer);
+        GetRenderingContext().GetDevice().SubmitCommandBuffer(commandBuffer);
 
         // Draw to window
         swapchain->Present(commandBuffer);
 
         // Update window
-        window->OnUpdate();
+        window->Update();
 
         return window->IsClosed();
     }
@@ -129,7 +123,7 @@ public:
         // Before deallocating rendering resources, make sure device is not using them
         for (const auto &commandBuffer : commandBuffers)
         {
-            GetRenderingContext()->GetDevice().WaitForCommandBuffer(commandBuffer);
+            GetRenderingContext().GetDevice().WaitForCommandBuffer(commandBuffer);
         }
     }
 

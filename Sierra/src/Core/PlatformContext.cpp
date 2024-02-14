@@ -36,16 +36,13 @@ namespace Sierra
     void PlatformContext::RunApplication(const PlatformApplicationRunInfo &runInfo)
     {
         runInfo.OnStart();
-        while (!runInfo.OnUpdate())
-        {
-            continue;
-        }
+        while (!runInfo.OnUpdate());
         runInfo.OnEnd();
     }
 
     /* --- PRIVATE METHODS --- */
 
-    std::unique_ptr<PlatformContext> PlatformContext::Load(const PlatformContextCreateInfo &createInfo)
+    std::unique_ptr<PlatformContext> PlatformContext::Create(const PlatformContextCreateInfo &createInfo)
     {
         return std::make_unique<NativeInstance>(createInfo);
     }

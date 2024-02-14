@@ -150,13 +150,13 @@
 
     #pragma region Macros
         #define SR_DEFINE_ENUM_FLAG_OPERATORS(T)                                                                                                                                                      \
-            inline constexpr T operator~ (const T a) { return static_cast<T>(~static_cast<std::underlying_type<T>::type>(a)); }                                                                       \
-            inline constexpr T operator| (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type<T>::type>(a) | static_cast<std::underlying_type<T>::type>(b)); }             \
-            inline constexpr std::underlying_type<T>::type operator& (const T a, const T b) { return static_cast<std::underlying_type<T>::type>(a) & static_cast<std::underlying_type<T>::type>(b); } \
-            inline constexpr T operator^ (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type<T>::type>(a) ^ static_cast<std::underlying_type<T>::type>(b)); }             \
-            inline T& operator|= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type<T>::type&>(a) |= static_cast<std::underlying_type<T>::type>(b)); }             \
-            inline T& operator&= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type<T>::type&>(a) &= static_cast<std::underlying_type<T>::type>(b)); }             \
-            inline T& operator^= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type<T>::type&>(a) ^= static_cast<std::underlying_type<T>::type>(b)); }             
+            inline constexpr T operator~ (const T a) { return static_cast<T>(~static_cast<std::underlying_type_t<T>>(a)); }                                                                       \
+            inline constexpr T operator| (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type_t<T>>(a) | static_cast<std::underlying_type_t<T>>(b)); }             \
+            inline constexpr std::underlying_type_t<T> operator& (const T a, const T b) { return static_cast<std::underlying_type_t<T>>(a) & static_cast<std::underlying_type_t<T>>(b); } \
+            inline constexpr T operator^ (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type_t<T>>(a) ^ static_cast<std::underlying_type_t<T>>(b)); }             \
+            inline T& operator|= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) |= static_cast<std::underlying_type_t<T>>(b)); }             \
+            inline T& operator&= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) &= static_cast<std::underlying_type_t<T>>(b)); }             \
+            inline T& operator^= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) ^= static_cast<std::underlying_type_t<T>>(b)); }             
     #pragma endregion
 
     #pragma region Source Files

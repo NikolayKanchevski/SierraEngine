@@ -29,7 +29,6 @@ namespace Sierra
 
     private:
         const VulkanDevice &device;
-
         VkShaderModule shaderModule = VK_NULL_HANDLE;
 
     };

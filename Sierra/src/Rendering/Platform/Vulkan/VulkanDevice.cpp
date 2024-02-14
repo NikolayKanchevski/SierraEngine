@@ -992,8 +992,8 @@ namespace Sierra
         vmaCreateAllocator(&vmaCreteInfo, &vmaAllocator);
 
         // Set device names
-        SetObjectName(physicalDevice, VK_OBJECT_TYPE_PHYSICAL_DEVICE, "Physical device of [" + GetName() + "]");
-        SetObjectName(logicalDevice, VK_OBJECT_TYPE_DEVICE, "Logical device of [" + GetName() + "]");
+        SetObjectName(physicalDevice, VK_OBJECT_TYPE_PHYSICAL_DEVICE, "Physical device of device [" + GetName() + "]");
+        SetObjectName(logicalDevice, VK_OBJECT_TYPE_DEVICE, "Logical device of device [" + GetName() + "]");
     }
 
     /* --- POLLING METHODS --- */
@@ -1059,22 +1059,22 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    bool VulkanDevice::IsImageConfigurationSupported(const ImageFormat format, const ImageUsage usage) const
+    bool VulkanDevice::IsImageFormatSupported(const ImageFormat format, const ImageUsage usage) const
     {
         // Get format properties
         VkFormatProperties formatProperties = { };
         vkGetPhysicalDeviceFormatProperties(physicalDevice, VulkanImage::ImageFormatToVkFormat(format), &formatProperties);
 
         // Check support
-        if (usage & ImageUsage::SourceTransfer         && !(formatProperties.linearTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT                )) return false;
-        if (usage & ImageUsage::DestinationTransfer    && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_DST_BIT               )) return false;
-        if (usage & ImageUsage::Storage                && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT              )) return false;
-        if (usage & ImageUsage::Sampled                && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
-        if (usage & ImageUsage::Filtered               && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
-        if (usage & ImageUsage::ColorAttachment        && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) return false;
-        if (usage & ImageUsage::DepthAttachment        && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT   )) return false;
-        if (usage & ImageUsage::InputAttachment        && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
-        if (usage & ImageUsage::TransientAttachment    && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT           )) return false;
+        if (usage & ImageUsage::SourceMemory        && !(formatProperties.linearTilingFeatures  & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT               )) return false;
+        if (usage & ImageUsage::DestinationMemory   && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_DST_BIT               )) return false;
+        if (usage & ImageUsage::Storage             && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT              )) return false;
+        if (usage & ImageUsage::Sample              && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
+        if (usage & ImageUsage::SmoothSample        && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
+        if (usage & ImageUsage::ColorAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) return false;
+        if (usage & ImageUsage::DepthAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT   )) return false;
+        if (usage & ImageUsage::InputAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
+        if (usage & ImageUsage::TransientAttachment && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT           )) return false;
         return true;
     }
 
@@ -1082,17 +1082,6 @@ namespace Sierra
     {
         const VkPhysicalDeviceProperties physicalDeviceProperties = GetPhysicalDeviceProperties();
         return (physicalDeviceProperties.limits.framebufferDepthSampleCounts & VulkanImage::ImageSamplingToVkSampleCountFlags(sampling)) && (physicalDeviceProperties.limits.sampledImageDepthSampleCounts & VulkanImage::ImageSamplingToVkSampleCountFlags(sampling));
-    }
-
-    ImageSampling VulkanDevice::GetHighestImageSamplingSupported() const
-    {
-        if (IsImageSamplingSupported(ImageSampling::x64)) return ImageSampling::x64;
-        if (IsImageSamplingSupported(ImageSampling::x32)) return ImageSampling::x32;
-        if (IsImageSamplingSupported(ImageSampling::x16)) return ImageSampling::x16;
-        if (IsImageSamplingSupported(ImageSampling::x8)) return ImageSampling::x8;
-        if (IsImageSamplingSupported(ImageSampling::x4)) return ImageSampling::x4;
-        if (IsImageSamplingSupported(ImageSampling::x2)) return ImageSampling::x2;
-        return ImageSampling::x1;
     }
 
     bool VulkanDevice::IsSamplerAnisotropySupported(const SamplerAnisotropy anisotropy) const
@@ -1112,17 +1101,6 @@ namespace Sierra
         }
 
         return anisotropy == SamplerAnisotropy::x1;
-    }
-
-    SamplerAnisotropy VulkanDevice::GetHighestSamplerAnisotropySupported() const
-    {
-        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x64)) return SamplerAnisotropy::x64;
-        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x32)) return SamplerAnisotropy::x32;
-        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x16)) return SamplerAnisotropy::x16;
-        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x8)) return SamplerAnisotropy::x8;
-        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x4)) return SamplerAnisotropy::x4;
-        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x2)) return SamplerAnisotropy::x2;
-        return SamplerAnisotropy::x1;
     }
 
     bool VulkanDevice::IsExtensionLoaded(const std::string &extensionName) const
@@ -1196,7 +1174,7 @@ namespace Sierra
             SR_WARNING_IF(!extension.requiredOnlyIfSupported, "[Vulkan]: Device extension [{0}] requested but not supported! Extension will be discarded, but issues may occur if extensions' support is not checked before their usage!", extension.name);
 
             // Free all data within the extension tree, as, because the current extension is not supported, its dependencies will never be loaded, and thus creating a memory leak
-            static std::function<void(const VulkanDeviceExtension&)> FreeExtensionTreeLambda = [](const VulkanDeviceExtension &extension)
+            static std::function<void(const VulkanDeviceExtension&)> const FreeExtensionTreeLambda = [](const VulkanDeviceExtension &extension)
             {
                 std::free(extension.data);
                 for (const auto &dependency : extension.dependencies) FreeExtensionTreeLambda(dependency);

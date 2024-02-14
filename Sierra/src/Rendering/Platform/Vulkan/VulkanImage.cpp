@@ -13,7 +13,7 @@ namespace Sierra
         : Image(createInfo), VulkanResource(createInfo.name), device(device), usageFlags(ImageUsageToVkImageUsageFlags(createInfo.usage))
     {
         SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Vulkan]: Cannot create image [{0}] with unsupported sampling! Make sure to use Device::IsImageSamplingSupported() to query image sampling support.", GetName());
-        SR_ERROR_IF(!device.IsImageConfigurationSupported(createInfo.format, createInfo.usage), "[Vulkan]: Cannot create image [{0}] with unsupported format! Use Device::IsImageConfigurationSupported() to query format support.", GetName());
+        SR_ERROR_IF(!device.IsImageFormatSupported(createInfo.format, createInfo.usage), "[Vulkan]: Cannot create image [{0}] with unsupported format! Use Device::IsImageFormatSupported() to query format support.", GetName());
 
         // Set up image create info
         VkImageCreateInfo imageCreateInfo = { };
@@ -24,10 +24,10 @@ namespace Sierra
         imageCreateInfo.extent.width = createInfo.width;
         imageCreateInfo.extent.height = createInfo.height;
         imageCreateInfo.extent.depth = 1;
-        imageCreateInfo.mipLevels = 1;
+        imageCreateInfo.mipLevels = createInfo.mipLevelCount;
         imageCreateInfo.arrayLayers = createInfo.layerCount;
         imageCreateInfo.samples = ImageSamplingToVkSampleCountFlags(createInfo.sampling);
-        imageCreateInfo.tiling = createInfo.usage != ImageUsage::SourceTransfer ? VK_IMAGE_TILING_OPTIMAL : VK_IMAGE_TILING_LINEAR;
+        imageCreateInfo.tiling = createInfo.usage != ImageUsage::SourceMemory ? VK_IMAGE_TILING_OPTIMAL : VK_IMAGE_TILING_LINEAR;
         imageCreateInfo.usage = usageFlags;
         imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -72,11 +72,11 @@ namespace Sierra
 
         // Set object names
         device.SetObjectName(image, VK_OBJECT_TYPE_IMAGE, GetName());
-        device.SetObjectName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image view of [" + GetName() + "]");
+        device.SetObjectName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image view of image [" + GetName() + "]");
     }
 
     VulkanImage::VulkanImage(const VulkanDevice &device, const SwapchainImageCreateInfo &createInfo)
-        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainVkFormatToImageFormat(createInfo.format), .usage = ImageUsage::SourceTransfer | ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::Device }), VulkanResource(createInfo.name),
+        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainVkFormatToImageFormat(createInfo.format), .usage = ImageUsage::SourceMemory | ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::Device }), VulkanResource(createInfo.name),
           device(device), image(createInfo.image), usageFlags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT), aspectFlags(VK_IMAGE_ASPECT_COLOR_BIT), swapchainImage(true)
     {
         SR_ERROR_IF(createInfo.image == VK_NULL_HANDLE, "[Vulkan]: Null texture pointer passed upon swapchain image [{0}] creation!", GetName());
@@ -103,7 +103,7 @@ namespace Sierra
 
         // Set object names
         device.SetObjectName(image, VK_OBJECT_TYPE_IMAGE, GetName());
-        device.SetObjectName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image view of [" + GetName() + "]");
+        device.SetObjectName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image view of image [" + GetName() + "]");
     }
 
     /* --- DESTRUCTOR --- */
@@ -145,6 +145,7 @@ namespace Sierra
                 {
                     case ImageMemoryType::Int8:         return VK_FORMAT_R8_SINT;
                     case ImageMemoryType::UInt8:        return VK_FORMAT_R8_UINT;
+                    case ImageMemoryType::Norm8:        return VK_FORMAT_R8_SNORM;
                     case ImageMemoryType::UNorm8:       return VK_FORMAT_R8_UNORM;
                     case ImageMemoryType::SRGB8:        return VK_FORMAT_R8_SRGB;
                     case ImageMemoryType::Int16:        return VK_FORMAT_R16_SINT;
@@ -166,6 +167,7 @@ namespace Sierra
                 {
                     case ImageMemoryType::Int8:         return VK_FORMAT_R8G8_SINT;
                     case ImageMemoryType::UInt8:        return VK_FORMAT_R8G8_UINT;
+                    case ImageMemoryType::Norm8:        return VK_FORMAT_R8G8_SNORM;
                     case ImageMemoryType::UNorm8:       return VK_FORMAT_R8G8_UNORM;
                     case ImageMemoryType::SRGB8:        return VK_FORMAT_R8G8_SRGB;
                     case ImageMemoryType::Int16:        return VK_FORMAT_R16G16_SINT;
@@ -183,11 +185,11 @@ namespace Sierra
             }
             case ImageChannels::RGB:
             {
-
                 switch (format.memoryType)
                 {
                     case ImageMemoryType::Int8:         return VK_FORMAT_R8G8B8_SINT;
                     case ImageMemoryType::UInt8:        return VK_FORMAT_R8G8B8_UINT;
+                    case ImageMemoryType::Norm8:        return VK_FORMAT_R8G8B8_SNORM;
                     case ImageMemoryType::UNorm8:       return VK_FORMAT_R8G8B8_UNORM;
                     case ImageMemoryType::SRGB8:        return VK_FORMAT_R8G8B8_SRGB;
                     case ImageMemoryType::Int16:        return VK_FORMAT_R16G16B16_SINT;
@@ -209,6 +211,7 @@ namespace Sierra
                 {
                     case ImageMemoryType::Int8:         return VK_FORMAT_R8G8B8A8_SINT;
                     case ImageMemoryType::UInt8:        return VK_FORMAT_R8G8B8A8_UINT;
+                    case ImageMemoryType::Norm8:        return VK_FORMAT_R8G8B8A8_SNORM;
                     case ImageMemoryType::UNorm8:       return VK_FORMAT_R8G8B8A8_UNORM;
                     case ImageMemoryType::SRGB8:        return VK_FORMAT_R8G8B8A8_SRGB;
                     case ImageMemoryType::Int16:        return VK_FORMAT_R16G16B16A16_SINT;
@@ -267,11 +270,11 @@ namespace Sierra
     VkImageUsageFlags VulkanImage::ImageUsageToVkImageUsageFlags(const ImageUsage usage)
     {
         VkImageUsageFlags usageFlags = 0;
-        if (usage & ImageUsage::SourceTransfer)                usageFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-        if (usage & ImageUsage::DestinationTransfer)           usageFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        if (usage & ImageUsage::SourceMemory) usageFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        if (usage & ImageUsage::DestinationMemory) usageFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         if (usage & ImageUsage::Storage)                       usageFlags |= VK_IMAGE_USAGE_STORAGE_BIT;
-        if (usage & ImageUsage::Sampled)                       usageFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
-        if (usage & ImageUsage::Filtered)                      usageFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
+        if (usage & ImageUsage::Sample) usageFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
+        if (usage & ImageUsage::SmoothSample) usageFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
         if (usage & ImageUsage::ColorAttachment)               usageFlags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         if (usage & ImageUsage::DepthAttachment)               usageFlags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
         if (usage & ImageUsage::InputAttachment)               usageFlags |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;

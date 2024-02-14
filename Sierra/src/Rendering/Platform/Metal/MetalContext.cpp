@@ -22,7 +22,6 @@
 #include "MetalGraphicsPipeline.h"
 #include "MetalComputePipeline.h"
 #include "MetalCommandBuffer.h"
-#include "MetalImGuiRenderTask.h"
 
 namespace Sierra
 {
@@ -85,11 +84,6 @@ namespace Sierra
     std::unique_ptr<CommandBuffer> MetalContext::CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const
     {
         return std::make_unique<MetalCommandBuffer>(device, createInfo);
-    }
-
-    std::unique_ptr<ImGuiRenderTask> MetalContext::CreateImGuiRenderTask(const ImGuiRenderTaskCreateInfo &createInfo) const
-    {
-        return std::make_unique<MetalImGuiTask>(device, createInfo);
     }
 
 }

@@ -50,17 +50,17 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void Win32Window::OnUpdate()
+    void Win32Window::Update()
     {
-        cursorManager.OnUpdate();
-        inputManager.OnUpdate();
+        cursorManager.Update();
+        inputManager.Update();
 
         while (!win32Context.IsWindowEventQueueEmpty(window))
         {
             win32Context.PollNextWindowEvent(window);
         }
 
-        cursorManager.OnUpdateEnd();
+        cursorManager.UpdateEnd();
         justBecameShown = false;
     }
 

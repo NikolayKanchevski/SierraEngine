@@ -42,8 +42,8 @@ namespace Sierra
         bool justHidCursor = false;
 
         friend class Win32Window;
-        void OnUpdate();
-        void OnUpdateEnd();
+        void Update();
+        void UpdateEnd();
         void MouseMoveMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
     };

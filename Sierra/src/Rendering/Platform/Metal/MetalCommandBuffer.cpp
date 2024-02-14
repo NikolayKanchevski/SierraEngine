@@ -29,8 +29,6 @@ namespace Sierra
             if (commandBuffer != nullptr) commandBuffer->release(); // NOTE: For some reason not calling this causes a memory leak on macOS (despite spec stating manual release is unnecessary, and thus, and a crash on iOS)
         #endif
 
-        FreeQueuedResources();
-
         // Set up command buffer descriptor
         MTL::CommandBufferDescriptor* commandBufferDescriptor = MTL::CommandBufferDescriptor::alloc()->init();
         #if SR_ENABLE_LOGGING
@@ -43,7 +41,16 @@ namespace Sierra
 
         // Create completion semaphore
         finishedExecution = false;
-        commandBuffer->addCompletedHandler(^(MTL::CommandBuffer*) { finishedExecution = true; });
+        commandBuffer->addCompletedHandler(^(MTL::CommandBuffer* executedCommandBuffer) {
+            queuedBuffers = std::queue<std::unique_ptr<Buffer>>();
+            queuedImages = std::queue<std::unique_ptr<Image>>();
+
+            #if SR_ENABLE_LOGGING
+                NS::Error* error = executedCommandBuffer->error();
+                SR_ERROR_IF(error != nullptr, "[Metal]: Submission of command buffer [{0}] failed! Error code: {1}.", GetName(), error->description()->cString(NS::ASCIIStringEncoding));
+            #endif
+            finishedExecution = true;
+        });
 
         // Release command buffer descriptor memory
         commandBufferDescriptor->release();
@@ -51,11 +58,18 @@ namespace Sierra
 
     void MetalCommandBuffer::End()
     {
+        if (currentBlitEncoder != nullptr)
+        {
+            currentBlitEncoder->endEncoding();
+            currentBlitEncoder = nullptr;
+        }
+
         currentIndexBuffer = nullptr;
-        currentIndexBufferOffset = 0;
+        currentIndexBufferByteOffset = 0;
+        currentVertexBufferByteOffset = 0;
     }
 
-    void MetalCommandBuffer::SynchronizeBufferUsage(const std::unique_ptr<Buffer> &buffer, const BufferCommandUsage previousUsage, const BufferCommandUsage nextUsage, const uint64 memorySize, const uint64 offset)
+    void MetalCommandBuffer::SynchronizeBufferUsage(const std::unique_ptr<Buffer> &buffer, const BufferCommandUsage previousUsage, const BufferCommandUsage nextUsage, const uint64 memorySize, const uint64 byteOffset)
     {
         SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not synchronize usage of buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer->GetName(), GetName());
         const MetalBuffer &metalBuffer = static_cast<MetalBuffer&>(*buffer);
@@ -64,21 +78,25 @@ namespace Sierra
         currentRenderEncoder->memoryBarrier(&bufferResource, 1, BufferCommandUsageToRenderStages(previousUsage), BufferCommandUsageToRenderStages(nextUsage));
     }
 
-    void MetalCommandBuffer::SynchronizeImageUsage(const std::unique_ptr<Image> &image, const ImageCommandUsage previousUsage, const ImageCommandUsage nextUsage, const uint32 baseMipLevel, const uint32 mipLevelCount, const uint32 baseLayer, const uint32 layerCount)
+    void MetalCommandBuffer::SynchronizeImageUsage(const std::unique_ptr<Image> &image, const ImageCommandUsage previousUsage, const ImageCommandUsage nextUsage, const uint32 baseMipLevel, uint32 mipLevelCount, const uint32 baseLayer, uint32 layerCount)
     {
         SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not synchronize usage of image [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image->GetName(), GetName());
         const MetalImage &metalImage = static_cast<MetalImage&>(*image);
 
         SR_ERROR_IF(baseMipLevel >= image->GetMipLevelCount(), "[Metal]: Cannot synchronize mip level [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseMipLevel, image->GetName(), GetName());
-        SR_ERROR_IF(baseMipLevel + mipLevelCount >= image->GetMipLevelCount(), "[Metal]: Cannot synchronize mip levels [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's mip level count - [{4}]!", baseMipLevel, baseMipLevel + mipLevelCount, image->GetName(), GetName(), image->GetMipLevelCount());
         SR_ERROR_IF(baseLayer >= image->GetLayerCount(), "[Metal]: Cannot synchronize layer [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseLayer, image->GetName(), GetName());
-        SR_ERROR_IF(baseLayer + layerCount >= image->GetLayerCount(), "[Metal]: Cannot synchronize layers [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's layer count - [{4}]!", baseLayer, baseLayer + layerCount, image->GetName(), GetName(), image->GetLayerCount());
+
+        mipLevelCount = mipLevelCount != 0 ? mipLevelCount : image->GetMipLevelCount() - baseMipLevel;
+        layerCount = layerCount != 0 ? layerCount : image->GetLayerCount() - baseLayer;
+
+        SR_ERROR_IF(baseMipLevel + mipLevelCount > image->GetMipLevelCount(), "[Metal]: Cannot synchronize mip levels [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's mip level count - [{4}]!", baseMipLevel, baseMipLevel + mipLevelCount - 1, image->GetName(), GetName(), image->GetMipLevelCount());
+        SR_ERROR_IF(baseLayer + layerCount > image->GetLayerCount(), "[Metal]: Cannot synchronize layers [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's layer count - [{4}]!", baseLayer, baseLayer + layerCount - 1, image->GetName(), GetName(), image->GetLayerCount());
 
         const MTL::Resource* textureResource = metalImage.GetMetalTexture();
         currentRenderEncoder->memoryBarrier(&textureResource, 1, ImageCommandUsageToRenderStages(previousUsage), ImageCommandUsageToRenderStages(nextUsage));
     }
 
-    void MetalCommandBuffer::CopyBufferToBuffer(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Buffer> &destinationBuffer, uint64 memoryRange, const uint64 sourceOffset, const uint64 destinationOffset)
+    void MetalCommandBuffer::CopyBufferToBuffer(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Buffer> &destinationBuffer, uint64 memoryRange, const uint64 sourceByteOffset, const uint64 destinationByteOffset)
     {
         SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy from buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", sourceBuffer->GetName(), GetName());
         const MetalBuffer &metalSourceBuffer = static_cast<MetalBuffer&>(*sourceBuffer);
@@ -87,18 +105,19 @@ namespace Sierra
         const MetalBuffer &metalDestinationBuffer = static_cast<MetalBuffer&>(*destinationBuffer);
 
         memoryRange = memoryRange != 0 ? memoryRange : sourceBuffer->GetMemorySize();
-        SR_ERROR_IF(sourceOffset + memoryRange > sourceBuffer->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, sourceOffset, sourceBuffer->GetName(), GetName(), sourceOffset + memoryRange, sourceBuffer->GetMemorySize());
-        SR_ERROR_IF(destinationOffset + memoryRange > destinationBuffer->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, destinationOffset, destinationBuffer->GetName(), GetName(), destinationOffset + memoryRange, destinationBuffer->GetMemorySize());
+        SR_ERROR_IF(sourceByteOffset + memoryRange > sourceBuffer->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, sourceByteOffset, sourceBuffer->GetName(), GetName(), sourceByteOffset + memoryRange, sourceBuffer->GetMemorySize());
+        SR_ERROR_IF(destinationByteOffset + memoryRange > destinationBuffer->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, destinationByteOffset, destinationBuffer->GetName(), GetName(), destinationByteOffset + memoryRange, destinationBuffer->GetMemorySize());
 
-        // Record copy
-        MTL::BlitCommandEncoder* blitEncoder = commandBuffer->blitCommandEncoder();
-        device.SetResourceName(blitEncoder, "Transfer encoder");
+        if (currentBlitEncoder == nullptr)
+        {
+            currentBlitEncoder = commandBuffer->blitCommandEncoder();
+            device.SetResourceName(currentBlitEncoder , "Transfer Encoder");
+        }
 
-        blitEncoder->copyFromBuffer(metalSourceBuffer.GetMetalBuffer(), sourceOffset, metalDestinationBuffer.GetMetalBuffer(), destinationOffset, memoryRange);
-        blitEncoder->endEncoding();
+        currentBlitEncoder->copyFromBuffer(metalSourceBuffer.GetMetalBuffer(), sourceByteOffset, metalDestinationBuffer.GetMetalBuffer(), destinationByteOffset, memoryRange);
     }
 
-    void MetalCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const Vector2UInt &pixelRange, const uint32 sourcePixelOffset, const Vector2UInt &destinationOffset, const uint32 mipLevel, const uint32 baseLayer, const uint32 layerCount)
+    void MetalCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const uint32 mipLevel, const Vector2UInt &pixelRange, const uint32 layer, const  uint64 sourceByteOffset, const Vector2UInt &destinationPixelOffset)
     {
         SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy from buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], to image [{1}] within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
         const MetalBuffer &metalSourceBuffer = static_cast<MetalBuffer&>(*sourceBuffer);
@@ -106,30 +125,35 @@ namespace Sierra
         SR_ERROR_IF(destinationImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not from buffer [{0}] to image [{1}], graphics API differs from [GraphicsAPI::Metal], within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
         const MetalImage &metalDestinationImage = static_cast<MetalImage&>(*destinationImage);
 
-        SR_ERROR_IF(mipLevel >= destinationImage->GetMipLevelCount(), "[Metal]: Cannot copy from buffer [{0}] to mip level [{1}] of image [{2}] within command buffer [{3}], as it does not have it!", sourceBuffer->GetName(), mipLevel, destinationImage->GetName(), GetName());
-        SR_ERROR_IF(baseLayer >= destinationImage->GetLayerCount(), "[Metal]: Cannot copy from buffer [{0}] to layer [{1}] of image [{2}] within command buffer [{3}], as it does not have it!", sourceBuffer->GetName(), baseLayer, destinationImage->GetName(), GetName());
-        SR_ERROR_IF(baseLayer + layerCount >= destinationImage->GetLayerCount(), "[Metal]: Cannot copy from buffer [{0}] to layers [{1}-{2}] of image [{3}] within command buffer [{4}], as they exceed image's layer count - [{5}]!", sourceBuffer->GetName(), baseLayer, baseLayer + layerCount, destinationImage->GetName(), GetName(), destinationImage->GetLayerCount());
-        SR_ERROR_IF((destinationOffset + pixelRange).x >= destinationImage->GetWidth() || (destinationOffset + pixelRange).y >= destinationImage->GetHeight(), "[Metal]: Cannot copy from buffer [{0}] pixel range [{1}x{2}], which is offset by another [{3}x{4}] pixels to image [{5}] within command buffer [{6}], as resulting pixel range of a total of [{7}x{8}] pixels is outside of image's dimensions - [{9}x{10}] !", sourceBuffer->GetName(), pixelRange.x, pixelRange.y, destinationOffset.x, destinationOffset.y, destinationImage->GetName(), GetName(), (destinationOffset + pixelRange).x, (destinationOffset + pixelRange).y, destinationImage->GetWidth(), destinationImage->GetHeight());
+        SR_ERROR_IF(mipLevel >= destinationImage->GetMipLevelCount(), "[Metal]: Cannot copy from buffer [{0}] to mip level [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), mipLevel, destinationImage->GetName(), GetName());
+        SR_ERROR_IF(layer >= destinationImage->GetLayerCount(), "[Metal]: Cannot copy from buffer [{0}] to layer [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), layer, destinationImage->GetName(), GetName());
 
-        const uint64 memoryRange = static_cast<uint64>(pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth()) * (pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight()) * destinationImage->GetPixelSize();
-        SR_ERROR_IF(sourcePixelOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()) > sourceBuffer->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), sourcePixelOffset, sourceBuffer->GetName(), GetName(), sourcePixelOffset + (static_cast<uint64>(pixelRange.x) * pixelRange.y * destinationImage->GetPixelSize()), sourceBuffer->GetMemorySize());
-        SR_ERROR_IF((static_cast<uint64>(destinationOffset.x) + destinationOffset.y + pixelRange.x + pixelRange.y) * destinationImage->GetPixelSize() > destinationImage->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to image [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the image - [{5}]!", pixelRange.x * pixelRange.y * destinationImage->GetPixelSize(), (destinationOffset.x + destinationOffset.y) * destinationImage->GetPixelSize(), destinationImage->GetName(), GetName(), (static_cast<uint64>(destinationOffset.x) + destinationOffset.y + pixelRange.x + pixelRange.y) * destinationImage->GetPixelSize(), destinationImage->GetMemorySize());
+        const MTL::Size sourceSize = MTL::Size(pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth() >> mipLevel, pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight() >> mipLevel, 1);
+        SR_ERROR_IF(destinationPixelOffset.x + sourceSize.width > destinationImage->GetWidth() || destinationPixelOffset.y + sourceSize.height > destinationImage->GetHeight(), "[Metal]: Cannot copy from buffer [{0}] pixel range [{1}x{2}], which is offset by another [{3}x{4}] pixels to image [{5}] within command buffer [{6}], as resulting pixel range of a total of [{7}x{8}] pixels exceeds the image's dimensions - [{9}x{10}]!", sourceBuffer->GetName(), sourceSize.width, sourceSize.height, destinationPixelOffset.x, destinationPixelOffset.y, destinationImage->GetName(), GetName(), destinationPixelOffset.x + sourceSize.width, destinationPixelOffset.y + sourceSize.height, destinationImage->GetWidth(), destinationImage->GetHeight());
+        SR_ERROR_IF(sourceByteOffset + static_cast<uint64>(sourceSize.width) * sourceSize.height * destinationImage->GetPixelMemorySize() > sourceBuffer->GetMemorySize(), "[Metal]: Cannot copy from buffer [{0}] pixel range [{1}x{2}], which is offset by another [{3}] bytes, to image [{4}], as total memory range [{5}] overflows that of the buffer - [{6}]!", sourceBuffer->GetName(), sourceSize.width, sourceSize.height, sourceByteOffset, destinationImage->GetName(), sourceByteOffset + sourceSize.width * sourceSize.height * destinationImage->GetPixelMemorySize(), sourceBuffer->GetMemorySize());
 
-        // Record copy
-        MTL::BlitCommandEncoder* blitEncoder = commandBuffer->blitCommandEncoder();
-        blitEncoder->copyFromBuffer(metalSourceBuffer.GetMetalBuffer(), sourcePixelOffset, static_cast<uint64>(destinationImage->GetWidth()) * destinationImage->GetPixelSize(), 0, MTL::Size(destinationImage->GetWidth(), destinationImage->GetHeight(), layerCount), metalDestinationImage.GetMetalTexture(), memoryRange, mipLevel, MTL::Origin(destinationOffset.x, destinationOffset.y, baseLayer));
-        blitEncoder->endEncoding();
+        if (currentBlitEncoder == nullptr)
+        {
+            currentBlitEncoder = commandBuffer->blitCommandEncoder();
+            device.SetResourceName(currentBlitEncoder , "Transfer Encoder");
+        }
+
+        currentBlitEncoder->copyFromBuffer(metalSourceBuffer.GetMetalBuffer(), sourceByteOffset, sourceSize.width * destinationImage->GetPixelMemorySize(), 0, sourceSize, metalDestinationImage.GetMetalTexture(), layer, mipLevel, MTL::Origin(destinationPixelOffset.x, destinationPixelOffset.y, 0));
     }
 
-    void MetalCommandBuffer::BlitImage(const std::unique_ptr<Image> &image)
+    void MetalCommandBuffer::GenerateMipMapsForImage(const std::unique_ptr<Image> &image)
     {
-        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not blit image [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", image->GetName(), GetName());
+        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot generate mip maps for image [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", image->GetName(), GetName());
         const MetalImage &metalImage = static_cast<MetalImage&>(*image);
 
-        // Record blit
-        MTL::BlitCommandEncoder* blitEncoder = commandBuffer->blitCommandEncoder();
-        blitEncoder->generateMipmaps(metalImage.GetMetalTexture());
-        blitEncoder->endEncoding();
+        SR_ERROR_IF(metalImage.GetMipLevelCount() <= 1, "[Metal]: Cannot generate mip maps for image [{0}], as it has a single mip level only!", metalImage.GetName());
+
+        if (currentBlitEncoder == nullptr)
+        {
+            MTL::BlitCommandEncoder* blitEncoder = commandBuffer->blitCommandEncoder();
+            device.SetResourceName(blitEncoder, "Transfer Encoder");
+        }
+        currentBlitEncoder->generateMipmaps(metalImage.GetMetalTexture());
     }
 
     void MetalCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments)
@@ -170,6 +194,7 @@ namespace Sierra
                     }
 
                     subpass->colorAttachments()->object(subpassColorAttachmentCount)->setTexture(metalImage.GetMetalTexture());
+                    subpass->colorAttachments()->object(subpassColorAttachmentCount)->setClearColor(MTL::ClearColor(attachment.clearColor.r, attachment.clearColor.g, attachment.clearColor.b, attachment.clearColor.a));
                     subpassColorAttachmentCount++;
                 }
             }
@@ -236,6 +261,7 @@ namespace Sierra
         currentRenderEncoder->setTriangleFillMode(metalGraphicsPipeline.GetTriangleFillMode());
         currentRenderEncoder->setFrontFacingWinding(metalGraphicsPipeline.GetWinding());
         currentRenderEncoder->setRenderPipelineState(metalGraphicsPipeline.GetRenderPipelineState());
+        if (metalGraphicsPipeline.GetDepthStencilState() != nullptr) currentRenderEncoder->setDepthStencilState(metalGraphicsPipeline.GetDepthStencilState());
 
         // Save pipeline
         currentGraphicsPipeline = &metalGraphicsPipeline;
@@ -249,39 +275,50 @@ namespace Sierra
         currentGraphicsPipeline = nullptr;
     }
 
-    void MetalCommandBuffer::BindVertexBuffer(const std::unique_ptr<Buffer> &vertexBuffer, const uint64 offset)
+    void MetalCommandBuffer::BindVertexBuffer(const std::unique_ptr<Buffer> &vertexBuffer, const uint64 byteOffset)
     {
         SR_ERROR_IF(vertexBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind vertex buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", vertexBuffer->GetName(), GetName());
         const MetalBuffer &metalVertexBuffer = static_cast<MetalBuffer&>(*vertexBuffer);
 
         SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot bind vertex buffer [{0}] if no render encoder is active within command buffer [{1}]!", vertexBuffer->GetName(), GetName());
 
-        SR_ERROR_IF(offset > vertexBuffer->GetMemorySize(), "[Metal]: Cannot bind vertex buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", vertexBuffer->GetName(), GetName(), offset, vertexBuffer->GetMemorySize());
-        currentRenderEncoder->setVertexBuffer(metalVertexBuffer.GetMetalBuffer(), offset, MetalPipelineLayout::VERTEX_BUFFER_SHADER_INDEX);
+        SR_ERROR_IF(byteOffset > vertexBuffer->GetMemorySize(), "[Metal]: Cannot bind vertex buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", vertexBuffer->GetName(), GetName(), byteOffset, vertexBuffer->GetMemorySize());
+        currentRenderEncoder->setVertexBuffer(metalVertexBuffer.GetMetalBuffer(), byteOffset, MetalPipelineLayout::VERTEX_BUFFER_SHADER_INDEX);
+        currentVertexBufferByteOffset = byteOffset;
     }
 
-    void MetalCommandBuffer::BindIndexBuffer(const std::unique_ptr<Buffer> &indexBuffer, const uint64 offset)
+    void MetalCommandBuffer::BindIndexBuffer(const std::unique_ptr<Buffer> &indexBuffer, const uint64 byteOffset)
     {
         SR_ERROR_IF(indexBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind index buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", indexBuffer->GetName(), GetName());
         const MetalBuffer &metalIndexBuffer = static_cast<MetalBuffer&>(*indexBuffer);
 
-        SR_ERROR_IF(offset > indexBuffer->GetMemorySize(), "[Metal]: Cannot bind index buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", indexBuffer->GetName(), GetName(), offset, indexBuffer->GetMemorySize());
+        SR_ERROR_IF(byteOffset > indexBuffer->GetMemorySize(), "[Metal]: Cannot bind index buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", indexBuffer->GetName(), GetName(), byteOffset, indexBuffer->GetMemorySize());
         SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot bind index buffer [{0}] if no render encoder is active within command buffer [{1}]!", indexBuffer->GetName(), GetName());
 
         currentIndexBuffer = metalIndexBuffer.GetMetalBuffer();
-        currentIndexBufferOffset = offset;
+        currentIndexBufferByteOffset = byteOffset;
     }
 
-    void MetalCommandBuffer::Draw(const uint32 vertexCount)
+    void MetalCommandBuffer::SetScissor(const Vector4UInt &scissor)
+    {
+        SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot set scissor if no render encoder is active within command buffer [{0}]!", GetName());
+        currentRenderEncoder->setScissorRect({ scissor.x, scissor.y, scissor.z, scissor.w });
+    }
+
+    void MetalCommandBuffer::Draw(const uint32 vertexCount, const uint32 vertexOffset)
     {
         SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot draw if no render encoder is active within command buffer [{0}]!", GetName());
+        const uint64 newVertexBufferByteOffset = currentVertexBufferByteOffset + (static_cast<uint64>(vertexOffset) * currentGraphicsPipeline->GetVertexByteStride());
+        if (newVertexBufferByteOffset > 0) currentRenderEncoder->setVertexBufferOffset(newVertexBufferByteOffset, MetalPipelineLayout::VERTEX_BUFFER_SHADER_INDEX);
         currentRenderEncoder->drawPrimitives(MTL::PrimitiveTypeTriangle, NS::UInteger(0), vertexCount);
     }
 
-    void MetalCommandBuffer::DrawIndexed(const uint32 indexCount, const uint64 indexOffset, const uint64 vertexOffset)
+    void MetalCommandBuffer::DrawIndexed(const uint32 indexCount, const uint32 indexOffset, const uint32 vertexOffset)
     {
         SR_ERROR_IF(currentRenderEncoder == nullptr, "[Metal]: Cannot draw indexed if no render encoder is active within command buffer [{0}]!", GetName());
-        currentRenderEncoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, indexCount, MTL::IndexTypeUInt32, currentIndexBuffer, currentIndexBufferOffset + indexOffset, 1, static_cast<int32>(vertexOffset), 0);
+        const uint64 newVertexBufferByteOffset = currentVertexBufferByteOffset + (static_cast<uint64>(vertexOffset) * currentGraphicsPipeline->GetVertexByteStride());
+        if (newVertexBufferByteOffset > 0) currentRenderEncoder->setVertexBufferOffset(newVertexBufferByteOffset, MetalPipelineLayout::VERTEX_BUFFER_SHADER_INDEX);
+        currentRenderEncoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, indexCount, MTL::IndexTypeUInt32, currentIndexBuffer, currentIndexBufferByteOffset + indexOffset * sizeof(uint32), 1);
     }
 
     void MetalCommandBuffer::BeginComputePipeline(const std::unique_ptr<ComputePipeline> &computePipeline)
@@ -314,45 +351,40 @@ namespace Sierra
         currentComputeEncoder->dispatchThreadgroups(MTL::Size(xWorkGroupCount, yWorkGroupCount, zWorkGroupCount), MTL::Size(1, 1, 1));
     }
 
-    void MetalCommandBuffer::PushConstants(const void* data, const uint16 memoryRange, const uint16 offset)
+    void MetalCommandBuffer::PushConstants(const void* data, const uint16 memoryRange, const uint16 byteOffset)
     {
-        const MetalPipelineLayout &currentPipelineLayout = currentGraphicsPipeline->GetLayout();
-        SR_ERROR_IF(memoryRange > currentPipelineLayout.GetPushConstantSize(), "[Metal]: Cannot push [{0}] bytes of push constant data within command buffer [{1}], as specified memory range is bigger than specified in the current pipeline's layout, which is [{2}] bytes!", memoryRange, GetName(), currentPipelineLayout.GetPushConstantSize());
-
         SR_ERROR_IF(currentRenderEncoder == nullptr && currentComputeEncoder == nullptr, "[Metal]: Cannot push constants if no encoder is active within command buffer [{0}]!", GetName());
         if (currentComputeEncoder != nullptr)
         {
-            currentComputeEncoder->setBytes(data, memoryRange, currentPipelineLayout.GetPushConstantIndex());
+            const MetalPipelineBinding bindingData = currentComputePipeline->GetLayout().GetPushConstantBinding();
+            currentComputeEncoder->setBytes(data, memoryRange, bindingData.index);
         }
         else
         {
-            currentRenderEncoder->setVertexBytes(data, memoryRange, currentPipelineLayout.GetPushConstantIndex());
-            if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentBytes(data, memoryRange, currentPipelineLayout.GetPushConstantIndex());
+            const MetalPipelineBinding bindingData = currentGraphicsPipeline->GetLayout().GetPushConstantBinding();
+            currentRenderEncoder->setVertexBytes(data, memoryRange, bindingData.index);
+            if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentBytes(data, memoryRange, bindingData.index);
         }
     }
 
-    void MetalCommandBuffer::BindBuffer(const uint32 binding, const std::unique_ptr<Buffer> &buffer, const uint32 arrayIndex, const uint64 memoryRange, const uint64 offset)
+    void MetalCommandBuffer::BindBuffer(const uint32 binding, const std::unique_ptr<Buffer> &buffer, const uint32 arrayIndex, const uint64 memoryRange, const uint64 byteOffset)
     {
         SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], to binding [{1}] within command buffer [{2}]!", buffer->GetName(), binding, GetName());
         const MetalBuffer &metalBuffer = static_cast<MetalBuffer&>(*buffer);
 
-        SR_ERROR_IF(offset + memoryRange > buffer->GetMemorySize(), "[Metal]: Cannot bind [{0}] bytes (offset by another [{1}] bytes) from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, offset, buffer->GetName(), GetName(), offset + memoryRange, buffer->GetMemorySize());
+        SR_ERROR_IF(byteOffset + memoryRange > buffer->GetMemorySize(), "[Metal]: Cannot bind [{0}] bytes (offset by another [{1}] bytes) from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, byteOffset, buffer->GetName(), GetName(), byteOffset + memoryRange, buffer->GetMemorySize());
 
         SR_ERROR_IF(currentRenderEncoder == nullptr && currentComputeEncoder == nullptr, "[Metal]: Cannot bind buffer [{0}] if no encoder is active within command buffer [{1}]!", buffer->GetName(), GetName());
         if (currentComputeEncoder != nullptr)
         {
-            const MetalPipelineLayout &pipelineLayout = currentComputePipeline->GetLayout();
-            const uint32 index = pipelineLayout.GetBindingIndex(binding, index);
-
-            currentComputeEncoder->setBuffer(metalBuffer.GetMetalBuffer(), offset, index);
+            const MetalPipelineBinding bindingData = currentComputePipeline->GetLayout().GetBindingData(binding);
+            currentComputeEncoder->setBuffer(metalBuffer.GetMetalBuffer(), byteOffset, bindingData.index);
         }
         else
         {
-            const MetalPipelineLayout &pipelineLayout = currentGraphicsPipeline->GetLayout();
-            const uint32 index = pipelineLayout.GetBindingIndex(binding, index);
-
-            currentRenderEncoder->setVertexBuffer(metalBuffer.GetMetalBuffer(), offset, index);
-            if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentBuffer(metalBuffer.GetMetalBuffer(), offset, index);
+            const MetalPipelineBinding bindingData = currentGraphicsPipeline->GetLayout().GetBindingData(binding);
+            currentRenderEncoder->setVertexBuffer(metalBuffer.GetMetalBuffer(), byteOffset, bindingData.index);
+            if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentBuffer(metalBuffer.GetMetalBuffer(), byteOffset, bindingData.index);
         }
     }
 
@@ -364,18 +396,14 @@ namespace Sierra
         SR_ERROR_IF(currentRenderEncoder == nullptr && currentComputeEncoder == nullptr, "[Metal]: Cannot bind image [{0}] if no encoder is active within command buffer [{1}]!", image->GetName(), GetName());
         if (currentComputeEncoder != nullptr)
         {
-            const MetalPipelineLayout &pipelineLayout = currentComputePipeline->GetLayout();
-            const uint32 index = pipelineLayout.GetBindingIndex(binding, index);
-
-            currentComputeEncoder->setTexture(metalImage.GetMetalTexture(), index);
+            const MetalPipelineBinding bindingData = currentComputePipeline->GetLayout().GetBindingData(binding);
+            currentComputeEncoder->setTexture(metalImage.GetMetalTexture(), bindingData.index);
         }
         else
         {
-            const MetalPipelineLayout &pipelineLayout = currentGraphicsPipeline->GetLayout();
-            const uint32 index = pipelineLayout.GetBindingIndex(binding, index);
-
-            currentRenderEncoder->setVertexTexture(metalImage.GetMetalTexture(), index);
-            if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentTexture(metalImage.GetMetalTexture(), index);
+            const MetalPipelineBinding bindingData = currentGraphicsPipeline->GetLayout().GetBindingData(binding);
+            currentRenderEncoder->setVertexTexture(metalImage.GetMetalTexture(), bindingData.index);
+            if (currentGraphicsPipeline->HasFragmentShader()) currentRenderEncoder->setFragmentTexture(metalImage.GetMetalTexture(), bindingData.index);
         }
     }
 
@@ -391,24 +419,19 @@ namespace Sierra
 
         if (currentComputeEncoder != nullptr)
         {
-            const MetalPipelineLayout &pipelineLayout = currentComputePipeline->GetLayout();
-            const uint32 index = pipelineLayout.GetBindingIndex(binding, index);
-
-            currentComputeEncoder->setTexture(metalImage.GetMetalTexture(), index);
-            currentComputeEncoder->setSamplerState(metalSampler.GetSamplerState(), index);
+            const MetalPipelineBinding bindingData = currentComputePipeline->GetLayout().GetBindingData(binding);
+            currentComputeEncoder->setTexture(metalImage.GetMetalTexture(), bindingData.index);
+            currentComputeEncoder->setSamplerState(metalSampler.GetSamplerState(), bindingData.data.textureData.samplerIndex);
         }
         else
         {
-            const MetalPipelineLayout &pipelineLayout = currentGraphicsPipeline->GetLayout();
-            const uint32 index = pipelineLayout.GetBindingIndex(binding, index);
-
-            currentRenderEncoder->setVertexTexture(metalImage.GetMetalTexture(), index);
-            currentRenderEncoder->setVertexSamplerState(metalSampler.GetSamplerState(), index);
-
+            const MetalPipelineBinding bindingData = currentGraphicsPipeline->GetLayout().GetBindingData(binding);
+            currentRenderEncoder->setVertexTexture(metalImage.GetMetalTexture(), bindingData.index);
+            currentRenderEncoder->setVertexSamplerState(metalSampler.GetSamplerState(), bindingData.data.textureData.samplerIndex);
             if (currentGraphicsPipeline->HasFragmentShader())
             {
-                currentRenderEncoder->setFragmentTexture(metalImage.GetMetalTexture(), index);
-                currentRenderEncoder->setFragmentSamplerState(metalSampler.GetSamplerState(), index);
+                currentRenderEncoder->setFragmentTexture(metalImage.GetMetalTexture(), bindingData.index);
+                currentRenderEncoder->setFragmentSamplerState(metalSampler.GetSamplerState(), bindingData.data.textureData.samplerIndex);
             }
         }
     }
@@ -441,7 +464,9 @@ namespace Sierra
 
     MetalCommandBuffer::~MetalCommandBuffer()
     {
-        commandBuffer->release();
+        #if SR_PLATFORM_macOS
+            if (commandBuffer != nullptr) commandBuffer->release();
+        #endif
     }
 
     /* --- CONVERSIONS --- */
@@ -471,8 +496,8 @@ namespace Sierra
             case ImageCommandUsage::MemoryWrite:
             case ImageCommandUsage::ComputeRead:
             case ImageCommandUsage::ComputeWrite:       return 0;
-            case ImageCommandUsage::AttachmentRead:
-            case ImageCommandUsage::AttachmentWrite:
+            case ImageCommandUsage::ColorRead:
+            case ImageCommandUsage::ColorWrite:
             case ImageCommandUsage::DepthRead:
             case ImageCommandUsage::DepthWrite:
             case ImageCommandUsage::GraphicsWrite:

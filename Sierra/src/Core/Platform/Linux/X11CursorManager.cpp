@@ -77,12 +77,12 @@ namespace Sierra
 
     /* --- PRIVATE METHODS --- */
 
-    void X11CursorManager::OnUpdate()
+    void X11CursorManager::Update()
     {
         lastCursorPosition = cursorPosition;
     }
 
-    void X11CursorManager::OnUpdateEnd()
+    void X11CursorManager::UpdateEnd()
     {
         if (!cursorHidden || !x11Context.IsWindowFocused(window)) return;
 

@@ -1,5 +1,5 @@
 enable_language(OBJCXX)
-function(BuildIOSApplication)
+function(BuildIOSApplication SOURCE_FILES)
     # Validate Xcode settings
     if(NOT PLATFORM)
         message(FATAL_ERROR "[Sierra]: In order to build an Xcode project for iOS, you must compile with -DPLATFORM={TARGET_PLATFORM}!")

@@ -56,7 +56,7 @@ namespace Sierra
             attachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
             attachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
             attachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_GENERAL;
+            attachmentDescription.finalLayout = attachment.type == RenderPassAttachmentType::Color ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
             // Handle resolve attachment
             if (attachment.resolveImage.has_value())
@@ -288,7 +288,7 @@ namespace Sierra
 
         // Set object names
         device.SetObjectName(renderPass, VK_OBJECT_TYPE_RENDER_PASS, GetName());
-        device.SetObjectName(framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Framebuffer of [" + GetName() + "]");
+        device.SetObjectName(framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Framebuffer of render pass [" + GetName() + "]");
     }
 
     /* --- DESTRUCTOR --- */

@@ -17,9 +17,9 @@ namespace Sierra
         // Set up sampler create info
         VkSamplerCreateInfo samplerCreateInfo = { };
         samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        samplerCreateInfo.magFilter = SamplerSampleModeToVkFilter(createInfo.sampleMode);
+        samplerCreateInfo.magFilter = SamplerSampleModeToVkFilter(createInfo.filter);
         samplerCreateInfo.minFilter = samplerCreateInfo.magFilter;
-        samplerCreateInfo.mipmapMode = SamplerSampleModeToVkSamplerMipMapMode(createInfo.sampleMode);
+        samplerCreateInfo.mipmapMode = SamplerSampleModeToVkSamplerMipMapMode(createInfo.filter);
         samplerCreateInfo.addressModeU = SamplerExtendModeToVkSamplerAddressMode(createInfo.extendMode);
         samplerCreateInfo.addressModeV = samplerCreateInfo.addressModeU;
         samplerCreateInfo.addressModeW = samplerCreateInfo.addressModeU;
@@ -50,36 +50,36 @@ namespace Sierra
 
     /* --- CONVERSIONS --- */
 
-    VkFilter VulkanSampler::SamplerSampleModeToVkFilter(const SamplerSampleMode sampleMode)
+    VkFilter VulkanSampler::SamplerSampleModeToVkFilter(const SamplerFilter sampleMode)
     {
         switch (sampleMode)
         {
-            case SamplerSampleMode::Smooth:     return VK_FILTER_LINEAR;
-            case SamplerSampleMode::Pixelize:   return VK_FILTER_NEAREST;
+            case SamplerFilter::Linear:     return VK_FILTER_LINEAR;
+            case SamplerFilter::Nearest:   return VK_FILTER_NEAREST;
         }
 
         return VK_FILTER_NEAREST;
     }
 
-    VkSamplerMipmapMode VulkanSampler::SamplerSampleModeToVkSamplerMipMapMode(const SamplerSampleMode sampleMode)
+    VkSamplerMipmapMode VulkanSampler::SamplerSampleModeToVkSamplerMipMapMode(const SamplerFilter sampleMode)
     {
         switch (sampleMode)
         {
-            case SamplerSampleMode::Smooth:         return VK_SAMPLER_MIPMAP_MODE_LINEAR;
-            case SamplerSampleMode::Pixelize:       return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+            case SamplerFilter::Linear:         return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+            case SamplerFilter::Nearest:        return VK_SAMPLER_MIPMAP_MODE_NEAREST;
         }
 
         return VK_SAMPLER_MIPMAP_MODE_NEAREST;
     }
 
-    VkSamplerAddressMode VulkanSampler::SamplerExtendModeToVkSamplerAddressMode(const SamplerExtendMode extendMode)
+    VkSamplerAddressMode VulkanSampler::SamplerExtendModeToVkSamplerAddressMode(const SamplerAddressMode extendMode)
     {
         switch (extendMode)
         {
-            case SamplerExtendMode::Repeat:             return VK_SAMPLER_ADDRESS_MODE_REPEAT;
-            case SamplerExtendMode::MirroredRepeat:     return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
-            case SamplerExtendMode::ClampToEdge:        return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-            case SamplerExtendMode::ClampToBorder:      return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+            case SamplerAddressMode::Repeat:             return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            case SamplerAddressMode::MirroredRepeat:     return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+            case SamplerAddressMode::ClampToEdge:        return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+            case SamplerAddressMode::ClampToBorder:      return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
         }
 
         return VK_SAMPLER_ADDRESS_MODE_REPEAT;

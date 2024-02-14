@@ -58,7 +58,7 @@ namespace Sierra
 
         // Try to create a stream to read file
         std::ifstream file(filePath, std::ios::binary | std::ios::ate);
-        SR_ERROR_IF(!file.is_open(), "Could not open file [{0}] for reading!", filePath.string().c_str());
+        SR_ERROR_IF(!file.is_open(), "Could not open file [{0}] for reading!", filePath.string());
 
         // Get file size and create resized vector
         const std::streamsize fileSize = static_cast<int64>(file.tellg());
@@ -117,7 +117,11 @@ namespace Sierra
                 resourcesDirectoryPath = path;
                 resourcesDirectoryPath = resourcesDirectoryPath.parent_path() / "Resources";
             #elif SR_PLATFORM_APPLE
-                resourcesDirectoryPath = NSFilePaths::GetApplicationDirectoryPath();
+                #if SR_PLATFORM_macOS
+                    resourcesDirectoryPath = NSFilePaths::GetApplicationDirectoryPath() / "Contents" / "Resources";
+                #elif SR_PLATFORM_iOS
+                    resourcesDirectoryPath = NSFilePaths::GetApplicationDirectoryPath();
+                #endif
             #endif
         }
         return resourcesDirectoryPath;

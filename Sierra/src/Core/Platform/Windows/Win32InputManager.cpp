@@ -64,7 +64,7 @@ namespace Sierra
 
     /* --- PRIVATE METHODS --- */
 
-    void Win32InputManager::OnUpdate()
+    void Win32InputManager::Update()
     {
         // Swap out current key/mouse states and move them to the array for the last frame
         std::copy(keyStates.begin(), keyStates.end(), lastKeyStates.begin());

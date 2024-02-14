@@ -1,4 +1,4 @@
-function(BuildWindowsExecutable)
+function(BuildWindowsExecutable SOURCE_FILES)
     # Have a folder for all temporary resources
     set(RESOURCES_FOLDER_PATH "${CMAKE_CURRENT_BINARY_DIR}/Resources")
 

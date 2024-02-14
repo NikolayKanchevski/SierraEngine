@@ -20,7 +20,7 @@ namespace Sierra
         VulkanBuffer(const VulkanDevice &device, const BufferCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void CopyFromMemory(const void* memoryPointer, uint64 memoryRange = 0, uint64 sourceOffset = 0, uint64 destinationOffset = 0) override;
+        void CopyFromMemory(const void* memoryPointer, uint64 memoryRange = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const void* GetData() const override { SR_ERROR_IF(memoryLocation != BufferMemoryLocation::CPU, "[Vulkan]: Cannot get data pointer of buffer [{0}], as it is not CPU-visible!", GetName()); return data; }

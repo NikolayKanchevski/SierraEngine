@@ -4,8 +4,6 @@
 
 #include "Shader.h"
 
-#include "../Engine/File.h"
-
 namespace Sierra
 {
 

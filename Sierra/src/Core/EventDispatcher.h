@@ -7,10 +7,10 @@
 namespace Sierra
 {
 
-    class SIERRA_API Event  {  };
+    class SIERRA_API Event {  };
 
     template<typename T>
-    class SIERRA_API EventDispatcher
+    class SIERRA_API EventDispatcher final
     {
     public:
         static_assert(!std::is_same_v<Event, T> && std::is_base_of_v<Event, T>, "Event type provided to EventDispatcher must not be of the base type Event, but has to derive from it!");
@@ -74,7 +74,7 @@ namespace Sierra
         template<typename... Args>
         void QueueEvent(Args&&... args) const
         {
-            queue.push(new T(std::forward<Args>(args))...);
+            queue.push(T(std::forward<Args>(args))...);
         }
 
         void DispatchQueue()
@@ -85,14 +85,13 @@ namespace Sierra
                 for (const auto &Callback : Callbacks)
                 {
                     // If event is handled, we break, so it does not go deeper in the event stack
-                    if (Callback(*event))
+                    if (Callback(event))
                     {
                         break;
                     }
                 }
-                delete(event);
             }
-            queue = std::queue<T*>();
+            queue = std::queue<T>();
         }
 
         /* --- OPERATORS --- */
@@ -100,17 +99,10 @@ namespace Sierra
         EventDispatcher& operator=(const EventDispatcher&) = delete;
 
         /* --- DESTRUCTOR --- */
-        ~EventDispatcher()
-        {
-            while (!queue.empty())
-            {
-                delete(queue.front());
-                queue.pop();
-            }
-        }
+        ~EventDispatcher() = default;
 
     private:
-        std::queue<T*> queue;
+        std::queue<T> queue;
         std::deque<EventCallback> Callbacks;
 
         uint32 totalIDs = 0;

@@ -31,7 +31,7 @@ namespace Sierra
 
     struct RenderPassAttachment
     {
-        const std::optional<std::reference_wrapper<std::unique_ptr<Image>>> resolveImage;
+        const std::optional<std::reference_wrapper<const std::unique_ptr<Image>>> &resolveImage = std::nullopt;
         const std::unique_ptr<Image> &templateImage;
         RenderPassAttachmentType type = RenderPassAttachmentType::Color;
         RenderPassAttachmentLoadOperation loadOperation = RenderPassAttachmentLoadOperation::Clear;

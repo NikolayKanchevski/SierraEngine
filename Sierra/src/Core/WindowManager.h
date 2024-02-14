@@ -27,9 +27,9 @@ namespace Sierra
 
     private:
         const std::unique_ptr<PlatformContext> &platformContext;
+        explicit WindowManager(const WindowManagerCreateInfo &createInfo);
 
         friend class Application;
-        explicit WindowManager(const WindowManagerCreateInfo &createInfo);
         static std::unique_ptr<WindowManager> Create(const WindowManagerCreateInfo &createInfo);
 
     };

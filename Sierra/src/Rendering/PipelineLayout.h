@@ -12,11 +12,11 @@ namespace Sierra
     enum class PipelineBindingType : uint8
     {
         Undefined,
+        UniformBuffer,
+        StorageBuffer,
         Image,
         Texture,
-        InputAttachment,
-        UniformBuffer,
-        StorageBuffer
+        InputAttachment
     };
 
     struct PipelineBinding

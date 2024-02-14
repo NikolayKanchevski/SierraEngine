@@ -1,9 +1,13 @@
 #version 450
 
-layout(location = 0) in vec3 fromVert_Color;
-layout(location = 0) out vec4 toFramebuffer_Color;
+layout(location = 0) in struct
+{
+    vec3 color;
+} In;
+
+layout(location = 0) out vec4 Out;
 
 void main()
 {
-    toFramebuffer_Color = vec4(fromVert_Color, 1.0);
+    Out = vec4(In.color, 1.0);
 }

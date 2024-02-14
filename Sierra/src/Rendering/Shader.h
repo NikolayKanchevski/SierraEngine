@@ -6,10 +6,12 @@
 
 #include "RenderingResource.h"
 
+#include "../Utilities/File.h"
+
 namespace Sierra
 {
 
-    enum class ShaderType
+    enum class ShaderType : uint8
     {
         Undefined,
         Vertex,

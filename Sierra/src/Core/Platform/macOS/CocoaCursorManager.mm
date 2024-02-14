@@ -61,12 +61,12 @@ namespace Sierra
 
     /* --- PRIVATE METHODS --- */
 
-    void CocoaCursorManager::OnUpdate()
+    void CocoaCursorManager::Update()
     {
         lastCursorPosition = cursorPosition;
     }
 
-    void CocoaCursorManager::OnUpdateEnd()
+    void CocoaCursorManager::UpdateEnd()
     {
         if (!cursorHidden || ![window isKeyWindow]) return;
 

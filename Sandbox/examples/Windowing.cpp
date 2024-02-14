@@ -20,14 +20,14 @@ private:
     const uint8 WINDOW_COUNT = !SR_PLATFORM_MOBILE + 1;
     std::vector<std::unique_ptr<Window>> windows;
 
-    void OnStart() override
+    void Start() override
     {
         // Create windows
         windows.resize(WINDOW_COUNT);
         for (uint32 i = 0; i < WINDOW_COUNT; i++)
         {
             const std::string title = "Window #" + std::to_string(i);
-            windows[i] = GetWindowManager()->CreateWindow({
+            windows[i] = GetWindowManager().CreateWindow({
                 .title = title,
                 .resizable = true,
                 .maximize = false,
@@ -59,7 +59,7 @@ private:
         }
     }
 
-    bool OnUpdate(const TimeStep &timeStep) override
+    bool Update(const TimeStep &timeStep) override
     {
         bool allWindowsAreClosed = true;
 
@@ -68,7 +68,7 @@ private:
         {
             if (!window->IsClosed())
             {
-                window->OnUpdate();
+                window->Update();
                 allWindowsAreClosed = false;
             }
         }

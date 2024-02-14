@@ -25,9 +25,9 @@ namespace Sierra
         ~VulkanSampler() override;
 
         /* --- CONVERSIONS --- */
-        [[nodiscard]] static VkFilter SamplerSampleModeToVkFilter(SamplerSampleMode sampleMode);
-        [[nodiscard]] static VkSamplerMipmapMode SamplerSampleModeToVkSamplerMipMapMode(SamplerSampleMode sampleMode);
-        [[nodiscard]] static VkSamplerAddressMode SamplerExtendModeToVkSamplerAddressMode(SamplerExtendMode extendMode);
+        [[nodiscard]] static VkFilter SamplerSampleModeToVkFilter(SamplerFilter sampleMode);
+        [[nodiscard]] static VkSamplerMipmapMode SamplerSampleModeToVkSamplerMipMapMode(SamplerFilter sampleMode);
+        [[nodiscard]] static VkSamplerAddressMode SamplerExtendModeToVkSamplerAddressMode(SamplerAddressMode extendMode);
         [[nodiscard]] static float32 SamplerAnisotropyToFloat32(SamplerAnisotropy anisotropy);
         [[nodiscard]] static VkCompareOp SamplerCompareOperationToVkCompareOp(SamplerCompareOperation compareOperation);
         [[nodiscard]] static VkBorderColor SamplerBorderColorToVkBorderColor(SamplerBorderColor borderColor);

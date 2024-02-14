@@ -16,13 +16,13 @@ namespace Sierra
 
     /* -- GETTER METHODS --- */
 
-    ImageFormat Device::GetSupportedImageFormat(const ImageChannels preferredChannels, const ImageMemoryType preferredMemoryType, const ImageUsage usage) const
+    std::optional<ImageFormat> Device::GetSupportedImageFormat(const ImageFormat preferredFormat, const ImageUsage usage) const
     {
         // NOTE: Though looking complex and heavy, realistically, the function should return almost immediately, and a format is pretty much guaranteed to be found
         std::vector<ImageChannels> channelsToTry;
         std::vector<ImageMemoryType> memoryTypesToTry;
         
-        switch (preferredChannels)
+        switch (preferredFormat.channels)
         {
             case ImageChannels::R:          channelsToTry = { ImageChannels::R, ImageChannels::RG, ImageChannels::RGB, ImageChannels::RGBA }; break;
             case ImageChannels::RG:         channelsToTry = { ImageChannels::RG, ImageChannels::RGB, ImageChannels::RGBA }; break;
@@ -32,7 +32,7 @@ namespace Sierra
             case ImageChannels::D:          channelsToTry = { ImageChannels::D }; break;
         }
 
-        switch (preferredMemoryType)
+        switch (preferredFormat.memoryType)
         {
             case ImageMemoryType::Int8:
             {
@@ -42,7 +42,6 @@ namespace Sierra
                     ImageMemoryType::Int16,
                     ImageMemoryType::Int32,
                     ImageMemoryType::Int64,
-                    ImageMemoryType::Float16,
                     ImageMemoryType::Float32,
                     ImageMemoryType::Float64
                 };
@@ -56,7 +55,6 @@ namespace Sierra
                     ImageMemoryType::UInt16,
                     ImageMemoryType::UInt32,
                     ImageMemoryType::UInt64,
-                    ImageMemoryType::Float16,
                     ImageMemoryType::Float32,
                     ImageMemoryType::Float64
                 };
@@ -66,8 +64,16 @@ namespace Sierra
             {
                 memoryTypesToTry =
                 {
-                    ImageMemoryType::SRGB8,
-                    ImageMemoryType::UNorm16,
+                    ImageMemoryType::SRGB8
+                };
+                break;
+            }
+            case ImageMemoryType::Norm8:
+            {
+                memoryTypesToTry =
+                {
+                    ImageMemoryType::Norm8,
+                    ImageMemoryType::Norm16,
                     ImageMemoryType::Float16,
                     ImageMemoryType::Float32,
                     ImageMemoryType::Float64
@@ -93,7 +99,6 @@ namespace Sierra
                     ImageMemoryType::Int16,
                     ImageMemoryType::Int32,
                     ImageMemoryType::Int64,
-                    ImageMemoryType::Float16,
                     ImageMemoryType::Float32,
                     ImageMemoryType::Float64
                 };
@@ -117,7 +122,9 @@ namespace Sierra
             {
                 memoryTypesToTry =
                 {
-                    ImageMemoryType::Norm16
+                    ImageMemoryType::Norm16,
+                    ImageMemoryType::Float32,
+                    ImageMemoryType::Float64
                 };
                 break;
             }
@@ -125,7 +132,9 @@ namespace Sierra
             {
                 memoryTypesToTry =
                 {
-                    ImageMemoryType::UNorm16
+                    ImageMemoryType::UNorm16,
+                    ImageMemoryType::Float32,
+                    ImageMemoryType::Float64
                 };
                 break;
             }
@@ -145,7 +154,6 @@ namespace Sierra
                 {
                     ImageMemoryType::Int32,
                     ImageMemoryType::Int64,
-                    ImageMemoryType::Float32,
                     ImageMemoryType::Float64
                 };
                 break;
@@ -156,7 +164,6 @@ namespace Sierra
                 {
                     ImageMemoryType::UInt32,
                     ImageMemoryType::UInt64,
-                    ImageMemoryType::Float32,
                     ImageMemoryType::Float64
                 };
                 break;
@@ -174,8 +181,7 @@ namespace Sierra
             {
                 memoryTypesToTry =
                 {
-                    ImageMemoryType::Int64,
-                    ImageMemoryType::Float64
+                    ImageMemoryType::Int64
                 };
                 break;
             }
@@ -183,8 +189,7 @@ namespace Sierra
             {
                 memoryTypesToTry =
                 {
-                    ImageMemoryType::UInt64,
-                    ImageMemoryType::Float64
+                    ImageMemoryType::UInt64
                 };
                 break;
             }
@@ -192,8 +197,7 @@ namespace Sierra
             {
                 memoryTypesToTry =
                 {
-                    ImageMemoryType::Float64,
-                    ImageMemoryType::Int64
+                    ImageMemoryType::Float64
                 };
                 break;
             }
@@ -204,12 +208,34 @@ namespace Sierra
             for (const auto memoryType : memoryTypesToTry)
             {
                 const ImageFormat format = { .channels = channels, .memoryType = memoryType };
-                if (IsImageConfigurationSupported(format, usage)) return format;
+                if (IsImageFormatSupported(format, usage)) return format;
             }
         }
 
-        SR_ERROR("No working image format supported for specified configuration!");
-        return { };
+        return std::nullopt;
     }
+
+    ImageSampling Device::GetHighestImageSamplingSupported() const
+    {
+        if (IsImageSamplingSupported(ImageSampling::x64)) return ImageSampling::x64;
+        if (IsImageSamplingSupported(ImageSampling::x32)) return ImageSampling::x32;
+        if (IsImageSamplingSupported(ImageSampling::x16)) return ImageSampling::x16;
+        if (IsImageSamplingSupported(ImageSampling::x8)) return ImageSampling::x8;
+        if (IsImageSamplingSupported(ImageSampling::x4)) return ImageSampling::x4;
+        if (IsImageSamplingSupported(ImageSampling::x2)) return ImageSampling::x2;
+        return ImageSampling::x1;
+    }
+
+    SamplerAnisotropy Device::GetHighestSamplerAnisotropySupported() const
+    {
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x64)) return SamplerAnisotropy::x64;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x32)) return SamplerAnisotropy::x32;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x16)) return SamplerAnisotropy::x16;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x8)) return SamplerAnisotropy::x8;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x4)) return SamplerAnisotropy::x4;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x2)) return SamplerAnisotropy::x2;
+        return SamplerAnisotropy::x1;
+    }
+
 
 }

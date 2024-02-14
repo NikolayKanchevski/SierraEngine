@@ -12,6 +12,16 @@
 namespace Sierra
 {
 
+    struct MetalPipelineBinding
+    {
+        uint32 index = 0;
+        union {
+            struct {
+                uint32 samplerIndex = 0;
+            } textureData;
+        } data = { };
+    };
+
     class SIERRA_API MetalPipelineLayout final : public PipelineLayout, public MetalResource
     {
     public:
@@ -19,8 +29,8 @@ namespace Sierra
         MetalPipelineLayout(const MetalDevice &metalDevice, const PipelineLayoutCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetBindingIndex(const uint32 binding, const uint32 arrayIndex = 0) const { return bindingIndices[arrayIndex]; };
-        [[nodiscard]] inline uint32 GetPushConstantIndex() const { return pushConstantIndex; };
+        [[nodiscard]] inline MetalPipelineBinding GetBindingData(const uint32 binding) const { return bindings[binding]; };
+        [[nodiscard]] inline MetalPipelineBinding GetPushConstantBinding() const { return bindings.back(); };
         [[nodiscard]] inline uint16 GetPushConstantSize() const { return pushConstantSize; }
 
         /* --- CONSTANTS --- */
@@ -30,9 +40,8 @@ namespace Sierra
         ~MetalPipelineLayout() override = default;
 
     private:
+        std::vector<MetalPipelineBinding> bindings;
         uint16 pushConstantSize = 0;
-        std::vector<uint32> bindingIndices;
-        uint32 pushConstantIndex = 0;
 
     };
 

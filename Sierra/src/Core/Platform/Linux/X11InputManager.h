@@ -46,7 +46,7 @@ namespace Sierra
         Vector2 mouseScroll = { 0, 0 };
 
         friend class X11Window;
-        void OnUpdate();
+        void Update();
         void KeyPressEvent(const XEvent &event);
         void KeyReleaseEvent(const XEvent &event);
         void ButtonPressEvent(const XEvent &event);

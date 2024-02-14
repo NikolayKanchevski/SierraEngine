@@ -6,13 +6,30 @@
 
 #include "RenderingResource.h"
 #include "../Core/Window.h"
-#include "../Events/SwapchainEvent.h"
 
 #include "RenderPass.h"
 #include "CommandBuffer.h"
 
 namespace Sierra
 {
+
+    #pragma region Events
+        class SIERRA_API SwapchainEvent : public Event { };
+
+        class SIERRA_API SwapchainResizeEvent final : public SwapchainEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            inline explicit SwapchainResizeEvent(const Vector2UInt size) : size(size) { }
+
+            /* --- GETTER METHODS --- */
+            [[nodiscard]] inline Vector2UInt GetSize() const { return size; }
+
+        private:
+            Vector2UInt size;
+
+        };
+    #pragma endregion
 
     enum class SwapchainPresentationMode : bool
     {
@@ -57,7 +74,7 @@ namespace Sierra
         [[nodiscard]] inline uint32 GetHeight() const { return GetImage(0)->GetHeight(); };
 
         /* --- EVENTS --- */
-        template<typename T> void OnEvent(SwapchainEventCallback<T>) { static_assert(std::is_base_of_v<SwapchainEvent, T> && !std::is_same_v<SwapchainEvent, T>, "Template function accepts derived swapchain events only!"); }
+        template<typename T> void OnEvent(SwapchainEventCallback<T> Callback) { static_assert(std::is_base_of_v<SwapchainEvent, T> && !std::is_same_v<SwapchainEvent, T>, "Template function accepts derived swapchain events only!"); }
 
         /* --- OPERATORS --- */
         Swapchain(const Swapchain&) = delete;

@@ -4,13 +4,20 @@
 
 #pragma once
 
-#include "../Engine/Time.h"
+#include "../Utilities/Time.h"
 
 namespace Sierra
 {
 
+    enum class TouchType : bool
+    {
+        Press,
+        Release
+    };
+
     struct TouchCreateInfo
     {
+        TouchType type = TouchType::Press;
         TimePoint tapTime = TimePoint::Now();
         uint32 tapCount = 0;
         float32 force = 0.0f;
@@ -26,6 +33,7 @@ namespace Sierra
         explicit Touch(const TouchCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] inline TouchType GetType() const { return createInfo.type; }
         [[nodiscard]] inline uint32 GetTapCount() const { return createInfo.tapCount; }
         [[nodiscard]] inline float32 GetForce() const { return createInfo.force; }
         [[nodiscard]] inline Vector2 GetPosition() const { return createInfo.position; }

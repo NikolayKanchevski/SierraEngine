@@ -5,7 +5,7 @@
 #pragma once
 
 #include "../src/srpch.h"
-#include "../src/Application.h"
+#include "../src/Core/Application.h"
 #include "../src/Core/CursorManager.h"
 #include "../src/Core/InputManager.h"
 #include "../src/Core/Key.h"
@@ -19,7 +19,10 @@
 #include "../src/Core/Version.h"
 #include "../src/Core/Window.h"
 #include "../src/Core/WindowManager.h"
-#include "../src/Engine/File.h"
-#include "../src/Engine/RNG.h"
-#include "../src/Engine/Time.h"
+#include "../src/Utilities/File.h"
+#include "../src/Utilities/RNG.h"
+#include "../src/Utilities/Time.h"
+#if SR_BUILD_IMGUI
+    #include "../src/Extensions/ImGuiRenderTask.h"
+#endif
 using namespace Sierra;

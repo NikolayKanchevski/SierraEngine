@@ -17,7 +17,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void GameActivityWindow::OnUpdate()
+    void GameActivityWindow::Update()
     {
         // Process system events
         int events;
@@ -35,7 +35,7 @@ namespace Sierra
         }
 
         // Update touch manager
-        touchManager.OnUpdate();
+        touchManager.Update();
     }
 
     void GameActivityWindow::Minimize()

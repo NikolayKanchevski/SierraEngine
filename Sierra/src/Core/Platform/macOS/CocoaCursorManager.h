@@ -49,8 +49,8 @@ namespace Sierra
         bool justHidCursor = false;
 
         friend class CocoaWindow;
-        void OnUpdate();
-        void OnUpdateEnd();
+        void Update();
+        void UpdateEnd();
 
         #if defined(__OBJC__) && (defined(COCOA_CURSOR_MANAGER_IMPLEMENTATION) || defined(COCOA_WINDOW_IMPLEMENTATION))
             /* --- EVENTS --- */

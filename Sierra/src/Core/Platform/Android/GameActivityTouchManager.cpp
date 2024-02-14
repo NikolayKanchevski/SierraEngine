@@ -25,7 +25,7 @@ namespace Sierra
 
     /* --- PRIVATE METHODS --- */
 
-    void GameActivityTouchManager::OnUpdate()
+    void GameActivityTouchManager::Update()
     {
         android_input_buffer* inputBuffer = android_app_swap_input_buffers(gameActivityContext.GetApp());
         if (inputBuffer == nullptr) return;

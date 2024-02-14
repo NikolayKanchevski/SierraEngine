@@ -4,12 +4,10 @@
 
 #pragma once
 
-#include "Engine/Time.h"
-#include "Engine/File.h"
-#include "Core/Version.h"
-#include "Core/WindowManager.h"
-#include "Core/PlatformContext.h"
-#include "Rendering/RenderingContext.h"
+#include "Version.h"
+#include "WindowManager.h"
+#include "PlatformContext.h"
+#include "../Rendering/RenderingContext.h"
 
 namespace Sierra
 {
@@ -47,17 +45,16 @@ namespace Sierra
     protected:
         explicit Application(const ApplicationCreateInfo &createInfo);
 
-        [[nodiscard]] inline const std::unique_ptr<WindowManager>& GetWindowManager() { return windowManager; }
-        [[nodiscard]] inline const std::unique_ptr<PlatformContext>& GetPlatformContext() { return platformContext; }
-        [[nodiscard]] inline const std::unique_ptr<RenderingContext>& GetRenderingContext() { return renderingContext; }
+        [[nodiscard]] inline const WindowManager& GetWindowManager() { return *windowManager; }
+        [[nodiscard]] inline const PlatformContext& GetPlatformContext() { return *platformContext; }
+        [[nodiscard]] inline const RenderingContext& GetRenderingContext() { return *renderingContext; }
 
-        [[nodiscard]] const std::filesystem::path& GetResourcesDirectoryPath();
         [[nodiscard]] const std::filesystem::path& GetApplicationCachesDirectoryPath();
         [[nodiscard]] const std::filesystem::path& GetApplicationTemporaryDirectoryPath();
 
     private:
-        virtual void OnStart() = 0;
-        virtual bool OnUpdate(const TimeStep &timeStep) = 0;
+        virtual void Start() = 0;
+        virtual bool Update(const TimeStep &timeStep) = 0;
 
         std::string name;
         Version version;

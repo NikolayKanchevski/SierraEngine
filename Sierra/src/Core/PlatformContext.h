@@ -44,10 +44,9 @@ namespace Sierra
     protected:
         explicit PlatformContext(const PlatformContextCreateInfo &createInfo);
 
-//    private:
+    private:
         friend class Application;
-        static std::unique_ptr<PlatformContext> Load(const PlatformContextCreateInfo &createInfo);
-
+        static std::unique_ptr<PlatformContext> Create(const PlatformContextCreateInfo &createInfo);
         virtual void RunApplication(const PlatformApplicationRunInfo &runInfo);
 
     };
