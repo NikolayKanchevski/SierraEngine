@@ -21,37 +21,37 @@ namespace Sierra
         MetalGraphicsPipeline(const MetalDevice &device, const GraphicsPipelineCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline MTL::RenderPipelineState* GetRenderPipelineState() const { return renderPipelineState; }
-        [[nodiscard]] inline MTL::DepthStencilState* GetDepthStencilState() const { return depthStencilState; }
+        [[nodiscard]] inline id<MTLRenderPipelineState> GetRenderPipelineState() const { return renderPipelineState; }
+        [[nodiscard]] inline id<MTLDepthStencilState> GetDepthStencilState() const { return depthStencilState; }
         [[nodiscard]] inline const MetalPipelineLayout& GetLayout() const { return layout; }
 
         [[nodiscard]] inline uint32 GetVertexByteStride() const { return vertexByteStride; }
         [[nodiscard]] inline bool HasFragmentShader() const { return hasFragmentShader; }
 
-        [[nodiscard]] inline MTL::CullMode GetCullMode() const { return cullMode; }
-        [[nodiscard]] inline MTL::TriangleFillMode GetTriangleFillMode() const { return triangleFillMode; }
-        [[nodiscard]] inline MTL::Winding GetWinding() const { return winding; }
+        [[nodiscard]] inline MTLCullMode GetCullMode() const { return cullMode; }
+        [[nodiscard]] inline MTLTriangleFillMode GetTriangleFillMode() const { return triangleFillMode; }
+        [[nodiscard]] inline MTLWinding GetWinding() const { return winding; }
 
         /* --- DESTRUCTOR --- */
         ~MetalGraphicsPipeline() override;
 
         /* --- CONVERSIONS --- */
-        [[nodiscard]] static MTL::CullMode CullModeToCullMode(CullMode cullMode);
-        [[nodiscard]] static MTL::TriangleFillMode ShadeModeToTriangleFillMode(ShadeMode shadeMode);
-        [[nodiscard]] static MTL::Winding FrontFaceModeToWinding(FrontFaceMode frontFaceMode);
+        [[nodiscard]] static MTLCullMode CullModeToCullMode(CullMode cullMode);
+        [[nodiscard]] static MTLTriangleFillMode ShadeModeToTriangleFillMode(ShadeMode shadeMode);
+        [[nodiscard]] static MTLWinding FrontFaceModeToWinding(FrontFaceMode frontFaceMode);
 
     private:
         const MetalPipelineLayout &layout;
 
-        MTL::RenderPipelineState* renderPipelineState = nullptr;
-        MTL::DepthStencilState* depthStencilState = nullptr;
+        id<MTLRenderPipelineState> renderPipelineState = nil;
+        id<MTLDepthStencilState> depthStencilState = nil;
 
         uint32 vertexByteStride = 0;
         bool hasFragmentShader = false;
 
-        MTL::CullMode cullMode;
-        MTL::TriangleFillMode triangleFillMode;
-        MTL::Winding winding;
+        MTLCullMode cullMode = MTLCullModeNone;
+        MTLTriangleFillMode triangleFillMode = MTLTriangleFillModeFill;
+        MTLWinding winding = MTLWindingCounterClockwise;
 
     };
 

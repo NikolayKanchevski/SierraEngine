@@ -31,20 +31,20 @@ namespace Sierra
         [[nodiscard]] inline const std::unique_ptr<Image>& GetImage(const uint32 frameIndex) const override { SR_ERROR_IF(frameIndex >= CONCURRENT_FRAME_COUNT, "[Metal]: Cannot return image with an index [{0}] of swapchain [{1}], as index is out of bounds! Use Swapchain::GetConcurrentFrameCount() to query image count.", frameIndex, GetName()); return swapchainImage; };
 
         /* --- DESTRUCTOR --- */
-        ~MetalSwapchain() override;
+        ~MetalSwapchain() override = default;
 
     private:
         const MetalDevice &device;
         const Window &window;
 
-        CA::MetalLayer* metalLayer = nullptr;
-        CA::MetalDrawable* metalDrawable = nullptr;
+        CAMetalLayer* metalLayer = nil;
+        id<CAMetalDrawable> metalDrawable = nil;
 
         std::unique_ptr<Image> swapchainImage;
-        dispatch_semaphore_t isFrameRenderedSemaphores = nullptr;
+        dispatch_semaphore_t isFrameRenderedSemaphores = nil;
 
         uint32 currentFrame = 0;
-        constexpr static NS::UInteger CONCURRENT_FRAME_COUNT = 3;
+        constexpr static NSUInteger CONCURRENT_FRAME_COUNT = 3;
         void Recreate();
 
     };

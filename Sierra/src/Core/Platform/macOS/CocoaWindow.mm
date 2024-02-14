@@ -78,8 +78,6 @@
     /* --- MEMBERS --- */
     {
         Sierra::CocoaWindow* window;
-        NSTrackingArea* trackingArea;
-        NSMutableAttributedString* markedText;
     }
 
     /* --- CONSTRUCTORS --- */
@@ -87,13 +85,7 @@
     - (instancetype) initWithWindow: (Sierra::CocoaWindow*) initWindow;
     {
         self = [super init];
-
         window = initWindow;
-        trackingArea = nil;
-        markedText = [[NSMutableAttributedString alloc] init];
-
-        [self updateTrackingAreas];
-        [self registerForDraggedTypes: @[NSPasteboardTypeURL]];
 
         // Modifiers prevent keyUp from being called, so we intercept such events and handle them manually
         [NSEvent addLocalMonitorForEventsMatchingMask: (NSEventMaskKeyUp) handler: ^(NSEvent* event)
@@ -203,19 +195,7 @@
 
     - (BOOL) hasMarkedText
     {
-        return [markedText length] > 0;
-    }
-
-    - (void) setMarkedText: (id) string selectedRange: (NSRange) selectedRange replacementRange: (NSRange) replacementRange
-    {
-        [markedText release];
-        if ([string isKindOfClass: [NSAttributedString class]]) markedText = [[NSMutableAttributedString alloc] initWithAttributedString:string];
-        else markedText = [[NSMutableAttributedString alloc] initWithString:string];
-    }
-
-    - (void) unmarkText
-    {
-        [[markedText mutableString] setString: @""];
+        return NO;
     }
 
     - (NSArray*) validAttributesForMarkedText
@@ -224,7 +204,7 @@
     }
     - (NSRange) markedRange
     {
-        return [markedText length] > 0 ? NSMakeRange(0, [markedText length] - 1) : NSRange { NSNotFound, 0 };
+        return NSRange { NSNotFound, 0 };
     }
 
     - (NSRange) selectedRange
@@ -243,11 +223,6 @@
         return NSMakeRect(frame.origin.x, frame.origin.y, 0.0, 0.0);
     }
 
-    - (void) insertText: (id) string replacementRange: (NSRange) replacementRange
-    {
-
-    }
-
     - (NSAttributedString*) attributedSubstringForProposedRange: (NSRange) range actualRange: (NSRangePointer) actualRange
     {
         return nil;
@@ -259,10 +234,22 @@
     {
         [self setLayer: nil];
         [self setWantsLayer: NO];
-
-        [trackingArea release];
-        [markedText release];
         [super dealloc];
+    }
+
+    - (void) insertText: (nonnull id) string replacementRange: (NSRange) replacementRange
+    {
+
+    }
+
+    - (void) unmarkText
+    {
+
+    }
+
+    - (void) setMarkedText:(nonnull id) string selectedRange: (NSRange) selectedRange replacementRange: (NSRange) replacementRange
+    {
+
     }
 
 @end
@@ -550,5 +537,9 @@ namespace Sierra
     {
         if (closed) return;
         cocoaContext.DestroyWindow(window);
+
+        [window release];
+        [delegate release];
+        [view release];
     }
 }

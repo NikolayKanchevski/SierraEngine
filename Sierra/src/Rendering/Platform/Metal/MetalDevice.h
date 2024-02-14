@@ -7,6 +7,19 @@
 #include "../../Device.h"
 #include "MetalResource.h"
 
+#if !defined(__OBJC__)
+    // This ugly bit is required, so that MetalDevice can be included in RenderingcContext.cpp which is C++ implemented
+    namespace Sierra
+    {
+        #define nil { }
+        template<typename T>
+        struct id { volatile T* data = nil; };
+
+        typedef void MTLDevice;
+        typedef void MTLCommandQueue;
+    }
+#endif
+
 namespace Sierra
 {
 
@@ -27,22 +40,25 @@ namespace Sierra
         [[nodiscard]] bool IsImageSamplingSupported(ImageSampling sampling) const override;
         [[nodiscard]] bool IsSamplerAnisotropySupported(SamplerAnisotropy anisotropy) const override;
 
-        [[nodiscard]] inline MTL::Device* GetMetalDevice() const { return device; }
-        [[nodiscard]] inline MTL::CommandQueue* GetCommandQueue() const { return commandQueue; }
+        [[nodiscard]] inline id<MTLDevice> GetMetalDevice() const { return device; }
+        [[nodiscard]] inline id<MTLCommandQueue> GetCommandQueue() const { return commandQueue; }
 
         /* --- SETTER METHODS --- */
         template<typename T>
-        inline void SetResourceName(T* resource, const std::string &name) const { resource->setLabel(NS::String::string(name.c_str(), NS::ASCIIStringEncoding)); }
+        inline void SetResourceName(T* resource, const std::string &name) const
+        {
+            #if defined(__OBJC__) && SR_ENABLE_LOGGING
+                [resource setLabel: [NSString stringWithCString: name.c_str() encoding: NSASCIIStringEncoding]];
+            #endif
+        }
 
         /* --- DESTRUCTOR --- */
         ~MetalDevice() override;
 
     private:
-        MTL::Device* device = nullptr;
         std::string deviceName;
-
-        MTL::CommandQueue* commandQueue = nullptr;
-        dispatch_semaphore_t sharedCommandBufferSemaphore = nullptr;
+        id<MTLDevice> device = nil;
+        id<MTLCommandQueue> commandQueue = nil;
 
     };
 

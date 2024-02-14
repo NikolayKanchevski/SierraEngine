@@ -102,7 +102,6 @@ Wondering how to use the engine? You can check out the online documentation [her
 * [Vulkan](https://www.vulkan.org/) - Allows for incredibly fast rendering on a wide variety of platforms.
 * [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For optimal memory management of [Vulkan](https://www.vulkan.org/) objects.
 * [Metal](https://developer.apple.com/metal/) - Being their native rendering API, it is used for fast, hardware-accelerated rendering on [Apple](https://www.apple.com) platforms.
-* [metal-cpp](https://developer.apple.com/metal/cpp/) - Convenient C++ layer for [Metal](https://developer.apple.com/metal/), made by [Apple](https://www.apple.com). 
 * [ios-cmake](https://github.com/leetal/ios-cmake) - Essential for building the engine on iOS.
 * [ImGui](https://github.com/ocornut/imgui) - Used in the ImGui UI extension.
 * [My Brain](https://ih1.redbubble.net/templateImage.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
@@ -122,7 +121,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LineCounter">Total lines of code: 23,139</p>
-<p align="center" id="LastUpdated">Last updated: 14/02/2024 </p>
+<p align="center" id="LineCounter">Total lines of code: 23,120</p>
+<p align="center" id="LastUpdated">Last updated: 15/02/2024 </p>
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

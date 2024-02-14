@@ -4,9 +4,12 @@
 
 #pragma once
 
-#include <Metal/Metal.hpp>
-#include <QuartzCore/QuartzCore.hpp>
 #include "../../RenderingResource.h"
+
+#if defined(__OBJC__)
+    #include <Metal/Metal.h>
+    #include <QuartzCore/QuartzCore.h>
+#endif
 
 namespace Sierra
 {

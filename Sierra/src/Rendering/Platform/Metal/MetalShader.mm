@@ -23,21 +23,21 @@ namespace Sierra
         SR_ERROR_IF(!File::FileExists(shaderLibraryFilePath), "[Metal]: Could not load Metal library from shader bundle [{0}]! Verify its presence and try again.", createInfo.shaderBundlePath.string().c_str());
 
         // Load library
-        NS::Error* error = nullptr;
-        library = device.GetMetalDevice()->newLibrary(NS::String::string(shaderLibraryFilePath.string().c_str(), NS::ASCIIStringEncoding), &error);
-        SR_ERROR_IF(error != nullptr, "Could not load Metal shader library [{0} - {1}]! Error: {2}.", GetName(), shaderLibraryFilePath.string().c_str(), error->description()->cString(NS::ASCIIStringEncoding));
+        NSError* error = nil;
+        const id<MTLLibrary> library = [device.GetMetalDevice() newLibraryWithURL: [NSURL fileURLWithPath: [NSString stringWithCString: shaderLibraryFilePath.string().c_str() encoding: NSASCIIStringEncoding]] error: &error];
+        SR_ERROR_IF(error != nil, "Could not load Metal shader library [{0} - {1}]! Error: {2}.", GetName(), shaderLibraryFilePath.string().c_str(), error.description.UTF8String);
         device.SetResourceName(library, GetName());
 
         // Load entry point
-        entryFunction = library->newFunction(NS::String::string("main0", NS::ASCIIStringEncoding));
+        entryFunction = [library newFunctionWithName: @"main0"];
+        [library release];
     }
 
     /* --- DESTRUCTOR --- */
 
     MetalShader::~MetalShader()
     {
-        entryFunction->release();
-        library->release();
+        [entryFunction release];
     }
 
 }

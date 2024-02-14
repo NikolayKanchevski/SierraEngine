@@ -32,17 +32,17 @@ namespace Sierra
         }
 
         // Create a render pass for every subpass (Metal does not have subpasses)
-        renderPassDescriptors.resize(createInfo.subpassDescriptions.size());
+        subpasses.resize(createInfo.subpassDescriptions.size());
         subpassRenderTargets.resize(createInfo.subpassDescriptions.size());
         for (uint32 i = 0; i < createInfo.subpassDescriptions.size(); i++)
         {
             const SubpassDescription &subpassDescription = *(createInfo.subpassDescriptions.begin() + i);
 
             // Allocate render pass descriptor
-            MTL::RenderPassDescriptor* &subpass = renderPassDescriptors[i];
-            subpass = MTL::RenderPassDescriptor::alloc()->init()->retain();
-            subpass->setRenderTargetWidth(createInfo.attachments.begin()->templateImage->GetWidth());
-            subpass->setRenderTargetHeight(createInfo.attachments.begin()->templateImage->GetHeight());
+            MTLRenderPassDescriptor* &subpass = subpasses[i];
+            subpass = [[MTLRenderPassDescriptor alloc] init];
+            [subpass setRenderTargetWidth: createInfo.attachments.begin()->templateImage->GetWidth()];
+            [subpass setRenderTargetHeight: createInfo.attachments.begin()->templateImage->GetHeight()];
 
             // Save render targets
             subpassRenderTargets[i] = subpassDescription.renderTargets;
@@ -58,12 +58,12 @@ namespace Sierra
                 if (renderTarget.type == RenderPassAttachmentType::Color)
                 {
                     // Add color attachment
-                    MTL::RenderPassColorAttachmentDescriptor* colorAttachment = subpass->colorAttachments()->object(subpassColorAttachmentCount);
-                    colorAttachment->setTexture(metalImage.GetMetalTexture()); // NOTE: We assign texture here, even though it will be overwritten at Begin(), so that pipeline can query its pixel format
-                    colorAttachment->setLoadAction(AttachmentLoadOperationToLoadAction(renderTarget.loadOperation));
+                    MTLRenderPassColorAttachmentDescriptor* const colorAttachment = subpass.colorAttachments[subpassColorAttachmentCount];
+                    [colorAttachment setTexture: metalImage.GetMetalTexture()]; // NOTE: We assign texture here, even though it will be overwritten at Begin(), so that pipeline can query its pixel format
+                    [colorAttachment setLoadAction: AttachmentLoadOperationToLoadAction(renderTarget.loadOperation)];
                     if (!renderTarget.resolveImage.has_value())
                     {
-                        colorAttachment->setStoreAction(AttachmentStoreOperationToStoreAction(renderTarget.storeOperation));
+                        [colorAttachment setStoreAction: AttachmentStoreOperationToStoreAction(renderTarget.storeOperation)];
                         subpassColorAttachmentCount++;
                     }
                     else
@@ -71,18 +71,18 @@ namespace Sierra
                         SR_ERROR_IF(renderTarget.resolveImage->get()->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not use image [{0}] of attachment [{1}] in render pass [{2}] for resolving, as its graphics API differs from [GraphicsAPI::Metal]!", renderTarget.resolveImage->get()->GetName(), renderTargetIndex, GetName());
                         const MetalImage &metalResolveImage = static_cast<MetalImage&>(*renderTarget.resolveImage->get());
 
-                        colorAttachment->setStoreAction(renderTarget.storeOperation == RenderPassAttachmentStoreOperation::Store ? MTL::StoreActionStoreAndMultisampleResolve : MTL::StoreActionDontCare);
-                        colorAttachment->setResolveTexture(metalResolveImage.GetMetalTexture());  // NOTE: We assign texture here, even though it will be overwritten at Begin(), so that pipeline can query its pixel format
+                        [colorAttachment setStoreAction: renderTarget.storeOperation == RenderPassAttachmentStoreOperation::Store ? MTLStoreActionStoreAndMultisampleResolve : MTLStoreActionDontCare];
+                        [colorAttachment setResolveTexture: metalResolveImage.GetMetalTexture()];  // NOTE: We assign texture here, even though it will be overwritten at Begin(), so that pipeline can query its pixel format
                     }
 
                 }
                 else if (renderTarget.type == RenderPassAttachmentType::Depth)
                 {
                     // Set depth attachment
-                    MTL::RenderPassDepthAttachmentDescriptor* depthAttachment = subpass->depthAttachment();
-                    depthAttachment->setTexture(metalImage.GetMetalTexture()); // NOTE: We assign texture here, even though it will be overwritten at Begin(), so that pipeline can query its pixel format
-                    depthAttachment->setLoadAction(AttachmentLoadOperationToLoadAction(renderTarget.loadOperation));
-                    depthAttachment->setStoreAction(AttachmentStoreOperationToStoreAction(renderTarget.storeOperation));
+                    MTLRenderPassDepthAttachmentDescriptor* const depthAttachment = subpass.depthAttachment;
+                    [depthAttachment setTexture: metalImage.GetMetalTexture()]; // NOTE: We assign texture here, even though it will be overwritten at Begin(), so that pipeline can query its pixel format
+                    [depthAttachment setLoadAction: AttachmentLoadOperationToLoadAction(renderTarget.loadOperation)];
+                    [depthAttachment setStoreAction: AttachmentStoreOperationToStoreAction(renderTarget.storeOperation)];
                     depthAttachmentIndex = renderTargetIndex;
                 }
             }
@@ -95,10 +95,10 @@ namespace Sierra
 
     void MetalRenderPass::Resize(const uint32 width, const uint32 height)
     {
-        for (const auto &renderPass : renderPassDescriptors)
+        for (const auto &renderPass : subpasses)
         {
-            renderPass->setRenderTargetWidth(width);
-            renderPass->setRenderTargetHeight(height);
+            [renderPass setRenderTargetWidth: width];
+            [renderPass setRenderTargetHeight: height];
         }
     }
 
@@ -106,34 +106,34 @@ namespace Sierra
 
     MetalRenderPass::~MetalRenderPass()
     {
-        for (auto* renderPass : renderPassDescriptors)
+        for (MTLRenderPassDescriptor* subpass : subpasses)
         {
-            renderPass->release();
+            [subpass release];
         }
     }
 
     /* --- CONVERSIONS --- */
 
-    MTL::LoadAction MetalRenderPass::AttachmentLoadOperationToLoadAction(const RenderPassAttachmentLoadOperation loadOperation)
+    MTLLoadAction MetalRenderPass::AttachmentLoadOperationToLoadAction(const RenderPassAttachmentLoadOperation loadOperation)
     {
         switch (loadOperation)
         {
-            case RenderPassAttachmentLoadOperation::Clear:        return MTL::LoadActionClear;
-            case RenderPassAttachmentLoadOperation::Load:         return MTL::LoadActionLoad;
+            case RenderPassAttachmentLoadOperation::Clear:        return MTLLoadActionClear;
+            case RenderPassAttachmentLoadOperation::Load:         return MTLLoadActionLoad;
         }
 
-        return MTL::LoadActionDontCare;
+        return MTLLoadActionDontCare;
     }
 
-    MTL::StoreAction MetalRenderPass::AttachmentStoreOperationToStoreAction(const RenderPassAttachmentStoreOperation storeOperation)
+    MTLStoreAction MetalRenderPass::AttachmentStoreOperationToStoreAction(const RenderPassAttachmentStoreOperation storeOperation)
     {
         switch (storeOperation)
         {
-            case RenderPassAttachmentStoreOperation::Store:       return MTL::StoreActionStore;
-            case RenderPassAttachmentStoreOperation::Discard:     return MTL::StoreActionDontCare;
+            case RenderPassAttachmentStoreOperation::Store:       return MTLStoreActionStore;
+            case RenderPassAttachmentStoreOperation::Discard:     return MTLStoreActionDontCare;
         }
 
-        return MTL::StoreActionDontCare;
+        return MTLStoreActionDontCare;
     }
 
 }

@@ -60,34 +60,34 @@ namespace Sierra
         void EndDebugRegion() override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline MTL::CommandBuffer* GetMetalCommandBuffer() const { return commandBuffer; }
+        [[nodiscard]] inline id<MTLCommandBuffer> GetMetalCommandBuffer() const { return commandBuffer; }
         [[nodiscard]] inline bool HasFinishedExecution() const { return finishedExecution; }
 
-        [[nodiscard]] inline MTL::RenderCommandEncoder* GetCurrentRenderCommandEncoder() const { return currentRenderEncoder; }
-        [[nodiscard]] inline MTL::ComputeCommandEncoder* GetCurrentComputeCommandEncoder() const { return currentComputeEncoder; }
+        [[nodiscard]] inline id<MTLRenderCommandEncoder> GetCurrentRenderCommandEncoder() const { return currentRenderEncoder; }
+        [[nodiscard]] inline id<MTLComputeCommandEncoder> GetCurrentComputeCommandEncoder() const { return currentComputeEncoder; }
 
         /* --- CONVERSIONS --- */
-        [[nodiscard]] static MTL::RenderStages BufferCommandUsageToRenderStages(BufferCommandUsage bufferCommandUsage);
-        [[nodiscard]] static MTL::RenderStages ImageCommandUsageToRenderStages(ImageCommandUsage imageCommandUsage);
+        [[nodiscard]] static MTLRenderStages BufferCommandUsageToRenderStages(BufferCommandUsage bufferCommandUsage);
+        [[nodiscard]] static MTLRenderStages ImageCommandUsageToRenderStages(ImageCommandUsage imageCommandUsage);
 
         /* --- DESTRUCTOR --- */
-        ~MetalCommandBuffer() override;
+        ~MetalCommandBuffer() override = default;
 
     private:
         const MetalDevice &device;
 
-        MTL::CommandBuffer* commandBuffer = nullptr;
+        id<MTLCommandBuffer> commandBuffer = nil;
         std::atomic<bool> finishedExecution = true;
 
-        MTL::RenderCommandEncoder* currentRenderEncoder = nullptr;
-        MTL::ComputeCommandEncoder* currentComputeEncoder = nullptr;
-        MTL::BlitCommandEncoder* currentBlitEncoder = nullptr;
+        id<MTLRenderCommandEncoder> currentRenderEncoder = nil;
+        id<MTLComputeCommandEncoder> currentComputeEncoder = nil;
+        id<MTLBlitCommandEncoder> currentBlitEncoder = nil;
         uint32 currentSubpass = 0;
 
         const MetalGraphicsPipeline* currentGraphicsPipeline = nullptr;
         const MetalComputePipeline* currentComputePipeline = nullptr;
 
-        MTL::Buffer* currentIndexBuffer = nullptr;
+        id<MTLBuffer> currentIndexBuffer = nil;
         uint64 currentIndexBufferByteOffset = 0;
         uint64 currentVertexBufferByteOffset = 0;
 

@@ -18,4 +18,5 @@ target_sources(Sierra PRIVATE
 target_link_libraries(Sierra PRIVATE
     "-framework Cocoa"
     "-framework QuartzCore"
+    "-framework Foundation"
 )

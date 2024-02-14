@@ -20,7 +20,7 @@ namespace Sierra
         MetalComputePipeline(const MetalDevice &device, const ComputePipelineCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline MTL::ComputePipelineState* GetComputePipelineState() const { return computePipelineState; }
+        [[nodiscard]] inline id<MTLComputePipelineState> GetComputePipelineState() const { return computePipelineState; }
         [[nodiscard]] inline const MetalPipelineLayout& GetLayout() const { return layout; }
 
         /* --- DESTRUCTOR --- */
@@ -28,7 +28,7 @@ namespace Sierra
 
     private:
         const MetalPipelineLayout &layout;
-        MTL::ComputePipelineState* computePipelineState = nullptr;
+        id<MTLComputePipelineState> computePipelineState = nil;
 
     };
 

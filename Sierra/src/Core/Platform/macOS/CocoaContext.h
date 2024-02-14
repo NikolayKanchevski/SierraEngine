@@ -15,10 +15,10 @@
     {
         typedef void CocoaApplication;
         typedef void CocoaApplicationDelegate;
-
         typedef void NSEvent;
         typedef void NSScreen;
         typedef void NSWindow;
+        #define nil nullptr
     }
 #else
     #include <Cocoa/Cocoa.h>
@@ -56,8 +56,8 @@ namespace Sierra
         friend class macOSContext;
         explicit CocoaContext(const CocoaContextCreateInfo &createInfo);
 
-        CocoaApplication* application;
-        CocoaApplicationDelegate* applicationDelegate;
+        CocoaApplication* application = nil;
+        CocoaApplicationDelegate* applicationDelegate = nil;
 
         struct CocoaScreenPair
         {

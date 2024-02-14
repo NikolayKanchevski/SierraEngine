@@ -119,9 +119,9 @@
 
     /* --- CONSTRUCTORS --- */
 
-    - (instancetype)initWithTitle: (const std::string&) title width: (const uint32) width height: (const uint32) height
+    - (instancetype) initWithTitle: (const std::string&) title width: (const uint32) width height: (const uint32) height
     {
-        self = [self initWithContentRect: NSMakeRect(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height)) styleMask: NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable backing: NSBackingStoreBuffered defer: NO];
+        self = [super initWithContentRect: NSMakeRect(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height)) styleMask: NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable backing: NSBackingStoreBuffered defer: NO];
         [self setTitle: @(title.c_str())];
         return self;
     }
@@ -160,13 +160,13 @@ namespace Sierra
 
         // Assign delegate and filter out specific events
         [application setDelegate: applicationDelegate];
-        NSEvent* (^block)(NSEvent*) = ^ NSEvent* (NSEvent* event)
+        NSEvent* (^const block)(NSEvent*) = ^NSEvent* (NSEvent* event)
         {
             if ([event modifierFlags] & NSEventModifierFlagCommand) [[application keyWindow] sendEvent: event];
             return event;
         };
 
-        NSDictionary* defaults = @{@"ApplePressAndHoldEnabled": @NO};
+        NSDictionary* const defaults = @{@"ApplePressAndHoldEnabled": @NO};
         [[NSUserDefaults standardUserDefaults] registerDefaults: defaults];
 
         // Run application
@@ -181,7 +181,7 @@ namespace Sierra
 
     NSWindow* CocoaContext::CreateWindow(const std::string &title, uint32 width, uint32 height) const
     {
-        NSWindow* window = [[CocoaWindow alloc] initWithTitle: title width: width height: height];
+        NSWindow* const window = [[CocoaWindow alloc] initWithTitle: title width: width height: height];
         [window center];
         [window setTitle: @(title.c_str())];
         [window setCollectionBehavior: NSWindowCollectionBehaviorFullScreenPrimary | NSWindowCollectionBehaviorManaged];
@@ -198,11 +198,12 @@ namespace Sierra
         [window performClose: nil];
         [window setDelegate: nil];
         [window setContentView: nil];
+        [window release];
     }
 
     NSEvent* CocoaContext::PollNextEvent() const
     {
-        NSEvent* event = [application nextEventMatchingMask: NSEventMaskAny untilDate: [NSDate distantPast] inMode: NSDefaultRunLoopMode dequeue: YES];
+        NSEvent* const event = [application nextEventMatchingMask: NSEventMaskAny untilDate: [NSDate distantPast] inMode: NSDefaultRunLoopMode dequeue: YES];
         if (event != nil) [application sendEvent: event];
         return event;
     }
@@ -236,7 +237,6 @@ namespace Sierra
         {
             screens.emplace_back(CocoaScreenPair{ screen, CocoaScreen({ .nsScreen = screen })});
         }
-        screens.shrink_to_fit();
     }
 
     /* --- DESTRUCTOR --- */
@@ -244,10 +244,7 @@ namespace Sierra
     CocoaContext::~CocoaContext()
     {
         [application setDelegate: nil];
-        application = nil;
-
         [applicationDelegate release];
-        applicationDelegate = nil;
     }
 
 }

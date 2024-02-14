@@ -19,14 +19,13 @@ namespace Sierra
         MetalShader(const MetalDevice &device, const ShaderCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline MTL::Function* GetEntryFunction() const { return entryFunction; }
+        [[nodiscard]] inline id<MTLFunction> GetEntryFunction() const { return entryFunction; }
 
         /* --- DESTRUCTOR --- */
         ~MetalShader() override;
 
     private:
-        MTL::Library* library = nullptr;
-        MTL::Function* entryFunction = nullptr;
+        id<MTLFunction> entryFunction = nil;
 
     };
 

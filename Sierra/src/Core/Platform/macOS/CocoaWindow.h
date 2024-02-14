@@ -20,6 +20,7 @@
         typedef void CocoaWindowView;
         typedef void NSView;
         typedef void CAMetalLayer;
+        #define nil nullptr
     }
 #else
     #include <Cocoa/Cocoa.h>
@@ -77,9 +78,9 @@ namespace Sierra
     private:
         const CocoaContext &cocoaContext;
 
-        NSWindow* window = nullptr;
-        CocoaWindowDelegate* delegate = nullptr;
-        CocoaWindowView* view = nullptr;
+        NSWindow* window = nil;
+        CocoaWindowDelegate* delegate = nil;
+        CocoaWindowView* view = nil;
 
         CocoaInputManager inputManager;
         CocoaCursorManager cursorManager;
@@ -88,7 +89,7 @@ namespace Sierra
         bool maximized = false;
         bool closed = false;
 
-        float32 GetTitleBarHeight() const;
+        [[nodiscard]] float32 GetTitleBarHeight() const;
 
     #if defined(__OBJC__) && defined(COCOA_WINDOW_IMPLEMENTATION)
         public:

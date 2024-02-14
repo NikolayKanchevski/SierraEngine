@@ -2,14 +2,6 @@
 // Created by Nikolay Kanchevski on 21.11.23.
 //
 
-// Implement metal-cpp symbols
-#define NS_PRIVATE_IMPLEMENTATION
-#define CA_PRIVATE_IMPLEMENTATION
-#define MTL_PRIVATE_IMPLEMENTATION
-#include <Metal/Metal.hpp>
-#include <Foundation/Foundation.hpp>
-#include <QuartzCore/QuartzCore.hpp>
-
 #include "MetalContext.h"
 
 #include "MetalBuffer.h"

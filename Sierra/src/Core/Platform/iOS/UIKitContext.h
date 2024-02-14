@@ -16,9 +16,9 @@
     {
         typedef void UIKitApplication;
         typedef void UIKitApplicationDelegate;
-
         typedef void UIWindow;
         typedef void UIWindowScene;
+        #define nil nullptr
     }
 #else
     #include <UIKit/UIKit.h>
@@ -51,7 +51,7 @@ namespace Sierra
         friend class iOSContext;
         explicit UIKitContext(const UIKitContextCreateInfo &createInfo);
 
-        UIKitApplication* application = nullptr;
+        UIKitApplication* application = nil;
         UIKitScreen primaryScreen;
 
         UIKitSelectorBridge applicationDidFinishLaunchingBridge;

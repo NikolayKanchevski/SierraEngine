@@ -19,36 +19,36 @@ namespace Sierra
         MetalImage(const MetalDevice &device, const ImageCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const MTL::Texture* GetMetalTexture() const { return texture; }
+        [[nodiscard]] inline const id<MTLTexture> GetMetalTexture() const { return texture; }
 
         /* --- DESTRUCTOR --- */
         ~MetalImage() override;
 
         /* --- CONVERSIONS --- */
-        static MTL::TextureType ImageSettingsToTextureType(ImageSampling sampling, uint32 layerCount);
-        static MTL::PixelFormat ImageFormatToPixelFormat(ImageFormat format);
-        static MTL::TextureUsage ImageUsageToTextureUsage(ImageUsage usage);
-        static NS::UInteger ImageSamplingToUInteger(ImageSampling sampling);
-        static MTL::StorageMode ImageMemoryLocationToStorageMode(ImageMemoryLocation memoryLocation);
-        static MTL::CPUCacheMode ImageMemoryLocationToCPUCacheMode(ImageMemoryLocation memoryLocation);
+        static MTLTextureType ImageSettingsToTextureType(ImageSampling sampling, uint32 layerCount);
+        static MTLPixelFormat ImageFormatToPixelFormat(ImageFormat format);
+        static MTLTextureUsage ImageUsageToTextureUsage(ImageUsage usage);
+        static NSUInteger ImageSamplingToUInteger(ImageSampling sampling);
+        static MTLStorageMode ImageMemoryLocationToStorageMode(ImageMemoryLocation memoryLocation);
+        static MTLCPUCacheMode ImageMemoryLocationToCPUCacheMode(ImageMemoryLocation memoryLocation);
 
     private:
-        MTL::Texture* texture = nullptr;
+        id<MTLTexture> texture = nil;
 
         friend class MetalSwapchain;
         struct SwapchainImageCreateInfo
         {
             const std::string &name = "Swapchain Image";
-            MTL::Texture* texture = nullptr;
+            id<MTLTexture> texture = nil;
 
             uint32 width = 0;
             uint32 height = 0;
-            MTL::PixelFormat format = MTL::PixelFormatInvalid;
+            MTLPixelFormat format = MTLPixelFormatInvalid;
         };
 
         bool swapchainImage = false;
         MetalImage(const MetalDevice &device, const SwapchainImageCreateInfo &createInfo);
-        [[nodiscard]] static ImageFormat SwapchainPixelFormatToImageFormat(MTL::PixelFormat format);
+        [[nodiscard]] static ImageFormat SwapchainPixelFormatToImageFormat(MTLPixelFormat format);
 
     };
 

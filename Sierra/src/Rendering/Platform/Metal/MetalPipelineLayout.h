@@ -34,7 +34,7 @@ namespace Sierra
         [[nodiscard]] inline uint16 GetPushConstantSize() const { return pushConstantSize; }
 
         /* --- CONSTANTS --- */
-        constexpr static NS::UInteger VERTEX_BUFFER_SHADER_INDEX = 30;
+        constexpr static NSUInteger VERTEX_BUFFER_SHADER_INDEX = 30;
 
         /* --- DESTRUCTOR --- */
         ~MetalPipelineLayout() override = default;

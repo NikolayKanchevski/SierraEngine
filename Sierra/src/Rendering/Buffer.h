@@ -46,7 +46,6 @@ namespace Sierra
         template<typename T>
         [[nodiscard]] inline const T& GetDataAs() const { return *reinterpret_cast<const T*>(GetData()); }
         [[nodiscard]] virtual uint64 GetMemorySize() const = 0;
-        [[nodiscard]] virtual BufferMemoryLocation GetMemoryLocation() const = 0;
 
         /* --- OPERATORS --- */
         Buffer(const Buffer&) = delete;

@@ -306,11 +306,9 @@ namespace Sierra
         GetWindowCloseDispatcher().DispatchEvent();
         uiKitContext.DestroyWindow(window);
 
-        [viewController release];
-        viewController = nil;
-
         [window release];
-        window = nil;
+        [viewController release];
+        // NOTE: We do not have a custom view implementation, so it is managed by view controller
     }
 
 }

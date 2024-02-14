@@ -19,20 +19,20 @@ namespace Sierra
         MetalSampler(const MetalDevice &device, const SamplerCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline MTL::SamplerState* GetSamplerState() const { return samplerState; }
+        [[nodiscard]] inline id<MTLSamplerState> GetSamplerState() const { return samplerState; }
 
         /* --- DESTRUCTOR --- */
         ~MetalSampler() override;
 
         /* --- CONVERSIONS --- */
-        [[nodiscard]] static MTL::SamplerMinMagFilter SamplerSampleModeToSamplerMinMagFilter(SamplerFilter sampleMode);
-        [[nodiscard]] static MTL::SamplerAddressMode SamplerExtendModeToSamplerAddressMode(SamplerAddressMode extendMode);
-        [[nodiscard]] static NS::UInteger SamplerAnisotropyToUInteger(SamplerAnisotropy anisotropy);
-        [[nodiscard]] static MTL::CompareFunction SamplerCompareOperationToCompareFunction(SamplerCompareOperation compareOperation);
-        [[nodiscard]] static MTL::SamplerBorderColor SamplerBorderColorToSamplerBorderColor(SamplerBorderColor borderColor);
+        [[nodiscard]] static MTLSamplerMinMagFilter SamplerSampleModeToSamplerMinMagFilter(SamplerFilter sampleMode);
+        [[nodiscard]] static MTLSamplerAddressMode SamplerExtendModeToSamplerAddressMode(SamplerAddressMode extendMode);
+        [[nodiscard]] static NSUInteger SamplerAnisotropyToUInteger(SamplerAnisotropy anisotropy);
+        [[nodiscard]] static MTLCompareFunction SamplerCompareOperationToCompareFunction(SamplerCompareOperation compareOperation);
+        [[nodiscard]] static MTLSamplerBorderColor SamplerBorderColorToSamplerBorderColor(SamplerBorderColor borderColor);
 
     private:
-        MTL::SamplerState* samplerState = nullptr;
+        id<MTLSamplerState> samplerState = nil;
 
     };
 

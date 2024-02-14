@@ -18,6 +18,7 @@
     {
         typedef void UIKitWindowViewController;
         typedef void UIView;
+        #define nil nullptr
     }
 #else
     #include <UIKit/UIKit.h>
@@ -64,9 +65,9 @@ namespace Sierra
         [[nodiscard]] TouchManager& GetTouchManager() override;
         [[nodiscard]] PlatformAPI GetAPI() const override;
 
-        [[nodiscard]] UIWindow* GetUIWindow() const { return window; }
-        [[nodiscard]] UIView* GetUIView() const { return view; }
-        [[nodiocard]] bool AllowsOrientationChange() const { return allowsOrientationChange; }
+        [[nodiscard]] inline UIWindow* GetUIWindow() const { return window; }
+        [[nodiscard]] inline UIView* GetUIView() const { return view; }
+        [[nodiocard]] inline bool AllowsOrientationChange() const { return allowsOrientationChange; }
 
         /* --- DESTRUCTOR --- */
         ~UIKitWindow() override;
@@ -75,9 +76,9 @@ namespace Sierra
         const UIKitContext &uiKitContext;
         UIKitTouchManager touchManager;
         
-        UIWindow* window = nullptr;
-        UIKitWindowViewController* viewController = nullptr;
-        UIView* view = nullptr;
+        UIWindow* window = nil;
+        UIKitWindowViewController* viewController = nil;
+        UIView* view = nil;
 
         std::string title;
         bool minimized = false;

@@ -28,8 +28,8 @@ namespace Sierra
 
         [[nodiscard]] inline const std::optional<uint32>& GetDepthAttachmentIndex() const { return depthAttachmentIndex; }
 
-        [[nodiscard]] inline uint32 GetSubpassCount() const { return renderPassDescriptors.size(); }
-        [[nodiscard]] inline MTL::RenderPassDescriptor* GetSubpass(const uint32 subpassIndex) const { return renderPassDescriptors[subpassIndex]; }
+        [[nodiscard]] inline uint32 GetSubpassCount() const { return subpasses.size(); }
+        [[nodiscard]] inline MTLRenderPassDescriptor* GetSubpass(const uint32 subpassIndex) const { return subpasses[subpassIndex]; }
         [[nodiscard]] inline const std::vector<uint32>& GetSubpassRenderTargets(const uint32 subpassIndex) const { return subpassRenderTargets[subpassIndex]; }
         [[nodiscard]] inline const std::vector<uint32>& GetResolvedColorAttachmentIndices() const { return resolvedColorAttachmentIndices; }
 
@@ -37,11 +37,11 @@ namespace Sierra
         ~MetalRenderPass() override;
 
         /* --- CONVERSIONS --- */
-        static MTL::LoadAction AttachmentLoadOperationToLoadAction(RenderPassAttachmentLoadOperation loadOperation);
-        static MTL::StoreAction AttachmentStoreOperationToStoreAction(RenderPassAttachmentStoreOperation storeOperation);
+        static MTLLoadAction AttachmentLoadOperationToLoadAction(RenderPassAttachmentLoadOperation loadOperation);
+        static MTLStoreAction AttachmentStoreOperationToStoreAction(RenderPassAttachmentStoreOperation storeOperation);
 
     private:
-        std::vector<MTL::RenderPassDescriptor*> renderPassDescriptors;
+        std::vector<MTLRenderPassDescriptor*> subpasses;
         std::vector<std::vector<uint32>> subpassRenderTargets;
 
         uint32 colorAttachmentCount = 0;

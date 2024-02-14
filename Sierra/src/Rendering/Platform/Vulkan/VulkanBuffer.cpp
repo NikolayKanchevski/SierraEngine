@@ -10,7 +10,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanBuffer::VulkanBuffer(const VulkanDevice &device, const BufferCreateInfo &createInfo)
-        : Buffer(createInfo), VulkanResource(createInfo.name), device(device), usageFlags(BufferUsageToVkBufferUsageFlags(createInfo.usage)), memorySize(createInfo.memorySize), memoryLocation(createInfo.memoryLocation)
+        : Buffer(createInfo), VulkanResource(createInfo.name), device(device), usageFlags(BufferUsageToVkBufferUsageFlags(createInfo.usage)), memorySize(createInfo.memorySize)
     {
         // Set up buffer create info
         VkBufferCreateInfo bufferCreateInfo = { };
@@ -45,7 +45,6 @@ namespace Sierra
     void VulkanBuffer::CopyFromMemory(const void* memoryPointer, uint64 memoryRange, const uint64 sourceByteOffset, const uint64 destinationByteOffset)
     {
         memoryRange = memoryRange != 0 ? memoryRange : GetMemorySize();
-        SR_ERROR_IF(memoryLocation != BufferMemoryLocation::CPU, "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as it is not CPU-visible!", memoryRange, destinationByteOffset, GetName());
         SR_ERROR_IF(destinationByteOffset + memoryRange > GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{3}] bytes is bigger than the size of the buffer - [{4}]!", memoryRange, destinationByteOffset, GetName(), destinationByteOffset + memoryRange, GetMemorySize());
 
         std::memcpy(reinterpret_cast<char*>(data) + destinationByteOffset, reinterpret_cast<const char*>(memoryPointer) + sourceByteOffset, memoryRange);
@@ -56,7 +55,7 @@ namespace Sierra
 
     VulkanBuffer::~VulkanBuffer()
     {
-        if (memoryLocation == BufferMemoryLocation::CPU) vmaUnmapMemory(device.GetMemoryAllocator(), allocation);
+        if (allocation != VK_NULL_HANDLE) vmaUnmapMemory(device.GetMemoryAllocator(), allocation);
         vmaDestroyBuffer(device.GetMemoryAllocator(), buffer, allocation);
     }
 
