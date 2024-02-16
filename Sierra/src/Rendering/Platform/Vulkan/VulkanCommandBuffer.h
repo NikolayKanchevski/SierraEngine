@@ -63,7 +63,7 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkCommandBuffer GetVulkanCommandBuffer() const { return commandBuffer; }
-        [[nodiscard]] inline uint64 GetSignalValue() const { return signalValue; }
+        [[nodiscard]] inline uint64 GetCompletionSignalValue() const { return completionSignalValue; }
 
         /* --- DESTRUCTOR --- */
         ~VulkanCommandBuffer() override;
@@ -80,7 +80,7 @@ namespace Sierra
 
         VkCommandPool commandPool = VK_NULL_HANDLE;
         VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
-        uint64 signalValue = 0;
+        uint64 completionSignalValue = 0;
 
         const VulkanGraphicsPipeline* currentGraphicsPipeline = nullptr;
         const VulkanComputePipeline* currentComputePipeline = nullptr;

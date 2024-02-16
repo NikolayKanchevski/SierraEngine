@@ -37,7 +37,7 @@ namespace Sierra
         [[nodiscard]] inline uint32 GetGeneralQueueFamily() const { return generalQueueFamily; }
         [[nodiscard]] inline VkQueue GetGeneralQueue() const { return generalQueue; }
 
-        [[nodiscard]] inline VkSemaphore GetSharedTimelineSemaphore() const { return sharedTimelineSemaphore; }
+        [[nodiscard]] inline VkSemaphore GetSharedSignalSemaphore() const { return sharedTimelineSemaphore; }
         [[nodiscard]] inline uint64 GetNewSignalValue() const { lastReservedSignalValue++; return lastReservedSignalValue; }
 
         [[nodiscard]] inline VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const;

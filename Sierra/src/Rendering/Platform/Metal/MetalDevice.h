@@ -17,6 +17,8 @@
 
         typedef void MTLDevice;
         typedef void MTLCommandQueue;
+        typedef void MTLSharedEvent;
+        typedef void MTLCommandBuffer;
     }
 #endif
 
@@ -43,6 +45,9 @@ namespace Sierra
         [[nodiscard]] inline id<MTLDevice> GetMetalDevice() const { return device; }
         [[nodiscard]] inline id<MTLCommandQueue> GetCommandQueue() const { return commandQueue; }
 
+        [[nodiscard]] inline id<MTLSharedEvent> GetSharedSignalSemaphore() const { return sharedSignalSemaphore; }
+        [[nodiscard]] inline uint64 GetNewSignalValue() const { lastReservedSignalValue++; return lastReservedSignalValue; }
+
         /* --- SETTER METHODS --- */
         template<typename T>
         inline void SetResourceName(T* resource, const std::string &name) const
@@ -59,6 +64,16 @@ namespace Sierra
         std::string deviceName;
         id<MTLDevice> device = nil;
         id<MTLCommandQueue> commandQueue = nil;
+
+        mutable uint64 lastReservedSignalValue = 0;
+        id<MTLSharedEvent> sharedSignalSemaphore = nil;
+
+        struct CommandBufferQueueEntry
+        {
+            id<MTLCommandBuffer> commandBuffer = nil;
+            uint32 counter = 0;
+        };
+        static inline std::deque<CommandBufferQueueEntry> commandBufferQueue;
 
     };
 

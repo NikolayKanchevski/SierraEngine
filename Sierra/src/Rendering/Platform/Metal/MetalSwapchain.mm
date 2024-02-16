@@ -112,12 +112,11 @@ namespace Sierra
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot present swapchain [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
         const MetalCommandBuffer &metalCommandBuffer = static_cast<MetalCommandBuffer&>(*commandBuffer);
 
-        // Wait until drawing command buffer has finished execution
-        while (!metalCommandBuffer.HasFinishedExecution()) { }
-
-        // Record presentation commands to a new command buffer
+        // Record presentation commands to a new command buffer (width a dependency to passed one)
         const id<MTLCommandBuffer> presentationCommandBuffer = [device.GetCommandQueue() commandBuffer];
         device.SetResourceName(presentationCommandBuffer, "Presentation command buffer of swapchain [" + GetName() + "]");
+        [presentationCommandBuffer encodeWaitForEvent: device.GetSharedSignalSemaphore() value: metalCommandBuffer.GetCompletionSignalValue()];
+        [presentationCommandBuffer presentDrawable: metalDrawable];
         [presentationCommandBuffer addCompletedHandler: ^(id<MTLCommandBuffer> executedCommandBuffer)
         {
             dispatch_semaphore_signal(isFrameRenderedSemaphores);
@@ -125,7 +124,6 @@ namespace Sierra
                 [executedCommandBuffer release];
             #endif
         }];
-        [presentationCommandBuffer presentDrawable: metalDrawable];
         [presentationCommandBuffer commit];
 
         // Increment current frame

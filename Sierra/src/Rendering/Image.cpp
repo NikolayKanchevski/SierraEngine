@@ -18,7 +18,7 @@ namespace Sierra
         SR_ERROR_IF(createInfo.mipLevelCount > static_cast<uint32>(glm::floor(std::log2(glm::max(createInfo.width, createInfo.height)))) + 1, "Cannot create the [{0}] mip levels of image [{1}], as its dimensions do not allow it! Maximum mip level count is calculate like so: floor(log2(max(width, height))) + 1.", createInfo.mipLevelCount, createInfo.name);
         SR_ERROR_IF(createInfo.usage == ImageUsage::Undefined, "Usage of image [{0}] must not be [ImageUsage::Undefined]!", createInfo.name);
         SR_ERROR_IF(createInfo.usage & ImageUsage::ColorAttachment && createInfo.usage & ImageUsage::DepthAttachment, "Usage of image [{0}] must not include both [ImageUsage::ColorAttachment] & [ImageUsage::DepthAttachment]!", createInfo.name);
-        SR_ERROR_IF(createInfo.usage & ImageUsage::SmoothSample && !(createInfo.usage & ImageUsage::Sample), "Usage of image [{0}] must also include [ImageUsage::Sampled] if [ImageUsage::Filtered] is present!", createInfo.name);
+        SR_ERROR_IF(createInfo.usage & ImageUsage::LinearFilter && !(createInfo.usage & ImageUsage::Sample), "Usage of image [{0}] must also include [ImageUsage::Sampled] if [ImageUsage::Filtered] is present!", createInfo.name);
         SR_ERROR_IF(createInfo.usage & ImageUsage::ResolveAttachment && createInfo.sampling != ImageSampling::x1, "Image [{0}], which includes [ImageUsage::ResolveAttachment] must be created with sampling of [ImageSampling::x1]!", createInfo.name);
     }
 

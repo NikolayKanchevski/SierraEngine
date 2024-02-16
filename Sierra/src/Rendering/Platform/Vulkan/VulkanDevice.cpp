@@ -1011,11 +1011,11 @@ namespace Sierra
             SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName(), commandBufferToWait->GetName(), i);
 
             const VulkanCommandBuffer &vulkanCommandBufferToWait = static_cast<VulkanCommandBuffer&>(*commandBufferToWait);
-            waitValue = std::max(waitValue, vulkanCommandBufferToWait.GetSignalValue());
+            waitValue = std::max(waitValue, vulkanCommandBufferToWait.GetCompletionSignalValue());
         }
 
         // Set up semaphore submit info
-        const uint64 signalValue = vulkanCommandBuffer.GetSignalValue();
+        const uint64 signalValue = vulkanCommandBuffer.GetCompletionSignalValue();
         VkTimelineSemaphoreSubmitInfo semaphoreSubmitInfo = { };
         semaphoreSubmitInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
         semaphoreSubmitInfo.waitSemaphoreValueCount = 1;
@@ -1046,7 +1046,7 @@ namespace Sierra
         const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
 
         // Set up wait info
-        const uint64 waitValue = vulkanCommandBuffer.GetSignalValue();
+        const uint64 waitValue = vulkanCommandBuffer.GetCompletionSignalValue();
         VkSemaphoreWaitInfo waitInfo = { };
         waitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
         waitInfo.semaphoreCount = 1;
@@ -1070,7 +1070,7 @@ namespace Sierra
         if (usage & ImageUsage::DestinationMemory   && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_DST_BIT               )) return false;
         if (usage & ImageUsage::Storage             && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT              )) return false;
         if (usage & ImageUsage::Sample              && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
-        if (usage & ImageUsage::SmoothSample        && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
+        if (usage & ImageUsage::LinearFilter && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
         if (usage & ImageUsage::ColorAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) return false;
         if (usage & ImageUsage::DepthAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT   )) return false;
         if (usage & ImageUsage::InputAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;

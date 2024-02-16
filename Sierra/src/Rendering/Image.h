@@ -101,7 +101,7 @@ namespace Sierra
         DestinationMemory       = 0x0002,
         Storage                 = 0x0004,
         Sample                  = 0x0008,
-        SmoothSample            = 0x0010,
+        LinearFilter            = 0x0010,
         ColorAttachment         = 0x0020,
         DepthAttachment         = 0x0040,
         InputAttachment         = 0x0080,

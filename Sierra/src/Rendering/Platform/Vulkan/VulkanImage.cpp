@@ -270,15 +270,15 @@ namespace Sierra
     VkImageUsageFlags VulkanImage::ImageUsageToVkImageUsageFlags(const ImageUsage usage)
     {
         VkImageUsageFlags usageFlags = 0;
-        if (usage & ImageUsage::SourceMemory) usageFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-        if (usage & ImageUsage::DestinationMemory) usageFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        if (usage & ImageUsage::Storage)                       usageFlags |= VK_IMAGE_USAGE_STORAGE_BIT;
-        if (usage & ImageUsage::Sample) usageFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
-        if (usage & ImageUsage::SmoothSample) usageFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
-        if (usage & ImageUsage::ColorAttachment)               usageFlags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-        if (usage & ImageUsage::DepthAttachment)               usageFlags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-        if (usage & ImageUsage::InputAttachment)               usageFlags |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
-        if (usage & ImageUsage::TransientAttachment)           usageFlags |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+        if (usage & ImageUsage::SourceMemory)               usageFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        if (usage & ImageUsage::DestinationMemory)          usageFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        if (usage & ImageUsage::Storage)                    usageFlags |= VK_IMAGE_USAGE_STORAGE_BIT;
+        if (usage & ImageUsage::Sample)                     usageFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
+        if (usage & ImageUsage::LinearFilter)               usageFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
+        if (usage & ImageUsage::ColorAttachment)            usageFlags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        if (usage & ImageUsage::DepthAttachment)            usageFlags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        if (usage & ImageUsage::InputAttachment)            usageFlags |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+        if (usage & ImageUsage::TransientAttachment)        usageFlags |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
         return usageFlags;
     }
 

@@ -65,7 +65,7 @@ namespace Sierra
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not begin command buffer [{0}]! Error code: {1}.", GetName(), result);
 
         // Get new code
-        signalValue = device.GetNewSignalValue();
+        completionSignalValue = device.GetNewSignalValue();
     }
 
     void VulkanCommandBuffer::End()

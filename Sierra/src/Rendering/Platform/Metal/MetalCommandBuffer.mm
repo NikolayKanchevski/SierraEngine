@@ -35,8 +35,8 @@ namespace Sierra
         commandBuffer = [device.GetCommandQueue() commandBufferWithDescriptor: commandBufferDescriptor];
         device.SetResourceName(commandBuffer, GetName());
 
-        // Create completion semaphore
-        finishedExecution = false;
+        // Create completion synchronization
+        completionSignalValue = device.GetNewSignalValue();
         [commandBuffer addCompletedHandler: ^(id<MTLCommandBuffer> executedCommandBuffer) {
             queuedBuffers = std::queue<std::unique_ptr<Buffer>>();
             queuedImages = std::queue<std::unique_ptr<Image>>();
@@ -48,7 +48,6 @@ namespace Sierra
             #if SR_PLATFORM_macOS
                 [executedCommandBuffer release];
             #endif
-            finishedExecution = true;
         }];
 
         [commandBufferDescriptor release];
@@ -149,7 +148,7 @@ namespace Sierra
 
         if (currentBlitEncoder == nil)
         {
-            id<MTLBlitCommandEncoder> blitEncoder = [commandBuffer blitCommandEncoder];
+            const id<MTLBlitCommandEncoder> blitEncoder = [commandBuffer blitCommandEncoder];
             device.SetResourceName(blitEncoder, "Transfer Encoder");
         }
 

@@ -69,7 +69,7 @@ namespace Sierra
         const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
 
         // Set up semaphore submit info
-        const uint64 waitValue = vulkanCommandBuffer.GetSignalValue();
+        const uint64 waitValue = vulkanCommandBuffer.GetCompletionSignalValue();
         constexpr uint64 binarySignalValue = 1;
         VkTimelineSemaphoreSubmitInfoKHR semaphoreSubmitInfo = { };
         semaphoreSubmitInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
@@ -80,7 +80,7 @@ namespace Sierra
 
         // Set up submit info
         const VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        VkSemaphore waitSemaphore = device.GetSharedTimelineSemaphore();
+        VkSemaphore waitSemaphore = device.GetSharedSignalSemaphore();
         VkSubmitInfo submitInfo = { };
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.waitSemaphoreCount = 1;

@@ -61,10 +61,7 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline id<MTLCommandBuffer> GetMetalCommandBuffer() const { return commandBuffer; }
-        [[nodiscard]] inline bool HasFinishedExecution() const { return finishedExecution; }
-
-        [[nodiscard]] inline id<MTLRenderCommandEncoder> GetCurrentRenderCommandEncoder() const { return currentRenderEncoder; }
-        [[nodiscard]] inline id<MTLComputeCommandEncoder> GetCurrentComputeCommandEncoder() const { return currentComputeEncoder; }
+        [[nodiscard]] inline uint64 GetCompletionSignalValue() const { return completionSignalValue; }
 
         /* --- CONVERSIONS --- */
         [[nodiscard]] static MTLRenderStages BufferCommandUsageToRenderStages(BufferCommandUsage bufferCommandUsage);
@@ -77,7 +74,7 @@ namespace Sierra
         const MetalDevice &device;
 
         id<MTLCommandBuffer> commandBuffer = nil;
-        std::atomic<bool> finishedExecution = true;
+        uint64 completionSignalValue = 0;
 
         id<MTLRenderCommandEncoder> currentRenderEncoder = nil;
         id<MTLComputeCommandEncoder> currentComputeEncoder = nil;
