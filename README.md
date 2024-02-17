@@ -55,7 +55,7 @@ If you clone the repository directly from an IDE, you may need to also run this:
 $ git submodule update --init --recursive
 ```
 
-And there you have it! You can now create your very own application using the Sierra API, which is contained in the [Sierra](https://github.com/NikichaTV/SierraEngine/tree/842946e5840b1bd03f32df8e2f2da3b6ae46ff2d/Sierra) subdirectory. Unfortunately, there is not an existing editor, however, rest assured, one is on its way! 
+And there you have it! You can now create your very own application using the Sierra API, which is contained in the [Sierra](https://github.com/NikichaTV/SierraEngine/tree/842946e5840b1bd03f32df8e2f2da3b6ae46ff2d/Sierra) subdirectory. Unfortunately, there is not an existing editor, however, rest assured, one is on its way!
 
 Tip: In order to get a better grasp of how the API works, you can always take a look at the [Sandbox](https://github.com/NikichaTV/SierraEngine/tree/842946e5840b1bd03f32df8e2f2da3b6ae46ff2d/Sandbox) project, which has a few ready-to-use examples.
 
@@ -67,9 +67,13 @@ Tip: In order to get a better grasp of how the API works, you can always take a 
 // TODO: Add to this section :D
 ```
 
+<br>
+
 ## 📄 Documentation
 
 Documentation has not yet been published. The website that will be hosting it, however, is already done. Someone just needs to take the time to write and upload it, but this will be postponed for when a stable version of the project has been released, which is scheduled for the distant future.
+
+<br>
 
 ## 🤓️ About
 
