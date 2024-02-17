@@ -16,8 +16,9 @@
 #if !defined(__OBJC__)
     namespace Sierra
     {
-        typedef void UIKitWindowImplementation;
         typedef void UIKitWindowViewController;
+        typedef void UIView;
+        #define nil nullptr
     }
 #else
     #include <UIKit/UIKit.h>
@@ -34,7 +35,7 @@ namespace Sierra
         explicit UIKitWindow(const UIKitContext &uiKitContext, const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void OnUpdate() override;
+        void Update() override;
         void Minimize() override;
         void Maximize() override;
         void Show() override;
@@ -62,27 +63,37 @@ namespace Sierra
 
         [[nodiscard]] const Screen& GetScreen() const override;
         [[nodiscard]] TouchManager& GetTouchManager() override;
-        [[nodiscard]] WindowAPI GetAPI() const override;
+        [[nodiscard]] PlatformAPI GetAPI() const override;
+
+        [[nodiscard]] inline UIWindow* GetUIWindow() const { return window; }
+        [[nodiscard]] inline UIView* GetUIView() const { return view; }
+        [[nodiocard]] inline bool AllowsOrientationChange() const { return allowsOrientationChange; }
 
         /* --- DESTRUCTOR --- */
-        ~UIKitWindow();
+        ~UIKitWindow() override;
 
     private:
         const UIKitContext &uiKitContext;
         UIKitTouchManager touchManager;
         
-        UIWindow* window = nullptr;
-        UIKitWindowViewController* viewController = nullptr;
-        
+        UIWindow* window = nil;
+        UIKitWindowViewController* viewController = nil;
+        UIView* view = nil;
+
         std::string title;
         bool minimized = false;
         bool closed = false;
 
+        bool allowsOrientationChange = false;
+        ScreenOrientation lastOrientation = ScreenOrientation::Portrait;
+
+        UIKitSelectorBridge deviceOrientationDidChangeBridge;
         UIKitSelectorBridge applicationDidEnterBackgroundBridge;
         UIKitSelectorBridge applicationWillEnterForegroundBridge;
         UIKitSelectorBridge applicationWillTerminateBridge;
         
         /* --- EVENTS --- */
+        void DeviceOrientationDidChange();
         void ApplicationDidEnterBackground();
         void ApplicationWillEnterForeground();
         void ApplicationWillTerminate();

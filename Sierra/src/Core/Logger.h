@@ -18,7 +18,7 @@ namespace Sierra
         Error
     };
 
-    class SIERRA_API Logger
+    class SIERRA_API Logger final
     {
     public:
         /* --- POLLING METHODS --- */
@@ -41,7 +41,7 @@ namespace Sierra
                     case MessageSeverity::Error:
                     {
                         applicationLogger->error(fmt, std::forward<Args>(args)...);
-                        #if SR_DEBUG
+                        #if SR_ENABLE_LOGGING
                             throw std::runtime_error("Program execution failed miserably!");
                         #endif
                         break;
@@ -86,7 +86,7 @@ namespace Sierra
                         case MessageSeverity::Error:
                         {
                             engineLogger->error(fmt, std::forward<Args>(args)...);
-                            #if SR_DEBUG
+                            #if SR_ENABLE_LOGGING
                                 throw std::runtime_error("Program execution failed miserably!");
                             #endif
                             break;

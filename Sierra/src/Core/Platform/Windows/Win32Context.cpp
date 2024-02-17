@@ -13,7 +13,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     Win32Context::Win32Context(const Win32ContextCreateInfo &createInfo)
-            : hInstance(GetModuleHandle(nullptr)), process(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, createInfo.processID))
+            : hInstance(GetModuleHandle(nullptr)), process(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId()))
     {
         // Get binary name
         CHAR executableName[MAX_PATH];
@@ -58,11 +58,11 @@ namespace Sierra
 
         // Create window
         HWND window = CreateWindowEx(
-                exStyle, className,
-                title.c_str(), style,
-                CW_USEDEFAULT, CW_USEDEFAULT,
-                rect.right - rect.left, rect.bottom - rect.top,
-                NULL, NULL, hInstance, NULL
+            exStyle, className,
+            title.c_str(), style,
+            CW_USEDEFAULT, CW_USEDEFAULT,
+            rect.right - rect.left, rect.bottom - rect.top,
+            NULL, NULL, hInstance, NULL
         );
         SR_ERROR_IF(window == nullptr, "Could not create Win32 window!");
 

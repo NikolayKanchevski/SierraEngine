@@ -17,14 +17,15 @@
     namespace Sierra
     {
         typedef void CocoaWindowDelegate;
-        typedef void CocoaWindowContentView;
-        typedef void CocoaWindowImplementation;
+        typedef void CocoaWindowView;
+        typedef void NSView;
+        typedef void CAMetalLayer;
+        #define nil nullptr
     }
 #else
     #include <Cocoa/Cocoa.h>
     @class CocoaWindowDelegate;
-    @class CocoaWindowContentView;
-    @class CocoaWindowImplementation;
+    @class CocoaWindowView;
 #endif
 
 namespace Sierra
@@ -37,7 +38,7 @@ namespace Sierra
         explicit CocoaWindow(const CocoaContext &cocoaContext, const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void OnUpdate() override;
+        void Update() override;
         void Minimize() override;
         void Maximize() override;
         void Show() override;
@@ -66,17 +67,20 @@ namespace Sierra
         [[nodiscard]] const Screen& GetScreen() const override;
         [[nodiscard]] InputManager& GetInputManager() override;
         [[nodiscard]] CursorManager& GetCursorManager() override;
-        [[nodiscard]] WindowAPI GetAPI() const override;
+        [[nodiscard]] PlatformAPI GetAPI() const override;
+
+        [[nodiscard]] inline const NSWindow* GetNSWindow() const { return window; }
+        [[nodiscard]] inline const NSView* GetNSView() const { return reinterpret_cast<NSView*>(view); }
 
         /* --- DESTRUCTOR --- */
-        ~CocoaWindow();
+        ~CocoaWindow() override;
 
     private:
         const CocoaContext &cocoaContext;
 
-        NSWindow* window = nullptr;
-        CocoaWindowDelegate* delegate = nullptr;
-        CocoaWindowContentView* view = nullptr;
+        NSWindow* window = nil;
+        CocoaWindowDelegate* delegate = nil;
+        CocoaWindowView* view = nil;
 
         CocoaInputManager inputManager;
         CocoaCursorManager cursorManager;
@@ -85,18 +89,18 @@ namespace Sierra
         bool maximized = false;
         bool closed = false;
 
-        float32 GetTitleBarHeight() const;
+        [[nodiscard]] float32 GetTitleBarHeight() const;
 
-        #if defined(__OBJC__) && defined(COCOA_WINDOW_IMPLEMENTATION)
-            public:
-                /* --- EVENTS --- */
-                void WindowShouldClose();
-                void WindowDidResize(const NSNotification* notification);
-                void WindowDidMove(const NSNotification* notification);
-                void WindowDidMiniaturize(const NSNotification* notification);
-                void WindowDidBecomeKey(const NSNotification* notification);
-                void WindowDidResignKey(const NSNotification* notification);
-        #endif
+    #if defined(__OBJC__) && defined(COCOA_WINDOW_IMPLEMENTATION)
+        public:
+            /* --- EVENTS --- */
+            void WindowShouldClose();
+            void WindowDidResize(const NSNotification* notification);
+            void WindowDidMove(const NSNotification* notification);
+            void WindowDidMiniaturize(const NSNotification* notification);
+            void WindowDidBecomeKey(const NSNotification* notification);
+            void WindowDidResignKey(const NSNotification* notification);
+    #endif
 
     };
 

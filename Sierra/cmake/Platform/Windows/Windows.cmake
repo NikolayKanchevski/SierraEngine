@@ -1,4 +1,4 @@
-function(BuildWindowsExecutable)
+function(BuildWindowsExecutable SOURCE_FILES)
     # Have a folder for all temporary resources
     set(RESOURCES_FOLDER_PATH "${CMAKE_CURRENT_BINARY_DIR}/Resources")
 
@@ -8,9 +8,9 @@ function(BuildWindowsExecutable)
 
     # Define RC file data
     set(RC_FILE_DATA "
-            IDR_MAINFRAME ICON
-            \"${SIERRA_APPLICATION_NAME}Icon.ico\"
-        ")
+        IDR_MAINFRAME ICON
+        \"${SIERRA_APPLICATION_NAME}Icon.ico\"
+    ")
 
     # Create and write to RC file
     set(RC_FILE_PATH "${RESOURCES_FOLDER_PATH}/Application.rc")
@@ -18,4 +18,7 @@ function(BuildWindowsExecutable)
 
     # Create executable
     add_executable(${SIERRA_APPLICATION_NAME} ${SOURCE_FILES} ${RC_FILE_PATH})
+
+    # Copy resources to resources folder
+    add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/resources" "${CMAKE_BINARY_DIR}/Resources")
 endfunction()

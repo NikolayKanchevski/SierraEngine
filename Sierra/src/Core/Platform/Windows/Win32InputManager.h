@@ -271,7 +271,7 @@ namespace Sierra
         Vector2 mouseScroll = { 0, 0 };
 
         friend class Win32Window;
-        void OnUpdate();
+        void Update();
         void KeyMessage(UINT message, WPARAM wParam, LPARAM lParam);
         void MouseButtonMessage(UINT message, WPARAM wParam, LPARAM lParam);
         void MouseWheelMessage(UINT message, WPARAM wParam, LPARAM lParam);

@@ -13,8 +13,8 @@ namespace Sierra
 {
     /* --- CONSTRUCTORS --- */
 
-    X11InputManager::X11InputManager(const X11InputManagerCreateInfo &createInfo)
-        : InputManager(createInfo), xkbExtension(createInfo.xkbExtension)
+    X11InputManager::X11InputManager(const XkbExtension &xkbExtension, const InputManagerCreateInfo &createInfo)
+        : InputManager(createInfo), xkbExtension(xkbExtension)
     {
 
     }
@@ -68,7 +68,7 @@ namespace Sierra
 
     /* --- PRIVATE METHODS --- */
 
-    void X11InputManager::OnUpdate()
+    void X11InputManager::Update()
     {
         std::copy(keyStates.begin(), keyStates.end(), lastKeyStates.begin());
         std::copy(mouseButtonStates.begin(), mouseButtonStates.end(), lastMouseButtonStates.begin());

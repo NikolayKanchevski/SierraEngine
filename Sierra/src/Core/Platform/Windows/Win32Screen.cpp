@@ -46,6 +46,21 @@ namespace Sierra
         }
     }
 
+    /* --- OPERATORS --- */
+
+    Win32Screen& Win32Screen::operator=(const Win32Screen &other)
+    {
+        name = other.name;
+        origin = other.origin;
+        size = other.size;
+        workAreaOrigin = other.workAreaOrigin;
+        workAreaSize = other.workAreaSize;
+        refreshRate = other.refreshRate;
+        return *this;
+    }
+
+    /* --- MOVE SEMANTICS --- */
+
     Win32Screen::Win32Screen(Win32Screen &&other)
         : name(std::move(other.name)), origin(other.origin), size(other.size), workAreaOrigin(other.workAreaOrigin), workAreaSize(other.workAreaSize), refreshRate(other.refreshRate)
     {
@@ -66,19 +81,6 @@ namespace Sierra
         workAreaOrigin = other.workAreaOrigin;
         workAreaSize = other.workAreaSize;
         refreshRate = other.refreshRate;
-    }
-
-    /* --- OPERATORS --- */
-
-    Win32Screen& Win32Screen::operator=(const Win32Screen &other)
-    {
-        name = other.name;
-        origin = other.origin;
-        size = other.size;
-        workAreaOrigin = other.workAreaOrigin;
-        workAreaSize = other.workAreaSize;
-        refreshRate = other.refreshRate;
-        return *this;
     }
 
 }

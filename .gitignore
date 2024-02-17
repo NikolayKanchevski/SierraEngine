@@ -1,8 +1,13 @@
 .vs/
 .idea/
+.cxx/
 
 bin/
 out/
 
 CMakeFiles/
 cmake_install.cmake
+
+.gradle/
+.android/
+local.properties

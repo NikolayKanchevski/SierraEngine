@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include "PlatformInstance.h"
-#include "../Events/WindowEvent.h"
+#include "PlatformContext.h"
 
 #include "Screen.h"
 #include "InputManager.h"
@@ -15,20 +14,91 @@
 namespace Sierra
 {
 
-    BETTER_ENUM(
-        WindowAPI, uint8,
+    #pragma region Events
+        class SIERRA_API WindowEvent : public Event { };
+
+        class SIERRA_API WindowResizeEvent final : public WindowEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            inline explicit WindowResizeEvent(const Vector2UInt size) : size(size) { }
+
+            /* --- GETTER METHODS --- */
+            [[nodiscard]] inline Vector2UInt GetSize() const { return size; }
+
+        private:
+            Vector2UInt size;
+
+        };
+
+        class SIERRA_API WindowCloseEvent final : public WindowEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            WindowCloseEvent() = default;
+
+        };
+
+        class SIERRA_API WindowMoveEvent final : public WindowEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            inline explicit WindowMoveEvent(const Vector2Int &position) : position(position) { }
+
+            /* --- GETTER METHODS --- */
+            [[nodiscard]] Vector2Int GetPosition() const { return position; }
+
+        private:
+            Vector2Int position;
+
+        };
+
+        class SIERRA_API WindowFocusEvent final : public WindowEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            inline explicit WindowFocusEvent(const bool focused) : focused(focused) { };
+
+            /* --- GETTER METHODS --- */
+            [[nodiscard]] bool IsFocused() const { return focused; }
+
+        private:
+            bool focused;
+
+        };
+
+        class SIERRA_API WindowMinimizeEvent final : public WindowEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            WindowMinimizeEvent() = default;
+
+        };
+
+        class SIERRA_API WindowMaximizeEvent final : public WindowEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            WindowMaximizeEvent() = default;
+
+        };
+    #pragma endregion
+
+    enum class PlatformAPI : uint8
+    {
         Win32,
         X11,
         Cocoa,
+        GameActivity,
         UIKit
-    );
+    };
 
     struct WindowCreateInfo
     {
         const std::string &title = "Sierra Application";
         uint32 width = 1280;
         uint32 height = 780;
-        bool resizable = true;
+        bool resizable = false;
         bool maximize = false;
         bool hide = false;
     };
@@ -41,7 +111,7 @@ namespace Sierra
         using WindowEventCallback = std::function<bool(const T&)>;
 
         /* --- POLLING METHODS --- */
-        virtual void OnUpdate() = 0;
+        virtual void Update() = 0;
         virtual void Minimize() = 0;
         virtual void Maximize() = 0;
         virtual void Show() = 0;
@@ -71,17 +141,17 @@ namespace Sierra
         [[nodiscard]] virtual InputManager& GetInputManager();
         [[nodiscard]] virtual CursorManager& GetCursorManager();
         [[nodiscard]] virtual TouchManager& GetTouchManager();
-        [[nodiscard]] virtual WindowAPI GetAPI() const = 0;
+        [[nodiscard]] virtual PlatformAPI GetAPI() const = 0;
 
         /* --- EVENTS --- */
-        template<typename T> void OnEvent(WindowEventCallback<T>) { static_assert(std::is_base_of_v<WindowEvent, T> && !std::is_same_v<WindowEvent, T>, "Template function accepts derived window events only!"); }
-
-        /* --- DESTRUCTOR --- */
-        virtual ~Window() = default;
+        template<typename T> void OnEvent(WindowEventCallback<T> Callback) { static_assert(std::is_base_of_v<WindowEvent, T> && !std::is_same_v<WindowEvent, T>, "Template function accepts derived window events only!"); }
         
         /* --- OPERATORS --- */
         Window(const Window&) = delete;
         Window& operator=(const Window&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        virtual ~Window() = default;
 
     protected:
         explicit Window(const WindowCreateInfo &createInfo);

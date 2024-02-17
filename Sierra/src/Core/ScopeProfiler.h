@@ -7,7 +7,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API ScopeProfiler
+    class SIERRA_API ScopeProfiler final
     {
     public:
         /* --- CONSTRUCTORS --- */
@@ -51,7 +51,7 @@ namespace Sierra
 
     #endif
     
-    #define PROFILE_SCOPE() ::Sierra::ScopeProfiler profilerLine##__LINE__(__FUNC_SIG__)
+    #define PROFILE_SCOPE() const ::Sierra::ScopeProfiler profilerLine##__LINE__(__FUNC_SIG__)
 #else
     #define PROFILE_SCOPE()
 #endif

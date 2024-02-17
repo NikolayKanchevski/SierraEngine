@@ -20,10 +20,10 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit X11Window(const X11Context &context, const WindowCreateInfo &createInfo);
+        explicit X11Window(const X11Context &x11Context, const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void OnUpdate() override;
+        void Update() override;
         void Minimize() override;
         void Maximize() override;
         void Show() override;
@@ -52,7 +52,10 @@ namespace Sierra
         [[nodiscard]] const Screen& GetScreen() const override;
         [[nodiscard]] InputManager& GetInputManager() override;
         [[nodiscard]] CursorManager& GetCursorManager() override;
-        [[nodiscard]] WindowAPI GetAPI() const override;
+        [[nodiscard]] PlatformAPI GetAPI() const override;
+
+        [[nodiscard]] inline XID GetX11Window() const { return window; }
+        [[nodiscard]] inline Display* GetDisplay() const { return x11Context.GetDisplay(); }
 
         /* --- DESTRUCTOR --- */
         ~X11Window() override;
@@ -77,11 +80,12 @@ namespace Sierra
         bool resizable = false;
         bool shouldMaximizeOnShow = false;
 
-        /*
-         * Since you cannot get events for a specific window with X11 (you instead get all pending events for all windows),
-         * we store the events, which are not for the current window, so they can be handled later - when the corresponding window is updated
-        */
-        static inline std::unordered_map<XID, std::vector<XEvent>> unhandledEvents;
+        struct WindowEventQueue
+        {
+            XID window = 0;
+            std::queue<XEvent> queue = { };
+        };
+        static inline std::vector<WindowEventQueue> unhandledEventQueues;
         void HandleX11Event(XEvent &event);
 
     };

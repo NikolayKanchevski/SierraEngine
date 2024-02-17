@@ -4,7 +4,7 @@
 
 #include "Win32Window.h"
 
-#include "WindowsInstance.h"
+#include "WindowsContext.h"
 
 #include "Win32Screen.h"
 
@@ -16,7 +16,7 @@ namespace Sierra
     Win32Window::Win32Window(const Win32Context &win32Context, const WindowCreateInfo &createInfo)
         : Window(createInfo), win32Context(win32Context),
           window(win32Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | (createInfo.resizable ? (WS_SIZEBOX | WS_MAXIMIZEBOX) : 0) | (createInfo.maximize && createInfo.resizable ? WS_MAXIMIZE : 0), WindowProc)),
-          inputManager(Win32InputManager({ })), cursorManager(Win32CursorManager({ .window = window })),
+          inputManager(Win32InputManager({ })), cursorManager(Win32CursorManager(window, { })),
           title(createInfo.title)
     {
         // Manually maximize window if not resizable
@@ -50,17 +50,17 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void Win32Window::OnUpdate()
+    void Win32Window::Update()
     {
-        cursorManager.OnUpdate();
-        inputManager.OnUpdate();
+        cursorManager.Update();
+        inputManager.Update();
 
         while (!win32Context.IsWindowEventQueueEmpty(window))
         {
             win32Context.PollNextWindowEvent(window);
         }
 
-        cursorManager.OnUpdateEnd();
+        cursorManager.UpdateEnd();
         justBecameShown = false;
     }
 
@@ -229,9 +229,9 @@ namespace Sierra
         return cursorManager;
     }
 
-    WindowAPI Win32Window::GetAPI() const
+    PlatformAPI Win32Window::GetAPI() const
     {
-        return WindowAPI::Win32;
+        return PlatformAPI::Win32;
     }
 
     /* --- PRIVATE METHODS --- */
@@ -291,7 +291,6 @@ namespace Sierra
                     if (wParam == SIZE_MAXIMIZED)
                     {
                         window->GetWindowMaximizeDispatcher().DispatchEvent();
-                        break;
                     }
 
                     if (window->nextMoveEventBlocked)

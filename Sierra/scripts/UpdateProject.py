@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import re
 import sys
 import tempfile
 import datetime
@@ -14,7 +15,7 @@ def Main() -> None:
     UpdateReadMe()
 
 def UpdateReadMe() -> None:
-    SOURCE_FILE_EXTENSIONS: [str] = ['.cpp', '.h', '.mm', '.cs', '.py', '.cmake', '.glsl', '.vert', '.frag', 'comp', '.geom', '.tesc', '.tese', '.sh', '.bat']
+    SOURCE_FILE_EXTENSIONS: [str] = ['.cpp', '.h', '.mm', '.cs', '.py', '.glsl', '.hlsl', '.msl' '.cmake', '.txt']
 
     # Define initial line count
     linesOfCode: int = 0
@@ -24,16 +25,16 @@ def UpdateReadMe() -> None:
         for root, dirs, files in os.walk(ENGINE_ROOT_DIRECTORY + subdirectory):
             for file in files:
                 for extension in SOURCE_FILE_EXTENSIONS:
-                    if 'bin' in root or 'vendor' in root or 'config' in root:
+                    if 'bin' in root or 'vendor' in root or 'config' in root or any(re.compile(r'\.[a-zA-Z]').match(item) for item in root.split('/')):
                         continue
 
-                    if file.endswith(extension):
+                    if str(file).endswith(extension):
                         with open(os.path.join(root, file), 'r') as file:
                             for count, line in enumerate(file):
                                 pass
                             linesOfCode += count + 1
 
-                            # print(file + ": " + str(count + 1))
+                            # print(str(file) + ": " + str(count + 1))
                             file.close()
 
     with open(ENGINE_ROOT_DIRECTORY + 'README.md', 'r+') as file:

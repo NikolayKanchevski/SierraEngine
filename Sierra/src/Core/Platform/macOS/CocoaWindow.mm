@@ -5,6 +5,8 @@
 #define COCOA_WINDOW_IMPLEMENTATION
 #include "CocoaWindow.h"
 
+#include <QuartzCore/QuartzCore.h>
+
 @interface CocoaWindowDelegate : NSObject<NSWindowDelegate>
 
 @end
@@ -67,17 +69,15 @@
 
 @end
 
-@interface CocoaWindowContentView : NSView<NSTextInputClient>
+@interface CocoaWindowView : NSView<NSTextInputClient>
 
 @end
 
-@implementation CocoaWindowContentView
+@implementation CocoaWindowView
 
     /* --- MEMBERS --- */
     {
         Sierra::CocoaWindow* window;
-        NSTrackingArea* trackingArea;
-        NSMutableAttributedString* markedText;
     }
 
     /* --- CONSTRUCTORS --- */
@@ -85,12 +85,16 @@
     - (instancetype) initWithWindow: (Sierra::CocoaWindow*) initWindow;
     {
         self = [super init];
-
         window = initWindow;
-        trackingArea = nil;
-        markedText = [[NSMutableAttributedString alloc] init];
-        [self updateTrackingAreas];
-        [self registerForDraggedTypes: @[NSPasteboardTypeURL]];
+
+        // Modifiers prevent keyUp from being called, so we intercept such events and handle them manually
+        [NSEvent addLocalMonitorForEventsMatchingMask: (NSEventMaskKeyUp) handler: ^(NSEvent* event)
+        {
+            [self keyUp: event];
+            event = nil;
+
+            return event;
+        }];
 
         return self;
     }
@@ -100,68 +104,73 @@
     - (void) keyDown: (NSEvent*) event
     {
         // No casting error checks are done, since the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->KeyDown(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).KeyDown(event);
         [self interpretKeyEvents: @[event]];
     }
 
     - (void) flagsChanged: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->FlagsChanged(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).FlagsChanged(event);
     }
 
     - (void) keyUp: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->KeyUp(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).KeyUp(event);
     }
 
     - (void) mouseDown: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->MouseDown(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).MouseDown(event);
     }
 
     - (void) rightMouseDown: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->RightMouseDown(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RightMouseDown(event);
     }
 
     - (void) otherMouseDown: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->OtherMouseDown(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).OtherMouseDown(event);
     }
 
     - (void) mouseUp: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->MouseUp(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).MouseUp(event);
     }
 
     - (void) rightMouseUp: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->RightMouseUp(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RightMouseUp(event);
     }
 
     - (void) otherMouseUp: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->OtherMouseUp(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).OtherMouseUp(event);
     }
 
     - (void) scrollWheel: (NSEvent*) event
     {
         // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager*>(&window->GetInputManager())->ScrollWheel(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).ScrollWheel(event);
+    }
+
+    - (void) mouseDragged: (NSEvent*) event
+    {
+        [self mouseMoved: event];
     }
 
     - (void) mouseMoved: (NSEvent*) event
     {
         // Unsafe casting, as the cursor manager type within a CocoaWindow is guaranteed to be CocoaCursorManager
-        static_cast<Sierra::CocoaCursorManager*>(&window->GetCursorManager())->MouseMoved(event);
+        static_cast<Sierra::CocoaCursorManager&>(window->GetCursorManager()).MouseMoved(event);
     }
 
     - (BOOL) canBecomeKeyView
@@ -186,19 +195,7 @@
 
     - (BOOL) hasMarkedText
     {
-        return [markedText length] > 0;
-    }
-
-    - (void) setMarkedText: (id) string selectedRange: (NSRange) selectedRange replacementRange: (NSRange) replacementRange
-    {
-        [markedText release];
-        if ([string isKindOfClass: [NSAttributedString class]]) markedText = [[NSMutableAttributedString alloc] initWithAttributedString:string];
-        else markedText = [[NSMutableAttributedString alloc] initWithString:string];
-    }
-
-    - (void) unmarkText
-    {
-        [[markedText mutableString] setString: @""];
+        return NO;
     }
 
     - (NSArray*) validAttributesForMarkedText
@@ -207,7 +204,7 @@
     }
     - (NSRange) markedRange
     {
-        return [markedText length] > 0 ? NSMakeRange(0, [markedText length] - 1) : NSRange { NSNotFound, 0 };
+        return NSRange { NSNotFound, 0 };
     }
 
     - (NSRange) selectedRange
@@ -226,11 +223,6 @@
         return NSMakeRect(frame.origin.x, frame.origin.y, 0.0, 0.0);
     }
 
-    - (void) insertText: (id) string replacementRange: (NSRange) replacementRange
-    {
-
-    }
-
     - (NSAttributedString*) attributedSubstringForProposedRange: (NSRange) range actualRange: (NSRangePointer) actualRange
     {
         return nil;
@@ -240,9 +232,24 @@
 
     - (void) dealloc
     {
-        [trackingArea release];
-        [markedText release];
+        [self setLayer: nil];
+        [self setWantsLayer: NO];
         [super dealloc];
+    }
+
+    - (void) insertText: (nonnull id) string replacementRange: (NSRange) replacementRange
+    {
+
+    }
+
+    - (void) unmarkText
+    {
+
+    }
+
+    - (void) setMarkedText:(nonnull id) string selectedRange: (NSRange) selectedRange replacementRange: (NSRange) replacementRange
+    {
+
     }
 
 @end
@@ -254,10 +261,14 @@ namespace Sierra
 
     CocoaWindow::CocoaWindow(const CocoaContext &cocoaContext, const WindowCreateInfo &createInfo)
         : Window(createInfo), cocoaContext(cocoaContext),
-          window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)), delegate([[CocoaWindowDelegate alloc] initWithWindow: this]), view([[CocoaWindowContentView alloc] initWithWindow: this]),
-          inputManager(CocoaInputManager({ })), cursorManager({ .window = window }),
+          window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)), delegate([[CocoaWindowDelegate alloc] initWithWindow: this]), view([[CocoaWindowView alloc] initWithWindow: this]),
+          inputManager(CocoaInputManager({ })), cursorManager(window, { }),
           title(createInfo.title)
     {
+        // Assign Metal layer
+        [view setLayer: [CAMetalLayer layer]];
+        [view setWantsLayer: YES];
+
         // Maximize window manually, or through Cocoa if resizable
         if (createInfo.maximize)
         {
@@ -300,27 +311,19 @@ namespace Sierra
             contentRect.size = NSMakeSize([view frame].size.width, [view frame].size.height - GetTitleBarHeight());
             [window setFrame: [window frameRectForContentRect: contentRect] display: YES];
         }
-
-        // Poll creation events
-        while (!cocoaContext.IsEventQueueEmpty())
-        {
-            cocoaContext.PollNextEvent();
-        }
     }
 
     /* --- POLLING METHODS --- */
 
-    void CocoaWindow::OnUpdate()
+    void CocoaWindow::Update()
     {
-        inputManager.OnUpdate();
-        cursorManager.OnUpdate();
+        inputManager.Update();
+        cursorManager.Update();
 
-        while (!cocoaContext.IsEventQueueEmpty())
-        {
-            cocoaContext.PollNextEvent();
-        }
+        // Poll events
+        while (cocoaContext.PollNextEvent() != nullptr);
 
-        cursorManager.OnUpdateEnd();
+        cursorManager.UpdateEnd();
     }
 
     void CocoaWindow::Minimize()
@@ -412,12 +415,12 @@ namespace Sierra
 
     Vector2UInt CocoaWindow::GetSize() const
     {
-        return { [view frame].size.width, [view frame].size.height + GetTitleBarHeight() };
+        return { [window frame].size.width, [window frame].size.height + GetTitleBarHeight() };
     }
 
     Vector2UInt CocoaWindow::GetFramebufferSize() const
     {
-        const NSRect contentRect = [window contentRectForFrameRect: [[window contentView] frame]];
+        const NSRect contentRect = [window convertRectToBacking: view.frame];
         return { contentRect.size.width, contentRect.size.height };
     }
 
@@ -466,9 +469,9 @@ namespace Sierra
         return cursorManager;
     }
 
-    WindowAPI CocoaWindow::GetAPI() const
+    PlatformAPI CocoaWindow::GetAPI() const
     {
-        return WindowAPI::Cocoa;
+        return PlatformAPI::Cocoa;
     }
 
     /* --- EVENTS --- */
@@ -481,9 +484,6 @@ namespace Sierra
 
         void CocoaWindow::WindowDidResize(const NSNotification* notification)
         {
-            // Get current window size
-            const NSRect contentRect = [view frame];
-
             // Check if window has been maximized
             const bool nowMaximized = [window isZoomed];
             if (maximized != nowMaximized)
@@ -492,13 +492,11 @@ namespace Sierra
                 if (maximized)
                 {
                     GetWindowMaximizeDispatcher().DispatchEvent();
-                    return;
                 }
             }
 
             // Otherwise handle event like a normal resize
             GetWindowResizeDispatcher().DispatchEvent(GetSize());
-            GetWindowResizeDispatcher().DispatchEvent(GetFramebufferSize());
         }
 
         void CocoaWindow::WindowDidMove(const NSNotification* notification)
@@ -539,5 +537,9 @@ namespace Sierra
     {
         if (closed) return;
         cocoaContext.DestroyWindow(window);
+
+        [window release];
+        [delegate release];
+        [view release];
     }
 }

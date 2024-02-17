@@ -10,7 +10,12 @@
         #define SR_PLATFORM_LINUX 0
         #define SR_PLATFORM_macOS 0
         #define SR_PLATFORM_iOS 0
-        #define SR_PLATFORM_ANDROID 0
+        #define SR_PLATFORM_EMULATOR 0
+        #if defined(__ANDROID__)
+            #define SR_PLATFORM_ANDROID __ANDROID__ // This is necessary due to a bug in Android's precompiled headers
+        #else
+            #define SR_PLATFORM_ANDROID 0
+        #endif
 
         #define SR_PLATFORM_APPLE (SR_PLATFORM_macOS || SR_PLATFORM_iOS)
         #define SR_PLATFORM_MOBILE (SR_PLATFORM_iOS || SR_PLATFORM_ANDROID)
@@ -26,6 +31,10 @@
             #else
                 #undef SR_PLATFORM_macOS
                 #define SR_PLATFORM_macOS 1
+            #endif
+            #if TARGET_OS_SIMULATOR
+                #undef SR_PLATFORM_EMULATOR
+                #define SR_PLATFORM_EMULATOR 1
             #endif
         #elif __ANDROID__
             #undef PLATFORM_ANDROID
@@ -49,6 +58,7 @@
         #include <cstdint>
         #include <array>
         #include <vector>
+        #include <list>
         #include <unordered_map>
         #include <set>
         #include <unordered_set>
@@ -80,10 +90,6 @@
     #pragma endregion
 
     #pragma region External Libraries
-        /* --- Better Enums --- */
-        #define BETTER_ENUMS_EXPORT SIERRA_API
-        #include <enum.h>
-
         /* --- GLM --- */
         #define GLM_DEPTH_ZERO_TO_ONE
         #include <glm/glm.hpp>
@@ -119,6 +125,9 @@
 	    typedef glm::vec<2, float32> Vector2;
 	    typedef glm::vec<3, float32> Vector3;
 	    typedef glm::vec<4, float32> Vector4;
+        typedef Vector4 ColorRGBA;
+        typedef Vector3 ColorRGB;
+        typedef Vector4 Color;
 	    typedef glm::vec<2, int32> Vector2Int;
 	    typedef glm::vec<3, int32> Vector3Int;
 	    typedef glm::vec<4, int32> Vector4Int;
@@ -141,13 +150,13 @@
 
     #pragma region Macros
         #define SR_DEFINE_ENUM_FLAG_OPERATORS(T)                                                                                                                                                      \
-            inline constexpr T operator~ (const T a) { return static_cast<T>(~static_cast<std::underlying_type<T>::type>(a)); }                                                                       \
-            inline constexpr T operator| (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type<T>::type>(a) | static_cast<std::underlying_type<T>::type>(b)); }             \
-            inline constexpr std::underlying_type<T>::type operator& (const T a, const T b) { return static_cast<std::underlying_type<T>::type>(a) & static_cast<std::underlying_type<T>::type>(b); } \
-            inline constexpr T operator^ (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type<T>::type>(a) ^ static_cast<std::underlying_type<T>::type>(b)); }             \
-            inline T& operator|= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type<T>::type&>(a) |= static_cast<std::underlying_type<T>::type>(b)); }             \
-            inline T& operator&= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type<T>::type&>(a) &= static_cast<std::underlying_type<T>::type>(b)); }             \
-            inline T& operator^= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type<T>::type&>(a) ^= static_cast<std::underlying_type<T>::type>(b)); }
+            inline constexpr T operator~ (const T a) { return static_cast<T>(~static_cast<std::underlying_type_t<T>>(a)); }                                                                       \
+            inline constexpr T operator| (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type_t<T>>(a) | static_cast<std::underlying_type_t<T>>(b)); }             \
+            inline constexpr std::underlying_type_t<T> operator& (const T a, const T b) { return static_cast<std::underlying_type_t<T>>(a) & static_cast<std::underlying_type_t<T>>(b); } \
+            inline constexpr T operator^ (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type_t<T>>(a) ^ static_cast<std::underlying_type_t<T>>(b)); }             \
+            inline T& operator|= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) |= static_cast<std::underlying_type_t<T>>(b)); }             \
+            inline T& operator&= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) &= static_cast<std::underlying_type_t<T>>(b)); }             \
+            inline T& operator^= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) ^= static_cast<std::underlying_type_t<T>>(b)); }             
     #pragma endregion
 
     #pragma region Source Files

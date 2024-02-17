@@ -10,12 +10,13 @@ target_sources(Sierra PRIVATE
     CocoaScreen.h
     CocoaWindow.mm
     CocoaWindow.h
-    macOSInstance.mm
-    macOSInstance.h
+    macOSContext.mm
+    macOSContext.h
 )
 
 # Link libraries
 target_link_libraries(Sierra PRIVATE
     "-framework Cocoa"
     "-framework QuartzCore"
+    "-framework Foundation"
 )

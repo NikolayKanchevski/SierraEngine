@@ -5,11 +5,6 @@
 #include <vulkan/vulkan.h>
 #include "VulkanDevice.h"
 
-#if SR_PLATFORM_APPLE
-    #include <vulkan/vulkan_beta.h> // For VK_KHR_PORTABILITY_SUBSET_EXTENSION
-    #define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR static_cast<VkStructureType>(1000163000)
-#endif
-
 #define VMA_IMPLEMENTATION
 #ifdef VMA_STATS_STRING_ENABLED
     #undef VMA_STATS_STRING_ENABLED
@@ -19,129 +14,131 @@
 #define VMA_DYNAMIC_VULKAN_FUNCTIONS 0
 #include <vk_mem_alloc.h>
 
+#include "VulkanImage.h"
+#include "VulkanCommandBuffer.h"
+#include "VulkanSwapchain.h"
+
 namespace Sierra
 {
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanDevice::VulkanDevice(const VulkanDeviceCreateInfo &createInfo)
-        : Device(createInfo)
+    VulkanDevice::VulkanDevice(const VulkanInstance &instance, const DeviceCreateInfo &createInfo)
+        : Device(createInfo), VulkanResource(createInfo.name), instance(instance)
     {
-        // Retrieve physical device
-        PhysicalDeviceInfo physicalDeviceInfo{};
+        // Retrieve number of GPUs found
+        uint32 physicalDeviceCount = 0;
+        VkResult result = instance.GetFunctionTable().vkEnumeratePhysicalDevices(instance.GetVulkanInstance(), &physicalDeviceCount, nullptr);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not enumerate physical devices! Error code: {0}.", result);
+        SR_ERROR_IF(physicalDeviceCount <= 0, "[Vulkan]: Could not find any supported physical devices!");
+
+        // Retrieve GPUs
+        std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
+        instance.GetFunctionTable().vkEnumeratePhysicalDevices(instance.GetVulkanInstance(), &physicalDeviceCount, physicalDevices.data());
+
+        // Use first found device
+        physicalDevice = physicalDevices[0];
+
+        // Retrieve properties
+        VkPhysicalDeviceProperties physicalDeviceProperties = { };
+        vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+
+        // Retrieve features
+        VkPhysicalDeviceFeatures physicalDeviceFeatures = { };
+        vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
+
+        // Save device name
+        deviceName = physicalDeviceProperties.deviceName;
+
+        // Get count of all present queue families
+        uint32 queueFamilyPropertiesCount = 0;
+        instance.GetFunctionTable().vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyPropertiesCount, nullptr);
+
+        // Retrieve all queue families
+        bool foundGeneralQueueFamily = false;
+        std::vector<uint32> queueFamilies(queueFamilyPropertiesCount);
+        if (queueFamilyPropertiesCount > 0)
         {
-            // Retrieve number of GPUs found
-            uint32 physicalDeviceCount = 0;
-            VK_VALIDATE(createInfo.instance.GetFunctionTable().vkEnumeratePhysicalDevices(createInfo.instance.GetVulkanInstance(), &physicalDeviceCount, nullptr), "Could not enumerate physical devices!");
+            // Retrieve queue families
+            std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyPropertiesCount);
+            instance.GetFunctionTable().vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyPropertiesCount, queueFamilyProperties.data());
 
-            SR_ERROR_IF(physicalDeviceCount <= 0, "Could not find any Vulkan supported physical devices!");
-
-            // Retrieve GPUs
-            std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
-            createInfo.instance.GetFunctionTable().vkEnumeratePhysicalDevices(createInfo.instance.GetVulkanInstance(), &physicalDeviceCount, physicalDevices.data());
-
-            // Select best GPU to use
-            for (uint32 i = 0; i < physicalDeviceCount; i++)
+            // Check which queues are present
+            for (uint32 i = 0; i < queueFamilyPropertiesCount; i++)
             {
-                const PhysicalDeviceInfo currentPhysicalDeviceInfo = GetPhysicalDeviceInfo(createInfo.instance, physicalDevices[i]);
-                if (currentPhysicalDeviceInfo.rating > physicalDeviceInfo.rating)
-                {
-                    physicalDeviceInfo = currentPhysicalDeviceInfo;
-                    physicalDevice = physicalDevices[i];
-                }
-            }
+                const VkQueueFamilyProperties properties = queueFamilyProperties[i];
 
-            // Save physical device info
-            physicalDeviceProperties = physicalDeviceInfo.properties;
-            physicalDeviceFeatures = physicalDeviceInfo.features;
+                // If queue family supports all operations, we save to use it later
+                if (!foundGeneralQueueFamily && properties.queueFlags & VK_QUEUE_TRANSFER_BIT && properties.queueFlags & VK_QUEUE_COMPUTE_BIT && properties.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                {
+                    generalQueueFamily = i;
+                    foundGeneralQueueFamily = true;
+                }
+
+                queueFamilies[i] = i;
+            }
+        }
+        SR_ERROR_IF(!foundGeneralQueueFamily, "[Vulkan]: Could not create device [{0}], because it does not have a single queue family, which supports all operations!", GetName());
+
+        // Set up queue create infos
+        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos(queueFamilies.size());
+
+        uint32 i = 0;
+        const float32 QUEUE_PRIORITY = 1.0f;
+        for (const auto &queueFamily : queueFamilies)
+        {
+            queueCreateInfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            queueCreateInfos[i].queueFamilyIndex = queueFamily;
+            queueCreateInfos[i].queueCount = 1;
+            queueCreateInfos[i].pQueuePriorities = &QUEUE_PRIORITY;
+            i++;
         }
 
-        // Create logical device from the physical device
+        // Set up device features
+        VkPhysicalDeviceFeatures2 physicalDeviceFeatures2 = { };
+        physicalDeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        physicalDeviceFeatures2.features = physicalDeviceFeatures;
+
+        // Store pointers of each extension's data, as it needs to be deallocated in the end of the function
+        std::vector<void*> extensionDataToFree;
+        extensionDataToFree.reserve(DEVICE_EXTENSIONS_TO_QUERY.size());
+
+        // Retrieve supported extension count
+        uint32 supportedExtensionCount = 0;
+        instance.GetFunctionTable().vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &supportedExtensionCount, nullptr);
+
+        // Retrieve supported extensions
+        std::vector<VkExtensionProperties> supportedExtensions(supportedExtensionCount);
+        instance.GetFunctionTable().vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &supportedExtensionCount, supportedExtensions.data());
+
+        // Load queried extensions if supported
+        std::vector<const char*> extensionsToLoad;
+        extensionsToLoad.reserve(DEVICE_EXTENSIONS_TO_QUERY.size());
+        for (const auto &extension : DEVICE_EXTENSIONS_TO_QUERY)
         {
-            // Filter out duplicated indices
-            std::set<uint32> uniqueQueueFamilies;
-            if (physicalDeviceInfo.queueFamilyIndices.transferFamily.has_value()) uniqueQueueFamilies.insert(physicalDeviceInfo.queueFamilyIndices.transferFamily.value());
-            if (physicalDeviceInfo.queueFamilyIndices.computeFamily.has_value()) uniqueQueueFamilies.insert(physicalDeviceInfo.queueFamilyIndices.computeFamily.value());
-            if (physicalDeviceInfo.queueFamilyIndices.graphicsFamily.has_value()) uniqueQueueFamilies.insert(physicalDeviceInfo.queueFamilyIndices.graphicsFamily.value());
+            AddExtensionIfSupported(extension, supportedExtensions, &physicalDeviceFeatures2, extensionsToLoad, extensionDataToFree);
+        }
 
-            // Set up queue create infos
-            std::vector<VkDeviceQueueCreateInfo> queueCreateInfos(uniqueQueueFamilies.size());
+        // Set up device create info
+        VkDeviceCreateInfo logicalDeviceCreateInfo = { };
+        logicalDeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        logicalDeviceCreateInfo.queueCreateInfoCount = static_cast<uint32>(queueCreateInfos.size());
+        logicalDeviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+        logicalDeviceCreateInfo.enabledLayerCount = 0;
+        logicalDeviceCreateInfo.ppEnabledLayerNames = nullptr;
+        logicalDeviceCreateInfo.enabledExtensionCount = static_cast<uint32>(extensionsToLoad.size());
+        logicalDeviceCreateInfo.ppEnabledExtensionNames = extensionsToLoad.data();
+        logicalDeviceCreateInfo.pEnabledFeatures = nullptr;
+        logicalDeviceCreateInfo.pNext = &physicalDeviceFeatures2;
 
-            uint32 i = 0;
-            const float32 QUEUE_PRIORITY = 1.0f;
-            for (const auto &queueFamily : uniqueQueueFamilies)
-            {
-                auto &queueCreateInfo = queueCreateInfos[i];
-                queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-                queueCreateInfo.queueFamilyIndex = queueFamily;
-                queueCreateInfo.queueCount = 1;
-                queueCreateInfo.pQueuePriorities = &QUEUE_PRIORITY;
-                queueCreateInfo.flags = 0;
-                queueCreateInfo.pNext = nullptr;
-                i++;
-            }
+        // Create logical device
+        result = instance.GetFunctionTable().vkCreateDevice(physicalDevice, &logicalDeviceCreateInfo, nullptr, &logicalDevice);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create logical device [{0}]! Error code: {1}.", GetName(), result);
 
-            // Store pointers of each extension's data, as it needs to be deallocated in the end of the function
-            std::vector<void*> extensionDataToFree;
-            extensionDataToFree.resize(DEVICE_EXTENSIONS_TO_QUERY.size());
+        // Deallocate extension data
+        for (const auto &data : extensionDataToFree) std::free(data);
 
-            // Retrieve supported extension count
-            uint32 supportedExtensionCount = 0;
-            createInfo.instance.GetFunctionTable().vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &supportedExtensionCount, nullptr);
-
-            // Retrieve supported extensions
-            std::vector<VkExtensionProperties> supportedExtensions(supportedExtensionCount);
-            createInfo.instance.GetFunctionTable().vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &supportedExtensionCount, supportedExtensions.data());
-
-            // Set up device features
-            VkPhysicalDeviceFeatures2 physicalDeviceFeatures2{};
-            physicalDeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-
-            // Load queried extensions if supported
-            std::vector<const char*> extensionsToLoad;
-            extensionsToLoad.reserve(DEVICE_EXTENSIONS_TO_QUERY.size() + SR_PLATFORM_APPLE); // Extra space for VK_KHR_PORTABILITY_SUBSET_EXTENSION (Apple-required-only extension)
-            for (const auto &extension : DEVICE_EXTENSIONS_TO_QUERY)
-            {
-                AddExtensionIfSupported(extension, extensionsToLoad, supportedExtensions, physicalDeviceFeatures2, extensionDataToFree);
-            }
-
-            #if SR_PLATFORM_APPLE
-                // Set up portability features
-                VkPhysicalDevicePortabilitySubsetFeaturesKHR portabilitySubsetFeatures{};
-                if (IsExtensionSupported(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME, supportedExtensions))
-                {
-                    // Add extension to list
-                    extensionsToLoad.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
-
-                    // Configure portability info
-                    portabilitySubsetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR;
-                    portabilitySubsetFeatures.pNext = nullptr;
-
-                    // Retrieve portability features
-                    PushToPNextChain(&physicalDeviceFeatures2, &portabilitySubsetFeatures);
-                    createInfo.instance.GetFunctionTable().vkGetPhysicalDeviceFeatures2(physicalDevice, &physicalDeviceFeatures2);
-                }
-            #endif
-
-            // Set to use already defined features
-            physicalDeviceFeatures2.features = physicalDeviceFeatures;
-
-            // Set up device create info
-            VkDeviceCreateInfo logicalDeviceCreateInfo{};
-            logicalDeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-            logicalDeviceCreateInfo.queueCreateInfoCount = static_cast<uint32>(queueCreateInfos.size());
-            logicalDeviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
-            logicalDeviceCreateInfo.enabledLayerCount = 0;
-            logicalDeviceCreateInfo.ppEnabledLayerNames = nullptr;
-            logicalDeviceCreateInfo.enabledExtensionCount = static_cast<uint32>(extensionsToLoad.size());
-            logicalDeviceCreateInfo.ppEnabledExtensionNames = extensionsToLoad.data();
-            logicalDeviceCreateInfo.pEnabledFeatures = nullptr;
-            logicalDeviceCreateInfo.flags = 0;
-            logicalDeviceCreateInfo.pNext = &physicalDeviceFeatures2;
-
-            // Create logical device
-            VK_VALIDATE(createInfo.instance.GetFunctionTable().vkCreateDevice(physicalDevice, &logicalDeviceCreateInfo, nullptr, &logicalDevice), "Could not create logical device!");
-
+        #pragma region Function Pointers
             // Load Vulkan functions
             #if defined(VK_VERSION_1_0)
                 functionTable.vkAllocateCommandBuffers           = reinterpret_cast<PFN_vkAllocateCommandBuffers>(vkGetDeviceProcAddr(logicalDevice, "vkAllocateCommandBuffers"));
@@ -925,135 +922,226 @@ namespace Sierra
             #if (defined(VK_KHR_device_group) && defined(VK_KHR_swapchain)) || (defined(VK_KHR_swapchain) && defined(VK_VERSION_1_1))
                 functionTable.vkAcquireNextImage2KHR = reinterpret_cast<PFN_vkAcquireNextImage2KHR>(vkGetDeviceProcAddr(logicalDevice, "vkAcquireNextImage2KHR"));
             #endif
+        #pragma endregion
 
-            // Retrieve queues
-            if (physicalDeviceInfo.queueFamilyIndices.transferFamily.has_value()) functionTable.vkGetDeviceQueue(logicalDevice, physicalDeviceInfo.queueFamilyIndices.transferFamily.value(), 0, &transferQueue);
-            if (physicalDeviceInfo.queueFamilyIndices.computeFamily.has_value()) functionTable.vkGetDeviceQueue(logicalDevice, physicalDeviceInfo.queueFamilyIndices.transferFamily.value(), 0, &computeQueue);
-            if (physicalDeviceInfo.queueFamilyIndices.graphicsFamily.has_value()) functionTable.vkGetDeviceQueue(logicalDevice, physicalDeviceInfo.queueFamilyIndices.transferFamily.value(), 0, &graphicsQueue);
+        // Retrieve general queue
+        functionTable.vkGetDeviceQueue(logicalDevice, generalQueueFamily, 0, &generalQueue);
 
-            // Deallocate extension data
-            for (const auto &data : extensionDataToFree) std::free(data);
-        }
+        SR_ERROR_IF(!IsExtensionLoaded(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME), "[Vulkan]: Cannot create device [{0}], as it does not support the {1} extension!", GetName(), VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
 
-        // Create memory allocator
+        // Set up semaphore type
+        VkSemaphoreTypeCreateInfo semaphoreTypeCreateInfo = { };
+        semaphoreTypeCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
+        semaphoreTypeCreateInfo.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
+        semaphoreTypeCreateInfo.initialValue = 0;
+
+        // Set up shared semaphore create info
+        VkSemaphoreCreateInfo semaphoreCreateInfo = { };
+        semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        semaphoreCreateInfo.pNext = &semaphoreTypeCreateInfo;
+
+        // Create shared fence
+        result = functionTable.vkCreateSemaphore(logicalDevice, &semaphoreCreateInfo, nullptr, &sharedTimelineSemaphore);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create shared command buffer fence of device [{0}]! Error code: {1}!", GetName(), result);
+
+        // Get Vulkan function pointers
+        VmaVulkanFunctions vulkanFunctions = { };
+        vulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+        vulkanFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+        vulkanFunctions.vkGetPhysicalDeviceProperties = instance.GetFunctionTable().vkGetPhysicalDeviceProperties;
+        vulkanFunctions.vkGetPhysicalDeviceMemoryProperties = instance.GetFunctionTable().vkGetPhysicalDeviceMemoryProperties;
+        vulkanFunctions.vkAllocateMemory = functionTable.vkAllocateMemory;
+        vulkanFunctions.vkFreeMemory = functionTable.vkFreeMemory;
+        vulkanFunctions.vkMapMemory = functionTable.vkMapMemory;
+        vulkanFunctions.vkUnmapMemory = functionTable.vkUnmapMemory;
+        vulkanFunctions.vkFlushMappedMemoryRanges = functionTable.vkFlushMappedMemoryRanges;
+        vulkanFunctions.vkInvalidateMappedMemoryRanges = functionTable.vkInvalidateMappedMemoryRanges;
+        vulkanFunctions.vkBindBufferMemory = functionTable.vkBindBufferMemory;
+        vulkanFunctions.vkBindImageMemory = functionTable.vkBindImageMemory;
+        vulkanFunctions.vkGetBufferMemoryRequirements = functionTable.vkGetBufferMemoryRequirements;
+        vulkanFunctions.vkGetImageMemoryRequirements = functionTable.vkGetImageMemoryRequirements;
+        vulkanFunctions.vkCreateBuffer = functionTable.vkCreateBuffer;
+        vulkanFunctions.vkDestroyBuffer = functionTable.vkDestroyBuffer;
+        vulkanFunctions.vkCreateImage = functionTable.vkCreateImage;
+        vulkanFunctions.vkDestroyImage = functionTable.vkDestroyImage;
+        vulkanFunctions.vkCmdCopyBuffer = functionTable.vkCmdCopyBuffer;
+        if (instance.GetAPIVersion() >= VulkanAPIVersion(1, 1, 0))
         {
-            // Get Vulkan function pointers
-            VmaVulkanFunctions vulkanFunctions{};
-            vulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
-            vulkanFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
-            vulkanFunctions.vkGetPhysicalDeviceProperties = createInfo.instance.GetFunctionTable().vkGetPhysicalDeviceProperties;
-            vulkanFunctions.vkGetPhysicalDeviceMemoryProperties = createInfo.instance.GetFunctionTable().vkGetPhysicalDeviceMemoryProperties;
-            vulkanFunctions.vkAllocateMemory = functionTable.vkAllocateMemory;
-            vulkanFunctions.vkFreeMemory = functionTable.vkFreeMemory;
-            vulkanFunctions.vkMapMemory = functionTable.vkMapMemory;
-            vulkanFunctions.vkUnmapMemory = functionTable.vkUnmapMemory;
-            vulkanFunctions.vkFlushMappedMemoryRanges = functionTable.vkFlushMappedMemoryRanges;
-            vulkanFunctions.vkInvalidateMappedMemoryRanges = functionTable.vkInvalidateMappedMemoryRanges;
-            vulkanFunctions.vkBindBufferMemory = functionTable.vkBindBufferMemory;
-            vulkanFunctions.vkBindImageMemory = functionTable.vkBindImageMemory;
-            vulkanFunctions.vkGetBufferMemoryRequirements = functionTable.vkGetBufferMemoryRequirements;
-            vulkanFunctions.vkGetImageMemoryRequirements = functionTable.vkGetImageMemoryRequirements;
-            vulkanFunctions.vkCreateBuffer = functionTable.vkCreateBuffer;
-            vulkanFunctions.vkDestroyBuffer = functionTable.vkDestroyBuffer;
-            vulkanFunctions.vkCreateImage = functionTable.vkCreateImage;
-            vulkanFunctions.vkDestroyImage = functionTable.vkDestroyImage;
-            vulkanFunctions.vkCmdCopyBuffer = functionTable.vkCmdCopyBuffer;
-            if (createInfo.instance.GetAPIVersion() >= VulkanAPIVersion(1, 1, 0))
-            {
-                vulkanFunctions.vkGetBufferMemoryRequirements2KHR = functionTable.vkGetBufferMemoryRequirements2;
-                vulkanFunctions.vkGetImageMemoryRequirements2KHR = functionTable.vkGetImageMemoryRequirements2;
-                vulkanFunctions.vkBindBufferMemory2KHR = functionTable.vkBindBufferMemory2;
-                vulkanFunctions.vkBindImageMemory2KHR = functionTable.vkBindImageMemory2;
-                vulkanFunctions.vkGetPhysicalDeviceMemoryProperties2KHR = createInfo.instance.GetFunctionTable().vkGetPhysicalDeviceMemoryProperties2;
-            }
-            if (createInfo.instance.GetAPIVersion() >= VulkanAPIVersion(1, 3, 0))
-            {
-                vulkanFunctions.vkGetDeviceBufferMemoryRequirements = functionTable.vkGetDeviceBufferMemoryRequirements;
-                vulkanFunctions.vkGetDeviceImageMemoryRequirements = functionTable.vkGetDeviceImageMemoryRequirements;
-            }
-
-            // Set up allocator creation info
-            VmaAllocatorCreateInfo vmaCreteInfo{};
-            vmaCreteInfo.instance = createInfo.instance.GetVulkanInstance();
-            vmaCreteInfo.physicalDevice = physicalDevice;
-            vmaCreteInfo.device = logicalDevice;
-            vmaCreteInfo.vulkanApiVersion = createInfo.instance.GetAPIVersion();
-            vmaCreteInfo.pVulkanFunctions = &vulkanFunctions;
-            vmaCreteInfo.flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
-
-            // Create allocator
-            vmaCreateAllocator(&vmaCreteInfo, &vmaAllocator);
+            vulkanFunctions.vkGetBufferMemoryRequirements2KHR = functionTable.vkGetBufferMemoryRequirements2;
+            vulkanFunctions.vkGetImageMemoryRequirements2KHR = functionTable.vkGetImageMemoryRequirements2;
+            vulkanFunctions.vkBindBufferMemory2KHR = functionTable.vkBindBufferMemory2;
+            vulkanFunctions.vkBindImageMemory2KHR = functionTable.vkBindImageMemory2;
+            vulkanFunctions.vkGetPhysicalDeviceMemoryProperties2KHR = instance.GetFunctionTable().vkGetPhysicalDeviceMemoryProperties2;
         }
+        if (instance.GetAPIVersion() >= VulkanAPIVersion(1, 3, 0))
+        {
+            vulkanFunctions.vkGetDeviceBufferMemoryRequirements = functionTable.vkGetDeviceBufferMemoryRequirements;
+            vulkanFunctions.vkGetDeviceImageMemoryRequirements = functionTable.vkGetDeviceImageMemoryRequirements;
+        }
+
+        // Set up allocator create info
+        VmaAllocatorCreateInfo vmaCreteInfo = { };
+        vmaCreteInfo.instance = instance.GetVulkanInstance();
+        vmaCreteInfo.physicalDevice = physicalDevice;
+        vmaCreteInfo.device = logicalDevice;
+        vmaCreteInfo.vulkanApiVersion = instance.GetAPIVersion();
+        vmaCreteInfo.pVulkanFunctions = &vulkanFunctions;
+        vmaCreteInfo.flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
+
+        // Create allocator
+        vmaCreateAllocator(&vmaCreteInfo, &vmaAllocator);
+
+        // Set device names
+        SetObjectName(physicalDevice, VK_OBJECT_TYPE_PHYSICAL_DEVICE, "Physical device of device [" + GetName() + "]");
+        SetObjectName(logicalDevice, VK_OBJECT_TYPE_DEVICE, "Logical device of device [" + GetName() + "]");
+    }
+
+    /* --- POLLING METHODS --- */
+
+    void VulkanDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::initializer_list<std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait) const
+    {
+        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit for command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
+        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
+
+        // See what value to wait for
+        uint64 waitValue = 0;
+        for (uint32 i = 0; i < commandBuffersToWait.size(); i++)
+        {
+            const auto &commandBufferToWait = (commandBuffersToWait.begin() + i)->get();
+            SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName(), commandBufferToWait->GetName(), i);
+
+            const VulkanCommandBuffer &vulkanCommandBufferToWait = static_cast<VulkanCommandBuffer&>(*commandBufferToWait);
+            waitValue = std::max(waitValue, vulkanCommandBufferToWait.GetCompletionSignalValue());
+        }
+
+        // Set up semaphore submit info
+        const uint64 signalValue = vulkanCommandBuffer.GetCompletionSignalValue();
+        VkTimelineSemaphoreSubmitInfo semaphoreSubmitInfo = { };
+        semaphoreSubmitInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+        semaphoreSubmitInfo.waitSemaphoreValueCount = 1;
+        semaphoreSubmitInfo.pWaitSemaphoreValues = &waitValue;
+        semaphoreSubmitInfo.signalSemaphoreValueCount = 1;
+        semaphoreSubmitInfo.pSignalSemaphoreValues = &signalValue;
+
+        // Set up submit info
+        VkCommandBuffer vkCommandBuffer = vulkanCommandBuffer.GetVulkanCommandBuffer();
+        const VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        VkSubmitInfo submitInfo = { };
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &vkCommandBuffer;
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = &sharedTimelineSemaphore;
+        submitInfo.pWaitDstStageMask = &waitStage;
+        submitInfo.pNext = &semaphoreSubmitInfo;
+
+        // Submit command buffer
+        const VkResult result = functionTable.vkQueueSubmit(generalQueue, 1, &submitInfo, VK_NULL_HANDLE);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Submission of command buffer [{0}] from device [{1}] failed! Error code: {2}.", vulkanCommandBuffer.GetName(), GetName(), result);
+    }
+
+    void VulkanDevice::WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const
+    {
+        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, on device [{0}], wait for command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
+        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
+
+        // Set up wait info
+        const uint64 waitValue = vulkanCommandBuffer.GetCompletionSignalValue();
+        VkSemaphoreWaitInfo waitInfo = { };
+        waitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
+        waitInfo.semaphoreCount = 1;
+        waitInfo.pSemaphores = &sharedTimelineSemaphore;
+        waitInfo.pValues = &waitValue;
+
+        // Wait for semaphore
+        vkWaitSemaphores(logicalDevice, &waitInfo, std::numeric_limits<uint64>::max());
     }
 
     /* --- GETTER METHODS --- */
+
+    bool VulkanDevice::IsImageFormatSupported(const ImageFormat format, const ImageUsage usage) const
+    {
+        // Get format properties
+        VkFormatProperties formatProperties = { };
+        vkGetPhysicalDeviceFormatProperties(physicalDevice, VulkanImage::ImageFormatToVkFormat(format), &formatProperties);
+
+        // Check support
+        if (usage & ImageUsage::SourceMemory        && !(formatProperties.linearTilingFeatures  & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT               )) return false;
+        if (usage & ImageUsage::DestinationMemory   && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_DST_BIT               )) return false;
+        if (usage & ImageUsage::Storage             && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT              )) return false;
+        if (usage & ImageUsage::Sample              && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
+        if (usage & ImageUsage::LinearFilter && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
+        if (usage & ImageUsage::ColorAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) return false;
+        if (usage & ImageUsage::DepthAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT   )) return false;
+        if (usage & ImageUsage::InputAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
+        if (usage & ImageUsage::TransientAttachment && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT           )) return false;
+        return true;
+    }
+
+    bool VulkanDevice::IsImageSamplingSupported(const ImageSampling sampling) const
+    {
+        const VkPhysicalDeviceProperties physicalDeviceProperties = GetPhysicalDeviceProperties();
+        return (physicalDeviceProperties.limits.framebufferDepthSampleCounts & VulkanImage::ImageSamplingToVkSampleCountFlags(sampling)) && (physicalDeviceProperties.limits.sampledImageDepthSampleCounts & VulkanImage::ImageSamplingToVkSampleCountFlags(sampling));
+    }
+
+    bool VulkanDevice::IsSamplerAnisotropySupported(const SamplerAnisotropy anisotropy) const
+    {
+        const VkPhysicalDeviceProperties physicalDeviceProperties = GetPhysicalDeviceProperties();
+        if (!GetPhysicalDeviceFeatures().samplerAnisotropy) return anisotropy == SamplerAnisotropy::x1;
+
+        switch (anisotropy)
+        {
+            case SamplerAnisotropy::x64:    return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 64.0f;
+            case SamplerAnisotropy::x32:    return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 32.0f;
+            case SamplerAnisotropy::x16:    return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 16.0f;
+            case SamplerAnisotropy::x8:     return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 8.0f;
+            case SamplerAnisotropy::x4:     return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 4.0f;
+            case SamplerAnisotropy::x2:     return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 2.0f;
+            case SamplerAnisotropy::x1:     return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 1.0f;
+        }
+
+        return anisotropy == SamplerAnisotropy::x1;
+    }
 
     bool VulkanDevice::IsExtensionLoaded(const std::string &extensionName) const
     {
         return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<std::string>{}(extensionName)) != loadedExtensions.end();
     }
 
-    /* --- PRIVATE METHODS --- */
-
-    VulkanDevice::PhysicalDeviceInfo VulkanDevice::GetPhysicalDeviceInfo(const VulkanInstance &instance, const VkPhysicalDevice physicalDevice)
+    VkPhysicalDeviceProperties VulkanDevice::GetPhysicalDeviceProperties() const
     {
-        // Retrieve GPU's properties
-        VkPhysicalDeviceProperties physicalDeviceProperties;
+        VkPhysicalDeviceProperties physicalDeviceProperties = { };
         instance.GetFunctionTable().vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
-
-        // Retrieve GPU's memory properties
-        VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-        instance.GetFunctionTable().vkGetPhysicalDeviceMemoryProperties(physicalDevice, &physicalDeviceMemoryProperties);
-
-        // Get the features of the given GPU
-        VkPhysicalDeviceFeatures physicalDeviceFeatures;
-        instance.GetFunctionTable().vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
-
-        // Get queue families
-        QueueFamilyIndices queueFamilyIndices = GetQueueFamilyIndices(instance, physicalDevice);
-
-        // Return device info
-        PhysicalDeviceInfo info{};
-        info.rating = 1.0f; // TODO: Implement actual rating system
-        info.features = physicalDeviceFeatures;
-        info.properties = physicalDeviceProperties;
-        info.queueFamilyIndices = queueFamilyIndices;
-        return info;
+        return physicalDeviceProperties;
     }
 
-    VulkanDevice::QueueFamilyIndices VulkanDevice::GetQueueFamilyIndices(const VulkanInstance &instance, const VkPhysicalDevice physicalDevice)
+    VkPhysicalDeviceFeatures VulkanDevice::GetPhysicalDeviceFeatures() const
     {
-        // Retrieve queue family count
-        uint32 queueFamilyCount = 0;
-        instance.GetFunctionTable().vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
-
-        QueueFamilyIndices indices{};
-        if (queueFamilyCount == 0) return indices;
-
-        // Retrieve queue families
-        std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
-        instance.GetFunctionTable().vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilyProperties.data());
-
-        // Check which queues are present
-        for (uint32 i = 0; i < queueFamilyCount; i++)
-        {
-            VkQueueFamilyProperties currentQueueFamilyProperties = queueFamilyProperties[i];
-            if (currentQueueFamilyProperties.queueFlags & VK_QUEUE_TRANSFER_BIT)
-            {
-                indices.transferFamily = i;
-            }
-            if (currentQueueFamilyProperties.queueFlags & VK_QUEUE_COMPUTE_BIT)
-            {
-                indices.computeFamily = i;
-            }
-            if (currentQueueFamilyProperties.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-            {
-                indices.graphicsFamily = i;
-            }
-        }
-
-        return indices;
+        VkPhysicalDeviceFeatures physicalDeviceFeatures = { };
+        instance.GetFunctionTable().vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
+        return physicalDeviceFeatures;
     }
+
+    /* --- SETTER METHODS --- */
+
+    void VulkanDevice::SetObjectName(VkHandle object, const VkObjectType objectType, const std::string &name) const
+    {
+        #if SR_ENABLE_LOGGING
+            if (!instance.IsExtensionLoaded(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) return;
+
+            // Set up object name info
+            VkDebugUtilsObjectNameInfoEXT objectNameInfo = { };
+            objectNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+            objectNameInfo.objectType = objectType;
+            objectNameInfo.objectHandle = (uint64) object;
+            objectNameInfo.pObjectName = name.c_str();
+
+            // Assign resource name
+            instance.GetFunctionTable().vkSetDebugUtilsObjectNameEXT(logicalDevice, &objectNameInfo);
+        #endif
+    }
+
+    /* --- PRIVATE METHODS --- */
 
     bool VulkanDevice::IsExtensionSupported(const char* extensionName, const std::vector<VkExtensionProperties> &supportedExtensions)
     {
@@ -1068,30 +1156,28 @@ namespace Sierra
         return false;
     }
 
-    template<typename T>
-    bool VulkanDevice::AddExtensionIfSupported(const DeviceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions, T &pNextChain, std::vector<void*> &extensionDataToFree)
+    bool VulkanDevice::AddExtensionIfSupported(const VulkanDeviceExtension &extension, const std::vector<VkExtensionProperties> &supportedExtensions, void* pNextChain, std::vector<const char*> &extensionList, std::vector<void*> &extensionDataToFree)
     {
         // Check if root extension is found within the supported ones
-        bool extensionSupported = IsExtensionSupported(extension.name.c_str(), supportedExtensions);
+        const bool extensionSupported = IsExtensionSupported(extension.name.c_str(), supportedExtensions);
+
+        // If extension has its own VkStructureType data, add that to pNext, and query it for freeing
         if (extensionSupported && extension.data != nullptr)
         {
-            PushToPNextChain(&pNextChain, extension.data);
+            PushToPNextChain(pNextChain, extension.data);
             extensionDataToFree.push_back(extension.data);
         }
 
         // If root extension is not found, we do not load it
         if (!extensionSupported)
         {
-            if (!extension.requiredOnlyIfSupported) SR_WARNING("Device extension [{0}] requested but not supported! Extension will be discarded, but issues may occur if extensions' support is not checked before their usage!", extension.name);
+            SR_WARNING_IF(!extension.requiredOnlyIfSupported, "[Vulkan]: Device extension [{0}] requested but not supported! Extension will be discarded, but issues may occur if extensions' support is not checked before their usage!", extension.name);
 
             // Free all data within the extension tree, as, because the current extension is not supported, its dependencies will never be loaded, and thus creating a memory leak
-            std::function<void(const DeviceExtension&)> FreeExtensionTreeLambda = [&FreeExtensionTreeLambda](const DeviceExtension &extension)
+            static std::function<void(const VulkanDeviceExtension&)> const FreeExtensionTreeLambda = [](const VulkanDeviceExtension &extension)
             {
                 std::free(extension.data);
-                for (const auto &dependency : extension.dependencies)
-                {
-                    FreeExtensionTreeLambda(dependency);
-                }
+                for (const auto &dependency : extension.dependencies) FreeExtensionTreeLambda(dependency);
             };
             FreeExtensionTreeLambda(extension);
 
@@ -1101,9 +1187,9 @@ namespace Sierra
         // If found, we then check if all required dependency extensions are supported
         for (const auto &dependencyExtension : extension.dependencies)
         {
-            if (!AddExtensionIfSupported(dependencyExtension, extensionList, supportedExtensions, pNextChain, extensionDataToFree))
+            if (!AddExtensionIfSupported(dependencyExtension, supportedExtensions, pNextChain, extensionList, extensionDataToFree))
             {
-                SR_WARNING("Device extension [{0}] requires the support of an unsupported extension [{1}]! Extensions will be discarded and the application may continue to run, but issues may occur if extensions' support is not checked before their usage!", extension.name, dependencyExtension.name);
+                SR_WARNING_IF(!extension.requiredOnlyIfSupported, "[Vulkan]: Device extension [{0}] requires the support of an unsupported extension [{1}]! Extensions will be discarded and the application may continue to run, but issues may occur if extensions' support is not checked before their usage!", extension.name, dependencyExtension.name);
                 return false;
             }
         }
@@ -1111,13 +1197,15 @@ namespace Sierra
         // Add extension to the list
         loadedExtensions.push_back(std::hash<std::string>{}(extension.name));
         extensionList.push_back(extension.name.c_str());
+
         return true;
     }
 
     /* --- DESTRUCTOR --- */
 
-    void VulkanDevice::Destroy()
+    VulkanDevice::~VulkanDevice()
     {
+        functionTable.vkDestroySemaphore(logicalDevice, sharedTimelineSemaphore, nullptr);
         vmaDestroyAllocator(vmaAllocator);
         functionTable.vkDestroyDevice(logicalDevice, nullptr);
     }

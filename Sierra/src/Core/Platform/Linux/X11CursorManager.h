@@ -16,17 +16,11 @@
 namespace Sierra
 {
 
-    struct X11CursorManagerCreateInfo final : public CursorManagerCreateInfo
-    {
-        const XID window;
-        const X11Context &x11Context;
-    };
-
     class SIERRA_API X11CursorManager final : public CursorManager
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit X11CursorManager(const X11CursorManagerCreateInfo &createInfo);
+        explicit X11CursorManager(const X11Context &x11Context, const XID window, const CursorManagerCreateInfo &createInfo);
 
         /* --- SETTER METHODS --- */
         void ShowCursor() override;
@@ -40,8 +34,8 @@ namespace Sierra
         [[nodiscard]] float32 GetVerticalDelta() const override;
 
     private:
-        const XID window;
         const X11Context &x11Context;
+        const XID window;
 
         Vector2Int cursorPosition = { 0, 0 };
         Vector2Int lastCursorPosition = { 0, 0 };
@@ -50,8 +44,8 @@ namespace Sierra
 
         friend class X11Window;
         void OnWindowInitialize();
-        void OnUpdate();
-        void OnUpdateEnd();
+        void Update();
+        void UpdateEnd();
         void MotionNotifyEvent(const XEvent &event);
 
     };

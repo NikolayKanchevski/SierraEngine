@@ -5,7 +5,22 @@
 #define UIKIT_WINDOW_IMPLEMENTATION
 #include "UIKitWindow.h"
 
-#include "iOSInstance.h"
+#include "iOSContext.h"
+
+@interface UIKitWindowView : UIView<CALayerDelegate>
+
+@end
+
+@implementation UIKitWindowView
+
+    /* --- POLLING METHODS --- */
+
+    + (Class) layerClass
+    {
+        return [CAMetalLayer class];
+    }
+
+@end
 
 @interface UIKitWindowViewController : UIViewController
 
@@ -24,10 +39,16 @@
     {
         self = [super init];
         window = initWindow;
+        self.view = [[UIKitWindowView alloc] initWithFrame: self.view.bounds];
         return self;
     }
 
     /* --- POLLING METHODS --- */
+
+    - (UIInterfaceOrientationMask) supportedInterfaceOrientations
+    {
+        return window->AllowsOrientationChange() ? UIInterfaceOrientationMaskAll : UIInterfaceOrientationMaskPortrait;
+    }
 
     - (void) touchesBegan: (NSSet<UITouch*>*) touches withEvent: (UIEvent*) event
     {
@@ -61,6 +82,14 @@
         static_cast<Sierra::UIKitTouchManager*>(&window->GetTouchManager())->TouchesCancelled(touches, event);
     }
 
+    /* --- DESTRUCTOR --- */
+
+    - (void) dealloc
+    {
+        [self.view release];
+        [super dealloc];
+    }
+
 @end
 
 namespace Sierra
@@ -69,7 +98,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     UIKitWindow::UIKitWindow(const UIKitContext &uiKitContext, const WindowCreateInfo &createInfo)
-        : Window(createInfo), title(createInfo.title), uiKitContext(uiKitContext), touchManager(UIKitTouchManager({ }))
+        : Window(createInfo), title(createInfo.title), allowsOrientationChange(createInfo.resizable), uiKitContext(uiKitContext), touchManager(UIKitTouchManager({ }))
     {
         // Create window
         window = uiKitContext.CreateWindow();
@@ -77,11 +106,14 @@ namespace Sierra
         // Create view controller
         viewController = [[UIKitWindowViewController alloc] initWithWindow: this];
 
-        // Assign window handlers and set background color
+        // Set up view
+        view = viewController.view;
+
+        // Assign window handlers
         [window setRootViewController: viewController];
-        [window setBackgroundColor: [UIColor whiteColor]];
 
         // Observe UIKit events
+        deviceOrientationDidChangeBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UIDeviceOrientationDidChangeNotification, [this] { DeviceOrientationDidChange(); });
         applicationDidEnterBackgroundBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UIApplicationDidEnterBackgroundNotification, [this] { ApplicationDidEnterBackground(); });
         applicationWillEnterForegroundBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UIApplicationWillEnterForegroundNotification, [this] { ApplicationWillEnterForeground(); });
         applicationWillTerminateBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UISceneDidDisconnectNotification, [this] { ApplicationWillTerminate(); });
@@ -92,9 +124,9 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void UIKitWindow::OnUpdate()
+    void UIKitWindow::Update()
     {
-        // Not applicable
+        touchManager.Update();
     }
 
     void UIKitWindow::Minimize()
@@ -182,7 +214,7 @@ namespace Sierra
 
     Vector2UInt UIKitWindow::GetFramebufferSize() const
     {
-        return uiKitContext.GetPrimaryScreen().GetSize();
+        return GetSize() * static_cast<uint32>([window contentScaleFactor]);
     }
 
     float32 UIKitWindow::GetOpacity() const
@@ -225,12 +257,21 @@ namespace Sierra
         return touchManager;
     }
 
-    WindowAPI UIKitWindow::GetAPI() const
+    PlatformAPI UIKitWindow::GetAPI() const
     {
-        return WindowAPI::UIKit;
+        return PlatformAPI::UIKit;
     }
 
     /* --- EVENTS --- */
+
+    void UIKitWindow::DeviceOrientationDidChange()
+    {
+        // Check if orientation has actually changed
+        if ((lastOrientation & ScreenOrientation::Landscape && uiKitContext.GetPrimaryScreen().GetOrientation() & ScreenOrientation::Landscape) || (lastOrientation & ScreenOrientation::Portrait && uiKitContext.GetPrimaryScreen().GetOrientation() & ScreenOrientation::Portrait)) return;
+
+        lastOrientation = uiKitContext.GetPrimaryScreen().GetOrientation();
+        GetWindowResizeDispatcher().DispatchEvent(GetSize());
+    }
 
     void UIKitWindow::ApplicationDidEnterBackground()
     {
@@ -256,7 +297,8 @@ namespace Sierra
     {
         if (closed) return;
         closed = true;
-        
+
+        deviceOrientationDidChangeBridge.Invalidate();
         applicationDidEnterBackgroundBridge.Invalidate();
         applicationWillEnterForegroundBridge.Invalidate();
         applicationWillTerminateBridge.Invalidate();
@@ -264,11 +306,9 @@ namespace Sierra
         GetWindowCloseDispatcher().DispatchEvent();
         uiKitContext.DestroyWindow(window);
 
-        [viewController release];
-        viewController = nil;
-
         [window release];
-        window = nil;
+        [viewController release];
+        // NOTE: We do not have a custom view implementation, so it is managed by view controller
     }
 
 }

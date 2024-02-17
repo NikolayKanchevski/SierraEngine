@@ -1,25 +1,42 @@
 # Set Metal's prerequisites (Metal is guaranteed to be found)
 set(Metal_LIBRARIES
+    "-framework CoreGraphics"
     "-framework Metal"
     "-framework QuartzCore"
-    "-framework Foundation"
 )
 message(STATUS "[Sierra]: Building Metal...")
 
-# Link Metal
-set(METAL_CPP_DIRECTORY ../../../../vendor/metal-cpp)
+# Link graphics libraries
 target_link_libraries(Sierra PRIVATE ${Metal_LIBRARIES})
-target_include_directories(Sierra PRIVATE ${METAL_CPP_DIRECTORY})
 
 # Set Metal definitions
 target_compile_definitions(Sierra PUBLIC "SR_METAL_SUPPORTED")
 
 # Add Metal source files
 target_sources(Sierra PRIVATE
-    MetalContext.cpp
+    MetalBuffer.mm
+    MetalBuffer.h
+    MetalCommandBuffer.mm
+    MetalCommandBuffer.h
+    MetalComputePipeline.mm
+    MetalComputePipeline.h
+    MetalContext.mm
     MetalContext.h
-    MetalDevice.cpp
+    MetalDevice.mm
     MetalDevice.h
-    MetalResource.cpp
-    MetalResource.h
+    MetalGraphicsPipeline.mm
+    MetalGraphicsPipeline.h
+    MetalImage.mm
+    MetalImage.h
+    MetalPipelineLayout.mm
+    MetalPipelineLayout.h
+    MetalRenderPass.mm
+    MetalRenderPass.h
+    MetalResource.mm
+    MetalSampler.h
+    MetalSampler.mm
+    MetalShader.mm
+    MetalShader.h
+    MetalSwapchain.mm
+    MetalSwapchain.h
 )

@@ -11,12 +11,6 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    X11Screen::X11Screen(X11Screen &&other)
-        : name(std::move(other.name)), origin(other.origin), size(other.size), workAreaOrigin(other.workAreaOrigin), workAreaSize(other.workAreaSize), refreshRate(other.refreshRate)
-    {
-
-    }
-
     X11Screen::X11Screen(const X11ScreenCreateInfo &createInfo)
         : Screen(), name(createInfo.outputInfo->name, createInfo.outputInfo->nameLen), origin(createInfo.crtcInfo->x, createInfo.crtcInfo->y)
     {
@@ -70,6 +64,14 @@ namespace Sierra
                 break;
             }
         }
+    }
+
+    /* --- MOVE SEMANTICS --- */
+
+    X11Screen::X11Screen(X11Screen &&other)
+    : name(std::move(other.name)), origin(other.origin), size(other.size), workAreaOrigin(other.workAreaOrigin), workAreaSize(other.workAreaSize), refreshRate(other.refreshRate)
+    {
+
     }
 
 }

@@ -16,9 +16,9 @@
     {
         typedef void UIKitApplication;
         typedef void UIKitApplicationDelegate;
-
         typedef void UIWindow;
         typedef void UIWindowScene;
+        #define nil nullptr
     }
 #else
     #include <UIKit/UIKit.h>
@@ -33,12 +33,9 @@ namespace Sierra
 
     };
 
-    class SIERRA_API UIKitContext
+    class SIERRA_API UIKitContext final
     {
     public:
-        /* --- CONSTRUCTORS --- */
-        explicit UIKitContext(const UIKitContextCreateInfo &createInfo);
-
         /* --- POLLING METHODS --- */
         [[nodiscard]] UIWindow* CreateWindow() const;
         void DestroyWindow(UIWindow* window) const;
@@ -51,7 +48,10 @@ namespace Sierra
         ~UIKitContext();
 
     private:
-        UIKitApplication* application = nullptr;
+        friend class iOSContext;
+        explicit UIKitContext(const UIKitContextCreateInfo &createInfo);
+
+        UIKitApplication* application = nil;
         UIKitScreen primaryScreen;
 
         UIKitSelectorBridge applicationDidFinishLaunchingBridge;

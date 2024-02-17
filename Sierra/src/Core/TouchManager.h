@@ -5,10 +5,49 @@
 #pragma once
 
 #include "Touch.h"
-#include "../Events/TouchEvent.h"
+#include "EventDispatcher.h"
 
 namespace Sierra
 {
+
+    #pragma region Events
+        class SIERRA_API TouchEvent : public Event
+        {
+        public:
+            [[nodiscard]] inline const Touch& GetTouch() const { return touch; }
+
+        protected:
+            explicit TouchEvent(const Touch &touch) : touch(touch) { }
+
+        private:
+            Touch touch;
+
+        };
+
+        class SIERRA_API TouchBeginEvent final : public TouchEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            explicit TouchBeginEvent(const Touch &touch) : TouchEvent(touch) { }
+
+        };
+
+        class SIERRA_API TouchMoveEvent final : public TouchEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            explicit TouchMoveEvent(const Touch &touch) : TouchEvent(touch) { }
+
+        };
+
+        class SIERRA_API TouchEndEvent final : public TouchEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            explicit TouchEndEvent(const Touch &touch) : TouchEvent(touch) { }
+
+        };
+    #pragma endregion
 
     struct TouchManagerCreateInfo
     {
@@ -26,13 +65,13 @@ namespace Sierra
         explicit TouchManager(const TouchManagerCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual uint32 GetTouchCount();
-        [[nodiscard]] virtual std::optional<Touch> GetTouch(uint32 touchIndex);
+        [[nodiscard]] virtual uint32 GetTouchCount() const;
+        [[nodiscard]] virtual const Touch& GetTouch(uint32 touchIndex) const;
 
         /* --- EVENTS --- */
-        template<typename T> void OnEvent(TouchEventCallback<T>) { static_assert(std::is_base_of_v<TouchEvent, T> && !std::is_same_v<TouchEvent, T>, "Template function accepts derived touch events only!"); }
+        template<typename T> void OnEvent(TouchEventCallback<T> Callback) { static_assert(std::is_base_of_v<TouchEvent, T> && !std::is_same_v<TouchEvent, T>, "Template function accepts derived touch events only!"); }
 
-        /* --- DESTRUCTORS --- */
+        /* --- DESTRUCTOR --- */
         virtual ~TouchManager() = default;
 
         /* --- OPERATORS --- */

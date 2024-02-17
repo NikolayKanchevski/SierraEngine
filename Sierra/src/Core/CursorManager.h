@@ -4,10 +4,28 @@
 
 #pragma once
 
-#include "../Events/CursorEvent.h"
+#include "EventDispatcher.h"
 
 namespace Sierra
 {
+
+    #pragma region Events
+        class SIERRA_API CursorEvent : public Event { };
+
+        class SIERRA_API CursorMoveEvent final : public CursorEvent
+        {
+        public:
+            /* --- CONSTRUCTORS --- */
+            inline explicit CursorMoveEvent(const Vector2 &position) : position(position) { }
+
+            /* --- GETTER METHODS --- */
+            [[nodiscard]] inline const Vector2& GetPosition() const { return position; }
+
+        private:
+            Vector2 position;
+
+        };
+    #pragma endregion
 
     struct CursorManagerCreateInfo
     {
@@ -36,14 +54,14 @@ namespace Sierra
         [[nodiscard]] virtual float32 GetVerticalDelta() const;
 
         /* --- EVENTS --- */
-        template<typename T> void OnEvent(CursorEventCallback<T>) { static_assert(std::is_base_of_v<CursorEvent, T> && !std::is_same_v<CursorEvent, T>, "Template function accepts derived cursor events only!"); }
-
-        /* --- DESTRUCTORS --- */
-        virtual ~CursorManager() = default;
+        template<typename T> void OnEvent(CursorEventCallback<T> Callback) { static_assert(std::is_base_of_v<CursorEvent, T> && !std::is_same_v<CursorEvent, T>, "Template function accepts derived cursor events only!"); }
 
         /* --- OPERATORS --- */
         CursorManager(const CursorManager&) = delete;
         CursorManager& operator=(const CursorManager&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        virtual ~CursorManager() = default;
 
     protected:
         [[nodiscard]] inline EventDispatcher<CursorMoveEvent>& GetCursorMoveDispatcher() { return cursorMoveDispatcher; }

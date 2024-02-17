@@ -5,18 +5,21 @@
 #include <X11/Xutil.h>
 
 #include "X11Window.h"
-#include "LinuxInstance.h"
+#include "LinuxContext.h"
 
 namespace Sierra
 {
     /* --- CONSTRUCTORS --- */
 
-    X11Window::X11Window(const X11Context &context, const WindowCreateInfo &createInfo)
-        : Window(createInfo), x11Context(context),
+    X11Window::X11Window(const X11Context &x11Context, const WindowCreateInfo &createInfo)
+        : Window(createInfo), x11Context(x11Context),
           window(x11Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
-          inputManager({ .xkbExtension = x11Context.GetXkbExtension() }), cursorManager({ .window = window, .x11Context = x11Context }),
+          inputManager(x11Context.GetXkbExtension(), { }), cursorManager(x11Context, window, { }),
           title(createInfo.title), extents(x11Context.GetWindowExtents(window)), lastMaximizedState(createInfo.maximize), resizable(createInfo.resizable)
     {
+        // Create entry in event queue map
+        unhandledEventQueues.push_back({ .window = window });
+
         if (!createInfo.hide) x11Context.ShowWindow(window);
 
         // Handle resizing and maximizing
@@ -48,42 +51,43 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void X11Window::OnUpdate()
+    void X11Window::Update()
     {
         if (closed) return;
 
-        inputManager.OnUpdate();
-        cursorManager.OnUpdate();
+        inputManager.Update();
+        cursorManager.Update();
 
         // Continue handling events until there are none queried
         while (!x11Context.IsEventQueueEmpty())
         {
-            XEvent event = x11Context.PollNextEvent();
-
             // If the current event does not apply to this window, we save it, so it can later access it
-            if (event.xany.window != window)
+            XEvent event = x11Context.PollNextEvent();
+            if (event.xany.window == window)
             {
-                unhandledEvents[event.xclient.window].push_back(event);
+                HandleX11Event(event);
             }
             else
             {
-                HandleX11Event(event);
+                auto iterator = std::find_if(unhandledEventQueues.begin(), unhandledEventQueues.end(), [event](const WindowEventQueue &item) { return item.window == event.xany.window; });
+                if (iterator != unhandledEventQueues.end())
+                {
+                    iterator->queue.push(event);
+                }
             }
         }
 
         // Check if there are unhandled events pending for this window and if so, handle them
-        const auto iterator = unhandledEvents.find(window);
-        if (iterator != unhandledEvents.end())
+        auto iterator = std::find_if(unhandledEventQueues.begin(), unhandledEventQueues.end(), [this](const WindowEventQueue &item) { return item.window == window; });
+        while (!iterator->queue.empty())
         {
-            for (auto &event : iterator->second)
-            {
-                HandleX11Event(event);
-            }
-            iterator->second.clear();
+            XEvent &event = iterator->queue.front();
+            if (event.xany.window == window) HandleX11Event(event);
+            iterator->queue.pop();
         }
 
         // A closing event may have been handled, so we need to check again
-        if (!closed) cursorManager.OnUpdateEnd();
+        if (!closed) cursorManager.UpdateEnd();
 
         x11Context.Flush();
     }
@@ -127,17 +131,11 @@ namespace Sierra
         if (closed) return;
         closed = true;
 
-        // Close window
-        x11Context.CloseWindow(window);
-
         // Remove XID from unhandled event map
-        auto iterator = unhandledEvents.find(window);
-        if (iterator != unhandledEvents.end())
-        {
-            unhandledEvents.erase(iterator);
-        }
+        unhandledEventQueues.erase(std::find_if(unhandledEventQueues.begin(), unhandledEventQueues.end(), [this](const WindowEventQueue &item) { return item.window == window; }));
 
-        // Invalidate window handle
+        // Destroy window
+        x11Context.DestroyWindow(window);
         window = 0;
     }
 
@@ -238,9 +236,9 @@ namespace Sierra
         return cursorManager;
     }
 
-    WindowAPI X11Window::GetAPI() const
+    PlatformAPI X11Window::GetAPI() const
     {
-        return WindowAPI::X11;
+        return PlatformAPI::X11;
     }
 
     /* --- PRIVATE METHODS --- */
@@ -415,7 +413,7 @@ namespace Sierra
         if (closed) return;
 
         // Destroy window
-        XEvent closeEvent = x11Context.DestroyWindow(window);
+        XEvent closeEvent = x11Context.QueryWindowDestruction(window);
         HandleX11Event(closeEvent);
     }
 }

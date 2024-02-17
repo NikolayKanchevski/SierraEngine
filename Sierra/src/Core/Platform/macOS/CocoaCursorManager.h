@@ -22,16 +22,11 @@
 namespace Sierra
 {
 
-    struct CocoaCursorManagerCreateInfo final : public CursorManagerCreateInfo
-    {
-        const NSWindow* window;
-    };
-
     class SIERRA_API CocoaCursorManager final : public CursorManager
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit CocoaCursorManager(const CocoaCursorManagerCreateInfo &createInfo);
+        explicit CocoaCursorManager(const NSWindow* window, const CursorManagerCreateInfo &createInfo);
 
         /* --- SETTER METHODS --- */
         void ShowCursor() override;
@@ -54,8 +49,8 @@ namespace Sierra
         bool justHidCursor = false;
 
         friend class CocoaWindow;
-        void OnUpdate();
-        void OnUpdateEnd();
+        void Update();
+        void UpdateEnd();
 
         #if defined(__OBJC__) && (defined(COCOA_CURSOR_MANAGER_IMPLEMENTATION) || defined(COCOA_WINDOW_IMPLEMENTATION))
             /* --- EVENTS --- */

@@ -52,18 +52,13 @@ namespace Sierra
 
     };
 
-    // NOTE:
-    //  This is a simple abstraction layer for X11, and as such, it complies with X11's design, and not with that of the engine.
-    //  For example, returned window coordinates are in -Y coordinates, even though the engine makes use of +Y, meaning it is up to the user to convert them.
-    class SIERRA_API X11Context
+    class SIERRA_API X11Context final
     {
     public:
-        /* --- CONSTRUCTORS --- */
-        explicit X11Context(const X11ContextCreateInfo &createInfo);
-
         /* --- POLLING METHODS --- */
         [[nodiscard]] XID CreateWindow(const std::string &title, uint32 width, uint32 height) const;
-        XEvent DestroyWindow(XID window) const;
+        XEvent QueryWindowDestruction(XID window) const;
+        void DestroyWindow(XID window) const;
 
         [[nodiscard]] bool IsEventQueueEmpty() const;
         XEvent PollNextEvent() const;
@@ -80,7 +75,6 @@ namespace Sierra
         void ShowWindow(XID window) const;
         void HideWindow(XID window) const;
         void FocusWindow(XID window) const;
-        void CloseWindow(XID window) const;
 
         /* --- SETTER METHODS --- */
         void SetWindowTitle(XID window, const std::string &title) const;
@@ -112,6 +106,7 @@ namespace Sierra
         [[nodiscard]] Vector4UInt GetWindowExtents(XID window) const;
         [[nodiscard]] inline Atom GetAtom(const AtomType atomType) const { return atomTable[GetAtomTypeIndex(atomType)]; }
 
+        [[nodiscard]] inline Display* GetDisplay() const { return display; }
         [[nodiscard]] inline const XkbExtension& GetXkbExtension() const { return xkbExtension; }
         [[nodiscard]] inline const XrandrExtension& GetXrandrExtension() const { return xrandrExtension; }
 
@@ -119,6 +114,9 @@ namespace Sierra
         ~X11Context();
 
     private:
+        friend class LinuxContext;
+        explicit X11Context(const X11ContextCreateInfo &createInfo);
+
         Display* display = nullptr;
         int screen = 0;
         XID rootWindow = 0;
@@ -129,7 +127,7 @@ namespace Sierra
 
         std::array<Atom, static_cast<uint32>(AtomType::NET_REQUEST_FRAME_EXTENTS) + 1> atomTable { 0 };
         Atom TryRetrieveAtom(const Atom* supportedAtoms, const ulong atomCount, const char* atomName);
-        [[nodiscard]] inline constexpr std::underlying_type<AtomType>::type GetAtomTypeIndex(const AtomType atomType) const { return static_cast<std::underlying_type<AtomType>::type>(atomType); }
+        [[nodiscard]] inline constexpr std::underlying_type<AtomType>::type GetAtomTypeIndex(const AtomType atomType) const { return static_cast<uint32>(atomType); }
 
         mutable std::vector<X11Screen> screens;
         void ReloadScreens(XEvent* notifyEvent = nullptr) const;

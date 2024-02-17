@@ -148,7 +148,7 @@ namespace Sierra
         {
             case Key::Unknown:                  return "Unknown";
             case Key::A:                        return "A";
-            case Key::B:                        return "OnWindowInitialize";
+            case Key::B:                        return "B";
             case Key::C:                        return "C";
             case Key::D:                        return "D";
             case Key::E:                        return "E";
@@ -284,6 +284,40 @@ namespace Sierra
         }
 
         return "Unknown";
+    }
+
+    constexpr static char GetKeyCharacter(const Key key)
+    {
+        switch (key)
+        {
+            case Key::A:                        return 'a';
+            case Key::B:                        return 'b';
+            case Key::C:                        return 'c';
+            case Key::D:                        return 'd';
+            case Key::E:                        return 'e';
+            case Key::F:                        return 'f';
+            case Key::G:                        return 'g';
+            case Key::H:                        return 'h';
+            case Key::I:                        return 'i';
+            case Key::J:                        return 'j';
+            case Key::K:                        return 'k';
+            case Key::L:                        return 'l';
+            case Key::M:                        return 'm';
+            case Key::N:                        return 'n';
+            case Key::O:                        return 'o';
+            case Key::P:                        return 'p';
+            case Key::Q:                        return 'q';
+            case Key::R:                        return 'r';
+            case Key::S:                        return 's';
+            case Key::T:                        return 't';
+            case Key::U:                        return 'u';
+            case Key::V:                        return 'v';
+            case Key::W:                        return 'w';
+            case Key::X:                        return 'x';
+            case Key::Y:                        return 'y';
+            case Key::Z:                        return 'z';
+            default:                            return ' ';
+        }
     }
 
 }

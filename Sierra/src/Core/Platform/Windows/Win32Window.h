@@ -24,7 +24,7 @@ namespace Sierra
         explicit Win32Window(const Win32Context &win32Context, const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void OnUpdate() override;
+        void Update() override;
         void Minimize() override;
         void Maximize() override;
         void Show() override;
@@ -53,10 +53,13 @@ namespace Sierra
         [[nodiscard]] const Screen& GetScreen() const override;
         [[nodiscard]] InputManager& GetInputManager() override;
         [[nodiscard]] CursorManager& GetCursorManager() override;
-        [[nodiscard]] WindowAPI GetAPI() const override;
+        [[nodiscard]] PlatformAPI GetAPI() const override;
+
+        [[nodiscard]] inline HWND GetHwnd() const { return window; }
+        [[nodiscard]] inline HINSTANCE GetHInstance() const { return win32Context.GetHInstance(); }
 
         /* --- DESTRUCTOR --- */
-        ~Win32Window();
+        ~Win32Window() override;
 
     private:
         const Win32Context &win32Context;

@@ -9,12 +9,12 @@ namespace Sierra
 
     enum class ScreenOrientation : uint8
     {
-        Unknown                   = 0 << 0,
-        PortraitNormal            = 1 << 1,
-        PortraitFlipped           = 1 << 2,
+        Unknown                   = 0x0000,
+        PortraitNormal            = 0x0001,
+        PortraitFlipped           = 0x0002,
         Portrait                  = PortraitNormal | PortraitFlipped,
-        LandscapeNormal           = 1 << 3,
-        LandscapeFlipped          = 1 << 4,
+        LandscapeNormal           = 0x0004,
+        LandscapeFlipped          = 0x0008,
         Landscape                 = LandscapeNormal | LandscapeFlipped
     };
     SR_DEFINE_ENUM_FLAG_OPERATORS(ScreenOrientation);
@@ -31,12 +31,12 @@ namespace Sierra
         [[nodiscard]] virtual uint32 GetRefreshRate() const = 0;
         [[nodiscard]] virtual ScreenOrientation GetOrientation() const = 0;
 
-        /* --- DESTRUCTOR --- */
-        virtual ~Screen() = default;
-
         /* --- OPERATORS --- */
         Screen(const Screen&) = delete;
         Screen& operator=(const Screen&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        virtual ~Screen() = default;
 
     protected:
         Screen() = default;

@@ -4,6 +4,7 @@
 
 #include "X11Context.h"
 
+#include <unistd.h>
 #include <X11/Xmd.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -160,17 +161,17 @@ namespace Sierra
         return window;
     }
 
-    XEvent X11Context::DestroyWindow(const XID window) const
+     void X11Context::DestroyWindow(const XID window) const
+    {
+        // Hide window away
+        XUnmapWindow(display, window);
+        Flush();
+    }
+
+    XEvent X11Context::QueryWindowDestruction(const XID window) const
     {
         // Register window closing
         XEvent event = RegisterWindowEvent(window, GetAtom(AtomType::WM_PROTOCOLS), GetAtom(AtomType::WM_DELETE_WINDOW), CurrentTime);
-
-        // Hide and destroy window
-        XUnmapWindow(display, window);
-        XDestroyWindow(display, window);
-
-        // Dispatch all queried X11 events
-        Flush();
         return event;
     }
 
@@ -291,14 +292,8 @@ namespace Sierra
             Flush();
         }
 
-        // Construct data struct to use when checking events
-        struct ConfigureNotifyEventData
-        {
-            XID window;
-        };
-        ConfigureNotifyEventData configureNotifyEventData = { .window = window };
-
         // Wait until request has been processed
+        struct ConfigureNotifyEventData { XID window; } configureNotifyEventData = { .window = window };
         WaitForEvent(&configureNotifyEventData, [](Display*, XEvent* event, XPointer configureNotifyEventDataPtr) -> int
         {
             return event->type == ConfigureNotify && event->xproperty.window == reinterpret_cast<ConfigureNotifyEventData*>(configureNotifyEventDataPtr)->window;
@@ -333,13 +328,6 @@ namespace Sierra
             return;
         }
 
-        Flush();
-    }
-
-    void X11Context::CloseWindow(const XID window) const
-    {
-        HideWindow(window);
-        XDestroyWindow(display, window);
         Flush();
     }
 
@@ -393,9 +381,9 @@ namespace Sierra
         Flush();
     }
 
-    void X11Context::SetWindowOpacity(const XID window, float32 opacity) const
+    void X11Context::SetWindowOpacity(const XID window, const float32 opacity) const
     {
-        CARD32 value = static_cast<CARD32>(UINT32_MAX * static_cast<double>(opacity));
+        CARD32 value = static_cast<CARD32>(std::numeric_limits<uint32>::max() * static_cast<float64>(opacity));
         XChangeProperty(display, window, GetAtom(AtomType::NET_WM_WINDOW_OPACITY), XA_CARDINAL, 32, PropModeReplace, reinterpret_cast<uchar*>(&value), 1);
     }
 
@@ -468,7 +456,7 @@ namespace Sierra
         CARD32* value = nullptr;
         if (GetWindowProperty(window, GetAtom(AtomType::NET_WM_WINDOW_OPACITY), XA_CARDINAL, reinterpret_cast<uchar**>(&value)))
         {
-            opacity = static_cast<float32>(*value / static_cast<double>(UINT32_MAX));
+            opacity = static_cast<float32>(*value / static_cast<float64>(std::numeric_limits<uint32>::max()));
             XFree(value);
         }
 

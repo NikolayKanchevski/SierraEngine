@@ -16,16 +16,11 @@
 namespace Sierra
 {
 
-    struct Win32CursorManagerCreateInfo final : public CursorManagerCreateInfo
-    {
-        HWND window;
-    };
-
     class SIERRA_API Win32CursorManager final : public CursorManager
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Win32CursorManager(const Win32CursorManagerCreateInfo &createInfo);
+        explicit Win32CursorManager(HWND window, const CursorManagerCreateInfo &createInfo);
 
         /* --- SETTER METHODS --- */
         void SetCursorPosition(const Vector2 &position) override;
@@ -47,8 +42,8 @@ namespace Sierra
         bool justHidCursor = false;
 
         friend class Win32Window;
-        void OnUpdate();
-        void OnUpdateEnd();
+        void Update();
+        void UpdateEnd();
         void MouseMoveMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
     };

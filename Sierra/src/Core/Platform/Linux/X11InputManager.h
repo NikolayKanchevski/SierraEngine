@@ -16,16 +16,11 @@
 namespace Sierra
 {
 
-    struct X11InputManagerCreateInfo final : public InputManagerCreateInfo
-    {
-        const XkbExtension &xkbExtension;
-    };
-
     class SIERRA_API X11InputManager final : public InputManager
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit X11InputManager(const X11InputManagerCreateInfo &createInfo);
+        explicit X11InputManager(const XkbExtension &xkbExtension, const InputManagerCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
         bool IsKeyPressed(Key key) const override;
@@ -51,7 +46,7 @@ namespace Sierra
         Vector2 mouseScroll = { 0, 0 };
 
         friend class X11Window;
-        void OnUpdate();
+        void Update();
         void KeyPressEvent(const XEvent &event);
         void KeyReleaseEvent(const XEvent &event);
         void ButtonPressEvent(const XEvent &event);

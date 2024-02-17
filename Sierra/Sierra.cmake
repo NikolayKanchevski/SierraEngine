@@ -12,45 +12,45 @@ set(SIERRA_APPLICATION_NAME ${PROJECT_NAME} CACHE STRING "Name of the applicatio
 set(SIERRA_APPLICATION_VERSION_MAJOR 1 CACHE STRING "Major version of the application.")
 set(SIERRA_APPLICATION_VERSION_MINOR 0 CACHE STRING "Minor version of the application.")
 set(SIERRA_APPLICATION_VERSION_PATCH 0 CACHE STRING "Patch number of the application.")
-set(SIERRA_APPLICATION_ICON_ICO "../Media/SierraExecutableIcon.ico" CACHE FILEPATH "Absolute path to an .ico image to use as an icon for the generated binary on non-Apple platforms.")
+set(SIERRA_APPLICATION_ICON_ICO "../Media/SierraExecutableIcon.ico" CACHE FILEPATH "Absolute path to an .ico image to use as an icon for the generated binary on non-Apple desktop platforms.")
 set(SIERRA_APPLICATION_ICON_ICNS "../Media/SierraExecutableIcon.icns" CACHE FILEPATH "Absolute path to an .icns image to use as an icon for the generated binary on Apple platforms.")
+set(SIERRA_APPLICATION_ICON_PNG "../Media/SierraExecutableIcon.png" CACHE FILEPATH "Absolute path to an .icns image to use as an icon for the generated binary on Apple platforms.")
+
+option(SIERRA_BUILD_STATIC_LIBRARY "Whether to build the engine as a static library, which is embedded in the application." OFF)
+option(SIERRA_BUILD_SHARED_LIBRARY "Whether to build the engine as a shared library, which is shipped as a separate file (.dll, .dylib, etc.)" OFF)
 
 if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Debug")
-    option(SIERRA_DEBUG_BUILD "Wether to compile a debug build." ON)
+    option(SIERRA_ENABLE_LOGGING "Whether to enable Application and Engine logging." ON)
+    option(SIERRA_ENABLE_OPTIMIZATIONS "Whether to enable optimizations." OFF)
 else()
-    option(SIERRA_DEBUG_BUILD "Wether to compile a debug build." OFF)
-endif()
-
-option(SIERRA_BUILD_STATIC_LIBRARY "Wether to build the engine as a static library, which is embedded in the application." OFF)
-option(SIERRA_BUILD_SHARED_LIBRARY "Wether to build the engine as a shared library, which is shipped as a separate file (.dll, .dylib, etc.)" OFF)
-
-if(SIERRA_DEBUG_BUILD)
-    option(SIERRA_ENABLE_LOGGING "Wether to enable Application and Engine logging." ON)
-    option(SIERRA_ENABLE_OPTIMIZATIONS "Wether to enable speed optimizations."  OFF)
-else()
-    option(SIERRA_ENABLE_LOGGING "Wether to enable both Application and Engine logging." OFF)
-    option(SIERRA_ENABLE_OPTIMIZATIONS "Wether to enable speed optimizations." ON)
+    option(SIERRA_ENABLE_LOGGING "Whether to enable both Application and Engine logging." OFF)
+    option(SIERRA_ENABLE_OPTIMIZATIONS "Whether to enable optimizations." ON)
 endif()
 
 if(SIERRA_PLATFORM_WINDOWS OR SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_LINUX OR SIERRA_PLATFORM_ANDROID OR SIERRA_PLATFORM_iOS)
-    option(SIERRA_BUILD_VULKAN "Wether to build Vulkan and its resources." ON)
+    option(SIERRA_BUILD_VULKAN "Whether to build Vulkan and its resources." ON)
 endif()
 if(SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_iOS)
-    option(SIERRA_BUILD_METAL "Wether to build Metal and its resources." ON)
+     option(SIERRA_BUILD_METAL "Whether to build Metal and its resources." ON)
 endif()
 
-function(SierraBuildApplication SOURCE_FILES)
-    # === CHECK IF REQUIREMENTS ARE MET === #
-    if(CMAKE_CXX_STANDARD LESS 20)
-        message(FATAL_ERROR "[Sierra]: Sierra requires C++ 20 or newer!")
-    endif()
-    if(SIERRA_COMPILER_UNKNOWN)
-        message(FATAL_ERROR "[Sierra]: Sierra cannot be built with unrecognized compiler [${CMAKE_CXX_COMPILER_ID}]!")
-    endif()
-    if(SIERRA_PLATFORM_UNKNOWN)
-        message(FATAL_ERROR "[Sierra]: Sierra cannot be built for current platform [${CMAKE_SYSTEM_NAME}]!")
-    endif()
+option(SIERRA_BUILD_IMGUI "Whether to build native ImGui support." ON)
 
+# === CHECK IF REQUIREMENTS ARE MET === #
+if(NOT CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 20)
+    message(FATAL_ERROR "[Sierra]: Sierra requires C++ 20 to be explicitly selected before including Sierra.cmake!")
+endif()
+if(SIERRA_COMPILER_UNKNOWN)
+    message(FATAL_ERROR "[Sierra]: Sierra cannot be built with unrecognized compiler [${CMAKE_CXX_COMPILER_ID}]!")
+endif()
+if(SIERRA_PLATFORM_UNKNOWN)
+    message(FATAL_ERROR "[Sierra]: Sierra cannot be built for current platform [${CMAKE_SYSTEM_NAME}]!")
+endif()
+
+# === BUILD API LIBRARY === #
+add_subdirectory(${SIERRA_DIRECTORY}/src ${SIERRA_DIRECTORY}/src)
+
+function(SierraBuildApplication SOURCE_FILES)
     # === COMPILER SETTINGS === #
     if(SIERRA_ENABLE_OPTIMIZATIONS)
         if(SIERRA_COMPILER_MSVC)
@@ -65,18 +65,27 @@ function(SierraBuildApplication SOURCE_FILES)
         add_compile_options(/wd4251)
     endif()
 
+    if(SIERRA_BUILD_ANDROID_STUDIO_PROJECT)
+        BuildAndroidStudioProject()
+        return()
+    endif()
+
     # == OUTPUT GENERATION === #
-    add_subdirectory(${SIERRA_DIRECTORY}/src ${SIERRA_DIRECTORY}/src)
     if(SIERRA_PLATFORM_WINDOWS)
-        BuildWindowsExecutable()
+        BuildWindowsExecutable(${SOURCE_FILES})
     elseif(SIERRA_PLATFORM_LINUX)
-        BuildLinuxExecutable()
+        BuildLinuxExecutable(${SOURCE_FILES})
     elseif(SIERRA_PLATFORM_macOS)
-        BuildMacOSExecutable()
+        BuildMacOSExecutable(${SOURCE_FILES})
     elseif(SIERRA_PLATFORM_ANDROID)
-        BuildAndroidApplication()
+        BuildAndroidApplication(${SOURCE_FILES})
     elseif(SIERRA_PLATFORM_iOS)
-        BuildIOSApplication()
+        BuildIOSApplication(${SOURCE_FILES})
+    endif()
+
+    # Delete static library after build
+    if(SIERRA_BUILD_STATIC_LIBRARY)
+        add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:Sierra>)
     endif()
 
     # === ENGINE LINKING === #

@@ -68,15 +68,12 @@ namespace Sierra
 
     struct Win32ContextCreateInfo
     {
-        DWORD processID;
+
     };
 
-    class SIERRA_API Win32Context
+    class SIERRA_API Win32Context final
     {
     public:
-        /* --- CONSTRUCTORS --- */
-        explicit Win32Context(const Win32ContextCreateInfo &createInfo);
-
         /* --- POLLING METHODS --- */
         [[nodiscard]] HWND CreateWindow(const std::string &title, uint32 width, uint32 height, DWORD style, WNDPROC windowProc) const;
         void DestroyWindow(HWND window) const;
@@ -99,6 +96,9 @@ namespace Sierra
         ~Win32Context();
 
     private:
+        friend class WindowsContext;
+        explicit Win32Context(const Win32ContextCreateInfo &createInfo);
+
         HINSTANCE hInstance;
         HANDLE process;
         HICON processIcon;

@@ -6,39 +6,58 @@
 
 #include "../../Device.h"
 #include "VulkanResource.h"
-#include "VulkanInstance.h"
+
 #include <vk_mem_alloc.h>
+#include "VulkanInstance.h"
 
 namespace Sierra
 {
-
-    struct VulkanDeviceCreateInfo final : public DeviceCreateInfo
-    {
-        const VulkanInstance &instance;
-    };
 
     class SIERRA_API VulkanDevice final : public Device, public VulkanResource
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit VulkanDevice(const VulkanDeviceCreateInfo &createInfo);
+        VulkanDevice(const VulkanInstance &instance, const DeviceCreateInfo &createInfo);
+
+        /* --- POLLING METHODS --- */
+        void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer,  const std::initializer_list<std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait = { }) const override;
+        void WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const char* GetName() const override { return physicalDeviceProperties.deviceName; }
+        [[nodiscard]] inline const std::string& GetDeviceName() const override { return deviceName; }
+
+        [[nodiscard]] bool IsImageFormatSupported(ImageFormat format, ImageUsage usage) const override;
+        [[nodiscard]] bool IsImageSamplingSupported(ImageSampling sampling) const override;
+        [[nodiscard]] bool IsSamplerAnisotropySupported(SamplerAnisotropy anisotropy) const override;
 
         [[nodiscard]] inline VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
         [[nodiscard]] inline VkDevice GetLogicalDevice() const { return logicalDevice; }
+        [[nodiscard]] inline VmaAllocator GetMemoryAllocator() const { return vmaAllocator; }
+
+        [[nodiscard]] inline uint32 GetGeneralQueueFamily() const { return generalQueueFamily; }
+        [[nodiscard]] inline VkQueue GetGeneralQueue() const { return generalQueue; }
+
+        [[nodiscard]] inline VkSemaphore GetSharedSignalSemaphore() const { return sharedTimelineSemaphore; }
+        [[nodiscard]] inline uint64 GetNewSignalValue() const { lastReservedSignalValue++; return lastReservedSignalValue; }
+
+        [[nodiscard]] inline VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const;
+        [[nodiscard]] inline VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures() const;
 
         [[nodiscard]] bool IsExtensionLoaded(const std::string &extensionName) const;
         [[nodiscard]] inline auto& GetFunctionTable() const { return functionTable; }
 
+        /* --- SETTER METHODS --- */
+        void SetObjectName(VkHandle object, VkObjectType objectType, const std::string &name) const;
+
         /* --- DESTRUCTOR --- */
-        void Destroy() override;
+        ~VulkanDevice() override;
 
     private:
+        const VulkanInstance &instance;
+
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-        VkPhysicalDeviceProperties physicalDeviceProperties;
-        VkPhysicalDeviceFeatures physicalDeviceFeatures;
+        std::string deviceName;
+
         struct
         {
             #if defined(VK_VERSION_1_0)
@@ -640,7 +659,7 @@ namespace Sierra
             #endif
             #if defined(VK_KHR_video_encode_queue)
                 PFN_vkCmdEncodeVideoKHR vkCmdEncodeVideoKHR;
-            PFN_vkGetEncodedVideoSessionParametersKHR vkGetEncodedVideoSessionParametersKHR;
+                PFN_vkGetEncodedVideoSessionParametersKHR vkGetEncodedVideoSessionParametersKHR;
             #endif
             #if defined(VK_KHR_video_queue)
                 PFN_vkBindVideoSessionMemoryKHR vkBindVideoSessionMemoryKHR;
@@ -836,72 +855,82 @@ namespace Sierra
             #if (defined(VK_KHR_device_group) && defined(VK_KHR_swapchain)) || (defined(VK_KHR_swapchain) && defined(VK_VERSION_1_1))
                 PFN_vkAcquireNextImage2KHR vkAcquireNextImage2KHR;
             #endif
-        } functionTable{};
-
-        struct QueueFamilyIndices
-        {
-            std::optional<uint> transferFamily;
-            std::optional<uint> computeFamily;
-            std::optional<uint> graphicsFamily;
-        };
-
-        struct PhysicalDeviceInfo
-        {
-            float32 rating = -1.0f;
-            VkPhysicalDeviceFeatures features { };
-            VkPhysicalDeviceProperties properties { };
-            QueueFamilyIndices queueFamilyIndices;
-        };
+        } functionTable = { };
 
         VkDevice logicalDevice = VK_NULL_HANDLE;
         VmaAllocator vmaAllocator = VK_NULL_HANDLE;
 
-        VkQueue transferQueue = VK_NULL_HANDLE;
-        VkQueue computeQueue = VK_NULL_HANDLE;
-        VkQueue graphicsQueue = VK_NULL_HANDLE;
+        uint32 generalQueueFamily = 0;
+        VkQueue generalQueue = VK_NULL_HANDLE;
 
-        struct DeviceExtension
+        mutable uint64 lastReservedSignalValue = 0;
+        VkSemaphore sharedTimelineSemaphore = VK_NULL_HANDLE;
+
+        struct VulkanDeviceExtension
         {
             std::string name;
-            std::vector<DeviceExtension> dependencies;
-            bool requiredOnlyIfSupported = false;
             void* data = nullptr;
+            std::vector<VulkanDeviceExtension> dependencies = { };
+            bool requiredOnlyIfSupported = false;
         };
-
-        const std::vector<DeviceExtension> DEVICE_EXTENSIONS_TO_QUERY
+        const std::vector<VulkanDeviceExtension> DEVICE_EXTENSIONS_TO_QUERY
         {
+            #if SR_ENABLE_LOGGING
+            {
+                .name = VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
+                .dependencies = {
+                    {
+                        .name = VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+                        .requiredOnlyIfSupported = true
+                    }
+                },
+                .requiredOnlyIfSupported = true
+            },
+            #endif
+            #if SR_PLATFORM_APPLE
+            {
+                .name = VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME,
+                .data = new VkPhysicalDevicePortabilitySubsetFeaturesKHR {
+                    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR
+                },
+                .requiredOnlyIfSupported = true
+            },
+            #endif
+            {
+                // Core in Vulkan 1.1
+                .name = VK_KHR_MAINTENANCE_1_EXTENSION_NAME
+            },
+            {
+                .name = VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME,
+                .data = new VkPhysicalDeviceImagelessFramebufferFeaturesKHR {
+                    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES_KHR,
+                    .imagelessFramebuffer = VK_TRUE
+                },
+                .dependencies = {
+                    {
+                        .name = VK_KHR_IMAGE_FORMAT_LIST_EXTENSION_NAME
+                    }
+                }
+            },
+            {
+                .name = VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME
+            },
+            {
+                // Core in Vulkan 1.2
+                .name = VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME,
+                .data = new VkPhysicalDeviceTimelineSemaphoreFeaturesKHR {
+                    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR,
+                    .timelineSemaphore = VK_TRUE
+                }
+            },
             {
                 .name = VK_KHR_SWAPCHAIN_EXTENSION_NAME
             },
-            {
-                .name = VK_KHR_MAINTENANCE3_EXTENSION_NAME
-            },
-            {
-                .name = VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME,
-            },
-            {
-                .name = VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
-                .dependencies = {
-                    {
-                        .name = VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME,
-                        .dependencies = {
-                            { .name = VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME },
-                        }
-                    }
-                },
-                .data = new VkPhysicalDeviceDynamicRenderingFeaturesKHR {
-                    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR,
-                    .dynamicRendering = VK_TRUE
-                }
-            }
         };
         std::vector<Hash> loadedExtensions;
 
-        bool IsExtensionSupported(const char* extensionName, const std::vector<VkExtensionProperties> &supportedExtensions);
-        template<typename T>
-        bool AddExtensionIfSupported(const DeviceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions, T &pNextChain, std::vector<void*> &extensionDataToFree);
-        static PhysicalDeviceInfo GetPhysicalDeviceInfo(const VulkanInstance &instance, VkPhysicalDevice physicalDevice);
-        static QueueFamilyIndices GetQueueFamilyIndices(const VulkanInstance &instance, VkPhysicalDevice physicalDevice);
+        static bool IsExtensionSupported(const char* extensionName, const std::vector<VkExtensionProperties> &supportedExtensions);
+        bool AddExtensionIfSupported(const VulkanDeviceExtension &extension, const std::vector<VkExtensionProperties> &supportedExtensions, void* pNextChain, std::vector<const char*> &extensionList, std::vector<void*> &extensionDataToFree);
 
     };
 

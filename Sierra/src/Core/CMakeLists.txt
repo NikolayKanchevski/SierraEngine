@@ -1,15 +1,18 @@
 # Link source files
 target_sources(Sierra PRIVATE
+    Application.cpp
+    Application.h
     CursorManager.cpp
     CursorManager.h
+    EventDispatcher.h
     InputManager.cpp
     InputManager.h
     Key.h
     Logger.cpp
     Logger.h
     MouseButton.h
-    PlatformInstance.cpp
-    PlatformInstance.h
+    PlatformContext.cpp
+    PlatformContext.h
     ScopeProfiler.cpp
     ScopeProfiler.h
     Screen.cpp
@@ -25,11 +28,6 @@ target_sources(Sierra PRIVATE
     WindowManager.cpp
     WindowManager.h
 )
-
-# Link BetterEnums
-set(BETTER_ENUMS_DIRECTORY ../../vendor/BetterEnums)
-target_sources(Sierra PRIVATE ${BETTER_ENUMS_DIRECTORY}/enum.h)
-target_include_directories(Sierra PUBLIC ${BETTER_ENUMS_DIRECTORY})
 
 # Link glm
 set(GLM_DIRECTORY ../../vendor/glm)
@@ -67,3 +65,6 @@ endif()
 if(SIERRA_PLATFORM_iOS)
     add_subdirectory(Platform/iOS)
 endif()
+
+# Link precompiled headers
+target_precompile_headers(Sierra PUBLIC ../srpch.h)

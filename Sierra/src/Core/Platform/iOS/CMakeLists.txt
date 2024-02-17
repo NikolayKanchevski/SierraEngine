@@ -1,7 +1,11 @@
+# Disable automatic reference counting
+set_xcode_property(Sierra CLANG_ENABLE_OBJC_ARC "NO" "All")
+set_xcode_property(Sierra GCC_WARN_INHIBIT_ALL_WARNINGS "YES" "All")
+
 # Link source files
 target_sources(Sierra PRIVATE
-    iOSInstance.mm
-    iOSInstance.h
+    iOSContext.mm
+    iOSContext.h
     UIKitContext.mm
     UIKitContext.h
     UIKitScreen.mm

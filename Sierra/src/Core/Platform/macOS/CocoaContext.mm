@@ -2,6 +2,7 @@
 // Created by Nikolay Kanchevski on 5.11.23.
 //
 
+#define COCOA_CONTEXT_IMPLEMENTATION
 #include "CocoaContext.h"
 
 @interface CocoaApplicationDelegate : NSObject<NSApplicationDelegate>
@@ -94,13 +95,18 @@
     - (void) applicationDidFinishLaunching: (NSNotification*) notification
     {
         NSEvent* event = [NSEvent otherEventWithType: NSEventTypeApplicationDefined location: NSMakePoint(0, 0) modifierFlags: 0 timestamp: 0 windowNumber: 0 context: nil subtype: 0 data1: 0 data2: 0];
-        [cocoaContext->GetApplication() postEvent:event atStart: YES];
+        [cocoaContext->GetApplication() postEvent: event atStart: YES];
         [cocoaContext->GetApplication() stop: nil];
     }
 
     - (void) applicationDidChangeScreenParameters: (NSNotification*) notification
     {
         cocoaContext->ApplicationDidChangeScreenParameters(notification);
+    }
+
+    - (BOOL) applicationSupportsSecureRestorableState: (NSApplication*) application
+    {
+        return YES;
     }
 
 @end
@@ -113,9 +119,9 @@
 
     /* --- CONSTRUCTORS --- */
 
-    - (instancetype)initWithTitle: (const std::string&) title width: (const uint32) width height: (const uint32) height
+    - (instancetype) initWithTitle: (const std::string&) title width: (const uint32) width height: (const uint32) height
     {
-        self = [self initWithContentRect: NSMakeRect(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height)) styleMask: NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable backing: NSBackingStoreBuffered defer: NO];
+        self = [super initWithContentRect: NSMakeRect(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height)) styleMask: NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable backing: NSBackingStoreBuffered defer: NO];
         [self setTitle: @(title.c_str())];
         return self;
     }
@@ -141,23 +147,6 @@
 
 @end
 
-@interface Pool : NSAutoreleasePool
-@end
-
-@implementation Pool
-    - (instancetype) init
-    {
-        self = [super init];
-        return self;
-    }
-
-    - (void) drain
-    {
-        [super drain];
-        printf("RELEASE\n");
-    }
-@end
-
 namespace Sierra
 {
 
@@ -171,13 +160,13 @@ namespace Sierra
 
         // Assign delegate and filter out specific events
         [application setDelegate: applicationDelegate];
-        NSEvent* (^block)(NSEvent*) = ^ NSEvent* (NSEvent* event)
+        NSEvent* (^const block)(NSEvent*) = ^NSEvent* (NSEvent* event)
         {
             if ([event modifierFlags] & NSEventModifierFlagCommand) [[application keyWindow] sendEvent: event];
             return event;
         };
 
-        NSDictionary* defaults = @{@"ApplePressAndHoldEnabled": @NO};
+        NSDictionary* const defaults = @{@"ApplePressAndHoldEnabled": @NO};
         [[NSUserDefaults standardUserDefaults] registerDefaults: defaults];
 
         // Run application
@@ -192,7 +181,7 @@ namespace Sierra
 
     NSWindow* CocoaContext::CreateWindow(const std::string &title, uint32 width, uint32 height) const
     {
-        NSWindow* window = [[CocoaWindow alloc] initWithTitle: title width: width height: height];
+        NSWindow* const window = [[CocoaWindow alloc] initWithTitle: title width: width height: height];
         [window center];
         [window setTitle: @(title.c_str())];
         [window setCollectionBehavior: NSWindowCollectionBehaviorFullScreenPrimary | NSWindowCollectionBehaviorManaged];
@@ -209,23 +198,14 @@ namespace Sierra
         [window performClose: nil];
         [window setDelegate: nil];
         [window setContentView: nil];
-    }
-
-    bool CocoaContext::IsEventQueueEmpty() const
-    {
-        return PeekNextEvent() == nil;
+        [window release];
     }
 
     NSEvent* CocoaContext::PollNextEvent() const
     {
-        NSEvent* event = [application nextEventMatchingMask: NSEventMaskAny untilDate: [NSDate distantPast] inMode: NSDefaultRunLoopMode dequeue: YES];
+        NSEvent* const event = [application nextEventMatchingMask: NSEventMaskAny untilDate: [NSDate distantPast] inMode: NSDefaultRunLoopMode dequeue: YES];
         if (event != nil) [application sendEvent: event];
         return event;
-    }
-
-    NSEvent* CocoaContext::PeekNextEvent() const
-    {
-        return [application nextEventMatchingMask: NSEventMaskAny untilDate: [NSDate distantPast] inMode: NSDefaultRunLoopMode dequeue: NO];
     }
 
     /* --- GETTER METHODS --- */
@@ -257,7 +237,6 @@ namespace Sierra
         {
             screens.emplace_back(CocoaScreenPair{ screen, CocoaScreen({ .nsScreen = screen })});
         }
-        screens.shrink_to_fit();
     }
 
     /* --- DESTRUCTOR --- */
@@ -265,10 +244,7 @@ namespace Sierra
     CocoaContext::~CocoaContext()
     {
         [application setDelegate: nil];
-        application = nil;
-
         [applicationDelegate release];
-        applicationDelegate = nil;
     }
 
 }

@@ -15,10 +15,10 @@
     {
         typedef void CocoaApplication;
         typedef void CocoaApplicationDelegate;
-
         typedef void NSEvent;
         typedef void NSScreen;
         typedef void NSWindow;
+        #define nil nullptr
     }
 #else
     #include <Cocoa/Cocoa.h>
@@ -37,16 +37,11 @@ namespace Sierra
     class CocoaContext
     {
     public:
-        /* --- CONSTRUCTORS --- */
-        explicit CocoaContext(const CocoaContextCreateInfo &createInfo);
-
         /* --- POLLING METHODS --- */
         [[nodiscard]] NSWindow* CreateWindow(const std::string &title, uint32 width, uint32 height) const;
         void DestroyWindow(NSWindow* window) const;
 
-        [[nodiscard]] bool IsEventQueueEmpty() const;
         NSEvent* PollNextEvent() const;
-        NSEvent* PeekNextEvent() const;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline const CocoaApplication* GetApplication() const { return application; }
@@ -54,17 +49,15 @@ namespace Sierra
         [[nodiscard]] const CocoaScreen& GetPrimaryScreen() const;
         [[nodiscard]] const CocoaScreen& GetWindowScreen(const NSWindow* window) const;
 
-        /* --- EVENTS --- */
-        #if defined(__OBJC__)
-            void ApplicationDidChangeScreenParameters(const NSNotification* notification);
-        #endif
-
         /* --- DESTRUCTOR --- */
         ~CocoaContext();
 
     private:
-        CocoaApplication* application;
-        CocoaApplicationDelegate* applicationDelegate;
+        friend class macOSContext;
+        explicit CocoaContext(const CocoaContextCreateInfo &createInfo);
+
+        CocoaApplication* application = nil;
+        CocoaApplicationDelegate* applicationDelegate = nil;
 
         struct CocoaScreenPair
         {
@@ -73,6 +66,12 @@ namespace Sierra
         };
         std::vector<CocoaScreenPair> screens;
         void ReloadScreens();
+
+        #if defined(__OBJC__) && defined(COCOA_CONTEXT_IMPLEMENTATION)
+            public:
+                /* --- EVENTS --- */
+                void ApplicationDidChangeScreenParameters(const NSNotification* notification);
+        #endif
 
     };
 

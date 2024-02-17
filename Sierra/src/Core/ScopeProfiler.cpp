@@ -52,8 +52,8 @@ namespace Sierra
 
     ScopeProfiler::~ScopeProfiler()
     {
-        auto endTime = std::chrono::high_resolution_clock::now();
-        uint64 duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+        const auto endTime = std::chrono::high_resolution_clock::now();
+        const uint64 duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
         SR_INFO("{0} took {1}ms", scopeName, duration);
     }
 

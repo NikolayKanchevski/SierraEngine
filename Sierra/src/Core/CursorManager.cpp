@@ -40,7 +40,7 @@ namespace Sierra
 
     Vector2 CursorManager::GetCursorPosition() const
     {
-        return { std::numeric_limits<float32>::min(), std::numeric_limits<float32>::min() };
+        return { 0.0f, 0.0f };
     }
 
     float32 CursorManager::GetHorizontalDelta() const

@@ -9,8 +9,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Win32CursorManager::Win32CursorManager(const Win32CursorManagerCreateInfo &createInfo)
-        : CursorManager(createInfo), window(createInfo.window)
+    Win32CursorManager::Win32CursorManager(HWND window, const CursorManagerCreateInfo &createInfo)
+        : CursorManager(createInfo), window(window)
     {
         // Get cursor position
         POINT cursorPoint = { };
@@ -62,12 +62,12 @@ namespace Sierra
 
     /* --- PRIVATE METHODS  --- */
 
-    void Win32CursorManager::OnUpdate()
+    void Win32CursorManager::Update()
     {
         lastCursorPosition = cursorPosition;
     }
 
-    void Win32CursorManager::OnUpdateEnd()
+    void Win32CursorManager::UpdateEnd()
     {
         if (!cursorHidden) return;
 

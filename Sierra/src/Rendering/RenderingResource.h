@@ -19,32 +19,32 @@ namespace Sierra
         #define GRAPHICS_API_AUTO Undefined
     #endif
 
-    BETTER_ENUM(
-        GraphicsAPI, uint8,
+    enum class GraphicsAPI : uint8
+    {
         Undefined,
         Vulkan,
         DirectX,
         Metal,
         OpenGL,
         Auto = GRAPHICS_API_AUTO
-    );
+    };
     #undef GRAPHICS_API_AUTO
 
     class SIERRA_API RenderingResource
     {
     public:
         /* --- GETTER METHODS --- */
+        #if SR_ENABLE_LOGGING
+            [[nodiscard]] inline const std::string& GetName() const { return name; }
+        #else
+            [[nodiscard]] inline const std::string& GetName() const { static std::string name = ""; return name; }
+        #endif
         [[nodiscard]] inline virtual GraphicsAPI GetAPI() const = 0;
 
-        /* --- DESTRUCTOR --- */
-        virtual void Destroy() { }
-        virtual ~RenderingResource() = default;
-
-        /* --- OPERATORS --- */
-        RenderingResource(const RenderingResource&) = delete;
-        RenderingResource& operator=(const RenderingResource&) = delete;
-
     protected:
+        #if SR_ENABLE_LOGGING
+            std::string name;
+        #endif
         RenderingResource() = default;
 
     };
