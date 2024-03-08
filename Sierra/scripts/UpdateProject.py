@@ -21,7 +21,7 @@ def UpdateReadMe() -> None:
     linesOfCode: int = 0
 
     # Loop through all project files and check if the current file is a source file
-    for subdirectory in ['Sierra/', 'Sandbox/']:
+    for subdirectory in ['Sierra/', 'SierraEngine/']:
         for root, dirs, files in os.walk(ENGINE_ROOT_DIRECTORY + subdirectory):
             for file in files:
                 for extension in SOURCE_FILE_EXTENSIONS:

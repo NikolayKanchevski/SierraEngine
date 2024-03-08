@@ -84,13 +84,16 @@ namespace Sierra
         uchar* atlasMemory = nullptr;
         ImGui::GetIO().Fonts->GetTexDataAsAlpha8(&atlasMemory, &atlasWidth, &atlasHeight);
 
+        constexpr ImageFormat FONT_ATLAS_IMAGE_FORMAT = ImageFormat::R8_UNorm;
+        constexpr ImageUsage FONT_ATLAS_IMAGE_USAGE = ImageUsage::Sample | ImageUsage::DestinationMemory;
+
         // Create default font atlas image
-        SR_ERROR_IF(!renderingContext.GetDevice().IsImageFormatSupported({ .channels = ImageChannels::R, .memoryType = ImageMemoryType::UNorm8 }, ImageUsage::Sample | ImageUsage::DestinationMemory), "Cannot create default ImGui font, as required image format [{ .channels = ImageChannels::R, .memoryType = ImageMemoryType::UNorm8 }] is unsupported!");
+        SR_ERROR_IF(!renderingContext.GetDevice().IsImageFormatSupported(FONT_ATLAS_IMAGE_FORMAT, FONT_ATLAS_IMAGE_USAGE), "Cannot create default ImGui font, as required image format [{ .channels = ImageChannels::R, .memoryType = ImageMemoryType::UNorm8 }] is unsupported!");
         sharedResources.defaultFontAtlas = renderingContext.CreateImage({
             .name = "Shared ImGui Render Task Font Atlas",
             .width = static_cast<uint32>(atlasWidth),
             .height = static_cast<uint32>(atlasHeight),
-            .format = { .channels = ImageChannels::R, .memoryType = ImageMemoryType::UNorm8 },
+            .format = ImageFormat::R8_UNorm,
             .usage = ImageUsage::DestinationMemory | ImageUsage::Sample
         });
 

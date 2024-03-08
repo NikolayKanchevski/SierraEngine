@@ -24,7 +24,7 @@ namespace Sierra
         /* --- POLLING METHODS --- */
         template<typename... Args>
         #if SR_ENABLE_LOGGING
-            constexpr static void LogMessage(const MessageSeverity messageSeverity, fmt::format_string<Args...> fmt, Args &&...args)
+            constexpr static void LogMessage(const MessageSeverity messageSeverity, fmt::format_string<Args...> fmt, Args&&... args)
             {
                 switch (messageSeverity)
                 {
@@ -49,23 +49,23 @@ namespace Sierra
                 }
             }
         #else
-            constexpr static void LogMessage(const MessageSeverity messageSeverity, Args &&...args) { }
+            constexpr static void LogMessage(const MessageSeverity messageSeverity, Args&&... args) { }
         #endif
 
         template<typename... Args>
         #if SR_ENABLE_LOGGING
-            constexpr static void LogMessageIf(const MessageSeverity messageSeverity, const bool expression, fmt::format_string<Args...> fmt, Args &&...args)
+            constexpr static void LogMessageIf(const MessageSeverity messageSeverity, const bool expression, fmt::format_string<Args...> fmt, Args&&... args)
             {
                 if (expression) LogMessage(messageSeverity, fmt, std::forward<Args>(args)...);
             }
         #else
-            constexpr static void LogMessageIf(const MessageSeverity messageSeverity, const bool expression, Args &&...args) { }
+            constexpr static void LogMessageIf(const MessageSeverity messageSeverity, const bool expression, Args&&... args) { }
         #endif
 
         #if defined(SR_LIBRARY_IMPLEMENTATION)
             template<typename... Args>
             #if SR_ENABLE_LOGGING
-                constexpr static void LogCoreMessage(const MessageSeverity messageSeverity, fmt::format_string<Args...> fmt, Args &&...args)
+                constexpr static void LogCoreMessage(const MessageSeverity messageSeverity, fmt::format_string<Args...> fmt, Args&&... args)
                 {
                     #if !SR_ENABLE_LOGGING
                         return;
@@ -94,17 +94,17 @@ namespace Sierra
                     }
                 }
             #else
-                constexpr static void LogCoreMessage(const MessageSeverity messageSeverity, Args &&...args) { }
+                constexpr static void LogCoreMessage(const MessageSeverity messageSeverity, Args&&... args) { }
             #endif
 
             template<typename... Args>
             #if SR_ENABLE_LOGGING
-                constexpr static void LogCoreMessageIf(const MessageSeverity messageSeverity, const bool expression, fmt::format_string<Args...> fmt, Args &&...args)
+                constexpr static void LogCoreMessageIf(const MessageSeverity messageSeverity, const bool expression, fmt::format_string<Args...> fmt, Args&&... args)
                 {
                     if (expression) LogCoreMessage(messageSeverity, fmt, std::forward<Args>(args)...);
                 }
             #else
-                constexpr static void LogCoreMessageIf(const MessageSeverity messageSeverity, const bool expression, Args &&...args) { }
+                constexpr static void LogCoreMessageIf(const MessageSeverity messageSeverity, const bool expression, Args&&... args) { }
             #endif
         #endif
 

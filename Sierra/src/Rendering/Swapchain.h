@@ -74,7 +74,7 @@ namespace Sierra
         [[nodiscard]] inline uint32 GetHeight() const { return GetImage(0)->GetHeight(); };
 
         /* --- EVENTS --- */
-        template<typename T> void OnEvent(SwapchainEventCallback<T> Callback) { static_assert(std::is_base_of_v<SwapchainEvent, T> && !std::is_same_v<SwapchainEvent, T>, "Template function accepts derived swapchain events only!"); }
+        template<typename T> requires (std::is_base_of_v<SwapchainEvent, T> && !std::is_same_v<SwapchainEvent, T>) void OnEvent(SwapchainEventCallback<T> Callback) { }
 
         /* --- OPERATORS --- */
         Swapchain(const Swapchain&) = delete;

@@ -89,8 +89,8 @@ namespace Sierra
         virtual void BindImage(uint32 binding, const std::unique_ptr<Image> &image, uint32 arrayIndex = 0) = 0;
         virtual void BindImage(uint32 binding, const std::unique_ptr<Image> &image, const std::unique_ptr<Sampler> &sampler, uint32 arrayIndex = 0) = 0;
 
-        virtual void BeginDebugRegion(const std::string &regionName, const Color &color = Color(1.0f, 1.0f, 0.0f, 1.0f)) = 0;
-        virtual void InsertDebugMarker(const std::string &markerName, const Color &color = Color(1.0f, 1.0f, 0.0f, 1.0f)) = 0;
+        virtual void BeginDebugRegion(const std::string &regionName, const ColorRGBA32 &color = { 1.0f, 1.0f, 0.0f, 1.0f }) = 0;
+        virtual void InsertDebugMarker(const std::string &markerName, const ColorRGBA32 &color = { 1.0f, 1.0f, 0.0f, 1.0f }) = 0;
         virtual void EndDebugRegion() = 0;
 
         inline std::unique_ptr<Buffer>& QueueBufferForDestruction(std::unique_ptr<Buffer> &&buffer) { return queuedBuffers.emplace(std::move(buffer)); }

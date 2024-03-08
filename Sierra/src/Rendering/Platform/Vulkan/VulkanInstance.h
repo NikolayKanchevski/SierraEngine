@@ -292,7 +292,7 @@ namespace Sierra
             #endif
         };
 
-        std::vector<Hash> loadedExtensions;
+        std::vector<hash> loadedExtensions;
         bool AddExtensionIfSupported(const InstanceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions);
 
         #if SR_ENABLE_LOGGING

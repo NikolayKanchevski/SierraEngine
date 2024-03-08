@@ -8,7 +8,7 @@
 
 # What is Sierra Engine?
 
-An **open-source** rendering engine based on **[C++ 20](https://en.cppreference.com/w/cpp/20/)**, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). Built on top of the **[Vulkan](https://www.vulkan.org/)** and [Metal](https://developer.apple.com/metal/) rendering APIs, it provides support for **Windows 7-11**, **macOS**, **Linux**, **Android** and **iOS**, but is planned to also feature other native APIs (like **[DirectX](https://developer.nvidia.com/directx)**) and support consoles.
+An **open-source** rendering engine based on **[C++ 20](https://en.cppreference.com/w/cpp/20/)**, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). Built on top of the **[Vulkan](https://www.vulkan.org/)** and [Metal](https://developer.apple.com/metal/) rendering APIs, it provides support for **Windows 7-11**, **macOS**, **Linux**, **Android** and **iOS**, and is planned to also feature other native APIs (like **[DirectX](https://developer.nvidia.com/directx)**), as well as support consoles.
 
 <br>
 
@@ -16,7 +16,7 @@ An **open-source** rendering engine based on **[C++ 20](https://en.cppreference.
 
 **Compatible compilers:**
 
-These are the compilers, which are tested and confirmed to be able to build the project. Some other compilers may still be used, though there could be issues.
+The following compilers have been tested and confirmed to be able to successfully build the project. Other ones may still be used, though there could be building issues.
 
 * [![MSVC Compiler Status](https://img.shields.io/badge/MSVC-2019\/2022-blue.svg)](https://visualstudio.microsoft.com/vs/)
 * [![Clang LLVM Compiler Status](https://img.shields.io/badge/Clang-LLVM-blue.svg)](https://clang.llvm.org/)
@@ -55,7 +55,9 @@ If you clone the repository directly from an IDE, you may need to also run this:
 $ git submodule update --init --recursive
 ```
 
-And there you have it! You can now create your very own application or play around with the engine itself.
+And there you have it! You can now create your very own application using the Sierra API, which is contained in the [Sierra](https://github.com/NikichaTV/SierraEngine/tree/842946e5840b1bd03f32df8e2f2da3b6ae46ff2d/Sierra) subdirectory. Unfortunately, there is not an existing editor, however, rest assured, one is on its way!
+
+Tip: In order to get a better grasp of how the API works, you can always take a look at the [Sandbox](https://github.com/NikichaTV/SierraEngine/tree/842946e5840b1bd03f32df8e2f2da3b6ae46ff2d/Sandbox) project, which has a few ready-to-use examples.
 
 <br>
 
@@ -65,31 +67,11 @@ And there you have it! You can now create your very own application or play arou
 // TODO: Add to this section :D
 ```
 
-## 📄 Documentation
-
-Wondering how to use the engine? You can check out the online documentation [here](https://sierra.nikichatv.com/Documentation/).
-
 <br>
 
-## 🔮 What's to come?
+## 📄 Documentation
 
-- [ ] HDR
-- [ ] PBR
-- [ ] Culling
-- [ ] Threading
-- [ ] Instancing
-- [ ] C# Scripting
-- [ ] Transparency
-- [ ] Custom Gizmos
-- [ ] Debug Renderer
-- [ ] Shadow Mapping
-- [ ] Virtual Texturing
-- [x] Arena Allocator
-- [ ] Post-Processing
-- [ ] Indirect Drawing
-- [x] Early Depth Pass
-- [ ] Scene Serialization
-- [ ] Advanced Anti-Aliasing Techniques
+Documentation has not yet been published. The website that will be hosting it, however, is already done. Someone just needs to take the time to write and upload it, but this will be postponed for when a stable version of the project has been released, which is scheduled for the distant future.
 
 <br>
 
@@ -97,6 +79,11 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 **Frameworks used:**
 
+Within Engine:
+* [stb](https://github.com/nothings/stb/) - An all-round image loader.
+* [KTX Software](https://github.com/KhronosGroup/KTX-Software) - Used to compress texture assets.
+
+Within API:
 * [GLM](https://github.com/g-truc/glm/) - Provides the engine with a powerful set of tools for solving linear algebra problems.
 * [spdlog](https://github.com/gabime/spdlog) - Used for fast, asynchronous debug-only logging.
 * [Vulkan](https://www.vulkan.org/) - Allows for incredibly fast rendering on a wide variety of platforms.
@@ -105,7 +92,6 @@ Wondering how to use the engine? You can check out the online documentation [her
 * [ios-cmake](https://github.com/leetal/ios-cmake) - Essential for building the engine on iOS.
 * [ImGui](https://github.com/ocornut/imgui) - Used in the ImGui UI extension.
 * [My Brain](https://ih1.redbubble.net/templateImage.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
-
 <br>
 
 **Software used:**
@@ -121,7 +107,7 @@ Wondering how to use the engine? You can check out the online documentation [her
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LineCounter">Total lines of code: 23,157</p>
-<p align="center" id="LastUpdated">Last updated: 16/02/2024 </p>
+<p align="center" id="LineCounter">Total lines of code: 24,563</p>
+<p align="center" id="LastUpdated">Last updated: 08/03/2024 </p>
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -9,6 +9,14 @@
 namespace Sierra
 {
 
+    enum class FileWriteFlags : uint8
+    {
+        None          = 0x0000,
+        Create        = 0x0001,
+        Overwrite     = 0x0002,
+    };
+    SR_DEFINE_ENUM_FLAG_OPERATORS(FileWriteFlags);
+
     class SIERRA_API File final
     {
     public:
@@ -19,8 +27,8 @@ namespace Sierra
         static bool DeleteFile(const std::filesystem::path &filePath);
         static bool DeleteDirectory(const std::filesystem::path &directoryPath);
 
-        [[nodiscard]] static std::vector<char> ReadFile(const std::filesystem::path &filePath);
-        static bool WriteToFile(const std::filesystem::path &filePath, const char* data, uint64 dataSize, bool overwrite, bool createFile = true);
+        [[nodiscard]] static std::vector<uint8> ReadFile(const std::filesystem::path &filePath, uint64 sourceByteOffset = 0, uint64 memoryRange = 0);
+        static bool WriteToFile(const std::filesystem::path &filePath, const void* memory, uint64 memoryRange, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0, FileWriteFlags writeFlags = FileWriteFlags::Create);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] static bool FileExists(const std::filesystem::path &filePath);

@@ -9,12 +9,11 @@
 #endif
 
 #include "../../Screen.h"
-#include "UIKitSelectorBridge.h"
 
 #if !defined(__OBJC__)
     namespace Sierra
     {
-        typedef void UIScreen;
+        using UIScreen = void;
     }
 #else
     #include <UIKit/UIKit.h>

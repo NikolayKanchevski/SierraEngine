@@ -13,7 +13,7 @@
 #if !defined(__OBJC__)
     namespace Sierra
     {
-        typedef void NSScreen;
+        using NSScreen = void;
     }
 #else
     #include <Cocoa/Cocoa.h>
@@ -43,7 +43,7 @@ namespace Sierra
         [[nodiscard]] inline ScreenOrientation GetOrientation() const override { return size.x >= size.y ? ScreenOrientation::LandscapeNormal : ScreenOrientation::PortraitNormal; }
 
         /* --- MOVE SEMANTICS --- */
-        CocoaScreen(CocoaScreen &&other);
+        CocoaScreen(CocoaScreen&& other);
 
     private:
         std::string name;

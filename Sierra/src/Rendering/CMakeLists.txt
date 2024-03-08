@@ -1,4 +1,3 @@
-# Link source files
 target_sources(Sierra PRIVATE
     Buffer.cpp
     Buffer.h
@@ -29,7 +28,6 @@ target_sources(Sierra PRIVATE
     Swapchain.h
 )
 
-# Link platform-specific source files and libraries
 if(SIERRA_BUILD_VULKAN)
     add_subdirectory(Platform/Vulkan)
 endif()

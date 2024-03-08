@@ -25,7 +25,6 @@
         return self;
     }
 
-    // Application closed:
     - (NSApplicationTerminateReply) applicationShouldTerminate: (NSApplication*) sender
     {
         // Close all windows
@@ -38,7 +37,6 @@
         return NSTerminateCancel;
     }
 
-    // Application being setup:
     - (void) applicationWillFinishLaunching: (NSNotification*) notification
     {
         if ([[NSBundle mainBundle] pathForResource: @"MainMenu" ofType: @"nib"])
@@ -91,7 +89,6 @@
         }
     }
 
-    // Application already setup:
     - (void) applicationDidFinishLaunching: (NSNotification*) notification
     {
         NSEvent* event = [NSEvent otherEventWithType: NSEventTypeApplicationDefined location: NSMakePoint(0, 0) modifierFlags: 0 timestamp: 0 windowNumber: 0 context: nil subtype: 0 data1: 0 data2: 0];
@@ -183,7 +180,6 @@ namespace Sierra
     {
         NSWindow* const window = [[CocoaWindow alloc] initWithTitle: title width: width height: height];
         [window center];
-        [window setTitle: @(title.c_str())];
         [window setCollectionBehavior: NSWindowCollectionBehaviorFullScreenPrimary | NSWindowCollectionBehaviorManaged];
         [window setAcceptsMouseMovedEvents: YES];
         [window setRestorable: NO];

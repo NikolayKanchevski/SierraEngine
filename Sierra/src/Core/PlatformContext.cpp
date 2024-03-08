@@ -6,19 +6,19 @@
 
 #if SR_PLATFORM_WINDOWS
     #include "Platform/Windows/WindowsContext.h"
-    typedef Sierra::WindowsContext NativeInstance;
+    using NativeInstance = Sierra::WindowsContext;
 #elif SR_PLATFORM_LINUX
     #include "Platform/Linux/LinuxContext.h"
-    typedef Sierra::LinuxContext NativeInstance;
+    using NativeInstance = Sierra::LinuxContext;
 #elif SR_PLATFORM_macOS
     #include "Platform/macOS/macOSContext.h"
-    typedef Sierra::macOSContext NativeInstance;
+    using NativeInstance = Sierra::macOSContext;
 #elif SR_PLATFORM_iOS
     #include "Platform/iOS/iOSContext.h"
-    typedef Sierra::iOSContext NativeInstance;
+    using NativeInstance = Sierra::iOSContext;
 #elif SR_PLATFORM_ANDROID
     #include "Platform/Android/AndroidContext.h"
-    typedef Sierra::AndroidContext NativeInstance;
+    using NativeInstance = Sierra::AndroidContext;
 #endif
 
 namespace Sierra

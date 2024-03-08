@@ -13,7 +13,7 @@
 #if !defined(__OBJC__)
     namespace Sierra
     {
-        typedef void NSWindow;
+        using NSWindow = void;
     }
 #else
     #include <Cocoa/Cocoa.h>

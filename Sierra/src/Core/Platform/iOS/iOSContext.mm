@@ -4,10 +4,11 @@
 
 #include "iOSContext.h"
 
-#include "UIKitTemporaryCreateInfoStorage.h"
-
 namespace Sierra
 {
+
+    PlatformApplicationRunInfo iOSApplicationRunInfo;
+    UIKitContext* iOSUIKitContext;
 
     /* --- CONSTRUCTORS --- */
 
@@ -21,12 +22,11 @@ namespace Sierra
 
     void iOSContext::RunApplication(const PlatformApplicationRunInfo &runInfo)
     {
-        // Save current run info
-        Sierra::UIKitTemporaryCreateInfoStorage::Push({ .context = &uiKitContext, .runInfo = runInfo });
+        iOSApplicationRunInfo = runInfo;
+        iOSUIKitContext = &uiKitContext;
 
         // Run application
-        char** argv = nil; // Gets rid of compiler warning
-        UIApplicationMain(0, argv, nil, @"UIKitApplicationDelegate");
+        UIApplicationMain(0, nil, nil, @"UIKitApplicationDelegate");
     }
 
 }

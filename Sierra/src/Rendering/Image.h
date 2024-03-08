@@ -15,93 +15,334 @@ namespace Sierra
         Cube
     };
 
-    enum class ImageChannels : uint8
+    enum class ImageFormat : uint16
     {
-        R,
-        RG,
-        RGB,
-        RGBA,
-        BGRA,
-        D
+        Undefined,
+
+        R8_Int,
+        R8_UInt,
+        R8_Norm,
+        R8_UNorm,
+        R8_SRGB,
+        R8G8_Int,
+        R8G8_UInt,
+        R8G8_Norm,
+        R8G8_UNorm,
+        R8G8_SRGB,
+        R8G8B8_Int,
+        R8G8B8_UInt,
+        R8G8B8_Norm,
+        R8G8B8_UNorm,
+        R8G8B8_SRGB,
+        R8G8B8A8_Int,
+        R8G8B8A8_UInt,
+        R8G8B8A8_Norm,
+        R8G8B8A8_UNorm,
+        R8G8B8A8_SRGB,
+
+        R16_Int,
+        R16_UInt,
+        R16_Norm,
+        R16_UNorm,
+        R16_Float,
+        R16G16_Int,
+        R16G16_UInt,
+        R16G16_Norm,
+        R16G16_UNorm,
+        R16G16_Float,
+        R16G16B16_Int,
+        R16G16B16_UInt,
+        R16G16B16_Norm,
+        R16G16B16_UNorm,
+        R16G16B16_Float,
+        R16G16B16A16_Int,
+        R16G16B16A16_UInt,
+        R16G16B16A16_Norm,
+        R16G16B16A16_UNorm,
+        R16G16B16A16_Float,
+
+        R32_Int,
+        R32_UInt,
+        R32_Float,
+        R32G32_Int,
+        R32G32_UInt,
+        R32G32_Float,
+        R32G32B32_Int,
+        R32G32B32_UInt,
+        R32G32B32_Float,
+        R32G32B32A32_Int,
+        R32G32B32A32_UInt,
+        R32G32B32A32_Float,
+
+        R64_Int,
+        R64_UInt,
+        R64_Float,
+        R64G64_Int,
+        R64G64_UInt,
+        R64G64_Float,
+        R64G64B64_Int,
+        R64G64B64_UInt,
+        R64G64B64_Float,
+        R64G64B64A64_Int,
+        R64G64B64A64_UInt,
+        R64G64B64A64_Float,
+
+        D16_UNorm,
+        D32_Float,
+
+        B8G8R8A8_UNorm,
+        B8G8R8A8_SRGB,
+
+        BC1_RGB_UNorm,
+        BC1_RGB_SRGB,
+        BC1_RGBA_UNorm,
+        BC1_RGBA_SRGB,
+        BC3_RGBA_UNorm,
+        BC3_RGBA_SRGB,
+        BC4_R_Norm,
+        BC4_R_UNorm,
+        BC5_RG_Norm,
+        BC5_RG_UNorm,
+        BC6_HDR_RGB_Float,
+        BC6_HDR_RGB_UFloat,
+        BC7_RGB_UNorm,
+        BC7_RGB_SRGB,
+        BC7_RGBA_UNorm,
+        BC7_RGBA_SRGB,
+
+        ASTC_4x4_UNorm,
+        ASTC_4x4_SRGB,
+        ASTC_8x8_UNorm,
+        ASTC_8x8_SRGB
     };
 
-    [[nodiscard]] constexpr static uint32 ImageChannelsToCount(const ImageChannels imageChannels)
+    [[nodiscard]] constexpr uint8 ImageFormatToChannelCount(const ImageFormat format)
     {
-        switch (imageChannels)
+        switch (format)
         {
-            case ImageChannels::R:
-            case ImageChannels::D:          return 1;
-            case ImageChannels::RG:         return 2;
-            case ImageChannels::RGB:        return 3;
-            case ImageChannels::RGBA:
-            case ImageChannels::BGRA:       return 4;
+            case ImageFormat::Undefined:                        break;
+
+            case ImageFormat::R8_Int:
+            case ImageFormat::R8_UInt:
+            case ImageFormat::R8_Norm:
+            case ImageFormat::R8_UNorm:
+            case ImageFormat::R8_SRGB:
+            case ImageFormat::R16_Int:
+            case ImageFormat::R16_UInt:
+            case ImageFormat::R16_Norm:
+            case ImageFormat::R16_UNorm:
+            case ImageFormat::R16_Float:
+            case ImageFormat::R32_Int:
+            case ImageFormat::R32_UInt:
+            case ImageFormat::R32_Float:
+            case ImageFormat::R64_Int:
+            case ImageFormat::R64_UInt:
+            case ImageFormat::R64_Float:
+
+            case ImageFormat::D16_UNorm:
+            case ImageFormat::D32_Float:
+
+            case ImageFormat::BC4_R_UNorm:
+            case ImageFormat::BC4_R_Norm:
+
+            case ImageFormat::ASTC_4x4_UNorm:
+            case ImageFormat::ASTC_4x4_SRGB:
+            case ImageFormat::ASTC_8x8_UNorm:
+            case ImageFormat::ASTC_8x8_SRGB:               return 1;
+
+            case ImageFormat::R8G8_Int:
+            case ImageFormat::R8G8_UInt:
+            case ImageFormat::R8G8_Norm:
+            case ImageFormat::R8G8_UNorm:
+            case ImageFormat::R8G8_SRGB:
+            case ImageFormat::R16G16_Int:
+            case ImageFormat::R16G16_UInt:
+            case ImageFormat::R16G16_Norm:
+            case ImageFormat::R16G16_UNorm:
+            case ImageFormat::R16G16_Float:
+            case ImageFormat::R32G32_Int:
+            case ImageFormat::R32G32_UInt:
+            case ImageFormat::R32G32_Float:
+            case ImageFormat::R64G64_Int:
+            case ImageFormat::R64G64_UInt:
+            case ImageFormat::R64G64_Float:
+
+            case ImageFormat::BC5_RG_Norm:
+            case ImageFormat::BC5_RG_UNorm:                 return 2;
+
+            case ImageFormat::R8G8B8_Int:
+            case ImageFormat::R8G8B8_UInt:
+            case ImageFormat::R8G8B8_Norm:
+            case ImageFormat::R8G8B8_UNorm:
+            case ImageFormat::R8G8B8_SRGB:
+            case ImageFormat::R16G16B16_Int:
+            case ImageFormat::R16G16B16_UInt:
+            case ImageFormat::R16G16B16_Norm:
+            case ImageFormat::R16G16B16_UNorm:
+            case ImageFormat::R16G16B16_Float:
+            case ImageFormat::R32G32B32_Int:
+            case ImageFormat::R32G32B32_UInt:
+            case ImageFormat::R32G32B32_Float:
+            case ImageFormat::R64G64B64_Int:
+            case ImageFormat::R64G64B64_UInt:
+            case ImageFormat::R64G64B64_Float:
+
+            case ImageFormat::BC6_HDR_RGB_Float:
+            case ImageFormat::BC6_HDR_RGB_UFloat:           return 3;
+
+            case ImageFormat::R8G8B8A8_Int:
+            case ImageFormat::R8G8B8A8_UInt:
+            case ImageFormat::R8G8B8A8_Norm:
+            case ImageFormat::R8G8B8A8_UNorm:
+            case ImageFormat::R8G8B8A8_SRGB:
+            case ImageFormat::R16G16B16A16_Int:
+            case ImageFormat::R16G16B16A16_UInt:
+            case ImageFormat::R16G16B16A16_Norm:
+            case ImageFormat::R16G16B16A16_UNorm:
+            case ImageFormat::R16G16B16A16_Float:
+            case ImageFormat::R32G32B32A32_Int:
+            case ImageFormat::R32G32B32A32_UInt:
+            case ImageFormat::R32G32B32A32_Float:
+            case ImageFormat::R64G64B64A64_Int:
+            case ImageFormat::R64G64B64A64_UInt:
+            case ImageFormat::R64G64B64A64_Float:
+
+            case ImageFormat::B8G8R8A8_UNorm:
+            case ImageFormat::B8G8R8A8_SRGB:
+
+            case ImageFormat::BC1_RGBA_UNorm:
+            case ImageFormat::BC1_RGBA_SRGB:
+            case ImageFormat::BC1_RGB_UNorm:
+            case ImageFormat::BC1_RGB_SRGB:
+            case ImageFormat::BC3_RGBA_UNorm:
+            case ImageFormat::BC3_RGBA_SRGB:
+            case ImageFormat::BC7_RGB_UNorm:
+            case ImageFormat::BC7_RGB_SRGB:
+            case ImageFormat::BC7_RGBA_UNorm:
+            case ImageFormat::BC7_RGBA_SRGB:            return 4;
         }
+
+        return 0;
     }
 
-    enum class ImageMemoryType : uint8
+    [[nodiscard]] constexpr uint8 ImageFormatToPixelMemorySize(const ImageFormat format)
     {
-        Int8,
-        UInt8,
-        Norm8,
-        UNorm8,
-        SRGB8,
-        Int16,
-        UInt16,
-        Norm16,
-        UNorm16,
-        Float16,
-        Int32,
-        UInt32,
-        Float32,
-        Int64,
-        UInt64,
-        Float64
-    };
-
-    [[nodiscard]] constexpr static uint32 ImageMemoryTypeToMemorySize(const ImageMemoryType memoryType)
-    {
-        switch (memoryType)
+        switch (format)
         {
-            case ImageMemoryType::Int8:
-            case ImageMemoryType::UInt8:
-            case ImageMemoryType::Norm8:
-            case ImageMemoryType::UNorm8:
-            case ImageMemoryType::SRGB8:         return 1;
-            case ImageMemoryType::Int16:
-            case ImageMemoryType::UInt16:
-            case ImageMemoryType::Norm16:
-            case ImageMemoryType::UNorm16:
-            case ImageMemoryType::Float16:       return 2;
-            case ImageMemoryType::Int32:
-            case ImageMemoryType::UInt32:
-            case ImageMemoryType::Float32:       return 4;
-            case ImageMemoryType::Int64:
-            case ImageMemoryType::UInt64:
-            case ImageMemoryType::Float64:       return 8;
+            case ImageFormat::Undefined:                        break;
+
+            case ImageFormat::R8_Int:
+            case ImageFormat::R8_UInt:
+            case ImageFormat::R8_Norm:
+            case ImageFormat::R8_UNorm:
+            case ImageFormat::R8_SRGB:                          return 1 * 1;
+            case ImageFormat::R8G8_Int:
+            case ImageFormat::R8G8_UInt:
+            case ImageFormat::R8G8_Norm:
+            case ImageFormat::R8G8_UNorm:
+            case ImageFormat::R8G8_SRGB:                        return 2 * 1;
+            case ImageFormat::R8G8B8_Int:
+            case ImageFormat::R8G8B8_UInt:
+            case ImageFormat::R8G8B8_Norm:
+            case ImageFormat::R8G8B8_UNorm:
+            case ImageFormat::R8G8B8_SRGB:                      return 3 * 1;
+            case ImageFormat::R8G8B8A8_Int:
+            case ImageFormat::R8G8B8A8_UInt:
+            case ImageFormat::R8G8B8A8_Norm:
+            case ImageFormat::R8G8B8A8_UNorm:
+            case ImageFormat::R8G8B8A8_SRGB:
+            case ImageFormat::B8G8R8A8_UNorm:
+            case ImageFormat::B8G8R8A8_SRGB:                    return 4 * 1;
+
+            case ImageFormat::R16_Int:
+            case ImageFormat::R16_UInt:
+            case ImageFormat::R16_Norm:
+            case ImageFormat::R16_UNorm:
+            case ImageFormat::R16_Float:
+            case ImageFormat::D16_UNorm:                        return 1 * 2;
+            case ImageFormat::R16G16_Int:
+            case ImageFormat::R16G16_UInt:
+            case ImageFormat::R16G16_Norm:
+            case ImageFormat::R16G16_UNorm:
+            case ImageFormat::R16G16_Float:                     return 2 * 2;
+            case ImageFormat::R16G16B16_Int:
+            case ImageFormat::R16G16B16_UInt:
+            case ImageFormat::R16G16B16_Norm:
+            case ImageFormat::R16G16B16_UNorm:
+            case ImageFormat::R16G16B16_Float:                  return 3 * 2;
+            case ImageFormat::R16G16B16A16_Int:
+            case ImageFormat::R16G16B16A16_UInt:
+            case ImageFormat::R16G16B16A16_Norm:
+            case ImageFormat::R16G16B16A16_UNorm:
+            case ImageFormat::R16G16B16A16_Float:               return 4 * 2;
+
+            case ImageFormat::R32_Int:
+            case ImageFormat::R32_UInt:
+            case ImageFormat::R32_Float:
+            case ImageFormat::D32_Float:                        return 1 * 4;
+            case ImageFormat::R32G32_Int:
+            case ImageFormat::R32G32_UInt:
+            case ImageFormat::R32G32_Float:                     return 2 * 4;
+            case ImageFormat::R32G32B32_Int:
+            case ImageFormat::R32G32B32_UInt:
+            case ImageFormat::R32G32B32_Float:                  return 3 * 4;
+            case ImageFormat::R32G32B32A32_Int:
+            case ImageFormat::R32G32B32A32_UInt:
+            case ImageFormat::R32G32B32A32_Float:               return 4 * 4;
+
+            case ImageFormat::R64_Int:
+            case ImageFormat::R64_UInt:
+            case ImageFormat::R64_Float:                        return 1 * 8;
+            case ImageFormat::R64G64_Int:
+            case ImageFormat::R64G64_UInt:
+            case ImageFormat::R64G64_Float:                     return 2 * 8;
+            case ImageFormat::R64G64B64_Int:
+            case ImageFormat::R64G64B64_UInt:
+            case ImageFormat::R64G64B64_Float:                  return 3 * 8;
+            case ImageFormat::R64G64B64A64_Int:
+            case ImageFormat::R64G64B64A64_UInt:
+            case ImageFormat::R64G64B64A64_Float:               return 4 * 8;
+
+            case ImageFormat::BC1_RGB_UNorm:
+            case ImageFormat::BC1_RGB_SRGB:
+            case ImageFormat::BC1_RGBA_UNorm:
+            case ImageFormat::BC1_RGBA_SRGB:                    return 4 * 0.5;
+            case ImageFormat::BC4_R_Norm:
+            case ImageFormat::BC4_R_UNorm:                      return 1 * 2;
+            case ImageFormat::BC3_RGBA_UNorm:
+            case ImageFormat::BC3_RGBA_SRGB:
+            case ImageFormat::BC5_RG_Norm:
+            case ImageFormat::BC5_RG_UNorm:
+            case ImageFormat::BC6_HDR_RGB_Float:
+            case ImageFormat::BC6_HDR_RGB_UFloat:
+            case ImageFormat::BC7_RGB_UNorm:
+            case ImageFormat::BC7_RGB_SRGB:
+            case ImageFormat::BC7_RGBA_UNorm:
+            case ImageFormat::BC7_RGBA_SRGB:                    return 4 * 1;
+
+            case ImageFormat::ASTC_4x4_UNorm:
+            case ImageFormat::ASTC_4x4_SRGB:                    return 1;
+            case ImageFormat::ASTC_8x8_UNorm:
+            case ImageFormat::ASTC_8x8_SRGB:                    return 2;
         }
+
+        return 0;
     }
 
-    struct ImageFormat
+    enum class ImageMemoryLocation : bool
     {
-        ImageChannels channels = ImageChannels::RGBA;
-        ImageMemoryType memoryType = ImageMemoryType::UNorm8;
+        CPU,
+        GPU
     };
 
-    enum class ImageMemoryLocation : uint8
-    {
-        Host,
-        Device,
-        Auto
-    };
-
-    enum class ImageUsage : uint16
+    enum class ImageUsage
     {
         Undefined               = 0x0000,
         SourceMemory            = 0x0001,
         DestinationMemory       = 0x0002,
         Storage                 = 0x0004,
         Sample                  = 0x0008,
-        LinearFilter            = 0x0010,
+        Filter                  = 0x0010,
         ColorAttachment         = 0x0020,
         DepthAttachment         = 0x0040,
         InputAttachment         = 0x0080,
@@ -128,15 +369,14 @@ namespace Sierra
         uint32 height = 0;
 
         ImageType type = ImageType::Plane;
-        ImageFormat format = { };
+        ImageFormat format = ImageFormat::Undefined;
 
         uint32 mipLevelCount = 1;
         uint32 layerCount = 1;
         ImageUsage usage = ImageUsage::Undefined;
 
-        ImageMemoryLocation memoryLocation = ImageMemoryLocation::Auto;
+        ImageMemoryLocation memoryLocation = ImageMemoryLocation::CPU;
         ImageSampling sampling = ImageSampling::x1;
-
     };
 
     class SIERRA_API Image : public virtual RenderingResource
@@ -147,8 +387,8 @@ namespace Sierra
         [[nodiscard]] inline uint32 GetHeight() const { return height; }
 
         [[nodiscard]] inline uint64 GetMemorySize() const { return static_cast<uint64>(width) * height * GetPixelMemorySize(); }
-        [[nodiscard]] inline uint32 GetPixelMemorySize() const { return ImageChannelsToCount(format.channels) * ImageMemoryTypeToMemorySize(format.memoryType); }
-        [[nodiscard]] inline ImageFormat GetFormat() const { return format; }
+        [[nodiscard]] inline float32 GetPixelMemorySize() const { return ImageFormatToPixelMemorySize(format); }
+        [[nodiscard]] inline const ImageFormat& GetFormat() const { return format; }
 
         [[nodiscard]] inline uint32 GetMipLevelCount() const { return mipLevelCount; }
         [[nodiscard]] inline uint32 GetLayerCount() const { return layerCount; }
@@ -167,7 +407,7 @@ namespace Sierra
     private:
         uint32 width = 0;
         uint32 height = 0;
-        ImageFormat format = { };
+        ImageFormat format = ImageFormat::Undefined;
 
         uint32 mipLevelCount = 1;
         uint32 layerCount = 1;

@@ -40,7 +40,7 @@ namespace Sierra
         [[nodiscard]] inline ScreenOrientation GetOrientation() const override { return size.x >= size.y ? ScreenOrientation::LandscapeNormal : ScreenOrientation::PortraitNormal; }
 
         /* --- MOVE SEMANTICS --- */
-        X11Screen(X11Screen &&other);
+        X11Screen(X11Screen&& other);
 
     private:
         std::string name;

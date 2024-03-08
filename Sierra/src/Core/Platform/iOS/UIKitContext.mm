@@ -2,9 +2,16 @@
 // Created by Nikolay Kanchevski on 9.11.23.
 //
 
+#define UIKIT_CONTEXT_IMPLEMENTATION
 #include "UIKitContext.h"
 
-#include "UIKitTemporaryCreateInfoStorage.h"
+#include "../../PlatformContext.h"
+
+namespace Sierra
+{
+    extern PlatformApplicationRunInfo iOSApplicationRunInfo;
+    extern UIKitContext* iOSUIKitContext;
+}
 
 @interface UIKitApplicationDelegate : UIResponder<UIApplicationDelegate>
 
@@ -14,20 +21,16 @@
 
     /* --- MEMBERS --- */
     {
-        CADisplayLink* runLoopDisplayLink;
-
-        Sierra::PlatformApplicationRunInfo runInfo;
-        UIScene* scene;
+        Sierra::UIKitContext* uiKitContext;
+        CADisplayLink* displayLink;
     }
 
     /* --- POLLING METHODS --- */
 
     - (BOOL) application: (UIApplication*) application didFinishLaunchingWithOptions: (NSDictionary*) launchOptions
     {
-        // Retrieve application create info
-        auto createInfo = Sierra::UIKitTemporaryCreateInfoStorage::MoveFront();
-        runInfo = std::move(createInfo.runInfo);
-
+        uiKitContext = Sierra::iOSUIKitContext;
+        uiKitContext->ApplicationDidFinishLaunching();
         return YES;
     }
 
@@ -38,35 +41,27 @@
 
     - (void) sceneDidBecomeActive: (UIScene*) activeScene
     {
-        // If this is the first scene to be activated
-        if (scene == nil)
-        {
-            // This is the actual entrypoint of the engine (not the UIApplication), as we have to wait until a scene has been created automatically,
-            // and we cannot wait for that, due to the single-threaded design of UIKit and its callback-based protocols
-            runInfo.OnStart();
-            
-            // Connect custom run loop to application
-            runLoopDisplayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(applicationShouldUpdate)];
-            [runLoopDisplayLink addToRunLoop: [NSRunLoop mainRunLoop] forMode: NSDefaultRunLoopMode];
-        }
-        
-        // Update scene
-        scene = activeScene;
+        if (displayLink != nil) return;
+
+        // Call Start() of application
+        Sierra::iOSApplicationRunInfo.OnStart();
+
+        // Connect run loop
+        displayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(applicationShouldUpdate)];
+        [displayLink addToRunLoop: [NSRunLoop mainRunLoop] forMode: NSDefaultRunLoopMode];
     }
 
     - (void) applicationShouldUpdate
     {
-        if (runInfo.OnUpdate())
+        if (Sierra::iOSApplicationRunInfo.OnUpdate())
         {
-            [runLoopDisplayLink invalidate];
-            runLoopDisplayLink = nil;
+            [displayLink invalidate];
         }
     }
 
     - (void) applicationWillTerminate: (UIApplication*) application
     {
-        // Run finalization code
-        runInfo.OnEnd();
+        Sierra::iOSApplicationRunInfo.OnEnd();
     }
 
 @end
@@ -100,8 +95,7 @@ namespace Sierra
     UIKitContext::UIKitContext(const Sierra::UIKitContextCreateInfo &createInfo)
         : primaryScreen({ .uiScreen = [UIScreen mainScreen] })
     {
-        applicationDidFinishLaunchingBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UIApplicationDidFinishLaunchingNotification, [this]{ ApplicationDidFinishLaunching(); });
-        applicationWillTerminateBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UIApplicationWillTerminateNotification, [this]{ ApplicationWillTerminate(); });
+
     }
 
     /* --- POLLING METHODS --- */
@@ -121,20 +115,7 @@ namespace Sierra
 
     void UIKitContext::ApplicationDidFinishLaunching()
     {
-        application = reinterpret_cast<UIKitApplication*>([UIApplication sharedApplication]);
-    }
-
-    void UIKitContext::ApplicationWillTerminate()
-    {
-
-    }
-
-    /* --- DESTRUCTOR --- */
-
-    UIKitContext::~UIKitContext()
-    {
-        applicationDidFinishLaunchingBridge.Invalidate();
-        applicationWillTerminateBridge.Invalidate();
+        application = [UIApplication sharedApplication];
     }
 
 }

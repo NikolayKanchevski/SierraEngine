@@ -15,10 +15,10 @@
         template<typename T>
         struct id { volatile T* data = nil; };
 
-        typedef void MTLDevice;
-        typedef void MTLCommandQueue;
-        typedef void MTLSharedEvent;
-        typedef void MTLCommandBuffer;
+        using MTLDevice = void;
+        using MTLCommandQueue = void;
+        using MTLSharedEvent = void;
+        using MTLCommandBuffer = void;
     }
 #endif
 
@@ -53,7 +53,9 @@ namespace Sierra
         inline void SetResourceName(T* resource, const std::string &name) const
         {
             #if defined(__OBJC__) && SR_ENABLE_LOGGING
-                [resource setLabel: [NSString stringWithCString: name.c_str() encoding: NSASCIIStringEncoding]];
+                NSString* const label = [[NSString alloc] initWithCString: name.c_str() encoding: NSASCIIStringEncoding];
+                [resource setLabel: label];
+                [label release];
             #endif
         }
 

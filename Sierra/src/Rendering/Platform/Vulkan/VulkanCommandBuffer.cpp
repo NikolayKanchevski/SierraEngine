@@ -166,8 +166,8 @@ namespace Sierra
         // Set copy region
         VkBufferImageCopy copyRegion = { };
         copyRegion.bufferOffset = sourceByteOffset;
-        copyRegion.bufferRowLength = pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth() >> mipLevel;
-        copyRegion.bufferImageHeight = pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight() >> mipLevel;
+        copyRegion.bufferRowLength = 0;
+        copyRegion.bufferImageHeight = 0;
         copyRegion.imageSubresource.aspectMask = vulkanDestinationImage.GetVulkanAspectFlags();
         copyRegion.imageSubresource.mipLevel = mipLevel;
         copyRegion.imageSubresource.baseArrayLayer = layer;
@@ -180,7 +180,6 @@ namespace Sierra
         copyRegion.imageExtent.depth = 1;
 
         SR_ERROR_IF(destinationPixelOffset.x + copyRegion.imageExtent.width > destinationImage->GetWidth() || destinationPixelOffset.y + copyRegion.imageExtent.height > destinationImage->GetHeight(), "[Vulkan]: Cannot copy from buffer [{0}] pixel range [{1}x{2}], which is offset by another [{3}x{4}] pixels to image [{5}] within command buffer [{6}], as resulting pixel range of a total of [{7}x{8}] pixels exceeds the image's dimensions - [{9}x{10}]!", sourceBuffer->GetName(), copyRegion.imageExtent.width, copyRegion.imageExtent.height, destinationPixelOffset.x, destinationPixelOffset.y, destinationImage->GetName(), GetName(), destinationPixelOffset.x + copyRegion.imageExtent.width, destinationPixelOffset.y + copyRegion.imageExtent.height, destinationImage->GetWidth(), destinationImage->GetHeight());
-        SR_ERROR_IF(sourceByteOffset + static_cast<uint64>(copyRegion.imageExtent.width) * copyRegion.imageExtent.height * destinationImage->GetPixelMemorySize() > sourceBuffer->GetMemorySize(), "[Vulkan]: Cannot copy from buffer [{0}] pixel range [{1}x{2}], which is offset by another [{3}] bytes, to image [{4}], as total memory range [{5}] overflows that of the buffer - [{6}]!", sourceBuffer->GetName(), copyRegion.imageExtent.width, copyRegion.imageExtent.height, sourceByteOffset, destinationImage->GetName(), sourceByteOffset + static_cast<uint64>(pixelRange.x) * copyRegion.imageExtent.height * destinationImage->GetPixelMemorySize(), sourceBuffer->GetMemorySize());
 
         // Copy data and change layout
         device.GetFunctionTable().vkCmdCopyBufferToImage(commandBuffer, vulkanSourceBuffer.GetVulkanBuffer(), vulkanDestinationImage.GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
@@ -256,7 +255,7 @@ namespace Sierra
 
             // Configure attachment info
             attachmentViews[i] = vulkanImage.GetVulkanImageView();
-            if (attachment.image->GetFormat().channels == ImageChannels::D)
+            if (attachment.image->GetFormat() == ImageFormat::D16_UNorm || attachment.image->GetFormat() == ImageFormat::D32_Float)
             {
                 clearValues[i].depthStencil = { 1.0f, 0 };
             }
@@ -452,7 +451,7 @@ namespace Sierra
         resourcesBound = false;
     }
 
-    void VulkanCommandBuffer::BeginDebugRegion(const std::string &regionName, const Color &color)
+    void VulkanCommandBuffer::BeginDebugRegion(const std::string &regionName, const ColorRGBA32 &color)
     {
         #if !SR_ENABLE_LOGGING
             return;
@@ -469,7 +468,7 @@ namespace Sierra
         device.GetFunctionTable().vkCmdDebugMarkerBeginEXT(commandBuffer, &markerInfo);
     }
 
-    void VulkanCommandBuffer::InsertDebugMarker(const std::string &markerName, const Color &color)
+    void VulkanCommandBuffer::InsertDebugMarker(const std::string &markerName, const ColorRGBA32 &color)
     {
         #if !SR_ENABLE_LOGGING
             return;

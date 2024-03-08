@@ -1011,7 +1011,7 @@ namespace Sierra
             SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName(), commandBufferToWait->GetName(), i);
 
             const VulkanCommandBuffer &vulkanCommandBufferToWait = static_cast<VulkanCommandBuffer&>(*commandBufferToWait);
-            waitValue = std::max(waitValue, vulkanCommandBufferToWait.GetCompletionSignalValue());
+            waitValue = glm::max(waitValue, vulkanCommandBufferToWait.GetCompletionSignalValue());
         }
 
         // Set up semaphore submit info
@@ -1070,7 +1070,7 @@ namespace Sierra
         if (usage & ImageUsage::DestinationMemory   && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_DST_BIT               )) return false;
         if (usage & ImageUsage::Storage             && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT              )) return false;
         if (usage & ImageUsage::Sample              && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
-        if (usage & ImageUsage::LinearFilter && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
+        if (usage & ImageUsage::Filter              && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
         if (usage & ImageUsage::ColorAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) return false;
         if (usage & ImageUsage::DepthAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT   )) return false;
         if (usage & ImageUsage::InputAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;

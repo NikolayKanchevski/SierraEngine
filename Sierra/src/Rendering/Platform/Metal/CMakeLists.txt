@@ -1,4 +1,4 @@
-# Set Metal's prerequisites (Metal is guaranteed to be found)
+# Set Metal's prerequisites
 set(Metal_LIBRARIES
     "-framework CoreGraphics"
     "-framework Metal"
@@ -6,7 +6,7 @@ set(Metal_LIBRARIES
 )
 message(STATUS "[Sierra]: Building Metal...")
 
-# Link graphics libraries
+# Link Metal's dependencies
 target_link_libraries(Sierra PRIVATE ${Metal_LIBRARIES})
 
 # Set Metal definitions

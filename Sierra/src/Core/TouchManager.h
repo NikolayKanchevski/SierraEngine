@@ -5,7 +5,7 @@
 #pragma once
 
 #include "Touch.h"
-#include "EventDispatcher.h"
+#include "EventDispatcher.hpp"
 
 namespace Sierra
 {
@@ -69,7 +69,7 @@ namespace Sierra
         [[nodiscard]] virtual const Touch& GetTouch(uint32 touchIndex) const;
 
         /* --- EVENTS --- */
-        template<typename T> void OnEvent(TouchEventCallback<T> Callback) { static_assert(std::is_base_of_v<TouchEvent, T> && !std::is_same_v<TouchEvent, T>, "Template function accepts derived touch events only!"); }
+        template<typename T> requires (std::is_base_of_v<TouchEvent, T> && !std::is_same_v<TouchEvent, T>) void OnEvent(TouchEventCallback<T> Callback) { }
 
         /* --- DESTRUCTOR --- */
         virtual ~TouchManager() = default;

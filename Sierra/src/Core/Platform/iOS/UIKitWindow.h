@@ -16,8 +16,8 @@
 #if !defined(__OBJC__)
     namespace Sierra
     {
-        typedef void UIKitWindowViewController;
-        typedef void UIView;
+        using UIKitWindowViewController = void;
+        using UIView = void;
         #define nil nullptr
     }
 #else
@@ -67,7 +67,7 @@ namespace Sierra
 
         [[nodiscard]] inline UIWindow* GetUIWindow() const { return window; }
         [[nodiscard]] inline UIView* GetUIView() const { return view; }
-        [[nodiocard]] inline bool AllowsOrientationChange() const { return allowsOrientationChange; }
+        [[nodiscard]] inline bool AllowsOrientationChange() const { return allowsOrientationChange; }
 
         /* --- DESTRUCTOR --- */
         ~UIKitWindow() override;

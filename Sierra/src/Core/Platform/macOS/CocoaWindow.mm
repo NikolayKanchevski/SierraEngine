@@ -32,7 +32,7 @@
     - (BOOL) windowShouldClose: (id) sender
     {
         window->WindowShouldClose();
-        return NO;
+        return YES;
     }
 
     - (void) windowDidResize: (NSNotification*) notification
@@ -320,8 +320,7 @@ namespace Sierra
         inputManager.Update();
         cursorManager.Update();
 
-        // Poll events
-        while (cocoaContext.PollNextEvent() != nullptr);
+        cocoaContext.PollNextEvent();
 
         cursorManager.UpdateEnd();
     }

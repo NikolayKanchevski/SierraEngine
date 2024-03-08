@@ -1,4 +1,3 @@
-# Link source files
 target_sources(Sierra PRIVATE
     CocoaContext.mm
     CocoaContext.h
@@ -14,7 +13,7 @@ target_sources(Sierra PRIVATE
     macOSContext.h
 )
 
-# Link libraries
+# Link platform-specific libraries
 target_link_libraries(Sierra PRIVATE
     "-framework Cocoa"
     "-framework QuartzCore"

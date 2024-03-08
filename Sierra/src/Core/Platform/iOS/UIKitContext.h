@@ -9,20 +9,16 @@
 #endif
 
 #include "UIKitScreen.h"
-#include "UIKitSelectorBridge.h"
 
 #if !defined(__OBJC__)
     namespace Sierra
     {
-        typedef void UIKitApplication;
-        typedef void UIKitApplicationDelegate;
-        typedef void UIWindow;
-        typedef void UIWindowScene;
+        using UIApplication = void;
+        using UIWindow = void;
         #define nil nullptr
     }
 #else
     #include <UIKit/UIKit.h>
-    typedef UIApplication UIKitApplication;
 #endif
 
 namespace Sierra
@@ -41,25 +37,24 @@ namespace Sierra
         void DestroyWindow(UIWindow* window) const;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const UIKitApplication* GetApplication() const { return application; }
+        [[nodiscard]] inline const UIApplication* GetApplication() const { return application; }
         [[nodiscard]] inline const UIKitScreen& GetPrimaryScreen() const { return primaryScreen; }
 
         /* --- DESTRUCTOR --- */
-        ~UIKitContext();
+        ~UIKitContext() = default;
 
     private:
         friend class iOSContext;
         explicit UIKitContext(const UIKitContextCreateInfo &createInfo);
 
-        UIKitApplication* application = nil;
+        UIApplication* application = nil;
         UIKitScreen primaryScreen;
 
-        UIKitSelectorBridge applicationDidFinishLaunchingBridge;
-        UIKitSelectorBridge applicationWillTerminateBridge;
-
-        /* --- EVENTS --- */
-        void ApplicationDidFinishLaunching();
-        void ApplicationWillTerminate();
+        #if defined(__OBJC__) && defined(UIKIT_CONTEXT_IMPLEMENTATION)
+            public:
+            /* --- EVENTS --- */
+            void ApplicationDidFinishLaunching();
+        #endif
 
     };
 

@@ -17,11 +17,9 @@ namespace Sierra
         void SetSeed(uint64 seed);
 
         /* --- GETTER METHODS --- */
-        template<typename T>
+        template<typename T> requires (std::is_integral_v<T> || std::is_floating_point_v<T>)
         [[nodiscard]] T Random(const T min, const T max)
         {
-            static_assert(std::is_integral_v<T> || std::is_floating_point_v<T>, "Method requires the given template argument to be a numeric type!");
-
             if constexpr(std::is_same_v<T, int16> || std::is_same_v<T, int32> || std::is_same_v<T, int64> || std::is_same_v<T, uint16> || std::is_same_v<T, uint32> || std::is_same_v<T, uint64>)
             {
                 std::uniform_int_distribution<T> distribution(min, max);

@@ -16,10 +16,10 @@
 #if !defined(__OBJC__)
     namespace Sierra
     {
-        typedef void CocoaWindowDelegate;
-        typedef void CocoaWindowView;
-        typedef void NSView;
-        typedef void CAMetalLayer;
+        using CocoaWindowDelegate = void;
+        using CocoaWindowView = void;
+        using NSView = void;
+        using CAMetalLayer = void;
         #define nil nullptr
     }
 #else

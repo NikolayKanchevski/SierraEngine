@@ -144,7 +144,7 @@ namespace Sierra
         [[nodiscard]] virtual PlatformAPI GetAPI() const = 0;
 
         /* --- EVENTS --- */
-        template<typename T> void OnEvent(WindowEventCallback<T> Callback) { static_assert(std::is_base_of_v<WindowEvent, T> && !std::is_same_v<WindowEvent, T>, "Template function accepts derived window events only!"); }
+        template<typename T> requires (std::is_base_of_v<WindowEvent, T> && !std::is_same_v<WindowEvent, T>) void OnEvent(WindowEventCallback<T> Callback) { }
         
         /* --- OPERATORS --- */
         Window(const Window&) = delete;

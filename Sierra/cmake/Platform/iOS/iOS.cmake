@@ -18,11 +18,18 @@ function(BuildIOSApplication SOURCE_FILES)
         MACOSX_BUNDLE_PRODUCT_IDENTIFIER "com.sierra.${SIERRA_APPLICATION_NAME}"
         MACOSX_BUNDLE_BUNDLE_VERSION "${SIERRA_APPLICATION_VERSION_MAJOR}.${SIERRA_APPLICATION_VERSION_MINOR}.${SIERRA_APPLICATION_VERSION_PATCH}"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "${SIERRA_APPLICATION_VERSION_MAJOR}"
+    )
+    set_target_properties(Sierra PROPERTIES
         XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC NO
     )
 
-    # Copy resources to staging directory (we can only copy directory structures. not create ones ourselves to iOS bundles, otherwise signing breaks), so we have Contents/Resources on iOS too
-    add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/resources" $<TARGET_FILE_DIR:${SIERRA_APPLICATION_NAME}>)
+    # Copy resources to bundle
+    set(RESOURCES_DIRECTORY "${CMAKE_SOURCE_DIR}/resources")
+    file(GLOB RESOURCES_DIRECTORY_ITEMS "${RESOURCES_DIRECTORY}/*.*")
+    list(LENGTH RESOURCES_DIRECTORY_ITEMS RESOURCES_DIRECTORY_ITEMS_LENGTH)
+    if(RESOURCES_DIRECTORY_ITEMS_LENGTH GREATER 0)
+        add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${RESOURCES_DIRECTORY}" $<TARGET_FILE_DIR:${SIERRA_APPLICATION_NAME}>)
+    endif()
 
     # Link icon with the application
     set_source_files_properties(${SIERRA_APPLICATION_ICON_ICNS} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)

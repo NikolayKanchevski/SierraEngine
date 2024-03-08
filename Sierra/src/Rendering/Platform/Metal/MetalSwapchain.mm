@@ -54,12 +54,7 @@ namespace Sierra
         #if SR_PLATFORM_macOS
             [metalLayer setDisplaySyncEnabled:createInfo.preferredPresentationMode == SwapchainPresentationMode::VSync]; // This is only present on macOS
         #endif
-
-        #if SR_PLATFORM_macOS
-            @autoreleasepool { metalDrawable = [[metalLayer nextDrawable] retain]; };
-        #else
-            metalDrawable = [metalLayer nextDrawable];
-        #endif
+        metalDrawable = [metalLayer nextDrawable];
 
         // Create swapchain image (unnecessary on Metal, but needs to comply with Vulkan design)
         swapchainImage = std::unique_ptr<MetalImage>(new MetalImage(device, MetalImage::SwapchainImageCreateInfo {
@@ -98,11 +93,9 @@ namespace Sierra
         // Acquire next drawable
         #if SR_PLATFORM_macOS
             [metalDrawable release];
-            @autoreleasepool { metalDrawable = [[metalLayer nextDrawable] retain]; };
-        #else
-            metalDrawable = [metalLayer nextDrawable];
         #endif
-
+        metalDrawable = [metalLayer nextDrawable];
+        
         // Update image
         static_cast<MetalImage&>(*swapchainImage).texture = metalDrawable.texture;
     }
@@ -141,6 +134,15 @@ namespace Sierra
             .height = static_cast<uint32>(metalLayer.drawableSize.height),
             .format = metalLayer.pixelFormat
         }));
+    }
+
+    /* --- DESTRUCTOR --- */
+
+    MetalSwapchain::~MetalSwapchain()
+    {
+        #if SR_PLATFORM_macOS
+            [metalDrawable release];
+        #endif
     }
 
 }

@@ -62,7 +62,7 @@ namespace Sierra
         imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
         imageViewCreateInfo.subresourceRange.aspectMask = aspectFlags;
         imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-        imageViewCreateInfo.subresourceRange.levelCount = 1;
+        imageViewCreateInfo.subresourceRange.levelCount = createInfo.mipLevelCount;
         imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
         imageViewCreateInfo.subresourceRange.layerCount = createInfo.layerCount;
 
@@ -76,7 +76,7 @@ namespace Sierra
     }
 
     VulkanImage::VulkanImage(const VulkanDevice &device, const SwapchainImageCreateInfo &createInfo)
-        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainVkFormatToImageFormat(createInfo.format), .usage = ImageUsage::SourceMemory | ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::Device }), VulkanResource(createInfo.name),
+        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainVkFormatToImageFormat(createInfo.format), .usage = ImageUsage::SourceMemory | ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }), VulkanResource(createInfo.name),
           device(device), image(createInfo.image), usageFlags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT), aspectFlags(VK_IMAGE_ASPECT_COLOR_BIT), swapchainImage(true)
     {
         SR_ERROR_IF(createInfo.image == VK_NULL_HANDLE, "[Vulkan]: Null texture pointer passed upon swapchain image [{0}] creation!", GetName());
@@ -120,12 +120,12 @@ namespace Sierra
     {
         switch (format)
         {
-            case VK_FORMAT_B8G8R8A8_UNORM:          return  { .channels = ImageChannels::BGRA, .memoryType = ImageMemoryType::UNorm8 };
-            case VK_FORMAT_B8G8R8A8_SRGB:           return  { .channels = ImageChannels::BGRA, .memoryType = ImageMemoryType::SRGB8 };
-            case VK_FORMAT_R8G8B8A8_UNORM:          return  { .channels = ImageChannels::RGBA, .memoryType = ImageMemoryType::UNorm8 };
-            case VK_FORMAT_R8G8B8A8_SRGB:           return  { .channels = ImageChannels::RGBA, .memoryType = ImageMemoryType::SRGB8 };
-            case VK_FORMAT_R16G16B16_UNORM:         return  { .channels = ImageChannels::RGBA, .memoryType = ImageMemoryType::UNorm8 };
-            case VK_FORMAT_R16G16B16_SFLOAT:        return  { .channels = ImageChannels::RGBA, .memoryType = ImageMemoryType::Float16 };
+            case VK_FORMAT_B8G8R8A8_UNORM:          return  ImageFormat::B8G8R8A8_UNorm;
+            case VK_FORMAT_B8G8R8A8_SRGB:           return  ImageFormat::B8G8R8A8_SRGB;
+            case VK_FORMAT_R8G8B8A8_UNORM:          return  ImageFormat::R8G8B8A8_UNorm;
+            case VK_FORMAT_R8G8B8A8_SRGB:           return  ImageFormat::R8G8B8A8_SRGB;
+            case VK_FORMAT_R16G16B16_UNORM:         return  ImageFormat::R16G16B16_UNorm;
+            case VK_FORMAT_R16G16B16_SFLOAT:        return  ImageFormat::R16G16B16_Float;
             default:                                break;
         }
 
@@ -137,114 +137,105 @@ namespace Sierra
 
     VkFormat VulkanImage::ImageFormatToVkFormat(const ImageFormat format)
     {
-        switch (format.channels)
+        switch (format)
         {
-            case ImageChannels::R:
-            {
-                switch (format.memoryType)
-                {
-                    case ImageMemoryType::Int8:         return VK_FORMAT_R8_SINT;
-                    case ImageMemoryType::UInt8:        return VK_FORMAT_R8_UINT;
-                    case ImageMemoryType::Norm8:        return VK_FORMAT_R8_SNORM;
-                    case ImageMemoryType::UNorm8:       return VK_FORMAT_R8_UNORM;
-                    case ImageMemoryType::SRGB8:        return VK_FORMAT_R8_SRGB;
-                    case ImageMemoryType::Int16:        return VK_FORMAT_R16_SINT;
-                    case ImageMemoryType::UInt16:       return VK_FORMAT_R16_UINT;
-                    case ImageMemoryType::Norm16:       return VK_FORMAT_R16_SNORM;
-                    case ImageMemoryType::UNorm16:      return VK_FORMAT_R16_UNORM;
-                    case ImageMemoryType::Float16:      return VK_FORMAT_R16_SFLOAT;
-                    case ImageMemoryType::Int32:        return VK_FORMAT_R32_SINT;
-                    case ImageMemoryType::UInt32:       return VK_FORMAT_R32_UINT;
-                    case ImageMemoryType::Float32:      return VK_FORMAT_R32_SFLOAT;
-                    case ImageMemoryType::Int64:        return VK_FORMAT_R64_SINT;
-                    case ImageMemoryType::UInt64:       return VK_FORMAT_R64_UINT;
-                    case ImageMemoryType::Float64:      return VK_FORMAT_R64_SFLOAT;
-                }
-            }
-            case ImageChannels::RG:
-            {
-                switch (format.memoryType)
-                {
-                    case ImageMemoryType::Int8:         return VK_FORMAT_R8G8_SINT;
-                    case ImageMemoryType::UInt8:        return VK_FORMAT_R8G8_UINT;
-                    case ImageMemoryType::Norm8:        return VK_FORMAT_R8G8_SNORM;
-                    case ImageMemoryType::UNorm8:       return VK_FORMAT_R8G8_UNORM;
-                    case ImageMemoryType::SRGB8:        return VK_FORMAT_R8G8_SRGB;
-                    case ImageMemoryType::Int16:        return VK_FORMAT_R16G16_SINT;
-                    case ImageMemoryType::UInt16:       return VK_FORMAT_R16G16_UINT;
-                    case ImageMemoryType::Norm16:       return VK_FORMAT_R16G16_SNORM;
-                    case ImageMemoryType::UNorm16:      return VK_FORMAT_R16G16_UNORM;
-                    case ImageMemoryType::Float16:      return VK_FORMAT_R16G16_SFLOAT;
-                    case ImageMemoryType::Int32:        return VK_FORMAT_R32G32_SINT;
-                    case ImageMemoryType::UInt32:       return VK_FORMAT_R32G32_UINT;
-                    case ImageMemoryType::Float32:      return VK_FORMAT_R32G32_SFLOAT;
-                    case ImageMemoryType::Int64:        return VK_FORMAT_R64G64_SINT;
-                    case ImageMemoryType::UInt64:       return VK_FORMAT_R64G64_UINT;
-                    case ImageMemoryType::Float64:      return VK_FORMAT_R64G64_SFLOAT;
-                }
-            }
-            case ImageChannels::RGB:
-            {
-                switch (format.memoryType)
-                {
-                    case ImageMemoryType::Int8:         return VK_FORMAT_R8G8B8_SINT;
-                    case ImageMemoryType::UInt8:        return VK_FORMAT_R8G8B8_UINT;
-                    case ImageMemoryType::Norm8:        return VK_FORMAT_R8G8B8_SNORM;
-                    case ImageMemoryType::UNorm8:       return VK_FORMAT_R8G8B8_UNORM;
-                    case ImageMemoryType::SRGB8:        return VK_FORMAT_R8G8B8_SRGB;
-                    case ImageMemoryType::Int16:        return VK_FORMAT_R16G16B16_SINT;
-                    case ImageMemoryType::UInt16:       return VK_FORMAT_R16G16B16_UINT;
-                    case ImageMemoryType::Norm16:       return VK_FORMAT_R16G16B16_SNORM;
-                    case ImageMemoryType::UNorm16:      return VK_FORMAT_R16G16B16_UNORM;
-                    case ImageMemoryType::Float16:      return VK_FORMAT_R16G16B16_SFLOAT;
-                    case ImageMemoryType::Int32:        return VK_FORMAT_R32G32B32_SINT;
-                    case ImageMemoryType::UInt32:       return VK_FORMAT_R32G32B32_UINT;
-                    case ImageMemoryType::Float32:      return VK_FORMAT_R32G32B32_SFLOAT;
-                    case ImageMemoryType::Int64:        return VK_FORMAT_R64G64B64_SINT;
-                    case ImageMemoryType::UInt64:       return VK_FORMAT_R64G64B64_UINT;
-                    case ImageMemoryType::Float64:      return VK_FORMAT_R64G64B64_SFLOAT;
-                }
-            }
-            case ImageChannels::RGBA:
-            {
-                switch (format.memoryType)
-                {
-                    case ImageMemoryType::Int8:         return VK_FORMAT_R8G8B8A8_SINT;
-                    case ImageMemoryType::UInt8:        return VK_FORMAT_R8G8B8A8_UINT;
-                    case ImageMemoryType::Norm8:        return VK_FORMAT_R8G8B8A8_SNORM;
-                    case ImageMemoryType::UNorm8:       return VK_FORMAT_R8G8B8A8_UNORM;
-                    case ImageMemoryType::SRGB8:        return VK_FORMAT_R8G8B8A8_SRGB;
-                    case ImageMemoryType::Int16:        return VK_FORMAT_R16G16B16A16_SINT;
-                    case ImageMemoryType::UInt16:       return VK_FORMAT_R16G16B16A16_UINT;
-                    case ImageMemoryType::Norm16:       return VK_FORMAT_R16G16B16A16_SNORM;
-                    case ImageMemoryType::UNorm16:      return VK_FORMAT_R16G16B16A16_UNORM;
-                    case ImageMemoryType::Float16:      return VK_FORMAT_R16G16B16A16_SFLOAT;
-                    case ImageMemoryType::Int32:        return VK_FORMAT_R32G32B32A32_SINT;
-                    case ImageMemoryType::UInt32:       return VK_FORMAT_R32G32B32A32_UINT;
-                    case ImageMemoryType::Float32:      return VK_FORMAT_R32G32B32A32_SFLOAT;
-                    case ImageMemoryType::Int64:        return VK_FORMAT_R64G64B64A64_SINT;
-                    case ImageMemoryType::UInt64:       return VK_FORMAT_R64G64B64A64_UINT;
-                    case ImageMemoryType::Float64:      return VK_FORMAT_R64G64B64A64_SFLOAT;
-                }
-            }
-            case ImageChannels::BGRA:
-            {
-                switch (format.memoryType)
-                {
-                    case ImageMemoryType::UNorm8:       return VK_FORMAT_B8G8R8A8_UNORM;
-                    case ImageMemoryType::SRGB8:        return VK_FORMAT_B8G8R8A8_SRGB;
-                    default:                            break;
-                }
-            }
-            case ImageChannels::D:
-            {
-                switch (format.memoryType)
-                {
-                    case ImageMemoryType::UNorm16:   return VK_FORMAT_D16_UNORM;
-                    case ImageMemoryType::Float32:   return VK_FORMAT_D32_SFLOAT;
-                    default:                         break;
-                }
-            }
+            case ImageFormat::Undefined:                return VK_FORMAT_UNDEFINED;
+
+            case ImageFormat::R8_Int:                   return VK_FORMAT_R8_SINT;
+            case ImageFormat::R8_UInt:                  return VK_FORMAT_R8_UINT;
+            case ImageFormat::R8_Norm:                  return VK_FORMAT_R8_SNORM;
+            case ImageFormat::R8_UNorm:                 return VK_FORMAT_R8_UNORM;
+            case ImageFormat::R8_SRGB:                  return VK_FORMAT_R8_SRGB;
+            case ImageFormat::R8G8_Int:                 return VK_FORMAT_R8G8_SINT;
+            case ImageFormat::R8G8_UInt:                return VK_FORMAT_R8G8_UINT;
+            case ImageFormat::R8G8_Norm:                return VK_FORMAT_R8G8_SNORM;
+            case ImageFormat::R8G8_UNorm:               return VK_FORMAT_R8G8_UNORM;
+            case ImageFormat::R8G8_SRGB:                return VK_FORMAT_R8G8_SRGB;
+            case ImageFormat::R8G8B8_Int:               return VK_FORMAT_R8G8B8_SINT;
+            case ImageFormat::R8G8B8_UInt:              return VK_FORMAT_R8G8B8_UINT;
+            case ImageFormat::R8G8B8_Norm:              return VK_FORMAT_R8G8B8_SNORM;
+            case ImageFormat::R8G8B8_UNorm:             return VK_FORMAT_R8G8B8_UNORM;
+            case ImageFormat::R8G8B8_SRGB:              return VK_FORMAT_R8G8B8_SRGB;
+            case ImageFormat::R8G8B8A8_Int:             return VK_FORMAT_R8G8B8A8_SINT;
+            case ImageFormat::R8G8B8A8_UInt:            return VK_FORMAT_R8G8B8A8_UINT;
+            case ImageFormat::R8G8B8A8_Norm:            return VK_FORMAT_R8G8B8A8_SNORM;
+            case ImageFormat::R8G8B8A8_UNorm:           return VK_FORMAT_R8G8B8A8_UNORM;
+            case ImageFormat::R8G8B8A8_SRGB:            return VK_FORMAT_R8G8B8A8_SRGB;
+
+            case ImageFormat::R16_Int:                  return VK_FORMAT_R16_SINT;
+            case ImageFormat::R16_UInt:                 return VK_FORMAT_R16_UINT;
+            case ImageFormat::R16_Norm:                 return VK_FORMAT_R16_SNORM;
+            case ImageFormat::R16_UNorm:                return VK_FORMAT_R16_UNORM;
+            case ImageFormat::R16_Float:                return VK_FORMAT_R16_SFLOAT;
+            case ImageFormat::R16G16_Int:               return VK_FORMAT_R16G16_SINT;
+            case ImageFormat::R16G16_UInt:              return VK_FORMAT_R16G16_UINT;
+            case ImageFormat::R16G16_Norm:              return VK_FORMAT_R16G16_SNORM;
+            case ImageFormat::R16G16_UNorm:             return VK_FORMAT_R16G16_UNORM;
+            case ImageFormat::R16G16_Float:             return VK_FORMAT_R16G16_SFLOAT;
+            case ImageFormat::R16G16B16_Int:            return VK_FORMAT_R16G16B16_SINT;
+            case ImageFormat::R16G16B16_UInt:           return VK_FORMAT_R16G16B16_UINT;
+            case ImageFormat::R16G16B16_Norm:           return VK_FORMAT_R16G16B16_SNORM;
+            case ImageFormat::R16G16B16_UNorm:          return VK_FORMAT_R16G16B16_UNORM;
+            case ImageFormat::R16G16B16_Float:          return VK_FORMAT_R16G16B16_SFLOAT;
+            case ImageFormat::R16G16B16A16_Int:         return VK_FORMAT_R16G16B16A16_SINT;
+            case ImageFormat::R16G16B16A16_UInt:        return VK_FORMAT_R16G16B16A16_UINT;
+            case ImageFormat::R16G16B16A16_Norm:        return VK_FORMAT_R16G16B16A16_SNORM;
+            case ImageFormat::R16G16B16A16_UNorm:       return VK_FORMAT_R16G16B16A16_UNORM;
+            case ImageFormat::R16G16B16A16_Float:       return VK_FORMAT_R16G16B16A16_SFLOAT;
+    
+            case ImageFormat::R32_Int:                  return VK_FORMAT_R32_SINT;
+            case ImageFormat::R32_UInt:                 return VK_FORMAT_R32_UINT;
+            case ImageFormat::R32_Float:                return VK_FORMAT_R32_SFLOAT;
+            case ImageFormat::R32G32_Int:               return VK_FORMAT_R32G32_SINT;
+            case ImageFormat::R32G32_UInt:              return VK_FORMAT_R32G32_UINT;
+            case ImageFormat::R32G32_Float:             return VK_FORMAT_R32G32_SFLOAT;
+            case ImageFormat::R32G32B32_Int:            return VK_FORMAT_R32G32B32_SINT;
+            case ImageFormat::R32G32B32_UInt:           return VK_FORMAT_R32G32B32_UINT;
+            case ImageFormat::R32G32B32_Float:          return VK_FORMAT_R32G32B32_SFLOAT;
+            case ImageFormat::R32G32B32A32_Int:         return VK_FORMAT_R32G32B32A32_SINT;
+            case ImageFormat::R32G32B32A32_UInt:        return VK_FORMAT_R32G32B32A32_UINT;
+            case ImageFormat::R32G32B32A32_Float:       return VK_FORMAT_R32G32B32A32_SFLOAT;
+            
+            case ImageFormat::R64_Int:                  return VK_FORMAT_R64_SINT;
+            case ImageFormat::R64_UInt:                 return VK_FORMAT_R64_UINT;
+            case ImageFormat::R64_Float:                return VK_FORMAT_R64_SFLOAT;
+            case ImageFormat::R64G64_Int:               return VK_FORMAT_R64G64_SINT;
+            case ImageFormat::R64G64_UInt:              return VK_FORMAT_R64G64_UINT;
+            case ImageFormat::R64G64_Float:             return VK_FORMAT_R64G64_SFLOAT;
+            case ImageFormat::R64G64B64_Int:            return VK_FORMAT_R64G64B64_SINT;
+            case ImageFormat::R64G64B64_UInt:           return VK_FORMAT_R64G64B64_UINT;
+            case ImageFormat::R64G64B64_Float:          return VK_FORMAT_R64G64B64_SFLOAT;
+            case ImageFormat::R64G64B64A64_Int:         return VK_FORMAT_R64G64B64A64_SINT;
+            case ImageFormat::R64G64B64A64_UInt:        return VK_FORMAT_R64G64B64A64_UINT;
+            case ImageFormat::R64G64B64A64_Float:       return VK_FORMAT_R64G64B64A64_SFLOAT;
+            
+            case ImageFormat::D16_UNorm:                return VK_FORMAT_D16_UNORM;
+            case ImageFormat::D32_Float:                return VK_FORMAT_D32_SFLOAT;
+            
+            case ImageFormat::B8G8R8A8_UNorm:           return VK_FORMAT_B8G8R8A8_UNORM;
+            case ImageFormat::B8G8R8A8_SRGB:            return VK_FORMAT_B8G8R8A8_SRGB;
+            
+            case ImageFormat::BC1_RGB_UNorm:            return VK_FORMAT_BC1_RGB_UNORM_BLOCK;
+            case ImageFormat::BC1_RGB_SRGB:             return VK_FORMAT_BC1_RGB_SRGB_BLOCK;
+            case ImageFormat::BC1_RGBA_UNorm:           return VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
+            case ImageFormat::BC1_RGBA_SRGB:            return VK_FORMAT_BC1_RGBA_SRGB_BLOCK;
+            case ImageFormat::BC3_RGBA_UNorm:           return VK_FORMAT_BC3_UNORM_BLOCK;
+            case ImageFormat::BC3_RGBA_SRGB:            return VK_FORMAT_BC3_SRGB_BLOCK;
+            case ImageFormat::BC4_R_Norm:               return VK_FORMAT_BC4_SNORM_BLOCK;
+            case ImageFormat::BC4_R_UNorm:              return VK_FORMAT_BC4_UNORM_BLOCK;
+            case ImageFormat::BC5_RG_Norm:              return VK_FORMAT_BC5_SNORM_BLOCK;
+            case ImageFormat::BC5_RG_UNorm:             return VK_FORMAT_BC5_UNORM_BLOCK;
+            case ImageFormat::BC6_HDR_RGB_Float:        return VK_FORMAT_BC6H_SFLOAT_BLOCK;
+            case ImageFormat::BC6_HDR_RGB_UFloat:       return VK_FORMAT_BC6H_UFLOAT_BLOCK;
+            case ImageFormat::BC7_RGB_UNorm:
+            case ImageFormat::BC7_RGBA_UNorm:           return VK_FORMAT_BC7_UNORM_BLOCK;
+            case ImageFormat::BC7_RGB_SRGB:
+            case ImageFormat::BC7_RGBA_SRGB:            return VK_FORMAT_BC7_SRGB_BLOCK;
+
+            case ImageFormat::ASTC_4x4_UNorm:           return VK_FORMAT_ASTC_4x4_UNORM_BLOCK;
+            case ImageFormat::ASTC_4x4_SRGB:            return VK_FORMAT_ASTC_4x4_SRGB_BLOCK;
+            case ImageFormat::ASTC_8x8_UNorm:           return VK_FORMAT_ASTC_8x8_UNORM_BLOCK;
+            case ImageFormat::ASTC_8x8_SRGB:            return VK_FORMAT_ASTC_8x8_SRGB_BLOCK;
         }
 
         SR_ERROR("[Vulkan]: Cannot determine image format of invalid channel and memory configuration!");
@@ -274,7 +265,7 @@ namespace Sierra
         if (usage & ImageUsage::DestinationMemory)          usageFlags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         if (usage & ImageUsage::Storage)                    usageFlags |= VK_IMAGE_USAGE_STORAGE_BIT;
         if (usage & ImageUsage::Sample)                     usageFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
-        if (usage & ImageUsage::LinearFilter)               usageFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
+        if (usage & ImageUsage::Filter)                     usageFlags |= VK_IMAGE_USAGE_SAMPLED_BIT;
         if (usage & ImageUsage::ColorAttachment)            usageFlags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         if (usage & ImageUsage::DepthAttachment)            usageFlags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
         if (usage & ImageUsage::InputAttachment)            usageFlags |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
@@ -286,9 +277,8 @@ namespace Sierra
     {
         switch (memoryLocation)
         {
-            case ImageMemoryLocation::Host:         return VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
-            case ImageMemoryLocation::Device:       return VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
-            case ImageMemoryLocation::Auto:         return VMA_MEMORY_USAGE_AUTO;
+            case ImageMemoryLocation::CPU:         return VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+            case ImageMemoryLocation::GPU:       return VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
         }
 
         return VMA_MEMORY_USAGE_AUTO;

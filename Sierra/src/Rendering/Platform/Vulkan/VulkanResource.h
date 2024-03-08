@@ -52,9 +52,9 @@
 namespace Sierra
 {
     #if VK_USE_64_BIT_PTR_DEFINES
-        typedef void* VkHandle;
+        using VkHandle = void*;
     #else
-        typedef uint64 VkHandle;
+        using VkHandle = uint64;
     #endif
 
     class SIERRA_API VulkanResource : public virtual RenderingResource

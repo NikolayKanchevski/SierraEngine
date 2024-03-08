@@ -21,8 +21,8 @@ namespace Sierra
     struct ApplicationCreateInfo
     {
         const std::string &name = "Sierra Application";
+        Version version = Version({ 1, 0, 0 });
         const ApplicationSettings &settings = { };
-        Version version = Version({ 1, 0, 0, VersionState::Experimental });
     };
 
     class SIERRA_API Application

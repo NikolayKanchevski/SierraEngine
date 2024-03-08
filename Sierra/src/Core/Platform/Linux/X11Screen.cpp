@@ -68,7 +68,7 @@ namespace Sierra
 
     /* --- MOVE SEMANTICS --- */
 
-    X11Screen::X11Screen(X11Screen &&other)
+    X11Screen::X11Screen(X11Screen&& other)
     : name(std::move(other.name)), origin(other.origin), size(other.size), workAreaOrigin(other.workAreaOrigin), workAreaSize(other.workAreaSize), refreshRate(other.refreshRate)
     {
 

@@ -5,15 +5,8 @@ if(SIERRA_BUILD_IMGUI)
         ImGuiRenderTask.h
     )
 
-    add_library(ImGui STATIC)
-    set_target_properties(ImGui PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-    )
-
     set(IMGUI_DIRECTORY ../../vendor/ImGui)
-    target_sources(ImGui PRIVATE
+    target_sources(Sierra PRIVATE
         ${IMGUI_DIRECTORY}/imgui.cpp
         ${IMGUI_DIRECTORY}/imgui.h
         ${IMGUI_DIRECTORY}/imconfig.h
@@ -25,10 +18,8 @@ if(SIERRA_BUILD_IMGUI)
         ${IMGUI_DIRECTORY}/imstb_rectpack.h
         ${IMGUI_DIRECTORY}/imstb_truetype.h
     )
-    target_compile_definitions(ImGui PRIVATE "ImDrawIdx=uint32_t")
+    target_compile_definitions(Sierra PUBLIC "ImDrawIdx=uint32_t")
 
     target_include_directories(Sierra PUBLIC ${IMGUI_DIRECTORY})
-    target_link_libraries(Sierra PUBLIC ImGui)
-
     target_compile_definitions(Sierra PUBLIC SR_BUILD_IMGUI)
 endif()

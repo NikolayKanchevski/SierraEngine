@@ -10,15 +10,16 @@
         #define SR_PLATFORM_LINUX 0
         #define SR_PLATFORM_macOS 0
         #define SR_PLATFORM_iOS 0
-        #define SR_PLATFORM_EMULATOR 0
+        #define SR_PLATFORM_APPLE (SR_PLATFORM_macOS || SR_PLATFORM_iOS)
         #if defined(__ANDROID__)
             #define SR_PLATFORM_ANDROID __ANDROID__ // This is necessary due to a bug in Android's precompiled headers
         #else
             #define SR_PLATFORM_ANDROID 0
         #endif
 
-        #define SR_PLATFORM_APPLE (SR_PLATFORM_macOS || SR_PLATFORM_iOS)
+        #define SR_PLATFORM_DESKTOP (SR_PLATFORM_WINDOWS || SR_PLATFORM_LINUX || SR_PLATFORM_macOS)
         #define SR_PLATFORM_MOBILE (SR_PLATFORM_iOS || SR_PLATFORM_ANDROID)
+        #define SR_PLATFORM_EMULATOR 0
 
         #if _WIN32 || _WIN64
             #undef SR_PLATFORM_WINDOWS
@@ -51,48 +52,43 @@
 
     #pragma region Standard Library
         #include <algorithm>
-        #include <functional>
-        #include <memory>
-        #include <thread>
-        #include <utility>
-        #include <cstdint>
         #include <array>
-        #include <vector>
-        #include <list>
-        #include <unordered_map>
-        #include <set>
-        #include <unordered_set>
-        #include <exception>
-        #include <execution>
-        #include <random>
-        #include <regex>
-        #include <chrono>
-        #include <mutex>
-        #include <shared_mutex>
-        #include <future>
-        #include <string>
-        #include <cstring>
-        #include <string_view>
-        #include <sstream>
-        #include <stack>
-        #include <queue>
-        #include <deque>
-        #include <optional>
-        #include <fstream>
-        #include <filesystem>
+        #include <atomic>
         #include <bitset>
-        #include <any>
-        #include <cstdio>
+        #include <chrono>
+        #include <deque>
+        #include <execution>
+        #include <filesystem>
+        #include <fstream>
+        #include <functional>
+        #include <future>
+        #include <iostream>
         #if SR_PLATFORM_WINDOWS
             #define NOMINMAX
         #endif
         #include <limits>
+        #include <list>
+        #include <memory>
+        #include <mutex>
+        #include <optional>
+        #include <queue>
+        #include <random>
+        #include <regex>
+        #include <sstream>
+        #include <string>
+        #include <string_view>
+        #include <thread>
+        #include <type_traits>
+        #include <unordered_map>
+        #include <unordered_set>
+        #include <vector>
     #pragma endregion
 
     #pragma region External Libraries
         /* --- GLM --- */
         #define GLM_DEPTH_ZERO_TO_ONE
         #include <glm/glm.hpp>
+        #include <glm/gtc/integer.hpp>
         #include <glm/gtc/type_ptr.hpp>
         #include <glm/gtx/quaternion.hpp>
         #include <glm/gtx/euler_angles.hpp>
@@ -102,43 +98,42 @@
     #pragma endregion
 
     #pragma region Type Definitions
-        typedef int8_t int8;
-        typedef int16_t int16;
-        typedef int32_t int32;
-        typedef int64_t int64;
-	    typedef uint8_t uint8;
-	    typedef uint16_t uint16;
-	    typedef uint32_t uint32;
-	    typedef uint64_t uint64;
-        typedef float float32;
-        typedef double float64;
+        using int8 = int8_t;
+        using int16 = int16_t;
+        using int32 = int32_t;
+        using int64 = int64_t;
+	    using uint8 = uint8_t;
+	    using uint16 = uint16_t;
+	    using uint32 = uint32_t;
+	    using uint64 = uint64_t;
+        using float32 = float;
+        using float64 = double;
 
-        typedef unsigned int uint;
-        typedef unsigned char uchar;
-        typedef unsigned long ulong;
-        typedef long long llong;
-        typedef unsigned long long ullong;
-        typedef long double ldouble;
-        typedef size_t size;
-        typedef size Hash;
+        using uint = unsigned int;
+        using uchar = unsigned char;
+        using ulong = unsigned long;
+        using llong = long long;
+        using ullong = unsigned long long;
+        using ldouble = long double;
+        using size = size_t;
+        using hash = size_t;
 
-	    typedef glm::vec<2, float32> Vector2;
-	    typedef glm::vec<3, float32> Vector3;
-	    typedef glm::vec<4, float32> Vector4;
-        typedef Vector4 ColorRGBA;
-        typedef Vector3 ColorRGB;
-        typedef Vector4 Color;
-	    typedef glm::vec<2, int32> Vector2Int;
-	    typedef glm::vec<3, int32> Vector3Int;
-	    typedef glm::vec<4, int32> Vector4Int;
-	    typedef glm::vec<2, uint32> Vector2UInt;
-	    typedef glm::vec<3, uint32> Vector3UInt;
-	    typedef glm::vec<4, uint32> Vector4UInt;
-	    typedef glm::quat Quaternion;
-	    typedef glm::mat<3, 3, float32> Matrix3x3;
-	    typedef glm::mat<4, 4, float32> Matrix4x4;
-	    typedef glm::mat<3, 3, int32> Matrix3x3Int;
-	    typedef glm::mat<4, 4, int32> Matrix4x4Int;
+	    using Vector2 = glm::vec<2, float32>;
+	    using Vector3 = glm::vec<3, float32>;
+	    using Vector4 = glm::vec<4, float32>;
+	    using Vector2Int = glm::vec<2, int32>;
+	    using Vector3Int = glm::vec<3, int32>;
+	    using Vector4Int = glm::vec<4, int32>;
+	    using Vector2UInt = glm::vec<2, uint32>;
+	    using Vector3UInt = glm::vec<3, uint32>;
+	    using Vector4UInt = glm::vec<4, uint32>;
+	    using Quaternion = glm::quat;
+	    using Matrix3x3 = glm::mat<3, 3, float32>;
+	    using Matrix4x4 = glm::mat<4, 4, float32>;
+	    using Matrix3x3Int = glm::mat<3, 3, int32>;
+	    using Matrix4x4Int = glm::mat<4, 4, int32>;
+        using ColorRGBA8 = glm::vec<4, uint8>;
+        using ColorRGBA32 = glm::vec<4, float32>;
 
 	    template<uint32 C, uint32 R>
 	    using Matrix = glm::mat<C, R, float32>;
@@ -149,14 +144,14 @@
     #pragma endregion
 
     #pragma region Macros
-        #define SR_DEFINE_ENUM_FLAG_OPERATORS(T)                                                                                                                                                      \
-            inline constexpr T operator~ (const T a) { return static_cast<T>(~static_cast<std::underlying_type_t<T>>(a)); }                                                                       \
-            inline constexpr T operator| (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type_t<T>>(a) | static_cast<std::underlying_type_t<T>>(b)); }             \
-            inline constexpr std::underlying_type_t<T> operator& (const T a, const T b) { return static_cast<std::underlying_type_t<T>>(a) & static_cast<std::underlying_type_t<T>>(b); } \
-            inline constexpr T operator^ (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type_t<T>>(a) ^ static_cast<std::underlying_type_t<T>>(b)); }             \
-            inline T& operator|= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) |= static_cast<std::underlying_type_t<T>>(b)); }             \
-            inline T& operator&= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) &= static_cast<std::underlying_type_t<T>>(b)); }             \
-            inline T& operator^= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) ^= static_cast<std::underlying_type_t<T>>(b)); }             
+        #define SR_DEFINE_ENUM_FLAG_OPERATORS(T)                                                                                                                                                \
+            inline constexpr T operator~ (const T a) { return static_cast<T>(~static_cast<std::underlying_type_t<T>>(a)); }                                                                     \
+            inline constexpr T operator| (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type_t<T>>(a) | static_cast<std::underlying_type_t<T>>(b)); }               \
+            inline constexpr std::underlying_type_t<T> operator& (const T a, const T b) { return static_cast<std::underlying_type_t<T>>(a) & static_cast<std::underlying_type_t<T>>(b); }       \
+            inline constexpr T operator^ (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type_t<T>>(a) ^ static_cast<std::underlying_type_t<T>>(b)); }               \
+            inline T& operator|= (T &a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) |= static_cast<std::underlying_type_t<T>>(b)); }               \
+            inline T& operator&= (T &a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) &= static_cast<std::underlying_type_t<T>>(b)); }               \
+            inline T& operator^= (T &a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) ^= static_cast<std::underlying_type_t<T>>(b)); }
     #pragma endregion
 
     #pragma region Source Files

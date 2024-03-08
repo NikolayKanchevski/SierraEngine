@@ -1,10 +1,9 @@
-# Link source files
 target_sources(Sierra PRIVATE
     Application.cpp
     Application.h
     CursorManager.cpp
     CursorManager.h
-    EventDispatcher.h
+        EventDispatcher.hpp
     InputManager.cpp
     InputManager.h
     Key.h
@@ -65,6 +64,3 @@ endif()
 if(SIERRA_PLATFORM_iOS)
     add_subdirectory(Platform/iOS)
 endif()
-
-# Link precompiled headers
-target_precompile_headers(Sierra PUBLIC ../srpch.h)

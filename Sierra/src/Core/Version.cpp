@@ -10,7 +10,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     Version::Version(const VersionCreateInfo &createInfo)
-        : MAJOR(createInfo.major), MINOR(createInfo.minor), PATCH(createInfo.patch), STATE(createInfo.state)
+        : major(createInfo.major), minor(createInfo.minor), patch(createInfo.patch)
     {
 
     }

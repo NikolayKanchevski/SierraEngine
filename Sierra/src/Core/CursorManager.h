@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "EventDispatcher.h"
+#include "EventDispatcher.hpp"
 
 namespace Sierra
 {
@@ -54,7 +54,7 @@ namespace Sierra
         [[nodiscard]] virtual float32 GetVerticalDelta() const;
 
         /* --- EVENTS --- */
-        template<typename T> void OnEvent(CursorEventCallback<T> Callback) { static_assert(std::is_base_of_v<CursorEvent, T> && !std::is_same_v<CursorEvent, T>, "Template function accepts derived cursor events only!"); }
+        template<typename T> requires (std::is_base_of_v<CursorEvent, T> && !std::is_same_v<CursorEvent, T>) void OnEvent(CursorEventCallback<T> Callback) { }
 
         /* --- OPERATORS --- */
         CursorManager(const CursorManager&) = delete;

@@ -52,7 +52,7 @@ namespace Sierra
         return std::filesystem::remove(directoryPath);
     }
 
-    std::vector<char> File::ReadFile(const std::filesystem::path &filePath)
+    std::vector<uint8> File::ReadFile(const std::filesystem::path &filePath, const uint64 sourceByteOffset, uint64 memoryRange)
     {
         SR_ERROR_IF(!FileExists(filePath), "Could not open file [{0}] for reading, as it does not exist!", filePath.string().c_str());
 
@@ -61,29 +61,30 @@ namespace Sierra
         SR_ERROR_IF(!file.is_open(), "Could not open file [{0}] for reading!", filePath.string());
 
         // Get file size and create resized vector
-        const std::streamsize fileSize = static_cast<int64>(file.tellg());
-        std::vector<char> fileBuffer(fileSize);
+        memoryRange = memoryRange == 0 ? static_cast<uint64>(file.tellg()) : memoryRange;
+        std::vector<uint8> fileBuffer(memoryRange);
 
         // Sava file data to buffer
-        file.seekg(0);
-        file.read(fileBuffer.data(), fileSize);
+        file.seekg(sourceByteOffset);
+        file.read(reinterpret_cast<char*>(fileBuffer.data()), memoryRange);
 
         // Close file and return data
         file.close();
         return fileBuffer;
     }
 
-    bool File::WriteToFile(const std::filesystem::path &filePath, const char* data, const uint64 dataSize, const bool overwrite, const bool createFile)
+    bool File::WriteToFile(const std::filesystem::path &filePath, const void* memory, const uint64 memoryRange, const uint64 sourceByteOffset, const uint64 destinationByteOffset, const FileWriteFlags writeFlags)
     {
-        if (createFile) CreateFile(filePath);
+        if (writeFlags & FileWriteFlags::Create) CreateFile(filePath);
         if (!FileExists(filePath)) return false;
 
         // Write data to file
-        std::ofstream file(filePath, std::ios::out | std::ios::binary | (overwrite ? std::ios::trunc : std::ios::app));
+        std::ofstream file(filePath, std::ios::out | std::ios::binary | ((writeFlags & FileWriteFlags::Overwrite) ? std::ios::trunc : std::ios::app));
         if (!file.is_open()) return false;
 
         // Write to file and close
-        file.write(data, static_cast<std::streamsize>(dataSize));
+        file.seekp(destinationByteOffset);
+        file.write(reinterpret_cast<const char*>(memory) + sourceByteOffset, static_cast<std::streamsize>(memoryRange));
         file.close();
 
         return true;

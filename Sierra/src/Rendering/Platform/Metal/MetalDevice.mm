@@ -87,17 +87,8 @@ namespace Sierra
 
     bool MetalDevice::IsImageFormatSupported(const ImageFormat format, const ImageUsage usage) const
     {
-        // Not RGB format is supported by Metal
-        if (format.channels == ImageChannels::RGB) return false;
-
         // No 64-bit format is supported by Metal
-        switch (format.memoryType)
-        {
-            case ImageMemoryType::Int64:
-            case ImageMemoryType::UInt64:
-            case ImageMemoryType::Float64:      return false;
-            default:                            break;
-        }
+        if (ImageFormatToPixelMemorySize(format) == 8) return false;
 
         // Get pixel format
         const MTLPixelFormat pixelFormat = MetalImage::ImageFormatToPixelFormat(format);
@@ -108,32 +99,33 @@ namespace Sierra
         /* === Reference: https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf === */
         switch (pixelFormat)
         {
-            case MTLPixelFormatR8Sint:                return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::LinearFilter);
-            case MTLPixelFormatR8Uint:                return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::LinearFilter);
+            case MTLPixelFormatInvalid:               return false;
+            case MTLPixelFormatR8Sint:                return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatR8Uint:                return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
             case MTLPixelFormatR8Unorm:               return true;
             case MTLPixelFormatR8Unorm_sRGB:          return true;
-            case MTLPixelFormatR16Sint:               return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::LinearFilter);
-            case MTLPixelFormatR16Uint:               return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::LinearFilter);
+            case MTLPixelFormatR16Sint:               return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatR16Uint:               return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
             case MTLPixelFormatR16Snorm:              return !(usage & ImageUsage::ResolveAttachment);
             case MTLPixelFormatR16Unorm:              return !(usage & ImageUsage::ResolveAttachment);
             case MTLPixelFormatR16Float:              return true;
-            case MTLPixelFormatR32Sint:               return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::LinearFilter);
-            case MTLPixelFormatR32Uint:               return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::LinearFilter);
-            case MTLPixelFormatR32Float:              return [device supportsFamily: MTLGPUFamilyApple8] || !(usage & ImageUsage::LinearFilter);
-            case MTLPixelFormatRG8Sint:               return !(usage & ImageUsage::LinearFilter);
-            case MTLPixelFormatRG8Uint:               return !(usage & ImageUsage::LinearFilter);
+            case MTLPixelFormatR32Sint:               return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatR32Uint:               return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatR32Float:              return [device supportsFamily: MTLGPUFamilyApple8] || !(usage & ImageUsage::Filter);
+            case MTLPixelFormatRG8Sint:               return !(usage & ImageUsage::Filter);
+            case MTLPixelFormatRG8Uint:               return !(usage & ImageUsage::Filter);
             case MTLPixelFormatRG8Unorm:              return true;
             case MTLPixelFormatRG8Unorm_sRGB:         return [device supportsFamily: MTLGPUFamilyApple2];
-            case MTLPixelFormatRG16Sint:              return !(usage & ImageUsage::LinearFilter);
-            case MTLPixelFormatRG16Uint:              return !(usage & ImageUsage::LinearFilter);
+            case MTLPixelFormatRG16Sint:              return !(usage & ImageUsage::Filter);
+            case MTLPixelFormatRG16Uint:              return !(usage & ImageUsage::Filter);
             case MTLPixelFormatRG16Snorm:             return !(usage & ImageUsage::ResolveAttachment);
             case MTLPixelFormatRG16Unorm:             return !(usage & ImageUsage::ResolveAttachment);
             case MTLPixelFormatRG16Float:             return true;
-            case MTLPixelFormatRG32Sint:              return [device supportsFamily: MTLGPUFamilyApple7] && !(usage & ImageUsage::LinearFilter);
-            case MTLPixelFormatRG32Uint:              return [device supportsFamily: MTLGPUFamilyApple7] && !(usage & ImageUsage::LinearFilter);
+            case MTLPixelFormatRG32Sint:              return [device supportsFamily: MTLGPUFamilyApple7] && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatRG32Uint:              return [device supportsFamily: MTLGPUFamilyApple7] && !(usage & ImageUsage::Filter);
             case MTLPixelFormatRG32Float:             return [device supportsFamily: MTLGPUFamilyApple9];
-            case MTLPixelFormatRGBA8Sint:             return !(usage & ImageUsage::LinearFilter);
-            case MTLPixelFormatRGBA8Uint:             return !(usage & ImageUsage::LinearFilter);
+            case MTLPixelFormatRGBA8Sint:             return !(usage & ImageUsage::Filter);
+            case MTLPixelFormatRGBA8Uint:             return !(usage & ImageUsage::Filter);
             case MTLPixelFormatRGBA8Unorm:            return true;
             case MTLPixelFormatRGBA8Unorm_sRGB:       return true;
             case MTLPixelFormatRGBA16Sint:            return !(usage & ImageUsage::ColorAttachment) && !(usage & ImageUsage::DepthAttachment) && !(usage & ImageUsage::ResolveAttachment);
@@ -141,13 +133,23 @@ namespace Sierra
             case MTLPixelFormatRGBA16Snorm:           return !(usage & ImageUsage::ResolveAttachment);
             case MTLPixelFormatRGBA16Unorm:           return !(usage & ImageUsage::ResolveAttachment);
             case MTLPixelFormatRGBA16Float:           return true;
-            case MTLPixelFormatRGBA32Sint:            return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::LinearFilter);
-            case MTLPixelFormatRGBA32Uint:            return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::LinearFilter);
-            case MTLPixelFormatRGBA32Float:           return [device supportsFamily: MTLGPUFamilyApple9] || (!(usage & ImageUsage::LinearFilter) && !(usage & ImageUsage::ResolveAttachment));
+            case MTLPixelFormatRGBA32Sint:            return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatRGBA32Uint:            return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatRGBA32Float:           return [device supportsFamily: MTLGPUFamilyApple9] || (!(usage & ImageUsage::Filter) && !(usage & ImageUsage::ResolveAttachment));
             case MTLPixelFormatBGRA8Unorm:            return true;
             case MTLPixelFormatBGRA8Unorm_sRGB:       return true;
             case MTLPixelFormatDepth16Unorm:          return [device supportsFamily: MTLGPUFamilyApple3] || !(usage & ImageUsage::ResolveAttachment);
-            case MTLPixelFormatDepth32Float:          return ([device supportsFamily: MTLGPUFamilyApple3] || !(usage & ImageUsage::ResolveAttachment)) && ([device supportsFamily: MTLGPUFamilyMac2] || !(usage & ImageUsage::LinearFilter));
+            case MTLPixelFormatDepth32Float:          return ([device supportsFamily: MTLGPUFamilyApple3] || !(usage & ImageUsage::ResolveAttachment)) && ([device supportsFamily: MTLGPUFamilyMac2] || !(usage & ImageUsage::Filter));
+            case MTLPixelFormatBC1_RGBA:
+            case MTLPixelFormatBC1_RGBA_sRGB:
+            case MTLPixelFormatBC3_RGBA:
+            case MTLPixelFormatBC3_RGBA_sRGB:
+            case MTLPixelFormatBC4_RUnorm:
+            case MTLPixelFormatBC4_RSnorm:
+            case MTLPixelFormatBC6H_RGBFloat:
+            case MTLPixelFormatBC6H_RGBUfloat:
+            case MTLPixelFormatBC7_RGBAUnorm:
+            case MTLPixelFormatBC7_RGBAUnorm_sRGB:    return [device supportsBCTextureCompression];
             default:                                  break;
         }
 
@@ -170,10 +172,10 @@ namespace Sierra
             case SamplerAnisotropy::x4:
             case SamplerAnisotropy::x8:
             case SamplerAnisotropy::x16:        return true;
-            default:                            return false;
+            default:                            break;
         }
 
-        return anisotropy == SamplerAnisotropy::x1;
+        return false;
     }
 
     /* --- DESTRUCTOR --- */

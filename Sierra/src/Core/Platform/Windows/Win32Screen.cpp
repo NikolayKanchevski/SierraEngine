@@ -61,7 +61,7 @@ namespace Sierra
 
     /* --- MOVE SEMANTICS --- */
 
-    Win32Screen::Win32Screen(Win32Screen &&other)
+    Win32Screen::Win32Screen(Win32Screen&& other)
         : name(std::move(other.name)), origin(other.origin), size(other.size), workAreaOrigin(other.workAreaOrigin), workAreaSize(other.workAreaSize), refreshRate(other.refreshRate)
     {
         other.origin = { 0, 0 };

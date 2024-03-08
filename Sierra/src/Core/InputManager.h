@@ -6,7 +6,7 @@
 
 #include "Key.h"
 #include "MouseButton.h"
-#include "EventDispatcher.h"
+#include "EventDispatcher.hpp"
 
 namespace Sierra
 {
@@ -111,9 +111,9 @@ namespace Sierra
         [[nodiscard]] virtual bool IsKeyReleased(Key key) const;
         [[nodiscard]] virtual bool IsKeyResting(Key key) const;
 
-        template<typename ...Args>
+        template<typename... Args>
         [[nodiscard]] inline bool IsKeyCombinationPressed(const Key first, const Args... rest) const { return IsKeyCombinationPressedImplementation({ first, rest... }); };
-        template<typename ...Args>
+        template<typename... Args>
         [[nodiscard]] inline bool IsKeyCombinationHeld(const Key first, const Args... rest) const { return IsKeyCombinationHeldImplementation({ first, rest... }); };
 
         [[nodiscard]] virtual bool IsMouseButtonPressed(MouseButton key) const;
@@ -123,7 +123,7 @@ namespace Sierra
         [[nodiscard]] virtual Vector2 GetMouseScroll() const;
 
         /* --- EVENTS --- */
-        template<typename T> void OnEvent(InputEventCallback<T> Callback) { static_assert(std::is_base_of_v<InputEvent, T> && !std::is_same_v<InputEvent, T>, "Template function accepts derived input events only!"); }
+        template<typename T> requires (std::is_base_of_v<InputEvent, T> && !std::is_same_v<InputEvent, T>) void OnEvent(InputEventCallback<T> Callback) {  }
 
         /* --- OPERATORS --- */
         InputManager(const InputManager&) = delete;

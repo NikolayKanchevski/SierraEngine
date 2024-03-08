@@ -11,9 +11,9 @@
 #if !defined(__OBJC__)
     namespace Sierra
     {
-        typedef void SelectorDispatcher;
-        typedef void NSNotificationCenter;
-        typedef void* NSNotificationName;
+        using SelectorDispatcher = void;
+        using NSNotificationCenter = void;
+        using NSNotificationName = void*;
     }
 #else
     #include <UIKit/UIKit.h>
@@ -28,7 +28,7 @@ namespace Sierra
     public:
         /* --- CONSTRUCTORS --- */
         UIKitSelectorBridge() = default;
-        explicit UIKitSelectorBridge(const NSNotificationCenter* notificationCenter, const NSNotificationName notificationName, const std::function<void()> &Callback);
+        explicit UIKitSelectorBridge(const NSNotificationCenter* notificationCenter, NSNotificationName notificationName, const std::function<void()> &Callback);
 
         /* --- POLLING METHODS --- */
         void Invalidate() const;

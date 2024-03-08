@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
         android:icon="@mipmap/ic_launcher"
-        android:label="Sandbox">
+        android:label="SierraEngine">
         <activity
             android:name="MainActivity"
             android:exported="true"

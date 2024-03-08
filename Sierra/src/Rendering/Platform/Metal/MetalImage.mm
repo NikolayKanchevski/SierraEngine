@@ -29,7 +29,6 @@ namespace Sierra
         [textureDescriptor setStorageMode: createInfo.usage & ImageUsage::TransientAttachment ? MTLStorageModeMemoryless : ImageMemoryLocationToStorageMode(createInfo.memoryLocation)];
         [textureDescriptor setCpuCacheMode: ImageMemoryLocationToCPUCacheMode(createInfo.memoryLocation)];
         [textureDescriptor setHazardTrackingMode: MTLHazardTrackingModeUntracked];
-        auto a = ImageMemoryLocationToStorageMode(createInfo.memoryLocation);
 
         // Allocate texture
         texture = [device.GetMetalDevice() newTextureWithDescriptor: textureDescriptor];
@@ -40,7 +39,7 @@ namespace Sierra
     }
 
     MetalImage::MetalImage(const MetalDevice &device, const SwapchainImageCreateInfo &createInfo)
-        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainPixelFormatToImageFormat(createInfo.format), .usage = ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::Device }), MetalResource(createInfo.name),
+        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainPixelFormatToImageFormat(createInfo.format), .usage = ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }), MetalResource(createInfo.name),
           texture(createInfo.texture), swapchainImage(true)
     {
 
@@ -59,9 +58,9 @@ namespace Sierra
     {
         switch (format)
         {
-            case MTLPixelFormatBGRA8Unorm:        return { .channels = ImageChannels::BGRA, .memoryType = ImageMemoryType::UNorm8 };
-            case MTLPixelFormatBGRA8Unorm_sRGB:   return { .channels = ImageChannels::BGRA, .memoryType = ImageMemoryType::SRGB8 };
-            case MTLPixelFormatRGBA16Float:       return { .channels = ImageChannels::BGRA, .memoryType = ImageMemoryType::Float16 };
+            case MTLPixelFormatBGRA8Unorm:          return ImageFormat::B8G8R8A8_UNorm;
+            case MTLPixelFormatBGRA8Unorm_sRGB:     return ImageFormat::B8G8R8A8_SRGB;
+            case MTLPixelFormatRGBA16Float:         return ImageFormat::R16G16B16A16_Float;
             default:                                break;
         }
 
@@ -83,110 +82,121 @@ namespace Sierra
 
     MTLPixelFormat MetalImage::ImageFormatToPixelFormat(const ImageFormat format)
     {
-        switch (format.channels)
+        switch (format)
         {
-            case ImageChannels::R:
-            {
-                switch (format.memoryType)
-                {
-                    case ImageMemoryType::Int8:         return MTLPixelFormatR8Sint;
-                    case ImageMemoryType::UInt8:        return MTLPixelFormatR8Uint;
-                    case ImageMemoryType::Norm8:        return MTLPixelFormatR8Snorm;
-                    case ImageMemoryType::UNorm8:       return MTLPixelFormatR8Unorm;
-                    case ImageMemoryType::SRGB8:        return MTLPixelFormatR8Unorm_sRGB;
-                    case ImageMemoryType::Int16:        return MTLPixelFormatR16Sint;
-                    case ImageMemoryType::UInt16:       return MTLPixelFormatR16Uint;
-                    case ImageMemoryType::Norm16:       return MTLPixelFormatR16Snorm;
-                    case ImageMemoryType::UNorm16:      return MTLPixelFormatR16Unorm;
-                    case ImageMemoryType::Float16:      return MTLPixelFormatR16Float;
-                    case ImageMemoryType::Int32:
-                    case ImageMemoryType::Int64:        return MTLPixelFormatR32Sint;
-                    case ImageMemoryType::UInt32:
-                    case ImageMemoryType::UInt64:       return MTLPixelFormatR32Uint;
-                    case ImageMemoryType::Float32:
-                    case ImageMemoryType::Float64:      return MTLPixelFormatR32Float;
-                }
-            }
-            case ImageChannels::RG:
-            {
-                switch (format.memoryType)
-                {
-                    case ImageMemoryType::Int8:         return MTLPixelFormatRG8Sint;
-                    case ImageMemoryType::UInt8:        return MTLPixelFormatRG8Uint;
-                    case ImageMemoryType::Norm8:        return MTLPixelFormatRG8Snorm;
-                    case ImageMemoryType::UNorm8:       return MTLPixelFormatRG8Unorm;
-                    case ImageMemoryType::SRGB8:        return MTLPixelFormatRG8Unorm_sRGB;
-                    case ImageMemoryType::Int16:        return MTLPixelFormatRG16Sint;
-                    case ImageMemoryType::UInt16:       return MTLPixelFormatRG16Uint;
-                    case ImageMemoryType::Norm16:       return MTLPixelFormatRG16Snorm;
-                    case ImageMemoryType::UNorm16:      return MTLPixelFormatRG16Unorm;
-                    case ImageMemoryType::Float16:      return MTLPixelFormatRG16Float;
-                    case ImageMemoryType::Int32:
-                    case ImageMemoryType::Int64:        return MTLPixelFormatRG32Sint;
-                    case ImageMemoryType::UInt32:
-                    case ImageMemoryType::UInt64:       return MTLPixelFormatRG32Uint;
-                    case ImageMemoryType::Float32:
-                    case ImageMemoryType::Float64:      return MTLPixelFormatRG32Float;
-                }
-            }
-            case ImageChannels::RGB:
-            case ImageChannels::RGBA:
-            {
-                switch (format.memoryType)
-                {
-                    case ImageMemoryType::Int8:         return MTLPixelFormatRGBA8Sint;
-                    case ImageMemoryType::UInt8:        return MTLPixelFormatRGBA8Uint;
-                    case ImageMemoryType::Norm8:        return MTLPixelFormatRGBA8Snorm;
-                    case ImageMemoryType::UNorm8:       return MTLPixelFormatRGBA8Unorm;
-                    case ImageMemoryType::SRGB8:        return MTLPixelFormatRGBA8Unorm_sRGB;
-                    case ImageMemoryType::Int16:        return MTLPixelFormatRGBA16Sint;
-                    case ImageMemoryType::UInt16:       return MTLPixelFormatRGBA16Uint;
-                    case ImageMemoryType::Norm16:       return MTLPixelFormatRGBA16Snorm;
-                    case ImageMemoryType::UNorm16:      return MTLPixelFormatRGBA16Unorm;
-                    case ImageMemoryType::Float16:      return MTLPixelFormatRGBA16Float;
-                    case ImageMemoryType::Int32:
-                    case ImageMemoryType::Int64:        return MTLPixelFormatRGBA32Sint;
-                    case ImageMemoryType::UInt32:
-                    case ImageMemoryType::UInt64:       return MTLPixelFormatRGBA32Uint;
-                    case ImageMemoryType::Float32:
-                    case ImageMemoryType::Float64:      return MTLPixelFormatRGBA32Float;
-                }
-            }
-            case ImageChannels::BGRA:
-            {
-                switch (format.memoryType)
-                {
-                    case ImageMemoryType::UNorm8:    return MTLPixelFormatBGRA8Unorm;
-                    case ImageMemoryType::SRGB8:     return MTLPixelFormatBGRA8Unorm_sRGB;
-                    default:                         break;
-                }
-            }
-            case ImageChannels::D:
-            {
-                switch (format.memoryType)
-                {
-                    case ImageMemoryType::UNorm16:   return MTLPixelFormatDepth16Unorm;
-                    case ImageMemoryType::Float32:   return MTLPixelFormatDepth32Float;
-                    default:                         break;
-                }
-            }
+            case ImageFormat::Undefined:                return MTLPixelFormatInvalid;
+
+            case ImageFormat::R8_Int:                   return MTLPixelFormatR8Sint;
+            case ImageFormat::R8_UInt:                  return MTLPixelFormatR8Uint;
+            case ImageFormat::R8_Norm:                  return MTLPixelFormatR8Snorm;
+            case ImageFormat::R8_UNorm:                 return MTLPixelFormatR8Unorm;
+            case ImageFormat::R8_SRGB:                  return MTLPixelFormatR8Unorm_sRGB;
+            case ImageFormat::R8G8_Int:                 return MTLPixelFormatRG8Sint;
+            case ImageFormat::R8G8_UInt:                return MTLPixelFormatRG8Uint;
+            case ImageFormat::R8G8_Norm:                return MTLPixelFormatRG8Snorm;
+            case ImageFormat::R8G8_UNorm:               return MTLPixelFormatRG8Unorm;
+            case ImageFormat::R8G8_SRGB:                return MTLPixelFormatRG8Unorm_sRGB;
+            case ImageFormat::R8G8B8A8_Int:             return MTLPixelFormatRGBA8Sint;
+            case ImageFormat::R8G8B8A8_UInt:            return MTLPixelFormatRGBA8Uint;
+            case ImageFormat::R8G8B8A8_Norm:            return MTLPixelFormatRGBA8Snorm;
+            case ImageFormat::R8G8B8A8_UNorm:           return MTLPixelFormatRGBA8Unorm;
+            case ImageFormat::R8G8B8A8_SRGB:            return MTLPixelFormatRGBA8Unorm_sRGB;
+
+            case ImageFormat::R16_Int:                  return MTLPixelFormatR16Sint;
+            case ImageFormat::R16_UInt:                 return MTLPixelFormatR16Uint;
+            case ImageFormat::R16_Norm:                 return MTLPixelFormatR16Snorm;
+            case ImageFormat::R16_UNorm:                return MTLPixelFormatR16Unorm;
+            case ImageFormat::R16_Float:                return MTLPixelFormatR16Float;
+            case ImageFormat::R16G16_Int:               return MTLPixelFormatRG16Sint;
+            case ImageFormat::R16G16_UInt:              return MTLPixelFormatRG16Uint;
+            case ImageFormat::R16G16_Norm:              return MTLPixelFormatRG16Snorm;
+            case ImageFormat::R16G16_UNorm:             return MTLPixelFormatRG16Unorm;
+            case ImageFormat::R16G16_Float:             return MTLPixelFormatRG16Float;
+            case ImageFormat::R16G16B16A16_Int:         return MTLPixelFormatRGBA16Sint;
+            case ImageFormat::R16G16B16A16_UInt:        return MTLPixelFormatRGBA16Uint;
+            case ImageFormat::R16G16B16A16_Norm:        return MTLPixelFormatRGBA16Snorm;
+            case ImageFormat::R16G16B16A16_UNorm:       return MTLPixelFormatRGBA16Unorm;
+            case ImageFormat::R16G16B16A16_Float:       return MTLPixelFormatRGBA16Float;
+
+            case ImageFormat::R32_Int:                  return MTLPixelFormatR32Sint;
+            case ImageFormat::R32_UInt:                 return MTLPixelFormatR32Uint;
+            case ImageFormat::R32_Float:                return MTLPixelFormatR32Float;
+            case ImageFormat::R32G32_Int:               return MTLPixelFormatRG32Sint;
+            case ImageFormat::R32G32_UInt:              return MTLPixelFormatRG32Uint;
+            case ImageFormat::R32G32_Float:             return MTLPixelFormatRG32Float;
+            case ImageFormat::R32G32B32A32_Int:         return MTLPixelFormatRGBA32Sint;
+            case ImageFormat::R32G32B32A32_UInt:        return MTLPixelFormatRGBA32Uint;
+            case ImageFormat::R32G32B32A32_Float:       return MTLPixelFormatRGBA32Float;
+
+            case ImageFormat::D16_UNorm:                return MTLPixelFormatDepth16Unorm;
+            case ImageFormat::D32_Float:                return MTLPixelFormatDepth32Float;
+
+            case ImageFormat::B8G8R8A8_UNorm:           return MTLPixelFormatBGRA8Unorm;
+            case ImageFormat::B8G8R8A8_SRGB:            return MTLPixelFormatBGRA8Unorm_sRGB;
+
+            case ImageFormat::BC1_RGB_UNorm:
+            case ImageFormat::BC1_RGBA_UNorm:           return MTLPixelFormatBC1_RGBA;
+            case ImageFormat::BC1_RGB_SRGB:
+            case ImageFormat::BC1_RGBA_SRGB:            return MTLPixelFormatBC1_RGBA_sRGB;
+            case ImageFormat::BC3_RGBA_UNorm:           return MTLPixelFormatBC3_RGBA;
+            case ImageFormat::BC3_RGBA_SRGB:            return MTLPixelFormatBC3_RGBA_sRGB;
+            case ImageFormat::BC4_R_Norm:               return MTLPixelFormatBC4_RSnorm;
+            case ImageFormat::BC4_R_UNorm:              return MTLPixelFormatBC4_RUnorm;
+            case ImageFormat::BC5_RG_Norm:              return MTLPixelFormatBC5_RGSnorm;
+            case ImageFormat::BC5_RG_UNorm:             return MTLPixelFormatBC5_RGUnorm;
+            case ImageFormat::BC6_HDR_RGB_Float:        return MTLPixelFormatBC6H_RGBFloat;
+            case ImageFormat::BC6_HDR_RGB_UFloat:       return MTLPixelFormatBC6H_RGBUfloat;
+            case ImageFormat::BC7_RGB_UNorm:
+            case ImageFormat::BC7_RGBA_UNorm:           return MTLPixelFormatBC7_RGBAUnorm;
+            case ImageFormat::BC7_RGB_SRGB:
+            case ImageFormat::BC7_RGBA_SRGB:            return MTLPixelFormatBC7_RGBAUnorm_sRGB;
+
+            case ImageFormat::ASTC_4x4_UNorm:           return MTLPixelFormatASTC_4x4_LDR;
+            case ImageFormat::ASTC_4x4_SRGB:            return MTLPixelFormatASTC_4x4_sRGB;
+            case ImageFormat::ASTC_8x8_UNorm:           return MTLPixelFormatASTC_8x8_LDR;
+            case ImageFormat::ASTC_8x8_SRGB:            return MTLPixelFormatASTC_8x8_sRGB;
+
+            case ImageFormat::R8G8B8_Int:
+            case ImageFormat::R8G8B8_UInt:
+            case ImageFormat::R8G8B8_Norm:
+            case ImageFormat::R8G8B8_UNorm:
+            case ImageFormat::R8G8B8_SRGB:
+            case ImageFormat::R16G16B16_Int:
+            case ImageFormat::R16G16B16_UInt:
+            case ImageFormat::R16G16B16_Norm:
+            case ImageFormat::R16G16B16_UNorm:
+            case ImageFormat::R16G16B16_Float:
+            case ImageFormat::R32G32B32_Int:
+            case ImageFormat::R32G32B32_UInt:
+            case ImageFormat::R32G32B32_Float:
+            case ImageFormat::R64_Int:
+            case ImageFormat::R64_UInt:
+            case ImageFormat::R64_Float:
+            case ImageFormat::R64G64_Int:
+            case ImageFormat::R64G64_UInt:
+            case ImageFormat::R64G64_Float:
+            case ImageFormat::R64G64B64_Int:
+            case ImageFormat::R64G64B64_UInt:
+            case ImageFormat::R64G64B64_Float:
+            case ImageFormat::R64G64B64A64_Int:
+            case ImageFormat::R64G64B64A64_UInt:
+            case ImageFormat::R64G64B64A64_Float:       return MTLPixelFormatInvalid;
         }
 
-        SR_ERROR("[Metal]: Cannot determine image format of invalid channel and memory configuration!");
         return MTLPixelFormatInvalid;
     }
 
     MTLTextureUsage MetalImage::ImageUsageToTextureUsage(const ImageUsage usage)
     {
         MTLTextureUsage usageFlags = MTLTextureUsageUnknown;
-        if (usage & ImageUsage::SourceMemory) usageFlags |= MTLTextureUsageUnknown;
-        if (usage & ImageUsage::DestinationMemory) usageFlags |= MTLTextureUsageUnknown;
-        if (usage & ImageUsage::Storage)                    usageFlags |= MTLTextureUsageShaderRead | MTLTextureUsageShaderWrite;
-        if (usage & ImageUsage::Sample) usageFlags |= MTLTextureUsageShaderRead;
+        if (usage & ImageUsage::SourceMemory)           usageFlags |= MTLTextureUsageUnknown;
+        if (usage & ImageUsage::DestinationMemory)      usageFlags |= MTLTextureUsageUnknown;
+        if (usage & ImageUsage::Storage)                usageFlags |= MTLTextureUsageShaderRead | MTLTextureUsageShaderWrite;
+        if (usage & ImageUsage::Sample)                 usageFlags |= MTLTextureUsageShaderRead;
         if (usage & ImageUsage::ColorAttachment ||
             usage & ImageUsage::DepthAttachment ||
             usage & ImageUsage::InputAttachment ||
-            usage & ImageUsage::TransientAttachment)        usageFlags |= MTLTextureUsageRenderTarget;
+            usage & ImageUsage::TransientAttachment)    usageFlags |= MTLTextureUsageRenderTarget;
         return usageFlags;
     }
 
@@ -210,9 +220,8 @@ namespace Sierra
     {
         switch (memoryLocation)
         {
-            case ImageMemoryLocation::Host:        return MTLStorageModeShared;
-            case ImageMemoryLocation::Device:      return MTLStorageModePrivate;
-            case ImageMemoryLocation::Auto:        return MTLStorageModeShared;
+            case ImageMemoryLocation::CPU:        return MTLStorageModeShared;
+            case ImageMemoryLocation::GPU:      return MTLStorageModePrivate;
         }
 
         return MTLStorageModeShared;
@@ -222,9 +231,8 @@ namespace Sierra
     {
         switch (memoryLocation)
         {
-            case ImageMemoryLocation::Host:        return MTLCPUCacheModeDefaultCache;
-            case ImageMemoryLocation::Device:      return MTLCPUCacheModeWriteCombined;
-            case ImageMemoryLocation::Auto:        return MTLCPUCacheModeDefaultCache;
+            case ImageMemoryLocation::CPU:        return MTLCPUCacheModeDefaultCache;
+            case ImageMemoryLocation::GPU:      return MTLCPUCacheModeWriteCombined;
         }
 
         return MTLCPUCacheModeDefaultCache;

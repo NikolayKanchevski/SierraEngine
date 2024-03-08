@@ -11,3 +11,12 @@
 	path = Sierra/vendor/ImGui
 	url = https://github.com/ocornut/imgui
 	branch = docking
+[submodule "Sierra/vendor/ios-cmake"]
+    path = Sierra/vendor/ios-cmake
+    url = https://github.com/leetal/ios-cmake
+[submodule "SierraEngine/vendor/stb"]
+	path = SierraEngine/vendor/stb
+	url = https://github.com/nothings/stb
+[submodule "SierraEngine/vendor/KTX-Software"]
+	path = SierraEngine/vendor/KTX-Software
+	url = https://github.com/KhronosGroup/KTX-Software/

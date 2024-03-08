@@ -14,7 +14,7 @@ namespace Sierra
         #if SR_ENABLE_LOGGING
             for (uint32 i = 0; i < createInfo.bindings.size(); i++)
             {
-                const auto iterator = createInfo.bindings.begin() + i;
+                const auto* iterator = createInfo.bindings.begin() + i;
                 SR_ERROR_IF(iterator->type == PipelineBindingType::Undefined, "Cannot create pipeline layout [{0}], as its [{1}] binding must not be of type PipelineBindingType::Undefined!", createInfo.name, i);
                 SR_ERROR_IF(iterator->arraySize == 0, "Cannot create pipeline layout [{0}], as its [{1}] binding must not have an array size of 0!", createInfo.name, i);
             }

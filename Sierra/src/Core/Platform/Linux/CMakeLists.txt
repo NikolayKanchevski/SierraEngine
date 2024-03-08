@@ -1,4 +1,3 @@
-# Link source files
 target_sources(Sierra PRIVATE
     LinuxContext.cpp
     LinuxContext.h

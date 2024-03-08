@@ -88,6 +88,9 @@ function(SierraBuildApplication SOURCE_FILES)
         add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:Sierra>)
     endif()
 
+    # === PRECOMPILED HEADERS === #
+    target_precompile_headers(Sierra PRIVATE "${SIERRA_DIRECTORY}/src/srpch.h")
+
     # === ENGINE LINKING === #
     target_link_libraries(${SIERRA_APPLICATION_NAME} PRIVATE Sierra)
     target_include_directories(${SIERRA_APPLICATION_NAME} PRIVATE ${SIERRA_DIRECTORY}/include/)

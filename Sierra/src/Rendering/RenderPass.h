@@ -54,7 +54,7 @@ namespace Sierra
     struct RenderPassBeginAttachment
     {
         const std::unique_ptr<Image> &image;
-        const Color &clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+        const ColorRGBA32 &clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
     };
 
     class SIERRA_API RenderPass : public virtual RenderingResource

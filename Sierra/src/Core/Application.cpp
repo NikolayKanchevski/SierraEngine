@@ -54,7 +54,7 @@ namespace Sierra
             },
             .OnEnd = [this] {
                 #if SR_PLATFORM_iOS
-                    this->~Application(); // Some genious at Apple has decided iOS should do exit(0) internally, which does not call destructors, so manual memory freeing is mandatory
+                    this->~Application(); // Some genius at Apple decided application should do exit(0) internally, which does not call destructors, so manual memory freeing is mandatory
                 #else
 
                 #endif

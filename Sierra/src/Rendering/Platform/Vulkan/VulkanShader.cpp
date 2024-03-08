@@ -19,7 +19,7 @@ namespace Sierra
         // Set up module create info
         VkShaderModuleCreateInfo shaderModuleCreateInfo = { };
         shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        shaderModuleCreateInfo.codeSize = shaderData.size() * sizeof(char);
+        shaderModuleCreateInfo.codeSize = shaderData.size();
         shaderModuleCreateInfo.pCode = reinterpret_cast<uint32*>(shaderData.data());
 
         // Create shader module

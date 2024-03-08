@@ -927,7 +927,7 @@ namespace Sierra
                 .name = VK_KHR_SWAPCHAIN_EXTENSION_NAME
             },
         };
-        std::vector<Hash> loadedExtensions;
+        std::vector<hash> loadedExtensions;
 
         static bool IsExtensionSupported(const char* extensionName, const std::vector<VkExtensionProperties> &supportedExtensions);
         bool AddExtensionIfSupported(const VulkanDeviceExtension &extension, const std::vector<VkExtensionProperties> &supportedExtensions, void* pNextChain, std::vector<const char*> &extensionList, std::vector<void*> &extensionDataToFree);

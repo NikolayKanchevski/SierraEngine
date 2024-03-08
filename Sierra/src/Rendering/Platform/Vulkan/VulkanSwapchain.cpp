@@ -6,19 +6,19 @@
 
 #if SR_PLATFORM_WINDOWS
     #include "Platform/Windows/VulkanWindowsSurface.h"
-    typedef Sierra::VulkanWindowsSurface NativeSurface;
+    using NativeSurface = Sierra::VulkanWindowsSurface;
 #elif SR_PLATFORM_macOS
     #include "Platform/macOS/VulkanMacOSSurface.h"
-    typedef Sierra::VulkanMacOSSurface NativeSurface;
+    using NativeSurface = Sierra::VulkanMacOSSurface;
 #elif SR_PLATFORM_LINUX
     #include "Platform/Linux/VulkanLinuxSurface.h"
-    typedef Sierra::VulkanLinuxSurface NativeSurface;
+    using NativeSurface = Sierra::VulkanLinuxSurface;
 #elif SR_PLATFORM_ANDROID
     #include "Platform/Android/VulkanAndroidSurface.h"
-    typedef Sierra::VulkanAndroidSurface NativeSurface;
+    using NativeSurface = Sierra::VulkanAndroidSurface;
 #elif SR_PLATFORM_iOS
     #include "Platform/iOS/VulkaniOSSurface.h"
-    typedef Sierra::VulkaniOSSurface NativeSurface;
+    using NativeSurface = Sierra::VulkaniOSSurface;
 #endif
 #include "VulkanCommandBuffer.h"
 
@@ -231,7 +231,7 @@ namespace Sierra
         instance.GetFunctionTable().vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.GetPhysicalDevice(), surface, &surfaceCapabilities);
 
         // Use at least 3 images per frame (for triple-buffering) if supported, otherwise the max allowed
-        const uint32 preferredConcurrentFrameCount = std::clamp(3U, surfaceCapabilities.minImageCount, std::max(surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount));
+        const uint32 preferredConcurrentFrameCount = glm::clamp(3U, surfaceCapabilities.minImageCount, glm::max(surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount));
 
         // Set up swapchain creation info
         VkSwapchainCreateInfoKHR swapchainCreateInfo = { };
@@ -240,8 +240,8 @@ namespace Sierra
         swapchainCreateInfo.imageFormat = selectedFormat.format;
         swapchainCreateInfo.imageColorSpace = selectedFormat.colorSpace;
         swapchainCreateInfo.minImageCount = preferredConcurrentFrameCount;
-        swapchainCreateInfo.imageExtent.width = std::clamp(window->GetFramebufferSize().x, surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width);
-        swapchainCreateInfo.imageExtent.height = std::clamp(window->GetFramebufferSize().y, surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height);
+        swapchainCreateInfo.imageExtent.width = glm::clamp(window->GetFramebufferSize().x, surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width);
+        swapchainCreateInfo.imageExtent.height = glm::clamp(window->GetFramebufferSize().y, surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height);
         swapchainCreateInfo.imageArrayLayers = 1;
         swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;

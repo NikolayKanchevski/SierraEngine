@@ -25,4 +25,3 @@
 #if SR_BUILD_IMGUI
     #include "../src/Extensions/ImGuiRenderTask.h"
 #endif
-using namespace Sierra;

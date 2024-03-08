@@ -37,10 +37,8 @@ namespace Sierra
 
         // Create completion synchronization
         completionSignalValue = device.GetNewSignalValue();
-        [commandBuffer addCompletedHandler: ^(id<MTLCommandBuffer> executedCommandBuffer) {
-            queuedBuffers = std::queue<std::unique_ptr<Buffer>>();
-            queuedImages = std::queue<std::unique_ptr<Image>>();
-
+        [commandBuffer addCompletedHandler: ^(id<MTLCommandBuffer> executedCommandBuffer)
+        {
             #if SR_ENABLE_LOGGING
                 NSError* const error = executedCommandBuffer.error;
                 SR_ERROR_IF(error != nil, "[Metal]: Submission of command buffer [{0}] failed! Error code: {1}.", GetName(), error.description.UTF8String);
@@ -61,6 +59,7 @@ namespace Sierra
             #if SR_PLATFORM_macOS
                 [currentBlitEncoder release];
             #endif
+
             currentBlitEncoder = nil;
         }
 
@@ -130,7 +129,6 @@ namespace Sierra
 
         const MTLSize sourceSize = MTLSizeMake(pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth() >> mipLevel, pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight() >> mipLevel, 1);
         SR_ERROR_IF(destinationPixelOffset.x + sourceSize.width > destinationImage->GetWidth() || destinationPixelOffset.y + sourceSize.height > destinationImage->GetHeight(), "[Metal]: Cannot copy from buffer [{0}] pixel range [{1}x{2}], which is offset by another [{3}x{4}] pixels to image [{5}] within command buffer [{6}], as resulting pixel range of a total of [{7}x{8}] pixels exceeds the image's dimensions - [{9}x{10}]!", sourceBuffer->GetName(), sourceSize.width, sourceSize.height, destinationPixelOffset.x, destinationPixelOffset.y, destinationImage->GetName(), GetName(), destinationPixelOffset.x + sourceSize.width, destinationPixelOffset.y + sourceSize.height, destinationImage->GetWidth(), destinationImage->GetHeight());
-        SR_ERROR_IF(sourceByteOffset + static_cast<uint64>(sourceSize.width) * sourceSize.height * destinationImage->GetPixelMemorySize() > sourceBuffer->GetMemorySize(), "[Metal]: Cannot copy from buffer [{0}] pixel range [{1}x{2}], which is offset by another [{3}] bytes, to image [{4}], as total memory range [{5}] overflows that of the buffer - [{6}]!", sourceBuffer->GetName(), sourceSize.width, sourceSize.height, sourceByteOffset, destinationImage->GetName(), sourceByteOffset + sourceSize.width * sourceSize.height * destinationImage->GetPixelMemorySize(), sourceBuffer->GetMemorySize());
 
         if (currentBlitEncoder == nil)
         {
@@ -138,7 +136,7 @@ namespace Sierra
             device.SetResourceName(currentBlitEncoder , "Transfer Encoder");
         }
 
-        [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer() sourceOffset: sourceByteOffset sourceBytesPerRow: sourceSize.width * destinationImage->GetPixelMemorySize() sourceBytesPerImage: 0 sourceSize: sourceSize toTexture: metalDestinationImage.GetMetalTexture() destinationSlice: layer destinationLevel: mipLevel destinationOrigin: MTLOriginMake(destinationPixelOffset.x, destinationPixelOffset.y, 0)];
+        [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer() sourceOffset: sourceByteOffset sourceBytesPerRow: sourceSize.width *     destinationImage->GetPixelMemorySize() sourceBytesPerImage: 0 sourceSize: sourceSize toTexture: metalDestinationImage.GetMetalTexture() destinationSlice: layer destinationLevel: mipLevel destinationOrigin: MTLOriginMake(destinationPixelOffset.x, destinationPixelOffset.y, 0)];
     }
 
     void MetalCommandBuffer::GenerateMipMapsForImage(const std::unique_ptr<Image> &image)
@@ -200,6 +198,16 @@ namespace Sierra
             }
         }
 
+        // End any prior transfer operations
+        if (currentBlitEncoder != nil)
+        {
+            [currentBlitEncoder endEncoding];
+            #if SR_PLATFORM_macOS
+                [currentBlitEncoder release];
+            #endif
+            currentBlitEncoder = nil;
+        }
+
         BeginNextSubpass(renderPass);
     }
 
@@ -209,6 +217,9 @@ namespace Sierra
         const MetalRenderPass &metalRenderPass = static_cast<MetalRenderPass&>(*renderPass);
 
         // Begin encoding next subpass
+        #if SR_PLATFORM_macOS
+            if (currentRenderEncoder != nil) [currentRenderEncoder release];
+        #endif
         currentRenderEncoder = [commandBuffer renderCommandEncoderWithDescriptor: metalRenderPass.GetSubpass(currentSubpass)];
         device.SetResourceName(currentComputeEncoder, "Render encoder for render pass [" + renderPass->GetName() + "]");
 
@@ -245,7 +256,7 @@ namespace Sierra
         SR_ERROR_IF(currentRenderEncoder == nil, "[Metal]: Cannot end render pass [{0}], as it has not been began within command buffer [{1}]!", renderPass->GetName(), GetName());
         [currentRenderEncoder endEncoding];
         #if SR_PLATFORM_macOS
-                [currentRenderEncoder release];
+            [currentRenderEncoder release];
         #endif
 
         currentRenderEncoder = nil;
@@ -329,6 +340,16 @@ namespace Sierra
         SR_ERROR_IF(computePipeline->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin compute graphicsPipeline [{0}], whose graphics API differs from [GraphicsAPI::Metal], from command buffer [{1}]!", computePipeline->GetName(), GetName());
         const MetalComputePipeline &metalComputePipeline = static_cast<MetalComputePipeline&>(*computePipeline);
 
+        // End any prior transfer operations
+        if (currentBlitEncoder != nil)
+        {
+            [currentBlitEncoder endEncoding];
+            #if SR_PLATFORM_macOS
+                [currentBlitEncoder release];
+            #endif
+            currentBlitEncoder = nil;
+        }
+
         // Begin encoding compute commands
         currentComputeEncoder = [commandBuffer computeCommandEncoderWithDispatchType: MTLDispatchTypeConcurrent];
         device.SetResourceName(currentComputeEncoder, "Compute encoder for pipeline [" + computePipeline->GetName() + "]");
@@ -342,7 +363,6 @@ namespace Sierra
     {
         SR_ERROR_IF(computePipeline->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot end compute pipeline [{0}], from command buffer [{1}]!", computePipeline->GetName(), GetName());
         [currentComputeEncoder endEncoding];
-
         #if SR_PLATFORM_macOS
             [currentComputeEncoder release];
         #endif
@@ -442,7 +462,7 @@ namespace Sierra
         }
     }
 
-    void MetalCommandBuffer::BeginDebugRegion(const std::string &regionName, const Color &color)
+    void MetalCommandBuffer::BeginDebugRegion(const std::string &regionName, const ColorRGBA32 &color)
     {
         #if !SR_ENABLE_LOGGING
             return;
@@ -450,7 +470,7 @@ namespace Sierra
         [commandBuffer pushDebugGroup: [NSString stringWithCString: regionName.c_str() encoding: NSASCIIStringEncoding]];
     }
 
-    void MetalCommandBuffer::InsertDebugMarker(const std::string &markerName, const Color &color)
+    void MetalCommandBuffer::InsertDebugMarker(const std::string &markerName, const ColorRGBA32 &color)
     {
         #if !SR_ENABLE_LOGGING
             return;
