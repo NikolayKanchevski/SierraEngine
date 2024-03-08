@@ -83,11 +83,12 @@ namespace SierraEngine
         }
 
         // Set up returned image
+        const uint8 blockSize = Sierra::ImageFormatToBlockSize(bestImageFormat);
         TranscodedImage transcodedImage = { };
-        transcodedImage.width = ktxTexture2->baseWidth;
-        transcodedImage.height = ktxTexture2->baseHeight;
+        transcodedImage.width = glm::ceil(static_cast<float32>(ktxTexture2->baseWidth) / blockSize) * blockSize;
+        transcodedImage.height = glm::ceil(static_cast<float32>(ktxTexture2->baseHeight) / blockSize) * blockSize;
         transcodedImage.format = bestImageFormat;
-        transcodedImage.memorySize = static_cast<uint64>(ktxTexture2->baseWidth) * ktxTexture2->baseHeight * Sierra::ImageFormatToChannelCount(bestImageFormat);
+        transcodedImage.memorySize = ktxTexture2->dataSize;
 
         // Copy image data
         transcodedMemory = std::malloc(transcodedImage.memorySize);

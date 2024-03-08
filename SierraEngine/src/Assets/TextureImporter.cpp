@@ -70,7 +70,7 @@ namespace SierraEngine
         // Create staging buffer to hold image data
         std::unique_ptr<Sierra::Buffer> stagingBuffer = renderingContext.CreateBuffer({
             .name = "Staging Buffer of Texture [" + name + "]",
-            .memorySize = image->GetMemorySize(),
+            .memorySize = image->GetLayerMemorySize(),
             .usage = Sierra::BufferUsage::SourceMemory,
             .memoryLocation = Sierra::BufferMemoryLocation::CPU
         });

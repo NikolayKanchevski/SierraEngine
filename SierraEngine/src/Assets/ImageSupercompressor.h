@@ -35,8 +35,8 @@ namespace SierraEngine
 
     struct ImageSupercompressorSupercompressInfo
     {
-        const std::vector<const std::vector<const std::filesystem::path>> &filePaths = { };
-        bool isNormalMap = false;
+        const std::vector<std::vector<std::filesystem::path>> &filePaths;
+        bool normalMap = false;
 
         ImageSupercompressionLevel compressionLevel = ImageSupercompressionLevel::Standard;
         ImageSupercompressionQualityLevel qualityLevel = ImageSupercompressionQualityLevel::Standard;

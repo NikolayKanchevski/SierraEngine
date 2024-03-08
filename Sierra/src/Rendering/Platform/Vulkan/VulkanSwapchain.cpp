@@ -243,7 +243,7 @@ namespace Sierra
         swapchainCreateInfo.imageExtent.width = glm::clamp(window->GetFramebufferSize().x, surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width);
         swapchainCreateInfo.imageExtent.height = glm::clamp(window->GetFramebufferSize().y, surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height);
         swapchainCreateInfo.imageArrayLayers = 1;
-        swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
         swapchainCreateInfo.presentMode = selectedPresentMode;
         swapchainCreateInfo.clipped = VK_TRUE;

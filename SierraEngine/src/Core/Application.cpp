@@ -57,7 +57,7 @@ namespace SierraEngine
         }
 
         // Import test texture
-        assetManager.ImportTexture(Sierra::File::GetResourcesDirectoryPath() / "assets/Mario.png", [](const AssetID assetID) { APP_INFO("{0}", assetID.GetHash()); });
+        assetManager.ImportTexture(Sierra::File::GetResourcesDirectoryPath() / "assets/Mario.png", [](const AssetID assetID) { APP_INFO("Asset {0} was imported successfully!", assetID.GetHash()); });
     }
 
     bool Application::Update(const Sierra::TimeStep &timeStep)

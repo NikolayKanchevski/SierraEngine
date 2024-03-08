@@ -26,7 +26,7 @@ namespace SierraEngine
         const ImageSupercompressorSupercompressInfo compressInfo =
         {
             .filePaths = { { filePath } },
-            .isNormalMap = serializeInfo.type == TextureType::Normal,
+            .normalMap = serializeInfo.type == TextureType::Normal,
             .compressionLevel = serializeInfo.compressionLevel,
             .qualityLevel = serializeInfo.qualityLevel
         };

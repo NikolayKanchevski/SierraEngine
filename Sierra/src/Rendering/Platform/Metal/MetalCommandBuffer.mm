@@ -136,7 +136,9 @@ namespace Sierra
             device.SetResourceName(currentBlitEncoder , "Transfer Encoder");
         }
 
-        [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer() sourceOffset: sourceByteOffset sourceBytesPerRow: sourceSize.width *     destinationImage->GetPixelMemorySize() sourceBytesPerImage: 0 sourceSize: sourceSize toTexture: metalDestinationImage.GetMetalTexture() destinationSlice: layer destinationLevel: mipLevel destinationOrigin: MTLOriginMake(destinationPixelOffset.x, destinationPixelOffset.y, 0)];
+        const uint8 imageBlockSize = ImageFormatToBlockSize(destinationImage->GetFormat());
+        const NSUInteger sourceBytesPerRow = imageBlockSize == 1 ? destinationImage->GetWidth() * destinationImage->GetPixelMemorySize() : destinationImage->GetWidth() * imageBlockSize * destinationImage->GetPixelMemorySize();
+        [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer() sourceOffset: sourceByteOffset sourceBytesPerRow: sourceBytesPerRow sourceBytesPerImage: 0 sourceSize: sourceSize toTexture: metalDestinationImage.GetMetalTexture() destinationSlice: layer destinationLevel: mipLevel destinationOrigin: MTLOriginMake(destinationPixelOffset.x, destinationPixelOffset.y, 0)];
     }
 
     void MetalCommandBuffer::GenerateMipMapsForImage(const std::unique_ptr<Image> &image)

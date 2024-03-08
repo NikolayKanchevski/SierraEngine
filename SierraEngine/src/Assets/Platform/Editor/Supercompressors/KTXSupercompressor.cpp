@@ -43,14 +43,11 @@ namespace SierraEngine
         int requestedBaseWidth = 0;
         int requestedBaseHeight = 0;
         int requestedBaseChannelCount = 0;
-        int requestedBaseChannelMemorySize;
 
         // Retrieve image data
         {
             const std::vector<uint8> baseImageFileMemory = Sierra::File::ReadFile(baseFilePath);
-
             stbi_info_from_memory(reinterpret_cast<const stbi_uc*>(baseImageFileMemory.data()), static_cast<int>(baseImageFileMemory.size()), &requestedBaseWidth, &requestedBaseHeight, &requestedBaseChannelCount);
-            requestedBaseChannelMemorySize = stbi_is_16_bit_from_memory(reinterpret_cast<const stbi_uc*>(baseImageFileMemory.data()), static_cast<int>(baseImageFileMemory.size())) + 1;
         }
 
         const float32 downscaleScalar = glm::max(1.0f, static_cast<float32>(glm::max(requestedBaseWidth, requestedBaseHeight)) / GetMaximumImageDimensions());
@@ -62,10 +59,10 @@ namespace SierraEngine
         ktx_uint32_t ktxTextureFormat = VK_FORMAT_UNDEFINED;
         switch (requestedBaseChannelCount)
         {
-            case 1:     { ktxTextureFormat = (requestedBaseChannelMemorySize == 1) ? VK_FORMAT_R8_UNORM : VK_FORMAT_R16_UNORM; break; }
-            case 2:     { ktxTextureFormat = (requestedBaseChannelMemorySize == 1) ? VK_FORMAT_R8G8_UNORM : VK_FORMAT_R16G16_UNORM; break; }
-            case 3:     { ktxTextureFormat = (requestedBaseChannelMemorySize == 1) ? VK_FORMAT_R8G8B8_UNORM : VK_FORMAT_R16G16B16_UNORM; break; }
-            case 4:     { ktxTextureFormat = (requestedBaseChannelMemorySize == 1) ? VK_FORMAT_R8G8B8A8_UNORM : VK_FORMAT_R16G16B16A16_UNORM; break; }
+            case 1:     { ktxTextureFormat = VK_FORMAT_R8_UNORM; break; }
+            case 2:     { ktxTextureFormat = VK_FORMAT_R8G8_UNORM; break; }
+            case 3:     { ktxTextureFormat = VK_FORMAT_R8G8B8_UNORM; break; }
+            case 4:     { ktxTextureFormat = VK_FORMAT_R8G8B8A8_UNORM; break; }
             default:    break;
         }
 
@@ -101,10 +98,7 @@ namespace SierraEngine
 
                 // Extract image info
                 int requestedWidth, requestedHeight, channelCount;
-                stbi_uc* rawImageMemory = (requestedBaseChannelMemorySize == 2)
-                    ? reinterpret_cast<stbi_uc*>(stbi_load_16_from_memory(reinterpret_cast<const stbi_uc*>(levelFileMemory.data()), static_cast<int>(levelFileMemory.size()), &requestedWidth, &requestedHeight, &channelCount, requestedBaseChannelCount))
-                    : stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(levelFileMemory.data()), static_cast<int>(levelFileMemory.size()), &requestedWidth, &requestedHeight, &channelCount, requestedBaseChannelCount)
-                ;
+                stbi_uc* rawImageMemory = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(levelFileMemory.data()), static_cast<int>(levelFileMemory.size()), &requestedWidth, &requestedHeight, &channelCount, requestedBaseChannelCount);
 
                 if (requestedWidth != requestedBaseWidth >> j || requestedBaseHeight != requestedHeight >> j)
                 {
@@ -113,8 +107,8 @@ namespace SierraEngine
                 }
 
                 // Resize if needed
-                uint32 width = static_cast<uint32>(requestedWidth / downscaleScalar);
-                uint32 height = static_cast<uint32>(requestedHeight / downscaleScalar);
+                const uint32 width = static_cast<uint32>(requestedWidth / downscaleScalar);
+                const uint32 height = static_cast<uint32>(requestedHeight / downscaleScalar);
                 if (glm::max(requestedWidth, requestedHeight) > glm::max(width, height))
                 {
                     // Get pixel layout
@@ -127,13 +121,9 @@ namespace SierraEngine
                         default:        break;
                     }
 
-                    // Update dimensions
-                    width = static_cast<uint32>(static_cast<float32>(width) / downscaleScalar);
-                    height = static_cast<uint32>(static_cast<float32>(height) / downscaleScalar);
-
                     // Downscale image data
-                    stbi_uc* downscaledRawImageMemory = new stbi_uc[static_cast<uint64>(width) * height * channelCount * requestedBaseChannelMemorySize];
-                    stbir_resize(rawImageMemory, requestedWidth, requestedHeight, 0, downscaledRawImageMemory, width, height, 0, pixelLayout, (requestedBaseChannelMemorySize == 2) ? STBIR_TYPE_UINT16 : STBIR_TYPE_UINT8, STBIR_EDGE_ZERO, STBIR_FILTER_DEFAULT);
+                    stbi_uc* downscaledRawImageMemory = new stbi_uc[static_cast<uint64>(width) * height * channelCount * 1];
+                    stbir_resize(rawImageMemory, requestedWidth, requestedHeight, 0, downscaledRawImageMemory, width, height, 0, pixelLayout, STBIR_TYPE_UINT8, STBIR_EDGE_ZERO, STBIR_FILTER_DEFAULT);
 
                     // Free and override image data
                     stbi_image_free(rawImageMemory);
@@ -141,7 +131,7 @@ namespace SierraEngine
                 }
 
                 // Copy raw image data to KTX texture
-                result = ktxTexture_SetImageFromMemory(ktxTexture(ktxTexture2), j, i, KTX_FACESLICE_WHOLE_LEVEL, reinterpret_cast<uint8*>(rawImageMemory), static_cast<uint64>(width) * height * channelCount * requestedBaseChannelMemorySize);
+                result = ktxTexture_SetImageFromMemory(ktxTexture(ktxTexture2), j, i, KTX_FACESLICE_WHOLE_LEVEL, reinterpret_cast<uint8*>(rawImageMemory), static_cast<uint64>(width) * height * channelCount * 1);
                 stbi_image_free(rawImageMemory);
 
                 if (result != KTX_SUCCESS)
@@ -182,7 +172,7 @@ namespace SierraEngine
                 case ImageSupercompressionLevel::High:             { basisParams.compressionLevel = 4; break; }
                 case ImageSupercompressionLevel::VeryHigh:         { basisParams.compressionLevel = 5; break; }
             }
-            basisParams.normalMap = compressInfo.isNormalMap;
+            basisParams.normalMap = compressInfo.normalMap;
 
             // Compress KTX texture into Basis Universal
             result = ktxTexture2_CompressBasisEx(ktxTexture2, &basisParams);

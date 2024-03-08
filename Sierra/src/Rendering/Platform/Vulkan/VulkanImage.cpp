@@ -77,7 +77,7 @@ namespace Sierra
 
     VulkanImage::VulkanImage(const VulkanDevice &device, const SwapchainImageCreateInfo &createInfo)
         : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainVkFormatToImageFormat(createInfo.format), .usage = ImageUsage::SourceMemory | ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }), VulkanResource(createInfo.name),
-          device(device), image(createInfo.image), usageFlags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT), aspectFlags(VK_IMAGE_ASPECT_COLOR_BIT), swapchainImage(true)
+          device(device), image(createInfo.image), usageFlags(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT), aspectFlags(VK_IMAGE_ASPECT_COLOR_BIT), swapchainImage(true)
     {
         SR_ERROR_IF(createInfo.image == VK_NULL_HANDLE, "[Vulkan]: Null texture pointer passed upon swapchain image [{0}] creation!", GetName());
 
