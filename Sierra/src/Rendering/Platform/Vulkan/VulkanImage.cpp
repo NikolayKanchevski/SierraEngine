@@ -12,7 +12,7 @@ namespace Sierra
     VulkanImage::VulkanImage(const VulkanDevice &device, const ImageCreateInfo &createInfo)
         : Image(createInfo), VulkanResource(createInfo.name), device(device), usageFlags(ImageUsageToVkImageUsageFlags(createInfo.usage))
     {
-        SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Vulkan]: Cannot create image [{0}] with unsupported sampling! Make sure to use Device::IsImageSamplingSupported() to query image sampling support.", GetName());
+        SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Vulkan]: Cannot create image [{0}] with unsupported sampling! Use Device::IsImageSamplingSupported() to query image sampling support.", GetName());
         SR_ERROR_IF(!device.IsImageFormatSupported(createInfo.format, createInfo.usage), "[Vulkan]: Cannot create image [{0}] with unsupported format! Use Device::IsImageFormatSupported() to query format support.", GetName());
 
         // Set up image create info
@@ -72,7 +72,7 @@ namespace Sierra
 
         // Set object names
         device.SetObjectName(image, VK_OBJECT_TYPE_IMAGE, GetName());
-        device.SetObjectName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image view of image [" + GetName() + "]");
+        device.SetObjectName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image view of image [" + std::string(GetName()) + "]");
     }
 
     VulkanImage::VulkanImage(const VulkanDevice &device, const SwapchainImageCreateInfo &createInfo)
@@ -103,7 +103,7 @@ namespace Sierra
 
         // Set object names
         device.SetObjectName(image, VK_OBJECT_TYPE_IMAGE, GetName());
-        device.SetObjectName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image view of image [" + GetName() + "]");
+        device.SetObjectName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image view of image [" + std::string(GetName()) + "]");
     }
 
     /* --- DESTRUCTOR --- */

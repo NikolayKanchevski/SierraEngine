@@ -32,13 +32,13 @@ namespace SierraEngine
 
     bool KTXSupercompressor::Supercompress(const ImageSupercompressorSupercompressInfo &compressInfo, void*& compressedMemory, uint64 &compressedMemorySize) const
     {
-        if (compressInfo.filePaths.empty() || compressInfo.filePaths[0].empty())
+        if (compressInfo.filePaths.size() == 0 || compressInfo.filePaths.begin()->size() == 0)
         {
             APP_WARNING("Cannot KTX compress texture with no file paths specified!");
             return false;
         }
 
-        const std::filesystem::path &baseFilePath = compressInfo.filePaths[0][0];
+        const std::filesystem::path &baseFilePath = *compressInfo.filePaths.begin()->begin();
 
         int requestedBaseWidth = 0;
         int requestedBaseHeight = 0;
@@ -53,7 +53,7 @@ namespace SierraEngine
         const float32 downscaleScalar = glm::max(1.0f, static_cast<float32>(glm::max(requestedBaseWidth, requestedBaseHeight)) / GetMaximumImageDimensions());
         const uint32 baseWidth = static_cast<uint32>(requestedBaseWidth / downscaleScalar);
         const uint32 baseHeight = static_cast<uint32>(requestedBaseHeight / downscaleScalar);
-        const uint32 mipLevelCount = (glm::floor(glm::log2(glm::max(baseWidth, baseHeight))) * static_cast<uint32>(compressInfo.filePaths[0].size() > 1)) + 1;
+        const uint32 mipLevelCount = (glm::floor(glm::log2(glm::max(baseWidth, baseHeight))) * static_cast<uint32>(compressInfo.filePaths.begin()->size() > 1)) + 1;
 
         // Convert channel count to KTX format
         ktx_uint32_t ktxTextureFormat = VK_FORMAT_UNDEFINED;
@@ -94,7 +94,7 @@ namespace SierraEngine
             for (uint32 j = 0; j < mipLevelCount; j++)
             {
                 // Read compressed image file for current level
-                const std::vector<uint8> levelFileMemory = Sierra::File::ReadFile(compressInfo.filePaths[i][j]);
+                const std::vector<uint8> levelFileMemory = Sierra::File::ReadFile(*((compressInfo.filePaths.begin() + i)->begin() + j));
 
                 // Extract image info
                 int requestedWidth, requestedHeight, channelCount;

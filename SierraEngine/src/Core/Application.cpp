@@ -23,31 +23,8 @@ namespace SierraEngine
         window = GetWindowManager().CreateWindow({ .title = "Test Window" });
         swapchain = GetRenderingContext().CreateSwapchain({ .name = "Test Swapchain", .window = window, .preferredPresentationMode = Sierra::SwapchainPresentationMode::VSync });
 
-        // Create render pass
-        renderPass = GetRenderingContext().CreateRenderPass({
-            .name = "Swapchain Render Pass",
-            .attachments = {
-                { .templateImage = swapchain->GetImage(0), .type = Sierra::RenderPassAttachmentType::Color }
-            },
-            .subpassDescriptions = {
-                { .renderTargets = { 0 } }
-            }
-        });
-
-        // Load shaders
-        vertexShader = GetRenderingContext().CreateShader({ .name = "Triangle Vertex Shader", .shaderBundlePath = Sierra::File::GetResourcesDirectoryPath() / "shaders/TriangleShader.vert.shader", .shaderType = Sierra::ShaderType::Vertex });
-        fragmentShader = GetRenderingContext().CreateShader({ .name = "Triangle Fragment Shader", .shaderBundlePath = Sierra::File::GetResourcesDirectoryPath() / "shaders/TriangleShader.frag.shader", .shaderType = Sierra::ShaderType::Fragment });
-
-        // Create graphics pipeline
-        pipelineLayout = GetRenderingContext().CreatePipelineLayout({ .name = "Triangle Graphics Pipeline Layout" });
-        graphicsPipeline = GetRenderingContext().CreateGraphicsPipeline({
-            .name = "Triangle Graphics Pipeline",
-            .vertexShader = vertexShader,
-            .fragmentShader = fragmentShader,
-            .layout = pipelineLayout,
-            .templateRenderPass = renderPass,
-            .cullMode = Sierra::CullMode::Back
-        });
+        // Create resource table
+        resourceTable = GetRenderingContext().CreateResourceTable({ .name = "Global Resource Table" });
 
         // Create a command buffer for every concurrent frame
         commandBuffers.resize(swapchain->GetConcurrentFrameCount());
@@ -55,18 +32,18 @@ namespace SierraEngine
         {
             commandBuffers[i] = GetRenderingContext().CreateCommandBuffer({ .name = "General Command Buffer " + std::to_string(i) });
         }
-
-        // Import test texture
-        assetManager.ImportTexture(Sierra::File::GetResourcesDirectoryPath() / "assets/Mario.png", [](const AssetID assetID) { APP_INFO("Asset {0} was imported successfully!", assetID.GetHash()); });
     }
 
     bool Application::Update(const Sierra::TimeStep &timeStep)
     {
         // Get command buffer for current frame
-        auto &commandBuffer = commandBuffers[swapchain->GetCurrentFrame()];
+        auto &commandBuffer = commandBuffers[swapchain->GetCurrentFrameIndex()];
 
         // Wait until it is no longer in use
         GetRenderingContext().GetDevice().WaitForCommandBuffer(commandBuffer);
+
+        // Swap out old swapchain image
+        swapchain->AcquireNextImage();
 
         // Begin recording commands to GPU
         commandBuffer->Begin();
@@ -74,23 +51,29 @@ namespace SierraEngine
         // Record asset manager's resources
         assetManager.Update(commandBuffer);
 
-        // Swap out old swapchain image
-        swapchain->AcquireNextImage();
+        // Bind bindless resource table
+        commandBuffer->BindResourceTable(resourceTable);
 
-        // Begin rendering to current swapchain image
-        commandBuffer->BeginRenderPass(renderPass, { { .image = swapchain->GetCurrentImage() } });
+        static std::once_flag firstTimeFlag;
+        std::call_once(firstTimeFlag, [this, &commandBuffer]
+        {
+            // Create ImGui resources
+            Sierra::ImGuiRenderTask::CreateResources(GetRenderingContext(), resourceTable, 0, 0, commandBuffer);
+            imGuiTask = std::make_unique<Sierra::ImGuiRenderTask>(GetRenderingContext(), Sierra::ImGuiRenderTaskCreateInfo {
+                .templateImage = swapchain->GetImage(0),
+                .scaling = swapchain->GetScaling()
+            });
+        });
 
-        // Start graphics pipeline
-        commandBuffer->BeginGraphicsPipeline(graphicsPipeline);
+        // Prepare swapchain image for writing
+        commandBuffer->SynchronizeImageUsage(swapchain->GetCurrentImage(), Sierra::ImageCommandUsage::None, Sierra::ImageCommandUsage::ColorWrite);
 
-        // Draw the 3 vertices of the triangle
-        commandBuffer->Draw(3);
+        // Update & draw ImGui demo window
+        imGuiTask->Update(window->GetInputManager(), window->GetCursorManager(), window->GetTouchManager());
+        ImGui::ShowDemoWindow();
 
-        // End pipeline
-        commandBuffer->EndGraphicsPipeline(graphicsPipeline);
-
-        // End render pass
-        commandBuffer->EndRenderPass(renderPass);
+        // Render ImGui
+        imGuiTask->Render(commandBuffer, swapchain->GetCurrentImage());
 
         // Wait until image is written to before presenting it to screen
         commandBuffer->SynchronizeImageUsage(swapchain->GetCurrentImage(), Sierra::ImageCommandUsage::ColorWrite, Sierra::ImageCommandUsage::Present);
@@ -108,6 +91,14 @@ namespace SierraEngine
         window->Update();
 
         return window->IsClosed();
+    }
+
+    /* --- DESTRUCTOR --- */
+
+    Application::~Application()
+    {
+        GetRenderingContext().GetDevice().WaitForCommandBuffer(commandBuffers[swapchain->GetCurrentImageIndex()]);
+        Sierra::ImGuiRenderTask::DestroyResources();
     }
 
 }

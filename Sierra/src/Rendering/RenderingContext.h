@@ -13,7 +13,7 @@
 #include "RenderPass.h"
 #include "Swapchain.h"
 #include "Shader.h"
-#include "PipelineLayout.h"
+#include "ResourceTable.h"
 #include "GraphicsPipeline.h"
 #include "ComputePipeline.h"
 #include "CommandBuffer.h"
@@ -23,7 +23,7 @@ namespace Sierra
 
     struct RenderingContextCreateInfo
     {
-        const std::string &name = "Rendering Context";
+        std::string_view name = "Rendering Context";
         GraphicsAPI graphicsAPI = GraphicsAPI::Auto;
     };
 
@@ -37,9 +37,9 @@ namespace Sierra
         [[nodiscard]] virtual std::unique_ptr<RenderPass> CreateRenderPass(const RenderPassCreateInfo &createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<Swapchain> CreateSwapchain(const SwapchainCreateInfo &createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(const ShaderCreateInfo &createInfo) const = 0;
-        [[nodiscard]] virtual std::unique_ptr<PipelineLayout> CreatePipelineLayout(const PipelineLayoutCreateInfo &createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(const GraphicsPipelineCreateInfo &createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo &createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<ResourceTable> CreateResourceTable(const ResourceTableCreateInfo &createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<CommandBuffer> CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const = 0;
 
         /* --- GETTER METHODS --- */

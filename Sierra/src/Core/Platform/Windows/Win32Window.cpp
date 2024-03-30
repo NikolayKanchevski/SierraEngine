@@ -101,7 +101,7 @@ namespace Sierra
 
     /* --- SETTER METHODS --- */
 
-    void Win32Window::SetTitle(const std::string &newTitle)
+    void Win32Window::SetTitle(const std::string_view newTitle)
     {
         title = newTitle;
         SetWindowText(window, newTitle.c_str());
@@ -148,7 +148,7 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    const std::string& Win32Window::GetTitle() const
+    std::string_view Win32Window::GetTitle() const
     {
         return title;
     }

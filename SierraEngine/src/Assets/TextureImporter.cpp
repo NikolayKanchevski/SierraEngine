@@ -19,7 +19,7 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    std::optional<std::pair<TextureAsset, std::unique_ptr<Sierra::Buffer>>> TextureImporter::Import(const Sierra::RenderingContext &renderingContext, const std::string &name, const std::pair<const SerializedTexture, const void*> &serializedTexture)
+    std::optional<std::pair<TextureAsset, std::unique_ptr<Sierra::Buffer>>> TextureImporter::Import(const Sierra::RenderingContext &renderingContext, const std::string_view name, const std::pair<const SerializedTexture, const void*> &serializedTexture)
     {
         const ImageTranscoderCreateInfo transcoderCreateInfo = { };
         const ImageTranscodeInfo transcodeInfo =
@@ -69,7 +69,7 @@ namespace SierraEngine
 
         // Create staging buffer to hold image data
         std::unique_ptr<Sierra::Buffer> stagingBuffer = renderingContext.CreateBuffer({
-            .name = "Staging Buffer of Texture [" + name + "]",
+            .name = "Staging Buffer of Texture [" + std::string(name) + "]",
             .memorySize = image->GetLayerMemorySize(),
             .usage = Sierra::BufferUsage::SourceMemory,
             .memoryLocation = Sierra::BufferMemoryLocation::CPU

@@ -46,7 +46,7 @@ namespace Sierra
         friend class VulkanSwapchain;
         struct SwapchainImageCreateInfo
         {
-            const std::string &name = "Swapchain Image";
+            std::string_view name = "Swapchain Image";
             VkImage image = VK_NULL_HANDLE;
 
             uint32 width = 0;

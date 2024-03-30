@@ -20,31 +20,23 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalSwapchain::MetalSwapchain(const MetalDevice &device, const SwapchainCreateInfo &createInfo)
-        : Swapchain(createInfo), MetalResource(createInfo.name), device(device), window(*createInfo.window)
+        : Swapchain(createInfo), MetalResource(createInfo.name), device(device), window(createInfo.window)
     {
         #if SR_PLATFORM_macOS
-            SR_ERROR_IF(window.GetAPI() != PlatformAPI::Cocoa, "[Metal]: Cannot create Metal swapchain [{0}] for window [{1}], because its platform API does not match [PlatformAPI::Cocoa]!", GetName(), window.GetTitle());
-            const CocoaWindow &cocoaWindow = static_cast<const CocoaWindow&>(window);
+            SR_ERROR_IF(window->GetAPI() != PlatformAPI::Cocoa, "[Metal]: Cannot create Metal swapchain [{0}] for window [{1}], because its platform API does not match [PlatformAPI::Cocoa]!", GetName(), window->GetTitle());
+            const CocoaWindow &cocoaWindow = static_cast<const CocoaWindow&>(*window);
             metalLayer = reinterpret_cast<CAMetalLayer*>(cocoaWindow.GetNSView().layer);
-
-            // Configure Metal layer
-            [cocoaWindow.GetNSView().layer setFrame: cocoaWindow.GetNSView().bounds];
-            [cocoaWindow.GetNSView().layer setContentsScale: cocoaWindow.GetNSWindow().backingScaleFactor];
         #elif SR_PLATFORM_iOS
-            SR_ERROR_IF(window.GetAPI() != PlatformAPI::UIKit, "[Metal]: Cannot create Metal swapchain [{0}] for window [{1}], because its platform API does not match [PlatformAPI::UIKit]!", GetName(), window.GetTitle());
+            SR_ERROR_IF(window->GetAPI() != PlatformAPI::UIKit, "[Metal]: Cannot create Metal swapchain [{0}] for window [{1}], because its platform API does not match [PlatformAPI::UIKit]!", GetName(), window->GetTitle());
             const UIKitWindow &uiKitWindow = static_cast<const UIKitWindow&>(window);
             metalLayer = reinterpret_cast<CAMetalLayer*>(uiKitWindow.GetUIView().layer);
-
-            // Configure Metal layer
-            [uiKitWindow.GetUIView().layer setFrame: uiKitWindow.GetUIView().bounds];
-            [uiKitWindow.GetUIView().layer setContentsScale: uiKitWindow.GetUIWindow().contentScaleFactor];
         #endif
 
         // Configure Metal layer
         [metalLayer setDevice: (__bridge id<MTLDevice>) device.GetMetalDevice()];
         [metalLayer setMaximumDrawableCount: CONCURRENT_FRAME_COUNT];
         [metalLayer setDrawsAsynchronously: YES];
-        [metalLayer setDrawableSize: CGSizeMake(window.GetFramebufferSize().x, window.GetFramebufferSize().y)];
+        [metalLayer setDrawableSize: CGSizeMake(window->GetFramebufferSize().x, window->GetFramebufferSize().y)];
         switch (createInfo.preferredImageMemoryType) // These formats are guaranteed to be supported
         {
             case SwapchainImageMemoryType::UNorm8:      { [metalLayer setPixelFormat: MTLPixelFormatBGRA8Unorm ];      break; }
@@ -58,7 +50,7 @@ namespace Sierra
 
         // Create swapchain image (unnecessary on Metal, but needs to comply with Vulkan design)
         swapchainImage = std::unique_ptr<MetalImage>(new MetalImage(device, MetalImage::SwapchainImageCreateInfo {
-            .name = "Image of swapchain [" + GetName() + "]",
+            .name = "Image of swapchain [" + std::string(GetName()) + "]",
             .texture = metalDrawable.texture,
             .width = static_cast<uint32>(metalLayer.drawableSize.width),
             .height = static_cast<uint32>(metalLayer.drawableSize.height),
@@ -72,7 +64,7 @@ namespace Sierra
         createInfo.window->OnEvent<WindowResizeEvent>([this](const WindowResizeEvent &event)
         {
             // Resize Metal layer
-            [metalLayer setDrawableSize: CGSizeMake(window.GetFramebufferSize().x, window.GetFramebufferSize().y)];
+            [metalLayer setDrawableSize: CGSizeMake(window->GetFramebufferSize().x, window->GetFramebufferSize().y)];
 
             // Recreate swapchain images
             Recreate();
@@ -107,7 +99,7 @@ namespace Sierra
 
         // Record presentation commands to a new command buffer (width a dependency to passed one)
         const id<MTLCommandBuffer> presentationCommandBuffer = [device.GetCommandQueue() commandBuffer];
-        device.SetResourceName(presentationCommandBuffer, "Presentation command buffer of swapchain [" + GetName() + "]");
+        device.SetResourceName(presentationCommandBuffer, "Presentation command buffer of swapchain [" + std::string(GetName()) + "]");
         [presentationCommandBuffer encodeWaitForEvent: device.GetSharedSignalSemaphore() value: metalCommandBuffer.GetCompletionSignalValue()];
         [presentationCommandBuffer presentDrawable: metalDrawable];
         [presentationCommandBuffer addCompletedHandler: ^(id<MTLCommandBuffer> executedCommandBuffer)
@@ -129,7 +121,7 @@ namespace Sierra
     {
         // Recreate image with new dimensions
         swapchainImage = std::unique_ptr<MetalImage>(new MetalImage(this->device, MetalImage::SwapchainImageCreateInfo {
-            .name = "Image of swapchain [" + GetName() + "]",
+            .name = "Image of swapchain [" + std::string(GetName()) + "]",
             .width = static_cast<uint32>(metalLayer.drawableSize.width),
             .height = static_cast<uint32>(metalLayer.drawableSize.height),
             .format = metalLayer.pixelFormat

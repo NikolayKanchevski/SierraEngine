@@ -21,7 +21,7 @@ namespace Sierra
 
     struct ShaderCreateInfo
     {
-        const std::string &name = "Shader";
+        std::string_view name = "Shader";
         const std::filesystem::path &shaderBundlePath;
         ShaderType shaderType = ShaderType::Undefined;
     };

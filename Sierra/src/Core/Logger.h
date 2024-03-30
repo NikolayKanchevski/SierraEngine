@@ -11,7 +11,7 @@
 namespace Sierra
 {
 
-    enum class MessageSeverity
+    enum class MessageSeverity : uint8
     {
         Info,
         Warning,
@@ -43,8 +43,9 @@ namespace Sierra
                         applicationLogger->error(fmt, std::forward<Args>(args)...);
                         #if SR_ENABLE_LOGGING
                             throw std::runtime_error("Program execution failed miserably!");
+                        #else
+                            break;
                         #endif
-                        break;
                     }
                 }
             }
@@ -88,8 +89,9 @@ namespace Sierra
                             engineLogger->error(fmt, std::forward<Args>(args)...);
                             #if SR_ENABLE_LOGGING
                                 throw std::runtime_error("Program execution failed miserably!");
+                            #else
+                                break;
                             #endif
-                            break;
                         }
                     }
                 }
@@ -110,7 +112,7 @@ namespace Sierra
 
     private:
         friend class Application;
-        static void Initialize(const std::string &applicationName);
+        static void Initialize(std::string_view applicationName);
 
         #if SR_ENABLE_LOGGING
             inline static std::shared_ptr<spdlog::logger> engineLogger = nullptr;

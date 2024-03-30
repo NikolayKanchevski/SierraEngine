@@ -28,6 +28,7 @@ namespace Sierra
         [samplerDescriptor setLodMaxClamp: static_cast<float32>(createInfo.highestSampledMipLevel)];
         [samplerDescriptor setBorderColor: SamplerBorderColorToSamplerBorderColor(createInfo.borderColor)];
         [samplerDescriptor setNormalizedCoordinates: YES];
+        [samplerDescriptor setSupportArgumentBuffers: YES];
 
         // Create sampler state
         samplerState = [device.GetMetalDevice() newSamplerStateWithDescriptor: samplerDescriptor];

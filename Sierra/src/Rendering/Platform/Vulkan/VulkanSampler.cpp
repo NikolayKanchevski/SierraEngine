@@ -12,7 +12,7 @@ namespace Sierra
     VulkanSampler::VulkanSampler(const VulkanDevice &device, const SamplerCreateInfo &createInfo)
         : Sampler(createInfo), VulkanResource(createInfo.name), device(device)
     {
-        SR_ERROR_IF(!device.IsSamplerAnisotropySupported(createInfo.anisotropy), "[Vulkan]: Cannot create sampler [{0}] with unsupported sample mode! Make sure to query Device::IsSamplerAnisotropySupported() to query support.", GetName());
+        SR_ERROR_IF(!device.IsSamplerAnisotropySupported(createInfo.anisotropy), "[Vulkan]: Cannot create sampler [{0}] with unsupported sample mode! Use Device::IsSamplerAnisotropySupported() to query support.", GetName());
 
         // Set up sampler create info
         VkSamplerCreateInfo samplerCreateInfo = { };

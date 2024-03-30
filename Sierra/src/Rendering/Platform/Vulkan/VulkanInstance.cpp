@@ -8,10 +8,70 @@
 namespace Sierra
 {
 
+    namespace
+    {
+        struct Layer
+        {
+            std::string_view name;
+        };
+
+        #if SR_ENABLE_LOGGING
+            constexpr std::array<Layer, 1> LAYERS_TO_QUERY
+            {
+                Layer {
+                    .name = "VK_LAYER_KHRONOS_validation"
+                }
+            };
+        #endif
+
+        struct Extension
+        {
+            std::string_view name;
+            bool requiredOnlyIfSupported = false;
+        };
+
+        constexpr std::array<Extension, 2 + SR_ENABLE_LOGGING + 1 + SR_PLATFORM_APPLE> INSTANCE_EXTENSIONS_TO_QUERY
+        {
+            Extension {
+                .name = VK_KHR_SURFACE_EXTENSION_NAME
+            },
+            Extension {
+                .name = VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
+            },
+            #if SR_ENABLE_LOGGING
+                Extension {
+                    .name = VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+                    .requiredOnlyIfSupported = true
+                },
+            #endif
+            #if SR_PLATFORM_WINDOWS
+                Extension { .name = VK_KHR_WIN32_SURFACE_EXTENSION_NAME },
+            #elif SR_PLATFORM_LINUX
+                Extension { .name = VK_KHR_XLIB_SURFACE_EXTENSION_NAME },
+            #elif SR_PLATFORM_ANDROID
+                Extension { .name = VK_KHR_ANDROID_SURFACE_EXTENSION_NAME },
+            #elif SR_PLATFORM_APPLE
+                Extension {
+                    .name = VK_EXT_METAL_SURFACE_EXTENSION_NAME
+                },
+                Extension {
+                    .name = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
+                    .requiredOnlyIfSupported = true
+                },
+            #endif
+        };
+    }
+
     /* --- CONSTRUCTORS --- */
 
     VulkanInstance::VulkanInstance(const VulkanInstanceCreateInfo &createInfo)
     {
+        #if SR_PLATFORM_APPLE
+            // Optional MoltenVK features must be explicitly enabled prior to performing any API calls
+            setenv("MVK_DEBUG", "1", true);
+            setenv("MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", "2", true);
+        #endif
+
         // Set up application info
         VkApplicationInfo applicationInfo = { };
         applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -19,7 +79,10 @@ namespace Sierra
         applicationInfo.applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
         applicationInfo.pEngineName = "Sierra";
         applicationInfo.engineVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
-        applicationInfo.apiVersion = GetAPIVersion();
+
+        // Determine API version
+        const Version version = GetAPIVersion();
+        applicationInfo.apiVersion = VK_MAKE_API_VERSION(0, version.GetMajor(), version.GetMinor(), version.GetPatch());
 
         // Retrieve supported extension count
         uint32 supportedExtensionCount = 0;
@@ -29,12 +92,29 @@ namespace Sierra
         std::vector<VkExtensionProperties> supportedExtensions(supportedExtensionCount);
         vkEnumerateInstanceExtensionProperties(nullptr, &supportedExtensionCount, supportedExtensions.data());
 
-        // Load queried extensions if supported
-        std::vector<const char*> extensionsToLoad;
-        extensionsToLoad.reserve(INSTANCE_EXTENSIONS_TO_QUERY.size());
-        for (const auto &extension : INSTANCE_EXTENSIONS_TO_QUERY)
+        // Define extensions array
+        std::array<const char*, INSTANCE_EXTENSIONS_TO_QUERY.size()> extensions;
+        loadedExtensions.resize(INSTANCE_EXTENSIONS_TO_QUERY.size());
+
+        // Load extensions
+        uint32 i = 0;
+        for (const Extension &requestedExtension : INSTANCE_EXTENSIONS_TO_QUERY)
         {
-            AddExtensionIfSupported(extension, extensionsToLoad, supportedExtensions);
+            bool extensionFound = false;
+            for (const VkExtensionProperties &supportedExtension : supportedExtensions)
+            {
+                if (strcmp(requestedExtension.name.data(), supportedExtension.extensionName) == 0)
+                {
+                    extensions[i] = requestedExtension.name.data();
+                    loadedExtensions[i] = std::hash<std::string_view>{}(requestedExtension.name);
+                    i++;
+
+                    extensionFound = true;
+                    break;
+                }
+            }
+
+            SR_WARNING_IF(!extensionFound && !requestedExtension.requiredOnlyIfSupported, "[Vulkan]: Device extension [{0}] requested but not supported! Extension will be discarded, but issues may occur if extensions' support is not checked before their usage!", requestedExtension.name);
         }
 
         // Set up instance create info
@@ -43,62 +123,87 @@ namespace Sierra
         instanceCreateInfo.pApplicationInfo = &applicationInfo;
         instanceCreateInfo.enabledLayerCount = 0;
         instanceCreateInfo.ppEnabledLayerNames = nullptr;
-        instanceCreateInfo.enabledExtensionCount = static_cast<uint32>(extensionsToLoad.size());
-        instanceCreateInfo.ppEnabledExtensionNames = extensionsToLoad.data();
+        instanceCreateInfo.enabledExtensionCount = i;
+        instanceCreateInfo.ppEnabledExtensionNames = extensions.data();
         #if SR_PLATFORM_APPLE
             if (IsExtensionLoaded(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME)) instanceCreateInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
         #endif
         instanceCreateInfo.pNext = nullptr;
 
          #if SR_ENABLE_LOGGING
-            // Define debug messenger info here, so it does not go out of scope
+            // Retrieve supported layer count
+            uint32 supportedLayerCount = 0;
+            vkEnumerateInstanceLayerProperties(&supportedLayerCount, nullptr);
+
+            // Retrieve supported layers
+            std::vector<VkLayerProperties> supportedLayers(supportedLayerCount);
+            vkEnumerateInstanceLayerProperties(&supportedLayerCount, supportedLayers.data());
+
+            // Define debug data
+            std::array<const char*, LAYERS_TO_QUERY.size()> layers;
             VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo = { };
-            const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 
-            // Handle validation
-            bool validationSupported = false;
-            if (IsExtensionLoaded(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+            bool validationEnabled = false;
+
+            // Enable validation & layers
+            const bool validationSupported = IsExtensionLoaded(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+            while (validationSupported)
             {
-                validationSupported = ValidationLayersSupported(validationLayers);
-                if (validationSupported)
+                // Load layers
+                i = 0;
+                for (const Layer &requestedLayer : LAYERS_TO_QUERY)
                 {
-                    // Set up debug messenger info
-                    debugMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-                    debugMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-                    debugMessengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-                    debugMessengerCreateInfo.pfnUserCallback = [](const VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, const VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void*) -> VkBool32
+                    for (const VkLayerProperties &supportedLayer : supportedLayers)
                     {
-                        switch (messageSeverity)
+                        if (strcmp(requestedLayer.name.data(), supportedLayer.layerName) == 0)
                         {
-                            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-                            {
-                                SR_WARNING("[Vulkan]: Warning - {0}", callbackData->pMessage);
-                                break;
-                            }
-                            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-                            {
-                                SR_ERROR("[Vulkan]: Error - {0}", callbackData->pMessage);
-                                break;
-                            }
-                            default:
-                            {
-                                break;
-                            }
+                            layers[i] = supportedLayer.layerName;
+                            i++;
+
+                            break;
                         }
-
-                        return VK_FALSE;
-                    };
-
-                    // Re-assign layer information in instance info
-                    instanceCreateInfo.enabledLayerCount = static_cast<uint32>(validationLayers.size());
-                    instanceCreateInfo.ppEnabledLayerNames = validationLayers.data();
-                    instanceCreateInfo.pNext = &debugMessengerCreateInfo;
+                    }
                 }
-                else
+
+                // Break if no layers are found
+                if (i == 0) break;
+
+                // Set up debug messenger info
+                debugMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+                debugMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+                debugMessengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+                debugMessengerCreateInfo.pfnUserCallback = [](const VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, const VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void*) -> VkBool32
                 {
-                    SR_WARNING("[Vulkan]: Vulkan validation layers requested, but none are supported!");
-                }
+                    switch (messageSeverity)
+                    {
+                        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+                        {
+                            SR_WARNING("[Vulkan]: Warning - {0}", callbackData->pMessage);
+                            break;
+                        }
+                        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+                        {
+                            SR_ERROR("[Vulkan]: Error - {0}", callbackData->pMessage);
+                            break;
+                        }
+                        default:
+                        {
+                            break;
+                        }
+                    }
+
+                    return VK_FALSE;
+                };
+
+                // Re-assign layer information in instance info
+                instanceCreateInfo.enabledLayerCount = i;
+                instanceCreateInfo.ppEnabledLayerNames = layers.data();
+                instanceCreateInfo.pNext = &debugMessengerCreateInfo;
+
+                validationEnabled = true;
+                break;
             }
+            SR_WARNING_IF(!validationEnabled, "[Vulkan]: Cannot enable Vulkan validation, as the required [{0}] extension in unsupported!", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         #endif
 
         // Create instance
@@ -317,94 +422,40 @@ namespace Sierra
 
         // Enable validation if supported
          #if SR_ENABLE_LOGGING
-            if (validationSupported && IsExtensionLoaded(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) functionTable.vkCreateDebugUtilsMessengerEXT(instance, &debugMessengerCreateInfo, nullptr, &debugMessenger);
+            if (validationEnabled) functionTable.vkCreateDebugUtilsMessengerEXT(instance, &debugMessengerCreateInfo, nullptr, &debugMessenger);
         #endif
     }
 
     /* --- GETTER METHODS --- */
 
-    bool VulkanInstance::IsExtensionLoaded(const std::string &extensionName) const
+    bool VulkanInstance::IsExtensionLoaded(const std::string_view extensionName) const
     {
-        return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<std::string>{}(extensionName)) != loadedExtensions.end();
+        return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<std::string_view>{}(extensionName)) != loadedExtensions.end();
     }
 
-    VulkanAPIVersion VulkanInstance::GetAPIVersion() const
+    Version VulkanInstance::GetAPIVersion() const
     {
+        // Retrieve version
         uint32 version = VK_API_VERSION_1_0;
         vkEnumerateInstanceVersion(&version);
         version &= 0xFFFFF000;
 
         #if SR_PLATFORM_APPLE
+            // Apple can only translate Vulkan 1.2 through Metal
             if (version >= VK_API_VERSION_1_3)
             {
-                return VK_API_VERSION_1_2;
+                version = VK_API_VERSION_1_2;
             }
         #endif
 
-        return version;
+        // Set up version
+        VersionCreateInfo versionCreateInfo = { };
+        versionCreateInfo.major = VK_API_VERSION_MAJOR(version);
+        versionCreateInfo.minor = VK_API_VERSION_MINOR(version);
+        versionCreateInfo.patch = VK_API_VERSION_PATCH(version);
+
+        return Version(versionCreateInfo);
     }
-
-    /* --- PRIVATE METHODS --- */
-
-    bool VulkanInstance::AddExtensionIfSupported(const InstanceExtension &extension, std::vector<const char*> &extensionList, const std::vector<VkExtensionProperties> &supportedExtensions)
-    {
-        // Check if extension is found within the supported ones
-        bool extensionSupported = false;
-        for (const auto &supportedExtension : supportedExtensions)
-        {
-            if (strcmp(extension.name.c_str(), supportedExtension.extensionName) == 0)
-            {
-                extensionSupported = true;
-                break;
-            }
-        }
-
-        // If extension is not found, we do not load it
-        if (!extensionSupported)
-        {
-            if (!extension.requiredOnlyIfSupported) SR_WARNING("Instance extension [{0}] requested but not supported! Extension will be discarded, but issues may occur if extensions' support is not checked before their usage", extension.name);
-            return false;
-        }
-
-        // Add extension to the list
-        loadedExtensions.push_back(std::hash<std::string>{}(extension.name));
-        extensionList.push_back(extension.name.c_str());
-        return true;
-    }
-
-    #if SR_ENABLE_LOGGING
-        bool VulkanInstance::ValidationLayersSupported(const std::vector<const char*> &layers)
-        {
-            // Retrieve supported layer count
-            uint32 layerCount = 0;
-            vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-            // Retrieve supported layers
-            std::vector<VkLayerProperties> layerProperties(layerCount);
-            vkEnumerateInstanceLayerProperties(&layerCount, layerProperties.data());
-
-            // Check whether every layer is inside the supported ones
-            for (const auto &layer : layers)
-            {
-                bool layerFound = false;
-                for (const auto &layerProperty : layerProperties)
-                {
-                    if (strcmp(layer, layerProperty.layerName) == 0)
-                    {
-                        layerFound = true;
-                        break;
-                    }
-                }
-
-                if (!layerFound)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-    #endif
 
     /* --- DESTRUCTOR --- */
 

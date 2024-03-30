@@ -56,7 +56,7 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] XID CreateWindow(const std::string &title, uint32 width, uint32 height) const;
+        [[nodiscard]] XID CreateWindow(std::string_view title, uint32 width, uint32 height) const;
         XEvent QueryWindowDestruction(XID window) const;
         void DestroyWindow(XID window) const;
 
@@ -77,7 +77,7 @@ namespace Sierra
         void FocusWindow(XID window) const;
 
         /* --- SETTER METHODS --- */
-        void SetWindowTitle(XID window, const std::string &title) const;
+        void SetWindowTitle(XID window, std::string_view title) const;
         void SetWindowPosition(XID window, const Vector2Int &position) const;
         void SetWindowSize(XID window, const Vector2UInt &size) const;
         void SetWindowSizeLimits(XID window, const Vector2UInt &minimumSize, const Vector2UInt &maximumSize) const;

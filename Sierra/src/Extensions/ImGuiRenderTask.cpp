@@ -14,8 +14,10 @@ namespace Sierra
     {
         // Create render pass
         renderPass = renderingContext.CreateRenderPass({
-            .name = "Render Pass of ImGui Render Task [" + createInfo.name + "]",
-            .attachments = { { .templateImage = createInfo.templateImage } },
+            .name = "Render Pass of ImGui Render Task [" + std::string(createInfo.name) + "]",
+            .attachments = {
+                { .templateImage = createInfo.templateImage }
+            },
             .subpassDescriptions = {
                 { .renderTargets = { 0 } }
             }
@@ -23,11 +25,11 @@ namespace Sierra
 
         // Create shared graphics pipeline
         pipeline = renderingContext.CreateGraphicsPipeline({
-            .name = "Pipeline of ImGui Render Task [" + createInfo.name + "]",
+            .name = "Pipeline of ImGui Render Task [" + std::string(createInfo.name) + "]",
             .vertexInputs = { VertexInput::Position_2D, VertexInput::UV, VertexInput::Color },
             .vertexShader = sharedResources.vertexShader,
             .fragmentShader = sharedResources.fragmentShader,
-            .layout = sharedResources.pipelineLayout,
+            .pushConstantSize = sizeof(PushConstant),
             .templateRenderPass = renderPass,
             .blendMode = BlendMode::Alpha,
             .cullMode = CullMode::None
@@ -52,7 +54,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void ImGuiRenderTask::CreateResources(const RenderingContext &renderingContext, std::unique_ptr<CommandBuffer> &commandBuffer)
+    void ImGuiRenderTask::CreateResources(const RenderingContext &renderingContext, std::unique_ptr<ResourceTable> &resourceTable, const uint32 fontAtlasIndex, const uint32 fontSamplerIndex, std::unique_ptr<CommandBuffer> &commandBuffer)
     {
         // Create context
         sharedResources.context = ImGui::CreateContext();
@@ -64,20 +66,11 @@ namespace Sierra
         io.BackendFlags = ImGuiBackendFlags_RendererHasVtxOffset;
 
         // Create shared shaders
-        sharedResources.vertexShader = renderingContext.CreateShader({ .name = "Shared ImGui Render Task Vertex Shader", .shaderBundlePath = File::GetResourcesDirectoryPath() / "shaders/ImGuiRenderTask.vert.shader",  .shaderType = ShaderType::Vertex });
-        sharedResources.fragmentShader = renderingContext.CreateShader({ .name = "Shared ImGui Render Task Fragment Shader", .shaderBundlePath = File::GetResourcesDirectoryPath() / "shaders/ImGuiRenderTask.frag.shader",  .shaderType = ShaderType::Fragment });
-
-        // Create shared pipeline layout
-        sharedResources.pipelineLayout = renderingContext.CreatePipelineLayout({
-            .name = "Shared ImGui Render Task Pipeline Layout",
-            .bindings = { { .type = PipelineBindingType::Texture } },
-            .pushConstantSize = sizeof(PushConstant)
-        });
+        sharedResources.vertexShader = renderingContext.CreateShader({ .name = "Shared ImGui Render Task vertex Shader", .shaderBundlePath = File::GetResourcesDirectoryPath() / "shaders/ImGuiRenderTask.vert.shader",  .shaderType = ShaderType::Vertex });
+        sharedResources.fragmentShader = renderingContext.CreateShader({ .name = "Shared ImGui Render Task fragment Shader", .shaderBundlePath = File::GetResourcesDirectoryPath() / "shaders/ImGuiRenderTask.frag.shader",  .shaderType = ShaderType::Fragment });
 
         // Create font sampler
-        sharedResources.fontSampler = renderingContext.CreateSampler({
-            .name = "Shared ImGui Render Task Font Sampler",
-        });
+        sharedResources.fontSampler = renderingContext.CreateSampler({ .name = "Shared ImGui Render Task font Sampler" });
 
         // Load font atlas
         int atlasWidth, atlasHeight;
@@ -90,7 +83,7 @@ namespace Sierra
         // Create default font atlas image
         SR_ERROR_IF(!renderingContext.GetDevice().IsImageFormatSupported(FONT_ATLAS_IMAGE_FORMAT, FONT_ATLAS_IMAGE_USAGE), "Cannot create default ImGui font, as required image format [{ .channels = ImageChannels::R, .memoryType = ImageMemoryType::UNorm8 }] is unsupported!");
         sharedResources.defaultFontAtlas = renderingContext.CreateImage({
-            .name = "Shared ImGui Render Task Font Atlas",
+            .name = "Shared ImGui Render Task font atlas",
             .width = static_cast<uint32>(atlasWidth),
             .height = static_cast<uint32>(atlasHeight),
             .format = ImageFormat::R8_UNorm,
@@ -102,7 +95,7 @@ namespace Sierra
 
         // Create staging buffer to hold atlas data
         auto defaultFontStagingBuffer = renderingContext.CreateBuffer({
-            .name = "Default ImGui Render Task Font Staging Buffer",
+            .name = "Default ImGui Render Task font staging buffer",
             .memorySize = static_cast<uint64>(atlasWidth) * atlasHeight * 1 * 1,
             .usage = BufferUsage::SourceMemory,
             .memoryLocation = BufferMemoryLocation::CPU
@@ -115,6 +108,15 @@ namespace Sierra
 
         // Prepare image for shader reading
         commandBuffer->SynchronizeImageUsage(sharedResources.defaultFontAtlas, ImageCommandUsage::MemoryWrite, ImageCommandUsage::GraphicsRead);
+
+        // Bind resources
+        {
+            SR_ERROR_IF(fontAtlasIndex >= resourceTable->GetSampledImageCapacity(), "Cannot create ImGui render task resources, as specified font atlas index [{0}] is exceeds the sampled image capacity of the specified resource table [{1}], which is [{2}]!", fontAtlasIndex, resourceTable->GetName(), resourceTable->GetSampledImageCapacity());
+            resourceTable->BindSampledImage(fontAtlasIndex, sharedResources.defaultFontAtlas);
+
+            SR_ERROR_IF(fontSamplerIndex >= resourceTable->GetSamplerCapacity(), "Cannot create ImGui render task resources, as specified font sampler index [{0}] is exceeds the sampler capacity of the specified resource table [{1}], which is [{2}]!", fontSamplerIndex, resourceTable->GetName(), resourceTable->GetSamplerCapacity());
+            resourceTable->BindSampler(fontSamplerIndex, sharedResources.fontSampler);
+        }
     }
 
     void ImGuiRenderTask::DestroyResources()
@@ -124,7 +126,6 @@ namespace Sierra
 
         sharedResources.vertexShader = nullptr;
         sharedResources.fragmentShader = nullptr;
-        sharedResources.pipelineLayout = nullptr;
         sharedResources.fontSampler = nullptr;
         sharedResources.defaultFontAtlas = nullptr;
     }
@@ -336,12 +337,13 @@ namespace Sierra
         // Bind resources
         commandBuffer->BindVertexBuffer(vertexBuffer);
         commandBuffer->BindIndexBuffer(indexBuffer);
-        commandBuffer->BindImage(0, sharedResources.defaultFontAtlas, sharedResources.fontSampler);
 
         // Bind perspective settings
         PushConstant pushConstant = { };
+        pushConstant.fontAtlasIndex = sharedResources.resourceTableFontAtlasIndex;
+        pushConstant.fontSamplerIndex = sharedResources.resourceTableFontSamplerIndex;
         pushConstant.translation = { -1.0f, 1.0f };
-        pushConstant.scale = { 2.0f / drawData->DisplaySize.x, -2.0f / drawData->DisplaySize.y };
+        pushConstant.scale = { scaling / drawData->DisplaySize.x, -scaling / drawData->DisplaySize.y };
         commandBuffer->PushConstants(&pushConstant, sizeof(PushConstant));
 
         uint32 vertexOffset = 0;

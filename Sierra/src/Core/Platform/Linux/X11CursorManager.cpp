@@ -30,7 +30,7 @@ namespace Sierra
         x11Context.HideWindowCursor(window);
     }
 
-    void X11CursorManager::SetCursorPosition(const Vector2 &position)
+    void X11CursorManager::SetCursorPosition(const Vector2 position)
     {
         // Get X11-suited position and move cursor
         const Vector2Int x11Position = { position.x, static_cast<int32>(x11Context.GetWindowSize(window).y) - static_cast<int32>(position.y) };

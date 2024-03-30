@@ -74,7 +74,7 @@ namespace Sierra
 
     /* --- SETTER METHODS --- */
 
-    void GameActivityWindow::SetTitle(const std::string &newTitle)
+    void GameActivityWindow::SetTitle(const std::string_view newTitle)
     {
         title = newTitle;
     }
@@ -96,7 +96,7 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    const std::string& GameActivityWindow::GetTitle() const
+    std::string_view GameActivityWindow::GetTitle() const
     {
         return title;
     }

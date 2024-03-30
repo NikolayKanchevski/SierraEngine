@@ -8,7 +8,6 @@
 #include "MetalResource.h"
 
 #include "MetalDevice.h"
-#include "MetalPipelineLayout.h"
 
 namespace Sierra
 {
@@ -21,13 +20,11 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline id<MTLComputePipelineState> GetComputePipelineState() const { return computePipelineState; }
-        [[nodiscard]] inline const MetalPipelineLayout& GetLayout() const { return layout; }
 
         /* --- DESTRUCTOR --- */
         ~MetalComputePipeline() override;
 
     private:
-        const MetalPipelineLayout &layout;
         id<MTLComputePipelineState> computePipelineState = nil;
 
     };

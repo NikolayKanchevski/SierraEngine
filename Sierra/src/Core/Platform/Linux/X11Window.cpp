@@ -141,7 +141,7 @@ namespace Sierra
 
     /* --- SETTER METHODS --- */
 
-    void X11Window::SetTitle(const std::string &newTitle)
+    void X11Window::SetTitle(const std::string_view newTitle)
     {
         title = newTitle;
         x11Context.SetWindowTitle(window, newTitle);
@@ -164,7 +164,7 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    const std::string& X11Window::GetTitle() const
+    std::string_view X11Window::GetTitle() const
     {
         return title;
     }

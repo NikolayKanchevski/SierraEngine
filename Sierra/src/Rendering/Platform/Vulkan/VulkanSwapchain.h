@@ -24,10 +24,11 @@ namespace Sierra
         void Present(std::unique_ptr<CommandBuffer> &commandBuffer) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetCurrentFrame() const override { return currentFrame; }
+        [[nodiscard]] inline uint32 GetCurrentFrameIndex() const override { return currentFrame; }
+        [[nodiscard]] inline uint32 GetCurrentImageIndex() const override { return currentImage; }
         [[nodiscard]] inline uint32 GetConcurrentFrameCount() const override { return concurrentFrameCount; }
 
-        [[nodiscard]] inline const std::unique_ptr<Image>& GetCurrentImage() const override { return swapchainImages[currentImage]; }
+        [[nodiscard]] inline float32 GetScaling() const override { return static_cast<float32>(swapchainImages[currentImage]->GetWidth()) / window->GetSize().x; }
         [[nodiscard]] inline const std::unique_ptr<Image>& GetImage(const uint32 frameIndex) const override { SR_ERROR_IF(frameIndex >= concurrentFrameCount, "[Vulkan]: Cannot return image with an index [{0}] of swapchain [{1}], as index is out of bounds! Use Swapchain::GetConcurrentFrameCount() to query image count.", frameIndex, GetName()); return swapchainImages[frameIndex]; }
 
         /* --- DESTRUCTOR --- */

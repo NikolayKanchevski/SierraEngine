@@ -12,16 +12,18 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalComputePipeline::MetalComputePipeline(const MetalDevice &device, const ComputePipelineCreateInfo &createInfo)
-        : ComputePipeline(createInfo), MetalResource(createInfo.name), layout(static_cast<MetalPipelineLayout&>(*createInfo.layout))
+        : ComputePipeline(createInfo), MetalResource(createInfo.name)
     {
-        SR_ERROR_IF(createInfo.layout->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create compute pipeline [{0}] using pipeline layout [{1}], as its graphics API differs from [GraphicsAPI::Metal]!");
-
         SR_ERROR_IF(createInfo.computeShader->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create compute pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.computeShader->GetName());
         const MetalShader &metalComputeShader = static_cast<MetalShader&>(*createInfo.computeShader);
 
         // Allocate pipeline descriptor
         MTLComputePipelineDescriptor* const computePipelineDescriptor = [[MTLComputePipelineDescriptor alloc] init];
         device.SetResourceName(computePipelineDescriptor, GetName());
+
+        // Mark bindless buffer as immutable
+        [[[computePipelineDescriptor buffers] objectAtIndexedSubscript: MetalDevice::BINDLESS_ARGUMENT_BUFFER_INDEX] setMutability: MTLMutabilityImmutable];
+        [[[computePipelineDescriptor buffers] objectAtIndexedSubscript: MetalDevice::PUSH_CONSTANT_INDEX] setMutability: MTLMutabilityImmutable];
 
         // Create pipeline
         NSError* error = nil;

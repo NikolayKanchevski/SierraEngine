@@ -21,7 +21,7 @@ namespace SierraEngine
         explicit TextureImporter(const TextureImporterCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::optional<std::pair<TextureAsset, std::unique_ptr<Sierra::Buffer>>> Import(const Sierra::RenderingContext &renderingContext, const std::string &name, const std::pair<const SerializedTexture, const void*> &serializedTexture);
+        [[nodiscard]] std::optional<std::pair<TextureAsset, std::unique_ptr<Sierra::Buffer>>> Import(const Sierra::RenderingContext &renderingContext, std::string_view name, const std::pair<const SerializedTexture, const void*> &serializedTexture);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline Sierra::Version GetVersion() const { return version; }

@@ -24,7 +24,7 @@ namespace SierraEngine
         explicit Application(const Sierra::ApplicationCreateInfo &createInfo);
 
         /* --- DESTRUCTOR --- */
-        ~Application() override = default;
+        ~Application() override;
 
     private:
         void Start() override;
@@ -35,13 +35,9 @@ namespace SierraEngine
 
         std::unique_ptr<Sierra::Window> window = nullptr;
         std::unique_ptr<Sierra::Swapchain> swapchain = nullptr;
-        std::unique_ptr<Sierra::RenderPass> renderPass = nullptr;
+        std::unique_ptr<Sierra::ImGuiRenderTask> imGuiTask = nullptr;
 
-        std::unique_ptr<Sierra::Shader> vertexShader = nullptr;
-        std::unique_ptr<Sierra::Shader> fragmentShader = nullptr;
-
-        std::unique_ptr<Sierra::PipelineLayout> pipelineLayout = nullptr;
-        std::unique_ptr<Sierra::GraphicsPipeline> graphicsPipeline = nullptr;
+        std::unique_ptr<Sierra::ResourceTable> resourceTable = nullptr;
         std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers;
 
     };

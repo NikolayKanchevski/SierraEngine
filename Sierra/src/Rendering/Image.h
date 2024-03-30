@@ -463,7 +463,7 @@ namespace Sierra
 
     struct ImageCreateInfo
     {
-        const std::string &name = "Image";
+        std::string_view name = "Image";
         uint32 width = 0;
         uint32 height = 0;
 

@@ -17,8 +17,12 @@
 
         using MTLDevice = void;
         using MTLCommandQueue = void;
+
         using MTLSharedEvent = void;
         using MTLCommandBuffer = void;
+
+        using MTLBuffer = void;
+        using MTLTexture = void;
     }
 #endif
 
@@ -36,7 +40,7 @@ namespace Sierra
         void WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const std::string& GetDeviceName() const override { return deviceName; }
+        [[nodiscard]] inline std::string_view GetDeviceName() const override { return deviceName; }
 
         [[nodiscard]] bool IsImageFormatSupported(ImageFormat format, ImageUsage usage) const override;
         [[nodiscard]] bool IsImageSamplingSupported(ImageSampling sampling) const override;
@@ -50,20 +54,29 @@ namespace Sierra
 
         /* --- SETTER METHODS --- */
         template<typename T>
-        inline void SetResourceName(T* resource, const std::string &name) const
+        inline void SetResourceName(T* resource, const std::string_view name) const
         {
             #if defined(__OBJC__) && SR_ENABLE_LOGGING
-                NSString* const label = [[NSString alloc] initWithCString: name.c_str() encoding: NSASCIIStringEncoding];
+                NSString* const label = [[NSString alloc] initWithCString: name.data() encoding: NSASCIIStringEncoding];
                 [resource setLabel: label];
                 [label release];
             #endif
         }
+
+        /* --- CONSTANTS --- */
+        constexpr static uint32 BINDLESS_ARGUMENT_BUFFER_INDEX = 0;
+        constexpr static uint32 BINDLESS_ARGUMENT_BUFFER_INDEX_COUNT = 7;
+
+        constexpr static uint32 PUSH_CONSTANT_INDEX = 1;
+        constexpr static uint32 VERTEX_BUFFER_INDEX = 30;
+
 
         /* --- DESTRUCTOR --- */
         ~MetalDevice() override;
 
     private:
         std::string deviceName;
+
         id<MTLDevice> device = nil;
         id<MTLCommandQueue> commandQueue = nil;
 

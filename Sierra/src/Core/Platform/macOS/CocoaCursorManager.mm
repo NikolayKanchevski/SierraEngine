@@ -31,7 +31,7 @@ namespace Sierra
         [NSCursor hide];
     }
 
-    void CocoaCursorManager::SetCursorPosition(const Vector2 &position)
+    void CocoaCursorManager::SetCursorPosition(const Vector2 position)
     {
         // Set mouse position (method takes -Y screen coordinates)
         CGWarpMouseCursorPosition(CGPointMake([window frame].origin.x + position.x, [[window screen] frame].size.height - [window frame].origin.y - position.y));

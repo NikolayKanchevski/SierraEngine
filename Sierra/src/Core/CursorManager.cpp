@@ -26,7 +26,7 @@ namespace Sierra
 
     }
 
-    void CursorManager::SetCursorPosition(const Vector2 &position)
+    void CursorManager::SetCursorPosition(const Vector2 position)
     {
 
     }

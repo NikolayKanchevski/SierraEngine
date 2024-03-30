@@ -24,7 +24,7 @@ namespace Sierra
         void WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const std::string& GetDeviceName() const override { return deviceName; }
+        [[nodiscard]] inline std::string_view GetDeviceName() const override { return deviceName; }
 
         [[nodiscard]] bool IsImageFormatSupported(ImageFormat format, ImageUsage usage) const override;
         [[nodiscard]] bool IsImageSamplingSupported(ImageSampling sampling) const override;
@@ -37,17 +37,33 @@ namespace Sierra
         [[nodiscard]] inline uint32 GetGeneralQueueFamily() const { return generalQueueFamily; }
         [[nodiscard]] inline VkQueue GetGeneralQueue() const { return generalQueue; }
 
-        [[nodiscard]] inline VkSemaphore GetSharedSignalSemaphore() const { return sharedTimelineSemaphore; }
+        [[nodiscard]] inline VkSemaphore GetGeneralTimelineSemaphore() const { return generalTimelineSemaphore; }
         [[nodiscard]] inline uint64 GetNewSignalValue() const { lastReservedSignalValue++; return lastReservedSignalValue; }
 
-        [[nodiscard]] inline VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const;
-        [[nodiscard]] inline VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures() const;
+        [[nodiscard]] inline VkDescriptorSetLayout GetDescriptorSetLayout() const { return generalDescriptorSetLayout; }
+        [[nodiscard]] inline VkPipelineLayout GetPipelineLayout(const uint16 pushConstantSize) const { return generalPipelineLayouts[pushConstantSize / 4]; }
 
-        [[nodiscard]] bool IsExtensionLoaded(const std::string &extensionName) const;
+        [[nodiscard]] VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const;
+        VkPhysicalDeviceProperties2 GetPhysicalDeviceProperties2(void* pNext = nullptr) const;
+
+        [[nodiscard]] VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures() const;
+        VkPhysicalDeviceFeatures2 GetPhysicalDeviceFeatures2(void* pNext = nullptr) const;
+
+        [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const;
         [[nodiscard]] inline auto& GetFunctionTable() const { return functionTable; }
 
         /* --- SETTER METHODS --- */
-        void SetObjectName(VkHandle object, VkObjectType objectType, const std::string &name) const;
+        void SetObjectName(VkHandle object, VkObjectType objectType, std::string_view name) const;
+
+        /* --- CONSTANTS --- */
+        constexpr static uint32 BINDLESS_UNIFORM_BUFFER_BINDING         = 0;
+        constexpr static uint32 BINDLESS_STORAGE_BUFFER_BINDING         = 1;
+        constexpr static uint32 BINDLESS_SAMPLED_IMAGE_BINDING          = 2;
+        constexpr static uint32 BINDLESS_SAMPLED_CUBEMAP_BINDING        = 3;
+        constexpr static uint32 BINDLESS_STORAGE_IMAGE_BINDING          = 4;
+        constexpr static uint32 BINDLESS_STORAGE_CUBEMAP_BINDING        = 5;
+        constexpr static uint32 BINDLESS_SAMPLER_BINDING                = 6;
+        constexpr static uint32 BINDLESS_BINDING_COUNT                  = 7;
 
         /* --- DESTRUCTOR --- */
         ~VulkanDevice() override;
@@ -55,8 +71,21 @@ namespace Sierra
     private:
         const VulkanInstance &instance;
 
-        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
         std::string deviceName;
+        std::vector<hash> loadedExtensions;
+
+        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+        VkDevice logicalDevice = VK_NULL_HANDLE;
+        VmaAllocator vmaAllocator = VK_NULL_HANDLE;
+
+        uint32 generalQueueFamily = 0;
+        VkQueue generalQueue = VK_NULL_HANDLE;
+
+        mutable uint64 lastReservedSignalValue = 0;
+        VkSemaphore generalTimelineSemaphore = VK_NULL_HANDLE;
+
+        VkDescriptorSetLayout generalDescriptorSetLayout = VK_NULL_HANDLE;
+        std::array<VkPipelineLayout, (MAX_PUSH_CONSTANT_SIZE / 4) + 1> generalPipelineLayouts;
 
         struct
         {
@@ -255,12 +284,12 @@ namespace Sierra
             #endif
             #if defined(VK_AMDX_shader_enqueue)
                 PFN_vkCmdDispatchGraphAMDX vkCmdDispatchGraphAMDX;
-                PFN_vkCmdDispatchGraphIndirectAMDX vkCmdDispatchGraphIndirectAMDX;
-                PFN_vkCmdDispatchGraphIndirectCountAMDX vkCmdDispatchGraphIndirectCountAMDX;
-                PFN_vkCmdInitializeGraphScratchMemoryAMDX vkCmdInitializeGraphScratchMemoryAMDX;
-                PFN_vkCreateExecutionGraphPipelinesAMDX vkCreateExecutionGraphPipelinesAMDX;
-                PFN_vkGetExecutionGraphPipelineNodeIndexAMDX vkGetExecutionGraphPipelineNodeIndexAMDX;
-                PFN_vkGetExecutionGraphPipelineScratchSizeAMDX vkGetExecutionGraphPipelineScratchSizeAMDX;
+                    PFN_vkCmdDispatchGraphIndirectAMDX vkCmdDispatchGraphIndirectAMDX;
+                    PFN_vkCmdDispatchGraphIndirectCountAMDX vkCmdDispatchGraphIndirectCountAMDX;
+                    PFN_vkCmdInitializeGraphScratchMemoryAMDX vkCmdInitializeGraphScratchMemoryAMDX;
+                    PFN_vkCreateExecutionGraphPipelinesAMDX vkCreateExecutionGraphPipelinesAMDX;
+                    PFN_vkGetExecutionGraphPipelineNodeIndexAMDX vkGetExecutionGraphPipelineNodeIndexAMDX;
+                    PFN_vkGetExecutionGraphPipelineScratchSizeAMDX vkGetExecutionGraphPipelineScratchSizeAMDX;
             #endif
             #if defined(VK_AMD_buffer_marker)
                 PFN_vkCmdWriteBufferMarkerAMD vkCmdWriteBufferMarkerAMD;
@@ -277,7 +306,7 @@ namespace Sierra
             #endif
             #if defined(VK_ANDROID_external_memory_android_hardware_buffer)
                 PFN_vkGetAndroidHardwareBufferPropertiesANDROID vkGetAndroidHardwareBufferPropertiesANDROID;
-                PFN_vkGetMemoryAndroidHardwareBufferANDROID vkGetMemoryAndroidHardwareBufferANDROID;
+                    PFN_vkGetMemoryAndroidHardwareBufferANDROID vkGetMemoryAndroidHardwareBufferANDROID;
             #endif
             #if defined(VK_EXT_attachment_feedback_loop_dynamic_state)
                 PFN_vkCmdSetAttachmentFeedbackLoopEnableEXT vkCmdSetAttachmentFeedbackLoopEnableEXT;
@@ -328,7 +357,7 @@ namespace Sierra
             #endif
             #if defined(VK_EXT_discard_rectangles) && VK_EXT_DISCARD_RECTANGLES_SPEC_VERSION >= 2
                 PFN_vkCmdSetDiscardRectangleEnableEXT vkCmdSetDiscardRectangleEnableEXT;
-            PFN_vkCmdSetDiscardRectangleModeEXT vkCmdSetDiscardRectangleModeEXT;
+                PFN_vkCmdSetDiscardRectangleModeEXT vkCmdSetDiscardRectangleModeEXT;
             #endif
             #if defined(VK_EXT_display_control)
                 PFN_vkDisplayPowerControlEXT vkDisplayPowerControlEXT;
@@ -341,16 +370,16 @@ namespace Sierra
             #endif
             #if defined(VK_EXT_full_screen_exclusive)
                 PFN_vkAcquireFullScreenExclusiveModeEXT vkAcquireFullScreenExclusiveModeEXT;
-                PFN_vkReleaseFullScreenExclusiveModeEXT vkReleaseFullScreenExclusiveModeEXT;
+                    PFN_vkReleaseFullScreenExclusiveModeEXT vkReleaseFullScreenExclusiveModeEXT;
             #endif
             #if defined(VK_EXT_hdr_metadata)
                 PFN_vkSetHdrMetadataEXT vkSetHdrMetadataEXT;
             #endif
             #if defined(VK_EXT_host_image_copy)
                 PFN_vkCopyImageToImageEXT vkCopyImageToImageEXT;
-                PFN_vkCopyImageToMemoryEXT vkCopyImageToMemoryEXT;
-                PFN_vkCopyMemoryToImageEXT vkCopyMemoryToImageEXT;
-                PFN_vkTransitionImageLayoutEXT vkTransitionImageLayoutEXT;
+                    PFN_vkCopyImageToMemoryEXT vkCopyImageToMemoryEXT;
+                    PFN_vkCopyMemoryToImageEXT vkCopyMemoryToImageEXT;
+                    PFN_vkTransitionImageLayoutEXT vkTransitionImageLayoutEXT;
             #endif
             #if defined(VK_EXT_host_query_reset)
                 PFN_vkResetQueryPoolEXT vkResetQueryPoolEXT;
@@ -410,9 +439,9 @@ namespace Sierra
             #endif
             #if defined(VK_EXT_shader_object)
                 PFN_vkCmdBindShadersEXT vkCmdBindShadersEXT;
-                PFN_vkCreateShadersEXT vkCreateShadersEXT;
-                PFN_vkDestroyShaderEXT vkDestroyShaderEXT;
-                PFN_vkGetShaderBinaryDataEXT vkGetShaderBinaryDataEXT;
+                    PFN_vkCreateShadersEXT vkCreateShadersEXT;
+                    PFN_vkDestroyShaderEXT vkDestroyShaderEXT;
+                    PFN_vkGetShaderBinaryDataEXT vkGetShaderBinaryDataEXT;
             #endif
             #if defined(VK_EXT_swapchain_maintenance1)
                 PFN_vkReleaseSwapchainImagesEXT vkReleaseSwapchainImagesEXT;
@@ -433,18 +462,18 @@ namespace Sierra
             #endif
             #if defined(VK_FUCHSIA_buffer_collection)
                 PFN_vkCreateBufferCollectionFUCHSIA vkCreateBufferCollectionFUCHSIA;
-                PFN_vkDestroyBufferCollectionFUCHSIA vkDestroyBufferCollectionFUCHSIA;
-                PFN_vkGetBufferCollectionPropertiesFUCHSIA vkGetBufferCollectionPropertiesFUCHSIA;
-                PFN_vkSetBufferCollectionBufferConstraintsFUCHSIA vkSetBufferCollectionBufferConstraintsFUCHSIA;
-                PFN_vkSetBufferCollectionImageConstraintsFUCHSIA vkSetBufferCollectionImageConstraintsFUCHSIA;
+                    PFN_vkDestroyBufferCollectionFUCHSIA vkDestroyBufferCollectionFUCHSIA;
+                    PFN_vkGetBufferCollectionPropertiesFUCHSIA vkGetBufferCollectionPropertiesFUCHSIA;
+                    PFN_vkSetBufferCollectionBufferConstraintsFUCHSIA vkSetBufferCollectionBufferConstraintsFUCHSIA;
+                    PFN_vkSetBufferCollectionImageConstraintsFUCHSIA vkSetBufferCollectionImageConstraintsFUCHSIA;
             #endif
             #if defined(VK_FUCHSIA_external_memory)
                 PFN_vkGetMemoryZirconHandleFUCHSIA vkGetMemoryZirconHandleFUCHSIA;
-                PFN_vkGetMemoryZirconHandlePropertiesFUCHSIA vkGetMemoryZirconHandlePropertiesFUCHSIA;
+                    PFN_vkGetMemoryZirconHandlePropertiesFUCHSIA vkGetMemoryZirconHandlePropertiesFUCHSIA;
             #endif
             #if defined(VK_FUCHSIA_external_semaphore)
                 PFN_vkGetSemaphoreZirconHandleFUCHSIA vkGetSemaphoreZirconHandleFUCHSIA;
-                PFN_vkImportSemaphoreZirconHandleFUCHSIA vkImportSemaphoreZirconHandleFUCHSIA;
+                    PFN_vkImportSemaphoreZirconHandleFUCHSIA vkImportSemaphoreZirconHandleFUCHSIA;
             #endif
             #if defined(VK_GOOGLE_display_timing)
                 PFN_vkGetPastPresentationTimingGOOGLE vkGetPastPresentationTimingGOOGLE;
@@ -547,7 +576,7 @@ namespace Sierra
             #endif
             #if defined(VK_KHR_external_fence_win32)
                 PFN_vkGetFenceWin32HandleKHR vkGetFenceWin32HandleKHR;
-                PFN_vkImportFenceWin32HandleKHR vkImportFenceWin32HandleKHR;
+                    PFN_vkImportFenceWin32HandleKHR vkImportFenceWin32HandleKHR;
             #endif
             #if defined(VK_KHR_external_memory_fd)
                 PFN_vkGetMemoryFdKHR vkGetMemoryFdKHR;
@@ -555,7 +584,7 @@ namespace Sierra
             #endif
             #if defined(VK_KHR_external_memory_win32)
                 PFN_vkGetMemoryWin32HandleKHR vkGetMemoryWin32HandleKHR;
-                PFN_vkGetMemoryWin32HandlePropertiesKHR vkGetMemoryWin32HandlePropertiesKHR;
+                    PFN_vkGetMemoryWin32HandlePropertiesKHR vkGetMemoryWin32HandlePropertiesKHR;
             #endif
             #if defined(VK_KHR_external_semaphore_fd)
                 PFN_vkGetSemaphoreFdKHR vkGetSemaphoreFdKHR;
@@ -563,7 +592,7 @@ namespace Sierra
             #endif
             #if defined(VK_KHR_external_semaphore_win32)
                 PFN_vkGetSemaphoreWin32HandleKHR vkGetSemaphoreWin32HandleKHR;
-                PFN_vkImportSemaphoreWin32HandleKHR vkImportSemaphoreWin32HandleKHR;
+                    PFN_vkImportSemaphoreWin32HandleKHR vkImportSemaphoreWin32HandleKHR;
             #endif
             #if defined(VK_KHR_fragment_shading_rate)
                 PFN_vkCmdSetFragmentShadingRateKHR vkCmdSetFragmentShadingRateKHR;
@@ -586,13 +615,13 @@ namespace Sierra
             #endif
             #if defined(VK_KHR_maintenance5)
                 PFN_vkCmdBindIndexBuffer2KHR vkCmdBindIndexBuffer2KHR;
-                PFN_vkGetDeviceImageSubresourceLayoutKHR vkGetDeviceImageSubresourceLayoutKHR;
-                PFN_vkGetImageSubresourceLayout2KHR vkGetImageSubresourceLayout2KHR;
-                PFN_vkGetRenderingAreaGranularityKHR vkGetRenderingAreaGranularityKHR;
+                    PFN_vkGetDeviceImageSubresourceLayoutKHR vkGetDeviceImageSubresourceLayoutKHR;
+                    PFN_vkGetImageSubresourceLayout2KHR vkGetImageSubresourceLayout2KHR;
+                    PFN_vkGetRenderingAreaGranularityKHR vkGetRenderingAreaGranularityKHR;
             #endif
             #if defined(VK_KHR_map_memory2)
                 PFN_vkMapMemory2KHR vkMapMemory2KHR;
-            PFN_vkUnmapMemory2KHR vkUnmapMemory2KHR;
+                PFN_vkUnmapMemory2KHR vkUnmapMemory2KHR;
             #endif
             #if defined(VK_KHR_performance_query)
                 PFN_vkAcquireProfilingLockKHR vkAcquireProfilingLockKHR;
@@ -659,7 +688,7 @@ namespace Sierra
             #endif
             #if defined(VK_KHR_video_encode_queue)
                 PFN_vkCmdEncodeVideoKHR vkCmdEncodeVideoKHR;
-                PFN_vkGetEncodedVideoSessionParametersKHR vkGetEncodedVideoSessionParametersKHR;
+                    PFN_vkGetEncodedVideoSessionParametersKHR vkGetEncodedVideoSessionParametersKHR;
             #endif
             #if defined(VK_KHR_video_queue)
                 PFN_vkBindVideoSessionMemoryKHR vkBindVideoSessionMemoryKHR;
@@ -705,8 +734,8 @@ namespace Sierra
             #endif
             #if defined(VK_NV_device_generated_commands_compute)
                 PFN_vkCmdUpdatePipelineIndirectBufferNV vkCmdUpdatePipelineIndirectBufferNV;
-                PFN_vkGetPipelineIndirectDeviceAddressNV vkGetPipelineIndirectDeviceAddressNV;
-                PFN_vkGetPipelineIndirectMemoryRequirementsNV vkGetPipelineIndirectMemoryRequirementsNV;
+                    PFN_vkGetPipelineIndirectDeviceAddressNV vkGetPipelineIndirectDeviceAddressNV;
+                    PFN_vkGetPipelineIndirectMemoryRequirementsNV vkGetPipelineIndirectMemoryRequirementsNV;
             #endif
             #if defined(VK_NV_external_memory_rdma)
                 PFN_vkGetMemoryRemoteAddressNV vkGetMemoryRemoteAddressNV;
@@ -856,82 +885,6 @@ namespace Sierra
                 PFN_vkAcquireNextImage2KHR vkAcquireNextImage2KHR;
             #endif
         } functionTable = { };
-
-        VkDevice logicalDevice = VK_NULL_HANDLE;
-        VmaAllocator vmaAllocator = VK_NULL_HANDLE;
-
-        uint32 generalQueueFamily = 0;
-        VkQueue generalQueue = VK_NULL_HANDLE;
-
-        mutable uint64 lastReservedSignalValue = 0;
-        VkSemaphore sharedTimelineSemaphore = VK_NULL_HANDLE;
-
-        struct VulkanDeviceExtension
-        {
-            std::string name;
-            void* data = nullptr;
-            std::vector<VulkanDeviceExtension> dependencies = { };
-            bool requiredOnlyIfSupported = false;
-        };
-        const std::vector<VulkanDeviceExtension> DEVICE_EXTENSIONS_TO_QUERY
-        {
-            #if SR_ENABLE_LOGGING
-            {
-                .name = VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
-                .dependencies = {
-                    {
-                        .name = VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
-                        .requiredOnlyIfSupported = true
-                    }
-                },
-                .requiredOnlyIfSupported = true
-            },
-            #endif
-            #if SR_PLATFORM_APPLE
-            {
-                .name = VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME,
-                .data = new VkPhysicalDevicePortabilitySubsetFeaturesKHR {
-                    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR
-                },
-                .requiredOnlyIfSupported = true
-            },
-            #endif
-            {
-                // Core in Vulkan 1.1
-                .name = VK_KHR_MAINTENANCE_1_EXTENSION_NAME
-            },
-            {
-                .name = VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME,
-                .data = new VkPhysicalDeviceImagelessFramebufferFeaturesKHR {
-                    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES_KHR,
-                    .imagelessFramebuffer = VK_TRUE
-                },
-                .dependencies = {
-                    {
-                        .name = VK_KHR_IMAGE_FORMAT_LIST_EXTENSION_NAME
-                    }
-                }
-            },
-            {
-                .name = VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME
-            },
-            {
-                // Core in Vulkan 1.2
-                .name = VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME,
-                .data = new VkPhysicalDeviceTimelineSemaphoreFeaturesKHR {
-                    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR,
-                    .timelineSemaphore = VK_TRUE
-                }
-            },
-            {
-                .name = VK_KHR_SWAPCHAIN_EXTENSION_NAME
-            },
-        };
-        std::vector<hash> loadedExtensions;
-
-        static bool IsExtensionSupported(const char* extensionName, const std::vector<VkExtensionProperties> &supportedExtensions);
-        bool AddExtensionIfSupported(const VulkanDeviceExtension &extension, const std::vector<VkExtensionProperties> &supportedExtensions, void* pNextChain, std::vector<const char*> &extensionList, std::vector<void*> &extensionDataToFree);
-
     };
 
 }

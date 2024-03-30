@@ -6,9 +6,11 @@
 
 #include "VulkanBuffer.h"
 #include "VulkanImage.h"
-#include "VulkanSampler.h"
+#include "VulkanResourceTable.h"
 
 #include "VulkanRenderPass.h"
+#include "VulkanGraphicsPipeline.h"
+#include "VulkanComputePipeline.h"
 
 namespace Sierra
 {
@@ -16,7 +18,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanCommandBuffer::VulkanCommandBuffer(const VulkanDevice &device, const CommandBufferCreateInfo &createInfo)
-        : CommandBuffer(createInfo), VulkanResource(createInfo.name), device(device), pushDescriptorSet({ })
+        : CommandBuffer(createInfo), VulkanResource(createInfo.name), device(device)
     {
         // Set up pool create info
         VkCommandPoolCreateInfo commandPoolCreateInfo = { };
@@ -27,6 +29,7 @@ namespace Sierra
         // Create command pool
         VkResult result = device.GetFunctionTable().vkCreateCommandPool(device.GetLogicalDevice(), &commandPoolCreateInfo, nullptr, &commandPool);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create command pool for command buffer [{0}]! Error code: {1}.", GetName(), result);
+        device.SetObjectName(commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Command pool of command buffer [" + std::string(GetName()) + "]");
 
         // Set up allocate info
         VkCommandBufferAllocateInfo allocateInfo = { };
@@ -38,10 +41,7 @@ namespace Sierra
         // Allocate command buffer
         result = device.GetFunctionTable().vkAllocateCommandBuffers(device.GetLogicalDevice(), &allocateInfo, &commandBuffer);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create command buffer [{0}]! Error code: {1}.", GetName(), result);
-
-        // Set object names
         device.SetObjectName(commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, GetName());
-        device.SetObjectName(commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Command pool of command buffer [" + GetName() + "]");
     }
 
     /* --- POLLING METHODS --- */
@@ -73,6 +73,7 @@ namespace Sierra
         // End command buffer
         const VkResult result = device.GetFunctionTable().vkEndCommandBuffer(commandBuffer);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not end command buffer [{0}]! Error code: {1}.", GetName(), result);
+        currentResourceTableDescriptorSet = VK_NULL_HANDLE;
     }
 
     void VulkanCommandBuffer::SynchronizeBufferUsage(const std::unique_ptr<Buffer> &buffer, const BufferCommandUsage previousUsage, const BufferCommandUsage nextUsage, const uint64 memorySize, const uint64 byteOffset)
@@ -237,6 +238,20 @@ namespace Sierra
         }
     }
 
+    void VulkanCommandBuffer::BindResourceTable(const std::unique_ptr<ResourceTable> &resourceTable)
+    {
+        SR_ERROR_IF(resourceTable->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind resource table [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{1}]!", resourceTable->GetName(), GetName());
+        const VulkanResourceTable &vulkanResourceTable = static_cast<VulkanResourceTable&>(*resourceTable);
+        currentResourceTableDescriptorSet = vulkanResourceTable.GetDescriptorSet();
+    }
+
+    void VulkanCommandBuffer::PushConstants(const void* data, const uint16 memoryRange, uint16 byteOffset)
+    {
+        SR_ERROR_IF(currentBindPoint == VK_PIPELINE_BIND_POINT_MAX_ENUM, "[Vulkan]: Cannot push constants within command buffer [{0}] if no pipelines are bound!", GetName());
+        SR_ERROR_IF(memoryRange > 128, "[Vulkan]: Cannot push constants of size bigger than 128 bytes within command buffer [{0}]!", GetName());
+        device.GetFunctionTable().vkCmdPushConstants(commandBuffer, currentPipelineLayout, VK_SHADER_STAGE_ALL, 0, memoryRange, reinterpret_cast<const char*>(data) + byteOffset);
+    }
+
     void VulkanCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments)
     {
         SR_ERROR_IF(renderPass->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], from command buffer [{1}]!", renderPass->GetName(), GetName());
@@ -327,14 +342,17 @@ namespace Sierra
         SR_ERROR_IF(graphicsPipeline->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin graphics graphicsPipeline [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], from command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
         const VulkanGraphicsPipeline &vulkanGraphicsPipeline = static_cast<VulkanGraphicsPipeline&>(*graphicsPipeline);
 
-        device.GetFunctionTable().vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanGraphicsPipeline.GetVulkanPipeline());
-        currentGraphicsPipeline = &vulkanGraphicsPipeline;
+        currentBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        currentPipelineLayout = vulkanGraphicsPipeline.GetVulkanPipelineLayout();
+
+        if (currentResourceTableDescriptorSet != VK_NULL_HANDLE) device.GetFunctionTable().vkCmdBindDescriptorSets(commandBuffer, currentBindPoint, currentPipelineLayout, 0, 1, &currentResourceTableDescriptorSet, 0, nullptr);
+        device.GetFunctionTable().vkCmdBindPipeline(commandBuffer, currentBindPoint, vulkanGraphicsPipeline.GetVulkanPipeline());
     }
 
     void VulkanCommandBuffer::EndGraphicsPipeline(const std::unique_ptr<GraphicsPipeline> &graphicsPipeline)
     {
         SR_ERROR_IF(graphicsPipeline->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot end graphics pipeline [{0}], from command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
-        currentGraphicsPipeline = nullptr;
+        currentBindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
     }
 
     void VulkanCommandBuffer::BindVertexBuffer(const std::unique_ptr<Buffer> &vertexBuffer, const uint64 byteOffset)
@@ -342,7 +360,7 @@ namespace Sierra
         SR_ERROR_IF(vertexBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind vertex buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{1}]!", vertexBuffer->GetName(), GetName());
         const VulkanBuffer &vulkanVertexBuffer = static_cast<VulkanBuffer&>(*vertexBuffer);
 
-        SR_ERROR_IF(byteOffset > vertexBuffer->GetMemorySize(), "[Vulkan]: Cannot bind vertex buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", vertexBuffer->GetName(), GetName(), byteOffset, vertexBuffer->GetMemorySize());
+        SR_ERROR_IF(byteOffset > vertexBuffer->GetMemorySize(), "[Vulkan]: Cannot bind vertex buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is not within a valid range of the [{3}] bytes the buffer holds!", vertexBuffer->GetName(), GetName(), byteOffset, vertexBuffer->GetMemorySize());
 
         VkBuffer vkBuffer = vulkanVertexBuffer.GetVulkanBuffer();
         device.GetFunctionTable().vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vkBuffer, &byteOffset);
@@ -353,7 +371,7 @@ namespace Sierra
         SR_ERROR_IF(indexBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind index buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{1}]!", indexBuffer->GetName(), GetName());
         const VulkanBuffer &vulkanIndexBuffer = static_cast<VulkanBuffer&>(*indexBuffer);
 
-        SR_ERROR_IF(byteOffset > indexBuffer->GetMemorySize(), "[Vulkan]: Cannot bind index buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is outside of the [{3}] bytes size of the size of the buffer!", indexBuffer->GetName(), GetName(), byteOffset, indexBuffer->GetMemorySize());
+        SR_ERROR_IF(byteOffset > indexBuffer->GetMemorySize(), "[Vulkan]: Cannot bind index buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is not within a valid range of the [{3}] bytes the buffer holds!", indexBuffer->GetName(), GetName(), byteOffset, indexBuffer->GetMemorySize());
         device.GetFunctionTable().vkCmdBindIndexBuffer(commandBuffer, vulkanIndexBuffer.GetVulkanBuffer(), byteOffset, VK_INDEX_TYPE_UINT32); // 32-bit indices are required, due to Metal shaders enforcing it
     }
 
@@ -372,17 +390,13 @@ namespace Sierra
 
     void VulkanCommandBuffer::Draw(const uint32 vertexCount, const uint32 vertexOffset)
     {
-        SR_ERROR_IF(currentGraphicsPipeline == nullptr, "[Vulkan]: Cannot draw if no graphics pipeline is active within command buffer [{0}]!", GetName());
-
-        BindResources();
+        SR_ERROR_IF(currentBindPoint != VK_PIPELINE_BIND_POINT_GRAPHICS, "[Vulkan]: Cannot draw if no graphics pipeline is active within command buffer [{0}]!", GetName());
         device.GetFunctionTable().vkCmdDraw(commandBuffer, vertexCount, 1, vertexOffset, 0);
     }
 
     void VulkanCommandBuffer::DrawIndexed(const uint32 indexCount, const uint32 indexOffset, const uint32 vertexOffset)
     {
-        SR_ERROR_IF(currentGraphicsPipeline == nullptr, "[Vulkan]: Cannot draw indexed if no graphics pipeline is active within command buffer [{0}]!", GetName());
-
-        BindResources();
+        SR_ERROR_IF(currentBindPoint != VK_PIPELINE_BIND_POINT_GRAPHICS, "[Vulkan]: Cannot draw indexed if no graphics pipeline is active within command buffer [{0}]!", GetName());
         device.GetFunctionTable().vkCmdDrawIndexed(commandBuffer, indexCount, 1, indexOffset, static_cast<int32>(vertexOffset), 0);
     }
 
@@ -391,67 +405,26 @@ namespace Sierra
         SR_ERROR_IF(computePipeline->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin compute graphicsPipeline [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], from command buffer [{1}]!", computePipeline->GetName(), GetName());
         const VulkanComputePipeline &vulkanComputePipeline = static_cast<VulkanComputePipeline&>(*computePipeline);
 
-        device.GetFunctionTable().vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, vulkanComputePipeline.GetVulkanPipeline());
-        currentComputePipeline = &vulkanComputePipeline;
+        currentBindPoint = VK_PIPELINE_BIND_POINT_COMPUTE;
+        currentPipelineLayout = vulkanComputePipeline.GetVulkanPipelineLayout();
+
+        if (currentResourceTableDescriptorSet != VK_NULL_HANDLE) device.GetFunctionTable().vkCmdBindDescriptorSets(commandBuffer, currentBindPoint, currentPipelineLayout, 0, 1, &currentResourceTableDescriptorSet, 0, nullptr);
+        device.GetFunctionTable().vkCmdBindPipeline(commandBuffer, currentBindPoint, vulkanComputePipeline.GetVulkanPipeline());
     }
 
     void VulkanCommandBuffer::EndComputePipeline(const std::unique_ptr<ComputePipeline> &computePipeline)
     {
         SR_ERROR_IF(computePipeline->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot end compute pipeline [{0}], from command buffer [{1}]!", computePipeline->GetName(), GetName());
-        currentComputePipeline = nullptr;
+        currentBindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
     }
 
     void VulkanCommandBuffer::Dispatch(const uint32 xWorkGroupCount, const uint32 yWorkGroupCount, const uint32 zWorkGroupCount)
     {
-        SR_ERROR_IF(currentComputePipeline == nullptr, "[Vulkan]: Cannot dispatch if no compute pipeline is active within command buffer [{0}]!", GetName());
-
-        BindResources();
+        SR_ERROR_IF(currentBindPoint != VK_PIPELINE_BIND_POINT_COMPUTE, "[Vulkan]: Cannot dispatch if no compute pipeline is active within command buffer [{0}]!", GetName());
         device.GetFunctionTable().vkCmdDispatch(commandBuffer, xWorkGroupCount, yWorkGroupCount, zWorkGroupCount);
     }
 
-    void VulkanCommandBuffer::PushConstants(const void* data, const uint16 memoryRange, const uint16 byteOffset)
-    {
-        SR_ERROR_IF(currentGraphicsPipeline == nullptr && currentComputePipeline == nullptr, "[Vulkan]: Cannot push constants if no pipeline is active within command buffer [{0}]!", GetName());
-        const VulkanPipelineLayout &currentPipelineLayout = currentComputePipeline != nullptr ? currentComputePipeline->GetLayout() : currentGraphicsPipeline->GetLayout();
-
-        SR_ERROR_IF(memoryRange > currentPipelineLayout.GetPushConstantSize(), "[Vulkan]: Cannot push [{0}] bytes of push constant data within command buffer [{1}], as specified memory range is bigger than specified in the current pipeline's layout, which is [{2}] bytes!", memoryRange, GetName(), currentPipelineLayout.GetPushConstantSize());
-        device.GetFunctionTable().vkCmdPushConstants(commandBuffer, currentPipelineLayout.GetVulkanPipelineLayout(), VK_SHADER_STAGE_ALL, byteOffset, memoryRange, data);
-    }
-
-    void VulkanCommandBuffer::BindBuffer(const uint32 binding, const std::unique_ptr<Buffer> &buffer, const uint32 arrayIndex, uint64 memoryRange, const uint64 byteOffset)
-    {
-        SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], to binding [{1}] within command buffer [{2}]!", buffer->GetName(), binding, GetName());
-        const VulkanBuffer &vulkanBuffer = static_cast<VulkanBuffer&>(*buffer);
-
-        memoryRange = memoryRange != 0 ? memoryRange : buffer->GetMemorySize();
-        SR_ERROR_IF(byteOffset + memoryRange > buffer->GetMemorySize(), "[Vulkan]: Cannot bind [{0}] bytes (offset by another [{1}] bytes) from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, byteOffset, buffer->GetName(), GetName(), byteOffset + memoryRange, buffer->GetMemorySize());
-
-        pushDescriptorSet.BindBuffer(binding, vulkanBuffer, arrayIndex, memoryRange, byteOffset);
-        resourcesBound = false;
-    }
-
-    void VulkanCommandBuffer::BindImage(const uint32 binding, const std::unique_ptr<Image> &image, const uint32 arrayIndex)
-    {
-        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind image [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], to binding [{1}] within command buffer [{2}]!", image->GetName(), binding, GetName());
-        const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
-
-        pushDescriptorSet.BindImage(binding, vulkanImage, nullptr, VK_IMAGE_LAYOUT_GENERAL, arrayIndex);
-        resourcesBound = false;
-    }
-
-    void VulkanCommandBuffer::BindImage(const uint32 binding, const std::unique_ptr<Image> &image, const std::unique_ptr<Sampler> &sampler, const uint32 arrayIndex)
-    {
-        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind image [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], to binding [{1}] within command buffer [{2}]!", image->GetName(), binding, GetName());
-        const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
-
-        SR_ERROR_IF(sampler->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind image [{0}] using sampler [{1}], whose graphics API differs from [GraphicsAPI::Vulkan], to binding [{2}] within command buffer [{3}]!", image->GetName(), sampler->GetName(), binding, GetName());
-        const VulkanSampler &vulkanSampler = static_cast<VulkanSampler&>(*sampler);
-
-        pushDescriptorSet.BindImage(binding, vulkanImage, &vulkanSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, arrayIndex);
-        resourcesBound = false;
-    }
-
-    void VulkanCommandBuffer::BeginDebugRegion(const std::string &regionName, const ColorRGBA32 &color)
+    void VulkanCommandBuffer::BeginDebugRegion(const std::string_view regionName, const ColorRGBA32 &color)
     {
         #if !SR_ENABLE_LOGGING
             return;
@@ -461,14 +434,14 @@ namespace Sierra
         // Set up marker info
         VkDebugMarkerMarkerInfoEXT markerInfo = { };
         markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
-        markerInfo.pMarkerName = regionName.c_str();
+        markerInfo.pMarkerName = regionName.data();
         std::memcpy(markerInfo.color, &color, sizeof(VkDebugMarkerMarkerInfoEXT::color));
 
         // Bind marker
         device.GetFunctionTable().vkCmdDebugMarkerBeginEXT(commandBuffer, &markerInfo);
     }
 
-    void VulkanCommandBuffer::InsertDebugMarker(const std::string &markerName, const ColorRGBA32 &color)
+    void VulkanCommandBuffer::InsertDebugMarker(const std::string_view markerName, const ColorRGBA32 &color)
     {
         #if !SR_ENABLE_LOGGING
             return;
@@ -478,7 +451,7 @@ namespace Sierra
         // Set up marker info
         VkDebugMarkerMarkerInfoEXT markerInfo = { };
         markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
-        markerInfo.pMarkerName = markerName.c_str();
+        markerInfo.pMarkerName = markerName.data();
         std::memcpy(markerInfo.color, &color, sizeof(VkDebugMarkerMarkerInfoEXT::color));
 
         // Bind marker
@@ -502,19 +475,6 @@ namespace Sierra
 
         queuedBuffers = std::queue<std::unique_ptr<Buffer>>();
         queuedImages = std::queue<std::unique_ptr<Image>>();
-    }
-
-    /* --- PRIVATE METHODS --- */
-
-    void VulkanCommandBuffer::BindResources()
-    {
-        if (resourcesBound) return;
-
-        const VkPipelineBindPoint bindPoint = currentComputePipeline != nullptr ? VK_PIPELINE_BIND_POINT_COMPUTE : VK_PIPELINE_BIND_POINT_GRAPHICS;
-        const VulkanPipelineLayout &currentPipelineLayout = currentComputePipeline != nullptr ? currentComputePipeline->GetLayout() : currentGraphicsPipeline->GetLayout();
-
-        if (!pushDescriptorSet.GetWriteDescriptorSets().empty()) device.GetFunctionTable().vkCmdPushDescriptorSetKHR(commandBuffer, bindPoint, currentPipelineLayout.GetVulkanPipelineLayout(), 0, pushDescriptorSet.GetWriteDescriptorSets().size(), pushDescriptorSet.GetWriteDescriptorSets().data());
-        resourcesBound = true;
     }
 
     /* --- CONVERSIONS --- */

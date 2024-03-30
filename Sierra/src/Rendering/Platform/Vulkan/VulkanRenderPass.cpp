@@ -288,7 +288,7 @@ namespace Sierra
 
         // Set object names
         device.SetObjectName(renderPass, VK_OBJECT_TYPE_RENDER_PASS, GetName());
-        device.SetObjectName(framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Framebuffer of render pass [" + GetName() + "]");
+        device.SetObjectName(framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Framebuffer of render pass [" + std::string(GetName()) + "]");
     }
 
     /* --- DESTRUCTOR --- */

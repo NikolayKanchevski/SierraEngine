@@ -9,6 +9,7 @@
 #include "Buffer.h"
 #include "Image.h"
 #include "Sampler.h"
+#include "ResourceTable.h"
 
 #include "RenderPass.h"
 #include "GraphicsPipeline.h"
@@ -48,7 +49,7 @@ namespace Sierra
 
     struct CommandBufferCreateInfo
     {
-        const std::string &name = "Command Buffer";
+        std::string_view name = "Command Buffer";
     };
 
     class SIERRA_API CommandBuffer : public virtual RenderingResource
@@ -69,6 +70,9 @@ namespace Sierra
         virtual void BeginNextSubpass(const std::unique_ptr<RenderPass> &renderPass) = 0;
         virtual void EndRenderPass(const std::unique_ptr<RenderPass> &renderPass) = 0;
 
+        virtual void BindResourceTable(const std::unique_ptr<ResourceTable> &resourceTable) = 0;
+        virtual void PushConstants(const void* data, uint16 memoryRange, uint16 byteOffset = 0) = 0;
+
         virtual void BeginGraphicsPipeline(const std::unique_ptr<GraphicsPipeline> &graphicsPipeline) = 0;
         virtual void EndGraphicsPipeline(const std::unique_ptr<GraphicsPipeline> &graphicsPipeline) = 0;
 
@@ -84,13 +88,8 @@ namespace Sierra
 
         virtual void Dispatch(uint32 xWorkGroupCount, uint32 yWorkGroupCount, uint32 zWorkGroupCount) = 0;
 
-        virtual void PushConstants(const void* data, uint16 memoryRange, uint16 byteOffset = 0) = 0;
-        virtual void BindBuffer(uint32 binding, const std::unique_ptr<Buffer> &buffer, uint32 arrayIndex = 0, uint64 memoryRange = 0, uint64 byteOffset = 0) = 0;
-        virtual void BindImage(uint32 binding, const std::unique_ptr<Image> &image, uint32 arrayIndex = 0) = 0;
-        virtual void BindImage(uint32 binding, const std::unique_ptr<Image> &image, const std::unique_ptr<Sampler> &sampler, uint32 arrayIndex = 0) = 0;
-
-        virtual void BeginDebugRegion(const std::string &regionName, const ColorRGBA32 &color = { 1.0f, 1.0f, 0.0f, 1.0f }) = 0;
-        virtual void InsertDebugMarker(const std::string &markerName, const ColorRGBA32 &color = { 1.0f, 1.0f, 0.0f, 1.0f }) = 0;
+        virtual void BeginDebugRegion(std::string_view regionName, const ColorRGBA32 &color = { 1.0f, 1.0f, 0.0f, 1.0f }) = 0;
+        virtual void InsertDebugMarker(std::string_view markerName, const ColorRGBA32 &color = { 1.0f, 1.0f, 0.0f, 1.0f }) = 0;
         virtual void EndDebugRegion() = 0;
 
         inline std::unique_ptr<Buffer>& QueueBufferForDestruction(std::unique_ptr<Buffer> &&buffer) { return queuedBuffers.emplace(std::move(buffer)); }

@@ -80,7 +80,7 @@ namespace Sierra
 
         // Set up submit info
         const VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        VkSemaphore waitSemaphore = device.GetSharedSignalSemaphore();
+        VkSemaphore waitSemaphore = device.GetGeneralTimelineSemaphore();
         VkSubmitInfo submitInfo = { };
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.waitSemaphoreCount = 1;
@@ -289,7 +289,7 @@ namespace Sierra
         for (uint32 i = 0; i < concurrentFrameCount; i++)
         {
             swapchainImages[i] = std::unique_ptr<VulkanImage>(new VulkanImage(device, VulkanImage::SwapchainImageCreateInfo {
-                .name = "Image " + std::to_string(i) + " of swapchain [" + GetName() + "]",
+                .name = "Image " + std::to_string(i) + " of swapchain [" + std::string(GetName()) + "]",
                 .image = vulkanSwapchainImages[i],
                 .width = swapchainCreateInfo.imageExtent.width,
                 .height = swapchainCreateInfo.imageExtent.height,
@@ -318,11 +318,11 @@ namespace Sierra
         {
             result = device.GetFunctionTable().vkCreateSemaphore(device.GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &isImageAcquiredSemaphores[i]);
             SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create semaphore [{0}], indicating whether corresponding swapchain image of swapchain [{1}] is free for use!", i, GetName());
-            device.SetObjectName(isImageAcquiredSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "Image free semaphore [" + std::to_string(i) + "] of swapchain [" + GetName() + "]");
+            device.SetObjectName(isImageAcquiredSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "Image free semaphore [" + std::to_string(i) + "] of swapchain [" + std::string(GetName()) + "]");
 
             result = device.GetFunctionTable().vkCreateSemaphore(device.GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &isImagePresentedSemaphores[i]);
             SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create semaphore [{0}], indicating whether corresponding swapchain image of swapchain [{1}] is free for presenting!", i, GetName());
-            device.SetObjectName(isImagePresentedSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "Image rendered semaphore [" + std::to_string(i) + "] of swapchain [" + GetName() + "]");
+            device.SetObjectName(isImagePresentedSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "Image rendered semaphore [" + std::to_string(i) + "] of swapchain [" + std::string(GetName()) + "]");
         }
     }
 

@@ -25,13 +25,13 @@ elseif(SIERRA_PLATFORM_iOS)
     if(NOT DEFINED VULKAN_SDK_PATH)
         message(FATAL_ERROR "[Sierra]: When building Vulkan for iOS, VULKAN_SDK_PATH must be set manually!")
     else()
-        set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/MoltenVK/include/")
+        set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/macOS/include/")
         if(${PLATFORM} STREQUAL "OS64")
-            list(APPEND Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/MoltenVK/MoltenVK.xcframework/ios-arm64/libMoltenVK.a")
+            list(APPEND Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/iOS/lib/MoltenVK.xcframework/ios-arm64/MoltenVK.framework/MoltenVK")
         elseif(${PLATFORM} STREQUAL "SIMULATORARM64" OR ${PLATFORM} STREQUAL "SIMULATOR64COMBINED")
-            list(APPEND Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/MoltenVK/MoltenVK.xcframework/ios-arm64_x86_64-simulator/libMoltenVK.a")
+            list(APPEND Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/iOS/lib/MoltenVK.xcframework/ios-arm64_x86_64-simulator/MoltenVK.framework/MoltenVK")
         elseif(${PLATFORM} STREQUAL "MAC" OR ${PLATFORM} STREQUAL "MAC_ARM64" OR ${PLATFORM} STREQUAL "MAC_UNIVERSAL" OR ${PLATFORM} STREQUAL "MAC_CATALYST" OR ${PLATFORM} STREQUAL "MAC_CATALYST_ARM64")
-            list(APPEND Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/MoltenVK/MoltenVK.xcframework/macos-arm64_x86_64/libMoltenVK.a")
+            list(APPEND Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/iOS/lib/MoltenVK.xcframework/macos-arm64_x86_64/MoltenVK.framework/MoltenVK")
         endif()
     endif()
 endif()
@@ -57,8 +57,6 @@ if(Vulkan_LIBRARIES)
         VulkanComputePipeline.h
         VulkanContext.cpp
         VulkanContext.h
-        VulkanDescriptors.cpp
-        VulkanDescriptors.h
         VulkanDevice.cpp
         VulkanDevice.h
         VulkanGraphicsPipeline.cpp
@@ -67,12 +65,12 @@ if(Vulkan_LIBRARIES)
         VulkanImage.h
         VulkanInstance.cpp
         VulkanInstance.h
-        VulkanPipelineLayout.cpp
-        VulkanPipelineLayout.h
         VulkanRenderPass.cpp
         VulkanRenderPass.h
         VulkanResource.cpp
         VulkanResource.h
+        VulkanResourceTable.h
+        VulkanResourceTable.cpp
         VulkanSampler.cpp
         VulkanSampler.h
         VulkanShader.cpp

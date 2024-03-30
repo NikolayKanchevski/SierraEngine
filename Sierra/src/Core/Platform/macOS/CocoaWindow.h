@@ -47,13 +47,13 @@ namespace Sierra
         void Close() override;
 
         /* --- SETTER METHODS --- */
-        void SetTitle(const std::string &title) override;
+        void SetTitle(std::string_view title) override;
         void SetPosition(const Vector2Int &position) override;
         void SetSize(const Vector2UInt &size) override;
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] const std::string& GetTitle() const override;
+        [[nodiscard]] std::string_view GetTitle() const override;
         [[nodiscard]] Vector2Int GetPosition() const override;
         [[nodiscard]] Vector2UInt GetSize() const override;
         [[nodiscard]] Vector2UInt GetFramebufferSize() const override;

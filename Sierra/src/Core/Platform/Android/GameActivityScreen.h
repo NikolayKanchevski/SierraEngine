@@ -28,7 +28,7 @@ namespace Sierra
         explicit GameActivityScreen(const ConfigurationScreenCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const std::string& GetName() const override { return name; };
+        [[nodiscard]] inline std::string_view GetName() const override { return name; };
         [[nodiscard]] inline Vector2Int GetOrigin() const override { return origin; };
         [[nodiscard]] inline Vector2UInt GetSize() const override { return size; };
         [[nodiscard]] inline Vector2Int GetWorkAreaOrigin() const override { return workAreaOrigin; };

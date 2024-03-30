@@ -16,7 +16,7 @@ namespace Sierra
 
     struct DeviceCreateInfo
     {
-        const std::string &name = "Device";
+        std::string_view name = "Device";
     };
 
     class SIERRA_API Device : public virtual RenderingResource
@@ -27,7 +27,7 @@ namespace Sierra
         virtual void WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual const std::string& GetDeviceName() const = 0;
+        [[nodiscard]] virtual std::string_view GetDeviceName() const = 0;
 
         [[nodiscard]] virtual bool IsImageFormatSupported(ImageFormat format, ImageUsage usage) const = 0;
         [[nodiscard]] std::optional<ImageFormat> GetSupportedImageFormat(ImageFormat preferredFormat, ImageUsage usage) const;
@@ -37,6 +37,9 @@ namespace Sierra
 
         [[nodiscard]] virtual bool IsSamplerAnisotropySupported(SamplerAnisotropy anisotropy) const = 0;
         [[nodiscard]] SamplerAnisotropy GetHighestSamplerAnisotropySupported() const;
+
+        /* --- CONSTANTS --- */
+        constexpr static uint16 MAX_PUSH_CONSTANT_SIZE = 128;
 
         /* --- OPERATORS --- */
         Device(const Device&) = delete;

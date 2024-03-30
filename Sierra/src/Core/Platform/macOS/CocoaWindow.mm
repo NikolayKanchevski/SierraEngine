@@ -269,6 +269,10 @@ namespace Sierra
         [view setLayer: [CAMetalLayer layer]];
         [view setWantsLayer: YES];
 
+        // Configure layer
+        [view.layer setFrame: view.bounds];
+        [view.layer setContentsScale: window.backingScaleFactor];
+
         // Maximize window manually, or through Cocoa if resizable
         if (createInfo.maximize)
         {
@@ -375,10 +379,10 @@ namespace Sierra
 
     /* --- SETTER METHODS --- */
 
-    void CocoaWindow::SetTitle(const std::string &newTitle)
+    void CocoaWindow::SetTitle(const std::string_view newTitle)
     {
         title = newTitle;
-        [window setTitle: @(newTitle.c_str())];
+        [window setTitle: @(newTitle.data())];
     }
 
     void CocoaWindow::SetPosition(const Vector2Int &position)
@@ -401,7 +405,7 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    const std::string& CocoaWindow::GetTitle() const
+    std::string_view CocoaWindow::GetTitle() const
     {
         return title;
     }
@@ -512,7 +516,6 @@ namespace Sierra
         {
             // macOS automatically shows cursor when window is unfocused, so we need to manually hide it again when focusing the window
             if (cursorManager.IsCursorHidden()) cursorManager.HideCursor();
-
             GetWindowFocusDispatcher().DispatchEvent(true);
         }
 

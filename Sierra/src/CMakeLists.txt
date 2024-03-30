@@ -47,5 +47,7 @@ endif()
 # Compile definitions
 target_compile_definitions(Sierra PRIVATE "SR_LIBRARY_IMPLEMENTATION")
 if(SIERRA_ENABLE_LOGGING)
-    target_compile_definitions(Sierra PUBLIC "SR_ENABLE_LOGGING")
+    target_compile_definitions(Sierra PUBLIC "SR_ENABLE_LOGGING=1")
+else()
+    target_compile_definitions(Sierra PUBLIC "SR_ENABLE_LOGGING=0")
 endif()

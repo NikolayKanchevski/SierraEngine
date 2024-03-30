@@ -15,7 +15,7 @@
 namespace Sierra
 {
 
-    void Logger::Initialize(const std::string &applicationName)
+    void Logger::Initialize(const std::string_view applicationName)
     {
         #if SR_ENABLE_LOGGING
             // Set global logging pattern [Time / Logger Name / Arguments]
@@ -25,12 +25,12 @@ namespace Sierra
             #if !SR_PLATFORM_ANDROID
                 engineLogger = spdlog::stderr_color_mt("Sierra API");
                 engineLogger->set_level(spdlog::level::info);
-                applicationLogger = spdlog::stderr_color_mt(applicationName);
+                applicationLogger = spdlog::stderr_color_mt(applicationName.data());
                 applicationLogger->set_level(spdlog::level::info);
             #else
                 engineLogger = spdlog::android_logger_mt("Sierra API");
                 engineLogger->set_level(spdlog::level::info);
-                applicationLogger = spdlog::android_logger_mt(applicationName);
+                applicationLogger = spdlog::android_logger_mt(applicationName.data());
                 applicationLogger->set_level(spdlog::level::info);
             #endif
         #endif

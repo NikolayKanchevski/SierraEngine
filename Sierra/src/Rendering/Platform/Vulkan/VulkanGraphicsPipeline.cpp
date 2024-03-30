@@ -14,10 +14,8 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanGraphicsPipeline::VulkanGraphicsPipeline(const VulkanDevice &device, const GraphicsPipelineCreateInfo &createInfo)
-        : GraphicsPipeline(createInfo), VulkanResource(createInfo.name), device(device), layout(static_cast<VulkanPipelineLayout&>(*createInfo.layout))
+        : GraphicsPipeline(createInfo), VulkanResource(createInfo.name), device(device), pushConstantSize(createInfo.pushConstantSize)
     {
-        SR_ERROR_IF(createInfo.layout->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with pipeline layout [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.layout->GetName());
-
         SR_ERROR_IF(createInfo.vertexShader->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.vertexShader->GetName());
         const VulkanShader &vulkanVertexShader = static_cast<VulkanShader&>(*createInfo.vertexShader);
 
@@ -210,7 +208,7 @@ namespace Sierra
         graphicsPipelineCreateInfo.pDepthStencilState = vulkanRenderPass.HasDepthAttachment() ? &depthStencilStateCreateInfo : nullptr;
         graphicsPipelineCreateInfo.pColorBlendState = &blendingStateCreateInfo;
         graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
-        graphicsPipelineCreateInfo.layout = layout.GetVulkanPipelineLayout();
+        graphicsPipelineCreateInfo.layout = device.GetPipelineLayout(createInfo.pushConstantSize);
         graphicsPipelineCreateInfo.renderPass = vulkanRenderPass.GetVulkanRenderPass();
         graphicsPipelineCreateInfo.subpass = createInfo.subpassIndex;
         graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
@@ -238,8 +236,8 @@ namespace Sierra
         switch (cullMode)
         {
             case CullMode::None:        return VK_CULL_MODE_NONE;
-            case CullMode::Front:       return VK_CULL_MODE_FRONT_BIT;   // NOTE: These are inverted, because we are using negative framebuffer viewports to flip
-            case CullMode::Back:        return VK_CULL_MODE_BACK_BIT;  //       output through the VK_KHR_MAINTENANCE_1 extension, which inverts culling
+            case CullMode::Front:       return VK_CULL_MODE_FRONT_BIT;
+            case CullMode::Back:        return VK_CULL_MODE_BACK_BIT;
         }
 
         return VK_CULL_MODE_NONE;

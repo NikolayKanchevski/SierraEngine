@@ -7,7 +7,6 @@
 #include "RenderingResource.h"
 
 #include "Shader.h"
-#include "PipelineLayout.h"
 #include "RenderPass.h"
 
 namespace Sierra
@@ -112,17 +111,18 @@ namespace Sierra
 
     struct GraphicsPipelineCreateInfo
     {
-        const std::string &name = "Graphics Pipeline";
+        std::string_view name = "Graphics Pipeline";
 
         const std::initializer_list<VertexInput> &vertexInputs = { };
         const std::unique_ptr<Shader> &vertexShader;
         const std::optional<std::reference_wrapper<const std::unique_ptr<Shader>>> &fragmentShader = std::nullopt;
 
-        const std::unique_ptr<PipelineLayout> &layout;
+        uint16 pushConstantSize = 0;
+        ImageSampling sampling = ImageSampling::x1;
+
         const std::unique_ptr<RenderPass> &templateRenderPass;
         uint32 subpassIndex = 0;
 
-        ImageSampling sampling = ImageSampling::x1;
         ShadeMode shadeMode = ShadeMode::Fill;
         DepthMode depthMode = DepthMode::None;
         BlendMode blendMode = BlendMode::None;

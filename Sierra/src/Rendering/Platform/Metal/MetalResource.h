@@ -21,7 +21,7 @@ namespace Sierra
         [[nodiscard]] inline GraphicsAPI GetAPI() const override { return GraphicsAPI::Metal; };
 
     protected:
-        inline explicit MetalResource(const std::string &name)
+        inline explicit MetalResource(const std::string_view name)
         {
             #if SR_ENABLE_LOGGING
                 this->name = name;

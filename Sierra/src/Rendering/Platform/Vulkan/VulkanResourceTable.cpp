@@ -1,0 +1,363 @@
+//
+// Created by Nikolay Kanchevski on 9.03.24.
+//
+
+#include "VulkanResourceTable.h"
+
+#include "VulkanBuffer.h"
+#include "VulkanImage.h"
+#include "VulkanSampler.h"
+
+namespace Sierra
+{
+
+    /* --- CONSTRUCTORS --- */
+
+    VulkanResourceTable::VulkanResourceTable(const VulkanDevice &device, const ResourceTableCreateInfo &createInfo)
+        : ResourceTable(createInfo), VulkanResource(createInfo.name), device(device)
+    {
+        SR_ERROR_IF(!device.IsExtensionLoaded(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME), "[Vulkan]: Cannot create resource table [{0}], as the provided device [{1}] does not support the {2} extension!", GetName(), device.GetName(), VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+
+        // Retrieve descriptor indexing properties
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
+        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
+        device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
+
+        // Set up pool sizes
+        std::array<VkDescriptorPoolSize, VulkanDevice::BINDLESS_BINDING_COUNT> poolSizes;
+        poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        poolSizes[0].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers;
+        poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        poolSizes[1].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers;
+        poolSizes[2].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        poolSizes[2].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1;
+        poolSizes[3].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        poolSizes[3].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1;
+        poolSizes[4].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        poolSizes[4].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1;
+        poolSizes[5].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        poolSizes[5].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1;
+        poolSizes[6].type = VK_DESCRIPTOR_TYPE_SAMPLER;
+        poolSizes[6].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers;
+
+        // Set up pool create info
+        VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = { };
+        descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT | VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
+        descriptorPoolCreateInfo.maxSets = 1;
+        descriptorPoolCreateInfo.poolSizeCount = poolSizes.size();
+        descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
+
+        // Create descriptor pool
+        VkResult result = device.GetFunctionTable().vkCreateDescriptorPool(device.GetLogicalDevice(), &descriptorPoolCreateInfo, nullptr, &descriptorPool);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create descriptor pool of resource table [{0}]! Error code: {1}.", GetName(), result);
+        device.SetObjectName(descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Descriptor pool of resource table [" + std::string(GetName()) + "]");
+
+        // Set up set allocate info
+        VkDescriptorSetLayout descriptorSetLayout = device.GetDescriptorSetLayout();
+        VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { };
+        descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        descriptorSetAllocateInfo.descriptorPool = descriptorPool;
+        descriptorSetAllocateInfo.descriptorSetCount = 1;
+        descriptorSetAllocateInfo.pSetLayouts = &descriptorSetLayout;
+
+        // Allocate descriptor set
+        result = device.GetFunctionTable().vkAllocateDescriptorSets(device.GetLogicalDevice(), &descriptorSetAllocateInfo, &descriptorSet);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not allocate descriptor set of resource table [{0}]! Error code: {1}.", GetName(), result);
+        device.SetObjectName(descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, "Descriptor set of resource table [" + std::string(GetName()) + "]");
+    }
+
+    /* --- POLLING METHODS --- */
+
+    void VulkanResourceTable::BindUniformBuffer(const uint32 index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange, uint64 byteOffset)
+    {
+        SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind uniform buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer->GetName(), GetName());
+        const VulkanBuffer &vulkanBuffer = static_cast<VulkanBuffer&>(*buffer);
+
+        if (index >= GetUniformBufferCapacity())
+        {
+            SR_WARNING("[Vulkan]: Cannot bind uniform buffer at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetUniformBufferCapacity() to query uniform buffer capacity.", index, GetName());
+            return;
+        }
+
+        // Set up buffer info
+        VkDescriptorBufferInfo bufferInfo = { };
+        bufferInfo.buffer = vulkanBuffer.GetVulkanBuffer();
+        bufferInfo.offset = byteOffset;
+        bufferInfo.range = memoryRange != 0 ? memoryRange : buffer->GetMemorySize();
+
+        // Set up write info
+        VkWriteDescriptorSet writeDescriptorSet = { };
+        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeDescriptorSet.dstSet = descriptorSet;
+        writeDescriptorSet.dstBinding = VulkanDevice::BINDLESS_UNIFORM_BUFFER_BINDING;
+        writeDescriptorSet.dstArrayElement = index;
+        writeDescriptorSet.descriptorCount = 1;
+        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        writeDescriptorSet.pBufferInfo = &bufferInfo;
+
+        // Update descriptor set
+        device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
+    }
+
+    void VulkanResourceTable::BindStorageBuffer(const uint32 index, const std::unique_ptr<Buffer> &buffer, const uint64 memoryRange, const uint64 byteOffset)
+    {
+        SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind storage buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer->GetName(), GetName());
+        const VulkanBuffer &vulkanBuffer = static_cast<VulkanBuffer&>(*buffer);
+
+        if (index >= GetStorageBufferCapacity())
+        {
+            SR_WARNING("[Vulkan]: Cannot bind storage buffer at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetStorageBufferCapacity() to query storage buffer capacity.", index, GetName());
+            return;
+        }
+
+        // Set up buffer info
+        VkDescriptorBufferInfo bufferInfo = { };
+        bufferInfo.buffer = vulkanBuffer.GetVulkanBuffer();
+        bufferInfo.offset = byteOffset;
+        bufferInfo.range = memoryRange != 0 ? memoryRange : buffer->GetMemorySize();
+
+        // Set up write info
+        VkWriteDescriptorSet writeDescriptorSet = { };
+        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeDescriptorSet.dstSet = descriptorSet;
+        writeDescriptorSet.dstBinding = VulkanDevice::BINDLESS_STORAGE_BUFFER_BINDING;
+        writeDescriptorSet.dstArrayElement = index;
+        writeDescriptorSet.descriptorCount = 1;
+        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        writeDescriptorSet.pBufferInfo = &bufferInfo;
+
+        // Update descriptor set
+        device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
+    }
+
+    void VulkanResourceTable::BindSampledImage(const uint32 index, const std::unique_ptr<Image> &image)
+    {
+        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind sampled image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image->GetName(), GetName());
+        const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
+
+        if (index >= GetSampledImageCapacity())
+        {
+            SR_WARNING("[Vulkan]: Cannot bind sampled image at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSampledImageCapacity() to query sampled image capacity.", index, GetName());
+            return;
+        }
+
+        // Set up image info
+        VkDescriptorImageInfo imageInfo = { };
+        imageInfo.sampler = VK_NULL_HANDLE;
+        imageInfo.imageView = vulkanImage.GetVulkanImageView();
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        // Set up write info
+        VkWriteDescriptorSet writeDescriptorSet = { };
+        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeDescriptorSet.dstSet = descriptorSet;
+        writeDescriptorSet.dstBinding = VulkanDevice::BINDLESS_SAMPLED_IMAGE_BINDING;
+        writeDescriptorSet.dstArrayElement = index;
+        writeDescriptorSet.descriptorCount = 1;
+        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        writeDescriptorSet.pImageInfo = &imageInfo;
+
+        // Update descriptor set
+        device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
+    }
+
+    void VulkanResourceTable::BindSampledCubemap(const uint32 index, const std::unique_ptr<Image> &image)
+    {
+        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind sampled cubemap [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image->GetName(), GetName());
+        const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
+
+        if (index >= GetSampledCubemapCapacity())
+        {
+            SR_WARNING("[Vulkan]: Cannot bind sampled cubemap at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSampledCubemapCapacity() to query sampled cubemap capacity.", index, GetName());
+            return;
+        }
+
+        // Set up image info
+        VkDescriptorImageInfo imageInfo = { };
+        imageInfo.sampler = VK_NULL_HANDLE;
+        imageInfo.imageView = vulkanImage.GetVulkanImageView();
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        // Set up write info
+        VkWriteDescriptorSet writeDescriptorSet = { };
+        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeDescriptorSet.dstSet = descriptorSet;
+        writeDescriptorSet.dstBinding = VulkanDevice::BINDLESS_SAMPLED_CUBEMAP_BINDING;
+        writeDescriptorSet.dstArrayElement = index;
+        writeDescriptorSet.descriptorCount = 1;
+        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        writeDescriptorSet.pImageInfo = &imageInfo;
+
+        // Update descriptor set
+        device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
+    }
+
+    void VulkanResourceTable::BindSampler(const uint32 index, const std::unique_ptr<Sampler> &sampler)
+    {
+        SR_ERROR_IF(sampler->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind sampler [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", sampler->GetName(), GetName());
+        const VulkanSampler &vulkanSampler = static_cast<VulkanSampler&>(*sampler);
+
+        if (index >= GetSamplerCapacity())
+        {
+            SR_WARNING("[Vulkan]: Cannot bind sampler at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSamplerCapacity() to query sampler capacity.", index, GetName());
+            return;
+        }
+
+        // Set up image info
+        VkDescriptorImageInfo imageInfo = { };
+        imageInfo.sampler = vulkanSampler.GetVulkanSampler();
+        imageInfo.imageView = VK_NULL_HANDLE;
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+        // Set up write info
+        VkWriteDescriptorSet writeDescriptorSet = { };
+        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeDescriptorSet.dstSet = descriptorSet;
+        writeDescriptorSet.dstBinding = VulkanDevice::BINDLESS_SAMPLER_BINDING;
+        writeDescriptorSet.dstArrayElement = index;
+        writeDescriptorSet.descriptorCount = 1;
+        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+        writeDescriptorSet.pImageInfo = &imageInfo;
+
+        // Update descriptor set
+        device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
+    }
+
+    void VulkanResourceTable::BindStorageImage(const uint32 index, const std::unique_ptr<Image> &image)
+    {
+        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind storage image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image->GetName(), GetName());
+        const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
+
+        if (index >= GetStorageImageCapacity())
+        {
+            SR_WARNING("[Vulkan]: Cannot bind storage image at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetStorageImageCapacity() to query storage image capacity.", index, GetName());
+            return;
+        }
+
+        // Set up image info
+        VkDescriptorImageInfo imageInfo = { };
+        imageInfo.sampler = VK_NULL_HANDLE;
+        imageInfo.imageView = vulkanImage.GetVulkanImageView();
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+
+        // Set up write info
+        VkWriteDescriptorSet writeDescriptorSet = { };
+        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeDescriptorSet.dstSet = descriptorSet;
+        writeDescriptorSet.dstBinding = VulkanDevice::BINDLESS_STORAGE_IMAGE_BINDING;
+        writeDescriptorSet.dstArrayElement = index;
+        writeDescriptorSet.descriptorCount = 1;
+        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        writeDescriptorSet.pImageInfo = &imageInfo;
+
+        // Update descriptor set
+        device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
+    }
+
+    void VulkanResourceTable::BindStorageCubemap(const uint32 index, const std::unique_ptr<Image> &image)
+    {
+        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind storage cubemap [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image->GetName(), GetName());
+        const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
+
+        if (index >= GetStorageCubemapCapacity())
+        {
+            SR_WARNING("[Vulkan]: Cannot bind storage cubemap at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetStorageCubemapCapacity() to query storage cubemap capacity..", index, GetName());
+            return;
+        }
+
+        // Set up image info
+        VkDescriptorImageInfo imageInfo = { };
+        imageInfo.sampler = VK_NULL_HANDLE;
+        imageInfo.imageView = vulkanImage.GetVulkanImageView();
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+
+        // Set up write info
+        VkWriteDescriptorSet writeDescriptorSet = { };
+        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeDescriptorSet.dstSet = descriptorSet;
+        writeDescriptorSet.dstBinding = VulkanDevice::BINDLESS_STORAGE_CUBEMAP_BINDING;
+        writeDescriptorSet.dstArrayElement = index;
+        writeDescriptorSet.descriptorCount = 1;
+        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        writeDescriptorSet.pImageInfo = &imageInfo;
+
+        // Update descriptor set
+        device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
+    }
+
+    /* --- GETTER METHODS --- */
+
+    uint32 VulkanResourceTable::GetUniformBufferCapacity() const
+    {
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
+        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
+
+        device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
+        return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers;
+    }
+
+    uint32 VulkanResourceTable::GetStorageBufferCapacity() const
+    {
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
+        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
+
+        device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
+        return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers;
+    }
+
+    uint32 VulkanResourceTable::GetSampledImageCapacity() const
+    {
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
+        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
+
+        device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
+        return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1;
+    }
+
+    uint32 VulkanResourceTable::GetSampledCubemapCapacity() const
+    {
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
+        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
+
+        device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
+        return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1;
+    }
+
+    uint32 VulkanResourceTable::GetSamplerCapacity() const
+    {
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
+        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
+
+        device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
+        return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers;
+    }
+
+    uint32 VulkanResourceTable::GetStorageImageCapacity() const
+    {
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
+        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
+
+        device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
+        return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1;
+    }
+
+    uint32 VulkanResourceTable::GetStorageCubemapCapacity() const
+    {
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
+        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
+
+        device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
+        return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1;
+    }
+
+
+    /* --- DESTRUCTOR --- */
+
+    VulkanResourceTable::~VulkanResourceTable()
+    {
+        device.GetFunctionTable().vkResetDescriptorPool(device.GetLogicalDevice(), descriptorPool, 0);
+        device.GetFunctionTable().vkDestroyDescriptorPool(device.GetLogicalDevice(), descriptorPool, nullptr);
+    }
+
+}

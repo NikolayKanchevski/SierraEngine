@@ -25,9 +25,9 @@ namespace Sierra
         [[nodiscard]] std::unique_ptr<RenderPass> CreateRenderPass(const RenderPassCreateInfo &createInfo) const override;
         [[nodiscard]] std::unique_ptr<Swapchain> CreateSwapchain(const SwapchainCreateInfo &createInfo) const override;
         [[nodiscard]] std::unique_ptr<Shader> CreateShader(const ShaderCreateInfo &createInfo) const override;
-        [[nodiscard]] std::unique_ptr<PipelineLayout> CreatePipelineLayout(const PipelineLayoutCreateInfo &createInfo) const override;
         [[nodiscard]] std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(const GraphicsPipelineCreateInfo &createInfo) const override;
         [[nodiscard]] std::unique_ptr<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo &createInfo) const override;
+        [[nodiscard]] std::unique_ptr<ResourceTable> CreateResourceTable(const ResourceTableCreateInfo &createInfo) const override;
         [[nodiscard]] std::unique_ptr<CommandBuffer> CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const override;
 
         /* --- GETTER METHODS --- */

@@ -10,6 +10,7 @@
 #include "MetalDevice.h"
 #include "MetalGraphicsPipeline.h"
 #include "MetalComputePipeline.h"
+#include "MetalResourceTable.h"
 
 namespace Sierra
 {
@@ -31,6 +32,9 @@ namespace Sierra
         void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const uint32 mipLevel, const Vector2UInt &pixelRange = { 0, 0 }, uint32 layer = 0, uint64 sourceByteOffset = 0, const Vector2UInt &destinationPixelOffset = { 0, 0 }) override;
         void GenerateMipMapsForImage(const std::unique_ptr<Image> &image) override;
 
+        void BindResourceTable(const std::unique_ptr<ResourceTable> &resourceTable) override;
+        void PushConstants(const void* data, uint16 memoryRange, uint16 byteOffset = 0) override;
+
         void BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments) override;
         void BeginNextSubpass(const std::unique_ptr<RenderPass> &renderPass) override;
         void EndRenderPass(const std::unique_ptr<RenderPass> &renderPass) override;
@@ -50,13 +54,8 @@ namespace Sierra
 
         void Dispatch(uint32 xWorkGroupCount, uint32 yWorkGroupCount, uint32 zWorkGroupCount) override;
 
-        void PushConstants(const void* data, uint16 memoryRange, uint16 byteOffset = 0) override;
-        void BindBuffer(uint32 binding, const std::unique_ptr<Buffer> &buffer, uint32 arrayIndex = 0, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
-        void BindImage(uint32 binding, const std::unique_ptr<Image> &image, uint32 arrayIndex = 0) override;
-        void BindImage(uint32 binding, const std::unique_ptr<Image> &image, const std::unique_ptr<Sampler> &sampler, uint32 arrayIndex = 0) override;
-
-        void BeginDebugRegion(const std::string &regionName, const ColorRGBA32 &color = { 1.0f, 1.0f, 0.0f, 1.0f }) override;
-        void InsertDebugMarker(const std::string &markerName, const ColorRGBA32 &color = { 1.0f, 1.0f, 0.0f, 1.0f }) override;
+        void BeginDebugRegion(std::string_view regionName, const ColorRGBA32 &color = { 1.0f, 1.0f, 0.0f, 1.0f }) override;
+        void InsertDebugMarker(std::string_view markerName, const ColorRGBA32 &color = { 1.0f, 1.0f, 0.0f, 1.0f }) override;
         void EndDebugRegion() override;
 
         /* --- GETTER METHODS --- */
@@ -83,10 +82,12 @@ namespace Sierra
 
         const MetalGraphicsPipeline* currentGraphicsPipeline = nullptr;
         const MetalComputePipeline* currentComputePipeline = nullptr;
+        const MetalResourceTable* currentResourceTable = nullptr;
 
         id<MTLBuffer> currentIndexBuffer = nil;
         uint64 currentIndexBufferByteOffset = 0;
         uint64 currentVertexBufferByteOffset = 0;
+
 
     };
 

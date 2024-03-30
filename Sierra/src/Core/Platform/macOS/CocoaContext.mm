@@ -52,8 +52,8 @@
             NSMenu* bar = [[NSMenu alloc] init];
             NSMenuItem* appMenuItem = [bar addItemWithTitle: @"" action: nil keyEquivalent: @""];
             NSMenu* appMenu = [[NSMenu alloc] init];
-            [appMenu addItemWithTitle:[NSString stringWithFormat: @"About %@", appName] action: @selector(orderFrontStandardAboutPanel:) keyEquivalent: @""];
-            [appMenu addItem:[NSMenuItem separatorItem]];
+            [appMenu addItemWithTitle: [NSString stringWithFormat: @"About %@", appName] action: @selector(orderFrontStandardAboutPanel:) keyEquivalent: @""];
+            [appMenu addItem: [NSMenuItem separatorItem]];
 
             NSMenu* servicesMenu = [[NSMenu alloc] init];
             [[appMenu addItemWithTitle: @"Services" action:nil keyEquivalent: @""] setSubmenu:servicesMenu];
@@ -116,10 +116,10 @@
 
     /* --- CONSTRUCTORS --- */
 
-    - (instancetype) initWithTitle: (const std::string&) title width: (const uint32) width height: (const uint32) height
+    - (instancetype) initWithTitle: (const std::string_view) title width: (const uint32) width height: (const uint32) height
     {
         self = [super initWithContentRect: NSMakeRect(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height)) styleMask: NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable backing: NSBackingStoreBuffered defer: NO];
-        [self setTitle: @(title.c_str())];
+        [self setTitle: @(title.data())];
         return self;
     }
 
@@ -176,7 +176,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    NSWindow* CocoaContext::CreateWindow(const std::string &title, uint32 width, uint32 height) const
+    NSWindow* CocoaContext::CreateWindow(const std::string_view title, uint32 width, uint32 height) const
     {
         NSWindow* const window = [[CocoaWindow alloc] initWithTitle: title width: width height: height];
         [window center];

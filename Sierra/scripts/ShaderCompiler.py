@@ -3,6 +3,10 @@ import sys
 import enum
 import platform
 
+SHADER_COMPILER_VERSION_MAJOR: int = 1
+SHADER_COMPILER_VERSION_MINOR: int = 1
+SHADER_COMPILER_VERSION_PATCH: int = 0
+
 CURRENT_DIRECTORY: str = os.path.dirname(os.path.realpath(__file__)).replace('\\', '/') + '/'
 
 class OperatingSystem(enum.Enum):
@@ -32,7 +36,7 @@ def CompileShader(inputShaderFilePath: str, outputShaderDirectoryPath: str) -> N
         compilerFilePath += 'Linux/'
     elif operatingSystem == OperatingSystem.macOS:
         compilerFilePath += 'macOS/'
-    compilerFilePath += 'ShaderConnect-1.0.0'
+    compilerFilePath += f'ShaderConnect-{ SHADER_COMPILER_VERSION_MAJOR }.{ SHADER_COMPILER_VERSION_MINOR }.{ SHADER_COMPILER_VERSION_PATCH }'
     if operatingSystem == OperatingSystem.Windows:
         compilerFilePath += '.exe'
 

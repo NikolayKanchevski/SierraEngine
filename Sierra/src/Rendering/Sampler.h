@@ -54,7 +54,7 @@ namespace Sierra
 
     struct SamplerCreateInfo
     {
-        const std::string &name = "Sampler";
+        std::string_view name = "Sampler";
         SamplerFilter filter = SamplerFilter::Nearest;
         SamplerAddressMode extendMode = SamplerAddressMode::Repeat;
         SamplerCompareOperation compareOperation = SamplerCompareOperation::None;

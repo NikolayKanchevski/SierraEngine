@@ -20,7 +20,7 @@ namespace Sierra
 
     struct ApplicationCreateInfo
     {
-        const std::string &name = "Sierra Application";
+        std::string_view name = "Sierra Application";
         Version version = Version({ 1, 0, 0 });
         const ApplicationSettings &settings = { };
     };
@@ -32,7 +32,7 @@ namespace Sierra
         void Run();
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const std::string& GetName() const { return name; }
+        [[nodiscard]] inline std::string_view GetName() const { return name; }
         [[nodiscard]] inline const Version& GetVersion() { return version; }
 
         /* --- OPERATORS --- */

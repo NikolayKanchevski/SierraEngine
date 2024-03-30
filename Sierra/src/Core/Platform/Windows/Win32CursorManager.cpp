@@ -28,7 +28,7 @@ namespace Sierra
 
     /* --- SETTER METHODS --- */
 
-    void Win32CursorManager::SetCursorPosition(const Vector2 &position)
+    void Win32CursorManager::SetCursorPosition(const Vector2 position)
     {
         // Get window's dimensions
         RECT rect = { };

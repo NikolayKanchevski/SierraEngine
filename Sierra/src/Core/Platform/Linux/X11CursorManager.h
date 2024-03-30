@@ -25,7 +25,7 @@ namespace Sierra
         /* --- SETTER METHODS --- */
         void ShowCursor() override;
         void HideCursor() override;
-        void SetCursorPosition(const Vector2 &position) override;
+        void SetCursorPosition(Vector2 position) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] bool IsCursorHidden() const override;

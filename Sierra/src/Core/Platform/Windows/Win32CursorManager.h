@@ -23,7 +23,7 @@ namespace Sierra
         explicit Win32CursorManager(HWND window, const CursorManagerCreateInfo &createInfo);
 
         /* --- SETTER METHODS --- */
-        void SetCursorPosition(const Vector2 &position) override;
+        void SetCursorPosition(Vector2 position) override;
         void ShowCursor() override;
         void HideCursor() override;
 

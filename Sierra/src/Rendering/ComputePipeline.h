@@ -7,16 +7,15 @@
 #include "RenderingResource.h"
 
 #include "Shader.h"
-#include "PipelineLayout.h"
 
 namespace Sierra
 {
 
     struct ComputePipelineCreateInfo
     {
-        const std::string &name = "Compute Pipeline";
+        std::string_view name = "Compute Pipeline";
         const std::unique_ptr<Shader> &computeShader;
-        const std::unique_ptr<PipelineLayout> &layout;
+        uint16 pushConstantSize = 0;
     };
 
     class SIERRA_API ComputePipeline : public virtual RenderingResource

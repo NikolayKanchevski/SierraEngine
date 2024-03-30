@@ -64,7 +64,7 @@ namespace Sierra
         [[nodiscard]] inline GraphicsAPI GetAPI() const override { return GraphicsAPI::Vulkan; };
 
     protected:
-        inline explicit VulkanResource(const std::string &name)
+        inline explicit VulkanResource(const std::string_view name)
         {
             #if SR_ENABLE_LOGGING
                 this->name = name;

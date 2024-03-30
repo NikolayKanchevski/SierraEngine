@@ -38,7 +38,7 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] NSWindow* CreateWindow(const std::string &title, uint32 width, uint32 height) const;
+        [[nodiscard]] NSWindow* CreateWindow(std::string_view title, uint32 width, uint32 height) const;
         void DestroyWindow(NSWindow* window) const;
 
         NSEvent* PollNextEvent() const;

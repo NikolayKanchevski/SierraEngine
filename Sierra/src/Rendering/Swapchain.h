@@ -46,7 +46,7 @@ namespace Sierra
 
     struct SwapchainCreateInfo
     {
-        const std::string &name = "Swapchain";
+        std::string_view name = "Swapchain";
         std::unique_ptr<Window> &window;
         SwapchainPresentationMode preferredPresentationMode = SwapchainPresentationMode::VSync;
         SwapchainImageMemoryType preferredImageMemoryType = SwapchainImageMemoryType::UNorm8;
@@ -64,14 +64,16 @@ namespace Sierra
         virtual void Present(std::unique_ptr<CommandBuffer> &commandBuffer) = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual uint32 GetCurrentFrame() const = 0;
+        [[nodiscard]] virtual uint32 GetCurrentFrameIndex() const = 0;
+        [[nodiscard]] virtual uint32 GetCurrentImageIndex() const = 0;
         [[nodiscard]] virtual uint32 GetConcurrentFrameCount() const = 0;
-
-        [[nodiscard]] virtual const std::unique_ptr<Image>& GetCurrentImage() const = 0;
-        [[nodiscard]] virtual const std::unique_ptr<Image>& GetImage(uint32 frameIndex) const = 0;
 
         [[nodiscard]] inline uint32 GetWidth() const { return GetImage(0)->GetWidth(); };
         [[nodiscard]] inline uint32 GetHeight() const { return GetImage(0)->GetHeight(); };
+        [[nodiscard]] virtual float32 GetScaling() const = 0;
+
+        [[nodiscard]] virtual const std::unique_ptr<Image>& GetImage(uint32 frameIndex) const = 0;
+        [[nodiscard]] inline const std::unique_ptr<Image>& GetCurrentImage() const { return GetImage(GetCurrentImageIndex()); };
 
         /* --- EVENTS --- */
         template<typename T> requires (std::is_base_of_v<SwapchainEvent, T> && !std::is_same_v<SwapchainEvent, T>) void OnEvent(SwapchainEventCallback<T> Callback) { }

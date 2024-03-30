@@ -23,7 +23,7 @@ namespace Sierra
     {
     public:
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual const std::string& GetName() const = 0;
+        [[nodiscard]] virtual std::string_view GetName() const = 0;
         [[nodiscard]] virtual Vector2Int GetOrigin() const = 0;
         [[nodiscard]] virtual Vector2UInt GetSize() const = 0;
         [[nodiscard]] virtual Vector2Int GetWorkAreaOrigin() const = 0;

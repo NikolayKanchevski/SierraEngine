@@ -73,7 +73,9 @@
         #include <optional>
         #include <queue>
         #include <random>
+        #include <ratio>
         #include <regex>
+        #include <span>
         #include <sstream>
         #include <string>
         #include <string_view>
@@ -87,6 +89,7 @@
     #pragma region External Libraries
         /* --- GLM --- */
         #define GLM_DEPTH_ZERO_TO_ONE
+        #define GLM_ENABLE_EXPERIMENTAL
         #include <glm/glm.hpp>
         #include <glm/gtc/integer.hpp>
         #include <glm/gtc/type_ptr.hpp>

@@ -29,7 +29,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    HWND Win32Context::CreateWindow(const std::string &title, const uint32 width, const uint32 height, const DWORD style, WNDPROC windowProc) const
+    HWND Win32Context::CreateWindow(const std::string_view title, const uint32 width, const uint32 height, const DWORD style, WNDPROC windowProc) const
     {
         // Generate random class name
         char className[11 + 1];

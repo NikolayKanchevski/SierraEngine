@@ -61,6 +61,12 @@ Tip: In order to get a better grasp of how the API works, you can always take a 
 
 <br>
 
+## 💻 System Requirements
+
+Detailed information on supported devices/systems can be found [here](Sierra/requirements.md).
+
+<br>
+
 ## 💫 Features
 
 ```c++
@@ -82,6 +88,7 @@ Documentation has not yet been published. The website that will be hosting it, h
 Within Engine:
 * [stb](https://github.com/nothings/stb/) - An all-round image loader.
 * [KTX Software](https://github.com/KhronosGroup/KTX-Software) - Used to compress texture assets.
+* [ShaderConnect](https://github.com/NikichaTV/ShaderConnect/tree/sierra) - A special branch of [NikichaTV](https://github.com/NikichaTV)'s framework for shader cross-compilation.
 
 Within API:
 * [GLM](https://github.com/g-truc/glm/) - Provides the engine with a powerful set of tools for solving linear algebra problems.
@@ -92,6 +99,7 @@ Within API:
 * [ios-cmake](https://github.com/leetal/ios-cmake) - Essential for building the engine on iOS.
 * [ImGui](https://github.com/ocornut/imgui) - Used in the ImGui UI extension.
 * [My Brain](https://ih1.redbubble.net/templateImage.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
+
 <br>
 
 **Software used:**
@@ -107,7 +115,7 @@ Within API:
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LineCounter">Total lines of code: 24,661</p>
-<p align="center" id="LastUpdated">Last updated: 09/03/2024 </p>
+<p align="center" id="LineCounter">Total lines of code: 25,274</p>
+<p align="center" id="LastUpdated">Last updated: 30/03/2024 </p>
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -22,9 +22,15 @@ namespace Sierra
 
         SR_ERROR_IF(!File::FileExists(shaderLibraryFilePath), "[Metal]: Could not load Metal library from shader bundle [{0}]! Verify its presence and try again.", createInfo.shaderBundlePath.string().c_str());
 
+
+        const std::string filePath = shaderLibraryFilePath.string();
+        NSString* const name = [[NSString alloc] initWithBytes: filePath.c_str() length: filePath.size() encoding: NSASCIIStringEncoding];
+
         // Load library
         NSError* error = nil;
-        const id<MTLLibrary> library = [device.GetMetalDevice() newLibraryWithURL: [NSURL fileURLWithPath: [NSString stringWithCString: shaderLibraryFilePath.string().c_str() encoding: NSASCIIStringEncoding]] error: &error];
+        const id<MTLLibrary> library = [device.GetMetalDevice() newLibraryWithURL: [NSURL fileURLWithPath: name] error: &error];
+        [name release];
+
         SR_ERROR_IF(error != nil, "Could not load Metal shader library [{0} - {1}]! Error: {2}.", GetName(), shaderLibraryFilePath.string().c_str(), error.description.UTF8String);
         device.SetResourceName(library, GetName());
 

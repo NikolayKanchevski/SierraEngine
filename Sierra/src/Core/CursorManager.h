@@ -16,7 +16,7 @@ namespace Sierra
         {
         public:
             /* --- CONSTRUCTORS --- */
-            inline explicit CursorMoveEvent(const Vector2 &position) : position(position) { }
+            inline explicit CursorMoveEvent(Vector2 position) : position(position) { }
 
             /* --- GETTER METHODS --- */
             [[nodiscard]] inline const Vector2& GetPosition() const { return position; }
@@ -45,7 +45,7 @@ namespace Sierra
         /* --- SETTER METHODS --- */
         virtual void ShowCursor();
         virtual void HideCursor();
-        virtual void SetCursorPosition(const Vector2 &position);
+        virtual void SetCursorPosition(Vector2 position);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual bool IsCursorHidden() const;

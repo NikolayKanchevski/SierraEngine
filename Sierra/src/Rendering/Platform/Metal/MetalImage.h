@@ -38,7 +38,7 @@ namespace Sierra
         friend class MetalSwapchain;
         struct SwapchainImageCreateInfo
         {
-            const std::string &name = "Swapchain Image";
+            std::string_view name = "Swapchain Image";
             id<MTLTexture> texture = nil;
 
             uint32 width = 0;

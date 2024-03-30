@@ -13,13 +13,13 @@ target_sources(Sierra PRIVATE
     GraphicsPipeline.h
     Image.cpp
     Image.h
-    PipelineLayout.cpp
-    PipelineLayout.h
     RenderingContext.cpp
     RenderingContext.h
     RenderingResource.h
     RenderPass.cpp
     RenderPass.h
+    ResourceTable.cpp
+    ResourceTable.h
     Sampler.cpp
     Sampler.h
     Shader.cpp

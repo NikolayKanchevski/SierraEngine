@@ -11,23 +11,23 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    ScopeProfiler::ScopeProfiler(const std::string &scopeSignature)
+    ScopeProfiler::ScopeProfiler(const std::string_view scopeSignature)
         : startTime(std::chrono::high_resolution_clock::now())
     {
         // Format the scopeSignature name if it is a function
-        if (size leftBracketPosition = scopeSignature.find('('); leftBracketPosition != std::string::npos)
+        if (const size leftBracketPosition = scopeSignature.find('('); leftBracketPosition != std::string::npos)
         {
             // Remove method arguments if there are any
-            std::string fullMethodName = scopeSignature.substr(0, leftBracketPosition);
+            std::string fullMethodName = std::string(scopeSignature.data(), leftBracketPosition);
             fullMethodName = std::regex_replace(fullMethodName, std::regex("\\ "), "> ");
 
-            size returnTypeSpacePosition = fullMethodName.rfind("> ");
+            const size returnTypeSpacePosition = fullMethodName.rfind("> ");
             fullMethodName = "::" + fullMethodName.substr(returnTypeSpacePosition + 2, fullMethodName.size() - 1 + 2);
 
              // Remove template arguments if there are any
-            if (size leftAngleBracketPosition = fullMethodName.find('<'); leftAngleBracketPosition != std::string::npos)
+            if (const size leftAngleBracketPosition = fullMethodName.find('<'); leftAngleBracketPosition != std::string::npos)
             {
-                size rightAngleBracketPosition = fullMethodName.rfind('>');
+                const size rightAngleBracketPosition = fullMethodName.rfind('>');
                 fullMethodName = fullMethodName.substr(0, leftAngleBracketPosition) + fullMethodName.substr(rightAngleBracketPosition, fullMethodName.size() - rightAngleBracketPosition - 1);
             }
 
@@ -54,7 +54,12 @@ namespace Sierra
     {
         const auto endTime = std::chrono::high_resolution_clock::now();
         const uint64 duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
-        SR_INFO("{0} took {1}ms", scopeName, duration);
+
+        #if SR_ENABLE_LOGGING
+            SR_INFO("{0} took {1}ms", scopeName, duration);
+        #else
+            printf("%s took %llums", scopeName.c_str(), duration);
+        #endif
     }
 
 }

@@ -29,7 +29,7 @@ namespace Sierra
 
     struct BufferCreateInfo
     {
-        const std::string &name = "Buffer";
+        std::string_view name = "Buffer";
         uint64 memorySize = 0;
         BufferUsage usage = BufferUsage::Undefined;
         BufferMemoryLocation memoryLocation = BufferMemoryLocation::CPU;

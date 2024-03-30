@@ -109,6 +109,10 @@ namespace Sierra
         // Set up view
         view = viewController.view;
 
+        // Configure layer
+        [view.layer setFrame: view.bounds];
+        [view.layer setContentsScale: window.contentScaleFactor];
+
         // Assign window handlers
         [window setRootViewController: viewController];
 
@@ -175,7 +179,7 @@ namespace Sierra
 
     /* --- SETTER METHODS --- */
 
-    void UIKitWindow::SetTitle(const std::string &newTitle)
+    void UIKitWindow::SetTitle(const std::string_view newTitle)
     {
         title = newTitle;
     }
@@ -197,7 +201,7 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    const std::string& UIKitWindow::GetTitle() const
+    std::string_view UIKitWindow::GetTitle() const
     {
         return title;
     }

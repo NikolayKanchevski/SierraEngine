@@ -21,6 +21,95 @@
 namespace Sierra
 {
 
+    namespace
+    {
+        struct Extension
+        {
+            std::string_view name;
+            bool requiredOnlyIfSupported = false;
+            void* data = nullptr;
+        };
+
+        #if SR_PLATFORM_APPLE
+            VkPhysicalDevicePortabilitySubsetFeaturesKHR portabilitySubsetFeatures =
+            {
+                .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR
+            };
+        #endif
+
+        VkPhysicalDeviceImagelessFramebufferFeaturesKHR imagelessFramebufferFeatures
+        {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES_KHR,
+            .imagelessFramebuffer = VK_TRUE
+        };
+
+        VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingFeatures
+        {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
+            .descriptorBindingUniformBufferUpdateAfterBind = VK_TRUE,
+            .descriptorBindingSampledImageUpdateAfterBind = VK_TRUE,
+            .descriptorBindingStorageImageUpdateAfterBind = VK_TRUE,
+            .descriptorBindingStorageBufferUpdateAfterBind = VK_TRUE,
+            .descriptorBindingPartiallyBound = VK_TRUE,
+            .runtimeDescriptorArray = VK_TRUE
+        };
+
+        VkPhysicalDeviceTimelineSemaphoreFeaturesKHR timelineSemaphoreFeatures
+        {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR,
+            .timelineSemaphore = VK_TRUE
+        };
+
+        constexpr VkPhysicalDeviceFeatures DEVICE_FEATURES_TO_QUERY =
+        {
+
+        };
+
+        constexpr std::array<Extension, 6 + SR_ENABLE_LOGGING + SR_PLATFORM_APPLE> DEVICE_EXTENSIONS_TO_QUERY
+        {
+            Extension {
+                // Core in Vulkan 1.0
+                .name = VK_KHR_SWAPCHAIN_EXTENSION_NAME
+            },
+            Extension {
+                // Core in Vulkan 1.1
+                .name = VK_KHR_MAINTENANCE_1_EXTENSION_NAME
+            },
+            Extension {
+                // Core in Vulkan 1.2 (dependency of VK_KHR_imageless_framebuffer)
+                .name = VK_KHR_IMAGE_FORMAT_LIST_EXTENSION_NAME,
+            },
+            Extension {
+                // Core in Vulkan 1.2
+                .name = VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME,
+                .data = &imagelessFramebufferFeatures
+            },
+            Extension {
+                // Core in Vulkan 1.2
+                .name = VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+                .data = &descriptorIndexingFeatures
+            },
+            Extension {
+                // Core in Vulkan 1.2
+                .name = VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME,
+                .data = &timelineSemaphoreFeatures
+            },
+            #if SR_ENABLE_LOGGING
+                Extension {
+                    .name = VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+                    .requiredOnlyIfSupported = true
+                },
+            #endif
+            #if SR_PLATFORM_APPLE
+                Extension {
+                    .name = VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME,
+                    .requiredOnlyIfSupported = true,
+                    .data = &portabilitySubsetFeatures
+                },
+            #endif
+        };
+    }
+
     /* --- CONSTRUCTORS --- */
 
     VulkanDevice::VulkanDevice(const VulkanInstance &instance, const DeviceCreateInfo &createInfo)
@@ -39,16 +128,12 @@ namespace Sierra
         // Use first found device
         physicalDevice = physicalDevices[0];
 
-        // Retrieve properties
-        VkPhysicalDeviceProperties physicalDeviceProperties = { };
-        vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
-
-        // Retrieve features
-        VkPhysicalDeviceFeatures physicalDeviceFeatures = { };
-        vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
-
         // Save device name
-        deviceName = physicalDeviceProperties.deviceName;
+        {
+            VkPhysicalDeviceProperties physicalDeviceProperties = { };
+            vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+            deviceName = physicalDeviceProperties.deviceName;
+        }
 
         // Get count of all present queue families
         uint32 queueFamilyPropertiesCount = 0;
@@ -81,27 +166,20 @@ namespace Sierra
         SR_ERROR_IF(!foundGeneralQueueFamily, "[Vulkan]: Could not create device [{0}], because it does not have a single queue family, which supports all operations!", GetName());
 
         // Set up queue create infos
-        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos(queueFamilies.size());
-
-        uint32 i = 0;
         const float32 QUEUE_PRIORITY = 1.0f;
-        for (const auto &queueFamily : queueFamilies)
+        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos(queueFamilies.size());
+        for (uint32 i = 0; i < queueFamilies.size(); i++)
         {
             queueCreateInfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            queueCreateInfos[i].queueFamilyIndex = queueFamily;
+            queueCreateInfos[i].queueFamilyIndex = queueFamilies[i];
             queueCreateInfos[i].queueCount = 1;
             queueCreateInfos[i].pQueuePriorities = &QUEUE_PRIORITY;
-            i++;
         }
 
-        // Set up device features
+        // Set up enabled device features
         VkPhysicalDeviceFeatures2 physicalDeviceFeatures2 = { };
         physicalDeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        physicalDeviceFeatures2.features = physicalDeviceFeatures;
-
-        // Store pointers of each extension's data, as it needs to be deallocated in the end of the function
-        std::vector<void*> extensionDataToFree;
-        extensionDataToFree.reserve(DEVICE_EXTENSIONS_TO_QUERY.size());
+        physicalDeviceFeatures2.features = DEVICE_FEATURES_TO_QUERY;
 
         // Retrieve supported extension count
         uint32 supportedExtensionCount = 0;
@@ -111,12 +189,34 @@ namespace Sierra
         std::vector<VkExtensionProperties> supportedExtensions(supportedExtensionCount);
         instance.GetFunctionTable().vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &supportedExtensionCount, supportedExtensions.data());
 
-        // Load queried extensions if supported
-        std::vector<const char*> extensionsToLoad;
-        extensionsToLoad.reserve(DEVICE_EXTENSIONS_TO_QUERY.size());
-        for (const auto &extension : DEVICE_EXTENSIONS_TO_QUERY)
+        // Define extensions array
+        std::array<const char*, DEVICE_EXTENSIONS_TO_QUERY.size()> extensions;
+        loadedExtensions.resize(DEVICE_EXTENSIONS_TO_QUERY.size());
+
+        // Load extensions
+        uint32 i = 0;
+        for (const Extension &requestedExtension : DEVICE_EXTENSIONS_TO_QUERY)
         {
-            AddExtensionIfSupported(extension, supportedExtensions, &physicalDeviceFeatures2, extensionsToLoad, extensionDataToFree);
+            bool extensionFound = false;
+            for (const VkExtensionProperties &supportedExtension : supportedExtensions)
+            {
+                if (strcmp(requestedExtension.name.data(), supportedExtension.extensionName) == 0)
+                {
+                    extensions[i] = requestedExtension.name.data();
+                    if (requestedExtension.data != nullptr)
+                    {
+                        PushToPNextChain(&physicalDeviceFeatures2, requestedExtension.data);
+                    }
+
+                    loadedExtensions[i] = std::hash<std::string_view>{}(requestedExtension.name);
+                    i++;
+
+                    extensionFound = true;
+                    break;
+                }
+            }
+
+            SR_WARNING_IF(!extensionFound && !requestedExtension.requiredOnlyIfSupported, "[Vulkan]: Device extension [{0}] requested but not supported! Extension will be discarded, but issues may occur if extensions' support is not checked before their usage!", requestedExtension.name);
         }
 
         // Set up device create info
@@ -126,17 +226,14 @@ namespace Sierra
         logicalDeviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
         logicalDeviceCreateInfo.enabledLayerCount = 0;
         logicalDeviceCreateInfo.ppEnabledLayerNames = nullptr;
-        logicalDeviceCreateInfo.enabledExtensionCount = static_cast<uint32>(extensionsToLoad.size());
-        logicalDeviceCreateInfo.ppEnabledExtensionNames = extensionsToLoad.data();
+        logicalDeviceCreateInfo.enabledExtensionCount = i;
+        logicalDeviceCreateInfo.ppEnabledExtensionNames = extensions.data();
         logicalDeviceCreateInfo.pEnabledFeatures = nullptr;
         logicalDeviceCreateInfo.pNext = &physicalDeviceFeatures2;
 
         // Create logical device
         result = instance.GetFunctionTable().vkCreateDevice(physicalDevice, &logicalDeviceCreateInfo, nullptr, &logicalDevice);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create logical device [{0}]! Error code: {1}.", GetName(), result);
-
-        // Deallocate extension data
-        for (const auto &data : extensionDataToFree) std::free(data);
 
         #pragma region Function Pointers
             // Load Vulkan functions
@@ -924,26 +1021,6 @@ namespace Sierra
             #endif
         #pragma endregion
 
-        // Retrieve general queue
-        functionTable.vkGetDeviceQueue(logicalDevice, generalQueueFamily, 0, &generalQueue);
-
-        SR_ERROR_IF(!IsExtensionLoaded(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME), "[Vulkan]: Cannot create device [{0}], as it does not support the {1} extension!", GetName(), VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
-
-        // Set up semaphore type
-        VkSemaphoreTypeCreateInfo semaphoreTypeCreateInfo = { };
-        semaphoreTypeCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
-        semaphoreTypeCreateInfo.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
-        semaphoreTypeCreateInfo.initialValue = 0;
-
-        // Set up shared semaphore create info
-        VkSemaphoreCreateInfo semaphoreCreateInfo = { };
-        semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        semaphoreCreateInfo.pNext = &semaphoreTypeCreateInfo;
-
-        // Create shared fence
-        result = functionTable.vkCreateSemaphore(logicalDevice, &semaphoreCreateInfo, nullptr, &sharedTimelineSemaphore);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create shared command buffer fence of device [{0}]! Error code: {1}!", GetName(), result);
-
         // Get Vulkan function pointers
         VmaVulkanFunctions vulkanFunctions = { };
         vulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
@@ -965,7 +1042,7 @@ namespace Sierra
         vulkanFunctions.vkCreateImage = functionTable.vkCreateImage;
         vulkanFunctions.vkDestroyImage = functionTable.vkDestroyImage;
         vulkanFunctions.vkCmdCopyBuffer = functionTable.vkCmdCopyBuffer;
-        if (instance.GetAPIVersion() >= VulkanAPIVersion(1, 1, 0))
+        if (instance.GetAPIVersion() >= Version({ 1, 1, 0 }))
         {
             vulkanFunctions.vkGetBufferMemoryRequirements2KHR = functionTable.vkGetBufferMemoryRequirements2;
             vulkanFunctions.vkGetImageMemoryRequirements2KHR = functionTable.vkGetImageMemoryRequirements2;
@@ -973,7 +1050,7 @@ namespace Sierra
             vulkanFunctions.vkBindImageMemory2KHR = functionTable.vkBindImageMemory2;
             vulkanFunctions.vkGetPhysicalDeviceMemoryProperties2KHR = instance.GetFunctionTable().vkGetPhysicalDeviceMemoryProperties2;
         }
-        if (instance.GetAPIVersion() >= VulkanAPIVersion(1, 3, 0))
+        if (instance.GetAPIVersion() >= Version({ 1, 3, 0 }))
         {
             vulkanFunctions.vkGetDeviceBufferMemoryRequirements = functionTable.vkGetDeviceBufferMemoryRequirements;
             vulkanFunctions.vkGetDeviceImageMemoryRequirements = functionTable.vkGetDeviceImageMemoryRequirements;
@@ -984,16 +1061,147 @@ namespace Sierra
         vmaCreteInfo.instance = instance.GetVulkanInstance();
         vmaCreteInfo.physicalDevice = physicalDevice;
         vmaCreteInfo.device = logicalDevice;
-        vmaCreteInfo.vulkanApiVersion = instance.GetAPIVersion();
         vmaCreteInfo.pVulkanFunctions = &vulkanFunctions;
         vmaCreteInfo.flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
+
+        // Determine API version
+        const Version version = instance.GetAPIVersion();
+        vmaCreteInfo.vulkanApiVersion = VK_MAKE_API_VERSION(0, version.GetMajor(), version.GetMinor(), version.GetPatch());
 
         // Create allocator
         vmaCreateAllocator(&vmaCreteInfo, &vmaAllocator);
 
         // Set device names
-        SetObjectName(physicalDevice, VK_OBJECT_TYPE_PHYSICAL_DEVICE, "Physical device of device [" + GetName() + "]");
-        SetObjectName(logicalDevice, VK_OBJECT_TYPE_DEVICE, "Logical device of device [" + GetName() + "]");
+        SetObjectName(physicalDevice, VK_OBJECT_TYPE_PHYSICAL_DEVICE, "Physical device of device [" + std::string(GetName()) + "]");
+        SetObjectName(logicalDevice, VK_OBJECT_TYPE_DEVICE, "Logical device of device [" + std::string(GetName()) + "]");
+
+        // Retrieve general queue
+        {
+            functionTable.vkGetDeviceQueue(logicalDevice, generalQueueFamily, 0, &generalQueue);
+        }
+
+        // Create global timeline semaphore
+        {
+            SR_ERROR_IF(!IsExtensionLoaded(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME), "[Vulkan]: Cannot create global timeline semaphore of device [{0}], as it does not support the {1} extension!", GetName(), VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
+
+            // Set up semaphore type
+            VkSemaphoreTypeCreateInfo semaphoreTypeCreateInfo = { };
+            semaphoreTypeCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
+            semaphoreTypeCreateInfo.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
+            semaphoreTypeCreateInfo.initialValue = 0;
+
+            // Set up shared semaphore create info
+            VkSemaphoreCreateInfo semaphoreCreateInfo = { };
+            semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+            semaphoreCreateInfo.pNext = &semaphoreTypeCreateInfo;
+
+            // Create shared fence
+            result = functionTable.vkCreateSemaphore(logicalDevice, &semaphoreCreateInfo, nullptr, &generalTimelineSemaphore);
+            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create shared command buffer fence of device [{0}]! Error code: {1}!", GetName(), result);
+        }
+
+        // Create global (bindless) descriptor set layout
+        {
+            SR_ERROR_IF(!IsExtensionLoaded(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME), "[Vulkan]: Cannot create global descriptor set of device [{0}], as it does not support the {1} extension!", GetName(), VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+
+            // Retrieve descriptor indexing properties
+            VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
+            descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
+            GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
+
+            // Set up bindings (one for each resource type)
+            std::array<VkDescriptorSetLayoutBinding, BINDLESS_BINDING_COUNT> descriptorSetBindings;
+            descriptorSetBindings[0].binding = BINDLESS_UNIFORM_BUFFER_BINDING;
+            descriptorSetBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorSetBindings[0].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers;
+            descriptorSetBindings[0].stageFlags = VK_SHADER_STAGE_ALL;
+            descriptorSetBindings[0].pImmutableSamplers = nullptr;
+            descriptorSetBindings[1].binding = BINDLESS_STORAGE_BUFFER_BINDING;
+            descriptorSetBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            descriptorSetBindings[1].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers;
+            descriptorSetBindings[1].stageFlags = VK_SHADER_STAGE_ALL;
+            descriptorSetBindings[1].pImmutableSamplers = nullptr;
+            descriptorSetBindings[2].binding = BINDLESS_SAMPLED_IMAGE_BINDING;
+            descriptorSetBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            descriptorSetBindings[2].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2;
+            descriptorSetBindings[2].stageFlags = VK_SHADER_STAGE_ALL;
+            descriptorSetBindings[2].pImmutableSamplers = nullptr;
+            descriptorSetBindings[3].binding = BINDLESS_SAMPLED_CUBEMAP_BINDING;
+            descriptorSetBindings[3].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            descriptorSetBindings[3].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2;
+            descriptorSetBindings[3].stageFlags = VK_SHADER_STAGE_ALL;
+            descriptorSetBindings[3].pImmutableSamplers = nullptr;
+            descriptorSetBindings[4].binding = BINDLESS_STORAGE_IMAGE_BINDING;
+            descriptorSetBindings[4].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+            descriptorSetBindings[4].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2;
+            descriptorSetBindings[4].stageFlags = VK_SHADER_STAGE_ALL;
+            descriptorSetBindings[4].pImmutableSamplers = nullptr;
+            descriptorSetBindings[5].binding = BINDLESS_STORAGE_CUBEMAP_BINDING;
+            descriptorSetBindings[5].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+            descriptorSetBindings[5].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2;
+            descriptorSetBindings[5].stageFlags = VK_SHADER_STAGE_ALL;
+            descriptorSetBindings[5].pImmutableSamplers = nullptr;
+            descriptorSetBindings[6].binding = BINDLESS_SAMPLER_BINDING;
+            descriptorSetBindings[6].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+            descriptorSetBindings[6].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers;
+            descriptorSetBindings[6].stageFlags = VK_SHADER_STAGE_ALL;
+            descriptorSetBindings[6].pImmutableSamplers = nullptr;
+
+            // Set up flags
+            std::array<VkDescriptorBindingFlagsEXT, BINDLESS_BINDING_COUNT> bindingFlags;
+            bindingFlags.fill(VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT);
+
+            // Set up flags create info
+            VkDescriptorSetLayoutBindingFlagsCreateInfoEXT bindingFlagsCreateInfo = { };
+            bindingFlagsCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
+            bindingFlagsCreateInfo.bindingCount = bindingFlags.size();
+            bindingFlagsCreateInfo.pBindingFlags = bindingFlags.data();
+
+            // Set up layout create info
+            VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = { };
+            descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            descriptorSetLayoutCreateInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT;
+            descriptorSetLayoutCreateInfo.bindingCount = descriptorSetBindings.size();
+            descriptorSetLayoutCreateInfo.pBindings = descriptorSetBindings.data();
+            descriptorSetLayoutCreateInfo.pNext = &bindingFlagsCreateInfo;
+
+            // Create bindless descriptor set layout
+            result = functionTable.vkCreateDescriptorSetLayout(logicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &generalDescriptorSetLayout);
+            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create descriptor set layout of resource table [{0}]! Error code: {1}.", GetName(), result);
+            SetObjectName(generalDescriptorSetLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "Bindless descriptor set layout");
+        }
+
+        // Pre-create all pipeline layout variants
+        {
+            // Set up layout create info
+            VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { };
+            pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+            pipelineLayoutCreateInfo.setLayoutCount = 1;
+            pipelineLayoutCreateInfo.pSetLayouts = &generalDescriptorSetLayout;
+            
+            // Create first layout (without push constants)
+            result = functionTable.vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &generalPipelineLayouts[0]);
+            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create general pipeline layout [0]! Error code: {0}.", result);
+            SetObjectName(generalPipelineLayouts[0], VK_OBJECT_TYPE_PIPELINE_LAYOUT, "General pipeline layout [0] of device [" + std::string(GetName()) + "]");
+
+            // Set up push constant range (size is to be updated)
+            VkPushConstantRange pushConstantRange = { };
+            pushConstantRange.stageFlags = VK_SHADER_STAGE_ALL;
+            pushConstantRange.offset = 0;
+            pushConstantRange.size = 0;
+            pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+            pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
+
+            // Create layouts
+            for (i = 1; i < generalPipelineLayouts.size(); i++)
+            {
+                pushConstantRange.size = i * 4;
+
+                result = functionTable.vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &generalPipelineLayouts[i]);
+                SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create general pipeline layout [{0}]! Error code: {1}.", i, result);
+                SetObjectName(generalPipelineLayouts[i], VK_OBJECT_TYPE_PIPELINE_LAYOUT, "General pipeline layout [" + std::to_string(i) + "] of device [" + std::string(GetName()) + "]");
+            }
+        }
     }
 
     /* --- POLLING METHODS --- */
@@ -1031,7 +1239,8 @@ namespace Sierra
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &vkCommandBuffer;
         submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = &sharedTimelineSemaphore;
+        submitInfo.pWaitSemaphores = &generalTimelineSemaphore;
+        submitInfo.pSignalSemaphores = &generalTimelineSemaphore;
         submitInfo.pWaitDstStageMask = &waitStage;
         submitInfo.pNext = &semaphoreSubmitInfo;
 
@@ -1050,11 +1259,11 @@ namespace Sierra
         VkSemaphoreWaitInfo waitInfo = { };
         waitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
         waitInfo.semaphoreCount = 1;
-        waitInfo.pSemaphores = &sharedTimelineSemaphore;
+        waitInfo.pSemaphores = &generalTimelineSemaphore;
         waitInfo.pValues = &waitValue;
 
         // Wait for semaphore
-        vkWaitSemaphores(logicalDevice, &waitInfo, std::numeric_limits<uint64>::max());
+        functionTable.vkWaitSemaphores(logicalDevice, &waitInfo, std::numeric_limits<uint64>::max());
     }
 
     /* --- GETTER METHODS --- */
@@ -1063,7 +1272,7 @@ namespace Sierra
     {
         // Get format properties
         VkFormatProperties formatProperties = { };
-        vkGetPhysicalDeviceFormatProperties(physicalDevice, VulkanImage::ImageFormatToVkFormat(format), &formatProperties);
+        instance.GetFunctionTable().vkGetPhysicalDeviceFormatProperties(physicalDevice, VulkanImage::ImageFormatToVkFormat(format), &formatProperties);
 
         // Check support
         if (usage & ImageUsage::SourceMemory        && !(formatProperties.linearTilingFeatures  & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT               )) return false;
@@ -1097,21 +1306,26 @@ namespace Sierra
             case SamplerAnisotropy::x8:     return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 8.0f;
             case SamplerAnisotropy::x4:     return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 4.0f;
             case SamplerAnisotropy::x2:     return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 2.0f;
-            case SamplerAnisotropy::x1:     return physicalDeviceProperties.limits.maxSamplerAnisotropy >= 1.0f;
+            case SamplerAnisotropy::x1:     break;
         }
 
-        return anisotropy == SamplerAnisotropy::x1;
-    }
-
-    bool VulkanDevice::IsExtensionLoaded(const std::string &extensionName) const
-    {
-        return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<std::string>{}(extensionName)) != loadedExtensions.end();
+        return true;
     }
 
     VkPhysicalDeviceProperties VulkanDevice::GetPhysicalDeviceProperties() const
     {
         VkPhysicalDeviceProperties physicalDeviceProperties = { };
         instance.GetFunctionTable().vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+        return physicalDeviceProperties;
+    }
+
+    VkPhysicalDeviceProperties2 VulkanDevice::GetPhysicalDeviceProperties2(void* pNext) const
+    {
+        VkPhysicalDeviceProperties2 physicalDeviceProperties = { };
+        physicalDeviceProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
+        physicalDeviceProperties.pNext = pNext;
+
+        instance.GetFunctionTable().vkGetPhysicalDeviceProperties2(physicalDevice, &physicalDeviceProperties);
         return physicalDeviceProperties;
     }
 
@@ -1122,9 +1336,25 @@ namespace Sierra
         return physicalDeviceFeatures;
     }
 
+    VkPhysicalDeviceFeatures2 VulkanDevice::GetPhysicalDeviceFeatures2(void* pNext) const
+    {
+        VkPhysicalDeviceFeatures2 physicalDeviceFeatures = { };
+        physicalDeviceFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
+        physicalDeviceFeatures.pNext = pNext;
+
+        instance.GetFunctionTable().vkGetPhysicalDeviceFeatures2(physicalDevice, &physicalDeviceFeatures);
+        return physicalDeviceFeatures;
+    }
+
+
+    bool VulkanDevice::IsExtensionLoaded(const std::string_view extensionName) const
+    {
+        return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<std::string_view>{}(extensionName)) != loadedExtensions.end();
+    }
+
     /* --- SETTER METHODS --- */
 
-    void VulkanDevice::SetObjectName(VkHandle object, const VkObjectType objectType, const std::string &name) const
+    void VulkanDevice::SetObjectName(VkHandle object, const VkObjectType objectType, std::string_view name) const
     {
         #if SR_ENABLE_LOGGING
             if (!instance.IsExtensionLoaded(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) return;
@@ -1134,78 +1364,21 @@ namespace Sierra
             objectNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
             objectNameInfo.objectType = objectType;
             objectNameInfo.objectHandle = (uint64) object;
-            objectNameInfo.pObjectName = name.c_str();
+            objectNameInfo.pObjectName = name.data();
 
             // Assign resource name
             instance.GetFunctionTable().vkSetDebugUtilsObjectNameEXT(logicalDevice, &objectNameInfo);
         #endif
     }
 
-    /* --- PRIVATE METHODS --- */
-
-    bool VulkanDevice::IsExtensionSupported(const char* extensionName, const std::vector<VkExtensionProperties> &supportedExtensions)
-    {
-        for (const auto &supportedExtension : supportedExtensions)
-        {
-            if (strcmp(extensionName, supportedExtension.extensionName) == 0)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    bool VulkanDevice::AddExtensionIfSupported(const VulkanDeviceExtension &extension, const std::vector<VkExtensionProperties> &supportedExtensions, void* pNextChain, std::vector<const char*> &extensionList, std::vector<void*> &extensionDataToFree)
-    {
-        // Check if root extension is found within the supported ones
-        const bool extensionSupported = IsExtensionSupported(extension.name.c_str(), supportedExtensions);
-
-        // If extension has its own VkStructureType data, add that to pNext, and query it for freeing
-        if (extensionSupported && extension.data != nullptr)
-        {
-            PushToPNextChain(pNextChain, extension.data);
-            extensionDataToFree.push_back(extension.data);
-        }
-
-        // If root extension is not found, we do not load it
-        if (!extensionSupported)
-        {
-            SR_WARNING_IF(!extension.requiredOnlyIfSupported, "[Vulkan]: Device extension [{0}] requested but not supported! Extension will be discarded, but issues may occur if extensions' support is not checked before their usage!", extension.name);
-
-            // Free all data within the extension tree, as, because the current extension is not supported, its dependencies will never be loaded, and thus creating a memory leak
-            static std::function<void(const VulkanDeviceExtension&)> const FreeExtensionTreeLambda = [](const VulkanDeviceExtension &extension)
-            {
-                std::free(extension.data);
-                for (const auto &dependency : extension.dependencies) FreeExtensionTreeLambda(dependency);
-            };
-            FreeExtensionTreeLambda(extension);
-
-            return false;
-        }
-
-        // If found, we then check if all required dependency extensions are supported
-        for (const auto &dependencyExtension : extension.dependencies)
-        {
-            if (!AddExtensionIfSupported(dependencyExtension, supportedExtensions, pNextChain, extensionList, extensionDataToFree))
-            {
-                SR_WARNING_IF(!extension.requiredOnlyIfSupported, "[Vulkan]: Device extension [{0}] requires the support of an unsupported extension [{1}]! Extensions will be discarded and the application may continue to run, but issues may occur if extensions' support is not checked before their usage!", extension.name, dependencyExtension.name);
-                return false;
-            }
-        }
-
-        // Add extension to the list
-        loadedExtensions.push_back(std::hash<std::string>{}(extension.name));
-        extensionList.push_back(extension.name.c_str());
-
-        return true;
-    }
-
     /* --- DESTRUCTOR --- */
 
     VulkanDevice::~VulkanDevice()
     {
-        functionTable.vkDestroySemaphore(logicalDevice, sharedTimelineSemaphore, nullptr);
+        for (const auto &pipelineLayout : generalPipelineLayouts) functionTable.vkDestroyPipelineLayout(logicalDevice, pipelineLayout, nullptr);
+        functionTable.vkDestroyDescriptorSetLayout(logicalDevice, generalDescriptorSetLayout, nullptr);
+
+        functionTable.vkDestroySemaphore(logicalDevice, generalTimelineSemaphore, nullptr);
         vmaDestroyAllocator(vmaAllocator);
         functionTable.vkDestroyDevice(logicalDevice, nullptr);
     }

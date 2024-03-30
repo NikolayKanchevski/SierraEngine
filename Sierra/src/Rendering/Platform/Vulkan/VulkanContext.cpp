@@ -10,9 +10,9 @@
 #include "VulkanRenderPass.h"
 #include "VulkanSwapchain.h"
 #include "VulkanShader.h"
-#include "VulkanPipelineLayout.h"
 #include "VulkanGraphicsPipeline.h"
 #include "VulkanComputePipeline.h"
+#include "VulkanResourceTable.h"
 #include "VulkanCommandBuffer.h"
 
 namespace Sierra
@@ -58,11 +58,6 @@ namespace Sierra
         return std::make_unique<VulkanShader>(device, createInfo);
     }
 
-    std::unique_ptr<PipelineLayout> VulkanContext::CreatePipelineLayout(const PipelineLayoutCreateInfo &createInfo) const
-    {
-        return std::make_unique<VulkanPipelineLayout>(device, createInfo);
-    }
-
     std::unique_ptr<GraphicsPipeline> VulkanContext::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo &createInfo) const
     {
         return std::make_unique<VulkanGraphicsPipeline>(device, createInfo);
@@ -71,6 +66,11 @@ namespace Sierra
     std::unique_ptr<ComputePipeline> VulkanContext::CreateComputePipeline(const ComputePipelineCreateInfo &createInfo) const
     {
         return std::make_unique<VulkanComputePipeline>(device, createInfo);
+    }
+
+    std::unique_ptr<ResourceTable> VulkanContext::CreateResourceTable(const ResourceTableCreateInfo &createInfo) const
+    {
+        return std::make_unique<VulkanResourceTable>(device, createInfo);
     }
 
     std::unique_ptr<CommandBuffer> VulkanContext::CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const

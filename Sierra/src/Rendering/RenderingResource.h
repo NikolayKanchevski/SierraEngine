@@ -34,18 +34,18 @@ namespace Sierra
     {
     public:
         /* --- GETTER METHODS --- */
-        #if SR_ENABLE_LOGGING
-            [[nodiscard]] inline const std::string& GetName() const { return name; }
-        #else
-            [[nodiscard]] inline const std::string& GetName() const { static std::string name = ""; return name; }
-        #endif
+        [[nodiscard]] inline std::string_view GetName() const { return name; }
         [[nodiscard]] inline virtual GraphicsAPI GetAPI() const = 0;
+
+    protected:
+        RenderingResource() = default;
 
     protected:
         #if SR_ENABLE_LOGGING
             std::string name;
+        #else
+            constexpr static const char* name = "";
         #endif
-        RenderingResource() = default;
 
     };
 

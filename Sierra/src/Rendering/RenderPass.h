@@ -46,7 +46,7 @@ namespace Sierra
 
     struct RenderPassCreateInfo
     {
-        const std::string &name = "Render Pass";
+        std::string_view name = "Render Pass";
         const std::initializer_list<RenderPassAttachment> &attachments = { };
         const std::initializer_list<SubpassDescription> &subpassDescriptions = { };
     };

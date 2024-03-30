@@ -8,7 +8,6 @@
 #include "VulkanResource.h"
 
 #include "VulkanDevice.h"
-#include "VulkanPipelineLayout.h"
 
 namespace Sierra
 {
@@ -20,17 +19,18 @@ namespace Sierra
         VulkanComputePipeline(const VulkanDevice &device, const ComputePipelineCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] inline uint16 GetPushConstantSize() const { return pushConstantSize; }
         [[nodiscard]] inline VkPipeline GetVulkanPipeline() const { return pipeline; }
-        [[nodiscard]] inline const VulkanPipelineLayout& GetLayout() const { return layout; }
+        [[nodiscard]] inline VkPipelineLayout GetVulkanPipelineLayout() const { return device.GetPipelineLayout(pushConstantSize); }
 
         /* --- DESTRUCTOR --- */
         ~VulkanComputePipeline() override;
 
     private:
         const VulkanDevice &device;
-        const VulkanPipelineLayout &layout;
 
         VkPipeline pipeline = VK_NULL_HANDLE;
+        uint16 pushConstantSize = 0;
 
     };
 

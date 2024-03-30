@@ -12,7 +12,7 @@ namespace Sierra
     MetalImage::MetalImage(const MetalDevice &device, const ImageCreateInfo &createInfo)
         : Image(createInfo), MetalResource(createInfo.name)
     {
-        SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Metal]: Cannot create image [{0}] with unsupported sampling! Make sure to use Device::IsImageSamplingSupported() to query image sampling support.", GetName());
+        SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Metal]: Cannot create image [{0}] with unsupported sampling! Use Device::IsImageSamplingSupported() to query image sampling support.", GetName());
         SR_ERROR_IF(!device.IsImageFormatSupported(createInfo.format, createInfo.usage), "[Metal]: Cannot create [{0}] image with unsupported format! Use Device::IsImageFormatSupported() to query format support.", GetName());
 
         // Set up texture descriptor
@@ -220,7 +220,7 @@ namespace Sierra
     {
         switch (memoryLocation)
         {
-            case ImageMemoryLocation::CPU:        return MTLStorageModeShared;
+            case ImageMemoryLocation::CPU:      return MTLStorageModeShared;
             case ImageMemoryLocation::GPU:      return MTLStorageModePrivate;
         }
 
@@ -231,7 +231,7 @@ namespace Sierra
     {
         switch (memoryLocation)
         {
-            case ImageMemoryLocation::CPU:        return MTLCPUCacheModeDefaultCache;
+            case ImageMemoryLocation::CPU:      return MTLCPUCacheModeDefaultCache;
             case ImageMemoryLocation::GPU:      return MTLCPUCacheModeWriteCombined;
         }
 

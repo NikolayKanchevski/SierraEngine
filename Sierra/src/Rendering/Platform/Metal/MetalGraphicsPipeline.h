@@ -8,7 +8,6 @@
 #include "MetalResource.h"
 
 #include "MetalDevice.h"
-#include "MetalPipelineLayout.h"
 #include "MetalBuffer.h"
 
 namespace Sierra
@@ -23,7 +22,6 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline id<MTLRenderPipelineState> GetRenderPipelineState() const { return renderPipelineState; }
         [[nodiscard]] inline id<MTLDepthStencilState> GetDepthStencilState() const { return depthStencilState; }
-        [[nodiscard]] inline const MetalPipelineLayout& GetLayout() const { return layout; }
 
         [[nodiscard]] inline uint32 GetVertexByteStride() const { return vertexByteStride; }
         [[nodiscard]] inline bool HasFragmentShader() const { return hasFragmentShader; }
@@ -41,17 +39,15 @@ namespace Sierra
         [[nodiscard]] static MTLWinding FrontFaceModeToWinding(FrontFaceMode frontFaceMode);
 
     private:
-        const MetalPipelineLayout &layout;
-
         id<MTLRenderPipelineState> renderPipelineState = nil;
         id<MTLDepthStencilState> depthStencilState = nil;
 
         uint32 vertexByteStride = 0;
         bool hasFragmentShader = false;
 
-        MTLCullMode cullMode = MTLCullModeNone;
-        MTLTriangleFillMode triangleFillMode = MTLTriangleFillModeFill;
-        MTLWinding winding = MTLWindingCounterClockwise;
+        const MTLCullMode cullMode = MTLCullModeNone;
+        const MTLTriangleFillMode triangleFillMode = MTLTriangleFillModeFill;
+        const MTLWinding winding = MTLWindingCounterClockwise;
 
     };
 

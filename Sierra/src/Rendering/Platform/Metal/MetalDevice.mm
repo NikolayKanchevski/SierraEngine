@@ -15,6 +15,16 @@ namespace Sierra
     MetalDevice::MetalDevice(const DeviceCreateInfo &createInfo)
         : Device(createInfo), MetalResource(createInfo.name)
     {
+        #if SR_ENABLE_LOGGING
+            setenv("MTL_DEBUG_LAYER", "1", true);
+            setenv("MTL_DEBUG_LAYER_ERROR_MODE", "assert", true);
+            setenv("MTL_DEBUG_LAYER_VALIDATE_LOAD_ACTIONS", "1", true);
+            setenv("MTL_DEBUG_LAYER_VALIDATE_STORE_ACTIONS", "1", true);
+            setenv("MTL_DEBUG_LAYER_VALIDATE_UNRETAINED_RESOURCES", "0x4", true);
+            setenv("MTL_SHADER_VALIDATION", "1", true);
+            setenv("MTL_HUD_ENABLED", "1", true);
+        #endif
+
         // Create device
         device = MTLCreateSystemDefaultDevice();
         SR_ERROR_IF(device == nil, "[Metal]: Could not create default system device for device [{0}]!", GetName());
@@ -184,6 +194,7 @@ namespace Sierra
     {
         [sharedSignalSemaphore release];
         [commandQueue release];
+
         [device release];
     }
 

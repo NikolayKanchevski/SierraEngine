@@ -28,11 +28,12 @@ target_sources(Sierra PRIVATE
     MetalGraphicsPipeline.h
     MetalImage.mm
     MetalImage.h
-    MetalPipelineLayout.mm
-    MetalPipelineLayout.h
     MetalRenderPass.mm
     MetalRenderPass.h
     MetalResource.mm
+    MetalResource.h
+    MetalResourceTable.mm
+    MetalResourceTable.h
     MetalSampler.h
     MetalSampler.mm
     MetalShader.mm

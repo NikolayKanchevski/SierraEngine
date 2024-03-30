@@ -24,10 +24,11 @@ namespace Sierra
         void Present(std::unique_ptr<CommandBuffer> &commandBuffer) override;
 
         /* -- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetCurrentFrame() const override { return currentFrame; }
+        [[nodiscard]] inline uint32 GetCurrentFrameIndex() const override { return currentFrame; }
+        [[nodiscard]] inline uint32 GetCurrentImageIndex() const override { return currentFrame; };
         [[nodiscard]] inline uint32 GetConcurrentFrameCount() const override { return CONCURRENT_FRAME_COUNT; }
 
-        [[nodiscard]] inline const std::unique_ptr<Image>& GetCurrentImage() const override { return swapchainImage; };
+        [[nodiscard]] inline float32 GetScaling() const override { return static_cast<float32>(swapchainImage->GetWidth()) / window->GetSize().x; }
         [[nodiscard]] inline const std::unique_ptr<Image>& GetImage(const uint32 frameIndex) const override { SR_ERROR_IF(frameIndex >= CONCURRENT_FRAME_COUNT, "[Metal]: Cannot return image with an index [{0}] of swapchain [{1}], as index is out of bounds! Use Swapchain::GetConcurrentFrameCount() to query image count.", frameIndex, GetName()); return swapchainImage; };
 
         /* --- DESTRUCTOR --- */
@@ -35,7 +36,7 @@ namespace Sierra
 
     private:
         const MetalDevice &device;
-        const Window &window;
+        const std::unique_ptr<Window> &window;
 
         CAMetalLayer* metalLayer = nil;
         id<CAMetalDrawable> metalDrawable = nil;

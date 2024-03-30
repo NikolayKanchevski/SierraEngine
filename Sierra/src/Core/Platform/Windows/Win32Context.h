@@ -75,7 +75,7 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] HWND CreateWindow(const std::string &title, uint32 width, uint32 height, DWORD style, WNDPROC windowProc) const;
+        [[nodiscard]] HWND CreateWindow(std::string_view title, uint32 width, uint32 height, DWORD style, WNDPROC windowProc) const;
         void DestroyWindow(HWND window) const;
 
         [[nodiscard]] bool IsWindowEventQueueEmpty(HWND window) const;

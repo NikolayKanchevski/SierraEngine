@@ -10,9 +10,9 @@
 #include "MetalRenderPass.h"
 #include "MetalSwapchain.h"
 #include "MetalShader.h"
-#include "MetalPipelineLayout.h"
 #include "MetalGraphicsPipeline.h"
 #include "MetalComputePipeline.h"
+#include "MetalResourceTable.h"
 #include "MetalCommandBuffer.h"
 
 namespace Sierra
@@ -58,11 +58,6 @@ namespace Sierra
         return std::make_unique<MetalShader>(device, createInfo);
     }
 
-    std::unique_ptr<PipelineLayout> MetalContext::CreatePipelineLayout(const PipelineLayoutCreateInfo &createInfo) const
-    {
-        return std::make_unique<MetalPipelineLayout>(device, createInfo);
-    }
-
     std::unique_ptr<GraphicsPipeline> MetalContext::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo &createInfo) const
     {
         return std::make_unique<MetalGraphicsPipeline>(device, createInfo);
@@ -71,6 +66,11 @@ namespace Sierra
     std::unique_ptr<ComputePipeline> MetalContext::CreateComputePipeline(const ComputePipelineCreateInfo &createInfo) const
     {
         return std::make_unique<MetalComputePipeline>(device, createInfo);
+    }
+
+    std::unique_ptr<ResourceTable> MetalContext::CreateResourceTable(const ResourceTableCreateInfo &createInfo) const
+    {
+        return std::make_unique<MetalResourceTable>(device, createInfo);
     }
 
     std::unique_ptr<CommandBuffer> MetalContext::CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const
