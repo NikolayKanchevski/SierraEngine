@@ -249,23 +249,27 @@ namespace Sierra
         device.SetResourceName(currentComputeEncoder, "Render encoder for render pass [" + std::string(renderPass->GetName()) + "]");
 
         // Define viewport
-        MTLViewport viewport = { };
-        viewport.originX = 0.0f;
-        viewport.originY = 0.0f;
-        viewport.width = static_cast<float64>(metalRenderPass.GetSubpass(currentSubpass).renderTargetWidth);
-        viewport.height = static_cast<float64>(metalRenderPass.GetSubpass(currentSubpass).renderTargetHeight);
-        viewport.znear = 0.0f;
-        viewport.zfar = 1.0f;
+        const MTLViewport viewport
+        {
+            .originX = 0.0f,
+            .originY = 0.0f,
+            .width = static_cast<float64>(metalRenderPass.GetSubpass(currentSubpass).renderTargetWidth),
+            .height = static_cast<float64>(metalRenderPass.GetSubpass(currentSubpass).renderTargetHeight),
+            .znear = 0.0f,
+            .zfar = 1.0f
+        };
 
         // Set viewport
         [currentRenderEncoder setViewport: viewport];
 
         // Define scissor
-        MTLScissorRect scissor = { };
-        scissor.x = 0;
-        scissor.y = 0;
-        scissor.width = static_cast<uint64>(metalRenderPass.GetSubpass(currentSubpass).renderTargetWidth);
-        scissor.height = static_cast<uint64>(metalRenderPass.GetSubpass(currentSubpass).renderTargetHeight);
+        const MTLScissorRect scissor
+        {
+            .x = 0,
+            .y = 0,
+            .width = static_cast<uint64>(metalRenderPass.GetSubpass(currentSubpass).renderTargetWidth),
+            .height = static_cast<uint64>(metalRenderPass.GetSubpass(currentSubpass).renderTargetHeight)
+        };
 
         // Set scissor
         [currentRenderEncoder setScissorRect: scissor];

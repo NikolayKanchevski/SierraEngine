@@ -351,7 +351,7 @@ namespace Sierra
 
     void X11Context::SetWindowTitle(const XID window, const std::string_view title) const
     {
-        XStoreName(display, window, title.c_str());
+        XStoreName(display, window, title.data());
     }
 
     void X11Context::SetWindowPosition(const XID window, const Vector2Int &position) const
@@ -397,10 +397,10 @@ namespace Sierra
     const X11Screen& X11Context::GetWindowScreen(const XID window) const
     {
         const Vector2Int windowPosition = GetWindowPosition(window);
-        for (auto &screen : screens)
+        for (const X11Screen &screen : screens)
         {
             const Vector2Int screenOrigin = screen.GetOrigin();
-            const Vector2Int screenSize = screen.GetSize();
+            const Vector2Int screenSize = { screen.GetWidth(), screen.GetHeight() };
             if (windowPosition.x >= screenOrigin.x && windowPosition.x <= screenOrigin.x + screenSize.x && windowPosition.y >= screenOrigin.y && windowPosition.y <= screenOrigin.y + screenSize.y)
             {
                 return screen;

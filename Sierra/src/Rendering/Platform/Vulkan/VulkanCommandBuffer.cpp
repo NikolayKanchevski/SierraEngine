@@ -21,10 +21,12 @@ namespace Sierra
         : CommandBuffer(createInfo), VulkanResource(createInfo.name), device(device)
     {
         // Set up pool create info
-        VkCommandPoolCreateInfo commandPoolCreateInfo = { };
-        commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        commandPoolCreateInfo.queueFamilyIndex = device.GetGeneralQueueFamily();
+        const VkCommandPoolCreateInfo commandPoolCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+            .queueFamilyIndex = device.GetGeneralQueueFamily()
+        };
 
         // Create command pool
         VkResult result = device.GetFunctionTable().vkCreateCommandPool(device.GetLogicalDevice(), &commandPoolCreateInfo, nullptr, &commandPool);
@@ -32,11 +34,13 @@ namespace Sierra
         device.SetObjectName(commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Command pool of command buffer [" + std::string(GetName()) + "]");
 
         // Set up allocate info
-        VkCommandBufferAllocateInfo allocateInfo = { };
-        allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocateInfo.commandPool = commandPool;
-        allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocateInfo.commandBufferCount = 1;
+        const VkCommandBufferAllocateInfo allocateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+            .commandPool = commandPool,
+            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            .commandBufferCount = 1
+        };
 
         // Allocate command buffer
         result = device.GetFunctionTable().vkAllocateCommandBuffers(device.GetLogicalDevice(), &allocateInfo, &commandBuffer);
@@ -56,9 +60,11 @@ namespace Sierra
         device.GetFunctionTable().vkResetCommandPool(device.GetLogicalDevice(), commandPool, 0);
 
         // Set up begin info
-        VkCommandBufferBeginInfo beginInfo = { };
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        const VkCommandBufferBeginInfo beginInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+        };
 
         // Begin command buffer
         const VkResult result = device.GetFunctionTable().vkBeginCommandBuffer(commandBuffer, &beginInfo);
@@ -84,15 +90,17 @@ namespace Sierra
         SR_ERROR_IF(nextUsage == BufferCommandUsage::None, "[Vulkan]: Cannot synchronize buffer [{0}], as specified next usage must not be BufferCommandUsage::None!", buffer->GetName());
 
         // Set up pipeline barrier
-        VkBufferMemoryBarrier pipelineBarrier = { };
-        pipelineBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-        pipelineBarrier.srcAccessMask = BufferCommandUsageToVkAccessFlags(previousUsage);
-        pipelineBarrier.dstAccessMask = BufferCommandUsageToVkAccessFlags(nextUsage);
-        pipelineBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        pipelineBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        pipelineBarrier.buffer = vulkanBuffer.GetVulkanBuffer();
-        pipelineBarrier.offset = byteOffset;
-        pipelineBarrier.size = memorySize != 0 ? memorySize : buffer->GetMemorySize();
+        const VkBufferMemoryBarrier pipelineBarrier
+        {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+            .srcAccessMask = BufferCommandUsageToVkAccessFlags(previousUsage),
+            .dstAccessMask = BufferCommandUsageToVkAccessFlags(nextUsage),
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .buffer = vulkanBuffer.GetVulkanBuffer(),
+            .offset = byteOffset,
+            .size = memorySize != 0 ? memorySize : buffer->GetMemorySize()
+        };
 
         SR_ERROR_IF(byteOffset + pipelineBarrier.size > buffer->GetMemorySize(), "[Vulkan]: Cannot synchronize [{0}] bytes, which are offset by another [{1}], within buffer [{2}] from command buffer [{3}], as specified memory range exceeds that of the buffer - [{4}]!", pipelineBarrier.size, byteOffset, buffer->GetMemorySize(), GetName(), buffer->GetMemorySize());
 
@@ -111,20 +119,24 @@ namespace Sierra
         SR_ERROR_IF(baseLayer >= image->GetLayerCount(), "[Vulkan]: Cannot synchronize layer [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseLayer, image->GetName(), GetName());
 
         // Set up pipeline barrier
-        VkImageMemoryBarrier pipelineBarrier = { };
-        pipelineBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        pipelineBarrier.srcAccessMask = ImageCommandUsageToVkAccessFlags(previousUsage);
-        pipelineBarrier.dstAccessMask = ImageCommandUsageToVkAccessFlags(nextUsage);
-        pipelineBarrier.oldLayout = ImageCommandUsageToVkLayout(previousUsage);
-        pipelineBarrier.newLayout = ImageCommandUsageToVkLayout(nextUsage);
-        pipelineBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        pipelineBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        pipelineBarrier.image = vulkanImage.GetVulkanImage();
-        pipelineBarrier.subresourceRange.aspectMask = vulkanImage.GetVulkanAspectFlags();
-        pipelineBarrier.subresourceRange.baseMipLevel = baseMipLevel;
-        pipelineBarrier.subresourceRange.levelCount = mipLevelCount != 0 ? mipLevelCount : image->GetMipLevelCount() - baseMipLevel;
-        pipelineBarrier.subresourceRange.baseArrayLayer = baseLayer;
-        pipelineBarrier.subresourceRange.layerCount = layerCount != 0 ? layerCount : image->GetLayerCount() - baseLayer;
+        const VkImageMemoryBarrier pipelineBarrier
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+            .srcAccessMask = ImageCommandUsageToVkAccessFlags(previousUsage),
+            .dstAccessMask = ImageCommandUsageToVkAccessFlags(nextUsage),
+            .oldLayout = ImageCommandUsageToVkLayout(previousUsage),
+            .newLayout = ImageCommandUsageToVkLayout(nextUsage),
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .image = vulkanImage.GetVulkanImage(),
+            .subresourceRange = {
+                .aspectMask = vulkanImage.GetVulkanAspectFlags(),
+                .baseMipLevel = baseMipLevel,
+                .levelCount = mipLevelCount != 0 ? mipLevelCount : image->GetMipLevelCount() - baseMipLevel,
+                .baseArrayLayer = baseLayer,
+                .layerCount = layerCount != 0 ? layerCount : image->GetLayerCount() - baseLayer
+            }
+        };
 
         SR_ERROR_IF(baseMipLevel + pipelineBarrier.subresourceRange.levelCount > image->GetMipLevelCount(), "[Vulkan]: Cannot synchronize mip levels [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's mip level count - [{4}]!", baseMipLevel, baseMipLevel + mipLevelCount - 1, image->GetName(), GetName(), image->GetMipLevelCount());
         SR_ERROR_IF(baseLayer + pipelineBarrier.subresourceRange.layerCount > image->GetLayerCount(), "[Vulkan]: Cannot synchronize layers [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's layer count - [{4}]!", baseLayer, baseLayer + layerCount - 1, image->GetName(), GetName(), image->GetLayerCount());
@@ -141,10 +153,12 @@ namespace Sierra
         SR_ERROR_IF(destinationBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not copy to buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", destinationBuffer->GetName(), GetName());
         const VulkanBuffer &vulkanDestinationBuffer = static_cast<VulkanBuffer&>(*destinationBuffer);
 
-        VkBufferCopy copyRegion = { };
-        copyRegion.srcOffset = sourceByteOffset;
-        copyRegion.dstOffset = destinationByteOffset;
-        copyRegion.size = memoryRange != 0 ? memoryRange : sourceBuffer->GetMemorySize();
+        const VkBufferCopy copyRegion
+        {
+            .srcOffset = sourceByteOffset,
+            .dstOffset = destinationByteOffset,
+            .size = memoryRange != 0 ? memoryRange : sourceBuffer->GetMemorySize(),
+        };
 
         SR_ERROR_IF(sourceByteOffset + copyRegion.size > sourceBuffer->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, sourceByteOffset, sourceBuffer->GetName(), GetName(), sourceByteOffset + memoryRange, sourceBuffer->GetMemorySize());
         SR_ERROR_IF(destinationByteOffset + copyRegion.size > destinationBuffer->GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, destinationByteOffset, destinationBuffer->GetName(), GetName(), destinationByteOffset + memoryRange, destinationBuffer->GetMemorySize());
@@ -165,21 +179,28 @@ namespace Sierra
         SR_ERROR_IF(layer >= destinationImage->GetLayerCount(), "[Vulkan]: Cannot copy from buffer [{0}] to layer [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), layer, destinationImage->GetName(), GetName());
 
         // Set copy region
-        VkBufferImageCopy copyRegion = { };
-        copyRegion.bufferOffset = sourceByteOffset;
-        copyRegion.bufferRowLength = 0;
-        copyRegion.bufferImageHeight = 0;
-        copyRegion.imageSubresource.aspectMask = vulkanDestinationImage.GetVulkanAspectFlags();
-        copyRegion.imageSubresource.mipLevel = mipLevel;
-        copyRegion.imageSubresource.baseArrayLayer = layer;
-        copyRegion.imageSubresource.layerCount = 1;
-        copyRegion.imageOffset.x = static_cast<int32>(destinationPixelOffset.x);
-        copyRegion.imageOffset.y = static_cast<int32>(destinationPixelOffset.y);
-        copyRegion.imageOffset.z = 0;
-        copyRegion.imageExtent.width = pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth() >> mipLevel;
-        copyRegion.imageExtent.height = pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight() >> mipLevel;
-        copyRegion.imageExtent.depth = 1;
-
+        const VkBufferImageCopy copyRegion
+        {
+            .bufferOffset = sourceByteOffset,
+            .bufferRowLength = 0,
+            .bufferImageHeight = 0,
+            .imageSubresource = {
+                .aspectMask = vulkanDestinationImage.GetVulkanAspectFlags(),
+                .mipLevel = mipLevel,
+                .baseArrayLayer = layer,
+                .layerCount = 1
+            },
+            .imageOffset = {
+                .x = static_cast<int32>(destinationPixelOffset.x),
+                .y = static_cast<int32>(destinationPixelOffset.y),
+                .z = 0
+            },
+            .imageExtent = {
+                .width = pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth() >> mipLevel,
+                .height = pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight() >> mipLevel,
+                .depth = 1
+            }
+        };
         SR_ERROR_IF(destinationPixelOffset.x + copyRegion.imageExtent.width > destinationImage->GetWidth() || destinationPixelOffset.y + copyRegion.imageExtent.height > destinationImage->GetHeight(), "[Vulkan]: Cannot copy from buffer [{0}] pixel range [{1}x{2}], which is offset by another [{3}x{4}] pixels to image [{5}] within command buffer [{6}], as resulting pixel range of a total of [{7}x{8}] pixels exceeds the image's dimensions - [{9}x{10}]!", sourceBuffer->GetName(), copyRegion.imageExtent.width, copyRegion.imageExtent.height, destinationPixelOffset.x, destinationPixelOffset.y, destinationImage->GetName(), GetName(), destinationPixelOffset.x + copyRegion.imageExtent.width, destinationPixelOffset.y + copyRegion.imageExtent.height, destinationImage->GetWidth(), destinationImage->GetHeight());
 
         // Copy data and change layout
@@ -194,34 +215,44 @@ namespace Sierra
         SR_ERROR_IF(vulkanImage.GetMipLevelCount() <= 1, "[Vulkan]: Cannot generate mip maps for image [{0}], as it has a single mip level only!", vulkanImage.GetName());
 
         // Set up base pipeline barrier
-        VkImageMemoryBarrier pipelineBarrier = { };
-        pipelineBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        pipelineBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        pipelineBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        pipelineBarrier.image = vulkanImage.GetVulkanImage();
-        pipelineBarrier.subresourceRange.aspectMask = vulkanImage.GetVulkanAspectFlags();
-        pipelineBarrier.subresourceRange.levelCount = 1;
-        pipelineBarrier.subresourceRange.baseArrayLayer = 0;
-        pipelineBarrier.subresourceRange.layerCount = image->GetLayerCount();
+        VkImageMemoryBarrier pipelineBarrier
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+            .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .image = vulkanImage.GetVulkanImage(),
+            .subresourceRange = {
+                .aspectMask = vulkanImage.GetVulkanAspectFlags(),
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = image->GetLayerCount()
+            },
+        };
 
         // Set up base blit command
-        VkImageBlit blit = { };
-        blit.srcOffsets[0] = { 0, 0, 0 };
-        blit.srcSubresource.aspectMask = vulkanImage.GetVulkanAspectFlags();
-        blit.srcSubresource.baseArrayLayer = 0;
-        blit.srcSubresource.layerCount = vulkanImage.GetLayerCount();
-        blit.dstOffsets[0] = { 0, 0, 0 };
-        blit.dstSubresource.aspectMask = vulkanImage.GetVulkanAspectFlags();
-        blit.dstSubresource.baseArrayLayer = 0;
-        blit.dstSubresource.layerCount = vulkanImage.GetLayerCount();
+        VkImageBlit blit
+        {
+            .srcSubresource = {
+                .aspectMask = vulkanImage.GetVulkanAspectFlags(),
+                .baseArrayLayer = 0,
+                .layerCount = vulkanImage.GetLayerCount()
+            },
+            .srcOffsets = { { .x = 0, .y = 0, .z = 0 } },
+            .dstSubresource = {
+                .aspectMask = vulkanImage.GetVulkanAspectFlags(),
+                .baseArrayLayer = 0,
+                .layerCount = vulkanImage.GetLayerCount()
+            },
+            .dstOffsets = { { .x = 0, .y = 0, .z = 0 } }
+        };
 
         for (uint32 i = 1; i < image->GetMipLevelCount(); i++)
         {
             // Prepare former mip level for blitting from it
-            pipelineBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            pipelineBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-            pipelineBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-            pipelineBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
             pipelineBarrier.subresourceRange.baseMipLevel = i - 1;
             device.GetFunctionTable().vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &pipelineBarrier);
 
@@ -281,45 +312,63 @@ namespace Sierra
         }
 
         // Set up dynamic attachments
-        VkRenderPassAttachmentBeginInfo attachmentBeginInfo = { };
-        attachmentBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_ATTACHMENT_BEGIN_INFO;
-        attachmentBeginInfo.attachmentCount = static_cast<uint32>(attachmentViews.size());
-        attachmentBeginInfo.pAttachments = attachmentViews.data();
+        const VkRenderPassAttachmentBeginInfo attachmentBeginInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_ATTACHMENT_BEGIN_INFO,
+            .attachmentCount = static_cast<uint32>(attachmentViews.size()),
+            .pAttachments = attachmentViews.data()
+        };
 
         // Set up begin info
-        VkRenderPassBeginInfo beginInfo = { };
-        beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        beginInfo.renderPass = vulkanRenderPass.GetVulkanRenderPass();
-        beginInfo.framebuffer = vulkanRenderPass.GetVulkanFramebuffer();
-        beginInfo.renderArea.extent.width = attachments.begin()->image->GetWidth();
-        beginInfo.renderArea.extent.height = attachments.begin()->image->GetHeight();
-        beginInfo.renderArea.offset.x = 0;
-        beginInfo.renderArea.offset.y = 0;
-        beginInfo.clearValueCount = static_cast<uint32>(clearValues.size());
-        beginInfo.pClearValues = clearValues.data();
-        beginInfo.pNext = &attachmentBeginInfo;
+        const VkRenderPassBeginInfo beginInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .pNext = &attachmentBeginInfo,
+            .renderPass = vulkanRenderPass.GetVulkanRenderPass(),
+            .framebuffer = vulkanRenderPass.GetVulkanFramebuffer(),
+            .renderArea = {
+                .offset = {
+                    .x = 0,
+                    .y = 0
+                },
+                .extent = {
+                    .width = attachments.begin()->image->GetWidth(),
+                    .height = attachments.begin()->image->GetHeight()
+                }
+            },
+            .clearValueCount = static_cast<uint32>(clearValues.size()),
+            .pClearValues = clearValues.data()
+        };
 
         // Begin render pass
         device.GetFunctionTable().vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         // Define viewport
-        VkViewport viewport = { };
-        viewport.x = 0;
-        viewport.y = static_cast<float32>(beginInfo.renderArea.extent.height);
-        viewport.width = static_cast<float32>(beginInfo.renderArea.extent.width);
-        viewport.height = -static_cast<float32>(beginInfo.renderArea.extent.height);
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
+        const VkViewport viewport
+        {
+            .x = 0,
+            .y = static_cast<float32>(beginInfo.renderArea.extent.height),
+            .width = static_cast<float32>(beginInfo.renderArea.extent.width),
+            .height = -static_cast<float32>(beginInfo.renderArea.extent.height),
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f
+        };
 
         // Set viewport
         device.GetFunctionTable().vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
         // Define scissor
-        VkRect2D scissor = { };
-        scissor.offset.x = 0;
-        scissor.offset.y = 0;
-        scissor.extent.width = beginInfo.renderArea.extent.width;
-        scissor.extent.height = beginInfo.renderArea.extent.height;
+        const VkRect2D scissor
+        {
+            .offset = {
+                .x = 0,
+                .y = 0
+            },
+            .extent = {
+                .width = beginInfo.renderArea.extent.width,
+                .height = beginInfo.renderArea.extent.height
+            }
+        };
 
         // Set scissor
         device.GetFunctionTable().vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
@@ -378,11 +427,17 @@ namespace Sierra
     void VulkanCommandBuffer::SetScissor(const Vector4UInt &scissor)
     {
         // Set up scissor rect
-        VkRect2D scissorRect = { };
-        scissorRect.offset.x = static_cast<int32>(scissor.x);
-        scissorRect.offset.y = static_cast<int32>(scissor.y);
-        scissorRect.extent.width = scissor.z;
-        scissorRect.extent.height = scissor.w;
+        const VkRect2D scissorRect
+        {
+            .offset = {
+                .x = static_cast<int32>(scissor.x),
+                .y = static_cast<int32>(scissor.y)
+            },
+            .extent = {
+                .width = scissor.z,
+                .height = scissor.w
+            }
+        };
 
         // Apply scissor
         device.GetFunctionTable().vkCmdSetScissor(commandBuffer, 0, 1, &scissorRect);
@@ -432,10 +487,12 @@ namespace Sierra
         if (!device.IsExtensionLoaded(VK_EXT_DEBUG_MARKER_EXTENSION_NAME)) return;
 
         // Set up marker info
-        VkDebugMarkerMarkerInfoEXT markerInfo = { };
-        markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
-        markerInfo.pMarkerName = regionName.data();
-        std::memcpy(markerInfo.color, &color, sizeof(VkDebugMarkerMarkerInfoEXT::color));
+        const VkDebugMarkerMarkerInfoEXT markerInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT,
+            .pMarkerName = regionName.data(),
+            .color = { color.r, color.g, color.b, color.a }
+        };
 
         // Bind marker
         device.GetFunctionTable().vkCmdDebugMarkerBeginEXT(commandBuffer, &markerInfo);
@@ -449,10 +506,12 @@ namespace Sierra
         if (!device.IsExtensionLoaded(VK_EXT_DEBUG_MARKER_EXTENSION_NAME)) return;
 
         // Set up marker info
-        VkDebugMarkerMarkerInfoEXT markerInfo = { };
-        markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
-        markerInfo.pMarkerName = markerName.data();
-        std::memcpy(markerInfo.color, &color, sizeof(VkDebugMarkerMarkerInfoEXT::color));
+        const VkDebugMarkerMarkerInfoEXT markerInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT,
+            .pMarkerName = markerName.data(),
+            .color = { color.r, color.g, color.b, color.a }
+        };
 
         // Bind marker
         device.GetFunctionTable().vkCmdDebugMarkerInsertEXT(commandBuffer, &markerInfo);

@@ -52,9 +52,12 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetTitle() const override;
         [[nodiscard]] Vector2Int GetPosition() const override;
-        [[nodiscard]] Vector2UInt GetSize() const override;
-        [[nodiscard]] Vector2UInt GetFramebufferSize() const override;
+        [[nodiscard]] uint32 GetWidth() const override;
+        [[nodiscard]] uint32 GetHeight() const override;
+        [[nodiscard]] uint32 GetFramebufferWidth() const override;
+        [[nodiscard]] uint32 GetFramebufferHeight() const override;
         [[nodiscard]] float32 GetOpacity() const override;
+
         [[nodiscard]] bool IsClosed() const override;
         [[nodiscard]] bool IsMinimized() const override;
         [[nodiscard]] bool IsMaximized() const override;

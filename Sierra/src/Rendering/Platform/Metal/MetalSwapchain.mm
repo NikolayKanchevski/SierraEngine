@@ -36,7 +36,7 @@ namespace Sierra
         [metalLayer setDevice: (__bridge id<MTLDevice>) device.GetMetalDevice()];
         [metalLayer setMaximumDrawableCount: CONCURRENT_FRAME_COUNT];
         [metalLayer setDrawsAsynchronously: YES];
-        [metalLayer setDrawableSize: CGSizeMake(window->GetFramebufferSize().x, window->GetFramebufferSize().y)];
+        [metalLayer setDrawableSize: CGSizeMake(window->GetWidth(), window->GetHeigh())];
         switch (createInfo.preferredImageMemoryType) // These formats are guaranteed to be supported
         {
             case SwapchainImageMemoryType::UNorm8:      { [metalLayer setPixelFormat: MTLPixelFormatBGRA8Unorm ];      break; }
@@ -64,13 +64,13 @@ namespace Sierra
         createInfo.window->OnEvent<WindowResizeEvent>([this](const WindowResizeEvent &event)
         {
             // Resize Metal layer
-            [metalLayer setDrawableSize: CGSizeMake(window->GetFramebufferSize().x, window->GetFramebufferSize().y)];
+            [metalLayer setDrawableSize: CGSizeMake(window->GetWidth(), window->GetHeight())];
 
             // Recreate swapchain images
             Recreate();
 
             // Dispatch resize event
-            GetSwapchainResizeDispatcher().DispatchEvent(Vector2UInt(metalLayer.drawableSize.width, metalLayer.drawableSize.height));
+            GetSwapchainResizeDispatcher().DispatchEvent(metalLayer.drawableSize.width, metalLayer.drawableSize.height);
             return false;
         });
     }

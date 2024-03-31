@@ -61,7 +61,7 @@ namespace SierraEngine
         ImageSupercompressionQualityLevel qualityLevel = ImageSupercompressionQualityLevel::Standard;
     };
 
-    struct SerializedTexture : SerializedAsset
+    struct SerializedTexture : public SerializedAsset
     {
         TextureType type = TextureType::Undefined;
         TextureFiltering filtering = TextureFiltering::Smooth;

@@ -44,7 +44,7 @@ namespace Sierra
                         .tapTime = TimePoint::Now(),
                         .tapCount = 1,
                         .force = GameActivityPointerAxes_getPressure(&pointer),
-                        .position = Vector2(GameActivityPointerAxes_getX(&pointer), static_cast<float32>(gameActivityContext.GetPrimaryScreen().GetSize().y) - GameActivityPointerAxes_getY(&pointer)),
+                        .position = Vector2(GameActivityPointerAxes_getX(&pointer), static_cast<float32>(gameActivityContext.GetPrimaryScreen().GetHeight()) - GameActivityPointerAxes_getY(&pointer)),
                         .deltaPosition = { 0.0f, 0.0f },
                         .ID = reinterpret_cast<void*>(pointer.id)
                     });
@@ -74,7 +74,7 @@ namespace Sierra
                     if (iterator == activeTouches.end()) continue;
 
                     // Get position within the screen and flip Y coordinate
-                    const Vector2 position = Vector2(GameActivityPointerAxes_getX(&pointer), static_cast<float32>(gameActivityContext.GetPrimaryScreen().GetSize().y) - GameActivityPointerAxes_getY(&pointer));
+                    const Vector2 position = Vector2(GameActivityPointerAxes_getX(&pointer), static_cast<float32>(gameActivityContext.GetPrimaryScreen().GetHeight()) - GameActivityPointerAxes_getY(&pointer));
 
                     // Create touch
                     const Touch touch = Touch({

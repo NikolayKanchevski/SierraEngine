@@ -67,17 +67,19 @@ namespace SierraEngine
         }
 
         // Set up KTX texture create info
-        ktxTextureCreateInfo ktxTextureCreateInfo = { };
-        ktxTextureCreateInfo.vkFormat = ktxTextureFormat;
-        ktxTextureCreateInfo.baseWidth = baseWidth;
-        ktxTextureCreateInfo.baseHeight = baseHeight;
-        ktxTextureCreateInfo.baseDepth = 1;
-        ktxTextureCreateInfo.numDimensions = 2;
-        ktxTextureCreateInfo.numLevels = mipLevelCount;
-        ktxTextureCreateInfo.numLayers = static_cast<uint32>(compressInfo.filePaths.size());
-        ktxTextureCreateInfo.numFaces = 1;
-        ktxTextureCreateInfo.isArray = KTX_FALSE;
-        ktxTextureCreateInfo.generateMipmaps = KTX_FALSE;
+        ktxTextureCreateInfo ktxTextureCreateInfo
+        {
+            .vkFormat = ktxTextureFormat,
+            .baseWidth = baseWidth,
+            .baseHeight = baseHeight,
+            .baseDepth = 1,
+            .numDimensions = 2,
+            .numLevels = mipLevelCount,
+            .numLayers = static_cast<uint32>(compressInfo.filePaths.size()),
+            .numFaces = 1,
+            .isArray = KTX_FALSE,
+            .generateMipmaps = KTX_FALSE
+        };
 
         // Create KTX texture
         ktxTexture2* ktxTexture2 = nullptr;
@@ -148,11 +150,14 @@ namespace SierraEngine
         if (compressInfo.compressionLevel != ImageSupercompressionLevel::None && (baseWidth > MINIMUM_DIMENSIONS_FOR_COMPRESSION && baseHeight > MINIMUM_DIMENSIONS_FOR_COMPRESSION))
         {
             // Set up Basis Universal settings
-            ktxBasisParams basisParams = { };
-            basisParams.structSize = sizeof(ktxBasisParams);
-            basisParams.uastc = compressInfo.qualityLevel == ImageSupercompressionQualityLevel::High || compressInfo.qualityLevel == ImageSupercompressionQualityLevel::VeryHigh;
-            basisParams.verbose = KTX_FALSE;
-            basisParams.threadCount = std::thread::hardware_concurrency();
+            ktxBasisParams basisParams
+            {
+                .structSize = sizeof(ktxBasisParams),
+                .uastc = compressInfo.qualityLevel == ImageSupercompressionQualityLevel::High || compressInfo.qualityLevel == ImageSupercompressionQualityLevel::VeryHigh,
+                .verbose = KTX_FALSE,
+                .threadCount = std::thread::hardware_concurrency(),
+                .normalMap = compressInfo.normalMap
+            };
             switch (compressInfo.qualityLevel)
             {
                 case ImageSupercompressionQualityLevel::Lowest:           { basisParams.qualityLevel = 1; break; }
@@ -172,7 +177,6 @@ namespace SierraEngine
                 case ImageSupercompressionLevel::High:             { basisParams.compressionLevel = 4; break; }
                 case ImageSupercompressionLevel::VeryHigh:         { basisParams.compressionLevel = 5; break; }
             }
-            basisParams.normalMap = compressInfo.normalMap;
 
             // Compress KTX texture into Basis Universal
             result = ktxTexture2_CompressBasisEx(ktxTexture2, &basisParams);

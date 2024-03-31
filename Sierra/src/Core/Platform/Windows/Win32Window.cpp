@@ -26,11 +26,13 @@ namespace Sierra
             const Win32Screen &screen = win32Context.GetWindowScreen(window);
 
             // Construct rect
-            RECT rect = { };
-            rect.left = screen.GetWorkAreaOrigin().x;
-            rect.right = screen.GetWorkAreaOrigin().x + static_cast<LONG>(screen.GetWorkAreaSize().x);
-            rect.top = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYBORDER);
-            rect.bottom = static_cast<LONG>(screen.GetWorkAreaSize().y);
+            RECT rect
+            {
+                .left = screen.GetWorkAreaOrigin().x,
+                .right = screen.GetWorkAreaOrigin().x + static_cast<LONG>(screen.GetWorkAreaWidth()),
+                .top = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYBORDER),
+                .bottom = static_cast<LONG>(screen.GetWorkAreaHeight())
+            };
 
             // Resize
             win32Context.AdjustWindowRectForDPI(window, rect);
@@ -161,18 +163,32 @@ namespace Sierra
         return { position.x, position.y - (GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYBORDER) * 2) };
     }
 
-    Vector2UInt Win32Window::GetSize() const
+    uint32 Win32Window::GetWidth() const
     {
         RECT rect = { };
         GetWindowRect(window, &rect);
-        return { rect.right - rect.left, rect.bottom - rect.top };
+        return rect.right - rect.left;
     }
 
-    Vector2UInt Win32Window::GetFramebufferSize() const
+    uint32 Win32Window::GetHeight() const
+    {
+        RECT rect = { };
+        GetWindowRect(window, &rect);
+        return rect.bottom - rect.top;
+    }
+
+    uint32 Win32Window::GetFramebufferWidth() const
     {
         RECT rect = { };
         GetClientRect(window, &rect);
-        return { rect.right - rect.left, rect.bottom - rect.top };
+        return rect.right - rect.left;
+    }
+
+    uint32 Win32Window::GetFramebufferHeight() const
+    {
+        RECT rect = { };
+        GetClientRect(window, &rect);
+        return rect.bottom - rect.top;
     }
 
     float32 Win32Window::GetOpacity() const
@@ -299,7 +315,7 @@ namespace Sierra
                         break;
                     }
 
-                    window->GetWindowResizeDispatcher().DispatchEvent(window->GetSize());
+                    window->GetWindowResizeDispatcher().DispatchEvent(window->GetWidth(), window->GetHeight());
                     break;
                 }
                 case WM_SETFOCUS:

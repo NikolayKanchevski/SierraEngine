@@ -129,12 +129,14 @@ namespace SierraEngine
                 }
 
             // Re-use outdated info and define serialization info
-            TextureSerializeInfo serializeInfo = { };
-            serializeInfo.type = serializedTexture.type;
-            serializeInfo.filtering = serializedTexture.filtering;
-            serializeInfo.compressorType = serializedTexture.compressorType != ImageSupercompressorType::Undefined ? serializedTexture.compressorType : ImageSupercompressorType::KTX;
-            serializeInfo.compressionLevel = ImageSupercompressionLevel::Standard;
-            serializeInfo.qualityLevel = ImageSupercompressionQualityLevel::Standard;
+            const TextureSerializeInfo serializeInfo
+            {
+                .type = serializedTexture.type,
+                .filtering = serializedTexture.filtering,
+                .compressorType = serializedTexture.compressorType != ImageSupercompressorType::Undefined ? serializedTexture.compressorType : ImageSupercompressorType::KTX,
+                .compressionLevel = ImageSupercompressionLevel::Standard,
+                .qualityLevel = ImageSupercompressionQualityLevel::Standard
+            };
 
             // Re-serialize and re-import texture
             if (!SerializeTexture(filePath, serializeInfo))

@@ -15,23 +15,25 @@ namespace Sierra
         SR_ERROR_IF(!device.IsSamplerAnisotropySupported(createInfo.anisotropy), "[Vulkan]: Cannot create sampler [{0}] with unsupported sample mode! Use Device::IsSamplerAnisotropySupported() to query support.", GetName());
 
         // Set up sampler create info
-        VkSamplerCreateInfo samplerCreateInfo = { };
-        samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        samplerCreateInfo.magFilter = SamplerSampleModeToVkFilter(createInfo.filter);
-        samplerCreateInfo.minFilter = samplerCreateInfo.magFilter;
-        samplerCreateInfo.mipmapMode = SamplerSampleModeToVkSamplerMipMapMode(createInfo.filter);
-        samplerCreateInfo.addressModeU = SamplerExtendModeToVkSamplerAddressMode(createInfo.extendMode);
-        samplerCreateInfo.addressModeV = samplerCreateInfo.addressModeU;
-        samplerCreateInfo.addressModeW = samplerCreateInfo.addressModeU;
-        samplerCreateInfo.mipLodBias = 0.0f;
-        samplerCreateInfo.anisotropyEnable = createInfo.anisotropy != SamplerAnisotropy::x1;
-        samplerCreateInfo.maxAnisotropy = samplerCreateInfo.anisotropyEnable ? SamplerAnisotropyToFloat32(createInfo.anisotropy) : 1.0f;
-        samplerCreateInfo.compareEnable = createInfo.compareOperation != SamplerCompareOperation::None;
-        samplerCreateInfo.compareOp = samplerCreateInfo.compareEnable ? SamplerCompareOperationToVkCompareOp(createInfo.compareOperation) : VK_COMPARE_OP_ALWAYS;
-        samplerCreateInfo.minLod = 0.0f;
-        samplerCreateInfo.maxLod = static_cast<float32>(createInfo.highestSampledMipLevel);
-        samplerCreateInfo.borderColor = SamplerBorderColorToVkBorderColor(createInfo.borderColor);
-        samplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
+        const VkSamplerCreateInfo samplerCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+            .magFilter = SamplerSampleModeToVkFilter(createInfo.filter),
+            .minFilter = samplerCreateInfo.magFilter,
+            .mipmapMode = SamplerSampleModeToVkSamplerMipMapMode(createInfo.filter),
+            .addressModeU = SamplerExtendModeToVkSamplerAddressMode(createInfo.extendMode),
+            .addressModeV = samplerCreateInfo.addressModeU,
+            .addressModeW = samplerCreateInfo.addressModeU,
+            .mipLodBias = 0.0f,
+            .anisotropyEnable = createInfo.anisotropy != SamplerAnisotropy::x1,
+            .maxAnisotropy = samplerCreateInfo.anisotropyEnable ? SamplerAnisotropyToFloat32(createInfo.anisotropy) : 1.0f,
+            .compareEnable = createInfo.compareOperation != SamplerCompareOperation::None,
+            .compareOp = samplerCreateInfo.compareEnable ? SamplerCompareOperationToVkCompareOp(createInfo.compareOperation) : VK_COMPARE_OP_ALWAYS,
+            .minLod = 0.0f,
+            .maxLod = static_cast<float32>(createInfo.highestSampledMipLevel),
+            .borderColor = SamplerBorderColorToVkBorderColor(createInfo.borderColor),
+            .unnormalizedCoordinates = VK_FALSE,
+        };
 
         // Create sampler
         const VkResult result = device.GetFunctionTable().vkCreateSampler(device.GetLogicalDevice(), &samplerCreateInfo, nullptr, &sampler);

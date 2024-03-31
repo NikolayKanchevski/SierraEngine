@@ -81,7 +81,7 @@ namespace Sierra
         constexpr ImageUsage FONT_ATLAS_IMAGE_USAGE = ImageUsage::Sample | ImageUsage::DestinationMemory;
 
         // Create default font atlas image
-        SR_ERROR_IF(!renderingContext.GetDevice().IsImageFormatSupported(FONT_ATLAS_IMAGE_FORMAT, FONT_ATLAS_IMAGE_USAGE), "Cannot create default ImGui font, as required image format [{ .channels = ImageChannels::R, .memoryType = ImageMemoryType::UNorm8 }] is unsupported!");
+        SR_ERROR_IF(!renderingContext.GetDevice().IsImageFormatSupported(FONT_ATLAS_IMAGE_FORMAT, FONT_ATLAS_IMAGE_USAGE), "Cannot create default ImGui font, as required image format [ .channels = ImageChannels::R, .memoryType = ImageMemoryType::UNorm8 ] is unsupported!");
         sharedResources.defaultFontAtlas = renderingContext.CreateImage({
             .name = "Shared ImGui Render Task font atlas",
             .width = static_cast<uint32>(atlasWidth),
@@ -339,11 +339,13 @@ namespace Sierra
         commandBuffer->BindIndexBuffer(indexBuffer);
 
         // Bind perspective settings
-        PushConstant pushConstant = { };
-        pushConstant.fontAtlasIndex = sharedResources.resourceTableFontAtlasIndex;
-        pushConstant.fontSamplerIndex = sharedResources.resourceTableFontSamplerIndex;
-        pushConstant.translation = { -1.0f, 1.0f };
-        pushConstant.scale = { scaling / drawData->DisplaySize.x, -scaling / drawData->DisplaySize.y };
+        const PushConstant pushConstant
+        {
+            .fontAtlasIndex = sharedResources.resourceTableFontAtlasIndex,
+            .fontSamplerIndex = sharedResources.resourceTableFontSamplerIndex,
+            .translation = { -1.0f, 1.0f },
+            .scale = { 2.0f / drawData->DisplaySize.x, -2.0f / drawData->DisplaySize.y }
+        };
         commandBuffer->PushConstants(&pushConstant, sizeof(PushConstant));
 
         uint32 vertexOffset = 0;

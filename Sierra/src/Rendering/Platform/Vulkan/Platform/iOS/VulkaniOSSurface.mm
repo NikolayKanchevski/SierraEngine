@@ -15,9 +15,11 @@ namespace Sierra
         const UIKitWindow &uiKitWindow = static_cast<const UIKitWindow&>(*window);
 
         // Set up surface create info
-        VkMetalSurfaceCreateInfoEXT surfaceCreateInfo = { };
-        surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
-        surfaceCreateInfo.pLayer = reinterpret_cast<CAMetalLayer*>(uiKitWindow.GetUIView().layer);
+        const VkMetalSurfaceCreateInfoEXT surfaceCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT,
+            .pLayer = reinterpret_cast<CAMetalLayer*>(uiKitWindow.GetUIView().layer)
+        };
 
         // Create surface
         VkSurfaceKHR surface;

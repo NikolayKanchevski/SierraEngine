@@ -52,11 +52,13 @@ namespace Sierra
 
         // Set up submit info
         const VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        VkSubmitInfo submitInfo = { };
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = &isImageAcquiredSemaphores[currentFrame];
-        submitInfo.pWaitDstStageMask = &waitStage;
+        const VkSubmitInfo submitInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &isImageAcquiredSemaphores[currentFrame],
+            .pWaitDstStageMask = &waitStage
+        };
 
         // Wait until swapchain image has been acquired and is ready to be worked on
         result = device.GetFunctionTable().vkQueueSubmit(device.GetGeneralQueue(), 1, &submitInfo, VK_NULL_HANDLE);
@@ -68,43 +70,51 @@ namespace Sierra
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot present swapchain [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
         const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
 
-        // Set up semaphore submit info
         const uint64 waitValue = vulkanCommandBuffer.GetCompletionSignalValue();
-        constexpr uint64 binarySignalValue = 1;
-        VkTimelineSemaphoreSubmitInfoKHR semaphoreSubmitInfo = { };
-        semaphoreSubmitInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
-        semaphoreSubmitInfo.waitSemaphoreValueCount = 1;
-        semaphoreSubmitInfo.pWaitSemaphoreValues = &waitValue;
-        semaphoreSubmitInfo.signalSemaphoreValueCount = 1;
-        semaphoreSubmitInfo.pSignalSemaphoreValues = &binarySignalValue; // Simply using 1, as we are signalling a binary semaphore
+        constexpr uint64 BINARY_SEMAPHORE_SIGNAL_VALUE = 1;
+
+        // Set up semaphore submit info
+        const VkTimelineSemaphoreSubmitInfoKHR semaphoreSubmitInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
+            .waitSemaphoreValueCount = 1,
+            .pWaitSemaphoreValues = &waitValue,
+            .signalSemaphoreValueCount = 1,
+            .pSignalSemaphoreValues = &BINARY_SEMAPHORE_SIGNAL_VALUE // Simply using 1, as we are signalling a binary semaphore
+        };
 
         // Set up submit info
         const VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         VkSemaphore waitSemaphore = device.GetGeneralTimelineSemaphore();
-        VkSubmitInfo submitInfo = { };
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = &waitSemaphore;
-        submitInfo.pWaitDstStageMask = &waitStage;
-        submitInfo.commandBufferCount = 0;
-        submitInfo.pCommandBuffers = nullptr;
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = &isImagePresentedSemaphores[currentFrame];
-        submitInfo.pNext = &semaphoreSubmitInfo;
+
+        const VkSubmitInfo submitInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = &semaphoreSubmitInfo,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &waitSemaphore,
+            .pWaitDstStageMask = &waitStage,
+            .commandBufferCount = 0,
+            .pCommandBuffers = nullptr,
+            .signalSemaphoreCount = 1,
+            .pSignalSemaphores = &isImagePresentedSemaphores[currentFrame]
+        };
 
         // Wait for timeline semaphore to signal, and signal the binary one as well, as VkPresentInfoKHR forbids passing timeline one to it
         VkResult result = device.GetFunctionTable().vkQueueSubmit(device.GetGeneralQueue(), 1, &submitInfo, VK_NULL_HANDLE);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not wait for timeline semaphore on swapchain [{1}]! Error code: {2}.", commandBuffer->GetName(), GetName(), result);
 
         // Set up presentation info
-        VkPresentInfoKHR presentInfo = { };
-        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = &isImagePresentedSemaphores[currentFrame];
-        presentInfo.swapchainCount = 1;
-        presentInfo.pSwapchains = &swapchain;
-        presentInfo.pImageIndices = &currentImage;
-        presentInfo.pResults = nullptr;
+        const VkPresentInfoKHR presentInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &isImagePresentedSemaphores[currentFrame],
+            .swapchainCount = 1,
+            .pSwapchains = &swapchain,
+            .pImageIndices = &currentImage,
+            .pResults = nullptr
+        };
 
         // Submit presentation queue and resize the swapchain if needed
         result = device.GetFunctionTable().vkQueuePresentKHR(presentationQueue, &presentInfo);
@@ -234,33 +244,28 @@ namespace Sierra
         const uint32 preferredConcurrentFrameCount = glm::clamp(3U, surfaceCapabilities.minImageCount, glm::max(surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount));
 
         // Set up swapchain creation info
-        VkSwapchainCreateInfoKHR swapchainCreateInfo = { };
-        swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        swapchainCreateInfo.surface = surface;
-        swapchainCreateInfo.imageFormat = selectedFormat.format;
-        swapchainCreateInfo.imageColorSpace = selectedFormat.colorSpace;
-        swapchainCreateInfo.minImageCount = preferredConcurrentFrameCount;
-        swapchainCreateInfo.imageExtent.width = glm::clamp(window->GetFramebufferSize().x, surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width);
-        swapchainCreateInfo.imageExtent.height = glm::clamp(window->GetFramebufferSize().y, surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height);
-        swapchainCreateInfo.imageArrayLayers = 1;
-        swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-        swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        swapchainCreateInfo.presentMode = selectedPresentMode;
-        swapchainCreateInfo.clipped = VK_TRUE;
-        swapchainCreateInfo.preTransform = surfaceCapabilities.currentTransform;
-        swapchainCreateInfo.oldSwapchain = swapchain;
-        if (device.GetGeneralQueueFamily() != presentationQueueFamily)
+        const VkSwapchainCreateInfoKHR swapchainCreateInfo
         {
-            swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-            swapchainCreateInfo.queueFamilyIndexCount = 2;
-            swapchainCreateInfo.pQueueFamilyIndices = sharedQueueFamilyIndices.data();
-        }
-        else
-        {
-            swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-            swapchainCreateInfo.queueFamilyIndexCount = 0;
-            swapchainCreateInfo.pQueueFamilyIndices = nullptr;
-        }
+            .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+            .surface = surface,
+            .minImageCount = preferredConcurrentFrameCount,
+            .imageFormat = selectedFormat.format,
+            .imageColorSpace = selectedFormat.colorSpace,
+            .imageExtent = {
+                .width = glm::clamp(window->GetWidth(), surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width),
+                .height = glm::clamp(window->GetHeight(), surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height)
+            },
+            .imageArrayLayers = 1,
+            .imageUsage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+            .imageSharingMode = static_cast<VkSharingMode>(device.GetGeneralQueueFamily() != presentationQueueFamily), // VK_SHARING_MODE_CONCURRENT if queues are unique, otherwise VK_SHARING_MODE_EXCLUSIVE
+            .queueFamilyIndexCount = static_cast<uint32_t>(static_cast<uint32>(device.GetGeneralQueueFamily() != presentationQueueFamily) * sharedQueueFamilyIndices.size()),
+            .pQueueFamilyIndices = sharedQueueFamilyIndices.data(),
+            .preTransform = surfaceCapabilities.currentTransform,
+            .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+            .presentMode = selectedPresentMode,
+            .clipped = VK_TRUE,
+            .oldSwapchain = swapchain
+        };
 
         // Create swapchain
         VkResult result = device.GetFunctionTable().vkCreateSwapchainKHR(device.GetLogicalDevice(), &swapchainCreateInfo, nullptr, &swapchain);
@@ -273,7 +278,6 @@ namespace Sierra
         if (swapchainCreateInfo.oldSwapchain != VK_NULL_HANDLE)
         {
             device.GetFunctionTable().vkDestroySwapchainKHR(device.GetLogicalDevice(), swapchainCreateInfo.oldSwapchain, nullptr);
-            swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
         }
 
         // Get actual concurrent image count
@@ -301,13 +305,17 @@ namespace Sierra
     void VulkanSwapchain::CreateSynchronization()
     {
         // Set up semaphore create info
-        VkSemaphoreCreateInfo semaphoreCreateInfo = { };
-        semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        const VkSemaphoreCreateInfo semaphoreCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+        };
 
         // Set up fence create info
-        VkFenceCreateInfo fenceCreateInfo = { };
-        fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+        const VkFenceCreateInfo fenceCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+            .flags = VK_FENCE_CREATE_SIGNALED_BIT
+        };
 
         // Create sync objects
         isImageAcquiredSemaphores.resize(concurrentFrameCount);
@@ -339,7 +347,7 @@ namespace Sierra
         CreateSwapchain();
         const Vector2UInt newSize = { swapchainImages[0]->GetWidth(), swapchainImages[0]->GetHeight() };
 
-        if (lastSize != newSize) GetSwapchainResizeDispatcher().DispatchEvent(Vector2UInt(newSize));
+        if (lastSize != newSize) GetSwapchainResizeDispatcher().DispatchEvent(newSize.x, newSize.y);
     }
 
 }

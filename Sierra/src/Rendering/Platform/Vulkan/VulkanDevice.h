@@ -72,7 +72,7 @@ namespace Sierra
         const VulkanInstance &instance;
 
         std::string deviceName;
-        std::vector<hash> loadedExtensions;
+        std::vector<size> loadedExtensions;
 
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
         VkDevice logicalDevice = VK_NULL_HANDLE;

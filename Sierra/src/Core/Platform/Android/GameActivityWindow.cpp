@@ -105,15 +105,25 @@ namespace Sierra
     {
         return { 0, 0 };
     }
-
-    Vector2UInt GameActivityWindow::GetSize() const
+    
+    uint32 GameActivityWindow::GetWidth() const
     {
-        return { ANativeWindow_getWidth(window), ANativeWindow_getHeight(window) };
+        return ANativeWindow_getWidth(window);
     }
 
-    Vector2UInt GameActivityWindow::GetFramebufferSize() const
+    uint32 GameActivityWindow::GetHeight() const
     {
-        return { ANativeWindow_getWidth(window), ANativeWindow_getHeight(window) };
+        return ANativeWindow_getHeight(window);
+    }
+
+    uint32 GameActivityWindow::GetFramebufferWidth() const
+    {
+        return ANativeWindow_getWidth(window);
+    }
+
+    uint32 GameActivityWindow::GetFramebufferHeight() const
+    {
+        return ANativeWindow_getHeight(window);
     }
 
     float32 GameActivityWindow::GetOpacity() const

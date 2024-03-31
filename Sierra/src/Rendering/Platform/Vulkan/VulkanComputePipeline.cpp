@@ -18,19 +18,23 @@ namespace Sierra
         const VulkanShader &vulkanComputeShader = static_cast<VulkanShader&>(*createInfo.computeShader);
 
         // Set up only shader stage
-        VkPipelineShaderStageCreateInfo shaderStageCreateInfo = { };
-        shaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        shaderStageCreateInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-        shaderStageCreateInfo.module = vulkanComputeShader.GetVulkanShaderModule();
-        shaderStageCreateInfo.pName = "main";
+        const VkPipelineShaderStageCreateInfo shaderStageCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .stage = VK_SHADER_STAGE_COMPUTE_BIT,
+            .module = vulkanComputeShader.GetVulkanShaderModule(),
+            .pName = "main"
+        };
 
         // Set up compute pipeline create info
-        VkComputePipelineCreateInfo computePipelineCreateInfo = { };
-        computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-        computePipelineCreateInfo.stage = shaderStageCreateInfo;
-        computePipelineCreateInfo.layout = device.GetPipelineLayout(createInfo.pushConstantSize);
-        computePipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
-        computePipelineCreateInfo.basePipelineIndex = -1;
+        const VkComputePipelineCreateInfo computePipelineCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+            .stage = shaderStageCreateInfo,
+            .layout = device.GetPipelineLayout(createInfo.pushConstantSize),
+            .basePipelineHandle = VK_NULL_HANDLE,
+            .basePipelineIndex = -1
+        };
 
         // Create pipeline
         const VkResult result = device.GetFunctionTable().vkCreateComputePipelines(device.GetLogicalDevice(), VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &pipeline);

@@ -14,7 +14,7 @@ namespace Sierra
     {
         SR_ERROR_IF(createInfo.width == 0, "Width of image [{0}] must not be [0]!", createInfo.name);
         SR_ERROR_IF(createInfo.height == 0, "Height of image [{0}] must not be [0]!", createInfo.name);
-        SR_ERROR_IF(createInfo.format == ImageFormat::Undefined, "Format of image [{0}] must not be [ImageFormat::Undefined]!");
+        SR_ERROR_IF(createInfo.format == ImageFormat::Undefined, "Format of image [{0}] must not be [ImageFormat::Undefined]!", createInfo.name);
         SR_ERROR_IF(glm::ceil(static_cast<uint32>(static_cast<float32>(createInfo.width) / ImageFormatToBlockSize(createInfo.format)) * ImageFormatToBlockSize(createInfo.format)) != width, "Width of image [{0}] must be divisible by its format's block size!", createInfo.name);
         SR_ERROR_IF(glm::ceil(static_cast<uint32>(static_cast<float32>(createInfo.height) / ImageFormatToBlockSize(createInfo.format)) * ImageFormatToBlockSize(createInfo.format)) != height, "Width of image [{0}] must be divisible by its format's block size!", createInfo.name);
         SR_ERROR_IF(createInfo.mipLevelCount == 0, "Mip level count of image [{0}] must not be [0]!", createInfo.name);

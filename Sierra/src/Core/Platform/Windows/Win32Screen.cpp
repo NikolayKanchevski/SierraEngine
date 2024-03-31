@@ -12,8 +12,10 @@ namespace Sierra
     Win32Screen::Win32Screen(const Win32ScreenCreateInfo &createInfo)
     {
         // Allocate monitor info
-        MONITORINFOEX monitorInfo = { };
-        monitorInfo.cbSize = sizeof(MONITORINFOEX);
+        MONITORINFOEX monitorInfo
+        {
+            .cbSize = sizeof(MONITORINFOEX)
+        };
 
         // Get monitor info
         if (GetMonitorInfo(createInfo.hMonitor, &monitorInfo))
@@ -27,16 +29,17 @@ namespace Sierra
             workAreaOrigin = { monitorInfo.rcMonitor.left + (size.x - workAreaSize.x), monitorInfo.rcMonitor.top + (size.y - workAreaSize.y) };
 
             // Allocate display settings
-            DEVMODE displaySettings = { };
-            displaySettings.dmSize = sizeof(DEVMODE);
-            displaySettings.dmDriverExtra = 0;
+            DEVMODE displaySettings
+            {
+                .dmSize = sizeof(DEVMODE),
+                .dmDriverExtra = 0
+            };
 
             // Retrieve display settings
             if (EnumDisplaySettings(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &displaySettings)) refreshRate = displaySettings.dmDisplayFrequency;
 
             // Allocate device info
-            DISPLAY_DEVICEA displayDevice = { };
-            displayDevice.cb = sizeof(DISPLAY_DEVICEA);
+            DISPLAY_DEVICEA displayDevice = { .cb = sizeof(DISPLAY_DEVICEA) };
 
             // Retrieve device info
             if (EnumDisplayDevicesA(monitorInfo.szDevice, 0, &displayDevice, 0))

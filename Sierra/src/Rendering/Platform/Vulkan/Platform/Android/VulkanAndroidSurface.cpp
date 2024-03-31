@@ -13,9 +13,11 @@ namespace Sierra
         const GameActivityWindow &gameActivityWindow = static_cast<const GameActivityWindow&>(*window);
 
         // Set up surface create info
-        VkAndroidSurfaceCreateInfoKHR surfaceCreateInfo = { };
-        surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
-        surfaceCreateInfo.window = gameActivityWindow.GetNativeWindow();
+        const VkAndroidSurfaceCreateInfoKHR surfaceCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR,
+            .window = gameActivityWindow.GetNativeWindow()
+        };
 
         // Create surface
         VkSurfaceKHR surface;

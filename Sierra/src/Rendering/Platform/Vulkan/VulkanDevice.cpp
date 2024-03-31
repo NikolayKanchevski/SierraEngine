@@ -60,7 +60,7 @@ namespace Sierra
             .timelineSemaphore = VK_TRUE
         };
 
-        constexpr VkPhysicalDeviceFeatures DEVICE_FEATURES_TO_QUERY =
+        constexpr VkPhysicalDeviceFeatures DEVICE_FEATURES_TO_QUERY
         {
 
         };
@@ -177,9 +177,7 @@ namespace Sierra
         }
 
         // Set up enabled device features
-        VkPhysicalDeviceFeatures2 physicalDeviceFeatures2 = { };
-        physicalDeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        physicalDeviceFeatures2.features = DEVICE_FEATURES_TO_QUERY;
+        VkPhysicalDeviceFeatures2 physicalDeviceFeatures2 = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, .features = DEVICE_FEATURES_TO_QUERY };
 
         // Retrieve supported extension count
         uint32 supportedExtensionCount = 0;
@@ -190,7 +188,7 @@ namespace Sierra
         instance.GetFunctionTable().vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &supportedExtensionCount, supportedExtensions.data());
 
         // Define extensions array
-        std::array<const char*, DEVICE_EXTENSIONS_TO_QUERY.size()> extensions;
+        std::array<const char*, DEVICE_EXTENSIONS_TO_QUERY.size()> extensions{};
         loadedExtensions.resize(DEVICE_EXTENSIONS_TO_QUERY.size());
 
         // Load extensions
@@ -220,16 +218,18 @@ namespace Sierra
         }
 
         // Set up device create info
-        VkDeviceCreateInfo logicalDeviceCreateInfo = { };
-        logicalDeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        logicalDeviceCreateInfo.queueCreateInfoCount = static_cast<uint32>(queueCreateInfos.size());
-        logicalDeviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
-        logicalDeviceCreateInfo.enabledLayerCount = 0;
-        logicalDeviceCreateInfo.ppEnabledLayerNames = nullptr;
-        logicalDeviceCreateInfo.enabledExtensionCount = i;
-        logicalDeviceCreateInfo.ppEnabledExtensionNames = extensions.data();
-        logicalDeviceCreateInfo.pEnabledFeatures = nullptr;
-        logicalDeviceCreateInfo.pNext = &physicalDeviceFeatures2;
+        const VkDeviceCreateInfo logicalDeviceCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+            .pNext = &physicalDeviceFeatures2,
+            .queueCreateInfoCount = static_cast<uint32>(queueCreateInfos.size()),
+            .pQueueCreateInfos = queueCreateInfos.data(),
+            .enabledLayerCount = 0,
+            .ppEnabledLayerNames = nullptr,
+            .enabledExtensionCount = i,
+            .ppEnabledExtensionNames = extensions.data(),
+            .pEnabledFeatures = nullptr
+        };
 
         // Create logical device
         result = instance.GetFunctionTable().vkCreateDevice(physicalDevice, &logicalDeviceCreateInfo, nullptr, &logicalDevice);
@@ -1022,51 +1022,49 @@ namespace Sierra
         #pragma endregion
 
         // Get Vulkan function pointers
-        VmaVulkanFunctions vulkanFunctions = { };
-        vulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
-        vulkanFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
-        vulkanFunctions.vkGetPhysicalDeviceProperties = instance.GetFunctionTable().vkGetPhysicalDeviceProperties;
-        vulkanFunctions.vkGetPhysicalDeviceMemoryProperties = instance.GetFunctionTable().vkGetPhysicalDeviceMemoryProperties;
-        vulkanFunctions.vkAllocateMemory = functionTable.vkAllocateMemory;
-        vulkanFunctions.vkFreeMemory = functionTable.vkFreeMemory;
-        vulkanFunctions.vkMapMemory = functionTable.vkMapMemory;
-        vulkanFunctions.vkUnmapMemory = functionTable.vkUnmapMemory;
-        vulkanFunctions.vkFlushMappedMemoryRanges = functionTable.vkFlushMappedMemoryRanges;
-        vulkanFunctions.vkInvalidateMappedMemoryRanges = functionTable.vkInvalidateMappedMemoryRanges;
-        vulkanFunctions.vkBindBufferMemory = functionTable.vkBindBufferMemory;
-        vulkanFunctions.vkBindImageMemory = functionTable.vkBindImageMemory;
-        vulkanFunctions.vkGetBufferMemoryRequirements = functionTable.vkGetBufferMemoryRequirements;
-        vulkanFunctions.vkGetImageMemoryRequirements = functionTable.vkGetImageMemoryRequirements;
-        vulkanFunctions.vkCreateBuffer = functionTable.vkCreateBuffer;
-        vulkanFunctions.vkDestroyBuffer = functionTable.vkDestroyBuffer;
-        vulkanFunctions.vkCreateImage = functionTable.vkCreateImage;
-        vulkanFunctions.vkDestroyImage = functionTable.vkDestroyImage;
-        vulkanFunctions.vkCmdCopyBuffer = functionTable.vkCmdCopyBuffer;
-        if (instance.GetAPIVersion() >= Version({ 1, 1, 0 }))
+        const VmaVulkanFunctions vulkanFunctions
         {
-            vulkanFunctions.vkGetBufferMemoryRequirements2KHR = functionTable.vkGetBufferMemoryRequirements2;
-            vulkanFunctions.vkGetImageMemoryRequirements2KHR = functionTable.vkGetImageMemoryRequirements2;
-            vulkanFunctions.vkBindBufferMemory2KHR = functionTable.vkBindBufferMemory2;
-            vulkanFunctions.vkBindImageMemory2KHR = functionTable.vkBindImageMemory2;
-            vulkanFunctions.vkGetPhysicalDeviceMemoryProperties2KHR = instance.GetFunctionTable().vkGetPhysicalDeviceMemoryProperties2;
-        }
-        if (instance.GetAPIVersion() >= Version({ 1, 3, 0 }))
-        {
-            vulkanFunctions.vkGetDeviceBufferMemoryRequirements = functionTable.vkGetDeviceBufferMemoryRequirements;
-            vulkanFunctions.vkGetDeviceImageMemoryRequirements = functionTable.vkGetDeviceImageMemoryRequirements;
-        }
+            .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
+            .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
+            .vkGetPhysicalDeviceProperties = instance.GetFunctionTable().vkGetPhysicalDeviceProperties,
+            .vkGetPhysicalDeviceMemoryProperties = instance.GetFunctionTable().vkGetPhysicalDeviceMemoryProperties,
+            .vkAllocateMemory = functionTable.vkAllocateMemory,
+            .vkFreeMemory = functionTable.vkFreeMemory,
+            .vkMapMemory = functionTable.vkMapMemory,
+            .vkUnmapMemory = functionTable.vkUnmapMemory,
+            .vkFlushMappedMemoryRanges = functionTable.vkFlushMappedMemoryRanges,
+            .vkInvalidateMappedMemoryRanges = functionTable.vkInvalidateMappedMemoryRanges,
+            .vkBindBufferMemory = functionTable.vkBindBufferMemory,
+            .vkBindImageMemory = functionTable.vkBindImageMemory,
+            .vkGetBufferMemoryRequirements = functionTable.vkGetBufferMemoryRequirements,
+            .vkGetImageMemoryRequirements = functionTable.vkGetImageMemoryRequirements,
+            .vkCreateBuffer = functionTable.vkCreateBuffer,
+            .vkDestroyBuffer = functionTable.vkDestroyBuffer,
+            .vkCreateImage = functionTable.vkCreateImage,
+            .vkDestroyImage = functionTable.vkDestroyImage,
+            .vkCmdCopyBuffer = functionTable.vkCmdCopyBuffer,
+            // Vulkan 1.1.0 Functions
+            .vkGetBufferMemoryRequirements2KHR = functionTable.vkGetBufferMemoryRequirements2,
+            .vkGetImageMemoryRequirements2KHR = functionTable.vkGetImageMemoryRequirements2,
+            .vkBindBufferMemory2KHR = functionTable.vkBindBufferMemory2,
+            .vkBindImageMemory2KHR = functionTable.vkBindImageMemory2,
+            .vkGetPhysicalDeviceMemoryProperties2KHR = instance.GetFunctionTable().vkGetPhysicalDeviceMemoryProperties2,
+            // Vulkan 1.3.0 Functions
+            .vkGetDeviceBufferMemoryRequirements = functionTable.vkGetDeviceBufferMemoryRequirements,
+            .vkGetDeviceImageMemoryRequirements = functionTable.vkGetDeviceImageMemoryRequirements
+        };
 
         // Set up allocator create info
-        VmaAllocatorCreateInfo vmaCreteInfo = { };
-        vmaCreteInfo.instance = instance.GetVulkanInstance();
-        vmaCreteInfo.physicalDevice = physicalDevice;
-        vmaCreteInfo.device = logicalDevice;
-        vmaCreteInfo.pVulkanFunctions = &vulkanFunctions;
-        vmaCreteInfo.flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
-
-        // Determine API version
         const Version version = instance.GetAPIVersion();
-        vmaCreteInfo.vulkanApiVersion = VK_MAKE_API_VERSION(0, version.GetMajor(), version.GetMinor(), version.GetPatch());
+        const VmaAllocatorCreateInfo vmaCreteInfo
+        {
+            .flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT,
+            .physicalDevice = physicalDevice,
+            .device = logicalDevice,
+            .pVulkanFunctions = &vulkanFunctions,
+            .instance = instance.GetVulkanInstance(),
+            .vulkanApiVersion = VK_MAKE_API_VERSION(0, version.GetMajor(), version.GetMinor(), version.GetPatch())
+        };
 
         // Create allocator
         vmaCreateAllocator(&vmaCreteInfo, &vmaAllocator);
@@ -1085,15 +1083,19 @@ namespace Sierra
             SR_ERROR_IF(!IsExtensionLoaded(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME), "[Vulkan]: Cannot create global timeline semaphore of device [{0}], as it does not support the {1} extension!", GetName(), VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
 
             // Set up semaphore type
-            VkSemaphoreTypeCreateInfo semaphoreTypeCreateInfo = { };
-            semaphoreTypeCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
-            semaphoreTypeCreateInfo.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
-            semaphoreTypeCreateInfo.initialValue = 0;
+            const VkSemaphoreTypeCreateInfo semaphoreTypeCreateInfo
+            {
+                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
+                .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE,
+                .initialValue = 0
+            };
 
             // Set up shared semaphore create info
-            VkSemaphoreCreateInfo semaphoreCreateInfo = { };
-            semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-            semaphoreCreateInfo.pNext = &semaphoreTypeCreateInfo;
+            const VkSemaphoreCreateInfo semaphoreCreateInfo
+            {
+                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+                .pNext = &semaphoreTypeCreateInfo
+            };
 
             // Create shared fence
             result = functionTable.vkCreateSemaphore(logicalDevice, &semaphoreCreateInfo, nullptr, &generalTimelineSemaphore);
@@ -1105,65 +1107,92 @@ namespace Sierra
             SR_ERROR_IF(!IsExtensionLoaded(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME), "[Vulkan]: Cannot create global descriptor set of device [{0}], as it does not support the {1} extension!", GetName(), VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 
             // Retrieve descriptor indexing properties
-            VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
-            descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
+            VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
             GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
 
             // Set up bindings (one for each resource type)
-            std::array<VkDescriptorSetLayoutBinding, BINDLESS_BINDING_COUNT> descriptorSetBindings;
-            descriptorSetBindings[0].binding = BINDLESS_UNIFORM_BUFFER_BINDING;
-            descriptorSetBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptorSetBindings[0].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers;
-            descriptorSetBindings[0].stageFlags = VK_SHADER_STAGE_ALL;
-            descriptorSetBindings[0].pImmutableSamplers = nullptr;
-            descriptorSetBindings[1].binding = BINDLESS_STORAGE_BUFFER_BINDING;
-            descriptorSetBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            descriptorSetBindings[1].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers;
-            descriptorSetBindings[1].stageFlags = VK_SHADER_STAGE_ALL;
-            descriptorSetBindings[1].pImmutableSamplers = nullptr;
-            descriptorSetBindings[2].binding = BINDLESS_SAMPLED_IMAGE_BINDING;
-            descriptorSetBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            descriptorSetBindings[2].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2;
-            descriptorSetBindings[2].stageFlags = VK_SHADER_STAGE_ALL;
-            descriptorSetBindings[2].pImmutableSamplers = nullptr;
-            descriptorSetBindings[3].binding = BINDLESS_SAMPLED_CUBEMAP_BINDING;
-            descriptorSetBindings[3].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            descriptorSetBindings[3].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2;
-            descriptorSetBindings[3].stageFlags = VK_SHADER_STAGE_ALL;
-            descriptorSetBindings[3].pImmutableSamplers = nullptr;
-            descriptorSetBindings[4].binding = BINDLESS_STORAGE_IMAGE_BINDING;
-            descriptorSetBindings[4].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-            descriptorSetBindings[4].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2;
-            descriptorSetBindings[4].stageFlags = VK_SHADER_STAGE_ALL;
-            descriptorSetBindings[4].pImmutableSamplers = nullptr;
-            descriptorSetBindings[5].binding = BINDLESS_STORAGE_CUBEMAP_BINDING;
-            descriptorSetBindings[5].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-            descriptorSetBindings[5].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2;
-            descriptorSetBindings[5].stageFlags = VK_SHADER_STAGE_ALL;
-            descriptorSetBindings[5].pImmutableSamplers = nullptr;
-            descriptorSetBindings[6].binding = BINDLESS_SAMPLER_BINDING;
-            descriptorSetBindings[6].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-            descriptorSetBindings[6].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers;
-            descriptorSetBindings[6].stageFlags = VK_SHADER_STAGE_ALL;
-            descriptorSetBindings[6].pImmutableSamplers = nullptr;
+            const std::array<VkDescriptorSetLayoutBinding, BINDLESS_BINDING_COUNT> descriptorSetBindings
+            {
+                VkDescriptorSetLayoutBinding {
+                    .binding = BINDLESS_UNIFORM_BUFFER_BINDING,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                    .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers,
+                    .stageFlags = VK_SHADER_STAGE_ALL,
+                    .pImmutableSamplers = nullptr
+                },
+                VkDescriptorSetLayoutBinding {
+                    .binding = BINDLESS_STORAGE_BUFFER_BINDING,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                    .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers,
+                    .stageFlags = VK_SHADER_STAGE_ALL,
+                    .pImmutableSamplers = nullptr
+                },
+                VkDescriptorSetLayoutBinding {
+                    .binding = BINDLESS_SAMPLED_IMAGE_BINDING,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                    .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2,
+                    .stageFlags = VK_SHADER_STAGE_ALL,
+                    .pImmutableSamplers = nullptr
+                },
+                VkDescriptorSetLayoutBinding {
+                    .binding = BINDLESS_SAMPLED_CUBEMAP_BINDING,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                    .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2,
+                    .stageFlags = VK_SHADER_STAGE_ALL,
+                    .pImmutableSamplers = nullptr
+                },
+                VkDescriptorSetLayoutBinding {
+                        .binding = BINDLESS_STORAGE_IMAGE_BINDING,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                    .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2,
+                    .stageFlags = VK_SHADER_STAGE_ALL,
+                    .pImmutableSamplers = nullptr,
+                },
+                VkDescriptorSetLayoutBinding {
+                    .binding = BINDLESS_STORAGE_CUBEMAP_BINDING,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                    .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2,
+                    .stageFlags = VK_SHADER_STAGE_ALL,
+                    .pImmutableSamplers = nullptr,
+                },
+                VkDescriptorSetLayoutBinding {
+                    .binding = BINDLESS_SAMPLER_BINDING,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+                    .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers,
+                    .stageFlags = VK_SHADER_STAGE_ALL,
+                    .pImmutableSamplers = nullptr
+                }
+            };
 
             // Set up flags
-            std::array<VkDescriptorBindingFlagsEXT, BINDLESS_BINDING_COUNT> bindingFlags;
-            bindingFlags.fill(VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT);
+            constexpr std::array<VkDescriptorBindingFlagsEXT, BINDLESS_BINDING_COUNT> BINDING_FLAGS
+            {
+                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
+                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
+                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
+                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
+                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
+                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
+                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT
+            };
 
             // Set up flags create info
-            VkDescriptorSetLayoutBindingFlagsCreateInfoEXT bindingFlagsCreateInfo = { };
-            bindingFlagsCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
-            bindingFlagsCreateInfo.bindingCount = bindingFlags.size();
-            bindingFlagsCreateInfo.pBindingFlags = bindingFlags.data();
+            const VkDescriptorSetLayoutBindingFlagsCreateInfoEXT bindingFlagsCreateInfo
+            {
+                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT,
+                .bindingCount = BINDING_FLAGS.size(),
+                .pBindingFlags = BINDING_FLAGS.data()
+            };
 
             // Set up layout create info
-            VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = { };
-            descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-            descriptorSetLayoutCreateInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT;
-            descriptorSetLayoutCreateInfo.bindingCount = descriptorSetBindings.size();
-            descriptorSetLayoutCreateInfo.pBindings = descriptorSetBindings.data();
-            descriptorSetLayoutCreateInfo.pNext = &bindingFlagsCreateInfo;
+            const VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo
+            {
+                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+                .pNext = &bindingFlagsCreateInfo,
+                .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT,
+                .bindingCount = descriptorSetBindings.size(),
+                .pBindings = descriptorSetBindings.data()
+            };
 
             // Create bindless descriptor set layout
             result = functionTable.vkCreateDescriptorSetLayout(logicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &generalDescriptorSetLayout);
@@ -1174,10 +1203,12 @@ namespace Sierra
         // Pre-create all pipeline layout variants
         {
             // Set up layout create info
-            VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { };
-            pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            pipelineLayoutCreateInfo.setLayoutCount = 1;
-            pipelineLayoutCreateInfo.pSetLayouts = &generalDescriptorSetLayout;
+            VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo
+            {
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+                .setLayoutCount = 1,
+                .pSetLayouts = &generalDescriptorSetLayout
+            };
             
             // Create first layout (without push constants)
             result = functionTable.vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &generalPipelineLayouts[0]);
@@ -1185,14 +1216,16 @@ namespace Sierra
             SetObjectName(generalPipelineLayouts[0], VK_OBJECT_TYPE_PIPELINE_LAYOUT, "General pipeline layout [0] of device [" + std::string(GetName()) + "]");
 
             // Set up push constant range (size is to be updated)
-            VkPushConstantRange pushConstantRange = { };
-            pushConstantRange.stageFlags = VK_SHADER_STAGE_ALL;
-            pushConstantRange.offset = 0;
-            pushConstantRange.size = 0;
-            pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-            pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
+            VkPushConstantRange pushConstantRange
+            {
+                .stageFlags = VK_SHADER_STAGE_ALL,
+                .offset = 0,
+                .size = 0
+            };
 
             // Create layouts
+            pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+            pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
             for (i = 1; i < generalPipelineLayouts.size(); i++)
             {
                 pushConstantRange.size = i * 4;
@@ -1222,27 +1255,33 @@ namespace Sierra
             waitValue = glm::max(waitValue, vulkanCommandBufferToWait.GetCompletionSignalValue());
         }
 
-        // Set up semaphore submit info
         const uint64 signalValue = vulkanCommandBuffer.GetCompletionSignalValue();
-        VkTimelineSemaphoreSubmitInfo semaphoreSubmitInfo = { };
-        semaphoreSubmitInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
-        semaphoreSubmitInfo.waitSemaphoreValueCount = 1;
-        semaphoreSubmitInfo.pWaitSemaphoreValues = &waitValue;
-        semaphoreSubmitInfo.signalSemaphoreValueCount = 1;
-        semaphoreSubmitInfo.pSignalSemaphoreValues = &signalValue;
+
+        // Set up semaphore submit info
+        const VkTimelineSemaphoreSubmitInfo semaphoreSubmitInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
+            .waitSemaphoreValueCount = 1,
+            .pWaitSemaphoreValues = &waitValue,
+            .signalSemaphoreValueCount = 1,
+            .pSignalSemaphoreValues = &signalValue
+        };
+
+        VkCommandBuffer vkCommandBuffer = vulkanCommandBuffer.GetVulkanCommandBuffer();
+        constexpr VkPipelineStageFlags WAIT_STAGE = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
         // Set up submit info
-        VkCommandBuffer vkCommandBuffer = vulkanCommandBuffer.GetVulkanCommandBuffer();
-        const VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        VkSubmitInfo submitInfo = { };
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &vkCommandBuffer;
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = &generalTimelineSemaphore;
-        submitInfo.pSignalSemaphores = &generalTimelineSemaphore;
-        submitInfo.pWaitDstStageMask = &waitStage;
-        submitInfo.pNext = &semaphoreSubmitInfo;
+        const VkSubmitInfo submitInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = &semaphoreSubmitInfo,
+            .pWaitSemaphores = &generalTimelineSemaphore,
+            .pWaitDstStageMask = &WAIT_STAGE,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &vkCommandBuffer,
+            .signalSemaphoreCount = 1,
+            .pSignalSemaphores = &generalTimelineSemaphore
+        };
 
         // Submit command buffer
         const VkResult result = functionTable.vkQueueSubmit(generalQueue, 1, &submitInfo, VK_NULL_HANDLE);
@@ -1254,13 +1293,16 @@ namespace Sierra
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, on device [{0}], wait for command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
         const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
 
-        // Set up wait info
         const uint64 waitValue = vulkanCommandBuffer.GetCompletionSignalValue();
-        VkSemaphoreWaitInfo waitInfo = { };
-        waitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
-        waitInfo.semaphoreCount = 1;
-        waitInfo.pSemaphores = &generalTimelineSemaphore;
-        waitInfo.pValues = &waitValue;
+
+        // Set up wait info
+        const VkSemaphoreWaitInfo waitInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
+            .semaphoreCount = 1,
+            .pSemaphores = &generalTimelineSemaphore,
+            .pValues = &waitValue
+        };
 
         // Wait for semaphore
         functionTable.vkWaitSemaphores(logicalDevice, &waitInfo, std::numeric_limits<uint64>::max());
@@ -1321,10 +1363,7 @@ namespace Sierra
 
     VkPhysicalDeviceProperties2 VulkanDevice::GetPhysicalDeviceProperties2(void* pNext) const
     {
-        VkPhysicalDeviceProperties2 physicalDeviceProperties = { };
-        physicalDeviceProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
-        physicalDeviceProperties.pNext = pNext;
-
+        VkPhysicalDeviceProperties2 physicalDeviceProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR, .pNext = pNext };
         instance.GetFunctionTable().vkGetPhysicalDeviceProperties2(physicalDevice, &physicalDeviceProperties);
         return physicalDeviceProperties;
     }
@@ -1338,10 +1377,7 @@ namespace Sierra
 
     VkPhysicalDeviceFeatures2 VulkanDevice::GetPhysicalDeviceFeatures2(void* pNext) const
     {
-        VkPhysicalDeviceFeatures2 physicalDeviceFeatures = { };
-        physicalDeviceFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
-        physicalDeviceFeatures.pNext = pNext;
-
+        VkPhysicalDeviceFeatures2 physicalDeviceFeatures = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR, .pNext = pNext };
         instance.GetFunctionTable().vkGetPhysicalDeviceFeatures2(physicalDevice, &physicalDeviceFeatures);
         return physicalDeviceFeatures;
     }
@@ -1360,11 +1396,13 @@ namespace Sierra
             if (!instance.IsExtensionLoaded(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) return;
 
             // Set up object name info
-            VkDebugUtilsObjectNameInfoEXT objectNameInfo = { };
-            objectNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-            objectNameInfo.objectType = objectType;
-            objectNameInfo.objectHandle = (uint64) object;
-            objectNameInfo.pObjectName = name.data();
+            const VkDebugUtilsObjectNameInfoEXT objectNameInfo
+            {
+                .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+                .objectType = objectType,
+                .objectHandle = (uint64) object,
+                .pObjectName = name.data(),
+            };
 
             // Assign resource name
             instance.GetFunctionTable().vkSetDebugUtilsObjectNameEXT(logicalDevice, &objectNameInfo);

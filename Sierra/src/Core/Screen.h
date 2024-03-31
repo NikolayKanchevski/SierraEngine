@@ -24,12 +24,16 @@ namespace Sierra
     public:
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual std::string_view GetName() const = 0;
-        [[nodiscard]] virtual Vector2Int GetOrigin() const = 0;
-        [[nodiscard]] virtual Vector2UInt GetSize() const = 0;
-        [[nodiscard]] virtual Vector2Int GetWorkAreaOrigin() const = 0;
-        [[nodiscard]] virtual Vector2UInt GetWorkAreaSize() const = 0;
         [[nodiscard]] virtual uint32 GetRefreshRate() const = 0;
         [[nodiscard]] virtual ScreenOrientation GetOrientation() const = 0;
+
+        [[nodiscard]] virtual Vector2Int GetOrigin() const = 0;
+        [[nodiscard]] virtual uint32 GetWidth() const = 0;
+        [[nodiscard]] virtual uint32 GetHeight() const = 0;
+
+        [[nodiscard]] virtual Vector2Int GetWorkAreaOrigin() const = 0;
+        [[nodiscard]] virtual uint32 GetWorkAreaWidth() const = 0;
+        [[nodiscard]] virtual uint32 GetWorkAreaHeight() const = 0;
 
         /* --- OPERATORS --- */
         Screen(const Screen&) = delete;

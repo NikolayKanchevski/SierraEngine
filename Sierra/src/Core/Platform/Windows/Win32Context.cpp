@@ -49,11 +49,13 @@ namespace Sierra
         DWORD exStyle = WS_EX_APPWINDOW;
 
         // Create window size rect
-        RECT rect = { };
-        rect.left = 0;
-        rect.top = 0;
-        rect.right = static_cast<LONG>(width);
-        rect.bottom = static_cast<LONG>(height);
+        RECT rect
+        {
+            .left = 0,
+            .top = 0,
+            .right = static_cast<LONG>(width),
+            .bottom = static_cast<LONG>(height)
+        };
         AdjustWindowRectEx(&rect, style, FALSE, exStyle);
 
         // Create window

@@ -16,27 +16,33 @@ namespace Sierra
         SR_ERROR_IF(!device.IsImageFormatSupported(createInfo.format, createInfo.usage), "[Vulkan]: Cannot create image [{0}] with unsupported format! Use Device::IsImageFormatSupported() to query format support.", GetName());
 
         // Set up image create info
-        VkImageCreateInfo imageCreateInfo = { };
-        imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        imageCreateInfo.flags = static_cast<uint32>(createInfo.type == ImageType::Cube) * VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-        imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-        imageCreateInfo.format = ImageFormatToVkFormat(createInfo.format);
-        imageCreateInfo.extent.width = createInfo.width;
-        imageCreateInfo.extent.height = createInfo.height;
-        imageCreateInfo.extent.depth = 1;
-        imageCreateInfo.mipLevels = createInfo.mipLevelCount;
-        imageCreateInfo.arrayLayers = createInfo.layerCount;
-        imageCreateInfo.samples = ImageSamplingToVkSampleCountFlags(createInfo.sampling);
-        imageCreateInfo.tiling = createInfo.usage != ImageUsage::SourceMemory ? VK_IMAGE_TILING_OPTIMAL : VK_IMAGE_TILING_LINEAR;
-        imageCreateInfo.usage = usageFlags;
-        imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        const VkImageCreateInfo imageCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+            .flags = static_cast<uint32>(createInfo.type == ImageType::Cube) * VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
+            .imageType = VK_IMAGE_TYPE_2D,
+            .format = ImageFormatToVkFormat(createInfo.format),
+            .extent = {
+                .width = createInfo.width,
+                .height = createInfo.height,
+                .depth = 1
+            },
+            .mipLevels = createInfo.mipLevelCount,
+            .arrayLayers = createInfo.layerCount,
+            .samples = ImageSamplingToVkSampleCountFlags(createInfo.sampling),
+            .tiling = createInfo.usage != ImageUsage::SourceMemory ? VK_IMAGE_TILING_OPTIMAL : VK_IMAGE_TILING_LINEAR,
+            .usage = usageFlags,
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
+        };
 
         // Set up image allocation info
-        VmaAllocationCreateInfo allocationCreateInfo = { };
-        allocationCreateInfo.usage = ImageMemoryLocationToVmaMemoryUsage(createInfo.memoryLocation);
-        allocationCreateInfo.memoryTypeBits = std::numeric_limits<uint32>::max();
-        allocationCreateInfo.priority = 0.5f;
+        const VmaAllocationCreateInfo allocationCreateInfo
+        {
+            .usage = ImageMemoryLocationToVmaMemoryUsage(createInfo.memoryLocation),
+            .memoryTypeBits = std::numeric_limits<uint32>::max(),
+            .priority = 0.5f
+        };
 
         // Create and allocate image
         VkResult result = vmaCreateImage(device.GetMemoryAllocator(), &imageCreateInfo, &allocationCreateInfo, &image, &allocation, nullptr);
@@ -51,20 +57,26 @@ namespace Sierra
         if (createInfo.type == ImageType::Cube) imageViewType = VK_IMAGE_VIEW_TYPE_CUBE;
 
         // Set up image view create info
-        VkImageViewCreateInfo imageViewCreateInfo = { };
-        imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        imageViewCreateInfo.image = image;
-        imageViewCreateInfo.viewType = imageViewType;
-        imageViewCreateInfo.format = imageCreateInfo.format;
-        imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.subresourceRange.aspectMask = aspectFlags;
-        imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-        imageViewCreateInfo.subresourceRange.levelCount = createInfo.mipLevelCount;
-        imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-        imageViewCreateInfo.subresourceRange.layerCount = createInfo.layerCount;
+        const VkImageViewCreateInfo imageViewCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .image = image,
+            .viewType = imageViewType,
+            .format = imageCreateInfo.format,
+            .components = {
+                .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .a = VK_COMPONENT_SWIZZLE_IDENTITY
+            },
+            .subresourceRange = {
+                .aspectMask = aspectFlags,
+                .baseMipLevel = 0,
+                .levelCount = createInfo.mipLevelCount,
+                .baseArrayLayer = 0,
+                .layerCount = createInfo.layerCount
+            }
+        };
 
         // Create the image view
         result = device.GetFunctionTable().vkCreateImageView(device.GetLogicalDevice(), &imageViewCreateInfo, nullptr, &imageView);
@@ -82,20 +94,26 @@ namespace Sierra
         SR_ERROR_IF(createInfo.image == VK_NULL_HANDLE, "[Vulkan]: Null texture pointer passed upon swapchain image [{0}] creation!", GetName());
 
         // Set up image view create info
-        VkImageViewCreateInfo imageViewCreateInfo = { };
-        imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        imageViewCreateInfo.image = image;
-        imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        imageViewCreateInfo.format = createInfo.format;
-        imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.subresourceRange.aspectMask = aspectFlags;
-        imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-        imageViewCreateInfo.subresourceRange.levelCount = 1;
-        imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-        imageViewCreateInfo.subresourceRange.layerCount = 1;
+        const VkImageViewCreateInfo imageViewCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .image = image,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = createInfo.format,
+            .components = {
+                .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .a = VK_COMPONENT_SWIZZLE_IDENTITY
+            },
+            .subresourceRange = {
+                .aspectMask = aspectFlags,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1
+            }
+        };
 
         // Create the image view
         const VkResult result = device.GetFunctionTable().vkCreateImageView(device.GetLogicalDevice(), &imageViewCreateInfo, nullptr, &imageView);

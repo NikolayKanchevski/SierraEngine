@@ -13,19 +13,22 @@ namespace Sierra
         : Buffer(createInfo), VulkanResource(createInfo.name), device(device), usageFlags(BufferUsageToVkBufferUsageFlags(createInfo.usage)), memorySize(createInfo.memorySize)
     {
         // Set up buffer create info
-        VkBufferCreateInfo bufferCreateInfo = { };
-        bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferCreateInfo.size = createInfo.memorySize;
-        bufferCreateInfo.usage = usageFlags;
-        bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        const VkBufferCreateInfo bufferCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+            .size = createInfo.memorySize,
+            .usage = usageFlags,
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+        };
 
         // Set up buffer allocation info
-        VmaAllocationCreateInfo allocationCreateInfo = { };
-        allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
-        allocationCreateInfo.usage = BufferMemoryLocationToVmaMemoryUsage(createInfo.memoryLocation);
-        allocationCreateInfo.memoryTypeBits = std::numeric_limits<uint32>::max();
-        allocationCreateInfo.memoryTypeBits = 0;
-        allocationCreateInfo.priority = 0.5f;
+        const VmaAllocationCreateInfo allocationCreateInfo
+        {
+            .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
+            .usage = BufferMemoryLocationToVmaMemoryUsage(createInfo.memoryLocation),
+            .memoryTypeBits = std::numeric_limits<uint32>::max(),
+            .priority = 0.5f
+        };
 
         // Create and allocate buffer
         const VkResult result = vmaCreateBuffer(device.GetMemoryAllocator(), &bufferCreateInfo, &allocationCreateInfo, &buffer, &allocation, nullptr);

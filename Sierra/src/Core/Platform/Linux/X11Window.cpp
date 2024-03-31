@@ -28,7 +28,7 @@ namespace Sierra
             if (createInfo.maximize)
             {
                 const X11Screen &screen = x11Context.GetWindowScreen(window);
-                const Vector2UInt sizeLimits = screen.GetWorkAreaSize() - Vector2UInt(extents.x, extents.z);
+                const Vector2UInt sizeLimits = Vector2UInt(screen.GetWorkAreaWidth(), screen.GetWorkAreaHeight()) - Vector2UInt(extents.x, extents.z);
                 x11Context.SetWindowSizeLimits(window, sizeLimits, sizeLimits);
             }
             else
@@ -112,7 +112,7 @@ namespace Sierra
             shouldMaximizeOnShow = false;
 
             GetWindowMaximizeDispatcher().DispatchEvent();
-            GetWindowResizeDispatcher().DispatchEvent(GetSize());
+            GetWindowResizeDispatcher().DispatchEvent(GetWidth(), GetHeight());
         }
     }
 
@@ -177,18 +177,28 @@ namespace Sierra
         Vector2Int position = x11Context.GetWindowPosition(window);
         position.x -= !IsMaximized() * extents.x;
         position.y -= !IsMaximized() * extents.z;
-        position.y = static_cast<int32>(screen.GetSize().y) - position.y;
+        position.y = static_cast<int32>(screen.GetHeight()) - position.y;
         return position;
     }
 
-    Vector2UInt X11Window::GetSize() const
+    uint32 X11Window::GetWidth() const
     {
-        return x11Context.GetWindowSize(window);
+        return x11Context.GetWindowSize(window).x;
     }
 
-    Vector2UInt X11Window::GetFramebufferSize() const
+    uint32 X11Window::GetHeight() const
     {
-        return lastSize;
+        return x11Context.GetWindowSize(window).y;
+    }
+
+    uint32 X11Window::GetFramebufferWidth() const
+    {
+        return lastSize.x;
+    }
+
+    uint32 X11Window::GetFramebufferHeight() const
+    {
+        return lastSize.y;
     }
 
     float32 X11Window::GetOpacity() const
@@ -273,7 +283,7 @@ namespace Sierra
                         if (newMaximizedState)
                         {
                             GetWindowMaximizeDispatcher().DispatchEvent();
-                            GetWindowResizeDispatcher().DispatchEvent(GetSize());
+                            GetWindowResizeDispatcher().DispatchEvent(GetWidth(), GetHeight());
                         }
                         lastMaximizedState = newMaximizedState;
                     }
@@ -293,7 +303,7 @@ namespace Sierra
                         // This is just to check if size has not been set yet, because resize event is called upon creation, and we do not want it to be registered
                         if (lastSize.y != std::numeric_limits<uint32>::max())
                         {
-                            GetWindowResizeDispatcher().DispatchEvent(GetSize());
+                            GetWindowResizeDispatcher().DispatchEvent(GetWidth(), GetHeight());
                         }
 
                         lastSize = newSize;

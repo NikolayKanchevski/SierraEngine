@@ -244,7 +244,7 @@ namespace Sierra
             #endif
         } functionTable = { };
 
-        std::vector<hash> loadedExtensions;
+        std::vector<size> loadedExtensions;
         #if SR_ENABLE_LOGGING
             VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
         #endif

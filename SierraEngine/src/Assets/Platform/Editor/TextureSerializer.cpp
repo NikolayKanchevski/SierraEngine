@@ -23,7 +23,7 @@ namespace SierraEngine
     {
         // Define supercompression settings
         const ImageSupercompressorCreateInfo compressorCreateInfo = { .maximumImageDimensions = maximumTextureDimensions };
-        const ImageSupercompressorSupercompressInfo compressInfo =
+        const ImageSupercompressorSupercompressInfo compressInfo
         {
             .filePaths = { { filePath } },
             .normalMap = serializeInfo.type == TextureType::Normal,

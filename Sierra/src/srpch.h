@@ -119,7 +119,6 @@
         using ullong = unsigned long long;
         using ldouble = long double;
         using size = size_t;
-        using hash = size_t;
 
 	    using Vector2 = glm::vec<2, float32>;
 	    using Vector3 = glm::vec<3, float32>;

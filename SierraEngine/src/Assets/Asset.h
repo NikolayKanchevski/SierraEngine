@@ -26,7 +26,7 @@ namespace SierraEngine
         inline AssetID(const std::filesystem::path &filePath) : hash(std::hash<std::string>{}(filePath.string())) { };
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline hash GetHash() const { return hash; }
+        [[nodiscard]] inline size GetHash() const { return hash; }
 
         /* --- OPERATORS --- */
         AssetID(const AssetID &other) = default;
@@ -39,7 +39,7 @@ namespace SierraEngine
         ~AssetID() = default;
 
     private:
-        hash hash = 0;
+        size hash = 0;
 
     };
 

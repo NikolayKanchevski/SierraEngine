@@ -21,13 +21,15 @@ namespace Sierra
         {
         public:
             /* --- CONSTRUCTORS --- */
-            inline explicit WindowResizeEvent(const Vector2UInt size) : size(size) { }
+            inline explicit WindowResizeEvent(const uint32 width, const uint32 height) : width(width), height(height) { }
 
             /* --- GETTER METHODS --- */
-            [[nodiscard]] inline Vector2UInt GetSize() const { return size; }
+            [[nodiscard]] inline uint32 GetWidth() const { return width; }
+            [[nodiscard]] inline uint32 GetHeight() const { return height; }
 
         private:
-            Vector2UInt size;
+            const uint32 width;
+            const uint32 height;
 
         };
 
@@ -49,7 +51,7 @@ namespace Sierra
             [[nodiscard]] Vector2Int GetPosition() const { return position; }
 
         private:
-            Vector2Int position;
+            const Vector2Int position;
 
         };
 
@@ -63,7 +65,7 @@ namespace Sierra
             [[nodiscard]] bool IsFocused() const { return focused; }
 
         private:
-            bool focused;
+            const bool focused;
 
         };
 
@@ -128,9 +130,12 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual std::string_view GetTitle() const = 0;
         [[nodiscard]] virtual Vector2Int GetPosition() const = 0;
-        [[nodiscard]] virtual Vector2UInt GetSize() const = 0;
-        [[nodiscard]] virtual Vector2UInt GetFramebufferSize() const = 0;
+        [[nodiscard]] virtual uint32 GetWidth() const = 0;
+        [[nodiscard]] virtual uint32 GetHeight() const = 0;
+        [[nodiscard]] virtual uint32 GetFramebufferWidth() const = 0;
+        [[nodiscard]] virtual uint32 GetFramebufferHeight() const = 0;
         [[nodiscard]] virtual float32 GetOpacity() const = 0;
+
         [[nodiscard]] virtual bool IsClosed() const = 0;
         [[nodiscard]] virtual bool IsMinimized() const = 0;
         [[nodiscard]] virtual bool IsMaximized() const = 0;

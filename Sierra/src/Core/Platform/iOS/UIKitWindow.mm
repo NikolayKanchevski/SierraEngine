@@ -211,14 +211,24 @@ namespace Sierra
         return { 0, 0 };
     }
 
-    Vector2UInt UIKitWindow::GetSize() const
+    uint32 UIKitWindow::GetWidth() const
     {
-        return uiKitContext.GetPrimaryScreen().GetSize();
+        return uiKitContext.GetPrimaryScreen().GetWidth();
     }
 
-    Vector2UInt UIKitWindow::GetFramebufferSize() const
+    uint32 UIKitWindow::GetHeight() const
     {
-        return GetSize() * static_cast<uint32>([window contentScaleFactor]);
+        return uiKitContext.GetPrimaryScreen().GetHeight();
+    }
+
+    uint32 UIKitWindow::GetFramebufferWidth() const
+    {
+        return GetWidth() * static_cast<uint32>([window contentScaleFactor]);
+    }
+
+    uint32 UIKitWindow::GetFramebufferHeight() const
+    {
+        return GetHeight() * static_cast<uint32>([window contentScaleFactor]);
     }
 
     float32 UIKitWindow::GetOpacity() const
@@ -274,7 +284,7 @@ namespace Sierra
         if ((lastOrientation & ScreenOrientation::Landscape && uiKitContext.GetPrimaryScreen().GetOrientation() & ScreenOrientation::Landscape) || (lastOrientation & ScreenOrientation::Portrait && uiKitContext.GetPrimaryScreen().GetOrientation() & ScreenOrientation::Portrait)) return;
 
         lastOrientation = uiKitContext.GetPrimaryScreen().GetOrientation();
-        GetWindowResizeDispatcher().DispatchEvent(GetSize());
+        GetWindowResizeDispatcher().DispatchEvent(GetWidth(), GetHeight());
     }
 
     void UIKitWindow::ApplicationDidEnterBackground()

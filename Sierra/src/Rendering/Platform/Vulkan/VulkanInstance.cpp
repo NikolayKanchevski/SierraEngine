@@ -73,16 +73,16 @@ namespace Sierra
         #endif
 
         // Set up application info
-        VkApplicationInfo applicationInfo = { };
-        applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        applicationInfo.pApplicationName = "Sierra Application";
-        applicationInfo.applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
-        applicationInfo.pEngineName = "Sierra";
-        applicationInfo.engineVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
-
-        // Determine API version
         const Version version = GetAPIVersion();
-        applicationInfo.apiVersion = VK_MAKE_API_VERSION(0, version.GetMajor(), version.GetMinor(), version.GetPatch());
+        const VkApplicationInfo applicationInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+            .pApplicationName = "Sierra Application",
+            .applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
+            .pEngineName = "Sierra",
+            .engineVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
+            .apiVersion = VK_MAKE_API_VERSION(0, version.GetMajor(), version.GetMinor(), version.GetPatch())
+        };
 
         // Retrieve supported extension count
         uint32 supportedExtensionCount = 0;
@@ -93,7 +93,7 @@ namespace Sierra
         vkEnumerateInstanceExtensionProperties(nullptr, &supportedExtensionCount, supportedExtensions.data());
 
         // Define extensions array
-        std::array<const char*, INSTANCE_EXTENSIONS_TO_QUERY.size()> extensions;
+        std::array<const char*, INSTANCE_EXTENSIONS_TO_QUERY.size()> extensions = { };
         loadedExtensions.resize(INSTANCE_EXTENSIONS_TO_QUERY.size());
 
         // Load extensions
@@ -118,17 +118,19 @@ namespace Sierra
         }
 
         // Set up instance create info
-        VkInstanceCreateInfo instanceCreateInfo = { };
-        instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        instanceCreateInfo.pApplicationInfo = &applicationInfo;
-        instanceCreateInfo.enabledLayerCount = 0;
-        instanceCreateInfo.ppEnabledLayerNames = nullptr;
-        instanceCreateInfo.enabledExtensionCount = i;
-        instanceCreateInfo.ppEnabledExtensionNames = extensions.data();
-        #if SR_PLATFORM_APPLE
-            if (IsExtensionLoaded(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME)) instanceCreateInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-        #endif
-        instanceCreateInfo.pNext = nullptr;
+        VkInstanceCreateInfo instanceCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+            .pNext = nullptr,
+            #if SR_PLATFORM_APPLE
+                .flags = static_cast<uint32>(IsExtensionLoaded(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME)) * VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
+            #endif
+            .pApplicationInfo = &applicationInfo,
+            .enabledLayerCount = 0,
+            .ppEnabledLayerNames = nullptr,
+            .enabledExtensionCount = i,
+            .ppEnabledExtensionNames = extensions.data()
+        };
 
          #if SR_ENABLE_LOGGING
             // Retrieve supported layer count
@@ -140,7 +142,7 @@ namespace Sierra
             vkEnumerateInstanceLayerProperties(&supportedLayerCount, supportedLayers.data());
 
             // Define debug data
-            std::array<const char*, LAYERS_TO_QUERY.size()> layers;
+            std::array<const char*, LAYERS_TO_QUERY.size()> layers = { };
             VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo = { };
 
             bool validationEnabled = false;
@@ -449,10 +451,12 @@ namespace Sierra
         #endif
 
         // Set up version
-        VersionCreateInfo versionCreateInfo = { };
-        versionCreateInfo.major = VK_API_VERSION_MAJOR(version);
-        versionCreateInfo.minor = VK_API_VERSION_MINOR(version);
-        versionCreateInfo.patch = VK_API_VERSION_PATCH(version);
+        const VersionCreateInfo versionCreateInfo
+        {
+            .major = static_cast<uint8>(VK_API_VERSION_MAJOR(version)),
+            .minor = static_cast<uint8>(VK_API_VERSION_MINOR(version)),
+            .patch = static_cast<uint8>(VK_API_VERSION_PATCH(version))
+        };
 
         return Version(versionCreateInfo);
     }

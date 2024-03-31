@@ -19,34 +19,51 @@ namespace Sierra
         SR_ERROR_IF(!device.IsExtensionLoaded(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME), "[Vulkan]: Cannot create resource table [{0}], as the provided device [{1}] does not support the {2} extension!", GetName(), device.GetName(), VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 
         // Retrieve descriptor indexing properties
-        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
-        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
 
         // Set up pool sizes
-        std::array<VkDescriptorPoolSize, VulkanDevice::BINDLESS_BINDING_COUNT> poolSizes;
-        poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        poolSizes[0].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers;
-        poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        poolSizes[1].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers;
-        poolSizes[2].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        poolSizes[2].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1;
-        poolSizes[3].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        poolSizes[3].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1;
-        poolSizes[4].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        poolSizes[4].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1;
-        poolSizes[5].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        poolSizes[5].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1;
-        poolSizes[6].type = VK_DESCRIPTOR_TYPE_SAMPLER;
-        poolSizes[6].descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers;
+        const std::array<VkDescriptorPoolSize, VulkanDevice::BINDLESS_BINDING_COUNT> poolSizes
+        {
+            VkDescriptorPoolSize {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers
+            },
+            VkDescriptorPoolSize {
+                .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers
+            },
+            VkDescriptorPoolSize {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1
+            },
+            VkDescriptorPoolSize {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1
+            },
+            VkDescriptorPoolSize {
+                .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1
+            },
+            VkDescriptorPoolSize {
+                .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1
+            },
+            VkDescriptorPoolSize {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+                .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers
+            }
+        };
 
         // Set up pool create info
-        VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = { };
-        descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT | VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
-        descriptorPoolCreateInfo.maxSets = 1;
-        descriptorPoolCreateInfo.poolSizeCount = poolSizes.size();
-        descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
+        const VkDescriptorPoolCreateInfo descriptorPoolCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+            .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT | VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
+            .maxSets = 1,
+            .poolSizeCount = poolSizes.size(),
+            .pPoolSizes = poolSizes.data()
+        };
 
         // Create descriptor pool
         VkResult result = device.GetFunctionTable().vkCreateDescriptorPool(device.GetLogicalDevice(), &descriptorPoolCreateInfo, nullptr, &descriptorPool);
@@ -55,11 +72,13 @@ namespace Sierra
 
         // Set up set allocate info
         VkDescriptorSetLayout descriptorSetLayout = device.GetDescriptorSetLayout();
-        VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = { };
-        descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        descriptorSetAllocateInfo.descriptorPool = descriptorPool;
-        descriptorSetAllocateInfo.descriptorSetCount = 1;
-        descriptorSetAllocateInfo.pSetLayouts = &descriptorSetLayout;
+        const VkDescriptorSetAllocateInfo descriptorSetAllocateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorPool = descriptorPool,
+            .descriptorSetCount = 1,
+            .pSetLayouts = &descriptorSetLayout
+        };
 
         // Allocate descriptor set
         result = device.GetFunctionTable().vkAllocateDescriptorSets(device.GetLogicalDevice(), &descriptorSetAllocateInfo, &descriptorSet);
@@ -81,20 +100,24 @@ namespace Sierra
         }
 
         // Set up buffer info
-        VkDescriptorBufferInfo bufferInfo = { };
-        bufferInfo.buffer = vulkanBuffer.GetVulkanBuffer();
-        bufferInfo.offset = byteOffset;
-        bufferInfo.range = memoryRange != 0 ? memoryRange : buffer->GetMemorySize();
+        const VkDescriptorBufferInfo bufferInfo
+        {
+            .buffer = vulkanBuffer.GetVulkanBuffer(),
+            .offset = byteOffset,
+            .range = memoryRange != 0 ? memoryRange : buffer->GetMemorySize()
+        };
 
         // Set up write info
-        VkWriteDescriptorSet writeDescriptorSet = { };
-        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writeDescriptorSet.dstSet = descriptorSet;
-        writeDescriptorSet.dstBinding = VulkanDevice::BINDLESS_UNIFORM_BUFFER_BINDING;
-        writeDescriptorSet.dstArrayElement = index;
-        writeDescriptorSet.descriptorCount = 1;
-        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        writeDescriptorSet.pBufferInfo = &bufferInfo;
+        const VkWriteDescriptorSet writeDescriptorSet
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = descriptorSet,
+            .dstBinding = VulkanDevice::BINDLESS_UNIFORM_BUFFER_BINDING,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .pBufferInfo = &bufferInfo
+        };
 
         // Update descriptor set
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
@@ -112,20 +135,24 @@ namespace Sierra
         }
 
         // Set up buffer info
-        VkDescriptorBufferInfo bufferInfo = { };
-        bufferInfo.buffer = vulkanBuffer.GetVulkanBuffer();
-        bufferInfo.offset = byteOffset;
-        bufferInfo.range = memoryRange != 0 ? memoryRange : buffer->GetMemorySize();
+        const VkDescriptorBufferInfo bufferInfo
+        {
+            .buffer = vulkanBuffer.GetVulkanBuffer(),
+            .offset = byteOffset,
+            .range = memoryRange != 0 ? memoryRange : buffer->GetMemorySize()
+        };
 
         // Set up write info
-        VkWriteDescriptorSet writeDescriptorSet = { };
-        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writeDescriptorSet.dstSet = descriptorSet;
-        writeDescriptorSet.dstBinding = VulkanDevice::BINDLESS_STORAGE_BUFFER_BINDING;
-        writeDescriptorSet.dstArrayElement = index;
-        writeDescriptorSet.descriptorCount = 1;
-        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        writeDescriptorSet.pBufferInfo = &bufferInfo;
+        const VkWriteDescriptorSet writeDescriptorSet
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = descriptorSet,
+            .dstBinding = VulkanDevice::BINDLESS_STORAGE_BUFFER_BINDING,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .pBufferInfo = &bufferInfo
+        };
 
         // Update descriptor set
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
@@ -143,20 +170,24 @@ namespace Sierra
         }
 
         // Set up image info
-        VkDescriptorImageInfo imageInfo = { };
-        imageInfo.sampler = VK_NULL_HANDLE;
-        imageInfo.imageView = vulkanImage.GetVulkanImageView();
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        const VkDescriptorImageInfo imageInfo
+        {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = vulkanImage.GetVulkanImageView(),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        };
 
         // Set up write info
-        VkWriteDescriptorSet writeDescriptorSet = { };
-        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writeDescriptorSet.dstSet = descriptorSet;
-        writeDescriptorSet.dstBinding = VulkanDevice::BINDLESS_SAMPLED_IMAGE_BINDING;
-        writeDescriptorSet.dstArrayElement = index;
-        writeDescriptorSet.descriptorCount = 1;
-        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        writeDescriptorSet.pImageInfo = &imageInfo;
+        const VkWriteDescriptorSet writeDescriptorSet
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = descriptorSet,
+            .dstBinding = VulkanDevice::BINDLESS_SAMPLED_IMAGE_BINDING,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .pImageInfo = &imageInfo
+        };
 
         // Update descriptor set
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
@@ -174,20 +205,24 @@ namespace Sierra
         }
 
         // Set up image info
-        VkDescriptorImageInfo imageInfo = { };
-        imageInfo.sampler = VK_NULL_HANDLE;
-        imageInfo.imageView = vulkanImage.GetVulkanImageView();
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        const VkDescriptorImageInfo imageInfo
+        {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = vulkanImage.GetVulkanImageView(),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        };
 
         // Set up write info
-        VkWriteDescriptorSet writeDescriptorSet = { };
-        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writeDescriptorSet.dstSet = descriptorSet;
-        writeDescriptorSet.dstBinding = VulkanDevice::BINDLESS_SAMPLED_CUBEMAP_BINDING;
-        writeDescriptorSet.dstArrayElement = index;
-        writeDescriptorSet.descriptorCount = 1;
-        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        writeDescriptorSet.pImageInfo = &imageInfo;
+        const VkWriteDescriptorSet writeDescriptorSet
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = descriptorSet,
+            .dstBinding = VulkanDevice::BINDLESS_SAMPLED_CUBEMAP_BINDING,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .pImageInfo = &imageInfo
+        };
 
         // Update descriptor set
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
@@ -205,20 +240,24 @@ namespace Sierra
         }
 
         // Set up image info
-        VkDescriptorImageInfo imageInfo = { };
-        imageInfo.sampler = vulkanSampler.GetVulkanSampler();
-        imageInfo.imageView = VK_NULL_HANDLE;
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        const VkDescriptorImageInfo imageInfo
+        {
+            .sampler = vulkanSampler.GetVulkanSampler(),
+            .imageView = VK_NULL_HANDLE,
+            .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED
+        };
 
         // Set up write info
-        VkWriteDescriptorSet writeDescriptorSet = { };
-        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writeDescriptorSet.dstSet = descriptorSet;
-        writeDescriptorSet.dstBinding = VulkanDevice::BINDLESS_SAMPLER_BINDING;
-        writeDescriptorSet.dstArrayElement = index;
-        writeDescriptorSet.descriptorCount = 1;
-        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        writeDescriptorSet.pImageInfo = &imageInfo;
+        const VkWriteDescriptorSet writeDescriptorSet
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = descriptorSet,
+            .dstBinding = VulkanDevice::BINDLESS_SAMPLER_BINDING,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = &imageInfo
+        };
 
         // Update descriptor set
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
@@ -236,20 +275,24 @@ namespace Sierra
         }
 
         // Set up image info
-        VkDescriptorImageInfo imageInfo = { };
-        imageInfo.sampler = VK_NULL_HANDLE;
-        imageInfo.imageView = vulkanImage.GetVulkanImageView();
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+        const VkDescriptorImageInfo imageInfo
+        {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = vulkanImage.GetVulkanImageView(),
+            .imageLayout = VK_IMAGE_LAYOUT_GENERAL
+        };
 
         // Set up write info
-        VkWriteDescriptorSet writeDescriptorSet = { };
-        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writeDescriptorSet.dstSet = descriptorSet;
-        writeDescriptorSet.dstBinding = VulkanDevice::BINDLESS_STORAGE_IMAGE_BINDING;
-        writeDescriptorSet.dstArrayElement = index;
-        writeDescriptorSet.descriptorCount = 1;
-        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        writeDescriptorSet.pImageInfo = &imageInfo;
+        const VkWriteDescriptorSet writeDescriptorSet
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = descriptorSet,
+            .dstBinding = VulkanDevice::BINDLESS_STORAGE_IMAGE_BINDING,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            .pImageInfo = &imageInfo
+        };
 
         // Update descriptor set
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
@@ -267,20 +310,24 @@ namespace Sierra
         }
 
         // Set up image info
-        VkDescriptorImageInfo imageInfo = { };
-        imageInfo.sampler = VK_NULL_HANDLE;
-        imageInfo.imageView = vulkanImage.GetVulkanImageView();
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+        const VkDescriptorImageInfo imageInfo
+        {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = vulkanImage.GetVulkanImageView(),
+            .imageLayout = VK_IMAGE_LAYOUT_GENERAL
+        };
 
         // Set up write info
-        VkWriteDescriptorSet writeDescriptorSet = { };
-        writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writeDescriptorSet.dstSet = descriptorSet;
-        writeDescriptorSet.dstBinding = VulkanDevice::BINDLESS_STORAGE_CUBEMAP_BINDING;
-        writeDescriptorSet.dstArrayElement = index;
-        writeDescriptorSet.descriptorCount = 1;
-        writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        writeDescriptorSet.pImageInfo = &imageInfo;
+        const VkWriteDescriptorSet writeDescriptorSet
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = descriptorSet,
+            .dstBinding = VulkanDevice::BINDLESS_STORAGE_CUBEMAP_BINDING,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            .pImageInfo = &imageInfo
+        };
 
         // Update descriptor set
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
@@ -290,63 +337,49 @@ namespace Sierra
 
     uint32 VulkanResourceTable::GetUniformBufferCapacity() const
     {
-        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
-        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
-
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
         return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers;
     }
 
     uint32 VulkanResourceTable::GetStorageBufferCapacity() const
     {
-        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
-        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
-
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
         return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers;
     }
 
     uint32 VulkanResourceTable::GetSampledImageCapacity() const
     {
-        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
-        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
-
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
         return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1;
     }
 
     uint32 VulkanResourceTable::GetSampledCubemapCapacity() const
     {
-        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
-        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
-
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
         return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1;
     }
 
     uint32 VulkanResourceTable::GetSamplerCapacity() const
     {
-        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
-        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
-
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
         return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers;
     }
 
     uint32 VulkanResourceTable::GetStorageImageCapacity() const
     {
-        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
-        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
-
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
         return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1;
     }
 
     uint32 VulkanResourceTable::GetStorageCubemapCapacity() const
     {
-        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { };
-        descriptorIndexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
-
+        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
         return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1;
     }

@@ -20,13 +20,15 @@ namespace Sierra
         {
         public:
             /* --- CONSTRUCTORS --- */
-            inline explicit SwapchainResizeEvent(const Vector2UInt size) : size(size) { }
+            inline explicit SwapchainResizeEvent(const uint32 width, const uint32 height) : width(width), height(height) { }
 
             /* --- GETTER METHODS --- */
-            [[nodiscard]] inline Vector2UInt GetSize() const { return size; }
+            [[nodiscard]] inline uint32 GetWidth() const { return width; }
+            [[nodiscard]] inline uint32 GetHeight() const { return height; }
 
         private:
-            Vector2UInt size;
+            const uint32 width;
+            const uint32 height;
 
         };
     #pragma endregion

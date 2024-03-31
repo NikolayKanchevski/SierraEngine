@@ -17,10 +17,12 @@ namespace Sierra
         auto shaderData = File::ReadFile(shaderFilePath);
 
         // Set up module create info
-        VkShaderModuleCreateInfo shaderModuleCreateInfo = { };
-        shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        shaderModuleCreateInfo.codeSize = shaderData.size();
-        shaderModuleCreateInfo.pCode = reinterpret_cast<uint32*>(shaderData.data());
+        const VkShaderModuleCreateInfo shaderModuleCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+            .codeSize = shaderData.size(),
+            .pCode = reinterpret_cast<uint32*>(shaderData.data())
+        };
 
         // Create shader module
         const VkResult result = device.GetFunctionTable().vkCreateShaderModule(device.GetLogicalDevice(), &shaderModuleCreateInfo, nullptr, &shaderModule);

@@ -18,9 +18,11 @@ namespace Sierra
 
         #if MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
             // Set up surface create info
-            VkMetalSurfaceCreateInfoEXT surfaceCreateInfo = { };
-            surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
-            surfaceCreateInfo.pLayer = reinterpret_cast<CAMetalLayer*>(cocoaWindow.GetNSView().layer);
+            const VkMetalSurfaceCreateInfoEXT surfaceCreateInfo
+            {
+                .sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT,
+                .pLayer = reinterpret_cast<CAMetalLayer*>(cocoaWindow.GetNSView().layer)
+            };
 
             // Create surface
             VkSurfaceKHR surface;

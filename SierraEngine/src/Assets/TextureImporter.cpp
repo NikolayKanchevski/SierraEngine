@@ -21,11 +21,15 @@ namespace SierraEngine
 
     std::optional<std::pair<TextureAsset, std::unique_ptr<Sierra::Buffer>>> TextureImporter::Import(const Sierra::RenderingContext &renderingContext, const std::string_view name, const std::pair<const SerializedTexture, const void*> &serializedTexture)
     {
-        const ImageTranscoderCreateInfo transcoderCreateInfo = { };
-        const ImageTranscodeInfo transcodeInfo =
+        const ImageTranscoderCreateInfo transcoderCreateInfo
+        {
+
+        };
+
+        const ImageTranscodeInfo transcodeInfo
         {
             .compressedMemory = serializedTexture.second,
-            .compressedMemorySize = serializedTexture.first.contentMemorySize,
+            .compressedMemorySize = serializedTexture.first.contentMemorySize
         };
 
         void* transcodedMemory = nullptr;

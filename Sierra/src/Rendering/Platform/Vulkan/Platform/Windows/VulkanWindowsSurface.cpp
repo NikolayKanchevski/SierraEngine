@@ -15,10 +15,12 @@ namespace Sierra
         const Win32Window &win32Window = static_cast<const Win32Window&>(*window);
 
         // Set up surface create info
-        VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = { };
-        surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-        surfaceCreateInfo.hinstance = win32Window.GetHInstance();
-        surfaceCreateInfo.hwnd = win32Window.GetHwnd();
+        const VkWin32SurfaceCreateInfoKHR surfaceCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+            .hinstance = win32Window.GetHInstance(),
+            .hwnd = win32Window.GetHwnd()
+        };
 
         // Create surface
         VkSurfaceKHR surface;

@@ -283,7 +283,7 @@ namespace Sierra
             else
             {
                 const CocoaScreen &screen = cocoaContext.GetWindowScreen(window);
-                const NSRect newFrame = NSMakeRect(screen.GetOrigin().x, screen.GetOrigin().y, screen.GetWorkAreaSize().x, screen.GetWorkAreaSize().y);
+                const NSRect newFrame = NSMakeRect(screen.GetOrigin().x, screen.GetOrigin().y, screen.GetWorkAreaWidth(), screen.GetWorkAreaHeight());
                 [window setFrame: newFrame display: YES animate: YES];
             }
         }
@@ -387,7 +387,7 @@ namespace Sierra
 
     void CocoaWindow::SetPosition(const Vector2Int &position)
     {
-        [window setFrameOrigin: [window frameRectForContentRect: NSMakeRect(position.x, position.y - GetSize().y, 0, 0)].origin];
+        [window setFrameOrigin: [window frameRectForContentRect: NSMakeRect(position.x, position.y - GetHeight(), 0, 0)].origin];
     }
 
     void CocoaWindow::SetSize(const Vector2UInt &size)
@@ -416,15 +416,26 @@ namespace Sierra
         return { contentRect.origin.x, contentRect.origin.y + contentRect.size.height };
     }
 
-    Vector2UInt CocoaWindow::GetSize() const
+    uint32 CocoaWindow::GetWidth() const
     {
-        return { [window frame].size.width, [window frame].size.height + GetTitleBarHeight() };
+        return window.frame.size.width;
     }
 
-    Vector2UInt CocoaWindow::GetFramebufferSize() const
+    uint32 CocoaWindow::GetHeight() const
+    {
+        return window.frame.size.height + GetTitleBarHeight();
+    }
+
+    uint32 CocoaWindow::GetFramebufferWidth() const
     {
         const NSRect contentRect = [window convertRectToBacking: view.frame];
-        return { contentRect.size.width, contentRect.size.height };
+        return contentRect.size.height;
+    }
+
+    uint32 CocoaWindow::GetFramebufferHeight() const
+    {
+        const NSRect contentRect = [window convertRectToBacking: view.frame];
+        return contentRect.size.width;
     }
 
     float32 CocoaWindow::GetOpacity() const
@@ -499,7 +510,7 @@ namespace Sierra
             }
 
             // Otherwise handle event like a normal resize
-            GetWindowResizeDispatcher().DispatchEvent(GetSize());
+            GetWindowResizeDispatcher().DispatchEvent(GetWidth(), GetHeight());
         }
 
         void CocoaWindow::WindowDidMove(const NSNotification* notification)

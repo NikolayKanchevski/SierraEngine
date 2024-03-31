@@ -30,7 +30,7 @@ namespace Sierra
         {
             const RenderPassAttachment &attachment = *(createInfo.attachments.begin() + i);
 
-            SR_ERROR_IF(attachment.templateImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not use image [{0}] of attachment [10}] in render pass [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.templateImage->GetName(), i, GetName());
+            SR_ERROR_IF(attachment.templateImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not use image [{0}] of attachment [{1}] in render pass [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.templateImage->GetName(), i, GetName());
             const VulkanImage &vulkanTemplateImage = static_cast<VulkanImage&>(*attachment.templateImage);
 
             // Set up framebuffer attachment format
@@ -98,9 +98,11 @@ namespace Sierra
         std::vector<std::vector<VkAttachmentReference>> colorAttachmentReferences;
         colorAttachmentReferences.resize(createInfo.subpassDescriptions.size());
 
-        VkAttachmentReference depthAttachmentReference = { };
-        depthAttachmentReference.attachment = 0;
-        depthAttachmentReference.layout = VK_IMAGE_LAYOUT_UNDEFINED;
+        VkAttachmentReference depthAttachmentReference
+        {
+            .attachment = 0,
+            .layout = VK_IMAGE_LAYOUT_UNDEFINED
+        };
 
         std::vector<std::vector<VkAttachmentReference>> resolveAttachmentReferences;
         resolveAttachmentReferences.resize(createInfo.subpassDescriptions.size());
@@ -216,35 +218,41 @@ namespace Sierra
         }
 
         // Set up render pass create info
-        VkRenderPassCreateInfo renderPassCreateInfo = { };
-        renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassCreateInfo.attachmentCount = static_cast<uint32>(attachmentDescriptions.size());
-        renderPassCreateInfo.pAttachments = attachmentDescriptions.data();
-        renderPassCreateInfo.subpassCount = static_cast<uint32>(subpassDescriptions.size());
-        renderPassCreateInfo.pSubpasses = subpassDescriptions.data();
-        renderPassCreateInfo.dependencyCount = static_cast<uint32>(subpassDependencies.size());
-        renderPassCreateInfo.pDependencies = subpassDependencies.data();
+        const VkRenderPassCreateInfo renderPassCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+            .attachmentCount = static_cast<uint32>(attachmentDescriptions.size()),
+            .pAttachments = attachmentDescriptions.data(),
+            .subpassCount = static_cast<uint32>(subpassDescriptions.size()),
+            .pSubpasses = subpassDescriptions.data(),
+            .dependencyCount = static_cast<uint32>(subpassDependencies.size()),
+            .pDependencies = subpassDependencies.data()
+        };
 
         // Create render pass
         VkResult result = device.GetFunctionTable().vkCreateRenderPass(device.GetLogicalDevice(), &renderPassCreateInfo, nullptr, &renderPass);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create render pass [{0}]! Error code: {1}.", GetName(), result);
 
         // Set up framebuffer attachment create info
-        VkFramebufferAttachmentsCreateInfo framebufferAttachmentsCreateInfo = { };
-        framebufferAttachmentsCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENTS_CREATE_INFO;
-        framebufferAttachmentsCreateInfo.attachmentImageInfoCount = static_cast<uint32>(framebufferImageAttachments.size());
-        framebufferAttachmentsCreateInfo.pAttachmentImageInfos = framebufferImageAttachments.data();
+        const VkFramebufferAttachmentsCreateInfo framebufferAttachmentsCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENTS_CREATE_INFO,
+            .attachmentImageInfoCount = static_cast<uint32>(framebufferImageAttachments.size()),
+            .pAttachmentImageInfos = framebufferImageAttachments.data()
+        };
 
         // Set up framebuffer create info
-        VkFramebufferCreateInfo framebufferCreateInfo = { };
-        framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferCreateInfo.pNext = &framebufferAttachmentsCreateInfo;
-        framebufferCreateInfo.flags = VK_FRAMEBUFFER_CREATE_IMAGELESS_BIT;
-        framebufferCreateInfo.renderPass = renderPass;
-        framebufferCreateInfo.attachmentCount = framebufferAttachmentsCreateInfo.attachmentImageInfoCount;
-        framebufferCreateInfo.width = framebufferAttachmentsCreateInfo.pAttachmentImageInfos[0].width;
-        framebufferCreateInfo.height = framebufferAttachmentsCreateInfo.pAttachmentImageInfos[0].height;
-        framebufferCreateInfo.layers = 1;
+        const VkFramebufferCreateInfo framebufferCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+            .pNext = &framebufferAttachmentsCreateInfo,
+            .flags = VK_FRAMEBUFFER_CREATE_IMAGELESS_BIT,
+            .renderPass = renderPass,
+            .attachmentCount = framebufferAttachmentsCreateInfo.attachmentImageInfoCount,
+            .width = framebufferAttachmentsCreateInfo.pAttachmentImageInfos[0].width,
+            .height = framebufferAttachmentsCreateInfo.pAttachmentImageInfos[0].height,
+            .layers = 1
+        };
 
         // Create framebuffer
         result = device.GetFunctionTable().vkCreateFramebuffer(device.GetLogicalDevice(), &framebufferCreateInfo, nullptr, &framebuffer);
@@ -266,21 +274,25 @@ namespace Sierra
         }
 
         // Set up framebuffer attachment create info
-        VkFramebufferAttachmentsCreateInfo framebufferAttachmentsCreateInfo = { };
-        framebufferAttachmentsCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENTS_CREATE_INFO;
-        framebufferAttachmentsCreateInfo.attachmentImageInfoCount = static_cast<uint32>(framebufferImageAttachments.size());
-        framebufferAttachmentsCreateInfo.pAttachmentImageInfos = framebufferImageAttachments.data();
+        const VkFramebufferAttachmentsCreateInfo framebufferAttachmentsCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENTS_CREATE_INFO,
+            .attachmentImageInfoCount = static_cast<uint32>(framebufferImageAttachments.size()),
+            .pAttachmentImageInfos = framebufferImageAttachments.data()
+        };
 
         // Set up framebuffer create info
-        VkFramebufferCreateInfo framebufferCreateInfo = { };
-        framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferCreateInfo.pNext = &framebufferAttachmentsCreateInfo;
-        framebufferCreateInfo.flags = VK_FRAMEBUFFER_CREATE_IMAGELESS_BIT;
-        framebufferCreateInfo.renderPass = renderPass;
-        framebufferCreateInfo.attachmentCount = framebufferAttachmentsCreateInfo.attachmentImageInfoCount;
-        framebufferCreateInfo.width = framebufferAttachmentsCreateInfo.pAttachmentImageInfos[0].width;
-        framebufferCreateInfo.height = framebufferAttachmentsCreateInfo.pAttachmentImageInfos[0].height;
-        framebufferCreateInfo.layers = 1;
+        const VkFramebufferCreateInfo framebufferCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+            .pNext = &framebufferAttachmentsCreateInfo,
+            .flags = VK_FRAMEBUFFER_CREATE_IMAGELESS_BIT,
+            .renderPass = renderPass,
+            .attachmentCount = framebufferAttachmentsCreateInfo.attachmentImageInfoCount,
+            .width = framebufferAttachmentsCreateInfo.pAttachmentImageInfos[0].width,
+            .height = framebufferAttachmentsCreateInfo.pAttachmentImageInfos[0].height,
+            .layers = 1
+        };
 
         // Recreate framebuffer
         const VkResult result = device.GetFunctionTable().vkCreateFramebuffer(device.GetLogicalDevice(), &framebufferCreateInfo, nullptr, &framebuffer);

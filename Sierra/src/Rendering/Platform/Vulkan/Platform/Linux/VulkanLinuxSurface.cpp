@@ -13,10 +13,12 @@ namespace Sierra
         const X11Window &x11Window = static_cast<const X11Window&>(*window);
 
         // Set up surface create info
-        VkXlibSurfaceCreateInfoKHR surfaceCreateInfo = { };
-        surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
-        surfaceCreateInfo.dpy = x11Window.GetDisplay();
-        surfaceCreateInfo.window = x11Window.GetX11Window();
+        const VkXlibSurfaceCreateInfoKHR surfaceCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
+            .dpy = x11Window.GetDisplay(),
+            .window = x11Window.GetX11Window()
+        };
 
         // Create surface
         VkSurfaceKHR surface;
