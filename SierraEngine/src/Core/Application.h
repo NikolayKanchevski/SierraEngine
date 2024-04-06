@@ -5,14 +5,9 @@
 #pragma once
 
 #include "ThreadPool.hpp"
-#include "../Assets/AssetManager.h"
+#include "../Assets/Platform/Editor/EditorAssetManager.h"
 
-#if SR_EDITOR_APPLICATION
-    #include "../Assets/Platform/Editor/EditorAssetManager.h"
-    using ApplicationAssetManager = SierraEngine::EditorAssetManager;
-#elif SR_STANDALONE_APPLICATION
-    #error "ERR"
-#endif
+#include <Sierra/Extensions/ImGui.h>
 
 namespace SierraEngine
 {
@@ -31,7 +26,7 @@ namespace SierraEngine
         bool Update(const Sierra::TimeStep &timeStep) override;
 
         ThreadPool threadPool;
-        ApplicationAssetManager assetManager;
+        EditorAssetManager assetManager;
 
         std::unique_ptr<Sierra::Window> window = nullptr;
         std::unique_ptr<Sierra::Swapchain> swapchain = nullptr;

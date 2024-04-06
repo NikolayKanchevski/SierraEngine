@@ -30,12 +30,11 @@ set_target_properties(Sierra PROPERTIES
 add_subdirectory(Core)
 add_subdirectory(Utilities)
 add_subdirectory(Rendering)
-add_subdirectory(Extensions)
 
 # Link include files
 target_sources(Sierra PRIVATE
     srpch.h
-    ../include/Sierra.h
+    ../include/Sierra/Sierra.h
 )
 
 # Export engine module symbols

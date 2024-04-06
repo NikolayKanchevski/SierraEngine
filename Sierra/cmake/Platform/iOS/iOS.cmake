@@ -24,11 +24,11 @@ function(BuildIOSApplication SOURCE_FILES)
     )
 
     # Copy resources to bundle
-    set(RESOURCES_DIRECTORY "${CMAKE_SOURCE_DIR}/resources")
-    file(GLOB_RECURSE RESOURCES_DIRECTORY_ITEMS "${RESOURCES_DIRECTORY}/*.*")
+    set(RESOURCES_DIRECTORY_PATH "${CMAKE_SOURCE_DIR}/resources")
+    file(GLOB_RECURSE RESOURCES_DIRECTORY_ITEMS "${RESOURCES_DIRECTORY_PATH}/*.*")
     list(LENGTH RESOURCES_DIRECTORY_ITEMS RESOURCES_DIRECTORY_ITEMS_LENGTH)
     if(RESOURCES_DIRECTORY_ITEMS_LENGTH GREATER 0)
-        add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${RESOURCES_DIRECTORY}" $<TARGET_FILE_DIR:${SIERRA_APPLICATION_NAME}>)
+        add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${RESOURCES_DIRECTORY_PATH}" $<TARGET_FILE_DIR:${SIERRA_APPLICATION_NAME}>)
     endif()
 
     # Link icon with the application
@@ -36,7 +36,7 @@ function(BuildIOSApplication SOURCE_FILES)
     target_sources(${SIERRA_APPLICATION_NAME} PRIVATE ${SIERRA_APPLICATION_ICON_ICNS})
 
     # Set Xcode project's info.plist
-    set_target_properties(${SIERRA_APPLICATION_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${SIERRA_DIRECTORY}/src/Core/Platform/iOS/config/plist.in)
+    set_target_properties(${SIERRA_APPLICATION_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${SIERRA_DIRECTORY_PATH}/src/Core/Platform/iOS/config/plist.in)
 
     # Set up Xcode project
     function(get_all_targets var)

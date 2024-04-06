@@ -7,7 +7,6 @@ struct PushConstant
 {
     uint fontAtlasIndex;
     uint fontSamplerIndex;
-    float2 translation;
     float2 scale;
 };
 

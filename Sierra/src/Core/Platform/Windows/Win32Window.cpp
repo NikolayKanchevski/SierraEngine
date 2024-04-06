@@ -29,8 +29,8 @@ namespace Sierra
             RECT rect
             {
                 .left = screen.GetWorkAreaOrigin().x,
-                .right = screen.GetWorkAreaOrigin().x + static_cast<LONG>(screen.GetWorkAreaWidth()),
                 .top = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYBORDER),
+                .right = screen.GetWorkAreaOrigin().x + static_cast<LONG>(screen.GetWorkAreaWidth()),
                 .bottom = static_cast<LONG>(screen.GetWorkAreaHeight())
             };
 
@@ -106,7 +106,7 @@ namespace Sierra
     void Win32Window::SetTitle(const std::string_view newTitle)
     {
         title = newTitle;
-        SetWindowText(window, newTitle.c_str());
+        SetWindowText(window, newTitle.data());
     }
 
     void Win32Window::SetPosition(const Vector2Int &position)

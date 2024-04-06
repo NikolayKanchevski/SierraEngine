@@ -61,7 +61,7 @@ namespace Sierra
         // Create window
         HWND window = CreateWindowEx(
             exStyle, className,
-            title.c_str(), style,
+            title.data(), style,
             CW_USEDEFAULT, CW_USEDEFAULT,
             rect.right - rect.left, rect.bottom - rect.top,
             NULL, NULL, hInstance, NULL

@@ -3,7 +3,7 @@ target_sources(Sierra PRIVATE
     Application.h
     CursorManager.cpp
     CursorManager.h
-        EventDispatcher.hpp
+    EventDispatcher.hpp
     InputManager.cpp
     InputManager.h
     Key.h
@@ -29,23 +29,23 @@ target_sources(Sierra PRIVATE
 )
 
 # Link glm
-set(GLM_DIRECTORY ../../vendor/glm)
-add_subdirectory(${GLM_DIRECTORY} ${GLM_DIRECTORY})
+set(GLM_DIRECTORY_PATH ../../vendor/glm)
+add_subdirectory(${GLM_DIRECTORY_PATH} ${GLM_DIRECTORY_PATH})
 target_link_libraries(Sierra PUBLIC glm)
-target_include_directories(Sierra PUBLIC ${GLM_DIRECTORY})
+target_include_directories(Sierra PUBLIC ${GLM_DIRECTORY_PATH})
 
 # Link spdlog
 if(SIERRA_ENABLE_LOGGING)
-    set(SPDLOG_DIRECTORY ../../vendor/spdlog)
+    set(SPDLOG_DIRECTORY_PATH ../../vendor/spdlog)
     set(SPDLOG_ENABLE_PCH ON)
     set(SPDLOG_USE_STD_FORMAT OFF)
     set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-    add_subdirectory(${SPDLOG_DIRECTORY} ${SPDLOG_DIRECTORY})
+    add_subdirectory(${SPDLOG_DIRECTORY_PATH} ${SPDLOG_DIRECTORY_PATH})
     if(SIERRA_BUILD_SHARED_LIBRARY AND SIERRA_PLATFORM_LINUX)
         set_target_properties(spdlog PROPERTIES COMPILE_FLAGS "-fPIC" LINK_FLAGS "-fPIC")
     endif()
     target_link_libraries(Sierra PUBLIC spdlog)
-    target_include_directories(Sierra PRIVATE ${SPDLOG_DIRECTORY}/include)
+    target_include_directories(Sierra PRIVATE ${SPDLOG_DIRECTORY_PATH}/include)
 endif()
 
 # Link platform-specific source files and libraries

@@ -1116,49 +1116,49 @@ namespace Sierra
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_UNIFORM_BUFFER_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers,
+                    .descriptorCount = 500'000, //descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers,
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr
                 },
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_STORAGE_BUFFER_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                    .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers,
+                    .descriptorCount = 500'000, //descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers,
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr
                 },
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_SAMPLED_IMAGE_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                    .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2,
+                    .descriptorCount = 500'000, //descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2,
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr
                 },
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_SAMPLED_CUBEMAP_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                    .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2,
+                    .descriptorCount = 500'000, //descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2,
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr
                 },
                 VkDescriptorSetLayoutBinding {
                         .binding = BINDLESS_STORAGE_IMAGE_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                    .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2,
+                    .descriptorCount = 500'000, //descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2,
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr,
                 },
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_STORAGE_CUBEMAP_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                    .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2,
+                    .descriptorCount = 500'000, //descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2,
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr,
                 },
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_SAMPLER_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-                    .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers,
+                    .descriptorCount = 500'000, //descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers,
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr
                 }

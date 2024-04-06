@@ -7,7 +7,7 @@ SHADER_COMPILER_VERSION_MAJOR: int = 1
 SHADER_COMPILER_VERSION_MINOR: int = 1
 SHADER_COMPILER_VERSION_PATCH: int = 0
 
-CURRENT_DIRECTORY: str = os.path.dirname(os.path.realpath(__file__)).replace('\\', '/') + '/'
+CURRENT_DIRECTORY_PATH: str = os.path.dirname(os.path.realpath(__file__)).replace('\\', '/') + '/'
 
 class OperatingSystem(enum.Enum):
     Undefined = 0
@@ -29,7 +29,7 @@ def CompileShader(inputShaderFilePath: str, outputShaderDirectoryPath: str) -> N
         return
 
     # Get path to ShaderConnect compiler
-    compilerFilePath: str = CURRENT_DIRECTORY + 'Platform/'
+    compilerFilePath: str = CURRENT_DIRECTORY_PATH + 'Platform/'
     if operatingSystem == OperatingSystem.Windows:
         compilerFilePath += 'Windows/'
     elif operatingSystem == OperatingSystem.Linux:
@@ -53,11 +53,11 @@ def CompileShader(inputShaderFilePath: str, outputShaderDirectoryPath: str) -> N
     # Determine target languages
     targetLanguages: list[str] = []
     if operatingSystem == OperatingSystem.Windows:
-        targetLanguages = ['spir-v', 'hlsl', 'dxil']
+        targetLanguages = ['spir-v', 'dxil', 'hlsl', 'macos-metalsl', 'ios-metalsl']
     elif operatingSystem == OperatingSystem.macOS:
         targetLanguages = ['spir-v', 'macos-metallib', 'ios-metallib', 'ios-simulator-metallib', 'macos-metalsl', 'ios-metalsl']
     elif operatingSystem == OperatingSystem.Linux:
-        targetLanguages = ['spir-v']
+        targetLanguages = ['spir-v', 'hlsl', 'macos-metalsl', 'ios-metalsl']
 
     # Run compile command
     command: str = f'{ compilerFilePath } { inputShaderFilePath } glsl { inputShaderType } { outputShaderDirectoryPath }{ inputShaderFileName }{ inputShaderFileExtension }.shader/ '

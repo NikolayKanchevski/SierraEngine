@@ -7,11 +7,10 @@ struct PushConstant
 {
     uint fontAtlasIndex;
     uint fontSamplerIndex;
-    float2 translation;
     float2 scale;
 };
 
-struct _42
+struct _41
 {
     float4 color;
     float2 UV;
@@ -34,8 +33,8 @@ struct main0_in
 vertex main0_out main0(main0_in in [[stage_in]], constant PushConstant& pushConstant [[buffer(1)]])
 {
     main0_out out = {};
-    _42 Out = {};
-    out.gl_Position = float4(fma(pushConstant.scale, in.position, pushConstant.translation), 0.0, 1.0);
+    _41 Out = {};
+    out.gl_Position = float4(fma(pushConstant.scale, in.position, float2(-1.0, 1.0)), 0.0, 1.0);
     Out.color = in.color;
     Out.UV = in.UV;
     out.Out_color = Out.color;

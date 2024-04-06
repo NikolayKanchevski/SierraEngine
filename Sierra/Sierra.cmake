@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.14)
 set(CMAKE_SUPPRESS_REGENERATION true)
 
 # === INCLUDED FILES === #
-set(SIERRA_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
-include(${SIERRA_DIRECTORY}/cmake/PlatformDetection.cmake)
-include(${SIERRA_DIRECTORY}/cmake/CompilerDetection.cmake)
+set(SIERRA_DIRECTORY_PATH ${CMAKE_CURRENT_LIST_DIR})
+include(${SIERRA_DIRECTORY_PATH}/cmake/PlatformDetection.cmake)
+include(${SIERRA_DIRECTORY_PATH}/cmake/CompilerDetection.cmake)
 
 # === OPTIONS === $
 set(SIERRA_APPLICATION_NAME ${PROJECT_NAME} CACHE STRING "Name of the application (used for the binary and code signing).")
@@ -34,7 +34,7 @@ if(SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_iOS)
      option(SIERRA_BUILD_METAL "Whether to build Metal and its resources." ON)
 endif()
 
-option(SIERRA_BUILD_IMGUI "Whether to build native ImGui support." ON)
+option(SIERRA_ENABLE_IMGUI_EXTENSION "Whether to build the ImGui layer (ImGui would still need to be manually linked to application). Requires SIERRA_IMGUI_INCLUDE_DIRECTORY_PATH to be set." OFF)
 
 # === CHECK IF REQUIREMENTS ARE MET === #
 if(NOT CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 20)
@@ -48,7 +48,7 @@ if(SIERRA_PLATFORM_UNKNOWN)
 endif()
 
 # === BUILD API LIBRARY === #
-add_subdirectory(${SIERRA_DIRECTORY}/src ${SIERRA_DIRECTORY}/src)
+add_subdirectory(${SIERRA_DIRECTORY_PATH}/src/ ${SIERRA_DIRECTORY_PATH}/src/)
 
 function(SierraBuildApplication SOURCE_FILES)
     # === COMPILER SETTINGS === #
@@ -89,16 +89,21 @@ function(SierraBuildApplication SOURCE_FILES)
     endif()
 
     # === PRECOMPILED HEADERS === #
-    target_precompile_headers(Sierra PRIVATE "${SIERRA_DIRECTORY}/src/srpch.h")
+    target_precompile_headers(Sierra PRIVATE "${SIERRA_DIRECTORY_PATH}/src/srpch.h")
 
     # === ENGINE LINKING === #
     target_link_libraries(${SIERRA_APPLICATION_NAME} PRIVATE Sierra)
-    target_include_directories(${SIERRA_APPLICATION_NAME} PRIVATE ${SIERRA_DIRECTORY}/include/)
+    target_include_directories(${SIERRA_APPLICATION_NAME} PRIVATE ${SIERRA_DIRECTORY_PATH}/include/)
+
+    # === EXTENSION LINKING === #
+    if(SIERRA_ENABLE_IMGUI_EXTENSION)
+        add_subdirectory(${SIERRA_DIRECTORY_PATH}/src/Extensions/ImGui/ ${SIERRA_DIRECTORY_PATH}/src/Extensions/ImGui/)
+    endif()
 
     # === RUN UPDATE SCRIPT === #
     find_package(Python)
     if(Python_FOUND)
-        add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} POST_BUILD COMMAND ${Python_EXECUTABLE} ${SIERRA_DIRECTORY}/scripts/UpdateProject.py)
+        add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} POST_BUILD COMMAND ${Python_EXECUTABLE} ${SIERRA_DIRECTORY_PATH}/scripts/UpdateProject.py)
         message(STATUS "[Sierra]: Running project update scripts...")
     else()
         message(WARNING "[Sierra]: Python install was not found on the machine. Project update scripts cannot be run!")

@@ -46,5 +46,5 @@ else()
 endif()
 
 foreach(ITEM ${SIERRA_PLATFORM_CMAKE_FILE_PATHS})
-    include("${SIERRA_DIRECTORY}/cmake/${ITEM}")
+    include("${SIERRA_DIRECTORY_PATH}/cmake/${ITEM}")
 endforeach()

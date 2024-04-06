@@ -8,8 +8,8 @@ import datetime
 import subprocess
 from sys import platform
 
-CURRENT_DIRECTORY: str = os.path.dirname(os.path.realpath(__file__)).replace('\\', '/') + '/'
-ENGINE_ROOT_DIRECTORY: str = CURRENT_DIRECTORY + '../../'
+CURRENT_DIRECTORY_PATH: str = os.path.dirname(os.path.realpath(__file__)).replace('\\', '/') + '/'
+ENGINE_ROOT_DIRECTORY_PATH: str = CURRENT_DIRECTORY_PATH + '../../'
 
 def Main() -> None:
     UpdateReadMe()
@@ -22,7 +22,7 @@ def UpdateReadMe() -> None:
 
     # Loop through all project files and check if the current file is a source file
     for subdirectory in ['Sierra/', 'SierraEngine/']:
-        for root, dirs, files in os.walk(ENGINE_ROOT_DIRECTORY + subdirectory):
+        for root, dirs, files in os.walk(ENGINE_ROOT_DIRECTORY_PATH + subdirectory):
             for file in files:
                 for extension in SOURCE_FILE_EXTENSIONS:
                     if 'bin' in root or 'vendor' in root or 'config' in root or any(re.compile(r'\.[a-zA-Z]').match(item) for item in root.split('/')):
@@ -37,7 +37,7 @@ def UpdateReadMe() -> None:
                             # print(str(file) + ": " + str(count + 1))
                             file.close()
 
-    with open(ENGINE_ROOT_DIRECTORY + 'README.md', 'r+') as file:
+    with open(ENGINE_ROOT_DIRECTORY_PATH + 'README.md', 'r+') as file:
         # Count README.md's lines as well (gotta look like there's a lot of code, innit :D) and write total count & date
         for count, line in enumerate(file):
             pass

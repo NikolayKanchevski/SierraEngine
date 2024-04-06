@@ -27,31 +27,31 @@ namespace Sierra
         {
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers
+                .descriptorCount = 500'000//descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers
+                .descriptorCount = 500'000//descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1
+                .descriptorCount = 500'000//descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1
+                .descriptorCount = 500'000//descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1
+                .descriptorCount = 500'000//descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1
+                .descriptorCount = 500'000//descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-                .descriptorCount = descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers
+                .descriptorCount = 500'000//descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers
             }
         };
 

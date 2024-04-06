@@ -1,6 +1,6 @@
 target_sources(Sierra PRIVATE
-    GameActivityContext.cpp
     GameActivityContext.h
+    GameActivityContext.cpp
     AndroidContext.h
     AndroidContext.cpp
     GameActivityScreen.h
@@ -20,8 +20,8 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u \ Java_com_google
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Build app_glue
-set(APP_GLUE_DIRECTORY "${game-activity_INCLUDE_DIRECTORIES}/game-activity/native_app_glue")
-target_sources(${SIERRA_APPLICATION_NAME} PRIVATE android_main.cpp ${APP_GLUE_DIRECTORY}/android_native_app_glue.h ${APP_GLUE_DIRECTORY}/android_native_app_glue.c ${game-activity_INCLUDE_DIRECTORIES}/game-activity/GameActivity.h ${game-activity_INCLUDE_DIRECTORIES}/game-activity/GameActivity.cpp)
+set(APP_GLUE_DIRECTORY_PATH "${game-activity_INCLUDE_DIRECTORIES}/game-activity/native_app_glue")
+target_sources(${SIERRA_APPLICATION_NAME} PRIVATE android_main.cpp ${APP_GLUE_DIRECTORY_PATH}/android_native_app_glue.h ${APP_GLUE_DIRECTORY_PATH}/android_native_app_glue.c ${game-activity_INCLUDE_DIRECTORIES}/game-activity/GameActivity.h ${game-activity_INCLUDE_DIRECTORIES}/game-activity/GameActivity.cpp)
 target_sources(Sierra PRIVATE ${game-activity_INCLUDE_DIRECTORIES}/game-activity/GameActivity.h)
 target_link_libraries(${SIERRA_APPLICATION_NAME} PUBLIC game-activity::game-activity_static)
 

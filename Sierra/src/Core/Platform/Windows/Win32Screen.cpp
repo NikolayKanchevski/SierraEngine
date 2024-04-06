@@ -12,10 +12,8 @@ namespace Sierra
     Win32Screen::Win32Screen(const Win32ScreenCreateInfo &createInfo)
     {
         // Allocate monitor info
-        MONITORINFOEX monitorInfo
-        {
-            .cbSize = sizeof(MONITORINFOEX)
-        };
+        MONITORINFOEX monitorInfo = { };
+        monitorInfo.cbSize = sizeof(MONITORINFOEX);
 
         // Get monitor info
         if (GetMonitorInfo(createInfo.hMonitor, &monitorInfo))
