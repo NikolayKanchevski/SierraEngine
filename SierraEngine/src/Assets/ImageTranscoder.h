@@ -16,8 +16,7 @@ namespace SierraEngine
 
     struct ImageTranscodeInfo
     {
-        const void* compressedMemory = nullptr;
-        uint64 compressedMemorySize = 0;
+        std::span<const uint8> compressedMemory;
     };
 
     struct TranscodedImage
@@ -25,21 +24,22 @@ namespace SierraEngine
         uint32 width = 0;
         uint32 height = 0;
         Sierra::ImageFormat format = Sierra::ImageFormat::Undefined;
-        uint64 memorySize = 0;
+        std::vector<std::vector<uint8>> levelMemories;
+        uint32 layerCount = 0;
     };
 
     class ImageTranscoder
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual std::optional<TranscodedImage> Transcode(const ImageTranscodeInfo &transcodeInfo, void*& transcodedMemory) const = 0;
+        [[nodiscard]] virtual std::optional<TranscodedImage> Transcode(const ImageTranscodeInfo &transcodeInfo) const = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual ImageSupercompressorType GetType() const = 0;
 
         /* --- OPERATORS --- */
         ImageTranscoder(const ImageTranscoder&) = delete;
-        ImageTranscoder &operator=(const ImageTranscoder&) = delete;
+        ImageTranscoder& operator=(const ImageTranscoder&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~ImageTranscoder() = default;

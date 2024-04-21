@@ -17,13 +17,8 @@ namespace SierraEngine
         Diffuse,
         Specular,
         Normal,
-        Height
-    };
-
-    enum class TextureFiltering : bool
-    {
-        Pixelated,
-        Smooth
+        Height,
+        Skybox
     };
 
     class TextureAsset final : public Asset
@@ -31,22 +26,20 @@ namespace SierraEngine
     public:
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline TextureType GetType() const { return type; }
-        [[nodiscard]] inline TextureFiltering GetFiltering() const { return filtering; }
         [[nodiscard]] inline const std::unique_ptr<Sierra::Image>& GetImage() const { return image; }
 
         /* --- MOVE SEMANTICS --- */
         TextureAsset(TextureAsset&& other) = default;
-        TextureAsset &operator=(TextureAsset&& other) = default;
+        TextureAsset& operator=(TextureAsset&& other) = default;
 
         /* --- DESTRUCTOR --- */
         ~TextureAsset() = default;
 
     private:
         friend class TextureImporter;
-        inline TextureAsset() : Asset(AssetType::Texture) { }
+        inline TextureAsset() = default;
 
         TextureType type = TextureType::Undefined;
-        TextureFiltering filtering = TextureFiltering::Pixelated;
         std::unique_ptr<Sierra::Image> image = nullptr;
 
     };
@@ -54,21 +47,24 @@ namespace SierraEngine
     struct TextureSerializeInfo
     {
         TextureType type = TextureType::Undefined;
-        TextureFiltering filtering = TextureFiltering::Smooth;
+        bool generateMipMaps = false;
 
         ImageSupercompressorType compressorType = ImageSupercompressorType::KTX;
         ImageSupercompressionLevel compressionLevel = ImageSupercompressionLevel::Standard;
         ImageSupercompressionQualityLevel qualityLevel = ImageSupercompressionQualityLevel::Standard;
     };
 
-    struct SerializedTexture : public SerializedAsset
+    struct SerializedTextureIndex
     {
         TextureType type = TextureType::Undefined;
-        TextureFiltering filtering = TextureFiltering::Smooth;
         ImageSupercompressorType compressorType = ImageSupercompressorType::Undefined;
-
-        uint64 contentMemorySize = 0;
-        // void* content = rest of file
     };
+
+    struct SerializedTexture
+    {
+        SerializedAssetHeader header = { };
+        SerializedTextureIndex index = { };
+    };
+    using SerializedTextureBlob = std::vector<uint8>;
 
 }

@@ -29,7 +29,8 @@ def GetGenerateFileDataFromFile(filePath: str, symbols: dict[str, str]) -> str:
 
     return fileData
 
-if len(sys.argv) < 3 + 1:
-    print('Usage: <relative_file_path> <relative_input_file_path> <symbols_dictionary>')
-else:
-    GenerateFileFromFile(sys.argv[1], sys.argv[2], dict(pair.split('=') for pair in sys.argv[3].split(',')))
+if __name__ == '__main__':
+    if len(sys.argv) < 3 + 1:
+        print('Usage: <relative_file_path> <relative_input_file_path> <symbols_dictionary>')
+    else:
+        GenerateFileFromFile(sys.argv[1], sys.argv[2], dict(pair.split('=') for pair in sys.argv[3].split(',')))

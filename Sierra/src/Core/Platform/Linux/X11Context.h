@@ -80,7 +80,7 @@ namespace Sierra
         void SetWindowTitle(XID window, std::string_view title) const;
         void SetWindowPosition(XID window, const Vector2Int &position) const;
         void SetWindowSize(XID window, const Vector2UInt &size) const;
-        void SetWindowSizeLimits(XID window, const Vector2UInt &minimumSize, const Vector2UInt &maximumSize) const;
+        void SetWindowSizeLimits(XID window, const Vector2UInt &minSize, const Vector2UInt &maxSize) const;
         void SetWindowOpacity(XID window, float32 opacity) const;
 
         void ShowWindowCursor(XID window) const;

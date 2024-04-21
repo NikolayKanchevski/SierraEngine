@@ -429,13 +429,13 @@ namespace Sierra
     uint32 CocoaWindow::GetFramebufferWidth() const
     {
         const NSRect contentRect = [window convertRectToBacking: view.frame];
-        return contentRect.size.height;
+        return contentRect.size.width;
     }
 
     uint32 CocoaWindow::GetFramebufferHeight() const
     {
         const NSRect contentRect = [window convertRectToBacking: view.frame];
-        return contentRect.size.width;
+        return contentRect.size.height;
     }
 
     float32 CocoaWindow::GetOpacity() const

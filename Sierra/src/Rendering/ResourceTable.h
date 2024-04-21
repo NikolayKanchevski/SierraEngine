@@ -45,7 +45,7 @@ namespace Sierra
 
         /* --- OPERATORS --- */
         ResourceTable(const ResourceTable&) = delete;
-        ResourceTable &operator=(const ResourceTable&) = delete;
+        ResourceTable& operator=(const ResourceTable&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~ResourceTable() = default;

@@ -135,7 +135,7 @@ namespace Sierra
     public:
         /* --- OPERATORS --- */
         GraphicsPipeline(const GraphicsPipeline&) = delete;
-        GraphicsPipeline &operator=(const GraphicsPipeline&) = delete;
+        GraphicsPipeline& operator=(const GraphicsPipeline&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~GraphicsPipeline() = default;

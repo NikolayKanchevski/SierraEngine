@@ -41,6 +41,7 @@ namespace Sierra
 
         VkSurfaceKHR surface = VK_NULL_HANDLE;
         VkQueue presentationQueue = VK_NULL_HANDLE;
+        uint32 presentationQueueFamily = std::numeric_limits<uint32>::max();
 
         SwapchainPresentationMode preferredPresentationMode = SwapchainPresentationMode::Immediate;
         SwapchainImageMemoryType preferredImageMemoryType = SwapchainImageMemoryType::UNorm8;
@@ -49,7 +50,7 @@ namespace Sierra
         std::vector<std::unique_ptr<Image>> swapchainImages;
 
         std::vector<VkSemaphore> isImageAcquiredSemaphores;
-        std::vector<VkSemaphore> isImagePresentedSemaphores;
+        std::vector<VkSemaphore> isPresentationCommandBufferFreeSemaphores;
 
         uint32 concurrentFrameCount = 0;
         uint32 currentFrame = 0; // On the CPU

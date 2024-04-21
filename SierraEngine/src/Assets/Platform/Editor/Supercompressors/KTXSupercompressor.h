@@ -16,7 +16,7 @@ namespace SierraEngine
         explicit KTXSupercompressor(const ImageSupercompressorCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] bool Supercompress(const ImageSupercompressorSupercompressInfo &compressInfo, void*& compressedMemory, uint64 &compressedMemorySize) const override;
+        [[nodiscard]] std::optional<std::vector<uint8>> Supercompress(const Sierra::FileManager &fileManager, const ImageSupercompressInfo &compressInfo) const override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline ImageSupercompressorType GetType() const override { return ImageSupercompressorType::KTX; }

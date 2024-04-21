@@ -9,7 +9,7 @@ namespace SierraEngine
 
     struct ImageSupercompressorCreateInfo
     {
-        uint16 maximumImageDimensions = 4096;
+        uint16 maxImageDimensions = 4096;
     };
 
     enum class ImageSupercompressionQualityLevel : uint8
@@ -33,10 +33,12 @@ namespace SierraEngine
         VeryHigh
     };
 
-    struct ImageSupercompressorSupercompressInfo
+    struct ImageSupercompressInfo
     {
-        const std::initializer_list<std::initializer_list<std::filesystem::path>> &filePaths;
+        const std::initializer_list<std::initializer_list<std::filesystem::path>> &levelFilePaths;
+
         bool normalMap = false;
+        bool generateMipMaps = false;
 
         ImageSupercompressionLevel compressionLevel = ImageSupercompressionLevel::Standard;
         ImageSupercompressionQualityLevel qualityLevel = ImageSupercompressionQualityLevel::Standard;
@@ -52,24 +54,24 @@ namespace SierraEngine
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual bool Supercompress(const ImageSupercompressorSupercompressInfo &superCompressInfo, void*& compressedMemory, uint64 &compressedMemorySize) const = 0;
+        [[nodiscard]] virtual std::optional<std::vector<uint8>> Supercompress(const Sierra::FileManager &fileManager, const ImageSupercompressInfo &superCompressInfo) const = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual ImageSupercompressorType GetType() const = 0;
 
         /* --- OPERATORS --- */
         ImageSupercompressor(const ImageSupercompressor&) = delete;
-        ImageSupercompressor &operator=(const ImageSupercompressor&) = delete;
+        ImageSupercompressor& operator=(const ImageSupercompressor&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~ImageSupercompressor() = default;
 
     protected:
         explicit ImageSupercompressor(const ImageSupercompressorCreateInfo &createInfo);
-        [[nodiscard]] inline uint16 GetMaximumImageDimensions() const { return maximumImageDimensions; }
+        [[nodiscard]] inline uint16 GetMaxImageDimensions() const { return maxImageDimensions; }
 
     private:
-        uint16 maximumImageDimensions = 0;
+        const uint16 maxImageDimensions = 0;
 
     };
 

@@ -30,7 +30,7 @@ namespace Sierra
             .compareEnable = createInfo.compareOperation != SamplerCompareOperation::None,
             .compareOp = samplerCreateInfo.compareEnable ? SamplerCompareOperationToVkCompareOp(createInfo.compareOperation) : VK_COMPARE_OP_ALWAYS,
             .minLod = 0.0f,
-            .maxLod = static_cast<float32>(createInfo.highestSampledMipLevel),
+            .maxLod = static_cast<float32>(createInfo.highestSampledLevel),
             .borderColor = SamplerBorderColorToVkBorderColor(createInfo.borderColor),
             .unnormalizedCoordinates = VK_FALSE,
         };

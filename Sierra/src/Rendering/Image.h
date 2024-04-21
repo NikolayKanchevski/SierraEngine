@@ -470,7 +470,7 @@ namespace Sierra
         ImageType type = ImageType::Plane;
         ImageFormat format = ImageFormat::Undefined;
 
-        uint32 mipLevelCount = 1;
+        uint32 levelCount = 1;
         uint32 layerCount = 1;
         ImageUsage usage = ImageUsage::Undefined;
 
@@ -484,13 +484,13 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint32 GetWidth() const { return width; }
         [[nodiscard]] inline uint32 GetHeight() const { return height; }
-        [[nodiscard]] inline uint64 GetMemorySize() const { return GetLayerMemorySize() * layerCount; }
-
         [[nodiscard]] inline ImageFormat GetFormat() const { return format; }
+
         [[nodiscard]] inline float32 GetPixelMemorySize() const { return ImageFormatToPixelMemorySize(format); }
         [[nodiscard]] inline uint64 GetLayerMemorySize() const { return static_cast<uint64>(width) * height * GetPixelMemorySize(); }
+        [[nodiscard]] inline uint64 GetMemorySize() const { return GetLayerMemorySize() * layerCount; }
 
-        [[nodiscard]] inline uint32 GetMipLevelCount() const { return mipLevelCount; }
+        [[nodiscard]] inline uint32 GetLevelCount() const { return levelCount; }
         [[nodiscard]] inline uint32 GetLayerCount() const { return layerCount; }
         [[nodiscard]] inline ImageSampling GetSampling() const { return sampling; };
 
@@ -509,7 +509,7 @@ namespace Sierra
         uint32 height = 0;
         ImageFormat format = ImageFormat::Undefined;
 
-        uint32 mipLevelCount = 1;
+        uint32 levelCount = 1;
         uint32 layerCount = 1;
         ImageSampling sampling = ImageSampling::x1;
 

@@ -24,6 +24,10 @@ namespace Sierra
 
     void MetalCommandBuffer::Begin()
     {
+        // Free queued resources
+//        queuedBuffersForDestruction = { };
+//        queuedImagesForDestruction = { };
+
         // Set up command buffer descriptor
         MTLCommandBufferDescriptor* const commandBufferDescriptor = [[MTLCommandBufferDescriptor alloc] init];
         #if SR_ENABLE_LOGGING
@@ -78,18 +82,18 @@ namespace Sierra
         [currentRenderEncoder memoryBarrierWithResources: &bufferResource count: 1 afterStages: BufferCommandUsageToRenderStages(previousUsage) beforeStages: BufferCommandUsageToRenderStages(nextUsage)];
     }
 
-    void MetalCommandBuffer::SynchronizeImageUsage(const std::unique_ptr<Image> &image, const ImageCommandUsage previousUsage, const ImageCommandUsage nextUsage, const uint32 baseMipLevel, uint32 mipLevelCount, const uint32 baseLayer, uint32 layerCount)
+    void MetalCommandBuffer::SynchronizeImageUsage(const std::unique_ptr<Image> &image, const ImageCommandUsage previousUsage, const ImageCommandUsage nextUsage, const uint32 baseLevel, uint32 levelCount, const uint32 baseLayer, uint32 layerCount)
     {
         SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not synchronize usage of image [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image->GetName(), GetName());
         const MetalImage &metalImage = static_cast<MetalImage&>(*image);
 
-        SR_ERROR_IF(baseMipLevel >= image->GetMipLevelCount(), "[Metal]: Cannot synchronize mip level [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseMipLevel, image->GetName(), GetName());
+        SR_ERROR_IF(baseLevel >= image->GetLevelCount(), "[Metal]: Cannot synchronize level [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseLevel, image->GetName(), GetName());
         SR_ERROR_IF(baseLayer >= image->GetLayerCount(), "[Metal]: Cannot synchronize layer [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseLayer, image->GetName(), GetName());
 
-        mipLevelCount = mipLevelCount != 0 ? mipLevelCount : image->GetMipLevelCount() - baseMipLevel;
+        levelCount = levelCount != 0 ? levelCount : image->GetLevelCount() - baseLevel;
         layerCount = layerCount != 0 ? layerCount : image->GetLayerCount() - baseLayer;
 
-        SR_ERROR_IF(baseMipLevel + mipLevelCount > image->GetMipLevelCount(), "[Metal]: Cannot synchronize mip levels [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's mip level count - [{4}]!", baseMipLevel, baseMipLevel + mipLevelCount - 1, image->GetName(), GetName(), image->GetMipLevelCount());
+        SR_ERROR_IF(baseLevel + levelCount > image->GetLevelCount(), "[Metal]: Cannot synchronize levels [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's level count - [{4}]!", baseLevel, baseLevel + levelCount - 1, image->GetName(), GetName(), image->GetLevelCount());
         SR_ERROR_IF(baseLayer + layerCount > image->GetLayerCount(), "[Metal]: Cannot synchronize layers [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's layer count - [{4}]!", baseLayer, baseLayer + layerCount - 1, image->GetName(), GetName(), image->GetLayerCount());
 
         const id<MTLResource> textureResource = metalImage.GetMetalTexture();
@@ -117,7 +121,7 @@ namespace Sierra
         [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer() sourceOffset: sourceByteOffset toBuffer: metalDestinationBuffer.GetMetalBuffer() destinationOffset: destinationByteOffset size: memoryRange];
     }
 
-    void MetalCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const uint32 mipLevel, const Vector2UInt &pixelRange, const uint32 layer, const  uint64 sourceByteOffset, const Vector2UInt &destinationPixelOffset)
+    void MetalCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const uint32 level, const uint32 layer, const Vector2UInt &pixelRange, const uint64 sourceByteOffset, const Vector2UInt &destinationPixelOffset)
     {
         SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy from buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], to image [{1}] within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
         const MetalBuffer &metalSourceBuffer = static_cast<MetalBuffer&>(*sourceBuffer);
@@ -125,10 +129,10 @@ namespace Sierra
         SR_ERROR_IF(destinationImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not from buffer [{0}] to image [{1}], graphics API differs from [GraphicsAPI::Metal], within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
         const MetalImage &metalDestinationImage = static_cast<MetalImage&>(*destinationImage);
 
-        SR_ERROR_IF(mipLevel >= destinationImage->GetMipLevelCount(), "[Metal]: Cannot copy from buffer [{0}] to mip level [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), mipLevel, destinationImage->GetName(), GetName());
+        SR_ERROR_IF(level >= destinationImage->GetLevelCount(), "[Metal]: Cannot copy from buffer [{0}] to level [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), level, destinationImage->GetName(), GetName());
         SR_ERROR_IF(layer >= destinationImage->GetLayerCount(), "[Metal]: Cannot copy from buffer [{0}] to layer [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), layer, destinationImage->GetName(), GetName());
 
-        const MTLSize sourceSize = MTLSizeMake(pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth() >> mipLevel, pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight() >> mipLevel, 1);
+        const MTLSize sourceSize = MTLSizeMake(pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth() >> level, pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight() >> level, 1);
         SR_ERROR_IF(destinationPixelOffset.x + sourceSize.width > destinationImage->GetWidth() || destinationPixelOffset.y + sourceSize.height > destinationImage->GetHeight(), "[Metal]: Cannot copy from buffer [{0}] pixel range [{1}x{2}], which is offset by another [{3}x{4}] pixels to image [{5}] within command buffer [{6}], as resulting pixel range of a total of [{7}x{8}] pixels exceeds the image's dimensions - [{9}x{10}]!", sourceBuffer->GetName(), sourceSize.width, sourceSize.height, destinationPixelOffset.x, destinationPixelOffset.y, destinationImage->GetName(), GetName(), destinationPixelOffset.x + sourceSize.width, destinationPixelOffset.y + sourceSize.height, destinationImage->GetWidth(), destinationImage->GetHeight());
 
         if (currentBlitEncoder == nil)
@@ -137,14 +141,14 @@ namespace Sierra
             device.SetResourceName(currentBlitEncoder , "Transfer Encoder");
         }
 
-        [currentBlitEncoder optimizeContentsForGPUAccess: metalDestinationImage.GetMetalTexture() slice: layer level: mipLevel];
-        [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer() sourceOffset: sourceByteOffset sourceBytesPerRow: destinationImage->GetWidth() * ImageFormatToBlockSize(destinationImage->GetFormat()) * destinationImage->GetPixelMemorySize() sourceBytesPerImage: 0 sourceSize: sourceSize toTexture: metalDestinationImage.GetMetalTexture() destinationSlice: layer destinationLevel: mipLevel destinationOrigin: MTLOriginMake(destinationPixelOffset.x, destinationPixelOffset.y, 0)];
+        [currentBlitEncoder optimizeContentsForGPUAccess: metalDestinationImage.GetMetalTexture() slice: layer level: level];
+        [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer() sourceOffset: sourceByteOffset sourceBytesPerRow: destinationImage->GetWidth() * ImageFormatToBlockSize(destinationImage->GetFormat()) * destinationImage->GetPixelMemorySize() sourceBytesPerImage: 0 sourceSize: sourceSize toTexture: metalDestinationImage.GetMetalTexture() destinationSlice: layer destinationLevel: level destinationOrigin: MTLOriginMake(destinationPixelOffset.x, destinationPixelOffset.y, 0)];
     }
 
     void MetalCommandBuffer::GenerateMipMapsForImage(const std::unique_ptr<Image> &image)
     {
         SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot generate mip maps for image [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", image->GetName(), GetName());
-        SR_ERROR_IF(image->GetMipLevelCount() <= 1, "[Metal]: Cannot generate mip maps for image [{0}], as it has a single mip level only!", image->GetName());
+        SR_ERROR_IF(image->GetLevelCount() <= 1, "[Metal]: Cannot generate mip maps for image [{0}], as it has a single level only!", image->GetName());
 
         if (currentBlitEncoder == nil)
         {
@@ -449,6 +453,24 @@ namespace Sierra
             return;
         #endif
         [commandBuffer popDebugGroup];
+    }
+
+    std::unique_ptr<Buffer>& MetalCommandBuffer::QueueBufferForDestruction(std::unique_ptr<Buffer> &&buffer)
+    {
+        return queuedBuffersForDestruction.emplace(std::move(buffer));
+    }
+
+    std::unique_ptr<Image>& MetalCommandBuffer::QueueImageForDestruction(std::unique_ptr<Image> &&image)
+    {
+        return queuedImagesForDestruction.emplace(std::move(image));
+    }
+
+    /* --- DESTRUCTOR --- */
+
+    MetalCommandBuffer::~MetalCommandBuffer()
+    {
+        queuedBuffersForDestruction = { };
+        queuedImagesForDestruction = { };
     }
 
     /* --- CONVERSIONS --- */

@@ -17,7 +17,7 @@ namespace Sierra
 
         /* --- OPERATORS --- */
         CommandTask(const CommandTask&) = delete;
-        CommandTask &operator=(const CommandTask&) = delete;
+        CommandTask& operator=(const CommandTask&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~CommandTask() = default;

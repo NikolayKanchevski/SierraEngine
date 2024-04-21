@@ -19,7 +19,7 @@ namespace Sierra
     {
         // Check if X11's XKB extension is supported
         int versionMajor, versionMinor;
-        int minimumKeyCode, maximumKeyCode;
+        int minKeyCode, maxKeyCode;
         if (XkbQueryExtension(createInfo.display, nullptr, nullptr, nullptr, &versionMajor, &versionMinor))
         {
             // Check for auto-key-repeat support
@@ -37,8 +37,8 @@ namespace Sierra
             XkbGetNames(createInfo.display, XkbKeyNamesMask | XkbKeyAliasesMask, keyboardDescription);
 
             // Save key code boundaries
-            minimumKeyCode = keyboardDescription->min_key_code;
-            maximumKeyCode = keyboardDescription->max_key_code;
+            minKeyCode = keyboardDescription->min_key_code;
+            maxKeyCode = keyboardDescription->max_key_code;
 
             struct KeyNameEntry
             {
@@ -172,7 +172,7 @@ namespace Sierra
             };
 
             // Map every X11 key code to an index in the key table
-            for (uint32 i = minimumKeyCode; i <= glm::min(maximumKeyCode, static_cast<int32>(KEY_TABLE.size()) - 1); i++)
+            for (uint32 i = minKeyCode; i <= glm::min(maxKeyCode, static_cast<int32>(KEY_TABLE.size()) - 1); i++)
             {
                 Key key = Key::Unknown;
 
@@ -217,17 +217,17 @@ namespace Sierra
         else
         {
             // Get raw X11's key codes for the display
-            XDisplayKeycodes(createInfo.display, &minimumKeyCode, &maximumKeyCode);
+            XDisplayKeycodes(createInfo.display, &minKeyCode, &maxKeyCode);
         }
 
         // Retrieve standard key sym mapping
         int width;
-        KeySym* keySyms = XGetKeyboardMapping(createInfo.display, minimumKeyCode, maximumKeyCode - minimumKeyCode + 1, &width);
+        KeySym* keySyms = XGetKeyboardMapping(createInfo.display, minKeyCode, maxKeyCode - minKeyCode + 1, &width);
 
         // Translate unmapped entries using regular X11 KeySym lookups
-        for (uint32 scancode = minimumKeyCode; scancode <= glm::min(maximumKeyCode, static_cast<int32>(KEY_TABLE.size())); scancode++)
+        for (uint32 scancode = minKeyCode; scancode <= glm::min(maxKeyCode, static_cast<int32>(KEY_TABLE.size())); scancode++)
         {
-            if (KEY_TABLE[scancode] == Key::Unknown) KEY_TABLE[scancode] = TranslateKeySyms(&keySyms[(scancode - minimumKeyCode) * width], width);
+            if (KEY_TABLE[scancode] == Key::Unknown) KEY_TABLE[scancode] = TranslateKeySyms(&keySyms[(scancode - minKeyCode) * width], width);
         }
 
         // Free key syms and mark table as configured

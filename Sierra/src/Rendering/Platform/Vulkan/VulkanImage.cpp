@@ -27,7 +27,7 @@ namespace Sierra
                 .height = createInfo.height,
                 .depth = 1
             },
-            .mipLevels = createInfo.mipLevelCount,
+            .mipLevels = createInfo.levelCount,
             .arrayLayers = createInfo.layerCount,
             .samples = ImageSamplingToVkSampleCountFlags(createInfo.sampling),
             .tiling = createInfo.usage != ImageUsage::SourceMemory ? VK_IMAGE_TILING_OPTIMAL : VK_IMAGE_TILING_LINEAR,
@@ -55,6 +55,7 @@ namespace Sierra
         // Determine view type
         VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_2D;
         if (createInfo.type == ImageType::Cube) imageViewType = VK_IMAGE_VIEW_TYPE_CUBE;
+        else if (createInfo.layerCount > 1) imageViewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 
         // Set up image view create info
         const VkImageViewCreateInfo imageViewCreateInfo
@@ -72,7 +73,7 @@ namespace Sierra
             .subresourceRange = {
                 .aspectMask = aspectFlags,
                 .baseMipLevel = 0,
-                .levelCount = createInfo.mipLevelCount,
+                .levelCount = createInfo.levelCount,
                 .baseArrayLayer = 0,
                 .layerCount = createInfo.layerCount
             }

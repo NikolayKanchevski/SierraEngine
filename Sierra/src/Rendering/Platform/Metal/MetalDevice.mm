@@ -60,7 +60,7 @@ namespace Sierra
         auto iterator = std::find_if(commandBufferQueue.begin(), commandBufferQueue.end(), [&metalCommandBuffer](const CommandBufferQueueEntry &item) { return item.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
         if (iterator == commandBufferQueue.end())
         {
-            commandBufferQueue.push_back({ .commandBuffer = metalCommandBuffer.GetMetalCommandBuffer(), .counter = 0 });
+            commandBufferQueue.push_back({ .commandBuffer = metalCommandBuffer.GetMetalCommandBuffer(), .counter = static_cast<uint32>(commandBuffersToWait.size()) });
             iterator = commandBufferQueue.end() - 1;
         }
 
@@ -74,7 +74,7 @@ namespace Sierra
             [metalCommandBufferToWait.GetMetalCommandBuffer() addCompletedHandler: ^(id<MTLCommandBuffer>)
             {
                 auto semaphoreIterator = std::find_if(commandBufferQueue.begin(), commandBufferQueue.end(), [&metalCommandBuffer](const CommandBufferQueueEntry &item) { return item.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
-                if (--semaphoreIterator->counter == 0)
+                if (semaphoreIterator->counter--; semaphoreIterator->counter == 0)
                 {
                     [semaphoreIterator->commandBuffer encodeSignalEvent: sharedSignalSemaphore value: metalCommandBuffer.GetCompletionSignalValue()];
                     [semaphoreIterator->commandBuffer commit];

@@ -41,11 +41,7 @@ namespace Sierra
                     case MessageSeverity::Error:
                     {
                         applicationLogger->error(fmt, std::forward<Args>(args)...);
-                        #if SR_ENABLE_LOGGING
-                            throw std::runtime_error("Program execution failed miserably!");
-                        #else
-                            break;
-                        #endif
+                        throw std::runtime_error("Program execution failed miserably!");
                     }
                 }
             }
@@ -68,10 +64,6 @@ namespace Sierra
             #if SR_ENABLE_LOGGING
                 constexpr static void LogCoreMessage(const MessageSeverity messageSeverity, fmt::format_string<Args...> fmt, Args&&... args)
                 {
-                    #if !SR_ENABLE_LOGGING
-                        return;
-                    #endif
-
                     switch (messageSeverity)
                     {
                         case MessageSeverity::Info:

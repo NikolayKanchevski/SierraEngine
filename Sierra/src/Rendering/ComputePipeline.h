@@ -23,7 +23,7 @@ namespace Sierra
     public:
         /* --- OPERATORS --- */
         ComputePipeline(const ComputePipeline&) = delete;
-        ComputePipeline &operator=(const ComputePipeline&) = delete;
+        ComputePipeline& operator=(const ComputePipeline&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~ComputePipeline() = default;

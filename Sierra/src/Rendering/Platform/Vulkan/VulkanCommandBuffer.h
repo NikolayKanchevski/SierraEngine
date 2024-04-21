@@ -26,10 +26,10 @@ namespace Sierra
         void End() override;
 
         void SynchronizeBufferUsage(const std::unique_ptr<Buffer> &buffer, BufferCommandUsage previousUsage, BufferCommandUsage nextUsage, uint64 memorySize = 0, uint64 byteOffset = 0) override;
-        void SynchronizeImageUsage(const std::unique_ptr<Image> &image, ImageCommandUsage previousUsage, ImageCommandUsage nextUsage, uint32 baseMipLevel = 0, uint32 mipLevelCount = 0, uint32 baseLayer = 0, uint32 layerCount = 0) override;
+        void SynchronizeImageUsage(const std::unique_ptr<Image> &image, ImageCommandUsage previousUsage, ImageCommandUsage nextUsage, uint32 baseLevel = 0, uint32 levelCount = 0, uint32 baseLayer = 0, uint32 layerCount = 0) override;
 
         void CopyBufferToBuffer(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Buffer> &destinationBuffer, uint64 memoryRange = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) override;
-        void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, uint32 mipLevel, const Vector2UInt &pixelRange = { 0, 0 }, uint32 layer = 0, uint64 sourceByteOffset = 0, const Vector2UInt &destinationPixelOffset = { 0, 0 }) override;
+        void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, uint32 level = 0, uint32 layer = 0, const Vector2UInt &pixelRange = { 0, 0 }, uint64 sourceByteOffset = 0, const Vector2UInt &destinationPixelOffset = { 0, 0 }) override;
         void GenerateMipMapsForImage(const std::unique_ptr<Image> &image) override;
 
         void BindResourceTable(const std::unique_ptr<ResourceTable> &resourceTable) override;
@@ -58,6 +58,9 @@ namespace Sierra
         void InsertDebugMarker(std::string_view markerName, const ColorRGBA32 &color = { 1.0f, 1.0f, 0.0f, 1.0f }) override;
         void EndDebugRegion() override;
 
+        std::unique_ptr<Buffer>& QueueBufferForDestruction(std::unique_ptr<Buffer> &&buffer) override;
+        std::unique_ptr<Image>& QueueImageForDestruction(std::unique_ptr<Image> &&image) override;
+
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline VkCommandBuffer GetVulkanCommandBuffer() const { return commandBuffer; }
         [[nodiscard]] inline uint64 GetCompletionSignalValue() const { return completionSignalValue; }
@@ -82,6 +85,9 @@ namespace Sierra
         VkDescriptorSet currentResourceTableDescriptorSet = VK_NULL_HANDLE;
         VkPipelineBindPoint currentBindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
         VkPipelineLayout currentPipelineLayout = VK_NULL_HANDLE;
+
+        std::queue<std::unique_ptr<Buffer>> queuedBuffersForDestruction;
+        std::queue<std::unique_ptr<Image>> queuedImagesForDestruction;
 
     };
 

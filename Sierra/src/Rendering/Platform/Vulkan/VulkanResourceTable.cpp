@@ -27,31 +27,31 @@ namespace Sierra
         {
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = 500'000//descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers
+                .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers, 250'000U),
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                .descriptorCount = 500'000//descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers
+                .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers, 250'000U),
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = 500'000//descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1
+                .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1, 250'000U),
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = 500'000//descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1
+                .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1, 250'000U),
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                .descriptorCount = 500'000//descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1
+                .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1, 250'000U),
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                .descriptorCount = 500'000//descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1
+                .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1, 250'000U),
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-                .descriptorCount = 500'000//descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers
+                .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers, 250'000U),
             }
         };
 

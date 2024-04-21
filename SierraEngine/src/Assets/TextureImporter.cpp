@@ -12,30 +12,19 @@ namespace SierraEngine
     /* --- CONSTRUCTORS --- */
 
     TextureImporter::TextureImporter(const TextureImporterCreateInfo &createInfo)
-        : version(createInfo.version)
     {
 
     }
 
     /* --- POLLING METHODS --- */
 
-    std::optional<std::pair<TextureAsset, std::unique_ptr<Sierra::Buffer>>> TextureImporter::Import(const Sierra::RenderingContext &renderingContext, const std::string_view name, const std::pair<const SerializedTexture, const void*> &serializedTexture)
+    std::optional<ImportedTexture> TextureImporter::Import(const Sierra::RenderingContext &renderingContext, const std::string_view name, const SerializedTexture &serializedTexture, const std::span<const uint8> blob) const
     {
-        const ImageTranscoderCreateInfo transcoderCreateInfo
-        {
+        const ImageTranscoderCreateInfo transcoderCreateInfo = { };
+        const ImageTranscodeInfo transcodeInfo = { .compressedMemory = blob };
 
-        };
-
-        const ImageTranscodeInfo transcodeInfo
-        {
-            .compressedMemory = serializedTexture.second,
-            .compressedMemorySize = serializedTexture.first.contentMemorySize
-        };
-
-        void* transcodedMemory = nullptr;
         std::optional<TranscodedImage> transcodedImage;
-
-        switch (serializedTexture.first.compressorType)
+        switch (serializedTexture.index.compressorType)
         {
             case ImageSupercompressorType::Undefined:
             {
@@ -44,7 +33,7 @@ namespace SierraEngine
             }
             case ImageSupercompressorType::KTX:
             {
-                if (transcodedImage = KTXTranscoder(transcoderCreateInfo).Transcode(transcodeInfo, transcodedMemory); !transcodedImage.has_value())
+                if (transcodedImage = KTXTranscoder(transcoderCreateInfo).Transcode(transcodeInfo); !transcodedImage.has_value())
                 {
                     APP_WARNING("Could not import texture [{0}], as an error occurred while KTX transcoding it!", name);
                     return std::nullopt;
@@ -66,30 +55,40 @@ namespace SierraEngine
             .name = name,
             .width = transcodedImage.value().width,
             .height = transcodedImage.value().height,
+            .type = transcodedImage.value().layerCount == 6 ? Sierra::ImageType::Cube : Sierra::ImageType::Plane,
             .format = imageFormat.value(),
+            .levelCount = static_cast<uint32>(transcodedImage.value().levelMemories.size()),
+            .layerCount = transcodedImage.value().layerCount,
             .usage = IMAGE_USAGE,
             .memoryLocation = Sierra::ImageMemoryLocation::GPU
         });
 
-        // Create staging buffer to hold image data
-        std::unique_ptr<Sierra::Buffer> stagingBuffer = renderingContext.CreateBuffer({
-            .name = "Staging Buffer of Texture [" + std::string(name) + "]",
-            .memorySize = image->GetLayerMemorySize(),
-            .usage = Sierra::BufferUsage::SourceMemory,
-            .memoryLocation = Sierra::BufferMemoryLocation::CPU
-        });
+        // Create staging buffers to hold image data for every level
+        std::vector<std::unique_ptr<Sierra::Buffer>> levelBuffers(transcodedImage.value().levelMemories.size());
+        for (uint32 i = 0; i < transcodedImage.value().levelMemories.size(); i++)
+        {
+            levelBuffers[i] = renderingContext.CreateBuffer({
+                .name = "Staging Buffer of Texture [" + std::string(name) + "] level [" + std::to_string(i) + "]",
+                .memorySize = transcodedImage.value().levelMemories[i].size(),
+                .usage = Sierra::BufferUsage::SourceMemory,
+                .memoryLocation = Sierra::BufferMemoryLocation::CPU
+            });
 
-        // Copy raw image data
-        stagingBuffer->CopyFromMemory(transcodedMemory);
-        std::free(transcodedMemory);
+            levelBuffers[i]->CopyFromMemory(transcodedImage.value().levelMemories[i].data());
+        }
 
         // Construct texture
         TextureAsset textureAsset = { };
-        textureAsset.type = serializedTexture.first.type;
-        textureAsset.filtering = serializedTexture.first.filtering;
+        textureAsset.type = serializedTexture.index.type;
         textureAsset.image = std::move(image);
 
-        return std::make_pair(std::move(textureAsset), std::move(stagingBuffer));
+        ImportedTexture importedTexture
+        {
+            .texture = std::move(textureAsset),
+            .levelBuffers = std::move(levelBuffers)
+        };
+
+        return importedTexture;
     }
 
 }

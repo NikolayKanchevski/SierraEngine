@@ -1116,49 +1116,49 @@ namespace Sierra
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_UNIFORM_BUFFER_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    .descriptorCount = 500'000, //descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers,
+                    .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers, 250'000U),
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr
                 },
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_STORAGE_BUFFER_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                    .descriptorCount = 500'000, //descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers,
+                    .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers, 250'000U),
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr
                 },
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_SAMPLED_IMAGE_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                    .descriptorCount = 500'000, //descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2,
+                    .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2, 250'000U),
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr
                 },
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_SAMPLED_CUBEMAP_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                    .descriptorCount = 500'000, //descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2,
+                    .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2, 250'000U),
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr
                 },
                 VkDescriptorSetLayoutBinding {
-                        .binding = BINDLESS_STORAGE_IMAGE_BINDING,
+                    .binding = BINDLESS_STORAGE_IMAGE_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                    .descriptorCount = 500'000, //descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2,
+                    .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2, 250'000U),
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr,
                 },
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_STORAGE_CUBEMAP_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                    .descriptorCount = 500'000, //descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2,
+                    .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2, 250'000U),
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr,
                 },
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_SAMPLER_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-                    .descriptorCount = 500'000, //descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers,
+                    .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers, 250'000U),
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr
                 }

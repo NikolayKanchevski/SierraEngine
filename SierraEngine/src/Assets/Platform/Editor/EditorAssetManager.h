@@ -6,9 +6,7 @@
 
 #include "../../AssetManager.h"
 
-#include "../../../Core/ThreadPool.hpp"
-#include "TextureSerializer.h"
-#include "../../TextureImporter.h"
+#include "../../../Core/ResourcePool.hpp"
 
 namespace SierraEngine
 {
@@ -17,32 +15,29 @@ namespace SierraEngine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        EditorAssetManager(ThreadPool &threadPool, const Sierra::RenderingContext &renderingContext, const AssetManagerCreateInfo &createInfo);
+        explicit EditorAssetManager(const AssetManagerCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         void Update(std::unique_ptr<Sierra::CommandBuffer> &commandBuffer) override;
 
-        [[nodiscard]] bool SerializeTexture(const std::filesystem::path &filePath, const TextureSerializeInfo &serializeInfo) override;
-        void ImportTexture(const std::filesystem::path &filePath, AssetLoadCallback LoadCallback) override;
+        bool SerializeTexture(const std::initializer_list<std::initializer_list<std::filesystem::path>> &levelFilePaths, const TextureSerializeInfo &serializeInfo) override;
+        void ImportTexture(const std::filesystem::path &assetFilePath, AssetLoadCallback LoadCallback) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline AssetID GetDefaultTexture(const TextureType textureType) const override { return defaultTextures[static_cast<uint8>(textureType)]; }
+        [[nodiscard]] AssetID GetDefaultTexture(TextureType textureType) const override;
         [[nodiscard]] inline std::optional<std::reference_wrapper<const TextureAsset>> GetTexture(const AssetID ID) const override { return texturePool.GetResource(ID); }
 
         /* --- DESTRUCTOR --- */
-        ~EditorAssetManager();
+        ~EditorAssetManager() override = default;
 
     private:
-        ThreadPool &threadPool;
-        const Sierra::RenderingContext &renderingContext;
-
-        TextureSerializer textureSerializer;
-        TextureImporter textureImporter;
-        ResourcePool<AssetID, TextureAsset> texturePool;
-        std::array<AssetID, TEXTURE_TYPE_COUNT> defaultTextures;
-
         std::mutex textureQueueMutex;
-        std::queue<AssetQueueEntry<TextureAsset>> textureQueue;
+        std::queue<TextureAssetQueueEntry> textureQueue;
+        ResourcePool<AssetID, TextureAsset> texturePool;
+
+        AssetID defaultCheckeredTexture;
+        AssetID defaultBlackTexture;
+        AssetID defaultNormalTexture;
 
     };
 

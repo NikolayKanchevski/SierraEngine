@@ -10,7 +10,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     Application::Application(const ApplicationCreateInfo &createInfo)
-        : name(createInfo.name), version(createInfo.version), maxFrameRate(createInfo.settings.maxFrameRate)
+        : name(createInfo.name), version(createInfo.version), maxFrameRate(createInfo.settings.maxFrameRate), fileManager({ })
     {
         #if SR_ENABLE_LOGGING
             Logger::Initialize(name);
@@ -69,7 +69,7 @@ namespace Sierra
 
     const std::filesystem::path& Application::GetApplicationCachesDirectoryPath()
     {
-        static auto path = File::GetCachesDirectoryPath()
+        static auto path = fileManager.GetTemporaryDirectoryPath()
            #if !SR_PLATFORM_APPLE
                / name
            #endif
@@ -78,7 +78,7 @@ namespace Sierra
     }
     const std::filesystem::path& Application::GetApplicationTemporaryDirectoryPath()
     {
-        static auto path = File::GetTemporaryDirectoryPath()
+        static auto path = fileManager.GetTemporaryDirectoryPath()
            #if !SR_PLATFORM_APPLE
                / name
            #endif

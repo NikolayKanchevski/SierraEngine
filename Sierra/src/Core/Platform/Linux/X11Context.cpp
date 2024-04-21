@@ -364,16 +364,16 @@ namespace Sierra
         XResizeWindow(display, window, size.x, size.y);
     }
 
-    void X11Context::SetWindowSizeLimits(const XID window, const Vector2UInt &minimumSize, const Vector2UInt &maximumSize) const
+    void X11Context::SetWindowSizeLimits(const XID window, const Vector2UInt &minSize, const Vector2UInt &maxSize) const
     {
         // Define size hints
         XSizeHints* sizeHints = XAllocSizeHints();
         sizeHints->flags |= PWinGravity | PMinSize | PMaxSize;
         sizeHints->win_gravity = StaticGravity;
-        sizeHints->min_width = static_cast<int>(minimumSize.x);
-        sizeHints->max_width = static_cast<int>(maximumSize.x);
-        sizeHints->min_height = static_cast<int>(minimumSize.y);
-        sizeHints->max_height = static_cast<int>(maximumSize.y);
+        sizeHints->min_width = static_cast<int>(minSize.x);
+        sizeHints->max_width = static_cast<int>(maxSize.x);
+        sizeHints->min_height = static_cast<int>(minSize.y);
+        sizeHints->max_height = static_cast<int>(maxSize.y);
         XSetWMNormalHints(display, window, sizeHints);
 
         // Free memory

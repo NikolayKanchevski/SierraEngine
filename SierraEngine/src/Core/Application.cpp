@@ -10,7 +10,7 @@ namespace SierraEngine
     /* --- CONSTRUCTORS --- */
 
     Application::Application(const Sierra::ApplicationCreateInfo &createInfo)
-        : Sierra::Application(createInfo), threadPool({ .threadCount = std::thread::hardware_concurrency() }), assetManager(threadPool, GetRenderingContext(), { .version = Sierra::Version({ 1, 0, 0 }) })
+        : Sierra::Application(createInfo), threadPool({ .threadCount = std::thread::hardware_concurrency() }), assetManager({ .threadPool = threadPool, .fileManager = GetFileManager(), .renderingContext = GetRenderingContext() })
     {
         APP_INFO("Application launched.");
     }
@@ -20,8 +20,9 @@ namespace SierraEngine
     void Application::Start()
     {
         // Create window & swapchain
-        window = GetWindowManager().CreateWindow({ .title = "Test Window" });
+        window = GetWindowManager().CreateWindow({ .title = "Test Window", .resizable = true });
         swapchain = GetRenderingContext().CreateSwapchain({ .name = "Test Swapchain", .window = window, .preferredPresentationMode = Sierra::SwapchainPresentationMode::VSync });
+        swapchain->OnEvent<Sierra::SwapchainResizeEvent>([this](const auto event) -> bool { imGuiTask->Resize(event.GetWidth() / swapchain->GetScaling(), event.GetHeight() / swapchain->GetScaling()); return false; });
 
         // Create resource table
         resourceTable = GetRenderingContext().CreateResourceTable({ .name = "Global Resource Table" });

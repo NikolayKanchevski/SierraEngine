@@ -20,10 +20,10 @@ option(SIERRA_BUILD_STATIC_LIBRARY "Whether to build the engine as a static libr
 option(SIERRA_BUILD_SHARED_LIBRARY "Whether to build the engine as a shared library, which is shipped as a separate file (.dll, .dylib, etc.)" OFF)
 
 if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Debug")
-    option(SIERRA_ENABLE_LOGGING "Whether to enable Application and Engine logging." ON)
+    option(SIERRA_ENABLE_LOGGING "Whether to enable Application and Engine logging. Do note this option is very likely to cause big memory leaks, due to bugs in graphics API drivers (not on Sierra's end)." ON)
     option(SIERRA_ENABLE_OPTIMIZATIONS "Whether to enable optimizations." OFF)
 else()
-    option(SIERRA_ENABLE_LOGGING "Whether to enable both Application and Engine logging." OFF)
+    option(SIERRA_ENABLE_LOGGING "Whether to enable both Application and Engine logging. Do note this option is very likely to cause big memory leaks, due to bugs in graphics API drivers (not on Sierra's end)." OFF)
     option(SIERRA_ENABLE_OPTIMIZATIONS "Whether to enable optimizations." ON)
 endif()
 

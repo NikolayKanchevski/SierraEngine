@@ -6,15 +6,12 @@
 
 #include "../../TextureAsset.h"
 
-#include "../../ImageSupercompressor.h"
-
 namespace SierraEngine
 {
 
     struct TextureSerializerCreateInfo
     {
-        Sierra::Version version = Sierra::Version({ 1, 0, 0 });
-        uint16 maximumTextureDimensions = 0;
+        uint16 maxTextureDimensions = 0;
     };
 
     class TextureSerializer final
@@ -24,21 +21,21 @@ namespace SierraEngine
         explicit TextureSerializer(const TextureSerializerCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::optional<std::pair<SerializedTexture, void*>> Serialize(const std::filesystem::path &filePath, const TextureSerializeInfo &serializeInfo);
+        [[nodiscard]] std::optional<std::pair<SerializedTexture, SerializedTextureBlob>> Serialize(const Sierra::FileManager &fileManager, const std::initializer_list<std::initializer_list<std::filesystem::path>> &levelFilePaths, const TextureSerializeInfo &serializeInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline Sierra::Version GetVersion() const { return version; }
+        [[nodiscard]] inline Sierra::Version GetVersion() const { return VERSION; }
 
         /* --- OPERATORS --- */
         TextureSerializer(const TextureSerializer&) = delete;
-        TextureSerializer &operator=(const TextureSerializer&) = delete;
+        TextureSerializer& operator=(const TextureSerializer&) = delete;
 
         /* --- DESTRUCTOR --- */
         ~TextureSerializer() = default;
 
     private:
-        Sierra::Version version = Sierra::Version({ 1, 0, 0 });
-        uint16 maximumTextureDimensions = 0;
+        uint16 maxTextureDimensions = 0;
+        constexpr static Sierra::Version VERSION = Sierra::Version({ 1, 0, 0 });
 
     };
 

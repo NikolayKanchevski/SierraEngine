@@ -4,85 +4,117 @@
 
 #include "EditorAssetManager.h"
 
+#include "TextureSerializer.h"
+#include "../../TextureImporter.h"
+
 namespace SierraEngine
 {
 
     /* --- CONSTRUCTORS --- */
 
-    EditorAssetManager::EditorAssetManager(ThreadPool &threadPool, const Sierra::RenderingContext &renderingContext, const AssetManagerCreateInfo &createInfo)
-        : AssetManager(createInfo), threadPool(threadPool), renderingContext(renderingContext),
-          textureSerializer({ .version = createInfo.version, .maximumTextureDimensions = MAX_TEXTURE_DIMENSIONS }), textureImporter({ .version = createInfo.version }), texturePool({ .initialSize = 256 })
+    EditorAssetManager::EditorAssetManager(const AssetManagerCreateInfo &createInfo)
+        : AssetManager(createInfo), texturePool({ .initialSize = 256 })
     {
-        ImportTexture(Sierra::File::GetResourcesDirectoryPath() / "core/assets/textures/DefaultBlack.jpg", [this](const AssetID assetID)
+        ImportTexture(GetFileManager().GetResourcesDirectoryPath() / "core/assets/textures/DefaultCheckered.jpg.texture", [this](const AssetID assetID) -> void
+        {
+            APP_ERROR_IF(!assetID.GetHash(), "Could not import default checkered texture!");
+            defaultCheckeredTexture = assetID;
+        });
+
+        ImportTexture(GetFileManager().GetResourcesDirectoryPath() / "core/assets/textures/DefaultBlack.jpg.texture", [this](const AssetID assetID) -> void
         {
             APP_ERROR_IF(!assetID.GetHash(), "Could not import default black texture!");
-            defaultTextures[static_cast<uint8>(TextureType::Undefined)] = assetID;
-            defaultTextures[static_cast<uint8>(TextureType::Specular)] = assetID;
-            defaultTextures[static_cast<uint8>(TextureType::Height)] = assetID;
+            defaultBlackTexture = assetID;
         });
 
-        ImportTexture(Sierra::File::GetResourcesDirectoryPath() / "core/assets/textures/DefaultDiffuse.jpg", [this](const AssetID assetID)
-        {
-            APP_ERROR_IF(!assetID.GetHash(), "Could not import default diffuse texture!");
-            defaultTextures[static_cast<uint8>(TextureType::Diffuse)] = assetID;
-        });
-
-        ImportTexture(Sierra::File::GetResourcesDirectoryPath() / "core/assets/textures/DefaultNormal.jpg", [this](const AssetID assetID)
+        ImportTexture(GetFileManager().GetResourcesDirectoryPath() / "core/assets/textures/DefaultNormal.jpg.texture", [this](const AssetID assetID) -> void
         {
             APP_ERROR_IF(!assetID.GetHash(), "Could not import default normal texture!");
-            defaultTextures[static_cast<uint8>(TextureType::Normal)] = assetID;
+            defaultNormalTexture = assetID;
         });
 
         // We must wait for default assets to get loaded before proceeding, so if future asset loading fails, defaults can be returned
-        threadPool.WaitForTasks();
+        GetThreadPool().WaitForTasks();
+    }
+
+    /* --- GETTER METHODS --- */
+
+    AssetID EditorAssetManager::GetDefaultTexture(const TextureType textureType) const
+    {
+        switch (textureType)
+        {
+            case TextureType::Undefined:
+            case TextureType::Diffuse:
+            default:                            break;
+            case TextureType::Specular:
+            case TextureType::Height:           return defaultBlackTexture;
+            case TextureType::Normal:           return defaultNormalTexture;
+        }
+
+        return defaultCheckeredTexture;
     }
 
     /* --- POLLING METHODS --- */
 
     void EditorAssetManager::Update(std::unique_ptr<Sierra::CommandBuffer> &commandBuffer)
     {
-        const std::lock_guard textureQueueLock(textureQueueMutex);
-        while (!textureQueue.empty())
+        // Save loaded textures
         {
-            AssetQueueEntry<TextureAsset> textureEntry = std::move(textureQueue.front());
-            textureQueue.pop();
+            const std::lock_guard textureQueueLock(textureQueueMutex);
+            while (!textureQueue.empty())
+            {
+                TextureAssetQueueEntry textureEntry = std::move(textureQueue.front());
+                textureQueue.pop();
 
-            commandBuffer->SynchronizeImageUsage(textureEntry.asset.GetImage(), Sierra::ImageCommandUsage::None, Sierra::ImageCommandUsage::MemoryWrite);
-            commandBuffer->CopyBufferToImage(textureEntry.buffer, textureEntry.asset.GetImage());
+                // Write every level to image
+                commandBuffer->SynchronizeImageUsage(textureEntry.asset.GetImage(), Sierra::ImageCommandUsage::None, Sierra::ImageCommandUsage::MemoryWrite);
+                for (uint32 level = 0; level < textureEntry.asset.GetImage()->GetLevelCount(); level++)
+                {
+                    for (uint32 layer = 0; layer < textureEntry.asset.GetImage()->GetLayerCount(); layer++)
+                    {
+                        commandBuffer->CopyBufferToImage(textureEntry.data[level], textureEntry.asset.GetImage(), level, layer, { 0, 0 }, layer * (textureEntry.data[level]->GetMemorySize() / textureEntry.asset.GetImage()->GetLayerCount()));
+                    }
+                    commandBuffer->QueueBufferForDestruction(std::move(textureEntry.data[level]));
+                }
+                commandBuffer->SynchronizeImageUsage(textureEntry.asset.GetImage(), Sierra::ImageCommandUsage::MemoryWrite, Sierra::ImageCommandUsage::GraphicsRead);
 
-            commandBuffer->SynchronizeImageUsage(textureEntry.asset.GetImage(), Sierra::ImageCommandUsage::MemoryWrite, Sierra::ImageCommandUsage::GraphicsRead);
-            commandBuffer->QueueBufferForDestruction(std::move(textureEntry.buffer));
-
-            texturePool.AddResource(textureEntry.ID, std::move(textureEntry.asset));
-            textureEntry.LoadCallback(textureEntry.ID);
+                texturePool.AddResource(textureEntry.ID, std::move(textureEntry.asset));
+                textureEntry.LoadCallback(textureEntry.ID);
+            }
         }
     }
 
-    bool EditorAssetManager::SerializeTexture(const std::filesystem::path &filePath, const TextureSerializeInfo &serializeInfo)
+    bool EditorAssetManager::SerializeTexture(const std::initializer_list<std::initializer_list<std::filesystem::path>> &levelFilePaths, const TextureSerializeInfo &serializeInfo)
     {
-        // Serialize texture
-        auto serializedTexture = textureSerializer.Serialize(filePath, serializeInfo);
-        if (!serializedTexture.has_value())
+        if (levelFilePaths.begin()->size() == 0 || levelFilePaths.begin()->begin()->empty())
         {
-            APP_WARNING("Could not serialize texture [{0}]!", filePath.string());
+            APP_WARNING("Cannot serialize texture with no file paths provided!");
             return false;
         }
 
-        const std::filesystem::path assetFilePath = filePath.string() + TEXTURE_ASSET_EXTENSION;
-        const auto [textureMetadata, content] = std::move(serializedTexture.value());
+        // Serialize texture
+        const std::optional<std::pair<SerializedTexture, SerializedTextureBlob>> serializedTexture = TextureSerializer({ .maxTextureDimensions = MAX_TEXTURE_DIMENSIONS }).Serialize(GetFileManager(), levelFilePaths, serializeInfo);
+        if (!serializedTexture.has_value())
+        {
+            APP_WARNING("Could not serialize texture [{0}]!", levelFilePaths.begin()->begin()->string());
+            return false;
+        }
+
+        const std::filesystem::path assetFilePath = levelFilePaths.begin()->begin()->string() + std::string(TEXTURE_ASSET_EXTENSION);
+        std::optional<Sierra::File> assetFile = GetFileManager().CreateAndOpenFile(assetFilePath, Sierra::FileAccess::WriteOnly);
+        APP_ERROR_IF(!assetFile.has_value(), "Could not write serialized texture to asset file [{0}]!", assetFilePath.string());
 
         // Write serialized memory and raw texture data to asset file
-        Sierra::File::WriteToFile(assetFilePath, &textureMetadata, sizeof(SerializedTexture), 0, 0);
-        Sierra::File::WriteToFile(assetFilePath, content, textureMetadata.contentMemorySize, 0, sizeof(SerializedTexture));
-        std::free(content);
+        const auto &[metadata, blob] = serializedTexture.value();
+        assetFile.value().Resize(sizeof(SerializedTexture) + blob.size());
+        assetFile.value().Write(&metadata, sizeof(SerializedTexture));
+        assetFile.value().Write(blob.data(), blob.size());
 
         return true;
     }
 
-    void EditorAssetManager::ImportTexture(const std::filesystem::path &filePath, const AssetLoadCallback LoadCallback)
+    void EditorAssetManager::ImportTexture(const std::filesystem::path &assetFilePath, const AssetLoadCallback LoadCallback)
     {
-        const std::filesystem::path assetFilePath = filePath.string() + TEXTURE_ASSET_EXTENSION;
-
         const AssetID ID = assetFilePath;
         if (texturePool.ResourceExists(ID))
         {
@@ -90,68 +122,44 @@ namespace SierraEngine
             return;
         }
 
-        threadPool.PushTask([this, LoadCallback, ID, filePath, assetFilePath]() -> void
+        GetThreadPool().PushTask([this, LoadCallback, ID, assetFilePath]() -> void
         {
-            SerializedTexture serializedTexture = { };
+            if (std::optional<Sierra::File> assetFile = GetFileManager().OpenFile(assetFilePath, Sierra::FileAccess::ReadOnly); assetFile.has_value())
+            {
+                // Load asset file
+                const std::vector<uint8> assetFileMemory = assetFile.value().Read();
+                const SerializedTexture &serializedTexture = *reinterpret_cast<const SerializedTexture*>(assetFileMemory.data());
+                const uint8* textureBlob = assetFileMemory.data() + sizeof(SerializedTexture);
 
-            Import:
-                while (Sierra::File::FileExists(assetFilePath))
+                // Check if outdated
+                const TextureImporter textureImporter = TextureImporter({ });
+                if (serializedTexture.header.version < textureImporter.GetVersion())
                 {
-                    // Load asset file
-                    const std::vector<uint8> assetFileMemory = Sierra::File::ReadFile(assetFilePath);
-                    serializedTexture = *reinterpret_cast<const SerializedTexture*>(assetFileMemory.data());
-                    const void* textureContent = assetFileMemory.data() + sizeof(SerializedTexture);
-
-                    // Check if outdated
-                    if (serializedTexture.version < textureImporter.GetVersion())
-                    {
-                        APP_INFO("Re-importing texture [{0}], as its asset format [{1}.{2}.{3}], is incompatible with that of importer - [{4}.{5}.{6}].", assetFilePath.string(), serializedTexture.version.GetMajor(), serializedTexture.version.GetMinor(), serializedTexture.version.GetPatch(), textureImporter.GetVersion().GetMajor(), textureImporter.GetVersion().GetMinor(), textureImporter.GetVersion().GetPatch());
-                        Sierra::File::DeleteFile(assetFilePath);
-                        break;
-                    }
-
-                    // Import texture and on fail return default
-                    auto importedTexture = textureImporter.Import(renderingContext, filePath.filename().string(), std::make_pair(serializedTexture, textureContent));
-                    if (!importedTexture.has_value())
-                    {
-                        APP_WARNING("Could not import texture [{0}]!", assetFilePath.string());
-                        LoadCallback(GetDefaultTexture(serializedTexture.type));
-                        return;
-                    }
-
-                    auto [textureAsset, buffer] = std::move(importedTexture.value());
-
-                    // Add texture data to queue
-                    const std::lock_guard textureQueueLock(textureQueueMutex);
-                    textureQueue.push({ ID, std::move(textureAsset), std::move(buffer), LoadCallback });
-
+                    APP_WARNING("Cannot import texture [{0}], as its asset version [{1}.{2}.{3}], is incompatible with that of importer - [{4}.{5}.{6}].", assetFilePath.string(), serializedTexture.header.version.GetMajor(), serializedTexture.header.version.GetMinor(), serializedTexture.header.version.GetPatch(), textureImporter.GetVersion().GetMajor(), textureImporter.GetVersion().GetMinor(), textureImporter.GetVersion().GetPatch());
+                    LoadCallback(GetDefaultTexture(serializedTexture.index.type));
                     return;
                 }
 
-            // Re-use outdated info and define serialization info
-            const TextureSerializeInfo serializeInfo
-            {
-                .type = serializedTexture.type,
-                .filtering = serializedTexture.filtering,
-                .compressorType = serializedTexture.compressorType != ImageSupercompressorType::Undefined ? serializedTexture.compressorType : ImageSupercompressorType::KTX,
-                .compressionLevel = ImageSupercompressionLevel::Standard,
-                .qualityLevel = ImageSupercompressionQualityLevel::Standard
-            };
+                // Import texture and on fail return default
+                std::optional<ImportedTexture> importedTexture = textureImporter.Import(GetRenderingContext(), assetFilePath.filename().string(), serializedTexture, { textureBlob, assetFileMemory.size() - sizeof(SerializedTexture) });
+                if (!importedTexture.has_value())
+                {
+                    APP_WARNING("Could not import texture [{0}]!", assetFilePath.string());
+                    LoadCallback(GetDefaultTexture(serializedTexture.index.type));
+                    return;
+                }
 
-            // Re-serialize and re-import texture
-            if (!SerializeTexture(filePath, serializeInfo))
-            {
-                LoadCallback(GetDefaultTexture(serializedTexture.type));
-                return;
+                auto &[textureAsset, buffers] = importedTexture.value();
+
+                // Add texture data to queue
+                const std::lock_guard textureQueueLock(textureQueueMutex);
+                textureQueue.push({ ID, std::move(textureAsset), std::move(buffers), LoadCallback });
             }
-
-            goto Import;
+            else
+            {
+                APP_ERROR("Cannot import texture [{0}], as it could not be open for reading! Make sure its file path is valid and the asset file is not in a protected directory.", assetFilePath.string());
+            }
         });
-    }
-
-    EditorAssetManager::~EditorAssetManager()
-    {
-        threadPool.WaitForTasks();
     }
 
 }

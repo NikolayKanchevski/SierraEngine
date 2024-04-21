@@ -16,7 +16,7 @@ namespace SierraEngine
         explicit KTXTranscoder(const ImageTranscoderCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::optional<TranscodedImage> Transcode(const ImageTranscodeInfo &decompressInfo, void*& transcodedMemory) const override;
+        [[nodiscard]] std::optional<TranscodedImage> Transcode(const ImageTranscodeInfo &transcodeInfo) const override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline ImageSupercompressorType GetType() const override { return ImageSupercompressorType::KTX; };

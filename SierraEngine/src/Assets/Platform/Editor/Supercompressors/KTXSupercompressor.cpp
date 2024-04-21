@@ -13,9 +13,8 @@
 #define STB_IMAGE_RESIZE2_IMPLEMENTATION
 #include "stb_image_resize2.h"
 
-#include "ktx.h"
-#include "vkformat_enum.h"
-
+#include <ktx.h>
+#include <vkformat_enum.h>
 
 namespace SierraEngine
 {
@@ -30,15 +29,13 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    bool KTXSupercompressor::Supercompress(const ImageSupercompressorSupercompressInfo &compressInfo, void*& compressedMemory, uint64 &compressedMemorySize) const
+    std::optional<std::vector<uint8>> KTXSupercompressor::Supercompress(const Sierra::FileManager &fileManager, const ImageSupercompressInfo &compressInfo) const
     {
-        if (compressInfo.filePaths.size() == 0 || compressInfo.filePaths.begin()->size() == 0)
+        if (compressInfo.levelFilePaths.size() == 0 || compressInfo.levelFilePaths.begin()->size() == 0)
         {
             APP_WARNING("Cannot KTX compress texture with no file paths specified!");
-            return false;
+            return std::nullopt;
         }
-
-        const std::filesystem::path &baseFilePath = *compressInfo.filePaths.begin()->begin();
 
         int requestedBaseWidth = 0;
         int requestedBaseHeight = 0;
@@ -46,14 +43,29 @@ namespace SierraEngine
 
         // Retrieve image data
         {
-            const std::vector<uint8> baseImageFileMemory = Sierra::File::ReadFile(baseFilePath);
-            stbi_info_from_memory(reinterpret_cast<const stbi_uc*>(baseImageFileMemory.data()), static_cast<int>(baseImageFileMemory.size()), &requestedBaseWidth, &requestedBaseHeight, &requestedBaseChannelCount);
+            std::optional<Sierra::File> baseImageFile = fileManager.OpenFile(*compressInfo.levelFilePaths.begin()->begin(), Sierra::FileAccess::ReadOnly);
+            if (!baseImageFile.has_value())
+            {
+                APP_WARNING("Cannot KTX compress texture, as image [{0}] of level [0] layer [0] could not be read!", compressInfo.levelFilePaths.begin()->begin()->string());
+                return std::nullopt;
+            }
+
+            const std::vector<uint8> baseImageFileMemory = baseImageFile.value().Read();
+            if (stbi_info_from_memory(reinterpret_cast<const stbi_uc*>(baseImageFileMemory.data()), static_cast<int>(baseImageFileMemory.size()), &requestedBaseWidth, &requestedBaseHeight, &requestedBaseChannelCount) != 1)
+            {
+                APP_WARNING("Cannot KTX compress texture [{0}], as image of level [0] layer [0] is not of a valid image format! Error: {1}.", compressInfo.levelFilePaths.begin()->begin()->string(), stbi_failure_reason());
+                return std::nullopt;
+            }
         }
 
-        const float32 downscaleScalar = glm::max(1.0f, static_cast<float32>(glm::max(requestedBaseWidth, requestedBaseHeight)) / GetMaximumImageDimensions());
-        const uint32 baseWidth = static_cast<uint32>(requestedBaseWidth / downscaleScalar);
-        const uint32 baseHeight = static_cast<uint32>(requestedBaseHeight / downscaleScalar);
-        const uint32 mipLevelCount = (glm::floor(glm::log2(glm::max(baseWidth, baseHeight))) * static_cast<uint32>(compressInfo.filePaths.begin()->size() > 1)) + 1;
+        // Make sure to emulate loading 4 channels when image contains only 3, so we do not have to pad data to an even count when writing it to GPU
+        requestedBaseChannelCount += static_cast<int>(requestedBaseChannelCount == 3);
+
+        const float32 downscaleScalar = glm::max(1.0f, static_cast<float32>(glm::max(requestedBaseWidth, requestedBaseHeight)) / static_cast<float32>(GetMaxImageDimensions()));
+        const uint32 baseWidth = static_cast<uint32>(static_cast<float32>(requestedBaseWidth) / downscaleScalar);
+        const uint32 baseHeight = static_cast<uint32>(static_cast<float32>(requestedBaseHeight) / downscaleScalar);
+        const uint32 levelCount = static_cast<uint32>(glm::floor(glm::log2(glm::max(baseWidth, baseHeight))) * static_cast<uint32>(compressInfo.levelFilePaths.size() > 1)) + 1;
+        const uint32 layerCount = static_cast<uint32>(compressInfo.levelFilePaths.begin()->size());
 
         // Convert channel count to KTX format
         ktx_uint32_t ktxTextureFormat = VK_FORMAT_UNDEFINED;
@@ -74,11 +86,11 @@ namespace SierraEngine
             .baseHeight = baseHeight,
             .baseDepth = 1,
             .numDimensions = 2,
-            .numLevels = mipLevelCount,
-            .numLayers = static_cast<uint32>(compressInfo.filePaths.size()),
+            .numLevels = levelCount,
+            .numLayers = layerCount,
             .numFaces = 1,
-            .isArray = KTX_FALSE,
-            .generateMipmaps = KTX_FALSE
+            .isArray = layerCount > 1,
+            .generateMipmaps = compressInfo.generateMipMaps
         };
 
         // Create KTX texture
@@ -86,36 +98,51 @@ namespace SierraEngine
         ktxResult result = ktxTexture2_Create(&ktxTextureCreateInfo, KTX_TEXTURE_CREATE_ALLOC_STORAGE, &ktxTexture2);
         if (result != KTX_SUCCESS)
         {
-            APP_WARNING("Could not serialize texture [{0}], as an error occurred during KTX texture allocation! Error code: {1}.", baseFilePath.string(), result);
-            return false;
+            APP_WARNING("Could create KTX texture [{0}], as an error occurred during texture allocation! Error code: {1}.", compressInfo.levelFilePaths.begin()->begin()->string(), result);
+            return std::nullopt;
         }
 
-        // Store every layer's mip level pixel data
-        for (uint32 i = 0; i < 1; i++)
+        for (uint32 layer = 0; layer < layerCount; layer++)
         {
-            for (uint32 j = 0; j < mipLevelCount; j++)
+            for (uint32 level = 0; level < levelCount; level++)
             {
-                // Read compressed image file for current level
-                const std::vector<uint8> levelFileMemory = Sierra::File::ReadFile(*((compressInfo.filePaths.begin() + i)->begin() + j));
-
-                // Extract image info
-                int requestedWidth, requestedHeight, channelCount;
-                stbi_uc* rawImageMemory = stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(levelFileMemory.data()), static_cast<int>(levelFileMemory.size()), &requestedWidth, &requestedHeight, &channelCount, requestedBaseChannelCount);
-
-                if (requestedWidth != requestedBaseWidth >> j || requestedBaseHeight != requestedHeight >> j)
+                int requestedWidth, requestedHeight, requestedChannelCount;
+                std::unique_ptr<stbi_uc, decltype(stbi_image_free)*> levelMemory = { nullptr, stbi_image_free };
                 {
-                    APP_WARNING("Cannot KTX compress texture [{0}], as the dimensions of image file at layer [{1}] level [{2}] are not equal to the half of those of the previous level!", baseFilePath.string(), i, j);
-                    return false;
+                    // Read compressed image file for current level
+                    std::optional<Sierra::File> levelFile = fileManager.OpenFile(*((compressInfo.levelFilePaths.begin() + level)->begin() + layer));
+                    if (!levelFile.has_value())
+                    {
+                        APP_WARNING("Cannot KTX compress texture [{0}], as image of level [{1}] layer [{2}] could not be read!", compressInfo.levelFilePaths.begin()->begin()->string(), level, layer);
+                        return std::nullopt;
+                    }
+
+                    // Extract image info
+                    const std::vector<uint8> levelFileMemory = levelFile.value().Read();
+                    levelMemory.reset(stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(levelFileMemory.data()), static_cast<int>(levelFileMemory.size()), &requestedWidth, &requestedHeight, &requestedChannelCount, requestedBaseChannelCount));
+                }
+                
+                if (levelMemory == nullptr)
+                {
+                    APP_WARNING("Cannot KTX compress texture [{0}], as image of level [{1}] layer [{2}] is not of a valid image format! Error: {3}.", compressInfo.levelFilePaths.begin()->begin()->string(), level, layer, stbi_failure_reason());
+                    return std::nullopt;
+                }
+
+                if (requestedWidth != (static_cast<uint32>(requestedBaseWidth) >> level) || requestedBaseHeight != (static_cast<uint32>(requestedHeight) >> level))
+                {
+                    APP_WARNING("Cannot KTX compress texture [{0}], as the dimensions of image file at level [{1}] layer [{2}] are not equal to the half of those of the previous level!", compressInfo.levelFilePaths.begin()->begin()->string(), layer, level);
+                    return std::nullopt;
                 }
 
                 // Resize if needed
-                const uint32 width = static_cast<uint32>(requestedWidth / downscaleScalar);
-                const uint32 height = static_cast<uint32>(requestedHeight / downscaleScalar);
+                const uint32 width = static_cast<uint32>(static_cast<float32>(requestedWidth) / downscaleScalar);
+                const uint32 height = static_cast<uint32>(static_cast<float32>(requestedHeight) / downscaleScalar);
+                const uint64 levelMemorySize = static_cast<uint64>(width) * height * requestedBaseChannelCount * 1;
                 if (glm::max(requestedWidth, requestedHeight) > glm::max(width, height))
                 {
                     // Get pixel layout
                     stbir_pixel_layout pixelLayout = STBIR_RGBA;
-                    switch (channelCount)
+                    switch (requestedBaseChannelCount)
                     {
                         case 1:         { pixelLayout = STBIR_1CHANNEL; break; }
                         case 2:         { pixelLayout = STBIR_2CHANNEL; break; }
@@ -124,30 +151,25 @@ namespace SierraEngine
                     }
 
                     // Downscale image data
-                    stbi_uc* downscaledRawImageMemory = new stbi_uc[static_cast<uint64>(width) * height * channelCount * 1];
-                    stbir_resize(rawImageMemory, requestedWidth, requestedHeight, 0, downscaledRawImageMemory, width, height, 0, pixelLayout, STBIR_TYPE_UINT8, STBIR_EDGE_ZERO, STBIR_FILTER_DEFAULT);
-
-                    // Free and override image data
-                    stbi_image_free(rawImageMemory);
-                    rawImageMemory = downscaledRawImageMemory;
+                    std::unique_ptr<stbi_uc, decltype(stbi_image_free)*> downscaledLevelMemory = { reinterpret_cast<stbi_uc*>(stbi__malloc(levelMemorySize)), stbi_image_free };
+                    stbir_resize(levelMemory.get(), requestedWidth, requestedHeight, 0, downscaledLevelMemory.get(), static_cast<int>(width), static_cast<int>(height), 0, pixelLayout, STBIR_TYPE_UINT8, STBIR_EDGE_ZERO, STBIR_FILTER_DEFAULT);
+                    levelMemory = std::move(downscaledLevelMemory);
                 }
 
                 // Copy raw image data to KTX texture
-                result = ktxTexture_SetImageFromMemory(ktxTexture(ktxTexture2), j, i, KTX_FACESLICE_WHOLE_LEVEL, reinterpret_cast<uint8*>(rawImageMemory), static_cast<uint64>(width) * height * channelCount * 1);
-                stbi_image_free(rawImageMemory);
-
+                result = ktxTexture_SetImageFromMemory(ktxTexture(ktxTexture2), level, layer, 0, reinterpret_cast<const uint8*>(levelMemory.get()), levelMemorySize);
                 if (result != KTX_SUCCESS)
                 {
-                    APP_WARNING("Could not serialize texture [{0}], as an error occurred while writing raw pixel memory to layer [{1}] level [{2}] of KTX texture! Error code: {3}.", baseFilePath.string(), i, j, result);
+                    APP_WARNING("Could not KTX compress [{0}], as an error occurred while writing raw pixel memory to level [{1}] layer [{2}] of KTX texture! Error code: {3}.", compressInfo.levelFilePaths.begin()->begin()->string(), level, layer, result);
                     ktxTexture_Destroy(ktxTexture(ktxTexture2));
-                    return false;
+                    return std::nullopt;
                 }
             }
         }
 
         // See if texture needs to be compressed
-        constexpr static uint16 MINIMUM_DIMENSIONS_FOR_COMPRESSION = 64;
-        if (compressInfo.compressionLevel != ImageSupercompressionLevel::None && (baseWidth > MINIMUM_DIMENSIONS_FOR_COMPRESSION && baseHeight > MINIMUM_DIMENSIONS_FOR_COMPRESSION))
+        constexpr static uint16 MIN_DIMENSIONS_FOR_COMPRESSION = 64;
+        if (compressInfo.compressionLevel != ImageSupercompressionLevel::None && (baseWidth > MIN_DIMENSIONS_FOR_COMPRESSION && baseHeight > MIN_DIMENSIONS_FOR_COMPRESSION))
         {
             // Set up Basis Universal settings
             ktxBasisParams basisParams
@@ -182,9 +204,9 @@ namespace SierraEngine
             result = ktxTexture2_CompressBasisEx(ktxTexture2, &basisParams);
             if (result != KTX_SUCCESS)
             {
-                APP_WARNING("Could not serialize texture [{0}], as an error occurred while compressing data into Basis Universal! Error code: {1}.", baseFilePath.string(), result);
+                APP_WARNING("Could not serialize texture [{0}], as an error occurred while compressing data into Basis Universal! Error code: {1}.", compressInfo.levelFilePaths.begin()->begin()->string(), result);
                 ktxTexture_Destroy(ktxTexture(ktxTexture2));
-                return false;
+                return std::nullopt;
             }
         }
 
@@ -194,18 +216,18 @@ namespace SierraEngine
         result = ktxTexture_WriteToMemory(ktxTexture(ktxTexture2), &ktxMemory, &ktxMemorySize);
         if (result != KTX_SUCCESS)
         {
-            APP_WARNING("Could not serialize texture [{0}], as an error occurred while extracting KTX data from texture! Error code: {1}.", baseFilePath.string(), result);
+            APP_WARNING("Could not serialize texture [{0}], as an error occurred while extracting KTX data from texture! Error code: {1}.", compressInfo.levelFilePaths.begin()->begin()->string(), result);
             ktxTexture_Destroy(ktxTexture(ktxTexture2));
-            return false;
+            return std::nullopt;
         }
 
-        // Deallocate KTX texture (ktxMemory must be freed by user)
+        // Deallocate KTX texture
         ktxTexture_Destroy(ktxTexture(ktxTexture2));
 
-        compressedMemory = ktxMemory;
-        compressedMemorySize = ktxMemorySize;
+        std::vector<uint8> supercompressedMemory = { ktxMemory, ktxMemory + ktxMemorySize };
+        std::free(ktxMemory);
 
-        return true;
+        return supercompressedMemory;
     }
 
 }

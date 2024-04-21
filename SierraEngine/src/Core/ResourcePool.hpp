@@ -9,7 +9,7 @@ namespace SierraEngine
 
     struct ResourcePoolCreateInfo
     {
-        uint32 initialSize = 0;
+        uint32 initialSize = 128;
     };
 
     template<typename K, typename T>
@@ -49,7 +49,7 @@ namespace SierraEngine
 
         /* --- OPERATORS --- */
         ResourcePool(const ResourcePool&) = delete;
-        ResourcePool &operator=(const ResourcePool&) = delete;
+        ResourcePool& operator=(const ResourcePool&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~ResourcePool() = default;

@@ -21,7 +21,7 @@ namespace Sierra
         [textureDescriptor setWidth: createInfo.width];
         [textureDescriptor setHeight: createInfo.height];
         [textureDescriptor setDepth: 1];
-        [textureDescriptor setMipmapLevelCount: createInfo.mipLevelCount];
+        [textureDescriptor setMipmapLevelCount: createInfo.levelCount];
         [textureDescriptor setArrayLength: createInfo.layerCount];
         [textureDescriptor setPixelFormat: ImageFormatToPixelFormat(createInfo.format)];
         [textureDescriptor setUsage: ImageUsageToTextureUsage(createInfo.usage)];

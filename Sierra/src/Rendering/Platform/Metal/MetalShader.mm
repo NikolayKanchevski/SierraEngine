@@ -12,26 +12,23 @@ namespace Sierra
     MetalShader::MetalShader(const MetalDevice &device, const ShaderCreateInfo &createInfo)
         : Shader(createInfo), MetalResource(createInfo.name)
     {
+        const ShaderFileHeader &fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.data.data());
         #if SR_PLATFORM_macOS
-            const std::filesystem::path shaderLibraryFilePath = createInfo.shaderBundlePath / "shader.macos.metallib";
+            const void* shaderData = createInfo.data.data() + sizeof(ShaderFileHeader) + fileHeader.GetMacOSMetalLibOffset();
+            const uint64 shaderDataMemorySize = fileHeader.macOSMetalLibMemorySize;
         #elif SR_PLATFORM_iOS && !SR_PLATFORM_EMULATOR
-            const std::filesystem::path shaderLibraryFilePath = createInfo.shaderBundlePath / "shader.ios.metallib";
+            const void* shaderData = createInfo.data.data() + sizeof(ShaderFileHeader) + fileHeader.GetIOSMetalLibOffset();
+            const uint64 shaderDataMemorySize = fileHeader.iOSMetalLibMemorySize;
         #elif SR_PLATFORM_iOS && SR_PLATFORM_EMULATOR
-            const std::filesystem::path shaderLibraryFilePath = createInfo.shaderBundlePath / "shader.ios-simulator.metallib";
+            const void* shaderData = createInfo.data.data() + sizeof(ShaderFileHeader) + fileHeader.GetIOSSimulatorMetalLibOffset();
+            const uint64 shaderDataMemorySize = fileHeader.iOSSimulatorMetalLibMemorySize;
         #endif
-
-        SR_ERROR_IF(!File::FileExists(shaderLibraryFilePath), "[Metal]: Could not load Metal library from shader bundle [{0}]! Verify its presence and try again.", createInfo.shaderBundlePath.string().c_str());
-
-
-        const std::string filePath = shaderLibraryFilePath.string();
-        NSString* const name = [[NSString alloc] initWithBytes: filePath.c_str() length: filePath.size() encoding: NSASCIIStringEncoding];
 
         // Load library
         NSError* error = nil;
-        const id<MTLLibrary> library = [device.GetMetalDevice() newLibraryWithURL: [NSURL fileURLWithPath: name] error: &error];
-        [name release];
+        const id<MTLLibrary> library = [device.GetMetalDevice() newLibraryWithData: dispatch_data_create(shaderData, shaderDataMemorySize, nullptr, nullptr) error: &error];
 
-        SR_ERROR_IF(error != nil, "Could not load Metal shader library [{0} - {1}]! Error: {2}.", GetName(), shaderLibraryFilePath.string().c_str(), error.description.UTF8String);
+        SR_ERROR_IF(error != nil, "[Metal]: Could not load Metal shader library [{0}]! Error: {1}.", GetName(), error.description.UTF8String);
         device.SetResourceName(library, GetName());
 
         // Load entry point

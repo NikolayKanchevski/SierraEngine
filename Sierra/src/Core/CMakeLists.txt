@@ -4,6 +4,8 @@ target_sources(Sierra PRIVATE
     CursorManager.cpp
     CursorManager.h
     EventDispatcher.hpp
+    FileManager.cpp
+    FileManager.h
     InputManager.cpp
     InputManager.h
     Key.h
@@ -20,8 +22,7 @@ target_sources(Sierra PRIVATE
     Touch.h
     TouchManager.cpp
     TouchManager.h
-    Version.cpp
-    Version.h
+    Version.hpp
     Window.cpp
     Window.h
     WindowManager.cpp

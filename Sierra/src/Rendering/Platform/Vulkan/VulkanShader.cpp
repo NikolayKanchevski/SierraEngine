@@ -12,16 +12,13 @@ namespace Sierra
     VulkanShader::VulkanShader(const VulkanDevice &device, const ShaderCreateInfo &createInfo)
         : Shader(createInfo), VulkanResource(createInfo.name), device(device)
     {
-        const std::filesystem::path shaderFilePath = createInfo.shaderBundlePath / "shader.spv";
-        SR_ERROR_IF(!File::FileExists(shaderFilePath), "[Vulkan]: Could not load SPIR-V shader from shader bundle [{0}]! Verify its presence and try again.", createInfo.shaderBundlePath.string().c_str());
-        auto shaderData = File::ReadFile(shaderFilePath);
-
         // Set up module create info
+        const ShaderFileHeader &fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.data.data());
         const VkShaderModuleCreateInfo shaderModuleCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-            .codeSize = shaderData.size(),
-            .pCode = reinterpret_cast<uint32*>(shaderData.data())
+            .codeSize = fileHeader.spvMemorySize,
+            .pCode = reinterpret_cast<const uint32*>(createInfo.data.data() + sizeof(ShaderFileHeader) + fileHeader.GetSpvOffset())
         };
 
         // Create shader module

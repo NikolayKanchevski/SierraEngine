@@ -10,7 +10,7 @@ namespace SierraEngine
     /* --- CONSTRUCTORS --- */
 
     AssetManager::AssetManager(const AssetManagerCreateInfo &createInfo)
-        : version(createInfo.version)
+        : threadPool(createInfo.threadPool), fileManager(createInfo.fileManager), renderingContext(createInfo.renderingContext)
     {
 
     }

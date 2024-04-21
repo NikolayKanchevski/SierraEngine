@@ -10,7 +10,7 @@ namespace SierraEngine
     /* --- CONSTRUCTORS --- */
 
     ImageSupercompressor::ImageSupercompressor(const ImageSupercompressorCreateInfo &createInfo)
-        : maximumImageDimensions(createInfo.maximumImageDimensions)
+        : maxImageDimensions(createInfo.maxImageDimensions)
     {
 
     }

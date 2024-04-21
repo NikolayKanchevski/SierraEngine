@@ -12,55 +12,57 @@ namespace SierraEngine
     /* --- CONSTRUCTORS --- */
 
     TextureSerializer::TextureSerializer(const TextureSerializerCreateInfo &createInfo)
-        : version(createInfo.version), maximumTextureDimensions(createInfo.maximumTextureDimensions)
+        : maxTextureDimensions(createInfo.maxTextureDimensions)
     {
 
     }
 
     /* --- POLLING METHODS --- */
 
-    std::optional<std::pair<SerializedTexture, void*>> TextureSerializer::Serialize(const std::filesystem::path &filePath, const TextureSerializeInfo &serializeInfo)
+    std::optional<std::pair<SerializedTexture, SerializedTextureBlob>> TextureSerializer::Serialize(const Sierra::FileManager &fileManager, const std::initializer_list<std::initializer_list<std::filesystem::path>> &levelFilePaths, const TextureSerializeInfo &serializeInfo)
     {
         // Define supercompression settings
-        const ImageSupercompressorCreateInfo compressorCreateInfo = { .maximumImageDimensions = maximumTextureDimensions };
-        const ImageSupercompressorSupercompressInfo compressInfo
+        const ImageSupercompressorCreateInfo compressorCreateInfo = { .maxImageDimensions = maxTextureDimensions };
+        const ImageSupercompressInfo compressInfo
         {
-            .filePaths = { { filePath } },
+            .levelFilePaths = levelFilePaths,
             .normalMap = serializeInfo.type == TextureType::Normal,
+            .generateMipMaps = serializeInfo.generateMipMaps,
             .compressionLevel = serializeInfo.compressionLevel,
             .qualityLevel = serializeInfo.qualityLevel
         };
 
-        void* compressedImageMemory = nullptr;
-        uint64 compressedImageMemorySize = 0;
-
         // Supercompress image
+        std::optional<std::vector<uint8>> compressedMemory = std::nullopt;
         switch (serializeInfo.compressorType)
         {
             case ImageSupercompressorType::Undefined:
             {
-                APP_WARNING("Cannot serialize texture [{0}] using a compressor of type [ImageCompressorType::Undefined]!", filePath.string());
+                APP_WARNING("Cannot serialize texture [{0}] using a compressor of type [ImageCompressorType::Undefined]!", levelFilePaths.begin()->begin()->string());
                 return std::nullopt;
             }
             case ImageSupercompressorType::KTX:
             {
-                if (!KTXSupercompressor(compressorCreateInfo).Supercompress(compressInfo, compressedImageMemory, compressedImageMemorySize))
+                if (compressedMemory = KTXSupercompressor(compressorCreateInfo).Supercompress(fileManager, compressInfo); !compressedMemory.has_value())
                 {
-                    APP_WARNING("Could not serialize texture [{0}], as an error occurred while KTX compressing it!", filePath.string());
+                    APP_WARNING("Could not serialize texture [{0}], as an error occurred while KTX compressing it!", levelFilePaths.begin()->begin()->string());
                     return std::nullopt;
                 }
             }
         }
 
-        // Set up asset data
-        SerializedTexture serializedTexture = { };
-        serializedTexture.version = version;
-        serializedTexture.type = serializeInfo.type;
-        serializedTexture.filtering = serializeInfo.filtering;
-        serializedTexture.compressorType = serializeInfo.compressorType;
-        serializedTexture.contentMemorySize = compressedImageMemorySize;
+        SerializedTexture serializedTexture
+        {
+            .header = {
+                .version = GetVersion()
+            },
+            .index = {
+                .type = serializeInfo.type,
+                .compressorType = serializeInfo.compressorType
+            }
+        };
 
-        return std::make_pair(serializedTexture, compressedImageMemory);
+        return std::make_pair(serializedTexture, std::move(compressedMemory.value()));
     }
 
 }

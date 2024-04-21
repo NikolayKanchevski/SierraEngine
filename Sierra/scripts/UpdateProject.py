@@ -11,9 +11,6 @@ from sys import platform
 CURRENT_DIRECTORY_PATH: str = os.path.dirname(os.path.realpath(__file__)).replace('\\', '/') + '/'
 ENGINE_ROOT_DIRECTORY_PATH: str = CURRENT_DIRECTORY_PATH + '../../'
 
-def Main() -> None:
-    UpdateReadMe()
-
 def UpdateReadMe() -> None:
     SOURCE_FILE_EXTENSIONS: [str] = ['.cpp', '.h', '.mm', '.cs', '.py', '.glsl', '.hlsl', '.msl' '.cmake', '.txt']
 
@@ -25,7 +22,7 @@ def UpdateReadMe() -> None:
         for root, dirs, files in os.walk(ENGINE_ROOT_DIRECTORY_PATH + subdirectory):
             for file in files:
                 for extension in SOURCE_FILE_EXTENSIONS:
-                    if 'bin' in root or 'vendor' in root or 'config' in root or any(re.compile(r'\.[a-zA-Z]').match(item) for item in root.split('/')):
+                    if 'bin' in root or 'vendor' in root or 'config' in root or 'Default' in root or any(re.compile(r'\.[a-zA-Z]').match(item) for item in root.split('/')):
                         continue
 
                     if str(file).endswith(extension):
@@ -65,8 +62,5 @@ def UpdateReadMe() -> None:
         file.write(newReadMeData)
         file.close()
 
-# We use a try here, as this script is called from a CMake file, which we do not want the build to crash together with this script
-try:
-    Main()
-except Exception as e:
-    print("UpdateProject.py failed: " + str(e))
+if __name__ == '__main__':
+    UpdateReadMe()

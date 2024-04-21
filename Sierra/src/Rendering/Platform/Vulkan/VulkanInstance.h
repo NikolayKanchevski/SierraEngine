@@ -6,7 +6,7 @@
 
 #include "VulkanResource.h"
 
-#include "../../../Core/Version.h"
+#include "../../../Core/Version.hpp"
 
 namespace Sierra
 {

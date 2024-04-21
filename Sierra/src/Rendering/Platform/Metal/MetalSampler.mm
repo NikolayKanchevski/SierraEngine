@@ -25,7 +25,7 @@ namespace Sierra
         [samplerDescriptor setMaxAnisotropy: SamplerAnisotropyToUInteger(createInfo.anisotropy)];
         [samplerDescriptor setCompareFunction: SamplerCompareOperationToCompareFunction(createInfo.compareOperation)];
         [samplerDescriptor setLodMinClamp: 0.0f];
-        [samplerDescriptor setLodMaxClamp: static_cast<float32>(createInfo.highestSampledMipLevel)];
+        [samplerDescriptor setLodMaxClamp: static_cast<float32>(createInfo.highestSampledLevel)];
         [samplerDescriptor setBorderColor: SamplerBorderColorToSamplerBorderColor(createInfo.borderColor)];
         [samplerDescriptor setNormalizedCoordinates: YES];
         [samplerDescriptor setSupportArgumentBuffers: YES];

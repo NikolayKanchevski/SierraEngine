@@ -1,6 +1,4 @@
 target_sources(Sierra PRIVATE
-    File.cpp
-    File.h
     RNG.cpp
     RNG.h
     Time.cpp

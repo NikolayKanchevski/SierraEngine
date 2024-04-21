@@ -43,7 +43,7 @@ namespace Sierra
 
         /* --- OPERATORS --- */
         Device(const Device&) = delete;
-        Device &operator=(const Device&) = delete;
+        Device& operator=(const Device&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~Device() = default;

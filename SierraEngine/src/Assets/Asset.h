@@ -7,17 +7,6 @@
 namespace SierraEngine
 {
 
-    enum class AssetType : uint8
-    {
-        Unknown,
-        Texture,
-        Cubemap,
-        Shader,
-        Material,
-        Model,
-        Audio
-    };
-
     class AssetID final
     {
     public:
@@ -30,7 +19,7 @@ namespace SierraEngine
 
         /* --- OPERATORS --- */
         AssetID(const AssetID &other) = default;
-        AssetID &operator=(const AssetID &other) = default;
+        AssetID& operator=(const AssetID &other) = default;
 
         inline bool operator==(const AssetID &other) const { return hash == other.hash; }
         inline bool operator!=(const AssetID &other) const { return hash != other.hash; }
@@ -48,25 +37,23 @@ namespace SierraEngine
     public:
         /* --- OPERATORS --- */
         Asset(const Asset&) = delete;
-        Asset &operator=(const Asset&) = delete;
+        Asset& operator=(const Asset&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        Asset(Asset&& other) : type(other.type) { }
-        Asset &operator=(Asset&& other) { if (this != &other) { type = other.type; } return *this; }
+        Asset(Asset&& other) = default;
+        Asset& operator=(Asset&& other) = default;
 
         /* --- DESTRUCTOR --- */
         ~Asset() = default;
 
     protected:
-        inline explicit Asset(const AssetType type) : type(type) { }
-
-    private:
-        AssetType type = AssetType::Unknown;
+        Asset() = default;
 
     };
 
-    struct SerializedAsset
+    struct SerializedAssetHeader
     {
+        char SIGNATURE[4] = { 'S', 'R', 'S', 'A' };
         Sierra::Version version = Sierra::Version({ 1, 0, 0 });
     };
 

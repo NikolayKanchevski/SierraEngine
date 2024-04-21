@@ -107,7 +107,7 @@ namespace SierraEngine
 
         /* --- OPERATORS --- */
         ThreadPool(const ThreadPool&) = delete;
-        ThreadPool &operator=(const ThreadPool&) = delete;
+        ThreadPool& operator=(const ThreadPool&) = delete;
 
         /* --- DESTRUCTOR --- */
         ~ThreadPool()

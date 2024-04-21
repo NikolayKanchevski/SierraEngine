@@ -53,8 +53,8 @@ namespace Sierra
     void VulkanCommandBuffer::Begin()
     {
         // Free queued resources
-        queuedBuffers = std::queue<std::unique_ptr<Buffer>>();
-        queuedImages = std::queue<std::unique_ptr<Image>>();
+        queuedBuffersForDestruction = { };
+        queuedImagesForDestruction = { };
 
         // Reset command buffer
         device.GetFunctionTable().vkResetCommandPool(device.GetLogicalDevice(), commandPool, 0);
@@ -108,14 +108,14 @@ namespace Sierra
         device.GetFunctionTable().vkCmdPipelineBarrier(commandBuffer, BufferCommandUsageToVkPipelineStageFlags(previousUsage), BufferCommandUsageToVkPipelineStageFlags(nextUsage), 0, 0, nullptr, 1, &pipelineBarrier, 0, nullptr);
     }
 
-    void VulkanCommandBuffer::SynchronizeImageUsage(const std::unique_ptr<Image> &image, const ImageCommandUsage previousUsage, const ImageCommandUsage nextUsage, const uint32 baseMipLevel, const uint32 mipLevelCount, const uint32 baseLayer, uint32 layerCount)
+    void VulkanCommandBuffer::SynchronizeImageUsage(const std::unique_ptr<Image> &image, const ImageCommandUsage previousUsage, const ImageCommandUsage nextUsage, const uint32 baseLevel, const uint32 levelCount, const uint32 baseLayer, uint32 layerCount)
     {
         SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not synchronize usage of image [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image->GetName(), GetName());
         const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
 
         SR_ERROR_IF(nextUsage == ImageCommandUsage::None, "[Vulkan]: Cannot synchronize image [{0}], as specified next usage must not be ImageCommandUsage::None!", image->GetName());
 
-        SR_ERROR_IF(baseMipLevel >= image->GetMipLevelCount(), "[Vulkan]: Cannot synchronize mip level [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseMipLevel, image->GetName(), GetName());
+        SR_ERROR_IF(baseLevel >= image->GetLevelCount(), "[Vulkan]: Cannot synchronize level [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseLevel, image->GetName(), GetName());
         SR_ERROR_IF(baseLayer >= image->GetLayerCount(), "[Vulkan]: Cannot synchronize layer [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseLayer, image->GetName(), GetName());
 
         // Set up pipeline barrier
@@ -131,14 +131,14 @@ namespace Sierra
             .image = vulkanImage.GetVulkanImage(),
             .subresourceRange = {
                 .aspectMask = vulkanImage.GetVulkanAspectFlags(),
-                .baseMipLevel = baseMipLevel,
-                .levelCount = mipLevelCount != 0 ? mipLevelCount : image->GetMipLevelCount() - baseMipLevel,
+                .baseMipLevel = baseLevel,
+                .levelCount = levelCount != 0 ? levelCount : image->GetLevelCount() - baseLevel,
                 .baseArrayLayer = baseLayer,
                 .layerCount = layerCount != 0 ? layerCount : image->GetLayerCount() - baseLayer
             }
         };
 
-        SR_ERROR_IF(baseMipLevel + pipelineBarrier.subresourceRange.levelCount > image->GetMipLevelCount(), "[Vulkan]: Cannot synchronize mip levels [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's mip level count - [{4}]!", baseMipLevel, baseMipLevel + mipLevelCount - 1, image->GetName(), GetName(), image->GetMipLevelCount());
+        SR_ERROR_IF(baseLevel + pipelineBarrier.subresourceRange.levelCount > image->GetLevelCount(), "[Vulkan]: Cannot synchronize levels [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's level count - [{4}]!", baseLevel, baseLevel + levelCount - 1, image->GetName(), GetName(), image->GetLevelCount());
         SR_ERROR_IF(baseLayer + pipelineBarrier.subresourceRange.layerCount > image->GetLayerCount(), "[Vulkan]: Cannot synchronize layers [{0}-{1}] of image [{2}] within command buffer [{3}], as they exceed image's layer count - [{4}]!", baseLayer, baseLayer + layerCount - 1, image->GetName(), GetName(), image->GetLayerCount());
 
         // Bind barrier
@@ -167,7 +167,7 @@ namespace Sierra
         device.GetFunctionTable().vkCmdCopyBuffer(commandBuffer, vulkanSourceBuffer.GetVulkanBuffer(), vulkanDestinationBuffer.GetVulkanBuffer(), 1, &copyRegion);
     }
 
-    void VulkanCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const uint32 mipLevel, const Vector2UInt &pixelRange, const uint32 layer, const uint64 sourceByteOffset, const Vector2UInt &destinationPixelOffset)
+    void VulkanCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const uint32 level, const uint32 layer, const Vector2UInt &pixelRange, const uint64 sourceByteOffset, const Vector2UInt &destinationPixelOffset)
     {
         SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not copy from buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], to image [{1}] within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
         const VulkanBuffer &vulkanSourceBuffer = static_cast<VulkanBuffer&>(*sourceBuffer);
@@ -175,7 +175,7 @@ namespace Sierra
         SR_ERROR_IF(destinationImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not from buffer [{0}] to image [{1}], graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
         const VulkanImage &vulkanDestinationImage = static_cast<VulkanImage&>(*destinationImage);
 
-        SR_ERROR_IF(mipLevel >= destinationImage->GetMipLevelCount(), "[Vulkan]: Cannot copy from buffer [{0}] to mip level [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), mipLevel, destinationImage->GetName(), GetName());
+        SR_ERROR_IF(level >= destinationImage->GetLevelCount(), "[Vulkan]: Cannot copy from buffer [{0}] to level [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), level, destinationImage->GetName(), GetName());
         SR_ERROR_IF(layer >= destinationImage->GetLayerCount(), "[Vulkan]: Cannot copy from buffer [{0}] to layer [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), layer, destinationImage->GetName(), GetName());
 
         // Set copy region
@@ -186,7 +186,7 @@ namespace Sierra
             .bufferImageHeight = 0,
             .imageSubresource = {
                 .aspectMask = vulkanDestinationImage.GetVulkanAspectFlags(),
-                .mipLevel = mipLevel,
+                .mipLevel = level,
                 .baseArrayLayer = layer,
                 .layerCount = 1
             },
@@ -196,8 +196,8 @@ namespace Sierra
                 .z = 0
             },
             .imageExtent = {
-                .width = pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth() >> mipLevel,
-                .height = pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight() >> mipLevel,
+                .width = pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth() >> level,
+                .height = pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight() >> level,
                 .depth = 1
             }
         };
@@ -212,7 +212,7 @@ namespace Sierra
         SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot generate mip maps for image [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{1}]!", image->GetName(), GetName());
         const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
 
-        SR_ERROR_IF(vulkanImage.GetMipLevelCount() <= 1, "[Vulkan]: Cannot generate mip maps for image [{0}], as it has a single mip level only!", vulkanImage.GetName());
+        SR_ERROR_IF(vulkanImage.GetLevelCount() <= 1, "[Vulkan]: Cannot generate mip maps for image [{0}], as it has a single mip level only!", vulkanImage.GetName());
 
         // Set up base pipeline barrier
         VkImageMemoryBarrier pipelineBarrier
@@ -250,17 +250,17 @@ namespace Sierra
             .dstOffsets = { { .x = 0, .y = 0, .z = 0 } }
         };
 
-        for (uint32 i = 1; i < image->GetMipLevelCount(); i++)
+        for (uint32 i = 1; i < image->GetLevelCount(); i++)
         {
-            // Prepare former mip level for blitting from it
+            // Prepare former level for blitting from it
             pipelineBarrier.subresourceRange.baseMipLevel = i - 1;
             device.GetFunctionTable().vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &pipelineBarrier);
 
-            // Set offsets for source mip level
+            // Set offsets for source level
             blit.srcOffsets[1] = { static_cast<int32>(image->GetWidth() >> (i - 1)), static_cast<int32>(image->GetHeight() >> (i - 1)), 1 };
             blit.srcSubresource.mipLevel = i - 1;
 
-            // Set offsets for destination mip level
+            // Set offsets for destination level
             blit.dstOffsets[1] = { static_cast<int32>(image->GetWidth() >> i), static_cast<int32>(image->GetHeight() >> i), 1 };
             blit.dstSubresource.mipLevel = i;
 
@@ -525,6 +525,16 @@ namespace Sierra
         device.GetFunctionTable().vkCmdDebugMarkerEndEXT(commandBuffer);
     }
 
+    std::unique_ptr<Buffer>& VulkanCommandBuffer::QueueBufferForDestruction(std::unique_ptr<Buffer> &&buffer)
+    {
+        return queuedBuffersForDestruction.emplace(std::move(buffer));
+    }
+
+    std::unique_ptr<Image>& VulkanCommandBuffer::QueueImageForDestruction(std::unique_ptr<Image> &&image)
+    {
+        return queuedImagesForDestruction.emplace(std::move(image));
+    }
+
     /* --- DESTRUCTOR --- */
 
     VulkanCommandBuffer::~VulkanCommandBuffer()
@@ -532,8 +542,8 @@ namespace Sierra
         device.GetFunctionTable().vkFreeCommandBuffers(device.GetLogicalDevice(), commandPool, 1, &commandBuffer);
         device.GetFunctionTable().vkDestroyCommandPool(device.GetLogicalDevice(), commandPool, nullptr);
 
-        queuedBuffers = std::queue<std::unique_ptr<Buffer>>();
-        queuedImages = std::queue<std::unique_ptr<Image>>();
+        queuedBuffersForDestruction = { };
+        queuedImagesForDestruction = { };
     }
 
     /* --- CONVERSIONS --- */

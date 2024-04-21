@@ -59,7 +59,7 @@ namespace Sierra
         SamplerAddressMode extendMode = SamplerAddressMode::Repeat;
         SamplerCompareOperation compareOperation = SamplerCompareOperation::None;
 
-        uint32 highestSampledMipLevel = 1;
+        uint32 highestSampledLevel = 1;
         SamplerAnisotropy anisotropy = SamplerAnisotropy::x1;
         SamplerBorderColor borderColor = SamplerBorderColor::Black;
     };
@@ -69,7 +69,7 @@ namespace Sierra
     public:
         /* --- OPERATORS --- */
         Sampler(const Sampler&) = delete;
-        Sampler &operator=(const Sampler&) = delete;
+        Sampler& operator=(const Sampler&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~Sampler() = default;
