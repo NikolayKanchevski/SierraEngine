@@ -17,4 +17,5 @@
 		ImVec4(const Vector4 &other) { x = other.x; y = other.y; z = other.z; w = other.w; }      \
 		operator Vector4() const { return Vector4(x, y, z, w); }
 
+#define ImTextureID uint64_t
 #define ImDrawIdx uint32_t

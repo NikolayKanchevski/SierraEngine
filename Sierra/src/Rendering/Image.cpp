@@ -22,9 +22,7 @@ namespace Sierra
         SR_ERROR_IF(createInfo.usage == ImageUsage::Undefined, "Usage of image [{0}] must not be [ImageUsage::Undefined]!", createInfo.name);
         SR_ERROR_IF(createInfo.usage & ImageUsage::ColorAttachment && createInfo.usage & ImageUsage::DepthAttachment, "Usage of image [{0}] must not include both [ImageUsage::ColorAttachment] & [ImageUsage::DepthAttachment]!", createInfo.name);
         SR_ERROR_IF(createInfo.usage & ImageUsage::Filter && !(createInfo.usage & ImageUsage::Sample), "Usage of image [{0}] must also include [ImageUsage::Sampled] if [ImageUsage::Filtered] is present!", createInfo.name);
-        SR_ERROR_IF(createInfo.usage & ImageUsage::ResolveAttachment && createInfo.sampling != ImageSampling::x1, "Image [{0}], which includes [ImageUsage::ResolveAttachment] must be created with sampling of [ImageSampling::x1]!", createInfo.name);
-
-
+        SR_ERROR_IF(createInfo.usage & ImageUsage::ResolverAttachment && createInfo.sampling == ImageSampling::x1, "Image [{0}], which includes [ImageUsage::ResolverAttachment] must be created with sampling, which differs from [ImageSampling::x1]!", createInfo.name);
     }
 
 }

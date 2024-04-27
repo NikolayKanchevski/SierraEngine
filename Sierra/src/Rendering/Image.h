@@ -445,7 +445,7 @@ namespace Sierra
         ColorAttachment         = 0x0020,
         DepthAttachment         = 0x0040,
         InputAttachment         = 0x0080,
-        ResolveAttachment       = 0x0100,
+        ResolverAttachment      = 0x0100,
         TransientAttachment     = 0x0200
     };
     SR_DEFINE_ENUM_FLAG_OPERATORS(ImageUsage);

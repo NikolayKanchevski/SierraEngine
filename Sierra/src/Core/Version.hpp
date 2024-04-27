@@ -34,9 +34,9 @@ namespace Sierra
 		[[nodiscard]] inline bool operator !=(const Version &other) const { return !(*this == other); }
 
     private:
-        uint8 major = 0;
-        uint8 minor = 0;
-        uint8 patch = 0;
+        const uint8 major = 0;
+        const uint8 minor = 0;
+        const uint8 patch = 0;
 
     };
 

@@ -12,15 +12,15 @@ namespace Sierra
     MetalShader::MetalShader(const MetalDevice &device, const ShaderCreateInfo &createInfo)
         : Shader(createInfo), MetalResource(createInfo.name)
     {
-        const ShaderFileHeader &fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.data.data());
+        const ShaderFileHeader &fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.memory.data());
         #if SR_PLATFORM_macOS
-            const void* shaderData = createInfo.data.data() + sizeof(ShaderFileHeader) + fileHeader.GetMacOSMetalLibOffset();
+            const void* shaderData = createInfo.memory.data() + sizeof(ShaderFileHeader) + fileHeader.GetMacOSMetalLibOffset();
             const uint64 shaderDataMemorySize = fileHeader.macOSMetalLibMemorySize;
         #elif SR_PLATFORM_iOS && !SR_PLATFORM_EMULATOR
-            const void* shaderData = createInfo.data.data() + sizeof(ShaderFileHeader) + fileHeader.GetIOSMetalLibOffset();
+            const void* shaderData = createInfo.memory.data() + sizeof(ShaderFileHeader) + fileHeader.GetIOSMetalLibOffset();
             const uint64 shaderDataMemorySize = fileHeader.iOSMetalLibMemorySize;
         #elif SR_PLATFORM_iOS && SR_PLATFORM_EMULATOR
-            const void* shaderData = createInfo.data.data() + sizeof(ShaderFileHeader) + fileHeader.GetIOSSimulatorMetalLibOffset();
+            const void* shaderData = createInfo.memory.data() + sizeof(ShaderFileHeader) + fileHeader.GetIOSSimulatorMetalLibOffset();
             const uint64 shaderDataMemorySize = fileHeader.iOSSimulatorMetalLibMemorySize;
         #endif
 

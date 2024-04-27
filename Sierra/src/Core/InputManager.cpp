@@ -66,7 +66,7 @@ namespace Sierra
     bool InputManager::IsKeyCombinationPressedImplementation(const std::initializer_list<Key> &keys) const
     {
         bool atLeastOneKeyPressed = false;
-        for (const auto key : keys)
+        for (const Key key : keys)
         {
             if (IsKeyHeld(key)) continue;
 
@@ -84,7 +84,7 @@ namespace Sierra
 
     bool InputManager::IsKeyCombinationHeldImplementation(const std::initializer_list<Key> &keys) const
     {
-        for (const auto key : keys)
+        for (const Key key : keys)
         {
             if (!IsKeyHeld(key))
             {

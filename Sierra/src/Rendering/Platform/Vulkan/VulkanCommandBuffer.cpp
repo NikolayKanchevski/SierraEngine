@@ -85,7 +85,7 @@ namespace Sierra
     void VulkanCommandBuffer::SynchronizeBufferUsage(const std::unique_ptr<Buffer> &buffer, const BufferCommandUsage previousUsage, const BufferCommandUsage nextUsage, const uint64 memorySize, const uint64 byteOffset)
     {
         SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not synchronize usage of buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer->GetName(), GetName());
-        const VulkanBuffer &vulkanBuffer = static_cast<VulkanBuffer&>(*buffer);
+        const VulkanBuffer &vulkanBuffer = static_cast<const VulkanBuffer&>(*buffer);
 
         SR_ERROR_IF(nextUsage == BufferCommandUsage::None, "[Vulkan]: Cannot synchronize buffer [{0}], as specified next usage must not be BufferCommandUsage::None!", buffer->GetName());
 
@@ -111,7 +111,7 @@ namespace Sierra
     void VulkanCommandBuffer::SynchronizeImageUsage(const std::unique_ptr<Image> &image, const ImageCommandUsage previousUsage, const ImageCommandUsage nextUsage, const uint32 baseLevel, const uint32 levelCount, const uint32 baseLayer, uint32 layerCount)
     {
         SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not synchronize usage of image [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image->GetName(), GetName());
-        const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
+        const VulkanImage &vulkanImage = static_cast<const VulkanImage&>(*image);
 
         SR_ERROR_IF(nextUsage == ImageCommandUsage::None, "[Vulkan]: Cannot synchronize image [{0}], as specified next usage must not be ImageCommandUsage::None!", image->GetName());
 
@@ -148,10 +148,10 @@ namespace Sierra
     void VulkanCommandBuffer::CopyBufferToBuffer(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Buffer> &destinationBuffer, const uint64 memoryRange, const uint64 sourceByteOffset, const uint64 destinationByteOffset)
     {
         SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not copy from buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", sourceBuffer->GetName(), GetName());
-        const VulkanBuffer &vulkanSourceBuffer = static_cast<VulkanBuffer&>(*sourceBuffer);
+        const VulkanBuffer &vulkanSourceBuffer = static_cast<const VulkanBuffer&>(*sourceBuffer);
 
         SR_ERROR_IF(destinationBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not copy to buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", destinationBuffer->GetName(), GetName());
-        const VulkanBuffer &vulkanDestinationBuffer = static_cast<VulkanBuffer&>(*destinationBuffer);
+        const VulkanBuffer &vulkanDestinationBuffer = static_cast<const VulkanBuffer&>(*destinationBuffer);
 
         const VkBufferCopy copyRegion
         {
@@ -170,10 +170,10 @@ namespace Sierra
     void VulkanCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const uint32 level, const uint32 layer, const Vector2UInt &pixelRange, const uint64 sourceByteOffset, const Vector2UInt &destinationPixelOffset)
     {
         SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not copy from buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], to image [{1}] within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
-        const VulkanBuffer &vulkanSourceBuffer = static_cast<VulkanBuffer&>(*sourceBuffer);
+        const VulkanBuffer &vulkanSourceBuffer = static_cast<const VulkanBuffer&>(*sourceBuffer);
 
         SR_ERROR_IF(destinationImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not from buffer [{0}] to image [{1}], graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
-        const VulkanImage &vulkanDestinationImage = static_cast<VulkanImage&>(*destinationImage);
+        const VulkanImage &vulkanDestinationImage = static_cast<const VulkanImage&>(*destinationImage);
 
         SR_ERROR_IF(level >= destinationImage->GetLevelCount(), "[Vulkan]: Cannot copy from buffer [{0}] to level [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), level, destinationImage->GetName(), GetName());
         SR_ERROR_IF(layer >= destinationImage->GetLayerCount(), "[Vulkan]: Cannot copy from buffer [{0}] to layer [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), layer, destinationImage->GetName(), GetName());
@@ -210,7 +210,7 @@ namespace Sierra
     void VulkanCommandBuffer::GenerateMipMapsForImage(const std::unique_ptr<Image> &image)
     {
         SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot generate mip maps for image [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{1}]!", image->GetName(), GetName());
-        const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*image);
+        const VulkanImage &vulkanImage = static_cast<const VulkanImage&>(*image);
 
         SR_ERROR_IF(vulkanImage.GetLevelCount() <= 1, "[Vulkan]: Cannot generate mip maps for image [{0}], as it has a single mip level only!", vulkanImage.GetName());
 
@@ -272,7 +272,7 @@ namespace Sierra
     void VulkanCommandBuffer::BindResourceTable(const std::unique_ptr<ResourceTable> &resourceTable)
     {
         SR_ERROR_IF(resourceTable->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind resource table [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{1}]!", resourceTable->GetName(), GetName());
-        const VulkanResourceTable &vulkanResourceTable = static_cast<VulkanResourceTable&>(*resourceTable);
+        const VulkanResourceTable &vulkanResourceTable = static_cast<const VulkanResourceTable&>(*resourceTable);
         currentResourceTableDescriptorSet = vulkanResourceTable.GetDescriptorSet();
     }
 
@@ -286,28 +286,57 @@ namespace Sierra
     void VulkanCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments)
     {
         SR_ERROR_IF(renderPass->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], from command buffer [{1}]!", renderPass->GetName(), GetName());
-        const VulkanRenderPass &vulkanRenderPass = static_cast<VulkanRenderPass&>(*renderPass);
+        const VulkanRenderPass &vulkanRenderPass = static_cast<const VulkanRenderPass&>(*renderPass);
 
         SR_ERROR_IF(attachments.size() != vulkanRenderPass.GetAttachmentCount(), "[Vulkan]: Cannot begin render pass [{0}] from command buffer [{1}] with [{2}] attachments, as it was created to hold [{3}]!", renderPass->GetName(), GetName(), attachments.size(), vulkanRenderPass.GetAttachmentCount());
 
-        // Collect attachment views
         std::vector<VkClearValue> clearValues(attachments.size());
         std::vector<VkImageView> attachmentViews(attachments.size());
+
+        // Collect attachment views
         for (uint32 i = 0; i < attachments.size(); i++)
         {
             const RenderPassBeginAttachment &attachment = *(attachments.begin() + i);
-            SR_ERROR_IF(attachment.image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), attachment.image->GetName(), i);
-            const VulkanImage &vulkanImage = static_cast<VulkanImage&>(*attachment.image);
 
-            // Configure attachment info
+            SR_ERROR_IF(attachment.outputImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}]'s output image, as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), attachment.outputImage->GetName(), i);
+            const VulkanImage &vulkanImage = static_cast<const VulkanImage&>(*attachment.outputImage);
+
             attachmentViews[i] = vulkanImage.GetVulkanImageView();
-            if (attachment.image->GetFormat() == ImageFormat::D16_UNorm || attachment.image->GetFormat() == ImageFormat::D32_Float)
+            switch (vulkanImage.GetFormat())
             {
-                clearValues[i].depthStencil = { 1.0f, 0 };
+                case ImageFormat::D16_UNorm:
+                case ImageFormat::D32_Float:
+                {
+                    clearValues[i].depthStencil = { attachment.clearValue.r, 0 };
+                    break;
+                }
+                default:
+                {
+                    clearValues[i].color = { attachment.clearValue.r, attachment.clearValue.g, attachment.clearValue.b, attachment.clearValue.a };
+                    break;
+                }
             }
-            else
+
+            if (attachment.resolverImage.has_value())
             {
-                clearValues[i].color = { attachment.clearColor.r, attachment.clearColor.g, attachment.clearColor.b, attachment.clearColor.a };
+                SR_ERROR_IF(attachment.resolverImage.value().get()->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}]'s resolver image, as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), attachment.resolverImage.value().get()->GetName(), i);
+                const VulkanImage &vulkanResolverImage = static_cast<const VulkanImage&>(*attachment.resolverImage.value().get());
+
+                attachmentViews.emplace_back(vulkanResolverImage.GetVulkanImageView());
+                switch (vulkanResolverImage.GetFormat())
+                {
+                    case ImageFormat::D16_UNorm:
+                    case ImageFormat::D32_Float:
+                    {
+                        clearValues.emplace_back().depthStencil = { 1.0f, 0 };
+                        break;
+                    }
+                    default:
+                    {
+                        clearValues.emplace_back().color = { attachment.clearValue.r, attachment.clearValue.g, attachment.clearValue.b, attachment.clearValue.a };
+                        break;
+                    }
+                }
             }
         }
 
@@ -332,8 +361,8 @@ namespace Sierra
                     .y = 0
                 },
                 .extent = {
-                    .width = attachments.begin()->image->GetWidth(),
-                    .height = attachments.begin()->image->GetHeight()
+                    .width = attachments.begin()->outputImage->GetWidth(),
+                    .height = attachments.begin()->outputImage->GetHeight()
                 }
             },
             .clearValueCount = static_cast<uint32>(clearValues.size()),
@@ -389,7 +418,7 @@ namespace Sierra
     void VulkanCommandBuffer::BeginGraphicsPipeline(const std::unique_ptr<GraphicsPipeline> &graphicsPipeline)
     {
         SR_ERROR_IF(graphicsPipeline->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin graphics graphicsPipeline [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], from command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
-        const VulkanGraphicsPipeline &vulkanGraphicsPipeline = static_cast<VulkanGraphicsPipeline&>(*graphicsPipeline);
+        const VulkanGraphicsPipeline &vulkanGraphicsPipeline = static_cast<const VulkanGraphicsPipeline&>(*graphicsPipeline);
 
         currentBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         currentPipelineLayout = vulkanGraphicsPipeline.GetVulkanPipelineLayout();
@@ -407,7 +436,7 @@ namespace Sierra
     void VulkanCommandBuffer::BindVertexBuffer(const std::unique_ptr<Buffer> &vertexBuffer, const uint64 byteOffset)
     {
         SR_ERROR_IF(vertexBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind vertex buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{1}]!", vertexBuffer->GetName(), GetName());
-        const VulkanBuffer &vulkanVertexBuffer = static_cast<VulkanBuffer&>(*vertexBuffer);
+        const VulkanBuffer &vulkanVertexBuffer = static_cast<const VulkanBuffer&>(*vertexBuffer);
 
         SR_ERROR_IF(byteOffset > vertexBuffer->GetMemorySize(), "[Vulkan]: Cannot bind vertex buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is not within a valid range of the [{3}] bytes the buffer holds!", vertexBuffer->GetName(), GetName(), byteOffset, vertexBuffer->GetMemorySize());
 
@@ -418,7 +447,7 @@ namespace Sierra
     void VulkanCommandBuffer::BindIndexBuffer(const std::unique_ptr<Buffer> &indexBuffer, const uint64 byteOffset)
     {
         SR_ERROR_IF(indexBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind index buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{1}]!", indexBuffer->GetName(), GetName());
-        const VulkanBuffer &vulkanIndexBuffer = static_cast<VulkanBuffer&>(*indexBuffer);
+        const VulkanBuffer &vulkanIndexBuffer = static_cast<const VulkanBuffer&>(*indexBuffer);
 
         SR_ERROR_IF(byteOffset > indexBuffer->GetMemorySize(), "[Vulkan]: Cannot bind index buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is not within a valid range of the [{3}] bytes the buffer holds!", indexBuffer->GetName(), GetName(), byteOffset, indexBuffer->GetMemorySize());
         device.GetFunctionTable().vkCmdBindIndexBuffer(commandBuffer, vulkanIndexBuffer.GetVulkanBuffer(), byteOffset, VK_INDEX_TYPE_UINT32); // 32-bit indices are required, due to Metal shaders enforcing it
@@ -458,7 +487,7 @@ namespace Sierra
     void VulkanCommandBuffer::BeginComputePipeline(const std::unique_ptr<ComputePipeline> &computePipeline)
     {
         SR_ERROR_IF(computePipeline->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin compute graphicsPipeline [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], from command buffer [{1}]!", computePipeline->GetName(), GetName());
-        const VulkanComputePipeline &vulkanComputePipeline = static_cast<VulkanComputePipeline&>(*computePipeline);
+        const VulkanComputePipeline &vulkanComputePipeline = static_cast<const VulkanComputePipeline&>(*computePipeline);
 
         currentBindPoint = VK_PIPELINE_BIND_POINT_COMPUTE;
         currentPipelineLayout = vulkanComputePipeline.GetVulkanPipelineLayout();

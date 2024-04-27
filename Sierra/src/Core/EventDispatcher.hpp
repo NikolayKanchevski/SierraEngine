@@ -21,7 +21,7 @@ namespace Sierra
         EventDispatcher() = default;
 
         /* --- POLLING METHODS --- */
-        EventSubscriptionID Subscribe(EventCallback &Callback)
+        EventSubscriptionID Subscribe(const EventCallback &Callback)
         {
             // Generate ID
             EventSubscriptionID ID;
@@ -37,17 +37,17 @@ namespace Sierra
 
             // Add callback
             totalIDs++;
-            Callbacks.push_back(Callback);
+            callbacks.push_back(Callback);
             return ID;
         }
 
         bool Unsubscribe(const EventSubscriptionID ID)
         {
             // Check if ID has been registered
-            if (ID >= Callbacks.size()) return false;
+            if (ID >= callbacks.size()) return false;
 
             // Remove callback reference
-            Callbacks.erase(ID);
+            callbacks.erase(ID);
 
             // Recycle ID
             freedIDs.push(ID);
@@ -59,7 +59,7 @@ namespace Sierra
         {
             // Immediately handle requested event
             T event = T(std::forward<Args>(args)...);
-            for (const auto Callback : Callbacks)
+            for (const EventCallback &Callback : callbacks)
             {
                 // If event is handled, we break, so that deeper subscribers do not register it
                 if (Callback(event))
@@ -67,29 +67,6 @@ namespace Sierra
                     break;
                 }
             }
-        }
-
-        template<typename... Args>
-        void QueueEvent(Args&&... args) const
-        {
-            queue.push(T(std::forward<Args>(args))...);
-        }
-
-        void DispatchQueue()
-        {
-            // Handle all registered events
-            for (auto event : queue)
-            {
-                for (const auto &Callback : Callbacks)
-                {
-                    // If event is handled, we break, so it does not go deeper in the event stack
-                    if (Callback(event))
-                    {
-                        break;
-                    }
-                }
-            }
-            queue = std::queue<T>();
         }
 
         /* --- OPERATORS --- */
@@ -100,8 +77,7 @@ namespace Sierra
         ~EventDispatcher() = default;
 
     private:
-        std::queue<T> queue;
-        std::deque<EventCallback> Callbacks;
+        std::deque<EventCallback> callbacks;
 
         uint32 totalIDs = 0;
         std::queue<EventSubscriptionID> freedIDs;

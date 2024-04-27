@@ -123,7 +123,8 @@ namespace Sierra
         [[nodiscard]] virtual Vector2 GetMouseScroll() const;
 
         /* --- EVENTS --- */
-        template<typename T> requires (std::is_base_of_v<InputEvent, T> && !std::is_same_v<InputEvent, T>) void OnEvent(InputEventCallback<T> Callback) {  }
+        template<typename T> requires (std::is_base_of_v<InputEvent, T> && !std::is_same_v<InputEvent, T>)
+        void OnEvent(const InputEventCallback<T> &Callback) {  }
 
         /* --- OPERATORS --- */
         InputManager(const InputManager&) = delete;
@@ -142,8 +143,8 @@ namespace Sierra
         constexpr static uint32 KEY_COUNT = static_cast<uint32>(Key::RightSystem) + 1;
         constexpr static uint32 MOUSE_BUTTON_COUNT = static_cast<uint32>(MouseButton::Extra2) + 1;
 
-        [[nodiscard]] inline constexpr static auto GetKeyIndex(const Key key) { return static_cast<uint32>(key); }
-        [[nodiscard]] inline constexpr static auto GetMouseButtonIndex(const MouseButton mouseButton) { return static_cast<uint32>(mouseButton); }
+        [[nodiscard]] inline constexpr static uint32 GetKeyIndex(const Key key) { return static_cast<uint32>(key); }
+        [[nodiscard]] inline constexpr static uint32 GetMouseButtonIndex(const MouseButton mouseButton) { return static_cast<uint32>(mouseButton); }
 
         [[nodiscard]] inline EventDispatcher<KeyPressEvent>& GetKeyPressDispatcher() { return keyPressDispatcher; }
         [[nodiscard]] inline EventDispatcher<KeyReleaseEvent>& GetKeyReleaseDispatcher() { return keyReleaseDispatcher; }
@@ -166,11 +167,11 @@ namespace Sierra
         std::queue<char> enteredCharacters;
     };
 
-    template<> inline void InputManager::OnEvent<KeyPressEvent>(InputEventCallback<KeyPressEvent> Callback) { keyPressDispatcher.Subscribe(Callback); }
-    template<> inline void InputManager::OnEvent<KeyReleaseEvent>(InputEventCallback<KeyReleaseEvent> Callback) { keyReleaseDispatcher.Subscribe(Callback); }
+    template<> inline void InputManager::OnEvent<KeyPressEvent>(const InputEventCallback<KeyPressEvent> &Callback) { keyPressDispatcher.Subscribe(Callback); }
+    template<> inline void InputManager::OnEvent<KeyReleaseEvent>(const InputEventCallback<KeyReleaseEvent> &Callback) { keyReleaseDispatcher.Subscribe(Callback); }
 
-    template<> inline void InputManager::OnEvent<MouseButtonPressEvent>(InputEventCallback<MouseButtonPressEvent> Callback) { mouseButtonPressDispatcher.Subscribe(Callback); }
-    template<> inline void InputManager::OnEvent<MouseButtonReleaseEvent>(InputEventCallback<MouseButtonReleaseEvent> Callback) { mouseButtonReleaseDispatcher.Subscribe(Callback); }
-    template<> inline void InputManager::OnEvent<MouseScrollEvent>(InputEventCallback<MouseScrollEvent> Callback) { mouseScrollDispatcher.Subscribe(Callback); }
+    template<> inline void InputManager::OnEvent<MouseButtonPressEvent>(const InputEventCallback<MouseButtonPressEvent> &Callback) { mouseButtonPressDispatcher.Subscribe(Callback); }
+    template<> inline void InputManager::OnEvent<MouseButtonReleaseEvent>(const InputEventCallback<MouseButtonReleaseEvent> &Callback) { mouseButtonReleaseDispatcher.Subscribe(Callback); }
+    template<> inline void InputManager::OnEvent<MouseScrollEvent>(const InputEventCallback<MouseScrollEvent> &Callback) { mouseScrollDispatcher.Subscribe(Callback); }
 
 }

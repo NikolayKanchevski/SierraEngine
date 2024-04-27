@@ -69,7 +69,7 @@ namespace Sierra
 
     const std::filesystem::path& Application::GetApplicationCachesDirectoryPath()
     {
-        static auto path = fileManager.GetTemporaryDirectoryPath()
+        static std::filesystem::path path = fileManager.GetTemporaryDirectoryPath()
            #if !SR_PLATFORM_APPLE
                / name
            #endif
@@ -78,7 +78,7 @@ namespace Sierra
     }
     const std::filesystem::path& Application::GetApplicationTemporaryDirectoryPath()
     {
-        static auto path = fileManager.GetTemporaryDirectoryPath()
+        static std::filesystem::path path = fileManager.GetTemporaryDirectoryPath()
            #if !SR_PLATFORM_APPLE
                / name
            #endif

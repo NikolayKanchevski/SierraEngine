@@ -25,8 +25,8 @@ namespace Sierra
     void MetalCommandBuffer::Begin()
     {
         // Free queued resources
-//        queuedBuffersForDestruction = { };
-//        queuedImagesForDestruction = { };
+        queuedBuffersForDestruction = { };
+        queuedImagesForDestruction = { };
 
         // Set up command buffer descriptor
         MTLCommandBufferDescriptor* const commandBufferDescriptor = [[MTLCommandBufferDescriptor alloc] init];
@@ -76,7 +76,7 @@ namespace Sierra
     void MetalCommandBuffer::SynchronizeBufferUsage(const std::unique_ptr<Buffer> &buffer, const BufferCommandUsage previousUsage, const BufferCommandUsage nextUsage, const uint64 memorySize, const uint64 byteOffset)
     {
         SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not synchronize usage of buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer->GetName(), GetName());
-        const MetalBuffer &metalBuffer = static_cast<MetalBuffer&>(*buffer);
+        const MetalBuffer &metalBuffer = static_cast<const MetalBuffer&>(*buffer);
 
         const id<MTLResource> bufferResource = metalBuffer.GetMetalBuffer();
         [currentRenderEncoder memoryBarrierWithResources: &bufferResource count: 1 afterStages: BufferCommandUsageToRenderStages(previousUsage) beforeStages: BufferCommandUsageToRenderStages(nextUsage)];
@@ -85,7 +85,7 @@ namespace Sierra
     void MetalCommandBuffer::SynchronizeImageUsage(const std::unique_ptr<Image> &image, const ImageCommandUsage previousUsage, const ImageCommandUsage nextUsage, const uint32 baseLevel, uint32 levelCount, const uint32 baseLayer, uint32 layerCount)
     {
         SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not synchronize usage of image [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image->GetName(), GetName());
-        const MetalImage &metalImage = static_cast<MetalImage&>(*image);
+        const MetalImage &metalImage = static_cast<const MetalImage&>(*image);
 
         SR_ERROR_IF(baseLevel >= image->GetLevelCount(), "[Metal]: Cannot synchronize level [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseLevel, image->GetName(), GetName());
         SR_ERROR_IF(baseLayer >= image->GetLayerCount(), "[Metal]: Cannot synchronize layer [{0}] of image [{1}] within command buffer [{2}], as it does not have it!", baseLayer, image->GetName(), GetName());
@@ -103,10 +103,10 @@ namespace Sierra
     void MetalCommandBuffer::CopyBufferToBuffer(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Buffer> &destinationBuffer, uint64 memoryRange, const uint64 sourceByteOffset, const uint64 destinationByteOffset)
     {
         SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy from buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", sourceBuffer->GetName(), GetName());
-        const MetalBuffer &metalSourceBuffer = static_cast<MetalBuffer&>(*sourceBuffer);
+        const MetalBuffer &metalSourceBuffer = static_cast<const MetalBuffer&>(*sourceBuffer);
 
         SR_ERROR_IF(destinationBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy to buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", destinationBuffer->GetName(), GetName());
-        const MetalBuffer &metalDestinationBuffer = static_cast<MetalBuffer&>(*destinationBuffer);
+        const MetalBuffer &metalDestinationBuffer = static_cast<const MetalBuffer&>(*destinationBuffer);
 
         memoryRange = memoryRange != 0 ? memoryRange : sourceBuffer->GetMemorySize();
         SR_ERROR_IF(sourceByteOffset + memoryRange > sourceBuffer->GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryRange, sourceByteOffset, sourceBuffer->GetName(), GetName(), sourceByteOffset + memoryRange, sourceBuffer->GetMemorySize());
@@ -124,10 +124,10 @@ namespace Sierra
     void MetalCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const uint32 level, const uint32 layer, const Vector2UInt &pixelRange, const uint64 sourceByteOffset, const Vector2UInt &destinationPixelOffset)
     {
         SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy from buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], to image [{1}] within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
-        const MetalBuffer &metalSourceBuffer = static_cast<MetalBuffer&>(*sourceBuffer);
+        const MetalBuffer &metalSourceBuffer = static_cast<const MetalBuffer&>(*sourceBuffer);
 
         SR_ERROR_IF(destinationImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not from buffer [{0}] to image [{1}], graphics API differs from [GraphicsAPI::Metal], within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
-        const MetalImage &metalDestinationImage = static_cast<MetalImage&>(*destinationImage);
+        const MetalImage &metalDestinationImage = static_cast<const MetalImage&>(*destinationImage);
 
         SR_ERROR_IF(level >= destinationImage->GetLevelCount(), "[Metal]: Cannot copy from buffer [{0}] to level [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), level, destinationImage->GetName(), GetName());
         SR_ERROR_IF(layer >= destinationImage->GetLayerCount(), "[Metal]: Cannot copy from buffer [{0}] to layer [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), layer, destinationImage->GetName(), GetName());
@@ -156,7 +156,7 @@ namespace Sierra
             device.SetResourceName(blitEncoder, "Transfer Encoder");
         }
 
-        const MetalImage &metalImage = static_cast<MetalImage&>(*image);
+        const MetalImage &metalImage = static_cast<const MetalImage&>(*image);
         [currentBlitEncoder optimizeContentsForGPUAccess: metalImage.GetMetalTexture()];
         [currentBlitEncoder generateMipmapsForTexture: metalImage.GetMetalTexture()];
     }
@@ -164,7 +164,7 @@ namespace Sierra
     void MetalCommandBuffer::BindResourceTable(const std::unique_ptr<ResourceTable> &resourceTable)
     {
         SR_ERROR_IF(resourceTable->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind resource table [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", resourceTable->GetName(), GetName());
-        const MetalResourceTable &metalResourceTable = static_cast<MetalResourceTable&>(*resourceTable);
+        const MetalResourceTable &metalResourceTable = static_cast<const MetalResourceTable&>(*resourceTable);
 
         currentResourceTable = &metalResourceTable;
     }
@@ -186,43 +186,40 @@ namespace Sierra
     void MetalCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments)
     {
         SR_ERROR_IF(renderPass->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin render pass [{0}], whose graphics API differs from [GraphicsAPI::Metal], from command buffer [{1}]!", renderPass->GetName(), GetName());
-        const MetalRenderPass &metalRenderPass = static_cast<MetalRenderPass&>(*renderPass);
+        const MetalRenderPass &metalRenderPass = static_cast<const MetalRenderPass&>(*renderPass);
 
         SR_ERROR_IF(attachments.size() != metalRenderPass.GetAttachmentCount(), "[Metal]: Cannot begin render pass [{0}] within command buffer [{1}] with [{2}] attachments, as it was created to hold [{3}]!", renderPass->GetName(), GetName(), attachments.size(), metalRenderPass.GetAttachmentCount());
-        for (uint32 i = 0; i < metalRenderPass.GetSubpassCount(); i++)
+        for (uint32 i = 0; i < attachments.size(); i++)
         {
-            MTLRenderPassDescriptor* const subpass = metalRenderPass.GetSubpass(i);
-
-            uint32 subpassColorAttachmentCount = 0;
-            for (const auto renderTargetIndex : metalRenderPass.GetSubpassRenderTargets(i))
+            const RenderPassBeginAttachment &attachment = *(attachments.begin() + i);
+            for (MTLRenderPassAttachmentDescriptor* const renderPassAttachmentDescriptor : metalRenderPass.GetAttachment(i))
             {
-                const RenderPassBeginAttachment &attachment = *(attachments.begin() + renderTargetIndex);
+                SR_ERROR_IF(attachment.outputImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}]'s output image, as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), attachment.outputImage->GetName(), i);
+                const MetalImage &metalOutputImage = static_cast<const MetalImage&>(*attachment.outputImage);
 
-                SR_ERROR_IF(attachment.image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin render pass [{0}] within command buffer [{1}] using image [{1}] as attachment [{2}], as its graphics API differs from [GraphicsAPI::Metal]!", renderPass->GetName(), GetName(), attachment.image->GetName(), renderTargetIndex);
-                const MetalImage &metalImage = static_cast<MetalImage&>(*attachment.image);
-
-                if (metalRenderPass.GetDepthAttachmentIndex() == renderTargetIndex)
+                [renderPassAttachmentDescriptor setTexture: metalOutputImage.GetMetalTexture()];
+                switch (metalOutputImage.GetFormat())
                 {
-                    [subpass.depthAttachment setTexture: metalImage.GetMetalTexture()];
-                }
-                else
-                {
-                    if (std::find(metalRenderPass.GetResolvedColorAttachmentIndices().begin(), metalRenderPass.GetResolvedColorAttachmentIndices().end(), i) != metalRenderPass.GetResolvedColorAttachmentIndices().end())
+                    case ImageFormat::D16_UNorm:
+                    case ImageFormat::D32_Float:
                     {
-                        SR_ERROR_IF(renderTargetIndex + 1 >= attachments.size(), "[Metal]: Cannot begin render pass [{0}] within command buffer [{1}], as resolve attachment at index [{2}] is missing its consecutive color attachment!", renderPass->GetName(), GetName(), renderTargetIndex);
-                        const RenderPassBeginAttachment &colorAttachment = *(attachments.begin() + renderTargetIndex + 1);
-
-                        SR_ERROR_IF(colorAttachment.image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin render pass [{0}] within command buffer [{1}] using image [{2}] as attachment [{3}], as its graphics API differs from [GraphicsAPI::Metal]!", renderPass->GetName(), GetName(), colorAttachment.image->GetName(), renderTargetIndex + 1);
-                        const MetalImage &metalColorImage = static_cast<MetalImage&>(*colorAttachment.image);
-
-                        [[subpass.colorAttachments objectAtIndexedSubscript: subpassColorAttachmentCount] setResolveTexture: metalImage.GetMetalTexture()];
-                        [[subpass.colorAttachments objectAtIndexedSubscript: subpassColorAttachmentCount] setTexture: metalColorImage.GetMetalTexture()];
-                        subpassColorAttachmentCount++;
+                        [reinterpret_cast<MTLRenderPassDepthAttachmentDescriptor*>(renderPassAttachmentDescriptor) setClearDepth: attachment.clearValue.r];
+                        break;
                     }
+                    default:
+                    {
+                        [reinterpret_cast<MTLRenderPassColorAttachmentDescriptor*>(renderPassAttachmentDescriptor) setClearColor: MTLClearColorMake(attachment.clearValue.r, attachment.clearValue.g, attachment.clearValue.b, attachment.clearValue.a)];
+                        break;
+                    }
+                }
 
-                    [[subpass.colorAttachments objectAtIndexedSubscript: subpassColorAttachmentCount] setTexture: metalImage.GetMetalTexture()];
-                    [[subpass.colorAttachments objectAtIndexedSubscript: subpassColorAttachmentCount] setClearColor: MTLClearColorMake(attachment.clearColor.r, attachment.clearColor.g, attachment.clearColor.b, attachment.clearColor.a)];
-                    subpassColorAttachmentCount++;
+                if (attachment.resolverImage.has_value())
+                {
+                    SR_ERROR_IF(attachment.resolverImage.value().get()->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}]'s resolver image, as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), attachment.resolverImage.value().get()->GetName(), i);
+                    const MetalImage &metalResolverImage = static_cast<const MetalImage&>(*attachment.resolverImage.value().get());
+
+                    [renderPassAttachmentDescriptor setTexture: metalResolverImage.GetMetalTexture()];
+                    [renderPassAttachmentDescriptor setResolveTexture: metalOutputImage.GetMetalTexture()];
                 }
             }
         }
@@ -243,7 +240,7 @@ namespace Sierra
     void MetalCommandBuffer::BeginNextSubpass(const std::unique_ptr<RenderPass> &renderPass)
     {
         SR_ERROR_IF(renderPass->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin next subpass of render pass [{0}], whose graphics API differs from [GraphicsAPI::Metal], from command buffer [{1}]!", renderPass->GetName(), GetName());
-        const MetalRenderPass &metalRenderPass = static_cast<MetalRenderPass&>(*renderPass);
+        const MetalRenderPass &metalRenderPass = static_cast<const MetalRenderPass&>(*renderPass);
 
         // Begin encoding next subpass
         #if SR_PLATFORM_macOS
@@ -307,7 +304,7 @@ namespace Sierra
     void MetalCommandBuffer::BeginGraphicsPipeline(const std::unique_ptr<GraphicsPipeline> &graphicsPipeline)
     {
         SR_ERROR_IF(graphicsPipeline->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin graphics pipeline [{0}], whose graphics API differs from [GraphicsAPI::Metal], from command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
-        const MetalGraphicsPipeline &metalGraphicsPipeline = static_cast<MetalGraphicsPipeline&>(*graphicsPipeline);
+        const MetalGraphicsPipeline &metalGraphicsPipeline = static_cast<const MetalGraphicsPipeline&>(*graphicsPipeline);
 
         SR_ERROR_IF(currentRenderEncoder == nil, "[Metal]: Cannot begin graphics pipeline [{0}] if no render encoder is active within command buffer [{1}]!", graphicsPipeline->GetName(), GetName());
 
@@ -333,7 +330,7 @@ namespace Sierra
     void MetalCommandBuffer::BindVertexBuffer(const std::unique_ptr<Buffer> &vertexBuffer, const uint64 byteOffset)
     {
         SR_ERROR_IF(vertexBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind vertex buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", vertexBuffer->GetName(), GetName());
-        const MetalBuffer &metalVertexBuffer = static_cast<MetalBuffer&>(*vertexBuffer);
+        const MetalBuffer &metalVertexBuffer = static_cast<const MetalBuffer&>(*vertexBuffer);
 
         SR_ERROR_IF(currentRenderEncoder == nil, "[Metal]: Cannot bind vertex buffer [{0}] if no render encoder is active within command buffer [{1}]!", vertexBuffer->GetName(), GetName());
 
@@ -345,7 +342,7 @@ namespace Sierra
     void MetalCommandBuffer::BindIndexBuffer(const std::unique_ptr<Buffer> &indexBuffer, const uint64 byteOffset)
     {
         SR_ERROR_IF(indexBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind index buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", indexBuffer->GetName(), GetName());
-        const MetalBuffer &metalIndexBuffer = static_cast<MetalBuffer&>(*indexBuffer);
+        const MetalBuffer &metalIndexBuffer = static_cast<const MetalBuffer&>(*indexBuffer);
 
         SR_ERROR_IF(byteOffset > indexBuffer->GetMemorySize(), "[Metal]: Cannot bind index buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is not within a valid range of the [{3}] bytes the buffer holds!", indexBuffer->GetName(), GetName(), byteOffset, indexBuffer->GetMemorySize());
         SR_ERROR_IF(currentRenderEncoder == nil, "[Metal]: Cannot bind index buffer [{0}] if no render encoder is active within command buffer [{1}]!", indexBuffer->GetName(), GetName());
@@ -379,7 +376,7 @@ namespace Sierra
     void MetalCommandBuffer::BeginComputePipeline(const std::unique_ptr<ComputePipeline> &computePipeline)
     {
         SR_ERROR_IF(computePipeline->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin compute graphicsPipeline [{0}], whose graphics API differs from [GraphicsAPI::Metal], from command buffer [{1}]!", computePipeline->GetName(), GetName());
-        const MetalComputePipeline &metalComputePipeline = static_cast<MetalComputePipeline&>(*computePipeline);
+        const MetalComputePipeline &metalComputePipeline = static_cast<const MetalComputePipeline&>(*computePipeline);
 
         // End any prior transfer operations
         if (currentBlitEncoder != nil)

@@ -62,7 +62,7 @@ namespace Sierra
 
         constexpr VkPhysicalDeviceFeatures DEVICE_FEATURES_TO_QUERY
         {
-
+            .sampleRateShading = VK_TRUE
         };
 
         constexpr std::array<Extension, 6 + SR_ENABLE_LOGGING + SR_PLATFORM_APPLE> DEVICE_EXTENSIONS_TO_QUERY
@@ -1242,16 +1242,16 @@ namespace Sierra
     void VulkanDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::initializer_list<std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait) const
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit for command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
-        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
+        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);
 
         // See what value to wait for
         uint64 waitValue = 0;
         for (uint32 i = 0; i < commandBuffersToWait.size(); i++)
         {
-            const auto &commandBufferToWait = (commandBuffersToWait.begin() + i)->get();
+            const std::unique_ptr<CommandBuffer> &commandBufferToWait = (commandBuffersToWait.begin() + i)->get();
             SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName(), commandBufferToWait->GetName(), i);
 
-            const VulkanCommandBuffer &vulkanCommandBufferToWait = static_cast<VulkanCommandBuffer&>(*commandBufferToWait);
+            const VulkanCommandBuffer &vulkanCommandBufferToWait = static_cast<const VulkanCommandBuffer&>(*commandBufferToWait);
             waitValue = glm::max(waitValue, vulkanCommandBufferToWait.GetCompletionSignalValue());
         }
 
@@ -1291,7 +1291,7 @@ namespace Sierra
     void VulkanDevice::WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, on device [{0}], wait for command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
-        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
+        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);
 
         const uint64 waitValue = vulkanCommandBuffer.GetCompletionSignalValue();
 
@@ -1413,7 +1413,7 @@ namespace Sierra
 
     VulkanDevice::~VulkanDevice()
     {
-        for (const auto &pipelineLayout : generalPipelineLayouts) functionTable.vkDestroyPipelineLayout(logicalDevice, pipelineLayout, nullptr);
+        for (const VkPipelineLayout &pipelineLayout : generalPipelineLayouts) functionTable.vkDestroyPipelineLayout(logicalDevice, pipelineLayout, nullptr);
         functionTable.vkDestroyDescriptorSetLayout(logicalDevice, generalDescriptorSetLayout, nullptr);
 
         functionTable.vkDestroySemaphore(logicalDevice, generalTimelineSemaphore, nullptr);

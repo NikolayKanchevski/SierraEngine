@@ -149,7 +149,8 @@ namespace Sierra
         [[nodiscard]] virtual PlatformAPI GetAPI() const = 0;
 
         /* --- EVENTS --- */
-        template<typename T> requires (std::is_base_of_v<WindowEvent, T> && !std::is_same_v<WindowEvent, T>) void OnEvent(WindowEventCallback<T> Callback) { }
+        template<typename T> requires (std::is_base_of_v<WindowEvent, T> && !std::is_same_v<WindowEvent, T>)
+        void OnEvent(const WindowEventCallback<T> &Callback) { }
         
         /* --- OPERATORS --- */
         Window(const Window&) = delete;
@@ -178,11 +179,11 @@ namespace Sierra
 
     };
 
-    template<> inline void Window::OnEvent<WindowMoveEvent>(WindowEventCallback<WindowMoveEvent> Callback) { windowMoveDispatcher.Subscribe(Callback); }
-    template<> inline void Window::OnEvent<WindowResizeEvent>(WindowEventCallback<WindowResizeEvent> Callback) { windowResizeDispatcher.Subscribe(Callback); }
-    template<> inline void Window::OnEvent<WindowFocusEvent>(WindowEventCallback<WindowFocusEvent> Callback) { windowFocusDispatcher.Subscribe(Callback); }
-    template<> inline void Window::OnEvent<WindowMinimizeEvent>(WindowEventCallback<WindowMinimizeEvent> Callback) { windowMinimizeDispatcher.Subscribe(Callback); }
-    template<> inline void Window::OnEvent<WindowMaximizeEvent>(WindowEventCallback<WindowMaximizeEvent> Callback) { windowMaximizeDispatcher.Subscribe(Callback); }
-    template<> inline void Window::OnEvent<WindowCloseEvent>(WindowEventCallback<WindowCloseEvent> Callback) { windowCloseDispatcher.Subscribe(Callback); }
+    template<> inline void Window::OnEvent<WindowMoveEvent>(const WindowEventCallback<WindowMoveEvent> &Callback) { windowMoveDispatcher.Subscribe(Callback); }
+    template<> inline void Window::OnEvent<WindowResizeEvent>(const WindowEventCallback<WindowResizeEvent> &Callback) { windowResizeDispatcher.Subscribe(Callback); }
+    template<> inline void Window::OnEvent<WindowFocusEvent>(const WindowEventCallback<WindowFocusEvent> &Callback) { windowFocusDispatcher.Subscribe(Callback); }
+    template<> inline void Window::OnEvent<WindowMinimizeEvent>(const WindowEventCallback<WindowMinimizeEvent> &Callback) { windowMinimizeDispatcher.Subscribe(Callback); }
+    template<> inline void Window::OnEvent<WindowMaximizeEvent>(const WindowEventCallback<WindowMaximizeEvent> &Callback) { windowMaximizeDispatcher.Subscribe(Callback); }
+    template<> inline void Window::OnEvent<WindowCloseEvent>(const WindowEventCallback<WindowCloseEvent> &Callback) { windowCloseDispatcher.Subscribe(Callback); }
 
 }

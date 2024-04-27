@@ -12,11 +12,16 @@ namespace SierraEngine
         uint32 initialSize = 128;
     };
 
-    template<typename K, typename T>
+    template<typename K, typename T, uint32 C = 0>
     class ResourcePool
     {
     public:
         /* --- CONSTRUCTORS --- */
+        ResourcePool()
+        {
+            resources.reserve(C);
+        }
+
         explicit ResourcePool(const ResourcePoolCreateInfo &createInfo)
         {
             resources.reserve(createInfo.initialSize);

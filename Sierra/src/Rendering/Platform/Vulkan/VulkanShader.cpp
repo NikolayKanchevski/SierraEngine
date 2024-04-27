@@ -13,12 +13,12 @@ namespace Sierra
         : Shader(createInfo), VulkanResource(createInfo.name), device(device)
     {
         // Set up module create info
-        const ShaderFileHeader &fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.data.data());
+        const ShaderFileHeader &fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.memory.data());
         const VkShaderModuleCreateInfo shaderModuleCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
             .codeSize = fileHeader.spvMemorySize,
-            .pCode = reinterpret_cast<const uint32*>(createInfo.data.data() + sizeof(ShaderFileHeader) + fileHeader.GetSpvOffset())
+            .pCode = reinterpret_cast<const uint32*>(createInfo.memory.data() + sizeof(ShaderFileHeader) + fileHeader.GetSpvOffset())
         };
 
         // Create shader module

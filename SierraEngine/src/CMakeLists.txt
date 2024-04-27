@@ -4,3 +4,4 @@ target_sources(SierraEngine PRIVATE
 
 add_subdirectory(Core)
 add_subdirectory(Assets)
+add_subdirectory(Rendering)

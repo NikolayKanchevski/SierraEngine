@@ -99,7 +99,7 @@ namespace SierraEngine
         {
             waiting = true;
 
-            std::unique_lock<std::mutex> taskLock(taskMutex);
+            std::unique_lock taskLock(taskMutex);
             taskCompleted.wait(taskLock, [this] { return (totalTaskCount == (paused ? taskQueue.size() : 0)); });
 
             waiting = false;
@@ -116,7 +116,7 @@ namespace SierraEngine
 
             running = false;
             taskAvailable.notify_all();
-            for (auto &thread : threads) thread.join();
+            for (std::thread &thread : threads) thread.join();
         }
 
     private:
@@ -138,7 +138,7 @@ namespace SierraEngine
             while (running)
             {
                 // Block thread until a task has been added to queue
-                std::unique_lock<std::mutex> taskLock(taskMutex);
+                std::unique_lock taskLock(taskMutex);
                 taskAvailable.wait(taskLock, [this] { return !taskQueue.empty() || !running; });
 
                 // If not paused and a task is present

@@ -23,15 +23,10 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint32 GetColorAttachmentCount() const override { return colorAttachmentCount; };
-        [[nodiscard]] uint32 GetResolveAttachmentCount() const override { return resolvedColorAttachmentIndices.size(); };
-        [[nodiscard]] bool HasDepthAttachment() const override { return depthAttachmentIndex.has_value(); };
+        [[nodiscard]] bool HasDepthAttachment() const override { return hasDepthAttachment; };
 
-        [[nodiscard]] inline const std::optional<uint32>& GetDepthAttachmentIndex() const { return depthAttachmentIndex; }
-
-        [[nodiscard]] inline uint32 GetSubpassCount() const { return subpasses.size(); }
         [[nodiscard]] inline MTLRenderPassDescriptor* GetSubpass(const uint32 subpassIndex) const { return subpasses[subpassIndex]; }
-        [[nodiscard]] inline const std::vector<uint32>& GetSubpassRenderTargets(const uint32 subpassIndex) const { return subpassRenderTargets[subpassIndex]; }
-        [[nodiscard]] inline const std::vector<uint32>& GetResolvedColorAttachmentIndices() const { return resolvedColorAttachmentIndices; }
+        [[nodiscard]] inline std::span<MTLRenderPassAttachmentDescriptor* const> GetAttachment(const uint32 attachmentIndex) const { return attachmentMap[attachmentIndex]; }
 
         /* --- DESTRUCTOR --- */
         ~MetalRenderPass() override;
@@ -41,12 +36,11 @@ namespace Sierra
         static MTLStoreAction AttachmentStoreOperationToStoreAction(RenderPassAttachmentStoreOperation storeOperation);
 
     private:
-        std::vector<MTLRenderPassDescriptor*> subpasses;
-        std::vector<std::vector<uint32>> subpassRenderTargets;
+        std::vector<MTLRenderPassDescriptor*> subpasses = { };
+        std::vector<std::vector<MTLRenderPassAttachmentDescriptor*>> attachmentMap = { };
 
         uint32 colorAttachmentCount = 0;
-        std::optional<uint32> depthAttachmentIndex = std::nullopt;
-        std::vector<uint32> resolvedColorAttachmentIndices;
+        bool hasDepthAttachment = false;
 
     };
 

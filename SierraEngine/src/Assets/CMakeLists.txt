@@ -1,19 +1,17 @@
+set(STB_DIRECTORY_PATH ../../vendor/stb)
+target_include_directories(SierraEngine PRIVATE ${STB_DIRECTORY_PATH})
+target_sources(SierraEngine PRIVATE ${STB_DIRECTORY_PATH}/stb_image.h ${STB_DIRECTORY_PATH}/stb_image_resize2.h)
+
 target_sources(SierraEngine PRIVATE
-    Asset.h
+    AssetID.hpp
     AssetManager.cpp
     AssetManager.h
-    ImageSupercompressor.cpp
-    ImageSupercompressor.h
-    ImageTranscoder.cpp
-    ImageTranscoder.h
-    TextureAsset.h
-    TextureImporter.cpp
-    TextureImporter.h
+    SerializedAsset.h
+    SerializedScene.h
+    SerializedTexture.h
 )
 
-add_subdirectory(Transcoders)
-if(SIERRA_ENGINE_BUILD_STANDALONE)
-    add_subdirectory(Platform/Standalone)
-else()
+add_subdirectory(Importers)
+if(NOT SIERRA_ENGINE_BUILD_STANDALONE)
     add_subdirectory(Platform/Editor)
 endif()

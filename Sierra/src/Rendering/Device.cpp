@@ -759,7 +759,7 @@ namespace Sierra
                 formatsToTry = { preferredFormat };
             }
         }
-        for (const auto format : formatsToTry)
+        for (const ImageFormat format : formatsToTry)
         {
             if (IsImageFormatSupported(format, usage))
             {

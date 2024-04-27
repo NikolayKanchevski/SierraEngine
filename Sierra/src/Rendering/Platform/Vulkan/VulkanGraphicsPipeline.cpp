@@ -17,10 +17,10 @@ namespace Sierra
         : GraphicsPipeline(createInfo), VulkanResource(createInfo.name), device(device), pushConstantSize(createInfo.pushConstantSize)
     {
         SR_ERROR_IF(createInfo.vertexShader->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.vertexShader->GetName());
-        const VulkanShader &vulkanVertexShader = static_cast<VulkanShader&>(*createInfo.vertexShader);
+        const VulkanShader &vulkanVertexShader = static_cast<const VulkanShader&>(*createInfo.vertexShader);
 
         SR_ERROR_IF(createInfo.templateRenderPass->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with render pass [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.templateRenderPass->GetName());
-        const VulkanRenderPass &vulkanRenderPass = static_cast<VulkanRenderPass&>(*createInfo.templateRenderPass);
+        const VulkanRenderPass &vulkanRenderPass = static_cast<const VulkanRenderPass&>(*createInfo.templateRenderPass);
 
         // Set up shader stages
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages(1 + createInfo.fragmentShader.has_value());
@@ -31,7 +31,7 @@ namespace Sierra
         if (createInfo.fragmentShader.has_value())
         {
             SR_ERROR_IF(createInfo.fragmentShader->get()->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.vertexShader->GetName());
-            const VulkanShader &vulkanFragmentShader = static_cast<VulkanShader&>(*createInfo.fragmentShader->get());
+            const VulkanShader &vulkanFragmentShader = static_cast<const VulkanShader&>(*createInfo.fragmentShader->get());
             shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
             shaderStages[1].module = vulkanFragmentShader.GetVulkanShaderModule();
@@ -147,7 +147,7 @@ namespace Sierra
             .polygonMode = ShadeModeToVkPolygonMode(createInfo.shadeMode),
             .cullMode = CullModeToVkCullMode(createInfo.cullMode),
             .frontFace = FrontFaceModeToVkFrontFace(createInfo.frontFaceMode),
-            .depthBiasEnable = false,
+            .depthBiasEnable = VK_FALSE,
             .lineWidth = 1.0f
         };
 

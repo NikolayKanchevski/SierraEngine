@@ -17,10 +17,10 @@ namespace Sierra
         : GraphicsPipeline(createInfo), MetalResource(createInfo.name), cullMode(CullModeToCullMode(createInfo.cullMode)), triangleFillMode(ShadeModeToTriangleFillMode(createInfo.shadeMode)), winding(FrontFaceModeToWinding(createInfo.frontFaceMode))
     {
         SR_ERROR_IF(createInfo.vertexShader->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.vertexShader->GetName());
-        const MetalShader &metalVertexShader = static_cast<MetalShader&>(*createInfo.vertexShader);
+        const MetalShader &metalVertexShader = static_cast<const MetalShader&>(*createInfo.vertexShader);
 
         SR_ERROR_IF(createInfo.templateRenderPass->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with render pass [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.templateRenderPass->GetName());
-        const MetalRenderPass &metalRenderPass = static_cast<MetalRenderPass&>(*createInfo.templateRenderPass);
+        const MetalRenderPass &metalRenderPass = static_cast<const MetalRenderPass&>(*createInfo.templateRenderPass);
 
         // Allocate pipeline descriptor
         MTLRenderPipelineDescriptor* const renderPipelineDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
@@ -31,7 +31,7 @@ namespace Sierra
         if (createInfo.fragmentShader.has_value() && createInfo.fragmentShader->get() != nil)
         {
             SR_ERROR_IF(createInfo.fragmentShader->get()->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.fragmentShader->get()->GetName());
-            const MetalShader &metalFragmentShader = static_cast<MetalShader&>(*createInfo.fragmentShader->get());
+            const MetalShader &metalFragmentShader = static_cast<const MetalShader&>(*createInfo.fragmentShader->get());
 
             [renderPipelineDescriptor setFragmentFunction: metalFragmentShader.GetEntryFunction()];
             hasFragmentShader = true;

@@ -6,8 +6,6 @@
 
 #include <imgui.h>
 
-#include "../../Rendering/CommandTask.h"
-
 #include "../../Rendering/RenderingContext.h"
 #include "../../Rendering/Image.h"
 #include "../../Rendering/RenderPass.h"
@@ -19,43 +17,61 @@
 namespace Sierra
 {
 
+    struct ImGuiRenderTaskFontCreateInfo
+    {
+        float32 size = 12.0f;
+        std::span<const uint8> ttfMemory = { };
+    };
+
     struct ImGuiRenderTaskCreateInfo
     {
         std::string_view name = "ImGui Render Task";
-        const ImGuiStyle &style = { };
 
-        const std::unique_ptr<Image> &templateImage;
-        float32 scaling = 1.0f;
+        const RenderingContext &renderingContext;
+        std::unique_ptr<CommandBuffer> &commandBuffer;
+
+        uint32 scaling = 1;
+        ImageSampling sampling = ImageSampling::x1;
+        const std::unique_ptr<Image> &templateOutputImage;
+
+        const ImGuiStyle &style = { };
+        ResourceTable::ResourceIndex fontAtlasIndex = 0;
+        const std::initializer_list<ImGuiRenderTaskFontCreateInfo> &fontCreateInfos = { };
+
+        ResourceTable::ResourceIndex fontSamplerIndex = 0;
+        std::unique_ptr<ResourceTable> &resourceTable;
     };
 
-    class SIERRA_API ImGuiRenderTask : public CommandTask
+    class SIERRA_API ImGuiRenderTask
     {
     public:
         /* --- CONSTRUCTORS --- */
-        ImGuiRenderTask(const RenderingContext &renderingContext, const ImGuiRenderTaskCreateInfo &createInfo);
+        explicit ImGuiRenderTask(const ImGuiRenderTaskCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] inline ImFont* GetFont(const uint32 index) const { return ImGui::GetIO().Fonts->Fonts[static_cast<int>(baseFontIndex + index)]; }
         [[nodiscard]] inline ImGuiStyle& GetStyle() { return style; }
 
         /* --- POLLING METHODS --- */
-        static void CreateResources(const RenderingContext &renderingContext, std::unique_ptr<ResourceTable> &resourceTable, uint32 fontAtlasIndex, uint32 fontSamplerIndex, std::unique_ptr<CommandBuffer> &commandBuffer);
-        static void DestroyResources();
-
         void Update(const std::optional<std::reference_wrapper<const InputManager>> &inputManager = std::nullopt, const std::optional<std::reference_wrapper<const CursorManager>> &cursorManager = std::nullopt, const std::optional<std::reference_wrapper<const TouchManager>> &touchManager = std::nullopt);
-        void Resize(uint32 width, uint32 height);
-        void Render(std::unique_ptr<CommandBuffer> &commandBuffer, const std::unique_ptr<Image> &image);
+        void Resize(uint32 width, uint32 height, uint32 scaling);
+        void Render(std::unique_ptr<CommandBuffer> &commandBuffer, const std::unique_ptr<Image> &outputImage);
 
         /* --- DESTRUCTOR --- */
-        ~ImGuiRenderTask() override = default;
+        ~ImGuiRenderTask();
 
     private:
         const RenderingContext &renderingContext;
 
-        const float32 scaling = 0.0f;
-        Vector2 framebufferSize = { 0.0f, 0.0f };
+        uint32 scaling = 1;
+        Vector2 viewportSize = { 0.0f, 0.0f };
 
+        std::unique_ptr<Image> resolverImage = nullptr;
         std::unique_ptr<Buffer> vertexBuffer = nullptr;
         std::unique_ptr<Buffer> indexBuffer = nullptr;
+
+        uint32 baseFontIndex = 0;
+        std::unique_ptr<Image> fontAtlas = nullptr;
 
         std::unique_ptr<RenderPass> renderPass;
         std::unique_ptr<GraphicsPipeline> pipeline;
@@ -63,21 +79,21 @@ namespace Sierra
 
         struct PushConstant
         {
-            uint32 fontAtlasIndex = 0;
-            uint32 fontSamplerIndex = 0;
+            ResourceTable::ResourceIndex fontAtlasIndex = 0;
+            ResourceTable::ResourceIndex fontSamplerIndex = 0;
             Vector2 scale = { 0.0f, 0.0f };
         };
 
         static inline struct {
-            uint32 resourceTableFontAtlasIndex = 0;
-            uint32 resourceTableFontSamplerIndex = 0;
-
             ImGuiContext* context = nullptr;
+            uint32 contextCount = 0;
+
             std::unique_ptr<Shader> vertexShader = nullptr;
             std::unique_ptr<Shader> fragmentShader = nullptr;
+
+            ResourceTable::ResourceIndex fontSamplerIndex = 0;
             std::unique_ptr<Sampler> fontSampler = nullptr;
-            std::unique_ptr<Image> defaultFontAtlas = nullptr;
-        } sharedResources = { 0, 0, nullptr, nullptr, nullptr, nullptr, nullptr };
+        } sharedResources = { nullptr, 0, nullptr, nullptr, 0, nullptr };
 
     };
 

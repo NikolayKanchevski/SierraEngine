@@ -19,15 +19,15 @@ namespace Sierra
         VulkanResourceTable(const VulkanDevice &device, const ResourceTableCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void BindUniformBuffer(uint32 index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
-        void BindStorageBuffer(uint32 index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
+        void BindUniformBuffer(ResourceIndex index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
+        void BindStorageBuffer(ResourceIndex index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
 
-        void BindSampledImage(uint32 index, const std::unique_ptr<Image> &image) override;
-        void BindSampledCubemap(uint32 index, const std::unique_ptr<Image> &image) override;
-        void BindSampler(uint32 index, const std::unique_ptr<Sampler> &sampler) override;
+        void BindSampledImage(ResourceIndex index, const std::unique_ptr<Image> &image) override;
+        void BindSampledCubemap(ResourceIndex index, const std::unique_ptr<Image> &image) override;
+        void BindSampler(ResourceIndex ResourceTableIndex, const std::unique_ptr<Sampler> &sampler) override;
 
-        void BindStorageImage(uint32 index, const std::unique_ptr<Image> &image) override;
-        void BindStorageCubemap(uint32 index, const std::unique_ptr<Image> &image) override;
+        void BindStorageImage(ResourceIndex index, const std::unique_ptr<Image> &image) override;
+        void BindStorageCubemap(ResourceIndex index, const std::unique_ptr<Image> &image) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint32 GetUniformBufferCapacity() const override;

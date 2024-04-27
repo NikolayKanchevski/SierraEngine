@@ -423,7 +423,7 @@ namespace Sierra
         char* title = nullptr;
         XFetchName(display, window, &title);
 
-        auto result = std::string(title);
+        std::string result = std::string(title);
         XFree(title);
 
         return result;

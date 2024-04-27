@@ -69,7 +69,8 @@ namespace Sierra
         [[nodiscard]] virtual const Touch& GetTouch(uint32 touchIndex) const;
 
         /* --- EVENTS --- */
-        template<typename T> requires (std::is_base_of_v<TouchEvent, T> && !std::is_same_v<TouchEvent, T>) void OnEvent(TouchEventCallback<T> Callback) { }
+        template<typename T> requires (std::is_base_of_v<TouchEvent, T> && !std::is_same_v<TouchEvent, T>)
+        void OnEvent(const TouchEventCallback<T> &Callback) { }
 
         /* --- DESTRUCTOR --- */
         virtual ~TouchManager() = default;
@@ -90,8 +91,8 @@ namespace Sierra
 
     };
 
-    template<> inline void TouchManager::OnEvent<TouchBeginEvent>(TouchEventCallback<TouchBeginEvent> Callback) { touchBeginDispatcher.Subscribe(Callback); }
-    template<> inline void TouchManager::OnEvent<TouchMoveEvent>(TouchEventCallback<TouchMoveEvent> Callback) { touchMoveDispatcher.Subscribe(Callback); }
-    template<> inline void TouchManager::OnEvent<TouchEndEvent>(TouchEventCallback<TouchEndEvent> Callback) { touchEndDispatcher.Subscribe(Callback); }
+    template<> inline void TouchManager::OnEvent<TouchBeginEvent>(const TouchEventCallback<TouchBeginEvent> &Callback) { touchBeginDispatcher.Subscribe(Callback); }
+    template<> inline void TouchManager::OnEvent<TouchMoveEvent>(const TouchEventCallback<TouchMoveEvent> &Callback) { touchMoveDispatcher.Subscribe(Callback); }
+    template<> inline void TouchManager::OnEvent<TouchEndEvent>(const TouchEventCallback<TouchEndEvent> &Callback) { touchEndDispatcher.Subscribe(Callback); }
 
 }

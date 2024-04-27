@@ -5,7 +5,7 @@
 #pragma once
 
 #include "ThreadPool.hpp"
-#include "../Assets/Platform/Editor/EditorAssetManager.h"
+#include "../Assets/AssetManager.h"
 
 #include <Sierra/Extensions/ImGui.h>
 
@@ -26,14 +26,14 @@ namespace SierraEngine
         bool Update(const Sierra::TimeStep &timeStep) override;
 
         ThreadPool threadPool;
-        EditorAssetManager assetManager;
+        AssetManager assetManager;
 
         std::unique_ptr<Sierra::Window> window = nullptr;
         std::unique_ptr<Sierra::Swapchain> swapchain = nullptr;
         std::unique_ptr<Sierra::ImGuiRenderTask> imGuiTask = nullptr;
-
         std::unique_ptr<Sierra::ResourceTable> resourceTable = nullptr;
         std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers;
+
 
     };
 

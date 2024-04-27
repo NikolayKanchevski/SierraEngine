@@ -16,7 +16,7 @@ namespace Sierra
           refreshRate(static_cast<uint32>(createInfo.uiScreen.maximumFramesPerSecond))
     {
         // Create temporary window to get its extents
-        const auto safeAreaInsets = [UIApplication sharedApplication].windows.firstObject.safeAreaInsets;
+        const UIEdgeInsets safeAreaInsets = [UIApplication sharedApplication].windows.firstObject.safeAreaInsets;
         
         // Add up extents to get work area origin
         workAreaOrigin = origin;

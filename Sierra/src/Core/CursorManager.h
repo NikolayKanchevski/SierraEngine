@@ -54,7 +54,8 @@ namespace Sierra
         [[nodiscard]] virtual float32 GetVerticalDelta() const;
 
         /* --- EVENTS --- */
-        template<typename T> requires (std::is_base_of_v<CursorEvent, T> && !std::is_same_v<CursorEvent, T>) void OnEvent(CursorEventCallback<T> Callback) { }
+        template<typename T> requires (std::is_base_of_v<CursorEvent, T> && !std::is_same_v<CursorEvent, T>)
+        void OnEvent(const CursorEventCallback<T> &Callback) { }
 
         /* --- OPERATORS --- */
         CursorManager(const CursorManager&) = delete;
@@ -71,6 +72,6 @@ namespace Sierra
 
     };
 
-    template<> inline void CursorManager::OnEvent<CursorMoveEvent>(CursorEventCallback<CursorMoveEvent> Callback) { cursorMoveDispatcher.Subscribe(Callback); }
+    template<> inline void CursorManager::OnEvent<CursorMoveEvent>(const CursorEventCallback<CursorMoveEvent> &Callback) { cursorMoveDispatcher.Subscribe(Callback); }
 
 }

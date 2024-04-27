@@ -24,6 +24,3 @@ add_subdirectory(src)
 
 # === LINK PRECOMPILED HEADERS === #
 target_precompile_headers(SierraEngine PRIVATE src/srpch.h)
-
-# === LINK LIBRARIES === #
-add_subdirectory(vendor)

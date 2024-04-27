@@ -5,8 +5,12 @@
 #pragma once
 
 #include "../Core/ThreadPool.hpp"
+#include "../Core/ResourcePool.hpp"
 
-#include "TextureAsset.h"
+#include "AssetID.hpp"
+
+#include "../Rendering/Texture.h"
+#include "Importers/TextureImporter.h"
 
 namespace SierraEngine
 {
@@ -18,53 +22,57 @@ namespace SierraEngine
         const Sierra::RenderingContext &renderingContext;
     };
 
-    class AssetManager
+    class AssetManager final
     {
     public:
         /* --- TYPE DEFINITIONS --- */
         using AssetLoadCallback = std::function<void(AssetID)>;
 
-        /* --- POLLING METHODS --- */
-        virtual void Update(std::unique_ptr<Sierra::CommandBuffer> &commandBuffer) = 0;
+        /* --- CONSTRUCTORS --- */
+        explicit AssetManager(const AssetManagerCreateInfo &createInfo);
 
-        virtual bool SerializeTexture(const std::initializer_list<std::initializer_list<std::filesystem::path>> &levelFilePaths, const TextureSerializeInfo &serializeInfo) = 0;
-        virtual void ImportTexture(const std::filesystem::path &assetFilePath, AssetLoadCallback LoadCallback) = 0;
+        /* --- POLLING METHODS --- */
+        void Update(std::unique_ptr<Sierra::CommandBuffer> &commandBuffer);
+
+        void ImportTexture(const std::filesystem::path &assetFilePath, const AssetLoadCallback &LoadCallback);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual AssetID GetDefaultTexture(TextureType textureType) const = 0;
-        [[nodiscard]] virtual std::optional<std::reference_wrapper<const TextureAsset>> GetTexture(AssetID ID) const = 0;
+        [[nodiscard]] AssetID GetDefaultTexture(TextureType textureType) const;
+        [[nodiscard]] std::optional<std::reference_wrapper<const Texture>> GetTexture(AssetID ID) const;
 
         /* --- OPERATORS --- */
         AssetManager(const AssetManager&) = delete;
         AssetManager& operator=(const AssetManager&) = delete;
 
         /* --- DESTRUCTOR --- */
-        virtual ~AssetManager() = default;
+        ~AssetManager() = default;
 
-    protected:
-        explicit AssetManager(const AssetManagerCreateInfo &createInfo);
-
-        [[nodiscard]] inline ThreadPool& GetThreadPool() { return threadPool; }
-        [[nodiscard]] inline const Sierra::FileManager& GetFileManager() const { return fileManager; }
-        [[nodiscard]] inline const Sierra::RenderingContext& GetRenderingContext() const { return renderingContext; }
-
-        template<typename T, typename U> requires (std::is_base_of_v<Asset, T> && !std::is_same_v<Asset, T>)
-        struct AssetQueueEntry
+    private:
+        template<typename A, typename I, uint32 C>
+        struct AssetBackend
         {
-            AssetID ID;
-            T asset;
-            U data;
-            std::function<void(AssetID)> LoadCallback;
-        };
+            struct AssetQueueEntry
+            {
+                AssetID ID;
+                I importedAsset;
+                std::function<void(AssetID)> LoadCallback;
+            };
 
-        constexpr static std::string_view TEXTURE_ASSET_EXTENSION = ".texture";
-        constexpr static uint16 MAX_TEXTURE_DIMENSIONS = 4096;
-        using TextureAssetQueueEntry = AssetQueueEntry<TextureAsset, std::vector<std::unique_ptr<Sierra::Buffer>>>;
+            std::mutex queueMutex = { };
+            std::queue<AssetQueueEntry> queue = { };
+
+            ResourcePool<AssetID, A, C> pool = { };
+        };
 
     private:
         ThreadPool &threadPool;
         const Sierra::FileManager &fileManager;
         const Sierra::RenderingContext &renderingContext;
+
+        AssetBackend<Texture, ImportedTexture, 256> textureBackend = { };
+        AssetID defaultCheckeredTexture;
+        AssetID defaultBlackTexture;
+        AssetID defaultNormalTexture;
 
     };
 

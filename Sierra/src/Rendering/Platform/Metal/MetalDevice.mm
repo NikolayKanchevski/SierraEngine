@@ -46,7 +46,7 @@ namespace Sierra
     void MetalDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer,  const std::initializer_list<std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait) const
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}] with a graphics API, that differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<MetalCommandBuffer&>(*commandBuffer);
+        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
 
         // If we do not need any manual synchronization, directly submit command buffer
         if (commandBuffersToWait.size() == 0)
@@ -67,10 +67,10 @@ namespace Sierra
         // Decrement semaphore counter after every command buffer to wait on until it reaches 0, then submit
         for (uint32 i = 0; i < commandBuffersToWait.size(); i++)
         {
-            const auto &commandBufferToWait = (commandBuffersToWait.begin() + i)->get();
+            const std::unique_ptr<CommandBuffer> &commandBufferToWait = (commandBuffersToWait.begin() + i)->get();
             SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName(), commandBufferToWait->GetName(), i);
 
-            const MetalCommandBuffer &metalCommandBufferToWait = static_cast<MetalCommandBuffer&>(*commandBufferToWait);
+            const MetalCommandBuffer &metalCommandBufferToWait = static_cast<const MetalCommandBuffer&>(*commandBufferToWait);
             [metalCommandBufferToWait.GetMetalCommandBuffer() addCompletedHandler: ^(id<MTLCommandBuffer>)
             {
                 auto semaphoreIterator = std::find_if(commandBufferQueue.begin(), commandBufferQueue.end(), [&metalCommandBuffer](const CommandBufferQueueEntry &item) { return item.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
@@ -87,7 +87,7 @@ namespace Sierra
     void MetalDevice::WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], wait for command buffer [{1}] with a graphics API, that differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<MetalCommandBuffer&>(*commandBuffer);
+        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
 
         // Wait for completion
         while ([sharedSignalSemaphore signaledValue] < metalCommandBuffer.GetCompletionSignalValue());
@@ -110,17 +110,17 @@ namespace Sierra
         switch (pixelFormat)
         {
             case MTLPixelFormatInvalid:               return false;
-            case MTLPixelFormatR8Sint:                return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
-            case MTLPixelFormatR8Uint:                return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatR8Sint:                return !(usage & ImageUsage::ResolverAttachment) && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatR8Uint:                return !(usage & ImageUsage::ResolverAttachment) && !(usage & ImageUsage::Filter);
             case MTLPixelFormatR8Unorm:               return true;
             case MTLPixelFormatR8Unorm_sRGB:          return true;
-            case MTLPixelFormatR16Sint:               return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
-            case MTLPixelFormatR16Uint:               return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
-            case MTLPixelFormatR16Snorm:              return !(usage & ImageUsage::ResolveAttachment);
-            case MTLPixelFormatR16Unorm:              return !(usage & ImageUsage::ResolveAttachment);
+            case MTLPixelFormatR16Sint:               return !(usage & ImageUsage::ResolverAttachment) && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatR16Uint:               return !(usage & ImageUsage::ResolverAttachment) && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatR16Snorm:              return !(usage & ImageUsage::ResolverAttachment);
+            case MTLPixelFormatR16Unorm:              return !(usage & ImageUsage::ResolverAttachment);
             case MTLPixelFormatR16Float:              return true;
-            case MTLPixelFormatR32Sint:               return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
-            case MTLPixelFormatR32Uint:               return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatR32Sint:               return !(usage & ImageUsage::ResolverAttachment) && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatR32Uint:               return !(usage & ImageUsage::ResolverAttachment) && !(usage & ImageUsage::Filter);
             case MTLPixelFormatR32Float:              return [device supportsFamily: MTLGPUFamilyApple8] || !(usage & ImageUsage::Filter);
             case MTLPixelFormatRG8Sint:               return !(usage & ImageUsage::Filter);
             case MTLPixelFormatRG8Uint:               return !(usage & ImageUsage::Filter);
@@ -128,8 +128,8 @@ namespace Sierra
             case MTLPixelFormatRG8Unorm_sRGB:         return [device supportsFamily: MTLGPUFamilyApple2];
             case MTLPixelFormatRG16Sint:              return !(usage & ImageUsage::Filter);
             case MTLPixelFormatRG16Uint:              return !(usage & ImageUsage::Filter);
-            case MTLPixelFormatRG16Snorm:             return !(usage & ImageUsage::ResolveAttachment);
-            case MTLPixelFormatRG16Unorm:             return !(usage & ImageUsage::ResolveAttachment);
+            case MTLPixelFormatRG16Snorm:             return !(usage & ImageUsage::ResolverAttachment);
+            case MTLPixelFormatRG16Unorm:             return !(usage & ImageUsage::ResolverAttachment);
             case MTLPixelFormatRG16Float:             return true;
             case MTLPixelFormatRG32Sint:              return [device supportsFamily: MTLGPUFamilyApple7] && !(usage & ImageUsage::Filter);
             case MTLPixelFormatRG32Uint:              return [device supportsFamily: MTLGPUFamilyApple7] && !(usage & ImageUsage::Filter);
@@ -138,18 +138,18 @@ namespace Sierra
             case MTLPixelFormatRGBA8Uint:             return !(usage & ImageUsage::Filter);
             case MTLPixelFormatRGBA8Unorm:            return true;
             case MTLPixelFormatRGBA8Unorm_sRGB:       return true;
-            case MTLPixelFormatRGBA16Sint:            return !(usage & ImageUsage::ColorAttachment) && !(usage & ImageUsage::DepthAttachment) && !(usage & ImageUsage::ResolveAttachment);
-            case MTLPixelFormatRGBA16Uint:            return !(usage & ImageUsage::ColorAttachment) && !(usage & ImageUsage::DepthAttachment) && !(usage & ImageUsage::ResolveAttachment);
-            case MTLPixelFormatRGBA16Snorm:           return !(usage & ImageUsage::ResolveAttachment);
-            case MTLPixelFormatRGBA16Unorm:           return !(usage & ImageUsage::ResolveAttachment);
+            case MTLPixelFormatRGBA16Sint:            return !(usage & ImageUsage::ColorAttachment) && !(usage & ImageUsage::DepthAttachment) && !(usage & ImageUsage::ResolverAttachment);
+            case MTLPixelFormatRGBA16Uint:            return !(usage & ImageUsage::ColorAttachment) && !(usage & ImageUsage::DepthAttachment) && !(usage & ImageUsage::ResolverAttachment);
+            case MTLPixelFormatRGBA16Snorm:           return !(usage & ImageUsage::ResolverAttachment);
+            case MTLPixelFormatRGBA16Unorm:           return !(usage & ImageUsage::ResolverAttachment);
             case MTLPixelFormatRGBA16Float:           return true;
-            case MTLPixelFormatRGBA32Sint:            return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
-            case MTLPixelFormatRGBA32Uint:            return !(usage & ImageUsage::ResolveAttachment) && !(usage & ImageUsage::Filter);
-            case MTLPixelFormatRGBA32Float:           return [device supportsFamily: MTLGPUFamilyApple9] || (!(usage & ImageUsage::Filter) && !(usage & ImageUsage::ResolveAttachment));
+            case MTLPixelFormatRGBA32Sint:            return !(usage & ImageUsage::ResolverAttachment) && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatRGBA32Uint:            return !(usage & ImageUsage::ResolverAttachment) && !(usage & ImageUsage::Filter);
+            case MTLPixelFormatRGBA32Float:           return [device supportsFamily: MTLGPUFamilyApple9] || (!(usage & ImageUsage::Filter) && !(usage & ImageUsage::ResolverAttachment));
             case MTLPixelFormatBGRA8Unorm:            return true;
             case MTLPixelFormatBGRA8Unorm_sRGB:       return true;
-            case MTLPixelFormatDepth16Unorm:          return [device supportsFamily: MTLGPUFamilyApple3] || !(usage & ImageUsage::ResolveAttachment);
-            case MTLPixelFormatDepth32Float:          return ([device supportsFamily: MTLGPUFamilyApple3] || !(usage & ImageUsage::ResolveAttachment)) && ([device supportsFamily: MTLGPUFamilyMac2] || !(usage & ImageUsage::Filter));
+            case MTLPixelFormatDepth16Unorm:          return [device supportsFamily: MTLGPUFamilyApple3] || !(usage & ImageUsage::ResolverAttachment);
+            case MTLPixelFormatDepth32Float:          return ([device supportsFamily: MTLGPUFamilyApple3] || !(usage & ImageUsage::ResolverAttachment)) && ([device supportsFamily: MTLGPUFamilyMac2] || !(usage & ImageUsage::Filter));
             case MTLPixelFormatBC1_RGBA:
             case MTLPixelFormatBC1_RGBA_sRGB:
             case MTLPixelFormatBC3_RGBA:

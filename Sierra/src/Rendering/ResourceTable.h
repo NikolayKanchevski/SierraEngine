@@ -21,16 +21,19 @@ namespace Sierra
     class SIERRA_API ResourceTable : public virtual RenderingResource
     {
     public:
+        /* --- TYPE DEFINITIONS --- */
+        using ResourceIndex = uint32;
+
         /* --- POLLING METHODS --- */
-        virtual void BindUniformBuffer(uint32 index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) = 0;
-        virtual void BindStorageBuffer(uint32 index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) = 0;
+        virtual void BindUniformBuffer(ResourceIndex index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) = 0;
+        virtual void BindStorageBuffer(ResourceIndex index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) = 0;
 
-        virtual void BindSampledImage(uint32 index, const std::unique_ptr<Image> &image) = 0;
-        virtual void BindSampledCubemap(uint32 index, const std::unique_ptr<Image> &image) = 0;
-        virtual void BindSampler(uint32 index, const std::unique_ptr<Sampler> &sampler) = 0;
+        virtual void BindSampledImage(ResourceIndex index, const std::unique_ptr<Image> &image) = 0;
+        virtual void BindSampledCubemap(ResourceIndex index, const std::unique_ptr<Image> &image) = 0;
+        virtual void BindSampler(ResourceIndex index, const std::unique_ptr<Sampler> &sampler) = 0;
 
-        virtual void BindStorageImage(uint32 index, const std::unique_ptr<Image> &image) = 0;
-        virtual void BindStorageCubemap(uint32 index, const std::unique_ptr<Image> &image) = 0;
+        virtual void BindStorageImage(ResourceIndex index, const std::unique_ptr<Image> &image) = 0;
+        virtual void BindStorageCubemap(ResourceIndex index, const std::unique_ptr<Image> &image) = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual uint32 GetUniformBufferCapacity() const = 0;

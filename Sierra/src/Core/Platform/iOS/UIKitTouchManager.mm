@@ -81,7 +81,7 @@ namespace Sierra
             for (UITouch* rawTouch in touches)
             {
                 // Check if touch has been stored before
-                auto iterator = std::find_if(activeTouches.begin(), activeTouches.end(), [&rawTouch](const Touch &item) { return item.GetID() == (__bridge void*) rawTouch; });
+                auto iterator = std::find_if(activeTouches.begin(), activeTouches.end(), [&rawTouch](const Touch &item) -> bool { return item.GetID() == rawTouch; });
                 if (iterator == activeTouches.end()) continue;
                 
                 // Get position within the screen and flip Y coordinate
@@ -112,7 +112,7 @@ namespace Sierra
             for (UITouch* rawTouch in touches)
             {
                 // Check if touch has been stored before
-                auto iterator = std::find_if(activeTouches.begin(), activeTouches.end(), [&rawTouch](const Touch &item) { return item.GetID() == (__bridge void*) rawTouch; });
+                auto iterator = std::find_if(activeTouches.begin(), activeTouches.end(), [&rawTouch](const Touch &item) -> bool { return item.GetID() == rawTouch; });
                 if (iterator == activeTouches.end()) continue;
 
                 // Get position within the screen and flip Y coordinate
@@ -140,7 +140,7 @@ namespace Sierra
         void UIKitTouchManager::TouchesCancelled(const NSSet<UITouch*>* touches, const UIEvent* event)
         {
             // All touches have been force-discarded (usually because of some system events such as incoming phone calls)
-            for (const auto &touch : activeTouches)
+            for (const Touch &touch : activeTouches)
             {
                 GetTouchEndDispatcher().DispatchEvent(touch);
             }

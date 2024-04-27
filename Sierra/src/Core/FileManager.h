@@ -36,13 +36,13 @@ namespace Sierra
 
         /* --- MOVE SEMANTICS --- */
         File(File&& other) = default;
-        File& operator=(File&& other) = default;
+        File& operator=(File&& other) = delete;
 
         /* --- DESTRUCTOR --- */
         ~File() = default;
 
     private:
-        std::filesystem::path path;
+        const std::filesystem::path path;
         std::fstream stream;
 
         friend class FileManager;

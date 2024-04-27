@@ -85,7 +85,7 @@ namespace Sierra
         VkSemaphore generalTimelineSemaphore = VK_NULL_HANDLE;
 
         VkDescriptorSetLayout generalDescriptorSetLayout = VK_NULL_HANDLE;
-        std::array<VkPipelineLayout, (MAX_PUSH_CONSTANT_SIZE / 4) + 1> generalPipelineLayouts;
+        std::array<VkPipelineLayout, (MAX_PUSH_CONSTANT_SIZE / 4) + 1> generalPipelineLayouts{};
 
         struct
         {

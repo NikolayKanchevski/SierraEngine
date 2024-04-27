@@ -15,7 +15,7 @@ namespace Sierra
         : ComputePipeline(createInfo), MetalResource(createInfo.name)
     {
         SR_ERROR_IF(createInfo.computeShader->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create compute pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.computeShader->GetName());
-        const MetalShader &metalComputeShader = static_cast<MetalShader&>(*createInfo.computeShader);
+        const MetalShader &metalComputeShader = static_cast<const MetalShader&>(*createInfo.computeShader);
 
         // Allocate pipeline descriptor
         MTLComputePipelineDescriptor* const computePipelineDescriptor = [[MTLComputePipelineDescriptor alloc] init];

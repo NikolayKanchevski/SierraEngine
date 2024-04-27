@@ -31,9 +31,11 @@ namespace Sierra
 
     struct RenderPassAttachment
     {
-        const std::optional<std::reference_wrapper<const std::unique_ptr<Image>>> &resolveImage = std::nullopt;
-        const std::unique_ptr<Image> &templateImage;
         RenderPassAttachmentType type = RenderPassAttachmentType::Color;
+
+        const std::unique_ptr<Image> &templateOutputImage;
+        const std::optional<std::reference_wrapper<const std::unique_ptr<Image>>> templateResolverImage = std::nullopt;
+
         RenderPassAttachmentLoadOperation loadOperation = RenderPassAttachmentLoadOperation::Clear;
         RenderPassAttachmentStoreOperation storeOperation = RenderPassAttachmentStoreOperation::Store;
     };
@@ -53,8 +55,9 @@ namespace Sierra
 
     struct RenderPassBeginAttachment
     {
-        const std::unique_ptr<Image> &image;
-        const ColorRGBA32 &clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+        const std::unique_ptr<Image> &outputImage;
+        const std::optional<std::reference_wrapper<const std::unique_ptr<Image>>> &resolverImage = std::nullopt;
+        const ColorRGBA32 &clearValue = { 0.0f, 0.0f, 0.0f, 1.0f };
     };
 
     class SIERRA_API RenderPass : public virtual RenderingResource
@@ -64,11 +67,9 @@ namespace Sierra
         virtual void Resize(uint32 width, uint32 height) = 0;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] inline uint32 GetAttachmentCount() const { return GetColorAttachmentCount() + HasDepthAttachment(); }
         [[nodiscard]] virtual uint32 GetColorAttachmentCount() const = 0;
-        [[nodiscard]] virtual uint32 GetResolveAttachmentCount() const = 0;
         [[nodiscard]] virtual bool HasDepthAttachment() const = 0;
-
-        [[nodiscard]] inline uint32 GetAttachmentCount() const { return GetColorAttachmentCount() + GetResolveAttachmentCount() + HasDepthAttachment(); }
 
         /* --- OPERATORS --- */
         RenderPass(const RenderPass&) = delete;

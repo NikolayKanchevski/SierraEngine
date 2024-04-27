@@ -86,7 +86,7 @@ Documentation has not yet been published. The website that will be hosting it, h
 **Frameworks used:**
 
 Within Engine:
-* [stb](https://github.com/nothings/stb/) - An all-round image loader.
+* [stb](https://github.com/nothings/stb/) - An all-round outputImage loader.
 * [KTX Software](https://github.com/KhronosGroup/KTX-Software) - Used to compress texture assets.
 * [ShaderConnect](https://github.com/NikichaTV/ShaderConnect/tree/sierra) - A special branch of [NikichaTV](https://github.com/NikichaTV)'s framework for shader cross-compilation.
 
@@ -98,7 +98,7 @@ Within API:
 * [Metal](https://developer.apple.com/metal/) - Being their native rendering API, it is used for fast, hardware-accelerated rendering on [Apple](https://www.apple.com) platforms.
 * [ios-cmake](https://github.com/leetal/ios-cmake) - Essential for building the engine on iOS.
 * [ImGui](https://github.com/ocornut/imgui) - Used in the ImGui UI extension.
-* [My Brain](https://ih1.redbubble.net/templateImage.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
+* [My Brain](https://ih1.redbubble.net/templateOutputImage.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
 
 <br>
 
@@ -115,7 +115,7 @@ Within API:
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LineCounter">Total lines of code: 25,917</p>
-<p align="center" id="LastUpdated">Last updated: 22/04/2024 </p>
+<p align="center" id="LineCounter">Total lines of code: 26,993</p>
+<p align="center" id="LastUpdated">Last updated: 27/04/2024 </p>
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

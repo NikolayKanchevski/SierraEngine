@@ -20,15 +20,17 @@ namespace Sierra
         {
         public:
             /* --- CONSTRUCTORS --- */
-            inline explicit SwapchainResizeEvent(const uint32 width, const uint32 height) : width(width), height(height) { }
+            inline explicit SwapchainResizeEvent(const uint32 width, const uint32 height, const uint32 scaling) : width(width), height(height), scaling(scaling) { }
 
             /* --- GETTER METHODS --- */
             [[nodiscard]] inline uint32 GetWidth() const { return width; }
             [[nodiscard]] inline uint32 GetHeight() const { return height; }
+            [[nodiscard]] inline uint32 GetScaling() const { return scaling; }
 
         private:
-            const uint32 width;
-            const uint32 height;
+            const uint32 scaling = 0;
+            const uint32 width = 0;
+            const uint32 height = 0;
 
         };
     #pragma endregion
@@ -72,13 +74,14 @@ namespace Sierra
 
         [[nodiscard]] inline uint32 GetWidth() const { return GetImage(0)->GetWidth(); };
         [[nodiscard]] inline uint32 GetHeight() const { return GetImage(0)->GetHeight(); };
-        [[nodiscard]] virtual float32 GetScaling() const = 0;
+        [[nodiscard]] virtual uint32 GetScaling() const = 0;
 
         [[nodiscard]] virtual const std::unique_ptr<Image>& GetImage(uint32 frameIndex) const = 0;
         [[nodiscard]] inline const std::unique_ptr<Image>& GetCurrentImage() const { return GetImage(GetCurrentImageIndex()); };
 
         /* --- EVENTS --- */
-        template<typename T> requires (std::is_base_of_v<SwapchainEvent, T> && !std::is_same_v<SwapchainEvent, T>) void OnEvent(SwapchainEventCallback<T> Callback) { }
+        template<typename T> requires (std::is_base_of_v<SwapchainEvent, T> && !std::is_same_v<SwapchainEvent, T>)
+        void OnEvent(const SwapchainEventCallback<T> &Callback) { }
 
         /* --- OPERATORS --- */
         Swapchain(const Swapchain&) = delete;
@@ -96,6 +99,6 @@ namespace Sierra
 
     };
 
-    template<> inline void Swapchain::OnEvent<SwapchainResizeEvent>(SwapchainEventCallback<SwapchainResizeEvent> Callback) { swapchainResizeDispatcher.Subscribe(Callback); }
+    template<> inline void Swapchain::OnEvent<SwapchainResizeEvent>(const SwapchainEventCallback<SwapchainResizeEvent> &Callback) { swapchainResizeDispatcher.Subscribe(Callback); }
 
 }

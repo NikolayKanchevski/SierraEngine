@@ -24,7 +24,6 @@
 
 #include "../../src/Rendering/Buffer.h"
 #include "../../src/Rendering/CommandBuffer.h"
-#include "../../src/Rendering/CommandTask.h"
 #include "../../src/Rendering/ComputePipeline.h"
 #include "../../src/Rendering/Device.h"
 #include "../../src/Rendering/GraphicsPipeline.h"

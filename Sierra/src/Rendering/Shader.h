@@ -22,7 +22,7 @@ namespace Sierra
     struct ShaderCreateInfo
     {
         std::string_view name = "Shader";
-        std::span<const uint8> data = { };
+        std::span<const uint8> memory = { };
         ShaderType shaderType = ShaderType::Undefined;
     };
 

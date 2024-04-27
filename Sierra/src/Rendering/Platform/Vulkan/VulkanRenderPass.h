@@ -23,12 +23,10 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint32 GetColorAttachmentCount() const override { return framebufferImageAttachments.size() - (resolveAttachmentCount + hasDepthAttachment); }
-        [[nodiscard]] inline uint32 GetResolveAttachmentCount() const override { return resolveAttachmentCount; }
         [[nodiscard]] inline bool HasDepthAttachment() const override { return hasDepthAttachment; };
 
         [[nodiscard]] inline VkFramebuffer GetVulkanFramebuffer() const { return framebuffer; }
         [[nodiscard]] inline VkRenderPass GetVulkanRenderPass() const { return renderPass; }
-        [[nodiscard]] inline VkFormat GetFormatOfAttachment(const uint32 attachmentIndex) const { return framebufferAttachmentImageFormats[attachmentIndex]; }
 
         /* --- DESTRUCTOR --- */
         ~VulkanRenderPass() override;

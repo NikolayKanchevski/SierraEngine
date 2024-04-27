@@ -69,7 +69,7 @@ namespace Sierra
     void VulkanSwapchain::Present(std::unique_ptr<CommandBuffer> &commandBuffer)
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot present swapchain [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
-        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<VulkanCommandBuffer&>(*commandBuffer);
+        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);
 
         const uint64 waitValue = vulkanCommandBuffer.GetCompletionSignalValue();
         constexpr uint64 BINARY_SEMAPHORE_SIGNAL_VALUE = 1; // Simply using 1, as we are signalling a binary semaphore
@@ -107,7 +107,7 @@ namespace Sierra
 
         if (presentationQueueFamily != device.GetGeneralQueueFamily())
         {
-            const VulkanImage& swapchainImage = static_cast<VulkanImage&>(*swapchainImages[currentImage]);
+            const VulkanImage &swapchainImage = static_cast<const VulkanImage&>(*swapchainImages[currentImage]);
             const VkImageMemoryBarrier pipelineBarrier
             {
                 .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -221,7 +221,7 @@ namespace Sierra
 
         // Try to find a format that satisfies user's needs
         VkSurfaceFormatKHR selectedFormat = { .format = VK_FORMAT_UNDEFINED, .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
-        for (const auto format : formatsToTry)
+        for (const VkFormat format : formatsToTry)
         {
             auto iterator = std::find_if(supportedFormats.begin(), supportedFormats.end(), [format](const VkSurfaceFormatKHR item) { return item.format == format && item.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR; });
             if (iterator != supportedFormats.end())
@@ -243,7 +243,7 @@ namespace Sierra
 
         // Select a present mode according to preferred one in create info
         VkPresentModeKHR selectedPresentMode = VK_PRESENT_MODE_FIFO_KHR; // FIFO is guaranteed to be supported
-        for (const auto presentMode : supportedPresentModes)
+        for (const VkPresentModeKHR presentMode : supportedPresentModes)
         {
             if (preferredPresentationMode == SwapchainPresentationMode::Immediate && presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)   // Possible tearing, no GPU idling, minimal latency, and high energy consumption
             {
@@ -366,7 +366,7 @@ namespace Sierra
         currentFrame = 0;
 
         const Vector2UInt newSize = { swapchainImages[0]->GetWidth(), swapchainImages[0]->GetHeight() };
-        if (lastSize != newSize) GetSwapchainResizeDispatcher().DispatchEvent(newSize.x, newSize.y);
+        if (lastSize != newSize) GetSwapchainResizeDispatcher().DispatchEvent(newSize.x, newSize.y, GetScaling());
     }
 
 }

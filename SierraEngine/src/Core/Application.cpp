@@ -20,9 +20,9 @@ namespace SierraEngine
     void Application::Start()
     {
         // Create window & swapchain
-        window = GetWindowManager().CreateWindow({ .title = "Test Window", .resizable = true });
+        window = GetWindowManager().CreateWindow({ .title = "Test Window", .resizable = true, .maximize = true });
         swapchain = GetRenderingContext().CreateSwapchain({ .name = "Test Swapchain", .window = window, .preferredPresentationMode = Sierra::SwapchainPresentationMode::VSync });
-        swapchain->OnEvent<Sierra::SwapchainResizeEvent>([this](const auto event) -> bool { imGuiTask->Resize(event.GetWidth() / swapchain->GetScaling(), event.GetHeight() / swapchain->GetScaling()); return false; });
+        swapchain->OnEvent<Sierra::SwapchainResizeEvent>([this](const auto event) -> bool { imGuiTask->Resize(event.GetWidth(), event.GetHeight(), event.GetScaling()); return false; });
 
         // Create resource table
         resourceTable = GetRenderingContext().CreateResourceTable({ .name = "Global Resource Table" });
@@ -31,14 +31,14 @@ namespace SierraEngine
         commandBuffers.resize(swapchain->GetConcurrentFrameCount());
         for (uint32 i = 0; i < swapchain->GetConcurrentFrameCount(); i++)
         {
-            commandBuffers[i] = GetRenderingContext().CreateCommandBuffer({ .name = "General Command Buffer " + std::to_string(i) });
+            commandBuffers[i] = GetRenderingContext().CreateCommandBuffer({ .name = "General Command Buffer [" + std::to_string(i) + "]" });
         }
     }
 
-    bool Application::Update(const Sierra::TimeStep &timeStep)
+    bool Application::Update(const Sierra::TimeStep&)
     {
         // Get command buffer for current frame
-        auto &commandBuffer = commandBuffers[swapchain->GetCurrentFrameIndex()];
+        std::unique_ptr<Sierra::CommandBuffer> &commandBuffer = commandBuffers[swapchain->GetCurrentFrameIndex()];
 
         // Wait until it is no longer in use
         GetRenderingContext().GetDevice().WaitForCommandBuffer(commandBuffer);
@@ -56,14 +56,26 @@ namespace SierraEngine
         commandBuffer->BindResourceTable(resourceTable);
 
         static std::once_flag firstTimeFlag;
-        std::call_once(firstTimeFlag, [this, &commandBuffer]
+        std::call_once(firstTimeFlag, [this, &commandBuffer]() -> void
         {
-            // Create ImGui resources
-            Sierra::ImGuiRenderTask::CreateResources(GetRenderingContext(), resourceTable, 0, 0, commandBuffer);
-            imGuiTask = std::make_unique<Sierra::ImGuiRenderTask>(GetRenderingContext(), Sierra::ImGuiRenderTaskCreateInfo {
-                .templateImage = swapchain->GetImage(0),
-                .scaling = swapchain->GetScaling()
-            });
+            if (std::optional<Sierra::File> fontFile = GetFileManager().OpenFile(GetFileManager().GetResourcesDirectoryPath() / "core/assets/fonts/Lato.ttf"); fontFile.has_value())
+            {
+                // Create ImGui resources
+                imGuiTask = std::make_unique<Sierra::ImGuiRenderTask>(Sierra::ImGuiRenderTaskCreateInfo {
+                    .renderingContext = GetRenderingContext(),
+                    .commandBuffer = commandBuffer,
+                    .scaling = swapchain->GetScaling(),
+                    .templateOutputImage = swapchain->GetImage(0),
+                    .fontAtlasIndex = 0,
+                    .fontCreateInfos = { { .ttfMemory = fontFile.value().Read() } },
+                    .fontSamplerIndex = 0,
+                    .resourceTable = resourceTable
+                });
+            }
+            else
+            {
+                APP_ERROR("Failed not load Lato.ttf font file!");
+            }
         });
 
         // Prepare swapchain image for writing
@@ -99,7 +111,6 @@ namespace SierraEngine
     Application::~Application()
     {
         GetRenderingContext().GetDevice().WaitForCommandBuffer(commandBuffers[swapchain->GetCurrentImageIndex()]);
-        Sierra::ImGuiRenderTask::DestroyResources();
     }
 
 }

@@ -33,7 +33,7 @@ namespace Sierra
         #endif
 
         // Configure Metal layer
-        [metalLayer setDevice: (__bridge id<MTLDevice>) device.GetMetalDevice()];
+        [metalLayer setDevice: device.GetMetalDevice()];
         [metalLayer setMaximumDrawableCount: CONCURRENT_FRAME_COUNT];
         [metalLayer setDrawsAsynchronously: YES];
         [metalLayer setDrawableSize: CGSizeMake(window->GetFramebufferWidth(), window->GetFramebufferHeight())];
@@ -70,7 +70,7 @@ namespace Sierra
             Recreate();
 
             // Dispatch resize event
-            GetSwapchainResizeDispatcher().DispatchEvent(window->GetFramebufferWidth(), window->GetFramebufferHeight());
+            GetSwapchainResizeDispatcher().DispatchEvent(window->GetFramebufferWidth(), window->GetFramebufferHeight(), GetScaling());
             return false;
         });
     }
@@ -95,7 +95,7 @@ namespace Sierra
     void MetalSwapchain::Present(std::unique_ptr<CommandBuffer> &commandBuffer)
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot present swapchain [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<MetalCommandBuffer&>(*commandBuffer);
+        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
 
         // Record presentation commands to a new command buffer (width a dependency to passed one)
         const id<MTLCommandBuffer> presentationCommandBuffer = [device.GetCommandQueue() commandBuffer];

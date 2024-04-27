@@ -20,3 +20,6 @@
 [submodule "SierraEngine/vendor/KTX-Software"]
 	path = SierraEngine/vendor/KTX-Software
 	url = https://github.com/KhronosGroup/KTX-Software/
+[submodule "SierraEngine/vendor/entt"]
+	path = SierraEngine/vendor/entt
+	url = https://github.com/skypjack/entt
