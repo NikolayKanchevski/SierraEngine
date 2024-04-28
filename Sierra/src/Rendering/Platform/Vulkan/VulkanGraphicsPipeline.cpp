@@ -238,7 +238,7 @@ namespace Sierra
 
         // Create pipeline
         const VkResult result = device.GetFunctionTable().vkCreateGraphicsPipelines(device.GetLogicalDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &pipeline);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create graphics pipeline [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create graphics pipeline [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         // Set object name
         device.SetObjectName(pipeline, VK_OBJECT_TYPE_PIPELINE, GetName());

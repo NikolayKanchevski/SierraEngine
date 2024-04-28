@@ -210,7 +210,7 @@ namespace Sierra
 
         // Create instance
         const VkResult result = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create instance! Error code: {0}.", result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create instance! Error code: {0}.", static_cast<int32>(result));
 
         // Load function pointers
         #pragma region Function Pointers

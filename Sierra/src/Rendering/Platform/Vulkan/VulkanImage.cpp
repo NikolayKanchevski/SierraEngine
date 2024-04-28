@@ -46,7 +46,7 @@ namespace Sierra
 
         // Create and allocate image
         VkResult result = vmaCreateImage(device.GetMemoryAllocator(), &imageCreateInfo, &allocationCreateInfo, &image, &allocation, nullptr);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create image [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create image [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         // Determine aspect flags
         if (createInfo.usage & ImageUsage::DepthAttachment) aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -81,7 +81,7 @@ namespace Sierra
 
         // Create the image view
         result = device.GetFunctionTable().vkCreateImageView(device.GetLogicalDevice(), &imageViewCreateInfo, nullptr, &imageView);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create image view for image [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create image view for image [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         // Set object names
         device.SetObjectName(image, VK_OBJECT_TYPE_IMAGE, GetName());
@@ -118,7 +118,7 @@ namespace Sierra
 
         // Create the image view
         const VkResult result = device.GetFunctionTable().vkCreateImageView(device.GetLogicalDevice(), &imageViewCreateInfo, nullptr, &imageView);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create image view for image [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create image view for image [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         // Set object names
         device.SetObjectName(image, VK_OBJECT_TYPE_IMAGE, GetName());

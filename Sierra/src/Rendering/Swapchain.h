@@ -28,7 +28,7 @@ namespace Sierra
             [[nodiscard]] inline uint32 GetScaling() const { return scaling; }
 
         private:
-            const uint32 scaling = 0;
+            const uint32 scaling = 1;
             const uint32 width = 0;
             const uint32 height = 0;
 

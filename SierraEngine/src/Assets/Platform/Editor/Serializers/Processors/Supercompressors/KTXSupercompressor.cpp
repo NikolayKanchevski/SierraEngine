@@ -98,7 +98,7 @@ namespace SierraEngine
         ktxResult result = ktxTexture2_Create(&ktxTextureCreateInfo, KTX_TEXTURE_CREATE_ALLOC_STORAGE, &ktxTexture2);
         if (result != KTX_SUCCESS)
         {
-            APP_WARNING("Could create KTX texture [{0}], as an error occurred during texture allocation! Error code: {1}.", compressInfo.levelFilePaths.begin()->begin()->string(), result);
+            APP_WARNING("Could create KTX texture [{0}], as an error occurred during texture allocation! Error code: {1}.", compressInfo.levelFilePaths.begin()->begin()->string(), static_cast<uint32>(result));
             return std::nullopt;
         }
 
@@ -160,7 +160,7 @@ namespace SierraEngine
                 result = ktxTexture_SetImageFromMemory(ktxTexture(ktxTexture2), level, layer, 0, reinterpret_cast<const uint8*>(levelMemory.get()), levelMemorySize);
                 if (result != KTX_SUCCESS)
                 {
-                    APP_WARNING("Could not KTX compress [{0}], as an error occurred while writing raw pixel memory to level [{1}] layer [{2}] of KTX texture! Error code: {3}.", compressInfo.levelFilePaths.begin()->begin()->string(), level, layer, result);
+                    APP_WARNING("Could not KTX compress [{0}], as an error occurred while writing raw pixel memory to level [{1}] layer [{2}] of KTX texture! Error code: {3}.", compressInfo.levelFilePaths.begin()->begin()->string(), level, layer, static_cast<uint32>(result));
                     ktxTexture_Destroy(ktxTexture(ktxTexture2));
                     return std::nullopt;
                 }
@@ -204,7 +204,7 @@ namespace SierraEngine
             result = ktxTexture2_CompressBasisEx(ktxTexture2, &basisParams);
             if (result != KTX_SUCCESS)
             {
-                APP_WARNING("Could not serialize texture [{0}], as an error occurred while compressing data into Basis Universal! Error code: {1}.", compressInfo.levelFilePaths.begin()->begin()->string(), result);
+                APP_WARNING("Could not serialize texture [{0}], as an error occurred while compressing data into Basis Universal! Error code: {1}.", compressInfo.levelFilePaths.begin()->begin()->string(), static_cast<uint32>(result));
                 ktxTexture_Destroy(ktxTexture(ktxTexture2));
                 return std::nullopt;
             }
@@ -216,7 +216,7 @@ namespace SierraEngine
         result = ktxTexture_WriteToMemory(ktxTexture(ktxTexture2), &ktxMemory, &ktxMemorySize);
         if (result != KTX_SUCCESS)
         {
-            APP_WARNING("Could not serialize texture [{0}], as an error occurred while extracting KTX data from texture! Error code: {1}.", compressInfo.levelFilePaths.begin()->begin()->string(), result);
+            APP_WARNING("Could not serialize texture [{0}], as an error occurred while extracting KTX data from texture! Error code: {1}.", compressInfo.levelFilePaths.begin()->begin()->string(), static_cast<uint32>(result));
             ktxTexture_Destroy(ktxTexture(ktxTexture2));
             return std::nullopt;
         }

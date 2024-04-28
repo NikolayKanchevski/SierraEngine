@@ -37,7 +37,7 @@ namespace Sierra
 
         // Create sampler
         const VkResult result = device.GetFunctionTable().vkCreateSampler(device.GetLogicalDevice(), &samplerCreateInfo, nullptr, &sampler);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create sampler [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create sampler [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         // Assign name
         device.SetObjectName(sampler, VK_OBJECT_TYPE_SAMPLER, GetName());

@@ -86,6 +86,7 @@ Documentation has not yet been published. The website that will be hosting it, h
 **Frameworks used:**
 
 Within Engine:
+* [entt](https://github.com/skypjack/entt) - Efficient entity component system, utilized for scenes.
 * [stb](https://github.com/nothings/stb/) - An all-round outputImage loader.
 * [KTX Software](https://github.com/KhronosGroup/KTX-Software) - Used to compress texture assets.
 * [ShaderConnect](https://github.com/NikichaTV/ShaderConnect/tree/sierra) - A special branch of [NikichaTV](https://github.com/NikichaTV)'s framework for shader cross-compilation.
@@ -115,7 +116,7 @@ Within API:
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p align="center" id="LineCounter">Total lines of code: 26,993</p>
-<p align="center" id="LastUpdated">Last updated: 27/04/2024 </p>
+<p align="center" id="LineCounter">Total lines of code: 26,977</p>
+<p align="center" id="LastUpdated">Last updated: 28/04/2024 </p>
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

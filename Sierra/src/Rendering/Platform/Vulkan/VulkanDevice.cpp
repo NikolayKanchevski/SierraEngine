@@ -118,7 +118,7 @@ namespace Sierra
         // Retrieve number of GPUs found
         uint32 physicalDeviceCount = 0;
         VkResult result = instance.GetFunctionTable().vkEnumeratePhysicalDevices(instance.GetVulkanInstance(), &physicalDeviceCount, nullptr);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not enumerate physical devices! Error code: {0}.", result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not enumerate physical devices! Error code: {0}.", static_cast<int32>(result));
         SR_ERROR_IF(physicalDeviceCount <= 0, "[Vulkan]: Could not find any supported physical devices!");
 
         // Retrieve GPUs
@@ -233,7 +233,7 @@ namespace Sierra
 
         // Create logical device
         result = instance.GetFunctionTable().vkCreateDevice(physicalDevice, &logicalDeviceCreateInfo, nullptr, &logicalDevice);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create logical device [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create logical device [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         #pragma region Function Pointers
             // Load Vulkan functions
@@ -1099,7 +1099,7 @@ namespace Sierra
 
             // Create shared fence
             result = functionTable.vkCreateSemaphore(logicalDevice, &semaphoreCreateInfo, nullptr, &generalTimelineSemaphore);
-            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create shared command buffer fence of device [{0}]! Error code: {1}!", GetName(), result);
+            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create shared command buffer fence of device [{0}]! Error code: {1}!", GetName(), static_cast<int32>(result));
         }
 
         // Create global (bindless) descriptor set layout
@@ -1196,7 +1196,7 @@ namespace Sierra
 
             // Create bindless descriptor set layout
             result = functionTable.vkCreateDescriptorSetLayout(logicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &generalDescriptorSetLayout);
-            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create descriptor set layout of resource table [{0}]! Error code: {1}.", GetName(), result);
+            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create descriptor set layout of resource table [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
             SetObjectName(generalDescriptorSetLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "Bindless descriptor set layout");
         }
 
@@ -1212,7 +1212,7 @@ namespace Sierra
             
             // Create first layout (without push constants)
             result = functionTable.vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &generalPipelineLayouts[0]);
-            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create general pipeline layout [0]! Error code: {0}.", result);
+            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create general pipeline layout [0]! Error code: {0}.", static_cast<int32>(result));
             SetObjectName(generalPipelineLayouts[0], VK_OBJECT_TYPE_PIPELINE_LAYOUT, "General pipeline layout [0] of device [" + std::string(GetName()) + "]");
 
             // Set up push constant range (size is to be updated)
@@ -1231,7 +1231,7 @@ namespace Sierra
                 pushConstantRange.size = i * 4;
 
                 result = functionTable.vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &generalPipelineLayouts[i]);
-                SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create general pipeline layout [{0}]! Error code: {1}.", i, result);
+                SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create general pipeline layout [{0}]! Error code: {1}.", i, static_cast<int32>(result));
                 SetObjectName(generalPipelineLayouts[i], VK_OBJECT_TYPE_PIPELINE_LAYOUT, "General pipeline layout [" + std::to_string(i) + "] of device [" + std::string(GetName()) + "]");
             }
         }
@@ -1285,7 +1285,7 @@ namespace Sierra
 
         // Submit command buffer
         const VkResult result = functionTable.vkQueueSubmit(generalQueue, 1, &submitInfo, VK_NULL_HANDLE);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Submission of command buffer [{0}] from device [{1}] failed! Error code: {2}.", vulkanCommandBuffer.GetName(), GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Submission of command buffer [{0}] from device [{1}] failed! Error code: {2}.", vulkanCommandBuffer.GetName(), GetName(), static_cast<int32>(result));
     }
 
     void VulkanDevice::WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const

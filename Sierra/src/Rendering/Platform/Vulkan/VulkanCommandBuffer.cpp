@@ -30,7 +30,7 @@ namespace Sierra
 
         // Create command pool
         VkResult result = device.GetFunctionTable().vkCreateCommandPool(device.GetLogicalDevice(), &commandPoolCreateInfo, nullptr, &commandPool);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create command pool for command buffer [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create command pool for command buffer [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
         device.SetObjectName(commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Command pool of command buffer [" + std::string(GetName()) + "]");
 
         // Set up allocate info
@@ -44,7 +44,7 @@ namespace Sierra
 
         // Allocate command buffer
         result = device.GetFunctionTable().vkAllocateCommandBuffers(device.GetLogicalDevice(), &allocateInfo, &commandBuffer);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create command buffer [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create command buffer [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
         device.SetObjectName(commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, GetName());
     }
 
@@ -68,7 +68,7 @@ namespace Sierra
 
         // Begin command buffer
         const VkResult result = device.GetFunctionTable().vkBeginCommandBuffer(commandBuffer, &beginInfo);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not begin command buffer [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not begin command buffer [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         // Get new code
         completionSignalValue = device.GetNewSignalValue();
@@ -78,7 +78,7 @@ namespace Sierra
     {
         // End command buffer
         const VkResult result = device.GetFunctionTable().vkEndCommandBuffer(commandBuffer);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not end command buffer [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not end command buffer [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
         currentResourceTableDescriptorSet = VK_NULL_HANDLE;
     }
 

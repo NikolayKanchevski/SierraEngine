@@ -38,7 +38,7 @@ namespace Sierra
 
         // Create pipeline
         const VkResult result = device.GetFunctionTable().vkCreateComputePipelines(device.GetLogicalDevice(), VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &pipeline);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create compute pipeline [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create compute pipeline [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
     }
 
     /* --- DESTRUCTOR --- */

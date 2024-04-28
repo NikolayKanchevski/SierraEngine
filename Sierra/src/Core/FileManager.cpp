@@ -9,6 +9,8 @@
     #include <Windows.h>
 
     #undef CreateFile
+    #undef CopyFile
+    #undef MoveFile
     #undef CreateDirectory
     #undef DeleteFile
     #undef DeleteDirectory

@@ -227,7 +227,7 @@ namespace Sierra
 
         // Create render pass
         VkResult result = device.GetFunctionTable().vkCreateRenderPass(device.GetLogicalDevice(), &renderPassCreateInfo, nullptr, &renderPass);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create render pass [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create render pass [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         // Set up framebuffer attachment create info
         const VkFramebufferAttachmentsCreateInfo framebufferAttachmentsCreateInfo
@@ -252,7 +252,7 @@ namespace Sierra
 
         // Create framebuffer
         result = device.GetFunctionTable().vkCreateFramebuffer(device.GetLogicalDevice(), &framebufferCreateInfo, nullptr, &framebuffer);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create framebuffer of render pass [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create framebuffer of render pass [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
     }
 
     /* --- POLLING METHODS --- */
@@ -292,7 +292,7 @@ namespace Sierra
 
         // Recreate framebuffer
         const VkResult result = device.GetFunctionTable().vkCreateFramebuffer(device.GetLogicalDevice(), &framebufferCreateInfo, nullptr, &framebuffer);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not resize framebuffer of render pass [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not resize framebuffer of render pass [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         // Set object names
         device.SetObjectName(renderPass, VK_OBJECT_TYPE_RENDER_PASS, GetName());

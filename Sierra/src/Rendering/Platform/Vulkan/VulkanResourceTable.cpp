@@ -67,7 +67,7 @@ namespace Sierra
 
         // Create descriptor pool
         VkResult result = device.GetFunctionTable().vkCreateDescriptorPool(device.GetLogicalDevice(), &descriptorPoolCreateInfo, nullptr, &descriptorPool);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create descriptor pool of resource table [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create descriptor pool of resource table [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
         device.SetObjectName(descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Descriptor pool of resource table [" + std::string(GetName()) + "]");
 
         // Set up set allocate info
@@ -82,7 +82,7 @@ namespace Sierra
 
         // Allocate descriptor set
         result = device.GetFunctionTable().vkAllocateDescriptorSets(device.GetLogicalDevice(), &descriptorSetAllocateInfo, &descriptorSet);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not allocate descriptor set of resource table [{0}]! Error code: {1}.", GetName(), result);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not allocate descriptor set of resource table [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
         device.SetObjectName(descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, "Descriptor set of resource table [" + std::string(GetName()) + "]");
     }
 

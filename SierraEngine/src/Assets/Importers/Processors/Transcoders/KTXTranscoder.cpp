@@ -26,7 +26,7 @@ namespace SierraEngine
         ktxResult result = ktxTexture2_CreateFromMemory(reinterpret_cast<const ktx_uint8_t*>(transcodeInfo.compressedMemory.data()), transcodeInfo.compressedMemory.size(), KTX_TEXTURE_CREATE_NO_STORAGE, &ktxTexture2);
         if (result != KTX_SUCCESS)
         {
-            APP_WARNING("Could not KTX transcode texture, as an error occurred during texture loading! Error code: {0}.",  result);
+            APP_WARNING("Could not KTX transcode texture, as an error occurred during texture loading! Error code: {0}.", static_cast<uint32>(result));
             return std::nullopt;
         }
 
@@ -37,7 +37,7 @@ namespace SierraEngine
             result = ktxTexture2_CreateFromMemory(reinterpret_cast<const ktx_uint8_t*>(transcodeInfo.compressedMemory.data()), transcodeInfo.compressedMemory.size(), KTX_TEXTURE_CREATE_ALLOC_STORAGE, &ktxTexture2);
             if (result != KTX_SUCCESS)
             {
-                APP_WARNING("Could not KTX transcode texture, as an error occurred during texture loading! Error code: {0}.",  result);
+                APP_WARNING("Could not KTX transcode texture, as an error occurred during texture loading! Error code: {0}.", static_cast<uint32>(result));
                 return std::nullopt;
             }
         }
@@ -76,7 +76,7 @@ namespace SierraEngine
             result = ktxTexture2_TranscodeBasis(ktxTexture2, transcodedFormat, 0);
             if (result != KTX_SUCCESS)
             {
-                APP_WARNING("Could not KTX transcode texture, as an error occurred during texture transcoding! Error code: {0}.", result);
+                APP_WARNING("Could not KTX transcode texture, as an error occurred during texture transcoding! Error code: {0}.", static_cast<uint32>(result));
                 ktxTexture_Destroy(ktxTexture(ktxTexture2));
                 return std::nullopt;
             }
