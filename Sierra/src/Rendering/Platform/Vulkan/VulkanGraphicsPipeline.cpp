@@ -23,15 +23,15 @@ namespace Sierra
         const VulkanRenderPass &vulkanRenderPass = static_cast<const VulkanRenderPass&>(*createInfo.templateRenderPass);
 
         // Set up shader stages
-        std::vector<VkPipelineShaderStageCreateInfo> shaderStages(1 + createInfo.fragmentShader.has_value());
+        std::vector<VkPipelineShaderStageCreateInfo> shaderStages(1 + (createInfo.fragmentShader != nullptr));
         shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
         shaderStages[0].module = vulkanVertexShader.GetVulkanShaderModule();
         shaderStages[0].pName = "main";
-        if (createInfo.fragmentShader.has_value())
+        if (createInfo.fragmentShader != nullptr)
         {
-            SR_ERROR_IF(createInfo.fragmentShader->get()->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.vertexShader->GetName());
-            const VulkanShader &vulkanFragmentShader = static_cast<const VulkanShader&>(*createInfo.fragmentShader->get());
+            SR_ERROR_IF(createInfo.fragmentShader->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.fragmentShader->GetName());
+            const VulkanShader &vulkanFragmentShader = static_cast<const VulkanShader&>(*createInfo.fragmentShader);
             shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
             shaderStages[1].module = vulkanFragmentShader.GetVulkanShaderModule();
@@ -46,7 +46,7 @@ namespace Sierra
             vertexInputAttributes[i].binding = 0;
             vertexInputAttributes[i].location = i;
             vertexInputAttributes[i].offset = vertexDataSize;
-            switch (*(createInfo.vertexInputs.begin() + i))
+            switch (createInfo.vertexInputs[i])
             {
                 case VertexInput::Int8:          { vertexInputAttributes[i].format = VK_FORMAT_R8_SINT;    vertexDataSize += 1 * 1; break; }
                 case VertexInput::UInt8:         { vertexInputAttributes[i].format = VK_FORMAT_R8_UINT;    vertexDataSize += 1 * 1; break; }

@@ -62,12 +62,13 @@ namespace SierraEngine
             {
                 // Create ImGui resources
                 imGuiTask = std::make_unique<Sierra::ImGuiRenderTask>(Sierra::ImGuiRenderTaskCreateInfo {
+                    .concurrentFrameCount = swapchain->GetConcurrentFrameCount(),
                     .renderingContext = GetRenderingContext(),
                     .commandBuffer = commandBuffer,
                     .scaling = swapchain->GetScaling(),
                     .templateOutputImage = swapchain->GetImage(0),
                     .fontAtlasIndex = 0,
-                    .fontCreateInfos = { { .ttfMemory = fontFile.value().Read() } },
+                    .fontCreateInfos = {{ { .ttfMemory = fontFile.value().Read() } }},
                     .fontSamplerIndex = 0,
                     .resourceTable = resourceTable
                 });

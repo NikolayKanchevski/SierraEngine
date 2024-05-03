@@ -32,9 +32,16 @@ namespace Sierra
             metalLayer = reinterpret_cast<CAMetalLayer*>(uiKitWindow.GetUIView().layer);
         #endif
 
+        // Determine concurrent frame count
+        switch (createInfo.preferredBuffering)
+        {
+            case SwapchainBuffering::DoubleBuffering:       { concurrentFrameCount = 2; break; }
+            case SwapchainBuffering::TripleBuffering:       { concurrentFrameCount = 3; break; }
+        }
+
         // Configure Metal layer
         [metalLayer setDevice: device.GetMetalDevice()];
-        [metalLayer setMaximumDrawableCount: CONCURRENT_FRAME_COUNT];
+        [metalLayer setMaximumDrawableCount: concurrentFrameCount];
         [metalLayer setDrawsAsynchronously: YES];
         [metalLayer setDrawableSize: CGSizeMake(window->GetFramebufferWidth(), window->GetFramebufferHeight())];
         switch (createInfo.preferredImageMemoryType) // These formats are guaranteed to be supported
@@ -58,7 +65,7 @@ namespace Sierra
         }));
 
         // Create sync objects
-        isFrameRenderedSemaphores = dispatch_semaphore_create(CONCURRENT_FRAME_COUNT);
+        isFrameRenderedSemaphores = dispatch_semaphore_create(concurrentFrameCount);
 
         // Handle resizing
         createInfo.window->OnEvent<WindowResizeEvent>([this](const WindowResizeEvent&) -> bool
@@ -112,7 +119,7 @@ namespace Sierra
         [presentationCommandBuffer commit];
 
         // Increment current frame
-        currentFrame = (currentFrame + 1) % CONCURRENT_FRAME_COUNT;
+        currentFrame = (currentFrame + 1) % concurrentFrameCount;
     }
 
     /* --- PRIVATE METHODS --- */

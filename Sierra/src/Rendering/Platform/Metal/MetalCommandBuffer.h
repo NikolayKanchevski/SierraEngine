@@ -35,7 +35,7 @@ namespace Sierra
         void BindResourceTable(const std::unique_ptr<ResourceTable> &resourceTable) override;
         void PushConstants(const void* data, uint16 memoryRange, uint16 byteOffset = 0) override;
 
-        void BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments) override;
+        void BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::span<const RenderPassBeginAttachment> &attachments) override;
         void BeginNextSubpass(const std::unique_ptr<RenderPass> &renderPass) override;
         void EndRenderPass(const std::unique_ptr<RenderPass> &renderPass) override;
 

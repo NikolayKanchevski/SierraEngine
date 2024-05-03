@@ -23,7 +23,7 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer,  const std::initializer_list<std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait = { }) const = 0;
+        virtual void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer,  const std::span<const std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait = { }) const = 0;
         virtual void WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const = 0;
 
         /* --- GETTER METHODS --- */

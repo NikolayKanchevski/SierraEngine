@@ -28,8 +28,9 @@ set_target_properties(Sierra PROPERTIES
 
 # Link engine modules
 add_subdirectory(Core)
-add_subdirectory(Utilities)
+add_subdirectory(Extensions)
 add_subdirectory(Rendering)
+add_subdirectory(Utilities)
 
 # Link include files
 target_sources(Sierra PRIVATE

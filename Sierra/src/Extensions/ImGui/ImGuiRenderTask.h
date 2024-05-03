@@ -27,6 +27,7 @@ namespace Sierra
     {
         std::string_view name = "ImGui Render Task";
 
+        uint32 concurrentFrameCount = 1;
         const RenderingContext &renderingContext;
         std::unique_ptr<CommandBuffer> &commandBuffer;
 
@@ -36,7 +37,7 @@ namespace Sierra
 
         const ImGuiStyle &style = { };
         ResourceTable::ResourceIndex fontAtlasIndex = 0;
-        const std::initializer_list<ImGuiRenderTaskFontCreateInfo> &fontCreateInfos = { };
+        const std::span<const ImGuiRenderTaskFontCreateInfo> &fontCreateInfos = { };
 
         ResourceTable::ResourceIndex fontSamplerIndex = 0;
         std::unique_ptr<ResourceTable> &resourceTable;
@@ -63,12 +64,15 @@ namespace Sierra
     private:
         const RenderingContext &renderingContext;
 
+        const uint32 concurrentFrameCount = 0;
+        uint32 currentFrame = 0;
+
         uint32 scaling = 1;
         Vector2 viewportSize = { 0.0f, 0.0f };
 
         std::unique_ptr<Image> resolverImage = nullptr;
-        std::unique_ptr<Buffer> vertexBuffer = nullptr;
-        std::unique_ptr<Buffer> indexBuffer = nullptr;
+        std::vector<std::unique_ptr<Buffer>> vertexBuffers = { };
+        std::vector<std::unique_ptr<Buffer>> indexBuffers = { };
 
         uint32 baseFontIndex = 0;
         std::unique_ptr<Image> fontAtlas = nullptr;

@@ -43,8 +43,9 @@ namespace Sierra
         VkQueue presentationQueue = VK_NULL_HANDLE;
         uint32 presentationQueueFamily = std::numeric_limits<uint32>::max();
 
-        SwapchainPresentationMode preferredPresentationMode = SwapchainPresentationMode::Immediate;
-        SwapchainImageMemoryType preferredImageMemoryType = SwapchainImageMemoryType::UNorm8;
+        const SwapchainPresentationMode preferredPresentationMode = SwapchainPresentationMode::Immediate;
+        const SwapchainBuffering preferredBuffering = SwapchainBuffering::DoubleBuffering;
+        const SwapchainImageMemoryType preferredImageMemoryType = SwapchainImageMemoryType::UNorm8;
 
         VkSwapchainKHR swapchain = VK_NULL_HANDLE;
         std::vector<std::unique_ptr<Image>> swapchainImages;

@@ -183,7 +183,7 @@ namespace Sierra
         }
     }
 
-    void MetalCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments)
+    void MetalCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::span<const RenderPassBeginAttachment> &attachments)
     {
         SR_ERROR_IF(renderPass->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin render pass [{0}], whose graphics API differs from [GraphicsAPI::Metal], from command buffer [{1}]!", renderPass->GetName(), GetName());
         const MetalRenderPass &metalRenderPass = static_cast<const MetalRenderPass&>(*renderPass);
@@ -191,10 +191,11 @@ namespace Sierra
         SR_ERROR_IF(attachments.size() != metalRenderPass.GetAttachmentCount(), "[Metal]: Cannot begin render pass [{0}] within command buffer [{1}] with [{2}] attachments, as it was created to hold [{3}]!", renderPass->GetName(), GetName(), attachments.size(), metalRenderPass.GetAttachmentCount());
         for (uint32 i = 0; i < attachments.size(); i++)
         {
-            const RenderPassBeginAttachment &attachment = *(attachments.begin() + i);
+            const RenderPassBeginAttachment &attachment = attachments[i];
             for (MTLRenderPassAttachmentDescriptor* const renderPassAttachmentDescriptor : metalRenderPass.GetAttachment(i))
             {
-                SR_ERROR_IF(attachment.outputImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}]'s output image, as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), attachment.outputImage->GetName(), i);
+                SR_ERROR_IF(attachment.outputImage == nullptr, "[Metal]: Cannot begin render pass [{0}], as referenced output image must not be a null pointer!", GetName());
+                SR_ERROR_IF(attachment.outputImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}]'s output image, because its graphics API differs from [GraphicsAPI::Metal]!", GetName(), attachment.outputImage->GetName(), i);
                 const MetalImage &metalOutputImage = static_cast<const MetalImage&>(*attachment.outputImage);
 
                 [renderPassAttachmentDescriptor setTexture: metalOutputImage.GetMetalTexture()];
@@ -213,10 +214,10 @@ namespace Sierra
                     }
                 }
 
-                if (attachment.resolverImage.has_value())
+                if (attachment.resolverImage != nullptr)
                 {
-                    SR_ERROR_IF(attachment.resolverImage.value().get()->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}]'s resolver image, as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), attachment.resolverImage.value().get()->GetName(), i);
-                    const MetalImage &metalResolverImage = static_cast<const MetalImage&>(*attachment.resolverImage.value().get());
+                    SR_ERROR_IF(attachment.resolverImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}]'s resolver image, as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), attachment.resolverImage->GetName(), i);
+                    const MetalImage &metalResolverImage = static_cast<const MetalImage&>(*attachment.resolverImage);
 
                     [renderPassAttachmentDescriptor setTexture: metalResolverImage.GetMetalTexture()];
                     [renderPassAttachmentDescriptor setResolveTexture: metalOutputImage.GetMetalTexture()];

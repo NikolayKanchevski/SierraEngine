@@ -283,7 +283,7 @@ namespace Sierra
         device.GetFunctionTable().vkCmdPushConstants(commandBuffer, currentPipelineLayout, VK_SHADER_STAGE_ALL, 0, memoryRange, reinterpret_cast<const char*>(data) + byteOffset);
     }
 
-    void VulkanCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments)
+    void VulkanCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::span<const RenderPassBeginAttachment> &attachments)
     {
         SR_ERROR_IF(renderPass->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], from command buffer [{1}]!", renderPass->GetName(), GetName());
         const VulkanRenderPass &vulkanRenderPass = static_cast<const VulkanRenderPass&>(*renderPass);
@@ -296,8 +296,9 @@ namespace Sierra
         // Collect attachment views
         for (uint32 i = 0; i < attachments.size(); i++)
         {
-            const RenderPassBeginAttachment &attachment = *(attachments.begin() + i);
+            const RenderPassBeginAttachment &attachment = attachments[i];
 
+            SR_ERROR_IF(attachment.outputImage == nullptr, "[Vulkan]: Cannot begin render pass [{0}], as referenced output image must not be a null pointer!", GetName());
             SR_ERROR_IF(attachment.outputImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}]'s output image, as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), attachment.outputImage->GetName(), i);
             const VulkanImage &vulkanImage = static_cast<const VulkanImage&>(*attachment.outputImage);
 
@@ -317,10 +318,10 @@ namespace Sierra
                 }
             }
 
-            if (attachment.resolverImage.has_value())
+            if (attachment.resolverImage != nullptr)
             {
-                SR_ERROR_IF(attachment.resolverImage.value().get()->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}]'s resolver image, as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), attachment.resolverImage.value().get()->GetName(), i);
-                const VulkanImage &vulkanResolverImage = static_cast<const VulkanImage&>(*attachment.resolverImage.value().get());
+                SR_ERROR_IF(attachment.resolverImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}] using image [{1}] as attachment [{2}]'s resolver image, as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), attachment.resolverImage->GetName(), i);
+                const VulkanImage &vulkanResolverImage = static_cast<const VulkanImage&>(*attachment.resolverImage);
 
                 attachmentViews.emplace_back(vulkanResolverImage.GetVulkanImageView());
                 switch (vulkanResolverImage.GetFormat())
@@ -328,7 +329,7 @@ namespace Sierra
                     case ImageFormat::D16_UNorm:
                     case ImageFormat::D32_Float:
                     {
-                        clearValues.emplace_back().depthStencil = { 1.0f, 0 };
+                        clearValues.emplace_back().depthStencil = { attachment.clearValue.r, 0 };
                         break;
                     }
                     default:

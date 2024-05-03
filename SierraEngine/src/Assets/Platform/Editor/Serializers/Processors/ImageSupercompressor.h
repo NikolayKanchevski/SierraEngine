@@ -36,7 +36,7 @@ namespace SierraEngine
     struct ImageSupercompressInfo
     {
         const Sierra::FileManager &fileManager;
-        const std::initializer_list<std::initializer_list<std::filesystem::path>> &levelFilePaths;
+        const std::span<const std::span<const std::filesystem::path>> &levelFilePaths;
 
         bool normalMap = false;
         bool generateMipMaps = false;

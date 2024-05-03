@@ -28,10 +28,10 @@ namespace Sierra
 
         // Configure pipeline descriptor's shaders
         [renderPipelineDescriptor setVertexFunction: metalVertexShader.GetEntryFunction()];
-        if (createInfo.fragmentShader.has_value() && createInfo.fragmentShader->get() != nil)
+        if (createInfo.fragmentShader != nullptr)
         {
-            SR_ERROR_IF(createInfo.fragmentShader->get()->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.fragmentShader->get()->GetName());
-            const MetalShader &metalFragmentShader = static_cast<const MetalShader&>(*createInfo.fragmentShader->get());
+            SR_ERROR_IF(createInfo.fragmentShader->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.fragmentShader->GetName());
+            const MetalShader &metalFragmentShader = static_cast<const MetalShader&>(*createInfo.fragmentShader);
 
             [renderPipelineDescriptor setFragmentFunction: metalFragmentShader.GetEntryFunction()];
             hasFragmentShader = true;
@@ -65,7 +65,7 @@ namespace Sierra
         {
             [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setBufferIndex: MetalDevice::VERTEX_BUFFER_INDEX];
             [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setOffset: vertexByteStride];
-            switch (*(createInfo.vertexInputs.begin() + i))
+            switch (createInfo.vertexInputs[i])
             {
                 case VertexInput::Int8:          { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar];             vertexByteStride += 1 * 1; break; }
                 case VertexInput::UInt8:         { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar];            vertexByteStride += 1 * 1; break; }

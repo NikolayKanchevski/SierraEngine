@@ -113,9 +113,9 @@ namespace Sierra
     {
         std::string_view name = "Graphics Pipeline";
 
-        const std::initializer_list<VertexInput> &vertexInputs = { };
+        const std::span<const VertexInput> &vertexInputs = { };
         const std::unique_ptr<Shader> &vertexShader;
-        const std::optional<std::reference_wrapper<const std::unique_ptr<Shader>>> &fragmentShader = std::nullopt;
+        const std::unique_ptr<Shader> &fragmentShader = nullptr;
 
         uint16 pushConstantSize = 0;
         ImageSampling sampling = ImageSampling::x1;

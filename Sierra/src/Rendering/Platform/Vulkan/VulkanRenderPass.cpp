@@ -26,7 +26,7 @@ namespace Sierra
         attachmentDescriptions.reserve(createInfo.attachments.size() * 2); // NOTE: We are reserving twice the space, so we can potentially put resolve attachments at back without reallocating and invalidating pointer connections
         for (uint32 i = 0; i < createInfo.attachments.size(); i++)
         {
-            const RenderPassAttachment &attachment = *(createInfo.attachments.begin() + i);
+            const RenderPassAttachment &attachment = createInfo.attachments[i];
 
             SR_ERROR_IF(attachment.templateOutputImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not use image [{0}] of attachment [{1}]'s output image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.templateOutputImage->GetName(), i, GetName());
             const VulkanImage &vulkanTemplateImage = static_cast<const VulkanImage&>(*attachment.templateOutputImage);
@@ -56,10 +56,10 @@ namespace Sierra
             outputImageAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             outputImageAttachment.finalLayout = attachment.type == RenderPassAttachmentType::Color ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-            if (attachment.templateResolverImage.has_value())
+            if (attachment.templateResolverImage != nullptr)
             {
-                SR_ERROR_IF(attachment.templateResolverImage->get()->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot not use image [{0}] of attachment [{1}]'s resolver image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.templateResolverImage->get()->GetName(), i, GetName());
-                const VulkanImage &vulkanResolveImage = static_cast<const VulkanImage&>(*attachment.templateResolverImage->get());
+                SR_ERROR_IF(attachment.templateResolverImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot not use image [{0}] of attachment [{1}]'s resolver image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.templateResolverImage->GetName(), i, GetName());
+                const VulkanImage &vulkanResolveImage = static_cast<const VulkanImage&>(*attachment.templateResolverImage);
 
                 // Set up framebuffer attachment format of resolver image
                 VkFormat &resolveAttachmentImageFormat = framebufferAttachmentImageFormats.emplace_back();
@@ -109,18 +109,18 @@ namespace Sierra
         // Set subpass descriptions
         for (uint32 i = 0; i < createInfo.subpassDescriptions.size(); i++)
         {
-            const SubpassDescription &subpass = *(createInfo.subpassDescriptions.begin() + i);
+            const SubpassDescription &subpass = createInfo.subpassDescriptions[i];
             subpassDescriptions[i].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
             // Create render target attachment references (they live in the outer scope, in the attachment references vectors, so they are not deallocated after the loop)
             for (const uint32 renderTargetIndex : subpass.renderTargets)
             {
-                const RenderPassAttachment &renderTarget = *(createInfo.attachments.begin() + renderTargetIndex);
+                const RenderPassAttachment &renderTarget = createInfo.attachments[renderTargetIndex];
 
                 // Check attachment type, then create and assign a VkAttachmentReference
                 if (renderTarget.type == RenderPassAttachmentType::Color)
                 {
-                    colorAttachmentReferences[i].push_back({ .attachment = renderTarget.templateResolverImage.has_value() * static_cast<uint32_t>(createInfo.attachments.size() + renderTargetIndex), .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
+                    colorAttachmentReferences[i].push_back({ .attachment = (renderTarget.templateResolverImage != nullptr) * static_cast<uint32_t>(createInfo.attachments.size() + renderTargetIndex), .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
                 }
                 else if (renderTarget.type == RenderPassAttachmentType::Depth)
                 {
@@ -128,7 +128,7 @@ namespace Sierra
                     hasDepthAttachment = true;
                 }
 
-                if (renderTarget.templateResolverImage.has_value())
+                if (renderTarget.templateResolverImage != nullptr)
                 {
                     resolveAttachmentReferences[i].push_back({ .attachment = renderTargetIndex, .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
                 }

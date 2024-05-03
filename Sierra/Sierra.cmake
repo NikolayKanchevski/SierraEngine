@@ -95,11 +95,6 @@ function(SierraBuildApplication SOURCE_FILES)
     target_link_libraries(${SIERRA_APPLICATION_NAME} PRIVATE Sierra)
     target_include_directories(${SIERRA_APPLICATION_NAME} PRIVATE ${SIERRA_DIRECTORY_PATH}/include/)
 
-    # === EXTENSION LINKING === #
-    if(SIERRA_ENABLE_IMGUI_EXTENSION)
-        add_subdirectory(${SIERRA_DIRECTORY_PATH}/src/Extensions/ImGui/ ${SIERRA_DIRECTORY_PATH}/src/Extensions/ImGui/)
-    endif()
-
     # === RUN UPDATE SCRIPT === #
     find_package(Python)
     if(Python_FOUND)

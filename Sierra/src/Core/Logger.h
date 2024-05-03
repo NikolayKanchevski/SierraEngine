@@ -122,13 +122,13 @@ namespace Sierra
         #define SR_INFO_IF(EXPRESSION, ...) static_cast<void>(EXPRESSION)
         #define SR_WARNING_IF(EXPRESSION, ...) static_cast<void>(EXPRESSION)
         #define SR_ERROR_IF(EXPRESSION, ...) static_cast<void>(EXPRESSION)
+    #else
+        #define APP_INFO(...)
+        #define APP_WARNING(...)
+        #define APP_ERROR(...)
+
+        #define APP_INFO_IF(EXPRESSION, ...) static_cast<void>(EXPRESSION)
+        #define APP_WARNING_IF(EXPRESSION, ...) static_cast<void>(EXPRESSION)
+        #define APP_ERROR_IF(EXPRESSION, ...) static_cast<void>(EXPRESSION)
     #endif
-
-    #define APP_INFO(...)
-    #define APP_WARNING(...)
-    #define APP_ERROR(...)
-
-    #define APP_INFO_IF(EXPRESSION, ...) static_cast<void>(EXPRESSION)
-    #define APP_WARNING_IF(EXPRESSION, ...) static_cast<void>(EXPRESSION)
-    #define APP_ERROR_IF(EXPRESSION, ...) static_cast<void>(EXPRESSION)
 #endif

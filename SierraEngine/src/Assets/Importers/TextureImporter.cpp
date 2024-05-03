@@ -21,7 +21,7 @@ namespace SierraEngine
     std::optional<ImportedTexture> TextureImporter::Import(const TextureImportInfo &importInfo, const std::span<const uint8> serializedTextureMemory) const
     {
         const SerializedTexture &serializedTexture = *reinterpret_cast<const SerializedTexture*>(serializedTextureMemory.data());
-        const std::span<const uint8> blob = { serializedTextureMemory.data() + sizeof(SerializedTexture), serializedTextureMemory.size_bytes() - sizeof(SerializedTexture) };
+        const std::span<const uint8> blob = serializedTextureMemory.subspan(sizeof(SerializedTexture), serializedTextureMemory.size() - sizeof(SerializedTexture));
 
         const ImageTranscoderCreateInfo transcoderCreateInfo = { };
         const ImageTranscodeInfo transcodeInfo = { .compressedMemory = blob };

@@ -34,7 +34,7 @@ namespace Sierra
         RenderPassAttachmentType type = RenderPassAttachmentType::Color;
 
         const std::unique_ptr<Image> &templateOutputImage;
-        const std::optional<std::reference_wrapper<const std::unique_ptr<Image>>> templateResolverImage = std::nullopt;
+        const std::unique_ptr<Image> &templateResolverImage = nullptr;
 
         RenderPassAttachmentLoadOperation loadOperation = RenderPassAttachmentLoadOperation::Clear;
         RenderPassAttachmentStoreOperation storeOperation = RenderPassAttachmentStoreOperation::Store;
@@ -42,21 +42,21 @@ namespace Sierra
 
     struct SubpassDescription
     {
-        const std::initializer_list<uint32> &renderTargets = { };
-        const std::initializer_list<uint32> &inputs = { };
+        const std::span<const uint32> &renderTargets = { };
+        const std::span<const uint32> &inputs = { };
     };
 
     struct RenderPassCreateInfo
     {
         std::string_view name = "Render Pass";
-        const std::initializer_list<RenderPassAttachment> &attachments = { };
-        const std::initializer_list<SubpassDescription> &subpassDescriptions = { };
+        const std::span<const RenderPassAttachment> &attachments = { };
+        const std::span<const SubpassDescription> &subpassDescriptions = { };
     };
 
     struct RenderPassBeginAttachment
     {
         const std::unique_ptr<Image> &outputImage;
-        const std::optional<std::reference_wrapper<const std::unique_ptr<Image>>> &resolverImage = std::nullopt;
+        const std::unique_ptr<Image> &resolverImage = nullptr;
         const ColorRGBA32 &clearValue = { 0.0f, 0.0f, 0.0f, 1.0f };
     };
 

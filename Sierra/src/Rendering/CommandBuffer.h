@@ -66,7 +66,7 @@ namespace Sierra
         virtual void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, uint32 level = 0, uint32 layer = 0, const Vector2UInt &pixelRange = { 0, 0 }, uint64 sourceByteOffset = 0, const Vector2UInt &destinationPixelOffset = { 0, 0 }) = 0;
         virtual void GenerateMipMapsForImage(const std::unique_ptr<Image> &image) = 0;
 
-        virtual void BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::initializer_list<RenderPassBeginAttachment> &attachments) = 0;
+        virtual void BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::span<const RenderPassBeginAttachment> &attachments) = 0;
         virtual void BeginNextSubpass(const std::unique_ptr<RenderPass> &renderPass) = 0;
         virtual void EndRenderPass(const std::unique_ptr<RenderPass> &renderPass) = 0;
 

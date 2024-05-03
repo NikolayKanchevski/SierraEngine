@@ -43,13 +43,13 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void MetalDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer,  const std::initializer_list<std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait) const
+    void MetalDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer,  const std::span<const std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait) const
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}] with a graphics API, that differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
         const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
 
         // If we do not need any manual synchronization, directly submit command buffer
-        if (commandBuffersToWait.size() == 0)
+        if (commandBuffersToWait.empty())
         {
             [metalCommandBuffer.GetMetalCommandBuffer() encodeSignalEvent: sharedSignalSemaphore value: metalCommandBuffer.GetCompletionSignalValue()];
             [metalCommandBuffer.GetMetalCommandBuffer() commit];
@@ -67,7 +67,7 @@ namespace Sierra
         // Decrement semaphore counter after every command buffer to wait on until it reaches 0, then submit
         for (uint32 i = 0; i < commandBuffersToWait.size(); i++)
         {
-            const std::unique_ptr<CommandBuffer> &commandBufferToWait = (commandBuffersToWait.begin() + i)->get();
+            const std::unique_ptr<CommandBuffer> &commandBufferToWait = commandBuffersToWait[i];
             SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName(), commandBufferToWait->GetName(), i);
 
             const MetalCommandBuffer &metalCommandBufferToWait = static_cast<const MetalCommandBuffer&>(*commandBufferToWait);

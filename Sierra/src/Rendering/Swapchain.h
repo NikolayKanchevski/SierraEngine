@@ -41,6 +41,12 @@ namespace Sierra
         VSync
     };
 
+    enum class SwapchainBuffering : bool
+    {
+        DoubleBuffering,
+        TripleBuffering
+    };
+
     enum class SwapchainImageMemoryType : uint8
     {
         UNorm8,
@@ -53,6 +59,7 @@ namespace Sierra
         std::string_view name = "Swapchain";
         std::unique_ptr<Window> &window;
         SwapchainPresentationMode preferredPresentationMode = SwapchainPresentationMode::VSync;
+        SwapchainBuffering preferredBuffering = !SR_PLATFORM_MOBILE ? SwapchainBuffering::TripleBuffering : SwapchainBuffering::DoubleBuffering;
         SwapchainImageMemoryType preferredImageMemoryType = SwapchainImageMemoryType::UNorm8;
     };
 

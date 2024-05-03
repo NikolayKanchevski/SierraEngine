@@ -28,7 +28,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanSwapchain::VulkanSwapchain(const VulkanInstance &instance, const VulkanDevice &device, const SwapchainCreateInfo &createInfo)
-        : Swapchain(createInfo), VulkanResource(createInfo.name), instance(instance), device(device), window(createInfo.window), surface(NativeSurface::Create(instance, createInfo.window)), preferredPresentationMode(createInfo.preferredPresentationMode), preferredImageMemoryType(createInfo.preferredImageMemoryType)
+        : Swapchain(createInfo), VulkanResource(createInfo.name), instance(instance), device(device), window(createInfo.window), surface(NativeSurface::Create(instance, createInfo.window)), preferredPresentationMode(createInfo.preferredPresentationMode), preferredBuffering(createInfo.preferredBuffering), preferredImageMemoryType(createInfo.preferredImageMemoryType)
     {
         SR_ERROR_IF(!device.IsExtensionLoaded(VK_KHR_SWAPCHAIN_EXTENSION_NAME), "[Vulkan]: Cannot create swapchain [{0}], as the provided device [{1}] does not support the {2} extension!", GetName(), device.GetName(), VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
@@ -266,7 +266,13 @@ namespace Sierra
         instance.GetFunctionTable().vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.GetPhysicalDevice(), surface, &surfaceCapabilities);
 
         // Use at least 3 images per frame (for triple-buffering) if supported, otherwise the max allowed
-        const uint32 preferredConcurrentFrameCount = glm::clamp(3U, surfaceCapabilities.minImageCount, glm::max(surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount));
+        uint32 preferredConcurrentFrameCount = 0;
+        switch (preferredBuffering)
+        {
+            case SwapchainBuffering::DoubleBuffering:       { preferredConcurrentFrameCount = 2; break; }
+            case SwapchainBuffering::TripleBuffering:       { preferredConcurrentFrameCount = 3; break; }
+        }
+        preferredConcurrentFrameCount = glm::clamp(preferredConcurrentFrameCount, surfaceCapabilities.minImageCount, glm::max(surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount));
 
         // Set up swapchain creation info
         const VkSwapchainCreateInfoKHR swapchainCreateInfo

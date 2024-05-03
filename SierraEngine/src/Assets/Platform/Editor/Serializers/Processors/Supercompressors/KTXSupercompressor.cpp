@@ -31,7 +31,7 @@ namespace SierraEngine
 
     std::optional<std::vector<uint8>> KTXSupercompressor::Supercompress(const ImageSupercompressInfo &compressInfo) const
     {
-        if (compressInfo.levelFilePaths.size() == 0 || compressInfo.levelFilePaths.begin()->size() == 0)
+        if (compressInfo.levelFilePaths.empty() || compressInfo.levelFilePaths.begin()->size() == 0)
         {
             APP_WARNING("Cannot KTX compress texture with no file paths specified!");
             return std::nullopt;
@@ -110,7 +110,7 @@ namespace SierraEngine
                 std::unique_ptr<stbi_uc, decltype(stbi_image_free)*> levelMemory = { nullptr, stbi_image_free };
                 {
                     // Read compressed image file for current level
-                    std::optional<Sierra::File> levelFile = compressInfo.fileManager.OpenFile(*((compressInfo.levelFilePaths.begin() + level)->begin() + layer));
+                    std::optional<Sierra::File> levelFile = compressInfo.fileManager.OpenFile(compressInfo.levelFilePaths[level][layer]);
                     if (!levelFile.has_value())
                     {
                         APP_WARNING("Cannot KTX compress texture [{0}], as image of level [{1}] layer [{2}] could not be read!", compressInfo.levelFilePaths.begin()->begin()->string(), level, layer);

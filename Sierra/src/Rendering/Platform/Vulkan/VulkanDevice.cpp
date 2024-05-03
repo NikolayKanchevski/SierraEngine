@@ -1239,7 +1239,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void VulkanDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::initializer_list<std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait) const
+    void VulkanDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::span<const std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait) const
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit for command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
         const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);
@@ -1248,7 +1248,7 @@ namespace Sierra
         uint64 waitValue = 0;
         for (uint32 i = 0; i < commandBuffersToWait.size(); i++)
         {
-            const std::unique_ptr<CommandBuffer> &commandBufferToWait = (commandBuffersToWait.begin() + i)->get();
+            const std::unique_ptr<CommandBuffer> &commandBufferToWait = commandBuffersToWait[i].get();
             SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName(), commandBufferToWait->GetName(), i);
 
             const VulkanCommandBuffer &vulkanCommandBufferToWait = static_cast<const VulkanCommandBuffer&>(*commandBufferToWait);

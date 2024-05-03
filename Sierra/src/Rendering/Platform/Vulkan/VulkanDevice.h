@@ -20,7 +20,7 @@ namespace Sierra
         VulkanDevice(const VulkanInstance &instance, const DeviceCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer,  const std::initializer_list<std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait = { }) const override;
+        void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer,  const std::span<const std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait = { }) const override;
         void WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
 
         /* --- GETTER METHODS --- */

@@ -17,7 +17,7 @@ namespace SierraEngine
     struct TextureSerializeInfo
     {
         const Sierra::FileManager &fileManager;
-        const std::initializer_list<std::initializer_list<std::filesystem::path>> &levelFilePaths;
+        const std::span<const std::span<const std::filesystem::path>> &levelFilePaths;
 
         TextureType type = TextureType::Undefined;
         bool generateMipMaps = false;
