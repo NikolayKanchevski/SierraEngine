@@ -20,17 +20,17 @@ namespace Sierra
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
             .flags = static_cast<uint32>(createInfo.type == ImageType::Cube) * VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
-            .imageType = VK_IMAGE_TYPE_2D,
+            .imageType = ImageTypeToVkImageType(createInfo.type),
             .format = ImageFormatToVkFormat(createInfo.format),
             .extent = {
                 .width = createInfo.width,
                 .height = createInfo.height,
-                .depth = 1
+                .depth = createInfo.depth
             },
             .mipLevels = createInfo.levelCount,
             .arrayLayers = createInfo.layerCount,
             .samples = ImageSamplingToVkSampleCountFlags(createInfo.sampling),
-            .tiling = createInfo.usage != ImageUsage::SourceMemory ? VK_IMAGE_TILING_OPTIMAL : VK_IMAGE_TILING_LINEAR,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = usageFlags,
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
@@ -52,17 +52,12 @@ namespace Sierra
         if (createInfo.usage & ImageUsage::DepthAttachment) aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
         else aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
-        // Determine view type
-        VkImageViewType imageViewType = VK_IMAGE_VIEW_TYPE_2D;
-        if (createInfo.type == ImageType::Cube) imageViewType = VK_IMAGE_VIEW_TYPE_CUBE;
-        else if (createInfo.layerCount > 1) imageViewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-
         // Set up image view create info
         const VkImageViewCreateInfo imageViewCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
             .image = image,
-            .viewType = imageViewType,
+            .viewType = ImageTypeToVkImageViewType(createInfo.type, createInfo.layerCount),
             .format = imageCreateInfo.format,
             .components = {
                 .r = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -153,6 +148,17 @@ namespace Sierra
     }
 
     /* --- CONVERSIONS --- */
+
+    VkImageType VulkanImage::ImageTypeToVkImageType(const ImageType type)
+    {
+        switch (type)
+        {
+            case ImageType::Line:           return VK_IMAGE_TYPE_1D;
+            case ImageType::Plane:
+            case ImageType::Cube:           return VK_IMAGE_TYPE_2D;
+            case ImageType::Volume:         return VK_IMAGE_TYPE_3D;
+        }
+    }
 
     VkFormat VulkanImage::ImageFormatToVkFormat(const ImageFormat format)
     {
@@ -296,11 +302,22 @@ namespace Sierra
     {
         switch (memoryLocation)
         {
-            case ImageMemoryLocation::CPU:         return VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
-            case ImageMemoryLocation::GPU:       return VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+            case ImageMemoryLocation::CPU:      return VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+            case ImageMemoryLocation::GPU:      return VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
         }
 
         return VMA_MEMORY_USAGE_AUTO;
+    }
+
+    VkImageViewType VulkanImage::ImageTypeToVkImageViewType(const ImageType type, const uint32 layerCount)
+    {
+        switch (type)
+        {
+            case ImageType::Line:           return layerCount == 1 ? VK_IMAGE_VIEW_TYPE_1D : VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+            case ImageType::Plane:          return layerCount == 1 ? VK_IMAGE_VIEW_TYPE_2D : VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            case ImageType::Volume:         return VK_IMAGE_VIEW_TYPE_3D;
+            case ImageType::Cube:           return (layerCount / 6) == 1 ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+        }
     }
 
 }

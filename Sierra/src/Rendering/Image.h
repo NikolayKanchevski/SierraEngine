@@ -1,4 +1,4 @@
-//
+ //
 // Created by Nikolay Kanchevski on 6.12.23.
 //
 
@@ -9,9 +9,11 @@
 namespace Sierra
 {
 
-    enum class ImageType : bool
+    enum class ImageType : uint8
     {
+        Line,
         Plane,
+        Volume,
         Cube
     };
 
@@ -465,7 +467,8 @@ namespace Sierra
     {
         std::string_view name = "Image";
         uint32 width = 0;
-        uint32 height = 0;
+        uint32 height = 1;
+        uint32 depth = 1;
 
         ImageType type = ImageType::Plane;
         ImageFormat format = ImageFormat::Undefined;
@@ -484,10 +487,11 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint32 GetWidth() const { return width; }
         [[nodiscard]] inline uint32 GetHeight() const { return height; }
+        [[nodiscard]] inline uint32 GetDepth() const { return depth; }
         [[nodiscard]] inline ImageFormat GetFormat() const { return format; }
 
         [[nodiscard]] inline float32 GetPixelMemorySize() const { return ImageFormatToPixelMemorySize(format); }
-        [[nodiscard]] inline uint64 GetLayerMemorySize() const { return static_cast<uint64>(static_cast<uint64>(width) * height * GetPixelMemorySize()); }
+        [[nodiscard]] inline uint64 GetLayerMemorySize() const { return static_cast<uint64>(static_cast<uint64>(width) * height * depth * GetPixelMemorySize()); }
         [[nodiscard]] inline uint64 GetMemorySize() const { return GetLayerMemorySize() * layerCount; }
 
         [[nodiscard]] inline uint32 GetLevelCount() const { return levelCount; }
@@ -507,6 +511,7 @@ namespace Sierra
     private:
         uint32 width = 0;
         uint32 height = 0;
+        uint32 depth = 0;
         ImageFormat format = ImageFormat::Undefined;
 
         uint32 levelCount = 1;

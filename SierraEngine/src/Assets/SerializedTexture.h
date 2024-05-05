@@ -19,7 +19,7 @@ namespace SierraEngine
         Specular,
         Normal,
         Height,
-        Skybox
+        EnvironmentMap
     };
 
     struct SerializedTextureIndex

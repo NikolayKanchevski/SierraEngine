@@ -47,37 +47,12 @@
 #define float64vec3 dvec3
 #define float64vec4 dvec4
 
-const uint32 SIERRA_RESERVED_SET = 0;
-
+const uint32 SIERRA_RESERVED_SET                    = 0;
 const uint32 SIERRA_UNIFORM_BUFFER_BINDING          = 0;
 const uint32 SIERRA_STORAGE_BUFFER_BINDING          = 1;
 const uint32 SIERRA_SAMPLED_IMAGE_BINDING           = 2;
-const uint32 SIERRA_SAMPLED_CUBEMAP_BINDING         = 3;
-const uint32 SIERRA_STORAGE_IMAGE_BINDING           = 4;
-const uint32 SIERRA_STORAGE_CUBEMAP_BINDING         = 5;
-const uint32 SIERRA_SAMPLER_BINDING                 = 6;
-
-layout(set = SIERRA_RESERVED_SET, binding = SIERRA_UNIFORM_BUFFER_BINDING) uniform _sierra_type_uniform_buffer_declaration {
-    uint32 x;
-    uint32 y;
-    uint32 z;
-    uint32 w;
-} _sierra_uniform_buffer_declaration[];
-
-layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_BUFFER_BINDING) buffer _sierra_type_storage_buffer_declaration {
-    uint32 x;
-    uint32 y;
-    uint32 z;
-    uint32 w;
-} _sierra_storage_buffer_declaration[];
-
-layout(set = SIERRA_RESERVED_SET, binding = SIERRA_SAMPLED_IMAGE_BINDING) uniform texture2D _sierra_sampled_image_declaration[];
-layout(set = SIERRA_RESERVED_SET, binding = SIERRA_SAMPLED_CUBEMAP_BINDING) uniform textureCube _sierra_sampled_cubemap_declaration[];
-
-layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_IMAGE_BINDING, rgba8) uniform image2D _sierra_storage_image_declaration[];
-layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_CUBEMAP_BINDING, rgba8) uniform image3D _sierra_storage_cubemap_declaration[];
-
-layout(set = SIERRA_RESERVED_SET, binding = SIERRA_SAMPLER_BINDING) uniform sampler _sierra_sampler_declaration[];
+const uint32 SIERRA_STORAGE_IMAGE_BINDING           = 3;
+const uint32 SIERRA_SAMPLER_BINDING                 = 4;
 
 #define SIERRA_PUSH_CONSTANT(NAME, TYPE)                                                                                                                                                \
     layout(push_constant) uniform _sierra_type_##TYPE                                                                                                                                   \
@@ -113,28 +88,89 @@ layout(set = SIERRA_RESERVED_SET, binding = SIERRA_SAMPLER_BINDING) uniform samp
         TYPE value;                                                                                                                                                                     \
     } _sierra_##NAME[]
 
-#define SIERRA_SAMPLED_IMAGE(NAME, INDEX)                                                                                                                                               \
-    uint32 _sierra_index_##NAME = INDEX
+#define SIERRA_SAMPLED_IMAGE_1D(NAME, INDEX)                                                                                                                                            \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_SAMPLED_IMAGE_BINDING) uniform texture1D _sierra_##NAME[]
 
-#define SIERRA_SAMPLED_CUBEMAP(NAME, INDEX)                                                                                                                                             \
-    uint32 _sierra_index_##NAME = INDEX
+#define SIERRA_SAMPLED_IMAGE_2D(NAME, INDEX)                                                                                                                                            \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_SAMPLED_IMAGE_BINDING) uniform texture2D _sierra_##NAME[]
 
-#define SIERRA_STORAGE_IMAGE(NAME, INDEX)                                                                                                                                               \
-    uint32 _sierra_index_##NAME = INDEX
+#define SIERRA_SAMPLED_IMAGE_3D(NAME, INDEX)                                                                                                                                            \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_SAMPLED_IMAGE_BINDING) uniform texture3D _sierra_##NAME[]
+
+#define SIERRA_SAMPLED_IMAGE_CUBE(NAME, INDEX)                                                                                                                                          \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_SAMPLED_IMAGE_BINDING) uniform textureCube _sierra_##NAME[]
+
+#define SIERRA_STORAGE_IMAGE_1D(NAME, INDEX)                                                                                                                                            \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_IMAGE_BINDING) uniform image1D _sierra_##NAME[]
+
+#define SIERRA_STORAGE_IMAGE_2D(NAME, INDEX)                                                                                                                                            \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_IMAGE_BINDING) uniform image2D _sierra_##NAME[]
+
+#define SIERRA_STORAGE_IMAGE_3D(NAME, INDEX)                                                                                                                                            \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_IMAGE_BINDING) uniform image3D _sierra_##NAME[]
+
+#define SIERRA_STORAGE_IMAGE_CUBE(NAME, INDEX)                                                                                                                                          \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_IMAGE_BINDING) uniform imageCube _sierra_##NAME[]
+
+#define SIERRA_READ_ONLY_STORAGE_IMAGE_1D(NAME, INDEX)                                                                                                                                  \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_IMAGE_BINDING) uniform readonly image1D _sierra_##NAME[]
+
+
+#define SIERRA_READ_ONLY_STORAGE_IMAGE_2D(NAME, INDEX)                                                                                                                                  \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_IMAGE_BINDING) uniform readonly image2D _sierra_##NAME[]
+
+#define SIERRA_READ_ONLY_STORAGE_IMAGE_3D(NAME, INDEX)                                                                                                                                  \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_IMAGE_BINDING) uniform readonly image3D _sierra_##NAME[]
+
+#define SIERRA_READ_ONLY_STORAGE_IMAGE_CUBE(NAME, INDEX)                                                                                                                                \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_IMAGE_BINDING) uniform readonly imageCube _sierra_##NAME[]
+
+#define SIERRA_WRITE_ONLY_STORAGE_IMAGE_1D(NAME, INDEX)                                                                                                                                 \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_IMAGE_BINDING) uniform writeonly image1D _sierra_##NAME[]
+
+#define SIERRA_WRITE_ONLY_STORAGE_IMAGE_2D(NAME, INDEX)                                                                                                                                 \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_IMAGE_BINDING) uniform writeonly image2D _sierra_##NAME[]
+
+#define SIERRA_WRITE_ONLY_STORAGE_IMAGE_3D(NAME, INDEX)                                                                                                                                 \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_IMAGE_BINDING) uniform writeonly image3D _sierra_##NAME[]
+
+#define SIERRA_WRITE_ONLY_STORAGE_IMAGE_CUBE(NAME, INDEX)                                                                                                                               \
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_IMAGE_BINDING) uniform writeonly imageCube _sierra_##NAME[]
 
 #define SIERRA_SAMPLER(NAME, INDEX)                                                                                                                                                     \
-    uint32 _sierra_index_##NAME = INDEX
+    uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_SAMPLER_BINDING) uniform sampler _sierra_##NAME[]
 
-#define SIERRA_GET_PUSH_CONSTANT(NAME)          _sierra_##NAME.value
-#define SIERRA_GET_UNIFORM_BUFFER(NAME)         _sierra_##NAME[_sierra_index_##NAME].value
-#define SIERRA_GET_STORAGE_BUFFER(NAME)         _sierra_##NAME[_sierra_index_##NAME].value
+#define SIERRA_GET_PUSH_CONSTANT(NAME)           _sierra_##NAME.value
+#define SIERRA_GET_UNIFORM_BUFFER(NAME)          _sierra_##NAME[_sierra_index_##NAME].value
+#define SIERRA_GET_STORAGE_BUFFER(NAME)          _sierra_##NAME[_sierra_index_##NAME].value
 
-#define SIERRA_GET_SAMPLED_IMAGE(NAME)           _sierra_sampled_image_declaration[_sierra_index_##NAME]
-#define SIERRA_GET_SAMPLED_CUBEMAP(NAME)         _sierra_sampled_cubemap_declaration[_sierra_index_##NAME]
+#define SIERRA_GET_SAMPLED_IMAGE_1D(NAME)        _sierra_##NAME[_sierra_index_##NAME]
+#define SIERRA_GET_SAMPLED_IMAGE_2D(NAME)        _sierra_##NAME[_sierra_index_##NAME]
+#define SIERRA_GET_SAMPLED_IMAGE_3D(NAME)        _sierra_##NAME[_sierra_index_##NAME]
+#define SIERRA_GET_SAMPLED_IMAGE_CUBE(NAME)      _sierra_##NAME[_sierra_index_##NAME]
 
-#define SIERRA_GET_STORAGE_IMAGE(NAME)           _sierra_storage_image_declaration[_sierra_index_##NAME]
-#define SIERRA_GET_STORAGE_CUBEMAP(NAME)         _sierra_storage_cubemap_declaration[_sierra_index_##NAME]
+#define SIERRA_GET_STORAGE_IMAGE_1D(NAME)        _sierra_##NAME[_sierra_index_##NAME]
+#define SIERRA_GET_STORAGE_IMAGE_2D(NAME)        _sierra_##NAME[_sierra_index_##NAME]
+#define SIERRA_GET_STORAGE_IMAGE_3D(NAME)        _sierra_##NAME[_sierra_index_##NAME]
+#define SIERRA_GET_STORAGE_CUBE(NAME)            _sierra_##NAME[_sierra_index_##NAME]
 
-#define SIERRA_GET_SAMPLER(NAME)                 _sierra_sampler_declaration[_sierra_index_##NAME]
+#define SIERRA_GET_SAMPLER(NAME)                 _sierra_##NAME[_sierra_index_##NAME]
 
 #endif

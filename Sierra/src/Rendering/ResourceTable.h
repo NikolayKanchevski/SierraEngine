@@ -29,22 +29,16 @@ namespace Sierra
         virtual void BindStorageBuffer(ResourceIndex index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) = 0;
 
         virtual void BindSampledImage(ResourceIndex index, const std::unique_ptr<Image> &image) = 0;
-        virtual void BindSampledCubemap(ResourceIndex index, const std::unique_ptr<Image> &image) = 0;
-        virtual void BindSampler(ResourceIndex index, const std::unique_ptr<Sampler> &sampler) = 0;
-
         virtual void BindStorageImage(ResourceIndex index, const std::unique_ptr<Image> &image) = 0;
-        virtual void BindStorageCubemap(ResourceIndex index, const std::unique_ptr<Image> &image) = 0;
+        virtual void BindSampler(ResourceIndex index, const std::unique_ptr<Sampler> &sampler) = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual uint32 GetUniformBufferCapacity() const = 0;
         [[nodiscard]] virtual uint32 GetStorageBufferCapacity() const = 0;
 
         [[nodiscard]] virtual uint32 GetSampledImageCapacity() const = 0;
-        [[nodiscard]] virtual uint32 GetSampledCubemapCapacity() const = 0;
-        [[nodiscard]] virtual uint32 GetSamplerCapacity() const = 0;
-
         [[nodiscard]] virtual uint32 GetStorageImageCapacity() const = 0;
-        [[nodiscard]] virtual uint32 GetStorageCubemapCapacity() const = 0;
+        [[nodiscard]] virtual uint32 GetSamplerCapacity() const = 0;
 
         /* --- OPERATORS --- */
         ResourceTable(const ResourceTable&) = delete;

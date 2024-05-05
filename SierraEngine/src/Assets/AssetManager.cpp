@@ -44,10 +44,10 @@ namespace SierraEngine
         {
             case TextureType::Undefined:
             case TextureType::Diffuse:
-            case TextureType::Skybox:           return defaultCheckeredTexture;
+            case TextureType::EnvironmentMap:           return defaultCheckeredTexture;
             case TextureType::Specular:
-            case TextureType::Height:           return defaultBlackTexture;
-            case TextureType::Normal:           return defaultNormalTexture;
+            case TextureType::Height:                   return defaultBlackTexture;
+            case TextureType::Normal:                   return defaultNormalTexture;
         }
 
         return defaultCheckeredTexture;

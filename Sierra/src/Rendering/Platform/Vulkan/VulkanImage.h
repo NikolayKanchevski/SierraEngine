@@ -28,10 +28,12 @@ namespace Sierra
         ~VulkanImage() override;
 
         /* --- CONVERSIONS --- */
+        static VkImageType ImageTypeToVkImageType(ImageType type);
         static VkFormat ImageFormatToVkFormat(ImageFormat format);
         static VkSampleCountFlagBits ImageSamplingToVkSampleCountFlags(ImageSampling sampling);
         static VkImageUsageFlags ImageUsageToVkImageUsageFlags(ImageUsage usage);
         static VmaMemoryUsage ImageMemoryLocationToVmaMemoryUsage(ImageMemoryLocation memoryLocation);
+        static VkImageViewType ImageTypeToVkImageViewType(ImageType type, uint32 layerCount);
 
     private:
         const VulkanDevice &device;

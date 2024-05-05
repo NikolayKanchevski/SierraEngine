@@ -6,7 +6,7 @@ import shutil
 import platform
 
 SHADER_COMPILER_VERSION_MAJOR: int = 1
-SHADER_COMPILER_VERSION_MINOR: int = 1
+SHADER_COMPILER_VERSION_MINOR: int = 2
 SHADER_COMPILER_VERSION_PATCH: int = 0
 
 CURRENT_DIRECTORY_PATH: str = os.path.dirname(os.path.realpath(__file__)).replace('\\', '/') + '/'

@@ -3,14 +3,10 @@
 //
 
 #include "Core/Application.h"
+using namespace SierraEngine;
 
 int main()
 {
-    using namespace SierraEngine;
-    std::unique_ptr<Application> application = std::make_unique<Application>(Sierra::ApplicationCreateInfo {
-        .name = "Sierra Engine",
-        .version = Sierra::Version({ 1, 0, 0 })
-    });
-
-    application->Run();
+    Application application = Application({ .name = "Sierra Engine", .version = Sierra::Version({ 1, 0, 0 }) });
+    application.Run();
 }

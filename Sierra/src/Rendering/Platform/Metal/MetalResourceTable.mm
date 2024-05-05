@@ -22,51 +22,36 @@ namespace Sierra
         NSMutableArray<MTLArgumentDescriptor*>* const argumentDescriptors = [[NSMutableArray alloc] initWithCapacity: MetalDevice::BINDLESS_ARGUMENT_BUFFER_INDEX_COUNT];
 
         [argumentDescriptors addObject: [MTLArgumentDescriptor argumentDescriptor]];
-        [[argumentDescriptors objectAtIndex: 0] setDataType: MTLDataTypePointer];
-        [[argumentDescriptors objectAtIndex: 0] setIndex: UNIFORM_BUFFER_INDEX];
-        [[argumentDescriptors objectAtIndex: 0] setAccess: MTLBindingAccessReadOnly];
-        [[argumentDescriptors objectAtIndex: 0] setArrayLength: UNIFORM_BUFFER_CAPACITY];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_UNIFORM_BUFFER_INDEX] setDataType: MTLDataTypePointer];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_UNIFORM_BUFFER_INDEX] setIndex: UNIFORM_BUFFER_INDEX];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_UNIFORM_BUFFER_INDEX] setAccess: MTLBindingAccessReadOnly];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_UNIFORM_BUFFER_INDEX] setArrayLength: UNIFORM_BUFFER_CAPACITY];
 
         [argumentDescriptors addObject: [MTLArgumentDescriptor argumentDescriptor]];
-        [[argumentDescriptors objectAtIndex: 1] setDataType: MTLDataTypePointer];
-        [[argumentDescriptors objectAtIndex: 1] setIndex: STORAGE_BUFFER_INDEX];
-        [[argumentDescriptors objectAtIndex: 1] setAccess: MTLBindingAccessReadWrite];
-        [[argumentDescriptors objectAtIndex: 1] setArrayLength: STORAGE_BUFFER_CAPACITY];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_STORAGE_BUFFER_INDEX] setDataType: MTLDataTypePointer];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_STORAGE_BUFFER_INDEX] setIndex: STORAGE_BUFFER_INDEX];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_STORAGE_BUFFER_INDEX] setAccess: MTLBindingAccessReadWrite];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_STORAGE_BUFFER_INDEX] setArrayLength: STORAGE_BUFFER_CAPACITY];
 
         [argumentDescriptors addObject: [MTLArgumentDescriptor argumentDescriptor]];
-        [[argumentDescriptors objectAtIndex: 2] setDataType: MTLDataTypeTexture];
-        [[argumentDescriptors objectAtIndex: 2] setIndex: SAMPLED_IMAGE_INDEX];
-        [[argumentDescriptors objectAtIndex: 2] setAccess: MTLBindingAccessReadOnly];
-        [[argumentDescriptors objectAtIndex: 2] setTextureType: MTLTextureType2D];
-        [[argumentDescriptors objectAtIndex: 2] setArrayLength: SAMPLED_IMAGE_CAPACITY];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_SAMPLED_IMAGE_INDEX] setDataType: MTLDataTypeTexture];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_SAMPLED_IMAGE_INDEX] setIndex: SAMPLED_IMAGE_INDEX];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_SAMPLED_IMAGE_INDEX] setAccess: MTLBindingAccessReadOnly];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_SAMPLED_IMAGE_INDEX] setTextureType: MTLTextureTypeCube]; // This should be covering all texture types
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_SAMPLED_IMAGE_INDEX] setArrayLength: SAMPLED_IMAGE_CAPACITY];
 
         [argumentDescriptors addObject: [MTLArgumentDescriptor argumentDescriptor]];
-        [[argumentDescriptors objectAtIndex: 3] setDataType: MTLDataTypeTexture];
-        [[argumentDescriptors objectAtIndex: 3] setIndex: SAMPLED_CUBEMAP_INDEX];
-        [[argumentDescriptors objectAtIndex: 3] setIndex: SAMPLED_CUBEMAP_INDEX];
-        [[argumentDescriptors objectAtIndex: 3] setAccess: MTLBindingAccessReadOnly];
-        [[argumentDescriptors objectAtIndex: 3] setTextureType: MTLTextureTypeCube];
-        [[argumentDescriptors objectAtIndex: 3] setArrayLength: SAMPLED_CUBEMAP_CAPACITY];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_STORAGE_IMAGE_INDEX] setDataType: MTLDataTypeTexture];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_STORAGE_IMAGE_INDEX] setIndex: STORAGE_IMAGE_INDEX];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_STORAGE_IMAGE_INDEX] setAccess: MTLBindingAccessReadWrite];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_STORAGE_IMAGE_INDEX] setTextureType: MTLTextureTypeCube]; // This should be covering all texture types
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_STORAGE_IMAGE_INDEX] setArrayLength: STORAGE_IMAGE_CAPACITY];
 
         [argumentDescriptors addObject: [MTLArgumentDescriptor argumentDescriptor]];
-        [[argumentDescriptors objectAtIndex: 4] setDataType: MTLDataTypeTexture];
-        [[argumentDescriptors objectAtIndex: 4] setIndex: STORAGE_IMAGE_INDEX];
-        [[argumentDescriptors objectAtIndex: 4] setAccess: MTLBindingAccessReadWrite];
-        [[argumentDescriptors objectAtIndex: 4] setTextureType: MTLTextureType2D];
-        [[argumentDescriptors objectAtIndex: 4] setArrayLength: STORAGE_IMAGE_CAPACITY];
-
-        [argumentDescriptors addObject: [MTLArgumentDescriptor argumentDescriptor]];
-        [[argumentDescriptors objectAtIndex: 5] setDataType: MTLDataTypeTexture];
-        [[argumentDescriptors objectAtIndex: 5] setIndex: STORAGE_CUBEMAP_INDEX];
-        [[argumentDescriptors objectAtIndex: 5] setAccess: MTLBindingAccessReadWrite];
-        [[argumentDescriptors objectAtIndex: 5] setTextureType: MTLTextureTypeCube];
-        [[argumentDescriptors objectAtIndex: 5] setArrayLength: STORAGE_CUBEMAP_CAPACITY];
-
-        [argumentDescriptors addObject: [MTLArgumentDescriptor argumentDescriptor]];
-        [[argumentDescriptors objectAtIndex: 6] setDataType:  MTLDataTypeSampler];
-        [[argumentDescriptors objectAtIndex: 6] setIndex:  SAMPLER_INDEX];
-        [[argumentDescriptors objectAtIndex: 6] setAccess:  MTLBindingAccessReadOnly];
-        [[argumentDescriptors objectAtIndex: 6] setArrayLength:  SAMPLER_CAPACITY];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_SAMPLER_INDEX] setDataType: MTLDataTypeSampler];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_SAMPLER_INDEX] setIndex: SAMPLER_INDEX];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_SAMPLER_INDEX] setAccess: MTLBindingAccessReadOnly];
+        [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_SAMPLER_INDEX] setArrayLength: SAMPLER_CAPACITY];
 
         // Create encoder
         argumentEncoder = [device.GetMetalDevice() newArgumentEncoderWithArguments: argumentDescriptors];
@@ -129,36 +114,6 @@ namespace Sierra
         boundResources[BoundResourceEntry(index, MTLResourceUsageRead)] = metalImage.GetMetalTexture();
     }
 
-    void MetalResourceTable::BindSampledCubemap(const ResourceIndex index, const std::unique_ptr<Image> &image)
-    {
-        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind sampled cubemap [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image->GetName(), GetName());
-        const MetalImage &metalImage = static_cast<const MetalImage&>(*image);
-
-        if (index >= GetSampledCubemapCapacity())
-        {
-            SR_WARNING("[Metal]: Cannot bind sampled cubemap at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSampledCubemapCapacity() to query sampled cubemap capacity.", index, GetName());
-            return;
-        }
-
-        [argumentEncoder setTexture: metalImage.GetMetalTexture() atIndex: SAMPLED_CUBEMAP_INDEX + index];
-        boundResources[BoundResourceEntry(index, MTLResourceUsageRead)] = metalImage.GetMetalTexture();
-    }
-
-    void MetalResourceTable::BindSampler(const ResourceIndex index, const std::unique_ptr<Sampler> &sampler)
-    {
-        SR_ERROR_IF(sampler->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind sampler [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", sampler->GetName(), GetName());
-        const MetalSampler &metalSampler = static_cast<const MetalSampler&>(*sampler);
-
-        if (index >= GetSamplerCapacity())
-        {
-            SR_WARNING("[Metal]: Cannot bind sampler at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSamplerCapacity() to query sampler capacity.", index, GetName());
-            return;
-        }
-
-        [argumentEncoder setSamplerState: metalSampler.GetSamplerState() atIndex: SAMPLER_INDEX + index];
-        // NOTE: Sampler states do not derive from MTLResource, so we do not need to add them to bound resource map
-    }
-
     void MetalResourceTable::BindStorageImage(const ResourceIndex index, const std::unique_ptr<Image> &image)
     {
         SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind storage image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image->GetName(), GetName());
@@ -174,19 +129,19 @@ namespace Sierra
         boundResources[BoundResourceEntry(index, MTLResourceUsageRead | MTLResourceUsageWrite)] = metalImage.GetMetalTexture();
     }
 
-    void MetalResourceTable::BindStorageCubemap(const ResourceIndex index, const std::unique_ptr<Image> &image)
+    void MetalResourceTable::BindSampler(const ResourceIndex index, const std::unique_ptr<Sampler> &sampler)
     {
-        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind storage cubemap [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image->GetName(), GetName());
-        const MetalImage &metalImage = static_cast<const MetalImage&>(*image);
+        SR_ERROR_IF(sampler->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind sampler [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", sampler->GetName(), GetName());
+        const MetalSampler &metalSampler = static_cast<const MetalSampler&>(*sampler);
 
-        if (index >= GetStorageCubemapCapacity())
+        if (index >= GetSamplerCapacity())
         {
-            SR_WARNING("[Metal]: Cannot bind storage cubemap at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetStorageCubemapCapacity() to query storage cubemap capacity..", index, GetName());
+            SR_WARNING("[Metal]: Cannot bind sampler at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSamplerCapacity() to query sampler capacity.", index, GetName());
             return;
         }
 
-        [argumentEncoder setTexture: metalImage.GetMetalTexture() atIndex: STORAGE_IMAGE_INDEX + index];
-        boundResources[BoundResourceEntry(index, MTLResourceUsageRead | MTLResourceUsageWrite)] = metalImage.GetMetalTexture();
+        [argumentEncoder setSamplerState: metalSampler.GetSamplerState() atIndex: SAMPLER_INDEX + index];
+        // NOTE: Sampler states do not derive from MTLResource, so we do not need to add them to bound resource map
     }
 
     /* --- DESTRUCTOR --- */

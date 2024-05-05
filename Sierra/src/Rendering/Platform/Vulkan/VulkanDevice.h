@@ -56,14 +56,13 @@ namespace Sierra
         void SetObjectName(VkHandle object, VkObjectType objectType, std::string_view name) const;
 
         /* --- CONSTANTS --- */
+        constexpr static uint32 BINDLESS_SET                            = 0;
         constexpr static uint32 BINDLESS_UNIFORM_BUFFER_BINDING         = 0;
         constexpr static uint32 BINDLESS_STORAGE_BUFFER_BINDING         = 1;
         constexpr static uint32 BINDLESS_SAMPLED_IMAGE_BINDING          = 2;
-        constexpr static uint32 BINDLESS_SAMPLED_CUBEMAP_BINDING        = 3;
-        constexpr static uint32 BINDLESS_STORAGE_IMAGE_BINDING          = 4;
-        constexpr static uint32 BINDLESS_STORAGE_CUBEMAP_BINDING        = 5;
-        constexpr static uint32 BINDLESS_SAMPLER_BINDING                = 6;
-        constexpr static uint32 BINDLESS_BINDING_COUNT                  = 7;
+        constexpr static uint32 BINDLESS_STORAGE_IMAGE_BINDING          = 3;
+        constexpr static uint32 BINDLESS_SAMPLER_BINDING                = 4;
+        constexpr static uint32 BINDLESS_BINDING_COUNT                  = 5;
 
         /* --- DESTRUCTOR --- */
         ~VulkanDevice() override;

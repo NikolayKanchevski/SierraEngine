@@ -23,25 +23,18 @@ namespace Sierra
         void BindStorageBuffer(ResourceIndex index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
 
         void BindSampledImage(ResourceIndex index, const std::unique_ptr<Image> &image) override;
-        void BindSampledCubemap(ResourceIndex index, const std::unique_ptr<Image> &image) override;
-        void BindSampler(ResourceIndex index, const std::unique_ptr<Sampler> &sampler) override;
-
         void BindStorageImage(ResourceIndex index, const std::unique_ptr<Image> &image) override;
-        void BindStorageCubemap(ResourceIndex index, const std::unique_ptr<Image> &image) override;
+        void BindSampler(ResourceIndex index, const std::unique_ptr<Sampler> &sampler) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint32 GetUniformBufferCapacity() const override { return UNIFORM_BUFFER_CAPACITY; };
         [[nodiscard]] inline uint32 GetStorageBufferCapacity() const override { return STORAGE_BUFFER_CAPACITY; };
 
         [[nodiscard]] inline uint32 GetSampledImageCapacity() const override { return SAMPLED_IMAGE_CAPACITY; };
-        [[nodiscard]] inline uint32 GetSampledCubemapCapacity() const override { return SAMPLED_IMAGE_CAPACITY; };
+        [[nodiscard]] inline uint32 GetStorageImageCapacity() const override { return STORAGE_IMAGE_CAPACITY; };
         [[nodiscard]] inline uint32 GetSamplerCapacity() const override { return SAMPLER_CAPACITY; };
 
-        [[nodiscard]] inline uint32 GetStorageImageCapacity() const override { return STORAGE_IMAGE_CAPACITY; };
-        [[nodiscard]] inline uint32 GetStorageCubemapCapacity() const override { return STORAGE_CUBEMAP_CAPACITY; };
-
         [[nodiscard]] inline id<MTLBuffer> GetMetalArgumentBuffer() const { return argumentBuffer; }
-//        [[nodiscard]] inline const auto& GetArgumentBufferData() const { return *reinterpret_cast<const ArgumentBufferData*>([argumentBuffer contents]); }
         [[nodiscard]] inline const auto& GetBoundResources() const { return boundResources; }
 
         /* --- DESTRUCTOR --- */
@@ -50,27 +43,22 @@ namespace Sierra
     private:
         const MetalDevice &device;
 
-        // NOTE: These must match those of https://github.com/NikichaTV/ShaderConnect/blob/sierra/src/Platform/MetalSL/MetalSLShaderCompiler.cpp#L105
+        // NOTE: These must match those of https://github.com/NikichaTV/ShaderConnect/blob/sierra/src/Platform/MetalSL/MetalSLShaderCompiler.cpp#L104
         constexpr static uint32 UNIFORM_BUFFER_CAPACITY         = 500'000;
         constexpr static uint32 STORAGE_BUFFER_CAPACITY         = 500'000;
-        constexpr static uint32 SAMPLED_IMAGE_CAPACITY          = 250'000;
-        constexpr static uint32 SAMPLED_CUBEMAP_CAPACITY        = 250'000;
-        constexpr static uint32 STORAGE_IMAGE_CAPACITY          = 250'000;
-        constexpr static uint32 STORAGE_CUBEMAP_CAPACITY        = 250'000;
+        constexpr static uint32 SAMPLED_IMAGE_CAPACITY          = 500'000;
+        constexpr static uint32 STORAGE_IMAGE_CAPACITY          = 500'000;
         constexpr static uint32 SAMPLER_CAPACITY                = 1024;
 
         constexpr static uint32 UNIFORM_BUFFER_INDEX        = 0;
         constexpr static uint32 STORAGE_BUFFER_INDEX        = UNIFORM_BUFFER_INDEX + UNIFORM_BUFFER_CAPACITY;
         constexpr static uint32 SAMPLED_IMAGE_INDEX         = STORAGE_BUFFER_INDEX + STORAGE_BUFFER_CAPACITY;
-        constexpr static uint32 SAMPLED_CUBEMAP_INDEX       = SAMPLED_IMAGE_INDEX + SAMPLED_IMAGE_CAPACITY;
-        constexpr static uint32 STORAGE_IMAGE_INDEX         = SAMPLED_CUBEMAP_INDEX + SAMPLED_CUBEMAP_CAPACITY;
-        constexpr static uint32 STORAGE_CUBEMAP_INDEX       = STORAGE_IMAGE_INDEX + STORAGE_IMAGE_CAPACITY;
-        constexpr static uint32 SAMPLER_INDEX               = STORAGE_CUBEMAP_INDEX + STORAGE_CUBEMAP_CAPACITY;
+        constexpr static uint32 STORAGE_IMAGE_INDEX         = SAMPLED_IMAGE_INDEX + SAMPLED_IMAGE_CAPACITY;
+        constexpr static uint32 SAMPLER_INDEX               = STORAGE_IMAGE_INDEX + STORAGE_IMAGE_CAPACITY;
 
         id<MTLArgumentEncoder> argumentEncoder = nil;
         id<MTLBuffer> argumentBuffer = nil;
 
-        #pragma pack(1)
         class SIERRA_API BoundResourceEntry
         {
         public:
@@ -101,7 +89,6 @@ namespace Sierra
 
         };
         std::unordered_map<BoundResourceEntry, id<MTLResource>, BoundResourceEntry::Hasher> boundResources;
-        #pragma pack()
 
     };
 

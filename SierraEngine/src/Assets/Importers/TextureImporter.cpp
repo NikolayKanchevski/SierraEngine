@@ -54,12 +54,11 @@ namespace SierraEngine
         }
 
         // Create image
-        const bool cubemap = serializedTexture.index.type == TextureType::Skybox;
         std::unique_ptr<Sierra::Image> image = importInfo.renderingContext.CreateImage({
             .name = importInfo.name,
             .width = transcodedImage.value().width,
             .height = transcodedImage.value().height,
-            .type = cubemap ? Sierra::ImageType::Cube : Sierra::ImageType::Plane,
+            .type = serializedTexture.index.type == TextureType::EnvironmentMap ? Sierra::ImageType::Cube : Sierra::ImageType::Plane,
             .format = imageFormat.value(),
             .levelCount = static_cast<uint32>(transcodedImage.value().levelMemories.size()),
             .layerCount = transcodedImage.value().layerCount,

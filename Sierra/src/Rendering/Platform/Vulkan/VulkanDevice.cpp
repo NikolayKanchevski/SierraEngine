@@ -1116,49 +1116,35 @@ namespace Sierra
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_UNIFORM_BUFFER_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers, 250'000U),
+                    .descriptorCount = glm::min(MAX_UNIFORM_BUFFERS_PER_RESOURCE_TABLE, descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers),
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr
                 },
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_STORAGE_BUFFER_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                    .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers, 250'000U),
+                    .descriptorCount = glm::min(MAX_STORAGE_BUFFERS_PER_RESOURCE_TABLE, descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers),
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr
                 },
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_SAMPLED_IMAGE_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                    .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2, 250'000U),
-                    .stageFlags = VK_SHADER_STAGE_ALL,
-                    .pImmutableSamplers = nullptr
-                },
-                VkDescriptorSetLayoutBinding {
-                    .binding = BINDLESS_SAMPLED_CUBEMAP_BINDING,
-                    .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                    .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages / 2, 250'000U),
+                    .descriptorCount = glm::min(MAX_SAMPLED_IMAGES_PER_RESOURCE_TABLE, descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages),
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr
                 },
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_STORAGE_IMAGE_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                    .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2, 250'000U),
-                    .stageFlags = VK_SHADER_STAGE_ALL,
-                    .pImmutableSamplers = nullptr,
-                },
-                VkDescriptorSetLayoutBinding {
-                    .binding = BINDLESS_STORAGE_CUBEMAP_BINDING,
-                    .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                    .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages / 2, 250'000U),
+                    .descriptorCount = glm::min(MAX_STORAGE_IMAGES_PER_RESOURCE_TABLE, descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages),
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr,
                 },
                 VkDescriptorSetLayoutBinding {
                     .binding = BINDLESS_SAMPLER_BINDING,
                     .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-                    .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers, 250'000U),
+                    .descriptorCount = glm::min(MAX_SAMPLERS_PER_RESOURCE_TABLE, descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers),
                     .stageFlags = VK_SHADER_STAGE_ALL,
                     .pImmutableSamplers = nullptr
                 }
@@ -1167,8 +1153,6 @@ namespace Sierra
             // Set up flags
             constexpr std::array<VkDescriptorBindingFlagsEXT, BINDLESS_BINDING_COUNT> BINDING_FLAGS
             {
-                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
-                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
                 VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
                 VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
                 VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,

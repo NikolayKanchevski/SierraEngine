@@ -25,7 +25,7 @@ namespace Sierra
         ~MetalImage() override;
 
         /* --- CONVERSIONS --- */
-        static MTLTextureType ImageSettingsToTextureType(ImageSampling sampling, uint32 layerCount);
+        static MTLTextureType ImageSettingsToTextureType(ImageType type, uint32 layerCount, ImageSampling sampling);
         static MTLPixelFormat ImageFormatToPixelFormat(ImageFormat format);
         static MTLTextureUsage ImageUsageToTextureUsage(ImageUsage usage);
         static NSUInteger ImageSamplingToUInteger(ImageSampling sampling);

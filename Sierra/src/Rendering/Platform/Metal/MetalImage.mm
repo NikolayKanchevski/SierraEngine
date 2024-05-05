@@ -17,12 +17,12 @@ namespace Sierra
 
         // Set up texture descriptor
         MTLTextureDescriptor* const textureDescriptor = [[MTLTextureDescriptor alloc] init];
-        [textureDescriptor setTextureType: ImageSettingsToTextureType(createInfo.sampling, createInfo.layerCount)];
+        [textureDescriptor setTextureType: ImageSettingsToTextureType(createInfo.type, createInfo.layerCount, createInfo.sampling)];
         [textureDescriptor setWidth: createInfo.width];
         [textureDescriptor setHeight: createInfo.height];
-        [textureDescriptor setDepth: 1];
+        [textureDescriptor setDepth: createInfo.depth];
         [textureDescriptor setMipmapLevelCount: createInfo.levelCount];
-        [textureDescriptor setArrayLength: createInfo.layerCount];
+        [textureDescriptor setArrayLength: createInfo.type != ImageType::Cube ? createInfo.layerCount : (createInfo.layerCount / 6)];
         [textureDescriptor setPixelFormat: ImageFormatToPixelFormat(createInfo.format)];
         [textureDescriptor setUsage: ImageUsageToTextureUsage(createInfo.usage)];
         [textureDescriptor setSampleCount: ImageSamplingToUInteger(createInfo.sampling)];
@@ -70,12 +70,15 @@ namespace Sierra
 
     /* --- CONVERSIONS --- */
 
-    MTLTextureType MetalImage::ImageSettingsToTextureType(const ImageSampling sampling, const uint32 layerCount)
+    MTLTextureType MetalImage::ImageSettingsToTextureType(const ImageType type, const uint32 layerCount, const ImageSampling sampling)
     {
-        if (sampling == ImageSampling::x1 && layerCount == 1) return MTLTextureType2D;
-        if (sampling != ImageSampling::x1 && layerCount == 1) return MTLTextureType2DMultisample;
-        if (sampling == ImageSampling::x1 && layerCount > 1)  return MTLTextureType2DArray;
-        if (sampling != ImageSampling::x1 && layerCount > 1)  return MTLTextureType2DMultisampleArray;
+        switch (type)
+        {
+            case ImageType::Line:           return layerCount == 1 ? MTLTextureType1D : MTLTextureType1DArray;
+            case ImageType::Plane:          return layerCount == 1 ? (sampling == ImageSampling::x1 ? MTLTextureType2D : MTLTextureType2DMultisample) : (sampling == ImageSampling::x1 ? MTLTextureType2DArray : MTLTextureType2DMultisampleArray);
+            case ImageType::Volume:         return MTLTextureType3D;
+            case ImageType::Cube:           return (layerCount / 6) == 1 ? MTLTextureTypeCube : MTLTextureTypeCubeArray;
+        }
 
         return MTLTextureType2D;
     }

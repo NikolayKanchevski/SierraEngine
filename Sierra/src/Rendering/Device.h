@@ -40,6 +40,11 @@ namespace Sierra
 
         /* --- CONSTANTS --- */
         constexpr static uint16 MAX_PUSH_CONSTANT_SIZE = 128;
+        constexpr static uint32 MAX_UNIFORM_BUFFERS_PER_RESOURCE_TABLE = 512'000;
+        constexpr static uint32 MAX_STORAGE_BUFFERS_PER_RESOURCE_TABLE = 512'000;
+        constexpr static uint32 MAX_SAMPLED_IMAGES_PER_RESOURCE_TABLE = 512'000;
+        constexpr static uint32 MAX_STORAGE_IMAGES_PER_RESOURCE_TABLE = 512'000;
+        constexpr static uint32 MAX_SAMPLERS_PER_RESOURCE_TABLE = 32'000;
 
         /* --- OPERATORS --- */
         Device(const Device&) = delete;

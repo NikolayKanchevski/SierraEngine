@@ -27,31 +27,23 @@ namespace Sierra
         {
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers, 250'000U),
+                .descriptorCount = GetUniformBufferCapacity(),
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers, 250'000U),
+                .descriptorCount = GetStorageBufferCapacity(),
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1, 250'000U),
-            },
-            VkDescriptorPoolSize {
-                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1, 250'000U),
+                .descriptorCount = GetSampledImageCapacity(),
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1, 250'000U),
-            },
-            VkDescriptorPoolSize {
-                .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1, 250'000U),
+                .descriptorCount = GetStorageImageCapacity(),
             },
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-                .descriptorCount = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers, 250'000U),
+                .descriptorCount = GetSamplerCapacity(),
             }
         };
 
@@ -193,41 +185,6 @@ namespace Sierra
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
     }
 
-    void VulkanResourceTable::BindSampledCubemap(const ResourceIndex index, const std::unique_ptr<Image> &image)
-    {
-        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind sampled cubemap [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image->GetName(), GetName());
-        const VulkanImage &vulkanImage = static_cast<const VulkanImage&>(*image);
-
-        if (index >= GetSampledCubemapCapacity())
-        {
-            SR_WARNING("[Vulkan]: Cannot bind sampled cubemap at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSampledCubemapCapacity() to query sampled cubemap capacity.", index, GetName());
-            return;
-        }
-
-        // Set up image info
-        const VkDescriptorImageInfo imageInfo
-        {
-            .sampler = VK_NULL_HANDLE,
-            .imageView = vulkanImage.GetVulkanImageView(),
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        };
-
-        // Set up write info
-        const VkWriteDescriptorSet writeDescriptorSet
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = descriptorSet,
-            .dstBinding = VulkanDevice::BINDLESS_SAMPLED_CUBEMAP_BINDING,
-            .dstArrayElement = index,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .pImageInfo = &imageInfo
-        };
-
-        // Update descriptor set
-        device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
-    }
-
     void VulkanResourceTable::BindSampler(const ResourceIndex index, const std::unique_ptr<Sampler> &sampler)
     {
         SR_ERROR_IF(sampler->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind sampler [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", sampler->GetName(), GetName());
@@ -298,90 +255,41 @@ namespace Sierra
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
     }
 
-    void VulkanResourceTable::BindStorageCubemap(const ResourceIndex index, const std::unique_ptr<Image> &image)
-    {
-        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind storage cubemap [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image->GetName(), GetName());
-        const VulkanImage &vulkanImage = static_cast<const VulkanImage&>(*image);
-
-        if (index >= GetStorageCubemapCapacity())
-        {
-            SR_WARNING("[Vulkan]: Cannot bind storage cubemap at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetStorageCubemapCapacity() to query storage cubemap capacity..", index, GetName());
-            return;
-        }
-
-        // Set up image info
-        const VkDescriptorImageInfo imageInfo
-        {
-            .sampler = VK_NULL_HANDLE,
-            .imageView = vulkanImage.GetVulkanImageView(),
-            .imageLayout = VK_IMAGE_LAYOUT_GENERAL
-        };
-
-        // Set up write info
-        const VkWriteDescriptorSet writeDescriptorSet
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = descriptorSet,
-            .dstBinding = VulkanDevice::BINDLESS_STORAGE_CUBEMAP_BINDING,
-            .dstArrayElement = index,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .pImageInfo = &imageInfo
-        };
-
-        // Update descriptor set
-        device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
-    }
-
     /* --- GETTER METHODS --- */
 
     uint32 VulkanResourceTable::GetUniformBufferCapacity() const
     {
         VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
-        return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers;
+        return glm::min(VulkanDevice::MAX_UNIFORM_BUFFERS_PER_RESOURCE_TABLE, descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers);
     }
 
     uint32 VulkanResourceTable::GetStorageBufferCapacity() const
     {
         VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
-        return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers;
+        return glm::min(VulkanDevice::MAX_STORAGE_BUFFERS_PER_RESOURCE_TABLE, descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers);
     }
 
     uint32 VulkanResourceTable::GetSampledImageCapacity() const
     {
         VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
-        return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1;
-    }
-
-    uint32 VulkanResourceTable::GetSampledCubemapCapacity() const
-    {
-        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
-        device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
-        return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages >> 1;
-    }
-
-    uint32 VulkanResourceTable::GetSamplerCapacity() const
-    {
-        VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
-        device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
-        return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers;
+        return glm::min(VulkanDevice::MAX_SAMPLED_IMAGES_PER_RESOURCE_TABLE, descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages);
     }
 
     uint32 VulkanResourceTable::GetStorageImageCapacity() const
     {
         VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
-        return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1;
+        return glm::min(VulkanDevice::MAX_STORAGE_IMAGES_PER_RESOURCE_TABLE, descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages);
     }
 
-    uint32 VulkanResourceTable::GetStorageCubemapCapacity() const
+    uint32 VulkanResourceTable::GetSamplerCapacity() const
     {
         VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
-        return descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages >> 1;
+        return glm::min(VulkanDevice::MAX_SAMPLERS_PER_RESOURCE_TABLE, descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers);
     }
 
 
