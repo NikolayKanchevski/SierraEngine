@@ -4,36 +4,24 @@
 
 #pragma once
 
-#include "ThreadPool.hpp"
-#include "../Assets/AssetManager.h"
-
-#include <Sierra/Extensions/ImGui.h>
-
 namespace SierraEngine
 {
 
-    class Application final : public Sierra::Application
+    struct ApplicationCreateInfo
+    {
+        std::string_view name = "Sierra Application";
+        Sierra::Version version = Sierra::Version({ 1, 0, 0 });
+        const Sierra::ApplicationSettings &settings = { };
+    };
+
+    class SIERRA_ENGINE_API Application : public Sierra::Application
     {
     public:
-        /* --- CONSTRUCTORS --- */
-        explicit Application(const Sierra::ApplicationCreateInfo &createInfo);
-
         /* --- DESTRUCTOR --- */
-        ~Application() override;
+        ~Application() override = default;
 
-    private:
-        void Start() override;
-        bool Update(const Sierra::TimeStep &timeStep) override;
-
-        ThreadPool threadPool;
-        AssetManager assetManager;
-
-        std::unique_ptr<Sierra::Window> window = nullptr;
-        std::unique_ptr<Sierra::Swapchain> swapchain = nullptr;
-        std::unique_ptr<Sierra::ImGuiRenderTask> imGuiTask = nullptr;
-        std::unique_ptr<Sierra::ResourceTable> resourceTable = nullptr;
-        std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers;
-
+    protected:
+        explicit Application(const ApplicationCreateInfo &createInfo);
 
     };
 

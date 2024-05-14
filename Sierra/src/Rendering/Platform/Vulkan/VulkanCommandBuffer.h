@@ -29,13 +29,13 @@ namespace Sierra
         void SynchronizeImageUsage(const std::unique_ptr<Image> &image, ImageCommandUsage previousUsage, ImageCommandUsage nextUsage, uint32 baseLevel = 0, uint32 levelCount = 0, uint32 baseLayer = 0, uint32 layerCount = 0) override;
 
         void CopyBufferToBuffer(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Buffer> &destinationBuffer, uint64 memoryRange = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) override;
-        void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, uint32 level = 0, uint32 layer = 0, const Vector2UInt &pixelRange = { 0, 0 }, uint64 sourceByteOffset = 0, const Vector2UInt &destinationPixelOffset = { 0, 0 }) override;
+        void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, uint32 level = 0, uint32 layer = 0, const Vector3UInt &pixelRange = { 0, 0, 0 }, uint64 sourceByteOffset = 0, const Vector3UInt &destinationPixelOffset = { 0, 0, 0 }) override;
         void GenerateMipMapsForImage(const std::unique_ptr<Image> &image) override;
 
         void BindResourceTable(const std::unique_ptr<ResourceTable> &resourceTable) override;
         void PushConstants(const void* data, uint16 memoryRange, uint16 byteOffset = 0) override;
 
-        void BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::span<const RenderPassBeginAttachment> &attachments) override;
+        void BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, std::span<const RenderPassBeginAttachment> attachments) override;
         void BeginNextSubpass(const std::unique_ptr<RenderPass> &renderPass) override;
         void EndRenderPass(const std::unique_ptr<RenderPass> &renderPass) override;
 

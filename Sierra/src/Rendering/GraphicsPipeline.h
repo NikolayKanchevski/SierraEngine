@@ -113,7 +113,7 @@ namespace Sierra
     {
         std::string_view name = "Graphics Pipeline";
 
-        const std::span<const VertexInput> &vertexInputs = { };
+        std::span<const VertexInput> vertexInputs = { };
         const std::unique_ptr<Shader> &vertexShader;
         const std::unique_ptr<Shader> &fragmentShader = nullptr;
 

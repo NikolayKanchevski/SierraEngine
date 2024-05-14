@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../../src/srpch.h"
+
 #include "../../src/Core/Application.h"
 #include "../../src/Core/CursorManager.h"
 #include "../../src/Core/EventDispatcher.hpp"
@@ -39,6 +40,6 @@
 #include "../../src/Utilities/RNG.h"
 #include "../../src/Utilities/Time.h"
 
-#if SR_BUILD_IMGUI
-    #include "Sierra/Extensions/ImGuiRenderTask.h"
+#if defined(SR_BUILD_IMGUI_EXTENSION)
+    #include "../../src/Extensions/ImGui/ImGuiRenderTask.h"
 #endif

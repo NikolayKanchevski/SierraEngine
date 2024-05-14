@@ -43,8 +43,6 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual const void* GetData() const = 0;
-        template<typename T>
-        [[nodiscard]] inline const T& GetDataAs() const { return *reinterpret_cast<const T*>(GetData()); }
         [[nodiscard]] virtual uint64 GetMemorySize() const = 0;
 
         /* --- OPERATORS --- */

@@ -56,6 +56,7 @@
         #include <atomic>
         #include <bitset>
         #include <chrono>
+        #include <concepts>
         #include <deque>
         #include <execution>
         #include <filesystem>

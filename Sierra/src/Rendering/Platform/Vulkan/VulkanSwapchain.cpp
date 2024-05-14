@@ -324,7 +324,7 @@ namespace Sierra
         for (uint32 i = 0; i < concurrentFrameCount; i++)
         {
             swapchainImages[i] = std::unique_ptr<VulkanImage>(new VulkanImage(device, VulkanImage::SwapchainImageCreateInfo {
-                .name = "Image " + std::to_string(i) + " of swapchain [" + std::string(GetName()) + "]",
+                .name = std::format("Image [{0}] of swapchain [{1}]", i, GetName()),
                 .image = vulkanSwapchainImages[i],
                 .width = swapchainCreateInfo.imageExtent.width,
                 .height = swapchainCreateInfo.imageExtent.height,
@@ -350,11 +350,11 @@ namespace Sierra
         {
             result = device.GetFunctionTable().vkCreateSemaphore(device.GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &isImageAcquiredSemaphores[i]);
             SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create semaphore [{0}], indicating whether corresponding swapchain image of swapchain [{1}] is ready to be used!", i, GetName());
-            device.SetObjectName(isImageAcquiredSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "Image free semaphore [" + std::to_string(i) + "] of swapchain [" + std::string(GetName()) + "]");
+            device.SetObjectName(isImageAcquiredSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, std::format("Image free semaphore [{0}] of swapchain [{1}]", i, GetName()));
 
             result = device.GetFunctionTable().vkCreateSemaphore(device.GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &isPresentationCommandBufferFreeSemaphores[i]);
             SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create semaphore [{0}], indicating whether presentation command buffer is ready to present swapchain [{1}]!", i, GetName());
-            device.SetObjectName(isPresentationCommandBufferFreeSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, "Presentation command buffer ready semaphore [" + std::to_string(i) + "] of swapchain [" + std::string(GetName()) + "]");
+            device.SetObjectName(isPresentationCommandBufferFreeSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, std::format("Presentation command buffer ready semaphore [{0}] of swapchain [{1}]", i, GetName()));
         }
     }
 

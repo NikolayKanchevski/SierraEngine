@@ -16,7 +16,7 @@ namespace SierraEngine
         uint32 indexCount = 0;
     };
 
-    class Mesh final
+    class SIERRA_ENGINE_API Mesh final
     {
     public:
         /* --- CONSTRUCTORS --- */
@@ -31,7 +31,7 @@ namespace SierraEngine
 
         /* --- OPERATORS --- */
         Mesh(const Mesh&) = delete;
-        Mesh &operator=(const Mesh&) = delete;
+        Mesh& operator=(const Mesh&) = delete;
 
         /* --- MOVE SEMANTICS --- */
         Mesh(Mesh&& other) = default;

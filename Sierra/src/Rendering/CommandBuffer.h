@@ -63,10 +63,10 @@ namespace Sierra
         virtual void SynchronizeImageUsage(const std::unique_ptr<Image> &image, ImageCommandUsage previousUsage, ImageCommandUsage nextUsage, uint32 baseLevel = 0, uint32 levelCount = 0, uint32 baseLayer = 0, uint32 layerCount = 0) = 0;
 
         virtual void CopyBufferToBuffer(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Buffer> &destinationBuffer, uint64 memoryRange = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) = 0;
-        virtual void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, uint32 level = 0, uint32 layer = 0, const Vector2UInt &pixelRange = { 0, 0 }, uint64 sourceByteOffset = 0, const Vector2UInt &destinationPixelOffset = { 0, 0 }) = 0;
+        virtual void CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, uint32 level = 0, uint32 layer = 0, const Vector3UInt &pixelRange = { 0, 0, 0 }, uint64 sourceByteOffset = 0, const Vector3UInt &destinationPixelOffset = { 0, 0, 0 }) = 0;
         virtual void GenerateMipMapsForImage(const std::unique_ptr<Image> &image) = 0;
 
-        virtual void BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::span<const RenderPassBeginAttachment> &attachments) = 0;
+        virtual void BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, std::span<const RenderPassBeginAttachment> attachments) = 0;
         virtual void BeginNextSubpass(const std::unique_ptr<RenderPass> &renderPass) = 0;
         virtual void EndRenderPass(const std::unique_ptr<RenderPass> &renderPass) = 0;
 

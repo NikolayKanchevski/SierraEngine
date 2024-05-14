@@ -67,7 +67,7 @@ namespace Sierra
 
             /* --- GETTER METHODS --- */
             [[nodiscard]] inline uint32 GetIndex() const { return (value >> 5) & 0x7FFFF; }
-            [[nodiscard]] inline MTLResourceUsage GetUsage() const { return ((value >> 3) & 0x3); }
+            [[nodiscard]] inline MTLResourceUsage GetUsage() const { return (value >> 3) & 0x3; }
             
             /* --- TYPE DEFINITIONS --- */
             class SIERRA_API Hasher

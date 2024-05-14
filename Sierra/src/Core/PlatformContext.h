@@ -46,7 +46,7 @@ namespace Sierra
 
     private:
         friend class Application;
-        static std::unique_ptr<PlatformContext> Create(const PlatformContextCreateInfo &createInfo);
+        [[nodiscard]] static std::unique_ptr<PlatformContext> Create(const PlatformContextCreateInfo &createInfo);
         virtual void RunApplication(const PlatformApplicationRunInfo &runInfo);
 
     };

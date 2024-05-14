@@ -42,15 +42,15 @@ namespace Sierra
 
     struct SubpassDescription
     {
-        const std::span<const uint32> &renderTargets = { };
-        const std::span<const uint32> &inputs = { };
+        std::span<const uint32> renderTargets = { };
+        std::span<const uint32> inputs = { };
     };
 
     struct RenderPassCreateInfo
     {
         std::string_view name = "Render Pass";
-        const std::span<const RenderPassAttachment> &attachments = { };
-        const std::span<const SubpassDescription> &subpassDescriptions = { };
+        std::span<const RenderPassAttachment> attachments = { };
+        std::span<const SubpassDescription> subpassDescriptions = { };
     };
 
     struct RenderPassBeginAttachment

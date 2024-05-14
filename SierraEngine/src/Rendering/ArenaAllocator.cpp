@@ -154,10 +154,4 @@ namespace SierraEngine
         return mesh;
     }
 
-    void ArenaAllocator::Bind(std::unique_ptr<Sierra::CommandBuffer> &commandBuffer)
-    {
-        commandBuffer->BindVertexBuffer(vertexBuffer);
-        commandBuffer->BindIndexBuffer(indexBuffer);
-    }
-
 }

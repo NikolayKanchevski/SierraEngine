@@ -17,17 +17,18 @@
 namespace Sierra
 {
 
-    struct ImGuiRenderTaskFontCreateInfo
+    struct ImGuiFontCreateInfo
     {
-        float32 size = 12.0f;
+        float32 size = 10.0f;
         std::span<const uint8> ttfMemory = { };
     };
 
     struct ImGuiRenderTaskCreateInfo
     {
-        std::string_view name = "ImGui Render Task";
+        const ImGuiStyle &style = { };
+        std::span<const ImGuiFontCreateInfo> fontCreateInfos = { };
 
-        uint32 concurrentFrameCount = 1;
+        uint32 concurrentFrameCount = 0;
         const RenderingContext &renderingContext;
         std::unique_ptr<CommandBuffer> &commandBuffer;
 
@@ -35,10 +36,7 @@ namespace Sierra
         ImageSampling sampling = ImageSampling::x1;
         const std::unique_ptr<Image> &templateOutputImage;
 
-        const ImGuiStyle &style = { };
         ResourceTable::ResourceIndex fontAtlasIndex = 0;
-        const std::span<const ImGuiRenderTaskFontCreateInfo> &fontCreateInfos = { };
-
         ResourceTable::ResourceIndex fontSamplerIndex = 0;
         std::unique_ptr<ResourceTable> &resourceTable;
     };

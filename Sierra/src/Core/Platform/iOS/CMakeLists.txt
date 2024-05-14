@@ -19,6 +19,7 @@ target_sources(Sierra PRIVATE
 
 # Link platform-specific libraries
 target_link_libraries(Sierra PRIVATE
+    "-framework Foundation"
     "-framework UIKit"
     "-framework QuartzCore"
 )

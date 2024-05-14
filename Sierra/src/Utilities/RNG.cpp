@@ -10,8 +10,9 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     RNG::RNG(const uint64 seed)
+        : generator(seed)
     {
-        generator.seed(seed);
+
     }
 
     /* --- SETTER METHODS -- */

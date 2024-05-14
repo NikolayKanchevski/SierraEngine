@@ -12,10 +12,15 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     X11Window::X11Window(const X11Context &x11Context, const WindowCreateInfo &createInfo)
-        : Window(createInfo), x11Context(x11Context),
-          window(x11Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
-          inputManager(x11Context.GetXkbExtension(), { }), cursorManager(x11Context, window, { }),
-          title(createInfo.title), extents(x11Context.GetWindowExtents(window)), lastMaximizedState(createInfo.maximize), resizable(createInfo.resizable)
+        : Window(createInfo),
+            x11Context(x11Context),
+            window(x11Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
+            inputManager(x11Context.GetXkbExtension(), { }),
+            cursorManager(x11Context, window, { }),
+            title(createInfo.title),
+            extents(x11Context.GetWindowExtents(window)),
+            lastMaximizedState(createInfo.maximize),
+            resizable(createInfo.resizable)
     {
         // Create entry in event queue map
         unhandledEventQueues.push_back({ .window = window });

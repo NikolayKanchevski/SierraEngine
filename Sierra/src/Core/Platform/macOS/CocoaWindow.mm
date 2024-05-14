@@ -260,10 +260,13 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     CocoaWindow::CocoaWindow(const CocoaContext &cocoaContext, const WindowCreateInfo &createInfo)
-        : Window(createInfo), cocoaContext(cocoaContext),
-          window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)), delegate([[CocoaWindowDelegate alloc] initWithWindow: this]), view([[CocoaWindowView alloc] initWithWindow: this]),
-          inputManager(CocoaInputManager({ })), cursorManager(window, { }),
-          title(createInfo.title)
+        : Window(createInfo),
+            cocoaContext(cocoaContext),
+            window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
+            delegate([[CocoaWindowDelegate alloc] initWithWindow: this]),
+            view([[CocoaWindowView alloc] initWithWindow: this]),
+            inputManager(CocoaInputManager({ })), cursorManager(window, { }),
+            title(createInfo.title)
     {
         // Assign Metal layer
         [view setLayer: [CAMetalLayer layer]];

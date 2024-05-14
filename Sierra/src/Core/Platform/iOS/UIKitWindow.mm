@@ -98,7 +98,11 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     UIKitWindow::UIKitWindow(const UIKitContext &uiKitContext, const WindowCreateInfo &createInfo)
-        : Window(createInfo), title(createInfo.title), allowsOrientationChange(createInfo.resizable), uiKitContext(uiKitContext), touchManager(UIKitTouchManager({ }))
+        : Window(createInfo),
+            title(createInfo.title),
+            allowsOrientationChange(createInfo.resizable),
+            uiKitContext(uiKitContext),
+            touchManager(UIKitTouchManager({ }))
     {
         // Create window
         window = uiKitContext.CreateWindow();

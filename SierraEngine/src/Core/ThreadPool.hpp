@@ -21,12 +21,8 @@ namespace SierraEngine
         /* --- CONSTRUCTORS --- */
         explicit ThreadPool(const ThreadPoolCreateInfo &createInfo)
         {
-            threads.resize(createInfo.threadCount != 0 ? createInfo.threadCount : glm::max(std::thread::hardware_concurrency(), 1u));
-            for (uint32 i = 0; i < threads.size(); i++)
-            {
-                threads[i] = std::thread(&ThreadPool::Thread, this);
-            }
-
+            threads.resize(createInfo.threadCount != 0 ? createInfo.threadCount : glm::max(std::thread::hardware_concurrency(), 1U));
+            for (std::thread &thread : threads) thread = std::thread(&ThreadPool::Thread, this);
             running = true;
         }
 
@@ -65,7 +61,7 @@ namespace SierraEngine
         }
 
         template<typename T, typename... Args, typename R = std::invoke_result_t<std::decay_t<T>, std::decay_t<Args>...>>
-        std::future<R> Submit(T&& task, Args&&... args)
+        [[nodiscard]] std::future<R> Submit(T&& task, Args&&... args)
         {
             // Create a promise task
             std::function<R()> taskFunction = std::bind(std::forward<T>(task), std::forward<Args>(args)...);
@@ -139,7 +135,7 @@ namespace SierraEngine
             {
                 // Block thread until a task has been added to queue
                 std::unique_lock taskLock(taskMutex);
-                taskAvailable.wait(taskLock, [this] { return !taskQueue.empty() || !running; });
+                taskAvailable.wait(taskLock, [this]() -> bool { return !taskQueue.empty() || !running; });
 
                 // If not paused and a task is present
                 if (running && !paused)

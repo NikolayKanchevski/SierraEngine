@@ -1,8 +1,8 @@
-# Generate library
 if((SIERRA_BUILD_STATIC_LIBRARY AND SIERRA_BUILD_SHARED_LIBRARY) OR (NOT SIERRA_BUILD_STATIC_LIBRARY AND NOT SIERRA_BUILD_SHARED_LIBRARY))
     message(FATAL_ERROR "[Sierra]: Illegal build configuration! You must compile with either SIERRA_BUILD_STATIC_LIBRARY or SIERRA_BUILD_SHARED_LIBRARY set, but not both!")
 endif()
 
+# Generate library
 if(SIERRA_BUILD_STATIC_LIBRARY)
     message(STATUS "[Sierra]: Building Sierra as static library...")
     add_library(Sierra STATIC)
@@ -26,7 +26,7 @@ set_target_properties(Sierra PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${SIERRA_LIBRARY_OUTPUT_PATH}
 )
 
-# Link engine modules
+# Link modules
 add_subdirectory(Core)
 add_subdirectory(Extensions)
 add_subdirectory(Rendering)
@@ -37,6 +37,9 @@ target_sources(Sierra PRIVATE
     srpch.h
     ../include/Sierra/Sierra.h
 )
+
+# Link precompiled headers
+target_precompile_headers(Sierra PRIVATE "${SIERRA_DIRECTORY_PATH}/src/srpch.h")
 
 # Export engine module symbols
 if(SIERRA_BUILD_SHARED_LIBRARY)

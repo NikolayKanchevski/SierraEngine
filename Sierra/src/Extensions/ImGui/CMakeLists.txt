@@ -1,3 +1,4 @@
+target_compile_definitions(Sierra PUBLIC "SR_BUILD_IMGUI_EXTENSION")
 target_sources(Sierra PRIVATE
     ImGuiConfiguration.h
     ImGuiRenderTask.h

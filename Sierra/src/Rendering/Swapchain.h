@@ -13,27 +13,26 @@
 namespace Sierra
 {
 
-    #pragma region Events
-        class SIERRA_API SwapchainEvent : public Event { };
+    class SIERRA_API SwapchainEvent : public Event { };
+    template<typename T> concept SwapchainEventType = std::is_base_of_v<SwapchainEvent, T> && !std::is_same_v<SwapchainEvent, std::decay_t<T>>;
 
-        class SIERRA_API SwapchainResizeEvent final : public SwapchainEvent
-        {
-        public:
-            /* --- CONSTRUCTORS --- */
-            inline explicit SwapchainResizeEvent(const uint32 width, const uint32 height, const uint32 scaling) : width(width), height(height), scaling(scaling) { }
+    class SIERRA_API SwapchainResizeEvent final : public SwapchainEvent
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        inline explicit SwapchainResizeEvent(const uint32 width, const uint32 height, const uint32 scaling) : width(width), height(height), scaling(scaling) { }
 
-            /* --- GETTER METHODS --- */
-            [[nodiscard]] inline uint32 GetWidth() const { return width; }
-            [[nodiscard]] inline uint32 GetHeight() const { return height; }
-            [[nodiscard]] inline uint32 GetScaling() const { return scaling; }
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] inline uint32 GetWidth() const { return width; }
+        [[nodiscard]] inline uint32 GetHeight() const { return height; }
+        [[nodiscard]] inline uint32 GetScaling() const { return scaling; }
 
-        private:
-            const uint32 scaling = 1;
-            const uint32 width = 0;
-            const uint32 height = 0;
+    private:
+        const uint32 scaling = 1;
+        const uint32 width = 0;
+        const uint32 height = 0;
 
-        };
-    #pragma endregion
+    };
 
     enum class SwapchainPresentationMode : bool
     {
@@ -67,8 +66,8 @@ namespace Sierra
     {
     public:
         /* --- TYPE DEFINITIONS --- */
-        template<typename T>
-        using SwapchainEventCallback = std::function<bool(const T&)>;
+        template<SwapchainEventType EventType>
+        using EventCallback = std::function<bool(const EventType&)>;
 
         /* --- POLLING METHODS --- */
         virtual void AcquireNextImage() = 0;
@@ -87,8 +86,8 @@ namespace Sierra
         [[nodiscard]] inline const std::unique_ptr<Image>& GetCurrentImage() const { return GetImage(GetCurrentImageIndex()); };
 
         /* --- EVENTS --- */
-        template<typename T> requires (std::is_base_of_v<SwapchainEvent, T> && !std::is_same_v<SwapchainEvent, T>)
-        void OnEvent(const SwapchainEventCallback<T> &Callback) { }
+        template<SwapchainEventType EventType>
+        void OnEvent(const EventCallback<EventType> &Callback) { }
 
         /* --- OPERATORS --- */
         Swapchain(const Swapchain&) = delete;
@@ -106,6 +105,6 @@ namespace Sierra
 
     };
 
-    template<> inline void Swapchain::OnEvent<SwapchainResizeEvent>(const SwapchainEventCallback<SwapchainResizeEvent> &Callback) { swapchainResizeDispatcher.Subscribe(Callback); }
+    template<> inline void Swapchain::OnEvent<SwapchainResizeEvent>(const EventCallback<SwapchainResizeEvent> &Callback) { swapchainResizeDispatcher.Subscribe(Callback); }
 
 }

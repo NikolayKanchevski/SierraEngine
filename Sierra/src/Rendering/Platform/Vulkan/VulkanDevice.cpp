@@ -1216,14 +1216,14 @@ namespace Sierra
 
                 result = functionTable.vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &generalPipelineLayouts[i]);
                 SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create general pipeline layout [{0}]! Error code: {1}.", i, static_cast<int32>(result));
-                SetObjectName(generalPipelineLayouts[i], VK_OBJECT_TYPE_PIPELINE_LAYOUT, "General pipeline layout [" + std::to_string(i) + "] of device [" + std::string(GetName()) + "]");
+                SetObjectName(generalPipelineLayouts[i], VK_OBJECT_TYPE_PIPELINE_LAYOUT, std::format("General pipeline layout [{0}] of device [{1}]", i, GetName()));
             }
         }
     }
 
     /* --- POLLING METHODS --- */
 
-    void VulkanDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::span<const std::reference_wrapper<std::unique_ptr<CommandBuffer>>> &commandBuffersToWait) const
+    void VulkanDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::span<const std::reference_wrapper<std::unique_ptr<CommandBuffer>>> commandBuffersToWait) const
     {
         SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit for command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer->GetName());
         const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(*commandBuffer);

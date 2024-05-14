@@ -10,7 +10,11 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     GameActivityWindow::GameActivityWindow(const GameActivityContext &gameActivityContext, const WindowCreateInfo &createInfo)
-        : Window(createInfo), gameActivityContext(gameActivityContext), touchManager(gameActivityContext, { }), window(gameActivityContext.CreateWindow()), title(createInfo.title)
+        : Window(createInfo),
+            gameActivityContext(gameActivityContext),
+            touchManager(gameActivityContext, { }),
+            window(gameActivityContext.CreateWindow()),
+            title(createInfo.title)
     {
 
     }

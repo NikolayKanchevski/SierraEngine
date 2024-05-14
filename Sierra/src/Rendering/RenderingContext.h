@@ -57,7 +57,7 @@ namespace Sierra
 
     private:
         friend class Application;
-        static std::unique_ptr<RenderingContext> Create(const RenderingContextCreateInfo &createInfo);
+        [[nodiscard]] static std::unique_ptr<RenderingContext> Create(const RenderingContextCreateInfo &createInfo);
 
     };
 

@@ -167,7 +167,7 @@ namespace Sierra
         device.GetFunctionTable().vkCmdCopyBuffer(commandBuffer, vulkanSourceBuffer.GetVulkanBuffer(), vulkanDestinationBuffer.GetVulkanBuffer(), 1, &copyRegion);
     }
 
-    void VulkanCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const uint32 level, const uint32 layer, const Vector2UInt &pixelRange, const uint64 sourceByteOffset, const Vector2UInt &destinationPixelOffset)
+    void VulkanCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const uint32 level, const uint32 layer, const Vector3UInt &pixelRange, const uint64 sourceByteOffset, const Vector3UInt &destinationPixelOffset)
     {
         SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not copy from buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], to image [{1}] within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
         const VulkanBuffer &vulkanSourceBuffer = static_cast<const VulkanBuffer&>(*sourceBuffer);
@@ -198,10 +198,10 @@ namespace Sierra
             .imageExtent = {
                 .width = pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth() >> level,
                 .height = pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight() >> level,
-                .depth = 1
+                .depth = pixelRange.z != 0 ? pixelRange.z : destinationImage->GetDepth() >> level,
             }
         };
-        SR_ERROR_IF(destinationPixelOffset.x + copyRegion.imageExtent.width > destinationImage->GetWidth() || destinationPixelOffset.y + copyRegion.imageExtent.height > destinationImage->GetHeight(), "[Vulkan]: Cannot copy from buffer [{0}] pixel range [{1}x{2}], which is offset by another [{3}x{4}] pixels to image [{5}] within command buffer [{6}], as resulting pixel range of a total of [{7}x{8}] pixels exceeds the image's dimensions - [{9}x{10}]!", sourceBuffer->GetName(), copyRegion.imageExtent.width, copyRegion.imageExtent.height, destinationPixelOffset.x, destinationPixelOffset.y, destinationImage->GetName(), GetName(), destinationPixelOffset.x + copyRegion.imageExtent.width, destinationPixelOffset.y + copyRegion.imageExtent.height, destinationImage->GetWidth(), destinationImage->GetHeight());
+        SR_ERROR_IF(destinationPixelOffset.x + copyRegion.imageExtent.width > destinationImage->GetWidth() || destinationPixelOffset.y + copyRegion.imageExtent.height > destinationImage->GetHeight() || destinationPixelOffset.z + copyRegion.imageExtent.depth > destinationImage->GetDepth(), "[Vulkan]: Cannot copy from buffer [{0}] pixel range [{1}x{2}x{3}], which is offset by another [{4}x{5}x{6}] pixels to image [{7}] within command buffer [{8}], as resulting pixel range of a total of [{9}x{10}x{11}] pixels exceeds the image's dimensions - [{12}x{13}x{14}]!", sourceBuffer->GetName(), copyRegion.imageExtent.width, copyRegion.imageExtent.height, copyRegion.imageExtent.depth, destinationPixelOffset.x, destinationPixelOffset.y, destinationPixelOffset.z, destinationImage->GetName(), GetName(), copyRegion.imageExtent.width + destinationPixelOffset.x, copyRegion.imageExtent.height + destinationPixelOffset.y, copyRegion.imageExtent.depth + destinationPixelOffset.z, destinationImage->GetWidth(), destinationImage->GetHeight(), destinationImage->GetDepth());;
 
         // Copy data and change layout
         device.GetFunctionTable().vkCmdCopyBufferToImage(commandBuffer, vulkanSourceBuffer.GetVulkanBuffer(), vulkanDestinationImage.GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
@@ -283,7 +283,7 @@ namespace Sierra
         device.GetFunctionTable().vkCmdPushConstants(commandBuffer, currentPipelineLayout, VK_SHADER_STAGE_ALL, 0, memoryRange, reinterpret_cast<const char*>(data) + byteOffset);
     }
 
-    void VulkanCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::span<const RenderPassBeginAttachment> &attachments)
+    void VulkanCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::span<const RenderPassBeginAttachment> attachments)
     {
         SR_ERROR_IF(renderPass->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot begin render pass [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], from command buffer [{1}]!", renderPass->GetName(), GetName());
         const VulkanRenderPass &vulkanRenderPass = static_cast<const VulkanRenderPass&>(*renderPass);

@@ -28,7 +28,7 @@ namespace Sierra
             metalLayer = reinterpret_cast<CAMetalLayer*>(cocoaWindow.GetNSView().layer);
         #elif SR_PLATFORM_iOS
             SR_ERROR_IF(window->GetAPI() != PlatformAPI::UIKit, "[Metal]: Cannot create Metal swapchain [{0}] for window [{1}], because its platform API does not match [PlatformAPI::UIKit]!", GetName(), window->GetTitle());
-            const UIKitWindow &uiKitWindow = static_cast<const UIKitWindow&>(window);
+            const UIKitWindow &uiKitWindow = static_cast<const UIKitWindow&>(*window);
             metalLayer = reinterpret_cast<CAMetalLayer*>(uiKitWindow.GetUIView().layer);
         #endif
 

@@ -13,7 +13,7 @@ namespace SierraEngine
     };
 
     template<typename K, typename T, uint32 C = 0>
-    class ResourcePool
+    class ResourcePool final
     {
     public:
         /* --- CONSTRUCTORS --- */
@@ -57,7 +57,7 @@ namespace SierraEngine
         ResourcePool& operator=(const ResourcePool&) = delete;
 
         /* --- DESTRUCTOR --- */
-        virtual ~ResourcePool() = default;
+        ~ResourcePool() = default;
 
     private:
         std::unordered_map<K, T> resources;

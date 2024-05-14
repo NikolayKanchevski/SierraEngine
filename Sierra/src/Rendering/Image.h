@@ -477,8 +477,8 @@ namespace Sierra
         uint32 layerCount = 1;
         ImageUsage usage = ImageUsage::Undefined;
 
-        ImageMemoryLocation memoryLocation = ImageMemoryLocation::CPU;
         ImageSampling sampling = ImageSampling::x1;
+        ImageMemoryLocation memoryLocation = ImageMemoryLocation::CPU;
     };
 
     class SIERRA_API Image : public virtual RenderingResource
@@ -491,7 +491,7 @@ namespace Sierra
         [[nodiscard]] inline ImageFormat GetFormat() const { return format; }
 
         [[nodiscard]] inline float32 GetPixelMemorySize() const { return ImageFormatToPixelMemorySize(format); }
-        [[nodiscard]] inline uint64 GetLayerMemorySize() const { return static_cast<uint64>(static_cast<uint64>(width) * height * depth * GetPixelMemorySize()); }
+        [[nodiscard]] inline uint64 GetLayerMemorySize() const { return static_cast<uint64>(width * height * depth * GetPixelMemorySize()); }
         [[nodiscard]] inline uint64 GetMemorySize() const { return GetLayerMemorySize() * layerCount; }
 
         [[nodiscard]] inline uint32 GetLevelCount() const { return levelCount; }

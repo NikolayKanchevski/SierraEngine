@@ -14,77 +14,76 @@
 namespace Sierra
 {
 
-    #pragma region Events
-        class SIERRA_API WindowEvent : public Event { };
+    class SIERRA_API WindowEvent : public Event { };
+    template<typename T> concept WindowEventType = std::is_base_of_v<WindowEvent, T> && !std::is_same_v<WindowEvent, std::decay_t<T>>;
 
-        class SIERRA_API WindowResizeEvent final : public WindowEvent
-        {
-        public:
-            /* --- CONSTRUCTORS --- */
-            inline explicit WindowResizeEvent(const uint32 width, const uint32 height) : width(width), height(height) { }
+    class SIERRA_API WindowResizeEvent final : public WindowEvent
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        inline explicit WindowResizeEvent(const uint32 width, const uint32 height) : width(width), height(height) { }
 
-            /* --- GETTER METHODS --- */
-            [[nodiscard]] inline uint32 GetWidth() const { return width; }
-            [[nodiscard]] inline uint32 GetHeight() const { return height; }
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] inline uint32 GetWidth() const { return width; }
+        [[nodiscard]] inline uint32 GetHeight() const { return height; }
 
-        private:
-            const uint32 width;
-            const uint32 height;
+    private:
+        const uint32 width;
+        const uint32 height;
 
-        };
+    };
 
-        class SIERRA_API WindowCloseEvent final : public WindowEvent
-        {
-        public:
-            /* --- CONSTRUCTORS --- */
-            WindowCloseEvent() = default;
+    class SIERRA_API WindowCloseEvent final : public WindowEvent
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        WindowCloseEvent() = default;
 
-        };
+    };
 
-        class SIERRA_API WindowMoveEvent final : public WindowEvent
-        {
-        public:
-            /* --- CONSTRUCTORS --- */
-            inline explicit WindowMoveEvent(const Vector2Int &position) : position(position) { }
+    class SIERRA_API WindowMoveEvent final : public WindowEvent
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        inline explicit WindowMoveEvent(const Vector2Int &position) : position(position) { }
 
-            /* --- GETTER METHODS --- */
-            [[nodiscard]] Vector2Int GetPosition() const { return position; }
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] Vector2Int GetPosition() const { return position; }
 
-        private:
-            const Vector2Int position;
+    private:
+        const Vector2Int position;
 
-        };
+    };
 
-        class SIERRA_API WindowFocusEvent final : public WindowEvent
-        {
-        public:
-            /* --- CONSTRUCTORS --- */
-            inline explicit WindowFocusEvent(const bool focused) : focused(focused) { };
+    class SIERRA_API WindowFocusEvent final : public WindowEvent
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        inline explicit WindowFocusEvent(const bool focused) : focused(focused) { };
 
-            /* --- GETTER METHODS --- */
-            [[nodiscard]] bool IsFocused() const { return focused; }
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] bool IsFocused() const { return focused; }
 
-        private:
-            const bool focused;
+    private:
+        const bool focused;
 
-        };
+    };
 
-        class SIERRA_API WindowMinimizeEvent final : public WindowEvent
-        {
-        public:
-            /* --- CONSTRUCTORS --- */
-            WindowMinimizeEvent() = default;
+    class SIERRA_API WindowMinimizeEvent final : public WindowEvent
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        WindowMinimizeEvent() = default;
 
-        };
+    };
 
-        class SIERRA_API WindowMaximizeEvent final : public WindowEvent
-        {
-        public:
-            /* --- CONSTRUCTORS --- */
-            WindowMaximizeEvent() = default;
+    class SIERRA_API WindowMaximizeEvent final : public WindowEvent
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        WindowMaximizeEvent() = default;
 
-        };
-    #pragma endregion
+    };
 
     enum class PlatformAPI : uint8
     {
@@ -109,8 +108,8 @@ namespace Sierra
     {
     public:
         /* --- TYPE DEFINITIONS --- */
-        template<typename T>
-        using WindowEventCallback = std::function<bool(const T&)>;
+        template<WindowEventType EventType>
+        using EventCallback = std::function<bool(const EventType&)>;
 
         /* --- POLLING METHODS --- */
         virtual void Update() = 0;
@@ -149,8 +148,8 @@ namespace Sierra
         [[nodiscard]] virtual PlatformAPI GetAPI() const = 0;
 
         /* --- EVENTS --- */
-        template<typename T> requires (std::is_base_of_v<WindowEvent, T> && !std::is_same_v<WindowEvent, T>)
-        void OnEvent(const WindowEventCallback<T> &Callback) { }
+        template<WindowEventType EventType>
+        void OnEvent(const EventCallback<EventType> &Callback) { }
         
         /* --- OPERATORS --- */
         Window(const Window&) = delete;
@@ -179,11 +178,11 @@ namespace Sierra
 
     };
 
-    template<> inline void Window::OnEvent<WindowMoveEvent>(const WindowEventCallback<WindowMoveEvent> &Callback) { windowMoveDispatcher.Subscribe(Callback); }
-    template<> inline void Window::OnEvent<WindowResizeEvent>(const WindowEventCallback<WindowResizeEvent> &Callback) { windowResizeDispatcher.Subscribe(Callback); }
-    template<> inline void Window::OnEvent<WindowFocusEvent>(const WindowEventCallback<WindowFocusEvent> &Callback) { windowFocusDispatcher.Subscribe(Callback); }
-    template<> inline void Window::OnEvent<WindowMinimizeEvent>(const WindowEventCallback<WindowMinimizeEvent> &Callback) { windowMinimizeDispatcher.Subscribe(Callback); }
-    template<> inline void Window::OnEvent<WindowMaximizeEvent>(const WindowEventCallback<WindowMaximizeEvent> &Callback) { windowMaximizeDispatcher.Subscribe(Callback); }
-    template<> inline void Window::OnEvent<WindowCloseEvent>(const WindowEventCallback<WindowCloseEvent> &Callback) { windowCloseDispatcher.Subscribe(Callback); }
+    template<> inline void Window::OnEvent<WindowMoveEvent>(const EventCallback<WindowMoveEvent> &Callback) { windowMoveDispatcher.Subscribe(Callback); }
+    template<> inline void Window::OnEvent<WindowResizeEvent>(const EventCallback<WindowResizeEvent> &Callback) { windowResizeDispatcher.Subscribe(Callback); }
+    template<> inline void Window::OnEvent<WindowFocusEvent>(const EventCallback<WindowFocusEvent> &Callback) { windowFocusDispatcher.Subscribe(Callback); }
+    template<> inline void Window::OnEvent<WindowMinimizeEvent>(const EventCallback<WindowMinimizeEvent> &Callback) { windowMinimizeDispatcher.Subscribe(Callback); }
+    template<> inline void Window::OnEvent<WindowMaximizeEvent>(const EventCallback<WindowMaximizeEvent> &Callback) { windowMaximizeDispatcher.Subscribe(Callback); }
+    template<> inline void Window::OnEvent<WindowCloseEvent>(const EventCallback<WindowCloseEvent> &Callback) { windowCloseDispatcher.Subscribe(Callback); }
 
 }

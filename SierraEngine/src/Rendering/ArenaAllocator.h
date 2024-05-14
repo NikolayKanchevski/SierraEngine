@@ -17,7 +17,7 @@ namespace SierraEngine
         uint64 initialIndexBufferCapacity = 8192;
     };
 
-    class ArenaAllocator final
+    class SIERRA_ENGINE_API ArenaAllocator final
     {
     public:
         /* --- CONSTRUCTORS --- */
@@ -25,15 +25,17 @@ namespace SierraEngine
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] Mesh RegisterMesh(std::unique_ptr<Sierra::CommandBuffer> &commandBuffer, std::span<Vertex> vertices, std::span<uint32> indices);
-        void Bind(std::unique_ptr<Sierra::CommandBuffer> &commandBuffer);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline uint32 GetVertexCount() const { return currentVertexByteOffset / sizeof(Vertex); }
+        [[nodiscard]] inline const std::unique_ptr<Sierra::Buffer>& GetVertexBuffer() const { return vertexBuffer; }
+
         [[nodiscard]] inline uint32 GetIndexCount() const { return currentIndexByteOffset / sizeof(uint32); }
+        [[nodiscard]] inline const std::unique_ptr<Sierra::Buffer>& GetIndexBuffer() const { return indexBuffer; }
 
         /* --- OPERATORS --- */
         ArenaAllocator(const ArenaAllocator&) = delete;
-        ArenaAllocator &operator=(const ArenaAllocator&) = delete;
+        ArenaAllocator& operator=(const ArenaAllocator&) = delete;
 
         /* --- DESTRUCTOR --- */
         ~ArenaAllocator() = default;

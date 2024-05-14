@@ -121,7 +121,7 @@ namespace Sierra
         [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer() sourceOffset: sourceByteOffset toBuffer: metalDestinationBuffer.GetMetalBuffer() destinationOffset: destinationByteOffset size: memoryRange];
     }
 
-    void MetalCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const uint32 level, const uint32 layer, const Vector2UInt &pixelRange, const uint64 sourceByteOffset, const Vector2UInt &destinationPixelOffset)
+    void MetalCommandBuffer::CopyBufferToImage(const std::unique_ptr<Buffer> &sourceBuffer, const std::unique_ptr<Image> &destinationImage, const uint32 level, const uint32 layer, const Vector3UInt &pixelRange, const uint64 sourceByteOffset, const Vector3UInt &destinationPixelOffset)
     {
         SR_ERROR_IF(sourceBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy from buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], to image [{1}] within command buffer [{2}]!", sourceBuffer->GetName(), destinationImage->GetName(), GetName());
         const MetalBuffer &metalSourceBuffer = static_cast<const MetalBuffer&>(*sourceBuffer);
@@ -132,8 +132,8 @@ namespace Sierra
         SR_ERROR_IF(level >= destinationImage->GetLevelCount(), "[Metal]: Cannot copy from buffer [{0}] to level [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), level, destinationImage->GetName(), GetName());
         SR_ERROR_IF(layer >= destinationImage->GetLayerCount(), "[Metal]: Cannot copy from buffer [{0}] to layer [{1}] of image [{2}] within command buffer [{3}], as image does not contain it!", sourceBuffer->GetName(), layer, destinationImage->GetName(), GetName());
 
-        const MTLSize sourceSize = MTLSizeMake(pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth() >> level, pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight() >> level, 1);
-        SR_ERROR_IF(destinationPixelOffset.x + sourceSize.width > destinationImage->GetWidth() || destinationPixelOffset.y + sourceSize.height > destinationImage->GetHeight(), "[Metal]: Cannot copy from buffer [{0}] pixel range [{1}x{2}], which is offset by another [{3}x{4}] pixels to image [{5}] within command buffer [{6}], as resulting pixel range of a total of [{7}x{8}] pixels exceeds the image's dimensions - [{9}x{10}]!", sourceBuffer->GetName(), sourceSize.width, sourceSize.height, destinationPixelOffset.x, destinationPixelOffset.y, destinationImage->GetName(), GetName(), destinationPixelOffset.x + sourceSize.width, destinationPixelOffset.y + sourceSize.height, destinationImage->GetWidth(), destinationImage->GetHeight());
+        const MTLSize sourceSize = MTLSizeMake(pixelRange.x != 0 ? pixelRange.x : destinationImage->GetWidth() >> level, pixelRange.y != 0 ? pixelRange.y : destinationImage->GetHeight() >> level, pixelRange.z != 0 ? pixelRange.z : destinationImage->GetDepth() >> level);
+        SR_ERROR_IF(destinationPixelOffset.x + sourceSize.width > destinationImage->GetWidth() || destinationPixelOffset.y + sourceSize.height > destinationImage->GetHeight() || destinationPixelOffset.z + sourceSize.depth > destinationImage->GetDepth(), "[Metal]: Cannot copy from buffer [{0}] pixel range [{1}x{2}x{3}], which is offset by another [{4}x{5}x{6}] pixels to image [{7}] within command buffer [{8}], as resulting pixel range of a total of [{9}x{10}x{11}] pixels exceeds the image's dimensions - [{12}x{13}x{14}]!", sourceBuffer->GetName(), sourceSize.width, sourceSize.height, sourceSize.depth, destinationPixelOffset.x, destinationPixelOffset.y, destinationPixelOffset.z, destinationImage->GetName(), GetName(), sourceSize.width + destinationPixelOffset.x, sourceSize.height + destinationPixelOffset.y, sourceSize.depth + destinationPixelOffset.z, destinationImage->GetWidth(), destinationImage->GetHeight(), destinationImage->GetDepth());
 
         if (currentBlitEncoder == nil)
         {
@@ -183,7 +183,7 @@ namespace Sierra
         }
     }
 
-    void MetalCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::span<const RenderPassBeginAttachment> &attachments)
+    void MetalCommandBuffer::BeginRenderPass(const std::unique_ptr<RenderPass> &renderPass, const std::span<const RenderPassBeginAttachment> attachments)
     {
         SR_ERROR_IF(renderPass->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot begin render pass [{0}], whose graphics API differs from [GraphicsAPI::Metal], from command buffer [{1}]!", renderPass->GetName(), GetName());
         const MetalRenderPass &metalRenderPass = static_cast<const MetalRenderPass&>(*renderPass);
@@ -333,8 +333,6 @@ namespace Sierra
         SR_ERROR_IF(vertexBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind vertex buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", vertexBuffer->GetName(), GetName());
         const MetalBuffer &metalVertexBuffer = static_cast<const MetalBuffer&>(*vertexBuffer);
 
-        SR_ERROR_IF(currentRenderEncoder == nil, "[Metal]: Cannot bind vertex buffer [{0}] if no render encoder is active within command buffer [{1}]!", vertexBuffer->GetName(), GetName());
-
         SR_ERROR_IF(byteOffset > vertexBuffer->GetMemorySize(), "[Metal]: Cannot bind vertex buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is not within a valid range of the [{3}] bytes the buffer holds!", vertexBuffer->GetName(), GetName(), byteOffset, vertexBuffer->GetMemorySize());
         [currentRenderEncoder setVertexBuffer: metalVertexBuffer.GetMetalBuffer() offset: byteOffset atIndex: MetalDevice::VERTEX_BUFFER_INDEX];
         currentVertexBufferByteOffset = byteOffset;
@@ -346,8 +344,6 @@ namespace Sierra
         const MetalBuffer &metalIndexBuffer = static_cast<const MetalBuffer&>(*indexBuffer);
 
         SR_ERROR_IF(byteOffset > indexBuffer->GetMemorySize(), "[Metal]: Cannot bind index buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is not within a valid range of the [{3}] bytes the buffer holds!", indexBuffer->GetName(), GetName(), byteOffset, indexBuffer->GetMemorySize());
-        SR_ERROR_IF(currentRenderEncoder == nil, "[Metal]: Cannot bind index buffer [{0}] if no render encoder is active within command buffer [{1}]!", indexBuffer->GetName(), GetName());
-
         currentIndexBuffer = metalIndexBuffer.GetMetalBuffer();
         currentIndexBufferByteOffset = byteOffset;
     }

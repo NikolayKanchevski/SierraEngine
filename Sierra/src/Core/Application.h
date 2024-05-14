@@ -33,7 +33,7 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] inline std::string_view GetName() const { return name; }
-        [[nodiscard]] inline const Version& GetVersion() { return version; }
+        [[nodiscard]] inline const Version& GetVersion() const { return version; }
 
         /* --- OPERATORS --- */
         Application(const Application&) = delete;
@@ -54,7 +54,7 @@ namespace Sierra
         [[nodiscard]] const std::filesystem::path& GetApplicationTemporaryDirectoryPath();
 
     private:
-        virtual void Start() = 0;
+        virtual void Start() = 0; // TODO: Get rid of altogether
         virtual bool Update(const TimeStep &timeStep) = 0;
 
         const std::string_view name;

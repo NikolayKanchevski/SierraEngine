@@ -9,23 +9,22 @@
 namespace Sierra
 {
 
-    #pragma region Events
-        class SIERRA_API CursorEvent : public Event { };
+    class SIERRA_API CursorEvent : public Event { };
+    template<typename T> concept CursorEventType = std::is_base_of_v<CursorEvent, T> && !std::is_same_v<CursorEvent, std::decay_t<T>>;
 
-        class SIERRA_API CursorMoveEvent final : public CursorEvent
-        {
-        public:
-            /* --- CONSTRUCTORS --- */
-            inline explicit CursorMoveEvent(Vector2 position) : position(position) { }
+    class SIERRA_API CursorMoveEvent final : public CursorEvent
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        inline explicit CursorMoveEvent(Vector2 position) : position(position) { }
 
-            /* --- GETTER METHODS --- */
-            [[nodiscard]] inline const Vector2& GetPosition() const { return position; }
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] inline const Vector2& GetPosition() const { return position; }
 
-        private:
-            Vector2 position;
+    private:
+        Vector2 position;
 
-        };
-    #pragma endregion
+    };
 
     struct CursorManagerCreateInfo
     {
@@ -36,8 +35,8 @@ namespace Sierra
     {
     public:
         /* --- TYPE DEFINITIONS --- */
-        template<typename T>
-        using CursorEventCallback = std::function<bool(const T&)>;
+        template<CursorEventType EventType>
+        using EventCallback = std::function<bool(const EventType&)>;
 
         /* --- CONSTRUCTORS --- */
         explicit CursorManager(const CursorManagerCreateInfo &createInfo);
@@ -54,8 +53,8 @@ namespace Sierra
         [[nodiscard]] virtual float32 GetVerticalDelta() const;
 
         /* --- EVENTS --- */
-        template<typename T> requires (std::is_base_of_v<CursorEvent, T> && !std::is_same_v<CursorEvent, T>)
-        void OnEvent(const CursorEventCallback<T> &Callback) { }
+        template<CursorEventType EventType>
+        void OnEvent(const EventCallback<EventType> &Callback) { }
 
         /* --- OPERATORS --- */
         CursorManager(const CursorManager&) = delete;
@@ -72,6 +71,6 @@ namespace Sierra
 
     };
 
-    template<> inline void CursorManager::OnEvent<CursorMoveEvent>(const CursorEventCallback<CursorMoveEvent> &Callback) { cursorMoveDispatcher.Subscribe(Callback); }
+    template<> inline void CursorManager::OnEvent<CursorMoveEvent>(const EventCallback<CursorMoveEvent> &Callback) { cursorMoveDispatcher.Subscribe(Callback); }
 
 }

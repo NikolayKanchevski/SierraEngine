@@ -16,7 +16,7 @@ namespace Sierra
     MetalResourceTable::MetalResourceTable(const MetalDevice &device, const ResourceTableCreateInfo &createInfo)
         : ResourceTable(createInfo), MetalResource(createInfo.name), device(device)
     {
-        SR_ERROR_IF([device.GetMetalDevice() argumentBuffersSupport] != MTLArgumentBuffersTier2, "[Metal]: Cannot create resource table [{0}], as the provided device [{1}] does not support the Argument Buffers!", GetName(), device.GetName());
+        SR_ERROR_IF([device.GetMetalDevice() argumentBuffersSupport] != MTLArgumentBuffersTier2, "[Metal]: Cannot create resource table [{0}], as the provided device [{1}] does not support Argument Buffers!", GetName(), device.GetName());
 
         // Set up argument descriptors
         NSMutableArray<MTLArgumentDescriptor*>* const argumentDescriptors = [[NSMutableArray alloc] initWithCapacity: MetalDevice::BINDLESS_ARGUMENT_BUFFER_INDEX_COUNT];

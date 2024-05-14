@@ -8,13 +8,14 @@ namespace Sierra
 {
 
     class SIERRA_API Event {  };
+    template<typename T> concept EventType = !std::is_same_v<Event, T> && std::is_base_of_v<Event, T>;
 
-    template<typename T> requires (!std::is_same_v<Event, T> && std::is_base_of_v<Event, T>)
+    template<EventType EventType>
     class SIERRA_API EventDispatcher final
     {
     public:
         /* --- TYPE DEFINITIONS --- */
-        using EventCallback = std::function<bool(const T&)>;
+        using EventCallback = std::function<bool(const EventType&)>;
         using EventSubscriptionID = uint32;
 
         /* --- CONSTRUCTORS --- */
@@ -58,7 +59,7 @@ namespace Sierra
         void DispatchEvent(Args&&... args)
         {
             // Immediately handle requested event
-            T event = T(std::forward<Args>(args)...);
+            EventType event = EventType(std::forward<Args>(args)...);
             for (const EventCallback &Callback : callbacks)
             {
                 // If event is handled, we break, so that deeper subscribers do not register it

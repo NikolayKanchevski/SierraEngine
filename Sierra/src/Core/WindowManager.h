@@ -30,7 +30,7 @@ namespace Sierra
         explicit WindowManager(const WindowManagerCreateInfo &createInfo);
 
         friend class Application;
-        static std::unique_ptr<WindowManager> Create(const WindowManagerCreateInfo &createInfo);
+        [[nodiscard]] static std::unique_ptr<WindowManager> Create(const WindowManagerCreateInfo &createInfo);
 
     };
 

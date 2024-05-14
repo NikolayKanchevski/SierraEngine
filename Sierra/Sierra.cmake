@@ -7,14 +7,14 @@ set(SIERRA_DIRECTORY_PATH ${CMAKE_CURRENT_LIST_DIR})
 include(${SIERRA_DIRECTORY_PATH}/cmake/PlatformDetection.cmake)
 include(${SIERRA_DIRECTORY_PATH}/cmake/CompilerDetection.cmake)
 
-# === OPTIONS === $
+# === OPTIONS === #
 set(SIERRA_APPLICATION_NAME ${PROJECT_NAME} CACHE STRING "Name of the application (used for the binary and code signing).")
 set(SIERRA_APPLICATION_VERSION_MAJOR 1 CACHE STRING "Major version of the application.")
 set(SIERRA_APPLICATION_VERSION_MINOR 0 CACHE STRING "Minor version of the application.")
 set(SIERRA_APPLICATION_VERSION_PATCH 0 CACHE STRING "Patch number of the application.")
 set(SIERRA_APPLICATION_ICON_ICO "../Media/SierraExecutableIcon.ico" CACHE FILEPATH "Absolute path to an .ico image to use as an icon for the generated binary on non-Apple desktop platforms.")
 set(SIERRA_APPLICATION_ICON_ICNS "../Media/SierraExecutableIcon.icns" CACHE FILEPATH "Absolute path to an .icns image to use as an icon for the generated binary on Apple platforms.")
-set(SIERRA_APPLICATION_ICON_PNG "../Media/SierraExecutableIcon.png" CACHE FILEPATH "Absolute path to an .icns image to use as an icon for the generated binary on Apple platforms.")
+set(SIERRA_APPLICATION_ICON_PNG "../Media/SierraExecutableIcon.png" CACHE FILEPATH "Absolute path to an .png image to use as an icon for the generated binary on Linux platforms.")
 
 option(SIERRA_BUILD_STATIC_LIBRARY "Whether to build the engine as a static library, which is embedded in the application." OFF)
 option(SIERRA_BUILD_SHARED_LIBRARY "Whether to build the engine as a shared library, which is shipped as a separate file (.dll, .dylib, etc.)" OFF)
@@ -27,7 +27,7 @@ else()
     option(SIERRA_ENABLE_OPTIMIZATIONS "Whether to enable optimizations." ON)
 endif()
 
-if(SIERRA_PLATFORM_WINDOWS OR SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_LINUX OR SIERRA_PLATFORM_ANDROID OR SIERRA_PLATFORM_iOS)
+if(SIERRA_PLATFORM_WINDOWS OR SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_LINUX OR SIERRA_PLATFORM_ANDROID)
     option(SIERRA_BUILD_VULKAN "Whether to build Vulkan and its resources." ON)
 endif()
 if(SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_iOS)
@@ -37,8 +37,8 @@ endif()
 option(SIERRA_ENABLE_IMGUI_EXTENSION "Whether to build the ImGui layer (ImGui would still need to be manually linked to application). Requires SIERRA_IMGUI_INCLUDE_DIRECTORY_PATH to be set." OFF)
 
 # === CHECK IF REQUIREMENTS ARE MET === #
-if(NOT CMAKE_CXX_STANDARD OR CMAKE_CXX_STANDARD LESS 20)
-    message(FATAL_ERROR "[Sierra]: Sierra requires C++ 20 to be explicitly selected before including Sierra.cmake!")
+if(NOT CMAKE_CXX_STANDARD OR NOT CMAKE_CXX_STANDARD EQUAL 20)
+    message(FATAL_ERROR "[Sierra]: Sierra runs under C++20 only, and needs the [CMAKE_CXX_STANDARD] version to be explicitly set to [20] prior to including Sierra.cmake!")
 endif()
 if(SIERRA_COMPILER_UNKNOWN)
     message(FATAL_ERROR "[Sierra]: Sierra cannot be built with unrecognized compiler [${CMAKE_CXX_COMPILER_ID}]!")
@@ -86,21 +86,5 @@ function(SierraBuildApplication SOURCE_FILES)
     # Delete static library after build
     if(SIERRA_BUILD_STATIC_LIBRARY)
         add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:Sierra>)
-    endif()
-
-    # === PRECOMPILED HEADERS === #
-    target_precompile_headers(Sierra PRIVATE "${SIERRA_DIRECTORY_PATH}/src/srpch.h")
-
-    # === ENGINE LINKING === #
-    target_link_libraries(${SIERRA_APPLICATION_NAME} PRIVATE Sierra)
-    target_include_directories(${SIERRA_APPLICATION_NAME} PRIVATE ${SIERRA_DIRECTORY_PATH}/include/)
-
-    # === RUN UPDATE SCRIPT === #
-    find_package(Python)
-    if(Python_FOUND)
-        add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} POST_BUILD COMMAND ${Python_EXECUTABLE} ${SIERRA_DIRECTORY_PATH}/scripts/UpdateProject.py)
-        message(STATUS "[Sierra]: Running project update scripts...")
-    else()
-        message(WARNING "[Sierra]: Python install was not found on the machine. Project update scripts cannot be run!")
     endif()
 endfunction()

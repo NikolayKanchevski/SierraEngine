@@ -58,7 +58,7 @@ namespace Sierra
 
     VulkanBuffer::~VulkanBuffer()
     {
-        if (allocation != VK_NULL_HANDLE) vmaUnmapMemory(device.GetMemoryAllocator(), allocation);
+        if (allocation != VK_NULL_HANDLE && data != nullptr) vmaUnmapMemory(device.GetMemoryAllocator(), allocation);
         vmaDestroyBuffer(device.GetMemoryAllocator(), buffer, allocation);
     }
 

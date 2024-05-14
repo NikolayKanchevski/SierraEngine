@@ -10,44 +10,45 @@
 namespace Sierra
 {
 
-    #pragma region Events
-        class SIERRA_API TouchEvent : public Event
-        {
-        public:
-            [[nodiscard]] inline const Touch& GetTouch() const { return touch; }
+    class SIERRA_API TouchEvent;
+    template<typename T> concept TouchEventType = std::is_base_of_v<TouchEvent, T> && !std::is_same_v<TouchEvent, std::decay_t<T>>;
 
-        protected:
-            explicit TouchEvent(const Touch &touch) : touch(touch) { }
+    class SIERRA_API TouchEvent : public Event
+    {
+    public:
+        [[nodiscard]] inline const Touch& GetTouch() const { return touch; }
 
-        private:
-            Touch touch;
+    protected:
+        explicit TouchEvent(const Touch &touch) : touch(touch) { }
 
-        };
+    private:
+        Touch touch;
 
-        class SIERRA_API TouchBeginEvent final : public TouchEvent
-        {
-        public:
-            /* --- CONSTRUCTORS --- */
-            explicit TouchBeginEvent(const Touch &touch) : TouchEvent(touch) { }
+    };
 
-        };
+    class SIERRA_API TouchBeginEvent final : public TouchEvent
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        explicit TouchBeginEvent(const Touch &touch) : TouchEvent(touch) { }
 
-        class SIERRA_API TouchMoveEvent final : public TouchEvent
-        {
-        public:
-            /* --- CONSTRUCTORS --- */
-            explicit TouchMoveEvent(const Touch &touch) : TouchEvent(touch) { }
+    };
 
-        };
+    class SIERRA_API TouchMoveEvent final : public TouchEvent
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        explicit TouchMoveEvent(const Touch &touch) : TouchEvent(touch) { }
 
-        class SIERRA_API TouchEndEvent final : public TouchEvent
-        {
-        public:
-            /* --- CONSTRUCTORS --- */
-            explicit TouchEndEvent(const Touch &touch) : TouchEvent(touch) { }
+    };
 
-        };
-    #pragma endregion
+    class SIERRA_API TouchEndEvent final : public TouchEvent
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        explicit TouchEndEvent(const Touch &touch) : TouchEvent(touch) { }
+
+    };
 
     struct TouchManagerCreateInfo
     {
@@ -58,8 +59,8 @@ namespace Sierra
     {
     public:
         /* --- TYPE DEFINITIONS --- */
-        template<typename T>
-        using TouchEventCallback = std::function<bool(const T&)>;
+        template<TouchEventType EventType>
+        using EventCallback = std::function<bool(const EventType&)>;
         
         /* --- CONSTRUCTORS --- */
         explicit TouchManager(const TouchManagerCreateInfo &createInfo);
@@ -69,8 +70,8 @@ namespace Sierra
         [[nodiscard]] virtual const Touch& GetTouch(uint32 touchIndex) const;
 
         /* --- EVENTS --- */
-        template<typename T> requires (std::is_base_of_v<TouchEvent, T> && !std::is_same_v<TouchEvent, T>)
-        void OnEvent(const TouchEventCallback<T> &Callback) { }
+        template<TouchEventType EventType>
+        void OnEvent(const EventCallback<EventType> &Callback) { }
 
         /* --- DESTRUCTOR --- */
         virtual ~TouchManager() = default;
@@ -91,8 +92,8 @@ namespace Sierra
 
     };
 
-    template<> inline void TouchManager::OnEvent<TouchBeginEvent>(const TouchEventCallback<TouchBeginEvent> &Callback) { touchBeginDispatcher.Subscribe(Callback); }
-    template<> inline void TouchManager::OnEvent<TouchMoveEvent>(const TouchEventCallback<TouchMoveEvent> &Callback) { touchMoveDispatcher.Subscribe(Callback); }
-    template<> inline void TouchManager::OnEvent<TouchEndEvent>(const TouchEventCallback<TouchEndEvent> &Callback) { touchEndDispatcher.Subscribe(Callback); }
+    template<> inline void TouchManager::OnEvent<TouchBeginEvent>(const EventCallback<TouchBeginEvent> &Callback) { touchBeginDispatcher.Subscribe(Callback); }
+    template<> inline void TouchManager::OnEvent<TouchMoveEvent>(const EventCallback<TouchMoveEvent> &Callback) { touchMoveDispatcher.Subscribe(Callback); }
+    template<> inline void TouchManager::OnEvent<TouchEndEvent>(const EventCallback<TouchEndEvent> &Callback) { touchEndDispatcher.Subscribe(Callback); }
 
 }

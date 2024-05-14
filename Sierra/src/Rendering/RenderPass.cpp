@@ -22,7 +22,7 @@ namespace Sierra
                 {
                     const RenderPassAttachment &attachment = createInfo.attachments[renderTargetIndex];
 
-                    SR_ERROR_IF(attachment.templateOutputImage == nullptr, "Cannot create render pass [{0}], as attachment [{1}]'s template output image must not be a null pointer!");
+                    SR_ERROR_IF(attachment.templateOutputImage == nullptr, "Cannot create render pass [{0}], as attachment [{1}]'s template output image must not be a null pointer!", createInfo.name, i);
                     SR_ERROR_IF(attachment.templateOutputImage->GetWidth() != expectedWidth || attachment.templateOutputImage->GetHeight() != expectedHeight, "Cannot create render pass [{0}], as attachment [{1}] does not share the same dimensions as the rest!", createInfo.name, renderTargetIndex);
                 }
             }
