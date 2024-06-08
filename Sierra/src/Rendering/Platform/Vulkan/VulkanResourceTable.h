@@ -19,12 +19,12 @@ namespace Sierra
         VulkanResourceTable(const VulkanDevice &device, const ResourceTableCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void BindUniformBuffer(ResourceIndex index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
-        void BindStorageBuffer(ResourceIndex index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
+        void BindUniformBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
+        void BindStorageBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
 
-        void BindSampledImage(ResourceIndex index, const std::unique_ptr<Image> &image) override;
-        void BindStorageImage(ResourceIndex index, const std::unique_ptr<Image> &image) override;
-        void BindSampler(ResourceIndex ResourceTableIndex, const std::unique_ptr<Sampler> &sampler) override;
+        void BindSampledImage(ResourceIndex index, const Image &image) override;
+        void BindStorageImage(ResourceIndex index, const Image &image) override;
+        void BindSampler(ResourceIndex index, const Sampler &sampler) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint32 GetUniformBufferCapacity() const override;
@@ -34,7 +34,7 @@ namespace Sierra
         [[nodiscard]] uint32 GetStorageImageCapacity() const override;
         [[nodiscard]] uint32 GetSamplerCapacity() const override;
 
-        [[nodiscard]] inline VkDescriptorSet GetDescriptorSet() const { return descriptorSet; }
+        [[nodiscard]] VkDescriptorSet GetDescriptorSet() const { return descriptorSet; }
 
         /* --- DESTRUCTOR --- */
         ~VulkanResourceTable() override;

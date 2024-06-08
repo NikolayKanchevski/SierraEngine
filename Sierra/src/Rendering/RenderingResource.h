@@ -34,8 +34,8 @@ namespace Sierra
     {
     public:
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline std::string_view GetName() const { return name; }
-        [[nodiscard]] inline virtual GraphicsAPI GetAPI() const = 0;
+        [[nodiscard]] std::string_view GetName() const { return name; }
+        [[nodiscard]] virtual GraphicsAPI GetAPI() const = 0;
 
     protected:
         RenderingResource() = default;

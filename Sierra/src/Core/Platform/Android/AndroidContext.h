@@ -22,11 +22,11 @@ namespace Sierra
         explicit AndroidContext(const PlatformContextCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const GameActivityContext& GetGameActivityContext() const { return activityContext; }
-        [[nodiscard]] inline PlatformType GetType() const override { return PlatformType::Android; }
+        [[nodiscard]] const GameActivityContext& GetGameActivityContext() const { return activityContext; }
+        [[nodiscard]] PlatformType GetType() const override { return PlatformType::Android; }
 
     private:
-        inline static android_app* app = nullptr;
+        static android_app* app = nullptr;
         friend void ::android_main(android_app*);
 
         GameActivityContext activityContext;

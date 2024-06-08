@@ -13,10 +13,10 @@ namespace SierraEngine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        UUID();
+        explicit UUID(uint64 hash = static_cast<uint64>(std::rand()) << 32 | std::rand()); // NOTE: We use std::rand() by default, despite its limited randomness, because it is ~20x faster for serialization than std::mt19937_64
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint64 GetHash() const { return hash; }
+        [[nodiscard]] uint64 GetHash() const { return hash; }
 
         /* --- TYPE DATA --- */
         [[nodiscard]] constexpr static std::string_view GetName() { return "UUID"; }

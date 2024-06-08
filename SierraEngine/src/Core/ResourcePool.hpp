@@ -12,19 +12,15 @@ namespace SierraEngine
         uint32 initialSize = 128;
     };
 
-    template<typename K, typename T, uint32 C = 0>
+    template<typename K, typename T>
     class ResourcePool final
     {
     public:
         /* --- CONSTRUCTORS --- */
-        ResourcePool()
-        {
-            resources.reserve(C);
-        }
-
         explicit ResourcePool(const ResourcePoolCreateInfo &createInfo)
+            : resources(createInfo.initialSize)
         {
-            resources.reserve(createInfo.initialSize);
+
         }
 
         /* --- POLLING METHODS --- */
@@ -39,15 +35,14 @@ namespace SierraEngine
         }
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::optional<std::reference_wrapper<const T>> GetResource(const K ID) const
+        [[nodiscard]] T* GetResource(const K ID) const
         {
             auto iterator = resources.find(ID);
             if (iterator != resources.end()) return iterator->second;
-
-            return std::nullopt;
+            return nullptr;
         }
 
-        [[nodiscard]] inline bool ResourceExists(const K ID) const
+        [[nodiscard]] bool ResourceExists(const K ID) const
         {
             return GetResource(ID).has_value();
         }
@@ -60,7 +55,7 @@ namespace SierraEngine
         ~ResourcePool() = default;
 
     private:
-        std::unordered_map<K, T> resources;
+        std::unordered_map<K, T> resources = { };
 
     };
 

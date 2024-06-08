@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    CommandBuffer::CommandBuffer(const CommandBufferCreateInfo &createInfo)
+    CommandBuffer::CommandBuffer(const CommandBufferCreateInfo&)
     {
 
     }

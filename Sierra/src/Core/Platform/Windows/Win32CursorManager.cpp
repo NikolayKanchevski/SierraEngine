@@ -67,7 +67,7 @@ namespace Sierra
         lastCursorPosition = cursorPosition;
     }
 
-    void Win32CursorManager::UpdateEnd()
+    void Win32CursorManager::PostUpdate()
     {
         if (!cursorHidden) return;
 

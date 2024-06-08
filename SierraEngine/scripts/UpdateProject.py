@@ -44,7 +44,7 @@ def UpdateReadMe() -> None:
         # Get old README.md file data
         readMeData: str = file.read()
 
-        index: int = readMeData.index('<p align="center" id="LineCounter">')
+        index: int = readMeData.index('<p id="LineCounter" style="text-align: center;">')
         readMeData = readMeData[0:index]
 
         # Get current date
@@ -53,8 +53,8 @@ def UpdateReadMe() -> None:
 
         # Apply date and line count changes
         linesOfCodeString: str = f'{linesOfCode:,}'
-        linesOfCodeLine: str = f'<p align="center" id="LineCounter">Total lines of code: { linesOfCodeString }</p>\n'
-        lastUpdatedLine: str = f'<p align="center" id="LastUpdated">Last updated: { updated } </p>\n'
+        linesOfCodeLine: str = f'<p id="LineCounter" style="text-align: center;">Total lines of code: { linesOfCodeString }</p>\n'
+        lastUpdatedLine: str = f'<p id="LastUpdated" style="text-align: center;">Last updated: { updated } </p>\n'
 
         # Get new data and write to README.md file
         newReadMeData = readMeData + linesOfCodeLine + lastUpdatedLine + '\n' + ('-' * 171)

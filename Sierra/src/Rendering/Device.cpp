@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Device::Device(const DeviceCreateInfo &createInfo)
+    Device::Device(const DeviceCreateInfo&)
     {
 
     }
@@ -764,7 +764,7 @@ namespace Sierra
             if (IsImageFormatSupported(format, usage))
             {
                 // If image is to be used for memory transfers, we must make sure suitable format has same channel memory size, or risk undefined behaviour and memory faults
-                if ((usage & ImageUsage::SourceMemory || usage & ImageUsage::DestinationMemory || usage & ImageUsage::Storage) && (ImageFormatToPixelMemorySize(preferredFormat) / ImageFormatToChannelCount(preferredFormat) != ImageFormatToPixelMemorySize(format) / ImageFormatToChannelCount(format))) continue;
+                if ((usage & ImageUsage::SourceMemory || usage & ImageUsage::DestinationMemory || usage & ImageUsage::Storage) && static_cast<uint32>(ImageFormatToPixelMemorySize(preferredFormat) / ImageFormatToChannelCount(preferredFormat)) != static_cast<uint32>(ImageFormatToPixelMemorySize(format) / ImageFormatToChannelCount(format))) continue;
                 return format;
             }
         }
@@ -774,23 +774,23 @@ namespace Sierra
 
     ImageSampling Device::GetHighestImageSamplingSupported() const
     {
-        if (IsImageSamplingSupported(ImageSampling::x64)) return ImageSampling::x64;
-        if (IsImageSamplingSupported(ImageSampling::x32)) return ImageSampling::x32;
-        if (IsImageSamplingSupported(ImageSampling::x16)) return ImageSampling::x16;
-        if (IsImageSamplingSupported(ImageSampling::x8)) return ImageSampling::x8;
-        if (IsImageSamplingSupported(ImageSampling::x4)) return ImageSampling::x4;
-        if (IsImageSamplingSupported(ImageSampling::x2)) return ImageSampling::x2;
+        if (IsImageSamplingSupported(ImageSampling::x64))       return ImageSampling::x64;
+        if (IsImageSamplingSupported(ImageSampling::x32))       return ImageSampling::x32;
+        if (IsImageSamplingSupported(ImageSampling::x16))       return ImageSampling::x16;
+        if (IsImageSamplingSupported(ImageSampling::x8))        return ImageSampling::x8;
+        if (IsImageSamplingSupported(ImageSampling::x4))        return ImageSampling::x4;
+        if (IsImageSamplingSupported(ImageSampling::x2))        return ImageSampling::x2;
         return ImageSampling::x1;
     }
 
     SamplerAnisotropy Device::GetHighestSamplerAnisotropySupported() const
     {
-        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x64)) return SamplerAnisotropy::x64;
-        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x32)) return SamplerAnisotropy::x32;
-        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x16)) return SamplerAnisotropy::x16;
-        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x8)) return SamplerAnisotropy::x8;
-        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x4)) return SamplerAnisotropy::x4;
-        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x2)) return SamplerAnisotropy::x2;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x64))       return SamplerAnisotropy::x64;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x32))       return SamplerAnisotropy::x32;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x16))       return SamplerAnisotropy::x16;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x8))        return SamplerAnisotropy::x8;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x4))        return SamplerAnisotropy::x4;
+        if (IsSamplerAnisotropySupported(SamplerAnisotropy::x2))        return SamplerAnisotropy::x2;
         return SamplerAnisotropy::x1;
     }
 

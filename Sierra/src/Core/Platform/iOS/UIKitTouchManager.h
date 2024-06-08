@@ -21,26 +21,22 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit UIKitTouchManager(const TouchManagerCreateInfo &createInfo);
+        explicit UIKitTouchManager();
 
         /* --- POLLING METHODS --- */
-        void Update();
+        void RegisterTouchPress(const Touch &touch) override;
+        void RegisterTouchMove(TouchID ID, Vector2 position) override;
+        void RegisterTouchRelease(TouchID ID) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] uint32 GetTouchCount() const override;
-        [[nodiscard]] const Touch& GetTouch(uint32 touchIndex) const override;
+        [[nodiscard]] std::span<const Touch> GetTouches() const override { return touches; }
 
     private:
-        std::deque<Touch> activeTouches;
+        std::vector<Touch> touches;
 
-        #if defined(__OBJC__) && (defined(UIKIT_TOUCH_MANAGER_IMPLEMENTATION) || defined(UIKIT_WINDOW_IMPLEMENTATION))
-            public:
-                /* --- EVENTS --- */
-                void TouchesBegan(const NSSet<UITouch*>* touches, const UIEvent* event);
-                void TouchesMoved(const NSSet<UITouch*>* touches, const UIEvent* event);
-                void TouchesEnded(const NSSet<UITouch*>* touches, const UIEvent* event);
-                void TouchesCancelled(const NSSet<UITouch*>* touches, const UIEvent* event);
-        #endif
+        friend class UIKitWindow;
+        void Update();
+
     };
 
 }

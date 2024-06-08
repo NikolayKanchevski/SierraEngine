@@ -4,9 +4,10 @@
 
 #pragma once
 
+#include "FileManager.h"
+#include "PlatformContext.h"
 #include "Version.hpp"
 #include "WindowManager.h"
-#include "PlatformContext.h"
 #include "../Rendering/RenderingContext.h"
 
 namespace Sierra
@@ -28,12 +29,12 @@ namespace Sierra
     class SIERRA_API Application
     {
     public:
-        /* --- CONSTRUCTORS --- */
-        void Run();
+        /* --- POLLING METHODS --- */
+        virtual bool Update() = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline std::string_view GetName() const { return name; }
-        [[nodiscard]] inline const Version& GetVersion() const { return version; }
+        [[nodiscard]] std::string_view GetName() const { return name; }
+        [[nodiscard]] const Version& GetVersion() const { return version; }
 
         /* --- OPERATORS --- */
         Application(const Application&) = delete;
@@ -45,18 +46,15 @@ namespace Sierra
     protected:
         explicit Application(const ApplicationCreateInfo &createInfo);
 
-        [[nodiscard]] inline const FileManager& GetFileManager() const { return fileManager; }
-        [[nodiscard]] inline const WindowManager& GetWindowManager() const { return *windowManager; }
-        [[nodiscard]] inline const PlatformContext& GetPlatformContext() const { return *platformContext; }
-        [[nodiscard]] inline const RenderingContext& GetRenderingContext() const { return *renderingContext; }
+        [[nodiscard]] const FileManager& GetFileManager() const { return fileManager; }
+        [[nodiscard]] const WindowManager& GetWindowManager() const { return *windowManager; }
+        [[nodiscard]] const PlatformContext& GetPlatformContext() const { return *platformContext; }
+        [[nodiscard]] const RenderingContext& GetRenderingContext() const { return *renderingContext; }
 
-        [[nodiscard]] const std::filesystem::path& GetApplicationCachesDirectoryPath();
-        [[nodiscard]] const std::filesystem::path& GetApplicationTemporaryDirectoryPath();
+        [[nodiscard]] const std::filesystem::path& GetApplicationCachesDirectoryPath() const;
+        [[nodiscard]] const std::filesystem::path& GetApplicationTemporaryDirectoryPath() const;
 
     private:
-        virtual void Start() = 0; // TODO: Get rid of altogether
-        virtual bool Update(const TimeStep &timeStep) = 0;
-
         const std::string_view name;
         const Version version;
         const uint16 maxFrameRate;

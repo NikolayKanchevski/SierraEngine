@@ -23,7 +23,7 @@ namespace Sierra
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
 
         // Set up pool sizes
-        const std::array<VkDescriptorPoolSize, VulkanDevice::BINDLESS_BINDING_COUNT> poolSizes
+        const std::array poolSizes
         {
             VkDescriptorPoolSize {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -60,7 +60,7 @@ namespace Sierra
         // Create descriptor pool
         VkResult result = device.GetFunctionTable().vkCreateDescriptorPool(device.GetLogicalDevice(), &descriptorPoolCreateInfo, nullptr, &descriptorPool);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create descriptor pool of resource table [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
-        device.SetObjectName(descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Descriptor pool of resource table [" + std::string(GetName()) + "]");
+        device.SetResourceName(descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Descriptor pool of resource table [" + std::string(GetName()) + "]");
 
         // Set up set allocate info
         VkDescriptorSetLayout descriptorSetLayout = device.GetDescriptorSetLayout();
@@ -75,15 +75,15 @@ namespace Sierra
         // Allocate descriptor set
         result = device.GetFunctionTable().vkAllocateDescriptorSets(device.GetLogicalDevice(), &descriptorSetAllocateInfo, &descriptorSet);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not allocate descriptor set of resource table [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
-        device.SetObjectName(descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, "Descriptor set of resource table [" + std::string(GetName()) + "]");
+        device.SetResourceName(descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, "Descriptor set of resource table [" + std::string(GetName()) + "]");
     }
 
     /* --- POLLING METHODS --- */
 
-    void VulkanResourceTable::BindUniformBuffer(const ResourceIndex index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange, uint64 byteOffset)
+    void VulkanResourceTable::BindUniformBuffer(const ResourceIndex index, const Buffer &buffer, const uint64 memoryRange, const uint64 byteOffset)
     {
-        SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind uniform buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer->GetName(), GetName());
-        const VulkanBuffer &vulkanBuffer = static_cast<const VulkanBuffer&>(*buffer);
+        SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind uniform buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer.GetName(), GetName());
+        const VulkanBuffer &vulkanBuffer = static_cast<const VulkanBuffer&>(buffer);
 
         if (index >= GetUniformBufferCapacity())
         {
@@ -96,7 +96,7 @@ namespace Sierra
         {
             .buffer = vulkanBuffer.GetVulkanBuffer(),
             .offset = byteOffset,
-            .range = memoryRange != 0 ? memoryRange : buffer->GetMemorySize()
+            .range = memoryRange != 0 ? memoryRange : buffer.GetMemorySize()
         };
 
         // Set up write info
@@ -115,10 +115,10 @@ namespace Sierra
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
     }
 
-    void VulkanResourceTable::BindStorageBuffer(const ResourceIndex index, const std::unique_ptr<Buffer> &buffer, const uint64 memoryRange, const uint64 byteOffset)
+    void VulkanResourceTable::BindStorageBuffer(const ResourceIndex index, const Buffer &buffer, const uint64 memoryRange, const uint64 byteOffset)
     {
-        SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind storage buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer->GetName(), GetName());
-        const VulkanBuffer &vulkanBuffer = static_cast<const VulkanBuffer&>(*buffer);
+        SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind storage buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer.GetName(), GetName());
+        const VulkanBuffer &vulkanBuffer = static_cast<const VulkanBuffer&>(buffer);
 
         if (index >= GetStorageBufferCapacity())
         {
@@ -131,7 +131,7 @@ namespace Sierra
         {
             .buffer = vulkanBuffer.GetVulkanBuffer(),
             .offset = byteOffset,
-            .range = memoryRange != 0 ? memoryRange : buffer->GetMemorySize()
+            .range = memoryRange != 0 ? memoryRange : buffer.GetMemorySize()
         };
 
         // Set up write info
@@ -150,10 +150,10 @@ namespace Sierra
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
     }
 
-    void VulkanResourceTable::BindSampledImage(const ResourceIndex index, const std::unique_ptr<Image> &image)
+    void VulkanResourceTable::BindSampledImage(const ResourceIndex index, const Image &image)
     {
-        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind sampled image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image->GetName(), GetName());
-        const VulkanImage &vulkanImage = static_cast<const VulkanImage&>(*image);
+        SR_ERROR_IF(image.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind sampled image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image.GetName(), GetName());
+        const VulkanImage &vulkanImage = static_cast<const VulkanImage&>(image);
 
         if (index >= GetSampledImageCapacity())
         {
@@ -185,10 +185,10 @@ namespace Sierra
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
     }
 
-    void VulkanResourceTable::BindSampler(const ResourceIndex index, const std::unique_ptr<Sampler> &sampler)
+    void VulkanResourceTable::BindSampler(const ResourceIndex index, const Sampler &sampler)
     {
-        SR_ERROR_IF(sampler->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind sampler [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", sampler->GetName(), GetName());
-        const VulkanSampler &vulkanSampler = static_cast<const VulkanSampler&>(*sampler);
+        SR_ERROR_IF(sampler.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind sampler [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", sampler.GetName(), GetName());
+        const VulkanSampler &vulkanSampler = static_cast<const VulkanSampler&>(sampler);
 
         if (index >= GetSamplerCapacity())
         {
@@ -220,10 +220,10 @@ namespace Sierra
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
     }
 
-    void VulkanResourceTable::BindStorageImage(const ResourceIndex index, const std::unique_ptr<Image> &image)
+    void VulkanResourceTable::BindStorageImage(const ResourceIndex index, const Image &image)
     {
-        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind storage image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image->GetName(), GetName());
-        const VulkanImage &vulkanImage = static_cast<const VulkanImage&>(*image);
+        SR_ERROR_IF(image.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind storage image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image.GetName(), GetName());
+        const VulkanImage &vulkanImage = static_cast<const VulkanImage&>(image);
 
         if (index >= GetStorageImageCapacity())
         {

@@ -5,6 +5,9 @@
 #define COCOA_CONTEXT_IMPLEMENTATION
 #include "CocoaContext.h"
 
+#include "../../EntryPoint.h"
+#include "../../Application.h"
+
 @interface CocoaApplicationDelegate : NSObject<NSApplicationDelegate>
 
 @end
@@ -25,85 +28,11 @@
         return self;
     }
 
-    - (NSApplicationTerminateReply) applicationShouldTerminate: (NSApplication*) sender
-    {
-        // Close all windows
-        NSArray<NSWindow*>* windows = [cocoaContext->GetApplication() windows];
-        for (ulong i = [windows count]; i--;)
-        {
-            [windows[i] performClose: nil];
-        }
-
-        return NSTerminateCancel;
-    }
-
-    - (void) applicationWillFinishLaunching: (NSNotification*) notification
-    {
-        if ([[NSBundle mainBundle] pathForResource: @"MainMenu" ofType: @"nib"])
-        {
-            [[NSBundle mainBundle] loadNibNamed: @"MainMenu" owner: cocoaContext->GetApplication() topLevelObjects: nil];
-        }
-        else
-        {
-            // Get process name
-            id appName = [[NSProcessInfo processInfo] processName];
-
-            // Create default application menu bar
-            NSMenu* bar = [[NSMenu alloc] init];
-            NSMenuItem* appMenuItem = [bar addItemWithTitle: @"" action: nil keyEquivalent: @""];
-            NSMenu* appMenu = [[NSMenu alloc] init];
-            [appMenu addItemWithTitle: [NSString stringWithFormat: @"About %@", appName] action: @selector(orderFrontStandardAboutPanel:) keyEquivalent: @""];
-            [appMenu addItem: [NSMenuItem separatorItem]];
-
-            NSMenu* servicesMenu = [[NSMenu alloc] init];
-            [[appMenu addItemWithTitle: @"Services" action:nil keyEquivalent: @""] setSubmenu:servicesMenu];
-            [appMenu addItem: [NSMenuItem separatorItem]];
-            [appMenu addItemWithTitle: [NSString stringWithFormat: @"Hide %@", appName] action: @selector(hide:) keyEquivalent: @"h"];
-            [[appMenu addItemWithTitle: @"Hide Others" action: @selector(hideOtherApplications:) keyEquivalent: @"h"] setKeyEquivalentModifierMask:NSEventModifierFlagOption | NSEventModifierFlagCommand];
-            [appMenu addItemWithTitle: @"Show All" action: @selector(unhideAllApplications:) keyEquivalent: @""];
-            [appMenu addItem: [NSMenuItem separatorItem]];
-            [appMenu addItemWithTitle: [NSString stringWithFormat: @"Quit %@", appName] action: @selector(terminate:) keyEquivalent: @"q"];
-            [appMenuItem setSubmenu: appMenu];
-            [cocoaContext->GetApplication() setServicesMenu: servicesMenu];
-            [servicesMenu release];
-
-            NSMenuItem* windowMenuItem = [bar addItemWithTitle: @"" action:nil keyEquivalent: @""];
-            NSMenu* windowMenu = [[NSMenu alloc] initWithTitle: @"Window"];
-            [windowMenu addItemWithTitle: @"Minimize" action: @selector(performMiniaturize:) keyEquivalent: @"m"];
-            [windowMenu addItemWithTitle: @"Zoom" action: @selector(performZoom:) keyEquivalent: @""];
-            [windowMenu addItem: [NSMenuItem separatorItem]];
-            [windowMenu addItemWithTitle: @"Bring All to Front" action: @selector(arrangeInFront:) keyEquivalent: @""];
-            [windowMenu addItem: [NSMenuItem separatorItem]];
-            [[windowMenu addItemWithTitle: @"Enter Full Screen" action: @selector(toggleFullScreen:) keyEquivalent: @"f"] setKeyEquivalentModifierMask:NSEventModifierFlagControl | NSEventModifierFlagCommand];
-            [cocoaContext->GetApplication() setWindowsMenu: windowMenu];
-            [windowMenuItem setSubmenu: windowMenu];
-            [windowMenu release];
-
-            [cocoaContext->GetApplication() setMainMenu: bar];
-            [bar release];
-
-            // This is required for macOS versions prior to Snow Leopard
-            SEL setAppleMenuSelector = NSSelectorFromString(@"setAppleMenu:");
-            [cocoaContext->GetApplication() performSelector: setAppleMenuSelector withObject: appMenu];
-            [appMenu release];
-        }
-    }
-
-    - (void) applicationDidFinishLaunching: (NSNotification*) notification
-    {
-        NSEvent* event = [NSEvent otherEventWithType: NSEventTypeApplicationDefined location: NSMakePoint(0, 0) modifierFlags: 0 timestamp: 0 windowNumber: 0 context: nil subtype: 0 data1: 0 data2: 0];
-        [cocoaContext->GetApplication() postEvent: event atStart: YES];
-        [cocoaContext->GetApplication() stop: nil];
-    }
+    /* --- EVENTS --- */
 
     - (void) applicationDidChangeScreenParameters: (NSNotification*) notification
     {
-        cocoaContext->ApplicationDidChangeScreenParameters(notification);
-    }
-
-    - (BOOL) applicationSupportsSecureRestorableState: (NSApplication*) application
-    {
-        return YES;
+        cocoaContext->ReloadScreens();
     }
 
 @end
@@ -150,13 +79,14 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     CocoaContext::CocoaContext(const CocoaContextCreateInfo &createInfo)
+        : application(createInfo.application)
     {
-        // Get application instance and delegate
-        application = [NSApplication sharedApplication];
-        applicationDelegate = [[CocoaApplicationDelegate alloc] initWithContext: this];
+        SR_ERROR_IF(createInfo.application == nullptr, "NSApplication pointer passed upon creation of CocoaContext must not be null!");
 
-        // Assign delegate and filter out specific events
-        [application setDelegate: applicationDelegate];
+        // Entry point assigns a temporary delegate, so we free and override that
+        [[application delegate] release];
+        [application setDelegate: [[CocoaApplicationDelegate alloc] initWithContext: this]];
+
         NSEvent* (^const block)(NSEvent*) = ^NSEvent* (NSEvent* event)
         {
             if ([event modifierFlags] & NSEventModifierFlagCommand) [[application keyWindow] sendEvent: event];
@@ -165,10 +95,6 @@ namespace Sierra
 
         NSDictionary* const defaults = @{@"ApplePressAndHoldEnabled": @NO};
         [[NSUserDefaults standardUserDefaults] registerDefaults: defaults];
-
-        // Run application
-        if (![[NSRunningApplication currentApplication] isFinishedLaunching]) [application run];
-        [application setActivationPolicy: NSApplicationActivationPolicyRegular];
 
         // Retrieve monitors
         ReloadScreens();
@@ -204,35 +130,26 @@ namespace Sierra
         return event;
     }
 
-    /* --- GETTER METHODS --- */
-
-    const CocoaScreen& CocoaContext::GetPrimaryScreen() const
-    {
-        return screens[0].cocoaScreen;
-    }
-
-    const CocoaScreen& CocoaContext::GetWindowScreen(const NSWindow* window) const
-    {
-        return std::find_if(screens.begin(), screens.end(), [window](const CocoaScreenPair &pair) { return pair.nsScreen == [window screen]; })->cocoaScreen;
-    }
-
-    /* --- EVENTS --- */
-
-    void CocoaContext::ApplicationDidChangeScreenParameters(const NSNotification* notification)
-    {
-        ReloadScreens();
-    }
-
-    /* --- PRIVATE METHODS --- */
-
     void CocoaContext::ReloadScreens()
     {
         screens.clear();
         screens.reserve([[NSScreen screens] count]);
         for (const NSScreen* screen in [NSScreen screens])
         {
-            screens.emplace_back(CocoaScreenPair{ screen, CocoaScreen({ .nsScreen = screen })});
+            screens.emplace_back(CocoaScreen({ .screen = screen }));
         }
+    }
+
+    /* --- GETTER METHODS --- */
+
+    CocoaScreen& CocoaContext::GetPrimaryScreen()
+    {
+        return screens[0];
+    }
+
+    CocoaScreen& CocoaContext::GetWindowScreen(const NSWindow* window)
+    {
+        return *std::find_if(screens.begin(), screens.end(), [window](const CocoaScreen &cocoaScreen) -> bool { return cocoaScreen.GetNSScreen() == [window screen]; });
     }
 
     /* --- DESTRUCTOR --- */
@@ -240,7 +157,7 @@ namespace Sierra
     CocoaContext::~CocoaContext()
     {
         [application setDelegate: nil];
-        [applicationDelegate release];
+        [[application delegate] release];
     }
 
 }

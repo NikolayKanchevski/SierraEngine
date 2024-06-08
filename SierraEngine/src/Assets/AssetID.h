@@ -15,14 +15,14 @@ namespace SierraEngine
         AssetID(const std::filesystem::path &filePath);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint64 GetHash() const { return hash; }
+        [[nodiscard]] uint64 GetHash() const { return hash; }
 
         /* --- OPERATORS --- */
+        [[nodiscard]] bool operator==(const AssetID &other) const { return hash == other.hash; }
+        [[nodiscard]] bool operator!=(const AssetID &other) const { return hash != other.hash; }
+
         AssetID(const AssetID &other) = default;
         AssetID& operator=(const AssetID &other) = default;
-
-        inline bool operator==(const AssetID &other) const { return hash == other.hash; }
-        inline bool operator!=(const AssetID &other) const { return hash != other.hash; }
 
         /* --- DESTRUCTOR --- */
         ~AssetID() = default;
@@ -34,13 +34,8 @@ namespace SierraEngine
 
 }
 
-namespace std
+template<>
+struct std::hash<SierraEngine::AssetID>
 {
-
-    template<>
-    struct hash<SierraEngine::AssetID>
-    {
-        inline size_t operator()(const SierraEngine::AssetID &assetID) const { return assetID.GetHash(); }
-    };
-
-}
+    size_t operator()(const SierraEngine::AssetID &assetID) const { return assetID.GetHash(); }
+};

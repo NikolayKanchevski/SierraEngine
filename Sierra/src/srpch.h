@@ -54,36 +54,31 @@
         #include <algorithm>
         #include <array>
         #include <atomic>
-        #include <bitset>
-        #include <chrono>
+        #define _LIBCPP_HAS_NO_LOCALIZATION // For some reason <chrono> imports <format>, which is only supported as of iOS 16.3, so we use fmt instead
+            #include <chrono>
+        #undef _LIBCPP_HAS_NO_LOCALIZATION
         #include <concepts>
         #include <deque>
-        #include <execution>
         #include <filesystem>
         #include <fstream>
         #include <functional>
         #include <future>
-        #include <iostream>
         #if SR_PLATFORM_WINDOWS
             #define NOMINMAX
         #endif
         #include <limits>
-        #include <list>
         #include <memory>
         #include <mutex>
         #include <optional>
         #include <queue>
         #include <random>
-        #include <ratio>
         #include <regex>
         #include <span>
-        #include <sstream>
         #include <string>
         #include <string_view>
         #include <thread>
         #include <type_traits>
         #include <unordered_map>
-        #include <unordered_set>
         #include <vector>
     #pragma endregion
 
@@ -99,6 +94,9 @@
         #include <glm/ext/matrix_transform.hpp>
         #include <glm/ext/matrix_clip_space.hpp>
         #include <glm/gtx/matrix_decompose.hpp>
+
+        /* --- FMT --- */
+        #include <fmt/format.h>
     #pragma endregion
 
     #pragma region Type Definitions

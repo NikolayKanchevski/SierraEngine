@@ -19,7 +19,7 @@ namespace Sierra
         VulkanSampler(const VulkanDevice &device, const SamplerCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline VkSampler GetVulkanSampler() const { return sampler; }
+        [[nodiscard]] VkSampler GetVulkanSampler() const { return sampler; }
 
         /* --- DESTRUCTOR --- */
         ~VulkanSampler() override;

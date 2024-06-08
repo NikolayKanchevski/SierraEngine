@@ -32,8 +32,8 @@ namespace Sierra
         uint32 PollNextEvent() const;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const GameActivityScreen& GetPrimaryScreen() const { return primaryScreen; };
-        [[nodiscard]] inline android_app* GetApp() const { return app; }
+        [[nodiscard]] const GameActivityScreen& GetPrimaryScreen() { return primaryScreen; };
+        [[nodiscard]] android_app* GetApp() const { return app; }
 
         /* --- DESTRUCTOR --- */
         ~GameActivityContext();

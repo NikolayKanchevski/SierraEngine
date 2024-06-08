@@ -13,15 +13,13 @@ namespace SierraEngine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Tag() = default;
-        explicit Tag(std::string_view tag);
-
+        explicit Tag(std::string_view tag = "Tag");
 
         /* --- SETTER METHODS --- */
-        void SetName(std::string_view tag);
+        void SetTag(std::string_view tag);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline std::string_view GetTag() const { return tag.data(); }
+        [[nodiscard]] std::string_view GetTag() const { return tagMemory.data(); }
 
         /* --- TYPE DATA --- */
         [[nodiscard]] constexpr static std::string_view GetName() { return "Tag"; }
@@ -31,7 +29,7 @@ namespace SierraEngine
         ~Tag() = default;
 
     private:
-        std::array<char, 32> tag = { 'T', 'a', 'g' };
+        std::array<char, 32> tagMemory = { 'T', 'a', 'g' };
 
     };
 

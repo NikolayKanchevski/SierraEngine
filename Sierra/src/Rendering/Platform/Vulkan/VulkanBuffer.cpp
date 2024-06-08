@@ -33,7 +33,7 @@ namespace Sierra
         // Create and allocate buffer
         const VkResult result = vmaCreateBuffer(device.GetMemoryAllocator(), &bufferCreateInfo, &allocationCreateInfo, &buffer, &allocation, nullptr);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create buffer [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
-        device.SetObjectName(buffer, VK_OBJECT_TYPE_BUFFER, GetName());
+        device.SetResourceName(buffer, VK_OBJECT_TYPE_BUFFER, GetName());
 
         // Map and reset memory if CPU-visible
         if (createInfo.memoryLocation == BufferMemoryLocation::CPU)
@@ -50,7 +50,7 @@ namespace Sierra
         memoryRange = memoryRange != 0 ? memoryRange : GetMemorySize();
         SR_ERROR_IF(destinationByteOffset + memoryRange > GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{3}] bytes is bigger than the size of the buffer - [{4}]!", memoryRange, destinationByteOffset, GetName(), destinationByteOffset + memoryRange, GetMemorySize());
 
-        std::memcpy(reinterpret_cast<char*>(data) + destinationByteOffset, reinterpret_cast<const char*>(memoryPointer) + sourceByteOffset, memoryRange);
+        std::memcpy(static_cast<char*>(data) + destinationByteOffset, static_cast<const char*>(memoryPointer) + sourceByteOffset, memoryRange);
         vmaFlushAllocation(device.GetMemoryAllocator(), allocation, destinationByteOffset, memoryRange);
     }
 

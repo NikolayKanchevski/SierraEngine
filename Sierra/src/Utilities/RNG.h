@@ -44,6 +44,10 @@ namespace Sierra
                 std::uniform_real_distribution<Type> distribution(min, max);
                 return distribution(generator);
             }
+            else
+            {
+                return static_cast<Type>(0);
+            }
         }
 
     private:

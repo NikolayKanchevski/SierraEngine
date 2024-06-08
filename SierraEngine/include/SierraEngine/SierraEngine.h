@@ -17,7 +17,8 @@
 #include "../../src/Assets/AssetID.h"
 
 #include "../../src/Scene/Component.h"
-#include "../../src/Scene/Entity.h"
-#include "../../src/Scene/Scene.h"
+#include "../../src/Scene/Components/Relationship.h"
 #include "../../src/Scene/Components/Tag.h"
 #include "../../src/Scene/Components/UUID.h"
+#include "../../src/Scene/Entity.h"
+#include "../../src/Scene/Scene.h"

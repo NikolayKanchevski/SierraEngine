@@ -2,7 +2,6 @@
 // Created by Nikolay Kanchevski on 19.09.23.
 //
 
-#define COCOA_INPUT_MANAGER_IMPLEMENTATION
 #include "CocoaInputManager.h"
 
 namespace Sierra
@@ -10,19 +9,45 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    CocoaInputManager::CocoaInputManager(const InputManagerCreateInfo &createInfo)
-        : InputManager(createInfo)
+    CocoaInputManager::CocoaInputManager()
+        : InputManager()
     {
 
     }
 
     /* --- POLLING METHODS --- */
 
-    void CocoaInputManager::Update()
+    void CocoaInputManager::RegisterKeyPress(const Key key)
     {
-        std::copy(keyStates.begin(), keyStates.end(), lastKeyStates.begin());
-        std::copy(mouseButtonStates.begin(), mouseButtonStates.end(), lastMouseButtonStates.begin());
-        mouseScroll = { 0, 0 };
+        if (key == Key::Unknown) return;
+        keyStates[GetKeyIndex(key)] = InputAction::Press;
+        GetKeyPressDispatcher().DispatchEvent(key);
+    }
+
+    void CocoaInputManager::RegisterKeyRelease(const Key key)
+    {
+        if (key == Key::Unknown) return;
+        keyStates[GetKeyIndex(key)] = InputAction::Release;
+        GetKeyReleaseDispatcher().DispatchEvent(key);
+    }
+
+    void CocoaInputManager::RegisterMouseButtonPress(const MouseButton mouseButton)
+    {
+        if (mouseButton == MouseButton::Unknown) return;
+        mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Press;
+        GetMouseButtonPressDispatcher().DispatchEvent(mouseButton);
+    }
+
+    void CocoaInputManager::RegisterMouseButtonRelease(const MouseButton mouseButton)
+    {
+        if (mouseButton == MouseButton::Unknown) return;
+        mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Release;
+        GetMouseButtonReleaseDispatcher().DispatchEvent(mouseButton);
+    }
+
+    void CocoaInputManager::RegisterMouseScroll(const Vector2 scroll)
+    {
+        mouseScroll = scroll;
     }
 
     /* --- GETTER METHODS --- */
@@ -72,176 +97,27 @@ namespace Sierra
         return mouseScroll;
     }
 
-    /* --- EVENTS --- */
+    /* --- CONVERSIONS --- */
 
-    #if defined(__OBJC__) && (defined(COCOA_INPUT_MANAGER_IMPLEMENTATION) || defined(COCOA_WINDOW_IMPLEMENTATION))
-        void CocoaInputManager::KeyDown(const NSEvent* event)
-        {
-            // Prevent out of bounds error
-            if ([event keyCode] >= KEY_TABLE.size()) return;
+    Key CocoaInputManager::KeyCodeToKey(const uint32 keyCode)
+    {
+        if (keyCode >= KEY_TABLE.size()) return Key::Unknown;
+        return KEY_TABLE[keyCode];
+    }
 
-            // Translate key
-            const Key key = KEY_TABLE[[event keyCode]];
-            if (key == Key::Unknown) return;
+    MouseButton CocoaInputManager::ButtonNumberToMouseButton(const uint32 buttonNumber)
+    {
+        if (buttonNumber >= static_cast<uint32>(buttonNumber)) return MouseButton::Unknown;
+        return static_cast<MouseButton>(buttonNumber + 1);
+    }
 
-            // Save key state and trigger events
-            keyStates[GetKeyIndex(key)] = InputAction::Press;
-            GetKeyPressDispatcher().DispatchEvent(key);
-        }
+    /* --- PRIVATE METHODS --- */
 
-        void CocoaInputManager::FlagsChanged(const NSEvent* event)
-        {
-            // Prevent out of bounds error
-            if ([event keyCode] >= KEY_TABLE.size()) return;
-
-            // Translate key
-            const Key key = KEY_TABLE[[event keyCode]];
-            if (key == Key::Unknown) return;
-
-            // Modifier keys need to be registered as pressed manually, so we get modifier flags of the modifier key... fun stuff!
-            NSEventModifierFlags keyModifierFlag = 0;
-            switch (key)
-            {
-                case Key::LeftShift:
-                case Key::RightShift:
-                {
-                    keyModifierFlag = NSEventModifierFlagShift;
-                    break;
-                }
-                case Key::LeftControl:
-                case Key::RightControl:
-                {
-                    keyModifierFlag = NSEventModifierFlagControl;
-                    break;
-                }
-                case Key::LeftOption:
-                case Key::RightOption:
-                {
-                    keyModifierFlag = NSEventModifierFlagOption;
-                    break;
-                }
-                case Key::LeftCommand:
-                case Key::RightCommand:
-                {
-                    keyModifierFlag = NSEventModifierFlagCommand;
-                    break;
-                }
-                case Key::CapsLock:
-                {
-                    keyModifierFlag = NSEventModifierFlagCapsLock;
-                    break;
-                }
-                default:
-                {
-                    break;
-                }
-            }
-
-            // Determine key action
-            InputAction action;
-            if (keyModifierFlag & [event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask)
-            {
-                action = keyStates[GetKeyIndex(key)] == InputAction::Press ? InputAction::Release : InputAction::Press;
-            }
-            else
-            {
-                action = InputAction::Release;
-            }
-
-            // Save key state and trigger events
-            keyStates[GetKeyIndex(key)] = action;
-            if (action == InputAction::Press) GetKeyPressDispatcher().DispatchEvent(key);
-            else if (action == InputAction::Release) GetKeyReleaseDispatcher().DispatchEvent(key);
-        }
-
-        void CocoaInputManager::KeyUp(const NSEvent* event)
-        {
-            // Prevent out of bounds error
-            if ([event keyCode] >= KEY_TABLE.size()) return;
-
-            // Translate key
-            const Key key = KEY_TABLE[[event keyCode]];
-            if (key == Key::Unknown) return;
-
-            // Save key state and trigger events
-            keyStates[GetKeyIndex(key)] = InputAction::Release;
-            GetKeyReleaseDispatcher().DispatchEvent(key);
-        }
-
-        void CocoaInputManager::MouseDown(const NSEvent* event)
-        {
-            // Save mouse button
-            const MouseButton mouseButton = MouseButton::Left;
-
-            // Save mouse button state and trigger events
-            mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Press;
-            GetMouseButtonPressDispatcher().DispatchEvent(mouseButton);
-        }
-
-        void CocoaInputManager::RightMouseDown(const NSEvent* event)
-        {
-            // Save mouse button
-            const MouseButton mouseButton = MouseButton::Right;
-
-            // Save mouse button state and trigger events
-            mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Press;
-            GetMouseButtonPressDispatcher().DispatchEvent(mouseButton);
-        }
-
-        void CocoaInputManager::OtherMouseDown(const NSEvent* event)
-        {
-            // Prevent out of bounds error
-            if ([event buttonNumber] > GetMouseButtonIndex(MouseButton::Extra2)) return;
-
-            // Save mouse button
-            const MouseButton mouseButton = static_cast<MouseButton>([event buttonNumber] + 1);
-
-            // Save mouse button state and trigger events
-            mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Press;
-            GetMouseButtonPressDispatcher().DispatchEvent(mouseButton);
-        }
-
-        void CocoaInputManager::MouseUp(const NSEvent* event)
-        {
-            // Save mouse button
-            const MouseButton mouseButton = MouseButton::Left;
-
-            // Save mouse button state and trigger events
-            mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Release;
-            GetMouseButtonReleaseDispatcher().DispatchEvent(mouseButton);
-        }
-
-        void CocoaInputManager::RightMouseUp(const NSEvent* event)
-        {
-            // Save mouse button
-            const MouseButton mouseButton = MouseButton::Right;
-
-            // Save mouse button state and trigger events
-            mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Release;
-            GetMouseButtonReleaseDispatcher().DispatchEvent(mouseButton);
-        }
-
-        void CocoaInputManager::OtherMouseUp(const NSEvent* event)
-        {
-            // Prevent out of bounds error
-            if ([event buttonNumber] > GetMouseButtonIndex(MouseButton::Extra2)) return;
-
-            // Save mouse button
-            const MouseButton mouseButton = static_cast<MouseButton>([event buttonNumber] + 1);
-
-            // Save mouse button state and trigger events
-            mouseButtonStates[GetMouseButtonIndex(mouseButton)] = InputAction::Release;
-            GetMouseButtonReleaseDispatcher().DispatchEvent(mouseButton);
-        }
-
-        void CocoaInputManager::ScrollWheel(const NSEvent* event)
-        {
-            // Save scroll inertia
-            mouseScroll = { [event deltaX], [event scrollingDeltaY] };
-
-            // Trigger events
-            GetMouseScrollDispatcher().DispatchEvent(mouseScroll);
-        }
-    #endif
+    void CocoaInputManager::Update()
+    {
+        std::copy(keyStates.begin(), keyStates.end(), lastKeyStates.begin());
+        std::copy(mouseButtonStates.begin(), mouseButtonStates.end(), lastMouseButtonStates.begin());
+        mouseScroll = { 0, 0 };
+    }
 
 }

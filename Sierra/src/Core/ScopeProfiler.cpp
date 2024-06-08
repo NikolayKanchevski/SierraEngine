@@ -33,7 +33,7 @@ namespace Sierra
 
             // Remove all namespaces and class names
             size lastColonPosition = fullMethodName.rfind(':');
-            std::string methodName = fullMethodName.substr(lastColonPosition + 1, fullMethodName.size() - lastColonPosition - 1);
+            const std::string methodName = fullMethodName.substr(lastColonPosition + 1, fullMethodName.size() - lastColonPosition - 1);
 
             // Get last namespace or class name, depending on where the method is defined
             std::string lastNamespace = fullMethodName.substr(0, fullMethodName.rfind(':') - 1);

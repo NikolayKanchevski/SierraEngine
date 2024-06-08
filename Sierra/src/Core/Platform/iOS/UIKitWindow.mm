@@ -5,8 +5,6 @@
 #define UIKIT_WINDOW_IMPLEMENTATION
 #include "UIKitWindow.h"
 
-#include "iOSContext.h"
-
 @interface UIKitWindowView : UIView<CALayerDelegate>
 
 @end
@@ -47,39 +45,77 @@
 
     - (UIInterfaceOrientationMask) supportedInterfaceOrientations
     {
-        return window->AllowsOrientationChange() ? UIInterfaceOrientationMaskAll : UIInterfaceOrientationMaskPortrait;
+        return Sierra::UIKitScreen::ScreenOrientationToUIInterfaceOrientationMask(window->GetAllowedOrientations());
     }
 
     - (void) touchesBegan: (NSSet<UITouch*>*) touches withEvent: (UIEvent*) event
     {
         [super touchesBegan: touches withEvent: event];
 
-        // No casting error checks are done, since the touch manager type within a UIKitWindow is guaranteed to be UIKitTouchManager
-        static_cast<Sierra::UIKitTouchManager*>(&window->GetTouchManager())->TouchesBegan(touches, event);
+        for (const UITouch* rawTouch in touches)
+        {
+            // Get position within the screen and flip Y coordinate
+            const Vector2 position = { [rawTouch locationInView: rawTouch.window.rootViewController.view].x, [[UIScreen mainScreen] bounds].size.height - [rawTouch locationInView: rawTouch.window.rootViewController.view].y };
+
+            // Create touch
+            const Sierra::Touch touch = Sierra::Touch({
+                .ID = std::bit_cast<uint64>([rawTouch timestamp]),
+                .type = Sierra::TouchType::Press,
+                .tapTime = Sierra::TimePoint::Now(),
+                .force = static_cast<float32>([rawTouch force] / [rawTouch maximumPossibleForce]),
+                .position = position,
+                .lastPosition = position
+            });
+
+            static_cast<Sierra::UIKitTouchManager&>(window->GetTouchManager()).RegisterTouchPress(touch);
+        }
     }
 
     - (void) touchesMoved: (NSSet<UITouch*>*) touches withEvent: (UIEvent*) event
     {
         [super touchesMoved: touches withEvent: event];
 
-        // No casting error checks are done, since the touch manager type within a UIKitWindow is guaranteed to be UIKitTouchManager
-        static_cast<Sierra::UIKitTouchManager*>(&window->GetTouchManager())->TouchesMoved(touches, event);
+        for (const UITouch* rawTouch in touches)
+        {
+            // Get position within the screen and flip Y coordinate
+            const Vector2 position = { [rawTouch locationInView: rawTouch.window.rootViewController.view].x, [[UIScreen mainScreen] bounds].size.height - [rawTouch locationInView: rawTouch.window.rootViewController.view].y };
+            static_cast<Sierra::UIKitTouchManager&>(window->GetTouchManager()).RegisterTouchMove(std::bit_cast<uint64>([rawTouch timestamp]), position);
+        }
     }
 
     - (void) touchesEnded: (NSSet<UITouch*>*) touches withEvent: (UIEvent*) event
     {
         [super touchesEnded: touches withEvent: event];
 
-        // No casting error checks are done, since the touch manager type within a UIKitWindow is guaranteed to be UIKitTouchManager
-        static_cast<Sierra::UIKitTouchManager*>(&window->GetTouchManager())->TouchesEnded(touches, event);
+        for (const UITouch* rawTouch in touches)
+        {
+            static_cast<Sierra::UIKitTouchManager&>(window->GetTouchManager()).RegisterTouchRelease(std::bit_cast<uint64>([rawTouch timestamp]));
+        }
     }
 
     - (void) touchesCancelled: (NSSet<UITouch*>*) touches withEvent: (UIEvent*) event
     {
         [super touchesCancelled: touches withEvent: event];
 
-        // No casting error checks are done, since the touch manager type within a UIKitWindow is guaranteed to be UIKitTouchManager
-        static_cast<Sierra::UIKitTouchManager*>(&window->GetTouchManager())->TouchesCancelled(touches, event);
+        for (const UITouch* rawTouch in touches)
+        {
+            static_cast<Sierra::UIKitTouchManager&>(window->GetTouchManager()).RegisterTouchRelease(std::bit_cast<uint64>([rawTouch timestamp]));
+        }
+    }
+
+    - (void) applicationDidEnterBackground
+    {
+        window->ApplicationDidEnterBackground();
+    }
+
+    - (void) applicationWillEnterForeground
+    {
+        window->ApplicationWillEnterForeground();
+    }
+
+    - (void) sceneDidDisconnect
+    {
+        window->SceneDidDisconnect();
     }
 
     /* --- DESTRUCTOR --- */
@@ -97,34 +133,25 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    UIKitWindow::UIKitWindow(const UIKitContext &uiKitContext, const WindowCreateInfo &createInfo)
-        : Window(createInfo),
+    UIKitWindow::UIKitWindow(UIKitContext &uiKitContext, const WindowCreateInfo &createInfo)
+        : Window(createInfo), uiKitContext(uiKitContext),
             title(createInfo.title),
-            allowsOrientationChange(createInfo.resizable),
-            uiKitContext(uiKitContext),
-            touchManager(UIKitTouchManager({ }))
+            allowedOrientations(createInfo.allowedOrientations)
     {
         // Create window
         window = uiKitContext.CreateWindow();
-
-        // Create view controller
         viewController = [[UIKitWindowViewController alloc] initWithWindow: this];
-
-        // Set up view
         view = viewController.view;
 
-        // Configure layer
+        // Configure window
         [view.layer setFrame: view.bounds];
         [view.layer setContentsScale: window.contentScaleFactor];
-
-        // Assign window handlers
         [window setRootViewController: viewController];
 
         // Observe UIKit events
-        deviceOrientationDidChangeBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UIDeviceOrientationDidChangeNotification, [this] { DeviceOrientationDidChange(); });
-        applicationDidEnterBackgroundBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UIApplicationDidEnterBackgroundNotification, [this] { ApplicationDidEnterBackground(); });
-        applicationWillEnterForegroundBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UIApplicationWillEnterForegroundNotification, [this] { ApplicationWillEnterForeground(); });
-        applicationWillTerminateBridge = UIKitSelectorBridge([NSNotificationCenter defaultCenter], UISceneDidDisconnectNotification, [this] { ApplicationWillTerminate(); });
+        [[NSNotificationCenter defaultCenter] addObserver: viewController selector: @selector(applicationDidEnterBackground) name: UIApplicationDidEnterBackgroundNotification object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver: viewController selector: @selector(applicationWillEnterForeground) name: UIApplicationWillEnterForegroundNotification object: nil];
+        [[NSNotificationCenter defaultCenter] addObserver: viewController selector: @selector(sceneDidDisconnect) name: UISceneDidDisconnectNotification object: nil];
 
         // Show and assign window
         [window makeKeyAndVisible];
@@ -170,10 +197,6 @@ namespace Sierra
         GetWindowCloseDispatcher().DispatchEvent();
         uiKitContext.DestroyWindow(window);
 
-        applicationDidEnterBackgroundBridge.Invalidate();
-        applicationWillEnterForegroundBridge.Invalidate();
-        applicationWillTerminateBridge.Invalidate();
-
         [viewController release];
         viewController = nil;
 
@@ -217,12 +240,12 @@ namespace Sierra
 
     uint32 UIKitWindow::GetWidth() const
     {
-        return uiKitContext.GetPrimaryScreen().GetWidth();
+        return uiKitContext.GetScreen().GetWidth();
     }
 
     uint32 UIKitWindow::GetHeight() const
     {
-        return uiKitContext.GetPrimaryScreen().GetHeight();
+        return uiKitContext.GetScreen().GetHeight();
     }
 
     uint32 UIKitWindow::GetFramebufferWidth() const
@@ -265,9 +288,9 @@ namespace Sierra
         return minimized;
     }
 
-    const Screen& UIKitWindow::GetScreen() const
+    Screen& UIKitWindow::GetScreen() const
     {
-        return uiKitContext.GetPrimaryScreen();
+        return uiKitContext.GetScreen();
     }
 
     TouchManager& UIKitWindow::GetTouchManager()
@@ -282,32 +305,25 @@ namespace Sierra
 
     /* --- EVENTS --- */
 
-    void UIKitWindow::DeviceOrientationDidChange()
-    {
-        // Check if orientation has actually changed
-        if ((lastOrientation & ScreenOrientation::Landscape && uiKitContext.GetPrimaryScreen().GetOrientation() & ScreenOrientation::Landscape) || (lastOrientation & ScreenOrientation::Portrait && uiKitContext.GetPrimaryScreen().GetOrientation() & ScreenOrientation::Portrait)) return;
+    #if defined(__OBJC__) && defined(UIKIT_WINDOW_IMPLEMENTATION)
+        void UIKitWindow::ApplicationDidEnterBackground()
+        {
+            minimized = true;
+            GetWindowFocusDispatcher().DispatchEvent(false);
+            GetWindowMinimizeDispatcher().DispatchEvent();
+        }
 
-        lastOrientation = uiKitContext.GetPrimaryScreen().GetOrientation();
-        GetWindowResizeDispatcher().DispatchEvent(GetWidth(), GetHeight());
-    }
+        void UIKitWindow::ApplicationWillEnterForeground()
+        {
+            minimized = false;
+            GetWindowFocusDispatcher().DispatchEvent(true);
+        }
 
-    void UIKitWindow::ApplicationDidEnterBackground()
-    {
-        minimized = true;
-        GetWindowFocusDispatcher().DispatchEvent(false);
-        GetWindowMinimizeDispatcher().DispatchEvent();
-    }
-
-    void UIKitWindow::ApplicationWillEnterForeground()
-    {
-        minimized = false;
-        GetWindowFocusDispatcher().DispatchEvent(true);
-    }
-
-    void UIKitWindow::ApplicationWillTerminate()
-    {
-        Close();
-    }
+        void UIKitWindow::SceneDidDisconnect()
+        {
+            Close();
+        }
+    #endif
 
     /* --- DESTRUCTOR --- */
 
@@ -316,17 +332,13 @@ namespace Sierra
         if (closed) return;
         closed = true;
 
-        deviceOrientationDidChangeBridge.Invalidate();
-        applicationDidEnterBackgroundBridge.Invalidate();
-        applicationWillEnterForegroundBridge.Invalidate();
-        applicationWillTerminateBridge.Invalidate();
-
+        [[NSNotificationCenter defaultCenter] removeObserver: viewController];
+        
         GetWindowCloseDispatcher().DispatchEvent();
         uiKitContext.DestroyWindow(window);
 
         [window release];
         [viewController release];
-        // NOTE: We do not have a custom view implementation, so it is managed by view controller
     }
 
 }

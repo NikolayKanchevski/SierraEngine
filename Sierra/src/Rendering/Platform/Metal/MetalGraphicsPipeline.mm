@@ -16,11 +16,11 @@ namespace Sierra
     MetalGraphicsPipeline::MetalGraphicsPipeline(const MetalDevice &device, const GraphicsPipelineCreateInfo &createInfo)
         : GraphicsPipeline(createInfo), MetalResource(createInfo.name), cullMode(CullModeToCullMode(createInfo.cullMode)), triangleFillMode(ShadeModeToTriangleFillMode(createInfo.shadeMode)), winding(FrontFaceModeToWinding(createInfo.frontFaceMode))
     {
-        SR_ERROR_IF(createInfo.vertexShader->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.vertexShader->GetName());
-        const MetalShader &metalVertexShader = static_cast<const MetalShader&>(*createInfo.vertexShader);
+        SR_ERROR_IF(createInfo.vertexShader.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.vertexShader.GetName());
+        const MetalShader &metalVertexShader = static_cast<const MetalShader&>(createInfo.vertexShader);
 
-        SR_ERROR_IF(createInfo.templateRenderPass->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with render pass [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.templateRenderPass->GetName());
-        const MetalRenderPass &metalRenderPass = static_cast<const MetalRenderPass&>(*createInfo.templateRenderPass);
+        SR_ERROR_IF(createInfo.templateRenderPass.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with render pass [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.templateRenderPass.GetName());
+        const MetalRenderPass &metalRenderPass = static_cast<const MetalRenderPass&>(createInfo.templateRenderPass);
 
         // Allocate pipeline descriptor
         MTLRenderPipelineDescriptor* const renderPipelineDescriptor = [[MTLRenderPipelineDescriptor alloc] init];

@@ -17,7 +17,7 @@ namespace Sierra
 
     /* --- SETTER METHODS -- */
 
-    void RNG::SetSeed(uint64 seed)
+    void RNG::SetSeed(const uint64 seed)
     {
         generator.seed(seed);
     }

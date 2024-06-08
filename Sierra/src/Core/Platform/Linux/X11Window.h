@@ -51,13 +51,13 @@ namespace Sierra
         [[nodiscard]] bool IsFocused() const override;
         [[nodiscard]] bool IsHidden() const override;
 
-        [[nodiscard]] const Screen& GetScreen() const override;
+        [[nodiscard]] Screen& GetScreen() const override;
         [[nodiscard]] InputManager& GetInputManager() override;
         [[nodiscard]] CursorManager& GetCursorManager() override;
         [[nodiscard]] PlatformAPI GetAPI() const override;
 
-        [[nodiscard]] inline XID GetX11Window() const { return window; }
-        [[nodiscard]] inline Display* GetDisplay() const { return x11Context.GetDisplay(); }
+        [[nodiscard]] XID GetX11Window() const { return window; }
+        [[nodiscard]] Display* GetDisplay() const { return x11Context.GetDisplay(); }
 
         /* --- DESTRUCTOR --- */
         ~X11Window() override;
@@ -87,7 +87,7 @@ namespace Sierra
             XID window = 0;
             std::queue<XEvent> queue = { };
         };
-        static inline std::vector<WindowEventQueue> unhandledEventQueues;
+        static std::vector<WindowEventQueue> unhandledEventQueues;
         void HandleX11Event(XEvent &event);
 
     };

@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    ResourceTable::ResourceTable(const ResourceTableCreateInfo &createInfo)
+    ResourceTable::ResourceTable(const ResourceTableCreateInfo&)
     {
         
     }

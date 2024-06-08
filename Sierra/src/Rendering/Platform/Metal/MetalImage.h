@@ -4,6 +4,20 @@
 
 #pragma once
 
+#if !defined(__OBJC__)
+    namespace Sierra
+    {
+        using MTLTexture = void;
+
+        using MTLTextureType = std::uintptr_t;
+        using MTLPixelFormat = std::uintptr_t;
+        using MTLTextureUsage = std::uintptr_t;
+        using NSUInteger = std::uintptr_t;
+        using MTLStorageMode = std::uintptr_t;
+        using MTLCPUCacheMode = std::uintptr_t;
+    }
+#endif
+
 #include "../../Image.h"
 #include "MetalResource.h"
 
@@ -19,7 +33,7 @@ namespace Sierra
         MetalImage(const MetalDevice &device, const ImageCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const id<MTLTexture> GetMetalTexture() const { return texture; }
+        [[nodiscard]] id<MTLTexture> GetMetalTexture() const { return texture; }
 
         /* --- DESTRUCTOR --- */
         ~MetalImage() override;
@@ -34,6 +48,9 @@ namespace Sierra
 
     private:
         id<MTLTexture> texture = nil;
+        #if !defined(__OBJC__)
+            using MTLPixelFormat = std::uintptr_t;
+        #endif
 
         friend class MetalSwapchain;
         struct SwapchainImageCreateInfo

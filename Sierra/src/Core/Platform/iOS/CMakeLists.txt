@@ -1,7 +1,4 @@
-# Disable automatic reference counting
-set_xcode_property(Sierra CLANG_ENABLE_OBJC_ARC "NO" "All")
-set_xcode_property(Sierra GCC_WARN_INHIBIT_ALL_WARNINGS "YES" "All")
-
+enable_language(OBJCXX)
 target_sources(Sierra PRIVATE
     iOSContext.mm
     iOSContext.h
@@ -9,8 +6,6 @@ target_sources(Sierra PRIVATE
     UIKitContext.h
     UIKitScreen.mm
     UIKitScreen.h
-    UIKitSelectorBridge.mm
-    UIKitSelectorBridge.h
     UIKitTouchManager.mm
     UIKitTouchManager.h
     UIKitWindow.mm
@@ -23,3 +18,11 @@ target_link_libraries(Sierra PRIVATE
     "-framework UIKit"
     "-framework QuartzCore"
 )
+
+# Disable automatic reference counting
+set_xcode_property(Sierra CLANG_ENABLE_OBJC_ARC "NO" "All")
+set_xcode_property(Sierra GCC_WARN_INHIBIT_ALL_WARNINGS "YES" "All")
+
+# Link entry point
+target_sources(${SIERRA_APPLICATION_NAME} PRIVATE main.mm)
+target_link_libraries(${SIERRA_APPLICATION_NAME} PRIVATE "-framework UIKit")

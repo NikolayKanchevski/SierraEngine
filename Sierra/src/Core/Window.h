@@ -4,11 +4,9 @@
 
 #pragma once
 
-#include "PlatformContext.h"
-
-#include "Screen.h"
-#include "InputManager.h"
 #include "CursorManager.h"
+#include "InputManager.h"
+#include "Screen.h"
 #include "TouchManager.h"
 
 namespace Sierra
@@ -21,11 +19,11 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline explicit WindowResizeEvent(const uint32 width, const uint32 height) : width(width), height(height) { }
+        explicit WindowResizeEvent(const uint32 width, const uint32 height) : width(width), height(height) { }
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetWidth() const { return width; }
-        [[nodiscard]] inline uint32 GetHeight() const { return height; }
+        [[nodiscard]] uint32 GetWidth() const { return width; }
+        [[nodiscard]] uint32 GetHeight() const { return height; }
 
     private:
         const uint32 width;
@@ -45,7 +43,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline explicit WindowMoveEvent(const Vector2Int &position) : position(position) { }
+        explicit WindowMoveEvent(const Vector2Int &position) : position(position) { }
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] Vector2Int GetPosition() const { return position; }
@@ -59,7 +57,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline explicit WindowFocusEvent(const bool focused) : focused(focused) { };
+        explicit WindowFocusEvent(const bool focused) : focused(focused) { }
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] bool IsFocused() const { return focused; }
@@ -96,10 +94,13 @@ namespace Sierra
 
     struct WindowCreateInfo
     {
-        std::string_view title = "Sierra Application";
+        std::string_view title = "Window";
         uint32 width = 1280;
         uint32 height = 780;
+
         bool resizable = false;
+        ScreenOrientation allowedOrientations = ScreenOrientation::Unknown;
+
         bool maximize = false;
         bool hide = false;
     };
@@ -141,7 +142,7 @@ namespace Sierra
         [[nodiscard]] virtual bool IsFocused() const = 0;
         [[nodiscard]] virtual bool IsHidden() const = 0;
 
-        [[nodiscard]] virtual const Screen& GetScreen() const = 0;
+        [[nodiscard]] virtual Screen& GetScreen() const = 0;
         [[nodiscard]] virtual InputManager& GetInputManager();
         [[nodiscard]] virtual CursorManager& GetCursorManager();
         [[nodiscard]] virtual TouchManager& GetTouchManager();
@@ -149,7 +150,7 @@ namespace Sierra
 
         /* --- EVENTS --- */
         template<WindowEventType EventType>
-        void OnEvent(const EventCallback<EventType> &Callback) { }
+        void OnEvent(const EventCallback<EventType>&) { }
         
         /* --- OPERATORS --- */
         Window(const Window&) = delete;
@@ -161,12 +162,12 @@ namespace Sierra
     protected:
         explicit Window(const WindowCreateInfo &createInfo);
 
-        [[nodiscard]] inline EventDispatcher<WindowMoveEvent>& GetWindowMoveDispatcher() { return windowMoveDispatcher; };
-        [[nodiscard]] inline EventDispatcher<WindowResizeEvent>& GetWindowResizeDispatcher() { return windowResizeDispatcher; };
-        [[nodiscard]] inline EventDispatcher<WindowFocusEvent>& GetWindowFocusDispatcher() { return windowFocusDispatcher; };
-        [[nodiscard]] inline EventDispatcher<WindowMinimizeEvent>& GetWindowMinimizeDispatcher() { return windowMinimizeDispatcher; };
-        [[nodiscard]] inline EventDispatcher<WindowMaximizeEvent>& GetWindowMaximizeDispatcher() { return windowMaximizeDispatcher; };
-        [[nodiscard]] inline EventDispatcher<WindowCloseEvent>& GetWindowCloseDispatcher() { return windowCloseDispatcher; };
+        [[nodiscard]] EventDispatcher<WindowMoveEvent>& GetWindowMoveDispatcher() { return windowMoveDispatcher; }
+        [[nodiscard]] EventDispatcher<WindowResizeEvent>& GetWindowResizeDispatcher() { return windowResizeDispatcher; }
+        [[nodiscard]] EventDispatcher<WindowFocusEvent>& GetWindowFocusDispatcher() { return windowFocusDispatcher; }
+        [[nodiscard]] EventDispatcher<WindowMinimizeEvent>& GetWindowMinimizeDispatcher() { return windowMinimizeDispatcher; }
+        [[nodiscard]] EventDispatcher<WindowMaximizeEvent>& GetWindowMaximizeDispatcher() { return windowMaximizeDispatcher; }
+        [[nodiscard]] EventDispatcher<WindowCloseEvent>& GetWindowCloseDispatcher() { return windowCloseDispatcher; }
 
     private:
         EventDispatcher<WindowMoveEvent> windowMoveDispatcher;

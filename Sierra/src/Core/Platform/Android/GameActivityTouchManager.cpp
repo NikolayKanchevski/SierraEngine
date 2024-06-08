@@ -17,7 +17,7 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    const Touch &GameActivityTouchManager::GetTouch(const uint32 touchIndex) const
+    const Touch& GameActivityTouchManager::GetTouch(const uint32 touchIndex) const
     {
         if (touchIndex >= activeTouches.size()) SR_ERROR("Touch index [{0}] out of range! Make sure to use TouchManager::GetTouchCount() and retrieve touches within the returned range.", touchIndex);
         return activeTouches[touchIndex];
@@ -78,11 +78,11 @@ namespace Sierra
 
                     // Create touch
                     const Touch touch = Touch({
-                        .tapTime = TimePoint::Now() - iterator->GetHoldDuration(),
+                        .tapTime = TimePoint::Now() - iterator.GetHoldDuration(),
                         .tapCount = 1,
                         .force = GameActivityPointerAxes_getPressure(&pointer),
                         .position = position,
-                        .deltaPosition = position - iterator->GetPosition(),
+                        .deltaPosition = position - iterator.GetPosition(),
                         .ID = reinterpret_cast<void*>(pointer.id)
                     });
 
@@ -97,7 +97,7 @@ namespace Sierra
                 case AMOTION_EVENT_ACTION_UP:
                 {
                     // Remove ended touches from the vector
-                    activeTouches.erase(std::remove_if(activeTouches.begin(), activeTouches.end(), [&pointer, this](const Touch &item)
+                    activeTouches.erase(std::ranges::remove_if(activeTouches.begin(), activeTouches.end(), [&pointer, this](const Touch &item)
                     {
                         if (uintptr_t(item.GetID()) == pointer.id)
                         {

@@ -18,7 +18,7 @@ namespace Sierra
     class SIERRA_API VulkaniOSSurface final
     {
     private:
-        static VkSurfaceKHR Create(const VulkanInstance &instance,  const std::unique_ptr<Window> &window);
+        static VkSurfaceKHR Create(const VulkanInstance &instance,  const Window &window);
         friend class VulkanSwapchain;
 
     };

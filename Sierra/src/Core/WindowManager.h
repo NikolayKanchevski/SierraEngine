@@ -12,7 +12,7 @@ namespace Sierra
 
     struct WindowManagerCreateInfo
     {
-        const std::unique_ptr<PlatformContext> &platformContext;
+        PlatformContext &platformContext;
     };
 
     class SIERRA_API WindowManager final
@@ -26,7 +26,7 @@ namespace Sierra
         WindowManager& operator=(const WindowManager&) = delete;
 
     private:
-        const std::unique_ptr<PlatformContext> &platformContext;
+        PlatformContext &platformContext;
         explicit WindowManager(const WindowManagerCreateInfo &createInfo);
 
         friend class Application;

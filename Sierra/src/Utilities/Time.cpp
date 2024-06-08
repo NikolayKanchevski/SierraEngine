@@ -9,28 +9,28 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    TimeStep::TimeStep(const float64 givenDuration, const TimeStepType type)
+    TimeStep::TimeStep(const float64 duration, const TimeStepType type)
     {
         switch (type)
         {
             case TimeStepType::Nanoseconds:
             {
-                duration = givenDuration * 0.000'001;
+                this->duration = duration * 0.000'001;
                 break;
             }
             case TimeStepType::Microseconds:
             {
-                duration = givenDuration * 0.001;
+                this->duration = duration * 0.001;
                 break;
             }
             case TimeStepType::Milliseconds:
             {
-                duration = givenDuration * 1.0;
+                this->duration = duration * 1.0;
                 break;
             }
             case TimeStepType::Seconds:
             {
-                duration = givenDuration * 1'000;
+                this->duration = duration * 1'000;
                 break;
             }
         }
@@ -51,17 +51,6 @@ namespace Sierra
 
     /* --- OPERATORS --- */
 
-    std::string TimePoint::ToString() const
-    {
-        const std::time_t time = std::chrono::system_clock::to_time_t(timePoint);
-        return (std::stringstream() << time).str();
-    }
-
-    TimeStep TimePoint::operator-(const TimePoint &other) const
-    {
-        return TimeStep(static_cast<float64>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<float64>(timePoint - other.timePoint)).count()));
-    }
-
     TimePoint TimePoint::operator-(const TimeStep &duration) const
     {
         return TimePoint(std::chrono::system_clock::from_time_t(std::chrono::system_clock::to_time_t(timePoint - std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::duration<float64, std::milli>(duration.GetDurationInMilliseconds())))));
@@ -70,6 +59,11 @@ namespace Sierra
     TimePoint TimePoint::operator+(const TimeStep &duration) const
     {
         return TimePoint(std::chrono::system_clock::from_time_t(std::chrono::system_clock::to_time_t(timePoint + std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::duration<float64, std::milli>(duration.GetDurationInMilliseconds())))));
+    }
+
+    TimeStep TimePoint::operator-(const TimePoint &other) const
+    {
+        return TimeStep(static_cast<float64>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<float64>(timePoint - other.timePoint)).count()));
     }
 
 }

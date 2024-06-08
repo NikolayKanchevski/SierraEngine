@@ -11,7 +11,7 @@ namespace SierraEngine
     {
         std::string_view name = "Sierra Application";
         Sierra::Version version = Sierra::Version({ 1, 0, 0 });
-        const Sierra::ApplicationSettings &settings = { };
+        Sierra::ApplicationSettings settings = { };
     };
 
     class SIERRA_ENGINE_API Application : public Sierra::Application

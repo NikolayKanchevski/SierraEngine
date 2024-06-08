@@ -106,9 +106,9 @@ namespace Sierra
     {
         switch (borderColor)
         {
-            case SamplerBorderColor::Transparent: return MTLSamplerBorderColorTransparentBlack;
-            case SamplerBorderColor::White:       return MTLSamplerBorderColorOpaqueWhite;
-            case SamplerBorderColor::Black:       return MTLSamplerBorderColorOpaqueBlack;
+            case SamplerBorderColor::Transparent:       return MTLSamplerBorderColorTransparentBlack;
+            case SamplerBorderColor::White:             return MTLSamplerBorderColorOpaqueWhite;
+            case SamplerBorderColor::Black:             return MTLSamplerBorderColorOpaqueBlack;
         }
 
         return MTLSamplerBorderColorTransparentBlack;

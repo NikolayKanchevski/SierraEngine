@@ -53,11 +53,11 @@ namespace Sierra
         [[nodiscard]] bool IsFocused() const override;
         [[nodiscard]] bool IsHidden() const override;
 
-        [[nodiscard]] const Screen& GetScreen() const override;
+        [[nodiscard]] Screen& GetScreen() const override;
         [[nodiscard]] TouchManager& GetTouchManager() override;
         [[nodiscard]] PlatformAPI GetAPI() const override;
 
-        [[nodiscard]] inline ANativeWindow* GetNativeWindow() const { return window; }
+        [[nodiscard]] ANativeWindow* GetNativeWindow() const { return window; }
 
         /* --- DESTRUCTOR --- */
         ~GameActivityWindow() override;

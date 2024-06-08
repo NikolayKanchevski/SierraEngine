@@ -4,6 +4,13 @@
 
 #pragma once
 
+#if !defined(__OBJC__)
+    namespace Sierra
+    {
+        using MTLSamplerState = void;
+    }
+#endif
+
 #include "../../Sampler.h"
 #include "MetalResource.h"
 
@@ -19,7 +26,7 @@ namespace Sierra
         MetalSampler(const MetalDevice &device, const SamplerCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline id<MTLSamplerState> GetSamplerState() const { return samplerState; }
+        [[nodiscard]] id<MTLSamplerState> GetSamplerState() const { return samplerState; }
 
         /* --- DESTRUCTOR --- */
         ~MetalSampler() override;

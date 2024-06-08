@@ -21,13 +21,6 @@ namespace Sierra
 
     };
 
-    struct PlatformApplicationRunInfo
-    {
-        std::function<void()> OnStart = [] { };
-        std::function<bool()> OnUpdate = [] { return false; };
-        std::function<void()> OnEnd = [] { };
-    };
-
     class SIERRA_API PlatformContext
     {
     public:
@@ -47,7 +40,6 @@ namespace Sierra
     private:
         friend class Application;
         [[nodiscard]] static std::unique_ptr<PlatformContext> Create(const PlatformContextCreateInfo &createInfo);
-        virtual void RunApplication(const PlatformApplicationRunInfo &runInfo);
 
     };
 

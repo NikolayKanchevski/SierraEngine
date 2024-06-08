@@ -23,3 +23,6 @@
 [submodule "SierraEngine/vendor/entt"]
 	path = SierraEngine/vendor/entt
 	url = https://github.com/skypjack/entt
+[submodule "Sierra/vendor/fmt"]
+	path = Sierra/vendor/fmt
+	url = https://github.com/fmtlib/fmt

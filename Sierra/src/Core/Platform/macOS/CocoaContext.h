@@ -8,70 +8,54 @@
     #error "Including the CocoaContext.h file is only allowed in macOS builds!"
 #endif
 
-#include "CocoaScreen.h"
-
-#if !defined(__OBJC__)
+#if defined(__OBJC__)
+    #include <Cocoa/Cocoa.h>
+#else
     namespace Sierra
     {
-        typedef void CocoaApplication;
-        typedef void CocoaApplicationDelegate;
-        typedef void NSEvent;
-        typedef void NSScreen;
-        typedef void NSWindow;
         #define nil nullptr
+        using NSApplication = void;
+        using NSWindow = void;
+        using NSEvent = void;
+        using NSNotification = void;
     }
-#else
-    #include <Cocoa/Cocoa.h>
-    typedef NSApplication CocoaApplication;
-    @class CocoaApplicationDelegate;
 #endif
+
+#include "CocoaScreen.h"
 
 namespace Sierra
 {
 
     struct CocoaContextCreateInfo
     {
-
+        NSApplication* application = nil;
     };
 
     class CocoaContext
     {
     public:
+        /* --- CONSTRUCTORS --- */
+        explicit CocoaContext(const CocoaContextCreateInfo &createInfo);
+
         /* --- POLLING METHODS --- */
         [[nodiscard]] NSWindow* CreateWindow(std::string_view title, uint32 width, uint32 height) const;
         void DestroyWindow(NSWindow* window) const;
 
         NSEvent* PollNextEvent() const;
+        void ReloadScreens();
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const CocoaApplication* GetApplication() const { return application; }
+        [[nodiscard]] const NSApplication* GetNSApplication() const { return application; }
 
-        [[nodiscard]] const CocoaScreen& GetPrimaryScreen() const;
-        [[nodiscard]] const CocoaScreen& GetWindowScreen(const NSWindow* window) const;
+        [[nodiscard]] CocoaScreen& GetPrimaryScreen();
+        [[nodiscard]] CocoaScreen& GetWindowScreen(const NSWindow* window);
 
         /* --- DESTRUCTOR --- */
         ~CocoaContext();
 
     private:
-        friend class macOSContext;
-        explicit CocoaContext(const CocoaContextCreateInfo &createInfo);
-
-        CocoaApplication* application = nil;
-        CocoaApplicationDelegate* applicationDelegate = nil;
-
-        struct CocoaScreenPair
-        {
-            const NSScreen* nsScreen;
-            CocoaScreen cocoaScreen;
-        };
-        std::vector<CocoaScreenPair> screens;
-        void ReloadScreens();
-
-        #if defined(__OBJC__) && defined(COCOA_CONTEXT_IMPLEMENTATION)
-            public:
-                /* --- EVENTS --- */
-                void ApplicationDidChangeScreenParameters(const NSNotification* notification);
-        #endif
+        NSApplication* application = nil;
+        std::vector<CocoaScreen> screens;
 
     };
 

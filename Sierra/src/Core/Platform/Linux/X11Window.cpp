@@ -92,7 +92,7 @@ namespace Sierra
         }
 
         // A closing event may have been handled, so we need to check again
-        if (!closed) cursorManager.UpdateEnd();
+        if (!closed) cursorManager.PostUpdate();
 
         x11Context.Flush();
     }
@@ -236,7 +236,7 @@ namespace Sierra
         return x11Context.IsWindowHidden(window);
     }
 
-    const Screen& X11Window::GetScreen() const
+    Screen& X11Window::GetScreen() const
     {
         return x11Context.GetWindowScreen(window);
     }

@@ -428,6 +428,8 @@ namespace Sierra
             case ImageFormat::B8G8R8A8_UNorm:
             case ImageFormat::B8G8R8A8_SRGB:                    return 1;
         }
+
+        return 1;
     }
 
     enum class ImageMemoryLocation : bool
@@ -436,7 +438,7 @@ namespace Sierra
         GPU
     };
 
-    enum class ImageUsage
+    enum class ImageUsage : uint16
     {
         Undefined               = 0x0000,
         SourceMemory            = 0x0001,
@@ -485,18 +487,18 @@ namespace Sierra
     {
     public:
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetWidth() const { return width; }
-        [[nodiscard]] inline uint32 GetHeight() const { return height; }
-        [[nodiscard]] inline uint32 GetDepth() const { return depth; }
-        [[nodiscard]] inline ImageFormat GetFormat() const { return format; }
+        [[nodiscard]] uint32 GetWidth() const { return width; }
+        [[nodiscard]] uint32 GetHeight() const { return height; }
+        [[nodiscard]] uint32 GetDepth() const { return depth; }
+        [[nodiscard]] ImageFormat GetFormat() const { return format; }
 
-        [[nodiscard]] inline float32 GetPixelMemorySize() const { return ImageFormatToPixelMemorySize(format); }
-        [[nodiscard]] inline uint64 GetLayerMemorySize() const { return static_cast<uint64>(width * height * depth * GetPixelMemorySize()); }
-        [[nodiscard]] inline uint64 GetMemorySize() const { return GetLayerMemorySize() * layerCount; }
+        [[nodiscard]] float32 GetPixelMemorySize() const { return ImageFormatToPixelMemorySize(format); }
+        [[nodiscard]] uint64 GetLayerMemorySize() const { return width * height * depth * GetPixelMemorySize(); }
+        [[nodiscard]] uint64 GetMemorySize() const { return GetLayerMemorySize() * layerCount; }
 
-        [[nodiscard]] inline uint32 GetLevelCount() const { return levelCount; }
-        [[nodiscard]] inline uint32 GetLayerCount() const { return layerCount; }
-        [[nodiscard]] inline ImageSampling GetSampling() const { return sampling; };
+        [[nodiscard]] uint32 GetLevelCount() const { return levelCount; }
+        [[nodiscard]] uint32 GetLayerCount() const { return layerCount; }
+        [[nodiscard]] ImageSampling GetSampling() const { return sampling; }
 
         /* --- OPERATORS --- */
         Image(const Image&) = delete;

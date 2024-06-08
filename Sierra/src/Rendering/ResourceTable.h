@@ -25,12 +25,12 @@ namespace Sierra
         using ResourceIndex = uint32;
 
         /* --- POLLING METHODS --- */
-        virtual void BindUniformBuffer(ResourceIndex index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) = 0;
-        virtual void BindStorageBuffer(ResourceIndex index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) = 0;
+        virtual void BindUniformBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) = 0;
+        virtual void BindStorageBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) = 0;
 
-        virtual void BindSampledImage(ResourceIndex index, const std::unique_ptr<Image> &image) = 0;
-        virtual void BindStorageImage(ResourceIndex index, const std::unique_ptr<Image> &image) = 0;
-        virtual void BindSampler(ResourceIndex index, const std::unique_ptr<Sampler> &sampler) = 0;
+        virtual void BindSampledImage(ResourceIndex index, const Image &image) = 0;
+        virtual void BindStorageImage(ResourceIndex index, const Image &image) = 0;
+        virtual void BindSampler(ResourceIndex index, const Sampler &sampler) = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual uint32 GetUniformBufferCapacity() const = 0;

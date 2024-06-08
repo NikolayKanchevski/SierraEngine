@@ -23,12 +23,12 @@ namespace Sierra
         : Swapchain(createInfo), MetalResource(createInfo.name), device(device), window(createInfo.window)
     {
         #if SR_PLATFORM_macOS
-            SR_ERROR_IF(window->GetAPI() != PlatformAPI::Cocoa, "[Metal]: Cannot create Metal swapchain [{0}] for window [{1}], because its platform API does not match [PlatformAPI::Cocoa]!", GetName(), window->GetTitle());
-            const CocoaWindow &cocoaWindow = static_cast<const CocoaWindow&>(*window);
+            SR_ERROR_IF(window.GetAPI() != PlatformAPI::Cocoa, "[Metal]: Cannot create Metal swapchain [{0}] for window [{1}], because its platform API does not match [PlatformAPI::Cocoa]!", GetName(), window.GetTitle());
+            const CocoaWindow &cocoaWindow = static_cast<const CocoaWindow&>(window);
             metalLayer = reinterpret_cast<CAMetalLayer*>(cocoaWindow.GetNSView().layer);
         #elif SR_PLATFORM_iOS
-            SR_ERROR_IF(window->GetAPI() != PlatformAPI::UIKit, "[Metal]: Cannot create Metal swapchain [{0}] for window [{1}], because its platform API does not match [PlatformAPI::UIKit]!", GetName(), window->GetTitle());
-            const UIKitWindow &uiKitWindow = static_cast<const UIKitWindow&>(*window);
+            SR_ERROR_IF(window.GetAPI() != PlatformAPI::UIKit, "[Metal]: Cannot create Metal swapchain [{0}] for window [{1}], because its platform API does not match [PlatformAPI::UIKit]!", GetName(), window.GetTitle());
+            const UIKitWindow &uiKitWindow = static_cast<const UIKitWindow&>(window);
             metalLayer = reinterpret_cast<CAMetalLayer*>(uiKitWindow.GetUIView().layer);
         #endif
 
@@ -43,7 +43,7 @@ namespace Sierra
         [metalLayer setDevice: device.GetMetalDevice()];
         [metalLayer setMaximumDrawableCount: concurrentFrameCount];
         [metalLayer setDrawsAsynchronously: YES];
-        [metalLayer setDrawableSize: CGSizeMake(window->GetFramebufferWidth(), window->GetFramebufferHeight())];
+        [metalLayer setDrawableSize: CGSizeMake(window.GetFramebufferWidth(), window.GetFramebufferHeight())];
         switch (createInfo.preferredImageMemoryType) // These formats are guaranteed to be supported
         {
             case SwapchainImageMemoryType::UNorm8:      { [metalLayer setPixelFormat: MTLPixelFormatBGRA8Unorm ];      break; }
@@ -68,16 +68,16 @@ namespace Sierra
         isFrameRenderedSemaphores = dispatch_semaphore_create(concurrentFrameCount);
 
         // Handle resizing
-        createInfo.window->OnEvent<WindowResizeEvent>([this](const WindowResizeEvent&) -> bool
+        createInfo.window.OnEvent<WindowResizeEvent>([this](const WindowResizeEvent&) -> bool
         {
             // Resize Metal layer
-            [metalLayer setDrawableSize: CGSizeMake(window->GetFramebufferWidth(), window->GetFramebufferHeight())];
+            [metalLayer setDrawableSize: CGSizeMake(window.GetFramebufferWidth(), window.GetFramebufferHeight())];
 
             // Recreate swapchain images
             Recreate();
 
             // Dispatch resize event
-            GetSwapchainResizeDispatcher().DispatchEvent(window->GetFramebufferWidth(), window->GetFramebufferHeight(), GetScaling());
+            GetSwapchainResizeDispatcher().DispatchEvent(window.GetFramebufferWidth(), window.GetFramebufferHeight(), GetScaling());
             return false;
         });
     }
@@ -96,13 +96,13 @@ namespace Sierra
         metalDrawable = [metalLayer nextDrawable];
         
         // Update image
-        static_cast<MetalImage&>(*swapchainImage).texture = metalDrawable.texture;
+        swapchainImage->texture = metalDrawable.texture;
     }
 
-    void MetalSwapchain::Present(std::unique_ptr<CommandBuffer> &commandBuffer)
+    void MetalSwapchain::Present(CommandBuffer &commandBuffer)
     {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot present swapchain [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
+        SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot present swapchain [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer.GetName());
+        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(commandBuffer);
 
         // Record presentation commands to a new command buffer (width a dependency to passed one)
         const id<MTLCommandBuffer> presentationCommandBuffer = [device.GetCommandQueue() commandBuffer];

@@ -53,13 +53,13 @@ namespace Sierra
         [[nodiscard]] bool IsFocused() const override;
         [[nodiscard]] bool IsHidden() const override;
 
-        [[nodiscard]] const Screen& GetScreen() const override;
+        [[nodiscard]] Screen& GetScreen() const override;
         [[nodiscard]] InputManager& GetInputManager() override;
         [[nodiscard]] CursorManager& GetCursorManager() override;
         [[nodiscard]] PlatformAPI GetAPI() const override;
 
-        [[nodiscard]] inline HWND GetHwnd() const { return window; }
-        [[nodiscard]] inline HINSTANCE GetHInstance() const { return win32Context.GetHInstance(); }
+        [[nodiscard]] HWND GetHwnd() const { return window; }
+        [[nodiscard]] HINSTANCE GetHInstance() const { return win32Context.GetHInstance(); }
 
         /* --- DESTRUCTOR --- */
         ~Win32Window() override;

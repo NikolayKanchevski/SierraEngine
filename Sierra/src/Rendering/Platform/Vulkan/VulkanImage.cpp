@@ -79,8 +79,8 @@ namespace Sierra
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create image view for image [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         // Set object names
-        device.SetObjectName(image, VK_OBJECT_TYPE_IMAGE, GetName());
-        device.SetObjectName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image view of image [" + std::string(GetName()) + "]");
+        device.SetResourceName(image, VK_OBJECT_TYPE_IMAGE, GetName());
+        device.SetResourceName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image view of image [" + std::string(GetName()) + "]");
     }
 
     VulkanImage::VulkanImage(const VulkanDevice &device, const SwapchainImageCreateInfo &createInfo)
@@ -116,8 +116,8 @@ namespace Sierra
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create image view for image [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         // Set object names
-        device.SetObjectName(image, VK_OBJECT_TYPE_IMAGE, GetName());
-        device.SetObjectName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image view of image [" + std::string(GetName()) + "]");
+        device.SetResourceName(image, VK_OBJECT_TYPE_IMAGE, GetName());
+        device.SetResourceName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image view of image [" + std::string(GetName()) + "]");
     }
 
     /* --- DESTRUCTOR --- */
@@ -130,7 +130,7 @@ namespace Sierra
 
     /* --- PRIVATE METHODS --- */
 
-    ImageFormat VulkanImage::SwapchainVkFormatToImageFormat(VkFormat format)
+    ImageFormat VulkanImage::SwapchainVkFormatToImageFormat(const VkFormat format)
     {
         switch (format)
         {
@@ -158,6 +158,8 @@ namespace Sierra
             case ImageType::Cube:           return VK_IMAGE_TYPE_2D;
             case ImageType::Volume:         return VK_IMAGE_TYPE_3D;
         }
+
+        return VK_IMAGE_TYPE_2D;
     }
 
     VkFormat VulkanImage::ImageFormatToVkFormat(const ImageFormat format)
@@ -316,8 +318,10 @@ namespace Sierra
             case ImageType::Line:           return layerCount == 1 ? VK_IMAGE_VIEW_TYPE_1D : VK_IMAGE_VIEW_TYPE_1D_ARRAY;
             case ImageType::Plane:          return layerCount == 1 ? VK_IMAGE_VIEW_TYPE_2D : VK_IMAGE_VIEW_TYPE_2D_ARRAY;
             case ImageType::Volume:         return VK_IMAGE_VIEW_TYPE_3D;
-            case ImageType::Cube:           return (layerCount / 6) == 1 ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+            case ImageType::Cube:           return layerCount / 6 == 1 ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
         }
+
+        return VK_IMAGE_VIEW_TYPE_2D;
     }
 
 }

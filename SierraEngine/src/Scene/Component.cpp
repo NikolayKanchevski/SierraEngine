@@ -9,9 +9,9 @@ namespace SierraEngine
 
     /* --- SETTER METHODS --- */
 
-    void Component::SetEnabled(const bool givenEnabled)
+    void Component::SetEnabled(const bool enabled)
     {
-        enabled = givenEnabled;
+        this->enabled = enabled;
     }
 
 }

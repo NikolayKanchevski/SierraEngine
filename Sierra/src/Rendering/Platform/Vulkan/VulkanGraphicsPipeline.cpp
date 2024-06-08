@@ -16,11 +16,11 @@ namespace Sierra
     VulkanGraphicsPipeline::VulkanGraphicsPipeline(const VulkanDevice &device, const GraphicsPipelineCreateInfo &createInfo)
         : GraphicsPipeline(createInfo), VulkanResource(createInfo.name), device(device), pushConstantSize(createInfo.pushConstantSize)
     {
-        SR_ERROR_IF(createInfo.vertexShader->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.vertexShader->GetName());
-        const VulkanShader &vulkanVertexShader = static_cast<const VulkanShader&>(*createInfo.vertexShader);
+        SR_ERROR_IF(createInfo.vertexShader.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.vertexShader.GetName());
+        const VulkanShader &vulkanVertexShader = static_cast<const VulkanShader&>(createInfo.vertexShader);
 
-        SR_ERROR_IF(createInfo.templateRenderPass->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with render pass [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.templateRenderPass->GetName());
-        const VulkanRenderPass &vulkanRenderPass = static_cast<const VulkanRenderPass&>(*createInfo.templateRenderPass);
+        SR_ERROR_IF(createInfo.templateRenderPass.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with render pass [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.templateRenderPass.GetName());
+        const VulkanRenderPass &vulkanRenderPass = static_cast<const VulkanRenderPass&>(createInfo.templateRenderPass);
 
         // Set up shader stages
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages(1 + (createInfo.fragmentShader != nullptr));
@@ -114,14 +114,14 @@ namespace Sierra
         const VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-            .vertexBindingDescriptionCount = createInfo.vertexInputs.size() > 0,
+            .vertexBindingDescriptionCount = !createInfo.vertexInputs.empty(),
             .pVertexBindingDescriptions = &vertexInputBinding,
             .vertexAttributeDescriptionCount = static_cast<uint32>(vertexInputAttributes.size()),
             .pVertexAttributeDescriptions = vertexInputAttributes.data()
         };
 
         // Set up input assembly state
-        const VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo
+        constexpr VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
             .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
@@ -129,7 +129,7 @@ namespace Sierra
         };
 
         // Set up viewport state
-        const VkPipelineViewportStateCreateInfo viewportStateCreateInfo
+        constexpr VkPipelineViewportStateCreateInfo viewportStateCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
             .viewportCount = 1,
@@ -188,7 +188,7 @@ namespace Sierra
             .alphaBlendOp = VK_BLEND_OP_ADD,
             .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
         };
-        std::vector<VkPipelineColorBlendAttachmentState> colorAttachmentStates(createInfo.templateRenderPass->GetColorAttachmentCount(), blendingAttachmentState);
+        std::vector<VkPipelineColorBlendAttachmentState> colorAttachmentStates(createInfo.templateRenderPass.GetColorAttachmentCount(), blendingAttachmentState);
 
         // Set up color blending state
         const VkPipelineColorBlendStateCreateInfo blendingStateCreateInfo
@@ -201,7 +201,7 @@ namespace Sierra
         };
 
         // Define dynamic states to use
-        constexpr std::array<VkDynamicState, 2> dynamicStates
+        constexpr std::array dynamicStates
         {
             VK_DYNAMIC_STATE_VIEWPORT,
             VK_DYNAMIC_STATE_SCISSOR
@@ -241,7 +241,7 @@ namespace Sierra
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create graphics pipeline [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         // Set object name
-        device.SetObjectName(pipeline, VK_OBJECT_TYPE_PIPELINE, GetName());
+        device.SetResourceName(pipeline, VK_OBJECT_TYPE_PIPELINE, GetName());
     }
 
     /* --- DESTRUCTOR --- */

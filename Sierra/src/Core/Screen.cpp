@@ -7,4 +7,11 @@
 namespace Sierra
 {
 
+    /* --- POLLING METHODS --- */
+
+    void Screen::RegisterScreenReorient(const ScreenOrientation)
+    {
+
+    }
+
 }

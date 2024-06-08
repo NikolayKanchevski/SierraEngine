@@ -9,11 +9,8 @@
 #endif
 
 #include "../../PlatformContext.h"
-#include "UIKitContext.h"
 
-#if defined(__OBJC__)
-    #include <UIKit/UIKit.h>
-#endif
+#include "UIKitContext.h"
 
 namespace Sierra
 {
@@ -25,12 +22,11 @@ namespace Sierra
         explicit iOSContext(const PlatformContextCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const UIKitContext& GetUIKitContext() const { return uiKitContext; }
-        [[nodiscard]] inline PlatformType GetType() const override { return PlatformType::iOS; }
+        [[nodiscard]] PlatformType GetType() const override { return PlatformType::iOS; }
+        [[nodiscard]] UIKitContext& GetUIKitContext() { return uiKitContext; }
 
     private:
         UIKitContext uiKitContext;
-        void RunApplication(const PlatformApplicationRunInfo &runInfo) override;
 
     };
 

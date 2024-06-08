@@ -19,9 +19,9 @@ namespace Sierra
         VulkanComputePipeline(const VulkanDevice &device, const ComputePipelineCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint16 GetPushConstantSize() const { return pushConstantSize; }
-        [[nodiscard]] inline VkPipeline GetVulkanPipeline() const { return pipeline; }
-        [[nodiscard]] inline VkPipelineLayout GetVulkanPipelineLayout() const { return device.GetPipelineLayout(pushConstantSize); }
+        [[nodiscard]] uint16 GetPushConstantSize() const { return pushConstantSize; }
+        [[nodiscard]] VkPipeline GetVulkanPipeline() const { return pipeline; }
+        [[nodiscard]] VkPipelineLayout GetVulkanPipelineLayout() const { return device.GetPipelineLayout(pushConstantSize); }
 
         /* --- DESTRUCTOR --- */
         ~VulkanComputePipeline() override;

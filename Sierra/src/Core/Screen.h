@@ -4,28 +4,54 @@
 
 #pragma once
 
+#include "EventDispatcher.hpp"
+
 namespace Sierra
 {
 
     enum class ScreenOrientation : uint8
     {
         Unknown                   = 0x0000,
-        PortraitNormal            = 0x0001,
+        Portrait                  = 0x0001,
         PortraitFlipped           = 0x0002,
-        Portrait                  = PortraitNormal | PortraitFlipped,
-        LandscapeNormal           = 0x0004,
+        PortraitAny               = Portrait | PortraitFlipped,
+        Landscape                 = 0x0004,
         LandscapeFlipped          = 0x0008,
-        Landscape                 = LandscapeNormal | LandscapeFlipped
+        LandscapeAny              = Landscape | LandscapeFlipped
     };
     SR_DEFINE_ENUM_FLAG_OPERATORS(ScreenOrientation);
+
+    class SIERRA_API ScreenEvent : public Event { };
+    template<typename T> concept ScreenEventType = std::is_base_of_v<ScreenEvent, T> && !std::is_same_v<ScreenEvent, std::decay_t<T>>;
+
+    class SIERRA_API ScreenReorientEvent : public ScreenEvent
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        explicit ScreenReorientEvent(const ScreenOrientation orientation) : orientation(orientation) { }
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] ScreenOrientation GetOrientation() const { return orientation; }
+
+    private:
+        const ScreenOrientation orientation = ScreenOrientation::Unknown;
+
+    };
 
     class SIERRA_API Screen
     {
     public:
+        /* --- TYPE DEFINITIONS --- */
+        template<ScreenEventType EventType>
+        using EventCallback = std::function<bool(const EventType&)>;
+
+        /* --- POLLING METHODS --- */
+        virtual void RegisterScreenReorient(ScreenOrientation orientation);
+
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual std::string_view GetName() const = 0;
-        [[nodiscard]] virtual uint32 GetRefreshRate() const = 0;
         [[nodiscard]] virtual ScreenOrientation GetOrientation() const = 0;
+        [[nodiscard]] virtual uint32 GetRefreshRate() const = 0;
 
         [[nodiscard]] virtual Vector2Int GetOrigin() const = 0;
         [[nodiscard]] virtual uint32 GetWidth() const = 0;
@@ -34,6 +60,10 @@ namespace Sierra
         [[nodiscard]] virtual Vector2Int GetWorkAreaOrigin() const = 0;
         [[nodiscard]] virtual uint32 GetWorkAreaWidth() const = 0;
         [[nodiscard]] virtual uint32 GetWorkAreaHeight() const = 0;
+
+        /* --- EVENTS --- */
+        template<ScreenEventType EventType>
+        void OnEvent(const EventCallback<EventType>&) { }
 
         /* --- OPERATORS --- */
         Screen(const Screen&) = delete;
@@ -45,6 +75,13 @@ namespace Sierra
     protected:
         Screen() = default;
 
+        [[nodiscard]] EventDispatcher<ScreenReorientEvent>& GetScreenReorientDispatcher() { return screenReorientDispatcher; }
+
+    private:
+        EventDispatcher<ScreenReorientEvent> screenReorientDispatcher;
+
     };
+
+    template<> inline void Screen::OnEvent<ScreenReorientEvent>(const EventCallback<ScreenReorientEvent> &Callback) { screenReorientDispatcher.Subscribe(Callback); }
 
 }

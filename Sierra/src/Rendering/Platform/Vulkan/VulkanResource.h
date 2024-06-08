@@ -16,8 +16,6 @@
     #include <vulkan/vulkan_win32.h>
 #elif SR_PLATFORM_APPLE
     #include <vulkan/vulkan_metal.h>
-
-    #define VK_KHR_portability_subset 1
     #define VK_KHR_PORTABILITY_SUBSET_SPEC_VERSION 1
     #define VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME "VK_KHR_portability_subset"
 
@@ -61,10 +59,10 @@ namespace Sierra
     {
     public:
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline GraphicsAPI GetAPI() const override { return GraphicsAPI::Vulkan; };
+        [[nodiscard]] GraphicsAPI GetAPI() const override { return GraphicsAPI::Vulkan; }
 
     protected:
-        inline explicit VulkanResource(const std::string_view name)
+        explicit VulkanResource(const std::string_view name)
         {
             #if SR_ENABLE_LOGGING
                 this->name = name;

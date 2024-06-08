@@ -7,6 +7,9 @@
 #include "Data/Fonts.h"
 #include "Data/Themes.h"
 
+#include "Panels/Viewport.h"
+#include "Panels/Hierarchy.h"
+
 namespace SierraEngine
 {
 
@@ -16,7 +19,7 @@ namespace SierraEngine
         : imGuiRenderTask({
             .style = createInfo.theme == EditorTheme::Light ? GetLightThemeStyle() : GetDarkThemeStyle(),
             .fontCreateInfos = {{
-                { .ttfMemory = LATO_FONT_TTF }
+                { .size = 7.0f, .ttfMemory = INTER_FONT_TTF }
             }},
             .concurrentFrameCount = createInfo.concurrentFrameCount,
             .renderingContext = createInfo.renderingContext,
@@ -34,10 +37,12 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void Editor::Update(Scene &scene, const std::optional<std::reference_wrapper<const Sierra::InputManager>> &inputManager, const std::optional<std::reference_wrapper<const Sierra::CursorManager>> &cursorManager, const std::optional<std::reference_wrapper<const Sierra::TouchManager>> &touchManager)
+    void Editor::Update(Scene &scene, const Sierra::InputManager* inputManager, const Sierra::CursorManager* cursorManager, const Sierra::TouchManager* touchManager)
     {
         imGuiRenderTask.Update(inputManager, cursorManager, touchManager);
-        ImGui::ShowDemoWindow();
+
+        Viewport::Draw();
+        Hierarchy::Draw(scene, selectedEntity);
     }
 
     void Editor::Resize(const uint32 width, const uint32 height, const uint32 scaling)
@@ -45,7 +50,7 @@ namespace SierraEngine
         imGuiRenderTask.Resize(width, height, scaling);
     }
 
-    void Editor::Render(std::unique_ptr<Sierra::CommandBuffer> &commandBuffer, const std::unique_ptr<Sierra::Image> &outputImage)
+    void Editor::Render(Sierra::CommandBuffer &commandBuffer, const Sierra::Image &outputImage)
     {
         imGuiRenderTask.Render(commandBuffer, outputImage);
     }

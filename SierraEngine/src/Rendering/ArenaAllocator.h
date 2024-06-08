@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "Vertex.h"
 #include "Mesh.h"
+#include "Vertex.h"
 
 namespace SierraEngine
 {
@@ -24,14 +24,14 @@ namespace SierraEngine
         explicit ArenaAllocator(const ArenaAllocatorCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] Mesh RegisterMesh(std::unique_ptr<Sierra::CommandBuffer> &commandBuffer, std::span<Vertex> vertices, std::span<uint32> indices);
+        [[nodiscard]] Mesh RegisterMesh(Sierra::CommandBuffer &commandBuffer, std::span<Vertex> vertices, std::span<uint32> indices);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetVertexCount() const { return currentVertexByteOffset / sizeof(Vertex); }
-        [[nodiscard]] inline const std::unique_ptr<Sierra::Buffer>& GetVertexBuffer() const { return vertexBuffer; }
+        [[nodiscard]] uint32 GetVertexCount() const { return static_cast<uint32>(currentVertexByteOffset / sizeof(Vertex)); }
+        [[nodiscard]] const Sierra::Buffer& GetVertexBuffer() const { return *vertexBuffer; }
 
-        [[nodiscard]] inline uint32 GetIndexCount() const { return currentIndexByteOffset / sizeof(uint32); }
-        [[nodiscard]] inline const std::unique_ptr<Sierra::Buffer>& GetIndexBuffer() const { return indexBuffer; }
+        [[nodiscard]] uint32 GetIndexCount() const { return static_cast<uint32>(currentIndexByteOffset / sizeof(uint32)); }
+        [[nodiscard]] const Sierra::Buffer& GetIndexBuffer() const { return *indexBuffer; }
 
         /* --- OPERATORS --- */
         ArenaAllocator(const ArenaAllocator&) = delete;

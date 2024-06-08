@@ -27,12 +27,12 @@ namespace SierraEngine
         }
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetThreadCount() const { return static_cast<uint32>(threads.size()); }
-        [[nodiscard]] inline bool IsPaused() const { return paused; }
+        [[nodiscard]] uint32 GetThreadCount() const { return static_cast<uint32>(threads.size()); }
+        [[nodiscard]] bool IsPaused() const { return paused; }
 
-        [[nodiscard]] inline uint32 GetQueuedTaskCount() const { const std::lock_guard taskLock(taskMutex); return static_cast<uint32>(taskQueue.size()); }
-        [[nodiscard]] inline uint32 GetRunningTaskCount() const { const std::lock_guard taskLock(taskMutex); return totalTaskCount - static_cast<uint32>(taskQueue.size()); }
-        [[nodiscard]] inline uint32 GetTotalTaskCount() const { return totalTaskCount; }
+        [[nodiscard]] uint32 GetQueuedTaskCount() const { const std::lock_guard taskLock(taskMutex); return static_cast<uint32>(taskQueue.size()); }
+        [[nodiscard]] uint32 GetRunningTaskCount() const { const std::lock_guard taskLock(taskMutex); return totalTaskCount - static_cast<uint32>(taskQueue.size()); }
+        [[nodiscard]] uint32 GetTotalTaskCount() const { return totalTaskCount; }
 
         /* --- POLLING METHODS --- */
         void Pause()
@@ -49,14 +49,14 @@ namespace SierraEngine
         void PushTask(T&& task, Args&&... args)
         {
             // Insert task into queue
-            Task taskFunction = std::bind(std::forward<T>(task), std::forward<Args>(args)...);
             {
+                const Task taskFunction = std::bind(std::forward<T>(task), std::forward<Args>(args)...);
                 const std::lock_guard taskLock(taskMutex);
                 taskQueue.push(taskFunction);
             }
 
             // Increment task count (safe, since on main thread)
-            totalTaskCount++;
+            ++totalTaskCount;
             taskAvailable.notify_one();
         }
 
@@ -96,7 +96,7 @@ namespace SierraEngine
             waiting = true;
 
             std::unique_lock taskLock(taskMutex);
-            taskCompleted.wait(taskLock, [this] { return (totalTaskCount == (paused ? taskQueue.size() : 0)); });
+            taskCompleted.wait(taskLock, [this]() -> bool { return totalTaskCount == (paused ? taskQueue.size() : 0); });
 
             waiting = false;
         }
@@ -116,17 +116,17 @@ namespace SierraEngine
         }
 
     private:
-        std::vector<std::thread> threads;
+        std::vector<std::thread> threads = { };
         std::atomic<bool> paused = false;
         std::atomic<bool> running = false;
         std::atomic<bool> waiting = false;
 
-        std::queue<Task> taskQueue;
+        std::queue<Task> taskQueue = { };
         std::atomic<uint32> totalTaskCount = 0;
 
-        mutable std::mutex taskMutex;
-        std::condition_variable taskAvailable;
-        std::condition_variable taskCompleted;
+        mutable std::mutex taskMutex = { };
+        std::condition_variable taskAvailable = { };
+        std::condition_variable taskCompleted = { };
 
         void Thread()
         {
@@ -150,7 +150,7 @@ namespace SierraEngine
 
                     // Safely decrement task count (by locking mutex)
                     taskLock.lock();
-                    totalTaskCount--;
+                    --totalTaskCount;
 
                     // If waiting, signal upon completion
                     if (waiting) taskCompleted.notify_one();

@@ -114,13 +114,13 @@ namespace Sierra
         std::string_view name = "Graphics Pipeline";
 
         std::span<const VertexInput> vertexInputs = { };
-        const std::unique_ptr<Shader> &vertexShader;
-        const std::unique_ptr<Shader> &fragmentShader = nullptr;
+        const Shader &vertexShader;
+        const Shader* fragmentShader = nullptr;
 
         uint16 pushConstantSize = 0;
         ImageSampling sampling = ImageSampling::x1;
 
-        const std::unique_ptr<RenderPass> &templateRenderPass;
+        const RenderPass &templateRenderPass;
         uint32 subpassIndex = 0;
 
         ShadeMode shadeMode = ShadeMode::Fill;

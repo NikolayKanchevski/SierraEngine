@@ -103,63 +103,107 @@
 
     - (void) keyDown: (NSEvent*) event
     {
-        // No casting error checks are done, since the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).KeyDown(event);
+        const Sierra::Key key = Sierra::CocoaInputManager::KeyCodeToKey([event keyCode]);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterKeyPress(key);
+
         [self interpretKeyEvents: @[event]];
     }
 
     - (void) flagsChanged: (NSEvent*) event
     {
-        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).FlagsChanged(event);
+        const Sierra::Key key = Sierra::CocoaInputManager::KeyCodeToKey([event keyCode]);
+
+        // Modifier keys need to be registered as pressed manually, so we get modifier flags of the modifier key... fun stuff!
+        NSEventModifierFlags keyModifierFlag = 0;
+        switch (key)
+        {
+            case Sierra::Key::LeftShift:
+            case Sierra::Key::RightShift:
+            {
+                keyModifierFlag = NSEventModifierFlagShift;
+                break;
+            }
+            case Sierra::Key::LeftControl:
+            case Sierra::Key::RightControl:
+            {
+                keyModifierFlag = NSEventModifierFlagControl;
+                break;
+            }
+            case Sierra::Key::LeftOption:
+            case Sierra::Key::RightOption:
+            {
+                keyModifierFlag = NSEventModifierFlagOption;
+                break;
+            }
+            case Sierra::Key::LeftCommand:
+            case Sierra::Key::RightCommand:
+            {
+                keyModifierFlag = NSEventModifierFlagCommand;
+                break;
+            }
+            case Sierra::Key::CapsLock:
+            {
+                keyModifierFlag = NSEventModifierFlagCapsLock;
+                break;
+            }
+            default:
+            {
+                break;
+            }
+        }
+
+        Sierra::CocoaInputManager &inputManager = static_cast<Sierra::CocoaInputManager&>(window->GetInputManager());
+        if(!inputManager.IsKeyPressed(key) && keyModifierFlag & [event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask)
+        {
+            inputManager.RegisterKeyPress(key);
+        }
+        else
+        {
+            inputManager.RegisterKeyRelease(key);
+        }
     }
 
     - (void) keyUp: (NSEvent*) event
     {
-        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).KeyUp(event);
+        const Sierra::Key key = Sierra::CocoaInputManager::KeyCodeToKey([event keyCode]);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterKeyRelease(key);
     }
 
     - (void) mouseDown: (NSEvent*) event
     {
-        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).MouseDown(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterMouseButtonPress(Sierra::MouseButton::Left);
     }
 
     - (void) rightMouseDown: (NSEvent*) event
     {
-        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RightMouseDown(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterMouseButtonPress(Sierra::MouseButton::Right);
     }
 
     - (void) otherMouseDown: (NSEvent*) event
     {
-        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).OtherMouseDown(event);
+        const Sierra::MouseButton mouseButton = Sierra::CocoaInputManager::ButtonNumberToMouseButton([event buttonNumber]);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterMouseButtonPress(mouseButton);
     }
 
     - (void) mouseUp: (NSEvent*) event
     {
-        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).MouseUp(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterMouseButtonRelease(Sierra::MouseButton::Left);
     }
 
     - (void) rightMouseUp: (NSEvent*) event
     {
-        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RightMouseUp(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterMouseButtonRelease(Sierra::MouseButton::Right);
     }
 
     - (void) otherMouseUp: (NSEvent*) event
     {
-        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).OtherMouseUp(event);
+        const Sierra::MouseButton mouseButton = Sierra::CocoaInputManager::ButtonNumberToMouseButton([event buttonNumber]);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterMouseButtonRelease(mouseButton);
     }
 
     - (void) scrollWheel: (NSEvent*) event
     {
-        // Unsafe casting, as the input manager type within a CocoaWindow is guaranteed to be CocoaInputManager
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).ScrollWheel(event);
+        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterMouseScroll({ [event deltaX], [event scrollingDeltaY] });
     }
 
     - (void) mouseDragged: (NSEvent*) event
@@ -169,8 +213,8 @@
 
     - (void) mouseMoved: (NSEvent*) event
     {
-        // Unsafe casting, as the cursor manager type within a CocoaWindow is guaranteed to be CocoaCursorManager
-        static_cast<Sierra::CocoaCursorManager&>(window->GetCursorManager()).MouseMoved(event);
+        const NSPoint point = [event locationInWindow];
+        static_cast<Sierra::CocoaCursorManager&>(window->GetCursorManager()).RegisterCursorMove({ point.x, point.y });
     }
 
     - (BOOL) canBecomeKeyView
@@ -259,13 +303,12 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    CocoaWindow::CocoaWindow(const CocoaContext &cocoaContext, const WindowCreateInfo &createInfo)
-        : Window(createInfo),
-            cocoaContext(cocoaContext),
-            window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
-            delegate([[CocoaWindowDelegate alloc] initWithWindow: this]),
+    CocoaWindow::CocoaWindow(CocoaContext &cocoaContext, const WindowCreateInfo &createInfo)
+        : Window(createInfo), cocoaContext(cocoaContext),
             view([[CocoaWindowView alloc] initWithWindow: this]),
-            inputManager(CocoaInputManager({ })), cursorManager(window, { }),
+            delegate([[CocoaWindowDelegate alloc] initWithWindow: this]),
+            window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
+            inputManager(), cursorManager(window),
             title(createInfo.title)
     {
         // Assign Metal layer
@@ -299,14 +342,14 @@ namespace Sierra
         }
 
         // Assign window handlers
-        [window setDelegate: delegate];
+        [window setDelegate: reinterpret_cast<CocoaWindowDelegate*>(delegate)];
         [window setContentView: view];
         [window makeFirstResponder: view];
 
         if (!createInfo.hide)
         {
             // Show and focus window
-            [cocoaContext.GetApplication() activateIgnoringOtherApps: YES];
+            [cocoaContext.GetNSApplication() activateIgnoringOtherApps: YES];
             [window orderFrontRegardless];
             [window makeKeyWindow];
         }
@@ -326,10 +369,9 @@ namespace Sierra
     {
         inputManager.Update();
         cursorManager.Update();
-
         cocoaContext.PollNextEvent();
 
-        cursorManager.UpdateEnd();
+        cursorManager.PostUpdate();
     }
 
     void CocoaWindow::Minimize()
@@ -351,7 +393,7 @@ namespace Sierra
 
     void CocoaWindow::Show()
     {
-        [cocoaContext.GetApplication() activateIgnoringOtherApps: YES];
+        [cocoaContext.GetNSApplication() activateIgnoringOtherApps: YES];
         [window orderFrontRegardless];
         [window makeKeyWindow];
     }
@@ -363,7 +405,7 @@ namespace Sierra
 
     void CocoaWindow::Focus()
     {
-        [cocoaContext.GetApplication() activateIgnoringOtherApps: YES];
+        [cocoaContext.GetNSApplication() activateIgnoringOtherApps: YES];
         [window orderFrontRegardless];
         [window makeKeyWindow];
     }
@@ -421,24 +463,24 @@ namespace Sierra
 
     uint32 CocoaWindow::GetWidth() const
     {
-        return window.frame.size.width;
+        return static_cast<uint32>([window frame].size.width);
     }
 
     uint32 CocoaWindow::GetHeight() const
     {
-        return window.frame.size.height + GetTitleBarHeight();
+        return static_cast<uint32>([window frame].size.height) + GetTitleBarHeight();
     }
 
     uint32 CocoaWindow::GetFramebufferWidth() const
     {
         const NSRect contentRect = [window convertRectToBacking: view.frame];
-        return contentRect.size.width;
+        return static_cast<uint32>(contentRect.size.width);
     }
 
     uint32 CocoaWindow::GetFramebufferHeight() const
     {
         const NSRect contentRect = [window convertRectToBacking: view.frame];
-        return contentRect.size.height;
+        return static_cast<uint32>(contentRect.size.height);
     }
 
     float32 CocoaWindow::GetOpacity() const
@@ -471,7 +513,7 @@ namespace Sierra
         return ![window isVisible];
     }
 
-    const Screen& CocoaWindow::GetScreen() const
+    Screen& CocoaWindow::GetScreen() const
     {
         return cocoaContext.GetWindowScreen(window);
     }
@@ -529,7 +571,7 @@ namespace Sierra
         void CocoaWindow::WindowDidBecomeKey(const NSNotification* notification)
         {
             // macOS automatically shows cursor when window is unfocused, so we need to manually hide it again when focusing the window
-            if (cursorManager.IsCursorHidden()) cursorManager.HideCursor();
+            if (!cursorManager.IsCursorVisible()) cursorManager.SetCursorVisibility(false);
             GetWindowFocusDispatcher().DispatchEvent(true);
         }
 
@@ -542,9 +584,9 @@ namespace Sierra
 
     /* --- PRIVATE METHODS --- */
 
-    float32 CocoaWindow::GetTitleBarHeight() const
+    uint32 CocoaWindow::GetTitleBarHeight() const
     {
-        return static_cast<float32>(window.frame.size.height - [window contentRectForFrameRect: window.frame].size.height);
+        return static_cast<uint32>(window.frame.size.height - [window contentRectForFrameRect: window.frame].size.height);
     }
 
     /* --- DESTRUCTOR --- */
@@ -555,7 +597,7 @@ namespace Sierra
         cocoaContext.DestroyWindow(window);
 
         [window release];
-        [delegate release];
+        [reinterpret_cast<CocoaWindowDelegate*>(delegate) release];
         [view release];
     }
 }

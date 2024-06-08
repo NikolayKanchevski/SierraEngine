@@ -8,9 +8,6 @@
     #error "Including the CocoaInputManager.h file is only allowed in macOS builds!"
 #endif
 
-#if defined(__OBJC__)
-    #include <Cocoa/Cocoa.h>
-#endif
 #include "../../InputManager.h"
 
 namespace Sierra
@@ -20,10 +17,15 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit CocoaInputManager(const InputManagerCreateInfo &createInfo);
+        explicit CocoaInputManager();
 
         /* --- POLLING METHODS --- */
-        void Update();
+        void RegisterKeyPress(Key key) override;
+        void RegisterKeyRelease(Key key) override;
+
+        void RegisterMouseButtonPress(MouseButton mouseButton) override;
+        void RegisterMouseButtonRelease(MouseButton mouseButton) override;
+        void RegisterMouseScroll(Vector2 scroll) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] bool IsKeyPressed(Key key) const override;
@@ -36,6 +38,10 @@ namespace Sierra
         [[nodiscard]] bool IsMouseButtonReleased(MouseButton mouseButton) const override;
         [[nodiscard]] bool IsMouseButtonResting(MouseButton mouseButton) const override;
         [[nodiscard]] Vector2 GetMouseScroll() const override;
+
+        /* --- CONVERSIONS --- */
+        [[nodiscard]] static Key KeyCodeToKey(uint32 keyCode);
+        [[nodiscard]] static MouseButton ButtonNumberToMouseButton(uint32 buttonNumber);
 
     private:
         constexpr static std::array<Key, 127> KEY_TABLE
@@ -174,24 +180,10 @@ namespace Sierra
 
         std::array<InputAction, MOUSE_BUTTON_COUNT> lastMouseButtonStates { };
         std::array<InputAction, MOUSE_BUTTON_COUNT> mouseButtonStates { };
+        Vector2 mouseScroll = { 0.0f, 0.0f };
 
-        Vector2 mouseScroll = { 0, 0 };
-
-        #if defined(__OBJC__) && (defined(COCOA_INPUT_MANAGER_IMPLEMENTATION) || defined(COCOA_WINDOW_IMPLEMENTATION))
-            public:
-                /* --- EVENTS --- */
-                void KeyDown(const NSEvent* event);
-                void FlagsChanged(const NSEvent* event);
-                void KeyUp(const NSEvent* event);
-
-                void MouseDown(const NSEvent* event);
-                void RightMouseDown(const NSEvent* event);
-                void OtherMouseDown(const NSEvent* event);
-                void MouseUp(const NSEvent* event);
-                void RightMouseUp(const NSEvent* event);
-                void OtherMouseUp(const NSEvent* event);
-                void ScrollWheel(const NSEvent* event);
-        #endif
+        friend class CocoaWindow;
+        void Update();
 
     };
 

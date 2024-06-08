@@ -23,8 +23,8 @@ namespace Sierra
         SR_ERROR_IF(createInfo.levelCount == 0, "Level count of image [{0}] must not be [0]!", createInfo.name);
         SR_ERROR_IF(createInfo.layerCount == 0, "Layer count of image [{0}] must not be [0]!", createInfo.name);
         SR_ERROR_IF(createInfo.type == ImageType::Volume && createInfo.layerCount != 1, "Layer count of image [{0}] must be [1] if its type is set to [ImageType::Volume]!", createInfo.name);
-        SR_ERROR_IF(createInfo.type == ImageType::Cube && (createInfo.width != createInfo.height), "Width and height of image [{0}] must be equal if its type has been set to [ImageType::Cube]!", createInfo.name);
-        SR_ERROR_IF(createInfo.type == ImageType::Cube && (createInfo.layerCount % 6) != 0, "Layer count of image [{0}] must be a number divisible by 6 if its type has been set to [ImageType::Cube]!", createInfo.name);
+        SR_ERROR_IF(createInfo.type == ImageType::Cube && createInfo.width != createInfo.height, "Width and height of image [{0}] must be equal if its type has been set to [ImageType::Cube]!", createInfo.name);
+        SR_ERROR_IF(createInfo.type == ImageType::Cube && createInfo.layerCount % 6 != 0, "Layer count of image [{0}] must be a number divisible by 6 if its type has been set to [ImageType::Cube]!", createInfo.name);
 
         SR_ERROR_IF(createInfo.usage == ImageUsage::Undefined, "Usage of image [{0}] must not be [ImageUsage::Undefined]!", createInfo.name);
         SR_ERROR_IF(createInfo.usage & ImageUsage::ColorAttachment && createInfo.usage & ImageUsage::DepthAttachment, "Usage of image [{0}] must not include both [ImageUsage::ColorAttachment] & [ImageUsage::DepthAttachment]!", createInfo.name);

@@ -7,26 +7,28 @@
 namespace Sierra
 {
 
-    /* --- CONSTRUCTORS --- */
-
-    TouchManager::TouchManager(const TouchManagerCreateInfo &createInfo)
-    {
-
-    }
-
     /* --- GETTER METHODS --- */
 
-    uint32 TouchManager::GetTouchCount() const
+    std::span<const Touch> TouchManager::GetTouches() const
     {
-        return 0;
+        return { };
     }
 
-    const Touch& TouchManager::GetTouch(const uint32 touchIndex) const
-    {
-        SR_ERROR("Touch index [{0}] out of range! Make sure to use TouchManager::GetTouchCount() and retrieve touches within the returned range.", touchIndex);
+    /* --- POLLING METHODS --- */
 
-        static Touch touch = Touch({ });
-        return touch;
+    void TouchManager::RegisterTouchPress(const Touch&)
+    {
+
+    }
+
+    void TouchManager::RegisterTouchMove(const uint64, const Vector2)
+    {
+
+    }
+
+    void TouchManager::RegisterTouchRelease(const uint64)
+    {
+
     }
 
 }

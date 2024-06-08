@@ -1,4 +1,6 @@
 target_sources(Sierra PRIVATE
+    FrameLimiter.cpp
+    FrameLimiter.h
     RNG.cpp
     RNG.h
     Time.cpp

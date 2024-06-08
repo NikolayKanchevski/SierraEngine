@@ -43,10 +43,10 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void MetalDevice::SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, const std::span<const std::reference_wrapper<std::unique_ptr<CommandBuffer>>> commandBuffersToWait) const
+    void MetalDevice::SubmitCommandBuffer(CommandBuffer &commandBuffer, const std::span<const CommandBuffer*> commandBuffersToWait) const
     {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}] with a graphics API, that differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
+        SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}] with a graphics API, that differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer.GetName());
+        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(commandBuffer);
 
         // If we do not need any manual synchronization, directly submit command buffer
         if (commandBuffersToWait.empty())
@@ -67,10 +67,12 @@ namespace Sierra
         // Decrement semaphore counter after every command buffer to wait on until it reaches 0, then submit
         for (uint32 i = 0; i < commandBuffersToWait.size(); i++)
         {
-            const std::unique_ptr<CommandBuffer> &commandBufferToWait = commandBuffersToWait[i];
-            SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName(), commandBufferToWait->GetName(), i);
+            const CommandBuffer* commandBufferToWait = commandBuffersToWait[i];
+            if (commandBufferToWait == nullptr) continue;
 
+            SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer.GetName(), commandBufferToWait->GetName(), i);
             const MetalCommandBuffer &metalCommandBufferToWait = static_cast<const MetalCommandBuffer&>(*commandBufferToWait);
+
             [metalCommandBufferToWait.GetMetalCommandBuffer() addCompletedHandler: ^(id<MTLCommandBuffer>)
             {
                 auto semaphoreIterator = std::find_if(commandBufferQueue.begin(), commandBufferQueue.end(), [&metalCommandBuffer](const CommandBufferQueueEntry &item) { return item.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
@@ -84,13 +86,24 @@ namespace Sierra
         }
     }
 
-    void MetalDevice::WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const
+    void MetalDevice::WaitForCommandBuffer(const CommandBuffer &commandBuffer) const
     {
-        SR_ERROR_IF(commandBuffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], wait for command buffer [{1}] with a graphics API, that differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer->GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(*commandBuffer);
+        SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], wait for command buffer [{1}] with a graphics API, that differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer.GetName());
+        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(commandBuffer);
 
         // Wait for completion
         while ([sharedSignalSemaphore signaledValue] < metalCommandBuffer.GetCompletionSignalValue());
+    }
+
+    /* --- SETTER METHODS --- */
+
+    void MetalDevice::SetResourceName( MTLHandle resource, const std::string_view name) const
+    {
+        #if SR_ENABLE_LOGGING
+            NSString* const label = [[NSString alloc] initWithCString: name.data() encoding: NSASCIIStringEncoding];
+            [((__bridge id) resource) performSelector: @selector(setLabel:) withObject: label];
+            [label release];
+        #endif
     }
 
     /* --- GETTER METHODS --- */

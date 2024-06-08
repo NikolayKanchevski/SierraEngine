@@ -16,21 +16,16 @@ namespace SierraEngine
     {
         window = createInfo.windowManager.CreateWindow({
             .title = "Sierra Engine Editor",
-            .resizable = true,
-            .maximize = true
+            .resizable = false,
+            .maximize = false,
+            .hide = true
         });
 
         swapchain = createInfo.renderingContext.CreateSwapchain({
             .name = "Editor Surface Swapchain",
-            .window = window,
+            .window = *window,
             .preferredPresentationMode = Sierra::SwapchainPresentationMode::VSync,
             .preferredBuffering = Sierra::SwapchainBuffering::TripleBuffering
-        });
-
-        swapchain->OnEvent<Sierra::SwapchainResizeEvent>([this](const Sierra::SwapchainResizeEvent&) -> bool
-        {
-            CreateStagingImages();
-            return false;
         });
 
         CreateStagingImages();
@@ -40,13 +35,14 @@ namespace SierraEngine
 
     void EditorSurface::Update() const
     {
+        window->Update();
         swapchain->AcquireNextImage();
     }
 
-    void EditorSurface::Present(std::unique_ptr<Sierra::CommandBuffer> &commandBuffer) const
+    void EditorSurface::Present(Sierra::CommandBuffer &commandBuffer) const
     {
+        window->Show();
         swapchain->Present(commandBuffer);
-        window->Update();
     }
 
 
@@ -62,7 +58,7 @@ namespace SierraEngine
         for (uint32 i = 0; i < stagingImages.size(); i++)
         {
             stagingImages[i] = renderingContext.CreateImage({
-                .name = std::format("Staging Image of Editor Surface [{0}]", i),
+                .name = fmt::format("Staging Image of Editor Surface [{0}]", i),
                 .width = swapchain->GetWidth(),
                 .height = swapchain->GetHeight(),
                 .format = format.value(),

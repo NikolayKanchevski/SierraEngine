@@ -19,10 +19,10 @@ namespace Sierra
         VulkanImage(const VulkanDevice &device, const ImageCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline VkImage GetVulkanImage() const { return image; }
-        [[nodiscard]] inline VkImageView GetVulkanImageView() const { return imageView; }
-        [[nodiscard]] inline VkImageAspectFlags GetVulkanAspectFlags() const { return aspectFlags; }
-        [[nodiscard]] inline VkImageUsageFlags GetVulkanUsageFlags() const { return usageFlags; }
+        [[nodiscard]] VkImage GetVulkanImage() const { return image; }
+        [[nodiscard]] VkImageView GetVulkanImageView() const { return imageView; }
+        [[nodiscard]] VkImageAspectFlags GetVulkanAspectFlags() const { return aspectFlags; }
+        [[nodiscard]] VkImageUsageFlags GetVulkanUsageFlags() const { return usageFlags; }
 
         /* --- DESTRUCTOR --- */
         ~VulkanImage() override;

@@ -5,6 +5,8 @@
 #include <vulkan/vulkan.h>
 #include "VulkanInstance.h"
 
+#include <vulkan/vulkan_metal.h>
+
 namespace Sierra
 {
 
@@ -16,7 +18,7 @@ namespace Sierra
         };
 
         #if SR_ENABLE_LOGGING
-            constexpr std::array<Layer, 1> LAYERS_TO_QUERY
+            constexpr std::array LAYERS_TO_QUERY
             {
                 Layer {
                     .name = "VK_LAYER_KHRONOS_validation"
@@ -30,7 +32,7 @@ namespace Sierra
             bool requiredOnlyIfSupported = false;
         };
 
-        constexpr std::array<Extension, 2 + SR_ENABLE_LOGGING + 1 + SR_PLATFORM_APPLE> INSTANCE_EXTENSIONS_TO_QUERY
+        constexpr std::array INSTANCE_EXTENSIONS_TO_QUERY
         {
             Extension {
                 .name = VK_KHR_SURFACE_EXTENSION_NAME
@@ -64,7 +66,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanInstance::VulkanInstance(const VulkanInstanceCreateInfo &createInfo)
+    VulkanInstance::VulkanInstance(const VulkanInstanceCreateInfo&)
     {
         #if SR_PLATFORM_APPLE
             // Optional MoltenVK features must be explicitly enabled prior to performing any API calls
@@ -432,7 +434,7 @@ namespace Sierra
 
     bool VulkanInstance::IsExtensionLoaded(const std::string_view extensionName) const
     {
-        return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<std::string_view>{}(extensionName)) != loadedExtensions.end();
+        return std::ranges::find(loadedExtensions, std::hash<std::string_view>{}(extensionName)) != loadedExtensions.end();
     }
 
     Version VulkanInstance::GetAPIVersion() const

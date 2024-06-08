@@ -4,29 +4,17 @@
 
 #include "iOSContext.h"
 
+#include <UIKit/UIKit.h>
+
 namespace Sierra
 {
-
-    PlatformApplicationRunInfo iOSApplicationRunInfo;
-    UIKitContext* iOSUIKitContext;
 
     /* --- CONSTRUCTORS --- */
 
     iOSContext::iOSContext(const PlatformContextCreateInfo &createInfo)
-        : PlatformContext(createInfo), uiKitContext(UIKitContext({ }))
+        : PlatformContext(createInfo), uiKitContext({ .application = [UIApplication sharedApplication] })
     {
         
-    }
-
-    /* --- POLLING METHODS --- */
-
-    void iOSContext::RunApplication(const PlatformApplicationRunInfo &runInfo)
-    {
-        iOSApplicationRunInfo = runInfo;
-        iOSUIKitContext = &uiKitContext;
-
-        // Run application
-        UIApplicationMain(0, nil, nil, @"UIKitApplicationDelegate");
     }
 
 }

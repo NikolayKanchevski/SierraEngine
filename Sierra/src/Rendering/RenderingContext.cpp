@@ -16,7 +16,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    RenderingContext::RenderingContext(const RenderingContextCreateInfo &createInfo)
+    RenderingContext::RenderingContext(const RenderingContextCreateInfo&)
     {
 
     }
@@ -57,7 +57,7 @@ namespace Sierra
             case GraphicsAPI::Undefined:
             default:
             {
-                SR_ERROR("Cannot create rendering context [{0}] using an undefined GraphicsAPI!", createInfo.name);
+                SR_ERROR("Cannot create rendering context [{0}] using an undefined graphics API!", createInfo.name);
                 return nullptr;
             }
         }

@@ -7,9 +7,29 @@
 namespace Sierra
 {
 
-    /* --- CONSTRUCTORS --- */
+    /* --- POLLING METHODS --- */
 
-    InputManager::InputManager(const InputManagerCreateInfo &createInfo)
+    void InputManager::RegisterKeyPress(const Key)
+    {
+
+    }
+
+    void InputManager::RegisterKeyRelease(const Key)
+    {
+
+    }
+
+    void InputManager::RegisterMouseButtonPress(const MouseButton)
+    {
+
+    }
+
+    void InputManager::RegisterMouseButtonRelease(const MouseButton)
+    {
+
+    }
+
+    void InputManager::RegisterMouseScroll(const Vector2)
     {
 
     }
@@ -84,14 +104,31 @@ namespace Sierra
 
     bool InputManager::IsKeyCombinationHeldImplementation(const std::initializer_list<Key> &keys) const
     {
-        for (const Key key : keys)
+        return std::ranges::all_of(keys, [this](const Key key) -> bool { return IsKeyHeld(key); });
+    }
+
+    bool InputManager::IsMouseButtonCombinationPressedImplementation(const std::initializer_list<MouseButton> &mouseButtons) const
+    {
+        bool atLeastOneMouseButtonPressed = false;
+        for (const MouseButton mouseButton : mouseButtons)
         {
-            if (!IsKeyHeld(key))
+            if (IsMouseButtonHeld(mouseButton)) continue;
+
+            if (IsMouseButtonPressed(mouseButton))
             {
-                return false;
+                atLeastOneMouseButtonPressed = true;
+                continue;
             }
+
+            return false;
         }
-        return true;
+
+        return atLeastOneMouseButtonPressed;
+    }
+
+    bool InputManager::IsMouseButtonCombinationHeldImplementation(const std::initializer_list<MouseButton> &mouseButtons) const
+    {
+        return std::ranges::all_of(mouseButtons, [this](const MouseButton mouseButton) -> bool { return IsMouseButtonHeld(mouseButton); });
     }
 
 }

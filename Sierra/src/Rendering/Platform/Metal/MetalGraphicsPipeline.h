@@ -4,11 +4,22 @@
 
 #pragma once
 
-#include "../../GraphicsPipeline.h"
+#if !defined(__OBJC__)
+    namespace Sierra
+    {
+        using MTLRenderPipelineState = void;
+        using MTLDepthStencilState = void;
+
+        using MTLCullMode = std::uintptr_t;
+        using MTLTriangleFillMode = std::uintptr_t;
+        using MTLWinding = std::uintptr_t;
+    }
+#endif
+
 #include "MetalResource.h"
+#include "../../GraphicsPipeline.h"
 
 #include "MetalDevice.h"
-#include "MetalBuffer.h"
 
 namespace Sierra
 {
@@ -20,15 +31,15 @@ namespace Sierra
         MetalGraphicsPipeline(const MetalDevice &device, const GraphicsPipelineCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline id<MTLRenderPipelineState> GetRenderPipelineState() const { return renderPipelineState; }
-        [[nodiscard]] inline id<MTLDepthStencilState> GetDepthStencilState() const { return depthStencilState; }
+        [[nodiscard]] id<MTLRenderPipelineState> GetRenderPipelineState() const { return renderPipelineState; }
+        [[nodiscard]] id<MTLDepthStencilState> GetDepthStencilState() const { return depthStencilState; }
 
-        [[nodiscard]] inline uint32 GetVertexByteStride() const { return vertexByteStride; }
-        [[nodiscard]] inline bool HasFragmentShader() const { return hasFragmentShader; }
+        [[nodiscard]] uint32 GetVertexByteStride() const { return vertexByteStride; }
+        [[nodiscard]] bool HasFragmentShader() const { return hasFragmentShader; }
 
-        [[nodiscard]] inline MTLCullMode GetCullMode() const { return cullMode; }
-        [[nodiscard]] inline MTLTriangleFillMode GetTriangleFillMode() const { return triangleFillMode; }
-        [[nodiscard]] inline MTLWinding GetWinding() const { return winding; }
+        [[nodiscard]] MTLCullMode GetCullMode() const { return cullMode; }
+        [[nodiscard]] MTLTriangleFillMode GetTriangleFillMode() const { return triangleFillMode; }
+        [[nodiscard]] MTLWinding GetWinding() const { return winding; }
 
         /* --- DESTRUCTOR --- */
         ~MetalGraphicsPipeline() override;

@@ -32,7 +32,7 @@ namespace Sierra
         [[nodiscard]] std::unique_ptr<CommandBuffer> CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] const Device& GetDevice() const override { return device; };
+        [[nodiscard]] const Device& GetDevice() const override { return device; }
 
         /* --- DESTRUCTOR --- */
         ~VulkanContext() override = default;

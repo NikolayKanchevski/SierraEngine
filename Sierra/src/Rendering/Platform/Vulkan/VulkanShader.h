@@ -19,7 +19,7 @@ namespace Sierra
         VulkanShader(const VulkanDevice &device, const ShaderCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline VkShaderModule GetVulkanShaderModule() const { return shaderModule; }
+        [[nodiscard]] VkShaderModule GetVulkanShaderModule() const { return shaderModule; }
 
         /* --- DESTRUCTOR --- */
         ~VulkanShader() override;

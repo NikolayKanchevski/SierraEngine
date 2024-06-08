@@ -30,16 +30,45 @@ set(SIERRA_BUILD_DYNAMIC_LIBRARY OFF)
 set(SIERRA_ENABLE_LOGGING ${SIERRA_ENGINE_ENABLE_LOGGING})
 set(SIERRA_ENABLE_OPTIMIZATIONS ${SIERRA_ENGINE_ENABLE_OPTIMIZATIONS})
 
+set(SIERRA_ENGINE_DIRECTORY_PATH ${CMAKE_CURRENT_LIST_DIR})
 set(SIERRA_ENABLE_IMGUI_EXTENSION ON)
 include(../Sierra/Sierra.cmake)
 
-# === BUILD API LIBRARY === #
-set(SIERRA_ENGINE_DIRECTORY_PATH ${CMAKE_CURRENT_LIST_DIR})
-add_subdirectory(${SIERRA_ENGINE_DIRECTORY_PATH}/src/ ${SIERRA_ENGINE_DIRECTORY_PATH}/src/)
+# Validate usage
+if((SIERRA_ENGINE_BUILD_STATIC_LIBRARY AND SIERRA_ENGINE_BUILD_SHARED_LIBRARY) OR (NOT SIERRA_ENGINE_BUILD_STATIC_LIBRARY AND NOT SIERRA_ENGINE_BUILD_SHARED_LIBRARY))
+    message(FATAL_ERROR "[Sierra Engine]: Illegal build configuration! You must compile with either SIERRA_ENGINE_BUILD_STATIC_LIBRARY or SIERRA_ENGINE_BUILD_SHARED_LIBRARY set, but not both!")
+endif()
+
+# Generate library
+if(SIERRA_ENGINE_BUILD_STATIC_LIBRARY)
+    message(STATUS "[Sierra Engine]: Building Sierra as static library...")
+    add_library(SierraEngine STATIC)
+elseif(SIERRA_ENGINE_BUILD_SHARED_LIBRARY)
+    message(STATUS "[Sierra Engine]: Building Sierra Engine as dynamic library...")
+    add_library(SierraEngine SHARED)
+endif()
+
+# Determine library output path
+set(SIERRA_ENGINE_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/")
+if(SIERRA_ENGINE_PLATFORM_macOS)
+    set(SIERRA_ENGINE_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/${SIERRA_ENGINE_APPLICATION_NAME}.app/Contents/Frameworks/")
+elseif(SIERRA_ENGINE_PLATFORM_iOS)
+    set(SIERRA_ENGINE_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin/")
+endif()
+
+# Assign library output path
+set_target_properties(SierraEngine PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY ${SIERRA_ENGINE_LIBRARY_OUTPUT_PATH}
+    LIBRARY_OUTPUT_DIRECTORY ${SIERRA_ENGINE_LIBRARY_OUTPUT_PATH}
+    RUNTIME_OUTPUT_DIRECTORY ${SIERRA_ENGINE_LIBRARY_OUTPUT_PATH}
+)
 
 function(SierraEngineBuildApplication SOURCE_FILES)
     # Create executable
     SierraBuildApplication(${SOURCE_FILES})
+
+    # Build library
+    add_subdirectory(${SIERRA_ENGINE_DIRECTORY_PATH}/src/ ${SIERRA_ENGINE_DIRECTORY_PATH}/src/)
 
     # Delete static library after build
     if(SIERRA_ENGINE_BUILD_STATIC_LIBRARY)

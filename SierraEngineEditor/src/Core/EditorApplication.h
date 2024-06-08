@@ -20,12 +20,12 @@ namespace SierraEngine
         ~EditorApplication() override;
 
     private:
-        void Start() override { }
-        bool Update(const Sierra::TimeStep &timeStep) override;
+        bool Update() override;
 
-        EditorSurface surface;
+        Sierra::FrameLimiter frameLimiter;
         ThreadPool threadPool;
 
+        EditorSurface surface;
         std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers = { };
 
         Scene scene;

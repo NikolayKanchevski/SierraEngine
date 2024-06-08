@@ -21,8 +21,8 @@ namespace Sierra
         explicit LinuxContext(const PlatformContextCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const X11Context& GetX11Context() const { return x11Context; }
-        [[nodiscard]] inline PlatformType GetType() const override { return PlatformType::Linux; }
+        [[nodiscard]] const X11Context& GetX11Context() const { return x11Context; }
+        [[nodiscard]] PlatformType GetType() const override { return PlatformType::Linux; }
 
     private:
         X11Context x11Context;

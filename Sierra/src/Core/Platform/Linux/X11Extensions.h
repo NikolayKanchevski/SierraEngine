@@ -17,7 +17,7 @@ namespace Sierra
 
     struct XkbExtensionCreateInfo
     {
-        Display* display;
+        Display* display = nullptr;
     };
 
     class SIERRA_API XkbExtension final
@@ -30,8 +30,8 @@ namespace Sierra
         explicit XkbExtension(const XkbExtensionCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline bool IsAutoRepeatDetectable() const { return autoRepeatDetectable; }
-        [[nodiscard]] inline const std::array<Key, X11_KEY_ENTRY_COUNT>& GetKeyTable() const { return KEY_TABLE; }
+        [[nodiscard]] bool IsAutoRepeatDetectable() const { return autoRepeatDetectable; }
+        [[nodiscard]] const std::array<Key, X11_KEY_ENTRY_COUNT>& GetKeyTable() const { return KEY_TABLE; }
 
     private:
         bool autoRepeatDetectable = false;
@@ -42,7 +42,7 @@ namespace Sierra
 
     struct XrandrExtensionCreateInfo
     {
-        Display* display;
+        Display* display = nullptr;
     };
 
     class SIERRA_API XrandrExtension final
@@ -52,7 +52,7 @@ namespace Sierra
         explicit XrandrExtension(const XrandrExtensionCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline int GetEventBase() const { return eventBase; }
+        [[nodiscard]] int GetEventBase() const { return eventBase; }
 
     private:
         int eventBase = 0;

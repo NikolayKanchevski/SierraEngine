@@ -4,6 +4,13 @@
 
 #pragma once
 
+#if !defined(__OBJC__)
+    namespace Sierra
+    {
+        using MTLBuffer = void;
+    }
+#endif
+
 #include "../../ResourceTable.h"
 #include "MetalResource.h"
 
@@ -12,36 +19,40 @@
 namespace Sierra
 {
 
-    class SIERRA_API MetalResourceTable : public ResourceTable, public MetalResource
+    class SIERRA_API MetalResourceTable final : public ResourceTable, public MetalResource
     {
     public:
         /* --- CONSTRUCTORS --- */
         MetalResourceTable(const MetalDevice &device, const ResourceTableCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void BindUniformBuffer(ResourceIndex index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
-        void BindStorageBuffer(ResourceIndex index, const std::unique_ptr<Buffer> &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
+        void BindUniformBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
+        void BindStorageBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
 
-        void BindSampledImage(ResourceIndex index, const std::unique_ptr<Image> &image) override;
-        void BindStorageImage(ResourceIndex index, const std::unique_ptr<Image> &image) override;
-        void BindSampler(ResourceIndex index, const std::unique_ptr<Sampler> &sampler) override;
+        void BindSampledImage(ResourceIndex index, const Image &image) override;
+        void BindStorageImage(ResourceIndex index, const Image &image) override;
+        void BindSampler(ResourceIndex index, const Sampler &sampler) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetUniformBufferCapacity() const override { return UNIFORM_BUFFER_CAPACITY; };
-        [[nodiscard]] inline uint32 GetStorageBufferCapacity() const override { return STORAGE_BUFFER_CAPACITY; };
+        [[nodiscard]] uint32 GetUniformBufferCapacity() const override { return UNIFORM_BUFFER_CAPACITY; }
+        [[nodiscard]] uint32 GetStorageBufferCapacity() const override { return STORAGE_BUFFER_CAPACITY; }
 
-        [[nodiscard]] inline uint32 GetSampledImageCapacity() const override { return SAMPLED_IMAGE_CAPACITY; };
-        [[nodiscard]] inline uint32 GetStorageImageCapacity() const override { return STORAGE_IMAGE_CAPACITY; };
-        [[nodiscard]] inline uint32 GetSamplerCapacity() const override { return SAMPLER_CAPACITY; };
+        [[nodiscard]] uint32 GetSampledImageCapacity() const override { return SAMPLED_IMAGE_CAPACITY; }
+        [[nodiscard]] uint32 GetStorageImageCapacity() const override { return STORAGE_IMAGE_CAPACITY; }
+        [[nodiscard]] uint32 GetSamplerCapacity() const override { return SAMPLER_CAPACITY; }
 
-        [[nodiscard]] inline id<MTLBuffer> GetMetalArgumentBuffer() const { return argumentBuffer; }
-        [[nodiscard]] inline const auto& GetBoundResources() const { return boundResources; }
+        [[nodiscard]] id<MTLBuffer> GetMetalArgumentBuffer() const { return argumentBuffer; }
+        [[nodiscard]] const auto& GetBoundResources() const { return boundResources; }
 
         /* --- DESTRUCTOR --- */
         ~MetalResourceTable() override;
 
     private:
         const MetalDevice &device;
+        #if !defined(__OBJC__)
+            using MTLArgumentEncoder = void;
+            using MTLResource = void;
+        #endif
 
         // NOTE: These must match those of https://github.com/NikichaTV/ShaderConnect/blob/sierra/src/Platform/MetalSL/MetalSLShaderCompiler.cpp#L104
         constexpr static uint32 UNIFORM_BUFFER_CAPACITY         = 500'000;
@@ -63,23 +74,23 @@ namespace Sierra
         {
         public:
             /* --- CONSTRUCTORS --- */
-            inline BoundResourceEntry(const uint32 index, const MTLResourceUsage usage) : value((index & 0x7FFFF) << 5 | (usage & 0x3) << 3) { }
+            BoundResourceEntry(const uint32 index, const MTLResourceUsage usage) : value((index & 0x7FFFF) << 5 | (usage & 0x3) << 3) { }
 
             /* --- GETTER METHODS --- */
-            [[nodiscard]] inline uint32 GetIndex() const { return (value >> 5) & 0x7FFFF; }
-            [[nodiscard]] inline MTLResourceUsage GetUsage() const { return (value >> 3) & 0x3; }
+            [[nodiscard]] uint32 GetIndex() const { return value >> 5 & 0x7FFFF; }
+            [[nodiscard]] MTLResourceUsage GetUsage() const { return value >> 3 & 0x3; }
             
             /* --- TYPE DEFINITIONS --- */
             class SIERRA_API Hasher
             {
             public:
                 /* --- OPERATORS --- */
-                [[nodiscard]] inline std::size_t operator()(const BoundResourceEntry entry) const { return entry.value; }
+                [[nodiscard]] std::size_t operator()(const BoundResourceEntry entry) const { return entry.value; }
 
             };
 
             /* --- OPERATORS --- */
-            [[nodiscard]] inline bool operator==(const BoundResourceEntry other) const { return value == other.value; }
+            [[nodiscard]] bool operator==(const BoundResourceEntry other) const { return value == other.value; }
 
         private:
             // Data is a masked uint24, whose bit ranges contain the following information:

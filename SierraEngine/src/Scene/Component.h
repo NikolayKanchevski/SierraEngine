@@ -8,9 +8,9 @@ namespace SierraEngine
 {
 
     class Component;
-    template<typename T> concept ComponentType = std::is_default_constructible_v<T> && std::is_base_of_v<Component, T> && !std::is_same_v<Component, std::decay_t<T>> && requires { T::GetName(); } && requires { T::GetSignature(); };
+    template<typename T> concept ComponentType = std::is_base_of_v<Component, T> && !std::is_same_v<Component, std::decay_t<T>> && requires { T::GetName(); } && requires { T::GetSignature(); };
 
-    template<ComponentType... Components>
+    template<ComponentType...>
     struct ComponentGroup { };
 
     class SIERRA_ENGINE_API Component
@@ -23,7 +23,7 @@ namespace SierraEngine
         void SetEnabled(bool enabled);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline bool IsEnabled() const { return enabled; }
+        [[nodiscard]] bool IsEnabled() const { return enabled; }
 
         /* --- OPERATORS --- */
         Component(const Component&) = delete;

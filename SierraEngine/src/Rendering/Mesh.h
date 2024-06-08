@@ -23,11 +23,11 @@ namespace SierraEngine
         explicit Mesh(const MeshCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint64 GetVertexByteOffset() const { return vertexByteOffset; }
-        [[nodiscard]] inline uint64 GetIndexByteOffset() const { return indexByteOffset; }
+        [[nodiscard]] uint64 GetVertexByteOffset() const { return vertexByteOffset; }
+        [[nodiscard]] uint64 GetIndexByteOffset() const { return indexByteOffset; }
 
-        [[nodiscard]] inline uint32 GetVertexCount() const { return vertexCount; }
-        [[nodiscard]] inline uint32 GetIndexCount() const { return indexCount; }
+        [[nodiscard]] uint32 GetVertexCount() const { return vertexCount; }
+        [[nodiscard]] uint32 GetIndexCount() const { return indexCount; }
 
         /* --- OPERATORS --- */
         Mesh(const Mesh&) = delete;

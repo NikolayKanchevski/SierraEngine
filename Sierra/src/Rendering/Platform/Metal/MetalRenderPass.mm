@@ -22,8 +22,8 @@ namespace Sierra
 
             // Configure a dedicated render pass for every subpass, because Metal lacks support for them
             MTLRenderPassDescriptor* const subpassDescriptor = (subpasses[i] = [[MTLRenderPassDescriptor alloc] init]);
-            [subpassDescriptor setRenderTargetWidth: createInfo.attachments.begin()->templateOutputImage->GetWidth()];
-            [subpassDescriptor setRenderTargetHeight: createInfo.attachments.begin()->templateOutputImage->GetHeight()];
+            [subpassDescriptor setRenderTargetWidth: createInfo.attachments.begin()->templateOutputImage.GetWidth()];
+            [subpassDescriptor setRenderTargetHeight: createInfo.attachments.begin()->templateOutputImage.GetHeight()];
 
             for (const uint32 renderTarget : subpassDescription.renderTargets)
             {
@@ -46,8 +46,8 @@ namespace Sierra
                     }
                 }
 
-                SR_ERROR_IF(attachment.templateOutputImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not use image [{0}] of attachment [{1}]'s output image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Metal]!", attachment.templateOutputImage->GetName(), i, GetName());
-                const MetalImage &metalOutputImage = static_cast<const MetalImage&>(*attachment.templateOutputImage);
+                SR_ERROR_IF(attachment.templateOutputImage.GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not use image [{0}] of attachment [{1}]'s output image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Metal]!", attachment.templateOutputImage.GetName(), i, GetName());
+                const MetalImage &metalOutputImage = static_cast<const MetalImage&>(attachment.templateOutputImage);
 
                 // Configure attachment
                 attachmentMap[renderTarget].emplace_back(attachmentDescriptor);

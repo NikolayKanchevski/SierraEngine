@@ -88,8 +88,8 @@ namespace Sierra
         void SetWindowCursorPosition(XID window, const Vector2Int &position) const;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] const X11Screen& GetPrimaryScreen() const;
-        [[nodiscard]] const X11Screen& GetWindowScreen(XID window) const;
+        [[nodiscard]] X11Screen& GetPrimaryScreen() const;
+        [[nodiscard]] X11Screen& GetWindowScreen(XID window) const;
         [[nodiscard]] std::optional<XID> GetFocusedWindow() const;
 
         [[nodiscard]] std::string GetWindowTitle(XID window) const;
@@ -104,11 +104,11 @@ namespace Sierra
         [[nodiscard]] Vector2Int GetWindowCursorPosition(XID window) const;
 
         [[nodiscard]] Vector4UInt GetWindowExtents(XID window) const;
-        [[nodiscard]] inline Atom GetAtom(const AtomType atomType) const { return atomTable[GetAtomTypeIndex(atomType)]; }
+        [[nodiscard]] Atom GetAtom(const AtomType atomType) const { return atomTable[GetAtomTypeIndex(atomType)]; }
 
-        [[nodiscard]] inline Display* GetDisplay() const { return display; }
-        [[nodiscard]] inline const XkbExtension& GetXkbExtension() const { return xkbExtension; }
-        [[nodiscard]] inline const XrandrExtension& GetXrandrExtension() const { return xrandrExtension; }
+        [[nodiscard]] Display* GetDisplay() const { return display; }
+        [[nodiscard]] const XkbExtension& GetXkbExtension() const { return xkbExtension; }
+        [[nodiscard]] const XrandrExtension& GetXrandrExtension() const { return xrandrExtension; }
 
         /* --- DESTRUCTOR --- */
         ~X11Context();
@@ -127,7 +127,7 @@ namespace Sierra
 
         std::array<Atom, static_cast<uint32>(AtomType::NET_REQUEST_FRAME_EXTENTS) + 1> atomTable { 0 };
         Atom TryRetrieveAtom(const Atom* supportedAtoms, const ulong atomCount, const char* atomName);
-        [[nodiscard]] inline constexpr std::underlying_type<AtomType>::type GetAtomTypeIndex(const AtomType atomType) const { return static_cast<uint32>(atomType); }
+        [[nodiscard]] constexpr std::underlying_type<AtomType>::type GetAtomTypeIndex(const AtomType atomType) const { return static_cast<uint32>(atomType); }
 
         mutable std::vector<X11Screen> screens;
         void ReloadScreens(XEvent* notifyEvent = nullptr) const;

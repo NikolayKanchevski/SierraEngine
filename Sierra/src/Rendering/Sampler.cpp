@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Sampler::Sampler(const SamplerCreateInfo &createInfo)
+    Sampler::Sampler(const SamplerCreateInfo&)
     {
 
     }

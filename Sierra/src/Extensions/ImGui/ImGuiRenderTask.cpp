@@ -19,12 +19,11 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     ImGuiRenderTask::ImGuiRenderTask(const ImGuiRenderTaskCreateInfo &createInfo)
-        : concurrentFrameCount(createInfo.concurrentFrameCount), renderingContext(createInfo.renderingContext), viewportSize({ createInfo.templateOutputImage->GetWidth() / createInfo.scaling, createInfo.templateOutputImage->GetHeight() / createInfo.scaling }), scaling(createInfo.scaling), style(createInfo.style)
+        : renderingContext(createInfo.renderingContext), concurrentFrameCount(createInfo.concurrentFrameCount), scaling(createInfo.scaling), viewportSize({ createInfo.templateOutputImage.GetWidth() / createInfo.scaling, createInfo.templateOutputImage.GetHeight() / createInfo.scaling }), style(createInfo.style)
     {
         SR_ERROR_IF(createInfo.fontCreateInfos.empty(), "Cannot create ImGui render task, as no fonts were specified to be loaded!");
         SR_ERROR_IF(createInfo.concurrentFrameCount == 0, "Cannot create ImGui render task, as concurrent count must not be [0]!");
         SR_ERROR_IF(!renderingContext.GetDevice().IsImageSamplingSupported(createInfo.sampling), "Cannot create ImGui render task, as requested sampling is not supported by the device of the provided rendering context [{0}]!", renderingContext.GetName());
-        SR_ERROR_IF(createInfo.commandBuffer == nullptr, "Cannot create ImGui render task, as provided command buffer must not be a null pointer!");
 
         // Create shared resources
         if (sharedResources.contextCount == 0)
@@ -36,7 +35,7 @@ namespace Sierra
 
             // Configure context
             ImGuiIO &io = ImGui::GetIO();
-            io.ConfigFlags = ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_DockingEnable | (SR_PLATFORM_MOBILE * ImGuiConfigFlags_IsTouchScreen);
+            io.ConfigFlags = ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_DockingEnable | SR_PLATFORM_MOBILE * ImGuiConfigFlags_IsTouchScreen;
             io.BackendFlags = ImGuiBackendFlags_RendererHasVtxOffset;
             io.BackendPlatformName = "Sierra";
             io.BackendRendererName = "ImGuiRenderTask";
@@ -46,15 +45,15 @@ namespace Sierra
 
             sharedResources.fontSamplerIndex = createInfo.fontSamplerIndex;
             sharedResources.fontSampler = renderingContext.CreateSampler({ .name = "Shared ImGui Render Task Font Sampler", .filter = SamplerFilter::Linear });
-        };
+        }
 
         if (createInfo.sampling != ImageSampling::x1)
         {
             resolverImage = renderingContext.CreateImage({
                 .name = "Resolve Image of ImGui Render Task",
-                .width = createInfo.templateOutputImage->GetWidth(),
-                .height = createInfo.templateOutputImage->GetHeight(),
-                .format = createInfo.templateOutputImage->GetFormat(),
+                .width = createInfo.templateOutputImage.GetWidth(),
+                .height = createInfo.templateOutputImage.GetHeight(),
+                .format = createInfo.templateOutputImage.GetFormat(),
                 .usage = ImageUsage::ColorAttachment | ImageUsage::ResolverAttachment | ImageUsage::TransientAttachment,
                 .sampling = createInfo.sampling,
                 .memoryLocation = ImageMemoryLocation::GPU
@@ -67,7 +66,7 @@ namespace Sierra
             .attachments = {
                 {{
                     .templateOutputImage = createInfo.templateOutputImage,
-                    .templateResolverImage = resolverImage
+                    .templateResolverImage = resolverImage.get()
                 }}
             },
             .subpassDescriptions = {
@@ -79,11 +78,11 @@ namespace Sierra
         pipeline = renderingContext.CreateGraphicsPipeline({
             .name = "Pipeline of ImGui Render Task",
             .vertexInputs = {{ VertexInput::Position_2D, VertexInput::UV, VertexInput::Color }},
-            .vertexShader = sharedResources.vertexShader,
-            .fragmentShader = sharedResources.fragmentShader,
+            .vertexShader = *sharedResources.vertexShader,
+            .fragmentShader = sharedResources.fragmentShader.get(),
             .pushConstantSize = sizeof(PushConstant),
             .sampling = createInfo.sampling,
-            .templateRenderPass = renderPass,
+            .templateRenderPass = *renderPass,
             .blendMode = BlendMode::Alpha,
             .cullMode = CullMode::None
         });
@@ -144,7 +143,7 @@ namespace Sierra
         });
 
         // Prepare image for writing
-        createInfo.commandBuffer->SynchronizeImageUsage(fontAtlas, ImageCommandUsage::None, ImageCommandUsage::MemoryWrite);
+        createInfo.commandBuffer.SynchronizeImageUsage(*fontAtlas, ImageCommandUsage::None, ImageCommandUsage::MemoryWrite);
 
         // Create staging buffer to hold atlas data
         std::unique_ptr<Buffer> defaultFontStagingBuffer = renderingContext.CreateBuffer({
@@ -156,190 +155,187 @@ namespace Sierra
         defaultFontStagingBuffer->CopyFromMemory(atlasMemory);
 
         // Copy atlas to image
-        createInfo.commandBuffer->CopyBufferToImage(defaultFontStagingBuffer, fontAtlas);
-        createInfo.commandBuffer->QueueBufferForDestruction(std::move(defaultFontStagingBuffer));
+        createInfo.commandBuffer.CopyBufferToImage(*defaultFontStagingBuffer, *fontAtlas);
+        createInfo.commandBuffer.QueueBufferForDestruction(std::move(defaultFontStagingBuffer));
 
         // Prepare image for shader reading
-        createInfo.commandBuffer->SynchronizeImageUsage(fontAtlas, ImageCommandUsage::MemoryWrite, ImageCommandUsage::GraphicsRead);
+        createInfo.commandBuffer.SynchronizeImageUsage(*fontAtlas, ImageCommandUsage::MemoryWrite, ImageCommandUsage::GraphicsRead);
 
         // Bind font atlas
-        SR_ERROR_IF(createInfo.fontAtlasIndex >= createInfo.resourceTable->GetSampledImageCapacity(), "Cannot create ImGui render task resources, as specified font atlas index [{0}] exceeds the sampled image capacity of the specified resource table [{1}], which is [{2}]!", createInfo.fontAtlasIndex, createInfo.resourceTable->GetName(), createInfo.resourceTable->GetSampledImageCapacity());
-        createInfo.resourceTable->BindSampledImage(createInfo.fontAtlasIndex, fontAtlas);
+        SR_ERROR_IF(createInfo.fontAtlasIndex >= createInfo.resourceTable.GetSampledImageCapacity(), "Cannot create ImGui render task resources, as specified font atlas index [{0}] exceeds the sampled image capacity of the specified resource table [{1}], which is [{2}]!", createInfo.fontAtlasIndex, createInfo.resourceTable.GetName(), createInfo.resourceTable.GetSampledImageCapacity());
+        createInfo.resourceTable.BindSampledImage(createInfo.fontAtlasIndex, *fontAtlas);
 
         // Bind font sampler
-        SR_ERROR_IF(createInfo.fontSamplerIndex >= createInfo.resourceTable->GetSamplerCapacity(), "Cannot create ImGui render task resources, as specified font sampler index [{0}] exceeds the sampler capacity of the specified resource table [{1}], which is [{2}]!", createInfo.fontSamplerIndex, createInfo.resourceTable->GetName(), createInfo.resourceTable->GetSamplerCapacity());
-        createInfo.resourceTable->BindSampler(createInfo.fontSamplerIndex, sharedResources.fontSampler);
+        SR_ERROR_IF(createInfo.fontSamplerIndex >= createInfo.resourceTable.GetSamplerCapacity(), "Cannot create ImGui render task resources, as specified font sampler index [{0}] exceeds the sampler capacity of the specified resource table [{1}], which is [{2}]!", createInfo.fontSamplerIndex, createInfo.resourceTable.GetName(), createInfo.resourceTable.GetSamplerCapacity());
+        createInfo.resourceTable.BindSampler(createInfo.fontSamplerIndex, *sharedResources.fontSampler);
     }
 
     /* --- POLLING METHODS --- */
 
-    void ImGuiRenderTask::Update(const std::optional<std::reference_wrapper<const InputManager>> &inputManagerReference, const std::optional<std::reference_wrapper<const CursorManager>> &cursorManagerReference, const std::optional<std::reference_wrapper<const TouchManager>> &touchManagerReference)
+    void ImGuiRenderTask::Update(const InputManager* inputManager, const CursorManager* cursorManager, const TouchManager* touchManager)
     {
         ImGuiIO &io = ImGui::GetIO();
-        if (inputManagerReference.has_value())
+        if (inputManager != nullptr)
         {
             // Update key map
-            const InputManager &inputManager = inputManagerReference.value();
-            io.AddKeyEvent(ImGuiKey_Tab,                inputManager.IsKeyPressed(Key::Tab));
-            io.AddKeyEvent(ImGuiKey_LeftArrow,          inputManager.IsKeyPressed(Key::LeftArrow));
-            io.AddKeyEvent(ImGuiKey_RightArrow,         inputManager.IsKeyPressed(Key::RightArrow));
-            io.AddKeyEvent(ImGuiKey_UpArrow,            inputManager.IsKeyPressed(Key::UpArrow));
-            io.AddKeyEvent(ImGuiKey_DownArrow,          inputManager.IsKeyPressed(Key::DownArrow));
-            io.AddKeyEvent(ImGuiKey_PageUp,             inputManager.IsKeyPressed(Key::PageUp));
-            io.AddKeyEvent(ImGuiKey_PageDown,           inputManager.IsKeyPressed(Key::PageDown));
-            io.AddKeyEvent(ImGuiKey_Home,               inputManager.IsKeyPressed(Key::Home));
-            io.AddKeyEvent(ImGuiKey_End,                inputManager.IsKeyPressed(Key::End));
-            io.AddKeyEvent(ImGuiKey_Insert,             inputManager.IsKeyPressed(Key::Insert));
-            io.AddKeyEvent(ImGuiKey_Delete,             inputManager.IsKeyPressed(Key::Delete));
-            io.AddKeyEvent(ImGuiKey_Backspace,          inputManager.IsKeyPressed(Key::Backspace));
-            io.AddKeyEvent(ImGuiKey_Space,              inputManager.IsKeyPressed(Key::Space));
-            io.AddKeyEvent(ImGuiKey_Enter,              inputManager.IsKeyPressed(Key::Enter));
-            io.AddKeyEvent(ImGuiKey_Escape,             inputManager.IsKeyPressed(Key::Escape));
-            io.AddKeyEvent(ImGuiKey_LeftCtrl,           inputManager.IsKeyPressed(Key::LeftControl));
-            io.AddKeyEvent(ImGuiKey_LeftShift,          inputManager.IsKeyPressed(Key::LeftShift));
-            io.AddKeyEvent(ImGuiKey_LeftAlt,            inputManager.IsKeyPressed(Key::LeftAlt));
-            io.AddKeyEvent(ImGuiKey_LeftSuper,          inputManager.IsKeyPressed(Key::LeftSystem));
-            io.AddKeyEvent(ImGuiKey_RightCtrl,          inputManager.IsKeyPressed(Key::RightControl));
-            io.AddKeyEvent(ImGuiKey_RightShift,         inputManager.IsKeyPressed(Key::RightShift));
-            io.AddKeyEvent(ImGuiKey_RightAlt,           inputManager.IsKeyPressed(Key::RightAlt));
-            io.AddKeyEvent(ImGuiKey_RightSuper,         inputManager.IsKeyPressed(Key::RightSystem));
-            io.AddKeyEvent(ImGuiKey_Menu,               inputManager.IsKeyPressed(Key::Menu));
-            io.AddKeyEvent(ImGuiKey_0,                  inputManager.IsKeyPressed(Key::Number0));
-            io.AddKeyEvent(ImGuiKey_1,                  inputManager.IsKeyPressed(Key::Number1));
-            io.AddKeyEvent(ImGuiKey_2,                  inputManager.IsKeyPressed(Key::Number2));
-            io.AddKeyEvent(ImGuiKey_3,                  inputManager.IsKeyPressed(Key::Number3));
-            io.AddKeyEvent(ImGuiKey_4,                  inputManager.IsKeyPressed(Key::Number4));
-            io.AddKeyEvent(ImGuiKey_5,                  inputManager.IsKeyPressed(Key::Number5));
-            io.AddKeyEvent(ImGuiKey_6,                  inputManager.IsKeyPressed(Key::Number6));
-            io.AddKeyEvent(ImGuiKey_7,                  inputManager.IsKeyPressed(Key::Number7));
-            io.AddKeyEvent(ImGuiKey_8,                  inputManager.IsKeyPressed(Key::Number8));
-            io.AddKeyEvent(ImGuiKey_9,                  inputManager.IsKeyPressed(Key::Number9));
-            io.AddKeyEvent(ImGuiKey_A,                  inputManager.IsKeyPressed(Key::A));
-            io.AddKeyEvent(ImGuiKey_B,                  inputManager.IsKeyPressed(Key::B));
-            io.AddKeyEvent(ImGuiKey_C,                  inputManager.IsKeyPressed(Key::C));
-            io.AddKeyEvent(ImGuiKey_D,                  inputManager.IsKeyPressed(Key::D));
-            io.AddKeyEvent(ImGuiKey_E,                  inputManager.IsKeyPressed(Key::E));
-            io.AddKeyEvent(ImGuiKey_F,                  inputManager.IsKeyPressed(Key::F));
-            io.AddKeyEvent(ImGuiKey_G,                  inputManager.IsKeyPressed(Key::G));
-            io.AddKeyEvent(ImGuiKey_H,                  inputManager.IsKeyPressed(Key::H));
-            io.AddKeyEvent(ImGuiKey_I,                  inputManager.IsKeyPressed(Key::I));
-            io.AddKeyEvent(ImGuiKey_J,                  inputManager.IsKeyPressed(Key::J));
-            io.AddKeyEvent(ImGuiKey_K,                  inputManager.IsKeyPressed(Key::K));
-            io.AddKeyEvent(ImGuiKey_L,                  inputManager.IsKeyPressed(Key::L));
-            io.AddKeyEvent(ImGuiKey_M,                  inputManager.IsKeyPressed(Key::M));
-            io.AddKeyEvent(ImGuiKey_N,                  inputManager.IsKeyPressed(Key::N));
-            io.AddKeyEvent(ImGuiKey_O,                  inputManager.IsKeyPressed(Key::O));
-            io.AddKeyEvent(ImGuiKey_P,                  inputManager.IsKeyPressed(Key::P));
-            io.AddKeyEvent(ImGuiKey_Q,                  inputManager.IsKeyPressed(Key::Q));
-            io.AddKeyEvent(ImGuiKey_R,                  inputManager.IsKeyPressed(Key::R));
-            io.AddKeyEvent(ImGuiKey_S,                  inputManager.IsKeyPressed(Key::S));
-            io.AddKeyEvent(ImGuiKey_T,                  inputManager.IsKeyPressed(Key::T));
-            io.AddKeyEvent(ImGuiKey_U,                  inputManager.IsKeyPressed(Key::U));
-            io.AddKeyEvent(ImGuiKey_V,                  inputManager.IsKeyPressed(Key::V));
-            io.AddKeyEvent(ImGuiKey_W,                  inputManager.IsKeyPressed(Key::W));
-            io.AddKeyEvent(ImGuiKey_X,                  inputManager.IsKeyPressed(Key::X));
-            io.AddKeyEvent(ImGuiKey_Y,                  inputManager.IsKeyPressed(Key::Y));
-            io.AddKeyEvent(ImGuiKey_Z,                  inputManager.IsKeyPressed(Key::Z));
-            io.AddKeyEvent(ImGuiKey_F1,                 inputManager.IsKeyPressed(Key::F1));
-            io.AddKeyEvent(ImGuiKey_F2,                 inputManager.IsKeyPressed(Key::F2));
-            io.AddKeyEvent(ImGuiKey_F3,                 inputManager.IsKeyPressed(Key::F3));
-            io.AddKeyEvent(ImGuiKey_F4,                 inputManager.IsKeyPressed(Key::F4));
-            io.AddKeyEvent(ImGuiKey_F5,                 inputManager.IsKeyPressed(Key::F5));
-            io.AddKeyEvent(ImGuiKey_F6,                 inputManager.IsKeyPressed(Key::F6));
-            io.AddKeyEvent(ImGuiKey_F7,                 inputManager.IsKeyPressed(Key::F7));
-            io.AddKeyEvent(ImGuiKey_F8,                 inputManager.IsKeyPressed(Key::F8));
-            io.AddKeyEvent(ImGuiKey_F9,                 inputManager.IsKeyPressed(Key::F9));
-            io.AddKeyEvent(ImGuiKey_F10,                inputManager.IsKeyPressed(Key::F10));
-            io.AddKeyEvent(ImGuiKey_F11,                inputManager.IsKeyPressed(Key::F11));
-            io.AddKeyEvent(ImGuiKey_F12,                inputManager.IsKeyPressed(Key::F12));
-            io.AddKeyEvent(ImGuiKey_F13,                inputManager.IsKeyPressed(Key::F13));
-            io.AddKeyEvent(ImGuiKey_F14,                inputManager.IsKeyPressed(Key::F14));
-            io.AddKeyEvent(ImGuiKey_F15,                inputManager.IsKeyPressed(Key::F15));
-            io.AddKeyEvent(ImGuiKey_F16,                inputManager.IsKeyPressed(Key::F16));
-            io.AddKeyEvent(ImGuiKey_F17,                inputManager.IsKeyPressed(Key::F17));
-            io.AddKeyEvent(ImGuiKey_F18,                inputManager.IsKeyPressed(Key::F18));
-            io.AddKeyEvent(ImGuiKey_F19,                inputManager.IsKeyPressed(Key::F19));
-            io.AddKeyEvent(ImGuiKey_F20,                inputManager.IsKeyPressed(Key::F20));
-            io.AddKeyEvent(ImGuiKey_F21,                inputManager.IsKeyPressed(Key::F21));
-            io.AddKeyEvent(ImGuiKey_F22,                inputManager.IsKeyPressed(Key::F22));
-            io.AddKeyEvent(ImGuiKey_F23,                inputManager.IsKeyPressed(Key::F23));
-            io.AddKeyEvent(ImGuiKey_F24,                inputManager.IsKeyPressed(Key::F24));
-            io.AddKeyEvent(ImGuiKey_Apostrophe,         inputManager.IsKeyPressed(Key::Apostrophe));
-            io.AddKeyEvent(ImGuiKey_Comma,              inputManager.IsKeyPressed(Key::Comma));
-            io.AddKeyEvent(ImGuiKey_Minus,              inputManager.IsKeyPressed(Key::Minus));
-            io.AddKeyEvent(ImGuiKey_Period,             inputManager.IsKeyPressed(Key::Period));
-            io.AddKeyEvent(ImGuiKey_Slash,              inputManager.IsKeyPressed(Key::Slash));
-            io.AddKeyEvent(ImGuiKey_Semicolon,          inputManager.IsKeyPressed(Key::Semicolon));
-            io.AddKeyEvent(ImGuiKey_Equal,              inputManager.IsKeyPressed(Key::Equals));
-            io.AddKeyEvent(ImGuiKey_LeftBracket,        inputManager.IsKeyPressed(Key::LeftBracket));
-            io.AddKeyEvent(ImGuiKey_Backslash,          inputManager.IsKeyPressed(Key::Backslash));
-            io.AddKeyEvent(ImGuiKey_RightBracket,       inputManager.IsKeyPressed(Key::RightBracket));
-            io.AddKeyEvent(ImGuiKey_GraveAccent,        inputManager.IsKeyPressed(Key::Grave));
-            io.AddKeyEvent(ImGuiKey_CapsLock,           inputManager.IsKeyPressed(Key::CapsLock));
-            io.AddKeyEvent(ImGuiKey_ScrollLock,         inputManager.IsKeyPressed(Key::ScrollLock));
-            io.AddKeyEvent(ImGuiKey_NumLock,            inputManager.IsKeyPressed(Key::NumpadLock));
-            io.AddKeyEvent(ImGuiKey_PrintScreen,        inputManager.IsKeyPressed(Key::PrintScreen));
-            io.AddKeyEvent(ImGuiKey_Pause,              inputManager.IsKeyPressed(Key::Pause));
-            io.AddKeyEvent(ImGuiKey_Keypad0,            inputManager.IsKeyPressed(Key::KeypadNumber0));
-            io.AddKeyEvent(ImGuiKey_Keypad5,            inputManager.IsKeyPressed(Key::KeypadNumber5));
-            io.AddKeyEvent(ImGuiKey_KeypadDecimal,      inputManager.IsKeyPressed(Key::KeypadDecimal));
-            io.AddKeyEvent(ImGuiKey_KeypadDivide,       inputManager.IsKeyPressed(Key::KeypadDivide));
-            io.AddKeyEvent(ImGuiKey_KeypadMultiply,     inputManager.IsKeyPressed(Key::KeypadMultiply));
-            io.AddKeyEvent(ImGuiKey_KeypadSubtract,     inputManager.IsKeyPressed(Key::KeypadSubtract));
-            io.AddKeyEvent(ImGuiKey_KeypadAdd,          inputManager.IsKeyPressed(Key::KeypadAdd));
-            io.AddKeyEvent(ImGuiKey_KeypadEnter,        inputManager.IsKeyPressed(Key::KeypadEnter));
-            io.AddKeyEvent(ImGuiKey_KeypadEqual,        inputManager.IsKeyPressed(Key::KeypadEquals));
+            io.AddKeyEvent(ImGuiKey_Tab,                inputManager->IsKeyPressed(Key::Tab));
+            io.AddKeyEvent(ImGuiKey_LeftArrow,          inputManager->IsKeyPressed(Key::LeftArrow));
+            io.AddKeyEvent(ImGuiKey_RightArrow,         inputManager->IsKeyPressed(Key::RightArrow));
+            io.AddKeyEvent(ImGuiKey_UpArrow,            inputManager->IsKeyPressed(Key::UpArrow));
+            io.AddKeyEvent(ImGuiKey_DownArrow,          inputManager->IsKeyPressed(Key::DownArrow));
+            io.AddKeyEvent(ImGuiKey_PageUp,             inputManager->IsKeyPressed(Key::PageUp));
+            io.AddKeyEvent(ImGuiKey_PageDown,           inputManager->IsKeyPressed(Key::PageDown));
+            io.AddKeyEvent(ImGuiKey_Home,               inputManager->IsKeyPressed(Key::Home));
+            io.AddKeyEvent(ImGuiKey_End,                inputManager->IsKeyPressed(Key::End));
+            io.AddKeyEvent(ImGuiKey_Insert,             inputManager->IsKeyPressed(Key::Insert));
+            io.AddKeyEvent(ImGuiKey_Delete,             inputManager->IsKeyPressed(Key::Delete));
+            io.AddKeyEvent(ImGuiKey_Backspace,          inputManager->IsKeyPressed(Key::Backspace));
+            io.AddKeyEvent(ImGuiKey_Space,              inputManager->IsKeyPressed(Key::Space));
+            io.AddKeyEvent(ImGuiKey_Enter,              inputManager->IsKeyPressed(Key::Enter));
+            io.AddKeyEvent(ImGuiKey_Escape,             inputManager->IsKeyPressed(Key::Escape));
+            io.AddKeyEvent(ImGuiKey_LeftCtrl,           inputManager->IsKeyPressed(Key::LeftControl));
+            io.AddKeyEvent(ImGuiKey_LeftShift,          inputManager->IsKeyPressed(Key::LeftShift));
+            io.AddKeyEvent(ImGuiKey_LeftAlt,            inputManager->IsKeyPressed(Key::LeftAlt));
+            io.AddKeyEvent(ImGuiKey_LeftSuper,          inputManager->IsKeyPressed(Key::LeftSystem));
+            io.AddKeyEvent(ImGuiKey_RightCtrl,          inputManager->IsKeyPressed(Key::RightControl));
+            io.AddKeyEvent(ImGuiKey_RightShift,         inputManager->IsKeyPressed(Key::RightShift));
+            io.AddKeyEvent(ImGuiKey_RightAlt,           inputManager->IsKeyPressed(Key::RightAlt));
+            io.AddKeyEvent(ImGuiKey_RightSuper,         inputManager->IsKeyPressed(Key::RightSystem));
+            io.AddKeyEvent(ImGuiKey_Menu,               inputManager->IsKeyPressed(Key::Menu));
+            io.AddKeyEvent(ImGuiKey_0,                  inputManager->IsKeyPressed(Key::Number0));
+            io.AddKeyEvent(ImGuiKey_1,                  inputManager->IsKeyPressed(Key::Number1));
+            io.AddKeyEvent(ImGuiKey_2,                  inputManager->IsKeyPressed(Key::Number2));
+            io.AddKeyEvent(ImGuiKey_3,                  inputManager->IsKeyPressed(Key::Number3));
+            io.AddKeyEvent(ImGuiKey_4,                  inputManager->IsKeyPressed(Key::Number4));
+            io.AddKeyEvent(ImGuiKey_5,                  inputManager->IsKeyPressed(Key::Number5));
+            io.AddKeyEvent(ImGuiKey_6,                  inputManager->IsKeyPressed(Key::Number6));
+            io.AddKeyEvent(ImGuiKey_7,                  inputManager->IsKeyPressed(Key::Number7));
+            io.AddKeyEvent(ImGuiKey_8,                  inputManager->IsKeyPressed(Key::Number8));
+            io.AddKeyEvent(ImGuiKey_9,                  inputManager->IsKeyPressed(Key::Number9));
+            io.AddKeyEvent(ImGuiKey_A,                  inputManager->IsKeyPressed(Key::A));
+            io.AddKeyEvent(ImGuiKey_B,                  inputManager->IsKeyPressed(Key::B));
+            io.AddKeyEvent(ImGuiKey_C,                  inputManager->IsKeyPressed(Key::C));
+            io.AddKeyEvent(ImGuiKey_D,                  inputManager->IsKeyPressed(Key::D));
+            io.AddKeyEvent(ImGuiKey_E,                  inputManager->IsKeyPressed(Key::E));
+            io.AddKeyEvent(ImGuiKey_F,                  inputManager->IsKeyPressed(Key::F));
+            io.AddKeyEvent(ImGuiKey_G,                  inputManager->IsKeyPressed(Key::G));
+            io.AddKeyEvent(ImGuiKey_H,                  inputManager->IsKeyPressed(Key::H));
+            io.AddKeyEvent(ImGuiKey_I,                  inputManager->IsKeyPressed(Key::I));
+            io.AddKeyEvent(ImGuiKey_J,                  inputManager->IsKeyPressed(Key::J));
+            io.AddKeyEvent(ImGuiKey_K,                  inputManager->IsKeyPressed(Key::K));
+            io.AddKeyEvent(ImGuiKey_L,                  inputManager->IsKeyPressed(Key::L));
+            io.AddKeyEvent(ImGuiKey_M,                  inputManager->IsKeyPressed(Key::M));
+            io.AddKeyEvent(ImGuiKey_N,                  inputManager->IsKeyPressed(Key::N));
+            io.AddKeyEvent(ImGuiKey_O,                  inputManager->IsKeyPressed(Key::O));
+            io.AddKeyEvent(ImGuiKey_P,                  inputManager->IsKeyPressed(Key::P));
+            io.AddKeyEvent(ImGuiKey_Q,                  inputManager->IsKeyPressed(Key::Q));
+            io.AddKeyEvent(ImGuiKey_R,                  inputManager->IsKeyPressed(Key::R));
+            io.AddKeyEvent(ImGuiKey_S,                  inputManager->IsKeyPressed(Key::S));
+            io.AddKeyEvent(ImGuiKey_T,                  inputManager->IsKeyPressed(Key::T));
+            io.AddKeyEvent(ImGuiKey_U,                  inputManager->IsKeyPressed(Key::U));
+            io.AddKeyEvent(ImGuiKey_V,                  inputManager->IsKeyPressed(Key::V));
+            io.AddKeyEvent(ImGuiKey_W,                  inputManager->IsKeyPressed(Key::W));
+            io.AddKeyEvent(ImGuiKey_X,                  inputManager->IsKeyPressed(Key::X));
+            io.AddKeyEvent(ImGuiKey_Y,                  inputManager->IsKeyPressed(Key::Y));
+            io.AddKeyEvent(ImGuiKey_Z,                  inputManager->IsKeyPressed(Key::Z));
+            io.AddKeyEvent(ImGuiKey_F1,                 inputManager->IsKeyPressed(Key::F1));
+            io.AddKeyEvent(ImGuiKey_F2,                 inputManager->IsKeyPressed(Key::F2));
+            io.AddKeyEvent(ImGuiKey_F3,                 inputManager->IsKeyPressed(Key::F3));
+            io.AddKeyEvent(ImGuiKey_F4,                 inputManager->IsKeyPressed(Key::F4));
+            io.AddKeyEvent(ImGuiKey_F5,                 inputManager->IsKeyPressed(Key::F5));
+            io.AddKeyEvent(ImGuiKey_F6,                 inputManager->IsKeyPressed(Key::F6));
+            io.AddKeyEvent(ImGuiKey_F7,                 inputManager->IsKeyPressed(Key::F7));
+            io.AddKeyEvent(ImGuiKey_F8,                 inputManager->IsKeyPressed(Key::F8));
+            io.AddKeyEvent(ImGuiKey_F9,                 inputManager->IsKeyPressed(Key::F9));
+            io.AddKeyEvent(ImGuiKey_F10,                inputManager->IsKeyPressed(Key::F10));
+            io.AddKeyEvent(ImGuiKey_F11,                inputManager->IsKeyPressed(Key::F11));
+            io.AddKeyEvent(ImGuiKey_F12,                inputManager->IsKeyPressed(Key::F12));
+            io.AddKeyEvent(ImGuiKey_F13,                inputManager->IsKeyPressed(Key::F13));
+            io.AddKeyEvent(ImGuiKey_F14,                inputManager->IsKeyPressed(Key::F14));
+            io.AddKeyEvent(ImGuiKey_F15,                inputManager->IsKeyPressed(Key::F15));
+            io.AddKeyEvent(ImGuiKey_F16,                inputManager->IsKeyPressed(Key::F16));
+            io.AddKeyEvent(ImGuiKey_F17,                inputManager->IsKeyPressed(Key::F17));
+            io.AddKeyEvent(ImGuiKey_F18,                inputManager->IsKeyPressed(Key::F18));
+            io.AddKeyEvent(ImGuiKey_F19,                inputManager->IsKeyPressed(Key::F19));
+            io.AddKeyEvent(ImGuiKey_F20,                inputManager->IsKeyPressed(Key::F20));
+            io.AddKeyEvent(ImGuiKey_F21,                inputManager->IsKeyPressed(Key::F21));
+            io.AddKeyEvent(ImGuiKey_F22,                inputManager->IsKeyPressed(Key::F22));
+            io.AddKeyEvent(ImGuiKey_F23,                inputManager->IsKeyPressed(Key::F23));
+            io.AddKeyEvent(ImGuiKey_F24,                inputManager->IsKeyPressed(Key::F24));
+            io.AddKeyEvent(ImGuiKey_Apostrophe,         inputManager->IsKeyPressed(Key::Apostrophe));
+            io.AddKeyEvent(ImGuiKey_Comma,              inputManager->IsKeyPressed(Key::Comma));
+            io.AddKeyEvent(ImGuiKey_Minus,              inputManager->IsKeyPressed(Key::Minus));
+            io.AddKeyEvent(ImGuiKey_Period,             inputManager->IsKeyPressed(Key::Period));
+            io.AddKeyEvent(ImGuiKey_Slash,              inputManager->IsKeyPressed(Key::Slash));
+            io.AddKeyEvent(ImGuiKey_Semicolon,          inputManager->IsKeyPressed(Key::Semicolon));
+            io.AddKeyEvent(ImGuiKey_Equal,              inputManager->IsKeyPressed(Key::Equals));
+            io.AddKeyEvent(ImGuiKey_LeftBracket,        inputManager->IsKeyPressed(Key::LeftBracket));
+            io.AddKeyEvent(ImGuiKey_Backslash,          inputManager->IsKeyPressed(Key::Backslash));
+            io.AddKeyEvent(ImGuiKey_RightBracket,       inputManager->IsKeyPressed(Key::RightBracket));
+            io.AddKeyEvent(ImGuiKey_GraveAccent,        inputManager->IsKeyPressed(Key::Grave));
+            io.AddKeyEvent(ImGuiKey_CapsLock,           inputManager->IsKeyPressed(Key::CapsLock));
+            io.AddKeyEvent(ImGuiKey_ScrollLock,         inputManager->IsKeyPressed(Key::ScrollLock));
+            io.AddKeyEvent(ImGuiKey_NumLock,            inputManager->IsKeyPressed(Key::NumpadLock));
+            io.AddKeyEvent(ImGuiKey_PrintScreen,        inputManager->IsKeyPressed(Key::PrintScreen));
+            io.AddKeyEvent(ImGuiKey_Pause,              inputManager->IsKeyPressed(Key::Pause));
+            io.AddKeyEvent(ImGuiKey_Keypad0,            inputManager->IsKeyPressed(Key::KeypadNumber0));
+            io.AddKeyEvent(ImGuiKey_Keypad5,            inputManager->IsKeyPressed(Key::KeypadNumber5));
+            io.AddKeyEvent(ImGuiKey_KeypadDecimal,      inputManager->IsKeyPressed(Key::KeypadDecimal));
+            io.AddKeyEvent(ImGuiKey_KeypadDivide,       inputManager->IsKeyPressed(Key::KeypadDivide));
+            io.AddKeyEvent(ImGuiKey_KeypadMultiply,     inputManager->IsKeyPressed(Key::KeypadMultiply));
+            io.AddKeyEvent(ImGuiKey_KeypadSubtract,     inputManager->IsKeyPressed(Key::KeypadSubtract));
+            io.AddKeyEvent(ImGuiKey_KeypadAdd,          inputManager->IsKeyPressed(Key::KeypadAdd));
+            io.AddKeyEvent(ImGuiKey_KeypadEnter,        inputManager->IsKeyPressed(Key::KeypadEnter));
+            io.AddKeyEvent(ImGuiKey_KeypadEqual,        inputManager->IsKeyPressed(Key::KeypadEquals));
 
             // Handle character entering
-            if (inputManager.IsKeyPressed(Key::A)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::A) : std::toupper(GetKeyCharacter(Key::A))); }
-            if (inputManager.IsKeyPressed(Key::B)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::B) : std::toupper(GetKeyCharacter(Key::B))); }
-            if (inputManager.IsKeyPressed(Key::C)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::C) : std::toupper(GetKeyCharacter(Key::C))); }
-            if (inputManager.IsKeyPressed(Key::D)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::D) : std::toupper(GetKeyCharacter(Key::D))); }
-            if (inputManager.IsKeyPressed(Key::E)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::E) : std::toupper(GetKeyCharacter(Key::E))); }
-            if (inputManager.IsKeyPressed(Key::F)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::F) : std::toupper(GetKeyCharacter(Key::F))); }
-            if (inputManager.IsKeyPressed(Key::G)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::G) : std::toupper(GetKeyCharacter(Key::G))); }
-            if (inputManager.IsKeyPressed(Key::H)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::H) : std::toupper(GetKeyCharacter(Key::H))); }
-            if (inputManager.IsKeyPressed(Key::I)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::I) : std::toupper(GetKeyCharacter(Key::I))); }
-            if (inputManager.IsKeyPressed(Key::J)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::J) : std::toupper(GetKeyCharacter(Key::J))); }
-            if (inputManager.IsKeyPressed(Key::K)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::K) : std::toupper(GetKeyCharacter(Key::K))); }
-            if (inputManager.IsKeyPressed(Key::L)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::L) : std::toupper(GetKeyCharacter(Key::L))); }
-            if (inputManager.IsKeyPressed(Key::M)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::M) : std::toupper(GetKeyCharacter(Key::M))); }
-            if (inputManager.IsKeyPressed(Key::N)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::N) : std::toupper(GetKeyCharacter(Key::N))); }
-            if (inputManager.IsKeyPressed(Key::O)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::O) : std::toupper(GetKeyCharacter(Key::O))); }
-            if (inputManager.IsKeyPressed(Key::P)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::P) : std::toupper(GetKeyCharacter(Key::P))); }
-            if (inputManager.IsKeyPressed(Key::Q)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::Q) : std::toupper(GetKeyCharacter(Key::Q))); }
-            if (inputManager.IsKeyPressed(Key::R)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::R) : std::toupper(GetKeyCharacter(Key::R))); }
-            if (inputManager.IsKeyPressed(Key::S)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::S) : std::toupper(GetKeyCharacter(Key::S))); }
-            if (inputManager.IsKeyPressed(Key::T)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::T) : std::toupper(GetKeyCharacter(Key::T))); }
-            if (inputManager.IsKeyPressed(Key::U)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::U) : std::toupper(GetKeyCharacter(Key::U))); }
-            if (inputManager.IsKeyPressed(Key::V)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::V) : std::toupper(GetKeyCharacter(Key::V))); }
-            if (inputManager.IsKeyPressed(Key::W)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::W) : std::toupper(GetKeyCharacter(Key::W))); }
-            if (inputManager.IsKeyPressed(Key::X)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::X) : std::toupper(GetKeyCharacter(Key::X))); }
-            if (inputManager.IsKeyPressed(Key::Y)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::Y) : std::toupper(GetKeyCharacter(Key::Y))); }
-            if (inputManager.IsKeyPressed(Key::Z)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::Z) : std::toupper(GetKeyCharacter(Key::Z))); }
-            if (inputManager.IsKeyPressed(Key::Space)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::Space) : std::toupper(GetKeyCharacter(Key::Space))); }
+            if (inputManager->IsKeyPressed(Key::A)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::A) : std::toupper(GetKeyCharacter(Key::A))); }
+            if (inputManager->IsKeyPressed(Key::B)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::B) : std::toupper(GetKeyCharacter(Key::B))); }
+            if (inputManager->IsKeyPressed(Key::C)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::C) : std::toupper(GetKeyCharacter(Key::C))); }
+            if (inputManager->IsKeyPressed(Key::D)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::D) : std::toupper(GetKeyCharacter(Key::D))); }
+            if (inputManager->IsKeyPressed(Key::E)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::E) : std::toupper(GetKeyCharacter(Key::E))); }
+            if (inputManager->IsKeyPressed(Key::F)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::F) : std::toupper(GetKeyCharacter(Key::F))); }
+            if (inputManager->IsKeyPressed(Key::G)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::G) : std::toupper(GetKeyCharacter(Key::G))); }
+            if (inputManager->IsKeyPressed(Key::H)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::H) : std::toupper(GetKeyCharacter(Key::H))); }
+            if (inputManager->IsKeyPressed(Key::I)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::I) : std::toupper(GetKeyCharacter(Key::I))); }
+            if (inputManager->IsKeyPressed(Key::J)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::J) : std::toupper(GetKeyCharacter(Key::J))); }
+            if (inputManager->IsKeyPressed(Key::K)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::K) : std::toupper(GetKeyCharacter(Key::K))); }
+            if (inputManager->IsKeyPressed(Key::L)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::L) : std::toupper(GetKeyCharacter(Key::L))); }
+            if (inputManager->IsKeyPressed(Key::M)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::M) : std::toupper(GetKeyCharacter(Key::M))); }
+            if (inputManager->IsKeyPressed(Key::N)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::N) : std::toupper(GetKeyCharacter(Key::N))); }
+            if (inputManager->IsKeyPressed(Key::O)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::O) : std::toupper(GetKeyCharacter(Key::O))); }
+            if (inputManager->IsKeyPressed(Key::P)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::P) : std::toupper(GetKeyCharacter(Key::P))); }
+            if (inputManager->IsKeyPressed(Key::Q)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::Q) : std::toupper(GetKeyCharacter(Key::Q))); }
+            if (inputManager->IsKeyPressed(Key::R)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::R) : std::toupper(GetKeyCharacter(Key::R))); }
+            if (inputManager->IsKeyPressed(Key::S)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::S) : std::toupper(GetKeyCharacter(Key::S))); }
+            if (inputManager->IsKeyPressed(Key::T)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::T) : std::toupper(GetKeyCharacter(Key::T))); }
+            if (inputManager->IsKeyPressed(Key::U)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::U) : std::toupper(GetKeyCharacter(Key::U))); }
+            if (inputManager->IsKeyPressed(Key::V)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::V) : std::toupper(GetKeyCharacter(Key::V))); }
+            if (inputManager->IsKeyPressed(Key::W)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::W) : std::toupper(GetKeyCharacter(Key::W))); }
+            if (inputManager->IsKeyPressed(Key::X)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::X) : std::toupper(GetKeyCharacter(Key::X))); }
+            if (inputManager->IsKeyPressed(Key::Y)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::Y) : std::toupper(GetKeyCharacter(Key::Y))); }
+            if (inputManager->IsKeyPressed(Key::Z)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::Z) : std::toupper(GetKeyCharacter(Key::Z))); }
+            if (inputManager->IsKeyPressed(Key::Space)) { io.AddInputCharacter(!io.KeyShift ? GetKeyCharacter(Key::Space) : std::toupper(GetKeyCharacter(Key::Space))); }
 
             // Update mouse buttons
-            io.AddMouseButtonEvent(ImGuiMouseButton_Left, inputManager.IsMouseButtonHeld(MouseButton::Left));
-            io.AddMouseButtonEvent(ImGuiMouseButton_Right, inputManager.IsMouseButtonHeld(MouseButton::Right));
-            io.AddMouseButtonEvent(ImGuiMouseButton_Middle, inputManager.IsMouseButtonHeld(MouseButton::Middle));
-            io.MouseWheel                             = inputManager.GetMouseScroll().y / 100.0f;
-            io.MouseWheelH                            = inputManager.GetMouseScroll().x / 100.0f;
+            io.AddMouseButtonEvent(ImGuiMouseButton_Left, inputManager->IsMouseButtonHeld(MouseButton::Left));
+            io.AddMouseButtonEvent(ImGuiMouseButton_Right, inputManager->IsMouseButtonHeld(MouseButton::Right));
+            io.AddMouseButtonEvent(ImGuiMouseButton_Middle, inputManager->IsMouseButtonHeld(MouseButton::Middle));
+            io.MouseWheel                             = inputManager->GetMouseScroll().y / 100.0f;
+            io.MouseWheelH                            = inputManager->GetMouseScroll().x / 100.0f;
         }
-        if (cursorManagerReference.has_value())
+        if (cursorManager != nullptr)
         {
             // Update other mouse data
-            const CursorManager &cursorManager = cursorManagerReference.value();
-            if (!cursorManager.IsCursorHidden()) io.AddMousePosEvent(cursorManager.GetCursorPosition().x, viewportSize.y - cursorManager.GetCursorPosition().y);
+            if (cursorManager->IsCursorVisible()) io.AddMousePosEvent(cursorManager->GetCursorPosition().x, viewportSize.y - cursorManager->GetCursorPosition().y);
             else io.AddMousePosEvent(-FLT_MIN, -FLT_MAX); // ImGui uses these two specific values to signal, that cursor is not present
         }
-        if (touchManagerReference.has_value())
+        if (touchManager != nullptr)
         {
-            const TouchManager &touchManager = touchManagerReference.value();
-            if (touchManager.GetTouchCount() > 0)
+            if (!touchManager->GetTouches().empty())
             {
-                io.MousePos = ImVec2(touchManager.GetTouch(0).GetPosition().x, viewportSize.y - touchManager.GetTouch(0).GetPosition().y);
-                if (touchManager.GetTouch(0).GetType() == TouchType::Press) io.MouseDown[ImGuiMouseButton_Left] = true;
+                io.MousePos = ImVec2(touchManager->GetTouches()[0].GetPosition().x, viewportSize.y - touchManager->GetTouches()[0].GetPosition().y);
+                if (touchManager->GetTouches()[0].GetType() == TouchType::Press) io.MouseDown[ImGuiMouseButton_Left] = true;
                 else io.MouseReleased[ImGuiMouseButton_Left] = true;
             }
         }
@@ -354,7 +350,7 @@ namespace Sierra
         ImGui::NewFrame();
     }
 
-    void ImGuiRenderTask::Render(std::unique_ptr<CommandBuffer> &commandBuffer, const std::unique_ptr<Image> &outputImage)
+    void ImGuiRenderTask::Render(CommandBuffer &commandBuffer, const Image &outputImage)
     {
         ImGui::Render();
         const ImDrawData* drawData = ImGui::GetDrawData();
@@ -369,7 +365,7 @@ namespace Sierra
         if (const uint64 requiredVertexMemorySize = drawData->TotalVtxCount * sizeof(ImDrawVert); requiredVertexMemorySize > vertexBuffer->GetMemorySize())
         {
             // Create new buffer with bigger memory
-            std::unique_ptr<Sierra::Buffer> newVertexBuffer = renderingContext.CreateBuffer({
+            std::unique_ptr<Buffer> newVertexBuffer = renderingContext.CreateBuffer({
                 .name = "Vertex Buffer of ImGui Render Task",
                 .memorySize = glm::max(requiredVertexMemorySize, static_cast<uint64>(static_cast<float64>(vertexBuffer->GetMemorySize()) * VERTEX_BUFFER_GROWTH_FACTOR)),
                 .usage = BufferUsage::Vertex,
@@ -377,7 +373,7 @@ namespace Sierra
             });
 
             // Query old buffer for destruction and replace it with the new one
-            commandBuffer->QueueBufferForDestruction(std::move(vertexBuffer));
+            commandBuffer.QueueBufferForDestruction(std::move(vertexBuffer));
             vertexBuffer = std::move(newVertexBuffer);
         }
 
@@ -385,7 +381,7 @@ namespace Sierra
         if (const uint64 requiredIndexMemorySize = drawData->TotalIdxCount * sizeof(ImDrawIdx); requiredIndexMemorySize > indexBuffer->GetMemorySize())
         {
             // Create new buffer with bigger memory
-            std::unique_ptr<Sierra::Buffer> newIndexBuffer = renderingContext.CreateBuffer({
+            std::unique_ptr<Buffer> newIndexBuffer = renderingContext.CreateBuffer({
                 .name = "Index Buffer of ImGui Render Task",
                 .memorySize = glm::max(requiredIndexMemorySize, static_cast<uint64>(static_cast<float64>(indexBuffer->GetMemorySize()) * INDEX_BUFFER_GROWTH_FACTOR)),
                 .usage = BufferUsage::Index,
@@ -393,14 +389,14 @@ namespace Sierra
             });
 
             // Query old buffer for destruction and replace it with the new one
-            commandBuffer->QueueBufferForDestruction(std::move(indexBuffer));
+            commandBuffer.QueueBufferForDestruction(std::move(indexBuffer));
             indexBuffer = std::move(newIndexBuffer);
         }
 
         // Begin rendering to image
-        commandBuffer->BeginRenderPass(renderPass, { {{ .outputImage = outputImage, .resolverImage = resolverImage }} });
+        commandBuffer.BeginRenderPass(*renderPass, { {{ .outputImage = outputImage, .resolverImage = resolverImage.get() }} });
 
-        commandBuffer->BeginGraphicsPipeline(pipeline);
+        commandBuffer.BeginGraphicsPipeline(*pipeline);
 
         // Bind perspective settings
         PushConstant pushConstant
@@ -410,8 +406,8 @@ namespace Sierra
         };
 
         // Bind mesh data
-        commandBuffer->BindVertexBuffer(vertexBuffer);
-        commandBuffer->BindIndexBuffer(indexBuffer);
+        commandBuffer.BindVertexBuffer(*vertexBuffer);
+        commandBuffer.BindIndexBuffer(*indexBuffer);
 
         uint32 vertexOffset = 0;
         uint32 indexOffset = 0;
@@ -429,7 +425,7 @@ namespace Sierra
 
                 // Update draw data
                 pushConstant.fontAtlasIndex = drawCommand.TextureId;
-                commandBuffer->PushConstants(&pushConstant, sizeof(PushConstant));
+                commandBuffer.PushConstants(&pushConstant, sizeof(PushConstant));
 
                 // Configure scissor
                 Vector4UInt scissor = Vector4UInt(
@@ -443,10 +439,10 @@ namespace Sierra
                 scissor.w -= scissor.y;
 
                 // Apply scissor
-                commandBuffer->SetScissor(scissor);
+                commandBuffer.SetScissor(scissor);
 
                 // Issue draw call
-                commandBuffer->DrawIndexed(drawCommand.ElemCount, drawCommand.IdxOffset + indexOffset, drawCommand.VtxOffset + vertexOffset);
+                commandBuffer.DrawIndexed(drawCommand.ElemCount, drawCommand.IdxOffset + indexOffset, drawCommand.VtxOffset + vertexOffset);
             }
 
             // Increment global indices
@@ -455,16 +451,16 @@ namespace Sierra
         }
 
         // End rendering
-        commandBuffer->EndGraphicsPipeline(pipeline);
-        commandBuffer->EndRenderPass(renderPass);
+        commandBuffer.EndGraphicsPipeline(*pipeline);
+        commandBuffer.EndRenderPass(*renderPass);
 
         // Increment current frame
         currentFrame = (currentFrame + 1) % concurrentFrameCount;
     }
 
-    void ImGuiRenderTask::Resize(const uint32 width, const uint32 height, const uint32 newScaling)
+    void ImGuiRenderTask::Resize(const uint32 width, const uint32 height, const uint32 scaling)
     {
-        scaling = newScaling;
+        this->scaling = scaling;
         viewportSize = { width / scaling, height / scaling };
 
         renderPass->Resize(width, height);

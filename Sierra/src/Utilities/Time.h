@@ -23,22 +23,25 @@ namespace Sierra
         explicit TimeStep(float64 duration, TimeStepType type = TimeStepType::Milliseconds);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline float64 GetDurationInNanoseconds() const { return duration * 1'000'000.0; }
-        [[nodiscard]] inline float64 GetDurationInMicroseconds() const { return duration * 1'000.0; }
-        [[nodiscard]] inline float64 GetDurationInMilliseconds() const { return duration; }
-        [[nodiscard]] inline float64 GetDurationInSeconds() const { return duration / 1'000.0; }
+        [[nodiscard]] float64 GetDurationInNanoseconds() const { return duration * 1'000'000.0; }
+        [[nodiscard]] float64 GetDurationInMicroseconds() const { return duration * 1'000.0; }
+        [[nodiscard]] float64 GetDurationInMilliseconds() const { return duration; }
+        [[nodiscard]] float64 GetDurationInSeconds() const { return duration / 1'000.0; }
 
         /* --- OPERATORS --- */
-        [[nodiscard]] inline operator float64() const { return duration; }
-        [[nodiscard]] inline bool operator <(const TimeStep &other) const { return duration < other.duration; }
-        [[nodiscard]] inline bool operator >(const TimeStep &other) const { return duration > other.duration; }
-        [[nodiscard]] inline bool operator <=(const TimeStep &other) const { return duration <= other.duration; }
-        [[nodiscard]] inline bool operator >=(const TimeStep &other) const { return duration >= other.duration; }
-        [[nodiscard]] inline TimeStep operator +(const TimeStep &other) const { return TimeStep(duration + other.duration); }
-        [[nodiscard]] inline TimeStep operator -(const TimeStep &other) const { return TimeStep(duration - other.duration); }
+        [[nodiscard]] TimeStep operator +(const TimeStep other) const { return TimeStep(duration + other.duration); }
+        [[nodiscard]] TimeStep operator -(const TimeStep other) const { return TimeStep(duration - other.duration); }
+
+        [[nodiscard]] bool operator <(const TimeStep other) const { return duration < other.duration; }
+        [[nodiscard]] bool operator >(const TimeStep other) const { return duration > other.duration; }
+        [[nodiscard]] bool operator <=(const TimeStep other) const { return duration <= other.duration; }
+        [[nodiscard]] bool operator >=(const TimeStep other) const { return duration >= other.duration; }
+
+        [[nodiscard]] bool operator ==(const TimeStep &other) const { return duration == other.duration; }
+        [[nodiscard]] bool operator !=(const TimeStep &other) const { return !(*this == other); }
 
     private:
-        float64 duration = 0.0f; // In milliseconds
+        float64 duration = 0.0f;
 
     };
 
@@ -50,13 +53,15 @@ namespace Sierra
         static TimePoint Now();
 
         /* --- OPERATORS --- */
-        [[nodiscard]] std::string ToString() const;
-        [[nodiscard]] TimeStep operator -(const TimePoint &other) const;
         [[nodiscard]] TimePoint operator +(const TimeStep &duration) const;
         [[nodiscard]] TimePoint operator -(const TimeStep &duration) const;
+        [[nodiscard]] TimeStep operator -(const TimePoint &other) const;
+
+        [[nodiscard]] bool operator ==(const TimePoint &other) const { return timePoint == other.timePoint; }
+        [[nodiscard]] bool operator !=(const TimePoint &other) const { return !(*this == other); }
 
     private:
-        TimePoint(const std::chrono::system_clock::time_point &timePoint);
+        explicit TimePoint(const std::chrono::system_clock::time_point &timePoint);
         std::chrono::system_clock::time_point timePoint;
 
     };

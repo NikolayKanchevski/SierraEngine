@@ -8,22 +8,22 @@
     #error "Including the UIKitWindow.h file is only allowed in iOS builds!"
 #endif
 
-#include "../../Window.h"
-#include "UIKitContext.h"
-#include "UIKitTouchManager.h"
-#include "UIKitSelectorBridge.h"
 
-#if !defined(__OBJC__)
+#if defined(__OBJC__)
+    #include <UIKit/UIKit.h>
+#else
     namespace Sierra
     {
-        using UIKitWindowViewController = void;
-        using UIView = void;
         #define nil nullptr
+        using UIWindow = void;
+        using UIViewController = void;
+        using UIView = void;
     }
-#else
-    #include <UIKit/UIKit.h>
-    @class UIKitWindowViewController;
 #endif
+#include "../../Window.h"
+
+#include "UIKitContext.h"
+#include "UIKitTouchManager.h"
 
 namespace Sierra
 {
@@ -32,7 +32,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit UIKitWindow(const UIKitContext &uiKitContext, const WindowCreateInfo &createInfo);
+        explicit UIKitWindow(UIKitContext &uiKitContext, const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         void Update() override;
@@ -64,42 +64,41 @@ namespace Sierra
         [[nodiscard]] bool IsFocused() const override;
         [[nodiscard]] bool IsHidden() const override;
 
-        [[nodiscard]] const Screen& GetScreen() const override;
+        [[nodiscard]] Screen& GetScreen() const override;
         [[nodiscard]] TouchManager& GetTouchManager() override;
         [[nodiscard]] PlatformAPI GetAPI() const override;
 
-        [[nodiscard]] inline UIWindow* GetUIWindow() const { return window; }
-        [[nodiscard]] inline UIView* GetUIView() const { return view; }
-        [[nodiscard]] inline bool AllowsOrientationChange() const { return allowsOrientationChange; }
+        [[nodiscard]] UIWindow* GetUIWindow() const { return window; }
+        [[nodiscard]] ScreenOrientation GetAllowedOrientations() const { return allowedOrientations; }
+
+        [[nodiscard]] UIViewController* GetUIViewController() const { return viewController; }
+        [[nodiscard]] UIView* GetUIView() const { return view; }
 
         /* --- DESTRUCTOR --- */
         ~UIKitWindow() override;
 
     private:
-        const UIKitContext &uiKitContext;
-        UIKitTouchManager touchManager;
+        UIKitContext &uiKitContext;
         
         UIWindow* window = nil;
-        UIKitWindowViewController* viewController = nil;
+        UIViewController* viewController = nil;
         UIView* view = nil;
+
+        UIKitTouchManager touchManager;
 
         std::string title;
         bool minimized = false;
         bool closed = false;
+        ScreenOrientation allowedOrientations = ScreenOrientation::Unknown;
 
-        bool allowsOrientationChange = false;
-        ScreenOrientation lastOrientation = ScreenOrientation::Portrait;
+        #if defined(__OBJC__) && defined(UIKIT_WINDOW_IMPLEMENTATION)
+            public:
+                /* --- EVENTS --- */
+                void ApplicationDidEnterBackground();
+                void ApplicationWillEnterForeground();
+                void SceneDidDisconnect();
+        #endif
 
-        UIKitSelectorBridge deviceOrientationDidChangeBridge;
-        UIKitSelectorBridge applicationDidEnterBackgroundBridge;
-        UIKitSelectorBridge applicationWillEnterForegroundBridge;
-        UIKitSelectorBridge applicationWillTerminateBridge;
-        
-        /* --- EVENTS --- */
-        void DeviceOrientationDidChange();
-        void ApplicationDidEnterBackground();
-        void ApplicationWillEnterForeground();
-        void ApplicationWillTerminate();
 
     };
 

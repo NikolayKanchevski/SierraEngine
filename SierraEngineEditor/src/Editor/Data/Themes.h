@@ -95,6 +95,7 @@ namespace SierraEngine
         style.LogSliderDeadzone                      = 4;
         style.TabRounding                            = 4;
         style.AntiAliasedLines                       = true;
+        style.AntiAliasedFill                        = true;
         style.WindowPadding                          = ImVec2(8.00f, 8.00f);
         style.FramePadding                           = ImVec2(5.00f, 2.00f);
         style.CellPadding                            = ImVec2(6.00f, 6.00f);

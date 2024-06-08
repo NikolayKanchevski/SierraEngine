@@ -8,7 +8,7 @@ def FileToByteArray(filePath: str) -> None:
 
     # Add every byte to string
     file = open(filePath, 'rb')
-    output = f'constexpr std::array<uint8, { os.path.getsize(filePath) }> DATA {{ {", ".join(f"{ hex(byte) }" for byte in file.read()) } }};'
+    output = f'constexpr std::array<uint8, { os.path.getsize(filePath) }> DATA = {{ {", ".join(f"{ hex(byte) }" for byte in file.read()) } }};'
     file.close()
 
     print(output)

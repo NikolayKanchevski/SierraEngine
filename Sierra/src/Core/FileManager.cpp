@@ -36,30 +36,30 @@ namespace Sierra
         stream.seekg(static_cast<std::streamoff>(index));
     }
 
-    void File::Resize(const uint64 memorySize)
+    void File::Resize(const uint64 memorySize) const
     {
         std::filesystem::resize_file(path, memorySize);
     }
 
-    std::vector<uint8> File::Read(uint64 length)
+    std::vector<uint8> File::Read(uint64 memorySize)
     {
-        length = length != 0 ? length : GetSize();
-        SR_ERROR_IF(static_cast<uint64>(stream.tellg()) + length > GetSize(), "Cannot read [{0}] bytes, offset by another [{1}], from file, as the memory range exceeds the file's size [{2}]!", length, static_cast<uint64>(stream.tellg()), GetSize());
+        memorySize = memorySize != 0 ? memorySize : GetSize();
+        SR_ERROR_IF(static_cast<uint64>(stream.tellg()) + memorySize > GetSize(), "Cannot read [{0}] bytes, offset by another [{1}], from file, as the memory range exceeds the file's size [{2}]!", memorySize, static_cast<uint64>(stream.tellg()), GetSize());
 
-        std::vector<uint8> buffer(length);
-        stream.read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamoff>(length));
+        std::vector<uint8> buffer(memorySize);
+        stream.read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamoff>(memorySize));
 
         return buffer;
     }
 
     void File::Write(const void* data, const uint64 memorySize)
     {
-        stream.write(reinterpret_cast<const char*>(data), static_cast<std::streamoff>(memorySize));
+        stream.write(static_cast<const char*>(data), static_cast<std::streamoff>(memorySize));
     }
 
     /* --- CONSTRUCTORS --- */
 
-    FileManager::FileManager(const FileManagerCreateInfo &createInfo)
+    FileManager::FileManager(const FileManagerCreateInfo&)
     {
 
     }
@@ -86,9 +86,9 @@ namespace Sierra
         return stream.is_open() && !stream.fail();
     }
 
-    bool FileManager::FileExists(const std::filesystem::path &path) const
+    bool FileManager::FileExists(const std::filesystem::path &filePath) const
     {
-        return std::filesystem::is_regular_file(path) && std::filesystem::exists(path);
+        return std::filesystem::is_regular_file(filePath) && std::filesystem::exists(filePath);
     }
 
     bool FileManager::CopyFile(const std::filesystem::path &sourceFilePath, const std::filesystem::path &destinationDirectory, const bool overwrite) const

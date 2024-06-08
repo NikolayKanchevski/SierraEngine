@@ -30,15 +30,15 @@ namespace Sierra
 
         uint32 concurrentFrameCount = 0;
         const RenderingContext &renderingContext;
-        std::unique_ptr<CommandBuffer> &commandBuffer;
+        CommandBuffer &commandBuffer;
 
         uint32 scaling = 1;
         ImageSampling sampling = ImageSampling::x1;
-        const std::unique_ptr<Image> &templateOutputImage;
+        const Image &templateOutputImage;
 
         ResourceTable::ResourceIndex fontAtlasIndex = 0;
         ResourceTable::ResourceIndex fontSamplerIndex = 0;
-        std::unique_ptr<ResourceTable> &resourceTable;
+        ResourceTable &resourceTable;
     };
 
     class SIERRA_API ImGuiRenderTask
@@ -48,13 +48,13 @@ namespace Sierra
         explicit ImGuiRenderTask(const ImGuiRenderTaskCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline ImFont* GetFont(const uint32 index) const { return ImGui::GetIO().Fonts->Fonts[static_cast<int>(baseFontIndex + index)]; }
-        [[nodiscard]] inline ImGuiStyle& GetStyle() { return style; }
+        [[nodiscard]] ImFont* GetFont(const uint32 index) const { return ImGui::GetIO().Fonts->Fonts[static_cast<int>(baseFontIndex + index)]; }
+        [[nodiscard]] ImGuiStyle& GetStyle() { return style; }
 
         /* --- POLLING METHODS --- */
-        void Update(const std::optional<std::reference_wrapper<const InputManager>> &inputManager = std::nullopt, const std::optional<std::reference_wrapper<const CursorManager>> &cursorManager = std::nullopt, const std::optional<std::reference_wrapper<const TouchManager>> &touchManager = std::nullopt);
+        void Update(const InputManager* inputManager = nullptr, const CursorManager* cursorManager = nullptr, const TouchManager* touchManager = nullptr);
         void Resize(uint32 width, uint32 height, uint32 scaling);
-        void Render(std::unique_ptr<CommandBuffer> &commandBuffer, const std::unique_ptr<Image> &outputImage);
+        void Render(CommandBuffer &commandBuffer, const Image &outputImage);
 
         /* --- DESTRUCTOR --- */
         ~ImGuiRenderTask();
@@ -86,7 +86,7 @@ namespace Sierra
             Vector2 scale = { 0.0f, 0.0f };
         };
 
-        static inline struct {
+        inline static struct {
             ImGuiContext* context = nullptr;
             uint32 contextCount = 0;
 

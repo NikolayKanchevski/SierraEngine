@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <entt/entt.hpp>
-
 #include "Entity.h"
 #include "Component.h"
 
@@ -23,26 +21,28 @@ namespace SierraEngine
     {
     public:
         /* --- TYPE DEFINITIONS --- */
-        using AllComponents = ComponentGroup<Tag, UUID>;
+        using EntityCallback = std::function<void(Entity)>;
+
+        template<ComponentType... Components>
+        using ComponentCallback = std::function<void(Components&...)>;
 
         /* --- CONSTRUCTORS --- */
         explicit Scene(const SceneCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void Update(std::unique_ptr<Sierra::CommandBuffer> &commandBuffer);
-
-        [[nodiscard]] Entity CreateEntity(std::string_view name = "Entity");
+        [[nodiscard]] Entity CreateEntity(std::string_view tag = "Entity");
+        void ForEachEntity(const EntityCallback &Callback);
         void DestroyEntity(Entity entity);
+
+        template<ComponentType Component>
+        void ForEachComponent(const ComponentCallback<Component> &Callback) const { registry.view<Component>().each(Callback); }
+
+        template<ComponentType... Components>
+        void ForEachComponentPair(const ComponentCallback<Components...> &Callback) const { registry.view<Component>().each(Callback); }
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] ArenaAllocator& GetArenaAllocator() { return arenaAllocator; }
-        [[nodiscard]] std::unique_ptr<Sierra::ResourceTable>& GetResourceTable() { return resourceTable; }
-
-        template<ComponentType Components>
-        [[nodiscard]] inline auto GetAllComponents() { return registry.view<Components>(); }
-
-        template<ComponentType... Components>
-        [[nodiscard]] inline auto GetAllComponentPairs() { return registry.group<Components...>(); }
+        [[nodiscard]] Sierra::ResourceTable& GetResourceTable() const { return *resourceTable; }
 
         /* --- OPERATORS --- */
         Scene(const Scene&) = delete;
@@ -52,8 +52,6 @@ namespace SierraEngine
         ~Scene() = default;
 
     private:
-        friend class Entity;
-        friend class SceneSerializer;
         entt::registry registry = { };
 
         ArenaAllocator arenaAllocator;

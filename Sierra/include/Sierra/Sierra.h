@@ -8,6 +8,7 @@
 
 #include "../../src/Core/Application.h"
 #include "../../src/Core/CursorManager.h"
+#include "../../src/Core/EntryPoint.h"
 #include "../../src/Core/EventDispatcher.hpp"
 #include "../../src/Core/FileManager.h"
 #include "../../src/Core/InputManager.h"
@@ -37,6 +38,7 @@
 #include "../../src/Rendering/Shader.h"
 #include "../../src/Rendering/Swapchain.h"
 
+#include "../../src/Utilities/FrameLimiter.h"
 #include "../../src/Utilities/RNG.h"
 #include "../../src/Utilities/Time.h"
 

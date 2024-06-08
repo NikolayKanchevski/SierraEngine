@@ -26,18 +26,9 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    PlatformContext::PlatformContext(const PlatformContextCreateInfo &createInfo)
+    PlatformContext::PlatformContext(const PlatformContextCreateInfo&)
     {
 
-    }
-
-    /* --- POLLING METHODS --- */
-
-    void PlatformContext::RunApplication(const PlatformApplicationRunInfo &runInfo)
-    {
-        runInfo.OnStart();
-        while (!runInfo.OnUpdate());
-        runInfo.OnEnd();
     }
 
     /* --- PRIVATE METHODS --- */

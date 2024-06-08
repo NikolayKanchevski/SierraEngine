@@ -18,7 +18,7 @@ namespace Sierra
         GameActivityTouchManager(const GameActivityContext &gameActivityContext, const TouchManagerCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetTouchCount() const override { return activeTouches.size(); };
+        [[nodiscard]] uint32 GetTouchCount() const override { return activeTouches.size(); };
         [[nodiscard]] const Touch& GetTouch(uint32 touchIndex) const override;
 
     private:

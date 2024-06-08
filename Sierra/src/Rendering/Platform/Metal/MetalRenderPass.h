@@ -4,6 +4,14 @@
 
 #pragma once
 
+#if !defined(__OBJC__)
+    namespace Sierra
+    {
+        using MTLRenderPassDescriptor = void;
+        using MTLRenderPassAttachmentDescriptor = void;
+    }
+#endif
+
 #include "../../RenderPass.h"
 #include "MetalResource.h"
 
@@ -22,11 +30,11 @@ namespace Sierra
         void Resize(uint32 width, uint32 height) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] uint32 GetColorAttachmentCount() const override { return colorAttachmentCount; };
-        [[nodiscard]] bool HasDepthAttachment() const override { return hasDepthAttachment; };
+        [[nodiscard]] uint32 GetColorAttachmentCount() const override { return colorAttachmentCount; }
+        [[nodiscard]] bool HasDepthAttachment() const override { return hasDepthAttachment; }
 
-        [[nodiscard]] inline MTLRenderPassDescriptor* GetSubpass(const uint32 subpassIndex) const { return subpasses[subpassIndex]; }
-        [[nodiscard]] inline std::span<MTLRenderPassAttachmentDescriptor* const> GetAttachment(const uint32 attachmentIndex) const { return attachmentMap[attachmentIndex]; }
+        [[nodiscard]] MTLRenderPassDescriptor* GetSubpass(const uint32 subpassIndex) const { return subpasses[subpassIndex]; }
+        [[nodiscard]] std::span<MTLRenderPassAttachmentDescriptor* const> GetAttachment(const uint32 attachmentIndex) const { return attachmentMap[attachmentIndex]; }
 
         /* --- DESTRUCTOR --- */
         ~MetalRenderPass() override;

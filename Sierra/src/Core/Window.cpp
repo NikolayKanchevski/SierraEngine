@@ -7,6 +7,13 @@
 namespace Sierra
 {
 
+    namespace
+    {
+        struct NullInputManager final : public InputManager { };
+        struct NullCursorManager final : public CursorManager { };
+        struct NullTouchManager final : public TouchManager { };
+    }
+
     /* --- CONSTRUCTORS --- */
 
     Window::Window(const WindowCreateInfo &createInfo)
@@ -18,19 +25,19 @@ namespace Sierra
 
     InputManager& Window::GetInputManager()
     {
-        static InputManager nullInputManger = InputManager({ });
+        static NullInputManager nullInputManger = NullInputManager();
         return nullInputManger;
     }
 
     CursorManager& Window::GetCursorManager()
     {
-        static CursorManager nullCursorManager = CursorManager({ });
+        static NullCursorManager nullCursorManager = NullCursorManager();
         return nullCursorManager;
     }
 
     TouchManager& Window::GetTouchManager()
     {
-        static TouchManager nullTouchManager = TouchManager({ });
+        static NullTouchManager nullTouchManager = NullTouchManager();
         return nullTouchManager;
     }
 

@@ -21,9 +21,9 @@ namespace Sierra
     public:
         /* --- GETTER METHODS --- */
         [[nodiscard]] Version GetAPIVersion() const;
-        [[nodiscard]] inline VkInstance GetVulkanInstance() const { return instance; }
+        [[nodiscard]] VkInstance GetVulkanInstance() const { return instance; }
 
-        [[nodiscard]] inline auto& GetFunctionTable() const { return functionTable; }
+        [[nodiscard]] auto& GetFunctionTable() const { return functionTable; }
         [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const;
 
         /* --- DESTRUCTOR --- */

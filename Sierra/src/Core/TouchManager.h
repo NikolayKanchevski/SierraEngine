@@ -16,7 +16,7 @@ namespace Sierra
     class SIERRA_API TouchEvent : public Event
     {
     public:
-        [[nodiscard]] inline const Touch& GetTouch() const { return touch; }
+        [[nodiscard]] const Touch& GetTouch() const { return touch; }
 
     protected:
         explicit TouchEvent(const Touch &touch) : touch(touch) { }
@@ -26,11 +26,11 @@ namespace Sierra
 
     };
 
-    class SIERRA_API TouchBeginEvent final : public TouchEvent
+    class SIERRA_API TouchPressEvent final : public TouchEvent
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit TouchBeginEvent(const Touch &touch) : TouchEvent(touch) { }
+        explicit TouchPressEvent(const Touch &touch) : TouchEvent(touch) { }
 
     };
 
@@ -42,16 +42,11 @@ namespace Sierra
 
     };
 
-    class SIERRA_API TouchEndEvent final : public TouchEvent
+    class SIERRA_API TouchReleaseEvent final : public TouchEvent
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit TouchEndEvent(const Touch &touch) : TouchEvent(touch) { }
-
-    };
-
-    struct TouchManagerCreateInfo
-    {
+        explicit TouchReleaseEvent(const Touch &touch) : TouchEvent(touch) { }
 
     };
 
@@ -61,17 +56,18 @@ namespace Sierra
         /* --- TYPE DEFINITIONS --- */
         template<TouchEventType EventType>
         using EventCallback = std::function<bool(const EventType&)>;
-        
-        /* --- CONSTRUCTORS --- */
-        explicit TouchManager(const TouchManagerCreateInfo &createInfo);
+
+        /* --- POLLING METHODS --- */
+        virtual void RegisterTouchPress(const Touch &touch);
+        virtual void RegisterTouchMove(TouchID ID, Vector2 position);
+        virtual void RegisterTouchRelease(TouchID ID);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual uint32 GetTouchCount() const;
-        [[nodiscard]] virtual const Touch& GetTouch(uint32 touchIndex) const;
+        [[nodiscard]] virtual std::span<const Touch> GetTouches() const;
 
         /* --- EVENTS --- */
         template<TouchEventType EventType>
-        void OnEvent(const EventCallback<EventType> &Callback) { }
+        void OnEvent(const EventCallback<EventType>&) { }
 
         /* --- DESTRUCTOR --- */
         virtual ~TouchManager() = default;
@@ -81,19 +77,21 @@ namespace Sierra
         TouchManager& operator=(const TouchManager&) = delete;
 
     protected:
-        [[nodiscard]] inline EventDispatcher<TouchBeginEvent>& GetTouchTapDispatcher() { return touchBeginDispatcher; };
-        [[nodiscard]] inline EventDispatcher<TouchMoveEvent>& GetTouchMoveDispatcher() { return touchMoveDispatcher; };
-        [[nodiscard]] inline EventDispatcher<TouchEndEvent>& GetTouchEndDispatcher() { return touchEndDispatcher; };
+        TouchManager() = default;
+
+        [[nodiscard]] EventDispatcher<TouchPressEvent>& GetTouchPressDispatcher() { return touchPressDispatcher; }
+        [[nodiscard]] EventDispatcher<TouchMoveEvent>& GetTouchMoveDispatcher() { return touchMoveDispatcher; }
+        [[nodiscard]] EventDispatcher<TouchReleaseEvent>& GetTouchReleaseDispatcher() { return touchReleaseDispatcher; }
 
     private:
-        EventDispatcher<TouchBeginEvent> touchBeginDispatcher;
+        EventDispatcher<TouchPressEvent> touchPressDispatcher;
         EventDispatcher<TouchMoveEvent> touchMoveDispatcher;
-        EventDispatcher<TouchEndEvent> touchEndDispatcher;
+        EventDispatcher<TouchReleaseEvent> touchReleaseDispatcher;
 
     };
 
-    template<> inline void TouchManager::OnEvent<TouchBeginEvent>(const EventCallback<TouchBeginEvent> &Callback) { touchBeginDispatcher.Subscribe(Callback); }
+    template<> inline void TouchManager::OnEvent<TouchPressEvent>(const EventCallback<TouchPressEvent> &Callback) { touchPressDispatcher.Subscribe(Callback); }
     template<> inline void TouchManager::OnEvent<TouchMoveEvent>(const EventCallback<TouchMoveEvent> &Callback) { touchMoveDispatcher.Subscribe(Callback); }
-    template<> inline void TouchManager::OnEvent<TouchEndEvent>(const EventCallback<TouchEndEvent> &Callback) { touchEndDispatcher.Subscribe(Callback); }
+    template<> inline void TouchManager::OnEvent<TouchReleaseEvent>(const EventCallback<TouchReleaseEvent> &Callback) { touchReleaseDispatcher.Subscribe(Callback); }
 
 }

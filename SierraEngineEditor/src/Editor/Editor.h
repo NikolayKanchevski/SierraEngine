@@ -21,10 +21,10 @@ namespace SierraEngine
         uint32 scaling = 1;
 
         const Sierra::RenderingContext &renderingContext;
-        std::unique_ptr<Sierra::CommandBuffer> &commandBuffer;
+        Sierra::CommandBuffer &commandBuffer;
 
-        const std::unique_ptr<Sierra::Image> &templateOutputImage;
-        std::unique_ptr<Sierra::ResourceTable> &resourceTable;
+        const Sierra::Image &templateOutputImage;
+        Sierra::ResourceTable &resourceTable;
     };
 
     class Editor final
@@ -34,9 +34,9 @@ namespace SierraEngine
         explicit Editor(const EditorCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void Update(Scene &scene, const std::optional<std::reference_wrapper<const Sierra::InputManager>> &inputManager = std::nullopt, const std::optional<std::reference_wrapper<const Sierra::CursorManager>> &cursorManager = std::nullopt, const std::optional<std::reference_wrapper<const Sierra::TouchManager>> &touchManager = std::nullopt);
+        void Update(Scene &scene, const Sierra::InputManager* inputManager = nullptr, const Sierra::CursorManager* cursorManager = nullptr, const Sierra::TouchManager* touchManager = nullptr);
         void Resize(uint32 width, uint32 height, uint32 scaling);
-        void Render(std::unique_ptr<Sierra::CommandBuffer> &commandBuffer, const std::unique_ptr<Sierra::Image> &outputImage);
+        void Render(Sierra::CommandBuffer &commandBuffer, const Sierra::Image &outputImage);
 
         /* --- OPERATORS --- */
         Editor(const Editor&) = delete;
@@ -47,6 +47,7 @@ namespace SierraEngine
 
     private:
         Sierra::ImGuiRenderTask imGuiRenderTask;
+        Entity selectedEntity = { };
 
     };
 

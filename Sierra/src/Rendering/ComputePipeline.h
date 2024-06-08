@@ -14,7 +14,7 @@ namespace Sierra
     struct ComputePipelineCreateInfo
     {
         std::string_view name = "Compute Pipeline";
-        const std::unique_ptr<Shader> &computeShader;
+        const Shader &computeShader;
         uint16 pushConstantSize = 0;
     };
 

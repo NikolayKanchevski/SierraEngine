@@ -19,16 +19,16 @@ namespace Sierra
         {
             .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
             .magFilter = SamplerSampleModeToVkFilter(createInfo.filter),
-            .minFilter = samplerCreateInfo.magFilter,
+            .minFilter = SamplerSampleModeToVkFilter(createInfo.filter),
             .mipmapMode = SamplerSampleModeToVkSamplerMipMapMode(createInfo.filter),
             .addressModeU = SamplerExtendModeToVkSamplerAddressMode(createInfo.extendMode),
-            .addressModeV = samplerCreateInfo.addressModeU,
-            .addressModeW = samplerCreateInfo.addressModeU,
+            .addressModeV = SamplerExtendModeToVkSamplerAddressMode(createInfo.extendMode),
+            .addressModeW = SamplerExtendModeToVkSamplerAddressMode(createInfo.extendMode),
             .mipLodBias = 0.0f,
             .anisotropyEnable = createInfo.anisotropy != SamplerAnisotropy::x1,
-            .maxAnisotropy = samplerCreateInfo.anisotropyEnable ? SamplerAnisotropyToFloat32(createInfo.anisotropy) : 1.0f,
+            .maxAnisotropy = SamplerAnisotropyToFloat32(createInfo.anisotropy),
             .compareEnable = createInfo.compareOperation != SamplerCompareOperation::None,
-            .compareOp = samplerCreateInfo.compareEnable ? SamplerCompareOperationToVkCompareOp(createInfo.compareOperation) : VK_COMPARE_OP_ALWAYS,
+            .compareOp = createInfo.anisotropy != SamplerAnisotropy::x1 ? SamplerCompareOperationToVkCompareOp(createInfo.compareOperation) : VK_COMPARE_OP_ALWAYS,
             .minLod = 0.0f,
             .maxLod = static_cast<float32>(createInfo.highestSampledLevel),
             .borderColor = SamplerBorderColorToVkBorderColor(createInfo.borderColor),
@@ -40,7 +40,7 @@ namespace Sierra
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create sampler [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         // Assign name
-        device.SetObjectName(sampler, VK_OBJECT_TYPE_SAMPLER, GetName());
+        device.SetResourceName(sampler, VK_OBJECT_TYPE_SAMPLER, GetName());
     }
 
     /* --- DESTRUCTOR --- */

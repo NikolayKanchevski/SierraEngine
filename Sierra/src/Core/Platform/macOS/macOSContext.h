@@ -21,8 +21,8 @@ namespace Sierra
         explicit macOSContext(const PlatformContextCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const CocoaContext& GetCocoaContext() const { return cocoaContext; }
-        [[nodiscard]] inline PlatformType GetType() const override { return PlatformType::macOS; }
+        [[nodiscard]] PlatformType GetType() const override { return PlatformType::macOS; }
+        [[nodiscard]] CocoaContext& GetCocoaContext() { return cocoaContext; }
 
     private:
         CocoaContext cocoaContext;

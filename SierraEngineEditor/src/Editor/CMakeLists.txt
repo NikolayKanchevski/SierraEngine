@@ -4,3 +4,4 @@ target_sources(SierraEngineEditor PRIVATE
 )
 
 add_subdirectory(Data)
+add_subdirectory(Panels)

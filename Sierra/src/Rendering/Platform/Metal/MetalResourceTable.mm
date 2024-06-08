@@ -19,7 +19,8 @@ namespace Sierra
         SR_ERROR_IF([device.GetMetalDevice() argumentBuffersSupport] != MTLArgumentBuffersTier2, "[Metal]: Cannot create resource table [{0}], as the provided device [{1}] does not support Argument Buffers!", GetName(), device.GetName());
 
         // Set up argument descriptors
-        NSMutableArray<MTLArgumentDescriptor*>* const argumentDescriptors = [[NSMutableArray alloc] initWithCapacity: MetalDevice::BINDLESS_ARGUMENT_BUFFER_INDEX_COUNT];
+        constexpr uint32 ARGUMENT_BUFFER_INDEX_COUNT = 5;
+        NSMutableArray<MTLArgumentDescriptor*>* const argumentDescriptors = [[NSMutableArray alloc] initWithCapacity: ARGUMENT_BUFFER_INDEX_COUNT];
 
         [argumentDescriptors addObject: [MTLArgumentDescriptor argumentDescriptor]];
         [[argumentDescriptors objectAtIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_UNIFORM_BUFFER_INDEX] setDataType: MTLDataTypePointer];
@@ -68,10 +69,10 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void MetalResourceTable::BindUniformBuffer(uint32 index, const std::unique_ptr<Buffer> &buffer, const uint64 memoryRange, const uint64 byteOffset)
+    void MetalResourceTable::BindUniformBuffer(uint32 index, const Buffer &buffer, const uint64 memoryRange, const uint64 byteOffset)
     {
-        SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind uniform buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer->GetName(), GetName());
-        const MetalBuffer &metalBuffer = static_cast<const MetalBuffer&>(*buffer);
+        SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind uniform buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer.GetName(), GetName());
+        const MetalBuffer &metalBuffer = static_cast<const MetalBuffer&>(buffer);
 
         if (index >= GetUniformBufferCapacity())
         {
@@ -84,10 +85,10 @@ namespace Sierra
 
     }
 
-    void MetalResourceTable::BindStorageBuffer(const ResourceIndex index, const std::unique_ptr<Buffer> &buffer, const uint64 memoryRange, const uint64 byteOffset)
+    void MetalResourceTable::BindStorageBuffer(const ResourceIndex index, const Buffer &buffer, const uint64 memoryRange, const uint64 byteOffset)
     {
-        SR_ERROR_IF(buffer->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind storage buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer->GetName(), GetName());
-        const MetalBuffer &metalBuffer = static_cast<const MetalBuffer&>(*buffer);
+        SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind storage buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer.GetName(), GetName());
+        const MetalBuffer &metalBuffer = static_cast<const MetalBuffer&>(buffer);
 
         if (index >= GetStorageBufferCapacity())
         {
@@ -99,10 +100,10 @@ namespace Sierra
         boundResources[BoundResourceEntry(index, MTLResourceUsageRead | MTLResourceUsageWrite)] = metalBuffer.GetMetalBuffer();
     }
 
-    void MetalResourceTable::BindSampledImage(const ResourceIndex index, const std::unique_ptr<Image> &image)
+    void MetalResourceTable::BindSampledImage(const ResourceIndex index, const Image &image)
     {
-        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind sampled image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image->GetName(), GetName());
-        const MetalImage &metalImage = static_cast<const MetalImage&>(*image);
+        SR_ERROR_IF(image.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind sampled image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image.GetName(), GetName());
+        const MetalImage &metalImage = static_cast<const MetalImage&>(image);
 
         if (index >= GetSampledImageCapacity())
         {
@@ -114,10 +115,10 @@ namespace Sierra
         boundResources[BoundResourceEntry(index, MTLResourceUsageRead)] = metalImage.GetMetalTexture();
     }
 
-    void MetalResourceTable::BindStorageImage(const ResourceIndex index, const std::unique_ptr<Image> &image)
+    void MetalResourceTable::BindStorageImage(const ResourceIndex index, const Image &image)
     {
-        SR_ERROR_IF(image->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind storage image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image->GetName(), GetName());
-        const MetalImage &metalImage = static_cast<const MetalImage&>(*image);
+        SR_ERROR_IF(image.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind storage image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image.GetName(), GetName());
+        const MetalImage &metalImage = static_cast<const MetalImage&>(image);
 
         if (index >= GetStorageImageCapacity())
         {
@@ -129,10 +130,10 @@ namespace Sierra
         boundResources[BoundResourceEntry(index, MTLResourceUsageRead | MTLResourceUsageWrite)] = metalImage.GetMetalTexture();
     }
 
-    void MetalResourceTable::BindSampler(const ResourceIndex index, const std::unique_ptr<Sampler> &sampler)
+    void MetalResourceTable::BindSampler(const ResourceIndex index, const Sampler &sampler)
     {
-        SR_ERROR_IF(sampler->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind sampler [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", sampler->GetName(), GetName());
-        const MetalSampler &metalSampler = static_cast<const MetalSampler&>(*sampler);
+        SR_ERROR_IF(sampler.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind sampler [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", sampler.GetName(), GetName());
+        const MetalSampler &metalSampler = static_cast<const MetalSampler&>(sampler);
 
         if (index >= GetSamplerCapacity())
         {

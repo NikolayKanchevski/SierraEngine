@@ -26,7 +26,7 @@ namespace Sierra
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create shader module for shader [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         // Set object name
-        device.SetObjectName(shaderModule, VK_OBJECT_TYPE_SHADER_MODULE, GetName());
+        device.SetResourceName(shaderModule, VK_OBJECT_TYPE_SHADER_MODULE, GetName());
     }
 
     /* --- DESTRUCTOR --- */

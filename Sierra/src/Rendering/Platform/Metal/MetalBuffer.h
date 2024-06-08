@@ -4,6 +4,14 @@
 
 #pragma once
 
+#if !defined(__OBJC__)
+    namespace Sierra
+    {
+        using MTLBuffer = void;
+        using MTLResourceOptions = std::uintptr_t;
+    }
+#endif
+
 #include "../../Buffer.h"
 #include "MetalResource.h"
 
@@ -22,10 +30,10 @@ namespace Sierra
         void CopyFromMemory(const void* memoryPointer, uint64 memoryRange = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const void* GetData() const override { return [buffer contents]; }
-        [[nodiscard]] inline uint64 GetMemorySize() const override { return [buffer length]; }
+        [[nodiscard]] const void* GetData() const override { return [buffer contents]; }
+        [[nodiscard]] uint64 GetMemorySize() const override { return [buffer length]; }
 
-        [[nodiscard]] inline id<MTLBuffer> GetMetalBuffer() const { return buffer; }
+        [[nodiscard]] id<MTLBuffer> GetMetalBuffer() const { return buffer; }
 
         /* --- DESTRUCTOR --- */
         ~MetalBuffer() override;

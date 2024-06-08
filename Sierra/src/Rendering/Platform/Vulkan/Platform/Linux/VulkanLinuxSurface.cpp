@@ -7,10 +7,10 @@
 namespace Sierra
 {
 
-    VkSurfaceKHR VulkanLinuxSurface::Create(const VulkanInstance &instance, const std::unique_ptr<Window> &window)
+    VkSurfaceKHR VulkanLinuxSurface::Create(const VulkanInstance &instance, const Window &window)
     {
-        SR_ERROR_IF(window->GetAPI() != PlatformAPI::X11, "[Vulkan]: Cannot create a Linux surface for Vulkan using window [{0}], which has a platform API, that differs from from [PlatformAPI::X11]!", window->GetTitle());
-        const X11Window &x11Window = static_cast<const X11Window&>(*window);
+        SR_ERROR_IF(window.GetAPI() != PlatformAPI::X11, "[Vulkan]: Cannot create a Linux surface for Vulkan using window [{0}], which has a platform API, that differs from from [PlatformAPI::X11]!", window.GetTitle());
+        const X11Window &x11Window = static_cast<const X11Window&>(window);
 
         // Set up surface create info
         const VkXlibSurfaceCreateInfoKHR surfaceCreateInfo
@@ -23,7 +23,7 @@ namespace Sierra
         // Create surface
         VkSurfaceKHR surface;
         const VkResult result = instance.GetFunctionTable().vkCreateXlibSurfaceKHR(instance.GetVulkanInstance(), &surfaceCreateInfo, nullptr, &surface);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create Linux surface for window [{0}]! Error code: {1}.", window->GetTitle(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create Linux surface for window [{0}]! Error code: {1}.", window.GetTitle(), static_cast<int32>(result));
 
         return surface;
     }

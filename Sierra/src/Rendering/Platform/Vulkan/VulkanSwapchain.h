@@ -21,15 +21,15 @@ namespace Sierra
 
         /* --- POLLING METHODS --- */
         void AcquireNextImage() override;
-        void Present(std::unique_ptr<CommandBuffer> &commandBuffer) override;
+        void Present(CommandBuffer &commandBuffer) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetCurrentFrameIndex() const override { return currentFrame; }
-        [[nodiscard]] inline uint32 GetCurrentImageIndex() const override { return currentImage; }
-        [[nodiscard]] inline uint32 GetConcurrentFrameCount() const override { return concurrentFrameCount; }
+        [[nodiscard]] uint32 GetCurrentFrameIndex() const override { return currentFrame; }
+        [[nodiscard]] uint32 GetCurrentImageIndex() const override { return currentImage; }
+        [[nodiscard]] uint32 GetConcurrentFrameCount() const override { return concurrentFrameCount; }
 
-        [[nodiscard]] inline uint32 GetScaling() const override { return glm::max(1U, swapchainImages[currentImage]->GetWidth() / window->GetWidth()); }
-        [[nodiscard]] inline const std::unique_ptr<Image>& GetImage(const uint32 frameIndex) const override { SR_ERROR_IF(frameIndex >= concurrentFrameCount, "[Vulkan]: Cannot return image with an index [{0}] of swapchain [{1}], as index is out of bounds! Use Swapchain::GetConcurrentFrameCount() to query image count.", frameIndex, GetName()); return swapchainImages[frameIndex]; }
+        [[nodiscard]] uint32 GetScaling() const override { return glm::max(1U, swapchainImages[currentImage]->GetWidth() / window.GetWidth()); }
+        [[nodiscard]] const Image& GetImage(const uint32 frameIndex) const override { SR_ERROR_IF(frameIndex >= concurrentFrameCount, "[Vulkan]: Cannot return image with an index [{0}] of swapchain [{1}], as index is out of bounds! Use Swapchain::GetConcurrentFrameCount() to query image count.", frameIndex, GetName()); return *swapchainImages[frameIndex]; }
 
         /* --- DESTRUCTOR --- */
         ~VulkanSwapchain() override;
@@ -37,7 +37,7 @@ namespace Sierra
     private:
         const VulkanInstance &instance;
         const VulkanDevice &device;
-        const std::unique_ptr<Window> &window;
+        Window &window;
 
         VkSurfaceKHR surface = VK_NULL_HANDLE;
         VkQueue presentationQueue = VK_NULL_HANDLE;

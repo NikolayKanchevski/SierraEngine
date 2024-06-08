@@ -82,7 +82,7 @@ namespace Sierra
         lastCursorPosition = cursorPosition;
     }
 
-    void X11CursorManager::UpdateEnd()
+    void X11CursorManager::PostUpdate()
     {
         if (!cursorHidden || !x11Context.IsWindowFocused(window)) return;
 

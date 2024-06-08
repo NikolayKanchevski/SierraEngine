@@ -15,15 +15,18 @@ namespace Sierra
         Release
     };
 
+    using TouchID = uint64;
     struct TouchCreateInfo
     {
+        TouchID ID = 0;
         TouchType type = TouchType::Press;
+
         TimePoint tapTime = TimePoint::Now();
-        uint32 tapCount = 0;
         float32 force = 0.0f;
+
         Vector2 position = { 0.0f, 0.0f };
-        Vector2 deltaPosition = { 0.0f, 0.0f };
-        void* ID = nullptr;
+        Vector2 lastPosition = {0.0f, 0.0f };
+
     };
 
     class SIERRA_API Touch
@@ -33,21 +36,30 @@ namespace Sierra
         explicit Touch(const TouchCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline TouchType GetType() const { return createInfo.type; }
-        [[nodiscard]] inline uint32 GetTapCount() const { return createInfo.tapCount; }
-        [[nodiscard]] inline float32 GetForce() const { return createInfo.force; }
-        [[nodiscard]] inline Vector2 GetPosition() const { return createInfo.position; }
-        [[nodiscard]] inline Vector2 GetLastPosition() const { return createInfo.position - createInfo.deltaPosition; }
-        [[nodiscard]] inline Vector2 GetDeltaPosition() const { return createInfo.deltaPosition; }
-        [[nodiscard]] inline TimeStep GetHoldDuration() const { return TimeStep(TimePoint::Now() - createInfo.tapTime); }
-        [[nodiscard]] inline void* GetID() const { return createInfo.ID; }
+        [[nodiscard]] TouchID GetID() const { return ID; }
+        [[nodiscard]] TouchType GetType() const { return type; }
+
+        [[nodiscard]] float32 GetForce() const { return force; }
+        [[nodiscard]] TimePoint GetTapTime() const { return tapTime; }
+        [[nodiscard]] TimeStep GetHoldDuration() const { return TimeStep(TimePoint::Now() - tapTime); }
+
+        [[nodiscard]] Vector2 GetPosition() const { return position; }
+        [[nodiscard]] Vector2 GetLastPosition() const { return lastPosition; }
+        [[nodiscard]] Vector2 GetDeltaPosition() const { return position - lastPosition; }
 
         /* --- OPERATORS --- */
-        [[nodiscard]] inline bool operator ==(const Touch &other) const { return createInfo.ID == other.createInfo.ID; }
-        [[nodiscard]] inline bool operator !=(const Touch &other) const { return !(*this == other); }
+        [[nodiscard]] bool operator ==(const Touch &other) const { return ID == other.ID; }
+        [[nodiscard]] bool operator !=(const Touch &other) const { return !(*this == other); }
 
     private:
-        TouchCreateInfo createInfo;
+        TouchID ID = 0;
+        TouchType type = TouchType::Press;
+
+        TimePoint tapTime = TimePoint::Now();
+        float32 force = 0.0f;
+
+        Vector2 position = { 0.0f, 0.0f };
+        Vector2 lastPosition = { 0.0f, 0.0f };
 
     };
 

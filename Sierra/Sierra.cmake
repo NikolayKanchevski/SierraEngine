@@ -27,7 +27,7 @@ else()
     option(SIERRA_ENABLE_OPTIMIZATIONS "Whether to enable optimizations." ON)
 endif()
 
-if(SIERRA_PLATFORM_WINDOWS OR SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_LINUX OR SIERRA_PLATFORM_ANDROID)
+if(SIERRA_PLATFORM_WINDOWS OR SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_LINUX OR SIERRA_PLATFORM_ANDROID OR SIERRA_PLATFORM_iOS)
     option(SIERRA_BUILD_VULKAN "Whether to build Vulkan and its resources." ON)
 endif()
 if(SIERRA_PLATFORM_macOS OR SIERRA_PLATFORM_iOS)
@@ -36,7 +36,7 @@ endif()
 
 option(SIERRA_ENABLE_IMGUI_EXTENSION "Whether to build the ImGui layer (ImGui would still need to be manually linked to application). Requires SIERRA_IMGUI_INCLUDE_DIRECTORY_PATH to be set." OFF)
 
-# === CHECK IF REQUIREMENTS ARE MET === #
+# Validate usage
 if(NOT CMAKE_CXX_STANDARD OR NOT CMAKE_CXX_STANDARD EQUAL 20)
     message(FATAL_ERROR "[Sierra]: Sierra runs under C++20 only, and needs the [CMAKE_CXX_STANDARD] version to be explicitly set to [20] prior to including Sierra.cmake!")
 endif()
@@ -46,31 +46,55 @@ endif()
 if(SIERRA_PLATFORM_UNKNOWN)
     message(FATAL_ERROR "[Sierra]: Sierra cannot be built for current platform [${CMAKE_SYSTEM_NAME}]!")
 endif()
+if((SIERRA_BUILD_STATIC_LIBRARY AND SIERRA_BUILD_SHARED_LIBRARY) OR (NOT SIERRA_BUILD_STATIC_LIBRARY AND NOT SIERRA_BUILD_SHARED_LIBRARY))
+    message(FATAL_ERROR "[Sierra]: Illegal build configuration! You must compile with either SIERRA_BUILD_STATIC_LIBRARY or SIERRA_BUILD_SHARED_LIBRARY set, but not both!")
+endif()
 
-# === BUILD API LIBRARY === #
-add_subdirectory(${SIERRA_DIRECTORY_PATH}/src/ ${SIERRA_DIRECTORY_PATH}/src/)
+# Generate library
+if(SIERRA_BUILD_STATIC_LIBRARY)
+    message(STATUS "[Sierra]: Building Sierra as static library...")
+    add_library(Sierra STATIC)
+elseif(SIERRA_BUILD_SHARED_LIBRARY)
+    message(STATUS "[Sierra]: Building Sierra as dynamic library...")
+    add_library(Sierra SHARED)
+endif()
+
+# Determine library output path
+set(SIERRA_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/")
+if(SIERRA_PLATFORM_macOS)
+    set(SIERRA_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/${SIERRA_APPLICATION_NAME}.app/Contents/Frameworks/")
+elseif(SIERRA_PLATFORM_iOS)
+    set(SIERRA_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin/")
+endif()
+
+# Assign library output path
+set_target_properties(Sierra PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY ${SIERRA_LIBRARY_OUTPUT_PATH}
+    LIBRARY_OUTPUT_DIRECTORY ${SIERRA_LIBRARY_OUTPUT_PATH}
+    RUNTIME_OUTPUT_DIRECTORY ${SIERRA_LIBRARY_OUTPUT_PATH}
+)
+
+# Set compiler options
+if(SIERRA_ENABLE_OPTIMIZATIONS)
+    if(SIERRA_COMPILER_MSVC)
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox")
+    elseif(SIERRA_COMPILER_CLANG OR SIERRA_COMPILER_GCC)
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+    endif()
+endif()
+
+if(SIERRA_COMPILER_MSVC)
+    add_compile_options(/wd4250)
+    add_compile_options(/wd4251)
+endif()
+
+if(SIERRA_BUILD_ANDROID_STUDIO_PROJECT)
+    BuildAndroidStudioProject()
+    return()
+endif()
 
 function(SierraBuildApplication SOURCE_FILES)
-    # === COMPILER SETTINGS === #
-    if(SIERRA_ENABLE_OPTIMIZATIONS)
-        if(SIERRA_COMPILER_MSVC)
-            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox")
-        elseif(SIERRA_COMPILER_CLANG OR SIERRA_COMPILER_GCC)
-            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-        endif()
-    endif()
-
-    if(SIERRA_COMPILER_MSVC)
-        add_compile_options(/wd4250)
-        add_compile_options(/wd4251)
-    endif()
-
-    if(SIERRA_BUILD_ANDROID_STUDIO_PROJECT)
-        BuildAndroidStudioProject()
-        return()
-    endif()
-
-    # == OUTPUT GENERATION === #
+    # Generate executable
     if(SIERRA_PLATFORM_WINDOWS)
         BuildWindowsExecutable(${SOURCE_FILES})
     elseif(SIERRA_PLATFORM_LINUX)
@@ -82,6 +106,9 @@ function(SierraBuildApplication SOURCE_FILES)
     elseif(SIERRA_PLATFORM_iOS)
         BuildIOSApplication(${SOURCE_FILES})
     endif()
+
+    # Build library
+    add_subdirectory(${SIERRA_DIRECTORY_PATH}/src/ ${SIERRA_DIRECTORY_PATH}/src/)
 
     # Delete static library after build
     if(SIERRA_BUILD_STATIC_LIBRARY)

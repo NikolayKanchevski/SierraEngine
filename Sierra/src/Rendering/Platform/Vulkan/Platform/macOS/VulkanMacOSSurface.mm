@@ -11,10 +11,10 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VkSurfaceKHR VulkanMacOSSurface::Create(const VulkanInstance &instance, const std::unique_ptr<Window> &window)
+    VkSurfaceKHR VulkanMacOSSurface::Create(const VulkanInstance &instance, const Window &window)
     {
-        SR_ERROR_IF(window->GetAPI() != PlatformAPI::Cocoa, "[Vulkan]: Cannot create a iOS surface for Vulkan using window [{0}], which has a platform API, that differs from from [PlatformAPI::Cocoa]!", window->GetTitle());
-        const CocoaWindow &cocoaWindow = static_cast<CocoaWindow&>(*window);
+        SR_ERROR_IF(window.GetAPI() != PlatformAPI::Cocoa, "[Vulkan]: Cannot create a iOS surface for Vulkan using window [{0}], which has a platform API, that differs from from [PlatformAPI::Cocoa]!", window.GetTitle());
+        const CocoaWindow &cocoaWindow = static_cast<const CocoaWindow&>(window);
 
         #if MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
             // Set up surface create info
@@ -27,7 +27,7 @@ namespace Sierra
             // Create surface
             VkSurfaceKHR surface;
             const VkResult result = instance.GetFunctionTable().vkCreateMetalSurfaceEXT(instance.GetVulkanInstance(), &surfaceCreateInfo, nullptr, &surface);
-            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create macOS surface for window [{0}]! Error code: {1}.", window->GetTitle(), static_cast<int32>(result));
+            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create macOS surface for window [{0}]! Error code: {1}.", window.GetTitle(), static_cast<int32>(result));
 
             return surface;
         #else

@@ -87,10 +87,10 @@ namespace Sierra
         [[nodiscard]] bool IsWindowsVersionOrGreater(DWORD major, DWORD minor, WORD servicePack) const;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline HINSTANCE GetHInstance() const { return hInstance; }
+        [[nodiscard]] HINSTANCE GetHInstance() const { return hInstance; }
 
-        [[nodiscard]] const Win32Screen& GetPrimaryScreen() const;
-        [[nodiscard]] const Win32Screen& GetWindowScreen(HWND window) const;
+        [[nodiscard]] Win32Screen& GetPrimaryScreen() const;
+        [[nodiscard]] Win32Screen& GetWindowScreen(HWND window) const;
 
         /* --- DESTRUCTOR --- */
         ~Win32Context();

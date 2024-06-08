@@ -18,10 +18,10 @@ namespace Sierra
 
     struct X11ScreenCreateInfo
     {
-        const XRRScreenResources* screenResources;
-        const XRRCrtcInfo* crtcInfo;
-        const XRROutputInfo* outputInfo;
-        const Vector4UInt &workAreaExtents;
+        const XRRScreenResources* screenResources = nullptr;
+        const XRRCrtcInfo* crtcInfo = nullptr;
+        const XRROutputInfo* outputInfo = nullptr;
+        const Vector4UInt &workAreaExtents = nullptr;
     };
 
     class SIERRA_API X11Screen final : public Screen
@@ -31,17 +31,17 @@ namespace Sierra
         explicit X11Screen(const X11ScreenCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline std::string_view GetName() const override { return name; };
-        [[nodiscard]] inline uint32 GetRefreshRate() const override { return refreshRate; };
-        [[nodiscard]] inline ScreenOrientation GetOrientation() const override { return size.x >= size.y ? ScreenOrientation::LandscapeNormal : ScreenOrientation::PortraitNormal; }
+        [[nodiscard]] std::string_view GetName() const override { return name; };
+        [[nodiscard]] uint32 GetRefreshRate() const override { return refreshRate; };
+        [[nodiscard]] ScreenOrientation GetOrientation() const override { return size.x >= size.y ? ScreenOrientation::Landscape : ScreenOrientation::Portrait; }
 
-        [[nodiscard]] inline Vector2Int GetOrigin() const override { return origin; };
-        [[nodiscard]] inline uint32 GetWidth() const override { return size.x; }
-        [[nodiscard]] inline uint32 GetHeight() const override { return size.y; }
+        [[nodiscard]] Vector2Int GetOrigin() const override { return origin; };
+        [[nodiscard]] uint32 GetWidth() const override { return size.x; }
+        [[nodiscard]] uint32 GetHeight() const override { return size.y; }
 
-        [[nodiscard]] inline Vector2Int GetWorkAreaOrigin() const override { return workAreaOrigin; };
-        [[nodiscard]] inline uint32 GetWorkAreaWidth() const override { return workAreaSize.x; }
-        [[nodiscard]] inline uint32 GetWorkAreaHeight() const override { return workAreaSize.y; }
+        [[nodiscard]] Vector2Int GetWorkAreaOrigin() const override { return workAreaOrigin; };
+        [[nodiscard]] uint32 GetWorkAreaWidth() const override { return workAreaSize.x; }
+        [[nodiscard]] uint32 GetWorkAreaHeight() const override { return workAreaSize.y; }
 
         /* --- MOVE SEMANTICS --- */
         X11Screen(X11Screen&& other);

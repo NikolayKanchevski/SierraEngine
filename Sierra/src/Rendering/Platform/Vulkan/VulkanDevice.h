@@ -20,28 +20,28 @@ namespace Sierra
         VulkanDevice(const VulkanInstance &instance, const DeviceCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer, std::span<const std::reference_wrapper<std::unique_ptr<CommandBuffer>>> commandBuffersToWait = { }) const override;
-        void WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const override;
+        void SubmitCommandBuffer(CommandBuffer &commandBuffer, std::span<const CommandBuffer*> commandBuffersToWait = { }) const override;
+        void WaitForCommandBuffer(const CommandBuffer &commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline std::string_view GetDeviceName() const override { return deviceName; }
+        [[nodiscard]] std::string_view GetDeviceName() const override { return deviceName; }
 
         [[nodiscard]] bool IsImageFormatSupported(ImageFormat format, ImageUsage usage) const override;
         [[nodiscard]] bool IsImageSamplingSupported(ImageSampling sampling) const override;
         [[nodiscard]] bool IsSamplerAnisotropySupported(SamplerAnisotropy anisotropy) const override;
 
-        [[nodiscard]] inline VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
-        [[nodiscard]] inline VkDevice GetLogicalDevice() const { return logicalDevice; }
-        [[nodiscard]] inline VmaAllocator GetMemoryAllocator() const { return vmaAllocator; }
+        [[nodiscard]] VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
+        [[nodiscard]] VkDevice GetLogicalDevice() const { return logicalDevice; }
+        [[nodiscard]] VmaAllocator GetMemoryAllocator() const { return vmaAllocator; }
 
-        [[nodiscard]] inline uint32 GetGeneralQueueFamily() const { return generalQueueFamily; }
-        [[nodiscard]] inline VkQueue GetGeneralQueue() const { return generalQueue; }
+        [[nodiscard]] uint32 GetGeneralQueueFamily() const { return generalQueueFamily; }
+        [[nodiscard]] VkQueue GetGeneralQueue() const { return generalQueue; }
 
-        [[nodiscard]] inline VkSemaphore GetGeneralTimelineSemaphore() const { return generalTimelineSemaphore; }
-        [[nodiscard]] inline uint64 GetNewSignalValue() const { lastReservedSignalValue++; return lastReservedSignalValue; }
+        [[nodiscard]] VkSemaphore GetGeneralTimelineSemaphore() const { return generalTimelineSemaphore; }
+        [[nodiscard]] uint64 GetNewSignalValue() const { return ++lastReservedSignalValue; }
 
-        [[nodiscard]] inline VkDescriptorSetLayout GetDescriptorSetLayout() const { return generalDescriptorSetLayout; }
-        [[nodiscard]] inline VkPipelineLayout GetPipelineLayout(const uint16 pushConstantSize) const { return generalPipelineLayouts[pushConstantSize / 4]; }
+        [[nodiscard]] VkDescriptorSetLayout GetDescriptorSetLayout() const { return generalDescriptorSetLayout; }
+        [[nodiscard]] VkPipelineLayout GetPipelineLayout(const uint16 pushConstantSize) const { return generalPipelineLayouts[pushConstantSize / 4]; }
 
         [[nodiscard]] VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const;
         VkPhysicalDeviceProperties2 GetPhysicalDeviceProperties2(void* pNext = nullptr) const;
@@ -50,10 +50,10 @@ namespace Sierra
         VkPhysicalDeviceFeatures2 GetPhysicalDeviceFeatures2(void* pNext = nullptr) const;
 
         [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const;
-        [[nodiscard]] inline auto& GetFunctionTable() const { return functionTable; }
+        [[nodiscard]] auto& GetFunctionTable() const { return functionTable; }
 
         /* --- SETTER METHODS --- */
-        void SetObjectName(VkHandle object, VkObjectType objectType, std::string_view name) const;
+        void SetResourceName(VkHandle object, VkObjectType type, std::string_view name) const;
 
         /* --- CONSTANTS --- */
         constexpr static uint32 BINDLESS_SET                            = 0;
@@ -62,7 +62,6 @@ namespace Sierra
         constexpr static uint32 BINDLESS_SAMPLED_IMAGE_BINDING          = 2;
         constexpr static uint32 BINDLESS_STORAGE_IMAGE_BINDING          = 3;
         constexpr static uint32 BINDLESS_SAMPLER_BINDING                = 4;
-        constexpr static uint32 BINDLESS_BINDING_COUNT                  = 5;
 
         /* --- DESTRUCTOR --- */
         ~VulkanDevice() override;
@@ -84,7 +83,7 @@ namespace Sierra
         VkSemaphore generalTimelineSemaphore = VK_NULL_HANDLE;
 
         VkDescriptorSetLayout generalDescriptorSetLayout = VK_NULL_HANDLE;
-        std::array<VkPipelineLayout, (MAX_PUSH_CONSTANT_SIZE / 4) + 1> generalPipelineLayouts{};
+        std::array<VkPipelineLayout, MAX_PUSH_CONSTANT_SIZE / 4 + 1> generalPipelineLayouts{};
 
         struct
         {

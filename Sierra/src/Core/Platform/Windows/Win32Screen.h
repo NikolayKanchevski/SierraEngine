@@ -18,7 +18,7 @@ namespace Sierra
 
     struct Win32ScreenCreateInfo
     {
-        HMONITOR hMonitor;
+        HMONITOR hMonitor = nullptr;
     };
 
     class SIERRA_API Win32Screen final : public Screen
@@ -28,17 +28,17 @@ namespace Sierra
         explicit Win32Screen(const Win32ScreenCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline std::string_view GetName() const override { return name; };
-        [[nodiscard]] inline uint32 GetRefreshRate() const override { return refreshRate; };
-        [[nodiscard]] inline ScreenOrientation GetOrientation() const override { return size.x >= size.y ? ScreenOrientation::LandscapeNormal : ScreenOrientation::PortraitNormal; }
+        [[nodiscard]] std::string_view GetName() const override { return name; };
+        [[nodiscard]] uint32 GetRefreshRate() const override { return refreshRate; };
+        [[nodiscard]] ScreenOrientation GetOrientation() const override { return size.x >= size.y ? ScreenOrientation::Landscape : ScreenOrientation::Portrait; }
 
-        [[nodiscard]] inline Vector2Int GetOrigin() const override { return origin; };
-        [[nodiscard]] inline uint32 GetWidth() const override { return size.x; }
-        [[nodiscard]] inline uint32 GetHeight() const override { return size.y; }
+        [[nodiscard]] Vector2Int GetOrigin() const override { return origin; };
+        [[nodiscard]] uint32 GetWidth() const override { return size.x; }
+        [[nodiscard]] uint32 GetHeight() const override { return size.y; }
 
-        [[nodiscard]] inline Vector2Int GetWorkAreaOrigin() const override { return workAreaOrigin; };
-        [[nodiscard]] inline uint32 GetWorkAreaWidth() const override { return workAreaSize.x; }
-        [[nodiscard]] inline uint32 GetWorkAreaHeight() const override { return workAreaSize.y; }
+        [[nodiscard]] Vector2Int GetWorkAreaOrigin() const override { return workAreaOrigin; };
+        [[nodiscard]] uint32 GetWorkAreaWidth() const override { return workAreaSize.x; }
+        [[nodiscard]] uint32 GetWorkAreaHeight() const override { return workAreaSize.y; }
 
         /* --- MOVE SEMANTICS --- */
         Win32Screen(Win32Screen&& other);

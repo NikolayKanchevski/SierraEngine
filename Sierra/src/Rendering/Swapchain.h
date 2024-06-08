@@ -7,7 +7,6 @@
 #include "RenderingResource.h"
 #include "../Core/Window.h"
 
-#include "RenderPass.h"
 #include "CommandBuffer.h"
 
 namespace Sierra
@@ -20,12 +19,12 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline explicit SwapchainResizeEvent(const uint32 width, const uint32 height, const uint32 scaling) : width(width), height(height), scaling(scaling) { }
+        explicit SwapchainResizeEvent(const uint32 width, const uint32 height, const uint32 scaling) : scaling(scaling), width(width), height(height) { }
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetWidth() const { return width; }
-        [[nodiscard]] inline uint32 GetHeight() const { return height; }
-        [[nodiscard]] inline uint32 GetScaling() const { return scaling; }
+        [[nodiscard]] uint32 GetWidth() const { return width; }
+        [[nodiscard]] uint32 GetHeight() const { return height; }
+        [[nodiscard]] uint32 GetScaling() const { return scaling; }
 
     private:
         const uint32 scaling = 1;
@@ -56,7 +55,7 @@ namespace Sierra
     struct SwapchainCreateInfo
     {
         std::string_view name = "Swapchain";
-        std::unique_ptr<Window> &window;
+        Window &window;
         SwapchainPresentationMode preferredPresentationMode = SwapchainPresentationMode::VSync;
         SwapchainBuffering preferredBuffering = !SR_PLATFORM_MOBILE ? SwapchainBuffering::TripleBuffering : SwapchainBuffering::DoubleBuffering;
         SwapchainImageMemoryType preferredImageMemoryType = SwapchainImageMemoryType::UNorm8;
@@ -71,23 +70,23 @@ namespace Sierra
 
         /* --- POLLING METHODS --- */
         virtual void AcquireNextImage() = 0;
-        virtual void Present(std::unique_ptr<CommandBuffer> &commandBuffer) = 0;
+        virtual void Present(CommandBuffer &commandBuffer) = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual uint32 GetCurrentFrameIndex() const = 0;
         [[nodiscard]] virtual uint32 GetCurrentImageIndex() const = 0;
         [[nodiscard]] virtual uint32 GetConcurrentFrameCount() const = 0;
 
-        [[nodiscard]] inline uint32 GetWidth() const { return GetImage(0)->GetWidth(); };
-        [[nodiscard]] inline uint32 GetHeight() const { return GetImage(0)->GetHeight(); };
+        [[nodiscard]] uint32 GetWidth() const { return GetImage(0).GetWidth(); }
+        [[nodiscard]] uint32 GetHeight() const { return GetImage(0).GetHeight(); }
         [[nodiscard]] virtual uint32 GetScaling() const = 0;
 
-        [[nodiscard]] virtual const std::unique_ptr<Image>& GetImage(uint32 frameIndex) const = 0;
-        [[nodiscard]] inline const std::unique_ptr<Image>& GetCurrentImage() const { return GetImage(GetCurrentImageIndex()); };
+        [[nodiscard]] virtual const Image& GetImage(uint32 frameIndex) const = 0;
+        [[nodiscard]] const Image& GetCurrentImage() const { return GetImage(GetCurrentImageIndex()); }
 
         /* --- EVENTS --- */
         template<SwapchainEventType EventType>
-        void OnEvent(const EventCallback<EventType> &Callback) { }
+        void OnEvent(const EventCallback<EventType>&) { }
 
         /* --- OPERATORS --- */
         Swapchain(const Swapchain&) = delete;
@@ -98,7 +97,7 @@ namespace Sierra
 
     protected:
         explicit Swapchain(const SwapchainCreateInfo &createInfo);
-        [[nodiscard]] inline EventDispatcher<SwapchainResizeEvent>& GetSwapchainResizeDispatcher() { return swapchainResizeDispatcher; };
+        [[nodiscard]] EventDispatcher<SwapchainResizeEvent>& GetSwapchainResizeDispatcher() { return swapchainResizeDispatcher; }
 
     private:
         EventDispatcher<SwapchainResizeEvent> swapchainResizeDispatcher;

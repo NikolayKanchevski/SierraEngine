@@ -6,10 +6,9 @@
 
 #include "RenderingResource.h"
 
+#include "CommandBuffer.h"
 #include "Image.h"
 #include "Sampler.h"
-#include "CommandBuffer.h"
-#include "Swapchain.h"
 
 namespace Sierra
 {
@@ -23,8 +22,8 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual void SubmitCommandBuffer(std::unique_ptr<CommandBuffer> &commandBuffer,  std::span<const std::reference_wrapper<std::unique_ptr<CommandBuffer>>> commandBuffersToWait = { }) const = 0;
-        virtual void WaitForCommandBuffer(const std::unique_ptr<CommandBuffer> &commandBuffer) const = 0;
+        virtual void SubmitCommandBuffer(CommandBuffer &commandBuffer,  std::span<const CommandBuffer*> commandBuffersToWait = { }) const = 0;
+        virtual void WaitForCommandBuffer(const CommandBuffer &commandBuffer) const = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual std::string_view GetDeviceName() const = 0;

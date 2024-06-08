@@ -43,7 +43,7 @@ namespace Sierra
 
         friend class Win32Window;
         void Update();
-        void UpdateEnd();
+        void PostUpdate();
         void MouseMoveMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
     };

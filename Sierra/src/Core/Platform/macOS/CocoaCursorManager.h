@@ -8,16 +8,16 @@
     #error "Including the CocoaCursorManager.h file is only allowed in macOS builds!"
 #endif
 
-#include "../../CursorManager.h"
-
-#if !defined(__OBJC__)
+#if defined(__OBJC__)
+    #include <Cocoa/Cocoa.h>
+#else
     namespace Sierra
     {
+        #define nil nullptr
         using NSWindow = void;
     }
-#else
-    #include <Cocoa/Cocoa.h>
 #endif
+#include "../../CursorManager.h"
 
 namespace Sierra
 {
@@ -26,18 +26,20 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit CocoaCursorManager(const NSWindow* window, const CursorManagerCreateInfo &createInfo);
+        explicit CocoaCursorManager(const NSWindow* window);
+
+        /* --- POLLING METHODS --- */
+        void RegisterCursorMove(Vector2 position) override;
 
         /* --- SETTER METHODS --- */
-        void ShowCursor() override;
-        void HideCursor() override;
+        void SetCursorVisibility(bool visible) override;
         void SetCursorPosition(Vector2 position) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] bool IsCursorHidden() const override;
+        [[nodiscard]] bool IsCursorVisible() const override;
         [[nodiscard]] Vector2 GetCursorPosition() const override;
-        [[nodiscard]] float32 GetHorizontalDelta() const override;
-        [[nodiscard]] float32 GetVerticalDelta() const override;
+        [[nodiscard]] Vector2 GetCursorDelta() const override;
+
 
     private:
         const NSWindow* window;
@@ -45,18 +47,12 @@ namespace Sierra
         Vector2 cursorPosition = { 0, 0 };
         Vector2 lastCursorPosition = { 0, 0 };
 
-        bool cursorHidden = false;
+        bool cursorShown = true;
         bool justHidCursor = false;
 
         friend class CocoaWindow;
         void Update();
-        void UpdateEnd();
-
-        #if defined(__OBJC__) && (defined(COCOA_CURSOR_MANAGER_IMPLEMENTATION) || defined(COCOA_WINDOW_IMPLEMENTATION))
-            /* --- EVENTS --- */
-            public:
-                void MouseMoved(const NSEvent* event);
-        #endif
+        void PostUpdate();
     };
 
 }

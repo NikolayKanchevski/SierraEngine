@@ -8,25 +8,17 @@
     #error "Including the CocoaWindow.h file is only allowed in macOS builds!"
 #endif
 
+#if defined(__OBJC__)
+    #include <Cocoa/Cocoa.h>
+#else
+    using NSView = void;
+    using NSWindow = void;
+#endif
 #include "../../Window.h"
+
 #include "CocoaContext.h"
 #include "CocoaInputManager.h"
 #include "CocoaCursorManager.h"
-
-#if !defined(__OBJC__)
-    namespace Sierra
-    {
-        using CocoaWindowDelegate = void;
-        using CocoaWindowView = void;
-        using NSView = void;
-        using CAMetalLayer = void;
-        #define nil nullptr
-    }
-#else
-    #include <Cocoa/Cocoa.h>
-    @class CocoaWindowDelegate;
-    @class CocoaWindowView;
-#endif
 
 namespace Sierra
 {
@@ -35,7 +27,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit CocoaWindow(const CocoaContext &cocoaContext, const WindowCreateInfo &createInfo);
+        explicit CocoaWindow(CocoaContext &cocoaContext, const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         void Update() override;
@@ -67,23 +59,23 @@ namespace Sierra
         [[nodiscard]] bool IsFocused() const override;
         [[nodiscard]] bool IsHidden() const override;
 
-        [[nodiscard]] const Screen& GetScreen() const override;
+        [[nodiscard]] Screen& GetScreen() const override;
         [[nodiscard]] InputManager& GetInputManager() override;
         [[nodiscard]] CursorManager& GetCursorManager() override;
         [[nodiscard]] PlatformAPI GetAPI() const override;
 
-        [[nodiscard]] inline const NSWindow* GetNSWindow() const { return window; }
-        [[nodiscard]] inline const NSView* GetNSView() const { return reinterpret_cast<NSView*>(view); }
+        [[nodiscard]] const NSView* GetNSView() const { return view; }
+        [[nodiscard]] const NSWindow* GetNSWindow() const { return window; }
 
         /* --- DESTRUCTOR --- */
         ~CocoaWindow() override;
 
     private:
-        const CocoaContext &cocoaContext;
+        CocoaContext &cocoaContext;
 
+        NSView* view = nil;
+        void* delegate = nil; // NSObject<NSWindowDelegate>*
         NSWindow* window = nil;
-        CocoaWindowDelegate* delegate = nil;
-        CocoaWindowView* view = nil;
 
         CocoaInputManager inputManager;
         CocoaCursorManager cursorManager;
@@ -92,7 +84,7 @@ namespace Sierra
         bool maximized = false;
         bool closed = false;
 
-        [[nodiscard]] float32 GetTitleBarHeight() const;
+        [[nodiscard]] uint32 GetTitleBarHeight() const;
 
     #if defined(__OBJC__) && defined(COCOA_WINDOW_IMPLEMENTATION)
         public:

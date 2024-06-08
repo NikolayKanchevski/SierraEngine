@@ -9,19 +9,32 @@
 #if defined(__OBJC__)
     #include <Metal/Metal.h>
     #include <QuartzCore/QuartzCore.h>
+#else
+    namespace Sierra
+    {
+        #define nil nullptr
+        template<typename T>
+        struct id
+        {
+            id(T* data) : data(data) { }
+            volatile T* data = nil;
+        };
+    }
 #endif
 
 namespace Sierra
 {
 
+    using MTLHandle = void*;
+
     class SIERRA_API MetalResource : public virtual RenderingResource
     {
     public:
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline GraphicsAPI GetAPI() const override { return GraphicsAPI::Metal; };
+        [[nodiscard]] GraphicsAPI GetAPI() const override { return GraphicsAPI::Metal; }
 
     protected:
-        inline explicit MetalResource(const std::string_view name)
+        explicit MetalResource(const std::string_view name)
         {
             #if SR_ENABLE_LOGGING
                 this->name = name;

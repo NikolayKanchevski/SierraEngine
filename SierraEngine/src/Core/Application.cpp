@@ -4,8 +4,6 @@
 
 #include "Application.h"
 
-#include "../Scene/Scene.h"
-
 namespace SierraEngine
 {
 

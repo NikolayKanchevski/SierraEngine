@@ -23,11 +23,11 @@ namespace Sierra
         void CopyFromMemory(const void* memoryPointer, uint64 memoryRange = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const void* GetData() const override { return data; }
-        [[nodiscard]] inline uint64 GetMemorySize() const override { return memorySize; }
+        [[nodiscard]] const void* GetData() const override { return data; }
+        [[nodiscard]] uint64 GetMemorySize() const override { return memorySize; }
 
-        [[nodiscard]] inline VkBuffer GetVulkanBuffer() const { return buffer; }
-        [[nodiscard]] inline VkBufferUsageFlags GetVulkanUsageFlags() const { return usageFlags; }
+        [[nodiscard]] VkBuffer GetVulkanBuffer() const { return buffer; }
+        [[nodiscard]] VkBufferUsageFlags GetVulkanUsageFlags() const { return usageFlags; }
 
         /* --- DESTRUCTOR --- */
         ~VulkanBuffer() override;

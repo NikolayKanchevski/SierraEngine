@@ -33,8 +33,8 @@ namespace Sierra
     {
         RenderPassAttachmentType type = RenderPassAttachmentType::Color;
 
-        const std::unique_ptr<Image> &templateOutputImage;
-        const std::unique_ptr<Image> &templateResolverImage = nullptr;
+        const Image &templateOutputImage;
+        const Image* templateResolverImage = nullptr;
 
         RenderPassAttachmentLoadOperation loadOperation = RenderPassAttachmentLoadOperation::Clear;
         RenderPassAttachmentStoreOperation storeOperation = RenderPassAttachmentStoreOperation::Store;
@@ -55,8 +55,8 @@ namespace Sierra
 
     struct RenderPassBeginAttachment
     {
-        const std::unique_ptr<Image> &outputImage;
-        const std::unique_ptr<Image> &resolverImage = nullptr;
+        const Image &outputImage;
+        const Image* resolverImage = nullptr;
         const ColorRGBA32 &clearValue = { 0.0f, 0.0f, 0.0f, 1.0f };
     };
 
@@ -67,7 +67,7 @@ namespace Sierra
         virtual void Resize(uint32 width, uint32 height) = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetAttachmentCount() const { return GetColorAttachmentCount() + HasDepthAttachment(); }
+        [[nodiscard]] uint32 GetAttachmentCount() const { return GetColorAttachmentCount() + HasDepthAttachment(); }
         [[nodiscard]] virtual uint32 GetColorAttachmentCount() const = 0;
         [[nodiscard]] virtual bool HasDepthAttachment() const = 0;
 

@@ -28,8 +28,8 @@ namespace Sierra
         {
             const RenderPassAttachment &attachment = createInfo.attachments[i];
 
-            SR_ERROR_IF(attachment.templateOutputImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not use image [{0}] of attachment [{1}]'s output image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.templateOutputImage->GetName(), i, GetName());
-            const VulkanImage &vulkanTemplateImage = static_cast<const VulkanImage&>(*attachment.templateOutputImage);
+            SR_ERROR_IF(attachment.templateOutputImage.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not use image [{0}] of attachment [{1}]'s output image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.templateOutputImage.GetName(), i, GetName());
+            const VulkanImage &vulkanTemplateImage = static_cast<const VulkanImage&>(attachment.templateOutputImage);
 
             // Set up framebuffer attachment format of output image
             VkFormat &framebufferAttachmentImageFormat = framebufferAttachmentImageFormats[i];
@@ -295,8 +295,8 @@ namespace Sierra
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not resize framebuffer of render pass [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
 
         // Set object names
-        device.SetObjectName(renderPass, VK_OBJECT_TYPE_RENDER_PASS, GetName());
-        device.SetObjectName(framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Framebuffer of render pass [" + std::string(GetName()) + "]");
+        device.SetResourceName(renderPass, VK_OBJECT_TYPE_RENDER_PASS, GetName());
+        device.SetResourceName(framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Framebuffer of render pass [" + std::string(GetName()) + "]");
     }
 
     /* --- DESTRUCTOR --- */

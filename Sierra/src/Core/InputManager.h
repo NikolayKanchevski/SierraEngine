@@ -18,10 +18,10 @@ namespace Sierra
     {
     public:
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline Key GetKey() const { return key; }
+        [[nodiscard]] Key GetKey() const { return key; }
 
     protected:
-        inline explicit KeyEvent(const Key key) : key(key) { }
+        explicit KeyEvent(const Key key) : key(key) { }
 
     private:
         Key key = Key::Unknown;
@@ -32,7 +32,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline explicit KeyPressEvent(const Key pressedKey) : KeyEvent(pressedKey) { }
+        explicit KeyPressEvent(const Key pressedKey) : KeyEvent(pressedKey) { }
 
     };
 
@@ -40,7 +40,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline explicit KeyReleaseEvent(const Key releasedKey) : KeyEvent(releasedKey) { }
+        explicit KeyReleaseEvent(const Key releasedKey) : KeyEvent(releasedKey) { }
 
     };
 
@@ -48,10 +48,10 @@ namespace Sierra
     {
     public:
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline MouseButton GetMouseButton() const { return mouseButton; }
+        [[nodiscard]] MouseButton GetMouseButton() const { return mouseButton; }
 
     protected:
-        inline explicit MouseButtonEvent(const MouseButton mouseButton) : mouseButton(mouseButton) { }
+        explicit MouseButtonEvent(const MouseButton mouseButton) : mouseButton(mouseButton) { }
 
     private:
         MouseButton mouseButton = MouseButton::Unknown;
@@ -62,7 +62,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline explicit MouseButtonPressEvent(const MouseButton mouseButton) : MouseButtonEvent(mouseButton) { }
+        explicit MouseButtonPressEvent(const MouseButton mouseButton) : MouseButtonEvent(mouseButton) { }
 
     };
 
@@ -70,7 +70,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline explicit MouseButtonReleaseEvent(const MouseButton mouseButton) : MouseButtonEvent(mouseButton) { }
+        explicit MouseButtonReleaseEvent(const MouseButton mouseButton) : MouseButtonEvent(mouseButton) { }
 
     };
 
@@ -78,19 +78,14 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        inline explicit MouseScrollEvent(const Vector2 scroll) : scroll(scroll) { }
+        explicit MouseScrollEvent(const Vector2 scroll) : scroll(scroll) { }
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline float32 GetHorizontalScroll() const { return scroll.x; }
-        [[nodiscard]] inline float32 GetVerticalScroll() const { return scroll.y; }
+        [[nodiscard]] float32 GetHorizontalScroll() const { return scroll.x; }
+        [[nodiscard]] float32 GetVerticalScroll() const { return scroll.y; }
 
     private:
         Vector2 scroll;
-
-    };
-
-    struct InputManagerCreateInfo
-    {
 
     };
 
@@ -101,8 +96,13 @@ namespace Sierra
         template<InputEventType EventType>
         using EventCallback = std::function<bool(const EventType&)>;
 
-        /* --- CONSTRUCTORS --- */
-        explicit InputManager(const InputManagerCreateInfo &createInfo);
+        /* --- POLLING METHODS --- */
+        virtual void RegisterKeyPress(Key key);
+        virtual void RegisterKeyRelease(Key key);
+
+        virtual void RegisterMouseButtonPress(MouseButton mouseButton);
+        virtual void RegisterMouseButtonRelease(MouseButton mouseButton);
+        virtual void RegisterMouseScroll(Vector2 scroll);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual bool IsKeyPressed(Key key) const;
@@ -111,19 +111,24 @@ namespace Sierra
         [[nodiscard]] virtual bool IsKeyResting(Key key) const;
 
         template<typename... Args>
-        [[nodiscard]] inline bool IsKeyCombinationPressed(const Key first, const Args... rest) const { return IsKeyCombinationPressedImplementation({ first, rest... }); };
+        [[nodiscard]] bool IsKeyCombinationPressed(const Key first, const Args... rest) const { return IsKeyCombinationPressedImplementation({ first, rest... }); }
         template<typename... Args>
-        [[nodiscard]] inline bool IsKeyCombinationHeld(const Key first, const Args... rest) const { return IsKeyCombinationHeldImplementation({ first, rest... }); };
+        [[nodiscard]] bool IsKeyCombinationHeld(const Key first, const Args... rest) const { return IsKeyCombinationHeldImplementation({ first, rest... }); }
 
-        [[nodiscard]] virtual bool IsMouseButtonPressed(MouseButton key) const;
-        [[nodiscard]] virtual bool IsMouseButtonHeld(MouseButton key) const;
-        [[nodiscard]] virtual bool IsMouseButtonReleased(MouseButton key) const;
-        [[nodiscard]] virtual bool IsMouseButtonResting(MouseButton key) const;
+        [[nodiscard]] virtual bool IsMouseButtonPressed(MouseButton mouseButton) const;
+        [[nodiscard]] virtual bool IsMouseButtonHeld(MouseButton mouseButton) const;
+        [[nodiscard]] virtual bool IsMouseButtonReleased(MouseButton mouseButton) const;
+        [[nodiscard]] virtual bool IsMouseButtonResting(MouseButton mouseButton) const;
         [[nodiscard]] virtual Vector2 GetMouseScroll() const;
+
+        template<typename... Args>
+        [[nodiscard]] bool IsMouseButtonCombinationPressed(const MouseButton first, const Args... rest) const { return IsMouseButtonCombinationPressedImplementation({ first, rest... }); }
+        template<typename... Args>
+        [[nodiscard]] bool IsMouseButtonCombinationHeld(const MouseButton first, const Args... rest) const { return IsMouseButtonCombinationHeldImplementation({ first, rest... }); }
 
         /* --- EVENTS --- */
         template<InputEventType EventType>
-        void OnEvent(const EventCallback<EventType> &Callback) {  }
+        void OnEvent(const EventCallback<EventType>&) {  }
 
         /* --- OPERATORS --- */
         InputManager(const InputManager&) = delete;
@@ -133,6 +138,8 @@ namespace Sierra
         virtual ~InputManager() = default;
 
     protected:
+        explicit InputManager() = default;
+
         enum class InputAction : bool
         {
             Release = 0,
@@ -142,15 +149,14 @@ namespace Sierra
         constexpr static uint32 KEY_COUNT = static_cast<uint32>(Key::RightSystem) + 1;
         constexpr static uint32 MOUSE_BUTTON_COUNT = static_cast<uint32>(MouseButton::Extra2) + 1;
 
-        [[nodiscard]] inline constexpr static uint32 GetKeyIndex(const Key key) { return static_cast<uint32>(key); }
-        [[nodiscard]] inline constexpr static uint32 GetMouseButtonIndex(const MouseButton mouseButton) { return static_cast<uint32>(mouseButton); }
+        [[nodiscard]] constexpr static uint32 GetKeyIndex(const Key key) { return static_cast<uint32>(key); }
+        [[nodiscard]] EventDispatcher<KeyPressEvent>& GetKeyPressDispatcher() { return keyPressDispatcher; }
+        [[nodiscard]] EventDispatcher<KeyReleaseEvent>& GetKeyReleaseDispatcher() { return keyReleaseDispatcher; }
 
-        [[nodiscard]] inline EventDispatcher<KeyPressEvent>& GetKeyPressDispatcher() { return keyPressDispatcher; }
-        [[nodiscard]] inline EventDispatcher<KeyReleaseEvent>& GetKeyReleaseDispatcher() { return keyReleaseDispatcher; }
-
-        [[nodiscard]] inline EventDispatcher<MouseButtonPressEvent>& GetMouseButtonPressDispatcher() { return mouseButtonPressDispatcher; }
-        [[nodiscard]] inline EventDispatcher<MouseButtonReleaseEvent>& GetMouseButtonReleaseDispatcher() { return mouseButtonReleaseDispatcher; }
-        [[nodiscard]] inline EventDispatcher<MouseScrollEvent>& GetMouseScrollDispatcher() { return mouseScrollDispatcher; }
+        [[nodiscard]] constexpr static uint32 GetMouseButtonIndex(const MouseButton mouseButton) { return static_cast<uint32>(mouseButton); }
+        [[nodiscard]] EventDispatcher<MouseButtonPressEvent>& GetMouseButtonPressDispatcher() { return mouseButtonPressDispatcher; }
+        [[nodiscard]] EventDispatcher<MouseButtonReleaseEvent>& GetMouseButtonReleaseDispatcher() { return mouseButtonReleaseDispatcher; }
+        [[nodiscard]] EventDispatcher<MouseScrollEvent>& GetMouseScrollDispatcher() { return mouseScrollDispatcher; }
 
     private:
         EventDispatcher<KeyPressEvent> keyPressDispatcher;
@@ -160,10 +166,12 @@ namespace Sierra
         EventDispatcher<MouseButtonReleaseEvent> mouseButtonReleaseDispatcher;
         EventDispatcher<MouseScrollEvent> mouseScrollDispatcher;
 
-       [[nodiscard]] bool IsKeyCombinationPressedImplementation(const std::initializer_list<Key> &keys) const;
-       [[nodiscard]] bool IsKeyCombinationHeldImplementation(const std::initializer_list<Key> &keys) const;
+        [[nodiscard]] bool IsKeyCombinationPressedImplementation(const std::initializer_list<Key> &keys) const;
+        [[nodiscard]] bool IsKeyCombinationHeldImplementation(const std::initializer_list<Key> &keys) const;
 
-        std::queue<char> enteredCharacters;
+        [[nodiscard]] bool IsMouseButtonCombinationPressedImplementation(const std::initializer_list<MouseButton> &mouseButtons) const;
+        [[nodiscard]] bool IsMouseButtonCombinationHeldImplementation(const std::initializer_list<MouseButton> &mouseButtons) const;
+
     };
 
     template<> inline void InputManager::OnEvent<KeyPressEvent>(const EventCallback<KeyPressEvent> &Callback) { keyPressDispatcher.Subscribe(Callback); }

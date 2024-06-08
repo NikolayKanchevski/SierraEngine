@@ -9,6 +9,7 @@
 
 #include "MetalDevice.h"
 #include "../../../Core/Window.h"
+#include "MetalImage.h"
 
 namespace Sierra
 {
@@ -21,27 +22,31 @@ namespace Sierra
 
         /* --- POLLING METHODS --- */
         void AcquireNextImage() override;
-        void Present(std::unique_ptr<CommandBuffer> &commandBuffer) override;
+        void Present(CommandBuffer &commandBuffer) override;
 
         /* -- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetCurrentFrameIndex() const override { return currentFrame; }
-        [[nodiscard]] inline uint32 GetCurrentImageIndex() const override { return currentFrame; };
-        [[nodiscard]] inline uint32 GetConcurrentFrameCount() const override { return concurrentFrameCount; }
+        [[nodiscard]] uint32 GetCurrentFrameIndex() const override { return currentFrame; }
+        [[nodiscard]] uint32 GetCurrentImageIndex() const override { return currentFrame; }
+        [[nodiscard]] uint32 GetConcurrentFrameCount() const override { return concurrentFrameCount; }
 
-        [[nodiscard]] inline uint32 GetScaling() const override { return swapchainImage->GetWidth() / window->GetWidth(); }
-        [[nodiscard]] inline const std::unique_ptr<Image>& GetImage(const uint32 frameIndex) const override { SR_ERROR_IF(frameIndex >= concurrentFrameCount, "[Metal]: Cannot return image with an index [{0}] of swapchain [{1}], as index is out of bounds! Use Swapchain::GetConcurrentFrameCount() to query image count.", frameIndex, GetName()); return swapchainImage; };
+        [[nodiscard]] uint32 GetScaling() const override { return swapchainImage->GetWidth() / window.GetWidth(); }
+        [[nodiscard]] const Image& GetImage(const uint32 frameIndex) const override { SR_ERROR_IF(frameIndex >= concurrentFrameCount, "[Metal]: Cannot return image with an index [{0}] of swapchain [{1}], as index is out of bounds! Use Swapchain::GetConcurrentFrameCount() to query image count.", frameIndex, GetName()); return *swapchainImage; }
 
         /* --- DESTRUCTOR --- */
         ~MetalSwapchain() override;
 
     private:
         const MetalDevice &device;
-        const std::unique_ptr<Window> &window;
+        const Window &window;
+        #if !defined(__OBJC__)
+          using CAMetalLayer = void;
+          using CAMetalDrawable = void;
+        #endif
 
         CAMetalLayer* metalLayer = nil;
         id<CAMetalDrawable> metalDrawable = nil;
 
-        std::unique_ptr<Image> swapchainImage;
+        std::unique_ptr<MetalImage> swapchainImage;
         dispatch_semaphore_t isFrameRenderedSemaphores = nil;
 
         uint32 currentFrame = 0;

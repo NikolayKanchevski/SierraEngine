@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Swapchain::Swapchain(const SwapchainCreateInfo &createInfo)
+    Swapchain::Swapchain(const SwapchainCreateInfo&)
     {
 
     }

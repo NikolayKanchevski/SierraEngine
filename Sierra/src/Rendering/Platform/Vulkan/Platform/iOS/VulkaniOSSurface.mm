@@ -9,10 +9,10 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VkSurfaceKHR VulkaniOSSurface::Create(const VulkanInstance &instance, const std::unique_ptr<Window> &window)
+    VkSurfaceKHR VulkaniOSSurface::Create(const VulkanInstance &instance, const Window &window)
     {
-        SR_ERROR_IF(window->GetAPI() != PlatformAPI::UIKit, "[Vulkan]: Cannot create a iOS surface for Vulkan using window [{0}], which has a platform API, that differs from from [PlatformAPI::UIKit]!", window->GetTitle());
-        const UIKitWindow &uiKitWindow = static_cast<const UIKitWindow&>(*window);
+        SR_ERROR_IF(window.GetAPI() != PlatformAPI::UIKit, "[Vulkan]: Cannot create a iOS surface for Vulkan using window [{0}], which has a platform API, that differs from from [PlatformAPI::UIKit]!", window.GetTitle());
+        const UIKitWindow &uiKitWindow = static_cast<const UIKitWindow&>(window);
 
         // Set up surface create info
         const VkMetalSurfaceCreateInfoEXT surfaceCreateInfo
@@ -24,7 +24,7 @@ namespace Sierra
         // Create surface
         VkSurfaceKHR surface;
         const VkResult result = instance.GetFunctionTable().vkCreateMetalSurfaceEXT(instance.GetVulkanInstance(), &surfaceCreateInfo, nullptr, &surface);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create iOS surface for window [{0}]! Error code: {1}.", window->GetTitle(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create iOS surface for window [{0}]! Error code: {1}.", window.GetTitle(), static_cast<int32>(result));
 
         return surface;
     }

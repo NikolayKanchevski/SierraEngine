@@ -64,7 +64,7 @@ namespace Sierra
             win32Context.PollNextWindowEvent(window);
         }
 
-        cursorManager.UpdateEnd();
+        cursorManager.PostUpdate();
         justBecameShown = false;
     }
 
@@ -232,7 +232,7 @@ namespace Sierra
         return !IsWindowVisible(window);
     }
 
-    const Screen& Win32Window::GetScreen() const
+    Screen& Win32Window::GetScreen() const
     {
         return win32Context.GetWindowScreen(window);
     }
@@ -291,7 +291,7 @@ namespace Sierra
                 {
                     if (window->nextMoveEventBlocked || window->justBecameShown || window->IsClosed()) break;
 
-                    window->GetWindowMoveDispatcher().DispatchEvent(window->GetPosition());
+                    window.GetWindowMoveDispatcher().DispatchEvent(window.GetPosition());
                     break;
                 }
                 case WM_SIZE:
@@ -302,13 +302,13 @@ namespace Sierra
                     {
                         if (window->IsClosed()) break;
 
-                        window->GetWindowMinimizeDispatcher().DispatchEvent();
+                        window.GetWindowMinimizeDispatcher().DispatchEvent();
                         break;
                     }
 
                     if (wParam == SIZE_MAXIMIZED)
                     {
-                        window->GetWindowMaximizeDispatcher().DispatchEvent();
+                        window.GetWindowMaximizeDispatcher().DispatchEvent();
                     }
 
                     if (window->nextMoveEventBlocked)
@@ -317,14 +317,14 @@ namespace Sierra
                         break;
                     }
 
-                    window->GetWindowResizeDispatcher().DispatchEvent(window->GetWidth(), window->GetHeight());
+                    window.GetWindowResizeDispatcher().DispatchEvent(window.GetWidth(), window.GetHeight());
                     break;
                 }
                 case WM_SETFOCUS:
                 {
                     if (window->IsClosed()) break;
 
-                    window->GetWindowFocusDispatcher().DispatchEvent(true);
+                    window.GetWindowFocusDispatcher().DispatchEvent(true);
                     window->nextMoveEventBlocked = false;
 
                     if (window->cursorManager.IsCursorHidden()) window->cursorManager.HideCursor();
@@ -334,13 +334,13 @@ namespace Sierra
                 {
                     if (window->IsClosed()) break;
 
-                    window->GetWindowFocusDispatcher().DispatchEvent(false);
+                    window.GetWindowFocusDispatcher().DispatchEvent(false);
                     window->nextMoveEventBlocked = true;
                     return 0;
                 }
                 case WM_CLOSE:
                 {
-                    window->GetWindowCloseDispatcher().DispatchEvent();
+                    window.GetWindowCloseDispatcher().DispatchEvent();
                     window->Close();
                     return 0;
                 }

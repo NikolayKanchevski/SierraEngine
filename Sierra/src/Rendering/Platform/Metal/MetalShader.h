@@ -4,6 +4,13 @@
 
 #pragma once
 
+#if !defined(__OBJC__)
+    namespace Sierra
+    {
+        using MTLFunction = void;
+    }
+#endif
+
 #include "../../Shader.h"
 #include "MetalResource.h"
 
@@ -19,7 +26,7 @@ namespace Sierra
         MetalShader(const MetalDevice &device, const ShaderCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline id<MTLFunction> GetEntryFunction() const { return entryFunction; }
+        [[nodiscard]] id<MTLFunction> GetEntryFunction() const { return entryFunction; }
 
         /* --- DESTRUCTOR --- */
         ~MetalShader() override;

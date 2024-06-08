@@ -31,10 +31,10 @@ namespace Sierra
         [[nodiscard]] std::unique_ptr<CommandBuffer> CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const Device& GetDevice() const override { return device; }
+        [[nodiscard]] const Device& GetDevice() const override { return device; }
 
         /* --- DESTRUCTOR --- */
-        ~MetalContext() = default;
+        ~MetalContext() override = default;
 
     private:
         MetalDevice device;

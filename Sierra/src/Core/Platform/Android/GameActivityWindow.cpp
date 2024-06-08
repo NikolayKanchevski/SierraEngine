@@ -160,7 +160,7 @@ namespace Sierra
         return minimized;
     }
 
-    const Screen& GameActivityWindow::GetScreen() const
+    Screen& GameActivityWindow::GetScreen() const
     {
         return gameActivityContext.GetPrimaryScreen();
     }

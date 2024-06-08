@@ -4,6 +4,13 @@
 
 #pragma once
 
+#if !defined(__OBJC__)
+    namespace Sierra
+    {
+        using MTLComputePipelineState = void;
+    }
+#endif
+
 #include "../../ComputePipeline.h"
 #include "MetalResource.h"
 
@@ -12,14 +19,14 @@
 namespace Sierra
 {
 
-    class SIERRA_API MetalComputePipeline : public ComputePipeline, public MetalResource
+    class SIERRA_API MetalComputePipeline final : public ComputePipeline, public MetalResource
     {
     public:
         /* --- CONSTRUCTORS --- */
         MetalComputePipeline(const MetalDevice &device, const ComputePipelineCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline id<MTLComputePipelineState> GetComputePipelineState() const { return computePipelineState; }
+        [[nodiscard]] id<MTLComputePipelineState> GetComputePipelineState() const { return computePipelineState; }
 
         /* --- DESTRUCTOR --- */
         ~MetalComputePipeline() override;

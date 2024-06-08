@@ -22,11 +22,11 @@ namespace Sierra
         void Resize(uint32 width, uint32 height) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline uint32 GetColorAttachmentCount() const override { return framebufferImageAttachments.size() - (resolveAttachmentCount + hasDepthAttachment); }
-        [[nodiscard]] inline bool HasDepthAttachment() const override { return hasDepthAttachment; };
+        [[nodiscard]] uint32 GetColorAttachmentCount() const override { return framebufferImageAttachments.size() - (resolveAttachmentCount + hasDepthAttachment); }
+        [[nodiscard]] bool HasDepthAttachment() const override { return hasDepthAttachment; }
 
-        [[nodiscard]] inline VkFramebuffer GetVulkanFramebuffer() const { return framebuffer; }
-        [[nodiscard]] inline VkRenderPass GetVulkanRenderPass() const { return renderPass; }
+        [[nodiscard]] VkFramebuffer GetVulkanFramebuffer() const { return framebuffer; }
+        [[nodiscard]] VkRenderPass GetVulkanRenderPass() const { return renderPass; }
 
         /* --- DESTRUCTOR --- */
         ~VulkanRenderPass() override;

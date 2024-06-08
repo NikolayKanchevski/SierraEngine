@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "../Rendering/Image.h"
-
 namespace Sierra
 {
 
@@ -20,15 +18,15 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        void Seek(const uint64 index);
-        void Resize(const uint64 memorySize);
+        void Seek(uint64 index);
+        void Resize(uint64 memorySize) const;
 
-        std::vector<uint8> Read(const uint64 memorySize = 0);
-        void Write(const void* data, const uint64 memorySize);
+        std::vector<uint8> Read(uint64 memorySize = 0);
+        void Write(const void* data, uint64 memorySize);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] inline const std::filesystem::path& GetPath() const { return path; }
-        [[nodiscard]] inline uint64 GetSize() const { return std::filesystem::file_size(path); }
+        [[nodiscard]] const std::filesystem::path& GetPath() const { return path; }
+        [[nodiscard]] uint64 GetSize() const { return std::filesystem::file_size(path); }
 
         /* --- OPERATORS --- */
         File(const File&) = delete;
