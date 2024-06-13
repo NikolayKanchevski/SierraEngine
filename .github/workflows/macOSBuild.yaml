@@ -24,12 +24,11 @@ jobs:
       - name: Update Git Submodules
         run: git submodule update --init --recursive
 
-      - name: Configure Build Directories
+      - name: Configure Editor Build Directory
         id: strings
         shell: bash
         run:
-          echo "editorBuildDirectory=${{ github.workspace }}/bin/SierraEngineEditor-macOS-Apple_Clang/" >> "$GITHUB_OUTPUT"
-          echo "runtimeBuildDirectory=${{ github.workspace }}/bin/SierraEngineRuntime-macOS-Apple_Clang/" >> "$GITHUB_OUTPUT"
+          echo "editorBuildDirectory=${{ github.workspace }}/bin/SierraEngineEditor-macOS-Clang/" >> "$GITHUB_OUTPUT"
 
       - name: Configure Editor CMake Project
         run: >
@@ -41,6 +40,12 @@ jobs:
 
       - name: Build Editor CMake Project
         run: cmake --build ${{ steps.strings.outputs.editorBuildDirectory }} --config ${{ matrix.build_type }}
+
+      - name: Configure Runtime Build Directory
+        id: strings
+        shell: bash
+        run:
+          echo "runtimeBuildDirectory=${{ github.workspace }}/bin/SierraEngineRuntime-macOS-Clang/" >> "$GITHUB_OUTPUT"
 
       - name: Configure Runtime CMake Project
         run: >
