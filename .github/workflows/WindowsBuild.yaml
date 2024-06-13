@@ -21,6 +21,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Vulkan SDK
+        uses: humbletim/install-vulkan-sdk@v1.1.1
+        with:
+          version: 1.3.204.1
+          cache: true
+
       - name: Update Git Submodules
         run: git submodule update --init --recursive
 
@@ -28,7 +34,7 @@ jobs:
         id: editorStrings
         shell: bash
         run:
-          echo "buildDirectory=${{ github.workspace }}\\bin\\SierraEngineEditor-Windows-MSVC\\" >> $ENV:GITHUB_OUTPUT
+          echo "buildDirectory=${{ github.workspace }}/bin/SierraEngineEditor-Windows-MSVC/" >> $ENV:GITHUB_OUTPUT
 
       - name: Configure Editor CMake Project
         run: >
@@ -45,7 +51,7 @@ jobs:
         id: runtimeStrings
         shell: bash
         run:
-          echo "buildDirectory=${{ github.workspace }}\\bin\\SierraEngineRuntime-Windows-MSVC\\" >> $ENV:GITHUB_OUTPUT
+          echo "buildDirectory=${{ github.workspace }}/bin/SierraEngineRuntime-Windows-MSVC/" >> $ENV:GITHUB_OUTPUT
 
       - name: Configure Runtime CMake Project
         run: >
