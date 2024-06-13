@@ -25,35 +25,35 @@ jobs:
         run: git submodule update --init --recursive
 
       - name: Configure Editor Build Directory
-        id: strings
+        id: editorStrings
         shell: bash
         run:
-          echo "editorBuildDirectory=${{ github.workspace }}/bin/SierraEngineEditor-macOS-Clang/" >> "$GITHUB_OUTPUT"
+          echo "buildDirectory=${{ github.workspace }}/bin/SierraEngineEditor-macOS-Clang/" >> "$GITHUB_OUTPUT"
 
       - name: Configure Editor CMake Project
         run: >
-          cmake -B ${{ steps.strings.outputs.editorBuildDirectory }}
+          cmake -B ${{ steps.editorStrings.outputs.buildDirectory }}
           -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
           -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -S ${{ github.workspace }}/SierraEngineEditor/
 
       - name: Build Editor CMake Project
-        run: cmake --build ${{ steps.strings.outputs.editorBuildDirectory }} --config ${{ matrix.build_type }}
+        run: cmake --build ${{ steps.editorStrings.outputs.buildDirectory }} --config ${{ matrix.build_type }}
 
       - name: Configure Runtime Build Directory
-        id: strings
+        id: runtimeStrings
         shell: bash
         run:
-          echo "runtimeBuildDirectory=${{ github.workspace }}/bin/SierraEngineRuntime-macOS-Clang/" >> "$GITHUB_OUTPUT"
+          echo "buildDirectory=${{ github.workspace }}/bin/SierraEngineRuntime-macOS-Clang/" >> "$GITHUB_OUTPUT"
 
       - name: Configure Runtime CMake Project
         run: >
-          cmake -B ${{ steps.strings.outputs.runtimeBuildDirectory }}
+          cmake -B ${{ steps.runtimeStrings.outputs.buildDirectory }}
           -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
           -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -S ${{ github.workspace }}/SierraEngineRuntime/
 
       - name: Build Runtime CMake Project
-        run: cmake --build ${{ steps.strings.outputs.runtimeBuildDirectory }} --config ${{ matrix.build_type }}
+        run: cmake --build ${{ steps.runtimeStrings.outputs.buildDirectory }} --config ${{ matrix.build_type }}
