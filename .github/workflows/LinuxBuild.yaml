@@ -19,7 +19,6 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-    steps:
       - uses: actions/checkout@v4
 
       - name: Update Git Submodules
