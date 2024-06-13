@@ -1,6 +1,6 @@
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://bit.ly/3OMysM8)
 
-# Sierra Engine ![License](https://img.shields.io/github/license/NikolayKanchevski/SierraEngine.svg) ![Windows Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/WindowsBuild.yml/badge.svg) ![Linux Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/LinuxBuild.yml/badge.svg) ![macOS Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/macOSBuild.yml/badge.svg) 
+# Sierra Engine ![License](https://img.shields.io/github/license/NikolayKanchevski/SierraEngine.svg) ![Windows Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/WindowsBuild.yaml/badge.svg) ![Linux Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/LinuxBuild.yaml/badge.svg) ![macOS Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/macOSBuild.yaml/badge.svg) 
 
 ![Sierra](Media/SierraLogoTextBackground.png "Sierra")
 
