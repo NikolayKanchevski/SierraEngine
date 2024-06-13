@@ -34,7 +34,7 @@ jobs:
       - name: Configure Editor Build Directory
         id: editorStrings
         shell: bash
-        run: echo "buildDirectory=${{ github.workspace }}/bin/SierraEngineEditor-Windows-MSVC/" >> $ENV:GITHUB_OUTPUT
+        run: echo "buildDirectory=${{ github.workspace }}/bin/SierraEngineEditor-Windows-MSVC/" >> $GITHUB_OUTPUT
 
       - name: Configure Editor CMake Project
         run: >
@@ -50,7 +50,7 @@ jobs:
       - name: Configure Runtime Build Directory
         id: runtimeStrings
         shell: bash
-        run: echo "buildDirectory=${{ github.workspace }}/bin/SierraEngineRuntime-Windows-MSVC/" >> $ENV:GITHUB_OUTPUT
+        run: echo "buildDirectory=${{ github.workspace }}/bin/SierraEngineRuntime-Windows-MSVC/" >> $GITHUB_OUTPUT
 
       - name: Configure Runtime CMake Project
         run: >
