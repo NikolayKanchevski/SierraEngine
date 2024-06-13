@@ -54,7 +54,7 @@ namespace Sierra
             using MTLResource = void;
         #endif
 
-        // NOTE: These must match those of https://github.com/NikichaTV/ShaderConnect/blob/sierra/src/Platform/MetalSL/MetalSLShaderCompiler.cpp#L104
+        // NOTE: These must match those of https://github.com/NikolayKanchevski/ShaderConnect/blob/sierra/src/Platform/MetalSL/MetalSLShaderCompiler.cpp#L104
         constexpr static uint32 UNIFORM_BUFFER_CAPACITY         = 500'000;
         constexpr static uint32 STORAGE_BUFFER_CAPACITY         = 500'000;
         constexpr static uint32 SAMPLED_IMAGE_CAPACITY          = 500'000;

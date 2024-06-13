@@ -1,0 +1,23 @@
+Sierra:
+  - all:
+    - changed-files:
+      - any-glob-to-any-file: '/Sierra/**/*'
+      - all-globs-to-all-files: '!/Sierra/vendor/*'
+
+Sierra Engine:
+  - all:
+    - changed-files:
+      - any-glob-to-any-file: '/SierraEngine/**/*'
+      - all-globs-to-all-files: '!/SierraEngine/vendor/*'
+
+Sierra Engine Editor:
+  - all:
+    - changed-files:
+      - any-glob-to-any-file: '/SierraEngineEditor/**/*'
+      - all-globs-to-all-files: '!/SierraEngineEditor/vendor/*'
+
+Sierra Engine Runtime:
+  - all:
+    - changed-files:
+      - any-glob-to-any-file: '/SierraEngineEditor/**/*'
+      - all-globs-to-all-files: '!/SierraEngineEditor/vendor/*'

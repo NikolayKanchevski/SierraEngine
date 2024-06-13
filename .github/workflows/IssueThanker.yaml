@@ -1,0 +1,23 @@
+name: Issue Thanker
+run-name: Thank creators of new issues
+
+on:
+  issues:
+    types:
+      - opened
+
+jobs:
+  Thank:
+    permissions:
+      issues: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Hey @${context.payload.issue.user.login}, thanks for flagging this issue! 🚩\n\nWe've got our detective hats on and are diving into this. Jump in with any other clues or thoughts you have!`
+            });

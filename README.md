@@ -1,6 +1,6 @@
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://bit.ly/3OMysM8)
 
-# Sierra Engine [![License](https://img.shields.io/github/license/NikichaTV/SierraEngine.svg)](https://github.com/NikichaTV/SierraEngine/blob/master/LICENSE)
+# Sierra Engine ![License](https://img.shields.io/github/license/NikolayKanchevski/SierraEngine.svg) ![Windows Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/WindowsBuild.yml/badge.svg) ![Linux Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/LinuxBuild.yml/badge.svg) ![macOS Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/macOSBuild.yml/badge.svg) 
 
 ![Sierra](Media/SierraLogoTextBackground.png "Sierra")
 
@@ -8,7 +8,7 @@
 
 # What is Sierra Engine?
 
-An **open-source** rendering engine based on **[C++20](https://en.cppreference.com/w/cpp/20/)**, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). Built on top of the **[Vulkan](https://vulkan.org/)** and [Metal](https://developer.apple.com/metal/) rendering APIs, it provides support for **Windows 7-11**, **macOS**, **Linux**, **Android** and **iOS** (check out [System Requirements](#-system-requirements)), and is planned to also feature other native APIs (like **[DirectX](https://developer.nvidia.com/directx)**), as well as support consoles. 
+An **open-source** rendering engine based on **[C++20](https://en.cppreference.com/w/cpp/20/)**, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). Built on top of the **[Vulkan](https://vulkan.org/)** and [Metal](https://developer.apple.com/metal/) rendering APIs, it provides support for **Windows 7-11**, **macOS**, **Linux**, **Android** and **iOS** (check out [System Requirements](#-system-requirements)), and is planned to also feature other native APIs (like **[DirectX](https://developer.nvidia.com/directx)**), as well as support consoles.
 
 <br>
 
@@ -40,7 +40,7 @@ In order to build it, you must have the following modules installed:
 Simply clone the repository either directly from your favourite IDE (**[Visual Studio](https://visualstudio.microsoft.com)**, **[CLion](https://jetbrains.com/clion/)**, etc.), or by opening the command line and running:
 
 ```bat
-$ git clone --recursive https://github.com/NikichaTV/SierraEngine
+$ git clone --recursive https://github.com/NikolayKanchevski/SierraEngine
 ```
 
 <br>
@@ -58,10 +58,6 @@ And there you have it! You can now create your very own applications using the S
 ## 💻 System Requirements
 
 Minimal system requirements for every supported platform of the [Sierra](Sierra) API are listed here. Built on top of it, the whole [Sierra Engine](SierraEngine) shares the exact same requirements. *Do note that the following information is a subject to change.*
-
-## Minimal System Requirements
-
-Complying with the following requirements guarantees that at least one graphics API backend is supported, hence the [Sierra](Sierra) API is supported as well. However, the usage of the only available API will be enforced.
 
 <br>
 
@@ -81,12 +77,6 @@ Complying with the following requirements guarantees that at least one graphics 
 
 <br>
 
-## Graphics API Support
-
-Below are listed the minimal requirements for every graphics API backend separately. Some systems might support multiple APIs, meaning that their respective user would be free to change their rendering backend at any time.
-
-<br>
-
 ### Minimum Graphics API Version
 
 |                                                      | **[Windows](https://microsoft.com/en-us/windows/)** | **[Linux](https://linux.org/)** | **[macOS](https://apple.com/macos/)** | **[Android](https://android.com/)** | **[iOS](https://apple.com/ios/)** |
@@ -95,6 +85,8 @@ Below are listed the minimal requirements for every graphics API backend separat
 | **[DirectX](https://developer.nvidia.com/directx/)** |                          ❌                          |                ❌                |                   ❌                   |                  ❌                  |                 ❌                 |
 |   **[Metal](https://developer.apple.com/metal/)**    |                          ❌                          |                ❌                |                  3.0                  |                  ❌                  |                3.0                |
 |      **[OpenGL](https://khronos.org/opengl/)**       |                          ❌                          |                ❌                |                   ❌                   |                  ❌                  |                 ❌                 |
+
+NOTE: Some systems might support multiple APIs, meaning their respective users would be free to change their rendering backend at any time.
 
 <br>
 
@@ -119,7 +111,7 @@ Below are listed the minimal requirements for every graphics API backend separat
 
 ## 📄 Documentation
 
-Documentation has not yet been made publicly available, but will be once a release is out. You can expect to see it on [Sierra's website](https://sierra.nikichatv.com). 
+Documentation has not yet been made publicly available, but will be once a release is out. You can expect to see it on [Sierra's website](https://sierra.nikichatv.com).
 
 <br>
 
@@ -138,7 +130,7 @@ Despite the repository being named after the [Sierra Engine](SierraEngine), it e
 * Local dependencies: [Sierra API](Sierra).
 
 **[Sierra Engine Editor](SierraEngineEditor):**
-* Description: A user interface for easy management of engine assets and runtime application programming. Exports all necessary files in a fast runtime-only format and crates final product.  
+* Description: A user interface for easy management of engine assets and runtime application programming. Exports all necessary files in a fast runtime-only format and crates final product.
 * Type: Executable.
 * Local dependencies: [Sierra Engine](SierraEngine).
 
@@ -151,9 +143,9 @@ Despite the repository being named after the [Sierra Engine](SierraEngine), it e
 
 ## 🤓️ About
 
-**Frameworks used:**
+### Frameworks used:
 
-Within [Sierra](Sierra):
+**Within [Sierra](Sierra)**:
 * [GLM](https://github.com/g-truc/glm/) - Provides the engine with a powerful set of tools for solving linear algebra problems.
 * [spdlog](https://github.com/gabime/spdlog) - Used for fast, asynchronous debug-only logging.
 * [Vulkan](https://vulkan.org/) - Allows for incredibly fast rendering on a wide variety of platforms.
@@ -163,15 +155,15 @@ Within [Sierra](Sierra):
 * [ImGui](https://github.com/ocornut/imgui) - Used in the ImGui UI extension.
 * [My Brain](https://ih1.redbubble.net/templateOutputImage.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
 
-Within [Sierra Engine](SierraEngine):
+**Within [Sierra Engine](SierraEngine)**:
 * [entt](https://github.com/skypjack/entt) - Efficient entity component system, utilized in scenes.
 * [stb](https://github.com/nothings/stb/) - An all-round image loader.
 * [KTX Software](https://github.com/KhronosGroup/KTX-Software) - Used to compress texture assets.
-* [ShaderConnect](https://github.com/NikichaTV/ShaderConnect/tree/sierra) - A dedicated branch of [NikichaTV](https://github.com/NikichaTV)'s framework for shader cross-compilation.
+* [ShaderConnect](https://github.com/NikolayKanchevski/ShaderConnect/tree/sierra) - A dedicated branch of the shader cross-compilation framework.
 
 <br>
 
-**Software used:**
+### Software used:
 
 * [JetBrains CLion](https://jetbrains.com/clion/) - Primary IDE of the project.
 * [JetBrains Rider](https://jetbrains.com/rider/) - Another IDE which was used to create the .NET 6.0 prototype version of the engine.
@@ -184,7 +176,7 @@ Within [Sierra Engine](SierraEngine):
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p id="LineCounter" style="text-align: center;">Total lines of code: 25,584</p>
-<p id="LastUpdated" style="text-align: center;">Last updated: 08/06/2024 </p>
+<p id="LineCounter" align="center">Total lines of code: 25,576</p>
+<p id="LastUpdated" align="center">Last updated: 14/06/2024 </p>
 
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

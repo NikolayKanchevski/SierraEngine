@@ -1,0 +1,54 @@
+name: Windows MSVC Build
+run-name: Build project modules on Windows with CMake and MSVC
+
+on:
+  push
+
+jobs:
+  Build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+        build_type: [Release]
+        c_compiler: [cl]
+        include:
+          - os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update Git Submodules
+        run: git submodule update --init --recursive
+
+      - name: Configure Build Directories
+        id: strings
+        shell: bash
+        run:
+          echo "editorBuildDirectory=${{ github.workspace }}/bin/SierraEngineEditor-Windows-MSVC/" >> "$GITHUB_OUTPUT"
+          echo "runtimeBuildDirectory=${{ github.workspace }}/bin/SierraEngineRuntime-Windows-MSVC/" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Editor CMake Project
+        run: >
+          cmake -B ${{ steps.strings.outputs.editorBuildDirectory }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -S ${{ github.workspace }}/SierraEngineEditor/
+
+      - name: Build Editor CMake Project
+        run: cmake --build ${{ steps.strings.outputs.editorBuildDirectory }} --config ${{ matrix.build_type }}
+
+      - name: Configure Runtime CMake Project
+        run: >
+          cmake -B ${{ steps.strings.outputs.runtimeBuildDirectory }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -S ${{ github.workspace }}/SierraEngineRuntime/
+
+      - name: Build Runtime CMake Project
+        run: cmake --build ${{ steps.strings.outputs.runtimeBuildDirectory }} --config ${{ matrix.build_type }}
