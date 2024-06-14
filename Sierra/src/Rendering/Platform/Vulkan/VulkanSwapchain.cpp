@@ -208,6 +208,7 @@ namespace Sierra
 
         std::vector<VkSurfaceFormatKHR> supportedFormats(supportedFormatCount);
         instance.GetFunctionTable().vkGetPhysicalDeviceSurfaceFormatsKHR(device.GetPhysicalDevice(), surface, &supportedFormatCount, supportedFormats.data());
+        SR_ERROR_IF(supportedFormats.empty(), "[Vulkan] Could not create swapchain [{0}], as it does not support any surface formats!", GetName());
 
         // Depending on user's preference, see which formats work
         std::vector<VkFormat> formatsToTry;
@@ -220,7 +221,7 @@ namespace Sierra
         }
 
         // Try to find a format that satisfies user's needs
-        VkSurfaceFormatKHR selectedFormat = { .format = VK_FORMAT_UNDEFINED, .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
+        VkSurfaceFormatKHR selectedFormat = { .format = supportedFormats[0].format, .colorSpace = supportedFormats[0].colorSpace };
         for (const VkFormat format : formatsToTry)
         {
             if (auto iterator = std::ranges::find_if(supportedFormats, [format](const VkSurfaceFormatKHR item) -> bool { return item.format == format && item.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR; }); iterator != supportedFormats.end())
@@ -229,9 +230,6 @@ namespace Sierra
                 break;
             }
         }
-
-        // Assign best format, if one was found
-        SR_ERROR_IF(selectedFormat.format == VK_FORMAT_UNDEFINED, "[Vulkan] Could not create swapchain [{0}], as it does not support any allowed swapchain formats!", GetName());
 
         // Retrieve supported present modes
         uint32 supportedPresentModeCount = 0;

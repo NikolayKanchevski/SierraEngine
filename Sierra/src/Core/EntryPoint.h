@@ -9,5 +9,5 @@
 namespace Sierra
 {
     // Implemented by user
-    extern Application* CreateApplication(int argc, const char* argv[]);
+    extern Application* CreateApplication(int argc, char* argv[]);
 }

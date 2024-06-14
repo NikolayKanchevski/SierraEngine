@@ -44,7 +44,7 @@ namespace Sierra
     {
         #if SR_PLATFORM_WINDOWS
             SR_ERROR_IF(platformContext.GetType() != PlatformType::Windows, "Cannot create Win32 window using a platform context of type, which differs from [PlatformType::Windows]!");
-            return std::make_unique<Win32Window>(static_cast<const WindowsContext&>(platformContext).GetWin32Context(), createInfo);
+            return std::make_unique<Win32Window>(static_cast<WindowsContext&>(platformContext).GetWin32Context(), createInfo);
         #elif SR_PLATFORM_LINUX
             SR_ERROR_IF(platformContext.GetType() != PlatformType::Linux, "Cannot create X11 window using a platform context of type, which differs from [PlatformType::Linux]!");
             return std::make_unique<X11Window>(static_cast<const LinuxContext&>(platformContext).GetX11Context(), createInfo);

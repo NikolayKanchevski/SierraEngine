@@ -2,7 +2,6 @@
 // Created by Nikolay Kanchevski on 5.11.23.
 //
 
-#define COCOA_CONTEXT_IMPLEMENTATION
 #include "CocoaContext.h"
 
 #include "../../EntryPoint.h"

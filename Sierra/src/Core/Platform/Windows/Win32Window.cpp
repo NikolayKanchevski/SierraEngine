@@ -13,12 +13,11 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Win32Window::Win32Window(const Win32Context &win32Context, const WindowCreateInfo &createInfo)
+    Win32Window::Win32Window(Win32Context &win32Context, const WindowCreateInfo &createInfo)
         : Window(createInfo),
             win32Context(win32Context),
-            window(win32Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | (createInfo.resizable ? (WS_SIZEBOX | WS_MAXIMIZEBOX) : 0) | (createInfo.maximize && createInfo.resizable ? WS_MAXIMIZE : 0), WindowProc)),
-            inputManager(Win32InputManager({ })),
-            cursorManager(Win32CursorManager(window, { })),
+            window(win32Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height, (!createInfo.hide ? WS_VISIBLE : 0) | WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | (createInfo.resizable ? (WS_SIZEBOX | WS_MAXIMIZEBOX) : 0) | (createInfo.maximize && createInfo.resizable ? WS_MAXIMIZE : 0), WindowProc)),
+            inputManager(), cursorManager(window),
             title(createInfo.title)
     {
         // Manually maximize window if not resizable
@@ -40,16 +39,9 @@ namespace Sierra
             win32Context.AdjustWindowRectForDPI(window, rect);
             SetWindowPos(window, nullptr, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SWP_NOACTIVATE | SWP_NOZORDER);
         }
-        else if (createInfo.maximize)
-        {
-            ShowWindow(window, SW_MAXIMIZE);
-        }
 
         // Connect this window instance to the Windows window handle
         SetWindowLongPtr(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
-
-        // Hide window
-        if (createInfo.hide) ShowWindow(window, SW_HIDE);
     }
 
     /* --- POLLING METHODS --- */
@@ -59,9 +51,9 @@ namespace Sierra
         cursorManager.Update();
         inputManager.Update();
 
-        while (!win32Context.IsWindowEventQueueEmpty(window))
+        while (!win32Context.EventQueueEmpty(window))
         {
-            win32Context.PollNextWindowEvent(window);
+            win32Context.PollNextEvent(window);
         }
 
         cursorManager.PostUpdate();
@@ -199,7 +191,7 @@ namespace Sierra
         DWORD flags;
 
         // Get alpha
-        if ((GetWindowLongW(window, GWL_EXSTYLE) & WS_EX_LAYERED) && GetLayeredWindowAttributes(window, NULL, &alpha, &flags))
+        if ((GetWindowLongW(window, GWL_EXSTYLE) & WS_EX_LAYERED) && GetLayeredWindowAttributes(window, nullptr, &alpha, &flags))
         {
             if (flags & LWA_ALPHA) return static_cast<float32>(alpha) / 255.f;
         }
@@ -259,11 +251,12 @@ namespace Sierra
         Win32Window* window = reinterpret_cast<Win32Window*>(GetWindowLongPtr(callingWindow, GWLP_USERDATA));
         if (window != nullptr)
         {
-            if (window->win32Context.IsWindowEventFiltered(callingWindow, message, wParam, lParam))
+            if (window->win32Context.IsEventFiltered(callingWindow, message, wParam, lParam))
             {
                 return 0;
             }
 
+            if (window->win32Context.IsEventFiltered(callingWindow, message, wParam, lParam)) return 0;
             switch (message)
             {
                 case WM_SYSCOMMAND:
@@ -290,8 +283,7 @@ namespace Sierra
                 case WM_MOVE:
                 {
                     if (window->nextMoveEventBlocked || window->justBecameShown || window->IsClosed()) break;
-
-                    window.GetWindowMoveDispatcher().DispatchEvent(window.GetPosition());
+                    window->GetWindowMoveDispatcher().DispatchEvent(window->GetPosition());
                     break;
                 }
                 case WM_SIZE:
@@ -302,13 +294,13 @@ namespace Sierra
                     {
                         if (window->IsClosed()) break;
 
-                        window.GetWindowMinimizeDispatcher().DispatchEvent();
+                        window->GetWindowMinimizeDispatcher().DispatchEvent();
                         break;
                     }
 
                     if (wParam == SIZE_MAXIMIZED)
                     {
-                        window.GetWindowMaximizeDispatcher().DispatchEvent();
+                        window->GetWindowMaximizeDispatcher().DispatchEvent();
                     }
 
                     if (window->nextMoveEventBlocked)
@@ -317,30 +309,30 @@ namespace Sierra
                         break;
                     }
 
-                    window.GetWindowResizeDispatcher().DispatchEvent(window.GetWidth(), window.GetHeight());
+                    window->GetWindowResizeDispatcher().DispatchEvent(window->GetWidth(), window->GetHeight());
                     break;
                 }
                 case WM_SETFOCUS:
                 {
                     if (window->IsClosed()) break;
 
-                    window.GetWindowFocusDispatcher().DispatchEvent(true);
+                    window->GetWindowFocusDispatcher().DispatchEvent(true);
                     window->nextMoveEventBlocked = false;
 
-                    if (window->cursorManager.IsCursorHidden()) window->cursorManager.HideCursor();
+                    if (!window->cursorManager.IsCursorVisible()) window->cursorManager.SetCursorVisibility(false);
                     return 0;
                 }
                 case WM_KILLFOCUS:
                 {
                     if (window->IsClosed()) break;
 
-                    window.GetWindowFocusDispatcher().DispatchEvent(false);
+                    window->GetWindowFocusDispatcher().DispatchEvent(false);
                     window->nextMoveEventBlocked = true;
                     return 0;
                 }
                 case WM_CLOSE:
                 {
-                    window.GetWindowCloseDispatcher().DispatchEvent();
+                    window->GetWindowCloseDispatcher().DispatchEvent();
                     window->Close();
                     return 0;
                 }
@@ -354,30 +346,173 @@ namespace Sierra
                 case WM_KEYUP:
                 case WM_SYSKEYUP:
                 {
-                    window->inputManager.KeyMessage(message, wParam, lParam);
+                    // If key has been filtered out we return
+                    if (wParam == VK_PROCESSKEY) break;
+
+                    // Translate key
+                    UINT keyCode = wParam != 0 ? static_cast<UINT>(wParam) : MapVirtualKeyW(static_cast<UINT>(wParam), MAPVK_VK_TO_VSC);
+                    Key key = Win32InputManager::VirtualKeyCodeToKey(keyCode);
+                    if (key == Key::Unknown) break;
+
+                    // Distinguish double keys, as they share the same initial code
+                    if (HIWORD(lParam) & KF_EXTENDED)
+                    {
+                        switch (key)
+                        {
+                            case Key::LeftControl:
+                            {
+                                key = Key::RightControl;
+                                break;
+                            }
+                            case Key::LeftAlt:
+                            {
+                                key = Key::RightAlt;
+                                break;
+                            }
+                            default:
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    // Since the legacy AltGr key is not handled as a separate key, but rather as a Left Control followed by Right Alt
+                    // event, we must capture the second event to not detect 2 physical presses, when a just single one has happened
+                    if (wParam == VK_CONTROL)
+                    {
+                        MSG temporaryMessage;
+                        const DWORD time = GetMessageTime();
+                        if (PeekMessageW(&temporaryMessage, nullptr, 0, 0, PM_NOREMOVE))
+                        {
+                            switch (temporaryMessage.message)
+                            {
+                                case WM_KEYDOWN:
+                                case WM_SYSKEYDOWN:
+                                case WM_KEYUP:
+                                case WM_SYSKEYUP:
+                                {
+                                    if (temporaryMessage.wParam == VK_MENU && (HIWORD(temporaryMessage.lParam) & KF_EXTENDED) && temporaryMessage.time == time)
+                                    {
+                                        // This is the Left Control message, so we exit before Right Alt gets the chance
+                                        break;
+                                    }
+                                    break;
+                                }
+                                default:
+                                {
+                                    break;
+                                }
+                            }
+                            if (
+                                (temporaryMessage.message == WM_KEYDOWN || temporaryMessage.message == WM_SYSKEYDOWN || temporaryMessage.message == WM_KEYUP || temporaryMessage.message == WM_SYSKEYUP) &&
+                                (temporaryMessage.wParam == VK_MENU && (HIWORD(temporaryMessage.lParam) & KF_EXTENDED) && temporaryMessage.time == time)
+                            )
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    // Explicitly handle PrintScreen, as it only sends out KEY_RELEASE messages
+                    if (key == Key::PrintScreen)
+                    {
+                        window->inputManager.RegisterKeyPress(Key::PrintScreen);
+                        window->inputManager.RegisterKeyRelease(Key::PrintScreen);
+                        break;
+                    }
+                    // Both Shift keys are reported as single VK_SHIFT message, and we need to distinguish them
+                    else if (key == Key::LeftShift)
+                    {
+                        if (message == WM_KEYDOWN)
+                        {
+                            if (GetKeyState(VK_LSHIFT) & KF_UP)
+                            {
+                                window->inputManager.RegisterKeyPress(Key::LeftShift);
+                                break;
+                            }
+                            else if (GetKeyState(VK_RSHIFT) & KF_UP)
+                            {
+                                window->inputManager.RegisterKeyPress(Key::RightShift);
+                                break;
+                            }
+                        }
+                        else if (message == WM_KEYUP)
+                        {
+                            if (window->inputManager.IsKeyPressed(Key::LeftShift) || window->inputManager.IsKeyHeld(Key::LeftShift) && !(GetKeyState(VK_LSHIFT) & KF_UP))
+                            {
+                                window->inputManager.RegisterKeyRelease(Key::LeftShift);
+                                break;
+                            }
+                            if (!window->inputManager.IsKeyPressed(Key::LeftShift) && !window->inputManager.IsKeyHeld(Key::LeftShift) && !(GetKeyState(VK_RSHIFT) & KF_UP))
+                            {
+                                window->inputManager.RegisterKeyRelease(Key::RightShift);
+                                break;
+                            }
+                        }
+                    }
+
+                    // Register key
+                    const bool pressed = !(HIWORD(lParam) & KF_UP);
+                    if (pressed) window->inputManager.RegisterKeyPress(key);
+                    else window->inputManager.RegisterKeyRelease(key);
+
                     break;
                 }
                 case WM_LBUTTONDOWN:
+                {
+                    window->inputManager.RegisterMouseButtonPress(MouseButton::Left);
+                    break;
+                }
                 case WM_LBUTTONUP:
+                {
+                    window->inputManager.RegisterMouseButtonRelease(MouseButton::Left);
+                    break;
+                }
                 case WM_RBUTTONDOWN:
+                {
+                    window->inputManager.RegisterMouseButtonPress(MouseButton::Right);
+                    break;
+                }
                 case WM_RBUTTONUP:
+                {
+                    window->inputManager.RegisterMouseButtonRelease(MouseButton::Right);
+                    break;
+                }
                 case WM_MBUTTONDOWN:
+                {
+                    window->inputManager.RegisterMouseButtonPress(MouseButton::Middle);
+                    break;
+                }
                 case WM_MBUTTONUP:
+                {
+                    window->inputManager.RegisterMouseButtonRelease(MouseButton::Middle);
+                    break;
+                }
                 case WM_XBUTTONDOWN:
+                {
+                    window->inputManager.RegisterMouseButtonPress(GET_XBUTTON_WPARAM(wParam) == XBUTTON1 ? MouseButton::Extra1 : MouseButton::Extra2);
+                    break;
+                }
                 case WM_XBUTTONUP:
                 {
-                    window->inputManager.MouseButtonMessage(message, wParam, lParam);
+                    window->inputManager.RegisterMouseButtonRelease(GET_XBUTTON_WPARAM(wParam) == XBUTTON1 ? MouseButton::Extra1 : MouseButton::Extra2);
                     break;
                 }
                 case WM_MOUSEWHEEL:
+                {
+                    window->inputManager.RegisterMouseScroll({ window->inputManager.GetMouseScroll().x, static_cast<float32>(static_cast<SHORT>(HIWORD(wParam))) / WHEEL_DELTA });
+                    break;
+                }
                 case WM_MOUSEHWHEEL:
                 {
-                    window->inputManager.MouseWheelMessage(message, wParam, lParam);
+                    window->inputManager.RegisterMouseScroll({ -static_cast<float32>(static_cast<SHORT>(HIWORD(wParam))) / WHEEL_DELTA, window->inputManager.GetMouseScroll().x });
                     break;
                 }
                 case WM_MOUSEMOVE:
                 {
-                    window->cursorManager.MouseMoveMessage(message, wParam, lParam);
+                    RECT rect = { };
+                    GetClientRect(window->GetHwnd(), &rect);
+                    window->cursorManager.RegisterCursorMove({ LOWORD(lParam), rect.bottom - rect.top - HIWORD(lParam) });
                     return 0;
                 }
                 default:
@@ -386,7 +521,6 @@ namespace Sierra
                 }
             }
         }
-
         return DefWindowProc(callingWindow, message, wParam, lParam);
     }
 

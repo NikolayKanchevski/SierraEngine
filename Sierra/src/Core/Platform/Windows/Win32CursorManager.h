@@ -20,31 +20,31 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Win32CursorManager(HWND window, const CursorManagerCreateInfo &createInfo);
+        explicit Win32CursorManager(HWND window);
+
+        /* --- POLLING METHODS --- */
+        void RegisterCursorMove(Vector2 position) override;
 
         /* --- SETTER METHODS --- */
+        void SetCursorVisibility(bool visible) override;
         void SetCursorPosition(Vector2 position) override;
-        void ShowCursor() override;
-        void HideCursor() override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] bool IsCursorHidden() const override;
+        [[nodiscard]] bool IsCursorVisible() const override;
         [[nodiscard]] Vector2 GetCursorPosition() const override;
-        [[nodiscard]] float32 GetHorizontalDelta() const override;
-        [[nodiscard]] float32 GetVerticalDelta() const override;
+        [[nodiscard]] Vector2 GetCursorDelta() const override;
 
     private:
         HWND window;
         Vector2 cursorPosition = { 0, 0 };
         Vector2 lastCursorPosition = { 0, 0 };
 
-        bool cursorHidden = false;
+        bool cursorShown = true;
         bool justHidCursor = false;
 
         friend class Win32Window;
         void Update();
         void PostUpdate();
-        void MouseMoveMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
     };
 

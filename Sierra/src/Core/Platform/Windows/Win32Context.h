@@ -68,29 +68,31 @@ namespace Sierra
 
     struct Win32ContextCreateInfo
     {
-
+        HINSTANCE hInstance = nullptr;
     };
 
     class SIERRA_API Win32Context final
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] HWND CreateWindow(std::string_view title, uint32 width, uint32 height, DWORD style, WNDPROC windowProc) const;
+        [[nodiscard]] HWND CreateWindow(std::string_view title, UINT width, UINT height, DWORD style, WNDPROC windowProc) const;
         void DestroyWindow(HWND window) const;
 
-        [[nodiscard]] bool IsWindowEventQueueEmpty(HWND window) const;
-        MSG PollNextWindowEvent(HWND window) const;
-        MSG PeekNextWindowEvent(HWND window) const;
-        [[nodiscard]] bool IsWindowEventFiltered(HWND window, UINT message, WPARAM wParam, LPARAM lParam) const;
+        [[nodiscard]] bool EventQueueEmpty(HWND window) const;
+        MSG PollNextEvent(HWND window) const;
+        MSG PeekNextEvent(HWND window) const;
+        [[nodiscard]] bool IsEventFiltered(HWND, const UINT message, const WPARAM wParam, const LPARAM);
 
         void AdjustWindowRectForDPI(HWND window, RECT &rect) const;
         [[nodiscard]] bool IsWindowsVersionOrGreater(DWORD major, DWORD minor, WORD servicePack) const;
 
+        void ReloadScreens();
+
         /* --- GETTER METHODS --- */
         [[nodiscard]] HINSTANCE GetHInstance() const { return hInstance; }
 
-        [[nodiscard]] Win32Screen& GetPrimaryScreen() const;
-        [[nodiscard]] Win32Screen& GetWindowScreen(HWND window) const;
+        [[nodiscard]] Win32Screen& GetPrimaryScreen();
+        [[nodiscard]] Win32Screen& GetWindowScreen(HWND window);
 
         /* --- DESTRUCTOR --- */
         ~Win32Context();
@@ -100,17 +102,11 @@ namespace Sierra
         explicit Win32Context(const Win32ContextCreateInfo &createInfo);
 
         HINSTANCE hInstance;
+        std::vector<Win32Screen> screens;
+
         HANDLE process;
         HICON processIcon;
 
-        struct Win32ScreenPair
-        {
-            HMONITOR hMonitor;
-            Win32Screen win32Screen;
-        };
-        mutable std::vector<Win32ScreenPair> screens;
-
-        void ReloadScreens() const;
         static BOOL CALLBACK EnumDisplayMonitorsProc(HMONITOR hMonitor, HDC hdc, LPRECT lrpcMonitor, LPARAM dwData);
 
     };

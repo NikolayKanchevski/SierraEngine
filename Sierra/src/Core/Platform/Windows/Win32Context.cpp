@@ -13,8 +13,10 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     Win32Context::Win32Context(const Win32ContextCreateInfo &createInfo)
-            : hInstance(GetModuleHandle(nullptr)), process(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId()))
+        : hInstance(createInfo.hInstance), process(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId()))
     {
+        SR_ERROR_IF(createInfo.hInstance == nullptr, "HINSTANCE pointer passed upon creation of Win32Context must not be null!");
+
         // Get binary name
         CHAR executableName[MAX_PATH];
         DWORD binaryNameLength = sizeof(CHAR) * MAX_PATH;
@@ -29,7 +31,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    HWND Win32Context::CreateWindow(const std::string_view title, const uint32 width, const uint32 height, const DWORD style, WNDPROC windowProc) const
+    HWND Win32Context::CreateWindow(const std::string_view title, const UINT width, const UINT height, const DWORD style, WNDPROC windowProc) const
     {
         // Generate random class name
         char className[11 + 1];
@@ -39,8 +41,8 @@ namespace Sierra
         WNDCLASS windowClass{ };
         windowClass.lpszClassName = className;
         windowClass.hInstance = hInstance;
-        windowClass.hIcon = LoadIcon(NULL, IDI_WINLOGO);
-        windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
+        windowClass.hIcon = LoadIcon(nullptr, IDI_WINLOGO);
+        windowClass.hCursor = LoadCursor(nullptr, IDC_ARROW);
         windowClass.lpfnWndProc = windowProc;
         windowClass.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
         RegisterClass(&windowClass);
@@ -64,7 +66,7 @@ namespace Sierra
             title.data(), style,
             CW_USEDEFAULT, CW_USEDEFAULT,
             rect.right - rect.left, rect.bottom - rect.top,
-            NULL, NULL, hInstance, NULL
+            nullptr, nullptr, hInstance, NULL
         );
         SR_ERROR_IF(window == nullptr, "Could not create Win32 window!");
 
@@ -74,16 +76,13 @@ namespace Sierra
         // Enable Windows >= 7 events
         if (IsWindowsVersionOrGreater(6, 1, 0))
         {
-            ChangeWindowMessageFilterEx(window, WM_DROPFILES, MSGFLT_ALLOW, NULL);
-            ChangeWindowMessageFilterEx(window, WM_COPYDATA, MSGFLT_ALLOW, NULL);
-            ChangeWindowMessageFilterEx(window, WM_COPYGLOBALDATA, MSGFLT_ALLOW, NULL);
+            ChangeWindowMessageFilterEx(window, WM_DROPFILES, MSGFLT_ALLOW, nullptr);
+            ChangeWindowMessageFilterEx(window, WM_COPYDATA, MSGFLT_ALLOW, nullptr);
+            ChangeWindowMessageFilterEx(window, WM_COPYGLOBALDATA, MSGFLT_ALLOW, nullptr);
         }
 
         // Set window's icon to that of the binary
         SendMessage(window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(processIcon));
-
-        // Show window
-        ShowWindow(window, SW_SHOW);
 
         return window;
     }
@@ -100,13 +99,13 @@ namespace Sierra
         ::DestroyWindow(window);
     }
 
-    bool Win32Context::IsWindowEventQueueEmpty(HWND window) const
+    bool Win32Context::EventQueueEmpty(HWND window) const
     {
         MSG message = { };
         return !PeekMessage(&message, window, 0, 0, PM_NOREMOVE);
     }
 
-    MSG Win32Context::PollNextWindowEvent(HWND window) const
+    MSG Win32Context::PollNextEvent(HWND window) const
     {
         MSG message = { };
         if (PeekMessage(&message, window, 0, 0, PM_REMOVE))
@@ -117,14 +116,14 @@ namespace Sierra
         return message;
     }
 
-    MSG Win32Context::PeekNextWindowEvent(HWND window) const
+    MSG Win32Context::PeekNextEvent(HWND window) const
     {
         MSG message = { };
         PeekMessage(&message, window, 0, 0, PM_NOREMOVE);
         return message;
     }
 
-    bool Win32Context::IsWindowEventFiltered(HWND, const UINT message, const WPARAM wParam, const LPARAM) const
+    bool Win32Context::IsEventFiltered(HWND, const UINT message, const WPARAM wParam, const LPARAM)
     {
         switch (message)
         {
@@ -190,31 +189,29 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    Win32Screen& Win32Context::GetPrimaryScreen() const
+    Win32Screen& Win32Context::GetPrimaryScreen()
     {
-        return screens[0].win32Screen;
+        return screens[0];
     }
 
-    Win32Screen& Win32Context::GetWindowScreen(HWND window) const
+    Win32Screen& Win32Context::GetWindowScreen(HWND window)
     {
         HMONITOR windowMonitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
-        return std::find_if(screens.begin(), screens.end(), [windowMonitor](const Win32ScreenPair &pair) { return pair.hMonitor == windowMonitor; })->win32Screen;
+        return *std::find_if(screens.begin(), screens.end(), [windowMonitor](const Win32Screen &item) { return item.GetHMonitor() == windowMonitor; });
     }
 
     /* --- PRIVATE METHODS --- */
 
-    void Win32Context::ReloadScreens() const
+    void Win32Context::ReloadScreens()
     {
-        screens.clear();
-        EnumDisplayMonitors(NULL, NULL, EnumDisplayMonitorsProc, reinterpret_cast<LPARAM>(this));
-        screens.shrink_to_fit();
+        EnumDisplayMonitors(nullptr, nullptr, EnumDisplayMonitorsProc, reinterpret_cast<LPARAM>(this));
     }
 
     BOOL Win32Context::EnumDisplayMonitorsProc(HMONITOR hMonitor, HDC hdc, LPRECT lrpcMonitor, const LPARAM dwData)
     {
         // Get passed context
         Win32Context* context = reinterpret_cast<Win32Context*>(dwData);
-        context->screens.push_back({ .hMonitor = hMonitor, .win32Screen = Win32Screen({ .hMonitor = hMonitor }) });
+        context->screens.emplace_back(Win32Screen({ .hMonitor = hMonitor }));
         return TRUE;
     }
 

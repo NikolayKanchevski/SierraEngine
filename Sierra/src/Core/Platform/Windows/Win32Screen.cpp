@@ -10,6 +10,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     Win32Screen::Win32Screen(const Win32ScreenCreateInfo &createInfo)
+        : hMonitor(createInfo.hMonitor)
     {
         // Allocate monitor info
         MONITORINFOEX monitorInfo = { };
@@ -47,41 +48,16 @@ namespace Sierra
         }
     }
 
-    /* --- OPERATORS --- */
-
-    Win32Screen& Win32Screen::operator=(const Win32Screen &other)
-    {
-        name = other.name;
-        origin = other.origin;
-        size = other.size;
-        workAreaOrigin = other.workAreaOrigin;
-        workAreaSize = other.workAreaSize;
-        refreshRate = other.refreshRate;
-        return *this;
-    }
-
     /* --- MOVE SEMANTICS --- */
 
     Win32Screen::Win32Screen(Win32Screen&& other)
-        : name(std::move(other.name)), origin(other.origin), size(other.size), workAreaOrigin(other.workAreaOrigin), workAreaSize(other.workAreaSize), refreshRate(other.refreshRate)
+        : name(other.name), origin(other.origin), size(other.size), workAreaOrigin(other.workAreaOrigin), workAreaSize(other.workAreaSize), refreshRate(other.refreshRate)
     {
         other.origin = { 0, 0 };
         other.size = { 0, 0 };
         other.workAreaOrigin = { 0, 0 };
         other.workAreaSize = { 0, 0 };
         other.refreshRate = 0;
-    }
-
-    /* --- PRIVATE METHODS --- */
-
-    Win32Screen::Win32Screen(Win32Screen &other)
-    {
-        name = other.name;
-        origin = other.origin;
-        size = other.size;
-        workAreaOrigin = other.workAreaOrigin;
-        workAreaSize = other.workAreaSize;
-        refreshRate = other.refreshRate;
     }
 
 }

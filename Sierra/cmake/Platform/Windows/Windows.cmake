@@ -17,7 +17,7 @@ function(BuildWindowsExecutable SOURCE_FILES)
     file(WRITE ${RC_FILE_PATH} ${RC_FILE_DATA})
 
     # Create executable
-    add_executable(${SIERRA_APPLICATION_NAME} ${SOURCE_FILES} ${RC_FILE_PATH})
+    add_executable(${SIERRA_APPLICATION_NAME} WIN32 ${SOURCE_FILES} ${RC_FILE_PATH})
 
     # Copy resources to resources folder
     set(RESOURCES_DIRECTORY_PATH "${CMAKE_SOURCE_DIR}/resources")

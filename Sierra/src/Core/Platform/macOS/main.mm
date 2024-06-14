@@ -78,8 +78,15 @@
             argv[i] = [[NSProcessInfo processInfo].arguments[i] UTF8String];
         }
 
-        // Create and run application
+        // Create and application
         const std::unique_ptr<Sierra::Application> application = std::unique_ptr<Sierra::Application>(Sierra::CreateApplication(static_cast<int>([NSProcessInfo processInfo].arguments.count), argv));
+        if (application == nullptr)
+        {
+            APP_ERROR("Created application returned from Sierra::CreateApplication() must not be a null pointer!");
+            return FALSE;
+        }
+
+        // Run application
         while (!application->Update());
     }
 
@@ -96,5 +103,5 @@ int main(const int argc, char* argv[])
 {
     // NOTE: This delegate is released in CocoaContext.mm, when overridden by a new one
     [[NSApplication sharedApplication] setDelegate: [[CocoaEntryPointDelegate alloc] init]];
-    NSApplicationMain(argc, (const char**) argv);
+    NSApplicationMain(argc, argv);
 }

@@ -177,7 +177,7 @@ Despite the repository being named after the [Sierra Engine](SierraEngine), it e
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-<p id="LineCounter" align="center">Total lines of code: 25,576</p>
+<p id="LineCounter" align="center">Total lines of code: 25,461</p>
 <p id="LastUpdated" align="center">Last updated: 14/06/2024 </p>
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -20,7 +20,15 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Win32InputManager(const InputManagerCreateInfo &createInfo);
+        explicit Win32InputManager();
+
+        /* --- POLLING METHODS --- */
+        void RegisterKeyPress(Key key) override;
+        void RegisterKeyRelease(Key key) override;
+
+        void RegisterMouseButtonPress(MouseButton mouseButton) override;
+        void RegisterMouseButtonRelease(MouseButton mouseButton) override;
+        void RegisterMouseScroll(Vector2 scroll) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] bool IsKeyPressed(Key key) const override;
@@ -34,8 +42,13 @@ namespace Sierra
         [[nodiscard]] bool IsMouseButtonResting(MouseButton mouseButton) const override;
         [[nodiscard]] Vector2 GetMouseScroll() const override;
 
+        /* --- CONVERSIONS --- */
+        [[nodiscard]] static Key VirtualKeyCodeToKey(UINT keyCode);
+        [[nodiscard]] static MouseButton VirtualKeyCodeToMouseButton(UINT keyCode);
+
     private:
-        constexpr static Key KEY_TABLE[]
+        /* === Reference: https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes === */
+        constexpr static std::array<Key, 223> KEY_TABLE
         {
             Key::Unknown,
             Key::Unknown,
@@ -262,6 +275,16 @@ namespace Sierra
             Key::Apostrophe
         };
 
+        constexpr static std::array<MouseButton, 6> MOUSE_BUTTON_TABLE
+        {
+            MouseButton::Unknown,
+            MouseButton::Left,
+            MouseButton::Right,
+            MouseButton::Unknown,
+            MouseButton::Extra1,
+            MouseButton::Extra2
+        };
+
         std::array<InputAction, KEY_COUNT> lastKeyStates { };
         std::array<InputAction, KEY_COUNT> keyStates { };
 
@@ -272,9 +295,6 @@ namespace Sierra
 
         friend class Win32Window;
         void Update();
-        void KeyMessage(UINT message, WPARAM wParam, LPARAM lParam);
-        void MouseButtonMessage(UINT message, WPARAM wParam, LPARAM lParam);
-        void MouseWheelMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
     };
 

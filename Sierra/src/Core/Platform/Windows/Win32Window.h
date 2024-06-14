@@ -21,7 +21,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Win32Window(const Win32Context &win32Context, const WindowCreateInfo &createInfo);
+        explicit Win32Window(Win32Context &win32Context, const WindowCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
         void Update() override;
@@ -65,7 +65,7 @@ namespace Sierra
         ~Win32Window() override;
 
     private:
-        const Win32Context &win32Context;
+        Win32Context &win32Context;
 
         HWND window;
 

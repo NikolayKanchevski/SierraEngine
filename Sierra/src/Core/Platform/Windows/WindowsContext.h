@@ -21,7 +21,7 @@ namespace Sierra
         explicit WindowsContext(const PlatformContextCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] const Win32Context& GetWin32Context() const { return win32Context; }
+        [[nodiscard]] Win32Context& GetWin32Context() { return win32Context; }
         [[nodiscard]] PlatformType GetType() const override { return PlatformType::Windows; }
 
     private:

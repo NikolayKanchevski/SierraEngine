@@ -40,21 +40,21 @@ namespace Sierra
         [[nodiscard]] uint32 GetWorkAreaWidth() const override { return workAreaSize.x; }
         [[nodiscard]] uint32 GetWorkAreaHeight() const override { return workAreaSize.y; }
 
+        [[nodiscard]] HMONITOR GetHMonitor() const { return hMonitor; }
+
         /* --- MOVE SEMANTICS --- */
         Win32Screen(Win32Screen&& other);
 
     private:
-        std::string name;
+        HMONITOR hMonitor = nullptr;
+
+        std::string name = "Unknown";
+        uint32 refreshRate = 0;
+
         Vector2Int origin = { 0, 0 };
         Vector2UInt size = { 0, 0 };
         Vector2Int workAreaOrigin = { 0, 0 };
         Vector2UInt workAreaSize = { 0, 0 };
-        uint32 refreshRate = 0;
-
-        // On MSVC, only a move constructor is not enough to allow Win32Context to hold a std::vector<Win32Screen>
-        friend class Win32Context;
-        explicit Win32Screen(Win32Screen& other);
-        Win32Screen& operator=(const Win32Screen &other);
 
     };
 

@@ -6,6 +6,12 @@
 
 #include "../../Application.h"
 
+namespace
+{
+    int __argc;
+    char** __argv;
+}
+
 @interface UIKitEntryPointDelegate : UIResponder<UIApplicationDelegate>
 
 @end
@@ -33,23 +39,21 @@
 
         // Connect run loop
         displayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(applicationShouldUpdate)];
-        // [displayLink addToRunLoop: [NSRunLoop mainRunLoop] forMode: NSDefaultRunLoopMode];
         timer = [NSTimer scheduledTimerWithTimeInterval: 0 target: self selector: @selector(applicationShouldUpdate) userInfo: nil repeats: true];
         [[NSRunLoop mainRunLoop] addTimer: timer forMode: NSDefaultRunLoopMode];
 
-        // Process arguments
-        const char* argv[[NSProcessInfo processInfo].arguments.count];
-        for (uint32 i = 0; i < [NSProcessInfo processInfo].arguments.count; i++)
+        // Create application
+        application = Sierra::CreateApplication(__argc, __argv);
+        if (application == nullptr)
         {
-            argv[i] = [[NSProcessInfo processInfo].arguments[i] UTF8String];
+            APP_ERROR("Created application returned from Sierra::CreateApplication() must not be a null pointer!");
+            return FALSE;
         }
-
-        // Create and run application
-        application = Sierra::CreateApplication(static_cast<int>([NSProcessInfo processInfo].arguments.count), argv);
     }
 
     - (void) applicationShouldUpdate
     {
+        // Update application
         if (application->Update())
         {
             [displayLink invalidate];
@@ -92,5 +96,7 @@
 
 int main(const int argc, char* argv[])
 {
+   __argc = argc;
+   __argv = argv;
     UIApplicationMain(argc, argv, nil, NSStringFromClass([UIKitEntryPointDelegate class]));
 }

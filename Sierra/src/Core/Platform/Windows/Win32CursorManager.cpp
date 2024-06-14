@@ -9,8 +9,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Win32CursorManager::Win32CursorManager(HWND window, const CursorManagerCreateInfo &createInfo)
-        : CursorManager(createInfo), window(window)
+    Win32CursorManager::Win32CursorManager(HWND window)
+        : CursorManager(), window(window)
     {
         // Get cursor position
         POINT cursorPoint = { };
@@ -26,7 +26,23 @@ namespace Sierra
         lastCursorPosition = cursorPosition;
     }
 
+    /* --- POLLING METHODS --- */
+
+    void Win32CursorManager::RegisterCursorMove(const Vector2 position)
+    {
+        cursorPosition = position;
+        if (cursorShown && cursorPosition != lastCursorPosition) GetCursorMoveDispatcher().DispatchEvent(cursorPosition);
+    }
+
     /* --- SETTER METHODS --- */
+
+    void Win32CursorManager::SetCursorVisibility(const bool visible)
+    {
+        // Show cursor
+        ::ShowCursor(visible);
+        cursorShown = visible;
+        justHidCursor = !visible;
+    }
 
     void Win32CursorManager::SetCursorPosition(const Vector2 position)
     {
@@ -46,21 +62,7 @@ namespace Sierra
         cursorPosition = position;
     }
 
-    void Win32CursorManager::ShowCursor()
-    {
-        // Show cursor
-        ::ShowCursor(true);
-        cursorHidden = false;
-    }
-
-    void Win32CursorManager::HideCursor()
-    {
-        ::ShowCursor(false);
-        cursorHidden = true;
-        justHidCursor = true;
-    }
-
-    /* --- PRIVATE METHODS  --- */
+    /* --- PRIVATE METHODS --- */
 
     void Win32CursorManager::Update()
     {
@@ -69,7 +71,7 @@ namespace Sierra
 
     void Win32CursorManager::PostUpdate()
     {
-        if (!cursorHidden) return;
+        if (cursorShown) return;
 
         // Get window dimensions
         RECT rect = { };
@@ -97,9 +99,9 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    bool Win32CursorManager::IsCursorHidden() const
+    bool Win32CursorManager::IsCursorVisible() const
     {
-        return cursorHidden;
+        return cursorShown;
     }
 
     Vector2 Win32CursorManager::GetCursorPosition() const
@@ -107,33 +109,11 @@ namespace Sierra
         return cursorPosition;
     }
 
-    float32 Win32CursorManager::GetHorizontalDelta() const
+    Vector2 Win32CursorManager::GetCursorDelta() const
     {
-        float32 delta = cursorPosition.x - lastCursorPosition.x;
-        if (cursorHidden) delta *= -1;
+        Vector2 delta = { cursorPosition.x - lastCursorPosition.x, cursorPosition.y - lastCursorPosition.y };
+        if (cursorShown) delta *= -1;
         return delta;
-    }
-
-    float32 Win32CursorManager::GetVerticalDelta() const
-    {
-        float32 delta = cursorPosition.y - lastCursorPosition.y;
-        if (cursorHidden) delta *= -1;
-        return delta;
-    }
-
-    /* --- EVENTS --- */
-
-    void Win32CursorManager::MouseMoveMessage(const UINT, const WPARAM, const LPARAM lParam)
-    {
-        // Get window's dimensions
-        RECT rect = { };
-        GetClientRect(window, &rect);
-
-        // Get and save position within the window
-        cursorPosition = { LOWORD(lParam), rect.bottom - rect.top - HIWORD(lParam) };
-
-        // Dispatch events
-        if (!cursorHidden && cursorPosition != lastCursorPosition) GetCursorMoveDispatcher().DispatchEvent(cursorPosition);
     }
 
 }

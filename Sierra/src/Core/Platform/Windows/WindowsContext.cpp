@@ -12,7 +12,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     WindowsContext::WindowsContext(const PlatformContextCreateInfo &createInfo)
-        : PlatformContext(createInfo), win32Context({ })
+        : PlatformContext(createInfo), win32Context({ .hInstance = GetModuleHandle(nullptr) })
     {
 
     }

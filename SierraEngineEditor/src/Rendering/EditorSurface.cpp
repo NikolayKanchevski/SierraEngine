@@ -4,8 +4,6 @@
 
 #include "EditorSurface.h"
 
-#define MY_MACRO(X) if (X) X()
-
 namespace SierraEngine
 {
 
@@ -35,7 +33,6 @@ namespace SierraEngine
 
     void EditorSurface::Update() const
     {
-        window->Update();
         swapchain->AcquireNextImage();
     }
 
@@ -43,8 +40,8 @@ namespace SierraEngine
     {
         window->Show();
         swapchain->Present(commandBuffer);
+        window->Update();
     }
-
 
     /* --- PRIVATE METHODS --- */
 

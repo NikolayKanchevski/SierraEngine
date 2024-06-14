@@ -493,7 +493,7 @@ namespace Sierra
         [[nodiscard]] ImageFormat GetFormat() const { return format; }
 
         [[nodiscard]] float32 GetPixelMemorySize() const { return ImageFormatToPixelMemorySize(format); }
-        [[nodiscard]] uint64 GetLayerMemorySize() const { return width * height * depth * GetPixelMemorySize(); }
+        [[nodiscard]] uint64 GetLayerMemorySize() const { return static_cast<uint64>(static_cast<float32>(width) * static_cast<float32>(height) * static_cast<float32>(depth) * GetPixelMemorySize()); }
         [[nodiscard]] uint64 GetMemorySize() const { return GetLayerMemorySize() * layerCount; }
 
         [[nodiscard]] uint32 GetLevelCount() const { return levelCount; }

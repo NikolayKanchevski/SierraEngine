@@ -19,7 +19,7 @@ namespace Sierra
 
     UIWindow* UIKitContext::CreateWindow() const
     {
-        return [[UIWindow alloc] initWithWindowScene: reinterpret_cast<UIWindowScene*>([[UIApplication sharedApplication] connectedScenes].allObjects.firstObject)];
+        return [[UIWindow alloc] initWithWindowScene: reinterpret_cast<UIWindowScene*>([application connectedScenes].allObjects.firstObject)];
     }
 
     void UIKitContext::DestroyWindow(UIWindow* window) const

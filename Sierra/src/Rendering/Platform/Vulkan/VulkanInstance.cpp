@@ -5,8 +5,6 @@
 #include <vulkan/vulkan.h>
 #include "VulkanInstance.h"
 
-#include <vulkan/vulkan_metal.h>
-
 namespace Sierra
 {
 
