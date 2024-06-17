@@ -17,7 +17,7 @@ namespace SierraEngine
             scene({ .renderingContext = GetRenderingContext() })
     {
          commandBuffers.resize(surface.GetConcurrentFrameCount());
-         for (uint32 i = 0; i < commandBuffers.size(); i++)
+         for (size i = 0; i < commandBuffers.size(); i++)
          {
              commandBuffers[i] = GetRenderingContext().CreateCommandBuffer({ .name = fmt::format("General Command Buffer [{0}]", i) });
          }

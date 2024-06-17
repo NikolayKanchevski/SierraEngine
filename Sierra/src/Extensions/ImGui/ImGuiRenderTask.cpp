@@ -90,7 +90,7 @@ namespace Sierra
         // Create mesh buffers
         vertexBuffers.resize(concurrentFrameCount);
         indexBuffers.resize(concurrentFrameCount);
-        for (uint32 i = 0; i < concurrentFrameCount; i++)
+        for (size i = 0; i < concurrentFrameCount; i++)
         {
             vertexBuffers[i] = renderingContext.CreateBuffer({
                 .name = "Vertex Buffer of ImGui Render Task",

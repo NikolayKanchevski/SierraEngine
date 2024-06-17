@@ -16,7 +16,7 @@ namespace Sierra
     {
         attachmentMap.resize(createInfo.attachments.size());
         subpasses.resize(createInfo.subpassDescriptions.size());
-        for (uint32 i = 0; i < subpasses.size(); i++)
+        for (size i = 0; i < subpasses.size(); i++)
         {
             const SubpassDescription &subpassDescription = createInfo.subpassDescriptions[i];
 

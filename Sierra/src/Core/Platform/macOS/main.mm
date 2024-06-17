@@ -4,11 +4,23 @@
 
 #include <Cocoa/Cocoa.h>
 
+namespace
+{
+    int _argc;
+    char** _argv;
+}
+
 @interface CocoaEntryPointDelegate : NSObject<NSApplicationDelegate>
 
 @end
 
 @implementation CocoaEntryPointDelegate
+
+    /* --- MEMBERS --- */
+    {
+        NSTimer* timer;
+        Sierra::Application* application;
+    }
 
     /* --- EVENTS --- */
 
@@ -71,29 +83,35 @@
 
     - (void) applicationDidFinishLaunching: (NSNotification*) notification
     {
-        // Process arguments
-        const char* argv[[NSProcessInfo processInfo].arguments.count];
-        for (uint32 i = 0; i < [NSProcessInfo processInfo].arguments.count; i++)
-        {
-            argv[i] = [[NSProcessInfo processInfo].arguments[i] UTF8String];
-        }
-
-        // Create and application
-        const std::unique_ptr<Sierra::Application> application = std::unique_ptr<Sierra::Application>(Sierra::CreateApplication(static_cast<int>([NSProcessInfo processInfo].arguments.count), argv));
+        // Create application
+        application = Sierra::CreateApplication(_argc, _argv);
         if (application == nullptr)
         {
             APP_ERROR("Created application returned from Sierra::CreateApplication() must not be a null pointer!");
-            return FALSE;
         }
 
-        // Run application
-        while (!application->Update());
+        // Create run loop
+        timer = [NSTimer scheduledTimerWithTimeInterval: 0 target: self selector: @selector(applicationShouldUpdate) userInfo: nil repeats: true];
+        [[NSRunLoop mainRunLoop] addTimer: timer forMode: NSDefaultRunLoopMode];
+    }
+
+    - (void) applicationShouldUpdate
+    {
+        if (application->Update())
+        {
+//            [[NSApplication sharedApplication] terminate: nil];
+        }
     }
 
     - (NSApplicationTerminateReply) applicationShouldTerminate: (NSApplication*) sender
     {
         NSArray<NSWindow*>* windows = [[NSApplication sharedApplication] windows];
         for (NSWindow* window in windows) [window performClose: nil];
+
+        [timer invalidate];
+        [timer release];
+
+        delete(application);
         return NSTerminateCancel;
     }
 
@@ -101,7 +119,10 @@
 
 int main(const int argc, char* argv[])
 {
+    _argc = argc;
+    _argv = argv;
+
     // NOTE: This delegate is released in CocoaContext.mm, when overridden by a new one
     [[NSApplication sharedApplication] setDelegate: [[CocoaEntryPointDelegate alloc] init]];
-    NSApplicationMain(argc, argv);
+    NSApplicationMain(argc, const_cast<const char**>(argv));
 }

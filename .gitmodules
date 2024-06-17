@@ -11,9 +11,6 @@
 	path = Sierra/vendor/ImGui
 	url = https://github.com/ocornut/imgui
 	branch = docking
-[submodule "Sierra/vendor/ios-cmake"]
-    path = Sierra/vendor/ios-cmake
-    url = https://github.com/leetal/ios-cmake
 [submodule "SierraEngine/vendor/stb"]
 	path = SierraEngine/vendor/stb
 	url = https://github.com/nothings/stb
@@ -26,3 +23,9 @@
 [submodule "Sierra/vendor/fmt"]
 	path = Sierra/vendor/fmt
 	url = https://github.com/fmtlib/fmt
+[submodule "Sierra/vendor/android-cmake"]
+	path = Sierra/vendor/android-cmake
+	url = https://github.com/taka-no-me/android-cmake
+[submodule "Sierra/vendor/ios-cmake"]
+	path = Sierra/vendor/ios-cmake
+	url = https://github.com/leetal/ios-cmake

@@ -16,7 +16,7 @@ namespace Sierra
         #if SR_ENABLE_LOGGING
             const uint32 expectedWidth = createInfo.attachments.begin()->templateOutputImage.GetWidth();
             const uint32 expectedHeight = createInfo.attachments.begin()->templateOutputImage.GetHeight();
-            for (uint32 i = 0; i < createInfo.subpassDescriptions.size(); i++)
+            for (size i = 0; i < createInfo.subpassDescriptions.size(); i++)
             {
                 for (const uint32 renderTargetIndex : createInfo.subpassDescriptions[i].renderTargets)
                 {

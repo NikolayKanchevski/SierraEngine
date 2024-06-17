@@ -65,7 +65,7 @@ namespace Sierra
         }
 
         // Decrement semaphore counter after every command buffer to wait on until it reaches 0, then submit
-        for (uint32 i = 0; i < commandBuffersToWait.size(); i++)
+        for (size i = 0; i < commandBuffersToWait.size(); i++)
         {
             const CommandBuffer* commandBufferToWait = commandBuffersToWait[i];
             if (commandBufferToWait == nullptr) continue;

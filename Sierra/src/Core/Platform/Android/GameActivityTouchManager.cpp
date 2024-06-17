@@ -30,7 +30,7 @@ namespace Sierra
         android_input_buffer* inputBuffer = android_app_swap_input_buffers(gameActivityContext.GetApp());
         if (inputBuffer == nullptr) return;
 
-        for (uint32 i = 0; i < inputBuffer->motionEventsCount; i++)
+        for (size i = 0; i < inputBuffer->motionEventsCount; i++)
         {
             const GameActivityMotionEvent &motionEvent = inputBuffer->motionEvents[i];
             const GameActivityPointerAxes &pointer = motionEvent.pointers[(motionEvent.action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT];

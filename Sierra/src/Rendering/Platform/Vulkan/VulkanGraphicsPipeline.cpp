@@ -41,7 +41,7 @@ namespace Sierra
         // Set up vertex attributes
         uint32 vertexDataSize = 0;
         std::vector<VkVertexInputAttributeDescription> vertexInputAttributes(createInfo.vertexInputs.size());
-        for (uint32 i = 0; i < createInfo.vertexInputs.size(); i++)
+        for (size i = 0; i < createInfo.vertexInputs.size(); i++)
         {
             vertexInputAttributes[i].binding = 0;
             vertexInputAttributes[i].location = i;

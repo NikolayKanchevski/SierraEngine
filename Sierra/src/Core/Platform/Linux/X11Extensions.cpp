@@ -172,7 +172,7 @@ namespace Sierra
             };
 
             // Map every X11 key code to an index in the key table
-            for (uint32 i = minKeyCode; i <= glm::min(maxKeyCode, static_cast<int32>(KEY_TABLE.size()) - 1); i++)
+            for (size i = minKeyCode; i <= glm::min(maxKeyCode, KEY_TABLE.size() - 1); i++)
             {
                 Key key = Key::Unknown;
 

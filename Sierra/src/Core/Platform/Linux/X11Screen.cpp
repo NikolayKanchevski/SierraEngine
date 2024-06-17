@@ -55,7 +55,7 @@ namespace Sierra
         workAreaOrigin.y += static_cast<int32>(size.y) - static_cast<int32>(workAreaSize.y);
 
         // Get refresh rate
-        for (uint32 i = 0; i < createInfo.screenResources->nmode; i++)
+        for (size i = 0; i < createInfo.screenResources->nmode; i++)
         {
             const XRRModeInfo &mode_info = createInfo.screenResources->modes[i];
             if (mode_info.id == createInfo.crtcInfo->mode)

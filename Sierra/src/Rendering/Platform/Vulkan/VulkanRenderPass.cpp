@@ -24,7 +24,7 @@ namespace Sierra
         // Set attachment descriptions
         std::vector<VkAttachmentDescription> attachmentDescriptions(createInfo.attachments.size());
         attachmentDescriptions.reserve(createInfo.attachments.size() * 2); // NOTE: We are reserving twice the space, so we can potentially put resolve attachments at back without reallocating and invalidating pointer connections
-        for (uint32 i = 0; i < createInfo.attachments.size(); i++)
+        for (size i = 0; i < createInfo.attachments.size(); i++)
         {
             const RenderPassAttachment &attachment = createInfo.attachments[i];
 
@@ -107,7 +107,7 @@ namespace Sierra
         };
 
         // Set subpass descriptions
-        for (uint32 i = 0; i < createInfo.subpassDescriptions.size(); i++)
+        for (size i = 0; i < createInfo.subpassDescriptions.size(); i++)
         {
             const SubpassDescription &subpass = createInfo.subpassDescriptions[i];
             subpassDescriptions[i].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -168,7 +168,7 @@ namespace Sierra
             firstDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
             // Create inner dependencies
-            for (uint32 i = 1; i < subpassDependencies.size() - 1; i++)
+            for (size i = 1; i < subpassDependencies.size() - 1; i++)
             {
                 subpassDependencies[i].srcSubpass = i - 1;
                 subpassDependencies[i].dstSubpass = i;

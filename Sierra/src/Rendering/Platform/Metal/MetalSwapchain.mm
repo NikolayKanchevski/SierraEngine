@@ -90,9 +90,6 @@ namespace Sierra
         dispatch_semaphore_wait(isFrameRenderedSemaphores, DISPATCH_TIME_FOREVER);
 
         // Acquire next drawable
-        #if SR_PLATFORM_macOS
-            [metalDrawable release];
-        #endif
         metalDrawable = [metalLayer nextDrawable];
         
         // Update image
@@ -112,9 +109,6 @@ namespace Sierra
         [presentationCommandBuffer addCompletedHandler: ^(id<MTLCommandBuffer> executedCommandBuffer)
         {
             dispatch_semaphore_signal(isFrameRenderedSemaphores);
-            #if SR_PLATFORM_macOS
-                [executedCommandBuffer release];
-            #endif
         }];
         [presentationCommandBuffer commit];
 
@@ -133,15 +127,6 @@ namespace Sierra
             .height = static_cast<uint32>(metalLayer.drawableSize.height),
             .format = metalLayer.pixelFormat
         }));
-    }
-
-    /* --- DESTRUCTOR --- */
-
-    MetalSwapchain::~MetalSwapchain()
-    {
-        #if SR_PLATFORM_macOS
-            [metalDrawable release];
-        #endif
     }
 
 }

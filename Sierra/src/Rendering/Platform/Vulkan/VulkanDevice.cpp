@@ -165,7 +165,7 @@ namespace Sierra
         // Set up queue create infos
         constexpr float32 QUEUE_PRIORITY = 1.0f;
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos(queueFamilies.size());
-        for (uint32 i = 0; i < queueFamilies.size(); i++)
+        for (size i = 0; i < queueFamilies.size(); i++)
         {
             queueCreateInfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
             queueCreateInfos[i].queueFamilyIndex = queueFamilies[i];
@@ -189,7 +189,7 @@ namespace Sierra
         loadedExtensions.resize(DEVICE_EXTENSIONS_TO_QUERY.size());
 
         // Load extensions
-        uint32 i = 0;
+        size i = 0;
         for (const Extension &requestedExtension : DEVICE_EXTENSIONS_TO_QUERY)
         {
             bool extensionFound = false;
@@ -223,7 +223,7 @@ namespace Sierra
             .pQueueCreateInfos = queueCreateInfos.data(),
             .enabledLayerCount = 0,
             .ppEnabledLayerNames = nullptr,
-            .enabledExtensionCount = i,
+            .enabledExtensionCount = static_cast<uint32>(i),
             .ppEnabledExtensionNames = extensions.data(),
             .pEnabledFeatures = nullptr
         };
@@ -1227,7 +1227,7 @@ namespace Sierra
 
         // See what value to wait for
         uint64 waitValue = 0;
-        for (uint32 i = 0; i < commandBuffersToWait.size(); i++)
+        for (size i = 0; i < commandBuffersToWait.size(); i++)
         {
             const CommandBuffer* commandBufferToWait = commandBuffersToWait[i];
             if (commandBufferToWait == nullptr) continue;

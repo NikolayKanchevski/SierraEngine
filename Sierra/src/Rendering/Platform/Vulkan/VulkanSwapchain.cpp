@@ -161,7 +161,7 @@ namespace Sierra
     {
         device.GetFunctionTable().vkDestroySwapchainKHR(device.GetLogicalDevice(), swapchain, nullptr);
 
-        for (uint32 i = 0; i < concurrentFrameCount; i++)
+        for (size i = 0; i < concurrentFrameCount; i++)
         {
             device.GetFunctionTable().vkDestroySemaphore(device.GetLogicalDevice(), isImageAcquiredSemaphores[i], nullptr);
             device.GetFunctionTable().vkDestroySemaphore(device.GetLogicalDevice(), isPresentationCommandBufferFreeSemaphores[i], nullptr);
@@ -318,7 +318,7 @@ namespace Sierra
 
         // Create image implementations
         swapchainImages.resize(concurrentFrameCount);
-        for (uint32 i = 0; i < concurrentFrameCount; i++)
+        for (size i = 0; i < concurrentFrameCount; i++)
         {
             swapchainImages[i] = std::unique_ptr<VulkanImage>(new VulkanImage(device, VulkanImage::SwapchainImageCreateInfo {
                 .name = fmt::format("Image [{0}] of swapchain [{1}]", i, GetName()),
@@ -342,8 +342,8 @@ namespace Sierra
         isImageAcquiredSemaphores.resize(concurrentFrameCount);
         isPresentationCommandBufferFreeSemaphores.resize(concurrentFrameCount);
 
-        VkResult result = VK_ERROR_UNKNOWN;
-        for (uint32 i = 0; i < concurrentFrameCount; i++)
+        VkResult result;
+        for (size i = 0; i < concurrentFrameCount; i++)
         {
             result = device.GetFunctionTable().vkCreateSemaphore(device.GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &isImageAcquiredSemaphores[i]);
             SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create semaphore [{0}], indicating whether corresponding swapchain image of swapchain [{1}] is ready to be used!", i, GetName());

@@ -294,7 +294,7 @@ namespace Sierra
         std::vector<VkImageView> attachmentViews(attachments.size());
 
         // Collect attachment views
-        for (uint32 i = 0; i < attachments.size(); i++)
+        for (size i = 0; i < attachments.size(); i++)
         {
             const RenderPassBeginAttachment &attachment = attachments[i];
 

@@ -46,9 +46,6 @@ namespace Sierra
                 NSError* const error = executedCommandBuffer.error;
                 SR_ERROR_IF(error != nil, "[Metal]: Submission of command buffer [{0}] failed! Error code: {1}.", GetName(), error.description.UTF8String);
             #endif
-            #if SR_PLATFORM_macOS
-                [executedCommandBuffer release];
-            #endif
         }];
 
         [commandBufferDescriptor release];
@@ -59,10 +56,6 @@ namespace Sierra
         if (currentBlitEncoder != nil)
         {
             [currentBlitEncoder endEncoding];
-            #if SR_PLATFORM_macOS
-                [currentBlitEncoder release];
-            #endif
-
             currentBlitEncoder = nil;
         }
 
@@ -189,7 +182,7 @@ namespace Sierra
         const MetalRenderPass &metalRenderPass = static_cast<const MetalRenderPass&>(renderPass);
 
         SR_ERROR_IF(attachments.size() != metalRenderPass.GetAttachmentCount(), "[Metal]: Cannot begin render pass [{0}] within command buffer [{1}] with [{2}] attachments, as it was created to hold [{3}]!", renderPass.GetName(), GetName(), attachments.size(), metalRenderPass.GetAttachmentCount());
-        for (uint32 i = 0; i < attachments.size(); i++)
+        for (size i = 0; i < attachments.size(); i++)
         {
             const RenderPassBeginAttachment &attachment = attachments[i];
             for (MTLRenderPassAttachmentDescriptor* const renderPassAttachmentDescriptor : metalRenderPass.GetAttachment(i))
@@ -228,9 +221,6 @@ namespace Sierra
         if (currentBlitEncoder != nil)
         {
             [currentBlitEncoder endEncoding];
-            #if SR_PLATFORM_macOS
-                [currentBlitEncoder release];
-            #endif
             currentBlitEncoder = nil;
         }
 
@@ -243,9 +233,6 @@ namespace Sierra
         const MetalRenderPass &metalRenderPass = static_cast<const MetalRenderPass&>(renderPass);
 
         // Begin encoding next subpass
-        #if SR_PLATFORM_macOS
-            if (currentRenderEncoder != nil) [currentRenderEncoder release];
-        #endif
         currentRenderEncoder = [commandBuffer renderCommandEncoderWithDescriptor: metalRenderPass.GetSubpass(currentSubpass)];
         device.SetResourceName(currentComputeEncoder, "Render encoder for render pass [" + std::string(renderPass.GetName()) + "]");
 
@@ -293,9 +280,6 @@ namespace Sierra
 
         SR_ERROR_IF(currentRenderEncoder == nil, "[Metal]: Cannot end render pass [{0}], as it has not been began within command buffer [{1}]!", renderPass.GetName(), GetName());
         [currentRenderEncoder endEncoding];
-        #if SR_PLATFORM_macOS
-            [currentRenderEncoder release];
-        #endif
 
         currentRenderEncoder = nil;
         currentSubpass = 0;
@@ -378,9 +362,6 @@ namespace Sierra
         if (currentBlitEncoder != nil)
         {
             [currentBlitEncoder endEncoding];
-            #if SR_PLATFORM_macOS
-                [currentBlitEncoder release];
-            #endif
             currentBlitEncoder = nil;
         }
 
@@ -404,9 +385,6 @@ namespace Sierra
     {
         SR_ERROR_IF(computePipeline.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot end compute pipeline [{0}], from command buffer [{1}]!", computePipeline.GetName(), GetName());
         [currentComputeEncoder endEncoding];
-        #if SR_PLATFORM_macOS
-            [currentComputeEncoder release];
-        #endif
         currentComputeEncoder = nil;
     }
 

@@ -24,8 +24,7 @@ set(SIERRA_APPLICATION_ICON_ICO ${SIERRA_ENGINE_APPLICATION_ICON_ICO})
 set(SIERRA_APPLICATION_ICON_ICNS ${SIERRA_ENGINE_APPLICATION_ICON_ICNS})
 set(SIERRA_APPLICATION_ICON_PNG ${SIERRA_ENGINE_APPLICATION_ICON_PNG})
 
-set(SIERRA_BUILD_STATIC_LIBRARY ON)
-set(SIERRA_BUILD_DYNAMIC_LIBRARY OFF)
+set(SIERRA_BUILD_SHARED_LIBRARY ON)
 
 set(SIERRA_ENABLE_LOGGING ${SIERRA_ENGINE_ENABLE_LOGGING})
 set(SIERRA_ENABLE_OPTIMIZATIONS ${SIERRA_ENGINE_ENABLE_OPTIMIZATIONS})
@@ -82,13 +81,4 @@ function(SierraEngineBuildApplication SOURCE_FILES)
     # Link engine library to application
     target_link_libraries(${SIERRA_ENGINE_APPLICATION_NAME} PRIVATE SierraEngine)
     target_include_directories(${SIERRA_ENGINE_APPLICATION_NAME} PRIVATE ${SIERRA_ENGINE_DIRECTORY_PATH}/include/)
-
-    # Run update scripts
-    find_package(Python)
-    if(Python_FOUND)
-        add_custom_command(TARGET ${SIERRA_APPLICATION_NAME} POST_BUILD COMMAND ${Python_EXECUTABLE} ${SIERRA_ENGINE_DIRECTORY_PATH}/scripts/UpdateProject.py)
-        message(STATUS "[Sierra Engine]: Running project update scripts...")
-    else()
-        message(WARNING "[Sierra Engine]: Python install was not found on the machine. Project update scripts cannot be run!")
-    endif()
 endfunction()

@@ -273,7 +273,7 @@ namespace Sierra
 
             // Check if all required states are present, and add these, which are not
             std::vector<Atom> missingStates = { GetAtom(AtomType::NET_WM_STATE_MAXIMIZED_VERT), GetAtom(AtomType::NET_WM_STATE_MAXIMIZED_HORZ) };
-            for (uint32 i = windowStateCount; i--;)
+            for (size i = windowStateCount; i--;)
             {
                 for (auto iterator = missingStates.begin(); iterator != missingStates.end();)
                 {
@@ -590,7 +590,7 @@ namespace Sierra
         Atom atom = XInternAtom(display, atomName, False);
 
         // Check if it is supported and return it
-        for (uint32 i = atomCount; i--;)
+        for (size i = atomCount; i--;)
         {
             if (supportedAtoms[i] == atom) return atom;
         }
@@ -621,7 +621,7 @@ namespace Sierra
 
         // Load screens
         XRRScreenResources* screenResources = XRRGetScreenResources(display, rootWindow);
-        for (uint32 i = 0; i < screenResources->ncrtc; i++)
+        for (size i = 0; i < screenResources->ncrtc; i++)
         {
             XRRCrtcInfo* crtcInfo = XRRGetCrtcInfo(display, screenResources, screenResources->crtcs[i]);
             if (crtcInfo->noutput > 0)

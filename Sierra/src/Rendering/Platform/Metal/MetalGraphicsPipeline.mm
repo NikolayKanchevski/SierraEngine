@@ -41,7 +41,7 @@ namespace Sierra
         [renderPipelineDescriptor setRasterSampleCount: MetalImage::ImageSamplingToUInteger(createInfo.sampling)];
 
         // Configure blending & pixel formats
-        for (uint32 i = 0; i < metalRenderPass.GetColorAttachmentCount(); i++)
+        for (NSUInteger i = 0; i < metalRenderPass.GetColorAttachmentCount(); i++)
         {
             MTLRenderPipelineColorAttachmentDescriptor* const colorAttachment = [renderPipelineDescriptor.colorAttachments objectAtIndexedSubscript: i];
             [colorAttachment setPixelFormat: [metalRenderPass.GetSubpass(createInfo.subpassIndex).colorAttachments objectAtIndexedSubscript: i].texture.pixelFormat];
@@ -61,7 +61,7 @@ namespace Sierra
 
         // Set up vertex attributes
         MTLVertexDescriptor* const vertexDescriptor = [[MTLVertexDescriptor alloc] init];
-        for (uint32 i = 0; i < createInfo.vertexInputs.size(); i++)
+        for (size i = 0; i < createInfo.vertexInputs.size(); i++)
         {
             [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setBufferIndex: MetalDevice::VERTEX_BUFFER_INDEX];
             [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setOffset: vertexByteStride];

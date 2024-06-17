@@ -33,8 +33,8 @@ namespace Sierra
         [[nodiscard]] uint32 GetColorAttachmentCount() const override { return colorAttachmentCount; }
         [[nodiscard]] bool HasDepthAttachment() const override { return hasDepthAttachment; }
 
-        [[nodiscard]] MTLRenderPassDescriptor* GetSubpass(const uint32 subpassIndex) const { return subpasses[subpassIndex]; }
-        [[nodiscard]] std::span<MTLRenderPassAttachmentDescriptor* const> GetAttachment(const uint32 attachmentIndex) const { return attachmentMap[attachmentIndex]; }
+        [[nodiscard]] MTLRenderPassDescriptor* GetSubpass(const size subpassIndex) const { return subpasses[subpassIndex]; }
+        [[nodiscard]] std::span<MTLRenderPassAttachmentDescriptor* const> GetAttachment(const size attachmentIndex) const { return attachmentMap[attachmentIndex]; }
 
         /* --- DESTRUCTOR --- */
         ~MetalRenderPass() override;

@@ -52,7 +52,7 @@ namespace SierraEngine
         APP_ERROR_IF(!format.has_value(), "[Editor]: Cannot create surface, as not matching image format for [ImageFormat::R8G8B8A8_UNorm] is supported by the device of rendering context [{0}]!", renderingContext.GetName());
 
         stagingImages.resize(swapchain->GetConcurrentFrameCount());
-        for (uint32 i = 0; i < stagingImages.size(); i++)
+        for (size i = 0; i < stagingImages.size(); i++)
         {
             stagingImages[i] = renderingContext.CreateImage({
                 .name = fmt::format("Staging Image of Editor Surface [{0}]", i),

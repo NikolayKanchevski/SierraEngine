@@ -1,9 +1,9 @@
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://bit.ly/3OMysM8)
 
-# Sierra Engine ![License](https://img.shields.io/github/license/NikolayKanchevski/SierraEngine.svg)
+# Sierra Engine ![License](https://img.shields.io/github/license/NikolayKanchevski/SierraEngine.svg) ![Lines of Code](https://tokei.rs/b1/github/NikolayKanchevski/SierraEngine?category=lines&label=Lines%20of%20Code&style=flat&branch=dev)
 ![Windows Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/WindowsBuild.yaml/badge.svg) ![Linux Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/LinuxBuild.yaml/badge.svg) ![macOS Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/macOSBuild.yaml/badge.svg) 
 
-![Sierra](Media/SierraLogoTextBackground.png "Sierra")
+![Sierra Logo](Media/SierraLogoTextBackground.png)
 
 <br>
 
@@ -152,6 +152,7 @@ Despite the repository being named after the [Sierra Engine](SierraEngine), it e
 * [Vulkan](https://vulkan.org/) - Allows for incredibly fast rendering on a wide variety of platforms.
 * [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For optimal memory management of [Vulkan](https://vulkan.org/) objects.
 * [Metal](https://developer.apple.com/metal/) - Being their native rendering API, it is used for fast, hardware-accelerated rendering on [Apple](https://apple.com) platforms.
+* [android-cmake](https://github.com/taka-no-me/android-cmake) - Essential for building the engine on Android.
 * [ios-cmake](https://github.com/leetal/ios-cmake) - Essential for building the engine on iOS.
 * [ImGui](https://github.com/ocornut/imgui) - Used in the ImGui UI extension.
 * [My Brain](https://ih1.redbubble.net/templateOutputImage.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
@@ -172,12 +173,3 @@ Despite the repository being named after the [Sierra Engine](SierraEngine), it e
 * [Android Studio](https://developer.android.com/studio/) - Needed for the deployment of [Android](https://android.com) version.
 * [Blender](https://blender.org/) - Managing and testing models and assets.
 * [Trello](https://trello.com/b/RMYtZPOg/sierra-engine/) - For pretending to have an organized list of things to implement next.
-
-<br>
-
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-<p id="LineCounter" align="center">Total lines of code: 25,461</p>
-<p id="LastUpdated" align="center">Last updated: 14/06/2024 </p>
-
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
