@@ -25,8 +25,8 @@ namespace Sierra
         const GameActivityContext &gameActivityContext;
         std::deque<Touch> activeTouches;
 
-        void Update();
         friend class GameActivityWindow;
+        void Update();
 
     };
 

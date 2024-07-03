@@ -12,12 +12,12 @@
 #include "../../src/Core/EventDispatcher.hpp"
 #include "../../src/Core/FileManager.h"
 #include "../../src/Core/InputManager.h"
-#include "../../src/Core/Key.h"
 #include "../../src/Core/Logger.h"
-#include "../../src/Core/MouseButton.h"
 #include "../../src/Core/PlatformContext.h"
+#include "../../src/Core/RNG.h"
 #include "../../src/Core/ScopeProfiler.h"
 #include "../../src/Core/Screen.h"
+#include "../../src/Core/Time.h"
 #include "../../src/Core/Touch.h"
 #include "../../src/Core/TouchManager.h"
 #include "../../src/Core/Version.hpp"
@@ -30,6 +30,7 @@
 #include "../../src/Rendering/Device.h"
 #include "../../src/Rendering/GraphicsPipeline.h"
 #include "../../src/Rendering/Image.h"
+#include "../../src/Rendering/Renderer.h"
 #include "../../src/Rendering/RenderingContext.h"
 #include "../../src/Rendering/RenderingResource.h"
 #include "../../src/Rendering/RenderPass.h"
@@ -38,10 +39,6 @@
 #include "../../src/Rendering/Shader.h"
 #include "../../src/Rendering/Swapchain.h"
 
-#include "../../src/Utilities/FrameLimiter.h"
-#include "../../src/Utilities/RNG.h"
-#include "../../src/Utilities/Time.h"
-
 #if defined(SR_BUILD_IMGUI_EXTENSION)
-    #include "../../src/Extensions/ImGui/ImGuiRenderTask.h"
+    #include "../../src/Extensions/ImGui/ImGuiRenderer.h"
 #endif

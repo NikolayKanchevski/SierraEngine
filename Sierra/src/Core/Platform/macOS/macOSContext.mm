@@ -9,8 +9,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    macOSContext::macOSContext(const PlatformContextCreateInfo &createInfo)
-        : PlatformContext(createInfo), cocoaContext({ .application = [NSApplication sharedApplication] })
+    macOSContext::macOSContext()
+        : PlatformContext(), cocoaContext({ .application = [NSApplication sharedApplication] })
     {
 
     }

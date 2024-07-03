@@ -7,7 +7,8 @@
 namespace Sierra
 {
 
-    class SIERRA_API Event {  };
+    using EventSubscriptionID = uint32;
+    class SIERRA_API Event { protected: Event() = default; };
     template<typename T> concept EventType = !std::is_same_v<Event, T> && std::is_base_of_v<Event, T>;
 
     template<EventType EventType>
@@ -16,7 +17,6 @@ namespace Sierra
     public:
         /* --- TYPE DEFINITIONS --- */
         using EventCallback = std::function<bool(const EventType&)>;
-        using EventSubscriptionID = uint32;
 
         /* --- CONSTRUCTORS --- */
         EventDispatcher() = default;
@@ -25,33 +25,22 @@ namespace Sierra
         EventSubscriptionID Subscribe(const EventCallback &Callback)
         {
             // Generate ID
-            EventSubscriptionID ID;
-            if (!freedIDs.empty())
-            {
-                ID = freedIDs.front();
-                freedIDs.pop();
-            }
-            else
-            {
-                ID = totalIDs;
-            }
+            EventSubscriptionID ID = static_cast<EventSubscriptionID>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 
             // Add callback
-            totalIDs++;
-            callbacks.push_back(Callback);
+            callbacks[ID] = Callback;
             return ID;
         }
 
         bool Unsubscribe(const EventSubscriptionID ID)
         {
             // Check if ID has been registered
-            if (ID >= callbacks.size()) return false;
+            auto iterator = callbacks.find(ID);
+            if (iterator == callbacks.end()) return false;
 
-            // Remove callback reference
-            callbacks.erase(ID);
+            // Remove callback
+            callbacks.erase(iterator);
 
-            // Recycle ID
-            freedIDs.push(ID);
             return true;
         }
 
@@ -60,7 +49,7 @@ namespace Sierra
         {
             // Immediately handle requested event
             EventType event = EventType(std::forward<Args>(args)...);
-            for (const EventCallback &Callback : callbacks)
+            for (const auto &[ID, Callback] : callbacks)
             {
                 // If event is handled, we break, so that deeper subscribers do not register it
                 if (Callback(event))
@@ -78,10 +67,7 @@ namespace Sierra
         ~EventDispatcher() = default;
 
     private:
-        std::deque<EventCallback> callbacks;
-
-        uint32 totalIDs = 0;
-        std::queue<EventSubscriptionID> freedIDs;
+        std::unordered_map<EventSubscriptionID, EventCallback> callbacks;
 
     };
 

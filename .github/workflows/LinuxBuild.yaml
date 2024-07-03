@@ -52,19 +52,3 @@ jobs:
 
       - name: Build Editor CMake Project
         run: cmake --build ${{ steps.editorStrings.outputs.buildDirectory }} --config ${{ matrix.build_type }}
-
-      - name: Configure Runtime Build Directory
-        id: runtimeStrings
-        shell: bash
-        run: echo "buildDirectory=${{ github.workspace }}/bin/SierraEngineRuntime-Linux-GCC/" >> "$GITHUB_OUTPUT"
-
-      - name: Configure Runtime CMake Project
-        run: >
-          cmake -B ${{ steps.runtimeStrings.outputs.buildDirectory }}
-          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -S ${{ github.workspace }}/SierraEngineRuntime/
-
-      - name: Build Runtime CMake Project
-        run: cmake --build ${{ steps.runtimeStrings.outputs.buildDirectory }} --config ${{ matrix.build_type }}

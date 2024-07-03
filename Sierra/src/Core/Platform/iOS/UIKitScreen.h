@@ -57,7 +57,7 @@ namespace Sierra
         [[nodiscard]] static UIInterfaceOrientationMask ScreenOrientationToUIInterfaceOrientationMask(ScreenOrientation orientation);
 
     private:
-        void* /* UIKitScreenEventWrapper */ eventWrapper = nullptr;
+        void* /* UIKitScreenEventWrapper* */ eventWrapper = nullptr;
 
         std::string name;
         uint32 refreshRate = 0;

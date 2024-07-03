@@ -67,7 +67,10 @@ namespace Sierra
 
         /* --- EVENTS --- */
         template<TouchEventType EventType>
-        void OnEvent(const EventCallback<EventType>&) { }
+        EventSubscriptionID AddEventListener(const EventCallback<EventType>&);
+
+        template<TouchEventType EventType>
+        bool RemoveEventListener(EventSubscriptionID);
 
         /* --- DESTRUCTOR --- */
         virtual ~TouchManager() = default;
@@ -90,8 +93,14 @@ namespace Sierra
 
     };
 
-    template<> inline void TouchManager::OnEvent<TouchPressEvent>(const EventCallback<TouchPressEvent> &Callback) { touchPressDispatcher.Subscribe(Callback); }
-    template<> inline void TouchManager::OnEvent<TouchMoveEvent>(const EventCallback<TouchMoveEvent> &Callback) { touchMoveDispatcher.Subscribe(Callback); }
-    template<> inline void TouchManager::OnEvent<TouchReleaseEvent>(const EventCallback<TouchReleaseEvent> &Callback) { touchReleaseDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID TouchManager::AddEventListener<TouchPressEvent>(const EventCallback<TouchPressEvent> &Callback) { return touchPressDispatcher.Subscribe(Callback); }
+    template<> inline bool TouchManager::RemoveEventListener<TouchPressEvent>(const EventSubscriptionID ID) { return touchPressDispatcher.Unsubscribe(ID); }
+
+    template<> inline EventSubscriptionID TouchManager::AddEventListener<TouchMoveEvent>(const EventCallback<TouchMoveEvent> &Callback) { return touchMoveDispatcher.Subscribe(Callback); }
+    template<> inline bool TouchManager::RemoveEventListener<TouchMoveEvent>(const EventSubscriptionID ID) { return touchMoveDispatcher.Unsubscribe(ID); }
+
+    template<> inline EventSubscriptionID TouchManager::AddEventListener<TouchReleaseEvent>(const EventCallback<TouchReleaseEvent> &Callback) { return touchReleaseDispatcher.Subscribe(Callback); }
+    template<> inline bool TouchManager::RemoveEventListener<TouchReleaseEvent>(const EventSubscriptionID ID) { return touchReleaseDispatcher.Unsubscribe(ID); }
+
 
 }

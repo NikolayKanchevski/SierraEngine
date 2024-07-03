@@ -12,9 +12,9 @@ out struct
     float32vec2 UV;
 } Out;
 
-const float32vec2 TRANSLATION = vec2(-1.0, 1.0);
 void main()
 {
+    const float32vec2 TRANSLATION = float32vec2(-1.0, 1.0);
     gl_Position = vec4(TRANSLATION + pushConstant.scale * position, 0.0, 1.0);
 
     Out.color = color;

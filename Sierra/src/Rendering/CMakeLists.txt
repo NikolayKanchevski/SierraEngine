@@ -11,6 +11,8 @@ target_sources(Sierra PRIVATE
     GraphicsPipeline.h
     Image.cpp
     Image.h
+    Renderer.cpp
+    Renderer.h
     RenderingContext.cpp
     RenderingContext.h
     RenderingResource.h

@@ -8,16 +8,18 @@ target_sources(Sierra PRIVATE
     FileManager.h
     InputManager.cpp
     InputManager.h
-    Key.h
     Logger.cpp
     Logger.h
-    MouseButton.h
     PlatformContext.cpp
     PlatformContext.h
+    RNG.cpp
+    RNG.h
     ScopeProfiler.cpp
     ScopeProfiler.h
     Screen.cpp
     Screen.h
+    Time.cpp
+    Time.h
     Touch.cpp
     Touch.h
     TouchManager.cpp
@@ -66,6 +68,7 @@ if(SIERRA_PLATFORM_WINDOWS)
 endif()
 if(SIERRA_PLATFORM_macOS)
     add_subdirectory(Platform/macOS)
+    add_subdirectory(Platform/Apple)
 endif()
 if(SIERRA_PLATFORM_LINUX)
     add_subdirectory(Platform/Linux)
@@ -75,4 +78,5 @@ if(SIERRA_PLATFORM_ANDROID)
 endif()
 if(SIERRA_PLATFORM_iOS)
     add_subdirectory(Platform/iOS)
+    add_subdirectory(Platform/Apple)
 endif()

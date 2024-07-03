@@ -15,12 +15,9 @@
 namespace Sierra
 {
 
-    class SIERRA_API VulkanAndroidSurface final
+    namespace VulkanAndroidSurface
     {
-    private:
-        static VkSurfaceKHR Create(const VulkanInstance &instance,  const Window &window);
-        friend class VulkanSwapchain;
-
+        VkSurfaceKHR SIERRA_API Create(const VulkanInstance &instance, const Window &window);
     };
 
 }

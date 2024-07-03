@@ -7,12 +7,17 @@
 #include "../../src/srepch.h"
 
 #include "../../src/Core/Application.h"
+#include "../../src/Core/FrameLimiter.h"
 #include "../../src/Core/ResourcePool.hpp"
 #include "../../src/Core/ThreadPool.hpp"
 
 #include "../../src/Rendering/ArenaAllocator.h"
 #include "../../src/Rendering/Mesh.h"
+#include "../../../Sierra/src/Rendering/Renderer.h"
+#include "../../src/Rendering/Surface.h"
 #include "../../src/Rendering/Vertex.h"
+
+#include "../../src/Rendering/Renderers/TriangleRenderer.h"
 
 #include "../../src/Assets/AssetID.h"
 

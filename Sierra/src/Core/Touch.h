@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../Utilities/Time.h"
+#include "Time.h"
 
 namespace Sierra
 {
@@ -48,8 +48,8 @@ namespace Sierra
         [[nodiscard]] Vector2 GetDeltaPosition() const { return position - lastPosition; }
 
         /* --- OPERATORS --- */
-        [[nodiscard]] bool operator ==(const Touch &other) const { return ID == other.ID; }
-        [[nodiscard]] bool operator !=(const Touch &other) const { return !(*this == other); }
+        [[nodiscard]] bool operator==(const Touch &other) const { return ID == other.ID; }
+        [[nodiscard]] bool operator!=(const Touch &other) const { return !(*this == other); }
 
     private:
         TouchID ID = 0;

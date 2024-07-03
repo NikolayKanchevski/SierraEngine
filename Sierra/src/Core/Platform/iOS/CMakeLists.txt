@@ -2,6 +2,8 @@ enable_language(OBJCXX)
 target_sources(Sierra PRIVATE
     iOSContext.mm
     iOSContext.h
+    iOSWindowManager.mm
+    iOSWindowManager.h
     UIKitContext.mm
     UIKitContext.h
     UIKitScreen.mm
@@ -12,7 +14,6 @@ target_sources(Sierra PRIVATE
     UIKitWindow.h
 )
 
-# Link platform-specific libraries
 target_link_libraries(Sierra PRIVATE
     "-framework Foundation"
     "-framework UIKit"

@@ -16,11 +16,6 @@ namespace Sierra
         iOS
     };
 
-    struct PlatformContextCreateInfo
-    {
-
-    };
-
     class SIERRA_API PlatformContext
     {
     public:
@@ -35,11 +30,7 @@ namespace Sierra
         virtual ~PlatformContext() = default;
 
     protected:
-        explicit PlatformContext(const PlatformContextCreateInfo &createInfo);
-
-    private:
-        friend class Application;
-        [[nodiscard]] static std::unique_ptr<PlatformContext> Create(const PlatformContextCreateInfo &createInfo);
+        PlatformContext() = default;
 
     };
 

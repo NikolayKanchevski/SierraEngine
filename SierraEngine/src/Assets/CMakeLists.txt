@@ -5,4 +5,6 @@ target_sources(SierraEngine PRIVATE ${STB_DIRECTORY_PATH}/stb_image.h ${STB_DIRE
 target_sources(SierraEngine PRIVATE
     AssetID.cpp
     AssetID.h
+    AssetManager.cpp
+    AssetManager.h
 )

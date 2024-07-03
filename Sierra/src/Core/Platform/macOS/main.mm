@@ -99,7 +99,10 @@ namespace
     {
         if (application->Update())
         {
-//            [[NSApplication sharedApplication] terminate: nil];
+            [timer invalidate];
+            [timer release];
+
+            [[NSApplication sharedApplication] terminate: nil];
         }
     }
 
@@ -107,9 +110,6 @@ namespace
     {
         NSArray<NSWindow*>* windows = [[NSApplication sharedApplication] windows];
         for (NSWindow* window in windows) [window performClose: nil];
-
-        [timer invalidate];
-        [timer release];
 
         delete(application);
         return NSTerminateCancel;

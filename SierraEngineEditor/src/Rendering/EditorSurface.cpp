@@ -9,8 +9,8 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    EditorSurface::EditorSurface(const EditorSurfaceCreateInfo &createInfo)
-        : renderingContext(createInfo.renderingContext)
+    EditorSurface::EditorSurface(const SurfaceCreateInfo &createInfo)
+        : Surface(createInfo), renderingContext(createInfo.renderingContext)
     {
         window = createInfo.windowManager.CreateWindow({
             .title = "Sierra Engine Editor",
@@ -26,7 +26,7 @@ namespace SierraEngine
             .preferredBuffering = Sierra::SwapchainBuffering::TripleBuffering
         });
 
-        CreateStagingImages();
+        CreateRenderTargets();
     }
 
     /* --- POLLING METHODS --- */
@@ -38,23 +38,24 @@ namespace SierraEngine
 
     void EditorSurface::Present(Sierra::CommandBuffer &commandBuffer) const
     {
-        window->Show();
         swapchain->Present(commandBuffer);
+
+        if (window->IsHidden()) window->Show();
         window->Update();
     }
 
     /* --- PRIVATE METHODS --- */
 
-    void EditorSurface::CreateStagingImages()
+    void EditorSurface::CreateRenderTargets()
     {
         constexpr Sierra::ImageUsage IMAGE_USAGE = Sierra::ImageUsage::ColorAttachment | Sierra::ImageUsage::Sample;
         const std::optional<Sierra::ImageFormat> format = renderingContext.GetDevice().GetSupportedImageFormat(Sierra::ImageFormat::R8G8B8A8_UNorm, IMAGE_USAGE);
-        APP_ERROR_IF(!format.has_value(), "[Editor]: Cannot create surface, as not matching image format for [ImageFormat::R8G8B8A8_UNorm] is supported by the device of rendering context [{0}]!", renderingContext.GetName());
+        APP_ERROR_IF(!format.has_value(), "[Sierra Engine Editor]: Cannot create surface, as no matching image format for [ImageFormat::R8G8B8A8_UNorm] is supported by the device of rendering context [{0}]!", renderingContext.GetName());
 
-        stagingImages.resize(swapchain->GetConcurrentFrameCount());
-        for (size i = 0; i < stagingImages.size(); i++)
+        renderTargets.resize(swapchain->GetConcurrentFrameCount());
+        for (size i = 0; i < renderTargets.size(); i++)
         {
-            stagingImages[i] = renderingContext.CreateImage({
+            renderTargets[i] = renderingContext.CreateImage({
                 .name = fmt::format("Staging Image of Editor Surface [{0}]", i),
                 .width = swapchain->GetWidth(),
                 .height = swapchain->GetHeight(),

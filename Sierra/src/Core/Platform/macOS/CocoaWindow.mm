@@ -27,7 +27,7 @@
         return self;
     }
 
-    /* --- POLLING METHODS --- */
+    /* --- EVENTS --- */
 
     - (BOOL) windowShouldClose: (id) sender
     {
@@ -99,7 +99,7 @@
         return self;
     }
 
-    /* --- POLLING METHODS --- */
+    /* --- EVENTS --- */
 
     - (void) keyDown: (NSEvent*) event
     {
@@ -416,9 +416,11 @@ namespace Sierra
         closed = true;
 
         GetWindowCloseDispatcher().DispatchEvent();
-        cocoaContext.DestroyWindow(window);
 
-        [window release];
+        [view release];
+        [reinterpret_cast<CocoaWindowDelegate*>(delegate) release];
+
+        cocoaContext.DestroyWindow(window);
         window = nil;
     }
 
@@ -594,10 +596,11 @@ namespace Sierra
     CocoaWindow::~CocoaWindow()
     {
         if (closed) return;
-        cocoaContext.DestroyWindow(window);
 
-        [window release];
-        [reinterpret_cast<CocoaWindowDelegate*>(delegate) release];
         [view release];
+        [reinterpret_cast<CocoaWindowDelegate*>(delegate) release];
+
+        cocoaContext.DestroyWindow(window);
+        window = nil;
     }
 }

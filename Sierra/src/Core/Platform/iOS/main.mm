@@ -74,7 +74,7 @@ namespace
 
 @implementation UIKitSceneDelegate
 
-    /* --- POLLING METHODS --- */
+    /* --- EVENTS --- */
 
     - (void) sceneDidBecomeActive: (UIScene*) scene
     {

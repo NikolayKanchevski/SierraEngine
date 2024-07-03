@@ -24,7 +24,6 @@ namespace Sierra
     struct RenderingContextCreateInfo
     {
         std::string_view name = "Rendering Context";
-        GraphicsAPI graphicsAPI = GraphicsAPI::Auto;
     };
 
     class SIERRA_API RenderingContext : public virtual RenderingResource
@@ -54,10 +53,6 @@ namespace Sierra
 
     protected:
         explicit RenderingContext(const RenderingContextCreateInfo &createInfo);
-
-    private:
-        friend class Application;
-        [[nodiscard]] static std::unique_ptr<RenderingContext> Create(const RenderingContextCreateInfo &createInfo);
 
     };
 

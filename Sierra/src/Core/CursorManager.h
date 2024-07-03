@@ -9,7 +9,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API CursorEvent : public Event { };
+    class SIERRA_API CursorEvent : public Event { protected: CursorEvent() = default; };
     template<typename T> concept CursorEventType = std::is_base_of_v<CursorEvent, T> && !std::is_same_v<CursorEvent, std::decay_t<T>>;
 
     class SIERRA_API CursorMoveEvent final : public CursorEvent
@@ -47,7 +47,10 @@ namespace Sierra
 
         /* --- EVENTS --- */
         template<CursorEventType EventType>
-        void OnEvent(const EventCallback<EventType>&) { }
+        EventSubscriptionID AddEventListener(const EventCallback<EventType>&);
+
+        template<CursorEventType EventType>
+        bool RemoveEventListener(EventSubscriptionID);
 
         /* --- OPERATORS --- */
         CursorManager(const CursorManager&) = delete;
@@ -57,7 +60,7 @@ namespace Sierra
         virtual ~CursorManager() = default;
 
     protected:
-        explicit CursorManager() = default;
+        CursorManager() = default;
 
         [[nodiscard]] EventDispatcher<CursorMoveEvent>& GetCursorMoveDispatcher() { return cursorMoveDispatcher; }
 
@@ -66,6 +69,7 @@ namespace Sierra
 
     };
 
-    template<> inline void CursorManager::OnEvent<CursorMoveEvent>(const EventCallback<CursorMoveEvent> &Callback) { cursorMoveDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID CursorManager::AddEventListener<CursorMoveEvent>(const EventCallback<CursorMoveEvent> &Callback) { return cursorMoveDispatcher.Subscribe(Callback); }
+    template<> inline bool CursorManager::RemoveEventListener<CursorMoveEvent>(const EventSubscriptionID ID) { return cursorMoveDispatcher.Unsubscribe(ID); }
 
 }

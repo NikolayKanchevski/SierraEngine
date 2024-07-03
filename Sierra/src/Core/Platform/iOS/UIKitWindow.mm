@@ -11,7 +11,7 @@
 
 @implementation UIKitWindowView
 
-    /* --- POLLING METHODS --- */
+    /* --- PROPERTIES --- */
 
     + (Class) layerClass
     {
@@ -41,12 +41,14 @@
         return self;
     }
 
-    /* --- POLLING METHODS --- */
+    /* --- PROPERTIES --- */
 
     - (UIInterfaceOrientationMask) supportedInterfaceOrientations
     {
         return Sierra::UIKitScreen::ScreenOrientationToUIInterfaceOrientationMask(window->GetAllowedOrientations());
     }
+
+    /* --- EVENTS --- */
 
     - (void) touchesBegan: (NSSet<UITouch*>*) touches withEvent: (UIEvent*) event
     {
@@ -337,8 +339,8 @@ namespace Sierra
         GetWindowCloseDispatcher().DispatchEvent();
         uiKitContext.DestroyWindow(window);
 
-        [window release];
         [viewController release];
+        [window release];
     }
 
 }

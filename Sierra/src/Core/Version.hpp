@@ -26,12 +26,12 @@ namespace Sierra
         [[nodiscard]] uint8 GetPatch() const { return patch; }
 
         /* --- OPERATORS --- */
-        [[nodiscard]] bool operator <(const Version &other) const { return major < other.major || minor < other.minor || patch < other.patch; }
-        [[nodiscard]] bool operator >(const Version &other) const { return major > other.major || minor > other.minor || patch > other.patch; }
-        [[nodiscard]] bool operator <=(const Version &other) const { return major <= other.major || minor <= other.minor || patch <= other.patch; }
-        [[nodiscard]] bool operator >=(const Version &other) const { return major >= other.major || minor >= other.minor || patch >= other.patch; }
-		[[nodiscard]] bool operator ==(const Version &other) const { return major == other.major && minor == other.minor && patch == other.patch; }
-		[[nodiscard]] bool operator !=(const Version &other) const { return !(*this == other); }
+        [[nodiscard]] bool operator<(const Version &other) const { return major < other.major || minor < other.minor || patch < other.patch; }
+        [[nodiscard]] bool operator>(const Version &other) const { return major > other.major || minor > other.minor || patch > other.patch; }
+        [[nodiscard]] bool operator<=(const Version &other) const { return major <= other.major || minor <= other.minor || patch <= other.patch; }
+        [[nodiscard]] bool operator>=(const Version &other) const { return major >= other.major || minor >= other.minor || patch >= other.patch; }
+		[[nodiscard]] bool operator==(const Version &other) const { return major == other.major && minor == other.minor && patch == other.patch; }
+		[[nodiscard]] bool operator!=(const Version &other) const { return !(*this == other); }
 
     private:
         const uint8 major = 0;

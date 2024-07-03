@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../Editor/Editor.h"
+#include "../Rendering/EditorRenderer.h"
 #include "../Rendering/EditorSurface.h"
 
 namespace SierraEngine
@@ -22,14 +22,16 @@ namespace SierraEngine
     private:
         bool Update() override;
 
-        Sierra::FrameLimiter frameLimiter;
+        FrameLimiter frameLimiter;
         ThreadPool threadPool;
 
         EditorSurface surface;
         std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers = { };
 
         Scene scene;
-        std::unique_ptr<Editor> editor = nullptr;
+
+        TriangleRenderer triangleRenderer;
+        std::unique_ptr<EditorRenderer> editorRenderer;
 
     };
 

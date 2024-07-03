@@ -15,22 +15,21 @@ namespace Sierra
         PlatformContext &platformContext;
     };
 
-    class SIERRA_API WindowManager final
+    class SIERRA_API WindowManager
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::unique_ptr<Window> CreateWindow(const WindowCreateInfo &createInfo) const;
+        [[nodiscard]] virtual std::unique_ptr<Window> CreateWindow(const WindowCreateInfo &createInfo) const = 0;
+
+        /* --- DESTRUCTOR --- */
+        virtual ~WindowManager() = default;
 
         /* --- OPERATORS --- */
         WindowManager(const WindowManager&) = delete;
         WindowManager& operator=(const WindowManager&) = delete;
 
-    private:
-        PlatformContext &platformContext;
+    protected:
         explicit WindowManager(const WindowManagerCreateInfo &createInfo);
-
-        friend class Application;
-        [[nodiscard]] static std::unique_ptr<WindowManager> Create(const WindowManagerCreateInfo &createInfo);
 
     };
 

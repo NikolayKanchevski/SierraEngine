@@ -7,58 +7,33 @@
 namespace SierraEngine
 {
 
-    struct EditorSurfaceCreateInfo
-    {
-        const Sierra::WindowManager &windowManager;
-        const Sierra::RenderingContext &renderingContext;
-    };
-
-    class EditorSurface final
+    class EditorSurface final : public Surface
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit EditorSurface(const EditorSurfaceCreateInfo &createInfo);
+        explicit EditorSurface(const SurfaceCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void Update() const;
-        void Present(Sierra::CommandBuffer &commandBuffer) const;
-
-        /* --- SETTER METHODS --- */
+        void Update() const override;
+        void Present(Sierra::CommandBuffer &commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] bool IsActive() const { return !window->IsClosed();  }
+        [[nodiscard]] const Sierra::Image& GetCurrentRenderTarget() const { return *renderTargets[swapchain->GetCurrentImageIndex()]; }
+        [[nodiscard]] const Sierra::Image& GetCurrentSwapchainImage() const override { return swapchain->GetCurrentImage(); }
 
-        [[nodiscard]] uint32 GetCurrentFrameIndex() const { return swapchain->GetCurrentFrameIndex(); }
-        [[nodiscard]] uint32 GetCurrentImageIndex() const { return swapchain->GetCurrentImageIndex(); }
-        [[nodiscard]] uint32 GetConcurrentFrameCount() const { return swapchain->GetConcurrentFrameCount(); }
-
-        [[nodiscard]] uint32 GetWidth() const { return swapchain->GetWidth(); }
-        [[nodiscard]] uint32 GetHeight() const { return swapchain->GetHeight(); }
-        [[nodiscard]] uint32 GetScaling() const { return swapchain->GetScaling(); }
-
-        [[nodiscard]] const Sierra::Image& GetCurrentOutputImage() const { return *stagingImages[swapchain->GetCurrentImageIndex()]; }
-        [[nodiscard]] const Sierra::Image& GetCurrentSwapchainImage() const { return swapchain->GetCurrentImage(); }
-
-        [[nodiscard]] Sierra::Screen& GetScreen() const { return window->GetScreen(); }
-        [[nodiscard]] Sierra::InputManager& GetInputManager() const { return window->GetInputManager(); }
-        [[nodiscard]] Sierra::CursorManager& GetCursorManager() const { return window->GetCursorManager(); }
-        [[nodiscard]] Sierra::TouchManager& GetTouchManager() const { return window->GetTouchManager(); }
-
-        /* --- OPERATORS --- */
-        EditorSurface(const EditorSurface&) = delete;
-        EditorSurface& operator=(const EditorSurface&) = delete;
+        [[nodiscard]] Sierra::Window& GetWindow() const override { return *window; }
+        [[nodiscard]] Sierra::Swapchain& GetSwapchain() const override { return *swapchain; }
 
         /* --- DESTRUCTOR --- */
-        ~EditorSurface() = default;
+        ~EditorSurface() override = default;
 
     private:
         const Sierra::RenderingContext &renderingContext;
-
         std::unique_ptr<Sierra::Window> window = nullptr;
         std::unique_ptr<Sierra::Swapchain> swapchain = nullptr;
 
-        std::vector<std::unique_ptr<Sierra::Image>> stagingImages = { };
-        void CreateStagingImages();
+        std::vector<std::unique_ptr<Sierra::Image>> renderTargets = { };
+        void CreateRenderTargets();
 
     };
 

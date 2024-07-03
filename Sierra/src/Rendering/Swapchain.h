@@ -12,7 +12,7 @@
 namespace Sierra
 {
 
-    class SIERRA_API SwapchainEvent : public Event { };
+    class SIERRA_API SwapchainEvent : public Event { protected: SwapchainEvent() = default; };
     template<typename T> concept SwapchainEventType = std::is_base_of_v<SwapchainEvent, T> && !std::is_same_v<SwapchainEvent, std::decay_t<T>>;
 
     class SIERRA_API SwapchainResizeEvent final : public SwapchainEvent
@@ -86,7 +86,10 @@ namespace Sierra
 
         /* --- EVENTS --- */
         template<SwapchainEventType EventType>
-        void OnEvent(const EventCallback<EventType>&) { }
+        EventSubscriptionID AddEventListener(const EventCallback<EventType>&);
+        
+        template<SwapchainEventType EventType>
+        bool RemoveEventListener(EventSubscriptionID);
 
         /* --- OPERATORS --- */
         Swapchain(const Swapchain&) = delete;
@@ -104,6 +107,7 @@ namespace Sierra
 
     };
 
-    template<> inline void Swapchain::OnEvent<SwapchainResizeEvent>(const EventCallback<SwapchainResizeEvent> &Callback) { swapchainResizeDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID Swapchain::AddEventListener<SwapchainResizeEvent>(const EventCallback<SwapchainResizeEvent> &Callback) { return swapchainResizeDispatcher.Subscribe(Callback); }
+    template<> inline bool Swapchain::RemoveEventListener<SwapchainResizeEvent>(const EventSubscriptionID ID) { return swapchainResizeDispatcher.Unsubscribe(ID); }
 
 }

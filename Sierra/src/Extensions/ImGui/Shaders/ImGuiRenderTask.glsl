@@ -5,8 +5,8 @@
 
 layout(push_constant) uniform PushConstant
 {
-    uint32 fontAtlasIndex;
-    uint32 fontSamplerIndex;
+    uint32 textureIndex;
+    uint32 samplerIndex;
     vec2 scale;
 } pushConstant;
 

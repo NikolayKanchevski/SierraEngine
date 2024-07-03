@@ -68,7 +68,7 @@ namespace Sierra
         isFrameRenderedSemaphores = dispatch_semaphore_create(concurrentFrameCount);
 
         // Handle resizing
-        createInfo.window.OnEvent<WindowResizeEvent>([this](const WindowResizeEvent&) -> bool
+        windowResizeEventListenerID = createInfo.window.AddEventListener<WindowResizeEvent>([this](const WindowResizeEvent&) -> bool
         {
             // Resize Metal layer
             [metalLayer setDrawableSize: CGSizeMake(window.GetFramebufferWidth(), window.GetFramebufferHeight())];
@@ -114,6 +114,13 @@ namespace Sierra
 
         // Increment current frame
         currentFrame = (currentFrame + 1) % concurrentFrameCount;
+    }
+
+    /* --- DESTRUCTOR --- */
+
+    MetalSwapchain::~MetalSwapchain()
+    {
+        window.RemoveEventListener<WindowResizeEvent>(windowResizeEventListenerID);
     }
 
     /* --- PRIVATE METHODS --- */

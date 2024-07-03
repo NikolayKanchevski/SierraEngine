@@ -8,12 +8,12 @@ in struct
     float32vec2 UV;
 } In;
 
-SIERRA_SAMPLED_IMAGE_2D(fontAtlas, pushConstant.fontAtlasIndex);
-SIERRA_SAMPLER(fontSampler, pushConstant.fontSamplerIndex);
+SIERRA_SAMPLED_IMAGE_2D(currentTexture, pushConstant.textureIndex);
+SIERRA_SAMPLER(currentSampler, pushConstant.samplerIndex);
 
 out float32vec4 Out;
 
 void main()
 {
-    Out = In.color * texture(sampler2D(SIERRA_GET_SAMPLED_IMAGE_2D(fontAtlas), SIERRA_GET_SAMPLER(fontSampler)), In.UV).r;
+    Out = In.color * texture(sampler2D(SIERRA_GET_SAMPLED_IMAGE_2D(currentTexture), SIERRA_GET_SAMPLER(currentSampler)), In.UV);
 }

@@ -11,8 +11,12 @@
 #if defined(__OBJC__)
     #include <Cocoa/Cocoa.h>
 #else
-    using NSView = void;
-    using NSWindow = void;
+    namespace Sierra
+    {
+        #define nil nullptr
+        using NSView = void;
+        using NSWindow = void;
+    }
 #endif
 #include "../../Window.h"
 
@@ -74,7 +78,7 @@ namespace Sierra
         CocoaContext &cocoaContext;
 
         NSView* view = nil;
-        void* delegate = nil; // NSObject<NSWindowDelegate>*
+        void* /* CocoaWindowDelegate* */ delegate = nil;
         NSWindow* window = nil;
 
         CocoaInputManager inputManager;

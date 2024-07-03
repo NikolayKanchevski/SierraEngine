@@ -103,7 +103,7 @@ namespace Sierra
 
     NSWindow* CocoaContext::CreateWindow(const std::string_view title, uint32 width, uint32 height) const
     {
-        NSWindow* const window = [[CocoaWindow alloc] initWithTitle: title width: width height: height];
+        NSWindow* const window = [[[CocoaWindow alloc] initWithTitle: title width: width height: height] retain];
         [window center];
         [window setCollectionBehavior: NSWindowCollectionBehaviorFullScreenPrimary | NSWindowCollectionBehaviorManaged];
         [window setAcceptsMouseMovedEvents: YES];
@@ -155,8 +155,8 @@ namespace Sierra
 
     CocoaContext::~CocoaContext()
     {
-        [application setDelegate: nil];
         [[application delegate] release];
+        [application setDelegate: nil];
     }
 
 }

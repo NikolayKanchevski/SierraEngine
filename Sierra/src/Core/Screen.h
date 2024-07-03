@@ -21,7 +21,7 @@ namespace Sierra
     };
     SR_DEFINE_ENUM_FLAG_OPERATORS(ScreenOrientation);
 
-    class SIERRA_API ScreenEvent : public Event { };
+    class SIERRA_API ScreenEvent : public Event { protected: ScreenEvent() = default; };
     template<typename T> concept ScreenEventType = std::is_base_of_v<ScreenEvent, T> && !std::is_same_v<ScreenEvent, std::decay_t<T>>;
 
     class SIERRA_API ScreenReorientEvent : public ScreenEvent
@@ -63,7 +63,10 @@ namespace Sierra
 
         /* --- EVENTS --- */
         template<ScreenEventType EventType>
-        void OnEvent(const EventCallback<EventType>&) { }
+        EventSubscriptionID AddEventListener(const EventCallback<EventType>&);
+
+        template<ScreenEventType EventType>
+        bool RemoveEventListener(EventSubscriptionID);
 
         /* --- OPERATORS --- */
         Screen(const Screen&) = delete;
@@ -82,6 +85,7 @@ namespace Sierra
 
     };
 
-    template<> inline void Screen::OnEvent<ScreenReorientEvent>(const EventCallback<ScreenReorientEvent> &Callback) { screenReorientDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID Screen::AddEventListener<ScreenReorientEvent>(const EventCallback<ScreenReorientEvent> &Callback) { return screenReorientDispatcher.Subscribe(Callback); }
+    template<> inline bool Screen::RemoveEventListener<ScreenReorientEvent>(const EventSubscriptionID ID) { return screenReorientDispatcher.Unsubscribe(ID); }
 
 }

@@ -6,19 +6,19 @@
 
 #if SR_PLATFORM_WINDOWS
     #include "Platform/Windows/VulkanWindowsSurface.h"
-    using NativeSurface = Sierra::VulkanWindowsSurface;
+    constexpr VkSurfaceKHR (*CreateVkSurfaceKHR)(const Sierra::VulkanInstance&, const Sierra::Window&) = &Sierra::VulkanWindowsSurface::Create;
 #elif SR_PLATFORM_macOS
     #include "Platform/macOS/VulkanMacOSSurface.h"
-    using NativeSurface = Sierra::VulkanMacOSSurface;
+    constexpr VkSurfaceKHR (*CreateVkSurfaceKHR)(const Sierra::VulkanInstance&, const Sierra::Window&) = &Sierra::VulkanMacOSSurface::Create;
 #elif SR_PLATFORM_LINUX
     #include "Platform/Linux/VulkanLinuxSurface.h"
-    using NativeSurface = Sierra::VulkanLinuxSurface;
+    constexpr VkSurfaceKHR (*CreateVkSurfaceKHR)(const Sierra::VulkanInstance&, const Sierra::Window&) = &Sierra::VulkanLinuxSurface::Create;
 #elif SR_PLATFORM_ANDROID
     #include "Platform/Android/VulkanAndroidSurface.h"
-    using NativeSurface = Sierra::VulkanAndroidSurface;
+    constexpr VkSurfaceKHR (*CreateVkSurfaceKHR)(const Sierra::VulkanInstance&, const Sierra::Window&) = &Sierra::VulkanAndroidSurface::Create;
 #elif SR_PLATFORM_iOS
     #include "Platform/iOS/VulkaniOSSurface.h"
-    using NativeSurface = Sierra::VulkaniOSSurface;
+    constexpr VkSurfaceKHR (*CreateVkSurfaceKHR)(const Sierra::VulkanInstance&, const Sierra::Window&) = &Sierra::VulkaniOSSurface::Create;
 #endif
 #include "VulkanCommandBuffer.h"
 
@@ -28,7 +28,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanSwapchain::VulkanSwapchain(const VulkanInstance &instance, const VulkanDevice &device, const SwapchainCreateInfo &createInfo)
-        : Swapchain(createInfo), VulkanResource(createInfo.name), instance(instance), device(device), window(createInfo.window), surface(NativeSurface::Create(instance, createInfo.window)), preferredPresentationMode(createInfo.preferredPresentationMode), preferredBuffering(createInfo.preferredBuffering), preferredImageMemoryType(createInfo.preferredImageMemoryType)
+        : Swapchain(createInfo), VulkanResource(createInfo.name), instance(instance), device(device), window(createInfo.window), surface(CreateVkSurfaceKHR(instance, createInfo.window)), preferredPresentationMode(createInfo.preferredPresentationMode), preferredBuffering(createInfo.preferredBuffering), preferredImageMemoryType(createInfo.preferredImageMemoryType)
     {
         SR_ERROR_IF(!device.IsExtensionLoaded(VK_KHR_SWAPCHAIN_EXTENSION_NAME), "[Vulkan]: Cannot create swapchain [{0}], as the provided device [{1}] does not support the {2} extension!", GetName(), device.GetName(), VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 

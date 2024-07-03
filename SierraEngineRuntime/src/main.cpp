@@ -4,7 +4,7 @@
 
 #include "Core/RuntimeApplication.h"
 
-Sierra::Application* Sierra::CreateApplication(const int argc, const char* argv[])
+Sierra::Application* Sierra::CreateApplication(const int argc, char* argv[])
 {
     return new SierraEngine::RuntimeApplication({ .name = "Sierra Engine", .version = Sierra::Version({ 1, 0, 0 }) });
 }

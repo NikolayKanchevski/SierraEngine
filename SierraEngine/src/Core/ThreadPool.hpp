@@ -20,10 +20,10 @@ namespace SierraEngine
 
         /* --- CONSTRUCTORS --- */
         explicit ThreadPool(const ThreadPoolCreateInfo &createInfo)
+            : running(true)
         {
-            threads.resize(createInfo.threadCount != 0 ? createInfo.threadCount : glm::max(std::thread::hardware_concurrency(), 1U));
-            for (std::thread &thread : threads) thread = std::thread(&ThreadPool::Thread, this);
-            running = true;
+            threads.resize(glm::clamp(createInfo.threadCount, 1U, std::thread::hardware_concurrency()));
+            std::ranges::generate(threads, [this]() -> std::thread { return std::thread(&ThreadPool::ThreadLoop, this); });
         }
 
         /* --- GETTER METHODS --- */
@@ -88,16 +88,15 @@ namespace SierraEngine
                     catch (...) { /* NOLINT(*-empty-catch) */ }
                 }
             });
+
             return promise->get_future();
         }
 
         void WaitForTasks()
         {
             waiting = true;
-
             std::unique_lock taskLock(taskMutex);
             taskCompleted.wait(taskLock, [this]() -> bool { return totalTaskCount == (paused ? taskQueue.size() : 0); });
-
             waiting = false;
         }
 
@@ -128,7 +127,7 @@ namespace SierraEngine
         std::condition_variable taskAvailable = { };
         std::condition_variable taskCompleted = { };
 
-        void Thread()
+        void ThreadLoop()
         {
             // While pool is functional
             while (running)

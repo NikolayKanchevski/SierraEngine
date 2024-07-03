@@ -15,12 +15,9 @@
 namespace Sierra
 {
 
-    class SIERRA_API VulkanWindowsSurface final
+    namespace VulkanWindowsSurface
     {
-    private:
-        static VkSurfaceKHR Create(const VulkanInstance &instance,  const Window &window);
-        friend class VulkanSwapchain;
-
+        VkSurfaceKHR SIERRA_API Create(const VulkanInstance &instance, const Window &window);
     };
 
 }

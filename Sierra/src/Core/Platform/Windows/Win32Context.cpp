@@ -5,7 +5,7 @@
 #include "Win32Context.h"
 
 #include <shellapi.h>
-#include "../../../Utilities/RNG.h"
+#include "../../../Core/RNG.h"
 
 namespace Sierra
 {
