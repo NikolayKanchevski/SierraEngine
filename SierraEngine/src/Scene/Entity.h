@@ -72,7 +72,7 @@ namespace SierraEngine
 
         /* --- OPERATORS --- */
         [[nodiscard]] bool IsNull() const { return entity == entt::null; }
-        operatorbool() const { return !IsNull(); }
+        operator bool() const { return !IsNull(); }
 
         [[nodiscard]] bool operator==(const Entity &other) const { return registry == other.registry && entity == other.entity; }
         [[nodiscard]] bool operator!=(const Entity &other) const { return !(*this == other); }

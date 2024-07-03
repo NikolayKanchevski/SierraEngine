@@ -2,13 +2,15 @@
 
 # Sierra Engine ![License](https://img.shields.io/github/license/NikolayKanchevski/SierraEngine?style=flat&color=%2300599C) ![Lines of Code](https://tokei.rs/b1/github/NikolayKanchevski/SierraEngine?category=lines&style=flat&branch=dev&label=Lines%20of%20Code&color=%2300599C) ![Repo Size](https://img.shields.io/github/repo-size/NikolayKanchevski/SierraEngine?style=flat&color=%2300599C) ![Language](https://img.shields.io/badge/C++-%2300599C.svg?style=flat&logo=c%2B%2B&logoColor=white)
 
-![Sierra Logo](Media/SierraLogoTextBackground.png)
-
 <div align="center">
+
+![Sierra Logo](Media/SierraLogoTextBackground.png)
 
 ![Windows Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/WindowsBuild.yaml/badge.svg) 
 ![Linux Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/LinuxBuild.yaml/badge.svg) 
 ![macOS Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/macOSBuild.yaml/badge.svg)
+
+![Sierra Showcase](Media/SierraShowcase.png)
 
 </div>
 
