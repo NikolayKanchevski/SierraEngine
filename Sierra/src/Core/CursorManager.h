@@ -47,7 +47,7 @@ namespace Sierra
 
         /* --- EVENTS --- */
         template<CursorEventType EventType>
-        EventSubscriptionID AddEventListener(const EventCallback<EventType>&);
+        EventSubscriptionID AddEventListener(EventCallback<EventType>);
 
         template<CursorEventType EventType>
         bool RemoveEventListener(EventSubscriptionID);
@@ -69,7 +69,7 @@ namespace Sierra
 
     };
 
-    template<> inline EventSubscriptionID CursorManager::AddEventListener<CursorMoveEvent>(const EventCallback<CursorMoveEvent> &Callback) { return cursorMoveDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID CursorManager::AddEventListener<CursorMoveEvent>(EventCallback<CursorMoveEvent> Callback) { return cursorMoveDispatcher.Subscribe(Callback); }
     template<> inline bool CursorManager::RemoveEventListener<CursorMoveEvent>(const EventSubscriptionID ID) { return cursorMoveDispatcher.Unsubscribe(ID); }
 
 }

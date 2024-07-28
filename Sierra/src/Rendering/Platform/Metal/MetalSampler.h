@@ -26,6 +26,8 @@ namespace Sierra
         MetalSampler(const MetalDevice &device, const SamplerCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const override;
+
         [[nodiscard]] id<MTLSamplerState> GetSamplerState() const { return samplerState; }
 
         /* --- DESTRUCTOR --- */

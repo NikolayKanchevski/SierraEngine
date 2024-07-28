@@ -6,7 +6,7 @@
 
 #include "FileManager.h"
 #include "PlatformContext.h"
-#include "Version.hpp"
+#include "Version.h"
 #include "WindowManager.h"
 #include "../Rendering/RenderingContext.h"
 

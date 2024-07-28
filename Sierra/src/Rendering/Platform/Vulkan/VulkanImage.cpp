@@ -10,10 +10,11 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanImage::VulkanImage(const VulkanDevice &device, const ImageCreateInfo &createInfo)
-        : Image(createInfo), VulkanResource(createInfo.name), device(device), usageFlags(ImageUsageToVkImageUsageFlags(createInfo.usage))
+        : Image(createInfo), device(device), width(createInfo.width), height(createInfo.height), depth(createInfo.depth), format(createInfo.format), levelCount(createInfo.levelCount), layerCount(createInfo.layerCount), sampling(createInfo.sampling),
+          name(createInfo.name), usageFlags(ImageUsageToVkImageUsageFlags(createInfo.usage))
     {
-        SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Vulkan]: Cannot create image [{0}] with unsupported sampling! Use Device::IsImageSamplingSupported() to query image sampling support.", GetName());
-        SR_ERROR_IF(!device.IsImageFormatSupported(createInfo.format, createInfo.usage), "[Vulkan]: Cannot create image [{0}] with unsupported format! Use Device::IsImageFormatSupported() to query format support.", GetName());
+        SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Vulkan]: Cannot create image [{0}] with unsupported sampling! Use Device::IsImageSamplingSupported() to query image sampling support.", name);
+        SR_ERROR_IF(!device.IsImageFormatSupported(createInfo.format, createInfo.usage), "[Vulkan]: Cannot create image [{0}] with unsupported format! Use Device::IsImageFormatSupported() to query format support.", name);
 
         // Set up image create info
         const VkImageCreateInfo imageCreateInfo
@@ -46,7 +47,7 @@ namespace Sierra
 
         // Create and allocate image
         VkResult result = vmaCreateImage(device.GetMemoryAllocator(), &imageCreateInfo, &allocationCreateInfo, &image, &allocation, nullptr);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create image [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create image [{0}]! Error code: {1}.", name, static_cast<int32>(result));
 
         // Determine aspect flags
         if (createInfo.usage & ImageUsage::DepthAttachment) aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -76,18 +77,19 @@ namespace Sierra
 
         // Create the image view
         result = device.GetFunctionTable().vkCreateImageView(device.GetLogicalDevice(), &imageViewCreateInfo, nullptr, &imageView);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create image view for image [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create image view for image [{0}]! Error code: {1}.", name, static_cast<int32>(result));
 
         // Set object names
-        device.SetResourceName(image, VK_OBJECT_TYPE_IMAGE, GetName());
-        device.SetResourceName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image view of image [" + std::string(GetName()) + "]");
+        device.SetResourceName(image, VK_OBJECT_TYPE_IMAGE, name);
+        device.SetResourceName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, fmt::format("Image view of image [{0}]", name));
     }
 
     VulkanImage::VulkanImage(const VulkanDevice &device, const SwapchainImageCreateInfo &createInfo)
-        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainVkFormatToImageFormat(createInfo.format), .usage = ImageUsage::SourceMemory | ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }), VulkanResource(createInfo.name),
-          device(device), image(createInfo.image), usageFlags(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT), aspectFlags(VK_IMAGE_ASPECT_COLOR_BIT), swapchainImage(true)
+        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainVkFormatToImageFormat(createInfo.format), .usage = ImageUsage::SourceMemory | ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }), device(device),
+          width(createInfo.width), height(createInfo.height), format(SwapchainVkFormatToImageFormat(createInfo.format)),
+          name(createInfo.name), image(createInfo.image), usageFlags(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT), aspectFlags(VK_IMAGE_ASPECT_COLOR_BIT), swapchainImage(true)
     {
-        SR_ERROR_IF(createInfo.image == VK_NULL_HANDLE, "[Vulkan]: Null texture pointer passed upon swapchain image [{0}] creation!", GetName());
+        SR_ERROR_IF(createInfo.image == VK_NULL_HANDLE, "[Vulkan]: Null texture pointer passed upon swapchain image [{0}] creation!", name);
 
         // Set up image view create info
         const VkImageViewCreateInfo imageViewCreateInfo
@@ -113,11 +115,11 @@ namespace Sierra
 
         // Create the image view
         const VkResult result = device.GetFunctionTable().vkCreateImageView(device.GetLogicalDevice(), &imageViewCreateInfo, nullptr, &imageView);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create image view for image [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create image view for image [{0}]! Error code: {1}.", name, static_cast<int32>(result));
 
         // Set object names
-        device.SetResourceName(image, VK_OBJECT_TYPE_IMAGE, GetName());
-        device.SetResourceName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image view of image [" + std::string(GetName()) + "]");
+        device.SetResourceName(image, VK_OBJECT_TYPE_IMAGE, name);
+        device.SetResourceName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, fmt::format("Image view of image [{0}]", name));
     }
 
     /* --- DESTRUCTOR --- */

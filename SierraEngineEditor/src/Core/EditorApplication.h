@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "../Assets/EditorAssetManager.h"
 #include "../Rendering/EditorRenderer.h"
 #include "../Rendering/EditorSurface.h"
 
@@ -26,8 +27,10 @@ namespace SierraEngine
         ThreadPool threadPool;
 
         EditorSurface surface;
+        std::unique_ptr<Sierra::ResourceTable> resourceTable;
         std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers = { };
 
+        EditorAssetManager editorAssetManager;
         Scene scene;
 
         TriangleRenderer triangleRenderer;

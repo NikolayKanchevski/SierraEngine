@@ -10,10 +10,10 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalImage::MetalImage(const MetalDevice &device, const ImageCreateInfo &createInfo)
-        : Image(createInfo), MetalResource(createInfo.name)
+        : Image(createInfo), width(createInfo.width), height(createInfo.height), depth(createInfo.depth), format(createInfo.format), levelCount(createInfo.levelCount), layerCount(createInfo.layerCount), sampling(createInfo.sampling)
     {
-        SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Metal]: Cannot create image [{0}] with unsupported sampling! Use Device::IsImageSamplingSupported() to query image sampling support.", GetName());
-        SR_ERROR_IF(!device.IsImageFormatSupported(createInfo.format, createInfo.usage), "[Metal]: Cannot create [{0}] image with unsupported format! Use Device::IsImageFormatSupported() to query format support.", GetName());
+        SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Metal]: Cannot create image [{0}] with unsupported sampling! Use Device::IsImageSamplingSupported() to query image sampling support.", createInfo.name);
+        SR_ERROR_IF(!device.IsImageFormatSupported(createInfo.format, createInfo.usage), "[Metal]: Cannot create [{0}] image with unsupported format! Use Device::IsImageFormatSupported() to query format support.", createInfo.name);
 
         // Set up texture descriptor
         MTLTextureDescriptor* const textureDescriptor = [[MTLTextureDescriptor alloc] init];
@@ -33,16 +33,23 @@ namespace Sierra
         // Allocate texture
         texture = [device.GetMetalDevice() newTextureWithDescriptor: textureDescriptor];
         SR_ERROR_IF(texture == nil, "[Metal]: Could not create image!");
-        device.SetResourceName(texture, GetName());
+        device.SetResourceName(texture, createInfo.name);
 
         [textureDescriptor release];
     }
 
     MetalImage::MetalImage(const MetalDevice &device, const SwapchainImageCreateInfo &createInfo)
-        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainPixelFormatToImageFormat(createInfo.format), .usage = ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }), MetalResource(createInfo.name),
-          texture(createInfo.texture), swapchainImage(true)
+        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainPixelFormatToImageFormat(createInfo.format), .usage = ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }),
+          width(createInfo.width), height(createInfo.height), format(SwapchainPixelFormatToImageFormat(createInfo.format)), texture(createInfo.texture), swapchainImage(true)
     {
 
+    }
+
+    /* --- GETTER METHODS --- */
+
+    std::string_view MetalImage::GetName() const
+    {
+        return { [texture.label UTF8String], [texture.label length] };
     }
 
     /* --- DESTRUCTOR --- */

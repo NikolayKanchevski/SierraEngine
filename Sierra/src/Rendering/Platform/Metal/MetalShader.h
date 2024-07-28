@@ -26,6 +26,8 @@ namespace Sierra
         MetalShader(const MetalDevice &device, const ShaderCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const override;
+
         [[nodiscard]] id<MTLFunction> GetEntryFunction() const { return entryFunction; }
 
         /* --- DESTRUCTOR --- */

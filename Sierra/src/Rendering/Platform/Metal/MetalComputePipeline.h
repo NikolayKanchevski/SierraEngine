@@ -26,6 +26,8 @@ namespace Sierra
         MetalComputePipeline(const MetalDevice &device, const ComputePipelineCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const override;
+
         [[nodiscard]] id<MTLComputePipelineState> GetComputePipelineState() const { return computePipelineState; }
 
         /* --- DESTRUCTOR --- */

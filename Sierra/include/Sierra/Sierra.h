@@ -20,7 +20,7 @@
 #include "../../src/Core/Time.h"
 #include "../../src/Core/Touch.h"
 #include "../../src/Core/TouchManager.h"
-#include "../../src/Core/Version.hpp"
+#include "../../src/Core/Version.h"
 #include "../../src/Core/Window.h"
 #include "../../src/Core/WindowManager.h"
 

@@ -13,6 +13,8 @@
     namespace Sierra
     {
         #define nil nullptr
+        using MTLResource = void;
+
         template<typename T>
         struct id
         {
@@ -33,13 +35,11 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] GraphicsAPI GetAPI() const override { return GraphicsAPI::Metal; }
 
+        /* --- DESTRUCTORS --- */
+        ~MetalResource() override = default;
+
     protected:
-        explicit MetalResource(const std::string_view name)
-        {
-            #if SR_ENABLE_LOGGING
-                this->name = name;
-            #endif
-        }
+        MetalResource() = default;
 
     };
 

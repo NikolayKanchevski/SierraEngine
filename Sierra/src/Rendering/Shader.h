@@ -27,12 +27,8 @@ namespace Sierra
     class SIERRA_API Shader : public virtual RenderingResource
     {
     public:
-        /* --- OPERATORS --- */
-        Shader(const Shader&) = delete;
-        Shader& operator=(const Shader&) = delete;
-
         /* --- DESTRUCTOR --- */
-        virtual ~Shader() = default;
+        ~Shader() override = default;
 
     protected:
         explicit Shader(const ShaderCreateInfo &createInfo);

@@ -107,12 +107,21 @@ namespace Sierra
                 },
             #endif
         };
+
+        void PushToPNextChain(void* mainStruct, void* newStruct)
+        {
+            // We just cast them to any Vulkan structure, as they all have their pNext stored exactly 4 bytes within the struct
+            VkBufferMemoryBarrier* mainStructAsVkStruct = static_cast<VkBufferMemoryBarrier*>(mainStruct);
+            VkBufferMemoryBarrier* newStructAsVkStruct = static_cast<VkBufferMemoryBarrier*>(newStruct);
+            newStructAsVkStruct->pNext = mainStructAsVkStruct->pNext;
+            mainStructAsVkStruct->pNext = newStruct;
+        }
     }
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanDevice::VulkanDevice(const VulkanInstance &instance, const DeviceCreateInfo &createInfo)
-        : Device(createInfo), VulkanResource(createInfo.name), instance(instance)
+    VulkanDevice::VulkanDevice(const VulkanInstance &instance)
+        : instance(instance)
     {
         // Retrieve number of GPUs found
         uint32 physicalDeviceCount = 0;
@@ -131,7 +140,7 @@ namespace Sierra
         {
             VkPhysicalDeviceProperties physicalDeviceProperties = { };
             vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
-            deviceName = physicalDeviceProperties.deviceName;
+            name = physicalDeviceProperties.deviceName;
         }
 
         // Get count of all present queue families
@@ -148,7 +157,7 @@ namespace Sierra
             instance.GetFunctionTable().vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyPropertiesCount, queueFamilyProperties.data());
 
             // Check which queues are present
-            for (uint32 i = 0; i < queueFamilyPropertiesCount; i++)
+            for (size i = 0; i < queueFamilyPropertiesCount; i++)
             {
                 // If queue family supports all operations, we save to use it later
                 if (const VkQueueFamilyProperties properties = queueFamilyProperties[i]; !foundGeneralQueueFamily && properties.queueFlags & VK_QUEUE_TRANSFER_BIT && properties.queueFlags & VK_QUEUE_COMPUTE_BIT && properties.queueFlags & VK_QUEUE_GRAPHICS_BIT)
@@ -160,7 +169,7 @@ namespace Sierra
                 queueFamilies[i] = i;
             }
         }
-        SR_ERROR_IF(!foundGeneralQueueFamily, "[Vulkan]: Could not create device [{0}], because it does not have a single queue family, which supports all operations!", GetName());
+        SR_ERROR_IF(!foundGeneralQueueFamily, "[Vulkan]: Could not create device [{0}], because it does not have a single queue family, which supports all operations!", name);
 
         // Set up queue create infos
         constexpr float32 QUEUE_PRIORITY = 1.0f;
@@ -230,7 +239,7 @@ namespace Sierra
 
         // Create logical device
         result = instance.GetFunctionTable().vkCreateDevice(physicalDevice, &logicalDeviceCreateInfo, nullptr, &logicalDevice);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create logical device [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create logical device [{0}]! Error code: {1}.", name, static_cast<int32>(result));
 
         #pragma region Function Pointers
             // Load Vulkan functions
@@ -1067,8 +1076,8 @@ namespace Sierra
         vmaCreateAllocator(&vmaCreteInfo, &vmaAllocator);
 
         // Set device names
-        SetResourceName(physicalDevice, VK_OBJECT_TYPE_PHYSICAL_DEVICE, "Physical device of device [" + std::string(GetName()) + "]");
-        SetResourceName(logicalDevice, VK_OBJECT_TYPE_DEVICE, "Logical device of device [" + std::string(GetName()) + "]");
+        SetResourceName(physicalDevice, VK_OBJECT_TYPE_PHYSICAL_DEVICE, fmt::format("Physical device of device [{0}]", name));
+        SetResourceName(logicalDevice, VK_OBJECT_TYPE_DEVICE, fmt::format("Logical device of device [{0}]", name));
 
         // Retrieve general queue
         {
@@ -1077,7 +1086,7 @@ namespace Sierra
 
         // Create global timeline semaphore
         {
-            SR_ERROR_IF(!IsExtensionLoaded(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME), "[Vulkan]: Cannot create global timeline semaphore of device [{0}], as it does not support the {1} extension!", GetName(), VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
+            SR_ERROR_IF(!IsExtensionLoaded(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME), "[Vulkan]: Cannot create global timeline semaphore of device [{0}], as it does not support the {1} extension!", name, VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
 
             // Set up semaphore type
             constexpr VkSemaphoreTypeCreateInfo semaphoreTypeCreateInfo
@@ -1096,12 +1105,12 @@ namespace Sierra
 
             // Create shared fence
             result = functionTable.vkCreateSemaphore(logicalDevice, &semaphoreCreateInfo, nullptr, &generalTimelineSemaphore);
-            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create shared command buffer fence of device [{0}]! Error code: {1}!", GetName(), static_cast<int32>(result));
+            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create shared command buffer fence of device [{0}]! Error code: {1}!", name, static_cast<int32>(result));
         }
 
         // Create global (bindless) descriptor set layout
         {
-            SR_ERROR_IF(!IsExtensionLoaded(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME), "[Vulkan]: Cannot create global descriptor set of device [{0}], as it does not support the {1} extension!", GetName(), VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+            SR_ERROR_IF(!IsExtensionLoaded(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME), "[Vulkan]: Cannot create global descriptor set of device [{0}], as it does not support the {1} extension!", name, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 
             // Retrieve descriptor indexing properties
             VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
@@ -1170,14 +1179,14 @@ namespace Sierra
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
                 .pNext = &bindingFlagsCreateInfo,
-                .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT,
+                .flags = SR_PLATFORM_APPLE * VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT,
                 .bindingCount = descriptorSetBindings.size(),
                 .pBindings = descriptorSetBindings.data()
             };
 
             // Create bindless descriptor set layout
             result = functionTable.vkCreateDescriptorSetLayout(logicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &generalDescriptorSetLayout);
-            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create descriptor set layout of resource table [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
+            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create descriptor set layout of resource table [{0}]! Error code: {1}.", name, static_cast<int32>(result));
             SetResourceName(generalDescriptorSetLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "Bindless descriptor set layout");
         }
 
@@ -1194,7 +1203,7 @@ namespace Sierra
             // Create first layout (without push constants)
             result = functionTable.vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, generalPipelineLayouts.data());
             SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create general pipeline layout [0]! Error code: {0}.", static_cast<int32>(result));
-            SetResourceName(generalPipelineLayouts[0], VK_OBJECT_TYPE_PIPELINE_LAYOUT, "General pipeline layout [0] of device [" + std::string(GetName()) + "]");
+            SetResourceName(generalPipelineLayouts[0], VK_OBJECT_TYPE_PIPELINE_LAYOUT, fmt::format("General pipeline layout [0] of device [{0}]", name));
 
             // Set up push constant range (size is to be updated)
             VkPushConstantRange pushConstantRange
@@ -1213,7 +1222,7 @@ namespace Sierra
 
                 result = functionTable.vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &generalPipelineLayouts[i]);
                 SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create general pipeline layout [{0}]! Error code: {1}.", i, static_cast<int32>(result));
-                SetResourceName(generalPipelineLayouts[i], VK_OBJECT_TYPE_PIPELINE_LAYOUT, fmt::format("General pipeline layout [{0}] of device [{1}]", i, GetName()));
+                SetResourceName(generalPipelineLayouts[i], VK_OBJECT_TYPE_PIPELINE_LAYOUT, fmt::format("General pipeline layout [{0}] of device [{1}]", i, name));
             }
         }
     }
@@ -1222,7 +1231,7 @@ namespace Sierra
 
     void VulkanDevice::SubmitCommandBuffer(CommandBuffer &commandBuffer, const std::span<const CommandBuffer*> commandBuffersToWait) const
     {
-        SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit for command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer.GetName());
+        SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit for command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", name, commandBuffer.GetName());
         const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(commandBuffer);
 
         // See what value to wait for
@@ -1232,7 +1241,7 @@ namespace Sierra
             const CommandBuffer* commandBufferToWait = commandBuffersToWait[i];
             if (commandBufferToWait == nullptr) continue;
 
-            SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer.GetName(), commandBufferToWait->GetName(), i);
+            SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Vulkan]!", name, commandBuffer.GetName(), commandBufferToWait->GetName(), i);
             const VulkanCommandBuffer &vulkanCommandBufferToWait = static_cast<const VulkanCommandBuffer&>(*commandBufferToWait);
 
             waitValue = glm::max(waitValue, vulkanCommandBufferToWait.GetCompletionSignalValue());
@@ -1268,12 +1277,12 @@ namespace Sierra
 
         // Submit command buffer
         const VkResult result = functionTable.vkQueueSubmit(generalQueue, 1, &submitInfo, VK_NULL_HANDLE);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Submission of command buffer [{0}] from device [{1}] failed! Error code: {2}.", vulkanCommandBuffer.GetName(), GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Submission of command buffer [{0}] from device [{1}] failed! Error code: {2}.", vulkanCommandBuffer.GetName(), name, static_cast<int32>(result));
     }
 
     void VulkanDevice::WaitForCommandBuffer(const CommandBuffer &commandBuffer) const
     {
-        SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, on device [{0}], wait for command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer.GetName());
+        SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot, on device [{0}], wait for command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", name, commandBuffer.GetName());
         const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(commandBuffer);
 
         const uint64 waitValue = vulkanCommandBuffer.GetCompletionSignalValue();
@@ -1364,7 +1373,6 @@ namespace Sierra
         instance.GetFunctionTable().vkGetPhysicalDeviceFeatures2(physicalDevice, &physicalDeviceFeatures);
         return physicalDeviceFeatures;
     }
-
 
     bool VulkanDevice::IsExtensionLoaded(const std::string_view extensionName) const
     {

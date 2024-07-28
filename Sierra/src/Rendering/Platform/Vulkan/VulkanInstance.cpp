@@ -68,7 +68,9 @@ namespace Sierra
     {
         #if SR_PLATFORM_APPLE
             // Optional MoltenVK features must be explicitly enabled prior to performing any API calls
-            setenv("MVK_DEBUG", "1", true);
+            #if SR_ENABLE_LOGGING
+                setenv("MVK_DEBUG", "1", true);
+            #endif
             setenv("MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", "2", true);
         #endif
 

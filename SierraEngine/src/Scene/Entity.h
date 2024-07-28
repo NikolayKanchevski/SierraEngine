@@ -46,7 +46,7 @@ namespace SierraEngine
         [[nodiscard]] Entity GetParent() const;
 
         [[nodiscard]] uint32 GetChildCount() const;
-        [[nodiscard]] Entity GetChild(uint32 index) const;
+        [[nodiscard]] Entity GetChild(size index) const;
 
         template<ComponentType Component>
         [[nodiscard]] bool HasComponent() const

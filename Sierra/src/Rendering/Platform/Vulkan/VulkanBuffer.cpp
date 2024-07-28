@@ -10,7 +10,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanBuffer::VulkanBuffer(const VulkanDevice &device, const BufferCreateInfo &createInfo)
-        : Buffer(createInfo), VulkanResource(createInfo.name), device(device), usageFlags(BufferUsageToVkBufferUsageFlags(createInfo.usage)), memorySize(createInfo.memorySize)
+        : Buffer(createInfo), device(device), name(createInfo.name), usageFlags(BufferUsageToVkBufferUsageFlags(createInfo.usage)), memorySize(createInfo.memorySize)
     {
         // Set up buffer create info
         const VkBufferCreateInfo bufferCreateInfo
@@ -32,33 +32,33 @@ namespace Sierra
 
         // Create and allocate buffer
         const VkResult result = vmaCreateBuffer(device.GetMemoryAllocator(), &bufferCreateInfo, &allocationCreateInfo, &buffer, &allocation, nullptr);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create buffer [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
-        device.SetResourceName(buffer, VK_OBJECT_TYPE_BUFFER, GetName());
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to create buffer [{0}]! Error code: {1}.", name, static_cast<int32>(result));
+        device.SetResourceName(buffer, VK_OBJECT_TYPE_BUFFER, name);
 
         // Map and reset memory if CPU-visible
         if (createInfo.memoryLocation == BufferMemoryLocation::CPU)
         {
-            vmaMapMemory(device.GetMemoryAllocator(), allocation, &data);
-            std::memset(data, 0, createInfo.memorySize);
+            vmaMapMemory(device.GetMemoryAllocator(), allocation, &memory);
+            std::memset(memory, 0, createInfo.memorySize);
         }
     }
 
     /* --- POLLING METHODS --- */
 
-    void VulkanBuffer::CopyFromMemory(const void* memoryPointer, uint64 memoryRange, const uint64 sourceByteOffset, const uint64 destinationByteOffset)
+    void VulkanBuffer::CopyFromMemory(const void* memoryPointer, uint64 memoryByteSize, const uint64 sourceByteOffset, const uint64 destinationByteOffset)
     {
-        memoryRange = memoryRange != 0 ? memoryRange : GetMemorySize();
-        SR_ERROR_IF(destinationByteOffset + memoryRange > GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{3}] bytes is bigger than the size of the buffer - [{4}]!", memoryRange, destinationByteOffset, GetName(), destinationByteOffset + memoryRange, GetMemorySize());
+        memoryByteSize = memoryByteSize != 0 ? memoryByteSize : GetMemorySize();
+        SR_ERROR_IF(destinationByteOffset + memoryByteSize > GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{3}] bytes is bigger than the size of the buffer - [{4}]!", memoryByteSize, destinationByteOffset, name, destinationByteOffset + memoryByteSize, GetMemorySize());
 
-        std::memcpy(static_cast<char*>(data) + destinationByteOffset, static_cast<const char*>(memoryPointer) + sourceByteOffset, memoryRange);
-        vmaFlushAllocation(device.GetMemoryAllocator(), allocation, destinationByteOffset, memoryRange);
+        std::memcpy(reinterpret_cast<uint8*>(memory) + destinationByteOffset, reinterpret_cast<const uint8*>(memoryPointer) + sourceByteOffset, memoryByteSize);
+        vmaFlushAllocation(device.GetMemoryAllocator(), allocation, destinationByteOffset, memoryByteSize);
     }
 
     /* --- DESTRUCTOR --- */
 
     VulkanBuffer::~VulkanBuffer()
     {
-        if (allocation != VK_NULL_HANDLE && data != nullptr) vmaUnmapMemory(device.GetMemoryAllocator(), allocation);
+        if (allocation != VK_NULL_HANDLE && memory != nullptr) vmaUnmapMemory(device.GetMemoryAllocator(), allocation);
         vmaDestroyBuffer(device.GetMemoryAllocator(), buffer, allocation);
     }
 
@@ -67,8 +67,8 @@ namespace Sierra
     VkBufferUsageFlags VulkanBuffer::BufferUsageToVkBufferUsageFlags(const BufferUsage bufferType)
     {
         VkBufferUsageFlags usageFlags = 0;
-        if (bufferType & BufferUsage::SourceMemory) usageFlags |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-        if (bufferType & BufferUsage::DestinationMemory) usageFlags |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        if (bufferType & BufferUsage::SourceMemory)              usageFlags |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        if (bufferType & BufferUsage::DestinationMemory)         usageFlags |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
         if (bufferType & BufferUsage::Uniform)                   usageFlags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         if (bufferType & BufferUsage::Storage)                   usageFlags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
         if (bufferType & BufferUsage::Index)                     usageFlags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;

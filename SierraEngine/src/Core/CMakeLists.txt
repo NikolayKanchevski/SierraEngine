@@ -3,6 +3,5 @@ target_sources(SierraEngine PRIVATE
     Application.cpp
     FrameLimiter.cpp
     FrameLimiter.h
-    ResourcePool.hpp
     ThreadPool.hpp
 )

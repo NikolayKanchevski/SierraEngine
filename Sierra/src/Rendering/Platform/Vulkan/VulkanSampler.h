@@ -19,6 +19,8 @@ namespace Sierra
         VulkanSampler(const VulkanDevice &device, const SamplerCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const override { return name; }
+
         [[nodiscard]] VkSampler GetVulkanSampler() const { return sampler; }
 
         /* --- DESTRUCTOR --- */
@@ -34,6 +36,8 @@ namespace Sierra
 
     private:
         const VulkanDevice &device;
+
+        std::string name;
         VkSampler sampler = VK_NULL_HANDLE;
 
     };

@@ -21,11 +21,6 @@
 namespace Sierra
 {
 
-    struct RenderingContextCreateInfo
-    {
-        std::string_view name = "Rendering Context";
-    };
-
     class SIERRA_API RenderingContext : public virtual RenderingResource
     {
     public:
@@ -44,15 +39,11 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual const Device& GetDevice() const = 0;
 
-        /* --- OPERATORS --- */
-        RenderingContext(const RenderingContext&) = delete;
-        RenderingContext& operator=(const RenderingContext&) = delete;
-
         /* --- DESTRUCTOR --- */
-        virtual ~RenderingContext() = default;
+        ~RenderingContext() override = default;
 
     protected:
-        explicit RenderingContext(const RenderingContextCreateInfo &createInfo);
+        RenderingContext() = default;
 
     };
 

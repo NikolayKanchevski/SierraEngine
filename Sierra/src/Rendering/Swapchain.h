@@ -86,17 +86,13 @@ namespace Sierra
 
         /* --- EVENTS --- */
         template<SwapchainEventType EventType>
-        EventSubscriptionID AddEventListener(const EventCallback<EventType>&);
+        EventSubscriptionID AddEventListener(EventCallback<EventType>);
         
         template<SwapchainEventType EventType>
         bool RemoveEventListener(EventSubscriptionID);
 
-        /* --- OPERATORS --- */
-        Swapchain(const Swapchain&) = delete;
-        Swapchain& operator=(const Swapchain&) = delete;
-
         /* --- DESTRUCTOR --- */
-        virtual ~Swapchain() = default;
+        ~Swapchain() override = default;
 
     protected:
         explicit Swapchain(const SwapchainCreateInfo &createInfo);
@@ -107,7 +103,7 @@ namespace Sierra
 
     };
 
-    template<> inline EventSubscriptionID Swapchain::AddEventListener<SwapchainResizeEvent>(const EventCallback<SwapchainResizeEvent> &Callback) { return swapchainResizeDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID Swapchain::AddEventListener<SwapchainResizeEvent>(EventCallback<SwapchainResizeEvent> Callback) { return swapchainResizeDispatcher.Subscribe(Callback); }
     template<> inline bool Swapchain::RemoveEventListener<SwapchainResizeEvent>(const EventSubscriptionID ID) { return swapchainResizeDispatcher.Unsubscribe(ID); }
 
 }

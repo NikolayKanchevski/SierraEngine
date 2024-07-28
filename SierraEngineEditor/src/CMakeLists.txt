@@ -1,4 +1,5 @@
 # Link modules
+add_subdirectory(Assets)
 add_subdirectory(Core)
 add_subdirectory(Rendering)
 add_subdirectory(Editor)

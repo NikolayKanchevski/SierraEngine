@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD 20)
 include(../SierraEngine/SierraEngine.cmake)
 
 # === BUILD APPLICATION === #
-SierraEngineBuildApplication(src/main.cpp)
+SierraEngineBuildApplication(src/EntryPoint.cpp)
 
 # === LINK SOURCE FILES === #
 add_subdirectory(src)

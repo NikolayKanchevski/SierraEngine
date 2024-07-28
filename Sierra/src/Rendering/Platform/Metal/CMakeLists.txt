@@ -30,7 +30,6 @@ target_sources(Sierra PRIVATE
     MetalImage.h
     MetalRenderPass.mm
     MetalRenderPass.h
-    MetalResource.mm
     MetalResource.h
     MetalResourceTable.mm
     MetalResourceTable.h

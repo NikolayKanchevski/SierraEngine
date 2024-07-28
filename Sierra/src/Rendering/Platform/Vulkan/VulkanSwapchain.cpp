@@ -28,9 +28,9 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanSwapchain::VulkanSwapchain(const VulkanInstance &instance, const VulkanDevice &device, const SwapchainCreateInfo &createInfo)
-        : Swapchain(createInfo), VulkanResource(createInfo.name), instance(instance), device(device), window(createInfo.window), surface(CreateVkSurfaceKHR(instance, createInfo.window)), preferredPresentationMode(createInfo.preferredPresentationMode), preferredBuffering(createInfo.preferredBuffering), preferredImageMemoryType(createInfo.preferredImageMemoryType)
+        : Swapchain(createInfo), instance(instance), device(device), name(createInfo.name), window(createInfo.window), surface(CreateVkSurfaceKHR(instance, createInfo.window)), preferredPresentationMode(createInfo.preferredPresentationMode), preferredBuffering(createInfo.preferredBuffering), preferredImageMemoryType(createInfo.preferredImageMemoryType)
     {
-        SR_ERROR_IF(!device.IsExtensionLoaded(VK_KHR_SWAPCHAIN_EXTENSION_NAME), "[Vulkan]: Cannot create swapchain [{0}], as the provided device [{1}] does not support the {2} extension!", GetName(), device.GetName(), VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+        SR_ERROR_IF(!device.IsExtensionLoaded(VK_KHR_SWAPCHAIN_EXTENSION_NAME), "[Vulkan]: Cannot create swapchain [{0}], as the provided device [{1}] does not support the {2} extension!", createInfo.name, device.GetName(), VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
         CreateSwapchain();
         CreateSynchronization();
@@ -63,12 +63,12 @@ namespace Sierra
 
         // Wait until swapchain image has been acquired and is ready to be worked on
         result = device.GetFunctionTable().vkQueueSubmit(device.GetGeneralQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not wait for swapchain image [{0}] on swapchain [{1}] to get swapped out! Error code: {2}.", currentFrame, GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not wait for swapchain image [{0}] on swapchain [{1}] to get swapped out! Error code: {2}.", currentFrame, name, static_cast<int32>(result));
     }
 
     void VulkanSwapchain::Present(CommandBuffer &commandBuffer)
     {
-        SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot present swapchain [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), commandBuffer.GetName());
+        SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot present swapchain [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", name, commandBuffer.GetName());
         const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(commandBuffer);
 
         const uint64 waitValue = vulkanCommandBuffer.GetCompletionSignalValue();
@@ -103,7 +103,7 @@ namespace Sierra
 
         // Wait for timeline semaphore to signal, and signal the binary one as well, as VkPresentInfoKHR forbids passing timeline one to it
         VkResult result = device.GetFunctionTable().vkQueueSubmit(device.GetGeneralQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not wait for timeline semaphore on swapchain [{1}]! Error code: {2}.", commandBuffer.GetName(), GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not wait for timeline semaphore on swapchain [{1}]! Error code: {2}.", commandBuffer.GetName(), name, static_cast<int32>(result));
 
         if (presentationQueueFamily != device.GetGeneralQueueFamily())
         {
@@ -196,7 +196,7 @@ namespace Sierra
                 break;
             }
         }
-        SR_ERROR_IF(presentationQueueFamily == std::numeric_limits<uint32>::max(), "[Vulkan]: Cannot create swapchain [{0}], as no queue family supports presentation!", GetName());
+        SR_ERROR_IF(presentationQueueFamily == std::numeric_limits<uint32>::max(), "[Vulkan]: Cannot create swapchain [{0}], as no queue family supports presentation!", name);
         const std::vector<uint32> sharedQueueFamilyIndices = { device.GetGeneralQueueFamily(), presentationQueueFamily };
 
         // Retrieve presentation queue
@@ -208,7 +208,7 @@ namespace Sierra
 
         std::vector<VkSurfaceFormatKHR> supportedFormats(supportedFormatCount);
         instance.GetFunctionTable().vkGetPhysicalDeviceSurfaceFormatsKHR(device.GetPhysicalDevice(), surface, &supportedFormatCount, supportedFormats.data());
-        SR_ERROR_IF(supportedFormats.empty(), "[Vulkan] Could not create swapchain [{0}], as it does not support any surface formats!", GetName());
+        SR_ERROR_IF(supportedFormats.empty(), "[Vulkan] Could not create swapchain [{0}], as it does not support any surface formats!", name);
 
         // Depending on user's preference, see which formats work
         std::vector<VkFormat> formatsToTry;
@@ -297,10 +297,10 @@ namespace Sierra
 
         // Create swapchain
         const VkResult result = device.GetFunctionTable().vkCreateSwapchainKHR(device.GetLogicalDevice(), &swapchainCreateInfo, nullptr, &swapchain);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create swapchain [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create swapchain [{0}]! Error code: {1}.", name, static_cast<int32>(result));
 
         // Set object name
-        device.SetResourceName(swapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, GetName());
+        device.SetResourceName(swapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, name);
 
         // If an old swapchain was reused, destroy that
         if (swapchainCreateInfo.oldSwapchain != VK_NULL_HANDLE)
@@ -321,7 +321,7 @@ namespace Sierra
         for (size i = 0; i < concurrentFrameCount; i++)
         {
             swapchainImages[i] = std::unique_ptr<VulkanImage>(new VulkanImage(device, VulkanImage::SwapchainImageCreateInfo {
-                .name = fmt::format("Image [{0}] of swapchain [{1}]", i, GetName()),
+                .name = fmt::format("Image [{0}] of swapchain [{1}]", i, name),
                 .image = vulkanSwapchainImages[i],
                 .width = swapchainCreateInfo.imageExtent.width,
                 .height = swapchainCreateInfo.imageExtent.height,
@@ -346,12 +346,12 @@ namespace Sierra
         for (size i = 0; i < concurrentFrameCount; i++)
         {
             result = device.GetFunctionTable().vkCreateSemaphore(device.GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &isImageAcquiredSemaphores[i]);
-            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create semaphore [{0}], indicating whether corresponding swapchain image of swapchain [{1}] is ready to be used!", i, GetName());
-            device.SetResourceName(isImageAcquiredSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, fmt::format("Image free semaphore [{0}] of swapchain [{1}]", i, GetName()));
+            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create semaphore [{0}], indicating whether corresponding swapchain image of swapchain [{1}] is ready to be used!", i, name);
+            device.SetResourceName(isImageAcquiredSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, fmt::format("Image free semaphore [{0}] of swapchain [{1}]", i, name));
 
             result = device.GetFunctionTable().vkCreateSemaphore(device.GetLogicalDevice(), &semaphoreCreateInfo, nullptr, &isPresentationCommandBufferFreeSemaphores[i]);
-            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create semaphore [{0}], indicating whether presentation command buffer is ready to present swapchain [{1}]!", i, GetName());
-            device.SetResourceName(isPresentationCommandBufferFreeSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, fmt::format("Presentation command buffer ready semaphore [{0}] of swapchain [{1}]", i, GetName()));
+            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create semaphore [{0}], indicating whether presentation command buffer is ready to present swapchain [{1}]!", i, name);
+            device.SetResourceName(isPresentationCommandBufferFreeSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, fmt::format("Presentation command buffer ready semaphore [{0}] of swapchain [{1}]", i, name));
         }
     }
 

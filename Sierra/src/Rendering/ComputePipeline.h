@@ -21,12 +21,8 @@ namespace Sierra
     class SIERRA_API ComputePipeline : public virtual RenderingResource
     {
     public:
-        /* --- OPERATORS --- */
-        ComputePipeline(const ComputePipeline&) = delete;
-        ComputePipeline& operator=(const ComputePipeline&) = delete;
-
         /* --- DESTRUCTOR --- */
-        virtual ~ComputePipeline() = default;
+        ~ComputePipeline() override = default;
 
     protected:
         explicit ComputePipeline(const ComputePipelineCreateInfo &createInfo);

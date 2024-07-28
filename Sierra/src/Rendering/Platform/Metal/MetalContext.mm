@@ -20,10 +20,10 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    MetalContext::MetalContext(const RenderingContextCreateInfo &createInfo)
-        : RenderingContext(createInfo), MetalResource(createInfo.name), device({ .name = "Default Metal Device" })
+    MetalContext::MetalContext()
+        : device()
     {
-        SR_INFO("Metal context created successfully! Device in use: [{0}].", device.GetDeviceName());
+        SR_INFO("Metal context created successfully! Device in use: [{0}].", device.GetName());
     }
 
     /* --- POLLING METHODS --- */

@@ -33,6 +33,17 @@ namespace Sierra
         MetalImage(const MetalDevice &device, const ImageCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const override;
+
+        [[nodiscard]] uint32 GetWidth() const override { return width; }
+        [[nodiscard]] uint32 GetHeight() const override { return height; }
+        [[nodiscard]] uint32 GetDepth() const override { return depth; }
+        [[nodiscard]] ImageFormat GetFormat() const override { return format; }
+
+        [[nodiscard]] uint32 GetLevelCount() const override { return levelCount; }
+        [[nodiscard]] uint32 GetLayerCount() const override { return layerCount; }
+        [[nodiscard]] ImageSampling GetSampling() const override { return sampling; }
+
         [[nodiscard]] id<MTLTexture> GetMetalTexture() const { return texture; }
 
         /* --- DESTRUCTOR --- */
@@ -47,6 +58,15 @@ namespace Sierra
         static MTLCPUCacheMode ImageMemoryLocationToCPUCacheMode(ImageMemoryLocation memoryLocation);
 
     private:
+        uint32 width = 0;
+        uint32 height = 0;
+        uint32 depth = 0;
+        ImageFormat format = ImageFormat::Undefined;
+
+        uint32 levelCount = 1;
+        uint32 layerCount = 1;
+        ImageSampling sampling = ImageSampling::x1;
+
         id<MTLTexture> texture = nil;
         #if !defined(__OBJC__)
             using MTLPixelFormat = std::uintptr_t;

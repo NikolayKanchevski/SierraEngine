@@ -14,9 +14,9 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalResourceTable::MetalResourceTable(const MetalDevice &device, const ResourceTableCreateInfo &createInfo)
-        : ResourceTable(createInfo), MetalResource(createInfo.name), device(device)
+        : ResourceTable(createInfo), device(device), name(createInfo.name)
     {
-        SR_ERROR_IF([device.GetMetalDevice() argumentBuffersSupport] != MTLArgumentBuffersTier2, "[Metal]: Cannot create resource table [{0}], as the provided device [{1}] does not support Argument Buffers!", GetName(), device.GetName());
+        SR_ERROR_IF([device.GetMetalDevice() argumentBuffersSupport] != MTLArgumentBuffersTier2, "[Metal]: Cannot create resource table [{0}], as the provided device [{1}] does not support Argument Buffers!", name, device.GetName());
 
         // Set up argument descriptors
         constexpr uint32 ARGUMENT_BUFFER_INDEX_COUNT = 5;
@@ -56,11 +56,11 @@ namespace Sierra
 
         // Create encoder
         argumentEncoder = [device.GetMetalDevice() newArgumentEncoderWithArguments: argumentDescriptors];
-        device.SetResourceName(argumentEncoder, "Argument encoder of resource table [" + std::string(GetName()) + "]");
+        device.SetResourceName(argumentEncoder, fmt::format("Argument encoder of resource table [{0}]", name));
 
         // Create argument buffer
         argumentBuffer = [device.GetMetalDevice() newBufferWithLength: [argumentEncoder encodedLength] options: MTLResourceStorageModeShared];
-        device.SetResourceName(argumentBuffer, "Argument buffer of resource table [" + std::string(GetName()) + "]");
+        device.SetResourceName(argumentBuffer, fmt::format("Argument buffer of resource table [{0}]", name));
 
         // Assign argument buffer
         [argumentEncoder setArgumentBuffer: argumentBuffer offset: 0];
@@ -69,14 +69,14 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void MetalResourceTable::BindUniformBuffer(uint32 index, const Buffer &buffer, const uint64 memoryRange, const uint64 byteOffset)
+    void MetalResourceTable::BindUniformBuffer(ResourceIndex index, const Buffer &buffer, const uint64 memoryByteSize, const uint64 byteOffset)
     {
-        SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind uniform buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer.GetName(), GetName());
+        SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind uniform buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer.GetName(), name);
         const MetalBuffer &metalBuffer = static_cast<const MetalBuffer&>(buffer);
 
         if (index >= GetUniformBufferCapacity())
         {
-            SR_WARNING("[Metal]: Cannot bind uniform buffer at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetUniformBufferCapacity() to query uniform buffer capacity.", index, GetName());
+            SR_WARNING("[Metal]: Cannot bind uniform buffer at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetUniformBufferCapacity() to query uniform buffer capacity.", index, name);
             return;
         }
 
@@ -85,14 +85,14 @@ namespace Sierra
 
     }
 
-    void MetalResourceTable::BindStorageBuffer(const ResourceIndex index, const Buffer &buffer, const uint64 memoryRange, const uint64 byteOffset)
+    void MetalResourceTable::BindStorageBuffer(const ResourceIndex index, const Buffer &buffer, const uint64 memoryByteSize, const uint64 byteOffset)
     {
-        SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind storage buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer.GetName(), GetName());
+        SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind storage buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer.GetName(), name);
         const MetalBuffer &metalBuffer = static_cast<const MetalBuffer&>(buffer);
 
         if (index >= GetStorageBufferCapacity())
         {
-            SR_WARNING("[Metal]: Cannot bind storage buffer at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetStorageBufferCapacity() to query storage buffer capacity.", index, GetName());
+            SR_WARNING("[Metal]: Cannot bind storage buffer at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetStorageBufferCapacity() to query storage buffer capacity.", index, name);
             return;
         }
 
@@ -102,12 +102,12 @@ namespace Sierra
 
     void MetalResourceTable::BindSampledImage(const ResourceIndex index, const Image &image)
     {
-        SR_ERROR_IF(image.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind sampled image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image.GetName(), GetName());
+        SR_ERROR_IF(image.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind sampled image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image.GetName(), name);
         const MetalImage &metalImage = static_cast<const MetalImage&>(image);
 
         if (index >= GetSampledImageCapacity())
         {
-            SR_WARNING("[Metal]: Cannot bind sampled image at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSampledImageCapacity() to query sampled image capacity.", index, GetName());
+            SR_WARNING("[Metal]: Cannot bind sampled image at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSampledImageCapacity() to query sampled image capacity.", index, name);
             return;
         }
 
@@ -117,12 +117,12 @@ namespace Sierra
 
     void MetalResourceTable::BindStorageImage(const ResourceIndex index, const Image &image)
     {
-        SR_ERROR_IF(image.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind storage image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image.GetName(), GetName());
+        SR_ERROR_IF(image.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind storage image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", image.GetName(), name);
         const MetalImage &metalImage = static_cast<const MetalImage&>(image);
 
         if (index >= GetStorageImageCapacity())
         {
-            SR_WARNING("[Metal]: Cannot bind storage image at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetStorageImageCapacity() to query storage image capacity.", index, GetName());
+            SR_WARNING("[Metal]: Cannot bind storage image at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetStorageImageCapacity() to query storage image capacity.", index, name);
             return;
         }
 
@@ -132,17 +132,24 @@ namespace Sierra
 
     void MetalResourceTable::BindSampler(const ResourceIndex index, const Sampler &sampler)
     {
-        SR_ERROR_IF(sampler.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind sampler [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", sampler.GetName(), GetName());
+        SR_ERROR_IF(sampler.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind sampler [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", sampler.GetName(), name);
         const MetalSampler &metalSampler = static_cast<const MetalSampler&>(sampler);
 
         if (index >= GetSamplerCapacity())
         {
-            SR_WARNING("[Metal]: Cannot bind sampler at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSamplerCapacity() to query sampler capacity.", index, GetName());
+            SR_WARNING("[Metal]: Cannot bind sampler at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSamplerCapacity() to query sampler capacity.", index, name);
             return;
         }
 
         [argumentEncoder setSamplerState: metalSampler.GetSamplerState() atIndex: SAMPLER_INDEX + index];
         // NOTE: Sampler states do not derive from MTLResource, so we do not need to add them to bound resource map
+    }
+
+    /* --- GETTER METHODS --- */
+
+    std::string_view MetalResourceTable::GetName() const
+    {
+        return name;
     }
 
     /* --- DESTRUCTOR --- */

@@ -31,14 +31,14 @@ namespace Sierra
         explicit FoundationFileStream(NSFileHandle* fileHandle);
 
         /* --- POLLING METHODS --- */
-        FileOperationResult Seek(uint64 offset) override;
+        FileOperationResult Seek(size byteOffset) override;
         FileOperationResult SeekToEnd() override;
 
-        FileOperationResult Read(uint64 memorySize, std::vector<uint8> &outData) override;
-        FileOperationResult Write(const void* memoryPointer, uint64 memorySize) override;
+        FileOperationResult Read(size memorySize, std::vector<uint8> &outData) override;
+        FileOperationResult Write(const void* memory, size memorySize) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] uint64 GetCurrentOffset() const override;
+        [[nodiscard]] size GetCurrentByteOffset() const override;
         [[nodiscard]] NSFileHandle* GetNSFileHandle() const { return fileHandle; }
 
         /* --- DESTRUCTOR --- */

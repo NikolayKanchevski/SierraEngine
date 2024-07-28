@@ -25,14 +25,14 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit MetalDevice(const DeviceCreateInfo &createInfo);
+        MetalDevice();
 
         /* --- POLLING METHODS --- */
         void SubmitCommandBuffer(CommandBuffer &commandBuffer, std::span<const CommandBuffer*> commandBuffersToWait = { }) const override;
         void WaitForCommandBuffer(const CommandBuffer &commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetDeviceName() const override { return deviceName; }
+        [[nodiscard]] std::string_view GetName() const override;
 
         [[nodiscard]] bool IsImageFormatSupported(ImageFormat format, ImageUsage usage) const override;
         [[nodiscard]] bool IsImageSamplingSupported(ImageSampling sampling) const override;

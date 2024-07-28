@@ -20,10 +20,10 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanContext::VulkanContext(const RenderingContextCreateInfo &createInfo)
-        : RenderingContext(createInfo), VulkanResource(createInfo.name), instance(VulkanInstance({ })), device(instance, { .name = "Default Vulkan Device" })
+    VulkanContext::VulkanContext()
+        : instance(VulkanInstance({ })), device(instance)
     {
-        SR_INFO("Vulkan context created successfully! Device in use: [{0}].", device.GetDeviceName());
+        SR_INFO("Vulkan context created successfully! Device in use: [{0}].", device.GetName());
     }
 
     /* --- POLLING METHODS --- */

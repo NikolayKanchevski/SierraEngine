@@ -22,6 +22,8 @@ namespace Sierra
         void Resize(uint32 width, uint32 height) override;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const override { return name; }
+
         [[nodiscard]] uint32 GetColorAttachmentCount() const override { return framebufferImageAttachments.size() - (resolveAttachmentCount + hasDepthAttachment); }
         [[nodiscard]] bool HasDepthAttachment() const override { return hasDepthAttachment; }
 
@@ -41,6 +43,7 @@ namespace Sierra
         std::vector<VkFormat> framebufferAttachmentImageFormats;
         std::vector<VkFramebufferAttachmentImageInfo> framebufferImageAttachments;
 
+        std::string name;
         VkFramebuffer framebuffer = VK_NULL_HANDLE;
         VkRenderPass renderPass = VK_NULL_HANDLE;
 

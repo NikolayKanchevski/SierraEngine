@@ -12,14 +12,14 @@ namespace SierraEngine
     public:
         /* --- CONSTRUCTORS --- */
         AssetID() = default;
-        AssetID(const std::filesystem::path &filePath);
+        AssetID(const uint64 hash) : hash(hash) { }
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint64 GetHash() const { return hash; }
 
         /* --- OPERATORS --- */
-        [[nodiscard]] bool operator==(const AssetID &other) const { return hash == other.hash; }
-        [[nodiscard]] bool operator!=(const AssetID &other) const { return hash != other.hash; }
+        [[nodiscard]] bool operator==(const AssetID other) const { return hash == other.hash; }
+        [[nodiscard]] bool operator!=(const AssetID other) const { return hash != other.hash; }
 
         AssetID(const AssetID &other) = default;
         AssetID& operator=(const AssetID &other) = default;

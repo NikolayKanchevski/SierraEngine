@@ -28,24 +28,25 @@ namespace Sierra
         OpenGL,
         Auto = GRAPHICS_API_AUTO
     };
+
     #undef GRAPHICS_API_AUTO
 
     class SIERRA_API RenderingResource
     {
     public:
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const { return name; }
+        [[nodiscard]] virtual std::string_view GetName() const = 0;
         [[nodiscard]] virtual GraphicsAPI GetAPI() const = 0;
+
+        /* --- OPERATORS --- */
+        RenderingResource(const RenderingResource&) = delete;
+        RenderingResource& operator=(const RenderingResource&) = delete;
+
+        /* --- DESTRUCTORS --- */
+        virtual ~RenderingResource() = default;
 
     protected:
         RenderingResource() = default;
-
-    protected:
-        #if SR_ENABLE_LOGGING
-            std::string name;
-        #else
-            constexpr static const char* name = "";
-        #endif
 
     };
 

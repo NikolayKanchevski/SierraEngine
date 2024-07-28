@@ -67,7 +67,6 @@ if(Vulkan_LIBRARIES)
         VulkanInstance.h
         VulkanRenderPass.cpp
         VulkanRenderPass.h
-        VulkanResource.cpp
         VulkanResource.h
         VulkanResourceTable.h
         VulkanResourceTable.cpp

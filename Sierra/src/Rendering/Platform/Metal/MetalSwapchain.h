@@ -25,6 +25,8 @@ namespace Sierra
         void Present(CommandBuffer &commandBuffer) override;
 
         /* -- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const override;
+
         [[nodiscard]] uint32 GetCurrentFrameIndex() const override { return currentFrame; }
         [[nodiscard]] uint32 GetCurrentImageIndex() const override { return currentFrame; }
         [[nodiscard]] uint32 GetConcurrentFrameCount() const override { return concurrentFrameCount; }
@@ -38,6 +40,8 @@ namespace Sierra
     private:
         const MetalDevice &device;
         Window &window;
+
+        std::string name;
 
         #if !defined(__OBJC__)
           using CAMetalLayer = void;

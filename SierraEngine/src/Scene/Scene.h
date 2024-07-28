@@ -14,7 +14,7 @@ namespace SierraEngine
 
     struct SceneCreateInfo
     {
-        const Sierra::RenderingContext &renderingContext;
+
     };
 
     class SIERRA_ENGINE_API Scene final
@@ -31,18 +31,14 @@ namespace SierraEngine
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] Entity CreateEntity(std::string_view tag = "Entity");
-        void ForEachEntity(const EntityCallback &Callback);
+        void ForEachEntity(EntityCallback Callback);
         void DestroyEntity(Entity entity);
 
         template<ComponentType Component>
-        void ForEachComponent(const ComponentCallback<Component> &Callback) const { registry.view<Component>().each(Callback); }
+        void ForEachComponent(ComponentCallback<Component> Callback) const { registry.view<Component>().each(Callback); }
 
         template<ComponentType... Components>
-        void ForEachComponentPair(const ComponentCallback<Components...> &Callback) const { registry.view<Component>().each(Callback); }
-
-        /* --- GETTER METHODS --- */
-        [[nodiscard]] ArenaAllocator& GetArenaAllocator() { return arenaAllocator; }
-        [[nodiscard]] Sierra::ResourceTable& GetResourceTable() const { return *resourceTable; }
+        void ForEachComponentPair(ComponentCallback<Components...> Callback) const { registry.view<Component>().each(Callback); }
 
         /* --- OPERATORS --- */
         Scene(const Scene&) = delete;
@@ -53,9 +49,6 @@ namespace SierraEngine
 
     private:
         entt::registry registry = { };
-
-        ArenaAllocator arenaAllocator;
-        std::unique_ptr<Sierra::ResourceTable> resourceTable = nullptr;
 
     };
 

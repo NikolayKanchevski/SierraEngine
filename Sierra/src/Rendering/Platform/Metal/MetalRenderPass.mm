@@ -12,7 +12,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalRenderPass::MetalRenderPass(const MetalDevice &device, const RenderPassCreateInfo &createInfo)
-        : RenderPass(createInfo), MetalResource(createInfo.name)
+        : RenderPass(createInfo), name(createInfo.name)
     {
         attachmentMap.resize(createInfo.attachments.size());
         subpasses.resize(createInfo.subpassDescriptions.size());
@@ -46,7 +46,7 @@ namespace Sierra
                     }
                 }
 
-                SR_ERROR_IF(attachment.templateOutputImage.GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not use image [{0}] of attachment [{1}]'s output image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Metal]!", attachment.templateOutputImage.GetName(), i, GetName());
+                SR_ERROR_IF(attachment.templateOutputImage.GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not use image [{0}] of attachment [{1}]'s output image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Metal]!", attachment.templateOutputImage.GetName(), i, name);
                 const MetalImage &metalOutputImage = static_cast<const MetalImage&>(attachment.templateOutputImage);
 
                 // Configure attachment
@@ -59,7 +59,7 @@ namespace Sierra
                 }
                 else
                 {
-                    SR_ERROR_IF(attachment.templateResolverImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not use image [{0}] of attachment [{1}]'s resolver image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Metal]!", attachment.templateResolverImage->GetName(), i, GetName());
+                    SR_ERROR_IF(attachment.templateResolverImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not use image [{0}] of attachment [{1}]'s resolver image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Metal]!", attachment.templateResolverImage->GetName(), i, name);
                     const MetalImage &metalResolveImage = static_cast<const MetalImage&>(*attachment.templateResolverImage);
 
                     [attachmentDescriptor setTexture: metalResolveImage.GetMetalTexture()];
@@ -80,6 +80,13 @@ namespace Sierra
             [renderPass setRenderTargetWidth: width];
             [renderPass setRenderTargetHeight: height];
         }
+    }
+
+    /* --- GETTER METHODS --- */
+
+    std::string_view MetalRenderPass::GetName() const
+    {
+        return name;
     }
 
     /* --- DESTRUCTOR --- */

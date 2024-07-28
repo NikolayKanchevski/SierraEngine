@@ -42,10 +42,10 @@ namespace Sierra
         SR_ERROR_IF(fileHandle.fileDescriptor == -1, "Passed file descriptor must be valid!");
     }
 
-    FileOperationResult FoundationFileStream::Seek(const uint64 offset)
+    FileOperationResult FoundationFileStream::Seek(const size byteOffset)
     {
         NSError* error = nil;
-        [fileHandle seekToOffset: offset error: &error];
+        [fileHandle seekToOffset: byteOffset error: &error];
 
         if (error != nil)
         {
@@ -71,7 +71,7 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    FileOperationResult FoundationFileStream::Read(const uint64 memorySize, std::vector<uint8> &outData)
+    FileOperationResult FoundationFileStream::Read(const size memorySize, std::vector<uint8> &outData)
     {
         NSError* error = nil;
         NSData* const data = [fileHandle readDataUpToLength: memorySize error: &error];
@@ -88,9 +88,9 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    FileOperationResult FoundationFileStream::Write(const void* memoryPointer, const uint64 memorySize)
+    FileOperationResult FoundationFileStream::Write(const void* memory, const size memorySize)
     {
-        NSData* const data = [[NSData dataWithBytesNoCopy: const_cast<void*>(memoryPointer) length: memorySize] retain];
+        NSData* const data = [[NSData dataWithBytesNoCopy: const_cast<void*>(memory) length: memorySize] retain];
 
         NSError* error = nil;
         [fileHandle writeData: data error: &error];
@@ -106,7 +106,7 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    uint64 FoundationFileStream::GetCurrentOffset() const
+    size FoundationFileStream::GetCurrentByteOffset() const
     {
         return [fileHandle offsetInFile];
     }
@@ -172,11 +172,7 @@ namespace Sierra
     {
         const std::string filePathString = filePath.string();
         NSString* const path = [NSString stringWithUTF8String: filePathString.c_str()];
-
-        const FileOperationResult result = [fileManager createFileAtPath: path contents: [NSData data] attributes: nil] ? FileOperationResult::Success : FileOperationResult::UnknownError;
-        [path release];
-
-        return result;
+        return [fileManager createFileAtPath: path contents: [NSData data] attributes: nil] ? FileOperationResult::Success : FileOperationResult::UnknownError;
     }
 
     FileOperationResult FoundationFileManager::RenameFile(const std::filesystem::path &filePath, const std::string_view name) const
@@ -293,7 +289,7 @@ namespace Sierra
     {
         const std::string directoryPathString = directoryPath.string();
         NSString* const path = [NSString stringWithUTF8String: directoryPathString.c_str()];
-        return [fileManager fileExistsAtPath: path];;
+        return [fileManager fileExistsAtPath: path];
     }
 
     FileOperationResult FoundationFileManager::EnumerateDirectoryFiles(const std::filesystem::path &directoryPath, std::vector<std::filesystem::path> &outFiles, const bool recursive) const
@@ -492,7 +488,7 @@ namespace Sierra
         const std::chrono::system_clock::time_point dateModifiedTimePoint(std::chrono::seconds(static_cast<uint64>(dateModified.timeIntervalSince1970)));
 
         uint32 fileCount = 0;
-        uint64 memorySize = 0;
+        size memorySize = 0;
         for (const std::filesystem::path &currentPath : std::filesystem::recursive_directory_iterator(directoryPath))
         {
             if (is_directory(currentPath) || is_symlink(currentPath)) continue;

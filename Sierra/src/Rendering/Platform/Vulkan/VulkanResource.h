@@ -61,14 +61,11 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] GraphicsAPI GetAPI() const override { return GraphicsAPI::Vulkan; }
 
+        /* --- DESTRUCTORS --- */
+        ~VulkanResource() override = default;
+
     protected:
-        explicit VulkanResource(const std::string_view name)
-        {
-            #if SR_ENABLE_LOGGING
-                this->name = name;
-            #endif
-        }
-        static void PushToPNextChain(void* mainStruct, void* newStruct);
+        VulkanResource() = default;
 
     };
 

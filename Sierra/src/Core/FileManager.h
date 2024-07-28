@@ -40,14 +40,14 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual FileOperationResult Seek(uint64 offset) = 0;
+        virtual FileOperationResult Seek(size byteOffset) = 0;
         virtual FileOperationResult SeekToEnd() = 0;
 
-        virtual FileOperationResult Read(uint64 memorySize, std::vector<uint8> &outData) = 0;
-        virtual FileOperationResult Write(const void* memoryPointer, uint64 memorySize) = 0;
+        virtual FileOperationResult Read(size memorySize, std::vector<uint8> &outData) = 0;
+        virtual FileOperationResult Write(const void* memory, size memorySize) = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual uint64 GetCurrentOffset() const = 0;
+        [[nodiscard]] virtual size GetCurrentByteOffset() const = 0;
 
         /* --- OPERATORS --- */
         FileStream(const FileStream&) = delete;
@@ -84,7 +84,7 @@ namespace Sierra
     struct FileMetadata
     {
         FileType type = FileType::Unknown;
-        uint64 memorySize = 0;
+        size memorySize = 0;
 
         Date dateCreated;
         Date dateLastModified;
@@ -93,7 +93,7 @@ namespace Sierra
     struct DirectoryMetadata
     {
         uint32 fileCount = 0;
-        uint64 memorySize = 0;
+        size memorySize = 0;
 
         Date dateCreated;
         Date dateLastModified;

@@ -6,8 +6,13 @@
 
 #include "AssetID.h"
 
+#include "Assets/Texture.h"
+#include "Importers/TextureImporter.h"
+
 namespace SierraEngine
 {
+
+    using TextureID = AssetID;
 
     class SIERRA_ENGINE_API AssetManager
     {
@@ -17,6 +22,13 @@ namespace SierraEngine
 
         /* --- POLLING METHODS --- */
         virtual void Update(Sierra::CommandBuffer &commandBuffer) = 0;
+
+        virtual void ImportTexture(std::weak_ptr<TextureImporter> importer, AssetLoadCallback Callback) = 0;
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] virtual bool IsTextureImported(TextureID ID) const = 0;
+        [[nodiscard]] virtual Texture* GetTexture(TextureID ID) = 0;
+        [[nodiscard]] virtual Texture& GetDefaultTexture(TextureType type) = 0;
 
         /* --- OPERATORS --- */
         AssetManager(const AssetManager&) = delete;

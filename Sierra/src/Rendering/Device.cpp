@@ -7,13 +7,6 @@
 namespace Sierra
 {
 
-    /* --- CONSTRUCTORS --- */
-
-    Device::Device(const DeviceCreateInfo&)
-    {
-
-    }
-
     /* -- GETTER METHODS --- */
 
     std::optional<ImageFormat> Device::GetSupportedImageFormat(const ImageFormat preferredFormat, const ImageUsage usage) const

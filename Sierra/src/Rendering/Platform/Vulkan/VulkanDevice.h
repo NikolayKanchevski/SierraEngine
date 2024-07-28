@@ -17,14 +17,14 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        VulkanDevice(const VulkanInstance &instance, const DeviceCreateInfo &createInfo);
+        explicit VulkanDevice(const VulkanInstance &instance);
 
         /* --- POLLING METHODS --- */
         void SubmitCommandBuffer(CommandBuffer &commandBuffer, std::span<const CommandBuffer*> commandBuffersToWait = { }) const override;
         void WaitForCommandBuffer(const CommandBuffer &commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetDeviceName() const override { return deviceName; }
+        [[nodiscard]] std::string_view GetName() const override { return name; }
 
         [[nodiscard]] bool IsImageFormatSupported(ImageFormat format, ImageUsage usage) const override;
         [[nodiscard]] bool IsImageSamplingSupported(ImageSampling sampling) const override;
@@ -56,12 +56,17 @@ namespace Sierra
         void SetResourceName(VkHandle object, VkObjectType type, std::string_view name) const;
 
         /* --- CONSTANTS --- */
-        constexpr static uint32 BINDLESS_SET                            = 0;
         constexpr static uint32 BINDLESS_UNIFORM_BUFFER_BINDING         = 0;
         constexpr static uint32 BINDLESS_STORAGE_BUFFER_BINDING         = 1;
         constexpr static uint32 BINDLESS_SAMPLED_IMAGE_BINDING          = 2;
         constexpr static uint32 BINDLESS_STORAGE_IMAGE_BINDING          = 3;
         constexpr static uint32 BINDLESS_SAMPLER_BINDING                = 4;
+
+        constexpr static uint32 MAX_UNIFORM_BUFFERS_PER_RESOURCE_TABLE = 8192;
+        constexpr static uint32 MAX_STORAGE_BUFFERS_PER_RESOURCE_TABLE = 8192;
+        constexpr static uint32 MAX_SAMPLED_IMAGES_PER_RESOURCE_TABLE = 8192;
+        constexpr static uint32 MAX_STORAGE_IMAGES_PER_RESOURCE_TABLE = 8192;
+        constexpr static uint32 MAX_SAMPLERS_PER_RESOURCE_TABLE = 8192;
 
         /* --- DESTRUCTOR --- */
         ~VulkanDevice() override;
@@ -69,7 +74,7 @@ namespace Sierra
     private:
         const VulkanInstance &instance;
 
-        std::string deviceName;
+        std::string name;
         std::vector<size> loadedExtensions;
 
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;

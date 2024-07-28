@@ -14,9 +14,9 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanResourceTable::VulkanResourceTable(const VulkanDevice &device, const ResourceTableCreateInfo &createInfo)
-        : ResourceTable(createInfo), VulkanResource(createInfo.name), device(device)
+        : ResourceTable(createInfo), device(device), name(createInfo.name)
     {
-        SR_ERROR_IF(!device.IsExtensionLoaded(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME), "[Vulkan]: Cannot create resource table [{0}], as the provided device [{1}] does not support the {2} extension!", GetName(), device.GetName(), VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+        SR_ERROR_IF(!device.IsExtensionLoaded(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME), "[Vulkan]: Cannot create resource table [{0}], as the provided device [{1}] does not support the {2} extension!", name, device.GetName(), VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 
         // Retrieve descriptor indexing properties
         VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
@@ -51,7 +51,7 @@ namespace Sierra
         const VkDescriptorPoolCreateInfo descriptorPoolCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-            .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT | VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
+            .flags = SR_PLATFORM_APPLE * VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
             .maxSets = 1,
             .poolSizeCount = poolSizes.size(),
             .pPoolSizes = poolSizes.data()
@@ -59,8 +59,8 @@ namespace Sierra
 
         // Create descriptor pool
         VkResult result = device.GetFunctionTable().vkCreateDescriptorPool(device.GetLogicalDevice(), &descriptorPoolCreateInfo, nullptr, &descriptorPool);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create descriptor pool of resource table [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
-        device.SetResourceName(descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Descriptor pool of resource table [" + std::string(GetName()) + "]");
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create descriptor pool of resource table [{0}]! Error code: {1}.", name, static_cast<int32>(result));
+        device.SetResourceName(descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, fmt::format("Descriptor pool of resource table [{0}]", name));
 
         // Set up set allocate info
         VkDescriptorSetLayout descriptorSetLayout = device.GetDescriptorSetLayout();
@@ -74,20 +74,20 @@ namespace Sierra
 
         // Allocate descriptor set
         result = device.GetFunctionTable().vkAllocateDescriptorSets(device.GetLogicalDevice(), &descriptorSetAllocateInfo, &descriptorSet);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not allocate descriptor set of resource table [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
-        device.SetResourceName(descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, "Descriptor set of resource table [" + std::string(GetName()) + "]");
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not allocate descriptor set of resource table [{0}]! Error code: {1}.", name, static_cast<int32>(result));
+        device.SetResourceName(descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, fmt::format("Descriptor set of resource table [{0}]", name));
     }
 
     /* --- POLLING METHODS --- */
 
-    void VulkanResourceTable::BindUniformBuffer(const ResourceIndex index, const Buffer &buffer, const uint64 memoryRange, const uint64 byteOffset)
+    void VulkanResourceTable::BindUniformBuffer(const ResourceIndex index, const Buffer &buffer, const uint64 memoryByteSize, const uint64 byteOffset)
     {
-        SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind uniform buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer.GetName(), GetName());
+        SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind uniform buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer.GetName(), name);
         const VulkanBuffer &vulkanBuffer = static_cast<const VulkanBuffer&>(buffer);
 
         if (index >= GetUniformBufferCapacity())
         {
-            SR_WARNING("[Vulkan]: Cannot bind uniform buffer at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetUniformBufferCapacity() to query uniform buffer capacity.", index, GetName());
+            SR_WARNING("[Vulkan]: Cannot bind uniform buffer at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetUniformBufferCapacity() to query uniform buffer capacity.", index, name);
             return;
         }
 
@@ -96,7 +96,7 @@ namespace Sierra
         {
             .buffer = vulkanBuffer.GetVulkanBuffer(),
             .offset = byteOffset,
-            .range = memoryRange != 0 ? memoryRange : buffer.GetMemorySize()
+            .range = memoryByteSize != 0 ? memoryByteSize : buffer.GetMemorySize()
         };
 
         // Set up write info
@@ -115,14 +115,14 @@ namespace Sierra
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
     }
 
-    void VulkanResourceTable::BindStorageBuffer(const ResourceIndex index, const Buffer &buffer, const uint64 memoryRange, const uint64 byteOffset)
+    void VulkanResourceTable::BindStorageBuffer(const ResourceIndex index, const Buffer &buffer, const uint64 memoryByteSize, const uint64 byteOffset)
     {
-        SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind storage buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer.GetName(), GetName());
+        SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind storage buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer.GetName(), name);
         const VulkanBuffer &vulkanBuffer = static_cast<const VulkanBuffer&>(buffer);
 
         if (index >= GetStorageBufferCapacity())
         {
-            SR_WARNING("[Vulkan]: Cannot bind storage buffer at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetStorageBufferCapacity() to query storage buffer capacity.", index, GetName());
+            SR_WARNING("[Vulkan]: Cannot bind storage buffer at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetStorageBufferCapacity() to query storage buffer capacity.", index, name);
             return;
         }
 
@@ -131,7 +131,7 @@ namespace Sierra
         {
             .buffer = vulkanBuffer.GetVulkanBuffer(),
             .offset = byteOffset,
-            .range = memoryRange != 0 ? memoryRange : buffer.GetMemorySize()
+            .range = memoryByteSize != 0 ? memoryByteSize : buffer.GetMemorySize()
         };
 
         // Set up write info
@@ -152,12 +152,12 @@ namespace Sierra
 
     void VulkanResourceTable::BindSampledImage(const ResourceIndex index, const Image &image)
     {
-        SR_ERROR_IF(image.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind sampled image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image.GetName(), GetName());
+        SR_ERROR_IF(image.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind sampled image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image.GetName(), name);
         const VulkanImage &vulkanImage = static_cast<const VulkanImage&>(image);
 
         if (index >= GetSampledImageCapacity())
         {
-            SR_WARNING("[Vulkan]: Cannot bind sampled image at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSampledImageCapacity() to query sampled image capacity.", index, GetName());
+            SR_WARNING("[Vulkan]: Cannot bind sampled image at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSampledImageCapacity() to query sampled image capacity.", index, name);
             return;
         }
 
@@ -187,12 +187,12 @@ namespace Sierra
 
     void VulkanResourceTable::BindSampler(const ResourceIndex index, const Sampler &sampler)
     {
-        SR_ERROR_IF(sampler.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind sampler [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", sampler.GetName(), GetName());
+        SR_ERROR_IF(sampler.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind sampler [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", sampler.GetName(), name);
         const VulkanSampler &vulkanSampler = static_cast<const VulkanSampler&>(sampler);
 
         if (index >= GetSamplerCapacity())
         {
-            SR_WARNING("[Vulkan]: Cannot bind sampler at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSamplerCapacity() to query sampler capacity.", index, GetName());
+            SR_WARNING("[Vulkan]: Cannot bind sampler at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetSamplerCapacity() to query sampler capacity.", index, name);
             return;
         }
 
@@ -222,12 +222,12 @@ namespace Sierra
 
     void VulkanResourceTable::BindStorageImage(const ResourceIndex index, const Image &image)
     {
-        SR_ERROR_IF(image.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind storage image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image.GetName(), GetName());
+        SR_ERROR_IF(image.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind storage image [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", image.GetName(), name);
         const VulkanImage &vulkanImage = static_cast<const VulkanImage&>(image);
 
         if (index >= GetStorageImageCapacity())
         {
-            SR_WARNING("[Vulkan]: Cannot bind storage image at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetStorageImageCapacity() to query storage image capacity.", index, GetName());
+            SR_WARNING("[Vulkan]: Cannot bind storage image at index [{0}] within resource table [{1}], as it is out of bounds! Use ResourceTable::GetStorageImageCapacity() to query storage image capacity.", index, name);
             return;
         }
 

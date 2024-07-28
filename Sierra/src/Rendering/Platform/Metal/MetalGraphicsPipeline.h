@@ -31,6 +31,8 @@ namespace Sierra
         MetalGraphicsPipeline(const MetalDevice &device, const GraphicsPipelineCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const override;
+
         [[nodiscard]] id<MTLRenderPipelineState> GetRenderPipelineState() const { return renderPipelineState; }
         [[nodiscard]] id<MTLDepthStencilState> GetDepthStencilState() const { return depthStencilState; }
 

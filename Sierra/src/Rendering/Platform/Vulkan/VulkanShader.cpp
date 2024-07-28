@@ -10,7 +10,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
     
     VulkanShader::VulkanShader(const VulkanDevice &device, const ShaderCreateInfo &createInfo)
-        : Shader(createInfo), VulkanResource(createInfo.name), device(device)
+        : Shader(createInfo), device(device), name(createInfo.name)
     {
         // Set up module create info
         const ShaderFileHeader &fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.memory.data());
@@ -23,10 +23,10 @@ namespace Sierra
 
         // Create shader module
         const VkResult result = device.GetFunctionTable().vkCreateShaderModule(device.GetLogicalDevice(), &shaderModuleCreateInfo, nullptr, &shaderModule);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create shader module for shader [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create shader module for shader [{0}]! Error code: {1}.", name, static_cast<int32>(result));
 
         // Set object name
-        device.SetResourceName(shaderModule, VK_OBJECT_TYPE_SHADER_MODULE, GetName());
+        device.SetResourceName(shaderModule, VK_OBJECT_TYPE_SHADER_MODULE, name);
     }
 
     /* --- DESTRUCTOR --- */

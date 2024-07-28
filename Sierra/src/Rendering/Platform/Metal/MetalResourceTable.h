@@ -26,8 +26,10 @@ namespace Sierra
         MetalResourceTable(const MetalDevice &device, const ResourceTableCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void BindUniformBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
-        void BindStorageBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
+        [[nodiscard]] std::string_view GetName() const override;
+
+        void BindUniformBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) override;
+        void BindStorageBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) override;
 
         void BindSampledImage(ResourceIndex index, const Image &image) override;
         void BindStorageImage(ResourceIndex index, const Image &image) override;
@@ -55,10 +57,10 @@ namespace Sierra
         #endif
 
         // NOTE: These must match those of https://github.com/NikolayKanchevski/ShaderConnect/blob/sierra/src/Platform/MetalSL/MetalSLShaderCompiler.cpp#L104
-        constexpr static uint32 UNIFORM_BUFFER_CAPACITY         = 500'000;
-        constexpr static uint32 STORAGE_BUFFER_CAPACITY         = 500'000;
-        constexpr static uint32 SAMPLED_IMAGE_CAPACITY          = 500'000;
-        constexpr static uint32 STORAGE_IMAGE_CAPACITY          = 500'000;
+        constexpr static uint32 UNIFORM_BUFFER_CAPACITY         = 8192;
+        constexpr static uint32 STORAGE_BUFFER_CAPACITY         = 8192;
+        constexpr static uint32 SAMPLED_IMAGE_CAPACITY          = 8192;
+        constexpr static uint32 STORAGE_IMAGE_CAPACITY          = 8192;
         constexpr static uint32 SAMPLER_CAPACITY                = 1024;
 
         constexpr static uint32 UNIFORM_BUFFER_INDEX        = 0;
@@ -67,6 +69,7 @@ namespace Sierra
         constexpr static uint32 STORAGE_IMAGE_INDEX         = SAMPLED_IMAGE_INDEX + SAMPLED_IMAGE_CAPACITY;
         constexpr static uint32 SAMPLER_INDEX               = STORAGE_IMAGE_INDEX + STORAGE_IMAGE_CAPACITY;
 
+        std::string name;
         id<MTLArgumentEncoder> argumentEncoder = nil;
         id<MTLBuffer> argumentBuffer = nil;
 

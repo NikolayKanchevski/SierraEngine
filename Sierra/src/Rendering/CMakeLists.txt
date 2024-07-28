@@ -13,7 +13,6 @@ target_sources(Sierra PRIVATE
     Image.h
     Renderer.cpp
     Renderer.h
-    RenderingContext.cpp
     RenderingContext.h
     RenderingResource.h
     RenderPass.cpp

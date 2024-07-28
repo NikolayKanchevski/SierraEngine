@@ -15,7 +15,9 @@ namespace Sierra
         Release
     };
 
+    /* --- TYPE DEFINITIONS --- */
     using TouchID = uint64;
+
     struct TouchCreateInfo
     {
         TouchID ID = 0;

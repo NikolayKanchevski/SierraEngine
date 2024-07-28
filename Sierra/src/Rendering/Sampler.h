@@ -67,12 +67,8 @@ namespace Sierra
     class SIERRA_API Sampler : public virtual RenderingResource
     {
     public:
-        /* --- OPERATORS --- */
-        Sampler(const Sampler&) = delete;
-        Sampler& operator=(const Sampler&) = delete;
-
         /* --- DESTRUCTOR --- */
-        virtual ~Sampler() = default;
+        ~Sampler() override = default;
 
     protected:
         explicit Sampler(const SamplerCreateInfo &createInfo);

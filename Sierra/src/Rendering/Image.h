@@ -42,6 +42,9 @@ namespace Sierra
         R8G8B8A8_UNorm,
         R8G8B8A8_SRGB,
 
+        B8G8R8A8_UNorm,
+        B8G8R8A8_SRGB,
+
         R16_Int,
         R16_UInt,
         R16_Norm,
@@ -92,9 +95,6 @@ namespace Sierra
         D16_UNorm,
         D32_Float,
 
-        B8G8R8A8_UNorm,
-        B8G8R8A8_SRGB,
-
         BC1_RGB_UNorm,
         BC1_RGB_SRGB,
         BC1_RGBA_UNorm,
@@ -118,319 +118,12 @@ namespace Sierra
         ASTC_8x8_SRGB
     };
 
-    [[nodiscard]] constexpr uint8 ImageFormatToChannelCount(const ImageFormat format)
-    {
-        switch (format)
-        {
-            case ImageFormat::Undefined:                        break;
+    /* --- CONVERSIONS --- */
+    [[nodiscard]] float32 ImageFormatToChannelMemorySize(ImageFormat format);
+    [[nodiscard]] float32 ImageFormatToPixelMemorySize(ImageFormat format);
 
-            case ImageFormat::R8_Int:
-            case ImageFormat::R8_UInt:
-            case ImageFormat::R8_Norm:
-            case ImageFormat::R8_UNorm:
-            case ImageFormat::R8_SRGB:
-            case ImageFormat::R16_Int:
-            case ImageFormat::R16_UInt:
-            case ImageFormat::R16_Norm:
-            case ImageFormat::R16_UNorm:
-            case ImageFormat::R16_Float:
-            case ImageFormat::R32_Int:
-            case ImageFormat::R32_UInt:
-            case ImageFormat::R32_Float:
-            case ImageFormat::R64_Int:
-            case ImageFormat::R64_UInt:
-            case ImageFormat::R64_Float:
-
-            case ImageFormat::D16_UNorm:
-            case ImageFormat::D32_Float:
-
-            case ImageFormat::BC4_R_UNorm:
-            case ImageFormat::BC4_R_Norm:
-
-            case ImageFormat::ASTC_4x4_UNorm:
-            case ImageFormat::ASTC_4x4_SRGB:
-            case ImageFormat::ASTC_8x8_UNorm:
-            case ImageFormat::ASTC_8x8_SRGB:               return 1;
-
-            case ImageFormat::R8G8_Int:
-            case ImageFormat::R8G8_UInt:
-            case ImageFormat::R8G8_Norm:
-            case ImageFormat::R8G8_UNorm:
-            case ImageFormat::R8G8_SRGB:
-            case ImageFormat::R16G16_Int:
-            case ImageFormat::R16G16_UInt:
-            case ImageFormat::R16G16_Norm:
-            case ImageFormat::R16G16_UNorm:
-            case ImageFormat::R16G16_Float:
-            case ImageFormat::R32G32_Int:
-            case ImageFormat::R32G32_UInt:
-            case ImageFormat::R32G32_Float:
-            case ImageFormat::R64G64_Int:
-            case ImageFormat::R64G64_UInt:
-            case ImageFormat::R64G64_Float:
-
-            case ImageFormat::BC5_RG_Norm:
-            case ImageFormat::BC5_RG_UNorm:                 return 2;
-
-            case ImageFormat::R8G8B8_Int:
-            case ImageFormat::R8G8B8_UInt:
-            case ImageFormat::R8G8B8_Norm:
-            case ImageFormat::R8G8B8_UNorm:
-            case ImageFormat::R8G8B8_SRGB:
-            case ImageFormat::R16G16B16_Int:
-            case ImageFormat::R16G16B16_UInt:
-            case ImageFormat::R16G16B16_Norm:
-            case ImageFormat::R16G16B16_UNorm:
-            case ImageFormat::R16G16B16_Float:
-            case ImageFormat::R32G32B32_Int:
-            case ImageFormat::R32G32B32_UInt:
-            case ImageFormat::R32G32B32_Float:
-            case ImageFormat::R64G64B64_Int:
-            case ImageFormat::R64G64B64_UInt:
-            case ImageFormat::R64G64B64_Float:
-
-            case ImageFormat::BC6_HDR_RGB_Float:
-            case ImageFormat::BC6_HDR_RGB_UFloat:           return 3;
-
-            case ImageFormat::R8G8B8A8_Int:
-            case ImageFormat::R8G8B8A8_UInt:
-            case ImageFormat::R8G8B8A8_Norm:
-            case ImageFormat::R8G8B8A8_UNorm:
-            case ImageFormat::R8G8B8A8_SRGB:
-            case ImageFormat::R16G16B16A16_Int:
-            case ImageFormat::R16G16B16A16_UInt:
-            case ImageFormat::R16G16B16A16_Norm:
-            case ImageFormat::R16G16B16A16_UNorm:
-            case ImageFormat::R16G16B16A16_Float:
-            case ImageFormat::R32G32B32A32_Int:
-            case ImageFormat::R32G32B32A32_UInt:
-            case ImageFormat::R32G32B32A32_Float:
-            case ImageFormat::R64G64B64A64_Int:
-            case ImageFormat::R64G64B64A64_UInt:
-            case ImageFormat::R64G64B64A64_Float:
-
-            case ImageFormat::B8G8R8A8_UNorm:
-            case ImageFormat::B8G8R8A8_SRGB:
-
-            case ImageFormat::BC1_RGBA_UNorm:
-            case ImageFormat::BC1_RGBA_SRGB:
-            case ImageFormat::BC1_RGB_UNorm:
-            case ImageFormat::BC1_RGB_SRGB:
-            case ImageFormat::BC3_RGBA_UNorm:
-            case ImageFormat::BC3_RGBA_SRGB:
-            case ImageFormat::BC7_RGB_UNorm:
-            case ImageFormat::BC7_RGB_SRGB:
-            case ImageFormat::BC7_RGBA_UNorm:
-            case ImageFormat::BC7_RGBA_SRGB:            return 4;
-        }
-
-        return 0;
-    }
-
-    [[nodiscard]] constexpr float32 ImageFormatToPixelMemorySize(const ImageFormat format)
-    {
-        switch (format)
-        {
-            case ImageFormat::Undefined:                        break;
-
-            case ImageFormat::R8_Int:
-            case ImageFormat::R8_UInt:
-            case ImageFormat::R8_Norm:
-            case ImageFormat::R8_UNorm:
-            case ImageFormat::R8_SRGB:                          return 1 * 1;
-            case ImageFormat::R8G8_Int:
-            case ImageFormat::R8G8_UInt:
-            case ImageFormat::R8G8_Norm:
-            case ImageFormat::R8G8_UNorm:
-            case ImageFormat::R8G8_SRGB:                        return 2 * 1;
-            case ImageFormat::R8G8B8_Int:
-            case ImageFormat::R8G8B8_UInt:
-            case ImageFormat::R8G8B8_Norm:
-            case ImageFormat::R8G8B8_UNorm:
-            case ImageFormat::R8G8B8_SRGB:                      return 3 * 1;
-            case ImageFormat::R8G8B8A8_Int:
-            case ImageFormat::R8G8B8A8_UInt:
-            case ImageFormat::R8G8B8A8_Norm:
-            case ImageFormat::R8G8B8A8_UNorm:
-            case ImageFormat::R8G8B8A8_SRGB:
-            case ImageFormat::B8G8R8A8_UNorm:
-            case ImageFormat::B8G8R8A8_SRGB:                    return 4 * 1;
-
-            case ImageFormat::R16_Int:
-            case ImageFormat::R16_UInt:
-            case ImageFormat::R16_Norm:
-            case ImageFormat::R16_UNorm:
-            case ImageFormat::R16_Float:
-            case ImageFormat::D16_UNorm:                        return 1 * 2;
-            case ImageFormat::R16G16_Int:
-            case ImageFormat::R16G16_UInt:
-            case ImageFormat::R16G16_Norm:
-            case ImageFormat::R16G16_UNorm:
-            case ImageFormat::R16G16_Float:                     return 2 * 2;
-            case ImageFormat::R16G16B16_Int:
-            case ImageFormat::R16G16B16_UInt:
-            case ImageFormat::R16G16B16_Norm:
-            case ImageFormat::R16G16B16_UNorm:
-            case ImageFormat::R16G16B16_Float:                  return 3 * 2;
-            case ImageFormat::R16G16B16A16_Int:
-            case ImageFormat::R16G16B16A16_UInt:
-            case ImageFormat::R16G16B16A16_Norm:
-            case ImageFormat::R16G16B16A16_UNorm:
-            case ImageFormat::R16G16B16A16_Float:               return 4 * 2;
-
-            case ImageFormat::R32_Int:
-            case ImageFormat::R32_UInt:
-            case ImageFormat::R32_Float:
-            case ImageFormat::D32_Float:                        return 1 * 4;
-            case ImageFormat::R32G32_Int:
-            case ImageFormat::R32G32_UInt:
-            case ImageFormat::R32G32_Float:                     return 2 * 4;
-            case ImageFormat::R32G32B32_Int:
-            case ImageFormat::R32G32B32_UInt:
-            case ImageFormat::R32G32B32_Float:                  return 3 * 4;
-            case ImageFormat::R32G32B32A32_Int:
-            case ImageFormat::R32G32B32A32_UInt:
-            case ImageFormat::R32G32B32A32_Float:               return 4 * 4;
-
-            case ImageFormat::R64_Int:
-            case ImageFormat::R64_UInt:
-            case ImageFormat::R64_Float:                        return 1 * 8;
-            case ImageFormat::R64G64_Int:
-            case ImageFormat::R64G64_UInt:
-            case ImageFormat::R64G64_Float:                     return 2 * 8;
-            case ImageFormat::R64G64B64_Int:
-            case ImageFormat::R64G64B64_UInt:
-            case ImageFormat::R64G64B64_Float:                  return 3 * 8;
-            case ImageFormat::R64G64B64A64_Int:
-            case ImageFormat::R64G64B64A64_UInt:
-            case ImageFormat::R64G64B64A64_Float:               return 4 * 8;
-
-            case ImageFormat::BC1_RGB_UNorm:
-            case ImageFormat::BC1_RGB_SRGB:
-            case ImageFormat::BC1_RGBA_UNorm:
-            case ImageFormat::BC1_RGBA_SRGB:
-            case ImageFormat::BC4_R_Norm:
-            case ImageFormat::BC4_R_UNorm:                      return 0.5;
-            case ImageFormat::BC3_RGBA_UNorm:
-            case ImageFormat::BC3_RGBA_SRGB:
-            case ImageFormat::BC5_RG_Norm:
-            case ImageFormat::BC5_RG_UNorm:
-            case ImageFormat::BC6_HDR_RGB_Float:
-            case ImageFormat::BC6_HDR_RGB_UFloat:
-            case ImageFormat::BC7_RGB_UNorm:
-            case ImageFormat::BC7_RGB_SRGB:
-            case ImageFormat::BC7_RGBA_UNorm:
-            case ImageFormat::BC7_RGBA_SRGB:                    return 1;
-
-            case ImageFormat::ASTC_4x4_UNorm:
-            case ImageFormat::ASTC_4x4_SRGB:                    return 1;
-            case ImageFormat::ASTC_8x8_UNorm:
-            case ImageFormat::ASTC_8x8_SRGB:                    return 2;
-        }
-
-        return 0;
-    }
-    
-    [[nodiscard]] constexpr uint8 ImageFormatToBlockSize(const ImageFormat format)
-    {
-        switch (format)
-        {
-            case ImageFormat::Undefined:                        return 0;
-
-            case ImageFormat::BC1_RGB_UNorm:
-            case ImageFormat::BC1_RGB_SRGB:
-            case ImageFormat::BC1_RGBA_UNorm:
-            case ImageFormat::BC1_RGBA_SRGB:
-            case ImageFormat::BC3_RGBA_UNorm:
-            case ImageFormat::BC3_RGBA_SRGB:
-            case ImageFormat::BC4_R_Norm:
-            case ImageFormat::BC4_R_UNorm:
-            case ImageFormat::BC5_RG_Norm:
-            case ImageFormat::BC5_RG_UNorm:
-            case ImageFormat::BC6_HDR_RGB_Float:
-            case ImageFormat::BC6_HDR_RGB_UFloat:
-            case ImageFormat::BC7_RGB_UNorm:
-            case ImageFormat::BC7_RGB_SRGB:
-            case ImageFormat::BC7_RGBA_UNorm:
-            case ImageFormat::BC7_RGBA_SRGB:                    return 4;
-
-            case ImageFormat::ASTC_4x4_UNorm:
-            case ImageFormat::ASTC_4x4_SRGB:                    return 4;
-            case ImageFormat::ASTC_8x8_UNorm:
-            case ImageFormat::ASTC_8x8_SRGB:                    return 8;
-
-            case ImageFormat::R8_Int:
-            case ImageFormat::R8_UInt:
-            case ImageFormat::R8_Norm:
-            case ImageFormat::R8_UNorm:
-            case ImageFormat::R8_SRGB:
-            case ImageFormat::R8G8_Int:
-            case ImageFormat::R8G8_UInt:
-            case ImageFormat::R8G8_Norm:
-            case ImageFormat::R8G8_UNorm:
-            case ImageFormat::R8G8_SRGB:
-            case ImageFormat::R8G8B8_Int:
-            case ImageFormat::R8G8B8_UInt:
-            case ImageFormat::R8G8B8_Norm:
-            case ImageFormat::R8G8B8_UNorm:
-            case ImageFormat::R8G8B8_SRGB:
-            case ImageFormat::R8G8B8A8_Int:
-            case ImageFormat::R8G8B8A8_UInt:
-            case ImageFormat::R8G8B8A8_Norm:
-            case ImageFormat::R8G8B8A8_UNorm:
-            case ImageFormat::R8G8B8A8_SRGB:
-            case ImageFormat::R16_Int:
-            case ImageFormat::R16_UInt:
-            case ImageFormat::R16_Norm:
-            case ImageFormat::R16_UNorm:
-            case ImageFormat::R16_Float:
-            case ImageFormat::R16G16_Int:
-            case ImageFormat::R16G16_UInt:
-            case ImageFormat::R16G16_Norm:
-            case ImageFormat::R16G16_UNorm:
-            case ImageFormat::R16G16_Float:
-            case ImageFormat::R16G16B16_Int:
-            case ImageFormat::R16G16B16_UInt:
-            case ImageFormat::R16G16B16_Norm:
-            case ImageFormat::R16G16B16_UNorm:
-            case ImageFormat::R16G16B16_Float:
-            case ImageFormat::R16G16B16A16_Int:
-            case ImageFormat::R16G16B16A16_UInt:
-            case ImageFormat::R16G16B16A16_Norm:
-            case ImageFormat::R16G16B16A16_UNorm:
-            case ImageFormat::R16G16B16A16_Float:
-            case ImageFormat::R32_Int:
-            case ImageFormat::R32_UInt:
-            case ImageFormat::R32_Float:
-            case ImageFormat::R32G32_Int:
-            case ImageFormat::R32G32_UInt:
-            case ImageFormat::R32G32_Float:
-            case ImageFormat::R32G32B32_Int:
-            case ImageFormat::R32G32B32_UInt:
-            case ImageFormat::R32G32B32_Float:
-            case ImageFormat::R32G32B32A32_Int:
-            case ImageFormat::R32G32B32A32_UInt:
-            case ImageFormat::R32G32B32A32_Float:
-            case ImageFormat::R64_Int:
-            case ImageFormat::R64_UInt:
-            case ImageFormat::R64_Float:
-            case ImageFormat::R64G64_Int:
-            case ImageFormat::R64G64_UInt:
-            case ImageFormat::R64G64_Float:
-            case ImageFormat::R64G64B64_Int:
-            case ImageFormat::R64G64B64_UInt:
-            case ImageFormat::R64G64B64_Float:
-            case ImageFormat::R64G64B64A64_Int:
-            case ImageFormat::R64G64B64A64_UInt:
-            case ImageFormat::R64G64B64A64_Float:
-            case ImageFormat::D16_UNorm:
-            case ImageFormat::D32_Float:
-            case ImageFormat::B8G8R8A8_UNorm:
-            case ImageFormat::B8G8R8A8_SRGB:                    return 1;
-        }
-
-        return 1;
-    }
+    [[nodiscard]] uint8 ImageFormatToChannelCount(ImageFormat format);
+    [[nodiscard]] uint8 ImageFormatToBlockSize(ImageFormat format);
 
     enum class ImageMemoryLocation : bool
     {
@@ -487,38 +180,22 @@ namespace Sierra
     {
     public:
         /* --- GETTER METHODS --- */
-        [[nodiscard]] uint32 GetWidth() const { return width; }
-        [[nodiscard]] uint32 GetHeight() const { return height; }
-        [[nodiscard]] uint32 GetDepth() const { return depth; }
-        [[nodiscard]] ImageFormat GetFormat() const { return format; }
+        [[nodiscard]] virtual uint32 GetWidth() const = 0;
+        [[nodiscard]] virtual uint32 GetHeight() const = 0;
+        [[nodiscard]] virtual uint32 GetDepth() const = 0;
 
-        [[nodiscard]] float32 GetPixelMemorySize() const { return ImageFormatToPixelMemorySize(format); }
-        [[nodiscard]] uint64 GetLayerMemorySize() const { return static_cast<uint64>(static_cast<float32>(width) * static_cast<float32>(height) * static_cast<float32>(depth) * GetPixelMemorySize()); }
-        [[nodiscard]] uint64 GetMemorySize() const { return GetLayerMemorySize() * layerCount; }
+        [[nodiscard]] virtual ImageFormat GetFormat() const = 0;
+        [[nodiscard]] uint64 GetMemorySize() const { return static_cast<uint64>(static_cast<float32>(GetWidth() * GetHeight() * GetDepth() * GetLayerCount()) * Sierra::ImageFormatToPixelMemorySize(GetFormat())); }
 
-        [[nodiscard]] uint32 GetLevelCount() const { return levelCount; }
-        [[nodiscard]] uint32 GetLayerCount() const { return layerCount; }
-        [[nodiscard]] ImageSampling GetSampling() const { return sampling; }
-
-        /* --- OPERATORS --- */
-        Image(const Image&) = delete;
-        Image& operator=(const Image&) = delete;
+        [[nodiscard]] virtual uint32 GetLevelCount() const = 0;
+        [[nodiscard]] virtual uint32 GetLayerCount() const = 0;
+        [[nodiscard]] virtual ImageSampling GetSampling() const = 0;
 
         /* --- DESTRUCTOR --- */
-        virtual ~Image() = default;
+        ~Image() override = default;
 
     protected:
         explicit Image(const ImageCreateInfo &createInfo);
-
-    private:
-        uint32 width = 0;
-        uint32 height = 0;
-        uint32 depth = 0;
-        ImageFormat format = ImageFormat::Undefined;
-
-        uint32 levelCount = 1;
-        uint32 layerCount = 1;
-        ImageSampling sampling = ImageSampling::x1;
 
     };
 

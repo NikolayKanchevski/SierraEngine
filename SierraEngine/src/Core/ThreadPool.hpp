@@ -12,7 +12,7 @@ namespace SierraEngine
         uint32 threadCount = 0;
     };
 
-    class ThreadPool final
+    class SIERRA_ENGINE_API ThreadPool final
     {
     public:
         /* --- TYPE DEFINITIONS --- */

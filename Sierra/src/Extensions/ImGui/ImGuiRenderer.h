@@ -37,8 +37,8 @@ namespace Sierra
         ImageSampling sampling = ImageSampling::x1;
         const Image &templateOutputImage;
 
-        ResourceTable::ResourceIndex fontAtlasIndex = 0;
-        ResourceTable::ResourceIndex fontSamplerIndex = 0;
+        ResourceIndex fontAtlasIndex = 0;
+        ResourceIndex fontSamplerIndex = 0;
         ResourceTable &resourceTable;
     };
 
@@ -49,7 +49,7 @@ namespace Sierra
         explicit ImGuiRenderer(const ImGuiRenderTaskCreateInfo &createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] ImFont* GetFont(const uint32 index) const { return ImGui::GetIO().Fonts->Fonts[static_cast<int>(baseFontIndex + index)]; }
+        [[nodiscard]] ImFont* GetFont(const size index) const { return ImGui::GetIO().Fonts->Fonts[static_cast<int>(baseFontIndex + index)]; }
         [[nodiscard]] ImGuiStyle& GetStyle() { return style; }
 
         /* --- POLLING METHODS --- */
@@ -82,8 +82,8 @@ namespace Sierra
 
         struct PushConstant
         {
-            ResourceTable::ResourceIndex textureIndex = 0;
-            ResourceTable::ResourceIndex samplerIndex = 0;
+            ResourceIndex textureIndex = 0;
+            ResourceIndex samplerIndex = 0;
             Vector2 scale = { 0.0f, 0.0f };
         };
 
@@ -94,7 +94,7 @@ namespace Sierra
             std::unique_ptr<Shader> vertexShader = nullptr;
             std::unique_ptr<Shader> fragmentShader = nullptr;
 
-            ResourceTable::ResourceIndex fontSamplerIndex = 0;
+            ResourceIndex fontSamplerIndex = 0;
             std::unique_ptr<Sampler> fontSampler = nullptr;
         } sharedResources = { nullptr, 0, nullptr, nullptr, 0, nullptr };
 

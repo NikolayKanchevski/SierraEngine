@@ -12,9 +12,9 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanRenderPass::VulkanRenderPass(const VulkanDevice &device, const RenderPassCreateInfo &createInfo)
-        : RenderPass(createInfo), VulkanResource(createInfo.name), device(device)
+        : RenderPass(createInfo), device(device), name(createInfo.name)
     {
-        SR_ERROR_IF(!device.IsExtensionLoaded(VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME), "[Vulkan]: Cannot create render pass [{0}], as the provided device [{1}] does not support the {2} extension!", GetName(), device.GetName(), VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME);
+        SR_ERROR_IF(!device.IsExtensionLoaded(VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME), "[Vulkan]: Cannot create render pass [{0}], as the provided device [{1}] does not support the {2} extension!", name, device.GetName(), VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME);
 
         // Allocate attachment data
         framebufferImageAttachments.resize(createInfo.attachments.size());
@@ -28,7 +28,7 @@ namespace Sierra
         {
             const RenderPassAttachment &attachment = createInfo.attachments[i];
 
-            SR_ERROR_IF(attachment.templateOutputImage.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not use image [{0}] of attachment [{1}]'s output image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.templateOutputImage.GetName(), i, GetName());
+            SR_ERROR_IF(attachment.templateOutputImage.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not use image [{0}] of attachment [{1}]'s output image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.templateOutputImage.GetName(), i, name);
             const VulkanImage &vulkanTemplateImage = static_cast<const VulkanImage&>(attachment.templateOutputImage);
 
             // Set up framebuffer attachment format of output image
@@ -58,7 +58,7 @@ namespace Sierra
 
             if (attachment.templateResolverImage != nullptr)
             {
-                SR_ERROR_IF(attachment.templateResolverImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot not use image [{0}] of attachment [{1}]'s resolver image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.templateResolverImage->GetName(), i, GetName());
+                SR_ERROR_IF(attachment.templateResolverImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot not use image [{0}] of attachment [{1}]'s resolver image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.templateResolverImage->GetName(), i, name);
                 const VulkanImage &vulkanResolveImage = static_cast<const VulkanImage&>(*attachment.templateResolverImage);
 
                 // Set up framebuffer attachment format of resolver image
@@ -227,7 +227,7 @@ namespace Sierra
 
         // Create render pass
         VkResult result = device.GetFunctionTable().vkCreateRenderPass(device.GetLogicalDevice(), &renderPassCreateInfo, nullptr, &renderPass);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create render pass [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create render pass [{0}]! Error code: {1}.", name, static_cast<int32>(result));
 
         // Set up framebuffer attachment create info
         const VkFramebufferAttachmentsCreateInfo framebufferAttachmentsCreateInfo
@@ -252,7 +252,7 @@ namespace Sierra
 
         // Create framebuffer
         result = device.GetFunctionTable().vkCreateFramebuffer(device.GetLogicalDevice(), &framebufferCreateInfo, nullptr, &framebuffer);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create framebuffer of render pass [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create framebuffer of render pass [{0}]! Error code: {1}.", name, static_cast<int32>(result));
     }
 
     /* --- POLLING METHODS --- */
@@ -292,11 +292,11 @@ namespace Sierra
 
         // Recreate framebuffer
         const VkResult result = device.GetFunctionTable().vkCreateFramebuffer(device.GetLogicalDevice(), &framebufferCreateInfo, nullptr, &framebuffer);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not resize framebuffer of render pass [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not resize framebuffer of render pass [{0}]! Error code: {1}.", name, static_cast<int32>(result));
 
         // Set object names
-        device.SetResourceName(renderPass, VK_OBJECT_TYPE_RENDER_PASS, GetName());
-        device.SetResourceName(framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Framebuffer of render pass [" + std::string(GetName()) + "]");
+        device.SetResourceName(renderPass, VK_OBJECT_TYPE_RENDER_PASS, name);
+        device.SetResourceName(framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, fmt::format("Framebuffer of render pass [{0}]", name));
     }
 
     /* --- DESTRUCTOR --- */

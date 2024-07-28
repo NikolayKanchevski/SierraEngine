@@ -32,10 +32,15 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    Mesh ArenaAllocator::RegisterMesh(Sierra::CommandBuffer &commandBuffer, const std::span<Vertex> vertices, const std::span<uint32> indices)
+    ArenaMesh ArenaAllocator::RegisterMesh(Sierra::CommandBuffer &commandBuffer, const std::span<const Vertex> vertices, const std::span<const uint32> indices)
     {
-        // Create mesh
-        Mesh mesh = Mesh({ .vertexByteOffset = currentVertexByteOffset, .vertexCount = static_cast<uint32>(vertices.size()), .indexByteOffset = currentIndexByteOffset, .indexCount = static_cast<uint32>(indices.size()) });
+        const ArenaMesh mesh
+        {
+            .vertexByteOffset = currentVertexByteOffset,
+            .vertexCount = static_cast<uint32>(vertices.size()),
+            .indexByteOffset = currentIndexByteOffset,
+            .indexCount = static_cast<uint32>(indices.size())
+        };
 
         // Check if vertex buffer has enough space to store new vertices
         if (const uint64 endVertexByteOffset = currentVertexByteOffset + vertices.size_bytes(); endVertexByteOffset > vertexBuffer->GetMemorySize())

@@ -86,7 +86,6 @@ namespace Sierra
 
         // Create rendering context
         {
-            const RenderingContextCreateInfo renderingContextCreateInfo = { .name = "Application Rendering Context" };
             switch (createInfo.settings.graphicsAPI)
             {
                 case GraphicsAPI::Vulkan:
@@ -94,7 +93,7 @@ namespace Sierra
                     #if !defined(SR_VULKAN_SUPPORTED)
                         SR_ERROR("Cannot create rendering context [{0}] using the Vulkan API, as it is unsupported on the system, or the CMake option [\"SIERRA_BUILD_VULKAN\"] hast not been turned on!", createInfo.name);
                     #else
-                        renderingContext = std::make_unique<VulkanContext>(renderingContextCreateInfo);
+                        renderingContext = std::make_unique<VulkanContext>();
                     #endif
                     break;
                 }
@@ -108,7 +107,7 @@ namespace Sierra
                     #if !defined(SR_METAL_SUPPORTED)
                         SR_ERROR("Cannot create rendering context using the Metal API, as it is unsupported on the system, or the CMake option [\"SIERRA_BUILD_METAL\"] hast not been turned on!");
                     #else
-                        renderingContext = std::make_unique<MetalContext>(renderingContextCreateInfo);
+                        renderingContext = std::make_unique<MetalContext>();
                     #endif
                     break;
                 }

@@ -16,7 +16,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit MetalContext(const RenderingContextCreateInfo &createInfo);
+        MetalContext();
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] std::unique_ptr<Buffer> CreateBuffer(const BufferCreateInfo &createInfo) const override;
@@ -31,6 +31,7 @@ namespace Sierra
         [[nodiscard]] std::unique_ptr<CommandBuffer> CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const override;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const override { return "Metal Context"; }
         [[nodiscard]] const Device& GetDevice() const override { return device; }
 
         /* --- DESTRUCTOR --- */

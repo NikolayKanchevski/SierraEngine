@@ -10,9 +10,9 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanSampler::VulkanSampler(const VulkanDevice &device, const SamplerCreateInfo &createInfo)
-        : Sampler(createInfo), VulkanResource(createInfo.name), device(device)
+        : Sampler(createInfo), device(device), name(createInfo.name)
     {
-        SR_ERROR_IF(!device.IsSamplerAnisotropySupported(createInfo.anisotropy), "[Vulkan]: Cannot create sampler [{0}] with unsupported sample mode! Use Device::IsSamplerAnisotropySupported() to query support.", GetName());
+        SR_ERROR_IF(!device.IsSamplerAnisotropySupported(createInfo.anisotropy), "[Vulkan]: Cannot create sampler [{0}] with unsupported sample mode! Use Device::IsSamplerAnisotropySupported() to query support.", name);
 
         // Set up sampler create info
         const VkSamplerCreateInfo samplerCreateInfo
@@ -37,10 +37,10 @@ namespace Sierra
 
         // Create sampler
         const VkResult result = device.GetFunctionTable().vkCreateSampler(device.GetLogicalDevice(), &samplerCreateInfo, nullptr, &sampler);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create sampler [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create sampler [{0}]! Error code: {1}.", name, static_cast<int32>(result));
 
         // Assign name
-        device.SetResourceName(sampler, VK_OBJECT_TYPE_SAMPLER, GetName());
+        device.SetResourceName(sampler, VK_OBJECT_TYPE_SAMPLER, name);
     }
 
     /* --- DESTRUCTOR --- */

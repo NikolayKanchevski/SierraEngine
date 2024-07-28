@@ -17,7 +17,7 @@ namespace Sierra
         Uniform               = 0x0004,
         Storage               = 0x0008,
         Index                 = 0x0010,
-        Vertex                = 0x0020
+        Vertex                = 0x0020,
     };
     SR_DEFINE_ENUM_FLAG_OPERATORS(BufferUsage);
 
@@ -30,7 +30,7 @@ namespace Sierra
     struct BufferCreateInfo
     {
         std::string_view name = "Buffer";
-        uint64 memorySize = 0;
+        size memorySize = 0;
         BufferUsage usage = BufferUsage::Undefined;
         BufferMemoryLocation memoryLocation = BufferMemoryLocation::CPU;
     };
@@ -39,18 +39,14 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual void CopyFromMemory(const void* memoryPointer, uint64 memoryRange = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) = 0;
+        virtual void CopyFromMemory(const void* memory, uint64 memoryByteSize = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual const void* GetData() const = 0;
+        [[nodiscard]] virtual std::span<const uint8> GetMemory() const = 0;
         [[nodiscard]] virtual uint64 GetMemorySize() const = 0;
 
-        /* --- OPERATORS --- */
-        Buffer(const Buffer&) = delete;
-        Buffer& operator=(const Buffer&) = delete;
-
         /* --- DESTRUCTOR --- */
-        virtual ~Buffer() = default;
+        ~Buffer() override = default;
 
     protected:
         explicit Buffer(const BufferCreateInfo &createInfo);

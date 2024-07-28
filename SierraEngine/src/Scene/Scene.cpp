@@ -14,7 +14,6 @@ namespace SierraEngine
     /* --- CONSTRUCTORS --- */
 
     Scene::Scene(const SceneCreateInfo &createInfo)
-        : arenaAllocator({ .renderingContext = createInfo.renderingContext }), resourceTable(createInfo.renderingContext.CreateResourceTable({ .name = "Scene Resource Table" }))
     {
 
     }
@@ -30,7 +29,7 @@ namespace SierraEngine
         return entity;
     }
 
-    void Scene::ForEachEntity(const EntityCallback &Callback)
+    void Scene::ForEachEntity(const EntityCallback Callback)
     {
         for (const entt::entity entity : registry.view<Relationship>()) Callback(Entity(&registry, entity));
     }

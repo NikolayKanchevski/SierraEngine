@@ -56,10 +56,10 @@ namespace Sierra
         virtual void Begin() = 0;
         virtual void End() = 0;
 
-        virtual void SynchronizeBufferUsage(const Buffer &buffer, BufferCommandUsage previousUsage, BufferCommandUsage nextUsage, uint64 memorySize = 0, uint64 byteOffset = 0) = 0;
+        virtual void SynchronizeBufferUsage(const Buffer &buffer, BufferCommandUsage previousUsage, BufferCommandUsage nextUsage, size memorySize = 0, uint64 byteOffset = 0) = 0;
         virtual void SynchronizeImageUsage(const Image &image, ImageCommandUsage previousUsage, ImageCommandUsage nextUsage, uint32 baseLevel = 0, uint32 levelCount = 0, uint32 baseLayer = 0, uint32 layerCount = 0) = 0;
 
-        virtual void CopyBufferToBuffer(const Buffer &sourceBuffer, const Buffer &destinationBuffer, uint64 memoryRange = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) = 0;
+        virtual void CopyBufferToBuffer(const Buffer &sourceBuffer, const Buffer &destinationBuffer, uint64 memoryByteSize = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) = 0;
         virtual void CopyBufferToImage(const Buffer &sourceBuffer, const Image &destinationImage, uint32 level = 0, uint32 layer = 0, const Vector3UInt &pixelRange = { 0, 0, 0 }, uint64 sourceByteOffset = 0, const Vector3UInt &destinationPixelOffset = { 0, 0, 0 }) = 0;
         virtual void GenerateMipMapsForImage(const Image &image) = 0;
 
@@ -68,7 +68,7 @@ namespace Sierra
         virtual void EndRenderPass(const RenderPass &renderPass) = 0;
 
         virtual void BindResourceTable(const ResourceTable &resourceTable) = 0;
-        virtual void PushConstants(const void* data, uint16 memoryRange, uint16 byteOffset = 0) = 0;
+        virtual void PushConstants(const void* memory, uint16 memoryByteSize, uint16 byteOffset = 0) = 0;
 
         virtual void BeginGraphicsPipeline(const GraphicsPipeline &graphicsPipeline) = 0;
         virtual void EndGraphicsPipeline(const GraphicsPipeline &graphicsPipeline) = 0;
@@ -83,21 +83,17 @@ namespace Sierra
         virtual void BeginComputePipeline(const ComputePipeline &computePipeline) = 0;
         virtual void EndComputePipeline(const ComputePipeline &computePipeline) = 0;
 
-        virtual void Dispatch(uint32 xWorkGroupCount, uint32 yWorkGroupCount, uint32 zWorkGroupCount) = 0;
+        virtual void Dispatch(uint32 xWorkGroupCount, uint32 yWorkGroupCount = 0, uint32 zWorkGroupCount = 0) = 0;
 
-        virtual void BeginDebugRegion(std::string_view regionName, const ColorRGBA32 &color = { 1.0f, 1.0f, 0.0f, 1.0f }) = 0;
-        virtual void InsertDebugMarker(std::string_view markerName, const ColorRGBA32 &color = { 1.0f, 1.0f, 0.0f, 1.0f }) = 0;
+        virtual void BeginDebugRegion(std::string_view regionName, Color color = { 1.0f, 1.0f, 0.0f, 1.0f }) = 0;
+        virtual void InsertDebugMarker(std::string_view markerName, Color color = { 1.0f, 1.0f, 0.0f, 1.0f }) = 0;
         virtual void EndDebugRegion() = 0;
 
         virtual std::unique_ptr<Buffer>& QueueBufferForDestruction(std::unique_ptr<Buffer> &&buffer) = 0;
         virtual std::unique_ptr<Image>& QueueImageForDestruction(std::unique_ptr<Image> &&image) = 0;
 
-        /* --- OPERATORS --- */
-        CommandBuffer(const CommandBuffer&) = delete;
-        CommandBuffer& operator=(const CommandBuffer&) = delete;
-
         /* --- DESTRUCTOR --- */
-        virtual ~CommandBuffer() = default;
+        ~CommandBuffer() override = default;
 
     protected:
         explicit CommandBuffer(const CommandBufferCreateInfo &createInfo);

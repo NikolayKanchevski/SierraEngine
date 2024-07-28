@@ -24,6 +24,8 @@ namespace Sierra
         void Present(CommandBuffer &commandBuffer) override;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const override { return name; }
+
         [[nodiscard]] uint32 GetCurrentFrameIndex() const override { return currentFrame; }
         [[nodiscard]] uint32 GetCurrentImageIndex() const override { return currentImage; }
         [[nodiscard]] uint32 GetConcurrentFrameCount() const override { return concurrentFrameCount; }
@@ -47,6 +49,7 @@ namespace Sierra
         const SwapchainBuffering preferredBuffering = SwapchainBuffering::DoubleBuffering;
         const SwapchainImageMemoryType preferredImageMemoryType = SwapchainImageMemoryType::UNorm8;
 
+        std::string name;
         VkSwapchainKHR swapchain = VK_NULL_HANDLE;
         std::vector<std::unique_ptr<Image>> swapchainImages;
 

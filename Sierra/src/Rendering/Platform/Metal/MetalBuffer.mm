@@ -10,12 +10,12 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalBuffer::MetalBuffer(const MetalDevice &device, const BufferCreateInfo &createInfo)
-        : Buffer(createInfo), MetalResource(createInfo.name)
+        : Buffer(createInfo)
     {
         // Create buffer
         buffer = [device.GetMetalDevice() newBufferWithLength: createInfo.memorySize options: BufferMemoryLocationToResourceOptions(createInfo.memoryLocation)];
-        SR_ERROR_IF(buffer == nil, "[Metal]: Failed to create buffer [{0}]!", GetName());
-        device.SetResourceName(buffer, GetName());
+        SR_ERROR_IF(buffer == nil, "[Metal]: Failed to create buffer [{0}]!", createInfo.name);
+        device.SetResourceName(buffer, createInfo.name);
 
         // Map and reset memory if CPU-visible
         if (createInfo.memoryLocation == BufferMemoryLocation::CPU) std::memset([buffer contents], 0, createInfo.memorySize);
@@ -23,11 +23,28 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void MetalBuffer::CopyFromMemory(const void* memoryPointer, uint64 memoryRange, const uint64 sourceByteOffset, const uint64 destinationByteOffset)
+    void MetalBuffer::CopyFromMemory(const void* memory, uint64 memoryByteSize, const uint64 sourceByteOffset, const uint64 destinationByteOffset)
     {
-        memoryRange = memoryRange != 0 ? memoryRange : GetMemorySize();
-        SR_ERROR_IF(destinationByteOffset + memoryRange > GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{3}] bytes is bigger than the size of the buffer - [{4}]!", memoryRange, destinationByteOffset, GetName(), destinationByteOffset + memoryRange, GetMemorySize());
-        std::memcpy(reinterpret_cast<char*>([buffer contents]) + destinationByteOffset, reinterpret_cast<const char*>(memoryPointer) + sourceByteOffset, memoryRange);
+        memoryByteSize = memoryByteSize != 0 ? memoryByteSize : GetMemorySize();
+        SR_ERROR_IF(destinationByteOffset + memoryByteSize > GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{3}] bytes is bigger than the size of the buffer - [{4}]!", memoryByteSize, destinationByteOffset, GetName(), destinationByteOffset + memoryByteSize, GetMemorySize());
+        std::memcpy(reinterpret_cast<uint8*>([buffer contents]) + destinationByteOffset, reinterpret_cast<const uint8*>(memory) + sourceByteOffset, memoryByteSize);
+    }
+
+    /* --- GETTER METHODS --- */
+
+    std::string_view MetalBuffer::GetName() const
+    {
+        return { [buffer.label UTF8String], [buffer.label length] };
+    }
+
+    std::span<const uint8> MetalBuffer::GetMemory() const
+    {
+        return { reinterpret_cast<const uint8*>([buffer contents]), [buffer length] };
+    }
+
+    uint64 MetalBuffer::GetMemorySize() const
+    {
+        return [buffer length];
     }
 
     /* --- DESTRUCTOR --- */

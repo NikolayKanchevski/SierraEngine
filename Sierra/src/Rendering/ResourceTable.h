@@ -18,15 +18,16 @@ namespace Sierra
         std::string_view name = "Resource Table";
     };
 
+    /* --- TYPE DEFINITIONS --- */
+    using ResourceIndex = uint32;
+
     class SIERRA_API ResourceTable : public virtual RenderingResource
     {
     public:
-        /* --- TYPE DEFINITIONS --- */
-        using ResourceIndex = uint32;
 
         /* --- POLLING METHODS --- */
-        virtual void BindUniformBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) = 0;
-        virtual void BindStorageBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) = 0;
+        virtual void BindUniformBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) = 0;
+        virtual void BindStorageBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) = 0;
 
         virtual void BindSampledImage(ResourceIndex index, const Image &image) = 0;
         virtual void BindStorageImage(ResourceIndex index, const Image &image) = 0;
@@ -40,12 +41,8 @@ namespace Sierra
         [[nodiscard]] virtual uint32 GetStorageImageCapacity() const = 0;
         [[nodiscard]] virtual uint32 GetSamplerCapacity() const = 0;
 
-        /* --- OPERATORS --- */
-        ResourceTable(const ResourceTable&) = delete;
-        ResourceTable& operator=(const ResourceTable&) = delete;
-
         /* --- DESTRUCTOR --- */
-        virtual ~ResourceTable() = default;
+        ~ResourceTable() override = default;
 
     protected:
         explicit ResourceTable(const ResourceTableCreateInfo &createInfo);

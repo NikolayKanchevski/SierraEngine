@@ -14,12 +14,12 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanGraphicsPipeline::VulkanGraphicsPipeline(const VulkanDevice &device, const GraphicsPipelineCreateInfo &createInfo)
-        : GraphicsPipeline(createInfo), VulkanResource(createInfo.name), device(device), pushConstantSize(createInfo.pushConstantSize)
+        : GraphicsPipeline(createInfo), device(device), name(createInfo.name), pushConstantSize(createInfo.pushConstantSize)
     {
-        SR_ERROR_IF(createInfo.vertexShader.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.vertexShader.GetName());
+        SR_ERROR_IF(createInfo.vertexShader.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", name, createInfo.vertexShader.GetName());
         const VulkanShader &vulkanVertexShader = static_cast<const VulkanShader&>(createInfo.vertexShader);
 
-        SR_ERROR_IF(createInfo.templateRenderPass.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with render pass [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.templateRenderPass.GetName());
+        SR_ERROR_IF(createInfo.templateRenderPass.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with template render pass [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", name, createInfo.templateRenderPass.GetName());
         const VulkanRenderPass &vulkanRenderPass = static_cast<const VulkanRenderPass&>(createInfo.templateRenderPass);
 
         // Set up shader stages
@@ -30,7 +30,7 @@ namespace Sierra
         shaderStages[0].pName = "main";
         if (createInfo.fragmentShader != nullptr)
         {
-            SR_ERROR_IF(createInfo.fragmentShader->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.fragmentShader->GetName());
+            SR_ERROR_IF(createInfo.fragmentShader->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", name, createInfo.fragmentShader->GetName());
             const VulkanShader &vulkanFragmentShader = static_cast<const VulkanShader&>(*createInfo.fragmentShader);
             shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -238,10 +238,10 @@ namespace Sierra
 
         // Create pipeline
         const VkResult result = device.GetFunctionTable().vkCreateGraphicsPipelines(device.GetLogicalDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &pipeline);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create graphics pipeline [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create graphics pipeline [{0}]! Error code: {1}.", name, static_cast<int32>(result));
 
         // Set object name
-        device.SetResourceName(pipeline, VK_OBJECT_TYPE_PIPELINE, GetName());
+        device.SetResourceName(pipeline, VK_OBJECT_TYPE_PIPELINE, name);
     }
 
     /* --- DESTRUCTOR --- */

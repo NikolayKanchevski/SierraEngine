@@ -12,8 +12,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    MetalDevice::MetalDevice(const DeviceCreateInfo &createInfo)
-        : Device(createInfo), MetalResource(createInfo.name)
+    MetalDevice::MetalDevice()
     {
         #if SR_ENABLE_LOGGING
             setenv("MTL_DEBUG_LAYER", "1", true);
@@ -27,10 +26,7 @@ namespace Sierra
 
         // Create device
         device = MTLCreateSystemDefaultDevice();
-        SR_ERROR_IF(device == nil, "[Metal]: Could not create default system device for device [{0}]!", GetName());
-
-        // Save device name
-        deviceName = std::string(device.name.UTF8String, device.name.length);
+        SR_ERROR_IF(device == nil, "[Metal]: Could not create default system device!");
 
         // Create command queue
         commandQueue = [device newCommandQueue];
@@ -97,16 +93,19 @@ namespace Sierra
 
     /* --- SETTER METHODS --- */
 
-    void MetalDevice::SetResourceName( MTLHandle resource, const std::string_view name) const
+    void MetalDevice::SetResourceName(MTLHandle resource, const std::string_view name) const
     {
-        #if SR_ENABLE_LOGGING
-            NSString* const label = [[NSString alloc] initWithCString: name.data() encoding: NSASCIIStringEncoding];
-            [((__bridge id) resource) performSelector: @selector(setLabel:) withObject: label];
-            [label release];
-        #endif
+        NSString* const label = [[NSString alloc] initWithCString: name.data() encoding: NSASCIIStringEncoding];
+        [((__bridge id) resource) performSelector: @selector(setLabel:) withObject: label];
+        [label release];
     }
 
     /* --- GETTER METHODS --- */
+
+    std::string_view MetalDevice::GetName() const
+    {
+        return { [device.name UTF8String], [device.name length] };
+    }
 
     bool MetalDevice::IsImageFormatSupported(const ImageFormat format, const ImageUsage usage) const
     {

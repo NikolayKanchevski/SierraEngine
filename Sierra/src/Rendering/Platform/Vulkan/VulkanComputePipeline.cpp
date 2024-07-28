@@ -12,9 +12,9 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanComputePipeline::VulkanComputePipeline(const VulkanDevice &device, const ComputePipelineCreateInfo &createInfo)
-        : ComputePipeline(createInfo), VulkanResource(createInfo.name), device(device), pushConstantSize(createInfo.pushConstantSize)
+        : ComputePipeline(createInfo), device(device), name(createInfo.name), pushConstantSize(createInfo.pushConstantSize)
     {
-        SR_ERROR_IF(createInfo.computeShader.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create compute pipeline [{0}] with compute shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", GetName(), createInfo.computeShader.GetName());
+        SR_ERROR_IF(createInfo.computeShader.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create compute pipeline [{0}] with compute shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", name, createInfo.computeShader.GetName());
         const VulkanShader &vulkanComputeShader = static_cast<const VulkanShader&>(createInfo.computeShader);
 
         // Set up only shader stage
@@ -38,7 +38,7 @@ namespace Sierra
 
         // Create pipeline
         const VkResult result = device.GetFunctionTable().vkCreateComputePipelines(device.GetLogicalDevice(), VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &pipeline);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create compute pipeline [{0}]! Error code: {1}.", GetName(), static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create compute pipeline [{0}]! Error code: {1}.", name, static_cast<int32>(result));
     }
 
     /* --- DESTRUCTOR --- */

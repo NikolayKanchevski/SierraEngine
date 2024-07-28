@@ -19,14 +19,16 @@ namespace Sierra
         VulkanResourceTable(const VulkanDevice &device, const ResourceTableCreateInfo &createInfo);
 
         /* --- POLLING METHODS --- */
-        void BindUniformBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
-        void BindStorageBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryRange = 0, uint64 byteOffset = 0) override;
+        void BindUniformBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) override;
+        void BindStorageBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) override;
 
         void BindSampledImage(ResourceIndex index, const Image &image) override;
         void BindStorageImage(ResourceIndex index, const Image &image) override;
         void BindSampler(ResourceIndex index, const Sampler &sampler) override;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const override { return name; }
+
         [[nodiscard]] uint32 GetUniformBufferCapacity() const override;
         [[nodiscard]] uint32 GetStorageBufferCapacity() const override;
 
@@ -42,6 +44,7 @@ namespace Sierra
     private:
         const VulkanDevice &device;
 
+        std::string name;
         VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
         VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
 

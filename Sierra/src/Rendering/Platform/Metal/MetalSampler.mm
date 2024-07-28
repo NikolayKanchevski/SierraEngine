@@ -10,13 +10,13 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalSampler::MetalSampler(const MetalDevice &device, const SamplerCreateInfo &createInfo)
-        : Sampler(createInfo), MetalResource(createInfo.name)
+        : Sampler(createInfo)
     {
-        SR_ERROR_IF(!device.IsSamplerAnisotropySupported(createInfo.anisotropy), "[Metal]: Cannot create sampler [{0}] with unsupported sample mode! Make sure to query Device::IsSamplerAnisotropySupported() to query support.", GetName());
+        SR_ERROR_IF(!device.IsSamplerAnisotropySupported(createInfo.anisotropy), "[Metal]: Cannot create sampler [{0}] with unsupported sample mode! Make sure to query Device::IsSamplerAnisotropySupported() to query support.", createInfo.name);
 
         // Set up sampler descriptor
         MTLSamplerDescriptor* const samplerDescriptor = [[MTLSamplerDescriptor alloc] init];
-        device.SetResourceName(samplerDescriptor, GetName());
+        device.SetResourceName(samplerDescriptor, createInfo.name);
         [samplerDescriptor setMagFilter: SamplerSampleModeToSamplerMinMagFilter(createInfo.filter)];
         [samplerDescriptor setMinFilter: samplerDescriptor.magFilter];
         [samplerDescriptor setRAddressMode: SamplerExtendModeToSamplerAddressMode(createInfo.extendMode)];
@@ -32,9 +32,16 @@ namespace Sierra
 
         // Create sampler state
         samplerState = [device.GetMetalDevice() newSamplerStateWithDescriptor: samplerDescriptor];
-        SR_ERROR_IF(samplerState == nil, "[Metal]: Could not create sampler [{0}]!", GetName());
+        SR_ERROR_IF(samplerState == nil, "[Metal]: Could not create sampler [{0}]!", createInfo.name);
 
         [samplerDescriptor release];
+    }
+
+    /* --- GETTER METHODS --- */
+
+    std::string_view MetalSampler::GetName() const
+    {
+        return { [samplerState.label UTF8String], [samplerState.label length] };
     }
 
     /* --- DESTRUCTOR --- */

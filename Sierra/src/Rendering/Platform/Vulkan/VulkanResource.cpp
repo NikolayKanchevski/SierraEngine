@@ -7,13 +7,6 @@
 namespace Sierra
 {
 
-    void VulkanResource::PushToPNextChain(void* mainStruct, void* newStruct)
-    {
-        // We just cast them to any Vulkan structure, as they all have their pNext stored exactly 4 bytes within the struct
-        auto* mainStructAsVkStruct = static_cast<VkBufferMemoryBarrier*>(mainStruct);
-        auto* newStructAsVkStruct = static_cast<VkBufferMemoryBarrier*>(newStruct);
-        newStructAsVkStruct->pNext = mainStructAsVkStruct->pNext;
-        mainStructAsVkStruct->pNext = newStruct;
-    }
+
 
 }

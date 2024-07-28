@@ -56,7 +56,7 @@ namespace SierraEngine
         for (size i = 0; i < renderTargets.size(); i++)
         {
             renderTargets[i] = renderingContext.CreateImage({
-                .name = fmt::format("Staging Image of Editor Surface [{0}]", i),
+                .name = fmt::format("Render Target of Editor Surface [{0}]", i),
                 .width = swapchain->GetWidth(),
                 .height = swapchain->GetHeight(),
                 .format = format.value(),

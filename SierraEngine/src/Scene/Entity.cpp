@@ -46,7 +46,7 @@ namespace SierraEngine
         return GetComponent<Relationship>().GetChildCount();
     }
 
-    Entity Entity::GetChild(const uint32 index) const
+    Entity Entity::GetChild(const size index) const
     {
         return Entity(registry, GetComponent<Relationship>().GetChildren()[index]);
     }

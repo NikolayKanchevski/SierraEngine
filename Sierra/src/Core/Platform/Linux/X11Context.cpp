@@ -491,18 +491,18 @@ namespace Sierra
         Atom* states;
         ulong stateCount = GetWindowProperty(window, GetAtom(AtomType::NET_WM_STATE), XA_ATOM, reinterpret_cast<uchar**>(&states));
 
-        bool result = false;
+        bool success = false;
         for (ulong i = stateCount; i--;)
         {
             if (states[i] == GetAtom(AtomType::NET_WM_STATE_MAXIMIZED_VERT) || states[i] == GetAtom(AtomType::NET_WM_STATE_MAXIMIZED_HORZ))
             {
-                result = true;
+                success = true;
                 break;
             }
         }
 
         if (states != nullptr) XFree(states);
-        return result;
+        return success;
     }
 
     bool X11Context::IsWindowFocused(const XID window) const

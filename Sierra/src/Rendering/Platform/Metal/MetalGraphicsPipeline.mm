@@ -14,23 +14,23 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalGraphicsPipeline::MetalGraphicsPipeline(const MetalDevice &device, const GraphicsPipelineCreateInfo &createInfo)
-        : GraphicsPipeline(createInfo), MetalResource(createInfo.name), cullMode(CullModeToCullMode(createInfo.cullMode)), triangleFillMode(ShadeModeToTriangleFillMode(createInfo.shadeMode)), winding(FrontFaceModeToWinding(createInfo.frontFaceMode))
+        : GraphicsPipeline(createInfo), cullMode(CullModeToCullMode(createInfo.cullMode)), triangleFillMode(ShadeModeToTriangleFillMode(createInfo.shadeMode)), winding(FrontFaceModeToWinding(createInfo.frontFaceMode))
     {
-        SR_ERROR_IF(createInfo.vertexShader.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.vertexShader.GetName());
+        SR_ERROR_IF(createInfo.vertexShader.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", createInfo.name, createInfo.vertexShader.GetName());
         const MetalShader &metalVertexShader = static_cast<const MetalShader&>(createInfo.vertexShader);
 
-        SR_ERROR_IF(createInfo.templateRenderPass.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with render pass [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.templateRenderPass.GetName());
+        SR_ERROR_IF(createInfo.templateRenderPass.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with template render pass [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", createInfo.name, createInfo.templateRenderPass.GetName());
         const MetalRenderPass &metalRenderPass = static_cast<const MetalRenderPass&>(createInfo.templateRenderPass);
 
         // Allocate pipeline descriptor
         MTLRenderPipelineDescriptor* const renderPipelineDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
-        device.SetResourceName(renderPipelineDescriptor, GetName());
+        device.SetResourceName(renderPipelineDescriptor, createInfo.name);
 
         // Configure pipeline descriptor's shaders
         [renderPipelineDescriptor setVertexFunction: metalVertexShader.GetEntryFunction()];
         if (createInfo.fragmentShader != nullptr)
         {
-            SR_ERROR_IF(createInfo.fragmentShader->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), createInfo.fragmentShader->GetName());
+            SR_ERROR_IF(createInfo.fragmentShader->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", createInfo.name, createInfo.fragmentShader->GetName());
             const MetalShader &metalFragmentShader = static_cast<const MetalShader&>(*createInfo.fragmentShader);
 
             [renderPipelineDescriptor setFragmentFunction: metalFragmentShader.GetEntryFunction()];
@@ -127,7 +127,7 @@ namespace Sierra
         if (metalRenderPass.HasDepthAttachment())
         {
             MTLDepthStencilDescriptor* const depthStencilDescriptor = [[MTLDepthStencilDescriptor alloc] init];
-            device.SetResourceName(depthStencilDescriptor, "Depth Stencil state of Graphics Pipeline [" + std::string(GetName()) + "]");
+            device.SetResourceName(depthStencilDescriptor, fmt::format("Depth stencil state of graphics pipeline [{0}]", GetName()));
             [depthStencilDescriptor setDepthWriteEnabled: createInfo.depthMode == DepthMode::WriteDepth];
             [depthStencilDescriptor setDepthCompareFunction: MTLCompareFunctionLessEqual];
 
@@ -144,12 +144,19 @@ namespace Sierra
         // Create pipeline
         NSError* error = nil;
         renderPipelineState = [device.GetMetalDevice() newRenderPipelineStateWithDescriptor: renderPipelineDescriptor error: &error];
-        SR_ERROR_IF(error != nil, "[Metal]: Could not create graphics pipeline [{0}]! Error: {1}.", GetName(), error.description.UTF8String);
+        SR_ERROR_IF(error != nil, "[Metal]: Could not create graphics pipeline [{0}]! Error: {1}.", createInfo.name, error.description.UTF8String);
 
         [renderPipelineDescriptor release];
         [vertexDescriptor release];
     }
     
+    /* --- GETTER METHODS --- */
+
+    std::string_view MetalGraphicsPipeline::GetName() const
+    {
+        return { [renderPipelineState.label UTF8String], [renderPipelineState.label length] };
+    }
+
     /* --- DESTRUCTOR --- */
 
     MetalGraphicsPipeline::~MetalGraphicsPipeline()

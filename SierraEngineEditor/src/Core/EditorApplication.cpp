@@ -14,7 +14,9 @@ namespace SierraEngine
             frameLimiter({ .maxFrameRate = 60 * SR_PLATFORM_MOBILE }),
             threadPool({ .threadCount = std::thread::hardware_concurrency() }),
             surface({ .windowTitle = "Sierra Engine Editor", .windowManager = GetWindowManager(), .renderingContext = GetRenderingContext() }),
-            scene({ .renderingContext = GetRenderingContext() }),
+            resourceTable(GetRenderingContext().CreateResourceTable({ .name = "General Resource Table" })),
+            editorAssetManager({ .renderingContext = GetRenderingContext(), .threadPool = threadPool }),
+            scene({ }),
             triangleRenderer({ .renderingContext = GetRenderingContext(), .templateOutputImage = surface.GetCurrentRenderTarget() })
     {
          commandBuffers.resize(surface.GetSwapchain().GetConcurrentFrameCount());
@@ -63,23 +65,26 @@ namespace SierraEngine
                 .renderingContext = GetRenderingContext(),
                 .commandBuffer = commandBuffer,
                 .templateOutputImage = surface.GetCurrentSwapchainImage(),
-                .resourceTable = scene.GetResourceTable()
+                .resourceTable = *resourceTable
             };
 
             editorRenderer = std::make_unique<EditorRenderer>(createInfo);
             firstTime = false;
         }
 
+        // Update assets
+        editorAssetManager.Update(commandBuffer);
+
         // Update editor
         editorRenderer->Update(scene, surface.GetCurrentRenderTarget(), &surface.GetWindow().GetInputManager(), &surface.GetWindow().GetCursorManager(), &surface.GetWindow().GetTouchManager());
 
         // Bind scene resources
-        commandBuffer.BindResourceTable(scene.GetResourceTable());
-        commandBuffer.BindVertexBuffer(scene.GetArenaAllocator().GetVertexBuffer());
-        commandBuffer.BindIndexBuffer(scene.GetArenaAllocator().GetIndexBuffer());
+        commandBuffer.BindResourceTable(*resourceTable);
+//        commandBuffer.BindVertexBuffer(scene.GetArenaAllocator().GetVertexBuffer());
+//        commandBuffer.BindIndexBuffer(scene.GetArenaAllocator().GetIndexBuffer());
 
         // Render triangle
-        scene.GetResourceTable().BindSampledImage(10, surface.GetCurrentRenderTarget());
+        resourceTable->BindSampledImage(10, surface.GetCurrentRenderTarget());
 
         commandBuffer.SynchronizeImageUsage(surface.GetCurrentRenderTarget(), Sierra::ImageCommandUsage::None, Sierra::ImageCommandUsage::ColorWrite);
         triangleRenderer.Render(commandBuffer, surface.GetCurrentRenderTarget());

@@ -11,21 +11,21 @@
 	path = Sierra/vendor/ImGui
 	url = https://github.com/ocornut/imgui
 	branch = docking
-[submodule "SierraEngine/vendor/stb"]
-	path = SierraEngine/vendor/stb
-	url = https://github.com/nothings/stb
-[submodule "SierraEngine/vendor/KTX-Software"]
-	path = SierraEngine/vendor/KTX-Software
-	url = https://github.com/KhronosGroup/KTX-Software/
 [submodule "SierraEngine/vendor/entt"]
 	path = SierraEngine/vendor/entt
 	url = https://github.com/skypjack/entt
 [submodule "Sierra/vendor/fmt"]
 	path = Sierra/vendor/fmt
 	url = https://github.com/fmtlib/fmt
-[submodule "Sierra/vendor/android-cmake"]
-	path = Sierra/vendor/android-cmake
-	url = https://github.com/taka-no-me/android-cmake
 [submodule "Sierra/vendor/ios-cmake"]
 	path = Sierra/vendor/ios-cmake
 	url = https://github.com/leetal/ios-cmake
+[submodule "SierraEngineEditor/vendor/basis_universal"]
+	path = SierraEngineEditor/vendor/basis_universal
+	url = https://github.com/BinomialLLC/basis_universal
+[submodule "SierraEngineEditor/vendor/stb"]
+	path = SierraEngineEditor/vendor/stb
+	url = https://github.com/nothings/stb
+[submodule "SierraEngineEditor/vendor/rapidyaml"]
+	path = SierraEngineEditor/vendor/rapidyaml
+	url = https://github.com/biojppm/rapidyaml

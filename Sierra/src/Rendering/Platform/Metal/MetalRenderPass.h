@@ -30,6 +30,8 @@ namespace Sierra
         void Resize(uint32 width, uint32 height) override;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const override;
+
         [[nodiscard]] uint32 GetColorAttachmentCount() const override { return colorAttachmentCount; }
         [[nodiscard]] bool HasDepthAttachment() const override { return hasDepthAttachment; }
 
@@ -44,6 +46,8 @@ namespace Sierra
         static MTLStoreAction AttachmentStoreOperationToStoreAction(RenderPassAttachmentStoreOperation storeOperation);
 
     private:
+        std::string name;
+
         std::vector<MTLRenderPassDescriptor*> subpasses = { };
         std::vector<std::vector<MTLRenderPassAttachmentDescriptor*>> attachmentMap = { };
 

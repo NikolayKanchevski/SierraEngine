@@ -1,6 +1,6 @@
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://bit.ly/3OMysM8)
 
-# Sierra Engine ![License](https://img.shields.io/github/license/NikolayKanchevski/SierraEngine?style=flat&color=%2300599C) ![Lines of Code](https://tokei.rs/b1/github/NikolayKanchevski/SierraEngine?category=lines&style=flat&branch=dev&label=Lines%20of%20Code&color=%2300599C) ![Repo Size](https://img.shields.io/github/repo-size/NikolayKanchevski/SierraEngine?style=flat&color=%2300599C) ![Language](https://img.shields.io/badge/C++-%2300599C.svg?style=flat&logo=c%2B%2B&logoColor=white)
+# Sierra Engine ![License](https://img.shields.io/github/license/NikolayKanchevski/SierraEngine?style=flat&color=%2300599C) ![Lines of Code](https://sloc.xyz/github/NikolayKanchevski/SierraEngine?category=lines&style=flat&branch=dev&label=Lines%20of%20Code&color=%2300599C) ![Repo Size](https://img.shields.io/github/repo-size/NikolayKanchevski/SierraEngine?style=flat&color=%2300599C) ![Language](https://img.shields.io/badge/C++-%2300599C.svg?style=flat&logo=c%2B%2B&logoColor=white)
 
 <div align="center">
 
@@ -10,15 +10,17 @@
 ![Linux Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/LinuxBuild.yaml/badge.svg) 
 ![macOS Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/macOSBuild.yaml/badge.svg)
 
+</div>
+
+## 🤔 What is Sierra Engine?
+
+An **open-source** rendering engine based on **[C++20](https://en.cppreference.com/w/cpp/20/)**, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). Built on top of the **[Vulkan](https://vulkan.org/)** and [Metal](https://developer.apple.com/metal/) rendering APIs, it provides support for **Windows 7-11**, **macOS**, **Linux**, **Android** and **iOS** (check out [System Requirements](#-system-requirements)), and is planned to also feature other native APIs (like **[DirectX](https://developer.nvidia.com/directx)**), as well as support consoles.
+
+<div align="center">
+
 ![Sierra Showcase](Media/SierraShowcase.png)
 
 </div>
-
-<br>
-
-# What is Sierra Engine?
-
-An **open-source** rendering engine based on **[C++20](https://en.cppreference.com/w/cpp/20/)**, which aims to provide users with an all-in-one development kit, suited for any graphics-intensive tasks (such as video games, 3D editors, etc.). Built on top of the **[Vulkan](https://vulkan.org/)** and [Metal](https://developer.apple.com/metal/) rendering APIs, it provides support for **Windows 7-11**, **macOS**, **Linux**, **Android** and **iOS** (check out [System Requirements](#-system-requirements)), and is planned to also feature other native APIs (like **[DirectX](https://developer.nvidia.com/directx)**), as well as support consoles.
 
 <br>
 
@@ -38,10 +40,9 @@ The following compilers have been tested and confirmed to be capable of successf
 
 In order to build it, you must have the following modules installed:
 * **[Git](https://git-scm.com/downloads/)**
-* A C++ compiler (preferably one of the listed [here](#-building-and-running-the-engine))
+* A C++ compiler (preferably one of the aforementioned [here](#-building-and-running-the-engine))
 * **[CMake](https://cmake.org/download/)** 3.20 or higher
-* **[VulkanSDK](https://vulkan.lunarg.com)** (optional for [Apple](https://apple.com/) platforms)
-* **[Python](https://python.org/downloads/)** (only required if building for [Android](https://android.com/))
+* **[VulkanSDK](https://vulkan.lunarg.com)** (only necessary if you will be using the **[Vulkan](https://vulkan.org/)** backend)
 
 <br>
 
@@ -61,13 +62,15 @@ Also, do not forget to update git submodules like so:
 $ git submodule update --init --recursive
 ```
 
-And there you have it! You can now create your very own applications using the Sierra Engine and/or libraries.
+<br>
+
+All that is left to do is pick which module you will be building (see [Modules](#-modules)). At the very root of its directory, it would contain a **[CMake](https://cmake.org/download/)** file. Depending on whether it is a library (for example the **[Sierra API](Sierra)**), or an executable (for example the **[Sierra Engine Editor](SierraEngineEditor)**), it will either have a `.cmake` extension, or be named `CMakeLists.txt`. Use it to build your module.
 
 <br>
 
 ## 💻 System Requirements
 
-Minimal system requirements for every supported platform of the [Sierra](Sierra) API are listed here. Built on top of it, the whole [Sierra Engine](SierraEngine) shares the exact same requirements. *Do note that the following information is a subject to change.*
+Minimal system requirements for every supported platform of the **[Sierra API](Sierra)** are listed here. Built on top of it, the whole **[Sierra Engine](SierraEngine)** shares the exact same requirements. *Do note that the following information is a subject to change.*
 
 <br>
 
@@ -127,9 +130,9 @@ Documentation has not yet been made publicly available, but will be once a relea
 
 ## 📐 Modules
 
-Despite the repository being named after the [Sierra Engine](SierraEngine), it encapsulates multiple libraries, upon which the engine is build. This means one could easily strip out any of them, and work with the provided low-level tools and abstractions, without having to use the engine itself. They are listed here:
+Despite the repository being named after the **[Sierra Engine](SierraEngine)**, it encapsulates multiple libraries, upon which the engine editor and runtime are build. This means one could easily strip out any of them, and work with the provided low-level tools and abstractions, without having to use the final engine executables. They are listed here:
 
-**[Sierra](Sierra):**
+**[Sierra API](Sierra):**
 * Description: Contains seamless abstractions for all kinds of low-level mechanisms, such as windowing, input polling, file management, build systems, and other platform-specific functionalities, as well as the cross-API rendering layer.
 * Type: Static or shared.
 * Local dependencies: None.
@@ -137,17 +140,17 @@ Despite the repository being named after the [Sierra Engine](SierraEngine), it e
 **[Sierra Engine](SierraEngine):**
 * Description: Build atop the core API, it provides all engine features, including asset management, scenes, entities and components, renderers, and many more.
 * Type: Static or shared.
-* Local dependencies: [Sierra API](Sierra).
+* Local dependencies: **[Sierra API](Sierra)**.
 
 **[Sierra Engine Editor](SierraEngineEditor):**
 * Description: A user interface for easy management of engine assets and runtime application programming. Exports all necessary files in a fast runtime-only format and crates final product.
 * Type: Executable.
-* Local dependencies: [Sierra Engine](SierraEngine).
+* Local dependencies: **[Sierra Engine](SierraEngine)**.
 
 **[Sierra Engine Runtime](SierraEngineRuntime):**
 * Description: End product exported by a formerly editor-based application.
 * Type: Executable.
-* Local dependencies: [Sierra Engine](SierraEngine).
+* Local dependencies: **[Sierra Engine](SierraEngine)**.
 
 <br>
 
@@ -156,21 +159,24 @@ Despite the repository being named after the [Sierra Engine](SierraEngine), it e
 ### Frameworks used:
 
 **Within [Sierra](Sierra)**:
-* [GLM](https://github.com/g-truc/glm/) - Provides the engine with a powerful set of tools for solving linear algebra problems.
-* [spdlog](https://github.com/gabime/spdlog) - Used for fast, asynchronous debug-only logging.
 * [Vulkan](https://vulkan.org/) - Allows for incredibly fast rendering on a wide variety of platforms.
-* [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For optimal memory management of [Vulkan](https://vulkan.org/) objects.
 * [Metal](https://developer.apple.com/metal/) - Being their native rendering API, it is used for fast, hardware-accelerated rendering on [Apple](https://apple.com) platforms.
-* [android-cmake](https://github.com/taka-no-me/android-cmake) - Essential for building the engine on Android.
+* [ShaderConnect](https://github.com/NikolayKanchevski/ShaderConnect/tree/sierra) - A dedicated branch of the shader cross-compilation framework.
+* [spdlog](https://github.com/gabime/spdlog) - Used for fast, asynchronous debug-only logging.
+* [fmt](https://github.com/fmtlib/fmt) - A faster and more supported counterpart of the standard formatting library.
+* [GLM](https://github.com/g-truc/glm/) - Provides the engine with a powerful set of tools for solving linear algebra problems.
 * [ios-cmake](https://github.com/leetal/ios-cmake) - Essential for building the engine on iOS.
+* [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For optimal memory management of [Vulkan](https://vulkan.org/) objects.
 * [ImGui](https://github.com/ocornut/imgui) - Used in the ImGui UI extension.
 * [My Brain](https://ih1.redbubble.net/templateOutputImage.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
 
 **Within [Sierra Engine](SierraEngine)**:
 * [entt](https://github.com/skypjack/entt) - Efficient entity component system, utilized in scenes.
+
+**Within [Sierra Engine Editor](SierraEngineEditor)**:
 * [stb](https://github.com/nothings/stb/) - An all-round image loader.
-* [KTX Software](https://github.com/KhronosGroup/KTX-Software) - Used to compress texture assets.
-* [ShaderConnect](https://github.com/NikolayKanchevski/ShaderConnect/tree/sierra) - A dedicated branch of the shader cross-compilation framework.
+* [Basis Universal](https://github.com/BinomialLLC/basis_universal/) - Toolkit, featuring compressors and transcoders for numerous compressed GPU formats.
+* [Rapid YAML](https://github.com/biojppm/rapidyaml/) - Fast YAML parser and emitter used for serialization.
 
 <br>
 

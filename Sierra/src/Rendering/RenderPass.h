@@ -57,7 +57,7 @@ namespace Sierra
     {
         const Image &outputImage;
         const Image* resolverImage = nullptr;
-        const ColorRGBA32 &clearValue = { 0.0f, 0.0f, 0.0f, 1.0f };
+        Color clearValue = { 0.0f, 0.0f, 0.0f, 1.0f };
     };
 
     class SIERRA_API RenderPass : public virtual RenderingResource
@@ -71,12 +71,8 @@ namespace Sierra
         [[nodiscard]] virtual uint32 GetColorAttachmentCount() const = 0;
         [[nodiscard]] virtual bool HasDepthAttachment() const = 0;
 
-        /* --- OPERATORS --- */
-        RenderPass(const RenderPass&) = delete;
-        RenderPass& operator=(const RenderPass&) = delete;
-
         /* --- DESTRUCTOR --- */
-        virtual ~RenderPass() = default;
+        ~RenderPass() override = default;
 
     protected:
         explicit RenderPass(const RenderPassCreateInfo &createInfo);

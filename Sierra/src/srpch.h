@@ -133,8 +133,7 @@
 	    using Matrix4x4 = glm::mat<4, 4, float32>;
 	    using Matrix3x3Int = glm::mat<3, 3, int32>;
 	    using Matrix4x4Int = glm::mat<4, 4, int32>;
-        using ColorRGBA8 = glm::vec<4, uint8>;
-        using ColorRGBA32 = glm::vec<4, float32>;
+        using Color = glm::vec<4, float32>;
 
 	    template<uint32 C, uint32 R>
 	    using Matrix = glm::mat<C, R, float32>;

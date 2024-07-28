@@ -274,7 +274,7 @@ namespace Sierra
 
         /* --- EVENTS --- */
         template<InputEventType EventType>
-        EventSubscriptionID AddEventListener(const EventCallback<EventType>&);
+        EventSubscriptionID AddEventListener(EventCallback<EventType>);
 
         template<InputEventType EventType>
         bool RemoveEventListener(EventSubscriptionID);
@@ -296,13 +296,14 @@ namespace Sierra
         };
 
         constexpr static uint32 KEY_COUNT = static_cast<uint32>(Key::RightSystem) + 1;
-        constexpr static uint32 MOUSE_BUTTON_COUNT = static_cast<uint32>(MouseButton::Extra2) + 1;
-
         [[nodiscard]] constexpr static uint32 GetKeyIndex(const Key key) { return static_cast<uint32>(key); }
+
+        constexpr static uint32 MOUSE_BUTTON_COUNT = static_cast<uint32>(MouseButton::Extra2) + 1;
+        [[nodiscard]] constexpr static uint32 GetMouseButtonIndex(const MouseButton mouseButton) { return static_cast<uint32>(mouseButton); }
+
         [[nodiscard]] EventDispatcher<KeyPressEvent>& GetKeyPressDispatcher() { return keyPressDispatcher; }
         [[nodiscard]] EventDispatcher<KeyReleaseEvent>& GetKeyReleaseDispatcher() { return keyReleaseDispatcher; }
 
-        [[nodiscard]] constexpr static uint32 GetMouseButtonIndex(const MouseButton mouseButton) { return static_cast<uint32>(mouseButton); }
         [[nodiscard]] EventDispatcher<MouseButtonPressEvent>& GetMouseButtonPressDispatcher() { return mouseButtonPressDispatcher; }
         [[nodiscard]] EventDispatcher<MouseButtonReleaseEvent>& GetMouseButtonReleaseDispatcher() { return mouseButtonReleaseDispatcher; }
         [[nodiscard]] EventDispatcher<MouseScrollEvent>& GetMouseScrollDispatcher() { return mouseScrollDispatcher; }
@@ -323,19 +324,19 @@ namespace Sierra
 
     };
 
-    template<> inline EventSubscriptionID InputManager::AddEventListener<KeyPressEvent>(const EventCallback<KeyPressEvent> &Callback) { return keyPressDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID InputManager::AddEventListener<KeyPressEvent>(EventCallback<KeyPressEvent> Callback) { return keyPressDispatcher.Subscribe(Callback); }
     template<> inline bool InputManager::RemoveEventListener<KeyPressEvent>(const EventSubscriptionID ID) { return keyPressDispatcher.Unsubscribe(ID); }
 
-    template<> inline EventSubscriptionID InputManager::AddEventListener<KeyReleaseEvent>(const EventCallback<KeyReleaseEvent> &Callback) { return keyReleaseDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID InputManager::AddEventListener<KeyReleaseEvent>(EventCallback<KeyReleaseEvent> Callback) { return keyReleaseDispatcher.Subscribe(Callback); }
     template<> inline bool InputManager::RemoveEventListener<KeyReleaseEvent>(const EventSubscriptionID ID) { return keyReleaseDispatcher.Unsubscribe(ID); }
 
-    template<> inline EventSubscriptionID InputManager::AddEventListener<MouseButtonPressEvent>(const EventCallback<MouseButtonPressEvent> &Callback) { return mouseButtonPressDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID InputManager::AddEventListener<MouseButtonPressEvent>(EventCallback<MouseButtonPressEvent> Callback) { return mouseButtonPressDispatcher.Subscribe(Callback); }
     template<> inline bool InputManager::RemoveEventListener<MouseButtonPressEvent>(const EventSubscriptionID ID) { return mouseButtonPressDispatcher.Unsubscribe(ID); }
 
-    template<> inline EventSubscriptionID InputManager::AddEventListener<MouseButtonReleaseEvent>(const EventCallback<MouseButtonReleaseEvent> &Callback) { return mouseButtonReleaseDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID InputManager::AddEventListener<MouseButtonReleaseEvent>(EventCallback<MouseButtonReleaseEvent> Callback) { return mouseButtonReleaseDispatcher.Subscribe(Callback); }
     template<> inline bool InputManager::RemoveEventListener<MouseButtonReleaseEvent>(const EventSubscriptionID ID) { return mouseButtonReleaseDispatcher.Unsubscribe(ID); }
 
-    template<> inline EventSubscriptionID InputManager::AddEventListener<MouseScrollEvent>(const EventCallback<MouseScrollEvent> &Callback) { return mouseScrollDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID InputManager::AddEventListener<MouseScrollEvent>(EventCallback<MouseScrollEvent> Callback) { return mouseScrollDispatcher.Subscribe(Callback); }
     template<> inline bool InputManager::RemoveEventListener<MouseScrollEvent>(const EventSubscriptionID ID) { return mouseScrollDispatcher.Unsubscribe(ID); }
 
 
