@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    GameActivityScreen::GameActivityScreen(const ConfigurationScreenCreateInfo &createInfo)
+    GameActivityScreen::GameActivityScreen(const ConfigurationScreenCreateInfo& createInfo)
         : configuration(createInfo.configuration)
     {
         // Attach thread to JNI

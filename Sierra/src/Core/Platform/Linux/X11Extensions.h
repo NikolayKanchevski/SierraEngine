@@ -27,7 +27,7 @@ namespace Sierra
 
     public:
         /* --- CONSTRUCTORS --- */
-        explicit XkbExtension(const XkbExtensionCreateInfo &createInfo);
+        explicit XkbExtension(const XkbExtensionCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] bool IsAutoRepeatDetectable() const { return autoRepeatDetectable; }
@@ -49,7 +49,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit XrandrExtension(const XrandrExtensionCreateInfo &createInfo);
+        explicit XrandrExtension(const XrandrExtensionCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] int GetEventBase() const { return eventBase; }

@@ -15,16 +15,16 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit macOSWindowManager(const WindowManagerCreateInfo &createInfo);
+        explicit macOSWindowManager(const WindowManagerCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::unique_ptr<Window> CreateWindow(const WindowCreateInfo &createInfo) const override;
+        [[nodiscard]] std::unique_ptr<Window> CreateWindow(const WindowCreateInfo& createInfo) const override;
 
         /* --- DESTRUCTOR --- */
         ~macOSWindowManager() override = default;
 
     private:
-        CocoaContext &cocoaContext;
+        CocoaContext& cocoaContext;
 
     };
 

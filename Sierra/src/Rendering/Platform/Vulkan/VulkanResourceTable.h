@@ -16,15 +16,15 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        VulkanResourceTable(const VulkanDevice &device, const ResourceTableCreateInfo &createInfo);
+        VulkanResourceTable(const VulkanDevice& device, const ResourceTableCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void BindUniformBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) override;
-        void BindStorageBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) override;
+        void BindUniformBuffer(ResourceIndex index, const Buffer& buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) override;
+        void BindStorageBuffer(ResourceIndex index, const Buffer& buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) override;
 
-        void BindSampledImage(ResourceIndex index, const Image &image) override;
-        void BindStorageImage(ResourceIndex index, const Image &image) override;
-        void BindSampler(ResourceIndex index, const Sampler &sampler) override;
+        void BindSampledImage(ResourceIndex index, const Image& image) override;
+        void BindStorageImage(ResourceIndex index, const Image& image) override;
+        void BindSampler(ResourceIndex index, const Sampler& sampler) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override { return name; }
@@ -42,7 +42,7 @@ namespace Sierra
         ~VulkanResourceTable() override;
 
     private:
-        const VulkanDevice &device;
+        const VulkanDevice& device;
 
         std::string name;
         VkDescriptorPool descriptorPool = VK_NULL_HANDLE;

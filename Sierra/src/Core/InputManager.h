@@ -243,29 +243,30 @@ namespace Sierra
         using EventCallback = std::function<bool(const EventType&)>;
 
         /* --- POLLING METHODS --- */
-        virtual void RegisterKeyPress(Key key);
-        virtual void RegisterKeyRelease(Key key);
+        virtual void RegisterKeyPress(Key key) = 0;
+        virtual void RegisterKeyRelease(Key key) = 0;
 
-        virtual void RegisterMouseButtonPress(MouseButton mouseButton);
-        virtual void RegisterMouseButtonRelease(MouseButton mouseButton);
-        virtual void RegisterMouseScroll(Vector2 scroll);
+        virtual void RegisterMouseButtonPress(MouseButton mouseButton) = 0;
+        virtual void RegisterMouseButtonRelease(MouseButton mouseButton) = 0;
+        virtual void RegisterMouseScroll(Vector2 scroll) = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual bool IsKeyPressed(Key key) const;
-        [[nodiscard]] virtual bool IsKeyHeld(Key key) const;
-        [[nodiscard]] virtual bool IsKeyReleased(Key key) const;
-        [[nodiscard]] virtual bool IsKeyResting(Key key) const;
+        [[nodiscard]] virtual bool IsKeyPressed(Key key) const = 0;
+        [[nodiscard]] virtual bool IsKeyHeld(Key key) const = 0;
+        [[nodiscard]] virtual bool IsKeyReleased(Key key) const = 0;
+        [[nodiscard]] virtual bool IsKeyResting(Key key) const = 0;
 
         template<typename... Args>
         [[nodiscard]] bool IsKeyCombinationPressed(const Key first, const Args... rest) const { return IsKeyCombinationPressedImplementation({ first, rest... }); }
+
         template<typename... Args>
         [[nodiscard]] bool IsKeyCombinationHeld(const Key first, const Args... rest) const { return IsKeyCombinationHeldImplementation({ first, rest... }); }
 
-        [[nodiscard]] virtual bool IsMouseButtonPressed(MouseButton mouseButton) const;
-        [[nodiscard]] virtual bool IsMouseButtonHeld(MouseButton mouseButton) const;
-        [[nodiscard]] virtual bool IsMouseButtonReleased(MouseButton mouseButton) const;
-        [[nodiscard]] virtual bool IsMouseButtonResting(MouseButton mouseButton) const;
-        [[nodiscard]] virtual Vector2 GetMouseScroll() const;
+        [[nodiscard]] virtual bool IsMouseButtonPressed(MouseButton mouseButton) const = 0;
+        [[nodiscard]] virtual bool IsMouseButtonHeld(MouseButton mouseButton) const = 0;
+        [[nodiscard]] virtual bool IsMouseButtonReleased(MouseButton mouseButton) const = 0;
+        [[nodiscard]] virtual bool IsMouseButtonResting(MouseButton mouseButton) const = 0;
+        [[nodiscard]] virtual Vector2 GetMouseScroll() const = 0;
 
         template<typename... Args>
         [[nodiscard]] bool IsMouseButtonCombinationPressed(const MouseButton first, const Args... rest) const { return IsMouseButtonCombinationPressedImplementation({ first, rest... }); }
@@ -274,14 +275,18 @@ namespace Sierra
 
         /* --- EVENTS --- */
         template<InputEventType EventType>
-        EventSubscriptionID AddEventListener(EventCallback<EventType>);
+        EventSubscriptionID AddEventListener(const EventCallback<EventType>&);
 
         template<InputEventType EventType>
         bool RemoveEventListener(EventSubscriptionID);
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         InputManager(const InputManager&) = delete;
         InputManager& operator=(const InputManager&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        InputManager(InputManager&&) = delete;
+        InputManager& operator=(InputManager&&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~InputManager() = default;
@@ -316,27 +321,27 @@ namespace Sierra
         EventDispatcher<MouseButtonReleaseEvent> mouseButtonReleaseDispatcher;
         EventDispatcher<MouseScrollEvent> mouseScrollDispatcher;
 
-        [[nodiscard]] bool IsKeyCombinationPressedImplementation(const std::initializer_list<Key> &keys) const;
-        [[nodiscard]] bool IsKeyCombinationHeldImplementation(const std::initializer_list<Key> &keys) const;
+        [[nodiscard]] bool IsKeyCombinationPressedImplementation(const std::initializer_list<Key>& keys) const;
+        [[nodiscard]] bool IsKeyCombinationHeldImplementation(const std::initializer_list<Key>& keys) const;
 
-        [[nodiscard]] bool IsMouseButtonCombinationPressedImplementation(const std::initializer_list<MouseButton> &mouseButtons) const;
-        [[nodiscard]] bool IsMouseButtonCombinationHeldImplementation(const std::initializer_list<MouseButton> &mouseButtons) const;
+        [[nodiscard]] bool IsMouseButtonCombinationPressedImplementation(const std::initializer_list<MouseButton>& mouseButtons) const;
+        [[nodiscard]] bool IsMouseButtonCombinationHeldImplementation(const std::initializer_list<MouseButton>& mouseButtons) const;
 
     };
 
-    template<> inline EventSubscriptionID InputManager::AddEventListener<KeyPressEvent>(EventCallback<KeyPressEvent> Callback) { return keyPressDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID InputManager::AddEventListener<KeyPressEvent>(const EventCallback<KeyPressEvent>& Callback) { return keyPressDispatcher.Subscribe(Callback); }
     template<> inline bool InputManager::RemoveEventListener<KeyPressEvent>(const EventSubscriptionID ID) { return keyPressDispatcher.Unsubscribe(ID); }
 
-    template<> inline EventSubscriptionID InputManager::AddEventListener<KeyReleaseEvent>(EventCallback<KeyReleaseEvent> Callback) { return keyReleaseDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID InputManager::AddEventListener<KeyReleaseEvent>(const EventCallback<KeyReleaseEvent>& Callback) { return keyReleaseDispatcher.Subscribe(Callback); }
     template<> inline bool InputManager::RemoveEventListener<KeyReleaseEvent>(const EventSubscriptionID ID) { return keyReleaseDispatcher.Unsubscribe(ID); }
 
-    template<> inline EventSubscriptionID InputManager::AddEventListener<MouseButtonPressEvent>(EventCallback<MouseButtonPressEvent> Callback) { return mouseButtonPressDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID InputManager::AddEventListener<MouseButtonPressEvent>(const EventCallback<MouseButtonPressEvent>& Callback) { return mouseButtonPressDispatcher.Subscribe(Callback); }
     template<> inline bool InputManager::RemoveEventListener<MouseButtonPressEvent>(const EventSubscriptionID ID) { return mouseButtonPressDispatcher.Unsubscribe(ID); }
 
-    template<> inline EventSubscriptionID InputManager::AddEventListener<MouseButtonReleaseEvent>(EventCallback<MouseButtonReleaseEvent> Callback) { return mouseButtonReleaseDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID InputManager::AddEventListener<MouseButtonReleaseEvent>(const EventCallback<MouseButtonReleaseEvent>& Callback) { return mouseButtonReleaseDispatcher.Subscribe(Callback); }
     template<> inline bool InputManager::RemoveEventListener<MouseButtonReleaseEvent>(const EventSubscriptionID ID) { return mouseButtonReleaseDispatcher.Unsubscribe(ID); }
 
-    template<> inline EventSubscriptionID InputManager::AddEventListener<MouseScrollEvent>(EventCallback<MouseScrollEvent> Callback) { return mouseScrollDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID InputManager::AddEventListener<MouseScrollEvent>(const EventCallback<MouseScrollEvent>& Callback) { return mouseScrollDispatcher.Subscribe(Callback); }
     template<> inline bool InputManager::RemoveEventListener<MouseScrollEvent>(const EventSubscriptionID ID) { return mouseScrollDispatcher.Unsubscribe(ID); }
 
 

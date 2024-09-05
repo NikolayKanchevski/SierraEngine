@@ -15,7 +15,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    XkbExtension::XkbExtension(const XkbExtensionCreateInfo &createInfo)
+    XkbExtension::XkbExtension(const XkbExtensionCreateInfo& createInfo)
     {
         // Check if X11's XKB extension is supported
         int versionMajor, versionMinor;
@@ -392,7 +392,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    XrandrExtension::XrandrExtension(const XrandrExtensionCreateInfo &createInfo)
+    XrandrExtension::XrandrExtension(const XrandrExtensionCreateInfo& createInfo)
     {
         int versionMajor, versionMinor;
         if (XRRQueryExtension(createInfo.display, &eventBase, &versionMajor))

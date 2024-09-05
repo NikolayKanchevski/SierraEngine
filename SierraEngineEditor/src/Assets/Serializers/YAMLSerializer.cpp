@@ -7,9 +7,22 @@
 namespace SierraEngine
 {
 
+    /*
+     *     [=============== Serialized Metadata ===============]
+     *
+     *      metadata:
+     *        name: Asset
+     *        author: Unknown
+     *        version: 1.0.0
+     *        hash: 12345678
+     *        tags:
+     *          - Tag
+     *
+     */
+
     /* --- POLLING METHODS --- */
 
-    void YAMLSerializer::SerializeMetadata(ryml::NodeRef root, const AssetMetadata &metadata)
+    void YAMLSerializer::SerializeMetadata(ryml::NodeRef root, const AssetMetadata& metadata)
     {
         ryml::NodeRef node = root["metadata"];
         node |= ryml::MAP;
@@ -23,6 +36,9 @@ namespace SierraEngine
         ryml::NodeRef version = node["version"]; version |= ryml::VAL_PLAIN;
         version << fmt::format("{0}.{1}.{2}", metadata.version.GetMajor(), metadata.version.GetMinor(), metadata.version.GetPatch());
 
+        ryml::NodeRef hash = node["hash"]; hash |= ryml::VAL_PLAIN;
+        hash << std::to_string(metadata.hash);
+
         ryml::NodeRef tags = node["tags"]; tags |= ryml::SEQ;
         for (size i = 0; i < metadata.tags.size(); i++)
         {
@@ -33,16 +49,16 @@ namespace SierraEngine
 
     /* --- GETTER METHODS --- */
 
-    size YAMLSerializer::GetMetadataNodeSize(const AssetMetadata &metadata)
+    size YAMLSerializer::GetMetadataNodeSize(const AssetMetadata& metadata)
     {
         // Metadata node + metadata fields + container size of tags
-        return 1 + 4 + metadata.tags.size();
+        return 1 + 5 + metadata.tags.size();
     }
 
-    size YAMLSerializer::GetMetadataArenaSize(const AssetMetadata &metadata)
+    size YAMLSerializer::GetMetadataArenaSize(const AssetMetadata& metadata)
     {
-        // Only length of version string, rest of strings are pre-allocated
-        return 8;
+        // Length of version string + hash
+        return 8 + 19;
     }
 
 }

@@ -12,7 +12,7 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    ArenaAllocator::ArenaAllocator(const ArenaAllocatorCreateInfo &createInfo)
+    ArenaAllocator::ArenaAllocator(const ArenaAllocatorCreateInfo& createInfo)
         : renderingContext(createInfo.renderingContext)
     {
         vertexBuffer = renderingContext.CreateBuffer({
@@ -32,7 +32,7 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    ArenaMesh ArenaAllocator::RegisterMesh(Sierra::CommandBuffer &commandBuffer, const std::span<const Vertex> vertices, const std::span<const uint32> indices)
+    ArenaMesh ArenaAllocator::RegisterMesh(Sierra::CommandBuffer& commandBuffer, const std::span<const Vertex> vertices, const std::span<const uint32> indices)
     {
         const ArenaMesh mesh
         {

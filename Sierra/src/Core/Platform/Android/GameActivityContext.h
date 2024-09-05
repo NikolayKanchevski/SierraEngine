@@ -40,7 +40,7 @@ namespace Sierra
 
     private:
         friend class AndroidContext;
-        explicit GameActivityContext(const GameActivityContextCreateInfo &createInfo);
+        explicit GameActivityContext(const GameActivityContextCreateInfo& createInfo);
 
         android_app* app = nullptr;
         bool initialized = false;

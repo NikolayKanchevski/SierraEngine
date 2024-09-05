@@ -18,7 +18,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    ImGuiRenderer::ImGuiRenderer(const ImGuiRenderTaskCreateInfo &createInfo)
+    ImGuiRenderer::ImGuiRenderer(const ImGuiRenderTaskCreateInfo& createInfo)
         : renderingContext(createInfo.renderingContext), concurrentFrameCount(createInfo.concurrentFrameCount), scaling(createInfo.scaling), viewportSize({ createInfo.templateOutputImage.GetWidth() / createInfo.scaling, createInfo.templateOutputImage.GetHeight() / createInfo.scaling }), style(createInfo.style)
     {
         SR_ERROR_IF(createInfo.fontCreateInfos.empty(), "Cannot create ImGui render task, as no fonts were specified to be loaded!");
@@ -34,7 +34,7 @@ namespace Sierra
             sharedResources.contextCount++;
 
             // Configure context
-            ImGuiIO &io = ImGui::GetIO();
+            ImGuiIO& io = ImGui::GetIO();
             io.ConfigFlags = ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_DockingEnable | SR_PLATFORM_MOBILE * ImGuiConfigFlags_IsTouchScreen;
             io.BackendFlags = ImGuiBackendFlags_RendererHasVtxOffset;
             io.BackendPlatformName = "Sierra";
@@ -108,13 +108,13 @@ namespace Sierra
         }
 
         // Save base font index within singleton pool
-        ImGuiIO &io = ImGui::GetIO();
+        ImGuiIO& io = ImGui::GetIO();
         baseFontIndex = io.Fonts->Fonts.size();
 
         // Process fonts memory
         ImFontConfig configuration = { };
         configuration.FontDataOwnedByAtlas = false;
-        for (const ImGuiFontCreateInfo &fontCreateInfo : createInfo.fontCreateInfos)
+        for (const ImGuiFontCreateInfo& fontCreateInfo : createInfo.fontCreateInfos)
         {
             io.Fonts->AddFontFromMemoryTTF(const_cast<uint8*>(fontCreateInfo.ttfMemory.data()), static_cast<int>(fontCreateInfo.ttfMemory.size_bytes()), fontCreateInfo.size * 3, &configuration);
             configuration.MergeMode = true;
@@ -174,7 +174,7 @@ namespace Sierra
 
     void ImGuiRenderer::Update(const InputManager* inputManager, const CursorManager* cursorManager, const TouchManager* touchManager)
     {
-        ImGuiIO &io = ImGui::GetIO();
+        ImGuiIO& io = ImGui::GetIO();
         if (inputManager != nullptr)
         {
             // Update key map
@@ -350,7 +350,7 @@ namespace Sierra
         ImGui::NewFrame();
     }
 
-    void ImGuiRenderer::Render(CommandBuffer &commandBuffer, const Image &outputImage)
+    void ImGuiRenderer::Render(CommandBuffer& commandBuffer, const Image& outputImage)
     {
         ImGui::Render();
         const ImDrawData* drawData = ImGui::GetDrawData();
@@ -361,7 +361,7 @@ namespace Sierra
         // Also return if window is minimized
         if (drawData->DisplaySize.x * drawData->FramebufferScale.x <= 0 || drawData->DisplaySize.y * drawData->FramebufferScale.y <= 0) return;
 
-        std::unique_ptr<Buffer> &vertexBuffer = vertexBuffers[currentFrame];
+        std::unique_ptr<Buffer>& vertexBuffer = vertexBuffers[currentFrame];
         if (const uint64 requiredVertexMemorySize = drawData->TotalVtxCount * sizeof(ImDrawVert); requiredVertexMemorySize > vertexBuffer->GetMemorySize())
         {
             // Create new buffer with bigger memory
@@ -377,7 +377,7 @@ namespace Sierra
             vertexBuffer = std::move(newVertexBuffer);
         }
 
-        std::unique_ptr<Buffer> &indexBuffer = indexBuffers[currentFrame];
+        std::unique_ptr<Buffer>& indexBuffer = indexBuffers[currentFrame];
         if (const uint64 requiredIndexMemorySize = drawData->TotalIdxCount * sizeof(ImDrawIdx); requiredIndexMemorySize > indexBuffer->GetMemorySize())
         {
             // Create new buffer with bigger memory
@@ -421,7 +421,7 @@ namespace Sierra
 
             for (int j = 0; j < commandList->CmdBuffer.Size; j++)
             {
-                const ImDrawCmd &drawCommand = commandList->CmdBuffer[j];
+                const ImDrawCmd& drawCommand = commandList->CmdBuffer[j];
 
                 // Update draw data
                 pushConstant.textureIndex = drawCommand.TextureId;
@@ -466,7 +466,7 @@ namespace Sierra
         if (resolverImage != nullptr)
         {
             resolverImage = renderingContext.CreateImage({
-                .name = std::string(resolverImage->GetName()),
+                .name = resolverImage->GetName(),
                 .width = width,
                 .height = height,
                 .format = resolverImage->GetFormat(),

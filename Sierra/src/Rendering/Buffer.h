@@ -49,7 +49,7 @@ namespace Sierra
         ~Buffer() override = default;
 
     protected:
-        explicit Buffer(const BufferCreateInfo &createInfo);
+        explicit Buffer(const BufferCreateInfo& createInfo);
 
     };
 

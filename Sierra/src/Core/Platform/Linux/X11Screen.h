@@ -21,14 +21,14 @@ namespace Sierra
         const XRRScreenResources* screenResources = nullptr;
         const XRRCrtcInfo* crtcInfo = nullptr;
         const XRROutputInfo* outputInfo = nullptr;
-        const Vector4UInt &workAreaExtents = nullptr;
+        const Vector4UInt& workAreaExtents = nullptr;
     };
 
     class SIERRA_API X11Screen final : public Screen
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit X11Screen(const X11ScreenCreateInfo &createInfo);
+        explicit X11Screen(const X11ScreenCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override { return name; };

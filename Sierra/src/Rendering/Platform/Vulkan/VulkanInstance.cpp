@@ -10,7 +10,7 @@ namespace Sierra
 
     namespace
     {
-        struct Layer
+        struct VulkanInstanceLayer
         {
             std::string_view name;
         };
@@ -18,13 +18,13 @@ namespace Sierra
         #if SR_ENABLE_LOGGING
             constexpr std::array LAYERS_TO_QUERY
             {
-                Layer {
+                VulkanInstanceLayer {
                     .name = "VK_LAYER_KHRONOS_validation"
                 }
             };
         #endif
 
-        struct Extension
+        struct VulkanInstanceExtension
         {
             std::string_view name;
             bool requiredOnlyIfSupported = false;
@@ -32,39 +32,40 @@ namespace Sierra
 
         constexpr std::array INSTANCE_EXTENSIONS_TO_QUERY
         {
-            Extension {
+            VulkanInstanceExtension {
                 .name = VK_KHR_SURFACE_EXTENSION_NAME
             },
-            Extension {
+            VulkanInstanceExtension {
                 .name = VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
             },
             #if SR_ENABLE_LOGGING
-                Extension {
+                VulkanInstanceExtension {
                     .name = VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
                     .requiredOnlyIfSupported = true
                 },
             #endif
             #if SR_PLATFORM_WINDOWS
-                Extension { .name = VK_KHR_WIN32_SURFACE_EXTENSION_NAME },
+                VulkanInstanceExtension { .name = VK_KHR_WIN32_SURFACE_EXTENSION_NAME }
             #elif SR_PLATFORM_LINUX
-                Extension { .name = VK_KHR_XLIB_SURFACE_EXTENSION_NAME },
+                VulkanInstanceExtension { .name = VK_KHR_XLIB_SURFACE_EXTENSION_NAME }
             #elif SR_PLATFORM_ANDROID
-                Extension { .name = VK_KHR_ANDROID_SURFACE_EXTENSION_NAME },
+                VulkanInstanceExtension { .name = VK_KHR_ANDROID_SURFACE_EXTENSION_NAME }
             #elif SR_PLATFORM_APPLE
-                Extension {
+                VulkanInstanceExtension {
                     .name = VK_EXT_METAL_SURFACE_EXTENSION_NAME
                 },
-                Extension {
+                VulkanInstanceExtension {
                     .name = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
                     .requiredOnlyIfSupported = true
-                },
+                }
             #endif
         };
     }
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanInstance::VulkanInstance(const VulkanInstanceCreateInfo&)
+    VulkanInstance::VulkanInstance(const VulkanInstanceCreateInfo& createInfo)
+        : name(createInfo.name)
     {
         #if SR_PLATFORM_APPLE
             // Optional MoltenVK features must be explicitly enabled prior to performing any API calls
@@ -79,8 +80,8 @@ namespace Sierra
         const VkApplicationInfo applicationInfo
         {
             .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-            .pApplicationName = "Sierra Application",
-            .applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
+            .pApplicationName = createInfo.applicationName.data(),
+            .applicationVersion = VK_MAKE_API_VERSION(0, createInfo.applicationVersion.GetMajor(), createInfo.applicationVersion.GetMinor(), createInfo.applicationVersion.GetPatch()),
             .pEngineName = "Sierra",
             .engineVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
             .apiVersion = VK_MAKE_API_VERSION(0, version.GetMajor(), version.GetMinor(), version.GetPatch())
@@ -100,10 +101,10 @@ namespace Sierra
 
         // Load extensions
         uint32 i = 0;
-        for (const Extension &requestedExtension : INSTANCE_EXTENSIONS_TO_QUERY)
+        for (const VulkanInstanceExtension& requestedExtension : INSTANCE_EXTENSIONS_TO_QUERY)
         {
             bool extensionFound = false;
-            for (const VkExtensionProperties &supportedExtension : supportedExtensions)
+            for (const VkExtensionProperties& supportedExtension : supportedExtensions)
             {
                 if (strcmp(requestedExtension.name.data(), supportedExtension.extensionName) == 0)
                 {
@@ -155,9 +156,9 @@ namespace Sierra
             {
                 // Load layers
                 i = 0;
-                for (const Layer &requestedLayer : LAYERS_TO_QUERY)
+                for (const VulkanInstanceLayer& requestedLayer : LAYERS_TO_QUERY)
                 {
-                    for (const VkLayerProperties &supportedLayer : supportedLayers)
+                    for (const VkLayerProperties& supportedLayer : supportedLayers)
                     {
                         if (strcmp(requestedLayer.name.data(), supportedLayer.layerName) == 0)
                         {

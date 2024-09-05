@@ -16,7 +16,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        VulkanRenderPass(const VulkanDevice &device, const RenderPassCreateInfo &createInfo);
+        VulkanRenderPass(const VulkanDevice& device, const RenderPassCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         void Resize(uint32 width, uint32 height) override;
@@ -38,7 +38,7 @@ namespace Sierra
         static VkAttachmentStoreOp AttachmentStoreOperationToVkAttachmentStoreOp(RenderPassAttachmentStoreOperation storeOperation);
 
     private:
-        const VulkanDevice &device;
+        const VulkanDevice& device;
 
         std::vector<VkFormat> framebufferAttachmentImageFormats;
         std::vector<VkFramebufferAttachmentImageInfo> framebufferImageAttachments;

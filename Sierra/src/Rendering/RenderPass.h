@@ -33,7 +33,7 @@ namespace Sierra
     {
         RenderPassAttachmentType type = RenderPassAttachmentType::Color;
 
-        const Image &templateOutputImage;
+        const Image& templateOutputImage;
         const Image* templateResolverImage = nullptr;
 
         RenderPassAttachmentLoadOperation loadOperation = RenderPassAttachmentLoadOperation::Clear;
@@ -55,7 +55,7 @@ namespace Sierra
 
     struct RenderPassBeginAttachment
     {
-        const Image &outputImage;
+        const Image& outputImage;
         const Image* resolverImage = nullptr;
         Color clearValue = { 0.0f, 0.0f, 0.0f, 1.0f };
     };
@@ -75,7 +75,7 @@ namespace Sierra
         ~RenderPass() override = default;
 
     protected:
-        explicit RenderPass(const RenderPassCreateInfo &createInfo);
+        explicit RenderPass(const RenderPassCreateInfo& createInfo);
 
     };
 }

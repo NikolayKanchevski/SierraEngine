@@ -12,7 +12,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Win32Context::Win32Context(const Win32ContextCreateInfo &createInfo)
+    Win32Context::Win32Context(const Win32ContextCreateInfo& createInfo)
         : hInstance(createInfo.hInstance), process(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId()))
     {
         SR_ERROR_IF(createInfo.hInstance == nullptr, "HINSTANCE pointer passed upon creation of Win32Context must not be null!");
@@ -157,7 +157,7 @@ namespace Sierra
         return false;
     }
 
-    void Win32Context::AdjustWindowRectForDPI(HWND window, RECT &rect) const
+    void Win32Context::AdjustWindowRectForDPI(HWND window, RECT& rect) const
     {
         if (IsWindowsVersionOrGreater(10, 0, 14393)) // Windows 10 1607
         {
@@ -197,7 +197,7 @@ namespace Sierra
     Win32Screen& Win32Context::GetWindowScreen(HWND window)
     {
         HMONITOR windowMonitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
-        return *std::find_if(screens.begin(), screens.end(), [windowMonitor](const Win32Screen &item) { return item.GetHMonitor() == windowMonitor; });
+        return *std::ranges::find_if(screens, [windowMonitor](const Win32Screen& item) { return item.GetHMonitor() == windowMonitor; });
     }
 
     /* --- PRIVATE METHODS --- */

@@ -32,7 +32,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit UIKitWindow(UIKitContext &uiKitContext, const WindowCreateInfo &createInfo);
+        explicit UIKitWindow(UIKitContext& uiKitContext, const WindowCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         void Update() override;
@@ -45,8 +45,8 @@ namespace Sierra
 
         /* --- SETTER METHODS --- */
         void SetTitle(std::string_view title) override;
-        void SetPosition(const Vector2Int &position) override;
-        void SetSize(const Vector2UInt &size) override;
+        void SetPosition(const Vector2Int& position) override;
+        void SetSize(const Vector2UInt& size) override;
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
@@ -65,7 +65,9 @@ namespace Sierra
         [[nodiscard]] bool IsHidden() const override;
 
         [[nodiscard]] Screen& GetScreen() const override;
-        [[nodiscard]] TouchManager& GetTouchManager() override;
+        [[nodiscard]] InputManager* GetInputManager() override;
+        [[nodiscard]] CursorManager* GetCursorManager() override;
+        [[nodiscard]] TouchManager* GetTouchManager() override;
         [[nodiscard]] PlatformAPI GetAPI() const override;
 
         [[nodiscard]] UIWindow* GetUIWindow() const { return window; }
@@ -78,7 +80,7 @@ namespace Sierra
         ~UIKitWindow() override;
 
     private:
-        UIKitContext &uiKitContext;
+        UIKitContext& uiKitContext;
         
         UIWindow* window = nil;
         UIViewController* viewController = nil;

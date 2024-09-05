@@ -16,7 +16,7 @@ namespace SierraEngine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit FrameLimiter(const FrameLimiterCreateInfo &createInfo);
+        explicit FrameLimiter(const FrameLimiterCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         Sierra::TimeStep BeginFrame();
@@ -29,9 +29,13 @@ namespace SierraEngine
         [[nodiscard]] uint32 GetMaxFrameRate() const { return maxFrameRate; }
         [[nodiscard]] Sierra::TimePoint GetFrameStartTime() const { return frameStartTime; }
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         FrameLimiter(const FrameLimiter&) = delete;
         FrameLimiter& operator=(const FrameLimiter&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        FrameLimiter(FrameLimiter&&) = default;
+        FrameLimiter& operator=(FrameLimiter&&) = default;
 
         /* --- DESTRUCTOR --- */
         ~FrameLimiter() = default;

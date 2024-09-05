@@ -17,7 +17,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        VulkanBuffer(const VulkanDevice &device, const BufferCreateInfo &createInfo);
+        VulkanBuffer(const VulkanDevice& device, const BufferCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         void CopyFromMemory(const void* memory, uint64 memoryByteSize = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) override;
@@ -39,7 +39,7 @@ namespace Sierra
         static VmaMemoryUsage BufferMemoryLocationToVmaMemoryUsage(BufferMemoryLocation memoryLocation);
 
     private:
-        const VulkanDevice &device;
+        const VulkanDevice& device;
 
         std::string name;
         VkBuffer buffer = VK_NULL_HANDLE;

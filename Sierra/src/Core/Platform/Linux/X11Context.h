@@ -63,7 +63,7 @@ namespace Sierra
         [[nodiscard]] bool IsEventQueueEmpty() const;
         XEvent PollNextEvent() const;
         XEvent PeekNextEvent() const;
-        [[nodiscard]] bool IsEventFiltered(XEvent &event) const;
+        [[nodiscard]] bool IsEventFiltered(XEvent& event) const;
         XEvent WaitForEvent(void* eventData, int(EventCheck)(Display*, XEvent*, XPointer)) const;
 
         XEvent RegisterWindowEvent(XID window, Atom type, long a = 0, long b = 0, long c = 0, long d = 0, int eventMask = NoEventMask) const;
@@ -78,14 +78,14 @@ namespace Sierra
 
         /* --- SETTER METHODS --- */
         void SetWindowTitle(XID window, std::string_view title) const;
-        void SetWindowPosition(XID window, const Vector2Int &position) const;
-        void SetWindowSize(XID window, const Vector2UInt &size) const;
-        void SetWindowSizeLimits(XID window, const Vector2UInt &minSize, const Vector2UInt &maxSize) const;
+        void SetWindowPosition(XID window, const Vector2Int& position) const;
+        void SetWindowSize(XID window, const Vector2UInt& size) const;
+        void SetWindowSizeLimits(XID window, const Vector2UInt& minSize, const Vector2UInt& maxSize) const;
         void SetWindowOpacity(XID window, float32 opacity) const;
 
         void ShowWindowCursor(XID window) const;
         void HideWindowCursor(XID window) const;
-        void SetWindowCursorPosition(XID window, const Vector2Int &position) const;
+        void SetWindowCursorPosition(XID window, const Vector2Int& position) const;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] X11Screen& GetPrimaryScreen() const;
@@ -115,7 +115,7 @@ namespace Sierra
 
     private:
         friend class LinuxContext;
-        explicit X11Context(const X11ContextCreateInfo &createInfo);
+        explicit X11Context(const X11ContextCreateInfo& createInfo);
 
         Display* display = nullptr;
         int screen = 0;

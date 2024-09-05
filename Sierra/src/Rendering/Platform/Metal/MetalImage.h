@@ -30,7 +30,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        MetalImage(const MetalDevice &device, const ImageCreateInfo &createInfo);
+        MetalImage(const MetalDevice& device, const ImageCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override;
@@ -84,7 +84,7 @@ namespace Sierra
         };
 
         bool swapchainImage = false;
-        MetalImage(const MetalDevice &device, const SwapchainImageCreateInfo &createInfo);
+        MetalImage(const MetalDevice& device, const SwapchainImageCreateInfo& createInfo);
         [[nodiscard]] static ImageFormat SwapchainPixelFormatToImageFormat(MTLPixelFormat format);
 
     };

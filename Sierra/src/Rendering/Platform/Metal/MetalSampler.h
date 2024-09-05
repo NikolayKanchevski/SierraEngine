@@ -23,7 +23,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        MetalSampler(const MetalDevice &device, const SamplerCreateInfo &createInfo);
+        MetalSampler(const MetalDevice& device, const SamplerCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override;

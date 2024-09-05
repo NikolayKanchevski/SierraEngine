@@ -195,7 +195,7 @@ namespace Sierra
         ~Image() override = default;
 
     protected:
-        explicit Image(const ImageCreateInfo &createInfo);
+        explicit Image(const ImageCreateInfo& createInfo);
 
     };
 

@@ -17,7 +17,7 @@ namespace SierraEngine
         YAMLTextureSerializer() = default;
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::optional<std::vector<uint8>> Serialize(const TextureSerializeInfo &serializeInfo) const override;
+        [[nodiscard]] std::optional<std::vector<uint8>> Serialize(const TextureSerializeInfo& serializeInfo) const override;
 
         /* --- DESTRUCTOR --- */
         ~YAMLTextureSerializer() override = default;

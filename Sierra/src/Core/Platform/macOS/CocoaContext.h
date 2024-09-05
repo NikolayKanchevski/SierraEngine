@@ -35,7 +35,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit CocoaContext(const CocoaContextCreateInfo &createInfo);
+        explicit CocoaContext(const CocoaContextCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] NSWindow* CreateWindow(std::string_view title, uint32 width, uint32 height) const;

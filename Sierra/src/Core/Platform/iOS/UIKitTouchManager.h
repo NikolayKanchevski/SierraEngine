@@ -24,7 +24,7 @@ namespace Sierra
         explicit UIKitTouchManager();
 
         /* --- POLLING METHODS --- */
-        void RegisterTouchPress(const Touch &touch) override;
+        void RegisterTouchPress(const Touch& touch) override;
         void RegisterTouchMove(TouchID ID, Vector2 position) override;
         void RegisterTouchRelease(TouchID ID) override;
 

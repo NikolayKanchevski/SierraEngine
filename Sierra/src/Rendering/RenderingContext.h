@@ -5,6 +5,7 @@
 #pragma once
 
 #include "RenderingResource.h"
+#include "../Core/Version.h"
 
 #include "Device.h"
 #include "Buffer.h"
@@ -21,20 +22,27 @@
 namespace Sierra
 {
 
+    struct RenderingContextCreateInfo
+    {
+        std::string_view name = "Rendering Context";
+        std::string_view applicationName = "Sierra Application";
+        Version applicationVersion = Version({ 1, 0, 0 });
+    };
+
     class SIERRA_API RenderingContext : public virtual RenderingResource
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual std::unique_ptr<Buffer> CreateBuffer(const BufferCreateInfo &createInfo) const = 0;
-        [[nodiscard]] virtual std::unique_ptr<Image> CreateImage(const ImageCreateInfo &createInfo) const = 0;
-        [[nodiscard]] virtual std::unique_ptr<Sampler> CreateSampler(const SamplerCreateInfo &createInfo) const = 0;
-        [[nodiscard]] virtual std::unique_ptr<RenderPass> CreateRenderPass(const RenderPassCreateInfo &createInfo) const = 0;
-        [[nodiscard]] virtual std::unique_ptr<Swapchain> CreateSwapchain(const SwapchainCreateInfo &createInfo) const = 0;
-        [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(const ShaderCreateInfo &createInfo) const = 0;
-        [[nodiscard]] virtual std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(const GraphicsPipelineCreateInfo &createInfo) const = 0;
-        [[nodiscard]] virtual std::unique_ptr<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo &createInfo) const = 0;
-        [[nodiscard]] virtual std::unique_ptr<ResourceTable> CreateResourceTable(const ResourceTableCreateInfo &createInfo) const = 0;
-        [[nodiscard]] virtual std::unique_ptr<CommandBuffer> CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<Buffer> CreateBuffer(const BufferCreateInfo& createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<Image> CreateImage(const ImageCreateInfo& createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<Sampler> CreateSampler(const SamplerCreateInfo& createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<RenderPass> CreateRenderPass(const RenderPassCreateInfo& createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<Swapchain> CreateSwapchain(const SwapchainCreateInfo& createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(const ShaderCreateInfo& createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<ResourceTable> CreateResourceTable(const ResourceTableCreateInfo& createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<CommandBuffer> CreateCommandBuffer(const CommandBufferCreateInfo& createInfo) const = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual const Device& GetDevice() const = 0;

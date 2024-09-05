@@ -7,11 +7,11 @@
 namespace SierraEngine
 {
 
-    namespace RenderPanel
+    namespace ViewportPanel
     {
 
         /* --- POLLING METHODS --- */
-        void Draw(const Sierra::Image &renderedImage);
+        void Draw(const Sierra::Image& renderedImage);
 
     }
 

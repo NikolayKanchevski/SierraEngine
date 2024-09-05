@@ -19,7 +19,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    X11Context::X11Context(const X11ContextCreateInfo &createInfo)
+    X11Context::X11Context(const X11ContextCreateInfo& createInfo)
         : display(XOpenDisplay(nullptr)), screen((SR_ERROR_IF(display == nullptr, "Could not open X11 display!"), XDefaultScreen(display))), rootWindow(XRootWindow(display, screen)),
           xkbExtension(XkbExtension({ .display = display })), xrandrExtension(XrandrExtension({ .display = display }))
     {
@@ -194,7 +194,7 @@ namespace Sierra
         return event;
     }
 
-    bool X11Context::IsEventFiltered(XEvent &event) const
+    bool X11Context::IsEventFiltered(XEvent& event) const
     {
         if (XFilterEvent(&event, None)) return true;
 
@@ -343,7 +343,7 @@ namespace Sierra
         XDefineCursor(display, window, invisibleCursor);
     }
 
-    void X11Context::SetWindowCursorPosition(const XID window, const Vector2Int &position) const
+    void X11Context::SetWindowCursorPosition(const XID window, const Vector2Int& position) const
     {
         XWarpPointer(display, None, window, 0, 0, 0, 0, position.x, position.y);
         Flush();
@@ -354,17 +354,17 @@ namespace Sierra
         XStoreName(display, window, title.data());
     }
 
-    void X11Context::SetWindowPosition(const XID window, const Vector2Int &position) const
+    void X11Context::SetWindowPosition(const XID window, const Vector2Int& position) const
     {
         XMoveWindow(display, window, position.x, position.y);
     }
 
-    void X11Context::SetWindowSize(const XID window, const Vector2UInt &size) const
+    void X11Context::SetWindowSize(const XID window, const Vector2UInt& size) const
     {
         XResizeWindow(display, window, size.x, size.y);
     }
 
-    void X11Context::SetWindowSizeLimits(const XID window, const Vector2UInt &minSize, const Vector2UInt &maxSize) const
+    void X11Context::SetWindowSizeLimits(const XID window, const Vector2UInt& minSize, const Vector2UInt& maxSize) const
     {
         // Define size hints
         XSizeHints* sizeHints = XAllocSizeHints();
@@ -397,7 +397,7 @@ namespace Sierra
     X11Screen& X11Context::GetWindowScreen(const XID window) const
     {
         const Vector2Int windowPosition = GetWindowPosition(window);
-        for (const X11Screen &screen : screens)
+        for (const X11Screen& screen : screens)
         {
             const Vector2Int screenOrigin = screen.GetOrigin();
             const Vector2Int screenSize = { screen.GetWidth(), screen.GetHeight() };

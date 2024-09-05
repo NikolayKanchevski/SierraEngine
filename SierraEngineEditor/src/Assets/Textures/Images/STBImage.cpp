@@ -18,7 +18,7 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    STBImage::STBImage(const ImageCreateInfo &createInfo)
+    STBImage::STBImage(const ImageCreateInfo& createInfo)
         : Image(createInfo)
     {
         int imageWidth, imageHeight, imageChannelCount;

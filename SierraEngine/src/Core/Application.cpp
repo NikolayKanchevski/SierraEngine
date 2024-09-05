@@ -9,7 +9,7 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    Application::Application(const ApplicationCreateInfo &createInfo)
+    Application::Application(const ApplicationCreateInfo& createInfo)
         : Sierra::Application({ .name = createInfo.name, .version = createInfo.version, .settings = createInfo.settings })
     {
 

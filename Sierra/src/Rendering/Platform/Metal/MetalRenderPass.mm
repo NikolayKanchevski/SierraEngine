@@ -11,14 +11,14 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    MetalRenderPass::MetalRenderPass(const MetalDevice &device, const RenderPassCreateInfo &createInfo)
+    MetalRenderPass::MetalRenderPass(const MetalDevice& device, const RenderPassCreateInfo& createInfo)
         : RenderPass(createInfo), name(createInfo.name)
     {
         attachmentMap.resize(createInfo.attachments.size());
         subpasses.resize(createInfo.subpassDescriptions.size());
         for (size i = 0; i < subpasses.size(); i++)
         {
-            const SubpassDescription &subpassDescription = createInfo.subpassDescriptions[i];
+            const SubpassDescription& subpassDescription = createInfo.subpassDescriptions[i];
 
             // Configure a dedicated render pass for every subpass, because Metal lacks support for them
             MTLRenderPassDescriptor* const subpassDescriptor = (subpasses[i] = [[MTLRenderPassDescriptor alloc] init]);
@@ -27,7 +27,7 @@ namespace Sierra
 
             for (const uint32 renderTarget : subpassDescription.renderTargets)
             {
-                const RenderPassAttachment &attachment = createInfo.attachments[renderTarget];
+                const RenderPassAttachment& attachment = createInfo.attachments[renderTarget];
 
                 MTLRenderPassAttachmentDescriptor* attachmentDescriptor = nullptr;
                 switch (attachment.type)
@@ -47,7 +47,7 @@ namespace Sierra
                 }
 
                 SR_ERROR_IF(attachment.templateOutputImage.GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not use image [{0}] of attachment [{1}]'s output image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Metal]!", attachment.templateOutputImage.GetName(), i, name);
-                const MetalImage &metalOutputImage = static_cast<const MetalImage&>(attachment.templateOutputImage);
+                const MetalImage& metalOutputImage = static_cast<const MetalImage&>(attachment.templateOutputImage);
 
                 // Configure attachment
                 attachmentMap[renderTarget].emplace_back(attachmentDescriptor);
@@ -60,7 +60,7 @@ namespace Sierra
                 else
                 {
                     SR_ERROR_IF(attachment.templateResolverImage->GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not use image [{0}] of attachment [{1}]'s resolver image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Metal]!", attachment.templateResolverImage->GetName(), i, name);
-                    const MetalImage &metalResolveImage = static_cast<const MetalImage&>(*attachment.templateResolverImage);
+                    const MetalImage& metalResolveImage = static_cast<const MetalImage&>(*attachment.templateResolverImage);
 
                     [attachmentDescriptor setTexture: metalResolveImage.GetMetalTexture()];
                     [attachmentDescriptor setResolveTexture: metalOutputImage.GetMetalTexture()];

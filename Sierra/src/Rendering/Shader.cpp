@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Shader::Shader(const ShaderCreateInfo &createInfo)
+    Shader::Shader(const ShaderCreateInfo& createInfo)
     {
         SR_ERROR_IF(createInfo.shaderType == ShaderType::Undefined, "Shader type of shader [{0}] must not be ShaderType::Undefined!", createInfo.name);
         SR_ERROR_IF(createInfo.memory.empty() || createInfo.memory.data() == nullptr, "Shader data of shader [{0}] must not be empty and contain a valid memory pointer!", createInfo.name);

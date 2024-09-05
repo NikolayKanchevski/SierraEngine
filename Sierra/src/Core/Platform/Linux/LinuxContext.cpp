@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    LinuxContext::LinuxContext(const PlatformContextCreateInfo &createInfo)
+    LinuxContext::LinuxContext(const PlatformContextCreateInfo& createInfo)
         : PlatformContext(createInfo), x11Context({ })
     {
 

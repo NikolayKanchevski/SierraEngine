@@ -431,7 +431,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Image::Image(const ImageCreateInfo &createInfo)
+    Image::Image(const ImageCreateInfo& createInfo)
     {
         SR_ERROR_IF(createInfo.width == 0, "Width of image [{0}] must not be [0]!", createInfo.name);
         SR_ERROR_IF(createInfo.height == 0, "Height of image [{0}] must not be [0]!", createInfo.name);

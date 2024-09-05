@@ -104,7 +104,7 @@
     - (void) keyDown: (NSEvent*) event
     {
         const Sierra::Key key = Sierra::CocoaInputManager::KeyCodeToKey([event keyCode]);
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterKeyPress(key);
+        static_cast<Sierra::CocoaInputManager&>(*window->GetInputManager()).RegisterKeyPress(key);
 
         [self interpretKeyEvents: @[event]];
     }
@@ -152,7 +152,7 @@
             }
         }
 
-        Sierra::CocoaInputManager &inputManager = static_cast<Sierra::CocoaInputManager&>(window->GetInputManager());
+        Sierra::CocoaInputManager& inputManager = static_cast<Sierra::CocoaInputManager&>(*window->GetInputManager());
         if(!inputManager.IsKeyPressed(key) && keyModifierFlag & [event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask)
         {
             inputManager.RegisterKeyPress(key);
@@ -166,44 +166,44 @@
     - (void) keyUp: (NSEvent*) event
     {
         const Sierra::Key key = Sierra::CocoaInputManager::KeyCodeToKey([event keyCode]);
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterKeyRelease(key);
+        static_cast<Sierra::CocoaInputManager&>(*window->GetInputManager()).RegisterKeyRelease(key);
     }
 
     - (void) mouseDown: (NSEvent*) event
     {
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterMouseButtonPress(Sierra::MouseButton::Left);
+        static_cast<Sierra::CocoaInputManager&>(*window->GetInputManager()).RegisterMouseButtonPress(Sierra::MouseButton::Left);
     }
 
     - (void) rightMouseDown: (NSEvent*) event
     {
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterMouseButtonPress(Sierra::MouseButton::Right);
+        static_cast<Sierra::CocoaInputManager&>(*window->GetInputManager()).RegisterMouseButtonPress(Sierra::MouseButton::Right);
     }
 
     - (void) otherMouseDown: (NSEvent*) event
     {
         const Sierra::MouseButton mouseButton = Sierra::CocoaInputManager::ButtonNumberToMouseButton([event buttonNumber]);
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterMouseButtonPress(mouseButton);
+        static_cast<Sierra::CocoaInputManager&>(*window->GetInputManager()).RegisterMouseButtonPress(mouseButton);
     }
 
     - (void) mouseUp: (NSEvent*) event
     {
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterMouseButtonRelease(Sierra::MouseButton::Left);
+        static_cast<Sierra::CocoaInputManager&>(*window->GetInputManager()).RegisterMouseButtonRelease(Sierra::MouseButton::Left);
     }
 
     - (void) rightMouseUp: (NSEvent*) event
     {
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterMouseButtonRelease(Sierra::MouseButton::Right);
+        static_cast<Sierra::CocoaInputManager&>(*window->GetInputManager()).RegisterMouseButtonRelease(Sierra::MouseButton::Right);
     }
 
     - (void) otherMouseUp: (NSEvent*) event
     {
         const Sierra::MouseButton mouseButton = Sierra::CocoaInputManager::ButtonNumberToMouseButton([event buttonNumber]);
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterMouseButtonRelease(mouseButton);
+        static_cast<Sierra::CocoaInputManager&>(*window->GetInputManager()).RegisterMouseButtonRelease(mouseButton);
     }
 
     - (void) scrollWheel: (NSEvent*) event
     {
-        static_cast<Sierra::CocoaInputManager&>(window->GetInputManager()).RegisterMouseScroll({ [event deltaX], [event scrollingDeltaY] });
+        static_cast<Sierra::CocoaInputManager&>(*window->GetInputManager()).RegisterMouseScroll({ [event deltaX], [event scrollingDeltaY] });
     }
 
     - (void) mouseDragged: (NSEvent*) event
@@ -214,7 +214,7 @@
     - (void) mouseMoved: (NSEvent*) event
     {
         const NSPoint point = [event locationInWindow];
-        static_cast<Sierra::CocoaCursorManager&>(window->GetCursorManager()).RegisterCursorMove({ point.x, point.y });
+        static_cast<Sierra::CocoaCursorManager&>(*window->GetCursorManager()).RegisterCursorMove({ point.x, point.y });
     }
 
     - (BOOL) canBecomeKeyView
@@ -303,7 +303,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    CocoaWindow::CocoaWindow(CocoaContext &cocoaContext, const WindowCreateInfo &createInfo)
+    CocoaWindow::CocoaWindow(CocoaContext& cocoaContext, const WindowCreateInfo& createInfo)
         : Window(createInfo), cocoaContext(cocoaContext),
             view([[CocoaWindowView alloc] initWithWindow: this]),
             delegate([[CocoaWindowDelegate alloc] initWithWindow: this]),
@@ -328,7 +328,7 @@ namespace Sierra
             }
             else
             {
-                const CocoaScreen &screen = cocoaContext.GetWindowScreen(window);
+                const CocoaScreen& screen = cocoaContext.GetWindowScreen(window);
                 const NSRect newFrame = NSMakeRect(screen.GetOrigin().x, screen.GetOrigin().y, screen.GetWorkAreaWidth(), screen.GetWorkAreaHeight());
                 [window setFrame: newFrame display: YES animate: YES];
             }
@@ -432,16 +432,16 @@ namespace Sierra
         [window setTitle: @(newTitle.data())];
     }
 
-    void CocoaWindow::SetPosition(const Vector2Int &position)
+    void CocoaWindow::SetPosition(const Vector2Int& position)
     {
         [window setFrameOrigin: [window frameRectForContentRect: NSMakeRect(position.x, position.y - GetHeight(), 0, 0)].origin];
     }
 
-    void CocoaWindow::SetSize(const Vector2UInt &size)
+    void CocoaWindow::SetSize(const Vector2UInt& size)
     {
         // Set new size and move window up, so that it retains its top Y position
         NSRect contentRect = [window contentRectForFrameRect: [window frame]];
-        contentRect.size = NSMakeSize(size.x, static_cast<float32>(size.y) - GetTitleBarHeight());
+        contentRect.size = NSMakeSize(size.x, static_cast<float32>(size.y - GetTitleBarHeight()));
         [window setFrame: [window frameRectForContentRect: contentRect] display: YES];
     }
 
@@ -520,14 +520,19 @@ namespace Sierra
         return cocoaContext.GetWindowScreen(window);
     }
 
-    InputManager& CocoaWindow::GetInputManager()
+    InputManager* CocoaWindow::GetInputManager()
     {
-        return inputManager;
+        return &inputManager;
     }
 
-    CursorManager& CocoaWindow::GetCursorManager()
+    CursorManager* CocoaWindow::GetCursorManager()
     {
-        return cursorManager;
+        return &cursorManager;
+    }
+
+    TouchManager* CocoaWindow::GetTouchManager()
+    {
+        return nullptr;
     }
 
     PlatformAPI CocoaWindow::GetAPI() const

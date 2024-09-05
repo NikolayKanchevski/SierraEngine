@@ -16,7 +16,7 @@ namespace SierraEngine
         BasisUniversalTranscoder();
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::optional<std::vector<uint8>> Transcode(const ImageTranscodeInfo &transcodeInfo) const override;
+        [[nodiscard]] std::optional<std::vector<uint8>> Transcode(const ImageTranscodeInfo& transcodeInfo) const override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] ImageTranscoderType GetType() const override { return ImageTranscoderType::BasisUniversal; }

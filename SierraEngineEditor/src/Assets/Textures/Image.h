@@ -41,15 +41,19 @@ namespace SierraEngine
         [[nodiscard]] virtual std::span<const uint8> GetMemory() const = 0;
         [[nodiscard]] virtual uint64 GetMemorySize() const = 0;
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         Image(const Image&) = delete;
         Image& operator=(const Image&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        Image(Image&&) = default;
+        Image& operator=(Image&&) = default;
 
         /* --- DESTRUCTOR --- */
         virtual ~Image() = default;
 
     protected:
-        explicit Image(const ImageCreateInfo &createInfo);
+        explicit Image(const ImageCreateInfo& createInfo);
 
         template<typename T> requires std::is_arithmetic_v<T>
         void SetPixelMemory(void* pixel, const uint8 channelCount, const Color color) const
@@ -59,7 +63,7 @@ namespace SierraEngine
         }
 
         template<typename T> requires std::is_arithmetic_v<T>
-        void GetPixelColor(const void* pixel, const uint8 channelCount, Color &color) const
+        void GetPixelColor(const void* pixel, const uint8 channelCount, Color& color) const
         {
             constexpr Color::value_type DIVISOR = std::is_floating_point_v<T> ? 1 : std::numeric_limits<T>::max();
             for (int i = 0; i < channelCount; i++) color[i] = static_cast<Color::value_type>(reinterpret_cast<const T*>(pixel)[i] / DIVISOR);
@@ -69,7 +73,7 @@ namespace SierraEngine
 
     struct ImageLayer
     {
-        Image &image;
+        Image& image;
     };
 
     struct ImageLevel

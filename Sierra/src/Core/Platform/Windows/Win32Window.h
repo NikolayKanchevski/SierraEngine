@@ -21,7 +21,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Win32Window(Win32Context &win32Context, const WindowCreateInfo &createInfo);
+        explicit Win32Window(Win32Context& win32Context, const WindowCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         void Update() override;
@@ -34,8 +34,8 @@ namespace Sierra
 
         /* --- SETTER METHODS --- */
         void SetTitle(std::string_view title) override;
-        void SetPosition(const Vector2Int &position) override;
-        void SetSize(const Vector2UInt &size) override;
+        void SetPosition(const Vector2Int& position) override;
+        void SetSize(const Vector2UInt& size) override;
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
@@ -54,8 +54,9 @@ namespace Sierra
         [[nodiscard]] bool IsHidden() const override;
 
         [[nodiscard]] Screen& GetScreen() const override;
-        [[nodiscard]] InputManager& GetInputManager() override;
-        [[nodiscard]] CursorManager& GetCursorManager() override;
+        [[nodiscard]] InputManager* GetInputManager() override;
+        [[nodiscard]] CursorManager* GetCursorManager() override;
+        [[nodiscard]] TouchManager* GetTouchManager() override;
         [[nodiscard]] PlatformAPI GetAPI() const override;
 
         [[nodiscard]] HWND GetHwnd() const { return window; }
@@ -65,7 +66,7 @@ namespace Sierra
         ~Win32Window() override;
 
     private:
-        Win32Context &win32Context;
+        Win32Context& win32Context;
 
         HWND window;
 

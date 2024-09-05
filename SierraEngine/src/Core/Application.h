@@ -21,7 +21,7 @@ namespace SierraEngine
         ~Application() override = default;
 
     protected:
-        explicit Application(const ApplicationCreateInfo &createInfo);
+        explicit Application(const ApplicationCreateInfo& createInfo);
 
     };
 

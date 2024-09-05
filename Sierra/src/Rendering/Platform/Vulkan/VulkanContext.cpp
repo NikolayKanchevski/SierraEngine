@@ -20,60 +20,60 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanContext::VulkanContext()
-        : instance(VulkanInstance({ })), device(instance)
+    VulkanContext::VulkanContext(const RenderingContextCreateInfo& createInfo)
+        : name(createInfo.name), instance(VulkanInstance({ .name = fmt::format("Instance of rendering context [{0}]", createInfo.name), .applicationName = createInfo.applicationName, .applicationVersion = createInfo.applicationVersion })), device({ instance })
     {
-        SR_INFO("Vulkan context created successfully! Device in use: [{0}].", device.GetName());
+
     }
 
     /* --- POLLING METHODS --- */
 
-    std::unique_ptr<Buffer> VulkanContext::CreateBuffer(const BufferCreateInfo &createInfo) const
+    std::unique_ptr<Buffer> VulkanContext::CreateBuffer(const BufferCreateInfo& createInfo) const
     {
         return std::make_unique<VulkanBuffer>(device, createInfo);
     }
 
-    std::unique_ptr<Image> VulkanContext::CreateImage(const ImageCreateInfo &createInfo) const
+    std::unique_ptr<Image> VulkanContext::CreateImage(const ImageCreateInfo& createInfo) const
     {
         return std::make_unique<VulkanImage>(device, createInfo);
     }
 
-    std::unique_ptr<Sampler> VulkanContext::CreateSampler(const SamplerCreateInfo &createInfo) const
+    std::unique_ptr<Sampler> VulkanContext::CreateSampler(const SamplerCreateInfo& createInfo) const
     {
         return std::make_unique<VulkanSampler>(device, createInfo);
     }
 
-    std::unique_ptr<RenderPass> VulkanContext::CreateRenderPass(const RenderPassCreateInfo &createInfo) const
+    std::unique_ptr<RenderPass> VulkanContext::CreateRenderPass(const RenderPassCreateInfo& createInfo) const
     {
         return std::make_unique<VulkanRenderPass>(device, createInfo);
     }
 
-    std::unique_ptr<Swapchain> VulkanContext::CreateSwapchain(const SwapchainCreateInfo &createInfo) const
+    std::unique_ptr<Swapchain> VulkanContext::CreateSwapchain(const SwapchainCreateInfo& createInfo) const
     {
         return std::make_unique<VulkanSwapchain>(instance, device, createInfo);
     }
 
-    std::unique_ptr<Shader> VulkanContext::CreateShader(const ShaderCreateInfo &createInfo) const
+    std::unique_ptr<Shader> VulkanContext::CreateShader(const ShaderCreateInfo& createInfo) const
     {
         return std::make_unique<VulkanShader>(device, createInfo);
     }
 
-    std::unique_ptr<GraphicsPipeline> VulkanContext::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo &createInfo) const
+    std::unique_ptr<GraphicsPipeline> VulkanContext::CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) const
     {
         return std::make_unique<VulkanGraphicsPipeline>(device, createInfo);
     }
 
-    std::unique_ptr<ComputePipeline> VulkanContext::CreateComputePipeline(const ComputePipelineCreateInfo &createInfo) const
+    std::unique_ptr<ComputePipeline> VulkanContext::CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) const
     {
         return std::make_unique<VulkanComputePipeline>(device, createInfo);
     }
 
-    std::unique_ptr<ResourceTable> VulkanContext::CreateResourceTable(const ResourceTableCreateInfo &createInfo) const
+    std::unique_ptr<ResourceTable> VulkanContext::CreateResourceTable(const ResourceTableCreateInfo& createInfo) const
     {
         return std::make_unique<VulkanResourceTable>(device, createInfo);
     }
 
-    std::unique_ptr<CommandBuffer> VulkanContext::CreateCommandBuffer(const CommandBufferCreateInfo &createInfo) const
+    std::unique_ptr<CommandBuffer> VulkanContext::CreateCommandBuffer(const CommandBufferCreateInfo& createInfo) const
     {
         return std::make_unique<VulkanCommandBuffer>(device, createInfo);
     }

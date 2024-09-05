@@ -4,10 +4,7 @@ target_link_libraries(SierraEngine PRIVATE EnTT)
 target_include_directories(SierraEngine PUBLIC ${ENTT_DIRECTORY_PATH}/single_include/)
 
 target_sources(SierraEngine PRIVATE
-    Component.cpp
     Component.h
-    Entity.cpp
-    Entity.h
     Scene.cpp
     Scene.h
 )

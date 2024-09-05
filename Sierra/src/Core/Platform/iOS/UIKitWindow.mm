@@ -69,7 +69,7 @@
                 .lastPosition = position
             });
 
-            static_cast<Sierra::UIKitTouchManager&>(window->GetTouchManager()).RegisterTouchPress(touch);
+            static_cast<Sierra::UIKitTouchManager&>(*window->GetTouchManager()).RegisterTouchPress(touch);
         }
     }
 
@@ -81,7 +81,7 @@
         {
             // Get position within the screen and flip Y coordinate
             const Vector2 position = { [rawTouch locationInView: rawTouch.window.rootViewController.view].x, [[UIScreen mainScreen] bounds].size.height - [rawTouch locationInView: rawTouch.window.rootViewController.view].y };
-            static_cast<Sierra::UIKitTouchManager&>(window->GetTouchManager()).RegisterTouchMove(std::bit_cast<uint64>([rawTouch timestamp]), position);
+            static_cast<Sierra::UIKitTouchManager&>(*window->GetTouchManager()).RegisterTouchMove(std::bit_cast<uint64>([rawTouch timestamp]), position);
         }
     }
 
@@ -91,7 +91,7 @@
 
         for (const UITouch* rawTouch in touches)
         {
-            static_cast<Sierra::UIKitTouchManager&>(window->GetTouchManager()).RegisterTouchRelease(std::bit_cast<uint64>([rawTouch timestamp]));
+            static_cast<Sierra::UIKitTouchManager&>(*window->GetTouchManager()).RegisterTouchRelease(std::bit_cast<uint64>([rawTouch timestamp]));
         }
     }
 
@@ -101,7 +101,7 @@
 
         for (const UITouch* rawTouch in touches)
         {
-            static_cast<Sierra::UIKitTouchManager&>(window->GetTouchManager()).RegisterTouchRelease(std::bit_cast<uint64>([rawTouch timestamp]));
+            static_cast<Sierra::UIKitTouchManager&>(*window->GetTouchManager()).RegisterTouchRelease(std::bit_cast<uint64>([rawTouch timestamp]));
         }
     }
 
@@ -135,7 +135,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    UIKitWindow::UIKitWindow(UIKitContext &uiKitContext, const WindowCreateInfo &createInfo)
+    UIKitWindow::UIKitWindow(UIKitContext& uiKitContext, const WindowCreateInfo& createInfo)
         : Window(createInfo), uiKitContext(uiKitContext),
             title(createInfo.title),
             allowedOrientations(createInfo.allowedOrientations)
@@ -213,12 +213,12 @@ namespace Sierra
         title = newTitle;
     }
 
-    void UIKitWindow::SetPosition(const Vector2Int &position)
+    void UIKitWindow::SetPosition(const Vector2Int& position)
     {
         // Not applicable
     }
 
-    void UIKitWindow::SetSize(const Vector2UInt &size)
+    void UIKitWindow::SetSize(const Vector2UInt& size)
     {
         // Not applicable
     }
@@ -295,9 +295,19 @@ namespace Sierra
         return uiKitContext.GetScreen();
     }
 
-    TouchManager& UIKitWindow::GetTouchManager()
+    InputManager* UIKitWindow::GetInputManager()
     {
-        return touchManager;
+        return nullptr;
+    }
+
+    CursorManager* UIKitWindow::GetCursorManager()
+    {
+        return nullptr;
+    }
+
+    TouchManager* UIKitWindow::GetTouchManager()
+    {
+        return &touchManager;
     }
 
     PlatformAPI UIKitWindow::GetAPI() const

@@ -31,7 +31,7 @@ namespace Sierra
         ~Shader() override = default;
 
     protected:
-        explicit Shader(const ShaderCreateInfo &createInfo);
+        explicit Shader(const ShaderCreateInfo& createInfo);
         struct ShaderFileHeader
         {
             uint64 spvMemorySize = 0;

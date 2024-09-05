@@ -15,11 +15,15 @@ namespace Sierra
     public:
         /* --- POLLING METHODS --- */
         virtual void Resize(uint32 width, uint32 height) = 0;
-        virtual void Render(CommandBuffer &commandBuffer, const Image &outputImage) = 0;
-        
-        /* --- OPERATORS --- */
+        virtual void Render(CommandBuffer& commandBuffer, const Image& outputImage) = 0;
+
+        /* --- COPY SEMANTICS --- */
         Renderer(const Renderer&) = delete;
         Renderer& operator=(const Renderer&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        Renderer(Renderer&&) = default;
+        Renderer& operator=(Renderer&&) = default;
         
         /* --- DESTRUCTOR --- */
         virtual ~Renderer() = default;

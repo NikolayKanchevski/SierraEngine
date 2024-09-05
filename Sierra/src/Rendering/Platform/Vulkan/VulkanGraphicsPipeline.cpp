@@ -13,14 +13,14 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanGraphicsPipeline::VulkanGraphicsPipeline(const VulkanDevice &device, const GraphicsPipelineCreateInfo &createInfo)
+    VulkanGraphicsPipeline::VulkanGraphicsPipeline(const VulkanDevice& device, const GraphicsPipelineCreateInfo& createInfo)
         : GraphicsPipeline(createInfo), device(device), name(createInfo.name), pushConstantSize(createInfo.pushConstantSize)
     {
         SR_ERROR_IF(createInfo.vertexShader.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", name, createInfo.vertexShader.GetName());
-        const VulkanShader &vulkanVertexShader = static_cast<const VulkanShader&>(createInfo.vertexShader);
+        const VulkanShader& vulkanVertexShader = static_cast<const VulkanShader&>(createInfo.vertexShader);
 
         SR_ERROR_IF(createInfo.templateRenderPass.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with template render pass [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", name, createInfo.templateRenderPass.GetName());
-        const VulkanRenderPass &vulkanRenderPass = static_cast<const VulkanRenderPass&>(createInfo.templateRenderPass);
+        const VulkanRenderPass& vulkanRenderPass = static_cast<const VulkanRenderPass&>(createInfo.templateRenderPass);
 
         // Set up shader stages
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages(1 + (createInfo.fragmentShader != nullptr));
@@ -31,7 +31,7 @@ namespace Sierra
         if (createInfo.fragmentShader != nullptr)
         {
             SR_ERROR_IF(createInfo.fragmentShader->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", name, createInfo.fragmentShader->GetName());
-            const VulkanShader &vulkanFragmentShader = static_cast<const VulkanShader&>(*createInfo.fragmentShader);
+            const VulkanShader& vulkanFragmentShader = static_cast<const VulkanShader&>(*createInfo.fragmentShader);
             shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
             shaderStages[1].module = vulkanFragmentShader.GetVulkanShaderModule();
@@ -226,7 +226,7 @@ namespace Sierra
             .pViewportState = &viewportStateCreateInfo,
             .pRasterizationState = &rasterizationStateCreateInfo,
             .pMultisampleState = &multisampleStateCreateInfo,
-            .pDepthStencilState = vulkanRenderPass.HasDepthAttachment() ? &depthStencilStateCreateInfo : nullptr,
+            .pDepthStencilState = vulkanRenderPass.HasDepthAttachment() ?& depthStencilStateCreateInfo : nullptr,
             .pColorBlendState = &blendingStateCreateInfo,
             .pDynamicState = &dynamicStateCreateInfo,
             .layout = device.GetPipelineLayout(createInfo.pushConstantSize),

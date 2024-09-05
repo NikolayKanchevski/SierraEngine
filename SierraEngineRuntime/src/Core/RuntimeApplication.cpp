@@ -9,7 +9,7 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    RuntimeApplication::RuntimeApplication(const ApplicationCreateInfo &createInfo)
+    RuntimeApplication::RuntimeApplication(const ApplicationCreateInfo& createInfo)
         : Application(createInfo)
     {
 

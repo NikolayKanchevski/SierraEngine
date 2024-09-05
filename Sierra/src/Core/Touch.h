@@ -6,17 +6,19 @@
 
 #include "Time.h"
 
+#include "UUID.hpp"
+
 namespace Sierra
 {
+
+    /* --- TYPE DEFINITIONS --- */
+    using TouchID = UUID64;
 
     enum class TouchType : bool
     {
         Press,
         Release
     };
-
-    /* --- TYPE DEFINITIONS --- */
-    using TouchID = uint64;
 
     struct TouchCreateInfo
     {
@@ -27,15 +29,14 @@ namespace Sierra
         float32 force = 0.0f;
 
         Vector2 position = { 0.0f, 0.0f };
-        Vector2 lastPosition = {0.0f, 0.0f };
-
+        Vector2 lastPosition = { 0.0f, 0.0f };
     };
 
     class SIERRA_API Touch
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Touch(const TouchCreateInfo &createInfo);
+        explicit Touch(const TouchCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] TouchID GetID() const { return ID; }
@@ -49,9 +50,20 @@ namespace Sierra
         [[nodiscard]] Vector2 GetLastPosition() const { return lastPosition; }
         [[nodiscard]] Vector2 GetDeltaPosition() const { return position - lastPosition; }
 
+        /* --- COPY SEMANTICS --- */
+        Touch(const Touch&) = default;
+        Touch& operator=(const Touch&) = default;
+
+        /* --- MOVE SEMANTICS --- */
+        Touch(Touch&&) = default;
+        Touch& operator=(Touch&&) = default;
+
         /* --- OPERATORS --- */
-        [[nodiscard]] bool operator==(const Touch &other) const { return ID == other.ID; }
-        [[nodiscard]] bool operator!=(const Touch &other) const { return !(*this == other); }
+        [[nodiscard]] bool operator==(const Touch& other) const { return ID == other.ID; }
+        [[nodiscard]] bool operator!=(const Touch& other) const { return !(*this == other); }
+
+        /* --- DESTRUCTOR --- */
+        ~Touch() = default;
 
     private:
         TouchID ID = 0;

@@ -31,7 +31,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit CocoaScreen(const CocoaScreenCreateInfo &createInfo);
+        explicit CocoaScreen(const CocoaScreenCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override { return name; }

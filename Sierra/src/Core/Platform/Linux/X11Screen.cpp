@@ -11,7 +11,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    X11Screen::X11Screen(const X11ScreenCreateInfo &createInfo)
+    X11Screen::X11Screen(const X11ScreenCreateInfo& createInfo)
         : Screen(), name(createInfo.outputInfo->name, createInfo.outputInfo->nameLen), origin(createInfo.crtcInfo->x, createInfo.crtcInfo->y)
     {
         // Save size, while taking rotation into account
@@ -57,7 +57,7 @@ namespace Sierra
         // Get refresh rate
         for (size i = 0; i < createInfo.screenResources->nmode; i++)
         {
-            const XRRModeInfo &mode_info = createInfo.screenResources->modes[i];
+            const XRRModeInfo& mode_info = createInfo.screenResources->modes[i];
             if (mode_info.id == createInfo.crtcInfo->mode)
             {
                 refreshRate = mode_info.dotClock / (mode_info.hTotal * mode_info.vTotal);

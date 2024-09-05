@@ -22,9 +22,13 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual PlatformType GetType() const = 0;
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         PlatformContext(const PlatformContext&) = delete;
         PlatformContext& operator=(const PlatformContext&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        PlatformContext(PlatformContext&&) = default;
+        PlatformContext& operator=(PlatformContext&&) = default;
 
         /* --- DESTRUCTOR --- */
         virtual ~PlatformContext() = default;

@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    CocoaScreen::CocoaScreen(const CocoaScreenCreateInfo &createInfo)
+    CocoaScreen::CocoaScreen(const CocoaScreenCreateInfo& createInfo)
         : Screen(), screen(createInfo.screen),
             name([createInfo.screen localizedName].UTF8String, [createInfo.screen localizedName].length),
             refreshRate(createInfo.screen.maximumFramesPerSecond),

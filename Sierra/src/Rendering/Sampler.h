@@ -71,7 +71,7 @@ namespace Sierra
         ~Sampler() override = default;
 
     protected:
-        explicit Sampler(const SamplerCreateInfo &createInfo);
+        explicit Sampler(const SamplerCreateInfo& createInfo);
 
     };
 

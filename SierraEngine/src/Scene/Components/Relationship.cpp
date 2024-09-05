@@ -7,34 +7,33 @@
 namespace SierraEngine
 {
 
-    /* --- CONSTRUCTORS --- */
-
-    Relationship::Relationship(const entt::entity parent)
-    {
-        SetParent(parent);
-    }
-
     /* --- SETTER METHODS --- */
 
-    void Relationship::SetParent(const entt::entity parent)
+    void Relationship::SetParent(const EntityID givenParent)
     {
-        this->parent = parent;
+        parent = givenParent;
     }
 
     void Relationship::RemoveParent()
     {
-        parent = entt::null;
+        parent = 0;
     }
 
-
-    void Relationship::AddChild(const entt::entity child)
+    void Relationship::AddChild(const EntityID child)
     {
         children.push_back(child);
     }
 
-    void Relationship::RemoveChild(const entt::entity child)
+    bool Relationship::RemoveChild(const EntityID child)
     {
-        children.erase(std::ranges::remove(children, child).begin());
+        const auto iterator = std::ranges::find(children, child);
+        if (iterator != children.end())
+        {
+            children.erase(iterator);
+            return true;
+        }
+
+        return false;
     }
 
 }

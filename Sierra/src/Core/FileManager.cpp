@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONVERSIONS --- */
 
-    FileType FileManager::FilePathToFileType(const std::filesystem::path &filePath)
+    FileType FileManager::FilePathToFileType(const std::filesystem::path& filePath)
     {
         if (!filePath.has_extension()) return FileType::Unknown;
 

@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    RenderPass::RenderPass(const RenderPassCreateInfo &createInfo)
+    RenderPass::RenderPass(const RenderPassCreateInfo& createInfo)
     {
         SR_ERROR_IF(createInfo.attachments.empty(), "Cannot create render pass [{0}] with no attachments!", createInfo.name);
         SR_ERROR_IF(createInfo.subpassDescriptions.empty(), "Cannot create render pass [{0}] with no subpasses specified!", createInfo.name);
@@ -20,7 +20,7 @@ namespace Sierra
             {
                 for (const uint32 renderTargetIndex : createInfo.subpassDescriptions[i].renderTargets)
                 {
-                    const RenderPassAttachment &attachment = createInfo.attachments[renderTargetIndex];
+                    const RenderPassAttachment& attachment = createInfo.attachments[renderTargetIndex];
                     SR_ERROR_IF(attachment.templateOutputImage.GetWidth() != expectedWidth || attachment.templateOutputImage.GetHeight() != expectedHeight, "Cannot create render pass [{0}], as attachment [{1}] does not share the same dimensions as the rest!", createInfo.name, renderTargetIndex);
                 }
             }

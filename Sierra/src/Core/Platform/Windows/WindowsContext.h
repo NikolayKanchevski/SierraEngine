@@ -18,7 +18,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit WindowsContext(const PlatformContextCreateInfo &createInfo);
+        explicit WindowsContext(const PlatformContextCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] Win32Context& GetWin32Context() { return win32Context; }

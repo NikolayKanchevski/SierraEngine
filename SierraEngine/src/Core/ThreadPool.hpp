@@ -19,7 +19,7 @@ namespace SierraEngine
         using Task = std::function<void()>;
 
         /* --- CONSTRUCTORS --- */
-        explicit ThreadPool(const ThreadPoolCreateInfo &createInfo)
+        explicit ThreadPool(const ThreadPoolCreateInfo& createInfo)
             : running(true)
         {
             threads.resize(glm::clamp(createInfo.threadCount, 1U, std::thread::hardware_concurrency()));
@@ -100,9 +100,13 @@ namespace SierraEngine
             waiting = false;
         }
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         ThreadPool(const ThreadPool&) = delete;
         ThreadPool& operator=(const ThreadPool&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        ThreadPool(ThreadPool&&) = delete;
+        ThreadPool& operator=(ThreadPool&&) = delete;
 
         /* --- DESTRUCTOR --- */
         ~ThreadPool()
@@ -111,7 +115,7 @@ namespace SierraEngine
 
             running = false;
             taskAvailable.notify_all();
-            for (std::thread &thread : threads) thread.join();
+            for (std::thread& thread : threads) thread.join();
         }
 
     private:

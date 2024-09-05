@@ -34,7 +34,7 @@ namespace Sierra
         FileOperationResult Seek(size byteOffset) override;
         FileOperationResult SeekToEnd() override;
 
-        FileOperationResult Read(size memorySize, std::vector<uint8> &outData) override;
+        FileOperationResult Read(size memorySize, std::vector<uint8>& outData) override;
         FileOperationResult Write(const void* memory, size memorySize) override;
 
         /* --- GETTER METHODS --- */
@@ -56,27 +56,27 @@ namespace Sierra
         FoundationFileManager();
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] bool FileExists(const std::filesystem::path &filePath) const override;
-        FileOperationResult OpenFileStream(const std::filesystem::path &filePath, FileStreamAccess access, FileStreamBuffering buffering, std::unique_ptr<FileStream> &outFileStream) const override;
+        [[nodiscard]] bool FileExists(const std::filesystem::path& filePath) const override;
+        FileOperationResult OpenFileStream(const std::filesystem::path& filePath, FileStreamAccess access, FileStreamBuffering buffering, std::unique_ptr<FileStream>& outFileStream) const override;
 
-        FileOperationResult CreateFile(const std::filesystem::path &filePath) const override;
-        FileOperationResult RenameFile(const std::filesystem::path &filePath, std::string_view name) const override;
-        FileOperationResult CopyFile(const std::filesystem::path &sourceFilePath, const std::filesystem::path &destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const override;
-        FileOperationResult MoveFile(const std::filesystem::path &sourceFilePath, const std::filesystem::path &destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const override;
-        FileOperationResult DeleteFile(const std::filesystem::path &filePath) const override;
+        FileOperationResult CreateFile(const std::filesystem::path& filePath) const override;
+        FileOperationResult RenameFile(const std::filesystem::path& filePath, std::string_view name) const override;
+        FileOperationResult CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const override;
+        FileOperationResult MoveFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const override;
+        FileOperationResult DeleteFile(const std::filesystem::path& filePath) const override;
 
-        [[nodiscard]] bool DirectoryExists(const std::filesystem::path &directoryPath) const override;
-        FileOperationResult EnumerateDirectoryFiles(const std::filesystem::path &directoryPath, std::vector<std::filesystem::path> &outFiles, bool recursive) const override;
+        [[nodiscard]] bool DirectoryExists(const std::filesystem::path& directoryPath) const override;
+        FileOperationResult EnumerateDirectoryFiles(const std::filesystem::path& directoryPath, std::vector<std::filesystem::path>& outFiles, bool recursive) const override;
 
-        FileOperationResult CreateDirectory(const std::filesystem::path &directoryPath) const override;
-        FileOperationResult RenameDirectory(const std::filesystem::path &directoryPath, std::string_view name) const override;
-        FileOperationResult CopyDirectory(const std::filesystem::path &sourceDirectoryPath, const std::filesystem::path &destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const override;
-        FileOperationResult MoveDirectory(const std::filesystem::path &sourceDirectoryPath, const std::filesystem::path &destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const override;
-        FileOperationResult DeleteDirectory(const std::filesystem::path &directoryPath) const override;
+        FileOperationResult CreateDirectory(const std::filesystem::path& directoryPath) const override;
+        FileOperationResult RenameDirectory(const std::filesystem::path& directoryPath, std::string_view name) const override;
+        FileOperationResult CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const override;
+        FileOperationResult MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const override;
+        FileOperationResult DeleteDirectory(const std::filesystem::path& directoryPath) const override;
 
         /* --- GETTER METHODS --- */
-        FileOperationResult GetFileMetadata(const std::filesystem::path &filePath, FileMetadata &outMetadata) const override;
-        FileOperationResult GetDirectoryMetadata(const std::filesystem::path &directoryPath, DirectoryMetadata &outMetadata) const override;
+        FileOperationResult GetFileMetadata(const std::filesystem::path& filePath, FileMetadata& outMetadata) const override;
+        FileOperationResult GetDirectoryMetadata(const std::filesystem::path& directoryPath, DirectoryMetadata& outMetadata) const override;
 
         [[nodiscard]] std::filesystem::path GetApplicationDirectoryPath() const override;
         [[nodiscard]] std::filesystem::path GetExecutableDirectoryPath() const override;
@@ -95,7 +95,7 @@ namespace Sierra
         [[nodiscard]] std::filesystem::path GetVideosDirectoryPath() const override;
 
         /* --- CONVERSIONS --- */
-        [[nodiscard]] static NSURL* PathToNSURL(const std::filesystem::path &path);
+        [[nodiscard]] static NSURL* PathToNSURL(const std::filesystem::path& path);
 
         /* --- DESTRUCTOR --- */
         ~FoundationFileManager() override = default;

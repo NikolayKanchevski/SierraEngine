@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Touch::Touch(const TouchCreateInfo &createInfo)
+    Touch::Touch(const TouchCreateInfo& createInfo)
         : ID(createInfo.ID), type(createInfo.type), tapTime(createInfo.tapTime), force(createInfo.force), position(createInfo.position), lastPosition(createInfo.lastPosition)
     {
 

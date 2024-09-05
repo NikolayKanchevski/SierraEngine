@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    MetalBuffer::MetalBuffer(const MetalDevice &device, const BufferCreateInfo &createInfo)
+    MetalBuffer::MetalBuffer(const MetalDevice& device, const BufferCreateInfo& createInfo)
         : Buffer(createInfo)
     {
         // Create buffer

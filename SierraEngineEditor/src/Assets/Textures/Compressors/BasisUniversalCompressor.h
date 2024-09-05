@@ -16,7 +16,7 @@ namespace SierraEngine
         BasisUniversalCompressor();
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::optional<std::vector<uint8>> Compress(const ImageCompressInfo &compressInfo) const override;
+        [[nodiscard]] std::optional<std::vector<uint8>> Compress(const ImageCompressInfo& compressInfo) const override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] ImageCompressorType GetType() const override { return ImageCompressorType::BasisUniversal; }

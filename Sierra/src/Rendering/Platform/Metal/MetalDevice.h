@@ -28,8 +28,8 @@ namespace Sierra
         MetalDevice();
 
         /* --- POLLING METHODS --- */
-        void SubmitCommandBuffer(CommandBuffer &commandBuffer, std::span<const CommandBuffer*> commandBuffersToWait = { }) const override;
-        void WaitForCommandBuffer(const CommandBuffer &commandBuffer) const override;
+        void SubmitCommandBuffer(const CommandBuffer& commandBuffer, std::span<const CommandBuffer*> commandBuffersToWait = { }) const override;
+        void WaitForCommandBuffer(const CommandBuffer& commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override;

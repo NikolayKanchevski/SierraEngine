@@ -6,7 +6,7 @@
 
 #include "../Assets/EditorAssetManager.h"
 #include "../Rendering/EditorRenderer.h"
-#include "../Rendering/EditorSurface.h"
+#include "../Editor/Editor.h"
 
 namespace SierraEngine
 {
@@ -15,7 +15,7 @@ namespace SierraEngine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit EditorApplication(const ApplicationCreateInfo &createInfo);
+        explicit EditorApplication(const ApplicationCreateInfo& createInfo);
 
         /* --- DESTRUCTOR --- */
         ~EditorApplication() override;
@@ -26,14 +26,16 @@ namespace SierraEngine
         FrameLimiter frameLimiter;
         ThreadPool threadPool;
 
-        EditorSurface surface;
+        Surface surface;
         std::unique_ptr<Sierra::ResourceTable> resourceTable;
         std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers = { };
 
-        EditorAssetManager editorAssetManager;
+        EditorAssetManager assetManager;
         Scene scene;
 
         TriangleRenderer triangleRenderer;
+
+        Editor editor;
         std::unique_ptr<EditorRenderer> editorRenderer;
 
     };

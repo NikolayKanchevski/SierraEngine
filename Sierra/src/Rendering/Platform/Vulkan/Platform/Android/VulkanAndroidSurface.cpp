@@ -7,10 +7,10 @@
 namespace Sierra
 {
 
-    VkSurfaceKHR VulkanAndroidSurface::Create(const VulkanInstance &instance, const Window &window)
+    VkSurfaceKHR VulkanAndroidSurface::Create(const VulkanInstance& instance, const Window& window)
     {
         SR_ERROR_IF(window.GetAPI() != PlatformAPI::GameActivity, "[Vulkan]: Cannot create a Android surface for Vulkan using window [{0}], which has a platform API, that differs from from [PlatformAPI::GameActivity]!", window.GetTitle());
-        const GameActivityWindow &gameActivityWindow = static_cast<const GameActivityWindow&>(window);
+        const GameActivityWindow& gameActivityWindow = static_cast<const GameActivityWindow&>(window);
 
         // Set up surface create info
         const VkAndroidSurfaceCreateInfoKHR surfaceCreateInfo

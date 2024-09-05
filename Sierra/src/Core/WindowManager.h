@@ -12,24 +12,28 @@ namespace Sierra
 
     struct WindowManagerCreateInfo
     {
-        PlatformContext &platformContext;
+        PlatformContext& platformContext;
     };
 
     class SIERRA_API WindowManager
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual std::unique_ptr<Window> CreateWindow(const WindowCreateInfo &createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<Window> CreateWindow(const WindowCreateInfo& createInfo) const = 0;
+
+        /* --- COPY SEMANTICS --- */
+        WindowManager(const WindowManager&) = delete;
+        WindowManager& operator=(const WindowManager&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        WindowManager(WindowManager&&) = delete;
+        WindowManager& operator=(WindowManager&&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~WindowManager() = default;
 
-        /* --- OPERATORS --- */
-        WindowManager(const WindowManager&) = delete;
-        WindowManager& operator=(const WindowManager&) = delete;
-
     protected:
-        explicit WindowManager(const WindowManagerCreateInfo &createInfo);
+        explicit WindowManager(const WindowManagerCreateInfo& createInfo);
 
     };
 

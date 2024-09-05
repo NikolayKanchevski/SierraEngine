@@ -11,7 +11,7 @@ namespace SierraEngine
 
     struct ArenaAllocatorCreateInfo
     {
-        const Sierra::RenderingContext &renderingContext;
+        const Sierra::RenderingContext& renderingContext;
         uint64 initialVertexBufferCapacity = 4096;
         uint64 initialIndexBufferCapacity = 8192;
     };
@@ -29,10 +29,10 @@ namespace SierraEngine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit ArenaAllocator(const ArenaAllocatorCreateInfo &createInfo);
+        explicit ArenaAllocator(const ArenaAllocatorCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] ArenaMesh RegisterMesh(Sierra::CommandBuffer &commandBuffer, std::span<const Vertex> vertices, std::span<const uint32> indices);
+        [[nodiscard]] ArenaMesh RegisterMesh(Sierra::CommandBuffer& commandBuffer, std::span<const Vertex> vertices, std::span<const uint32> indices);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint32 GetVertexCount() const { return static_cast<uint32>(currentVertexByteOffset / sizeof(Vertex)); }
@@ -41,15 +41,19 @@ namespace SierraEngine
         [[nodiscard]] uint32 GetIndexCount() const { return static_cast<uint32>(currentIndexByteOffset / sizeof(uint32)); }
         [[nodiscard]] const Sierra::Buffer& GetIndexBuffer() const { return *indexBuffer; }
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         ArenaAllocator(const ArenaAllocator&) = delete;
         ArenaAllocator& operator=(const ArenaAllocator&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        ArenaAllocator(ArenaAllocator&&) = delete;
+        ArenaAllocator& operator=(ArenaAllocator&&) = delete;
 
         /* --- DESTRUCTOR --- */
         ~ArenaAllocator() = default;
 
     private:
-        const Sierra::RenderingContext &renderingContext;
+        const Sierra::RenderingContext& renderingContext;
 
         size currentVertexByteOffset = 0;
         std::unique_ptr<Sierra::Buffer> vertexBuffer = nullptr;

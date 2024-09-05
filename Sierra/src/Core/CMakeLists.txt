@@ -24,7 +24,8 @@ target_sources(Sierra PRIVATE
     Touch.h
     TouchManager.cpp
     TouchManager.h
-        Version.h
+    UUID.hpp
+    Version.h
     Window.cpp
     Window.h
     WindowManager.cpp

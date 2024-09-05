@@ -11,10 +11,10 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VkSurfaceKHR VulkanMacOSSurface::Create(const VulkanInstance &instance, const Window &window)
+    VkSurfaceKHR VulkanMacOSSurface::Create(const VulkanInstance& instance, const Window& window)
     {
         SR_ERROR_IF(window.GetAPI() != PlatformAPI::Cocoa, "[Vulkan]: Cannot create a iOS surface for Vulkan using window [{0}], which has a platform API, that differs from from [PlatformAPI::Cocoa]!", window.GetTitle());
-        const CocoaWindow &cocoaWindow = static_cast<const CocoaWindow&>(window);
+        const CocoaWindow& cocoaWindow = static_cast<const CocoaWindow&>(window);
 
         #if MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
             // Set up surface create info

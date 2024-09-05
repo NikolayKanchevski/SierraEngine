@@ -16,7 +16,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        VulkanSampler(const VulkanDevice &device, const SamplerCreateInfo &createInfo);
+        VulkanSampler(const VulkanDevice& device, const SamplerCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override { return name; }
@@ -35,7 +35,7 @@ namespace Sierra
         [[nodiscard]] static VkBorderColor SamplerBorderColorToVkBorderColor(SamplerBorderColor borderColor);
 
     private:
-        const VulkanDevice &device;
+        const VulkanDevice& device;
 
         std::string name;
         VkSampler sampler = VK_NULL_HANDLE;

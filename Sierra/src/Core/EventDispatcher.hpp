@@ -4,12 +4,16 @@
 
 #pragma once
 
+#include "RNG.h"
+
 namespace Sierra
 {
 
-    using EventSubscriptionID = uint32;
     class SIERRA_API Event { protected: Event() = default; };
     template<typename T> concept EventType = !std::is_same_v<Event, T> && std::is_base_of_v<Event, T>;
+
+    /* --- TYPE DEFINITIONS --- */
+    using EventSubscriptionID = uint32;
 
     template<EventType EventType>
     class SIERRA_API EventDispatcher final
@@ -22,10 +26,10 @@ namespace Sierra
         EventDispatcher() = default;
 
         /* --- POLLING METHODS --- */
-        EventSubscriptionID Subscribe(const EventCallback &Callback)
+        EventSubscriptionID Subscribe(const EventCallback& Callback)
         {
             // Generate ID
-            EventSubscriptionID ID = static_cast<EventSubscriptionID>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+            const EventSubscriptionID ID = RNG().Random<EventSubscriptionID>();
 
             // Add callback
             callbacks[ID] = Callback;
@@ -40,7 +44,6 @@ namespace Sierra
 
             // Remove callback
             callbacks.erase(iterator);
-
             return true;
         }
 
@@ -49,7 +52,7 @@ namespace Sierra
         {
             // Immediately handle requested event
             EventType event = EventType(std::forward<Args>(args)...);
-            for (const auto &[ID, Callback] : callbacks)
+            for (const auto& [ID, Callback] : callbacks)
             {
                 // If event is handled, we break, so that deeper subscribers do not register it
                 if (Callback(event))
@@ -59,9 +62,13 @@ namespace Sierra
             }
         }
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         EventDispatcher(const EventDispatcher&) = delete;
         EventDispatcher& operator=(const EventDispatcher&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        EventDispatcher(EventDispatcher&&) = default;
+        EventDispatcher& operator=(EventDispatcher&&) = default;
 
         /* --- DESTRUCTOR --- */
         ~EventDispatcher() = default;

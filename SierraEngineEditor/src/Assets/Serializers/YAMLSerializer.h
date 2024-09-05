@@ -22,9 +22,9 @@ namespace SierraEngine
     protected:
         YAMLSerializer() = default;
 
-        [[nodiscard]] static size GetMetadataNodeSize(const AssetMetadata &metadata);
-        [[nodiscard]] static size GetMetadataArenaSize(const AssetMetadata &metadata);
-        static void SerializeMetadata(ryml::NodeRef root, const AssetMetadata &metadata);
+        [[nodiscard]] static size GetMetadataNodeSize(const AssetMetadata& metadata);
+        [[nodiscard]] static size GetMetadataArenaSize(const AssetMetadata& metadata);
+        static void SerializeMetadata(ryml::NodeRef root, const AssetMetadata& metadata);
 
     };
 

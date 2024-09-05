@@ -23,17 +23,17 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        MetalResourceTable(const MetalDevice &device, const ResourceTableCreateInfo &createInfo);
+        MetalResourceTable(const MetalDevice& device, const ResourceTableCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] std::string_view GetName() const override;
 
-        void BindUniformBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) override;
-        void BindStorageBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) override;
+        void BindUniformBuffer(ResourceIndex index, const Buffer& buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) override;
+        void BindStorageBuffer(ResourceIndex index, const Buffer& buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) override;
 
-        void BindSampledImage(ResourceIndex index, const Image &image) override;
-        void BindStorageImage(ResourceIndex index, const Image &image) override;
-        void BindSampler(ResourceIndex index, const Sampler &sampler) override;
+        void BindSampledImage(ResourceIndex index, const Image& image) override;
+        void BindStorageImage(ResourceIndex index, const Image& image) override;
+        void BindSampler(ResourceIndex index, const Sampler& sampler) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint32 GetUniformBufferCapacity() const override { return UNIFORM_BUFFER_CAPACITY; }
@@ -50,7 +50,7 @@ namespace Sierra
         ~MetalResourceTable() override;
 
     private:
-        const MetalDevice &device;
+        const MetalDevice& device;
         #if !defined(__OBJC__)
             using MTLArgumentEncoder = void;
             using MTLResource = void;
@@ -84,7 +84,7 @@ namespace Sierra
             [[nodiscard]] MTLResourceUsage GetUsage() const { return value >> 3 & 0x3; }
             
             /* --- TYPE DEFINITIONS --- */
-            class SIERRA_API Hasher
+            struct Hasher
             {
             public:
                 /* --- OPERATORS --- */
@@ -98,7 +98,7 @@ namespace Sierra
         private:
             // Data is a masked uint24, whose bit ranges contain the following information:
             // [0-18 - resource's index | 19-20 - resource usage | 21-24 - unused]
-            // [0000000000000000000     | 00                     | 000            ]
+            // [0000000000000000000     | 00                     | 000           ]
             uint value : 24;
 
         };

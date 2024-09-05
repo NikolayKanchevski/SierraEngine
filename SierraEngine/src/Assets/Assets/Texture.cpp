@@ -9,7 +9,7 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    Texture::Texture(const TextureCreateInfo &createInfo)
+    Texture::Texture(const TextureCreateInfo& createInfo)
         : filter(createInfo.preferredFilter)
     {
         Sierra::ImageFormat format = createInfo.preferredFormat;

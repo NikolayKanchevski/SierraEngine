@@ -16,7 +16,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        VulkanComputePipeline(const VulkanDevice &device, const ComputePipelineCreateInfo &createInfo);
+        VulkanComputePipeline(const VulkanDevice& device, const ComputePipelineCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override { return name; }
@@ -29,7 +29,7 @@ namespace Sierra
         ~VulkanComputePipeline() override;
 
     private:
-        const VulkanDevice &device;
+        const VulkanDevice& device;
 
         std::string name;
         VkPipeline pipeline = VK_NULL_HANDLE;

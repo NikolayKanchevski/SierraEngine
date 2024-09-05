@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    GameActivityTouchManager::GameActivityTouchManager(const GameActivityContext &gameActivityContext, const TouchManagerCreateInfo &createInfo)
+    GameActivityTouchManager::GameActivityTouchManager(const GameActivityContext& gameActivityContext, const TouchManagerCreateInfo& createInfo)
         : TouchManager(createInfo), gameActivityContext(gameActivityContext)
     {
 
@@ -32,8 +32,8 @@ namespace Sierra
 
         for (size i = 0; i < inputBuffer->motionEventsCount; i++)
         {
-            const GameActivityMotionEvent &motionEvent = inputBuffer->motionEvents[i];
-            const GameActivityPointerAxes &pointer = motionEvent.pointers[(motionEvent.action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT];
+            const GameActivityMotionEvent& motionEvent = inputBuffer->motionEvents[i];
+            const GameActivityPointerAxes& pointer = motionEvent.pointers[(motionEvent.action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT];
 
             switch (motionEvent.action)
             {
@@ -50,7 +50,7 @@ namespace Sierra
                     });
 
                     // Try to find the touch in the vector
-                    auto iterator = std::find(activeTouches.begin(), activeTouches.end(), touch);
+                    auto iterator = std::ranges::find(activeTouches, touch);
 
                     // Add if missing, otherwise overwrite it
                     if (iterator == activeTouches.end())
@@ -70,7 +70,7 @@ namespace Sierra
                 case AMOTION_EVENT_ACTION_MOVE:
                 {
                     // Check if touch has been stored before
-                    auto iterator = std::find_if(activeTouches.begin(), activeTouches.end(), [&pointer](const Touch &item) { return uintptr_t(item.GetID()) == pointer.id; });
+                    auto iterator = std::ranges::find_if(activeTouches, [&pointer](const Touch& item) { return uintptr_t(item.GetID()) == pointer.id; });
                     if (iterator == activeTouches.end()) continue;
 
                     // Get position within the screen and flip Y coordinate
@@ -97,7 +97,7 @@ namespace Sierra
                 case AMOTION_EVENT_ACTION_UP:
                 {
                     // Remove ended touches from the vector
-                    activeTouches.erase(std::ranges::remove_if(activeTouches.begin(), activeTouches.end(), [&pointer, this](const Touch &item)
+                    activeTouches.erase(std::ranges::remove_if(activeTouches.begin(), activeTouches.end(), [&pointer, this](const Touch& item)
                     {
                         if (uintptr_t(item.GetID()) == pointer.id)
                         {

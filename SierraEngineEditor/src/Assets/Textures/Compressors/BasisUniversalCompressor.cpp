@@ -22,7 +22,7 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    std::optional<std::vector<uint8>> BasisUniversalCompressor::Compress(const ImageCompressInfo &compressInfo) const
+    std::optional<std::vector<uint8>> BasisUniversalCompressor::Compress(const ImageCompressInfo& compressInfo) const
     {
         if (compressInfo.imageLevels.empty() || compressInfo.imageLevels[0].layers.empty())
         {

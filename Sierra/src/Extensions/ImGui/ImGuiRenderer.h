@@ -26,27 +26,27 @@ namespace Sierra
 
     struct ImGuiRenderTaskCreateInfo
     {
-        const ImGuiStyle &style = { };
+        const ImGuiStyle& style = { };
         std::span<const ImGuiFontCreateInfo> fontCreateInfos = { };
 
         uint32 concurrentFrameCount = 0;
-        const RenderingContext &renderingContext;
-        CommandBuffer &commandBuffer;
+        const RenderingContext& renderingContext;
+        CommandBuffer& commandBuffer;
 
         uint32 scaling = 1;
         ImageSampling sampling = ImageSampling::x1;
-        const Image &templateOutputImage;
+        const Image& templateOutputImage;
 
         ResourceIndex fontAtlasIndex = 0;
         ResourceIndex fontSamplerIndex = 0;
-        ResourceTable &resourceTable;
+        ResourceTable& resourceTable;
     };
 
     class SIERRA_API ImGuiRenderer final : public Renderer
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit ImGuiRenderer(const ImGuiRenderTaskCreateInfo &createInfo);
+        explicit ImGuiRenderer(const ImGuiRenderTaskCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] ImFont* GetFont(const size index) const { return ImGui::GetIO().Fonts->Fonts[static_cast<int>(baseFontIndex + index)]; }
@@ -55,13 +55,13 @@ namespace Sierra
         /* --- POLLING METHODS --- */
         void Update(const InputManager* inputManager = nullptr, const CursorManager* cursorManager = nullptr, const TouchManager* touchManager = nullptr);
         void Resize(uint32 width, uint32 height) override;
-        void Render(CommandBuffer &commandBuffer, const Image &outputImage) override;
+        void Render(CommandBuffer& commandBuffer, const Image& outputImage) override;
 
         /* --- DESTRUCTOR --- */
         ~ImGuiRenderer() override;
 
     private:
-        const RenderingContext &renderingContext;
+        const RenderingContext& renderingContext;
 
         const uint32 concurrentFrameCount = 0;
         uint32 currentFrame = 0;

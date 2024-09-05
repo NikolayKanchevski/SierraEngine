@@ -11,7 +11,7 @@ namespace SierraEngine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit RuntimeApplication(const ApplicationCreateInfo &createInfo);
+        explicit RuntimeApplication(const ApplicationCreateInfo& createInfo);
 
         /* --- DESTRUCTOR --- */
         ~RuntimeApplication() override = default;

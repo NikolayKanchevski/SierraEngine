@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    WindowManager::WindowManager(const WindowManagerCreateInfo &createInfo)
+    WindowManager::WindowManager(const WindowManagerCreateInfo& createInfo)
     {
 
     }

@@ -23,7 +23,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        MetalComputePipeline(const MetalDevice &device, const ComputePipelineCreateInfo &createInfo);
+        MetalComputePipeline(const MetalDevice& device, const ComputePipelineCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override;

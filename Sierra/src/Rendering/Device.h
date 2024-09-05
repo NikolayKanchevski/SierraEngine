@@ -6,6 +6,7 @@
 
 #include "RenderingResource.h"
 
+#include "../Core/UUID.hpp"
 #include "CommandBuffer.h"
 #include "Image.h"
 #include "Sampler.h"
@@ -17,8 +18,8 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual void SubmitCommandBuffer(CommandBuffer &commandBuffer,  std::span<const CommandBuffer*> commandBuffersToWait = { }) const = 0;
-        virtual void WaitForCommandBuffer(const CommandBuffer &commandBuffer) const = 0;
+        virtual void SubmitCommandBuffer(const CommandBuffer& commandBuffer, std::span<const CommandBuffer*> commandBuffersToWait = { }) const = 0;
+        virtual void WaitForCommandBuffer(const CommandBuffer& commandBuffer) const = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual bool IsImageFormatSupported(ImageFormat format, ImageUsage usage) const = 0;

@@ -32,7 +32,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit UIKitScreen(const UIKitScreenCreatInfo &creatInfo);
+        explicit UIKitScreen(const UIKitScreenCreatInfo& creatInfo);
 
         /* --- POLLING METHODS --- */
         void RegisterScreenReorient(ScreenOrientation orientation) override;

@@ -25,7 +25,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit GameActivityScreen(const ConfigurationScreenCreateInfo &createInfo);
+        explicit GameActivityScreen(const ConfigurationScreenCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override { return name; };

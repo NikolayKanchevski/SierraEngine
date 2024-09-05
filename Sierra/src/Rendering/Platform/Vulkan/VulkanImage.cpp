@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanImage::VulkanImage(const VulkanDevice &device, const ImageCreateInfo &createInfo)
+    VulkanImage::VulkanImage(const VulkanDevice& device, const ImageCreateInfo& createInfo)
         : Image(createInfo), device(device), width(createInfo.width), height(createInfo.height), depth(createInfo.depth), format(createInfo.format), levelCount(createInfo.levelCount), layerCount(createInfo.layerCount), sampling(createInfo.sampling),
           name(createInfo.name), usageFlags(ImageUsageToVkImageUsageFlags(createInfo.usage))
     {
@@ -84,7 +84,7 @@ namespace Sierra
         device.SetResourceName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, fmt::format("Image view of image [{0}]", name));
     }
 
-    VulkanImage::VulkanImage(const VulkanDevice &device, const SwapchainImageCreateInfo &createInfo)
+    VulkanImage::VulkanImage(const VulkanDevice& device, const SwapchainImageCreateInfo& createInfo)
         : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainVkFormatToImageFormat(createInfo.format), .usage = ImageUsage::SourceMemory | ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }), device(device),
           width(createInfo.width), height(createInfo.height), format(SwapchainVkFormatToImageFormat(createInfo.format)),
           name(createInfo.name), image(createInfo.image), usageFlags(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT), aspectFlags(VK_IMAGE_ASPECT_COLOR_BIT), swapchainImage(true)

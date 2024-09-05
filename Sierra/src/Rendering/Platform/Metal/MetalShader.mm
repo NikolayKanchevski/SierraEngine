@@ -9,10 +9,10 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    MetalShader::MetalShader(const MetalDevice &device, const ShaderCreateInfo &createInfo)
+    MetalShader::MetalShader(const MetalDevice& device, const ShaderCreateInfo& createInfo)
         : Shader(createInfo)
     {
-        const ShaderFileHeader &fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.memory.data());
+        const ShaderFileHeader& fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.memory.data());
         #if SR_PLATFORM_macOS
             const void* shaderData = createInfo.memory.data() + sizeof(ShaderFileHeader) + fileHeader.GetMacOSMetalLibOffset();
             const size shaderDataMemorySize = fileHeader.macOSMetalLibMemorySize;

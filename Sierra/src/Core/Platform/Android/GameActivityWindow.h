@@ -21,7 +21,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        GameActivityWindow(const GameActivityContext &gameActivityContext, const WindowCreateInfo &createInfo);
+        GameActivityWindow(const GameActivityContext& gameActivityContext, const WindowCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         void Update() override;
@@ -34,8 +34,8 @@ namespace Sierra
 
         /* --- SETTER METHODS --- */
         void SetTitle(std::string_view title) override;
-        void SetPosition(const Vector2Int &position) override;
-        void SetSize(const Vector2UInt &size) override;
+        void SetPosition(const Vector2Int& position) override;
+        void SetSize(const Vector2UInt& size) override;
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
@@ -54,6 +54,8 @@ namespace Sierra
         [[nodiscard]] bool IsHidden() const override;
 
         [[nodiscard]] Screen& GetScreen() const override;
+        [[nodiscard]] InputManager* GetInputManager() override;
+        [[nodiscard]] CursorManager* GetCursorManager() override;
         [[nodiscard]] TouchManager& GetTouchManager() override;
         [[nodiscard]] PlatformAPI GetAPI() const override;
 
@@ -63,7 +65,7 @@ namespace Sierra
         ~GameActivityWindow() override;
 
     private:
-        const GameActivityContext &gameActivityContext;
+        const GameActivityContext& gameActivityContext;
 
         ANativeWindow* window;
         GameActivityTouchManager touchManager;

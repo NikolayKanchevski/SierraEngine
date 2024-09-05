@@ -31,7 +31,7 @@ namespace SierraEngine
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual std::optional<std::vector<uint8>> Serialize(const TextureSerializeInfo &serializeInfo) const = 0;
+        [[nodiscard]] virtual std::optional<std::vector<uint8>> Serialize(const TextureSerializeInfo& serializeInfo) const = 0;
 
     protected:
         TextureSerializer() = default;

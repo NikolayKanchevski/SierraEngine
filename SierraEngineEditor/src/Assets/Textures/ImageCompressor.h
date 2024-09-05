@@ -44,14 +44,18 @@ namespace SierraEngine
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual std::optional<std::vector<uint8>> Compress(const ImageCompressInfo &compressInfo) const = 0;
+        [[nodiscard]] virtual std::optional<std::vector<uint8>> Compress(const ImageCompressInfo& compressInfo) const = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual ImageCompressorType GetType() const = 0;
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         ImageCompressor(const ImageCompressor&) = delete;
         ImageCompressor& operator=(const ImageCompressor&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        ImageCompressor(ImageCompressor&&) = default;
+        ImageCompressor& operator=(ImageCompressor&&) = default;
 
         /* --- DESTRUCTOR --- */
         virtual ~ImageCompressor() = default;

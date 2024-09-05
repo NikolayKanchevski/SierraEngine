@@ -17,11 +17,11 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        VulkanSwapchain(const VulkanInstance &instance, const VulkanDevice &device, const SwapchainCreateInfo &createInfo);
+        VulkanSwapchain(const VulkanInstance& instance, const VulkanDevice& device, const SwapchainCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         void AcquireNextImage() override;
-        void Present(CommandBuffer &commandBuffer) override;
+        void Present(CommandBuffer& commandBuffer) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override { return name; }
@@ -37,9 +37,9 @@ namespace Sierra
         ~VulkanSwapchain() override;
 
     private:
-        const VulkanInstance &instance;
-        const VulkanDevice &device;
-        Window &window;
+        const VulkanInstance& instance;
+        const VulkanDevice& device;
+        Window& window;
 
         VkSurfaceKHR surface = VK_NULL_HANDLE;
         VkQueue presentationQueue = VK_NULL_HANDLE;

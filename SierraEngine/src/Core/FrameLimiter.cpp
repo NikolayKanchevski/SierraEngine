@@ -9,7 +9,7 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    FrameLimiter::FrameLimiter(const FrameLimiterCreateInfo &createInfo)
+    FrameLimiter::FrameLimiter(const FrameLimiterCreateInfo& createInfo)
         : maxFrameRate(createInfo.maxFrameRate)
     {
 

@@ -11,11 +11,11 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    MetalComputePipeline::MetalComputePipeline(const MetalDevice &device, const ComputePipelineCreateInfo &createInfo)
+    MetalComputePipeline::MetalComputePipeline(const MetalDevice& device, const ComputePipelineCreateInfo& createInfo)
         : ComputePipeline(createInfo)
     {
         SR_ERROR_IF(createInfo.computeShader.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot create compute pipeline [{0}] with vertex shader [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", createInfo.name, createInfo.computeShader.GetName());
-        const MetalShader &metalComputeShader = static_cast<const MetalShader&>(createInfo.computeShader);
+        const MetalShader& metalComputeShader = static_cast<const MetalShader&>(createInfo.computeShader);
 
         // Allocate pipeline descriptor
         MTLComputePipelineDescriptor* const computePipelineDescriptor = [[MTLComputePipelineDescriptor alloc] init];

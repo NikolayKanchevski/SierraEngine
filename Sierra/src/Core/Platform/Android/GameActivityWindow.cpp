@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    GameActivityWindow::GameActivityWindow(const GameActivityContext &gameActivityContext, const WindowCreateInfo &createInfo)
+    GameActivityWindow::GameActivityWindow(const GameActivityContext& gameActivityContext, const WindowCreateInfo& createInfo)
         : Window(createInfo),
             gameActivityContext(gameActivityContext),
             touchManager(gameActivityContext, { }),
@@ -83,12 +83,12 @@ namespace Sierra
         title = newTitle;
     }
 
-    void GameActivityWindow::SetPosition(const Vector2Int &position)
+    void GameActivityWindow::SetPosition(const Vector2Int& position)
     {
         // Not applicable
     }
 
-    void GameActivityWindow::SetSize(const Vector2UInt &size)
+    void GameActivityWindow::SetSize(const Vector2UInt& size)
     {
         // Not applicable
     }
@@ -165,9 +165,19 @@ namespace Sierra
         return gameActivityContext.GetPrimaryScreen();
     }
 
-    TouchManager& GameActivityWindow::GetTouchManager()
+    InputManager* GameActivityWindow::GetInputManager()
     {
-        return touchManager;
+        return nullptr;
+    }
+
+    CursorManager* GameActivityWindow::GetCursorManager()
+    {
+        return nullptr;
+    }
+
+    TouchManager* GameActivityWindow::GetTouchManager()
+    {
+        return &touchManager;
     }
 
     PlatformAPI GameActivityWindow::GetAPI() const

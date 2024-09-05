@@ -24,7 +24,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        MetalRenderPass(const MetalDevice &device, const RenderPassCreateInfo &createInfo);
+        MetalRenderPass(const MetalDevice& device, const RenderPassCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         void Resize(uint32 width, uint32 height) override;

@@ -25,7 +25,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Win32Screen(const Win32ScreenCreateInfo &createInfo);
+        explicit Win32Screen(const Win32ScreenCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override { return name; };

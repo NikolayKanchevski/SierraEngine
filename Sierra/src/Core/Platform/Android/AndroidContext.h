@@ -19,7 +19,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit AndroidContext(const PlatformContextCreateInfo &createInfo);
+        explicit AndroidContext(const PlatformContextCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] const GameActivityContext& GetGameActivityContext() const { return activityContext; }

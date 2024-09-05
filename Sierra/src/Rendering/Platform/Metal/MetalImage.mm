@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    MetalImage::MetalImage(const MetalDevice &device, const ImageCreateInfo &createInfo)
+    MetalImage::MetalImage(const MetalDevice& device, const ImageCreateInfo& createInfo)
         : Image(createInfo), width(createInfo.width), height(createInfo.height), depth(createInfo.depth), format(createInfo.format), levelCount(createInfo.levelCount), layerCount(createInfo.layerCount), sampling(createInfo.sampling)
     {
         SR_ERROR_IF(!device.IsImageSamplingSupported(createInfo.sampling), "[Metal]: Cannot create image [{0}] with unsupported sampling! Use Device::IsImageSamplingSupported() to query image sampling support.", createInfo.name);
@@ -38,7 +38,7 @@ namespace Sierra
         [textureDescriptor release];
     }
 
-    MetalImage::MetalImage(const MetalDevice &device, const SwapchainImageCreateInfo &createInfo)
+    MetalImage::MetalImage(const MetalDevice& device, const SwapchainImageCreateInfo& createInfo)
         : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainPixelFormatToImageFormat(createInfo.format), .usage = ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }),
           width(createInfo.width), height(createInfo.height), format(SwapchainPixelFormatToImageFormat(createInfo.format)), texture(createInfo.texture), swapchainImage(true)
     {

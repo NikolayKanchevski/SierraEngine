@@ -71,7 +71,7 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    FileOperationResult FoundationFileStream::Read(const size memorySize, std::vector<uint8> &outData)
+    FileOperationResult FoundationFileStream::Read(const size memorySize, std::vector<uint8>& outData)
     {
         NSError* error = nil;
         NSData* const data = [fileHandle readDataUpToLength: memorySize error: &error];
@@ -128,14 +128,14 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    bool FoundationFileManager::FileExists(const std::filesystem::path &filePath) const
+    bool FoundationFileManager::FileExists(const std::filesystem::path& filePath) const
     {
         const std::string filePathString = filePath.string();
         NSString* const path = [NSString stringWithUTF8String: filePathString.c_str()];
         return [fileManager fileExistsAtPath: path];
     }
 
-    FileOperationResult FoundationFileManager::OpenFileStream(const std::filesystem::path &filePath, const FileStreamAccess access, const FileStreamBuffering buffering, std::unique_ptr<FileStream> &outFileStream) const
+    FileOperationResult FoundationFileManager::OpenFileStream(const std::filesystem::path& filePath, const FileStreamAccess access, const FileStreamBuffering buffering, std::unique_ptr<FileStream>& outFileStream) const
     {
         NSURL* const URL = PathToNSURL(filePath);
 
@@ -168,14 +168,14 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    FileOperationResult FoundationFileManager::CreateFile(const std::filesystem::path &filePath) const
+    FileOperationResult FoundationFileManager::CreateFile(const std::filesystem::path& filePath) const
     {
         const std::string filePathString = filePath.string();
         NSString* const path = [NSString stringWithUTF8String: filePathString.c_str()];
         return [fileManager createFileAtPath: path contents: [NSData data] attributes: nil] ? FileOperationResult::Success : FileOperationResult::UnknownError;
     }
 
-    FileOperationResult FoundationFileManager::RenameFile(const std::filesystem::path &filePath, const std::string_view name) const
+    FileOperationResult FoundationFileManager::RenameFile(const std::filesystem::path& filePath, const std::string_view name) const
     {
 
         NSURL* const sourceURL = PathToNSURL(filePath);
@@ -191,7 +191,7 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    FileOperationResult FoundationFileManager::CopyFile(const std::filesystem::path &sourceFilePath, const std::filesystem::path &destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
+    FileOperationResult FoundationFileManager::CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
         std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceFilePath.filename();
         if (FileExists(destinationFilePath))
@@ -232,7 +232,7 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    FileOperationResult FoundationFileManager::MoveFile(const std::filesystem::path &sourceFilePath, const std::filesystem::path &destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
+    FileOperationResult FoundationFileManager::MoveFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
         std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceFilePath.filename();
         if (FileExists(destinationFilePath))
@@ -273,7 +273,7 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    FileOperationResult FoundationFileManager::DeleteFile(const std::filesystem::path &filePath) const
+    FileOperationResult FoundationFileManager::DeleteFile(const std::filesystem::path& filePath) const
     {
         NSURL* const URL = PathToNSURL(filePath);
 
@@ -285,18 +285,18 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    bool FoundationFileManager::DirectoryExists(const std::filesystem::path &directoryPath) const
+    bool FoundationFileManager::DirectoryExists(const std::filesystem::path& directoryPath) const
     {
         const std::string directoryPathString = directoryPath.string();
         NSString* const path = [NSString stringWithUTF8String: directoryPathString.c_str()];
         return [fileManager fileExistsAtPath: path];
     }
 
-    FileOperationResult FoundationFileManager::EnumerateDirectoryFiles(const std::filesystem::path &directoryPath, std::vector<std::filesystem::path> &outFiles, const bool recursive) const
+    FileOperationResult FoundationFileManager::EnumerateDirectoryFiles(const std::filesystem::path& directoryPath, std::vector<std::filesystem::path>& outFiles, const bool recursive) const
     {
         if (!recursive)
         {
-            for (const std::filesystem::path &path : std::filesystem::directory_iterator(directoryPath))
+            for (const std::filesystem::path& path : std::filesystem::directory_iterator(directoryPath))
             {
                 if (is_directory(path) || is_symlink(path)) continue;
                 outFiles.emplace_back(path);
@@ -304,7 +304,7 @@ namespace Sierra
         }
         else
         {
-            for (const std::filesystem::path &path : std::filesystem::recursive_directory_iterator(directoryPath))
+            for (const std::filesystem::path& path : std::filesystem::recursive_directory_iterator(directoryPath))
             {
                 if (is_directory(path) || is_symlink(path)) continue;
                 outFiles.emplace_back(path);
@@ -314,7 +314,7 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    FileOperationResult FoundationFileManager::CreateDirectory(const std::filesystem::path &directoryPath) const
+    FileOperationResult FoundationFileManager::CreateDirectory(const std::filesystem::path& directoryPath) const
     {
         NSURL* const URL = PathToNSURL(directoryPath);
 
@@ -326,7 +326,7 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    FileOperationResult FoundationFileManager::RenameDirectory(const std::filesystem::path &directoryPath, const std::string_view name) const
+    FileOperationResult FoundationFileManager::RenameDirectory(const std::filesystem::path& directoryPath, const std::string_view name) const
     {
         NSURL* const sourceURL = PathToNSURL(directoryPath);
         NSURL* const destinationURL = PathToNSURL(directoryPath.parent_path() / name);
@@ -341,7 +341,7 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    FileOperationResult FoundationFileManager::CopyDirectory(const std::filesystem::path &sourceDirectoryPath, const std::filesystem::path &destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
+    FileOperationResult FoundationFileManager::CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
         std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceDirectoryPath.filename();
         if (DirectoryExists(destinationFilePath))
@@ -384,7 +384,7 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    FileOperationResult FoundationFileManager::MoveDirectory(const std::filesystem::path &sourceDirectoryPath, const std::filesystem::path &destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
+    FileOperationResult FoundationFileManager::MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
         std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceDirectoryPath.filename();
         if (DirectoryExists(destinationFilePath))
@@ -427,7 +427,7 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    FileOperationResult FoundationFileManager::DeleteDirectory(const std::filesystem::path &directoryPath) const
+    FileOperationResult FoundationFileManager::DeleteDirectory(const std::filesystem::path& directoryPath) const
     {
         NSURL* const URL = PathToNSURL(directoryPath);
 
@@ -441,7 +441,7 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    FileOperationResult FoundationFileManager::GetFileMetadata(const std::filesystem::path &filePath, FileMetadata &outMetadata) const
+    FileOperationResult FoundationFileManager::GetFileMetadata(const std::filesystem::path& filePath, FileMetadata& outMetadata) const
     {
         const std::string filePathString = filePath.string();
         NSString* const path = [[NSString alloc] initWithBytes: filePathString.data() length: filePathString.size() encoding: NSASCIIStringEncoding];
@@ -470,7 +470,7 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    FileOperationResult FoundationFileManager::GetDirectoryMetadata(const std::filesystem::path &directoryPath, DirectoryMetadata &outMetadata) const
+    FileOperationResult FoundationFileManager::GetDirectoryMetadata(const std::filesystem::path& directoryPath, DirectoryMetadata& outMetadata) const
     {
         const std::string directoryPathString = directoryPath.string();
         NSString* const path = [[NSString alloc] initWithBytes: directoryPathString.data() length: directoryPathString.size() encoding: NSASCIIStringEncoding];
@@ -489,7 +489,7 @@ namespace Sierra
 
         uint32 fileCount = 0;
         size memorySize = 0;
-        for (const std::filesystem::path &currentPath : std::filesystem::recursive_directory_iterator(directoryPath))
+        for (const std::filesystem::path& currentPath : std::filesystem::recursive_directory_iterator(directoryPath))
         {
             if (is_directory(currentPath) || is_symlink(currentPath)) continue;
             memorySize += std::filesystem::file_size(currentPath);
@@ -609,7 +609,7 @@ namespace Sierra
 
     /* --- CONVERSIONS --- */
 
-    NSURL* FoundationFileManager::PathToNSURL(const std::filesystem::path &givenPath)
+    NSURL* FoundationFileManager::PathToNSURL(const std::filesystem::path& givenPath)
     {
         const std::string pathString = givenPath.string();
         NSString* const path = [[NSString alloc] initWithBytes: pathString.data() length: pathString.size() encoding: NSASCIIStringEncoding];

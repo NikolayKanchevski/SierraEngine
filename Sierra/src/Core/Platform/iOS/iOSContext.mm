@@ -11,7 +11,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    iOSContext::iOSContext(const PlatformContextCreateInfo &createInfo)
+    iOSContext::iOSContext(const PlatformContextCreateInfo& createInfo)
         : PlatformContext(createInfo), uiKitContext({ .application = [UIApplication sharedApplication] })
     {
         

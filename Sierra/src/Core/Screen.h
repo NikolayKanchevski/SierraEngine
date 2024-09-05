@@ -63,14 +63,18 @@ namespace Sierra
 
         /* --- EVENTS --- */
         template<ScreenEventType EventType>
-        EventSubscriptionID AddEventListener(EventCallback<EventType>);
+        EventSubscriptionID AddEventListener(const EventCallback<EventType>&);
 
         template<ScreenEventType EventType>
         bool RemoveEventListener(EventSubscriptionID);
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         Screen(const Screen&) = delete;
         Screen& operator=(const Screen&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        Screen(Screen&&) = default;
+        Screen& operator=(Screen&&) = default;
 
         /* --- DESTRUCTOR --- */
         virtual ~Screen() = default;
@@ -85,7 +89,7 @@ namespace Sierra
 
     };
 
-    template<> inline EventSubscriptionID Screen::AddEventListener<ScreenReorientEvent>(EventCallback<ScreenReorientEvent> Callback) { return screenReorientDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID Screen::AddEventListener<ScreenReorientEvent>(const EventCallback<ScreenReorientEvent>& Callback) { return screenReorientDispatcher.Subscribe(Callback); }
     template<> inline bool Screen::RemoveEventListener<ScreenReorientEvent>(const EventSubscriptionID ID) { return screenReorientDispatcher.Unsubscribe(ID); }
 
 }

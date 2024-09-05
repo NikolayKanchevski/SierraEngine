@@ -118,6 +118,7 @@
         using ullong = unsigned long long;
         using ldouble = long double;
         using size = size_t;
+        using hash = size_t;
 
 	    using Vector2 = glm::vec<2, float32>;
 	    using Vector3 = glm::vec<3, float32>;
@@ -149,9 +150,9 @@
             inline constexpr T operator| (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type_t<T>>(a) | static_cast<std::underlying_type_t<T>>(b)); }               \
             inline constexpr std::underlying_type_t<T> operator& (const T a, const T b) { return static_cast<std::underlying_type_t<T>>(a) & static_cast<std::underlying_type_t<T>>(b); }       \
             inline constexpr T operator^ (const T a, const T b) { return static_cast<T>(static_cast<std::underlying_type_t<T>>(a) ^ static_cast<std::underlying_type_t<T>>(b)); }               \
-            inline T& operator|= (T &a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) |= static_cast<std::underlying_type_t<T>>(b)); }               \
-            inline T& operator&= (T &a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) &= static_cast<std::underlying_type_t<T>>(b)); }               \
-            inline T& operator^= (T &a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) ^= static_cast<std::underlying_type_t<T>>(b)); }
+            inline T& operator|= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) |= static_cast<std::underlying_type_t<T>>(b)); }               \
+            inline T& operator&= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) &= static_cast<std::underlying_type_t<T>>(b)); }               \
+            inline T& operator^= (T& a, const T b) { return reinterpret_cast<T&>(reinterpret_cast<std::underlying_type_t<T>&>(a) ^= static_cast<std::underlying_type_t<T>>(b)); }
     #pragma endregion
 
     #pragma region Source Files

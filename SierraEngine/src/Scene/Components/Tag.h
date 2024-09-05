@@ -13,23 +13,23 @@ namespace SierraEngine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Tag(std::string_view tag = "Tag");
+        Tag() = default;
+        explicit Tag(std::string_view tag);
 
         /* --- SETTER METHODS --- */
         void SetTag(std::string_view tag);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetTag() const { return tagMemory.data(); }
+        [[nodiscard]] std::string_view GetTag() const { return tag; }
 
         /* --- TYPE DATA --- */
         [[nodiscard]] constexpr static std::string_view GetName() { return "Tag"; }
-        [[nodiscard]] constexpr static Signature GetSignature() { return { 'T', 'A', 'G', 'G' }; }
 
         /* --- DESTRUCTORS --- */
         ~Tag() = default;
 
     private:
-        std::array<char, 32> tagMemory = { 'T', 'a', 'g' };
+        std::string tag;
 
     };
 

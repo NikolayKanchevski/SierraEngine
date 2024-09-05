@@ -16,7 +16,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        VulkanImage(const VulkanDevice &device, const ImageCreateInfo &createInfo);
+        VulkanImage(const VulkanDevice& device, const ImageCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override { return name; }
@@ -47,7 +47,7 @@ namespace Sierra
         static VkImageViewType ImageTypeToVkImageViewType(ImageType type, uint32 layerCount);
 
     private:
-        const VulkanDevice &device;
+        const VulkanDevice& device;
 
         uint32 width = 0;
         uint32 height = 0;
@@ -78,7 +78,7 @@ namespace Sierra
         };
 
         bool swapchainImage = false;
-        VulkanImage(const VulkanDevice &device, const SwapchainImageCreateInfo &createInfo);
+        VulkanImage(const VulkanDevice& device, const SwapchainImageCreateInfo& createInfo);
         [[nodiscard]] static ImageFormat SwapchainVkFormatToImageFormat(VkFormat format);
 
     };

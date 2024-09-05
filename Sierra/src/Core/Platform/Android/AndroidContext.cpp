@@ -12,7 +12,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    AndroidContext::AndroidContext(const PlatformContextCreateInfo &createInfo)
+    AndroidContext::AndroidContext(const PlatformContextCreateInfo& createInfo)
         : PlatformContext(createInfo), activityContext({ .app = app })
     {
 

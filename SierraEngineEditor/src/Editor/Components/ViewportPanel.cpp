@@ -2,14 +2,14 @@
 // Created by Nikolay Kanchevski on 24.06.24.
 //
 
-#include "RenderPanel.h"
+#include "ViewportPanel.h"
 
 namespace SierraEngine
 {
 
     /* --- POLLING METHODS --- */
 
-    void RenderPanel::Draw(const Sierra::Image &renderedImage)
+    void ViewportPanel::Draw(const Sierra::Image& renderedImage)
     {
         if (ImGui::Begin("Rendered Image", nullptr, 0))
         {

@@ -43,7 +43,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit WindowMoveEvent(const Vector2Int &position) : position(position) { }
+        explicit WindowMoveEvent(const Vector2Int& position) : position(position) { }
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] Vector2Int GetPosition() const { return position; }
@@ -123,8 +123,8 @@ namespace Sierra
 
         /* --- SETTER METHODS --- */
         virtual void SetTitle(std::string_view title) = 0;
-        virtual void SetPosition(const Vector2Int &position) = 0;
-        virtual void SetSize(const Vector2UInt &size) = 0;
+        virtual void SetPosition(const Vector2Int& position) = 0;
+        virtual void SetSize(const Vector2UInt& size) = 0;
         virtual void SetOpacity(float32 opacity) = 0;
 
         /* --- GETTER METHODS --- */
@@ -143,27 +143,31 @@ namespace Sierra
         [[nodiscard]] virtual bool IsHidden() const = 0;
 
         [[nodiscard]] virtual Screen& GetScreen() const = 0;
-        [[nodiscard]] virtual InputManager& GetInputManager();
-        [[nodiscard]] virtual CursorManager& GetCursorManager();
-        [[nodiscard]] virtual TouchManager& GetTouchManager();
+        [[nodiscard]] virtual InputManager* GetInputManager() = 0;
+        [[nodiscard]] virtual CursorManager* GetCursorManager() = 0;
+        [[nodiscard]] virtual TouchManager* GetTouchManager() = 0;
         [[nodiscard]] virtual PlatformAPI GetAPI() const = 0;
 
         /* --- EVENTS --- */
         template<WindowEventType EventType>
-        EventSubscriptionID AddEventListener(EventCallback<EventType>);
+        EventSubscriptionID AddEventListener(const EventCallback<EventType>&);
 
         template<WindowEventType EventType>
         bool RemoveEventListener(EventSubscriptionID);
-        
-        /* --- OPERATORS --- */
+
+        /* --- COPY SEMANTICS --- */
         Window(const Window&) = delete;
         Window& operator=(const Window&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        Window(Window&&) = default;
+        Window& operator=(Window&&) = default;
 
         /* --- DESTRUCTOR --- */
         virtual ~Window() = default;
 
     protected:
-        explicit Window(const WindowCreateInfo &createInfo);
+        explicit Window(const WindowCreateInfo& createInfo);
 
         [[nodiscard]] EventDispatcher<WindowMoveEvent>& GetWindowMoveDispatcher() { return windowMoveDispatcher; }
         [[nodiscard]] EventDispatcher<WindowResizeEvent>& GetWindowResizeDispatcher() { return windowResizeDispatcher; }
@@ -182,22 +186,22 @@ namespace Sierra
 
     };
 
-    template<> inline EventSubscriptionID Window::AddEventListener<WindowMoveEvent>(EventCallback<WindowMoveEvent> Callback) { return windowMoveDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID Window::AddEventListener<WindowMoveEvent>(const EventCallback<WindowMoveEvent>& Callback) { return windowMoveDispatcher.Subscribe(Callback); }
     template<> inline bool Window::RemoveEventListener<WindowMoveEvent>(const EventSubscriptionID ID) { return windowMoveDispatcher.Unsubscribe(ID); }
 
-    template<> inline EventSubscriptionID Window::AddEventListener<WindowResizeEvent>(EventCallback<WindowResizeEvent> Callback) { return windowResizeDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID Window::AddEventListener<WindowResizeEvent>(const EventCallback<WindowResizeEvent>& Callback) { return windowResizeDispatcher.Subscribe(Callback); }
     template<> inline bool Window::RemoveEventListener<WindowResizeEvent>(const EventSubscriptionID ID) { return windowResizeDispatcher.Unsubscribe(ID); }
 
-    template<> inline EventSubscriptionID Window::AddEventListener<WindowFocusEvent>(EventCallback<WindowFocusEvent> Callback) { return windowFocusDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID Window::AddEventListener<WindowFocusEvent>(const EventCallback<WindowFocusEvent>& Callback) { return windowFocusDispatcher.Subscribe(Callback); }
     template<> inline bool Window::RemoveEventListener<WindowFocusEvent>(const EventSubscriptionID ID) { return windowFocusDispatcher.Unsubscribe(ID); }
 
-    template<> inline EventSubscriptionID Window::AddEventListener<WindowMinimizeEvent>(EventCallback<WindowMinimizeEvent> Callback) { return windowMinimizeDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID Window::AddEventListener<WindowMinimizeEvent>(const EventCallback<WindowMinimizeEvent>& Callback) { return windowMinimizeDispatcher.Subscribe(Callback); }
     template<> inline bool Window::RemoveEventListener<WindowMinimizeEvent>(const EventSubscriptionID ID) { return windowMinimizeDispatcher.Unsubscribe(ID); }
 
-    template<> inline EventSubscriptionID Window::AddEventListener<WindowMaximizeEvent>(EventCallback<WindowMaximizeEvent> Callback) { return windowMaximizeDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID Window::AddEventListener<WindowMaximizeEvent>(const EventCallback<WindowMaximizeEvent>& Callback) { return windowMaximizeDispatcher.Subscribe(Callback); }
     template<> inline bool Window::RemoveEventListener<WindowMaximizeEvent>(const EventSubscriptionID ID) { return windowMaximizeDispatcher.Unsubscribe(ID); }
 
-    template<> inline EventSubscriptionID Window::AddEventListener<WindowCloseEvent>(EventCallback<WindowCloseEvent> Callback) { return windowCloseDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID Window::AddEventListener<WindowCloseEvent>(const EventCallback<WindowCloseEvent>& Callback) { return windowCloseDispatcher.Subscribe(Callback); }
     template<> inline bool Window::RemoveEventListener<WindowCloseEvent>(const EventSubscriptionID ID) { return windowCloseDispatcher.Unsubscribe(ID); }
 
 

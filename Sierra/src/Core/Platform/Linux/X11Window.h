@@ -20,7 +20,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit X11Window(const X11Context &x11Context, const WindowCreateInfo &createInfo);
+        explicit X11Window(const X11Context& x11Context, const WindowCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         void Update() override;
@@ -33,8 +33,8 @@ namespace Sierra
 
         /* --- SETTER METHODS --- */
         void SetTitle(std::string_view title) override;
-        void SetPosition(const Vector2Int &position) override;
-        void SetSize(const Vector2UInt &size) override;
+        void SetPosition(const Vector2Int& position) override;
+        void SetSize(const Vector2UInt& size) override;
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
@@ -52,8 +52,9 @@ namespace Sierra
         [[nodiscard]] bool IsHidden() const override;
 
         [[nodiscard]] Screen& GetScreen() const override;
-        [[nodiscard]] InputManager& GetInputManager() override;
-        [[nodiscard]] CursorManager& GetCursorManager() override;
+        [[nodiscard]] InputManager* GetInputManager() override;
+        [[nodiscard]] CursorManager* GetCursorManager() override;
+        [[nodiscard]] TouchManager* GetTouchManager() override;
         [[nodiscard]] PlatformAPI GetAPI() const override;
 
         [[nodiscard]] XID GetX11Window() const { return window; }
@@ -63,7 +64,7 @@ namespace Sierra
         ~X11Window() override;
 
     private:
-        const X11Context &x11Context;
+        const X11Context& x11Context;
         XID window;
 
         X11InputManager inputManager;
@@ -88,7 +89,7 @@ namespace Sierra
             std::queue<XEvent> queue = { };
         };
         static std::vector<WindowEventQueue> unhandledEventQueues;
-        void HandleX11Event(XEvent &event);
+        void HandleX11Event(XEvent& event);
 
     };
 

@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    UIKitContext::UIKitContext(const Sierra::UIKitContextCreateInfo &createInfo)
+    UIKitContext::UIKitContext(const Sierra::UIKitContextCreateInfo& createInfo)
         : application(createInfo.application), screen({ .screen = [UIScreen mainScreen] })
     {
 

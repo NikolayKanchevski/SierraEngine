@@ -29,9 +29,6 @@ namespace Sierra
         [[nodiscard]] float64 GetDurationInSeconds() const { return duration / 1'000.0; }
 
         /* --- OPERATORS --- */
-        TimeStep(const TimeStep&) = default;
-        TimeStep& operator=(const TimeStep&) = default;
-
         [[nodiscard]] bool operator==(const TimeStep other) const { return duration == other.duration; }
         [[nodiscard]] bool operator!=(const TimeStep other) const { return !(*this == other); }
 
@@ -43,6 +40,14 @@ namespace Sierra
         [[nodiscard]] TimeStep operator+(const TimeStep other) const { return TimeStep(duration + other.duration); }
         [[nodiscard]] TimeStep operator-(const TimeStep other) const { return TimeStep(duration - other.duration); }
 
+        /* --- COPY SEMANTICS --- */
+        TimeStep(const TimeStep&) = default;
+        TimeStep& operator=(const TimeStep&) = default;
+
+        /* --- MOVE SEMANTICS --- */
+        TimeStep(TimeStep&&) = default;
+        TimeStep& operator=(TimeStep&&) = default;
+
     private:
         float64 duration = 0.0f;
 
@@ -53,19 +58,25 @@ namespace Sierra
     public:
         /* --- CONSTRUCTORS --- */
         TimePoint() = default;
+
         explicit TimePoint(std::chrono::system_clock::time_point timePoint);
         static TimePoint Now();
 
         /* --- OPERATORS --- */
-        TimePoint(const TimePoint&) = default;
-        TimePoint& operator=(const TimePoint&) = default;
-
         [[nodiscard]] bool operator==(const TimePoint other) const { return timePoint == other.timePoint; }
         [[nodiscard]] bool operator!=(const TimePoint other) const { return !(*this == other); }
 
         [[nodiscard]] TimePoint operator+(TimeStep step) const;
         [[nodiscard]] TimePoint operator-(TimeStep step) const;
         [[nodiscard]] TimeStep operator-(TimePoint other) const;
+
+        /* --- COPY SEMANTICS --- */
+        TimePoint(const TimePoint&) = default;
+        TimePoint& operator=(const TimePoint&) = default;
+
+        /* --- MOVE SEMANTICS --- */
+        TimePoint(TimePoint&&) = default;
+        TimePoint& operator=(TimePoint&&) = default;
 
     private:
         friend class Date;
@@ -102,11 +113,11 @@ namespace Sierra
 
     struct DateCreateInfo
     {
-        uint8 second = 0; // [0, 60]
-        uint8 minute = 0; // [0, 59]
-        uint8 hour = 0;   // [0, 23]
+        uint8 second = 0;
+        uint8 minute = 0;
+        uint8 hour = 0;
         Month month = Month::January;
-        uint8 day = 1;    // [1, 31]
+        uint8 day = 1;
         uint16 year = 0;
     };
 
@@ -114,9 +125,8 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Date() = default;
-        explicit Date(const DateCreateInfo &createInfo);
-        explicit Date(const TimePoint &point);
+        explicit Date(const DateCreateInfo& createInfo);
+        explicit Date(const TimePoint& point = TimePoint::Now());
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint8 GetSecond() const { return second; }
@@ -129,31 +139,36 @@ namespace Sierra
         [[nodiscard]] Day GetWeekDay() const { return weekDay; }
         [[nodiscard]] uint16 GetYearDay() const { return yearDay; }
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         Date(const Date&) = default;
         Date& operator=(const Date&) = default;
 
-        [[nodiscard]] bool operator==(Date other) const;
-        [[nodiscard]] bool operator!=(Date other) const;
+        /* --- MOVE SEMANTICS --- */
+        Date(Date&&) = default;
+        Date& operator=(Date&&) = default;
 
-        [[nodiscard]] bool operator<(Date other) const;
-        [[nodiscard]] bool operator>(Date other) const;
-        [[nodiscard]] bool operator<=(Date other) const;
-        [[nodiscard]] bool operator>=(Date other) const;
+        /* --- OPERATORS --- */
+        [[nodiscard]] bool operator==(const Date other) const { return year == other.year && yearDay == other.yearDay && hour == other.hour && minute == other.minute && second == other.second; }
+        [[nodiscard]] bool operator!=(const Date other) const { return !(*this == other); }
+
+        [[nodiscard]] bool operator<(const Date other) const;
+        [[nodiscard]] bool operator>(const Date other) const { return !(*this < other) && !(*this == other); }
+        [[nodiscard]] bool operator<=(const Date other) const { return *this < other || *this == other; }
+        [[nodiscard]] bool operator>=(const Date other) const { return *this > other || *this == other; }
 
         /* --- DESTRUCTORS --- */
         ~Date() = default;
 
     private:
-        uint8 second = 0; // [0, 60]
-        uint8 minute = 0; // [0, 59]
-        uint8 hour = 0;   // [0, 23]
+        uint8 second = 0;
+        uint8 minute = 0;
+        uint8 hour = 0;
         Month month = Month::January;
-        uint8 day = 0;    // [1-31]
+        uint8 day = 0;
         uint16 year = 0;
 
         Day weekDay = Day::Monday;
-        uint16 yearDay = 0;   // [0, 365]
+        uint16 yearDay = 0;
 
     };
 

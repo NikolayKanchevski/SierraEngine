@@ -13,7 +13,7 @@ namespace Sierra
 {
     /* --- CONSTRUCTORS --- */
 
-    X11InputManager::X11InputManager(const XkbExtension &xkbExtension, const InputManagerCreateInfo &createInfo)
+    X11InputManager::X11InputManager(const XkbExtension& xkbExtension, const InputManagerCreateInfo& createInfo)
         : InputManager(createInfo), xkbExtension(xkbExtension)
     {
 
@@ -77,7 +77,7 @@ namespace Sierra
 
     /* --- EVENTS --- */
 
-    void X11InputManager::KeyPressEvent(const XEvent &event)
+    void X11InputManager::KeyPressEvent(const XEvent& event)
     {
         // Prevent out of bounds error
         if (event.xkey.keycode >= xkbExtension.GetKeyTable().size()) return;
@@ -91,7 +91,7 @@ namespace Sierra
         GetKeyPressDispatcher().DispatchEvent(key);
     }
 
-    void X11InputManager::KeyReleaseEvent(const XEvent &event)
+    void X11InputManager::KeyReleaseEvent(const XEvent& event)
     {
         // Prevent out of bounds error
         if (event.xkey.keycode >= xkbExtension.GetKeyTable().size()) return;
@@ -105,7 +105,7 @@ namespace Sierra
         GetKeyReleaseDispatcher().DispatchEvent(key);
     }
 
-    void X11InputManager::ButtonPressEvent(const XEvent &event)
+    void X11InputManager::ButtonPressEvent(const XEvent& event)
     {
         switch (event.xbutton.button)
         {
@@ -184,7 +184,7 @@ namespace Sierra
         }
     }
 
-    void X11InputManager::ButtonReleaseEvent(const XEvent &event)
+    void X11InputManager::ButtonReleaseEvent(const XEvent& event)
     {
         switch (event.xbutton.button)
         {

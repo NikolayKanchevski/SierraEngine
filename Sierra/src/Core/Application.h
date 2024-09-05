@@ -22,7 +22,7 @@ namespace Sierra
     {
         std::string_view name = "Sierra Application";
         Version version = Version({ 1, 0, 0 });
-        const ApplicationSettings &settings = { };
+        const ApplicationSettings& settings = { };
     };
 
     class SIERRA_API Application
@@ -35,15 +35,19 @@ namespace Sierra
         [[nodiscard]] std::string_view GetName() const { return name; }
         [[nodiscard]] Version GetVersion() const { return version; }
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         Application(const Application&) = delete;
         Application& operator=(const Application&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        Application(Application&&) = delete;
+        Application& operator=(Application&&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~Application() = default;
 
     protected:
-        explicit Application(const ApplicationCreateInfo &createInfo);
+        explicit Application(const ApplicationCreateInfo& createInfo);
 
         [[nodiscard]] const PlatformContext& GetPlatformContext() const { return *platformContext; }
         [[nodiscard]] const FileManager& GetFileManager() const { return *fileManager; }

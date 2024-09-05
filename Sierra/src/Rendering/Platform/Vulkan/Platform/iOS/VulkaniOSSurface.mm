@@ -9,10 +9,10 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VkSurfaceKHR VulkaniOSSurface::Create(const VulkanInstance &instance, const Window &window)
+    VkSurfaceKHR VulkaniOSSurface::Create(const VulkanInstance& instance, const Window& window)
     {
         SR_ERROR_IF(window.GetAPI() != PlatformAPI::UIKit, "[Vulkan]: Cannot create a iOS surface for Vulkan using window [{0}], which has a platform API, that differs from from [PlatformAPI::UIKit]!", window.GetTitle());
-        const UIKitWindow &uiKitWindow = static_cast<const UIKitWindow&>(window);
+        const UIKitWindow& uiKitWindow = static_cast<const UIKitWindow&>(window);
 
         // Set up surface create info
         const VkMetalSurfaceCreateInfoEXT surfaceCreateInfo

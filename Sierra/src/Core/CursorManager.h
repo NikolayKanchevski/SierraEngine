@@ -34,27 +34,31 @@ namespace Sierra
         using EventCallback = std::function<bool(const EventType&)>;
 
         /* --- POLLING METHODS --- */
-        virtual void RegisterCursorMove(Vector2 position);
+        virtual void RegisterCursorMove(Vector2 position) = 0;
 
         /* --- SETTER METHODS --- */
-        virtual void SetCursorVisibility(bool visible);
-        virtual void SetCursorPosition(Vector2 position);
+        virtual void SetCursorVisibility(bool visible) = 0;
+        virtual void SetCursorPosition(Vector2 position) = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual bool IsCursorVisible() const;
-        [[nodiscard]] virtual Vector2 GetCursorPosition() const;
-        [[nodiscard]] virtual Vector2 GetCursorDelta() const;
+        [[nodiscard]] virtual bool IsCursorVisible() const = 0;
+        [[nodiscard]] virtual Vector2 GetCursorPosition() const = 0;
+        [[nodiscard]] virtual Vector2 GetCursorDelta() const = 0;
 
         /* --- EVENTS --- */
         template<CursorEventType EventType>
-        EventSubscriptionID AddEventListener(EventCallback<EventType>);
+        EventSubscriptionID AddEventListener(const EventCallback<EventType>&);
 
         template<CursorEventType EventType>
         bool RemoveEventListener(EventSubscriptionID);
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         CursorManager(const CursorManager&) = delete;
         CursorManager& operator=(const CursorManager&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        CursorManager(CursorManager&&) = delete;
+        CursorManager& operator=(CursorManager&&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~CursorManager() = default;
@@ -69,7 +73,7 @@ namespace Sierra
 
     };
 
-    template<> inline EventSubscriptionID CursorManager::AddEventListener<CursorMoveEvent>(EventCallback<CursorMoveEvent> Callback) { return cursorMoveDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID CursorManager::AddEventListener<CursorMoveEvent>(const EventCallback<CursorMoveEvent>& Callback) { return cursorMoveDispatcher.Subscribe(Callback); }
     template<> inline bool CursorManager::RemoveEventListener<CursorMoveEvent>(const EventSubscriptionID ID) { return cursorMoveDispatcher.Unsubscribe(ID); }
 
 }

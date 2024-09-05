@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Win32Screen::Win32Screen(const Win32ScreenCreateInfo &createInfo)
+    Win32Screen::Win32Screen(const Win32ScreenCreateInfo& createInfo)
         : hMonitor(createInfo.hMonitor)
     {
         // Allocate monitor info

@@ -28,7 +28,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        MetalGraphicsPipeline(const MetalDevice &device, const GraphicsPipelineCreateInfo &createInfo);
+        MetalGraphicsPipeline(const MetalDevice& device, const GraphicsPipelineCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override;

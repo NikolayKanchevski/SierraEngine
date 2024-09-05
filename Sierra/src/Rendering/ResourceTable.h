@@ -26,12 +26,12 @@ namespace Sierra
     public:
 
         /* --- POLLING METHODS --- */
-        virtual void BindUniformBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) = 0;
-        virtual void BindStorageBuffer(ResourceIndex index, const Buffer &buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) = 0;
+        virtual void BindUniformBuffer(ResourceIndex index, const Buffer& buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) = 0;
+        virtual void BindStorageBuffer(ResourceIndex index, const Buffer& buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) = 0;
 
-        virtual void BindSampledImage(ResourceIndex index, const Image &image) = 0;
-        virtual void BindStorageImage(ResourceIndex index, const Image &image) = 0;
-        virtual void BindSampler(ResourceIndex index, const Sampler &sampler) = 0;
+        virtual void BindSampledImage(ResourceIndex index, const Image& image) = 0;
+        virtual void BindStorageImage(ResourceIndex index, const Image& image) = 0;
+        virtual void BindSampler(ResourceIndex index, const Sampler& sampler) = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual uint32 GetUniformBufferCapacity() const = 0;
@@ -45,7 +45,7 @@ namespace Sierra
         ~ResourceTable() override = default;
 
     protected:
-        explicit ResourceTable(const ResourceTableCreateInfo &createInfo);
+        explicit ResourceTable(const ResourceTableCreateInfo& createInfo);
 
     };
 

@@ -1,6 +1,5 @@
 target_sources(SierraEngine PRIVATE
     Asset.h
-    AssetID.h
     AssetManager.h
 )
 

@@ -43,15 +43,19 @@ namespace Sierra
         virtual FileOperationResult Seek(size byteOffset) = 0;
         virtual FileOperationResult SeekToEnd() = 0;
 
-        virtual FileOperationResult Read(size memorySize, std::vector<uint8> &outData) = 0;
+        virtual FileOperationResult Read(size memorySize, std::vector<uint8>& outData) = 0;
         virtual FileOperationResult Write(const void* memory, size memorySize) = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual size GetCurrentByteOffset() const = 0;
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         FileStream(const FileStream&) = delete;
         FileStream& operator=(const FileStream&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        FileStream(FileStream&&) = default;
+        FileStream& operator=(FileStream&&) = default;
 
         /* --- DESTRUCTOR --- */
         virtual ~FileStream() = default;
@@ -103,27 +107,27 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual bool FileExists(const std::filesystem::path &filePath) const = 0;
-        virtual FileOperationResult OpenFileStream(const std::filesystem::path &filePath, FileStreamAccess access, FileStreamBuffering buffering, std::unique_ptr<FileStream> &outFileStream) const = 0;
+        [[nodiscard]] virtual bool FileExists(const std::filesystem::path& filePath) const = 0;
+        virtual FileOperationResult OpenFileStream(const std::filesystem::path& filePath, FileStreamAccess access, FileStreamBuffering buffering, std::unique_ptr<FileStream>& outFileStream) const = 0;
 
-        virtual FileOperationResult CreateFile(const std::filesystem::path &filePath) const = 0;
-        virtual FileOperationResult RenameFile(const std::filesystem::path &filePath, std::string_view name) const = 0;
-        virtual FileOperationResult CopyFile(const std::filesystem::path &sourceFilePath, const std::filesystem::path &destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const = 0;
-        virtual FileOperationResult MoveFile(const std::filesystem::path &sourceFilePath, const std::filesystem::path &destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const = 0;
-        virtual FileOperationResult DeleteFile(const std::filesystem::path &filePath) const = 0;
+        virtual FileOperationResult CreateFile(const std::filesystem::path& filePath) const = 0;
+        virtual FileOperationResult RenameFile(const std::filesystem::path& filePath, std::string_view name) const = 0;
+        virtual FileOperationResult CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const = 0;
+        virtual FileOperationResult MoveFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const = 0;
+        virtual FileOperationResult DeleteFile(const std::filesystem::path& filePath) const = 0;
 
-        [[nodiscard]] virtual bool DirectoryExists(const std::filesystem::path &directoryPath) const = 0;
-        virtual FileOperationResult EnumerateDirectoryFiles(const std::filesystem::path &directoryPath, std::vector<std::filesystem::path> &outFiles, bool recursive) const = 0;
+        [[nodiscard]] virtual bool DirectoryExists(const std::filesystem::path& directoryPath) const = 0;
+        virtual FileOperationResult EnumerateDirectoryFiles(const std::filesystem::path& directoryPath, std::vector<std::filesystem::path>& outFiles, bool recursive) const = 0;
 
-        virtual FileOperationResult CreateDirectory(const std::filesystem::path &directoryPath) const = 0;
-        virtual FileOperationResult RenameDirectory(const std::filesystem::path &directoryPath, std::string_view name) const = 0;
-        virtual FileOperationResult CopyDirectory(const std::filesystem::path &sourceDirectoryPath, const std::filesystem::path &destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const = 0;
-        virtual FileOperationResult MoveDirectory(const std::filesystem::path &sourceDirectoryPath, const std::filesystem::path &destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const = 0;
-        virtual FileOperationResult DeleteDirectory(const std::filesystem::path &directoryPath) const = 0;
+        virtual FileOperationResult CreateDirectory(const std::filesystem::path& directoryPath) const = 0;
+        virtual FileOperationResult RenameDirectory(const std::filesystem::path& directoryPath, std::string_view name) const = 0;
+        virtual FileOperationResult CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const = 0;
+        virtual FileOperationResult MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const = 0;
+        virtual FileOperationResult DeleteDirectory(const std::filesystem::path& directoryPath) const = 0;
 
         /* --- GETTER METHODS --- */
-        virtual FileOperationResult GetFileMetadata(const std::filesystem::path &filePath, FileMetadata &outMetadata) const = 0;
-        virtual FileOperationResult GetDirectoryMetadata(const std::filesystem::path &directoryPath, DirectoryMetadata &outMetadata) const = 0;
+        virtual FileOperationResult GetFileMetadata(const std::filesystem::path& filePath, FileMetadata& outMetadata) const = 0;
+        virtual FileOperationResult GetDirectoryMetadata(const std::filesystem::path& directoryPath, DirectoryMetadata& outMetadata) const = 0;
 
         [[nodiscard]] virtual std::filesystem::path GetApplicationDirectoryPath() const = 0;
         [[nodiscard]] virtual std::filesystem::path GetExecutableDirectoryPath() const = 0;
@@ -142,11 +146,15 @@ namespace Sierra
         [[nodiscard]] virtual std::filesystem::path GetVideosDirectoryPath() const = 0;
 
         /* --- CONVERSIONS --- */
-        [[nodiscard]] static FileType FilePathToFileType(const std::filesystem::path &filePath);
+        [[nodiscard]] static FileType FilePathToFileType(const std::filesystem::path& filePath);
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         FileManager(const FileManager&) = delete;
         FileManager& operator=(const FileManager&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        FileManager(FileManager&&) = delete;
+        FileManager& operator=(FileManager&&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~FileManager() = default;

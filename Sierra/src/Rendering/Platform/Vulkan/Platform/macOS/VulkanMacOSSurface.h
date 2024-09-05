@@ -17,7 +17,7 @@ namespace Sierra
 
     namespace VulkanMacOSSurface
     {
-        VkSurfaceKHR SIERRA_API Create(const VulkanInstance &instance, const Window &window);
+        VkSurfaceKHR SIERRA_API Create(const VulkanInstance& instance, const Window& window);
     }
 
 }

@@ -77,7 +77,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    CocoaContext::CocoaContext(const CocoaContextCreateInfo &createInfo)
+    CocoaContext::CocoaContext(const CocoaContextCreateInfo& createInfo)
         : application(createInfo.application)
     {
         SR_ERROR_IF(createInfo.application == nullptr, "NSApplication pointer passed upon creation of CocoaContext must not be null!");
@@ -148,7 +148,7 @@ namespace Sierra
 
     CocoaScreen& CocoaContext::GetWindowScreen(const NSWindow* window)
     {
-        return *std::find_if(screens.begin(), screens.end(), [window](const CocoaScreen &cocoaScreen) -> bool { return cocoaScreen.GetNSScreen() == [window screen]; });
+        return *std::ranges::find_if(screens, [window](const CocoaScreen& cocoaScreen) -> bool { return cocoaScreen.GetNSScreen() == [window screen]; });
     }
 
     /* --- DESTRUCTOR --- */

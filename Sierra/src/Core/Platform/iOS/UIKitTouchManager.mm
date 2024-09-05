@@ -17,10 +17,10 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void UIKitTouchManager::RegisterTouchPress(const Touch &touch)
+    void UIKitTouchManager::RegisterTouchPress(const Touch& touch)
     {
         if (touch.GetType() != TouchType::Press) return;
-        if (std::find(touches.begin(), touches.end(), touch) == touches.end())
+        if (std::ranges::find(touches, touch) == touches.end())
         {
             touches.emplace_back(touch);
             GetTouchPressDispatcher().DispatchEvent(touch);
@@ -29,7 +29,7 @@ namespace Sierra
 
     void UIKitTouchManager::RegisterTouchMove(const TouchID ID, const Vector2 position)
     {
-        auto iterator = std::find_if(touches.begin(), touches.end(), [ID](const Touch &item) -> bool { return item.GetID() == ID; });
+        auto iterator = std::ranges::find_if(touches, [ID](const Touch& item) -> bool { return item.GetID() == ID; });
         if (iterator == touches.end()) return;
 
         *iterator = Touch({
@@ -45,7 +45,7 @@ namespace Sierra
 
     void UIKitTouchManager::RegisterTouchRelease(const TouchID ID)
     {
-        auto iterator = std::find_if(touches.begin(), touches.end(), [ID](const Touch &item) -> bool { return item.GetID() == ID; });
+        auto iterator = std::ranges::find_if(touches, [ID](const Touch& item) -> bool { return item.GetID() == ID; });
         if (iterator == touches.end()) return;
 
         *iterator = Touch({
@@ -63,7 +63,7 @@ namespace Sierra
 
     void UIKitTouchManager::Update()
     {
-        std::erase_if(touches, [](const Touch &item) -> bool { return item.GetType() == TouchType::Release; });
+        std::erase_if(touches, [](const Touch& item) -> bool { return item.GetType() == TouchType::Release; });
     }
 
 }

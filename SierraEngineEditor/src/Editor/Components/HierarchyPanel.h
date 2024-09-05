@@ -11,7 +11,7 @@ namespace SierraEngine
     {
 
         /* --- POLLING METHODS --- */
-        void Draw(Scene &scene, Entity &selectedEntity);
+        void Draw(Scene& scene, EntityID& selectedEntity);
 
     };
 

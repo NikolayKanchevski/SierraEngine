@@ -14,7 +14,7 @@ namespace Sierra
     struct ComputePipelineCreateInfo
     {
         std::string_view name = "Compute Pipeline";
-        const Shader &computeShader;
+        const Shader& computeShader;
         uint16 pushConstantSize = 0;
     };
 
@@ -25,7 +25,7 @@ namespace Sierra
         ~ComputePipeline() override = default;
 
     protected:
-        explicit ComputePipeline(const ComputePipelineCreateInfo &createInfo);
+        explicit ComputePipeline(const ComputePipelineCreateInfo& createInfo);
 
     };
 

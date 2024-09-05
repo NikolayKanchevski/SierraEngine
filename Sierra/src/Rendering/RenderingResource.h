@@ -38,9 +38,13 @@ namespace Sierra
         [[nodiscard]] virtual std::string_view GetName() const = 0;
         [[nodiscard]] virtual GraphicsAPI GetAPI() const = 0;
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         RenderingResource(const RenderingResource&) = delete;
         RenderingResource& operator=(const RenderingResource&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        RenderingResource(RenderingResource&&) = default;
+        RenderingResource& operator=(RenderingResource&&) = default;
 
         /* --- DESTRUCTORS --- */
         virtual ~RenderingResource() = default;

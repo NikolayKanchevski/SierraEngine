@@ -10,13 +10,6 @@ namespace SierraEngine
     /*
      *     [=============== Serialized Texture ===============]
      *
-     *      metadata:
-     *        name: Asset
-     *        author: Unknown
-     *        version: 1.0.0
-     *        tags:
-     *          - Tag
-     *
      *      properties:
      *        type: Albedo
      *        width: 1024
@@ -176,7 +169,7 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    std::optional<std::vector<uint8>> YAMLTextureSerializer::Serialize(const TextureSerializeInfo &serializeInfo) const
+    std::optional<std::vector<uint8>> YAMLTextureSerializer::Serialize(const TextureSerializeInfo& serializeInfo) const
     {
         const size nodeCapacity = GetMetadataNodeSize(serializeInfo.metadata) + 9;
         const uint32 arenaCapacity = GetMetadataArenaSize(serializeInfo.metadata) + 5 + 5 + 2 + 2;
@@ -189,11 +182,11 @@ namespace SierraEngine
         ryml::NodeRef type = properties["type"]; type |= ryml::VAL_PLAIN;
         type = c4::to_csubstr(TextureTypeToString(serializeInfo.type));
 
-        ryml::NodeRef width = properties["width"]; width |= ryml::VAL_PLAIN; // Cost: ~5 chars
-        width << std::to_string(serializeInfo.width);
+        ryml::NodeRef width = properties["width"]; width |= ryml::VAL_PLAIN;
+        width << std::to_string(serializeInfo.width); // Cost: ~5 chars
 
-        ryml::NodeRef height = properties["height"]; height |= ryml::VAL_PLAIN; // Cost: ~5 chars
-        height << std::to_string(serializeInfo.height);
+        ryml::NodeRef height = properties["height"]; height |= ryml::VAL_PLAIN;
+        height << std::to_string(serializeInfo.height); // Cost: ~5 chars
 
         ryml::NodeRef compression = properties["compression"]; compression |= ryml::VAL_PLAIN;
         compression = c4::to_csubstr(ImageCompressorTypeToString(serializeInfo.compression));
@@ -204,11 +197,11 @@ namespace SierraEngine
         ryml::NodeRef filtering = properties["filtering"]; filtering |= ryml::VAL_PLAIN;
         filtering = c4::to_csubstr(SamplerFilterToString(serializeInfo.filter));
 
-        ryml::NodeRef levelCount = properties["levelCount"]; levelCount |= ryml::VAL_PLAIN; // Cost: ~2 chars
-        levelCount << std::to_string(serializeInfo.levelCount);
+        ryml::NodeRef levelCount = properties["levelCount"]; levelCount |= ryml::VAL_PLAIN;
+        levelCount << std::to_string(serializeInfo.levelCount); // Cost: ~2 chars
 
-        ryml::NodeRef layerCount = properties["layerCount"]; layerCount |= ryml::VAL_PLAIN; // Cost: ~2 chars
-        layerCount << std::to_string(serializeInfo.layerCount);
+        ryml::NodeRef layerCount = properties["layerCount"]; layerCount |= ryml::VAL_PLAIN;
+        layerCount << std::to_string(serializeInfo.layerCount); // Cost: ~2 chars
 
         const std::vector<char> data = ryml::emitrs_yaml<std::vector<char>>(tree);
         return std::vector(reinterpret_cast<const uint8*>(data.data()), reinterpret_cast<const uint8*>(data.data()) + data.size());

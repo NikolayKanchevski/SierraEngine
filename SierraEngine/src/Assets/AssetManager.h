@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include "AssetID.h"
-
 #include "Assets/Texture.h"
 #include "Importers/TextureImporter.h"
 
 namespace SierraEngine
 {
 
+    /* --- TYPE DEFINITIONS --- */
+    using AssetID = Sierra::UUID64;
     using TextureID = AssetID;
 
     class SIERRA_ENGINE_API AssetManager
@@ -21,18 +21,21 @@ namespace SierraEngine
         using AssetLoadCallback = std::function<void(AssetID)>;
 
         /* --- POLLING METHODS --- */
-        virtual void Update(Sierra::CommandBuffer &commandBuffer) = 0;
+        virtual void Update(Sierra::CommandBuffer& commandBuffer) = 0;
 
-        virtual void ImportTexture(std::weak_ptr<TextureImporter> importer, AssetLoadCallback Callback) = 0;
+        virtual void ImportTexture(std::weak_ptr<TextureImporter> importer, const AssetLoadCallback& Callback) = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual bool IsTextureImported(TextureID ID) const = 0;
-        [[nodiscard]] virtual Texture* GetTexture(TextureID ID) = 0;
-        [[nodiscard]] virtual Texture& GetDefaultTexture(TextureType type) = 0;
+        [[nodiscard]] virtual const Texture* GetTexture(TextureID textureID) = 0;
+        [[nodiscard]] virtual const Texture& GetDefaultTexture(TextureType textureType) = 0;
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         AssetManager(const AssetManager&) = delete;
         AssetManager& operator=(const AssetManager&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        AssetManager(AssetManager&&) = default;
+        AssetManager& operator=(AssetManager&&) = default;
 
         /* --- DESTRUCTOR --- */
         virtual ~AssetManager() = default;

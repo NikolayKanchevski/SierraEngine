@@ -47,7 +47,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    UIKitScreen::UIKitScreen(const UIKitScreenCreatInfo &createInfo)
+    UIKitScreen::UIKitScreen(const UIKitScreenCreatInfo& createInfo)
         : Screen(),
             eventWrapper([[UIKitScreenEventWrapper alloc] initWithScreen: this]),
             name([[UIDevice currentDevice].name UTF8String], [[UIDevice currentDevice].name length]),

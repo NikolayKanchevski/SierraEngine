@@ -11,7 +11,7 @@ namespace Sierra
 {
     /* --- CONSTRUCTORS --- */
 
-    X11Window::X11Window(const X11Context &x11Context, const WindowCreateInfo &createInfo)
+    X11Window::X11Window(const X11Context& x11Context, const WindowCreateInfo& createInfo)
         : Window(createInfo),
             x11Context(x11Context),
             window(x11Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
@@ -32,7 +32,7 @@ namespace Sierra
         {
             if (createInfo.maximize)
             {
-                const X11Screen &screen = x11Context.GetWindowScreen(window);
+                const X11Screen& screen = x11Context.GetWindowScreen(window);
                 const Vector2UInt sizeLimits = Vector2UInt(screen.GetWorkAreaWidth(), screen.GetWorkAreaHeight()) - Vector2UInt(extents.x, extents.z);
                 x11Context.SetWindowSizeLimits(window, sizeLimits, sizeLimits);
             }
@@ -74,7 +74,7 @@ namespace Sierra
             }
             else
             {
-                auto iterator = std::find_if(unhandledEventQueues.begin(), unhandledEventQueues.end(), [event](const WindowEventQueue &item) { return item.window == event.xany.window; });
+                auto iterator = std::ranges::find_if(unhandledEventQueues, [event](const WindowEventQueue& item) { return item.window == event.xany.window; });
                 if (iterator != unhandledEventQueues.end())
                 {
                     iterator->queue.push(event);
@@ -83,10 +83,10 @@ namespace Sierra
         }
 
         // Check if there are unhandled events pending for this window and if so, handle them
-        auto iterator = std::find_if(unhandledEventQueues.begin(), unhandledEventQueues.end(), [this](const WindowEventQueue &item) { return item.window == window; });
+        auto iterator = std::ranges::find_if(unhandledEventQueues, [this](const WindowEventQueue& item) { return item.window == window; });
         while (!iterator->queue.empty())
         {
-            XEvent &event = iterator->queue.front();
+            XEvent& event = iterator->queue.front();
             if (event.xany.window == window) HandleX11Event(event);
             iterator->queue.pop();
         }
@@ -137,7 +137,7 @@ namespace Sierra
         closed = true;
 
         // Remove XID from unhandled event map
-        unhandledEventQueues.erase(std::find_if(unhandledEventQueues.begin(), unhandledEventQueues.end(), [this](const WindowEventQueue &item) { return item.window == window; }));
+        unhandledEventQueues.erase(std::ranges::find_if(unhandledEventQueues, [this](const WindowEventQueue& item) { return item.window == window; }));
 
         // Destroy window
         x11Context.DestroyWindow(window);
@@ -152,12 +152,12 @@ namespace Sierra
         x11Context.SetWindowTitle(window, newTitle);
     }
 
-    void X11Window::SetPosition(const Vector2Int &newPosition)
+    void X11Window::SetPosition(const Vector2Int& newPosition)
     {
         x11Context.SetWindowPosition(window, { newPosition.x + extents.x, newPosition.y });
     }
 
-    void X11Window::SetSize(const Vector2UInt &newSize)
+    void X11Window::SetSize(const Vector2UInt& newSize)
     {
         x11Context.SetWindowSize(window, newSize);
     }
@@ -176,7 +176,7 @@ namespace Sierra
 
     Vector2Int X11Window::GetPosition() const
     {
-        const X11Screen &screen = x11Context.GetWindowScreen(window);
+        const X11Screen& screen = x11Context.GetWindowScreen(window);
         
         // X11 does not take window extents into account when not maximized and uses -Y, so we manually handle that
         Vector2Int position = x11Context.GetWindowPosition(window);
@@ -241,14 +241,19 @@ namespace Sierra
         return x11Context.GetWindowScreen(window);
     }
 
-    InputManager& X11Window::GetInputManager()
+    InputManager* X11Window::GetInputManager()
     {
-        return inputManager;
+        return &inputManager;
     }
 
-    CursorManager& X11Window::GetCursorManager()
+    CursorManager* X11Window::GetCursorManager()
     {
-        return cursorManager;
+        return &cursorManager;
+    }
+
+    TouchManager* X11Window::GetTouchManager()
+    {
+        return nullptr;
     }
 
     PlatformAPI X11Window::GetAPI() const
@@ -258,7 +263,7 @@ namespace Sierra
 
     /* --- PRIVATE METHODS --- */
 
-    void X11Window::HandleX11Event(XEvent &event)
+    void X11Window::HandleX11Event(XEvent& event)
     {
         // Discard event if filtered out
         if (x11Context.IsEventFiltered(event)) return;

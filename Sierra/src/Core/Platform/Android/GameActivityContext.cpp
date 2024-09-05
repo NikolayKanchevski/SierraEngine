@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    GameActivityContext::GameActivityContext(const GameActivityContextCreateInfo &createInfo)
+    GameActivityContext::GameActivityContext(const GameActivityContextCreateInfo& createInfo)
         : app(createInfo.app), primaryScreen({ .gameActivity = app->activity, .configuration = app->config })
     {
         // Set up app data

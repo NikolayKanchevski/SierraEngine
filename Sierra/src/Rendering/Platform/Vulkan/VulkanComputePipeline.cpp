@@ -11,11 +11,11 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanComputePipeline::VulkanComputePipeline(const VulkanDevice &device, const ComputePipelineCreateInfo &createInfo)
+    VulkanComputePipeline::VulkanComputePipeline(const VulkanDevice& device, const ComputePipelineCreateInfo& createInfo)
         : ComputePipeline(createInfo), device(device), name(createInfo.name), pushConstantSize(createInfo.pushConstantSize)
     {
         SR_ERROR_IF(createInfo.computeShader.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot create compute pipeline [{0}] with compute shader [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", name, createInfo.computeShader.GetName());
-        const VulkanShader &vulkanComputeShader = static_cast<const VulkanShader&>(createInfo.computeShader);
+        const VulkanShader& vulkanComputeShader = static_cast<const VulkanShader&>(createInfo.computeShader);
 
         // Set up only shader stage
         const VkPipelineShaderStageCreateInfo shaderStageCreateInfo

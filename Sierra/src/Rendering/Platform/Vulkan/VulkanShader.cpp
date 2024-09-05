@@ -9,11 +9,11 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
     
-    VulkanShader::VulkanShader(const VulkanDevice &device, const ShaderCreateInfo &createInfo)
+    VulkanShader::VulkanShader(const VulkanDevice& device, const ShaderCreateInfo& createInfo)
         : Shader(createInfo), device(device), name(createInfo.name)
     {
         // Set up module create info
-        const ShaderFileHeader &fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.memory.data());
+        const ShaderFileHeader& fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.memory.data());
         const VkShaderModuleCreateInfo shaderModuleCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,

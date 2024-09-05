@@ -27,7 +27,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanSwapchain::VulkanSwapchain(const VulkanInstance &instance, const VulkanDevice &device, const SwapchainCreateInfo &createInfo)
+    VulkanSwapchain::VulkanSwapchain(const VulkanInstance& instance, const VulkanDevice& device, const SwapchainCreateInfo& createInfo)
         : Swapchain(createInfo), instance(instance), device(device), name(createInfo.name), window(createInfo.window), surface(CreateVkSurfaceKHR(instance, createInfo.window)), preferredPresentationMode(createInfo.preferredPresentationMode), preferredBuffering(createInfo.preferredBuffering), preferredImageMemoryType(createInfo.preferredImageMemoryType)
     {
         SR_ERROR_IF(!device.IsExtensionLoaded(VK_KHR_SWAPCHAIN_EXTENSION_NAME), "[Vulkan]: Cannot create swapchain [{0}], as the provided device [{1}] does not support the {2} extension!", createInfo.name, device.GetName(), VK_KHR_SWAPCHAIN_EXTENSION_NAME);
@@ -66,10 +66,10 @@ namespace Sierra
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not wait for swapchain image [{0}] on swapchain [{1}] to get swapped out! Error code: {2}.", currentFrame, name, static_cast<int32>(result));
     }
 
-    void VulkanSwapchain::Present(CommandBuffer &commandBuffer)
+    void VulkanSwapchain::Present(CommandBuffer& commandBuffer)
     {
         SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot present swapchain [{0}] using command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", name, commandBuffer.GetName());
-        const VulkanCommandBuffer &vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(commandBuffer);
+        const VulkanCommandBuffer& vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(commandBuffer);
 
         const uint64 waitValue = vulkanCommandBuffer.GetCompletionSignalValue();
         constexpr uint64 BINARY_SEMAPHORE_SIGNAL_VALUE = 1; // Simply using 1, as we are signalling a binary semaphore
@@ -107,7 +107,7 @@ namespace Sierra
 
         if (presentationQueueFamily != device.GetGeneralQueueFamily())
         {
-            const VulkanImage &swapchainImage = static_cast<const VulkanImage&>(*swapchainImages[currentImage]);
+            const VulkanImage& swapchainImage = static_cast<const VulkanImage&>(*swapchainImages[currentImage]);
             const VkImageMemoryBarrier pipelineBarrier
             {
                 .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,

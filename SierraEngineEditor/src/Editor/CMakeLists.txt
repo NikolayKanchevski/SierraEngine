@@ -1,9 +1,6 @@
 target_sources(SierraEngineEditor PRIVATE
-    HierarchyPanel.cpp
-    HierarchyPanel.h
-    RenderPanel.cpp
-    RenderPanel.h
-    MenuBar.cpp
-    MenuBar.h
+    Editor.cpp
+    Editor.h
 )
-add_subdirectory(Data)
+
+add_subdirectory(Components)

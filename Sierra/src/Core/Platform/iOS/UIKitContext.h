@@ -31,7 +31,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit UIKitContext(const UIKitContextCreateInfo &createInfo);
+        explicit UIKitContext(const UIKitContextCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] UIWindow* CreateWindow() const;

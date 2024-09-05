@@ -24,7 +24,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        MetalBuffer(const MetalDevice &device, const BufferCreateInfo &createInfo);
+        MetalBuffer(const MetalDevice& device, const BufferCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         void CopyFromMemory(const void* memory, uint64 memoryByteSize = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) override;

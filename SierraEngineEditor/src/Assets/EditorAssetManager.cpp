@@ -55,11 +55,9 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    EditorAssetManager::EditorAssetManager(const EditorAssetManagerCreateInfo &createInfo)
-        : AssetManager(), threadPool(createInfo.threadPool), renderingContext(createInfo.renderingContext)
+    EditorAssetManager::EditorAssetManager(const EditorAssetManagerCreateInfo& createInfo)
+        : AssetManager(), threadPool(createInfo.threadPool), renderingContext(createInfo.renderingContext), textureMap(3)
     {
-        textureMap.reserve(3);
-
         // Default checkered texture
         {
             std::unique_ptr<Sierra::Buffer> textureBuffer = renderingContext.CreateBuffer({
@@ -148,7 +146,7 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void EditorAssetManager::Update(Sierra::CommandBuffer &commandBuffer)
+    void EditorAssetManager::Update(Sierra::CommandBuffer& commandBuffer)
     {
         while (true)
         {
@@ -159,12 +157,12 @@ namespace SierraEngine
             textureQueue.pop();
 
             textureQueueLock.unlock();
-            const Sierra::Image &textureImage = textureEntry.texture.GetImage();
+            const Sierra::Image& textureImage = textureEntry.texture.GetImage();
 
             commandBuffer.SynchronizeImageUsage(textureImage, Sierra::ImageCommandUsage::None, Sierra::ImageCommandUsage::MemoryWrite);
             for (size level = 0; level < textureEntry.texture.GetLevelCount(); level++)
             {
-                std::unique_ptr<Sierra::Buffer> &levelBuffer = textureEntry.levelBuffers[level];
+                std::unique_ptr<Sierra::Buffer>& levelBuffer = textureEntry.levelBuffers[level];
                 for (uint32 layer = 0; layer < textureEntry.texture.GetLayerCount(); layer++)
                 {
                     commandBuffer.CopyBufferToImage(*levelBuffer, textureImage, level, layer, { 0, 0, 0 }, layer * (levelBuffer->GetMemorySize() / textureImage.GetLayerCount()));
@@ -178,7 +176,7 @@ namespace SierraEngine
         }
     }
 
-    void EditorAssetManager::ImportTexture(const std::weak_ptr<TextureImporter> importerReference, const AssetLoadCallback Callback)
+    void EditorAssetManager::ImportTexture(const std::weak_ptr<TextureImporter> importerReference, const AssetLoadCallback& Callback)
     {
         threadPool.PushTask([this, importerReference, Callback]() -> void
         {
@@ -237,9 +235,9 @@ namespace SierraEngine
 
     /* --- GETTER METHODS --- */
 
-    Texture& EditorAssetManager::GetDefaultTexture(const TextureType type)
+    const Texture& EditorAssetManager::GetDefaultTexture(const TextureType textureType)
     {
-        switch (type)
+        switch (textureType)
         {
             case TextureType::Undefined:
             case TextureType::Albedo:

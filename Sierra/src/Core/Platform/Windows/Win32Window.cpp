@@ -13,7 +13,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Win32Window::Win32Window(Win32Context &win32Context, const WindowCreateInfo &createInfo)
+    Win32Window::Win32Window(Win32Context& win32Context, const WindowCreateInfo& createInfo)
         : Window(createInfo),
             win32Context(win32Context),
             window(win32Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height, (!createInfo.hide ? WS_VISIBLE : 0) | WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | (createInfo.resizable ? (WS_SIZEBOX | WS_MAXIMIZEBOX) : 0) | (createInfo.maximize && createInfo.resizable ? WS_MAXIMIZE : 0), WindowProc)),
@@ -24,7 +24,7 @@ namespace Sierra
         if (createInfo.maximize && !createInfo.resizable)
         {
             // Get screen
-            const Win32Screen &screen = win32Context.GetWindowScreen(window);
+            const Win32Screen& screen = win32Context.GetWindowScreen(window);
 
             // Construct rect
             RECT rect
@@ -103,7 +103,7 @@ namespace Sierra
         SetWindowText(window, newTitle.data());
     }
 
-    void Win32Window::SetPosition(const Vector2Int &position)
+    void Win32Window::SetPosition(const Vector2Int& position)
     {
         RECT rect = { position.x, position.y + GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYBORDER) };
         win32Context.AdjustWindowRectForDPI(window, rect);
@@ -112,7 +112,7 @@ namespace Sierra
         SetWindowPos(window, nullptr, rect.left, rect.top, 0, 0, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE);
     }
 
-    void Win32Window::SetSize(const Vector2UInt &size)
+    void Win32Window::SetSize(const Vector2UInt& size)
     {
         RECT rect = { 0, 0, static_cast<LONG>(size.x), static_cast<LONG>(size.y) };
         win32Context.AdjustWindowRectForDPI(window, rect);
@@ -229,14 +229,19 @@ namespace Sierra
         return win32Context.GetWindowScreen(window);
     }
 
-    InputManager& Win32Window::GetInputManager()
+    InputManager* Win32Window::GetInputManager()
     {
-        return inputManager;
+        return &inputManager;
     }
 
-    CursorManager& Win32Window::GetCursorManager()
+    CursorManager* Win32Window::GetCursorManager()
     {
-        return cursorManager;
+        return &cursorManager;
+    }
+
+    TouchManager* Win32Window::GetTouchManager()
+    {
+        return nullptr;
     }
 
     PlatformAPI Win32Window::GetAPI() const

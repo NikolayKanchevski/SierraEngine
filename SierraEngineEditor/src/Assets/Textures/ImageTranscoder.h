@@ -29,14 +29,18 @@ namespace SierraEngine
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual std::optional<std::vector<uint8>> Transcode(const ImageTranscodeInfo &transcodeInfo) const = 0;
+        [[nodiscard]] virtual std::optional<std::vector<uint8>> Transcode(const ImageTranscodeInfo& transcodeInfo) const = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual ImageTranscoderType GetType() const = 0;
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         ImageTranscoder(const ImageTranscoder&) = delete;
         ImageTranscoder& operator=(const ImageTranscoder&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        ImageTranscoder(ImageTranscoder&&) = default;
+        ImageTranscoder& operator=(ImageTranscoder&&) = default;
 
         /* --- DESTRUCTOR --- */
         virtual ~ImageTranscoder() = default;

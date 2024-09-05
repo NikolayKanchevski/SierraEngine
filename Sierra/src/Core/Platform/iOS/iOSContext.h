@@ -19,7 +19,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit iOSContext(const PlatformContextCreateInfo &createInfo);
+        explicit iOSContext(const PlatformContextCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] PlatformType GetType() const override { return PlatformType::iOS; }

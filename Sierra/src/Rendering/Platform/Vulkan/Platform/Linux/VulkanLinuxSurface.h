@@ -16,7 +16,7 @@ namespace Sierra
 {
     namespace VulkanLinuxSurface
     {
-        VkSurfaceKHR SIERRA_API Create(const VulkanInstance &instance, const Window &window);
+        VkSurfaceKHR SIERRA_API Create(const VulkanInstance& instance, const Window& window);
     };
 
 }

@@ -18,7 +18,7 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    std::optional<std::vector<uint8>> BasisUniversalTranscoder::Transcode(const ImageTranscodeInfo &transcodeInfo) const
+    std::optional<std::vector<uint8>> BasisUniversalTranscoder::Transcode(const ImageTranscodeInfo& transcodeInfo) const
     {
         basist::basisu_transcoder transcoder = { };
         if (!transcoder.start_transcoding(transcodeInfo.memory.data(), transcodeInfo.memory.size_bytes()))

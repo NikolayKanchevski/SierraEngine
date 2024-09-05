@@ -16,7 +16,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        VulkanShader(const VulkanDevice &device, const ShaderCreateInfo &createInfo);
+        VulkanShader(const VulkanDevice& device, const ShaderCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override { return name; }
@@ -30,7 +30,7 @@ namespace Sierra
         [[nodiscard]] static VkShaderStageFlags ShaderTypeToVkShaderStageFlags(ShaderType shaderType);
 
     private:
-        const VulkanDevice &device;
+        const VulkanDevice& device;
 
         std::string name;
         VkShaderModule shaderModule = VK_NULL_HANDLE;

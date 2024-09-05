@@ -20,7 +20,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit X11InputManager(const XkbExtension &xkbExtension, const InputManagerCreateInfo &createInfo);
+        explicit X11InputManager(const XkbExtension& xkbExtension, const InputManagerCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         bool IsKeyPressed(Key key) const override;
@@ -35,7 +35,7 @@ namespace Sierra
         Vector2 GetMouseScroll() const override;
 
     private:
-        const XkbExtension &xkbExtension;
+        const XkbExtension& xkbExtension;
 
         std::array<InputAction, KEY_COUNT> lastKeyStates { };
         std::array<InputAction, KEY_COUNT> keyStates { };
@@ -47,10 +47,10 @@ namespace Sierra
 
         friend class X11Window;
         void Update();
-        void KeyPressEvent(const XEvent &event);
-        void KeyReleaseEvent(const XEvent &event);
-        void ButtonPressEvent(const XEvent &event);
-        void ButtonReleaseEvent(const XEvent &event);
+        void KeyPressEvent(const XEvent& event);
+        void KeyReleaseEvent(const XEvent& event);
+        void ButtonPressEvent(const XEvent& event);
+        void ButtonReleaseEvent(const XEvent& event);
 
     };
 

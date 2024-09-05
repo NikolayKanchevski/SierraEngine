@@ -13,6 +13,14 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         explicit ScopeProfiler(std::string_view scopeSignature);
 
+        /* --- COPY SEMANTICS --- */
+        ScopeProfiler(const ScopeProfiler&) = delete;
+        ScopeProfiler& operator=(const ScopeProfiler&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        ScopeProfiler(ScopeProfiler&&) = delete;
+        ScopeProfiler& operator=(ScopeProfiler&&) = delete;
+
         /* --- DESTRUCTOR --- */
         ~ScopeProfiler();
 

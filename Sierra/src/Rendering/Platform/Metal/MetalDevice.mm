@@ -39,10 +39,10 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void MetalDevice::SubmitCommandBuffer(CommandBuffer &commandBuffer, const std::span<const CommandBuffer*> commandBuffersToWait) const
+    void MetalDevice::SubmitCommandBuffer(const CommandBuffer& commandBuffer, const std::span<const CommandBuffer*> commandBuffersToWait) const
     {
         SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}] with a graphics API, that differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer.GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(commandBuffer);
+        const MetalCommandBuffer& metalCommandBuffer = static_cast<const MetalCommandBuffer&>(commandBuffer);
 
         // If we do not need any manual synchronization, directly submit command buffer
         if (commandBuffersToWait.empty())
@@ -53,7 +53,7 @@ namespace Sierra
         }
 
         // Try to find the semaphore counter of the command buffer
-        auto iterator = std::find_if(commandBufferQueue.begin(), commandBufferQueue.end(), [&metalCommandBuffer](const CommandBufferQueueEntry &item) { return item.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
+        auto iterator = std::ranges::find_if(commandBufferQueue, [&metalCommandBuffer](const CommandBufferQueueEntry& item) { return item.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
         if (iterator == commandBufferQueue.end())
         {
             commandBufferQueue.push_back({ .commandBuffer = metalCommandBuffer.GetMetalCommandBuffer(), .counter = static_cast<uint32>(commandBuffersToWait.size()) });
@@ -67,11 +67,11 @@ namespace Sierra
             if (commandBufferToWait == nullptr) continue;
 
             SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], submit command buffer [{1}], whilst waiting on command buffer [{2}], which has an index of [{3}], as its graphics API differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer.GetName(), commandBufferToWait->GetName(), i);
-            const MetalCommandBuffer &metalCommandBufferToWait = static_cast<const MetalCommandBuffer&>(*commandBufferToWait);
+            const MetalCommandBuffer& metalCommandBufferToWait = static_cast<const MetalCommandBuffer&>(*commandBufferToWait);
 
             [metalCommandBufferToWait.GetMetalCommandBuffer() addCompletedHandler: ^(id<MTLCommandBuffer>)
             {
-                auto semaphoreIterator = std::find_if(commandBufferQueue.begin(), commandBufferQueue.end(), [&metalCommandBuffer](const CommandBufferQueueEntry &item) { return item.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
+                auto semaphoreIterator = std::ranges::find_if(commandBufferQueue, [&metalCommandBuffer](const CommandBufferQueueEntry& item) { return item.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
                 if (semaphoreIterator->counter--; semaphoreIterator->counter == 0)
                 {
                     [semaphoreIterator->commandBuffer encodeSignalEvent: sharedSignalSemaphore value: metalCommandBuffer.GetCompletionSignalValue()];
@@ -82,10 +82,10 @@ namespace Sierra
         }
     }
 
-    void MetalDevice::WaitForCommandBuffer(const CommandBuffer &commandBuffer) const
+    void MetalDevice::WaitForCommandBuffer(const CommandBuffer& commandBuffer) const
     {
         SR_ERROR_IF(commandBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot, from device [{0}], wait for command buffer [{1}] with a graphics API, that differs from [GraphicsAPI::Metal]!", GetName(), commandBuffer.GetName());
-        const MetalCommandBuffer &metalCommandBuffer = static_cast<const MetalCommandBuffer&>(commandBuffer);
+        const MetalCommandBuffer& metalCommandBuffer = static_cast<const MetalCommandBuffer&>(commandBuffer);
 
         // Wait for completion
         while ([sharedSignalSemaphore signaledValue] < metalCommandBuffer.GetCompletionSignalValue());

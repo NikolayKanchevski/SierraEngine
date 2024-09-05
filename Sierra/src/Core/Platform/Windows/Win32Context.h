@@ -83,7 +83,7 @@ namespace Sierra
         MSG PeekNextEvent(HWND window) const;
         [[nodiscard]] bool IsEventFiltered(HWND, const UINT message, const WPARAM wParam, const LPARAM);
 
-        void AdjustWindowRectForDPI(HWND window, RECT &rect) const;
+        void AdjustWindowRectForDPI(HWND window, RECT& rect) const;
         [[nodiscard]] bool IsWindowsVersionOrGreater(DWORD major, DWORD minor, WORD servicePack) const;
 
         void ReloadScreens();
@@ -99,7 +99,7 @@ namespace Sierra
 
     private:
         friend class WindowsContext;
-        explicit Win32Context(const Win32ContextCreateInfo &createInfo);
+        explicit Win32Context(const Win32ContextCreateInfo& createInfo);
 
         HINSTANCE hInstance;
         std::vector<Win32Screen> screens;

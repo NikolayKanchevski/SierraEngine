@@ -32,7 +32,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Application::Application(const ApplicationCreateInfo &createInfo)
+    Application::Application(const ApplicationCreateInfo& createInfo)
         : name(createInfo.name), version(createInfo.version)
     {
         #if SR_ENABLE_LOGGING
@@ -93,7 +93,7 @@ namespace Sierra
                     #if !defined(SR_VULKAN_SUPPORTED)
                         SR_ERROR("Cannot create rendering context [{0}] using the Vulkan API, as it is unsupported on the system, or the CMake option [\"SIERRA_BUILD_VULKAN\"] hast not been turned on!", createInfo.name);
                     #else
-                        renderingContext = std::make_unique<VulkanContext>();
+                        renderingContext = std::make_unique<VulkanContext>(RenderingContextCreateInfo{});
                     #endif
                     break;
                 }

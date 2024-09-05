@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    MetalSampler::MetalSampler(const MetalDevice &device, const SamplerCreateInfo &createInfo)
+    MetalSampler::MetalSampler(const MetalDevice& device, const SamplerCreateInfo& createInfo)
         : Sampler(createInfo)
     {
         SR_ERROR_IF(!device.IsSamplerAnisotropySupported(createInfo.anisotropy), "[Metal]: Cannot create sampler [{0}] with unsupported sample mode! Make sure to query Device::IsSamplerAnisotropySupported() to query support.", createInfo.name);

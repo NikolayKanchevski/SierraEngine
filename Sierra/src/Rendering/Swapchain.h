@@ -55,7 +55,7 @@ namespace Sierra
     struct SwapchainCreateInfo
     {
         std::string_view name = "Swapchain";
-        Window &window;
+        Window& window;
         SwapchainPresentationMode preferredPresentationMode = SwapchainPresentationMode::VSync;
         SwapchainBuffering preferredBuffering = !SR_PLATFORM_MOBILE ? SwapchainBuffering::TripleBuffering : SwapchainBuffering::DoubleBuffering;
         SwapchainImageMemoryType preferredImageMemoryType = SwapchainImageMemoryType::UNorm8;
@@ -70,7 +70,7 @@ namespace Sierra
 
         /* --- POLLING METHODS --- */
         virtual void AcquireNextImage() = 0;
-        virtual void Present(CommandBuffer &commandBuffer) = 0;
+        virtual void Present(CommandBuffer& commandBuffer) = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual uint32 GetCurrentFrameIndex() const = 0;
@@ -86,7 +86,7 @@ namespace Sierra
 
         /* --- EVENTS --- */
         template<SwapchainEventType EventType>
-        EventSubscriptionID AddEventListener(EventCallback<EventType>);
+        EventSubscriptionID AddEventListener(const EventCallback<EventType>&);
         
         template<SwapchainEventType EventType>
         bool RemoveEventListener(EventSubscriptionID);
@@ -95,7 +95,7 @@ namespace Sierra
         ~Swapchain() override = default;
 
     protected:
-        explicit Swapchain(const SwapchainCreateInfo &createInfo);
+        explicit Swapchain(const SwapchainCreateInfo& createInfo);
         [[nodiscard]] EventDispatcher<SwapchainResizeEvent>& GetSwapchainResizeDispatcher() { return swapchainResizeDispatcher; }
 
     private:
@@ -103,7 +103,7 @@ namespace Sierra
 
     };
 
-    template<> inline EventSubscriptionID Swapchain::AddEventListener<SwapchainResizeEvent>(EventCallback<SwapchainResizeEvent> Callback) { return swapchainResizeDispatcher.Subscribe(Callback); }
+    template<> inline EventSubscriptionID Swapchain::AddEventListener<SwapchainResizeEvent>(const EventCallback<SwapchainResizeEvent>& Callback) { return swapchainResizeDispatcher.Subscribe(Callback); }
     template<> inline bool Swapchain::RemoveEventListener<SwapchainResizeEvent>(const EventSubscriptionID ID) { return swapchainResizeDispatcher.Unsubscribe(ID); }
 
 }

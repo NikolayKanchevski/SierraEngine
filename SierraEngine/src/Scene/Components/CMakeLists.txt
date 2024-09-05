@@ -3,6 +3,4 @@ target_sources(SierraEngine PRIVATE
     Relationship.h
     Tag.cpp
     Tag.h
-    UUID.cpp
-    UUID.h
 )

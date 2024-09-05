@@ -23,7 +23,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        MetalShader(const MetalDevice &device, const ShaderCreateInfo &createInfo);
+        MetalShader(const MetalDevice& device, const ShaderCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override;

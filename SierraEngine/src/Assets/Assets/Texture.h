@@ -28,7 +28,7 @@ namespace SierraEngine
     struct TextureCreateInfo
     {
         std::string_view name = "Texture";
-        const Sierra::RenderingContext &renderingContext;
+        const Sierra::RenderingContext& renderingContext;
 
         uint32 width = 0;
         uint32 height = 0;
@@ -45,7 +45,7 @@ namespace SierraEngine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Texture(const TextureCreateInfo &createInfo);
+        explicit Texture(const TextureCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint32 GetWidth() const { return image->GetWidth(); }

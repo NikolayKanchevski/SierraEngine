@@ -12,7 +12,7 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    TriangleRenderer::TriangleRenderer(const TriangleRendererCreateInfo &createInfo)
+    TriangleRenderer::TriangleRenderer(const TriangleRendererCreateInfo& createInfo)
         : renderingContext(createInfo.renderingContext)
     {
         vertexShader = renderingContext.CreateShader({
@@ -55,7 +55,7 @@ namespace SierraEngine
     }
 
 
-    void TriangleRenderer::Render(Sierra::CommandBuffer &commandBuffer, const Sierra::Image &outputImage)
+    void TriangleRenderer::Render(Sierra::CommandBuffer& commandBuffer, const Sierra::Image& outputImage)
     {
         commandBuffer.BeginRenderPass(*renderPass, {{ { .outputImage = outputImage } }});
         {

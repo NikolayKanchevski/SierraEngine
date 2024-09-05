@@ -13,7 +13,7 @@ namespace SierraEngine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit STBImage(const ImageCreateInfo &createInfo);
+        explicit STBImage(const ImageCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         void Resize(uint32 width, uint32 height) override;

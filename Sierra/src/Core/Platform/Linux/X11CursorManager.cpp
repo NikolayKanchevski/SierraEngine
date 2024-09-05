@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    X11CursorManager::X11CursorManager(const X11Context &x11Context, const XID window, const CursorManagerCreateInfo &createInfo)
+    X11CursorManager::X11CursorManager(const X11Context& x11Context, const XID window, const CursorManagerCreateInfo& createInfo)
         : CursorManager(createInfo), x11Context(x11Context), window(window)
     {
 
@@ -108,7 +108,7 @@ namespace Sierra
 
     /* --- EVENTS --- */
 
-    void X11CursorManager::MotionNotifyEvent(const XEvent &event)
+    void X11CursorManager::MotionNotifyEvent(const XEvent& event)
     {
         const Vector2Int newPosition = { event.xmotion.x, x11Context.GetWindowSize(window).y - event.xmotion.y };
         if (cursorPosition == newPosition) return;

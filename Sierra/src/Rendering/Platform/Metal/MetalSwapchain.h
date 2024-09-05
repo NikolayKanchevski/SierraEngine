@@ -18,11 +18,11 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        MetalSwapchain(const MetalDevice &device, const SwapchainCreateInfo &createInfo);
+        MetalSwapchain(const MetalDevice& device, const SwapchainCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         void AcquireNextImage() override;
-        void Present(CommandBuffer &commandBuffer) override;
+        void Present(CommandBuffer& commandBuffer) override;
 
         /* -- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override;
@@ -38,8 +38,8 @@ namespace Sierra
         ~MetalSwapchain() override;
 
     private:
-        const MetalDevice &device;
-        Window &window;
+        const MetalDevice& device;
+        Window& window;
 
         std::string name;
 

@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanBuffer::VulkanBuffer(const VulkanDevice &device, const BufferCreateInfo &createInfo)
+    VulkanBuffer::VulkanBuffer(const VulkanDevice& device, const BufferCreateInfo& createInfo)
         : Buffer(createInfo), device(device), name(createInfo.name), usageFlags(BufferUsageToVkBufferUsageFlags(createInfo.usage)), memorySize(createInfo.memorySize)
     {
         // Set up buffer create info
@@ -58,7 +58,7 @@ namespace Sierra
 
     VulkanBuffer::~VulkanBuffer()
     {
-        if (allocation != VK_NULL_HANDLE && memory != nullptr) vmaUnmapMemory(device.GetMemoryAllocator(), allocation);
+        if (memory != nullptr) vmaUnmapMemory(device.GetMemoryAllocator(), allocation);
         vmaDestroyBuffer(device.GetMemoryAllocator(), buffer, allocation);
     }
 

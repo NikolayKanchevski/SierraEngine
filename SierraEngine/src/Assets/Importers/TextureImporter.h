@@ -11,7 +11,7 @@ namespace SierraEngine
 
     struct ImportedTexture
     {
-        std::array<char, 64> name;
+        std::array<char, 64> name = { };
         uint64 hash = 0;
 
         uint32 width = 0;
@@ -32,9 +32,13 @@ namespace SierraEngine
         /* --- POLLING METHODS --- */
         [[nodiscard]] virtual std::optional<ImportedTexture> Import() const = 0;
 
-        /* --- OPERATORS --- */
+        /* --- COPY SEMANTICS --- */
         TextureImporter(const TextureImporter&) = delete;
         TextureImporter& operator=(const TextureImporter&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        TextureImporter(TextureImporter&&) = default;
+        TextureImporter& operator=(TextureImporter&&) = default;
 
         /* --- DESTRUCTOR --- */
         virtual ~TextureImporter() = default;

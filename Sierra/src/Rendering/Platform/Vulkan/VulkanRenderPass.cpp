@@ -11,7 +11,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanRenderPass::VulkanRenderPass(const VulkanDevice &device, const RenderPassCreateInfo &createInfo)
+    VulkanRenderPass::VulkanRenderPass(const VulkanDevice& device, const RenderPassCreateInfo& createInfo)
         : RenderPass(createInfo), device(device), name(createInfo.name)
     {
         SR_ERROR_IF(!device.IsExtensionLoaded(VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME), "[Vulkan]: Cannot create render pass [{0}], as the provided device [{1}] does not support the {2} extension!", name, device.GetName(), VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME);
@@ -26,17 +26,17 @@ namespace Sierra
         attachmentDescriptions.reserve(createInfo.attachments.size() * 2); // NOTE: We are reserving twice the space, so we can potentially put resolve attachments at back without reallocating and invalidating pointer connections
         for (size i = 0; i < createInfo.attachments.size(); i++)
         {
-            const RenderPassAttachment &attachment = createInfo.attachments[i];
+            const RenderPassAttachment& attachment = createInfo.attachments[i];
 
             SR_ERROR_IF(attachment.templateOutputImage.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not use image [{0}] of attachment [{1}]'s output image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.templateOutputImage.GetName(), i, name);
-            const VulkanImage &vulkanTemplateImage = static_cast<const VulkanImage&>(attachment.templateOutputImage);
+            const VulkanImage& vulkanTemplateImage = static_cast<const VulkanImage&>(attachment.templateOutputImage);
 
             // Set up framebuffer attachment format of output image
-            VkFormat &framebufferAttachmentImageFormat = framebufferAttachmentImageFormats[i];
+            VkFormat& framebufferAttachmentImageFormat = framebufferAttachmentImageFormats[i];
             framebufferAttachmentImageFormat = VulkanImage::ImageFormatToVkFormat(vulkanTemplateImage.GetFormat());
 
             // Set up framebuffer attachment of output image
-            VkFramebufferAttachmentImageInfo &framebufferOutputImageAttachment = framebufferImageAttachments[i];
+            VkFramebufferAttachmentImageInfo& framebufferOutputImageAttachment = framebufferImageAttachments[i];
             framebufferOutputImageAttachment.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENT_IMAGE_INFO;
             framebufferOutputImageAttachment.usage = vulkanTemplateImage.GetVulkanUsageFlags();
             framebufferOutputImageAttachment.width = vulkanTemplateImage.GetWidth();
@@ -46,7 +46,7 @@ namespace Sierra
             framebufferOutputImageAttachment.pViewFormats = &framebufferAttachmentImageFormat;
 
             // Set up render pass attachment of output image
-            VkAttachmentDescription &outputImageAttachment = attachmentDescriptions[i];
+            VkAttachmentDescription& outputImageAttachment = attachmentDescriptions[i];
             outputImageAttachment.format = VulkanImage::ImageFormatToVkFormat(vulkanTemplateImage.GetFormat());
             outputImageAttachment.samples = VulkanImage::ImageSamplingToVkSampleCountFlags(vulkanTemplateImage.GetSampling());
             outputImageAttachment.loadOp = AttachmentLoadOperationToVkAttachmentLoadOp(attachment.loadOperation);
@@ -59,14 +59,14 @@ namespace Sierra
             if (attachment.templateResolverImage != nullptr)
             {
                 SR_ERROR_IF(attachment.templateResolverImage->GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot not use image [{0}] of attachment [{1}]'s resolver image within render pass [{2}], as its graphics API differs from [GraphicsAPI::Vulkan]!", attachment.templateResolverImage->GetName(), i, name);
-                const VulkanImage &vulkanResolveImage = static_cast<const VulkanImage&>(*attachment.templateResolverImage);
+                const VulkanImage& vulkanResolveImage = static_cast<const VulkanImage&>(*attachment.templateResolverImage);
 
                 // Set up framebuffer attachment format of resolver image
-                VkFormat &resolveAttachmentImageFormat = framebufferAttachmentImageFormats.emplace_back();
+                VkFormat& resolveAttachmentImageFormat = framebufferAttachmentImageFormats.emplace_back();
                 resolveAttachmentImageFormat = VulkanImage::ImageFormatToVkFormat(vulkanResolveImage.GetFormat());
 
                 // Set up framebuffer attachment of resolver image
-                VkFramebufferAttachmentImageInfo &framebufferResolverImageAttachment = framebufferImageAttachments.emplace_back();
+                VkFramebufferAttachmentImageInfo& framebufferResolverImageAttachment = framebufferImageAttachments.emplace_back();
                 framebufferResolverImageAttachment.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENT_IMAGE_INFO;
                 framebufferResolverImageAttachment.usage = vulkanResolveImage.GetVulkanUsageFlags();
                 framebufferResolverImageAttachment.width = vulkanResolveImage.GetWidth();
@@ -76,7 +76,7 @@ namespace Sierra
                 framebufferResolverImageAttachment.pViewFormats = &resolveAttachmentImageFormat;
 
                 // Set up render pass attachment of resolver image
-                VkAttachmentDescription &resolverImageAttachment = attachmentDescriptions.emplace_back();
+                VkAttachmentDescription& resolverImageAttachment = attachmentDescriptions.emplace_back();
                 resolverImageAttachment.format = VulkanImage::ImageFormatToVkFormat(vulkanResolveImage.GetFormat());
                 resolverImageAttachment.samples = VulkanImage::ImageSamplingToVkSampleCountFlags(vulkanResolveImage.GetSampling());
                 resolverImageAttachment.loadOp = outputImageAttachment.loadOp;
@@ -109,13 +109,13 @@ namespace Sierra
         // Set subpass descriptions
         for (size i = 0; i < createInfo.subpassDescriptions.size(); i++)
         {
-            const SubpassDescription &subpass = createInfo.subpassDescriptions[i];
+            const SubpassDescription& subpass = createInfo.subpassDescriptions[i];
             subpassDescriptions[i].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
             // Create render target attachment references (they live in the outer scope, in the attachment references vectors, so they are not deallocated after the loop)
             for (const uint32 renderTargetIndex : subpass.renderTargets)
             {
-                const RenderPassAttachment &renderTarget = createInfo.attachments[renderTargetIndex];
+                const RenderPassAttachment& renderTarget = createInfo.attachments[renderTargetIndex];
 
                 // Check attachment type, then create and assign a VkAttachmentReference
                 if (renderTarget.type == RenderPassAttachmentType::Color)
@@ -145,7 +145,7 @@ namespace Sierra
             subpassDescriptions[i].pInputAttachments = inputAttachmentReferences[i].data();
             subpassDescriptions[i].colorAttachmentCount = static_cast<uint32>(colorAttachmentReferences[i].size());
             subpassDescriptions[i].pColorAttachments = colorAttachmentReferences[i].data();
-            subpassDescriptions[i].pDepthStencilAttachment = hasDepthAttachment ? &depthAttachmentReference : nullptr;
+            subpassDescriptions[i].pDepthStencilAttachment = hasDepthAttachment ?& depthAttachmentReference : nullptr;
             subpassDescriptions[i].pResolveAttachments = resolveAttachmentReferences[i].data();
         }
 
@@ -157,7 +157,7 @@ namespace Sierra
             subpassDependencies.resize(createInfo.subpassDescriptions.size() + 1);
 
             // Create entry dependency
-            VkSubpassDependency &firstDependency = subpassDependencies.front();
+            VkSubpassDependency& firstDependency = subpassDependencies.front();
             firstDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
             firstDependency.dstSubpass = 0;
             firstDependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
@@ -180,7 +180,7 @@ namespace Sierra
             }
 
             // Create exit dependency
-            VkSubpassDependency &lastDependency = subpassDependencies.back();
+            VkSubpassDependency& lastDependency = subpassDependencies.back();
             lastDependency.srcSubpass = static_cast<uint32>(createInfo.subpassDescriptions.size()) - 1;
             lastDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
             lastDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -263,7 +263,7 @@ namespace Sierra
         device.GetFunctionTable().vkDestroyFramebuffer(device.GetLogicalDevice(), framebuffer, nullptr);
 
         // Change attachments' size
-        for (VkFramebufferAttachmentImageInfo &framebufferImageAttachment : framebufferImageAttachments)
+        for (VkFramebufferAttachmentImageInfo& framebufferImageAttachment : framebufferImageAttachments)
         {
             framebufferImageAttachment.width = width;
             framebufferImageAttachment.height = height;
