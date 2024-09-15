@@ -39,7 +39,7 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override { return name; }
-        [[nodiscard]] uint32 GetRefreshRate() const override { return refreshRate; }
+        [[nodiscard]] uint16 GetRefreshRate() const override { return refreshRate; }
         [[nodiscard]] ScreenOrientation GetOrientation() const override { return orientation; }
 
         [[nodiscard]] Vector2Int GetOrigin() const override { return origin; }
@@ -60,7 +60,7 @@ namespace Sierra
         void* /* UIKitScreenEventWrapper* */ eventWrapper = nullptr;
 
         std::string name;
-        uint32 refreshRate = 0;
+        uint16 refreshRate = 0;
         ScreenOrientation orientation = ScreenOrientation::Unknown;
 
         Vector2Int origin = { 0, 0 };

@@ -9,7 +9,7 @@ namespace Sierra
     template<typename T> concept HashType = std::is_unsigned_v<T>;
 
     template<HashType T>
-    class SIERRA_API UUID final
+    class UUID final
     {
     public:
         /* --- CONSTRUCTORS --- */

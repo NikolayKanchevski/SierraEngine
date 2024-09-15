@@ -64,63 +64,63 @@ namespace Sierra
         for (size i = 0; i < createInfo.vertexInputs.size(); i++)
         {
             [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setBufferIndex: MetalDevice::VERTEX_BUFFER_INDEX];
-            [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setOffset: vertexByteStride];
+            [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setOffset: vertexStride];
             switch (createInfo.vertexInputs[i])
             {
-                case VertexInput::Int8:          { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar];             vertexByteStride += 1 * 1; break; }
-                case VertexInput::UInt8:         { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar];            vertexByteStride += 1 * 1; break; }
-                case VertexInput::Norm8:         { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatCharNormalized];   vertexByteStride += 1 * 1; break; }
-                case VertexInput::UNorm8:        { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUCharNormalized];  vertexByteStride += 1 * 1; break; }
-                case VertexInput::Int16:         { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShort];            vertexByteStride += 1 * 2; break; }
-                case VertexInput::UInt16:        { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShort];           vertexByteStride += 1 * 2; break; }
-                case VertexInput::Norm16:        { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShortNormalized];  vertexByteStride += 1 * 2; break; }
-                case VertexInput::UNorm16:       { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShortNormalized]; vertexByteStride += 1 * 2; break; }
-                case VertexInput::Float16:       { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatHalf];             vertexByteStride += 1 * 4; break; }
-                case VertexInput::Int32:         { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatInt];              vertexByteStride += 1 * 4; break; }
-                case VertexInput::UInt32:        { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUInt];             vertexByteStride += 1 * 4; break; }
-                case VertexInput::Float32:       { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatFloat];            vertexByteStride += 1 * 4; break; }
+                case VertexInput::Int8:          { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar];             vertexStride += 1 * 1; break; }
+                case VertexInput::UInt8:         { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar];            vertexStride += 1 * 1; break; }
+                case VertexInput::Norm8:         { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatCharNormalized];   vertexStride += 1 * 1; break; }
+                case VertexInput::UNorm8:        { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUCharNormalized];  vertexStride += 1 * 1; break; }
+                case VertexInput::Int16:         { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShort];            vertexStride += 1 * 2; break; }
+                case VertexInput::UInt16:        { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShort];           vertexStride += 1 * 2; break; }
+                case VertexInput::Norm16:        { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShortNormalized];  vertexStride += 1 * 2; break; }
+                case VertexInput::UNorm16:       { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShortNormalized]; vertexStride += 1 * 2; break; }
+                case VertexInput::Float16:       { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatHalf];             vertexStride += 1 * 4; break; }
+                case VertexInput::Int32:         { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatInt];              vertexStride += 1 * 4; break; }
+                case VertexInput::UInt32:        { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUInt];             vertexStride += 1 * 4; break; }
+                case VertexInput::Float32:       { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatFloat];            vertexStride += 1 * 4; break; }
 
-                case VertexInput::Int8_2D:       { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar2];             vertexByteStride += 2 * 1; break; }
-                case VertexInput::UInt8_2D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar2];            vertexByteStride += 2 * 1; break; }
-                case VertexInput::Norm8_2D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar2Normalized];   vertexByteStride += 2 * 1; break; }
-                case VertexInput::UNorm8_2D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar2Normalized];  vertexByteStride += 2 * 1; break; }
-                case VertexInput::Int16_2D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShort2];            vertexByteStride += 2 * 2; break; }
-                case VertexInput::UInt16_2D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShort2];           vertexByteStride += 2 * 2; break; }
-                case VertexInput::Norm16_2D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShort2Normalized];  vertexByteStride += 2 * 2; break; }
-                case VertexInput::UNorm16_2D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShort2Normalized]; vertexByteStride += 2 * 2; break; }
-                case VertexInput::Float16_2D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatHalf2];             vertexByteStride += 2 * 2; break; }
-                case VertexInput::Int32_2D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatInt2];              vertexByteStride += 2 * 4; break; }
-                case VertexInput::UInt32_2D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUInt2];             vertexByteStride += 2 * 4; break; }
-                case VertexInput::Float32_2D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatFloat2];            vertexByteStride += 2 * 4; break; }
+                case VertexInput::Int8_2D:       { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar2];             vertexStride += 2 * 1; break; }
+                case VertexInput::UInt8_2D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar2];            vertexStride += 2 * 1; break; }
+                case VertexInput::Norm8_2D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar2Normalized];   vertexStride += 2 * 1; break; }
+                case VertexInput::UNorm8_2D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar2Normalized];  vertexStride += 2 * 1; break; }
+                case VertexInput::Int16_2D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShort2];            vertexStride += 2 * 2; break; }
+                case VertexInput::UInt16_2D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShort2];           vertexStride += 2 * 2; break; }
+                case VertexInput::Norm16_2D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShort2Normalized];  vertexStride += 2 * 2; break; }
+                case VertexInput::UNorm16_2D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShort2Normalized]; vertexStride += 2 * 2; break; }
+                case VertexInput::Float16_2D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatHalf2];             vertexStride += 2 * 2; break; }
+                case VertexInput::Int32_2D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatInt2];              vertexStride += 2 * 4; break; }
+                case VertexInput::UInt32_2D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUInt2];             vertexStride += 2 * 4; break; }
+                case VertexInput::Float32_2D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatFloat2];            vertexStride += 2 * 4; break; }
 
-                case VertexInput::Int8_3D:       { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar3];             vertexByteStride += 3 * 1; break; }
-                case VertexInput::UInt8_3D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar3];            vertexByteStride += 3 * 1; break; }
-                case VertexInput::Norm8_3D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar3Normalized];   vertexByteStride += 3 * 1; break; }
-                case VertexInput::UNorm8_3D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar3Normalized];  vertexByteStride += 3 * 1; break; }
-                case VertexInput::Int16_3D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShort3];            vertexByteStride += 3 * 2; break; }
-                case VertexInput::UInt16_3D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShort3];           vertexByteStride += 3 * 2; break; }
-                case VertexInput::Norm16_3D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShort3Normalized];  vertexByteStride += 3 * 2; break; }
-                case VertexInput::UNorm16_3D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShort3Normalized]; vertexByteStride += 3 * 2; break; }
-                case VertexInput::Float16_3D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatHalf3];             vertexByteStride += 3 * 2; break; }
-                case VertexInput::Int32_3D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatInt3];              vertexByteStride += 3 * 4; break; }
-                case VertexInput::UInt32_3D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUInt3];             vertexByteStride += 3 * 4; break; }
-                case VertexInput::Float32_3D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatFloat3];            vertexByteStride += 3 * 4; break; }
+                case VertexInput::Int8_3D:       { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar3];             vertexStride += 3 * 1; break; }
+                case VertexInput::UInt8_3D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar3];            vertexStride += 3 * 1; break; }
+                case VertexInput::Norm8_3D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar3Normalized];   vertexStride += 3 * 1; break; }
+                case VertexInput::UNorm8_3D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar3Normalized];  vertexStride += 3 * 1; break; }
+                case VertexInput::Int16_3D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShort3];            vertexStride += 3 * 2; break; }
+                case VertexInput::UInt16_3D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShort3];           vertexStride += 3 * 2; break; }
+                case VertexInput::Norm16_3D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShort3Normalized];  vertexStride += 3 * 2; break; }
+                case VertexInput::UNorm16_3D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShort3Normalized]; vertexStride += 3 * 2; break; }
+                case VertexInput::Float16_3D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatHalf3];             vertexStride += 3 * 2; break; }
+                case VertexInput::Int32_3D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatInt3];              vertexStride += 3 * 4; break; }
+                case VertexInput::UInt32_3D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUInt3];             vertexStride += 3 * 4; break; }
+                case VertexInput::Float32_3D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatFloat3];            vertexStride += 3 * 4; break; }
 
-                case VertexInput::Int8_4D:       { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar4];             vertexByteStride += 4 * 1; break; }
-                case VertexInput::UInt8_4D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar4];            vertexByteStride += 4 * 1; break; }
-                case VertexInput::Norm8_4D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar4Normalized];   vertexByteStride += 4 * 1; break; }
-                case VertexInput::UNorm8_4D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar4Normalized];  vertexByteStride += 4 * 1; break; }
-                case VertexInput::Int16_4D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShort4];            vertexByteStride += 4 * 2; break; }
-                case VertexInput::UInt16_4D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShort4];           vertexByteStride += 4 * 2; break; }
-                case VertexInput::Norm16_4D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShort4Normalized];  vertexByteStride += 4 * 2; break; }
-                case VertexInput::UNorm16_4D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShort4Normalized]; vertexByteStride += 4 * 2; break; }
-                case VertexInput::Float16_4D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatHalf4];             vertexByteStride += 4 * 2; break; }
-                case VertexInput::Int32_4D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatInt4];              vertexByteStride += 4 * 4; break; }
-                case VertexInput::UInt32_4D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUInt4];             vertexByteStride += 4 * 4; break; }
-                case VertexInput::Float32_4D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatFloat4];            vertexByteStride += 4 * 4; break; }
+                case VertexInput::Int8_4D:       { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar4];             vertexStride += 4 * 1; break; }
+                case VertexInput::UInt8_4D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar4];            vertexStride += 4 * 1; break; }
+                case VertexInput::Norm8_4D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatChar4Normalized];   vertexStride += 4 * 1; break; }
+                case VertexInput::UNorm8_4D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUChar4Normalized];  vertexStride += 4 * 1; break; }
+                case VertexInput::Int16_4D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShort4];            vertexStride += 4 * 2; break; }
+                case VertexInput::UInt16_4D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShort4];           vertexStride += 4 * 2; break; }
+                case VertexInput::Norm16_4D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatShort4Normalized];  vertexStride += 4 * 2; break; }
+                case VertexInput::UNorm16_4D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUShort4Normalized]; vertexStride += 4 * 2; break; }
+                case VertexInput::Float16_4D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatHalf4];             vertexStride += 4 * 2; break; }
+                case VertexInput::Int32_4D:      { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatInt4];              vertexStride += 4 * 4; break; }
+                case VertexInput::UInt32_4D:     { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatUInt4];             vertexStride += 4 * 4; break; }
+                case VertexInput::Float32_4D:    { [[vertexDescriptor.attributes objectAtIndexedSubscript: i] setFormat: MTLVertexFormatFloat4];            vertexStride += 4 * 4; break; }
             }
         }
-        [[vertexDescriptor.layouts objectAtIndexedSubscript: MetalDevice::VERTEX_BUFFER_INDEX] setStride: vertexByteStride];
+        [[vertexDescriptor.layouts objectAtIndexedSubscript: MetalDevice::VERTEX_BUFFER_INDEX] setStride: vertexStride];
         [renderPipelineDescriptor setVertexDescriptor: vertexDescriptor];
 
         // Set depth testing

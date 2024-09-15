@@ -60,13 +60,13 @@ namespace Sierra
         }
 
         currentIndexBuffer = nil;
-        currentIndexBufferByteOffset = 0;
-        currentVertexBufferByteOffset = 0;
+        currentIndexBufferOffset = 0;
+        currentVertexBufferOffset = 0;
 
         currentResourceTable = nullptr;
     }
 
-    void MetalCommandBuffer::SynchronizeBufferUsage(const Buffer& buffer, const BufferCommandUsage previousUsage, const BufferCommandUsage nextUsage, const size memorySize, const uint64 byteOffset)
+    void MetalCommandBuffer::SynchronizeBufferUsage(const Buffer& buffer, const BufferCommandUsage previousUsage, const BufferCommandUsage nextUsage, const size memorySize, const uint64 offset)
     {
         SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not synchronize usage of buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer.GetName(), name);
         const MetalBuffer& metalBuffer = static_cast<const MetalBuffer&>(buffer);
@@ -93,7 +93,7 @@ namespace Sierra
         [currentRenderEncoder memoryBarrierWithResources: &textureResource count: 1 afterStages: ImageCommandUsageToRenderStages(previousUsage) beforeStages: ImageCommandUsageToRenderStages(nextUsage)];
     }
 
-    void MetalCommandBuffer::CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, uint64 memoryByteSize, const uint64 sourceByteOffset, const uint64 destinationByteOffset)
+    void MetalCommandBuffer::CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, uint64 memorySize, const uint64 sourceOffset, const uint64 Offset)
     {
         SR_ERROR_IF(sourceBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy from buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", sourceBuffer.GetName(), name);
         const MetalBuffer& metalSourceBuffer = static_cast<const MetalBuffer&>(sourceBuffer);
@@ -101,9 +101,9 @@ namespace Sierra
         SR_ERROR_IF(destinationBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy to buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", destinationBuffer.GetName(), name);
         const MetalBuffer& metalDestinationBuffer = static_cast<const MetalBuffer&>(destinationBuffer);
 
-        memoryByteSize = memoryByteSize != 0 ? memoryByteSize : sourceBuffer.GetMemorySize();
-        SR_ERROR_IF(sourceByteOffset + memoryByteSize > sourceBuffer.GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryByteSize, sourceByteOffset, sourceBuffer.GetName(), name, sourceByteOffset + memoryByteSize, sourceBuffer.GetMemorySize());
-        SR_ERROR_IF(destinationByteOffset + memoryByteSize > destinationBuffer.GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memoryByteSize, destinationByteOffset, destinationBuffer.GetName(), name, destinationByteOffset + memoryByteSize, destinationBuffer.GetMemorySize());
+        memorySize = memorySize != 0 ? memorySize : sourceBuffer.GetMemorySize();
+        SR_ERROR_IF(sourceOffset + memorySize > sourceBuffer.GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memorySize, sourceOffset, sourceBuffer.GetName(), name, sourceOffset + memorySize, sourceBuffer.GetMemorySize());
+        SR_ERROR_IF(Offset + memorySize > destinationBuffer.GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memorySize, Offset, destinationBuffer.GetName(), name, Offset + memorySize, destinationBuffer.GetMemorySize());
 
         if (currentBlitEncoder == nil)
         {
@@ -111,10 +111,10 @@ namespace Sierra
             device.SetResourceName(currentBlitEncoder, "Transfer Encoder");
         }
 
-        [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer() sourceOffset: sourceByteOffset toBuffer: metalDestinationBuffer.GetMetalBuffer() destinationOffset: destinationByteOffset size: memoryByteSize];
+        [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer() sourceOffset: sourceOffset toBuffer: metalDestinationBuffer.GetMetalBuffer() Offset: Offset size: memorySize];
     }
 
-    void MetalCommandBuffer::CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, const uint32 level, const uint32 layer, const Vector3UInt& pixelRange, const uint64 sourceByteOffset, const Vector3UInt& destinationPixelOffset)
+    void MetalCommandBuffer::CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, const uint32 level, const uint32 layer, const Vector3UInt& pixelRange, const uint64 sourceOffset, const Vector3UInt& destinationPixelOffset)
     {
         SR_ERROR_IF(sourceBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy from buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], to image [{1}] within command buffer [{2}]!", sourceBuffer.GetName(), destinationImage.GetName(), name);
         const MetalBuffer& metalSourceBuffer = static_cast<const MetalBuffer&>(sourceBuffer);
@@ -135,7 +135,7 @@ namespace Sierra
         }
 
         [currentBlitEncoder optimizeContentsForGPUAccess: metalDestinationImage.GetMetalTexture() slice: layer level: level];
-        [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer() sourceOffset: sourceByteOffset sourceBytesPerRow: static_cast<uint64>(static_cast<float32>(destinationImage.GetWidth() * ImageFormatToBlockSize(destinationImage.GetFormat())) * Sierra::ImageFormatToPixelMemorySize(destinationImage.GetFormat())) sourceBytesPerImage: 0 sourceSize: sourceSize toTexture: metalDestinationImage.GetMetalTexture() destinationSlice: layer destinationLevel: level destinationOrigin: MTLOriginMake(destinationPixelOffset.x, destinationPixelOffset.y, destinationPixelOffset.z)];
+        [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer() sourceOffset: sourceOffset sourceBytesPerRow: static_cast<uint64>(static_cast<float32>(destinationImage.GetWidth() * ImageFormatToBlockSize(destinationImage.GetFormat())) * Sierra::ImageFormatToPixelMemorySize(destinationImage.GetFormat())) sourceBytesPerImage: 0 sourceSize: sourceSize toTexture: metalDestinationImage.GetMetalTexture() destinationSlice: layer destinationLevel: level destinationOrigin: MTLOriginMake(destinationPixelOffset.x, destinationPixelOffset.y, destinationPixelOffset.z)];
     }
 
     void MetalCommandBuffer::GenerateMipMapsForImage(const Image& image)
@@ -162,17 +162,17 @@ namespace Sierra
         currentResourceTable = &metalResourceTable;
     }
 
-    void MetalCommandBuffer::PushConstants(const void* memory, const uint16 memoryByteSize, const uint16 sourceByteOffset)
+    void MetalCommandBuffer::PushConstants(const void* memory, const uint16 memorySize, const uint16 sourceOffset)
     {
         SR_ERROR_IF(currentRenderEncoder == nil && currentComputeEncoder == nil, "[Metal]: Cannot push constants if no encoder is active within command buffer [{0}]!", name);
         if (currentComputeEncoder != nil)
         {
-            [currentComputeEncoder setBytes:reinterpret_cast<const uint8*>(memory) + sourceByteOffset length: memoryByteSize atIndex: MetalDevice::PUSH_CONSTANT_INDEX];
+            [currentComputeEncoder setBytes:reinterpret_cast<const uint8*>(memory) + sourceOffset length: memorySize atIndex: MetalDevice::PUSH_CONSTANT_INDEX];
         }
         else
         {
-            [currentRenderEncoder setVertexBytes:reinterpret_cast<const uint8*>(memory) + sourceByteOffset length: memoryByteSize atIndex: MetalDevice::PUSH_CONSTANT_INDEX];
-            if (currentGraphicsPipeline->HasFragmentShader()) [currentRenderEncoder setFragmentBytes:reinterpret_cast<const uint8*>(memory) + sourceByteOffset length: memoryByteSize atIndex: MetalDevice::PUSH_CONSTANT_INDEX];
+            [currentRenderEncoder setVertexBytes:reinterpret_cast<const uint8*>(memory) + sourceOffset length: memorySize atIndex: MetalDevice::PUSH_CONSTANT_INDEX];
+            if (currentGraphicsPipeline->HasFragmentShader()) [currentRenderEncoder setFragmentBytes:reinterpret_cast<const uint8*>(memory) + sourceOffset length: memorySize atIndex: MetalDevice::PUSH_CONSTANT_INDEX];
         }
     }
 
@@ -311,24 +311,24 @@ namespace Sierra
         currentGraphicsPipeline = nil;
     }
 
-    void MetalCommandBuffer::BindVertexBuffer(const Buffer& vertexBuffer, const uint64 byteOffset)
+    void MetalCommandBuffer::BindVertexBuffer(const Buffer& vertexBuffer, const uint64 offset)
     {
         SR_ERROR_IF(vertexBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind vertex buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", vertexBuffer.GetName(), name);
         const MetalBuffer& metalVertexBuffer = static_cast<const MetalBuffer&>(vertexBuffer);
 
-        SR_ERROR_IF(byteOffset > vertexBuffer.GetMemorySize(), "[Metal]: Cannot bind vertex buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is not within a valid range of the [{3}] bytes the buffer holds!", vertexBuffer.GetName(), name, byteOffset, vertexBuffer.GetMemorySize());
-        [currentRenderEncoder setVertexBuffer: metalVertexBuffer.GetMetalBuffer() offset: byteOffset atIndex: MetalDevice::VERTEX_BUFFER_INDEX];
-        currentVertexBufferByteOffset = byteOffset;
+        SR_ERROR_IF(offset > vertexBuffer.GetMemorySize(), "[Metal]: Cannot bind vertex buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is not within a valid range of the [{3}] bytes the buffer holds!", vertexBuffer.GetName(), name, offset, vertexBuffer.GetMemorySize());
+        [currentRenderEncoder setVertexBuffer: metalVertexBuffer.GetMetalBuffer() offset: offset atIndex: MetalDevice::VERTEX_BUFFER_INDEX];
+        currentVertexBufferOffset = offset;
     }
 
-    void MetalCommandBuffer::BindIndexBuffer(const Buffer& indexBuffer, const uint64 byteOffset)
+    void MetalCommandBuffer::BindIndexBuffer(const Buffer& indexBuffer, const uint64 offset)
     {
         SR_ERROR_IF(indexBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind index buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", indexBuffer.GetName(), name);
         const MetalBuffer& metalIndexBuffer = static_cast<const MetalBuffer&>(indexBuffer);
 
-        SR_ERROR_IF(byteOffset > indexBuffer.GetMemorySize(), "[Metal]: Cannot bind index buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is not within a valid range of the [{3}] bytes the buffer holds!", indexBuffer.GetName(), name, byteOffset, indexBuffer.GetMemorySize());
+        SR_ERROR_IF(offset > indexBuffer.GetMemorySize(), "[Metal]: Cannot bind index buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is not within a valid range of the [{3}] bytes the buffer holds!", indexBuffer.GetName(), name, offset, indexBuffer.GetMemorySize());
         currentIndexBuffer = metalIndexBuffer.GetMetalBuffer();
-        currentIndexBufferByteOffset = byteOffset;
+        currentIndexBufferOffset = offset;
     }
 
     void MetalCommandBuffer::SetScissor(const Vector4UInt& scissor)
@@ -340,17 +340,17 @@ namespace Sierra
     void MetalCommandBuffer::Draw(const uint32 vertexCount, const uint32 vertexOffset)
     {
         SR_ERROR_IF(currentRenderEncoder == nil, "[Metal]: Cannot draw if no render encoder is active within command buffer [{0}]!", name);
-        const uint64 newVertexBufferByteOffset = currentVertexBufferByteOffset + (static_cast<uint64>(vertexOffset) * currentGraphicsPipeline->GetVertexByteStride());
-        if (newVertexBufferByteOffset > 0) [currentRenderEncoder setVertexBufferOffset: newVertexBufferByteOffset atIndex: MetalDevice::VERTEX_BUFFER_INDEX];
+        const uint64 newVertexBufferOffset = currentVertexBufferOffset + (static_cast<uint64>(vertexOffset) * currentGraphicsPipeline->GetVertexStride());
+        if (newVertexBufferOffset > 0) [currentRenderEncoder setVertexBufferOffset: newVertexBufferOffset atIndex: MetalDevice::VERTEX_BUFFER_INDEX];
         [currentRenderEncoder drawPrimitives: MTLPrimitiveTypeTriangle vertexStart: 0 vertexCount: vertexCount];
     }
 
     void MetalCommandBuffer::DrawIndexed(const uint32 indexCount, const uint32 indexOffset, const uint32 vertexOffset)
     {
         SR_ERROR_IF(currentRenderEncoder == nil, "[Metal]: Cannot draw indexed if no render encoder is active within command buffer [{0}]!", name);
-        const uint64 newVertexBufferByteOffset = currentVertexBufferByteOffset + (static_cast<uint64>(vertexOffset) * currentGraphicsPipeline->GetVertexByteStride());
-        if (newVertexBufferByteOffset > 0) [currentRenderEncoder setVertexBufferOffset: newVertexBufferByteOffset atIndex: MetalDevice::VERTEX_BUFFER_INDEX];
-        [currentRenderEncoder drawIndexedPrimitives: MTLPrimitiveTypeTriangle indexCount: indexCount indexType: MTLIndexTypeUInt32 indexBuffer: currentIndexBuffer indexBufferOffset: currentIndexBufferByteOffset + indexOffset * sizeof(uint32) instanceCount: 1];
+        const uint64 newVertexBufferOffset = currentVertexBufferOffset + (static_cast<uint64>(vertexOffset) * currentGraphicsPipeline->GetVertexStride());
+        if (newVertexBufferOffset > 0) [currentRenderEncoder setVertexBufferOffset: newVertexBufferOffset atIndex: MetalDevice::VERTEX_BUFFER_INDEX];
+        [currentRenderEncoder drawIndexedPrimitives: MTLPrimitiveTypeTriangle indexCount: indexCount indexType: MTLIndexTypeUInt32 indexBuffer: currentIndexBuffer indexBufferOffset: currentIndexBufferOffset + indexOffset * sizeof(uint32) instanceCount: 1];
     }
 
     void MetalCommandBuffer::BeginComputePipeline(const ComputePipeline& computePipeline)

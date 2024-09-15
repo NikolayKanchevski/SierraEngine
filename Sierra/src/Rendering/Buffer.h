@@ -39,7 +39,7 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual void CopyFromMemory(const void* memory, uint64 memoryByteSize = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) = 0;
+        virtual void CopyFromMemory(const void* memory, uint64 memorySize = 0, uint64 sourceOffset = 0, uint64 Offset = 0) = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual std::span<const uint8> GetMemory() const = 0;

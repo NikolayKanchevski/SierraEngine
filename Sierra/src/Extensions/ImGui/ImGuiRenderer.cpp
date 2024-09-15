@@ -476,7 +476,6 @@ namespace Sierra
         }
     }
 
-
     /* --- DESTRUCTOR --- */
 
     ImGuiRenderer::~ImGuiRenderer()

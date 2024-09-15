@@ -37,18 +37,21 @@ namespace Sierra
         char className[11 + 1];
         sprintf_s(className, "%i", RNG().Random<int32>());
 
+        const WNDCLASS windowClass =
+        {
+            .lpfnWndProc = windowProc,
+            .hInstance = hInstance,
+            .hIcon = LoadIcon(nullptr, IDI_WINLOGO),
+            .hCursor = LoadCursor(nullptr, IDC_ARROW),
+            .hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1),
+            .lpszClassName = className,
+        };
+
         // Set up window class
-        WNDCLASS windowClass{ };
-        windowClass.lpszClassName = className;
-        windowClass.hInstance = hInstance;
-        windowClass.hIcon = LoadIcon(nullptr, IDI_WINLOGO);
-        windowClass.hCursor = LoadCursor(nullptr, IDC_ARROW);
-        windowClass.lpfnWndProc = windowProc;
-        windowClass.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
         RegisterClass(&windowClass);
 
         // Set up window style
-        DWORD exStyle = WS_EX_APPWINDOW;
+        const DWORD exStyle = WS_EX_APPWINDOW;
 
         // Create window size rect
         RECT rect
@@ -61,7 +64,7 @@ namespace Sierra
         AdjustWindowRectEx(&rect, style, FALSE, exStyle);
 
         // Create window
-        HWND window = CreateWindowEx(
+        HWND window = CreateWindowExA(
             exStyle, className,
             title.data(), style,
             CW_USEDEFAULT, CW_USEDEFAULT,
@@ -157,6 +160,11 @@ namespace Sierra
         return false;
     }
 
+    void Win32Context::ReloadScreens()
+    {
+        EnumDisplayMonitors(nullptr, nullptr, EnumDisplayMonitorsProc, reinterpret_cast<LPARAM>(this));
+    }
+
     void Win32Context::AdjustWindowRectForDPI(HWND window, RECT& rect) const
     {
         if (IsWindowsVersionOrGreater(10, 0, 14393)) // Windows 10 1607
@@ -167,24 +175,6 @@ namespace Sierra
         {
             AdjustWindowRectEx(&rect, GetWindowLong(window, GWL_STYLE), FALSE, GetWindowLong(window, GWL_STYLE));
         }
-    }
-
-    bool Win32Context::IsWindowsVersionOrGreater(const DWORD major, const DWORD minor, const WORD servicePack) const
-    {
-        OSVERSIONINFOEX versionInfo;
-        ZeroMemory(&versionInfo, sizeof(OSVERSIONINFOEX));
-
-        versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-        versionInfo.dwMajorVersion = major;          // Desired major version
-        versionInfo.dwMinorVersion = minor;          // Desired minor version
-        versionInfo.wServicePackMajor = servicePack; // Desired service pack major version
-
-        DWORDLONG conditionMask = 0;
-        VER_SET_CONDITION(conditionMask, VER_MAJORVERSION, VER_GREATER_EQUAL);
-        VER_SET_CONDITION(conditionMask, VER_MINORVERSION, VER_GREATER_EQUAL);
-        VER_SET_CONDITION(conditionMask, VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
-
-        return VerifyVersionInfo(&versionInfo, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, conditionMask);
     }
 
     /* --- GETTER METHODS --- */
@@ -202,9 +192,22 @@ namespace Sierra
 
     /* --- PRIVATE METHODS --- */
 
-    void Win32Context::ReloadScreens()
+    bool Win32Context::IsWindowsVersionOrGreater(const DWORD major, const DWORD minor, const WORD servicePack) const
     {
-        EnumDisplayMonitors(nullptr, nullptr, EnumDisplayMonitorsProc, reinterpret_cast<LPARAM>(this));
+        OSVERSIONINFOEX versionInfo;
+        ZeroMemory(&versionInfo, sizeof(OSVERSIONINFOEX));
+
+        versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+        versionInfo.dwMajorVersion = major;          // Desired major version
+        versionInfo.dwMinorVersion = minor;          // Desired minor version
+        versionInfo.wServicePackMajor = servicePack; // Desired service pack major version
+
+        DWORDLONG conditionMask = 0;
+        VER_SET_CONDITION(conditionMask, VER_MAJORVERSION, VER_GREATER_EQUAL);
+        VER_SET_CONDITION(conditionMask, VER_MINORVERSION, VER_GREATER_EQUAL);
+        VER_SET_CONDITION(conditionMask, VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
+
+        return VerifyVersionInfo(&versionInfo, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, conditionMask);
     }
 
     BOOL Win32Context::EnumDisplayMonitorsProc(HMONITOR hMonitor, HDC hdc, LPRECT lrpcMonitor, const LPARAM dwData)

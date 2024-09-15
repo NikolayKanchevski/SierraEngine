@@ -31,7 +31,7 @@ namespace Sierra
         NSApplication* application = nil;
     };
 
-    class CocoaContext
+    class SIERRA_API CocoaContext final
     {
     public:
         /* --- CONSTRUCTORS --- */
@@ -42,13 +42,20 @@ namespace Sierra
         void DestroyWindow(NSWindow* window) const;
 
         NSEvent* PollNextEvent() const;
-        void ReloadScreens();
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] const NSApplication* GetNSApplication() const { return application; }
 
         [[nodiscard]] CocoaScreen& GetPrimaryScreen();
         [[nodiscard]] CocoaScreen& GetWindowScreen(const NSWindow* window);
+    
+        /* --- COPY SEMANTICS --- */
+        CocoaContext(const CocoaContext&) = delete;
+        CocoaContext& operator=(const CocoaContext&) = delete;
+    
+        /* --- MOVE SEMANTICS --- */
+        CocoaContext(CocoaContext&&) = default;
+        CocoaContext& operator=(CocoaContext&&) = default;
 
         /* --- DESTRUCTOR --- */
         ~CocoaContext();
@@ -56,6 +63,8 @@ namespace Sierra
     private:
         NSApplication* application = nil;
         std::vector<CocoaScreen> screens;
+
+        void ReloadScreens();
 
     };
 

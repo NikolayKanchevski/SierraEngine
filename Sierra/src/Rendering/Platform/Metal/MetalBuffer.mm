@@ -23,11 +23,11 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void MetalBuffer::CopyFromMemory(const void* memory, uint64 memoryByteSize, const uint64 sourceByteOffset, const uint64 destinationByteOffset)
+    void MetalBuffer::CopyFromMemory(const void* memory, uint64 memorySize, const uint64 sourceOffset, const uint64 Offset)
     {
-        memoryByteSize = memoryByteSize != 0 ? memoryByteSize : GetMemorySize();
-        SR_ERROR_IF(destinationByteOffset + memoryByteSize > GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{3}] bytes is bigger than the size of the buffer - [{4}]!", memoryByteSize, destinationByteOffset, GetName(), destinationByteOffset + memoryByteSize, GetMemorySize());
-        std::memcpy(reinterpret_cast<uint8*>([buffer contents]) + destinationByteOffset, reinterpret_cast<const uint8*>(memory) + sourceByteOffset, memoryByteSize);
+        memorySize = memorySize != 0 ? memorySize : GetMemorySize();
+        SR_ERROR_IF(Offset + memorySize > GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{3}] bytes is bigger than the size of the buffer - [{4}]!", memorySize, Offset, GetName(), Offset + memorySize, GetMemorySize());
+        std::memcpy(reinterpret_cast<uint8*>([buffer contents]) + Offset, reinterpret_cast<const uint8*>(memory) + sourceOffset, memorySize);
     }
 
     /* --- GETTER METHODS --- */

@@ -28,8 +28,8 @@ namespace Sierra
         /* --- POLLING METHODS --- */
         [[nodiscard]] std::string_view GetName() const override;
 
-        void BindUniformBuffer(ResourceIndex index, const Buffer& buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) override;
-        void BindStorageBuffer(ResourceIndex index, const Buffer& buffer, uint64 memoryByteSize = 0, uint64 byteOffset = 0) override;
+        void BindUniformBuffer(ResourceIndex index, const Buffer& buffer, uint64 memorySize = 0, uint64 offset = 0) override;
+        void BindStorageBuffer(ResourceIndex index, const Buffer& buffer, uint64 memorySize = 0, uint64 offset = 0) override;
 
         void BindSampledImage(ResourceIndex index, const Image& image) override;
         void BindStorageImage(ResourceIndex index, const Image& image) override;

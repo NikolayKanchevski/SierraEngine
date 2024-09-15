@@ -58,7 +58,6 @@ namespace Sierra
         constexpr static uint32 PUSH_CONSTANT_INDEX = 1;
         constexpr static uint32 VERTEX_BUFFER_INDEX = 30;
 
-
         /* --- DESTRUCTOR --- */
         ~MetalDevice() override;
 
@@ -77,7 +76,6 @@ namespace Sierra
             uint32 counter = 0;
         };
         inline static std::deque<CommandBufferQueueEntry> commandBufferQueue;
-
 
     };
 

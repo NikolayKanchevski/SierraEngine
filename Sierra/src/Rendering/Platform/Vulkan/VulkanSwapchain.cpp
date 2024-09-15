@@ -47,8 +47,10 @@ namespace Sierra
         if (result == VK_ERROR_OUT_OF_DATE_KHR)
         {
             Recreate();
-            AcquireNextImage();
-            return;
+
+            // Try to re-acquire next image
+            result = device.GetFunctionTable().vkAcquireNextImageKHR(device.GetLogicalDevice(), swapchain, std::numeric_limits<uint64>::max(), isImageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &currentImage);
+            SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Failed to acquire image [{0}] of swapchain [{1}]. Error code: {2}.", currentFrame, name, static_cast<int32>(result));
         }
 
         // Set up submit info
@@ -63,7 +65,7 @@ namespace Sierra
 
         // Wait until swapchain image has been acquired and is ready to be worked on
         result = device.GetFunctionTable().vkQueueSubmit(device.GetGeneralQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not wait for swapchain image [{0}] on swapchain [{1}] to get swapped out! Error code: {2}.", currentFrame, name, static_cast<int32>(result));
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not wait for swapchain image [{0}] of swapchain [{1}] to get swapped out! Error code: {2}.", currentFrame, name, static_cast<int32>(result));
     }
 
     void VulkanSwapchain::Present(CommandBuffer& commandBuffer)

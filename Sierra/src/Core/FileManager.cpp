@@ -75,4 +75,57 @@ namespace Sierra
         return FileType::Unknown;
     }
 
+    /* --- POLLING METHODS --- */
+
+    FileOperationResult FileStream::SeekToEnd()
+    {
+        return Seek(GetMemorySize() - 1);
+    }
+
+    FileOperationResult FileStream::Read(const size memorySize, const size offset, std::vector<uint8>& outData)
+    {
+        Seek(offset);
+        return Read(memorySize, outData);
+    }
+
+    FileOperationResult FileStream::Write(const void* memory, const size memorySize, const size sourceOffset, const size Offset)
+    {
+        Seek(Offset);
+        return Write(memory, memorySize, sourceOffset);
+    }
+
+    /* --- PROTECTED METHODS --- */
+
+    FileOperationResult FileManager::ResolveFilePathConflict(const std::filesystem::path& sourceFilePath, std::filesystem::path& destinationFilePath, const FilePathConflictPolicy conflictPolicy) const
+    {
+        if (FileExists(destinationFilePath))
+        {
+            switch (conflictPolicy)
+            {
+                case FilePathConflictPolicy::Overwrite:
+                {
+                    if (const FileOperationResult result = DeleteFile(destinationFilePath); result != FileOperationResult::Success)
+                    {
+                        return FileOperationResult::UnknownError;
+                    }
+                    break;
+                }
+                case FilePathConflictPolicy::KeepExisting:
+                {
+                    return FileOperationResult::Success;
+                }
+                case FilePathConflictPolicy::KeepBoth:
+                {
+                    uint32 copyIndex = 0;
+                    do
+                    {
+                        destinationFilePath.replace_filename(fmt::format("{0}_{1}{2}", sourceFilePath.stem().string(), copyIndex, sourceFilePath.extension().string()));
+                        copyIndex++;
+                    } while (FileExists(destinationFilePath));
+                    break;
+                }
+            }
+        }
+    }
+
 }

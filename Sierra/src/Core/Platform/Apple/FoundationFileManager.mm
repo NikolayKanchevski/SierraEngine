@@ -2,35 +2,35 @@
 // Created by Nikolay Kanchevski on 27.06.24.
 //
 
-#include <fcntl.h>
 #include "FoundationFileManager.h"
 
 namespace Sierra
 {
 
-    /* --- CONVERSIONS --- */
-
-    FileOperationResult NSErrorToFileOperationResult(const NSError* const error)
+    namespace
     {
-        switch (error.code)
+        FileOperationResult NSErrorToFileOperationResult(const NSError* const error)
         {
-            case NSFileNoSuchFileError:                              return FileOperationResult::NoSuchFilePath;
-            case NSFileLockingError:                                 return FileOperationResult::FileLocked;
-            case NSFileReadUnknownError:
-            case NSFileWriteUnknownError:                            return FileOperationResult::UnknownError;
-            case NSFileReadNoPermissionError:
-            case NSFileWriteNoPermissionError:                       return FileOperationResult::MissingPermissions;
-            case NSFileReadInvalidFileNameError:
-            case NSFileWriteInvalidFileNameError:                    return FileOperationResult::FilePathInvalid;
-            case NSFileReadCorruptFileError:                         return FileOperationResult::FileCorrupted;
-            case NSFileReadNoSuchFileError:                          return FileOperationResult::NoSuchFilePath;
-            case NSFileWriteFileExistsError:                         return FileOperationResult::FilePathAlreadyExists;
-            case NSFileWriteOutOfSpaceError:                         return FileOperationResult::VolumeOutOfSpace;
-            case NSFileWriteVolumeReadOnlyError:                     return FileOperationResult::VolumeReadOnly;
-            default:                                                 break;
-        }
+            switch (error.code)
+            {
+                case NSFileReadUnknownError:
+                case NSFileWriteUnknownError:                            return FileOperationResult::UnknownError;
+                case NSFileReadInvalidFileNameError:
+                case NSFileWriteInvalidFileNameError:                    return FileOperationResult::FilePathInvalid;
+                case NSFileReadNoSuchFileError:
+                case NSFileNoSuchFileError:                              return FileOperationResult::NoSuchFilePath;
+                case NSFileWriteFileExistsError:                         return FileOperationResult::FilePathAlreadyExists;
+                case NSFileReadNoPermissionError:
+                case NSFileWriteNoPermissionError:                       return FileOperationResult::FileAccessDenied;
+                case NSFileLockingError:                                 return FileOperationResult::FileLocked;
+                case NSFileReadCorruptFileError:                         return FileOperationResult::FileCorrupted;
+                case NSFileWriteVolumeReadOnlyError:                     return FileOperationResult::FileReadOnly;
+                case NSFileWriteOutOfSpaceError:                         return FileOperationResult::FileTooLarge;
+                default:                                                 break;
+            }
 
-        return FileOperationResult::UnknownError;
+            return FileOperationResult::UnknownError;
+        }
     }
 
     /* --- CONSTRUCTORS --- */
@@ -42,25 +42,10 @@ namespace Sierra
         SR_ERROR_IF(fileHandle.fileDescriptor == -1, "Passed file descriptor must be valid!");
     }
 
-    FileOperationResult FoundationFileStream::Seek(const size byteOffset)
+    FileOperationResult FoundationFileStream::Seek(const size offset)
     {
         NSError* error = nil;
-        [fileHandle seekToOffset: byteOffset error: &error];
-
-        if (error != nil)
-        {
-            const FileOperationResult result = NSErrorToFileOperationResult(error);
-            return result;
-        }
-
-        return FileOperationResult::Success;
-    }
-
-    FileOperationResult FoundationFileStream::SeekToEnd()
-    {
-        ullong offset;
-        NSError* error = nil;
-        [fileHandle seekToEndReturningOffset: &offset error: &error];
+        [fileHandle seekToOffset: offset error: &error];
 
         if (error != nil)
         {
@@ -88,9 +73,9 @@ namespace Sierra
         return FileOperationResult::Success;
     }
 
-    FileOperationResult FoundationFileStream::Write(const void* memory, const size memorySize)
+    FileOperationResult FoundationFileStream::Write(const void* memory, const size memorySize, const size offset)
     {
-        NSData* const data = [[NSData dataWithBytesNoCopy: const_cast<void*>(memory) length: memorySize] retain];
+        NSData* const data = [[NSData dataWithBytesNoCopy: const_cast<void*>(reinterpret_cast<const uint8*>(memory) + offset) length: memorySize] retain];
 
         NSError* error = nil;
         [fileHandle writeData: data error: &error];
@@ -106,9 +91,22 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    size FoundationFileStream::GetCurrentByteOffset() const
+    size FoundationFileStream::GetMemorySize() const
     {
-        return [fileHandle offsetInFile];
+        size initialOffset = GetCurrentOffset();
+
+        NSUInteger memorySize = 0;
+        [fileHandle seekToEndReturningOffset: memorySize error: nil];
+
+        Seek(initialOffset);
+        return memorySize;
+    }
+
+    size FoundationFileStream::GetCurrentOffset() const
+    {
+        NSUInteger offset = 0;
+        [fileHandle getOffset: offset error: nil];
+        return offset;
     }
 
     /* --- DESTRUCTOR --- */
@@ -170,6 +168,11 @@ namespace Sierra
 
     FileOperationResult FoundationFileManager::CreateFile(const std::filesystem::path& filePath) const
     {
+        if (const FileOperationResult result = CreateDirectory(filePath.parent_path()); result != FileOperationResult::Success)
+        {
+            return result;
+        }
+
         const std::string filePathString = filePath.string();
         NSString* const path = [NSString stringWithUTF8String: filePathString.c_str()];
         return [fileManager createFileAtPath: path contents: [NSData data] attributes: nil] ? FileOperationResult::Success : FileOperationResult::UnknownError;
@@ -179,7 +182,7 @@ namespace Sierra
     {
 
         NSURL* const sourceURL = PathToNSURL(filePath);
-        NSURL* const destinationURL = PathToNSURL(filePath.parent_path() / fmt::format("{0}{1}", name, filePath.extension().string()));
+        NSURL* const destinationURL = PathToNSURL(filePath.parent_path() / name);
 
         NSError* error = nil;
         [fileManager moveItemAtURL: sourceURL toURL: destinationURL error: &error];
@@ -194,29 +197,14 @@ namespace Sierra
     FileOperationResult FoundationFileManager::CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
         std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceFilePath.filename();
-        if (FileExists(destinationFilePath))
+        if (const FileOperationResult result = ResolveFilePathConflict(sourceFilePath, destinationFilePath, conflictPolicy); result != FileOperationResult::Success)
         {
-            switch (conflictPolicy)
-            {
-                case FilePathConflictPolicy::Overwrite:
-                {
-                    if (DeleteFile(destinationFilePath) != FileOperationResult::Success) return FileOperationResult::UnknownError;
-                    break;
-                }
-                case FilePathConflictPolicy::KeepExisting:
-                {
-                    return FileOperationResult::Success;
-                }
-                case FilePathConflictPolicy::KeepBoth:
-                {
-                    uint32 copyIndex = 0;
-                    do {
-                        destinationFilePath.replace_filename(fmt::format("{0}_{1}{2}", sourceFilePath.stem().string(), copyIndex, sourceFilePath.extension().string()));
-                        copyIndex++;
-                    } while (FileExists(destinationFilePath));
-                    break;
-                }
-            }
+            return result;
+        }
+
+        if (const FileOperationResult result = CreateDirectory(destinationDirectoryPath); result != FileOperationResult::Success)
+        {
+            return result;
         }
 
         NSURL* const sourceURL = PathToNSURL(sourceFilePath);
@@ -235,29 +223,14 @@ namespace Sierra
     FileOperationResult FoundationFileManager::MoveFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
         std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceFilePath.filename();
-        if (FileExists(destinationFilePath))
+        if (const FileOperationResult result = ResolveFilePathConflict(sourceFilePath, destinationFilePath, conflictPolicy); result != FileOperationResult::Success)
         {
-            switch (conflictPolicy)
-            {
-                case FilePathConflictPolicy::Overwrite:
-                {
-                    if (DeleteFile(destinationFilePath) != FileOperationResult::Success) return FileOperationResult::UnknownError;
-                    break;
-                }
-                case FilePathConflictPolicy::KeepExisting:
-                {
-                    return FileOperationResult::Success;
-                }
-                case FilePathConflictPolicy::KeepBoth:
-                {
-                    uint32 copyIndex = 0;
-                    do {
-                        destinationFilePath.replace_filename(fmt::format("{0}_{1}{2}", sourceFilePath.stem().string(), copyIndex, sourceFilePath.extension().string()));
-                        copyIndex++;
-                    } while (FileExists(destinationFilePath));
-                    break;
-                }
-            }
+            return result;
+        }
+
+        if (const FileOperationResult result = CreateDirectory(destinationDirectoryPath); result != FileOperationResult::Success)
+        {
+            return result;
         }
 
         NSURL* const sourceURL = PathToNSURL(sourceFilePath);
@@ -344,32 +317,15 @@ namespace Sierra
     FileOperationResult FoundationFileManager::CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
         std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceDirectoryPath.filename();
-        if (DirectoryExists(destinationFilePath))
+        if (const FileOperationResult result = ResolveFilePathConflict(sourceDirectoryPath, destinationFilePath, conflictPolicy); result != FileOperationResult::Success)
         {
-            switch (conflictPolicy)
-            {
-                case FilePathConflictPolicy::Overwrite:
-                {
-                    if (DeleteDirectory(destinationFilePath) != FileOperationResult::Success) return FileOperationResult::UnknownError;
-                    break;
-                }
-                case FilePathConflictPolicy::KeepExisting:
-                {
-                    return FileOperationResult::Success;
-                }
-                case FilePathConflictPolicy::KeepBoth:
-                {
-                    uint32 copyIndex = 0;
-                    do {
-                        destinationFilePath.replace_filename(fmt::format("{0}_{1}", sourceDirectoryPath.filename().string(), copyIndex));
-                        copyIndex++;
-                    } while (DirectoryExists(destinationFilePath));
-                    break;
-                }
-            }
+            return result;
         }
 
-        if (!DirectoryExists(destinationDirectoryPath)) CreateDirectory(destinationDirectoryPath);
+        if (const FileOperationResult result = CreateDirectory(destinationDirectoryPath); result != FileOperationResult::Success)
+        {
+            return result;
+        }
 
         NSURL* const sourceURL = PathToNSURL(sourceDirectoryPath);
         NSURL* const destinationURL = PathToNSURL(destinationFilePath);
@@ -387,32 +343,15 @@ namespace Sierra
     FileOperationResult FoundationFileManager::MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
         std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceDirectoryPath.filename();
-        if (DirectoryExists(destinationFilePath))
+        if (const FileOperationResult result = ResolveFilePathConflict(sourceDirectoryPath, destinationFilePath, conflictPolicy); result != FileOperationResult::Success)
         {
-            switch (conflictPolicy)
-            {
-                case FilePathConflictPolicy::Overwrite:
-                {
-                    if (DeleteDirectory(destinationFilePath) != FileOperationResult::Success) return FileOperationResult::UnknownError;
-                    break;
-                }
-                case FilePathConflictPolicy::KeepExisting:
-                {
-                    return FileOperationResult::Success;
-                }
-                case FilePathConflictPolicy::KeepBoth:
-                {
-                    uint32 copyIndex = 0;
-                    do {
-                        destinationFilePath.replace_filename(fmt::format("{0}_{1}", sourceDirectoryPath.filename().string(), copyIndex));
-                        copyIndex++;
-                    } while (DirectoryExists(destinationFilePath));
-                    break;
-                }
-            }
+            return result;
         }
 
-        if (!DirectoryExists(destinationDirectoryPath)) CreateDirectory(destinationDirectoryPath);
+        if (const FileOperationResult result = CreateDirectory(destinationDirectoryPath); result != FileOperationResult::Success)
+        {
+            return result;
+        }
 
         NSURL* const sourceURL = PathToNSURL(sourceDirectoryPath);
         NSURL* const destinationURL = PathToNSURL(destinationFilePath);
@@ -604,8 +543,6 @@ namespace Sierra
         SR_ERROR_IF(error != nil, "Could not retrieve Videos directory path!");
         return { std::string_view(URL.path.UTF8String, URL.path.length) };
     }
-
-
 
     /* --- CONVERSIONS --- */
 

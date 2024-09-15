@@ -608,4 +608,5 @@ namespace Sierra
         cocoaContext.DestroyWindow(window);
         window = nil;
     }
+
 }

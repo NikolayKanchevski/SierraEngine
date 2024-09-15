@@ -36,7 +36,7 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override { return name; }
         [[nodiscard]] ScreenOrientation GetOrientation() const override { return size.x >= size.y ? ScreenOrientation::Landscape : ScreenOrientation::Portrait; }
-        [[nodiscard]] uint32 GetRefreshRate() const override { return refreshRate; }
+        [[nodiscard]] uint16 GetRefreshRate() const override { return refreshRate; }
 
         [[nodiscard]] Vector2Int GetOrigin() const override { return origin; }
         [[nodiscard]] uint32 GetWidth() const override { return size.x; }
@@ -51,14 +51,11 @@ namespace Sierra
         /* --- DESTRUCTOR --- */
         ~CocoaScreen() override = default;
 
-        /* --- MOVE SEMANTICS --- */
-        CocoaScreen(CocoaScreen&& other);
-
     private:
         const NSScreen* screen = nil;
 
         std::string name;
-        uint32 refreshRate = 0;
+        uint16 refreshRate = 0;
 
         Vector2Int origin = { 0, 0 };
         Vector2UInt size = { 0, 0 };

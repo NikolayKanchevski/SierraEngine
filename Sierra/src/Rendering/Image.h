@@ -119,11 +119,11 @@ namespace Sierra
     };
 
     /* --- CONVERSIONS --- */
-    [[nodiscard]] float32 ImageFormatToChannelMemorySize(ImageFormat format);
-    [[nodiscard]] float32 ImageFormatToPixelMemorySize(ImageFormat format);
+    [[nodiscard]] SIERRA_API float32 ImageFormatToChannelMemorySize(ImageFormat format);
+    [[nodiscard]] SIERRA_API float32 ImageFormatToPixelMemorySize(ImageFormat format);
 
-    [[nodiscard]] uint8 ImageFormatToChannelCount(ImageFormat format);
-    [[nodiscard]] uint8 ImageFormatToBlockSize(ImageFormat format);
+    [[nodiscard]] SIERRA_API uint8 ImageFormatToChannelCount(ImageFormat format);
+    [[nodiscard]] SIERRA_API uint8 ImageFormatToBlockSize(ImageFormat format);
 
     enum class ImageMemoryLocation : bool
     {

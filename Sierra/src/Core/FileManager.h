@@ -16,11 +16,11 @@ namespace Sierra
         FilePathInvalid,
         NoSuchFilePath,
         FilePathAlreadyExists,
+        FileAccessDenied,
         FileLocked,
         FileCorrupted,
-        MissingPermissions,
-        VolumeReadOnly,
-        VolumeOutOfSpace
+        FileReadOnly,
+        FileTooLarge
     };
 
     enum class FileStreamAccess : uint8
@@ -40,14 +40,18 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual FileOperationResult Seek(size byteOffset) = 0;
-        virtual FileOperationResult SeekToEnd() = 0;
+        virtual FileOperationResult Seek(size offset) = 0;
+        FileOperationResult SeekToEnd();
 
         virtual FileOperationResult Read(size memorySize, std::vector<uint8>& outData) = 0;
-        virtual FileOperationResult Write(const void* memory, size memorySize) = 0;
+        FileOperationResult Read(size memorySize, size offset, std::vector<uint8>& outData);
+
+        virtual FileOperationResult Write(const void* memory, size memorySize, size offset) = 0;
+        FileOperationResult Write(const void* memory, size memorySize, size sourceOffset, size Offset);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual size GetCurrentByteOffset() const = 0;
+        [[nodiscard]] virtual size GetMemorySize() const = 0;
+        [[nodiscard]] virtual size GetCurrentOffset() const = 0;
 
         /* --- COPY SEMANTICS --- */
         FileStream(const FileStream&) = delete;
@@ -90,8 +94,8 @@ namespace Sierra
         FileType type = FileType::Unknown;
         size memorySize = 0;
 
-        Date dateCreated;
-        Date dateLastModified;
+        Date dateCreated = { };
+        Date dateLastModified = { };
     };
 
     struct DirectoryMetadata
@@ -161,6 +165,8 @@ namespace Sierra
 
     protected:
         FileManager() = default;
+
+        FileOperationResult ResolveFilePathConflict(const std::filesystem::path& sourceFilePath, std::filesystem::path& destinationFilePath, Sierra::FilePathConflictPolicy conflictPolicy) const;
 
     };
 

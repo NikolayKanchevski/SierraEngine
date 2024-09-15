@@ -20,7 +20,7 @@ namespace Sierra
         VulkanBuffer(const VulkanDevice& device, const BufferCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void CopyFromMemory(const void* memory, uint64 memoryByteSize = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) override;
+        void CopyFromMemory(const void* memory, uint64 memorySize = 0, uint64 sourceOffset = 0, uint64 Offset = 0) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override { return name; }

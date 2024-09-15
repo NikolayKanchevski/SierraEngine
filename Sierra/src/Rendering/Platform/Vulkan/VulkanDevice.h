@@ -13,12 +13,6 @@
 namespace Sierra
 {
 
-    struct VulkanDeviceCreateInfo
-    {
-        const VulkanInstance& instance;
-        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    };
-
     struct VulkanDeviceFunctionTable
     {
         #if defined(VK_VERSION_1_0)
@@ -822,7 +816,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit VulkanDevice(const VulkanDeviceCreateInfo& createInfo);
+        explicit VulkanDevice(const VulkanInstance& instance);
 
         /* --- POLLING METHODS --- */
         void SubmitCommandBuffer(const CommandBuffer& commandBuffer, std::span<const CommandBuffer*> commandBuffersToWait = { }) const override;

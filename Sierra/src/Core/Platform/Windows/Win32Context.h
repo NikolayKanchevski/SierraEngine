@@ -74,6 +74,9 @@ namespace Sierra
     class SIERRA_API Win32Context final
     {
     public:
+        /* --- CONSTRUCTORS --- */
+        explicit Win32Context(const Win32ContextCreateInfo& createInfo);
+
         /* --- POLLING METHODS --- */
         [[nodiscard]] HWND CreateWindow(std::string_view title, UINT width, UINT height, DWORD style, WNDPROC windowProc) const;
         void DestroyWindow(HWND window) const;
@@ -81,12 +84,10 @@ namespace Sierra
         [[nodiscard]] bool EventQueueEmpty(HWND window) const;
         MSG PollNextEvent(HWND window) const;
         MSG PeekNextEvent(HWND window) const;
-        [[nodiscard]] bool IsEventFiltered(HWND, const UINT message, const WPARAM wParam, const LPARAM);
-
-        void AdjustWindowRectForDPI(HWND window, RECT& rect) const;
-        [[nodiscard]] bool IsWindowsVersionOrGreater(DWORD major, DWORD minor, WORD servicePack) const;
+        [[nodiscard]] bool IsEventFiltered(HWND, UINT message, WPARAM wParam, LPARAM);
 
         void ReloadScreens();
+        void AdjustWindowRectForDPI(HWND window, RECT& rect) const;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] HINSTANCE GetHInstance() const { return hInstance; }
@@ -94,19 +95,25 @@ namespace Sierra
         [[nodiscard]] Win32Screen& GetPrimaryScreen();
         [[nodiscard]] Win32Screen& GetWindowScreen(HWND window);
 
+        /* --- COPY SEMANTICS --- */
+        Win32Context(const Win32Context&) = delete;
+        Win32Context& operator=(const Win32Context&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        Win32Context(Win32Context&&) = default;
+        Win32Context& operator=(Win32Context&&) = default;
+
         /* --- DESTRUCTOR --- */
         ~Win32Context();
 
     private:
-        friend class WindowsContext;
-        explicit Win32Context(const Win32ContextCreateInfo& createInfo);
-
         HINSTANCE hInstance;
         std::vector<Win32Screen> screens;
 
         HANDLE process;
         HICON processIcon;
 
+        [[nodiscard]] bool IsWindowsVersionOrGreater(DWORD major, DWORD minor, WORD servicePack) const;
         static BOOL CALLBACK EnumDisplayMonitorsProc(HMONITOR hMonitor, HDC hdc, LPRECT lrpcMonitor, LPARAM dwData);
 
     };

@@ -125,8 +125,9 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
+        Date() = default;
         explicit Date(const DateCreateInfo& createInfo);
-        explicit Date(const TimePoint& point = TimePoint::Now());
+        explicit Date(const TimePoint& point);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint8 GetSecond() const { return second; }

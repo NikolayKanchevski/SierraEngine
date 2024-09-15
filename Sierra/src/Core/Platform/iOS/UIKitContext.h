@@ -41,6 +41,14 @@ namespace Sierra
         [[nodiscard]] const UIApplication* GetUIApplication() const { return application; }
         [[nodiscard]] UIKitScreen& GetScreen() { return screen; }
 
+        /* --- COPY SEMANTICS --- */
+        UIKitContext(const UIKitContext&) = delete;
+        UIKitContext& operator=(const UIKitContext&) = delete;
+    
+        /* --- MOVE SEMANTICS --- */
+        UIKitContext(UIKitContext&&) = default;
+        UIKitContext& operator=(UIKitContext&&) = default;
+
         /* --- DESTRUCTOR --- */
         ~UIKitContext() = default;
 

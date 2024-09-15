@@ -21,19 +21,4 @@ namespace Sierra
         SR_ERROR_IF(createInfo.screen == nullptr, "NSScreen pointer passed upon creation of CocoaScreen must not be null!");
     }
 
-    /* --- MOVE SEMANTICS --- */
-
-    CocoaScreen::CocoaScreen(CocoaScreen&& other)
-        : screen(other.screen), name(std::move(other.name)), origin(other.origin), size(other.size), workAreaOrigin(other.workAreaOrigin), workAreaSize(other.workAreaSize), refreshRate(other.refreshRate)
-    {
-        other.screen = nil;
-        other.name.clear();
-        other.refreshRate = 0;
-
-        other.origin = { 0, 0 };
-        other.size = { 0, 0 };
-        other.workAreaOrigin = { 0, 0 };
-        other.workAreaSize = { 0, 0 };
-    }
-
 }

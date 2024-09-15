@@ -172,7 +172,7 @@ namespace SierraEngine
     std::optional<std::vector<uint8>> YAMLTextureSerializer::Serialize(const TextureSerializeInfo& serializeInfo) const
     {
         const size nodeCapacity = GetMetadataNodeSize(serializeInfo.metadata) + 9;
-        const uint32 arenaCapacity = GetMetadataArenaSize(serializeInfo.metadata) + 5 + 5 + 2 + 2;
+        const size arenaCapacity = GetMetadataArenaSize(serializeInfo.metadata) + 5 + 5 + 2 + 2;
         ryml::Tree tree(nodeCapacity, arenaCapacity);
 
         ryml::NodeRef root = tree.rootref(); root |= ryml::MAP;

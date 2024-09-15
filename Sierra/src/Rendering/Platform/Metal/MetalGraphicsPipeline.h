@@ -36,7 +36,7 @@ namespace Sierra
         [[nodiscard]] id<MTLRenderPipelineState> GetRenderPipelineState() const { return renderPipelineState; }
         [[nodiscard]] id<MTLDepthStencilState> GetDepthStencilState() const { return depthStencilState; }
 
-        [[nodiscard]] uint32 GetVertexByteStride() const { return vertexByteStride; }
+        [[nodiscard]] uint32 GetVertexStride() const { return vertexStride; }
         [[nodiscard]] bool HasFragmentShader() const { return hasFragmentShader; }
 
         [[nodiscard]] MTLCullMode GetCullMode() const { return cullMode; }
@@ -55,7 +55,7 @@ namespace Sierra
         id<MTLRenderPipelineState> renderPipelineState = nil;
         id<MTLDepthStencilState> depthStencilState = nil;
 
-        uint32 vertexByteStride = 0;
+        uint32 vertexStride = 0;
         bool hasFragmentShader = false;
 
         const MTLCullMode cullMode = MTLCullModeNone;

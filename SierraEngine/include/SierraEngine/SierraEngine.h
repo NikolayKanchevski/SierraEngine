@@ -8,7 +8,7 @@
 
 #include "../../src/Core/Application.h"
 #include "../../src/Core/FrameLimiter.h"
-#include "../../src/Core/ThreadPool.hpp"
+#include "../../src/Core/ThreadPool.h"
 
 #include "../../src/Rendering/ArenaAllocator.h"
 #include "../../../Sierra/src/Rendering/Renderer.h"

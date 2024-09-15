@@ -120,9 +120,22 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanDevice::VulkanDevice(const VulkanDeviceCreateInfo& createInfo)
-        : instance(createInfo.instance), physicalDevice(createInfo.physicalDevice)
+    VulkanDevice::VulkanDevice(const VulkanInstance& instance)
+        : instance(instance)
     {
+        // Retrieve number of GPUs found
+        uint32 physicalDeviceCount = 0;
+        VkResult result = instance.GetFunctionTable().vkEnumeratePhysicalDevices(instance.GetVulkanInstance(), &physicalDeviceCount, nullptr);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not enumerate physical devices! Error code: {0}.", static_cast<int32>(result));
+        SR_ERROR_IF(physicalDeviceCount <= 0, "[Vulkan]: Could not find any supported physical devices!");
+
+        // Retrieve GPUs
+        std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
+        instance.GetFunctionTable().vkEnumeratePhysicalDevices(instance.GetVulkanInstance(), &physicalDeviceCount, physicalDevices.data());
+
+        // Use first found device
+        physicalDevice = physicalDevices[0];
+
         // Save device name
         {
             VkPhysicalDeviceProperties physicalDeviceProperties = { };
@@ -211,7 +224,7 @@ namespace Sierra
         }
 
         // Set up device create info
-        const VkDeviceCreateInfo logicalDeviceCreateInfo
+        const VkDeviceCreateInfo deviceCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
             .pNext = &physicalDeviceFeatures2,
@@ -225,7 +238,7 @@ namespace Sierra
         };
 
         // Create logical device
-        VkResult result = instance.GetFunctionTable().vkCreateDevice(physicalDevice, &logicalDeviceCreateInfo, nullptr, &device);
+        result = instance.GetFunctionTable().vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device);
         SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create logical device [{0}]! Error code: {1}.", name, static_cast<int32>(result));
 
         #pragma region Function Pointers
@@ -437,8 +450,8 @@ namespace Sierra
                 functionTable.vkGetShaderInfoAMD = reinterpret_cast<PFN_vkGetShaderInfoAMD>(vkGetDeviceProcAddr(device, "vkGetShaderInfoAMD"));
             #endif
             #if defined(VK_ANDROID_external_memory_android_hardware_buffer)
-                functionTable.vkGetAndroidHardwareBufferPropertiesANDROID = reinterpret_cast<PFN_vkGetAndroidHardwareBufferPropertiesANDROID>(vkGetDeviceProcAddr(logicalDevice, "vkGetAndroidHardwareBufferPropertiesANDROID"));
-                functionTable.vkGetMemoryAndroidHardwareBufferANDROID     = reinterpret_cast<PFN_vkGetMemoryAndroidHardwareBufferANDROID>(vkGetDeviceProcAddr(logicalDevice, "vkGetMemoryAndroidHardwareBufferANDROID"));
+                functionTable.vkGetAndroidHardwareBufferPropertiesANDROID = reinterpret_cast<PFN_vkGetAndroidHardwareBufferPropertiesANDROID>(vkGetDeviceProcAddr(device, "vkGetAndroidHardwareBufferPropertiesANDROID"));
+                functionTable.vkGetMemoryAndroidHardwareBufferANDROID     = reinterpret_cast<PFN_vkGetMemoryAndroidHardwareBufferANDROID>(vkGetDeviceProcAddr(device, "vkGetMemoryAndroidHardwareBufferANDROID"));
             #endif
             #if defined(VK_EXT_attachment_feedback_loop_dynamic_state)
                 functionTable.vkCmdSetAttachmentFeedbackLoopEnableEXT = reinterpret_cast<PFN_vkCmdSetAttachmentFeedbackLoopEnableEXT>(vkGetDeviceProcAddr(device, "vkCmdSetAttachmentFeedbackLoopEnableEXT"));
@@ -501,8 +514,8 @@ namespace Sierra
                 functionTable.vkGetMemoryHostPointerPropertiesEXT = reinterpret_cast<PFN_vkGetMemoryHostPointerPropertiesEXT>(vkGetDeviceProcAddr(device, "vkGetMemoryHostPointerPropertiesEXT"));
             #endif
             #if defined(VK_EXT_full_screen_exclusive)
-                functionTable.vkAcquireFullScreenExclusiveModeEXT = reinterpret_cast<PFN_vkAcquireFullScreenExclusiveModeEXT>(vkGetDeviceProcAddr(logicalDevice, "vkAcquireFullScreenExclusiveModeEXT"));
-                functionTable.vkReleaseFullScreenExclusiveModeEXT = reinterpret_cast<PFN_vkReleaseFullScreenExclusiveModeEXT>(vkGetDeviceProcAddr(logicalDevice, "vkReleaseFullScreenExclusiveModeEXT"));
+                functionTable.vkAcquireFullScreenExclusiveModeEXT = reinterpret_cast<PFN_vkAcquireFullScreenExclusiveModeEXT>(vkGetDeviceProcAddr(device, "vkAcquireFullScreenExclusiveModeEXT"));
+                functionTable.vkReleaseFullScreenExclusiveModeEXT = reinterpret_cast<PFN_vkReleaseFullScreenExclusiveModeEXT>(vkGetDeviceProcAddr(device, "vkReleaseFullScreenExclusiveModeEXT"));
             #endif
             #if defined(VK_EXT_hdr_metadata)
                 functionTable.vkSetHdrMetadataEXT = reinterpret_cast<PFN_vkSetHdrMetadataEXT>(vkGetDeviceProcAddr(device, "vkSetHdrMetadataEXT"));
@@ -593,19 +606,19 @@ namespace Sierra
                 functionTable.vkMergeValidationCachesEXT  = reinterpret_cast<PFN_vkMergeValidationCachesEXT>(vkGetDeviceProcAddr(device, "vkMergeValidationCachesEXT"));
             #endif
             #if defined(VK_FUCHSIA_buffer_collection)
-                functionTable.vkCreateBufferCollectionFUCHSIA               = reinterpret_cast<PFN_vkCreateBufferCollectionFUCHSIA>(vkGetDeviceProcAddr(logicalDevice, "vkCreateBufferCollectionFUCHSIA"));
-                functionTable.vkDestroyBufferCollectionFUCHSIA              = reinterpret_cast<PFN_vkDestroyBufferCollectionFUCHSIA>(vkGetDeviceProcAddr(logicalDevice, "vkDestroyBufferCollectionFUCHSIA"));
-                functionTable.vkGetBufferCollectionPropertiesFUCHSIA        = reinterpret_cast<PFN_vkGetBufferCollectionPropertiesFUCHSIA>(vkGetDeviceProcAddr(logicalDevice, "vkGetBufferCollectionPropertiesFUCHSIA"));
-                functionTable.vkSetBufferCollectionBufferConstraintsFUCHSIA = reinterpret_cast<PFN_vkSetBufferCollectionBufferConstraintsFUCHSIA>(vkGetDeviceProcAddr(logicalDevice, "vkSetBufferCollectionBufferConstraintsFUCHSIA"));
-                functionTable.vkSetBufferCollectionImageConstraintsFUCHSIA  = reinterpret_cast<PFN_vkSetBufferCollectionImageConstraintsFUCHSIA>(vkGetDeviceProcAddr(logicalDevice, "vkSetBufferCollectionImageConstraintsFUCHSIA"));
+                functionTable.vkCreateBufferCollectionFUCHSIA               = reinterpret_cast<PFN_vkCreateBufferCollectionFUCHSIA>(vkGetDeviceProcAddr(device, "vkCreateBufferCollectionFUCHSIA"));
+                functionTable.vkDestroyBufferCollectionFUCHSIA              = reinterpret_cast<PFN_vkDestroyBufferCollectionFUCHSIA>(vkGetDeviceProcAddr(device, "vkDestroyBufferCollectionFUCHSIA"));
+                functionTable.vkGetBufferCollectionPropertiesFUCHSIA        = reinterpret_cast<PFN_vkGetBufferCollectionPropertiesFUCHSIA>(vkGetDeviceProcAddr(device, "vkGetBufferCollectionPropertiesFUCHSIA"));
+                functionTable.vkSetBufferCollectionBufferConstraintsFUCHSIA = reinterpret_cast<PFN_vkSetBufferCollectionBufferConstraintsFUCHSIA>(vkGetDeviceProcAddr(device, "vkSetBufferCollectionBufferConstraintsFUCHSIA"));
+                functionTable.vkSetBufferCollectionImageConstraintsFUCHSIA  = reinterpret_cast<PFN_vkSetBufferCollectionImageConstraintsFUCHSIA>(vkGetDeviceProcAddr(device, "vkSetBufferCollectionImageConstraintsFUCHSIA"));
             #endif
             #if defined(VK_FUCHSIA_external_memory)
-                functionTable.vkGetMemoryZirconHandleFUCHSIA           = reinterpret_cast<PFN_vkGetMemoryZirconHandleFUCHSIA>(vkGetDeviceProcAddr(logicalDevice, "vkGetMemoryZirconHandleFUCHSIA"));
-                functionTable.vkGetMemoryZirconHandlePropertiesFUCHSIA = reinterpret_cast<PFN_vkGetMemoryZirconHandlePropertiesFUCHSIA>(vkGetDeviceProcAddr(logicalDevice, "vkGetMemoryZirconHandlePropertiesFUCHSIA"));
+                functionTable.vkGetMemoryZirconHandleFUCHSIA           = reinterpret_cast<PFN_vkGetMemoryZirconHandleFUCHSIA>(vkGetDeviceProcAddr(device, "vkGetMemoryZirconHandleFUCHSIA"));
+                functionTable.vkGetMemoryZirconHandlePropertiesFUCHSIA = reinterpret_cast<PFN_vkGetMemoryZirconHandlePropertiesFUCHSIA>(vkGetDeviceProcAddr(device, "vkGetMemoryZirconHandlePropertiesFUCHSIA"));
             #endif
             #if defined(VK_FUCHSIA_external_semaphore)
-                functionTable.vkGetSemaphoreZirconHandleFUCHSIA    = reinterpret_cast<PFN_vkGetSemaphoreZirconHandleFUCHSIA>(vkGetDeviceProcAddr(logicalDevice, "vkGetSemaphoreZirconHandleFUCHSIA"));
-                functionTable.vkImportSemaphoreZirconHandleFUCHSIA = reinterpret_cast<PFN_vkImportSemaphoreZirconHandleFUCHSIA>(vkGetDeviceProcAddr(logicalDevice, "vkImportSemaphoreZirconHandleFUCHSIA"));
+                functionTable.vkGetSemaphoreZirconHandleFUCHSIA    = reinterpret_cast<PFN_vkGetSemaphoreZirconHandleFUCHSIA>(vkGetDeviceProcAddr(device, "vkGetSemaphoreZirconHandleFUCHSIA"));
+                functionTable.vkImportSemaphoreZirconHandleFUCHSIA = reinterpret_cast<PFN_vkImportSemaphoreZirconHandleFUCHSIA>(vkGetDeviceProcAddr(device, "vkImportSemaphoreZirconHandleFUCHSIA"));
             #endif
             #if defined(VK_GOOGLE_display_timing)
                 functionTable.vkGetPastPresentationTimingGOOGLE = reinterpret_cast<PFN_vkGetPastPresentationTimingGOOGLE>(vkGetDeviceProcAddr(device, "vkGetPastPresentationTimingGOOGLE"));
@@ -707,24 +720,24 @@ namespace Sierra
                 functionTable.vkImportFenceFdKHR = reinterpret_cast<PFN_vkImportFenceFdKHR>(vkGetDeviceProcAddr(device, "vkImportFenceFdKHR"));
             #endif
             #if defined(VK_KHR_external_fence_win32)
-                functionTable.vkGetFenceWin32HandleKHR    = reinterpret_cast<PFN_vkGetFenceWin32HandleKHR>(vkGetDeviceProcAddr(logicalDevice, "vkGetFenceWin32HandleKHR"));
-                functionTable.vkImportFenceWin32HandleKHR = reinterpret_cast<PFN_vkImportFenceWin32HandleKHR>(vkGetDeviceProcAddr(logicalDevice, "vkImportFenceWin32HandleKHR"));
+                functionTable.vkGetFenceWin32HandleKHR    = reinterpret_cast<PFN_vkGetFenceWin32HandleKHR>(vkGetDeviceProcAddr(device, "vkGetFenceWin32HandleKHR"));
+                functionTable.vkImportFenceWin32HandleKHR = reinterpret_cast<PFN_vkImportFenceWin32HandleKHR>(vkGetDeviceProcAddr(device, "vkImportFenceWin32HandleKHR"));
             #endif
             #if defined(VK_KHR_external_memory_fd)
                 functionTable.vkGetMemoryFdKHR           = reinterpret_cast<PFN_vkGetMemoryFdKHR>(vkGetDeviceProcAddr(device, "vkGetMemoryFdKHR"));
                 functionTable.vkGetMemoryFdPropertiesKHR = reinterpret_cast<PFN_vkGetMemoryFdPropertiesKHR>(vkGetDeviceProcAddr(device, "vkGetMemoryFdPropertiesKHR"));
             #endif
             #if defined(VK_KHR_external_memory_win32)
-                functionTable.vkGetMemoryWin32HandleKHR           = reinterpret_cast<PFN_vkGetMemoryWin32HandleKHR>(vkGetDeviceProcAddr(logicalDevice, "vkGetMemoryWin32HandleKHR"));
-                functionTable.vkGetMemoryWin32HandlePropertiesKHR = reinterpret_cast<PFN_vkGetMemoryWin32HandlePropertiesKHR>(vkGetDeviceProcAddr(logicalDevice, "vkGetMemoryWin32HandlePropertiesKHR"));
+                functionTable.vkGetMemoryWin32HandleKHR           = reinterpret_cast<PFN_vkGetMemoryWin32HandleKHR>(vkGetDeviceProcAddr(device, "vkGetMemoryWin32HandleKHR"));
+                functionTable.vkGetMemoryWin32HandlePropertiesKHR = reinterpret_cast<PFN_vkGetMemoryWin32HandlePropertiesKHR>(vkGetDeviceProcAddr(device, "vkGetMemoryWin32HandlePropertiesKHR"));
             #endif
             #if defined(VK_KHR_external_semaphore_fd)
                 functionTable.vkGetSemaphoreFdKHR    = reinterpret_cast<PFN_vkGetSemaphoreFdKHR>(vkGetDeviceProcAddr(device, "vkGetSemaphoreFdKHR"));
                 functionTable.vkImportSemaphoreFdKHR = reinterpret_cast<PFN_vkImportSemaphoreFdKHR>(vkGetDeviceProcAddr(device, "vkImportSemaphoreFdKHR"));
             #endif
             #if defined(VK_KHR_external_semaphore_win32)
-                functionTable.vkGetSemaphoreWin32HandleKHR    = reinterpret_cast<PFN_vkGetSemaphoreWin32HandleKHR>(vkGetDeviceProcAddr(logicalDevice, "vkGetSemaphoreWin32HandleKHR"));
-                functionTable.vkImportSemaphoreWin32HandleKHR = reinterpret_cast<PFN_vkImportSemaphoreWin32HandleKHR>(vkGetDeviceProcAddr(logicalDevice, "vkImportSemaphoreWin32HandleKHR"));
+                functionTable.vkGetSemaphoreWin32HandleKHR    = reinterpret_cast<PFN_vkGetSemaphoreWin32HandleKHR>(vkGetDeviceProcAddr(device, "vkGetSemaphoreWin32HandleKHR"));
+                functionTable.vkImportSemaphoreWin32HandleKHR = reinterpret_cast<PFN_vkImportSemaphoreWin32HandleKHR>(vkGetDeviceProcAddr(device, "vkImportSemaphoreWin32HandleKHR"));
             #endif
             #if defined(VK_KHR_fragment_shading_rate)
                 functionTable.vkCmdSetFragmentShadingRateKHR = reinterpret_cast<PFN_vkCmdSetFragmentShadingRateKHR>(vkGetDeviceProcAddr(device, "vkCmdSetFragmentShadingRateKHR"));
@@ -869,7 +882,7 @@ namespace Sierra
                 functionTable.vkGetMemoryRemoteAddressNV = reinterpret_cast<PFN_vkGetMemoryRemoteAddressNV>(vkGetDeviceProcAddr(device, "vkGetMemoryRemoteAddressNV"));
             #endif
             #if defined(VK_NV_external_memory_win32)
-                functionTable.vkGetMemoryWin32HandleNV = reinterpret_cast<PFN_vkGetMemoryWin32HandleNV>(vkGetDeviceProcAddr(logicalDevice, "vkGetMemoryWin32HandleNV"));
+                functionTable.vkGetMemoryWin32HandleNV = reinterpret_cast<PFN_vkGetMemoryWin32HandleNV>(vkGetDeviceProcAddr(device, "vkGetMemoryWin32HandleNV"));
             #endif
             #if defined(VK_NV_fragment_shading_rate_enums)
                 functionTable.vkCmdSetFragmentShadingRateEnumNV = reinterpret_cast<PFN_vkCmdSetFragmentShadingRateEnumNV>(vkGetDeviceProcAddr(device, "vkCmdSetFragmentShadingRateEnumNV"));
@@ -919,7 +932,7 @@ namespace Sierra
                 functionTable.vkGetFramebufferTilePropertiesQCOM      = reinterpret_cast<PFN_vkGetFramebufferTilePropertiesQCOM>(vkGetDeviceProcAddr(device, "vkGetFramebufferTilePropertiesQCOM"));
             #endif
             #if defined(VK_QNX_external_memory_screen_buffer)
-                functionTable.vkGetScreenBufferPropertiesQNX = reinterpret_cast<PFN_vkGetScreenBufferPropertiesQNX>(vkGetDeviceProcAddr(logicalDevice, "vkGetScreenBufferPropertiesQNX"));
+                functionTable.vkGetScreenBufferPropertiesQNX = reinterpret_cast<PFN_vkGetScreenBufferPropertiesQNX>(vkGetDeviceProcAddr(device, "vkGetScreenBufferPropertiesQNX"));
             #endif
             #if defined(VK_VALVE_descriptor_set_host_mapping)
                 functionTable.vkGetDescriptorSetHostMappingVALVE           = reinterpret_cast<PFN_vkGetDescriptorSetHostMappingVALVE>(vkGetDeviceProcAddr(device, "vkGetDescriptorSetHostMappingVALVE"));
@@ -994,7 +1007,7 @@ namespace Sierra
                 functionTable.vkCmdSetCoverageReductionModeNV = reinterpret_cast<PFN_vkCmdSetCoverageReductionModeNV>(vkGetDeviceProcAddr(device, "vkCmdSetCoverageReductionModeNV"));
             #endif
             #if (defined(VK_EXT_full_screen_exclusive) && defined(VK_KHR_device_group)) || (defined(VK_EXT_full_screen_exclusive) && defined(VK_VERSION_1_1))
-                functionTable.vkGetDeviceGroupSurfacePresentModes2EXT = reinterpret_cast<PFN_vkGetDeviceGroupSurfacePresentModes2EXT>(vkGetDeviceProcAddr(logicalDevice, "vkGetDeviceGroupSurfacePresentModes2EXT"));
+                functionTable.vkGetDeviceGroupSurfacePresentModes2EXT = reinterpret_cast<PFN_vkGetDeviceGroupSurfacePresentModes2EXT>(vkGetDeviceProcAddr(device, "vkGetDeviceGroupSurfacePresentModes2EXT"));
             #endif
             #if (defined(VK_EXT_host_image_copy)) || (defined(VK_EXT_image_compression_control))
                 functionTable.vkGetImageSubresourceLayout2EXT = reinterpret_cast<PFN_vkGetImageSubresourceLayout2EXT>(vkGetDeviceProcAddr(device, "vkGetImageSubresourceLayout2EXT"));
@@ -1146,11 +1159,11 @@ namespace Sierra
             // Set up flags
             constexpr std::array<VkDescriptorBindingFlagsEXT, descriptorSetBindings.size()> BINDING_FLAGS
             {
-                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
-                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
-                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
-                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
-                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT
+                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | (SR_PLATFORM_APPLE * VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT),
+                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | (SR_PLATFORM_APPLE * VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT),
+                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | (SR_PLATFORM_APPLE * VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT),
+                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | (SR_PLATFORM_APPLE * VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT),
+                VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | (SR_PLATFORM_APPLE * VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT)
             };
 
             // Set up flags create info

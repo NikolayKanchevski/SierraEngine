@@ -49,7 +49,6 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-
     ANativeWindow* GameActivityContext::CreateWindow() const
     {
         return window;

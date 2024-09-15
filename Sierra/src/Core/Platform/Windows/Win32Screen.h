@@ -29,7 +29,7 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override { return name; };
-        [[nodiscard]] uint32 GetRefreshRate() const override { return refreshRate; };
+        [[nodiscard]] uint16 GetRefreshRate() const override { return refreshRate; };
         [[nodiscard]] ScreenOrientation GetOrientation() const override { return size.x >= size.y ? ScreenOrientation::Landscape : ScreenOrientation::Portrait; }
 
         [[nodiscard]] Vector2Int GetOrigin() const override { return origin; };
@@ -42,14 +42,11 @@ namespace Sierra
 
         [[nodiscard]] HMONITOR GetHMonitor() const { return hMonitor; }
 
-        /* --- MOVE SEMANTICS --- */
-        Win32Screen(Win32Screen&& other);
-
     private:
         HMONITOR hMonitor = nullptr;
 
         std::string name = "Unknown";
-        uint32 refreshRate = 0;
+        uint16 refreshRate = 0;
 
         Vector2Int origin = { 0, 0 };
         Vector2UInt size = { 0, 0 };

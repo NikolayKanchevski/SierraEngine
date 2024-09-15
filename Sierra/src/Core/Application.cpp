@@ -6,6 +6,8 @@
 
 #if SR_PLATFORM_WINDOWS
     #include "Platform/Windows/WindowsContext.h"
+    #include "Platform/Windows/Win32FileManager.h"
+    #include "Platform/Windows/WindowsWindowManager.h"
 #elif SR_PLATFORM_LINUX
     #include "Platform/Linux/LinuxContext.h"
 #elif SR_PLATFORM_macOS
@@ -38,7 +40,7 @@ namespace Sierra
         #if SR_ENABLE_LOGGING
             Logger::Initialize(name);
         #endif
-        SR_ERROR_IF(createInfo.name.empty(), "Application title must not be empty!");
+        SR_ERROR_IF(createInfo.name.empty(), "Application name must not be empty!");
 
         // Create platform context
         {
@@ -58,13 +60,12 @@ namespace Sierra
         // Create file manager
         {
             #if SR_PLATFORM_WINDOWS
-
+                fileManager = std::make_unique<Win32FileManager>();
             #elif SR_PLATFORM_LINUX
                 platformContext = std::make_unique<LinuxContext>(platformContextCreateInfo);
             #elif SR_PLATFORM_APPLE
                 fileManager = std::make_unique<FoundationFileManager>();
             #elif SR_PLATFORM_ANDROID
-
             #endif
         }
 
@@ -72,7 +73,7 @@ namespace Sierra
         {
             const WindowManagerCreateInfo windowManagerCreateInfo = { .platformContext = *platformContext };
             #if SR_PLATFORM_WINDOWS
-
+                windowManager = std::make_unique<WindowsWindowManager>(windowManagerCreateInfo);
             #elif SR_PLATFORM_LINUX
 
             #elif SR_PLATFORM_macOS

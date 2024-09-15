@@ -6,7 +6,6 @@
 
 namespace SierraEngine
 {
-
     /* --- CONSTRUCTORS --- */
 
     Application::Application(const ApplicationCreateInfo& createInfo)

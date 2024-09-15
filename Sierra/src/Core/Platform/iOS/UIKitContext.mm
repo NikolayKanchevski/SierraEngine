@@ -27,4 +27,5 @@ namespace Sierra
         [window setRootViewController: nil];
         [window removeFromSuperview];
     }
+
 }

@@ -436,4 +436,5 @@ namespace Sierra
         XEvent closeEvent = x11Context.QueryWindowDestruction(window);
         HandleX11Event(closeEvent);
     }
+
 }

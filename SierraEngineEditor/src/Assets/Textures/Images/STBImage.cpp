@@ -127,7 +127,6 @@ namespace SierraEngine
         return true;
     }
 
-
     /* --- GETTER METHODS --- */
 
     Color STBImage::GetPixel(const Vector2UInt coordinate) const

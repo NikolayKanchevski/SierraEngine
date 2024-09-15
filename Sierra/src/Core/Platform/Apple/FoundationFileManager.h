@@ -21,9 +21,6 @@
 namespace Sierra
 {
 
-    /* --- CONVERSIONS --- */
-    [[nodiscard]] FileOperationResult NSErrorToFileOperationResult(const NSError* error);
-
     class SIERRA_API FoundationFileStream final : public FileStream
     {
     public:
@@ -31,14 +28,14 @@ namespace Sierra
         explicit FoundationFileStream(NSFileHandle* fileHandle);
 
         /* --- POLLING METHODS --- */
-        FileOperationResult Seek(size byteOffset) override;
-        FileOperationResult SeekToEnd() override;
-
+        FileOperationResult Seek(size offset) override;
         FileOperationResult Read(size memorySize, std::vector<uint8>& outData) override;
-        FileOperationResult Write(const void* memory, size memorySize) override;
+        FileOperationResult Write(const void* memory, size memorySize, size offset) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] size GetCurrentByteOffset() const override;
+        [[nodiscard]] size GetMemorySize() const override;
+        [[nodiscard]] size GetCurrentOffset() const override;
+
         [[nodiscard]] NSFileHandle* GetNSFileHandle() const { return fileHandle; }
 
         /* --- DESTRUCTOR --- */
@@ -102,7 +99,6 @@ namespace Sierra
 
     private:
         NSFileManager* const fileManager = nullptr;
-
 
     };
 

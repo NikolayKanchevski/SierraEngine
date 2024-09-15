@@ -40,7 +40,6 @@ namespace Sierra
         [[nodiscard]] Vector2 GetCursorPosition() const override;
         [[nodiscard]] Vector2 GetCursorDelta() const override;
 
-
     private:
         const NSWindow* window;
 

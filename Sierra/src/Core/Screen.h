@@ -51,7 +51,7 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual std::string_view GetName() const = 0;
         [[nodiscard]] virtual ScreenOrientation GetOrientation() const = 0;
-        [[nodiscard]] virtual uint32 GetRefreshRate() const = 0;
+        [[nodiscard]] virtual uint16 GetRefreshRate() const = 0;
 
         [[nodiscard]] virtual Vector2Int GetOrigin() const = 0;
         [[nodiscard]] virtual uint32 GetWidth() const = 0;

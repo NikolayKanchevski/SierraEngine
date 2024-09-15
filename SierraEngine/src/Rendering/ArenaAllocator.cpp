@@ -36,23 +36,23 @@ namespace SierraEngine
     {
         const ArenaMesh mesh
         {
-            .vertexByteOffset = currentVertexByteOffset,
+            .vertexOffset = currentVertexOffset,
             .vertexCount = static_cast<uint32>(vertices.size()),
-            .indexByteOffset = currentIndexByteOffset,
+            .indexOffset = currentIndexOffset,
             .indexCount = static_cast<uint32>(indices.size())
         };
 
         // Check if vertex buffer has enough space to store new vertices
-        if (const uint64 endVertexByteOffset = currentVertexByteOffset + vertices.size_bytes(); endVertexByteOffset > vertexBuffer->GetMemorySize())
+        if (const uint64 endVertexOffset = currentVertexOffset + vertices.size_bytes(); endVertexOffset > vertexBuffer->GetMemorySize())
         {
             // Create temporary buffer to house both old and new vertex data
             std::unique_ptr<Sierra::Buffer> stagingBuffer = renderingContext.CreateBuffer({
                 .name = "Staging Buffer of Arena Allocator Vertex Data",
-                .memorySize = endVertexByteOffset,
+                .memorySize = endVertexOffset,
                 .usage = Sierra::BufferUsage::Vertex | Sierra::BufferUsage::SourceMemory | Sierra::BufferUsage::DestinationMemory,
                 .memoryLocation = Sierra::BufferMemoryLocation::CPU
             });
-            stagingBuffer->CopyFromMemory(vertices.data(), vertices.size_bytes(), 0, currentVertexByteOffset);
+            stagingBuffer->CopyFromMemory(vertices.data(), vertices.size_bytes(), 0, currentVertexOffset);
 
             // Copy old vertex data to temporary buffer
             commandBuffer.SynchronizeBufferUsage(*vertexBuffer, Sierra::BufferCommandUsage::VertexRead, Sierra::BufferCommandUsage::MemoryRead);
@@ -63,7 +63,7 @@ namespace SierraEngine
             commandBuffer.QueueBufferForDestruction(std::move(vertexBuffer));
             vertexBuffer = renderingContext.CreateBuffer({
                 .name = "Arena Allocator Vertex Buffer",
-                .memorySize = glm::max(endVertexByteOffset, static_cast<uint64>(static_cast<float64>(vertexBuffer->GetMemorySize()) * VERTEX_BUFFER_GROWTH_FACTOR)),
+                .memorySize = glm::max(endVertexOffset, static_cast<uint64>(static_cast<float64>(vertexBuffer->GetMemorySize()) * VERTEX_BUFFER_GROWTH_FACTOR)),
                 .usage = Sierra::BufferUsage::Vertex | Sierra::BufferUsage::SourceMemory | Sierra::BufferUsage::DestinationMemory,
                 .memoryLocation = Sierra::BufferMemoryLocation::GPU
             });
@@ -91,25 +91,25 @@ namespace SierraEngine
             // Copy vertex data over to GPU buffer
             commandBuffer.SynchronizeBufferUsage(*stagingBuffer, Sierra::BufferCommandUsage::None, Sierra::BufferCommandUsage::MemoryRead);
             commandBuffer.SynchronizeBufferUsage(*vertexBuffer, Sierra::BufferCommandUsage::VertexRead, Sierra::BufferCommandUsage::MemoryWrite);
-            commandBuffer.CopyBufferToBuffer(*stagingBuffer, *vertexBuffer, stagingBuffer->GetMemorySize(), 0, currentVertexByteOffset);
+            commandBuffer.CopyBufferToBuffer(*stagingBuffer, *vertexBuffer, stagingBuffer->GetMemorySize(), 0, currentVertexOffset);
 
             // Discard temporary buffer
             commandBuffer.QueueBufferForDestruction(std::move(stagingBuffer));
             commandBuffer.SynchronizeBufferUsage(*vertexBuffer, Sierra::BufferCommandUsage::MemoryWrite, Sierra::BufferCommandUsage::VertexRead);
         }
-        currentVertexByteOffset += vertices.size_bytes();
+        currentVertexOffset += vertices.size_bytes();
 
         // Check if index buffer has enough space to store new vertices
-        if (const uint64 endIndexByteOffset = currentIndexByteOffset + indices.size_bytes(); endIndexByteOffset > indexBuffer->GetMemorySize())
+        if (const uint64 endIndexOffset = currentIndexOffset + indices.size_bytes(); endIndexOffset > indexBuffer->GetMemorySize())
         {
             // Create temporary buffer to house both old and new index data
             std::unique_ptr<Sierra::Buffer> stagingBuffer = renderingContext.CreateBuffer({
                 .name = "Staging Buffer of Arena Allocator Index Data",
-                .memorySize = endIndexByteOffset,
+                .memorySize = endIndexOffset,
                 .usage = Sierra::BufferUsage::Index | Sierra::BufferUsage::SourceMemory | Sierra::BufferUsage::DestinationMemory,
                 .memoryLocation = Sierra::BufferMemoryLocation::CPU
             });
-            stagingBuffer->CopyFromMemory(indices.data(), indices.size_bytes(), 0, currentIndexByteOffset);
+            stagingBuffer->CopyFromMemory(indices.data(), indices.size_bytes(), 0, currentIndexOffset);
 
             // Copy old index data to temporary buffer
             commandBuffer.SynchronizeBufferUsage(*indexBuffer, Sierra::BufferCommandUsage::IndexRead, Sierra::BufferCommandUsage::MemoryRead);
@@ -120,7 +120,7 @@ namespace SierraEngine
             commandBuffer.QueueBufferForDestruction(std::move(indexBuffer));
             indexBuffer = renderingContext.CreateBuffer({
                 .name = "Arena Allocator Index Buffer",
-                .memorySize = glm::max(endIndexByteOffset, static_cast<uint64>(static_cast<float64>(indexBuffer->GetMemorySize()) * INDEX_BUFFER_GROWTH_FACTOR)),
+                .memorySize = glm::max(endIndexOffset, static_cast<uint64>(static_cast<float64>(indexBuffer->GetMemorySize()) * INDEX_BUFFER_GROWTH_FACTOR)),
                 .usage = Sierra::BufferUsage::Index | Sierra::BufferUsage::SourceMemory | Sierra::BufferUsage::DestinationMemory,
                 .memoryLocation = Sierra::BufferMemoryLocation::GPU
             });
@@ -148,13 +148,13 @@ namespace SierraEngine
             // Copy index data over to GPU buffer
             commandBuffer.SynchronizeBufferUsage(*stagingBuffer, Sierra::BufferCommandUsage::None, Sierra::BufferCommandUsage::MemoryRead);
             commandBuffer.SynchronizeBufferUsage(*indexBuffer, Sierra::BufferCommandUsage::IndexRead, Sierra::BufferCommandUsage::MemoryWrite);
-            commandBuffer.CopyBufferToBuffer(*stagingBuffer, *indexBuffer, stagingBuffer->GetMemorySize(), 0, currentIndexByteOffset);
+            commandBuffer.CopyBufferToBuffer(*stagingBuffer, *indexBuffer, stagingBuffer->GetMemorySize(), 0, currentIndexOffset);
 
             // Discard temporary buffer
             commandBuffer.QueueBufferForDestruction(std::move(stagingBuffer));
             commandBuffer.SynchronizeBufferUsage(*indexBuffer, Sierra::BufferCommandUsage::MemoryWrite, Sierra::BufferCommandUsage::IndexRead);
         }
-        currentIndexByteOffset += indices.size_bytes();
+        currentIndexOffset += indices.size_bytes();
 
         return mesh;
     }

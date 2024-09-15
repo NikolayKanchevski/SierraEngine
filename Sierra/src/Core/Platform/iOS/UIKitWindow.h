@@ -101,7 +101,6 @@ namespace Sierra
                 void SceneDidDisconnect();
         #endif
 
-
     };
 
 }

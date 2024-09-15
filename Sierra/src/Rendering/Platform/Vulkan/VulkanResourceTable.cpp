@@ -80,7 +80,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void VulkanResourceTable::BindUniformBuffer(const ResourceIndex index, const Buffer& buffer, const uint64 memoryByteSize, const uint64 byteOffset)
+    void VulkanResourceTable::BindUniformBuffer(const ResourceIndex index, const Buffer& buffer, const uint64 memorySize, const uint64 offset)
     {
         SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind uniform buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer.GetName(), name);
         const VulkanBuffer& vulkanBuffer = static_cast<const VulkanBuffer&>(buffer);
@@ -95,8 +95,8 @@ namespace Sierra
         const VkDescriptorBufferInfo bufferInfo
         {
             .buffer = vulkanBuffer.GetVulkanBuffer(),
-            .offset = byteOffset,
-            .range = memoryByteSize != 0 ? memoryByteSize : buffer.GetMemorySize()
+            .offset = offset,
+            .range = memorySize != 0 ? memorySize : buffer.GetMemorySize()
         };
 
         // Set up write info
@@ -115,7 +115,7 @@ namespace Sierra
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
     }
 
-    void VulkanResourceTable::BindStorageBuffer(const ResourceIndex index, const Buffer& buffer, const uint64 memoryByteSize, const uint64 byteOffset)
+    void VulkanResourceTable::BindStorageBuffer(const ResourceIndex index, const Buffer& buffer, const uint64 memorySize, const uint64 offset)
     {
         SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind storage buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer.GetName(), name);
         const VulkanBuffer& vulkanBuffer = static_cast<const VulkanBuffer&>(buffer);
@@ -130,8 +130,8 @@ namespace Sierra
         const VkDescriptorBufferInfo bufferInfo
         {
             .buffer = vulkanBuffer.GetVulkanBuffer(),
-            .offset = byteOffset,
-            .range = memoryByteSize != 0 ? memoryByteSize : buffer.GetMemorySize()
+            .offset = offset,
+            .range = memorySize != 0 ? memorySize : buffer.GetMemorySize()
         };
 
         // Set up write info
@@ -291,7 +291,6 @@ namespace Sierra
         device.GetPhysicalDeviceProperties2(&descriptorIndexingProperties);
         return glm::min(VulkanDevice::MAX_SAMPLERS_PER_RESOURCE_TABLE, descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers);
     }
-
 
     /* --- DESTRUCTOR --- */
 

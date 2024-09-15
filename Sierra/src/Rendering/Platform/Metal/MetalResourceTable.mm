@@ -69,7 +69,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void MetalResourceTable::BindUniformBuffer(ResourceIndex index, const Buffer& buffer, const uint64 memoryByteSize, const uint64 byteOffset)
+    void MetalResourceTable::BindUniformBuffer(ResourceIndex index, const Buffer& buffer, const uint64 memorySize, const uint64 offset)
     {
         SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind uniform buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer.GetName(), name);
         const MetalBuffer& metalBuffer = static_cast<const MetalBuffer&>(buffer);
@@ -80,12 +80,12 @@ namespace Sierra
             return;
         }
 
-        [argumentEncoder setBuffer: metalBuffer.GetMetalBuffer() offset: byteOffset atIndex: UNIFORM_BUFFER_INDEX + index];
+        [argumentEncoder setBuffer: metalBuffer.GetMetalBuffer() offset: offset atIndex: UNIFORM_BUFFER_INDEX + index];
         boundResources[BoundResourceEntry(index, MTLResourceUsageRead)] = metalBuffer.GetMetalBuffer();
 
     }
 
-    void MetalResourceTable::BindStorageBuffer(const ResourceIndex index, const Buffer& buffer, const uint64 memoryByteSize, const uint64 byteOffset)
+    void MetalResourceTable::BindStorageBuffer(const ResourceIndex index, const Buffer& buffer, const uint64 memorySize, const uint64 offset)
     {
         SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind storage buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer.GetName(), name);
         const MetalBuffer& metalBuffer = static_cast<const MetalBuffer&>(buffer);
@@ -96,7 +96,7 @@ namespace Sierra
             return;
         }
 
-        [argumentEncoder setBuffer: metalBuffer.GetMetalBuffer() offset: byteOffset atIndex: STORAGE_BUFFER_INDEX + index];
+        [argumentEncoder setBuffer: metalBuffer.GetMetalBuffer() offset: offset atIndex: STORAGE_BUFFER_INDEX + index];
         boundResources[BoundResourceEntry(index, MTLResourceUsageRead | MTLResourceUsageWrite)] = metalBuffer.GetMetalBuffer();
     }
 

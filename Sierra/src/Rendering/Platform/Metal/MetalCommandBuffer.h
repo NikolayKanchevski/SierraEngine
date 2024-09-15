@@ -33,15 +33,15 @@ namespace Sierra
         void Begin() override;
         void End() override;
 
-        void SynchronizeBufferUsage(const Buffer& buffer, BufferCommandUsage previousUsage, BufferCommandUsage nextUsage, size memorySize = 0, uint64 byteOffset = 0) override;
+        void SynchronizeBufferUsage(const Buffer& buffer, BufferCommandUsage previousUsage, BufferCommandUsage nextUsage, size memorySize = 0, uint64 offset = 0) override;
         void SynchronizeImageUsage(const Image& image, ImageCommandUsage previousUsage, ImageCommandUsage nextUsage, uint32 baseLevel = 0, uint32 levelCount = 0, uint32 baseLayer = 0, uint32 layerCount = 0) override;
 
-        void CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, uint64 memoryByteSize = 0, uint64 sourceByteOffset = 0, uint64 destinationByteOffset = 0) override;
-        void CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, uint32 level = 0, uint32 layer = 0, const Vector3UInt& pixelRange = { 0, 0, 0 }, uint64 sourceByteOffset = 0, const Vector3UInt& destinationPixelOffset = { 0, 0, 0 }) override;
+        void CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, uint64 memorySize = 0, uint64 sourceOffset = 0, uint64 Offset = 0) override;
+        void CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, uint32 level = 0, uint32 layer = 0, const Vector3UInt& pixelRange = { 0, 0, 0 }, uint64 sourceOffset = 0, const Vector3UInt& destinationPixelOffset = { 0, 0, 0 }) override;
         void GenerateMipMapsForImage(const Image& image) override;
 
         void BindResourceTable(const ResourceTable& resourceTable) override;
-        void PushConstants(const void* memory, uint16 memoryByteSize, uint16 sourceByteOffset = 0) override;
+        void PushConstants(const void* memory, uint16 memorySize, uint16 sourceOffset = 0) override;
 
         void BeginRenderPass(const RenderPass& renderPass, std::span<const RenderPassBeginAttachment> attachments) override;
         void BeginNextSubpass(const RenderPass& renderPass) override;
@@ -50,8 +50,8 @@ namespace Sierra
         void BeginGraphicsPipeline(const GraphicsPipeline& pipeline) override;
         void EndGraphicsPipeline(const GraphicsPipeline& pipeline) override;
 
-        void BindVertexBuffer(const Buffer& vertexBuffer, uint64 byteOffset = 0) override;
-        void BindIndexBuffer(const Buffer& indexBuffer, uint64 byteOffset = 0) override;
+        void BindVertexBuffer(const Buffer& vertexBuffer, uint64 offset = 0) override;
+        void BindIndexBuffer(const Buffer& indexBuffer, uint64 offset = 0) override;
 
         void SetScissor(const Vector4UInt& scissor) override;
         void Draw(uint32 vertexCount, uint32 vertexOffset = 0) override;
@@ -104,8 +104,8 @@ namespace Sierra
         const MetalResourceTable* currentResourceTable = nullptr;
 
         id<MTLBuffer> currentIndexBuffer = nil;
-        uint64 currentIndexBufferByteOffset = 0;
-        uint64 currentVertexBufferByteOffset = 0;
+        uint64 currentIndexBufferOffset = 0;
+        uint64 currentVertexBufferOffset = 0;
 
         std::queue<std::unique_ptr<Buffer>> queuedBuffersForDestruction;
         std::queue<std::unique_ptr<Image>> queuedImagesForDestruction;

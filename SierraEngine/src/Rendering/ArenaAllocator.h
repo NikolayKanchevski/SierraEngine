@@ -18,10 +18,10 @@ namespace SierraEngine
 
     struct ArenaMesh
     {
-        uint64 vertexByteOffset = 0;
+        uint64 vertexOffset = 0;
         uint32 vertexCount = 0;
 
-        uint64 indexByteOffset = 0;
+        uint64 indexOffset = 0;
         uint32 indexCount = 0;
     };
 
@@ -35,10 +35,10 @@ namespace SierraEngine
         [[nodiscard]] ArenaMesh RegisterMesh(Sierra::CommandBuffer& commandBuffer, std::span<const Vertex> vertices, std::span<const uint32> indices);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] uint32 GetVertexCount() const { return static_cast<uint32>(currentVertexByteOffset / sizeof(Vertex)); }
+        [[nodiscard]] uint32 GetVertexCount() const { return static_cast<uint32>(currentVertexOffset / sizeof(Vertex)); }
         [[nodiscard]] const Sierra::Buffer& GetVertexBuffer() const { return *vertexBuffer; }
 
-        [[nodiscard]] uint32 GetIndexCount() const { return static_cast<uint32>(currentIndexByteOffset / sizeof(uint32)); }
+        [[nodiscard]] uint32 GetIndexCount() const { return static_cast<uint32>(currentIndexOffset / sizeof(uint32)); }
         [[nodiscard]] const Sierra::Buffer& GetIndexBuffer() const { return *indexBuffer; }
 
         /* --- COPY SEMANTICS --- */
@@ -55,10 +55,10 @@ namespace SierraEngine
     private:
         const Sierra::RenderingContext& renderingContext;
 
-        size currentVertexByteOffset = 0;
+        size currentVertexOffset = 0;
         std::unique_ptr<Sierra::Buffer> vertexBuffer = nullptr;
 
-        size currentIndexByteOffset = 0;
+        size currentIndexOffset = 0;
         std::unique_ptr<Sierra::Buffer> indexBuffer = nullptr;
 
     };
