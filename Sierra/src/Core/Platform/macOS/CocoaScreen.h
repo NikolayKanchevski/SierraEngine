@@ -48,6 +48,14 @@ namespace Sierra
 
         [[nodiscard]] const NSScreen* GetNSScreen() const { return screen; }
 
+        /* --- COPY SEMANTICS --- */
+        CocoaScreen(const CocoaScreen&) = delete;
+        CocoaScreen& operator=(const CocoaScreen&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        CocoaScreen(CocoaScreen&&) = default;
+        CocoaScreen& operator=(CocoaScreen&&) = default;
+
         /* --- DESTRUCTOR --- */
         ~CocoaScreen() override = default;
 

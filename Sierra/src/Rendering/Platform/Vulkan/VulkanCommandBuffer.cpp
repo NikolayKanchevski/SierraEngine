@@ -82,7 +82,7 @@ namespace Sierra
         currentResourceTableDescriptorSet = VK_NULL_HANDLE;
     }
 
-    void VulkanCommandBuffer::SynchronizeBufferUsage(const Buffer& buffer, const BufferCommandUsage previousUsage, const BufferCommandUsage nextUsage, const size memorySize, const uint64 offset)
+    void VulkanCommandBuffer::SynchronizeBufferUsage(const Buffer& buffer, const BufferCommandUsage previousUsage, const BufferCommandUsage nextUsage, const size memorySize, const size offset)
     {
         SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not synchronize usage of buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer.GetName(), name);
         const VulkanBuffer& vulkanBuffer = static_cast<const VulkanBuffer&>(buffer);
@@ -145,7 +145,7 @@ namespace Sierra
         device.GetFunctionTable().vkCmdPipelineBarrier(commandBuffer, ImageCommandUsageToVkPipelineStageFlags(previousUsage), ImageCommandUsageToVkPipelineStageFlags(nextUsage), 0, 0, nullptr, 0, nullptr, 1, &pipelineBarrier);
     }
 
-    void VulkanCommandBuffer::CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, const uint64 memorySize, const uint64 sourceOffset, const uint64 Offset)
+    void VulkanCommandBuffer::CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, const size memorySize, const size sourceOffset, const size offset)
     {
         SR_ERROR_IF(sourceBuffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not copy from buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", sourceBuffer.GetName(), name);
         const VulkanBuffer& vulkanSourceBuffer = static_cast<const VulkanBuffer&>(sourceBuffer);
@@ -156,18 +156,18 @@ namespace Sierra
         const VkBufferCopy copyRegion
         {
             .srcOffset = sourceOffset,
-            .dstOffset = Offset,
+            .dstOffset = offset,
             .size = memorySize != 0 ? memorySize : sourceBuffer.GetMemorySize(),
         };
 
         SR_ERROR_IF(sourceOffset + copyRegion.size > sourceBuffer.GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memorySize, sourceOffset, sourceBuffer.GetName(), name, sourceOffset + memorySize, sourceBuffer.GetMemorySize());
-        SR_ERROR_IF(Offset + copyRegion.size > destinationBuffer.GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memorySize, Offset, destinationBuffer.GetName(), name, Offset + memorySize, destinationBuffer.GetMemorySize());
+        SR_ERROR_IF(offset + copyRegion.size > destinationBuffer.GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memorySize, offset, destinationBuffer.GetName(), name, offset + memorySize, destinationBuffer.GetMemorySize());
 
         // Record copy
         device.GetFunctionTable().vkCmdCopyBuffer(commandBuffer, vulkanSourceBuffer.GetVulkanBuffer(), vulkanDestinationBuffer.GetVulkanBuffer(), 1, &copyRegion);
     }
 
-    void VulkanCommandBuffer::CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, const uint32 level, const uint32 layer, const Vector3UInt& pixelRange, const uint64 sourceOffset, const Vector3UInt& destinationPixelOffset)
+    void VulkanCommandBuffer::CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, const uint32 level, const uint32 layer, const Vector3UInt& pixelRange, const size sourceOffset, const Vector3UInt& destinationPixelOffset)
     {
         SR_ERROR_IF(sourceBuffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Could not copy from buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], to image [{1}] within command buffer [{2}]!", sourceBuffer.GetName(), destinationImage.GetName(), name);
         const VulkanBuffer& vulkanSourceBuffer = static_cast<const VulkanBuffer&>(sourceBuffer);
@@ -433,18 +433,19 @@ namespace Sierra
         currentBindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
     }
 
-    void VulkanCommandBuffer::BindVertexBuffer(const Buffer& vertexBuffer, const uint64 offset)
+    void VulkanCommandBuffer::BindVertexBuffer(const Buffer& vertexBuffer, const size offset)
     {
         SR_ERROR_IF(vertexBuffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind vertex buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{1}]!", vertexBuffer.GetName(), name);
         const VulkanBuffer& vulkanVertexBuffer = static_cast<const VulkanBuffer&>(vertexBuffer);
 
         SR_ERROR_IF(offset > vertexBuffer.GetMemorySize(), "[Vulkan]: Cannot bind vertex buffer [{0}] within command buffer [{1}] using specified offset of [{2}] bytes, which is not within a valid range of the [{3}] bytes the buffer holds!", vertexBuffer.GetName(), name, offset, vertexBuffer.GetMemorySize());
 
-        VkBuffer const vkBuffer = vulkanVertexBuffer.GetVulkanBuffer();
-        device.GetFunctionTable().vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vkBuffer, &offset);
+        const std::array<VkDeviceSize, 1> offsets = { offset };
+        VkBuffer vkBuffer = vulkanVertexBuffer.GetVulkanBuffer();
+        device.GetFunctionTable().vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vkBuffer, offsets.data());
     }
 
-    void VulkanCommandBuffer::BindIndexBuffer(const Buffer& indexBuffer, const uint64 offset)
+    void VulkanCommandBuffer::BindIndexBuffer(const Buffer& indexBuffer, const size offset)
     {
         SR_ERROR_IF(indexBuffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind index buffer [{0}], whose graphics API differs from [GraphicsAPI::Vulkan], within command buffer [{1}]!", indexBuffer.GetName(), name);
         const VulkanBuffer& vulkanIndexBuffer = static_cast<const VulkanBuffer&>(indexBuffer);

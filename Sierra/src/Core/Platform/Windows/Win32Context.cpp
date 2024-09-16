@@ -162,6 +162,7 @@ namespace Sierra
 
     void Win32Context::ReloadScreens()
     {
+        screens.clear();
         EnumDisplayMonitors(nullptr, nullptr, EnumDisplayMonitorsProc, reinterpret_cast<LPARAM>(this));
     }
 

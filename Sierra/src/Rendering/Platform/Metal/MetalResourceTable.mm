@@ -69,7 +69,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void MetalResourceTable::BindUniformBuffer(ResourceIndex index, const Buffer& buffer, const uint64 memorySize, const uint64 offset)
+    void MetalResourceTable::BindUniformBuffer(ResourceIndex index, const Buffer& buffer, const size memorySize, const size offset)
     {
         SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind uniform buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer.GetName(), name);
         const MetalBuffer& metalBuffer = static_cast<const MetalBuffer&>(buffer);
@@ -85,7 +85,7 @@ namespace Sierra
 
     }
 
-    void MetalResourceTable::BindStorageBuffer(const ResourceIndex index, const Buffer& buffer, const uint64 memorySize, const uint64 offset)
+    void MetalResourceTable::BindStorageBuffer(const ResourceIndex index, const Buffer& buffer, const size memorySize, const size offset)
     {
         SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot not bind storage buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer.GetName(), name);
         const MetalBuffer& metalBuffer = static_cast<const MetalBuffer&>(buffer);

@@ -66,7 +66,7 @@ namespace Sierra
         currentResourceTable = nullptr;
     }
 
-    void MetalCommandBuffer::SynchronizeBufferUsage(const Buffer& buffer, const BufferCommandUsage previousUsage, const BufferCommandUsage nextUsage, const size memorySize, const uint64 offset)
+    void MetalCommandBuffer::SynchronizeBufferUsage(const Buffer& buffer, const BufferCommandUsage previousUsage, const BufferCommandUsage nextUsage, const size memorySize, const size offset)
     {
         SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not synchronize usage of buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", buffer.GetName(), name);
         const MetalBuffer& metalBuffer = static_cast<const MetalBuffer&>(buffer);
@@ -93,7 +93,7 @@ namespace Sierra
         [currentRenderEncoder memoryBarrierWithResources: &textureResource count: 1 afterStages: ImageCommandUsageToRenderStages(previousUsage) beforeStages: ImageCommandUsageToRenderStages(nextUsage)];
     }
 
-    void MetalCommandBuffer::CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, uint64 memorySize, const uint64 sourceOffset, const uint64 Offset)
+    void MetalCommandBuffer::CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, size memorySize, const size sourceOffset, const size offset)
     {
         SR_ERROR_IF(sourceBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy from buffer [{0}] within command buffer [{1}], as its graphics API differs from [GraphicsAPI::Metal]!", sourceBuffer.GetName(), name);
         const MetalBuffer& metalSourceBuffer = static_cast<const MetalBuffer&>(sourceBuffer);
@@ -103,7 +103,7 @@ namespace Sierra
 
         memorySize = memorySize != 0 ? memorySize : sourceBuffer.GetMemorySize();
         SR_ERROR_IF(sourceOffset + memorySize > sourceBuffer.GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, from buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memorySize, sourceOffset, sourceBuffer.GetName(), name, sourceOffset + memorySize, sourceBuffer.GetMemorySize());
-        SR_ERROR_IF(Offset + memorySize > destinationBuffer.GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memorySize, Offset, destinationBuffer.GetName(), name, Offset + memorySize, destinationBuffer.GetMemorySize());
+        SR_ERROR_IF(offset + memorySize > destinationBuffer.GetMemorySize(), "[Metal]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}] within command buffer [{3}], as the resulting memory space of a total of [{4}] bytes is bigger than the size of the buffer - [{5}]!", memorySize, offset, destinationBuffer.GetName(), name, offset + memorySize, destinationBuffer.GetMemorySize());
 
         if (currentBlitEncoder == nil)
         {
@@ -111,10 +111,10 @@ namespace Sierra
             device.SetResourceName(currentBlitEncoder, "Transfer Encoder");
         }
 
-        [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer() sourceOffset: sourceOffset toBuffer: metalDestinationBuffer.GetMetalBuffer() Offset: Offset size: memorySize];
+        [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer() sourceOffset: sourceOffset toBuffer: metalDestinationBuffer.GetMetalBuffer() destinationOffset: offset size: memorySize];
     }
 
-    void MetalCommandBuffer::CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, const uint32 level, const uint32 layer, const Vector3UInt& pixelRange, const uint64 sourceOffset, const Vector3UInt& destinationPixelOffset)
+    void MetalCommandBuffer::CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, const uint32 level, const uint32 layer, const Vector3UInt& pixelRange, const size sourceOffset, const Vector3UInt& destinationPixelOffset)
     {
         SR_ERROR_IF(sourceBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Could not copy from buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], to image [{1}] within command buffer [{2}]!", sourceBuffer.GetName(), destinationImage.GetName(), name);
         const MetalBuffer& metalSourceBuffer = static_cast<const MetalBuffer&>(sourceBuffer);
@@ -311,7 +311,7 @@ namespace Sierra
         currentGraphicsPipeline = nil;
     }
 
-    void MetalCommandBuffer::BindVertexBuffer(const Buffer& vertexBuffer, const uint64 offset)
+    void MetalCommandBuffer::BindVertexBuffer(const Buffer& vertexBuffer, const size offset)
     {
         SR_ERROR_IF(vertexBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind vertex buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", vertexBuffer.GetName(), name);
         const MetalBuffer& metalVertexBuffer = static_cast<const MetalBuffer&>(vertexBuffer);
@@ -321,7 +321,7 @@ namespace Sierra
         currentVertexBufferOffset = offset;
     }
 
-    void MetalCommandBuffer::BindIndexBuffer(const Buffer& indexBuffer, const uint64 offset)
+    void MetalCommandBuffer::BindIndexBuffer(const Buffer& indexBuffer, const size offset)
     {
         SR_ERROR_IF(indexBuffer.GetAPI() != GraphicsAPI::Metal, "[Metal]: Cannot bind index buffer [{0}], whose graphics API differs from [GraphicsAPI::Metal], within command buffer [{1}]!", indexBuffer.GetName(), name);
         const MetalBuffer& metalIndexBuffer = static_cast<const MetalBuffer&>(indexBuffer);

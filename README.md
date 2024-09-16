@@ -1,6 +1,6 @@
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://bit.ly/3OMysM8)
 
-# Sierra Engine ![License](https://img.shields.io/github/license/NikolayKanchevski/SierraEngine?style=flat&color=%2300599C) ![Lines of Code](https://sloc.xyz/github/NikolayKanchevski/SierraEngine?category=lines&style=flat&branch=dev&label=Lines%20of%20Code&color=%2300599C) ![Repo Size](https://img.shields.io/github/repo-size/NikolayKanchevski/SierraEngine?style=flat&color=%2300599C) ![Language](https://img.shields.io/badge/C++-%2300599C.svg?style=flat&logo=c%2B%2B&logoColor=white)
+# Sierra Engine ![License](https://img.shields.io/github/license/NikolayKanchevski/SierraEngine?style=flat&color=%2300599C) [Lines of Code](https://tokei.rs/b1/github/NikolayKanchevski/SierraEngine?category=lines&style=flat&branch=dev&label=lines%20of%20code&color=%2300599C) ![Repo Size](https://img.shields.io/github/repo-size/NikolayKanchevski/SierraEngine?style=flat&color=%2300599C) ![Language](https://img.shields.io/badge/C++-%2300599C.svg?style=flat&logo=c%2B%2B&logoColor=white)
 
 <div align="center">
 

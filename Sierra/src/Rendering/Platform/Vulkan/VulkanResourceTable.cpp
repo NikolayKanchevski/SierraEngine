@@ -80,7 +80,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void VulkanResourceTable::BindUniformBuffer(const ResourceIndex index, const Buffer& buffer, const uint64 memorySize, const uint64 offset)
+    void VulkanResourceTable::BindUniformBuffer(const ResourceIndex index, const Buffer& buffer, const size memorySize, const size offset)
     {
         SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind uniform buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer.GetName(), name);
         const VulkanBuffer& vulkanBuffer = static_cast<const VulkanBuffer&>(buffer);
@@ -115,7 +115,7 @@ namespace Sierra
         device.GetFunctionTable().vkUpdateDescriptorSets(device.GetLogicalDevice(), 1, &writeDescriptorSet, 0, nullptr);
     }
 
-    void VulkanResourceTable::BindStorageBuffer(const ResourceIndex index, const Buffer& buffer, const uint64 memorySize, const uint64 offset)
+    void VulkanResourceTable::BindStorageBuffer(const ResourceIndex index, const Buffer& buffer, const size memorySize, const size offset)
     {
         SR_ERROR_IF(buffer.GetAPI() != GraphicsAPI::Vulkan, "[Vulkan]: Cannot bind storage buffer [{0}] to resource table [{1}], as its graphics API differs from [GraphicsAPI::Vulkan]!", buffer.GetName(), name);
         const VulkanBuffer& vulkanBuffer = static_cast<const VulkanBuffer&>(buffer);

@@ -129,6 +129,17 @@ namespace Sierra
         return event;
     }
 
+    void CocoaContext::ReloadScreens()
+    {
+        screens.clear();
+
+        screens.reserve([[NSScreen screens] count]);
+        for (const NSScreen* screen in [NSScreen screens])
+        {
+            screens.emplace_back(CocoaScreen({ .screen = screen }));
+        }
+    }
+
     /* --- GETTER METHODS --- */
 
     CocoaScreen& CocoaContext::GetPrimaryScreen()
@@ -147,18 +158,6 @@ namespace Sierra
     {
         [[application delegate] release];
         [application setDelegate: nil];
-    }
-
-    /* --- PRIVATE METHODS --- */
-
-    void CocoaContext::ReloadScreens()
-    {
-        screens.clear();
-        screens.reserve([[NSScreen screens] count]);
-        for (const NSScreen* screen in [NSScreen screens])
-        {
-            screens.emplace_back(CocoaScreen({ .screen = screen }));
-        }
     }
 
 }

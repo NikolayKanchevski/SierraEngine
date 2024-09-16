@@ -33,11 +33,11 @@ namespace Sierra
         void Begin() override;
         void End() override;
 
-        void SynchronizeBufferUsage(const Buffer& buffer, BufferCommandUsage previousUsage, BufferCommandUsage nextUsage, size memorySize = 0, uint64 offset = 0) override;
+        void SynchronizeBufferUsage(const Buffer& buffer, BufferCommandUsage previousUsage, BufferCommandUsage nextUsage, size memorySize = 0, size offset = 0) override;
         void SynchronizeImageUsage(const Image& image, ImageCommandUsage previousUsage, ImageCommandUsage nextUsage, uint32 baseLevel = 0, uint32 levelCount = 0, uint32 baseLayer = 0, uint32 layerCount = 0) override;
 
-        void CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, uint64 memorySize = 0, uint64 sourceOffset = 0, uint64 Offset = 0) override;
-        void CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, uint32 level = 0, uint32 layer = 0, const Vector3UInt& pixelRange = { 0, 0, 0 }, uint64 sourceOffset = 0, const Vector3UInt& destinationPixelOffset = { 0, 0, 0 }) override;
+        void CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, size memorySize = 0,  size sourceOffset = 0,  size offset = 0) override;
+        void CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, uint32 level = 0, uint32 layer = 0, const Vector3UInt& pixelRange = { 0, 0, 0 },  size sourceOffset = 0, const Vector3UInt& destinationPixelOffset = { 0, 0, 0 }) override;
         void GenerateMipMapsForImage(const Image& image) override;
 
         void BindResourceTable(const ResourceTable& resourceTable) override;
@@ -50,8 +50,8 @@ namespace Sierra
         void BeginGraphicsPipeline(const GraphicsPipeline& pipeline) override;
         void EndGraphicsPipeline(const GraphicsPipeline& pipeline) override;
 
-        void BindVertexBuffer(const Buffer& vertexBuffer, uint64 offset = 0) override;
-        void BindIndexBuffer(const Buffer& indexBuffer, uint64 offset = 0) override;
+        void BindVertexBuffer(const Buffer& vertexBuffer, size offset = 0) override;
+        void BindIndexBuffer(const Buffer& indexBuffer, size offset = 0) override;
 
         void SetScissor(const Vector4UInt& scissor) override;
         void Draw(uint32 vertexCount, uint32 vertexOffset = 0) override;

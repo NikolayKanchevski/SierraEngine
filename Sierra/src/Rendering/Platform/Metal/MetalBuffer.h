@@ -27,7 +27,7 @@ namespace Sierra
         MetalBuffer(const MetalDevice& device, const BufferCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void CopyFromMemory(const void* memory, uint64 memorySize = 0, uint64 sourceOffset = 0, uint64 Offset = 0) override;
+        void CopyFromMemory(const void* memory, size memorySize = 0,  size sourceOffset = 0,  size offset = 0) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const override;

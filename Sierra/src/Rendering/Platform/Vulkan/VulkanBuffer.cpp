@@ -45,13 +45,13 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void VulkanBuffer::CopyFromMemory(const void* memoryPointer, uint64 memorySize, const uint64 sourceOffset, const uint64 Offset)
+    void VulkanBuffer::CopyFromMemory(const void* memoryPointer, size memorySize, const size sourceOffset, const size offset)
     {
         memorySize = memorySize != 0 ? memorySize : GetMemorySize();
-        SR_ERROR_IF(Offset + memorySize > GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{3}] bytes is bigger than the size of the buffer - [{4}]!", memorySize, Offset, name, Offset + memorySize, GetMemorySize());
+        SR_ERROR_IF(offset + memorySize > GetMemorySize(), "[Vulkan]: Cannot copy [{0}] bytes of memory, which is offset by another [{1}] bytes, to buffer [{2}], as the resulting memory space of a total of [{3}] bytes is bigger than the size of the buffer - [{4}]!", memorySize, offset, name, offset + memorySize, GetMemorySize());
 
-        std::memcpy(reinterpret_cast<uint8*>(memory) + Offset, reinterpret_cast<const uint8*>(memoryPointer) + sourceOffset, memorySize);
-        vmaFlushAllocation(device.GetMemoryAllocator(), allocation, Offset, memorySize);
+        std::memcpy(reinterpret_cast<uint8*>(memory) + offset, reinterpret_cast<const uint8*>(memoryPointer) + sourceOffset, memorySize);
+        vmaFlushAllocation(device.GetMemoryAllocator(), allocation, offset, memorySize);
     }
 
     /* --- DESTRUCTOR --- */

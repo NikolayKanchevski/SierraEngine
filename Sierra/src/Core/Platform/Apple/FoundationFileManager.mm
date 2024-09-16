@@ -75,7 +75,7 @@ namespace Sierra
 
     FileOperationResult FoundationFileStream::Write(const void* memory, const size memorySize, const size offset)
     {
-        NSData* const data = [[NSData dataWithBytesNoCopy: const_cast<void*>(reinterpret_cast<const uint8*>(memory) + offset) length: memorySize] retain];
+        NSData* const data = [[NSData dataWithBytesNoCopy: const_cast<void*>(reinterpret_cast<const void*>(reinterpret_cast<const uint8*>(memory) + offset)) length: memorySize] retain];
 
         NSError* error = nil;
         [fileHandle writeData: data error: &error];
@@ -95,17 +95,19 @@ namespace Sierra
     {
         size initialOffset = GetCurrentOffset();
 
-        NSUInteger memorySize = 0;
-        [fileHandle seekToEndReturningOffset: memorySize error: nil];
+        ullong memorySize = 0;
+        [fileHandle seekToEndReturningOffset: &memorySize error: nil];
 
-        Seek(initialOffset);
+        NSError* error = nil;
+        [fileHandle seekToOffset: initialOffset error: &error];
+
         return memorySize;
     }
 
     size FoundationFileStream::GetCurrentOffset() const
     {
-        NSUInteger offset = 0;
-        [fileHandle getOffset: offset error: nil];
+        ullong offset = 0;
+        [fileHandle getOffset: &offset error: nil];
         return offset;
     }
 

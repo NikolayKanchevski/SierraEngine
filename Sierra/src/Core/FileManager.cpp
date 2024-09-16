@@ -88,9 +88,9 @@ namespace Sierra
         return Read(memorySize, outData);
     }
 
-    FileOperationResult FileStream::Write(const void* memory, const size memorySize, const size sourceOffset, const size Offset)
+    FileOperationResult FileStream::Write(const void* memory, const size memorySize, const size sourceOffset, const size offset)
     {
-        Seek(Offset);
+        Seek(offset);
         return Write(memory, memorySize, sourceOffset);
     }
 
