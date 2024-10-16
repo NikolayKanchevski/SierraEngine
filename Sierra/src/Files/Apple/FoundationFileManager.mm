@@ -253,13 +253,12 @@ namespace Sierra
         const std::string path = filePath.string();
 
         NSError* error = nil;
-        const NSDictionary<NSFileAttributeKey, id>* const attributes = [[fileManager attributesOfItemAtPath: [NSString stringWithCString: path.data() length: path.size()] error: &error] retain];
+        const NSDictionary<NSFileAttributeKey, id>* const attributes = [fileManager attributesOfItemAtPath: [NSString stringWithCString: path.data() length: path.size()] error: &error];
         if (error != nil) HandleNSFileError(error, "Could not get file metadata", filePath);
 
         const NSNumber* const memorySize = [attributes objectForKey: NSFileSize];
         const NSDate* const dateCreated = [attributes objectForKey: NSFileCreationDate];
         const NSDate* const dateModified = [attributes objectForKey: NSFileModificationDate];
-        [attributes release];
 
         const std::chrono::system_clock::time_point dateCreatedTimePoint(std::chrono::seconds(static_cast<uint64>(dateCreated.timeIntervalSince1970)));
         const std::chrono::system_clock::time_point dateModifiedTimePoint(std::chrono::seconds(static_cast<uint64>(dateModified.timeIntervalSince1970)));
@@ -278,12 +277,11 @@ namespace Sierra
         const std::string path = directoryPath.string();
 
         NSError* error = nil;
-        const NSDictionary<NSFileAttributeKey, id>* const attributes = [[fileManager attributesOfItemAtPath: [NSString stringWithCString: path.data() length: path.size()] error: &error] retain];
+        const NSDictionary<NSFileAttributeKey, id>* const attributes = [fileManager attributesOfItemAtPath: [NSString stringWithCString: path.data() length: path.size()] error: &error];
         if (error != nil) HandleNSFileError(error, "Could not get directory metadata", directoryPath);
 
         const NSDate* const dateCreated = [attributes objectForKey: NSFileCreationDate];
         const NSDate* const dateModified = [attributes objectForKey: NSFileModificationDate];
-        [attributes release];
 
         const std::chrono::system_clock::time_point dateCreatedTimePoint(std::chrono::seconds(static_cast<uint64>(dateCreated.timeIntervalSince1970)));
         const std::chrono::system_clock::time_point dateModifiedTimePoint(std::chrono::seconds(static_cast<uint64>(dateModified.timeIntervalSince1970)));

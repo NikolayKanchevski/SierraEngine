@@ -39,10 +39,10 @@ namespace Sierra
         return { reinterpret_cast<const uint8*>(data.bytes), reinterpret_cast<const uint8*>(data.bytes) + memorySize };
     }
 
-    void FoundationFileStream::Write(const void* memory, const size sourceOffset, const size memorySize)
+    void FoundationFileStream::Write(const void* memory, const size offset, const size memorySize)
     {
         FileStream::Write(memory, offset, memorySize);
-        NSData* const data = [[NSData dataWithBytesNoCopy: const_cast<void*>(reinterpret_cast<const void*>(reinterpret_cast<const uint8*>(memory) + sourceOffset)) length: memorySize] retain];
+        NSData* const data = [NSData dataWithBytesNoCopy: const_cast<void*>(reinterpret_cast<const void*>(reinterpret_cast<const uint8*>(memory) + offset)) length: memorySize];
 
         NSError* error = nil;
         [fileHandle writeData: data error: &error];

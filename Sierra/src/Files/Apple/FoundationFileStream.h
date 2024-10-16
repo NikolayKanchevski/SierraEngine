@@ -33,7 +33,7 @@ namespace Sierra
         /* --- POLLING METHODS --- */
         void Seek(size offset) override;
         [[nodiscard]] std::vector<uint8> Read(size memorySize) override;
-        void Write(const void* memory, size sourceOffset, size memorySize) override;
+        void Write(const void* memory, size offset, size memorySize) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] size GetCurrentOffset() const override;
