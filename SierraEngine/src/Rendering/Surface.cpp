@@ -11,15 +11,15 @@ namespace SierraEngine
 
     Surface::Surface(const SurfaceCreateInfo& createInfo)
     {
-        window = createInfo.windowManager.CreateWindow({
+        window = createInfo.platformContext.CreateWindow({
             .title = createInfo.title,
             .resizable = false,
             .maximize = false,
             .hide = true
         });
 
-        swapchain = createInfo.renderingContext.CreateSwapchain({
-            .name = fmt::format("Swapchain of window [{0}]", createInfo.title),
+        swapchain = createInfo.device.CreateSwapchain({
+            .name = SR_FORMAT("Swapchain of window [{0}]", createInfo.title),
             .window = *window,
             .preferredPresentationMode = Sierra::SwapchainPresentationMode::VSync,
             .preferredBuffering = Sierra::SwapchainBuffering::TripleBuffering

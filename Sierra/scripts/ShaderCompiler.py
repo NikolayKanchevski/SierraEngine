@@ -40,7 +40,7 @@ def CompileShader(inputShaderFilePath: str, outputShaderDirectoryPath: str) -> N
         return
 
     # Get path to ShaderConnect compiler
-    compilerFilePath: str = CURRENT_DIRECTORY_PATH + 'Platform/'
+    compilerFilePath: str = CURRENT_DIRECTORY_PATH
     if operatingSystem == OperatingSystem.Windows:
         compilerFilePath += 'Windows/'
     elif operatingSystem == OperatingSystem.Linux:

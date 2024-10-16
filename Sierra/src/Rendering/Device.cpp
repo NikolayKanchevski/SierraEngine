@@ -7,9 +7,16 @@
 namespace Sierra
 {
 
+    /* -- CONSTRUCTORS --- */
+
+    Device::Device(const DeviceCreateInfo& createInfo)
+    {
+        SR_THROW_IF(createInfo.name.empty(), InvalidValueError("Cannot create device, as specified name must not be empty"));
+    }
+
     /* -- GETTER METHODS --- */
 
-    std::optional<ImageFormat> Device::GetSupportedImageFormat(const ImageFormat preferredFormat, const ImageUsage usage) const
+    std::optional<ImageFormat> Device::GetSupportedImageFormat(const ImageFormat preferredFormat, const ImageUsage usage) const noexcept
     {
         // NOTE: Though looking complex and heavy, realistically, the function should return almost immediately, and a format is pretty much guaranteed to be found
 
@@ -752,12 +759,13 @@ namespace Sierra
                 formatsToTry = { preferredFormat };
             }
         }
+
         for (const ImageFormat format : formatsToTry)
         {
             if (IsImageFormatSupported(format, usage))
             {
                 // If image is to be used for memory transfers, we must make sure suitable format has same channel memory size, or risk undefined behaviour and memory faults
-                if ((usage & ImageUsage::SourceMemory || usage & ImageUsage::DestinationMemory || usage & ImageUsage::Storage) && static_cast<uint32>(ImageFormatToPixelMemorySize(preferredFormat) / ImageFormatToChannelCount(preferredFormat)) != static_cast<uint32>(ImageFormatToPixelMemorySize(format) / ImageFormatToChannelCount(format))) continue;
+                if ((usage & ImageUsage::SourceMemory || usage & ImageUsage::DestinationMemory || usage & ImageUsage::Storage) && ImageFormatToChannelMemorySize(format) != ImageFormatToChannelMemorySize(preferredFormat)) continue;
                 return format;
             }
         }
@@ -765,7 +773,7 @@ namespace Sierra
         return std::nullopt;
     }
 
-    ImageSampling Device::GetHighestImageSamplingSupported() const
+    ImageSampling Device::GetHighestImageSamplingSupported() const noexcept
     {
         if (IsImageSamplingSupported(ImageSampling::x64))       return ImageSampling::x64;
         if (IsImageSamplingSupported(ImageSampling::x32))       return ImageSampling::x32;
@@ -776,7 +784,7 @@ namespace Sierra
         return ImageSampling::x1;
     }
 
-    SamplerAnisotropy Device::GetHighestSamplerAnisotropySupported() const
+    SamplerAnisotropy Device::GetHighestSamplerAnisotropySupported() const noexcept
     {
         if (IsSamplerAnisotropySupported(SamplerAnisotropy::x64))       return SamplerAnisotropy::x64;
         if (IsSamplerAnisotropySupported(SamplerAnisotropy::x32))       return SamplerAnisotropy::x32;

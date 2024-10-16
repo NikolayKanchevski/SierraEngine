@@ -12,7 +12,7 @@ namespace SierraEngine
         std::string_view name = "Asset";
         std::string_view author = "Unknown";
         Sierra::Version version = Sierra::Version({ 1, 0, 0 });
-        hash hash = 0;
+        Sierra::Hash64 hash = 0;
         std::span<const std::string_view> tags = { };
     };
 
@@ -23,15 +23,16 @@ namespace SierraEngine
         AssetSerializer(const AssetSerializer&) = delete;
         AssetSerializer& operator=(const AssetSerializer&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        AssetSerializer(AssetSerializer&&) = default;
-        AssetSerializer& operator=(AssetSerializer&&) = default;
-
         /* --- DESTRUCTOR --- */
-        virtual ~AssetSerializer() = default;
+        virtual ~AssetSerializer() noexcept = default;
 
     protected:
-        AssetSerializer() = default;
+        /* --- CONSTRUCTORS --- */
+        AssetSerializer() noexcept = default;
+
+        /* --- MOVE SEMANTICS --- */
+        AssetSerializer(AssetSerializer&&) noexcept = default;
+        AssetSerializer& operator=(AssetSerializer&&) noexcept = default;
 
     };
 

@@ -28,7 +28,7 @@ namespace SierraEngine
     struct TextureCreateInfo
     {
         std::string_view name = "Texture";
-        const Sierra::RenderingContext& renderingContext;
+        const Sierra::Device& device;
 
         uint32 width = 0;
         uint32 height = 0;
@@ -48,23 +48,27 @@ namespace SierraEngine
         explicit Texture(const TextureCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] uint32 GetWidth() const { return image->GetWidth(); }
-        [[nodiscard]] uint32 GetHeight() const { return image->GetHeight(); }
-        [[nodiscard]] Sierra::ImageFormat GetFormat() const { return image->GetFormat(); }
-        [[nodiscard]] Sierra::SamplerFilter GetFilter() const { return filter; }
+        [[nodiscard]] uint32 GetWidth() const noexcept { return image->GetWidth(); }
+        [[nodiscard]] uint32 GetHeight() const noexcept { return image->GetHeight(); }
+        [[nodiscard]] Sierra::ImageFormat GetFormat() const noexcept { return image->GetFormat(); }
+        [[nodiscard]] Sierra::SamplerFilter GetFilter() const noexcept { return filter; }
 
-        [[nodiscard]] uint32 GetLevelCount() const { return image->GetLevelCount(); }
-        [[nodiscard]] uint32 GetLayerCount() const { return image->GetLayerCount(); }
+        [[nodiscard]] uint32 GetLevelCount() const noexcept { return image->GetLevelCount(); }
+        [[nodiscard]] uint32 GetLayerCount() const noexcept { return image->GetLayerCount(); }
 
-        [[nodiscard]] const Sierra::Image& GetImage() const { return *image; }
-        [[nodiscard]] AssetType GetType() const override { return AssetType::Texture; }
+        [[nodiscard]] const Sierra::Image& GetImage() const noexcept { return *image; }
+        [[nodiscard]] AssetType GetType() const noexcept override { return AssetType::Texture; }
+
+        /* --- COPY SEMANTICS --- */
+        Texture(const Texture&) = delete;
+        Texture& operator=(const Texture&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        Texture(Texture&&) = default;
-        Texture& operator=(Texture&&) = default;
+        Texture(Texture&&) noexcept = default;
+        Texture& operator=(Texture&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
-        ~Texture() override = default;
+        ~Texture() noexcept override = default;
 
     private:
         std::unique_ptr<Sierra::Image> image = nullptr;

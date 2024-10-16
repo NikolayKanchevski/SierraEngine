@@ -22,14 +22,15 @@ namespace Sierra
         Renderer& operator=(const Renderer&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        Renderer(Renderer&&) = default;
-        Renderer& operator=(Renderer&&) = default;
+        Renderer(Renderer&&) = delete;
+        Renderer& operator=(Renderer&&) = delete;
         
         /* --- DESTRUCTOR --- */
-        virtual ~Renderer() = default;
+        virtual ~Renderer() noexcept = default;
     
     protected:
-        Renderer() = default;
+        /* --- CONSTRUCTORS --- */
+        Renderer() noexcept = default;
     
     };
 

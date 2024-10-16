@@ -24,8 +24,8 @@ namespace SierraEngine
         explicit Editor(const EditorCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] Scene& GetScene() { return scene; }
-        [[nodiscard]] std::span<const EditorViewport> GetViewports() const { return viewports; }
+        [[nodiscard]] Scene& GetScene() noexcept { return scene; }
+        [[nodiscard]] std::span<const EditorViewport> GetViewports() const noexcept { return viewports; }
 
         /* --- COPY SEMANTICS --- */
         Editor(const Editor&) = delete;
@@ -36,7 +36,7 @@ namespace SierraEngine
         Editor& operator=(Editor&&) = delete;
 
         /* --- DESTRUCTOR --- */
-        ~Editor() = default;
+        ~Editor() noexcept = default;
 
     private:
         Scene& scene;

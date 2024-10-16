@@ -13,21 +13,21 @@ namespace SierraEngine
     /* --- CONSTRUCTORS --- */
 
     TriangleRenderer::TriangleRenderer(const TriangleRendererCreateInfo& createInfo)
-        : renderingContext(createInfo.renderingContext)
+        : device(createInfo.device)
     {
-        vertexShader = renderingContext.CreateShader({
+        vertexShader = device.CreateShader({
             .name = "Triangle Renderer Vertex Shader",
             .memory = VERTEX_SHADER_DATA,
             .shaderType = Sierra::ShaderType::Vertex
         });
 
-        fragmentShader = renderingContext.CreateShader({
+        fragmentShader = device.CreateShader({
             .name = "Triangle Renderer Fragment Shader",
             .memory = FRAGMENT_SHADER_DATA,
             .shaderType = Sierra::ShaderType::Fragment
         });
 
-        renderPass = renderingContext.CreateRenderPass({
+        renderPass = device.CreateRenderPass({
             .name = "Triangle Renderer Render Pass",
             .attachments = {{
                 {
@@ -39,8 +39,8 @@ namespace SierraEngine
             }}
         });
 
-        graphicsPipeline = renderingContext.CreateGraphicsPipeline({
-            .name = "Traingle Renderer Graphics Pipeline",
+        graphicsPipeline = device.CreateGraphicsPipeline({
+            .name = "Triangle Renderer Graphics Pipeline",
             .vertexShader = *vertexShader,
             .fragmentShader = fragmentShader.get(),
             .templateRenderPass = *renderPass,
@@ -60,7 +60,8 @@ namespace SierraEngine
         commandBuffer.BeginRenderPass(*renderPass, {{ { .outputImage = outputImage } }});
         {
             commandBuffer.BeginGraphicsPipeline(*graphicsPipeline);
-            commandBuffer.Draw(3);
+            commandBuffer.Draw(3, 0);
+            commandBuffer.EndGraphicsPipeline(*graphicsPipeline);
         }
         commandBuffer.EndRenderPass(*renderPass);
     }

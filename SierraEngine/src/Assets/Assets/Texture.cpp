@@ -15,21 +15,21 @@ namespace SierraEngine
         Sierra::ImageFormat format = createInfo.preferredFormat;
         Sierra::ImageUsage usage = Sierra::ImageUsage::DestinationMemory | Sierra::ImageUsage::Sample | (createInfo.preferredFilter == Sierra::SamplerFilter::Linear ? Sierra::ImageUsage::Filter : Sierra::ImageUsage::Undefined);
 
-        if (std::optional<Sierra::ImageFormat> supportedFormat = createInfo.renderingContext.GetDevice().GetSupportedImageFormat(format, usage))
+        if (std::optional<Sierra::ImageFormat> supportedFormat = createInfo.device.GetSupportedImageFormat(format, usage))
         {
             if (!supportedFormat.has_value() && createInfo.preferredFilter == Sierra::SamplerFilter::Linear)
             {
                 filter = Sierra::SamplerFilter::Nearest;
                 usage &= ~Sierra::ImageUsage::Filter;
 
-                supportedFormat = createInfo.renderingContext.GetDevice().GetSupportedImageFormat(format, usage);
+                supportedFormat = createInfo.device.GetSupportedImageFormat(format, usage);
             }
 
-            APP_ERROR_IF(!supportedFormat.has_value(), "Cannot create texture [{0}], as no suitable image format is supported for it!", createInfo.name);
+            APP_THROW_IF(!supportedFormat.has_value(), Sierra::UnsupportedFeatureError(SR_FORMAT("Cannot create texture [{0}], device [{1}] supports no suitable image format for it", createInfo.name, createInfo.device.GetName())));
         }
 
-        image = createInfo.renderingContext.CreateImage({
-            .name = fmt::format("Image of texture [{0}]", createInfo.name),
+        image = createInfo.device.CreateImage({
+            .name = SR_FORMAT("Image of texture [{0}]", createInfo.name),
             .width = createInfo.width,
             .height = createInfo.height,
             .type = createInfo.imageType,

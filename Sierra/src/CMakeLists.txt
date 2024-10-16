@@ -1,7 +1,12 @@
 # Link modules
 add_subdirectory(Core)
+add_subdirectory(Events)
 add_subdirectory(Extensions)
+add_subdirectory(Files)
+add_subdirectory(Platform)
 add_subdirectory(Rendering)
+add_subdirectory(Utilities)
+add_subdirectory(Windowing)
 
 # Link include files
 target_sources(Sierra PRIVATE

@@ -4,10 +4,9 @@
 
 #pragma once
 
-#include "FileManager.h"
-#include "PlatformContext.h"
 #include "Version.h"
-#include "WindowManager.h"
+#include "../Files/FileManager.h"
+#include "../Platform/PlatformContext.h"
 #include "../Rendering/RenderingContext.h"
 
 namespace Sierra
@@ -15,25 +14,25 @@ namespace Sierra
 
     struct ApplicationSettings
     {
-        GraphicsAPI graphicsAPI = GraphicsAPI::Auto;
+        RenderingBackendType renderingBackendType = RenderingBackendType::Best;
     };
 
     struct ApplicationCreateInfo
     {
         std::string_view name = "Sierra Application";
         Version version = Version({ 1, 0, 0 });
-        const ApplicationSettings& settings = { };
+        ApplicationSettings settings = { };
     };
 
     class SIERRA_API Application
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual bool Update() = 0;
+        virtual bool Update();
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const { return name; }
-        [[nodiscard]] Version GetVersion() const { return version; }
+        [[nodiscard]] std::string_view GetName() const noexcept { return name; }
+        [[nodiscard]] Version GetVersion() const noexcept { return version; }
 
         /* --- COPY SEMANTICS --- */
         Application(const Application&) = delete;
@@ -47,25 +46,23 @@ namespace Sierra
         virtual ~Application() = default;
 
     protected:
+        /* --- CONSTRUCTORS --- */
         explicit Application(const ApplicationCreateInfo& createInfo);
 
-        [[nodiscard]] const PlatformContext& GetPlatformContext() const { return *platformContext; }
-        [[nodiscard]] const FileManager& GetFileManager() const { return *fileManager; }
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] const PlatformContext& GetPlatformContext() noexcept { return *platformContext; }
+        [[nodiscard]] const RenderingContext& GetRenderingContext() const noexcept { return *renderingContext; }
 
-        [[nodiscard]] const WindowManager& GetWindowManager() const { return *windowManager; }
-        [[nodiscard]] const RenderingContext& GetRenderingContext() const { return *renderingContext; }
+        [[nodiscard]] const FileManager& GetFileManager() const noexcept { return platformContext->GetFileManager(); }
 
-        [[nodiscard]] std::filesystem::path GetApplicationCachesDirectoryPath() const;
-        [[nodiscard]] std::filesystem::path GetApplicationTemporaryDirectoryPath() const;
+        [[nodiscard]] std::filesystem::path GetApplicationCachesDirectoryPath() const noexcept;
+        [[nodiscard]] std::filesystem::path GetApplicationTemporaryDirectoryPath() const noexcept;
 
     private:
         const std::string_view name;
         const Version version;
 
         std::unique_ptr<PlatformContext> platformContext = nullptr;
-        std::unique_ptr<FileManager> fileManager = nullptr;
-
-        std::unique_ptr<WindowManager> windowManager = nullptr;
         std::unique_ptr<RenderingContext> renderingContext = nullptr;
 
     };

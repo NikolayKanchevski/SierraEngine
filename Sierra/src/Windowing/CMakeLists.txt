@@ -1,0 +1,42 @@
+target_sources(Sierra PRIVATE
+    CursorEvents.cpp
+    CursorEvents.h
+    CursorManager.cpp
+    CursorManager.h
+    InputEvents.cpp
+    InputEvents.h
+    InputManager.cpp
+    InputManager.h
+    Key.h
+    Key.cpp
+    MouseButton.cpp
+    MouseButton.h
+    Screen.cpp
+    Screen.h
+    ScreenEvents.cpp
+    ScreenEvents.h
+    ScreenOrientation.h
+    Touch.cpp
+    Touch.h
+    TouchEvents.cpp
+    TouchEvents.h
+    TouchManager.cpp
+    TouchManager.h
+    Window.cpp
+    Window.h
+    WindowEvents.cpp
+    WindowEvents.h
+    WindowingBackendType.h
+)
+
+if(SIERRA_PLATFORM_WINDOWS)
+    add_subdirectory(Windows)
+elseif(SIERRA_PLATFORM_LINUX)
+    add_subdirectory(Linux)
+elseif(SIERRA_PLATFORM_macOS)
+    add_subdirectory(macOS)
+elseif(SIERRA_PLATFORM_ANDROID)
+    add_subdirectory(Android)
+elseif(SIERRA_PLATFORM_iOS)
+    add_subdirectory(iOS)
+endif()

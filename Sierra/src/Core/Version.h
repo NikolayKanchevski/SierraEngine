@@ -9,45 +9,45 @@ namespace Sierra
 
     struct VersionCreateInfo
     {
-        uint8 major = 0;
-        uint8 minor = 0;
-        uint8 patch = 0;
+        uint32 major = 0;
+        uint32 minor = 0;
+        uint32 patch = 0;
     };
 
     class SIERRA_API Version final
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Version(const VersionCreateInfo& createInfo) : major(createInfo.major), minor(createInfo.minor), patch(createInfo.patch) { }
+        explicit Version(VersionCreateInfo createInfo) noexcept;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] uint8 GetMajor() const { return major; }
-        [[nodiscard]] uint8 GetMinor() const { return minor; }
-        [[nodiscard]] uint8 GetPatch() const { return patch; }
+        [[nodiscard]] uint32 GetMajor() const noexcept { return major; }
+        [[nodiscard]] uint32 GetMinor() const noexcept { return minor; }
+        [[nodiscard]] uint32 GetPatch() const noexcept { return patch; }
 
         /* --- COPY SEMANTICS --- */
-        Version(const Version&) = default;
-        Version& operator=(const Version&) = default;
+        Version(const Version&) noexcept = default;
+        Version& operator=(const Version&) noexcept = default;
 
         /* --- MOVE SEMANTICS --- */
-        Version(Version&&) = default;
-        Version& operator=(Version&&) = default;
+        Version(Version&&) noexcept = default;
+        Version& operator=(Version&&) noexcept = default;
 
         /* --- OPERATORS --- */
-        [[nodiscard]] bool operator<(const Version other) const { return major < other.major || minor < other.minor || patch < other.patch; }
-        [[nodiscard]] bool operator>(const Version other) const { return major > other.major || minor > other.minor || patch > other.patch; }
-        [[nodiscard]] bool operator<=(const Version other) const { return major <= other.major || minor <= other.minor || patch <= other.patch; }
-        [[nodiscard]] bool operator>=(const Version other) const { return major >= other.major || minor >= other.minor || patch >= other.patch; }
-		[[nodiscard]] bool operator==(const Version other) const { return major == other.major && minor == other.minor && patch == other.patch; }
-		[[nodiscard]] bool operator!=(const Version other) const { return !(*this == other); }
+        [[nodiscard]] bool operator<(Version other) const noexcept { return major < other.major || minor < other.minor || patch < other.patch; }
+        [[nodiscard]] bool operator>(Version other) const noexcept { return major > other.major || minor > other.minor || patch > other.patch; }
+        [[nodiscard]] bool operator<=(Version other) const noexcept { return major <= other.major || minor <= other.minor || patch <= other.patch; }
+        [[nodiscard]] bool operator>=(Version other) const noexcept { return major >= other.major || minor >= other.minor || patch >= other.patch; }
+		[[nodiscard]] bool operator==(Version other) const noexcept { return major == other.major && minor == other.minor && patch == other.patch; }
+		[[nodiscard]] bool operator!=(Version other) const noexcept { return !(*this == other); }
 
         /* --- DESTRUCTOR --- */
-        ~Version() = default;
+        ~Version() noexcept = default;
 
     private:
-        uint8 major = 0;
-        uint8 minor = 0;
-        uint8 patch = 0;
+        uint32 major = 0;
+        uint32 minor = 0;
+        uint32 patch = 0;
 
     };
 

@@ -9,7 +9,7 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    FrameLimiter::FrameLimiter(const FrameLimiterCreateInfo& createInfo)
+    FrameLimiter::FrameLimiter(const FrameLimiterCreateInfo& createInfo) noexcept
         : maxFrameRate(createInfo.maxFrameRate)
     {
 
@@ -17,13 +17,13 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    Sierra::TimeStep FrameLimiter::BeginFrame()
+    Sierra::TimeStep FrameLimiter::BeginFrame() noexcept
     {
         frameStartTime = Sierra::TimePoint::Now();
         return frameStartTime - lastFrameStartTime;
     }
 
-    void FrameLimiter::EndFrame()
+    void FrameLimiter::EndFrame() noexcept
     {
         // Enforce frame limit if set
         if (maxFrameRate != 0)
@@ -41,7 +41,7 @@ namespace SierraEngine
 
     /* --- SETTER METHODS --- */
 
-    void FrameLimiter::SetMaxFrameRate(const uint32 frameRate)
+    void FrameLimiter::SetMaxFrameRate(const uint32 frameRate) noexcept
     {
         maxFrameRate = frameRate;
     }

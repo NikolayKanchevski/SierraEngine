@@ -18,8 +18,8 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    STBImage::STBImage(const ImageCreateInfo& createInfo)
-        : Image(createInfo)
+    STBImage::STBImage(const RawImageCreateInfo& createInfo)
+        : RawImage(createInfo)
     {
         int imageWidth, imageHeight, imageChannelCount;
         APP_ERROR_IF(stbi_info_from_memory(reinterpret_cast<const stbi_uc*>(createInfo.compressedMemory.data()), static_cast<int>(createInfo.compressedMemory.size_bytes()), &imageWidth, &imageHeight, &imageChannelCount) != 1, "Failed to retrieve image properties using STB! Reason {0}.", stbi_failure_reason());
@@ -102,50 +102,6 @@ namespace SierraEngine
         memory = std::move(croppedMemory);
         width = newWidth;
         height = newHeight;
-    }
-
-    /* --- SETTER METHODS --- */
-
-    bool STBImage::SetPixel(const Vector2UInt coordinate, const Color color)
-    {
-        if (coordinate.x >= width || coordinate.y >= height) return false;
-
-        const uint8 channelMemorySize = static_cast<uint8>(Sierra::ImageFormatToChannelMemorySize(format));
-        const uint8 channelCount = Sierra::ImageFormatToChannelCount(format);
-        void* pixel = reinterpret_cast<uint8*>(memory.get()) + (coordinate.y * width + coordinate.x) * channelMemorySize * channelCount;
-
-        Color c;
-        GetPixelColor<uint8>(pixel, channelCount, c);
-
-        switch (channelMemorySize)
-        {
-            case 1:         { SetPixelMemory<uint8>(pixel, channelCount, color);  break; }
-            case 2:         { SetPixelMemory<uint16>(pixel, channelCount, color); break; }
-            default:        return false;
-        }
-
-        return true;
-    }
-
-    /* --- GETTER METHODS --- */
-
-    Color STBImage::GetPixel(const Vector2UInt coordinate) const
-    {
-        Color color = { 0.0f, 0.0f, 0.0f, 0.0f };
-        if (coordinate.x >= width || coordinate.y >= height) return color;
-
-        const uint8 channelMemorySize = static_cast<uint8>(Sierra::ImageFormatToChannelMemorySize(format));
-        const uint8 channelCount = Sierra::ImageFormatToChannelCount(format);
-        const void* pixel = reinterpret_cast<uint8*>(memory.get()) + (coordinate.y * width + coordinate.x) * channelMemorySize * channelCount;
-
-        switch (channelMemorySize)
-        {
-            case 1:         { GetPixelColor<uint8>(pixel, channelCount, color);  break; }
-            case 2:         { GetPixelColor<uint16>(pixel, channelCount, color); break; }
-            default:        return color;
-        }
-
-        return color;
     }
 
 }

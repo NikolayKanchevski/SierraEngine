@@ -7,7 +7,7 @@
 namespace SierraEngine
 {
 
-    enum class AssetType : uint8
+    enum class AssetType : bool
     {
         Unknown,
         Texture
@@ -17,21 +17,22 @@ namespace SierraEngine
     {
     public:
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual AssetType GetType() const = 0;
+        [[nodiscard]] virtual AssetType GetType() const noexcept = 0;
 
         /* --- COPY SEMANTICS --- */
         Asset(const Asset&) = delete;
         Asset& operator=(const Asset&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        Asset(Asset&&) = default;
-        Asset& operator=(Asset&&) = default;
-
         /* --- DESTRUCTOR --- */
-        virtual ~Asset() = default;
+        virtual ~Asset() noexcept = default;
 
     protected:
-        Asset() = default;
+        /* --- CONSTRUCTORS --- */
+        Asset() noexcept = default;
+
+        /* --- MOVE SEMANTICS --- */
+        Asset(Asset&&) noexcept = default;
+        Asset& operator=(Asset&&) noexcept = default;
 
     };
 

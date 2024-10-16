@@ -13,11 +13,17 @@
 namespace SierraEngine
 {
 
+    namespace
+    {
+        uint32 compressorCount = 0;
+    }
+
     /* --- CONSTRUCTORS --- */
 
     BasisUniversalCompressor::BasisUniversalCompressor()
     {
-        basisu::basisu_encoder_init();
+        if (compressorCount == 0) basisu::basisu_encoder_init();
+        compressorCount++;
     }
 
     /* --- POLLING METHODS --- */
@@ -116,7 +122,7 @@ namespace SierraEngine
         compressorParameters.m_source_images.resize(compressInfo.imageLevels[0].layers.size());
         for (size layer = 0; layer < compressInfo.imageLevels[0].layers.size(); layer++)
         {
-            compressorParameters.m_source_images[layer].init(compressInfo.imageLevels[0].layers[0].image.GetMemory().data(), compressInfo.imageLevels[0].layers[0].image.GetWidth(), compressInfo.imageLevels[0].layers[0].image.GetHeight(), ImageFormatToChannelCount(compressInfo.imageLevels[0].layers[layer].image.GetFormat()));
+            compressorParameters.m_source_images[layer].init(reinterpret_cast<const uint8*>(compressInfo.imageLevels[0].layers[0].image.GetMemory()), compressInfo.imageLevels[0].layers[0].image.GetWidth(), compressInfo.imageLevels[0].layers[0].image.GetHeight(), ImageFormatToChannelCount(compressInfo.imageLevels[0].layers[layer].image.GetFormat()));
         }
 
         compressorParameters.m_source_mipmap_images.resize(compressInfo.imageLevels.size() - 1);
@@ -124,7 +130,7 @@ namespace SierraEngine
         {
             for (size layer = 0; layer < compressInfo.imageLevels.size(); layer++)
             {
-                compressorParameters.m_source_images[level].init(compressInfo.imageLevels[level].layers[layer].image.GetMemory().data(), compressInfo.imageLevels[0].layers[0].image.GetWidth() >> level, compressInfo.imageLevels[0].layers[0].image.GetHeight() >> level, ImageFormatToChannelCount(compressInfo.imageLevels[level].layers[layer].image.GetFormat()));
+                compressorParameters.m_source_images[level].init(reinterpret_cast<const uint8*>(compressInfo.imageLevels[level].layers[layer].image.GetMemory()), compressInfo.imageLevels[0].layers[0].image.GetWidth() >> level, compressInfo.imageLevels[0].layers[0].image.GetHeight() >> level, ImageFormatToChannelCount(compressInfo.imageLevels[level].layers[layer].image.GetFormat()));
             }
         }
 
@@ -148,9 +154,10 @@ namespace SierraEngine
 
     /* --- DESTRUCTORS --- */
 
-    BasisUniversalCompressor::~BasisUniversalCompressor()
+    BasisUniversalCompressor::~BasisUniversalCompressor() noexcept
     {
-        basisu::basisu_encoder_deinit();
+        compressorCount--;
+        if (compressorCount == 0) basisu::basisu_encoder_deinit();
     }
 
 

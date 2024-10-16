@@ -18,33 +18,38 @@ namespace Sierra
         std::string_view name = "Resource Table";
     };
 
-    /* --- TYPE DEFINITIONS --- */
-    using ResourceIndex = uint32;
-
     class SIERRA_API ResourceTable : public virtual RenderingResource
     {
     public:
-
         /* --- POLLING METHODS --- */
-        virtual void BindUniformBuffer(ResourceIndex index, const Buffer& buffer, size memorySize = 0, size offset = 0) = 0;
-        virtual void BindStorageBuffer(ResourceIndex index, const Buffer& buffer, size memorySize = 0, size offset = 0) = 0;
+        virtual void BindUniformBuffer(uint32 index, const Buffer& buffer, size offset, size memorySize);
+        virtual void BindStorageBuffer(uint32 index, const Buffer& buffer, size offset, size memorySize);
 
-        virtual void BindSampledImage(ResourceIndex index, const Image& image) = 0;
-        virtual void BindStorageImage(ResourceIndex index, const Image& image) = 0;
-        virtual void BindSampler(ResourceIndex index, const Sampler& sampler) = 0;
+        virtual void BindSampledImage(uint32 index, const Image& image);
+        virtual void BindStorageImage(uint32 index, const Image& image);
+        virtual void BindSampler(uint32 index, const Sampler& sampler);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual uint32 GetUniformBufferCapacity() const = 0;
-        [[nodiscard]] virtual uint32 GetStorageBufferCapacity() const = 0;
+        [[nodiscard]] virtual uint32 GetUniformBufferCapacity() const noexcept = 0;
+        [[nodiscard]] virtual uint32 GetStorageBufferCapacity() const noexcept = 0;
 
-        [[nodiscard]] virtual uint32 GetSampledImageCapacity() const = 0;
-        [[nodiscard]] virtual uint32 GetStorageImageCapacity() const = 0;
-        [[nodiscard]] virtual uint32 GetSamplerCapacity() const = 0;
+        [[nodiscard]] virtual uint32 GetSampledImageCapacity() const noexcept = 0;
+        [[nodiscard]] virtual uint32 GetStorageImageCapacity() const noexcept = 0;
+        [[nodiscard]] virtual uint32 GetSamplerCapacity() const noexcept = 0;
+
+        /* --- COPY SEMANTICS --- */
+        ResourceTable(const ResourceTable&) = delete;
+        ResourceTable& operator=(const ResourceTable&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        ResourceTable(ResourceTable&&) = delete;
+        ResourceTable& operator=(ResourceTable&&) = delete;
 
         /* --- DESTRUCTOR --- */
-        ~ResourceTable() override = default;
+        ~ResourceTable() noexcept override = default;
 
     protected:
+        /* --- CONSTRUCTORS --- */
         explicit ResourceTable(const ResourceTableCreateInfo& createInfo);
 
     };

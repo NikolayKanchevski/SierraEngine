@@ -22,7 +22,7 @@ namespace SierraEngine
         uint32 concurrentFrameCount = 0;
         uint32 scaling = 1;
 
-        const Sierra::RenderingContext& renderingContext;
+        const Sierra::Device& device;
         Sierra::CommandBuffer& commandBuffer;
 
         const Sierra::Image& templateOutputImage;
@@ -40,8 +40,16 @@ namespace SierraEngine
         void Resize(uint32 width, uint32 height) override;
         void Render(Sierra::CommandBuffer& commandBuffer, const Sierra::Image& outputImage) override;
 
+        /* --- COPY SEMANTICS --- */
+        EditorRenderer(const EditorRenderer&) = delete;
+        EditorRenderer& operator=(const EditorRenderer&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        EditorRenderer(EditorRenderer&&) = delete;
+        EditorRenderer& operator=(EditorRenderer&&) = delete;
+        
         /* --- DESTRUCTOR --- */
-        ~EditorRenderer() override = default;
+        ~EditorRenderer() noexcept override = default;
 
     private:
         Sierra::ImGuiRenderer imGuiRenderer;

@@ -67,10 +67,19 @@ namespace Sierra
     class SIERRA_API Sampler : public virtual RenderingResource
     {
     public:
+        /* --- COPY SEMANTICS --- */
+        Sampler(const Sampler&) = delete;
+        Sampler& operator=(const Sampler&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        Sampler(Sampler&&) = delete;
+        Sampler& operator=(Sampler&&) = delete;
+
         /* --- DESTRUCTOR --- */
-        ~Sampler() override = default;
+        ~Sampler() noexcept override = default;
 
     protected:
+        /* --- CONSTRUCTORS --- */
         explicit Sampler(const SamplerCreateInfo& createInfo);
 
     };

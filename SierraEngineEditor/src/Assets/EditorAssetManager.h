@@ -9,7 +9,7 @@ namespace SierraEngine
 
     struct EditorAssetManagerCreateInfo
     {
-        const Sierra::RenderingContext& renderingContext;
+        const Sierra::Device& device;
         ThreadPool& threadPool;
     };
 
@@ -25,15 +25,23 @@ namespace SierraEngine
         void ImportTexture(std::weak_ptr<TextureImporter> importer, const AssetLoadCallback& Callback) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] const Texture* GetTexture(const TextureID textureID) override { const auto iterator = textureMap.find(textureID); return iterator != textureMap.end() ? &iterator->second : nullptr; }
-        [[nodiscard]] const Texture& GetDefaultTexture(TextureType textureType) override;
+        [[nodiscard]] const Texture* GetTexture(const TextureID textureID) const noexcept override { const auto iterator = textureMap.find(textureID); return iterator != textureMap.end() ? &iterator->second : nullptr; }
+        [[nodiscard]] const Texture& GetDefaultTexture(TextureType textureType) const noexcept override;
+
+        /* --- COPY SEMANTICS --- */
+        EditorAssetManager(const EditorAssetManager&) = delete;
+        EditorAssetManager& operator=(const EditorAssetManager&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        EditorAssetManager(EditorAssetManager&&) = delete;
+        EditorAssetManager& operator=(EditorAssetManager&&) = delete;
 
         /* --- DESTRUCTOR --- */
-        ~EditorAssetManager() override = default;
+        ~EditorAssetManager() noexcept override = default;
 
     private:
         ThreadPool& threadPool;
-        const Sierra::RenderingContext& renderingContext;
+        const Sierra::Device& device;
 
         TextureID defaultCheckeredTextureID;
         TextureID defaultBlackTextureID;

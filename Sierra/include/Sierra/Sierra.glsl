@@ -55,35 +55,35 @@ const uint32 SIERRA_STORAGE_IMAGE_BINDING           = 3;
 const uint32 SIERRA_SAMPLER_BINDING                 = 4;
 
 #define SIERRA_PUSH_CONSTANT(NAME, TYPE)                                                                                                                                                \
-    layout(push_constant) uniform _sierra_type_##TYPE                                                                                                                                   \
+    layout(push_constant) uniform _sierra_push_constant_##TYPE                                                                                                                          \
     {                                                                                                                                                                                   \
         TYPE value;                                                                                                                                                                     \
-    } _sierra_##NAME                                                                                                                                                                    \
+    } _sierra_##NAME
 
 #define SIERRA_UNIFORM_BUFFER(NAME, TYPE, INDEX)                                                                                                                                        \
     uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
-    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_UNIFORM_BUFFER_BINDING) uniform _sierra_type_##TYPE                                                                              \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_UNIFORM_BUFFER_BINDING) uniform _sierra_uniform_buffer_##TYPE                                                                    \
     {                                                                                                                                                                                   \
         TYPE value;                                                                                                                                                                     \
     } _sierra_##NAME[]
 
 #define SIERRA_STORAGE_BUFFER(NAME, TYPE, INDEX)                                                                                                                                        \
     uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
-    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_BUFFER_BINDING) buffer _sierra_type_##TYPE                                                                               \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_BUFFER_BINDING) buffer _sierra_storage_buffer_##TYPE                                                                     \
     {                                                                                                                                                                                   \
         TYPE value;                                                                                                                                                                     \
     } _sierra_##NAME[]
 
 #define SIERRA_READ_ONLY_STORAGE_BUFFER(NAME, TYPE, INDEX)                                                                                                                              \
     uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
-    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_BUFFER_BINDING) readonly buffer _sierra_type_##TYPE                                                                      \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_BUFFER_BINDING) readonly buffer _sierra_storage_buffer_##TYPE                                                            \
     {                                                                                                                                                                                   \
         TYPE value;                                                                                                                                                                     \
     } _sierra_##NAME[]
 
 #define SIERRA_WRITE_ONLY_STORAGE_BUFFER(NAME, TYPE, INDEX)                                                                                                                             \
     uint32 _sierra_index_##NAME = INDEX;                                                                                                                                                \
-    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_BUFFER_BINDING) writeonly buffer _sierra_type_##TYPE                                                                     \
+    layout(set = SIERRA_RESERVED_SET, binding = SIERRA_STORAGE_BUFFER_BINDING) writeonly buffer _sierra_storage_buffer_##TYPE                                                           \
     {                                                                                                                                                                                   \
         TYPE value;                                                                                                                                                                     \
     } _sierra_##NAME[]

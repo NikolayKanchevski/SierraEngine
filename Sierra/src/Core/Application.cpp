@@ -5,28 +5,22 @@
 #include "Application.h"
 
 #if SR_PLATFORM_WINDOWS
-    #include "Platform/Windows/WindowsContext.h"
-    #include "Platform/Windows/Win32FileManager.h"
-    #include "Platform/Windows/WindowsWindowManager.h"
+    #include "../Platform/Windows/WindowsContext.h"
 #elif SR_PLATFORM_LINUX
-    #include "Platform/Linux/LinuxContext.h"
+    #include "../Platform/Linux/LinuxContext.h"
 #elif SR_PLATFORM_macOS
-    #include "Platform/macOS/macOSContext.h"
-    #include "Platform/Apple/FoundationFileManager.h"
-    #include "Platform/macOS/macOSWindowManager.h"
+    #include "../Platform/macOS/macOSContext.h"
 #elif SR_PLATFORM_iOS
-    #include "Platform/iOS/iOSContext.h"
-    #include "Platform/Apple/FoundationFileManager.h"
-    #include "Platform/iOS/iOSWindowManager.h"
+    #include "../Platform/iOS/iOSContext.h"
 #elif SR_PLATFORM_ANDROID
-    #include "Platform/Android/AndroidContext.h"
+    #include "../Platform/Android/AndroidContext.h"
 #endif
 
-#if defined(SR_VULKAN_SUPPORTED)
-    #include "../Rendering/Platform/Vulkan/VulkanContext.h"
+#if SR_VULKAN_SUPPORTED
+    #include "../Rendering/Vulkan/VulkanContext.h"
 #endif
-#if defined(SR_METAL_SUPPORTED)
-    #include "../Rendering/Platform/Metal/MetalContext.h"
+#if SR_METAL_SUPPORTED
+    #include "../Rendering/Metal/MetalContext.h"
 #endif
 
 namespace Sierra
@@ -37,10 +31,10 @@ namespace Sierra
     Application::Application(const ApplicationCreateInfo& createInfo)
         : name(createInfo.name), version(createInfo.version)
     {
+        SR_THROW_IF(createInfo.name.empty(), InvalidValueError("Cannot create application, as specified name must not be empty"));
         #if SR_ENABLE_LOGGING
             Logger::Initialize(name);
         #endif
-        SR_ERROR_IF(createInfo.name.empty(), "Application name must not be empty!");
 
         // Create platform context
         {
@@ -57,85 +51,71 @@ namespace Sierra
             #endif
         }
 
-        // Create file manager
-        {
-            #if SR_PLATFORM_WINDOWS
-                fileManager = std::make_unique<Win32FileManager>();
-            #elif SR_PLATFORM_LINUX
-                platformContext = std::make_unique<LinuxContext>(platformContextCreateInfo);
-            #elif SR_PLATFORM_APPLE
-                fileManager = std::make_unique<FoundationFileManager>();
-            #elif SR_PLATFORM_ANDROID
-            #endif
-        }
-
-        // Create window manager
-        {
-            const WindowManagerCreateInfo windowManagerCreateInfo = { .platformContext = *platformContext };
-            #if SR_PLATFORM_WINDOWS
-                windowManager = std::make_unique<WindowsWindowManager>(windowManagerCreateInfo);
-            #elif SR_PLATFORM_LINUX
-
-            #elif SR_PLATFORM_macOS
-                windowManager = std::make_unique<macOSWindowManager>(windowManagerCreateInfo);
-            #elif SR_PLATFORM_iOS
-                windowManager = std::make_unique<iOSWindowManager>(windowManagerCreateInfo);
-            #elif SR_PLATFORM_ANDROID
-
-            #endif
-        }
-
         // Create rendering context
         {
-            switch (createInfo.settings.graphicsAPI)
+            const RenderingContextCreateInfo renderingContextCreateInfo
             {
-                case GraphicsAPI::Vulkan:
+                .applicationName = GetName(),
+                .applicationVersion = GetVersion()
+            };
+
+            switch (createInfo.settings.renderingBackendType)
+            {
+                case RenderingBackendType::Vulkan:
                 {
-                    #if !defined(SR_VULKAN_SUPPORTED)
-                        SR_ERROR("Cannot create rendering context [{0}] using the Vulkan API, as it is unsupported on the system, or the CMake option [\"SIERRA_BUILD_VULKAN\"] hast not been turned on!", createInfo.name);
+                    #if !SR_VULKAN_SUPPORTED
+                        SR_THROW(UnsupportedFeatureError(SR_FORMAT("Cannot create application [{0}], as specified backend type [RenderingBackendType::Vulkan] is either unsupported on this system, or the CMake option [SIERRA_BUILD_VULKAN] is not turned on", name)));
                     #else
-                        renderingContext = std::make_unique<VulkanContext>(RenderingContextCreateInfo{});
+                        renderingContext = std::make_unique<VulkanContext>(renderingContextCreateInfo);
                     #endif
                     break;
                 }
-                case GraphicsAPI::DirectX:
+                case RenderingBackendType::DirectX:
                 {
-                    SR_ERROR("Cannot create rendering context using DirectX, as it has not been implemented yet!");
+                    SR_THROW(UnsupportedFeatureError("Cannot create application, as specified backend type [RenderingBackendType::WebGPU] has not been implemented yet"));
                     break;
                 }
-                case GraphicsAPI::Metal:
+                case RenderingBackendType::Metal:
                 {
-                    #if !defined(SR_METAL_SUPPORTED)
-                        SR_ERROR("Cannot create rendering context using the Metal API, as it is unsupported on the system, or the CMake option [\"SIERRA_BUILD_METAL\"] hast not been turned on!");
+                    #if !SR_METAL_SUPPORTED
+                        SR_THROW(UnsupportedFeatureError(SR_FORMAT("Cannot create application [{0}], as specified backend type [RenderingBackendType::Metal] is either unsupported on this system, or the CMake option [SIERRA_BUILD_METAL] is not turned on", name)));
                     #else
-                        renderingContext = std::make_unique<MetalContext>();
+                        renderingContext = std::make_unique<MetalContext>(renderingContextCreateInfo);
                     #endif
                     break;
                 }
-                case GraphicsAPI::OpenGL:
+                case RenderingBackendType::OpenGL:
                 {
-                    SR_ERROR("Cannot create rendering context [{0}] using OpenGL, as it has not been implemented yet!", createInfo.name);
+                    SR_THROW(UnsupportedFeatureError("Cannot create application, as specified backend type [RenderingBackendType::OpenGL] has not been implemented yet"));
                     break;
                 }
-                case GraphicsAPI::Undefined:
+                case RenderingBackendType::WebGPU:
                 {
-                    SR_ERROR("Cannot create rendering context [{0}] using an undefined graphics API!", createInfo.name);
+                    SR_THROW(UnsupportedFeatureError("Cannot create application, as specified backend type [RenderingBackendType::WebGPU] has not been implemented yet"));
                     break;
                 }
             }
         }
     }
 
-    /* --- PROTECTED METHODS --- */
+    /* --- POLLING METHODS --- */
 
-    std::filesystem::path Application::GetApplicationTemporaryDirectoryPath() const
+    bool Application::Update()
     {
-        return fileManager->GetTemporaryDirectoryPath() / name;
+        platformContext->Update();
+        return false;
     }
 
-    std::filesystem::path Application::GetApplicationCachesDirectoryPath() const
+    /* --- PROTECTED METHODS --- */
+
+    std::filesystem::path Application::GetApplicationTemporaryDirectoryPath() const noexcept
     {
-        return fileManager->GetCachesDirectoryPath() / name;
+        return GetFileManager().GetTemporaryDirectoryPath() / name;
+    }
+
+    std::filesystem::path Application::GetApplicationCachesDirectoryPath() const noexcept
+    {
+        return GetFileManager().GetCachesDirectoryPath() / name;
     }
 
 }

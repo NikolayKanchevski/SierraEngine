@@ -27,11 +27,21 @@ namespace Sierra
     class SIERRA_API Shader : public virtual RenderingResource
     {
     public:
+        /* --- COPY SEMANTICS --- */
+        Shader(const Shader&) = delete;
+        Shader& operator=(const Shader&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        Shader(Shader&&) = delete;
+        Shader& operator=(Shader&&) = delete;
+
         /* --- DESTRUCTOR --- */
-        ~Shader() override = default;
+        ~Shader() noexcept override = default;
 
     protected:
+        /* --- CONSTRUCTORS --- */
         explicit Shader(const ShaderCreateInfo& createInfo);
+
         struct ShaderFileHeader
         {
             uint64 spvMemorySize = 0;
@@ -40,11 +50,11 @@ namespace Sierra
             uint64 iOSSimulatorMetalLibMemorySize = 0;
             uint64 dxilMemorySize = 0;
 
-            [[nodiscard]] constexpr uint64 GetSpvOffset() const { return 0; }
-            [[nodiscard]] uint64 GetMacOSMetalLibOffset() const { return GetSpvOffset() + spvMemorySize; }
-            [[nodiscard]] uint64 GetIOSMetalLibOffset() const { return GetMacOSMetalLibOffset() + macOSMetalLibMemorySize; }
-            [[nodiscard]] uint64 GetIOSSimulatorMetalLibOffset() const { return GetIOSMetalLibOffset() + iOSMetalLibMemorySize; }
-            [[nodiscard]] uint64 GetDxilOffset() const { return GetIOSSimulatorMetalLibOffset() + iOSSimulatorMetalLibMemorySize; }
+            [[nodiscard]] constexpr uint64 GetSpvOffset() const noexcept { return 0; }
+            [[nodiscard]] uint64 GetMacOSMetalLibOffset() const noexcept { return GetSpvOffset() + spvMemorySize; }
+            [[nodiscard]] uint64 GetIOSMetalLibOffset() const noexcept { return GetMacOSMetalLibOffset() + macOSMetalLibMemorySize; }
+            [[nodiscard]] uint64 GetIOSSimulatorMetalLibOffset() const noexcept { return GetIOSMetalLibOffset() + iOSMetalLibMemorySize; }
+            [[nodiscard]] uint64 GetDxilOffset() const noexcept { return GetIOSSimulatorMetalLibOffset() + iOSSimulatorMetalLibMemorySize; }
         };
 
     };

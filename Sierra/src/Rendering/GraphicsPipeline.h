@@ -133,10 +133,19 @@ namespace Sierra
     class SIERRA_API GraphicsPipeline : public virtual RenderingResource
     {
     public:
+        /* --- COPY SEMANTICS --- */
+        GraphicsPipeline(const GraphicsPipeline&) = delete;
+        GraphicsPipeline& operator=(const GraphicsPipeline&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        GraphicsPipeline(GraphicsPipeline&&) = delete;
+        GraphicsPipeline& operator=(GraphicsPipeline&&) = delete;
+
         /* --- DESTRUCTOR --- */
-        ~GraphicsPipeline() override = default;
+        ~GraphicsPipeline() noexcept override = default;
 
     protected:
+        /* --- CONSTRUCTORS --- */
         explicit GraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo);
 
     };

@@ -11,9 +11,18 @@ namespace Sierra
 
     Buffer::Buffer(const BufferCreateInfo& createInfo)
     {
-        SR_ERROR_IF(createInfo.memorySize == 0, "Memory size of buffer [{0}] must not be [0] bytes!", createInfo.name);
-        SR_ERROR_IF(createInfo.usage == BufferUsage::Undefined, "Usage of buffer [{0}] must not be [BufferUsage::Undefined]!", createInfo.name);
-        SR_ERROR_IF(createInfo.usage & BufferUsage::Uniform && createInfo.usage & BufferUsage::Storage, "Usage of buffer [{0}] can contain either [BufferUsage::Uniform] or [BufferUsage::Storage], but not both!", createInfo.name);
+        SR_THROW_IF(createInfo.name.empty(), InvalidValueError("Cannot create buffer, as specified name must not be empty"));
+        SR_THROW_IF(createInfo.memorySize == 0, InvalidValueError(SR_FORMAT("Memory size of buffer [{0}] must not be equal to [0]", createInfo.name)));
+        SR_THROW_IF(createInfo.usage == BufferUsage::Undefined, InvalidValueError(SR_FORMAT("Usage of buffer [{0}] must not be [BufferUsage::Undefined]", createInfo.name)));
+        SR_THROW_IF(createInfo.usage & BufferUsage::Uniform && createInfo.usage & BufferUsage::Storage, InvalidConfigurationError(SR_FORMAT("Usage of buffer [{0}] may only contain either [BufferUsage::Uniform] or [BufferUsage::Storage], but never both", createInfo.name)));
+    }
+
+    /* --- POLLING METHODS --- */
+
+    void Buffer::Write(const void* memory, const size sourceOffset, const size offset, const size memorySize)
+    {
+        SR_THROW_IF(memory == nullptr, InvalidValueError(SR_FORMAT("Cannot write null-pointed memory range to buffer [{0}]", GetName())));
+        SR_THROW_IF(offset + memorySize > GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot write invalid memory range to buffer [{0}]", GetName()), offset, memorySize, size(0), GetMemorySize()));
     }
 
 }

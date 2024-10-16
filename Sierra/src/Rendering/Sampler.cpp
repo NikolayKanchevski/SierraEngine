@@ -9,9 +9,9 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Sampler::Sampler(const SamplerCreateInfo&)
+    Sampler::Sampler(const SamplerCreateInfo& createInfo)
     {
-
+        SR_THROW_IF(createInfo.name.empty(), InvalidValueError("Cannot create buffer, as specified name must not be empty"));
     }
 
 }

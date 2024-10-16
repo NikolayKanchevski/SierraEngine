@@ -57,24 +57,35 @@ namespace Sierra
     {
         const Image& outputImage;
         const Image* resolverImage = nullptr;
-        Color clearValue = { 0.0f, 0.0f, 0.0f, 1.0f };
+        Color32 clearValue = { 0.0f, 0.0f, 0.0f, 1.0f };
     };
 
     class SIERRA_API RenderPass : public virtual RenderingResource
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual void Resize(uint32 width, uint32 height) = 0;
+        virtual void Resize(uint32 width, uint32 height);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] uint32 GetAttachmentCount() const { return GetColorAttachmentCount() + HasDepthAttachment(); }
-        [[nodiscard]] virtual uint32 GetColorAttachmentCount() const = 0;
-        [[nodiscard]] virtual bool HasDepthAttachment() const = 0;
+        [[nodiscard]] virtual uint32 GetSubpassCount() const noexcept = 0;
+
+        [[nodiscard]] uint32 GetAttachmentCount() const noexcept { return GetColorAttachmentCount() + HasDepthAttachment(); }
+        [[nodiscard]] virtual uint32 GetColorAttachmentCount() const noexcept = 0;
+        [[nodiscard]] virtual bool HasDepthAttachment() const noexcept = 0;
+
+        /* --- COPY SEMANTICS --- */
+        RenderPass(const RenderPass&) = delete;
+        RenderPass& operator=(const RenderPass&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        RenderPass(RenderPass&&) = delete;
+        RenderPass& operator=(RenderPass&&) = delete;
 
         /* --- DESTRUCTOR --- */
-        ~RenderPass() override = default;
+        ~RenderPass() noexcept override = default;
 
     protected:
+        /* --- CONSTRUCTORS --- */
         explicit RenderPass(const RenderPassCreateInfo& createInfo);
 
     };

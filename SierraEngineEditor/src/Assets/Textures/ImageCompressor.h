@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Image.h"
+#include "RawImage.h"
 
 namespace SierraEngine
 {
@@ -47,21 +47,22 @@ namespace SierraEngine
         [[nodiscard]] virtual std::optional<std::vector<uint8>> Compress(const ImageCompressInfo& compressInfo) const = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual ImageCompressorType GetType() const = 0;
+        [[nodiscard]] virtual ImageCompressorType GetType() const noexcept = 0;
 
         /* --- COPY SEMANTICS --- */
         ImageCompressor(const ImageCompressor&) = delete;
         ImageCompressor& operator=(const ImageCompressor&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        ImageCompressor(ImageCompressor&&) = default;
-        ImageCompressor& operator=(ImageCompressor&&) = default;
-
         /* --- DESTRUCTOR --- */
-        virtual ~ImageCompressor() = default;
+        virtual ~ImageCompressor() noexcept = default;
 
     protected:
-        ImageCompressor() = default;
+        /* --- CONSTRUCTORS --- */
+        ImageCompressor() noexcept = default;
+
+        /* --- MOVE SEMANTICS --- */
+        ImageCompressor(ImageCompressor&&) noexcept = default;
+        ImageCompressor& operator=(ImageCompressor&&) noexcept = default;
 
     };
 

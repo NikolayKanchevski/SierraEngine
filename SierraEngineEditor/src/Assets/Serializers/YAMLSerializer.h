@@ -16,15 +16,25 @@ namespace SierraEngine
     class YAMLSerializer : public virtual AssetSerializer
     {
     public:
+        /* --- COPY SEMANTICS --- */
+        YAMLSerializer(const YAMLSerializer&) = delete;
+        YAMLSerializer& operator=(const YAMLSerializer&) = delete;
+        
         /* --- DESTRUCTOR --- */
-        ~YAMLSerializer() override = default;
+        ~YAMLSerializer() noexcept override = default;
 
     protected:
-        YAMLSerializer() = default;
+        /* --- CONSTRUCTORS --- */
+        YAMLSerializer() noexcept = default;
 
-        [[nodiscard]] static size GetMetadataNodeSize(const AssetMetadata& metadata);
-        [[nodiscard]] static size GetMetadataArenaSize(const AssetMetadata& metadata);
-        static void SerializeMetadata(ryml::NodeRef root, const AssetMetadata& metadata);
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] size GetMetadataNodeSize(const AssetMetadata& metadata) const noexcept;
+        [[nodiscard]] size GetMetadataArenaSize(const AssetMetadata& metadata) const noexcept;
+        void SerializeMetadata(ryml::NodeRef root, const AssetMetadata& metadata) const noexcept;
+
+        /* --- MOVE SEMANTICS --- */
+        YAMLSerializer(YAMLSerializer&&) noexcept = default;
+        YAMLSerializer& operator=(YAMLSerializer&&) noexcept = default;
 
     };
 

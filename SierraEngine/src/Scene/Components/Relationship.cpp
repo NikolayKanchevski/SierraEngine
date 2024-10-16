@@ -9,22 +9,22 @@ namespace SierraEngine
 
     /* --- SETTER METHODS --- */
 
-    void Relationship::SetParent(const EntityID givenParent)
+    void Relationship::SetParent(const EntityID givenParent) noexcept
     {
         parent = givenParent;
     }
 
-    void Relationship::RemoveParent()
+    void Relationship::RemoveParent() noexcept
     {
         parent = 0;
     }
 
-    void Relationship::AddChild(const EntityID child)
+    void Relationship::AddChild(const EntityID child) noexcept
     {
         children.push_back(child);
     }
 
-    bool Relationship::RemoveChild(const EntityID child)
+    bool Relationship::RemoveChild(const EntityID child) noexcept
     {
         const auto iterator = std::ranges::find(children, child);
         if (iterator != children.end())

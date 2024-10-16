@@ -16,29 +16,29 @@ namespace SierraEngine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit FrameLimiter(const FrameLimiterCreateInfo& createInfo);
+        explicit FrameLimiter(const FrameLimiterCreateInfo& createInfo) noexcept;
 
         /* --- POLLING METHODS --- */
-        Sierra::TimeStep BeginFrame();
-        void EndFrame();
+        Sierra::TimeStep BeginFrame() noexcept;
+        void EndFrame() noexcept;
 
         /* --- SETTER METHODS --- */
-        void SetMaxFrameRate(uint32 frameRate);
+        void SetMaxFrameRate(uint32 frameRate) noexcept;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] uint32 GetMaxFrameRate() const { return maxFrameRate; }
-        [[nodiscard]] Sierra::TimePoint GetFrameStartTime() const { return frameStartTime; }
+        [[nodiscard]] uint32 GetMaxFrameRate() const noexcept { return maxFrameRate; }
+        [[nodiscard]] Sierra::TimePoint GetFrameStartTime() const noexcept { return frameStartTime; }
 
         /* --- COPY SEMANTICS --- */
         FrameLimiter(const FrameLimiter&) = delete;
         FrameLimiter& operator=(const FrameLimiter&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        FrameLimiter(FrameLimiter&&) = default;
-        FrameLimiter& operator=(FrameLimiter&&) = default;
+        FrameLimiter(FrameLimiter&&) noexcept = default;
+        FrameLimiter& operator=(FrameLimiter&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
-        ~FrameLimiter() = default;
+        ~FrameLimiter() noexcept = default;
 
     private:
         uint32 maxFrameRate = 0;

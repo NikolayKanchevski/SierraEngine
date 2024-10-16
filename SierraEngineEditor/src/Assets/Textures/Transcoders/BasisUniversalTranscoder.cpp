@@ -9,11 +9,20 @@
 namespace SierraEngine
 {
 
+    namespace
+    {
+        bool basisTranscoderInitialized = false;
+    }
+
     /* --- CONSTRUCTORS --- */
 
     BasisUniversalTranscoder::BasisUniversalTranscoder()
     {
-        basist::basisu_transcoder_init();
+        if (!basisTranscoderInitialized)
+        {
+            basist::basisu_transcoder_init();
+            basisTranscoderInitialized = true;
+        }
     }
 
     /* --- POLLING METHODS --- */
@@ -21,7 +30,7 @@ namespace SierraEngine
     std::optional<std::vector<uint8>> BasisUniversalTranscoder::Transcode(const ImageTranscodeInfo& transcodeInfo) const
     {
         basist::basisu_transcoder transcoder = { };
-        if (!transcoder.start_transcoding(transcodeInfo.memory.data(), transcodeInfo.memory.size_bytes()))
+        if (!transcoder.start_transcoding(transcodeInfo.memory.data(), static_cast<uint32>(transcodeInfo.memory.size_bytes())))
         {
             APP_WARNING("Could not start Basis Universal transcoding image!");
             return std::nullopt;
@@ -49,24 +58,23 @@ namespace SierraEngine
         size memorySize = 0;
         for (uint32 i = 0; i < transcodeInfo.levelCount; i++)
         {
-            memorySize += static_cast<uint64>(static_cast<float32>((transcodeInfo.width >> i) * (transcodeInfo.height >> i)) * pixelMemorySize) * transcodeInfo.layerCount;
+            memorySize += static_cast<size>(static_cast<float32>((transcodeInfo.width >> i) * (transcodeInfo.height >> i)) * pixelMemorySize) * transcodeInfo.layerCount;
         }
 
         std::vector<uint8> memory(memorySize);
-        uint64 currentOffset = 0;
+        size currentOffset = 0;
 
         for (uint32 level = 0; level < transcodeInfo.levelCount; level++)
         {
-            const size layerSize = static_cast<uint64>(static_cast<float32>((transcodeInfo.width >> level) * (transcodeInfo.height >> level)) * pixelMemorySize);
+            const size layerSize = static_cast<size>(static_cast<float32>((transcodeInfo.width >> level) * (transcodeInfo.height >> level)) * pixelMemorySize);
             for (uint32 layer = 0; layer < transcodeInfo.layerCount; layer++)
             {
-                transcoder.transcode_image_level(transcodeInfo.memory.data(), transcodeInfo.memory.size_bytes(), layer, level, memory.data() + currentOffset, memorySize - currentOffset, format);
+                transcoder.transcode_image_level(transcodeInfo.memory.data(), static_cast<uint32>(transcodeInfo.memory.size_bytes()), layer, level, memory.data() + currentOffset, static_cast<uint32>(memorySize - currentOffset), format);
                 currentOffset += layerSize;
             }
         }
 
         return memory;
     }
-
 
 }

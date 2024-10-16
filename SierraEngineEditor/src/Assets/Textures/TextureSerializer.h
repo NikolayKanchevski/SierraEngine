@@ -33,8 +33,20 @@ namespace SierraEngine
         /* --- POLLING METHODS --- */
         [[nodiscard]] virtual std::optional<std::vector<uint8>> Serialize(const TextureSerializeInfo& serializeInfo) const = 0;
 
+        /* --- COPY SEMANTICS --- */
+        TextureSerializer(const TextureSerializer&) = delete;
+        TextureSerializer& operator=(const TextureSerializer&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        TextureSerializer(TextureSerializer&&) noexcept = default;
+        TextureSerializer& operator=(TextureSerializer&&) noexcept = default;
+
+        /* --- DESTRUCTOR --- */
+        ~TextureSerializer() noexcept override = default;
+
     protected:
-        TextureSerializer() = default;
+        /* --- CONSTRUCTORS --- */
+        TextureSerializer() noexcept = default;
 
     };
 

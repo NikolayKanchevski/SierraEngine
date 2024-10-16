@@ -9,7 +9,7 @@ namespace SierraEngine
 
     struct ThreadPoolCreateInfo
     {
-        uint32 threadCount = 0;
+        uint32 maxThreadCount = 0;
     };
 
     class SIERRA_ENGINE_API ThreadPool final
@@ -19,19 +19,19 @@ namespace SierraEngine
         using Task = std::function<void()>;
 
         /* --- CONSTRUCTORS --- */
-        explicit ThreadPool(const ThreadPoolCreateInfo& createInfo);
+        explicit ThreadPool(const ThreadPoolCreateInfo& createInfo) noexcept;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] uint32 GetThreadCount() const { return static_cast<uint32>(threads.size()); }
-        [[nodiscard]] bool IsPaused() const { return paused; }
+        [[nodiscard]] uint32 GetThreadCount() const noexcept { return static_cast<uint32>(threads.size()); }
+        [[nodiscard]] bool IsPaused() const noexcept { return paused; }
 
-        [[nodiscard]] uint32 GetQueuedTaskCount() const { const std::lock_guard taskLock(taskMutex); return static_cast<uint32>(taskQueue.size()); }
-        [[nodiscard]] uint32 GetRunningTaskCount() const { const std::lock_guard taskLock(taskMutex); return totalTaskCount - static_cast<uint32>(taskQueue.size()); }
-        [[nodiscard]] uint32 GetTotalTaskCount() const { return totalTaskCount; }
+        [[nodiscard]] uint32 GetQueuedTaskCount() const noexcept { const std::lock_guard taskLock(taskMutex); return static_cast<uint32>(taskQueue.size()); }
+        [[nodiscard]] uint32 GetRunningTaskCount() const noexcept { const std::lock_guard taskLock(taskMutex); return totalTaskCount - static_cast<uint32>(taskQueue.size()); }
+        [[nodiscard]] uint32 GetTotalTaskCount() const noexcept { return totalTaskCount; }
 
         /* --- POLLING METHODS --- */
-        void Pause();
-        void Resume();
+        void Pause() noexcept;
+        void Resume() noexcept;
         void WaitForTasks();
 
         template<typename T, typename... Args>
@@ -90,7 +90,7 @@ namespace SierraEngine
         ThreadPool& operator=(ThreadPool&&) = delete;
 
         /* --- DESTRUCTOR --- */
-        ~ThreadPool();
+        ~ThreadPool() noexcept;
 
     private:
         std::vector<std::thread> threads = { };

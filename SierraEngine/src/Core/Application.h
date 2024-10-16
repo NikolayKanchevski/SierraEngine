@@ -17,10 +17,19 @@ namespace SierraEngine
     class SIERRA_ENGINE_API Application : public Sierra::Application
     {
     public:
+        /* --- COPY SEMANTICS --- */
+        Application(const Application&) = delete;
+        Application& operator=(const Application&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        Application(Application&&) = delete;
+        Application& operator=(Application&&) = delete;
+
         /* --- DESTRUCTOR --- */
         ~Application() override = default;
 
     protected:
+        /* --- CONSTRUCTORS --- */
         explicit Application(const ApplicationCreateInfo& createInfo);
 
     };

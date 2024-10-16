@@ -19,13 +19,18 @@ namespace SierraEngine
         [[nodiscard]] std::optional<std::vector<uint8>> Compress(const ImageCompressInfo& compressInfo) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] ImageCompressorType GetType() const override { return ImageCompressorType::BasisUniversal; }
+        [[nodiscard]] ImageCompressorType GetType() const noexcept override { return ImageCompressorType::BasisUniversal; }
+
+        /* --- COPY SEMANTICS --- */
+        BasisUniversalCompressor(const BasisUniversalCompressor&) = delete;
+        BasisUniversalCompressor& operator=(const BasisUniversalCompressor&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        BasisUniversalCompressor(BasisUniversalCompressor&&) noexcept = default;
+        BasisUniversalCompressor& operator=(BasisUniversalCompressor&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
-        ~BasisUniversalCompressor() override;
-
-    private:
-
+        ~BasisUniversalCompressor() noexcept override;
     };
 
 }

@@ -4,10 +4,9 @@
 
 #pragma once
 
-#include "../Assets/AssetManager.h"
+#include "EntityID.h"
 #include "Component.h"
-
-#include "Components/Relationship.h"
+#include "../Assets/AssetManager.h"
 
 namespace SierraEngine
 {
@@ -28,19 +27,19 @@ namespace SierraEngine
         explicit Scene(const SceneCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] EntityID CreateEntity(std::string_view tag = "Entity");
-        void DestroyEntity(EntityID entityID);
+        [[nodiscard]] EntityID CreateEntity(std::string_view tag = "Entity") noexcept;
+        void DestroyEntity(EntityID entityID) noexcept;
 
         template<ComponentType Component, typename... Args>
-        Component& AddEntityComponent(const EntityID entityID, Args&&... args)
+        Component& AddEntityComponent(const EntityID entityID, Args&&... args) noexcept
         {
-            return registry.get_or_emplace<Component>(static_cast<entt::entity>(entityID.GetHash()), std::forward<Args>(args)...);
+            return registry.get_or_emplace<Component>(static_cast<entt::entity>(entityID.GetValue()), std::forward<Args>(args)...);
         }
 
         template<ComponentType Component>
-        bool RemoveEntityComponent(const EntityID entityID)
+        bool RemoveEntityComponent(const EntityID entityID) noexcept
         {
-            return registry.remove<Component>(static_cast<entt::entity>(entityID.GetHash())) > 0;
+            return registry.remove<Component>(static_cast<entt::entity>(entityID.GetValue())) > 0;
         }
 
         template<ComponentType Component>
@@ -50,52 +49,52 @@ namespace SierraEngine
         void ForEachComponentPair(ComponentCallback<Components...>& Callback) const { registry.view<Component>().each(Callback); }
 
         /* --- SETTER METHODS --- */
-        void SetEntityParent(EntityID entityID, EntityID parentID);
-        void RemoveEntityParent(EntityID entityID);
+        void SetEntityParent(EntityID entityID, EntityID parentID) noexcept;
+        void RemoveEntityParent(EntityID entityID) noexcept;
 
-        void AddEntityChild(EntityID entityID, EntityID childID);
-        void RemoveEntityChild(EntityID entityID, EntityID childID);
+        void AddEntityChild(EntityID entityID, EntityID childID) noexcept;
+        void RemoveEntityChild(EntityID entityID, EntityID childID) noexcept;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const { return name; }
+        [[nodiscard]] std::string_view GetName() const noexcept { return name; }
 
-        [[nodiscard]] bool EntityExists(EntityID entityID) const;
-        [[nodiscard]] uint32 GetEntityCount() const { return entityCount; }
+        [[nodiscard]] bool EntityExists(EntityID entityID) const noexcept;
+        [[nodiscard]] uint32 GetEntityCount() const noexcept { return entityCount; }
 
         template<ComponentType Component>
-        [[nodiscard]] bool EntityHasComponent(const EntityID entityID) const
+        [[nodiscard]] bool EntityHasComponent(const EntityID entityID) const noexcept
         {
-            return registry.any_of<Component>(static_cast<entt::entity>(entityID.GetHash()));
+            return registry.any_of<Component>(static_cast<entt::entity>(entityID.GetValue()));
         }
 
         template<ComponentType Component>
-        [[nodiscard]] Component* GetEntityComponent(const EntityID entityID)
+        [[nodiscard]] Component* GetEntityComponent(const EntityID entityID) noexcept
         {
-            return registry.try_get<Component>(static_cast<entt::entity>(entityID.GetHash()));
+            return registry.try_get<Component>(static_cast<entt::entity>(entityID.GetValue()));
         }
 
         template<ComponentType Component>
-        [[nodiscard]] const Component* GetEntityComponent(const EntityID entityID) const
+        [[nodiscard]] const Component* GetEntityComponent(const EntityID entityID) const noexcept
         {
-            return registry.try_get<Component>(static_cast<entt::entity>(entityID.GetHash()));
+            return registry.try_get<Component>(static_cast<entt::entity>(entityID.GetValue()));
         }
 
-        [[nodiscard]] bool EntityHasParent(EntityID entityID) const;
-        [[nodiscard]] EntityID GetEntityParent(EntityID entityID) const;
-        [[nodiscard]] std::span<const EntityID> GetEntityChildren(EntityID entityID) const;
+        [[nodiscard]] bool EntityHasParent(EntityID entityID) const noexcept;
+        [[nodiscard]] EntityID GetEntityParent(EntityID entityID) const noexcept;
+        [[nodiscard]] std::span<const EntityID> GetEntityChildren(EntityID entityID) const noexcept;
 
-        [[nodiscard]] std::span<const EntityID> GetRootEntities() const { return rootEntities; }
+        [[nodiscard]] std::span<const EntityID> GetRootEntities() const noexcept { return rootEntities; }
 
         /* --- COPY SEMANTICS --- */
         Scene(const Scene&) = delete;
         Scene& operator=(const Scene&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        Scene(Scene&&) = default;
-        Scene& operator=(Scene&&) = default;
+        Scene(Scene&&) noexcept = default;
+        Scene& operator=(Scene&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
-        ~Scene() = default;
+        ~Scene() noexcept = default;
 
     private:
         std::string name;

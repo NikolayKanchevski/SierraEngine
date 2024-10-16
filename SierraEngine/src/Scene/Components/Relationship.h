@@ -6,34 +6,41 @@
 
 #include "../Component.h"
 
+#include "../EntityID.h"
+
 namespace SierraEngine
 {
-
-    /* --- TYPE DEFINITIONS --- */
-    using EntityID = Sierra::UUID<ENTT_ID_TYPE>;
 
     class SIERRA_ENGINE_API Relationship final : public Component
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Relationship() = default;
+        Relationship() noexcept = default;
 
         /* --- SETTER METHODS --- */
-        void SetParent(EntityID parent);
-        void RemoveParent();
+        void SetParent(EntityID parent) noexcept;
+        void RemoveParent() noexcept;
 
-        void AddChild(EntityID child);
-        bool RemoveChild(EntityID child);
+        void AddChild(EntityID child) noexcept;
+        bool RemoveChild(EntityID child) noexcept;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] EntityID GetParentID() const { return parent; }
-        [[nodiscard]] std::span<const EntityID> GetChildrenIDs() const { return children; }
+        [[nodiscard]] EntityID GetParentID() const noexcept { return parent; }
+        [[nodiscard]] std::span<const EntityID> GetChildrenIDs() const noexcept { return children; }
 
         /* --- TYPE DATA --- */
         [[nodiscard]] constexpr static std::string_view GetName() { return "Relationship"; }
 
+        /* --- COPY SEMANTICS --- */
+        Relationship(const Relationship&) = delete;
+        Relationship& operator=(const Relationship&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        Relationship(Relationship&&) noexcept = default;
+        Relationship& operator=(Relationship&&) noexcept = default;
+
         /* --- DESTRUCTOR --- */
-        ~Relationship() = default;
+        ~Relationship() noexcept = default;
     
     private:
         EntityID parent = 0;

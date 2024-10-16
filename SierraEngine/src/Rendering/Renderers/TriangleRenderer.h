@@ -9,7 +9,7 @@ namespace SierraEngine
 
     struct TriangleRendererCreateInfo
     {
-        const Sierra::RenderingContext& renderingContext;
+        const Sierra::Device& device;
         const Sierra::Image& templateOutputImage;
     };
 
@@ -27,7 +27,7 @@ namespace SierraEngine
         ~TriangleRenderer() override = default;
 
     private:
-        const Sierra::RenderingContext& renderingContext;
+        const Sierra::Device& device;
 
         std::unique_ptr<Sierra::Shader> vertexShader = nullptr;
         std::unique_ptr<Sierra::Shader> fragmentShader = nullptr;

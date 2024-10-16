@@ -1,9 +1,9 @@
 target_sources(SierraEngineEditor PRIVATE
-    TextureSerializer.h
-    Image.h
-    Image.cpp
     ImageCompressor.h
     ImageTranscoder.h
+    RawImage.cpp
+    RawImage.h
+    TextureSerializer.h
 )
 
 add_subdirectory(Compressors)

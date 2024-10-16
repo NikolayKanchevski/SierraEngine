@@ -7,12 +7,18 @@ target_sources(Sierra PRIVATE
     ComputePipeline.h
     Device.cpp
     Device.h
+    DeviceErrors.cpp
+    DeviceErrors.h
     GraphicsPipeline.cpp
     GraphicsPipeline.h
     Image.cpp
     Image.h
+    Queue.cpp
+    Queue.h
     Renderer.cpp
     Renderer.h
+    RenderingBackendType.h
+    RenderingContext.cpp
     RenderingContext.h
     RenderingResource.h
     RenderPass.cpp
@@ -25,11 +31,13 @@ target_sources(Sierra PRIVATE
     Shader.h
     Swapchain.cpp
     Swapchain.h
+    SwapchainEvents.cpp
+    SwapchainEvents.h
 )
 
 if(SIERRA_BUILD_VULKAN)
-    add_subdirectory(Platform/Vulkan)
+    add_subdirectory(Vulkan)
 endif()
 if(SIERRA_BUILD_METAL)
-    add_subdirectory(Platform/Metal)
+    add_subdirectory(Metal)
 endif()

@@ -39,16 +39,25 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual void CopyFromMemory(const void* memory, size memorySize = 0,  size sourceOffset = 0,  size offset = 0) = 0;
+        virtual void Write(const void* memory, size sourceOffset, size offset, size memorySize);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual std::span<const uint8> GetMemory() const = 0;
-        [[nodiscard]] virtual uint64 GetMemorySize() const = 0;
+        [[nodiscard]] virtual void* GetMemory() const noexcept = 0;
+        [[nodiscard]] virtual size GetMemorySize() const noexcept = 0;
+
+        /* --- COPY SEMANTICS --- */
+        Buffer(const Buffer&) = delete;
+        Buffer& operator=(const Buffer&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        Buffer(Buffer&&) = delete;
+        Buffer& operator=(Buffer&&) = delete;
 
         /* --- DESTRUCTOR --- */
-        ~Buffer() override = default;
+        ~Buffer() noexcept override = default;
 
     protected:
+        /* --- CONSTRUCTORS --- */
         explicit Buffer(const BufferCreateInfo& createInfo);
 
     };

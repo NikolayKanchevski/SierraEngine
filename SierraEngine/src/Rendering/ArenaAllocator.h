@@ -11,7 +11,7 @@ namespace SierraEngine
 
     struct ArenaAllocatorCreateInfo
     {
-        const Sierra::RenderingContext& renderingContext;
+        const Sierra::Device& device;
         uint64 initialVertexBufferCapacity = 4096;
         uint64 initialIndexBufferCapacity = 8192;
     };
@@ -35,11 +35,11 @@ namespace SierraEngine
         [[nodiscard]] ArenaMesh RegisterMesh(Sierra::CommandBuffer& commandBuffer, std::span<const Vertex> vertices, std::span<const uint32> indices);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] uint32 GetVertexCount() const { return static_cast<uint32>(currentVertexOffset / sizeof(Vertex)); }
-        [[nodiscard]] const Sierra::Buffer& GetVertexBuffer() const { return *vertexBuffer; }
+        [[nodiscard]] uint32 GetVertexCount() const noexcept { return static_cast<uint32>(currentVertexOffset / sizeof(Vertex)); }
+        [[nodiscard]] const Sierra::Buffer& GetVertexBuffer() const noexcept { return *vertexBuffer; }
 
-        [[nodiscard]] uint32 GetIndexCount() const { return static_cast<uint32>(currentIndexOffset / sizeof(uint32)); }
-        [[nodiscard]] const Sierra::Buffer& GetIndexBuffer() const { return *indexBuffer; }
+        [[nodiscard]] uint32 GetIndexCount() const noexcept { return static_cast<uint32>(currentIndexOffset / sizeof(uint32)); }
+        [[nodiscard]] const Sierra::Buffer& GetIndexBuffer() const noexcept { return *indexBuffer; }
 
         /* --- COPY SEMANTICS --- */
         ArenaAllocator(const ArenaAllocator&) = delete;
@@ -50,10 +50,10 @@ namespace SierraEngine
         ArenaAllocator& operator=(ArenaAllocator&&) = delete;
 
         /* --- DESTRUCTOR --- */
-        ~ArenaAllocator() = default;
+        ~ArenaAllocator() noexcept = default;
 
     private:
-        const Sierra::RenderingContext& renderingContext;
+        const Sierra::Device& device;
 
         size currentVertexOffset = 0;
         std::unique_ptr<Sierra::Buffer> vertexBuffer = nullptr;

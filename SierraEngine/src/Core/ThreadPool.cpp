@@ -9,21 +9,21 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    ThreadPool::ThreadPool(const ThreadPoolCreateInfo &createInfo)
+    ThreadPool::ThreadPool(const ThreadPoolCreateInfo &createInfo) noexcept
         : running(true)
     {
-        threads.resize(glm::clamp(createInfo.threadCount, 1U, std::thread::hardware_concurrency()));
+        threads.resize(glm::clamp(createInfo.maxThreadCount, 1U, std::thread::hardware_concurrency()));
         std::ranges::generate(threads, [this]() -> std::thread { return std::thread(&ThreadPool::ThreadLoop, this); });
     }
 
     /* --- POLLING METHODS --- */
 
-    void ThreadPool::Pause()
+    void ThreadPool::Pause() noexcept
     {
         paused = true;
     }
 
-    void ThreadPool::Resume()
+    void ThreadPool::Resume() noexcept
     {
         paused = false;
     }
@@ -38,7 +38,7 @@ namespace SierraEngine
 
     /* --- DESTRUCTOR --- */
 
-    ThreadPool::~ThreadPool()
+    ThreadPool::~ThreadPool() noexcept
     {
         WaitForTasks();
 

@@ -7,23 +7,28 @@
 #include "../../src/srpch.h"
 
 #include "../../src/Core/Application.h"
-#include "../../src/Core/CursorManager.h"
-#include "../../src/Core/EntryPoint.h"
-#include "../../src/Core/EventDispatcher.hpp"
-#include "../../src/Core/FileManager.h"
-#include "../../src/Core/InputManager.h"
-#include "../../src/Core/Logger.h"
-#include "../../src/Core/PlatformContext.h"
-#include "../../src/Core/RNG.h"
-#include "../../src/Core/ScopeProfiler.h"
-#include "../../src/Core/Screen.h"
-#include "../../src/Core/Time.h"
-#include "../../src/Core/Touch.h"
-#include "../../src/Core/TouchManager.h"
-#include "../../src/Core/UUID.hpp"
+#include "../../src/Core/Logging.h"
 #include "../../src/Core/Version.h"
-#include "../../src/Core/Window.h"
-#include "../../src/Core/WindowManager.h"
+
+#include "../../src/Events/Event.h"
+#include "../../src/Events/EventDispatcher.hpp"
+
+#if defined(SR_BUILD_IMGUI_EXTENSION)
+    #include "../../src/Extensions/ImGui/ImGuiRenderer.h"
+#endif
+
+#include "../../src/Files/FileErrors.h"
+#include "../../src/Files/FileManager.h"
+#include "../../src/Files/FileStream.h"
+#include "../../src/Files/PathErrors.h"
+
+#include "../../src/Platform/EntryPoint.h"
+#include "../../src/Platform/PlatformContext.h"
+
+#include "../../src/Utilities/Date.h"
+#include "../../src/Utilities/Hash.hpp"
+#include "../../src/Utilities/RNG.h"
+#include "../../src/Utilities/Time.h"
 
 #include "../../src/Rendering/Buffer.h"
 #include "../../src/Rendering/CommandBuffer.h"
@@ -40,6 +45,17 @@
 #include "../../src/Rendering/Shader.h"
 #include "../../src/Rendering/Swapchain.h"
 
-#if defined(SR_BUILD_IMGUI_EXTENSION)
-    #include "../../src/Extensions/ImGui/ImGuiRenderer.h"
-#endif
+#include "../../src/Windowing/CursorEvents.h"
+#include "../../src/Windowing/CursorManager.h"
+#include "../../src/Windowing/InputEvents.h"
+#include "../../src/Windowing/InputManager.h"
+#include "../../src/Windowing/Key.h"
+#include "../../src/Windowing/MouseButton.h"
+#include "../../src/Windowing/Screen.h"
+#include "../../src/Windowing/ScreenEvents.h"
+#include "../../src/Windowing/ScreenOrientation.h"
+#include "../../src/Windowing/Touch.h"
+#include "../../src/Windowing/TouchEvents.h"
+#include "../../src/Windowing/TouchManager.h"
+#include "../../src/Windowing/Window.h"
+#include "../../src/Windowing/WindowEvents.h"

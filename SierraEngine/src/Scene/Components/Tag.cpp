@@ -9,7 +9,7 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    Tag::Tag(const std::string_view tag)
+    Tag::Tag(const std::string_view tag) noexcept
         : tag(tag)
     {
 
@@ -17,7 +17,7 @@ namespace SierraEngine
 
     /* --- SETTER METHODS --- */
 
-    void Tag::SetTag(const std::string_view givenTag)
+    void Tag::SetTag(const std::string_view givenTag) noexcept
     {
         tag = givenTag;
     }

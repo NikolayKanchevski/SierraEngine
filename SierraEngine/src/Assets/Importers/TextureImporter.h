@@ -30,21 +30,22 @@ namespace SierraEngine
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual std::optional<ImportedTexture> Import() const = 0;
+        [[nodiscard]] virtual std::optional<ImportedTexture> Import() const noexcept = 0;
 
         /* --- COPY SEMANTICS --- */
         TextureImporter(const TextureImporter&) = delete;
         TextureImporter& operator=(const TextureImporter&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        TextureImporter(TextureImporter&&) = default;
-        TextureImporter& operator=(TextureImporter&&) = default;
+        TextureImporter(TextureImporter&&) noexcept = default;
+        TextureImporter& operator=(TextureImporter&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
-        virtual ~TextureImporter() = default;
+        virtual ~TextureImporter() noexcept = default;
 
     protected:
-        TextureImporter() = default;
+        /* --- CONSTRUCTORS --- */
+        TextureImporter() noexcept = default;
 
     };
 

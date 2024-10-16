@@ -1,0 +1,31 @@
+//
+// Created by Nikolay Kanchevski on 12.15.23.
+//
+
+#include "VulkanLinuxSurface.h"
+
+namespace Sierra
+{
+
+    VkSurfaceKHR VulkanLinuxSurface::Create(const VulkanInstance& instance, const Window& window)
+    {
+        SR_ERROR_IF(window.GetBackendType() != WindowingBackendType::X11, "[Vulkan]: Cannot create a Linux surface for Vulkan using window [{0}], which has a platform backend, that differs from from [PlatformBackendType::X11]", window.GetTitle());
+        const X11Window& x11Window = static_cast<const X11Window&>(window);
+
+        // Set up surface create info
+        const VkXlibSurfaceCreateInfoKHR surfaceCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
+            .dpy = x11Window.GetDisplay(),
+            .window = x11Window.GetX11Window()
+        };
+
+        // Create surface
+        VkSurfaceKHR surface;
+        const VkResult result = instance.GetFunctionTable().vkCreateXlibSurfaceKHR(instance.GetVulkanInstance(), &surfaceCreateInfo, nullptr, &surface);
+        SR_ERROR_IF(result != VK_SUCCESS, "[Vulkan]: Could not create Linux surface for window [{0}]! Error code: {1}.", window.GetTitle(), static_cast<int32>(result));
+
+        return surface;
+    }
+
+}

@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include "../Editor/Editor.h"
 #include "../Assets/EditorAssetManager.h"
 #include "../Rendering/EditorRenderer.h"
-#include "../Editor/Editor.h"
 
 namespace SierraEngine
 {
@@ -17,6 +17,14 @@ namespace SierraEngine
         /* --- CONSTRUCTORS --- */
         explicit EditorApplication(const ApplicationCreateInfo& createInfo);
 
+        /* --- COPY SEMANTICS --- */
+        EditorApplication(const EditorApplication&) = delete;
+        EditorApplication& operator=(const EditorApplication&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        EditorApplication(EditorApplication&&) = delete;
+        EditorApplication& operator=(EditorApplication&&) = delete;
+
         /* --- DESTRUCTOR --- */
         ~EditorApplication() override;
 
@@ -26,17 +34,21 @@ namespace SierraEngine
         FrameLimiter frameLimiter;
         ThreadPool threadPool;
 
-        Surface surface;
-        std::unique_ptr<Sierra::ResourceTable> resourceTable;
+        std::unique_ptr<Sierra::Device> device = nullptr;
+        std::unique_ptr<Sierra::Queue> queue = nullptr;
+
+        std::unique_ptr<Sierra::ResourceTable> resourceTable = nullptr;
         std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers = { };
 
-        EditorAssetManager assetManager;
-        Scene scene;
+        Surface surface;
+        std::unique_ptr<EditorRenderer> editorRenderer = nullptr;
 
+        std::vector<std::unique_ptr<Sierra::Image>> renderedImages;
         TriangleRenderer triangleRenderer;
 
+        Scene scene;
         Editor editor;
-        std::unique_ptr<EditorRenderer> editorRenderer;
+        EditorAssetManager assetManager;
 
     };
 

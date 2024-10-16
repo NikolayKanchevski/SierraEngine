@@ -24,7 +24,7 @@ namespace SierraEngine
 
     namespace
     {
-        std::string_view TextureTypeToString(const TextureType type)
+        std::string_view TextureTypeToString(const TextureType type) noexcept
         {
             switch (type)
             {
@@ -45,7 +45,7 @@ namespace SierraEngine
             return "Unknown";
         }
 
-        std::string_view ImageCompressorTypeToString(const ImageCompressorType type)
+        std::string_view ImageCompressorTypeToString(const ImageCompressorType type) noexcept
         {
             switch (type)
             {
@@ -56,7 +56,7 @@ namespace SierraEngine
             return "Unknown";
         }
 
-        std::string_view ImageFormatToString(const Sierra::ImageFormat format)
+        std::string_view ImageFormatToString(const Sierra::ImageFormat format) noexcept
         {
             switch (format)
             {
@@ -155,7 +155,7 @@ namespace SierraEngine
             return "Unknown";
         }
 
-        std::string_view SamplerFilterToString(const Sierra::SamplerFilter filter)
+        std::string_view SamplerFilterToString(const Sierra::SamplerFilter filter) noexcept
         {
             switch (filter)
             {

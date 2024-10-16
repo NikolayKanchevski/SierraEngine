@@ -14,14 +14,21 @@ namespace SierraEngine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        YAMLTextureSerializer() = default;
+        YAMLTextureSerializer() noexcept = default;
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] std::optional<std::vector<uint8>> Serialize(const TextureSerializeInfo& serializeInfo) const override;
 
-        /* --- DESTRUCTOR --- */
-        ~YAMLTextureSerializer() override = default;
+        /* --- COPY SEMANTICS --- */
+        YAMLTextureSerializer(const YAMLTextureSerializer&) = delete;
+        YAMLTextureSerializer& operator=(const YAMLTextureSerializer&) = delete;
 
+        /* --- MOVE SEMANTICS --- */
+        YAMLTextureSerializer(YAMLTextureSerializer&&) noexcept = default;
+        YAMLTextureSerializer& operator=(YAMLTextureSerializer&&) noexcept = default;
+
+        /* --- DESTRUCTOR --- */
+        ~YAMLTextureSerializer() noexcept override = default;
     };
 
 }

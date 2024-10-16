@@ -17,21 +17,25 @@ namespace SierraEngine
     {
     public:
         /* --- SETTER METHODS --- */
-        void SetEnabled(const bool enable) { enabled = enable; }
+        void SetEnabled(bool enabled) noexcept;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] bool IsEnabled() const { return enabled; }
+        [[nodiscard]] bool IsEnabled() const noexcept { return enabled; }
 
         /* --- COPY SEMANTICS --- */
         Component(const Component&) = delete;
         Component& operator=(const Component&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        Component(Component&&) = default;
-        Component& operator=(Component&&) = default;
+        /* --- DESTRUCTOR --- */
+        ~Component() noexcept = default;
 
     protected:
-        Component() = default;
+        /* --- CONSTRUCTORS --- */
+        Component() noexcept = default;
+
+        /* --- MOVE SEMANTICS --- */
+        Component(Component&&) noexcept = default;
+        Component& operator=(Component&&) noexcept = default;
 
     private:
         bool enabled = true;

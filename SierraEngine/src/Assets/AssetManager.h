@@ -11,7 +11,7 @@ namespace SierraEngine
 {
 
     /* --- TYPE DEFINITIONS --- */
-    using AssetID = Sierra::UUID64;
+    using AssetID = Sierra::Hash64;
     using TextureID = AssetID;
 
     class SIERRA_ENGINE_API AssetManager
@@ -26,22 +26,23 @@ namespace SierraEngine
         virtual void ImportTexture(std::weak_ptr<TextureImporter> importer, const AssetLoadCallback& Callback) = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual const Texture* GetTexture(TextureID textureID) = 0;
-        [[nodiscard]] virtual const Texture& GetDefaultTexture(TextureType textureType) = 0;
+        [[nodiscard]] virtual const Texture* GetTexture(TextureID textureID) const noexcept = 0;
+        [[nodiscard]] virtual const Texture& GetDefaultTexture(TextureType textureType) const noexcept = 0;
 
         /* --- COPY SEMANTICS --- */
         AssetManager(const AssetManager&) = delete;
         AssetManager& operator=(const AssetManager&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        AssetManager(AssetManager&&) = default;
-        AssetManager& operator=(AssetManager&&) = default;
+        AssetManager(AssetManager&&) = delete;
+        AssetManager& operator=(AssetManager&&) = delete;
 
         /* --- DESTRUCTOR --- */
-        virtual ~AssetManager() = default;
+        virtual ~AssetManager() noexcept = default;
 
     protected:
-        AssetManager() = default;
+        /* --- CONSTRUCTORS --- */
+        AssetManager() noexcept = default;
 
     };
 

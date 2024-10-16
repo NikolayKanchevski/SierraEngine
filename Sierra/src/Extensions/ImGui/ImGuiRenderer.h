@@ -12,8 +12,9 @@
 #include "../../Rendering/RenderPass.h"
 #include "../../Rendering/CommandBuffer.h"
 
-#include "../../Core/InputManager.h"
-#include "../../Core/CursorManager.h"
+#include "../../Windowing/InputManager.h"
+#include "../../Windowing/CursorManager.h"
+#include "../../Windowing/TouchManager.h"
 
 namespace Sierra
 {
@@ -30,15 +31,15 @@ namespace Sierra
         std::span<const ImGuiFontCreateInfo> fontCreateInfos = { };
 
         uint32 concurrentFrameCount = 0;
-        const RenderingContext& renderingContext;
+        const Device& device;
         CommandBuffer& commandBuffer;
 
         uint32 scaling = 1;
         ImageSampling sampling = ImageSampling::x1;
         const Image& templateOutputImage;
 
-        ResourceIndex fontAtlasIndex = 0;
-        ResourceIndex fontSamplerIndex = 0;
+        uint32 fontAtlasIndex = 0;
+        uint32 fontSamplerIndex = 0;
         ResourceTable& resourceTable;
     };
 
@@ -49,22 +50,28 @@ namespace Sierra
         explicit ImGuiRenderer(const ImGuiRenderTaskCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] ImFont* GetFont(const size index) const { return ImGui::GetIO().Fonts->Fonts[static_cast<int>(baseFontIndex + index)]; }
-        [[nodiscard]] ImGuiStyle& GetStyle() { return style; }
+        [[nodiscard]] ImFont* GetFont(const size index) const noexcept { return ImGui::GetIO().Fonts->Fonts[static_cast<int>(baseFontIndex + index)]; }
+        [[nodiscard]] ImGuiStyle& GetStyle() noexcept { return style; }
 
         /* --- POLLING METHODS --- */
         void Update(const InputManager* inputManager = nullptr, const CursorManager* cursorManager = nullptr, const TouchManager* touchManager = nullptr);
         void Resize(uint32 width, uint32 height) override;
         void Render(CommandBuffer& commandBuffer, const Image& outputImage) override;
 
+        /* --- COPY SEMANTICS --- */
+        ImGuiRenderer(const ImGuiRenderer&) = delete;
+        ImGuiRenderer& operator=(const ImGuiRenderer&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        ImGuiRenderer(ImGuiRenderer&&) = delete;
+        ImGuiRenderer& operator=(ImGuiRenderer&&) = delete;
+
         /* --- DESTRUCTOR --- */
-        ~ImGuiRenderer() override;
+        ~ImGuiRenderer() noexcept override;
 
     private:
-        const RenderingContext& renderingContext;
-
+        const Device& device;
         const uint32 concurrentFrameCount = 0;
-        uint32 currentFrame = 0;
 
         uint32 scaling = 1;
         Vector2 viewportSize = { 0.0f, 0.0f };
@@ -80,23 +87,13 @@ namespace Sierra
         std::unique_ptr<GraphicsPipeline> pipeline;
         ImGuiStyle style = { };
 
+        uint32 currentFrame = 0;
         struct PushConstant
         {
-            ResourceIndex textureIndex = 0;
-            ResourceIndex samplerIndex = 0;
+            uint32 textureIndex = 0;
+            uint32 samplerIndex = 0;
             Vector2 scale = { 0.0f, 0.0f };
         };
-
-        inline static struct {
-            ImGuiContext* context = nullptr;
-            uint32 contextCount = 0;
-
-            std::unique_ptr<Shader> vertexShader = nullptr;
-            std::unique_ptr<Shader> fragmentShader = nullptr;
-
-            ResourceIndex fontSamplerIndex = 0;
-            std::unique_ptr<Sampler> fontSampler = nullptr;
-        } sharedResources = { nullptr, 0, nullptr, nullptr, 0, nullptr };
 
     };
 

@@ -56,25 +56,25 @@ namespace SierraEngine
     /* --- CONSTRUCTORS --- */
 
     EditorAssetManager::EditorAssetManager(const EditorAssetManagerCreateInfo& createInfo)
-        : AssetManager(), threadPool(createInfo.threadPool), renderingContext(createInfo.renderingContext), textureMap(3)
+        : AssetManager(), threadPool(createInfo.threadPool), device(createInfo.device), textureMap(3)
     {
         // Default checkered texture
         {
-            std::unique_ptr<Sierra::Buffer> textureBuffer = renderingContext.CreateBuffer({
+            std::unique_ptr<Sierra::Buffer> textureBuffer = device.CreateBuffer({
                 .name = "Buffer of Texture [Default Checkered]",
                 .memorySize = sizeof(uint8) * CHECKERED_TEXTURE_MEMORY.size(),
                 .usage = Sierra::BufferUsage::SourceMemory,
                 .memoryLocation = Sierra::BufferMemoryLocation::CPU
             });
-            textureBuffer->CopyFromMemory(CHECKERED_TEXTURE_MEMORY.data());
+            textureBuffer->Write(CHECKERED_TEXTURE_MEMORY.data(), 0, 0, textureBuffer->GetMemorySize());
 
-            defaultCheckeredTextureID = std::hash<std::string_view>{}(":default/CHECKERED_TEXTURE");
+            defaultCheckeredTextureID = std::hash<std::string_view>{}("$DEFAULT{CHECKERED_TEXTURE}");
             TextureQueueEntry textureEntry
             {
                 .ID = defaultCheckeredTextureID,
                 .texture = Texture({
                     .name = "Default Checkered Texture",
-                    .renderingContext = renderingContext,
+                    .device = device,
                     .width = 2,
                     .height = 2,
                     .preferredFormat = Sierra::ImageFormat::R8G8B8A8_UNorm,
@@ -89,21 +89,21 @@ namespace SierraEngine
 
         // Default black texture
         {
-            std::unique_ptr<Sierra::Buffer> textureBuffer = renderingContext.CreateBuffer({
+            std::unique_ptr<Sierra::Buffer> textureBuffer = device.CreateBuffer({
                 .name = "Buffer of Texture [Default Black]",
                 .memorySize = sizeof(uint8) * BLACK_TEXTURE_MEMORY.size(),
                 .usage = Sierra::BufferUsage::SourceMemory,
                 .memoryLocation = Sierra::BufferMemoryLocation::CPU
             });
-            textureBuffer->CopyFromMemory(BLACK_TEXTURE_MEMORY.data());
+            textureBuffer->Write(BLACK_TEXTURE_MEMORY.data(), 0, 0, textureBuffer->GetMemorySize());
 
-            defaultBlackTextureID = std::hash<std::string_view>{}(":default/BLACK_TEXTURE");
+            defaultBlackTextureID = std::hash<std::string_view>{}("$DEFAULT{BLACK_TEXTURE}");
             TextureQueueEntry textureEntry
             {
                 .ID = defaultBlackTextureID,
                 .texture = Texture({
                     .name = "Default Black Texture",
-                    .renderingContext = renderingContext,
+                    .device = device,
                     .width = 1,
                     .height = 1,
                     .preferredFormat = Sierra::ImageFormat::R8G8B8A8_UNorm
@@ -117,21 +117,21 @@ namespace SierraEngine
 
         // Default normal texture
         {
-            std::unique_ptr<Sierra::Buffer> textureBuffer = renderingContext.CreateBuffer({
+            std::unique_ptr<Sierra::Buffer> textureBuffer = device.CreateBuffer({
                 .name = "Buffer of Texture [Default Normal]",
                 .memorySize = sizeof(uint8) * NORMAL_TEXTURE_MEMORY.size(),
                 .usage = Sierra::BufferUsage::SourceMemory,
                 .memoryLocation = Sierra::BufferMemoryLocation::CPU
             });
-            textureBuffer->CopyFromMemory(NORMAL_TEXTURE_MEMORY.data());
+            textureBuffer->Write(NORMAL_TEXTURE_MEMORY.data(), 0, 0, textureBuffer->GetMemorySize());
 
-            defaultNormalTextureID = std::hash<std::string_view>{}(":default/NORMAL_TEXTURE");
+            defaultNormalTextureID = std::hash<std::string_view>{}("$DEFAULT{NORMAL_TEXTURE}");
             TextureQueueEntry textureEntry
             {
                 .ID = defaultNormalTextureID,
                 .texture = Texture({
                     .name = "Default Normal Texture",
-                    .renderingContext = renderingContext,
+                    .device = device,
                     .width = 1,
                     .height = 1,
                     .preferredFormat = Sierra::ImageFormat::R8G8B8A8_UNorm
@@ -159,17 +159,17 @@ namespace SierraEngine
             textureQueueLock.unlock();
             const Sierra::Image& textureImage = textureEntry.texture.GetImage();
 
-            commandBuffer.SynchronizeImageUsage(textureImage, Sierra::ImageCommandUsage::None, Sierra::ImageCommandUsage::MemoryWrite);
-            for (size level = 0; level < textureEntry.texture.GetLevelCount(); level++)
+            commandBuffer.SynchronizeImageUsage(textureImage, Sierra::ImageCommandUsage::None, Sierra::ImageCommandUsage::MemoryWrite, 0, textureImage.GetLevelCount(), 0, textureImage.GetLayerCount());
+            for (uint32 level = 0; level < textureEntry.texture.GetLevelCount(); level++)
             {
                 std::unique_ptr<Sierra::Buffer>& levelBuffer = textureEntry.levelBuffers[level];
                 for (uint32 layer = 0; layer < textureEntry.texture.GetLayerCount(); layer++)
                 {
-                    commandBuffer.CopyBufferToImage(*levelBuffer, textureImage, level, layer, { 0, 0, 0 }, layer * (levelBuffer->GetMemorySize() / textureImage.GetLayerCount()));
+                    commandBuffer.CopyBufferToImage(*levelBuffer, textureImage, level, layer, layer * (levelBuffer->GetMemorySize() / textureImage.GetLayerCount()), { 0, 0, 0 }, { textureImage.GetWidth() >> level, textureImage.GetHeight() >> level, textureImage.GetDepth() >> level });
                 }
                 commandBuffer.QueueBufferForDestruction(std::move(levelBuffer));
             }
-            commandBuffer.SynchronizeImageUsage(textureImage, Sierra::ImageCommandUsage::MemoryWrite, Sierra::ImageCommandUsage::GraphicsRead);
+            commandBuffer.SynchronizeImageUsage(textureImage, Sierra::ImageCommandUsage::MemoryWrite, Sierra::ImageCommandUsage::GraphicsRead, 0, textureImage.GetLevelCount(), 0, textureImage.GetLayerCount());
 
             textureMap.emplace(textureEntry.ID, std::move(textureEntry.texture));
             textureEntry.LoadCallback(textureEntry.ID);
@@ -200,7 +200,7 @@ namespace SierraEngine
                 .ID = ID,
                 .texture = Texture({
                     .name = importedTexture.value().name.data(),
-                    .renderingContext = renderingContext,
+                    .device = device,
                     .width = importedTexture.value().width,
                     .height = importedTexture.value().height,
                     .imageType = importedTexture.value().imageType,
@@ -214,13 +214,13 @@ namespace SierraEngine
 
             for (size i = 0; i < importedTexture->levelCount; i++)
             {
-                textureEntry.levelBuffers[i] = renderingContext.CreateBuffer({
-                   .name = fmt::format("Buffer of Texture [{0}]", importedTexture.value().name.data()),
+                textureEntry.levelBuffers[i] = device.CreateBuffer({
+                   .name = SR_FORMAT("Buffer of Texture [{0}]", importedTexture.value().name.data()),
                    .memorySize = sizeof(uint8) * importedTexture.value().levelMemory[i].size(),
                    .usage = Sierra::BufferUsage::SourceMemory,
                    .memoryLocation = Sierra::BufferMemoryLocation::CPU
                 });
-                textureEntry.levelBuffers[i]->CopyFromMemory(importedTexture.value().levelMemory[i].data());
+                textureEntry.levelBuffers[i]->Write(importedTexture.value().levelMemory[i].data(), 0, 0, textureEntry.levelBuffers[i]->GetMemorySize());
             }
 
             {
@@ -235,7 +235,7 @@ namespace SierraEngine
 
     /* --- GETTER METHODS --- */
 
-    const Texture& EditorAssetManager::GetDefaultTexture(const TextureType textureType)
+    const Texture& EditorAssetManager::GetDefaultTexture(const TextureType textureType) const noexcept
     {
         switch (textureType)
         {

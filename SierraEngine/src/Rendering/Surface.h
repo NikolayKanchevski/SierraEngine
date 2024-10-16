@@ -12,8 +12,8 @@ namespace SierraEngine
         std::string_view title = "Sierra Engine Window";
         Sierra::SwapchainPresentationMode preferredPresentationMode = Sierra::SwapchainPresentationMode::VSync;
 
-        const Sierra::WindowManager& windowManager;
-        const Sierra::RenderingContext& renderingContext;
+        const Sierra::PlatformContext& platformContext;
+        const Sierra::Device& device;
     };
 
     class SIERRA_ENGINE_API Surface final
@@ -27,19 +27,19 @@ namespace SierraEngine
         void Present(Sierra::CommandBuffer& commandBuffer) const;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] Sierra::Window& GetWindow() const { return *window; }
-        [[nodiscard]] Sierra::Swapchain& GetSwapchain() const { return *swapchain; }
+        [[nodiscard]] Sierra::Window& GetWindow() const noexcept { return *window; }
+        [[nodiscard]] Sierra::Swapchain& GetSwapchain() const noexcept { return *swapchain; }
 
         /* --- COPY SEMANTICS --- */
         Surface(const Surface&) = delete;
         Surface& operator=(const Surface&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        Surface(Surface&&) = default;
-        Surface& operator=(Surface&&) = default;
+        Surface(Surface&&) noexcept = default;
+        Surface& operator=(Surface&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
-        ~Surface() = default;
+        ~Surface() noexcept = default;
 
     private:
         std::unique_ptr<Sierra::Window> window = nullptr;

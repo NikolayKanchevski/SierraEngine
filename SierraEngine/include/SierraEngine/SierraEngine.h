@@ -23,4 +23,5 @@
 #include "../../src/Scene/Component.h"
 #include "../../src/Scene/Components/Relationship.h"
 #include "../../src/Scene/Components/Tag.h"
+#include "../../src/Scene/EntityID.h"
 #include "../../src/Scene/Scene.h"
