@@ -18,14 +18,14 @@ namespace Sierra
             Best = Metal
         #elif SR_VULKAN_SUPPORTED
             Best = Vulkan
-        #elif SSR_DIRECTX_SUPPORTED
+        #elif SR_DIRECTX_SUPPORTED
             Best = DirectX
-        #elif SSR_OPENGL_SUPPORTED
+        #elif SR_OPENGL_SUPPORTED
             Best = OpenGL
-        #elif SSR_WEBGPU_SUPPORTED
+        #elif SR_WEBGPU_SUPPORTED
             Best = OpenGL
         #else
-            Best = Undefined
+            Best
         #endif
     };
 

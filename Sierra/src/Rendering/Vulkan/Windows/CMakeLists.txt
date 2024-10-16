@@ -1,5 +1,5 @@
 # Add Windows source files
 target_sources(Sierra PRIVATE
-    VulkanWindowsSurface.cpp
-    VulkanWindowsSurface.h
+        VulkanWin32Surface.cpp
+        VulkanWin32Surface.h
 )

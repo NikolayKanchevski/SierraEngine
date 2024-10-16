@@ -25,13 +25,13 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual void Seek(size offset) = 0;
+        virtual void Seek(size offset);
         void SeekToEnd();
 
         [[nodiscard]] virtual std::vector<uint8> Read(size memorySize) = 0;
         [[nodiscard]] std::vector<uint8> Read(size offset, size memorySize);
 
-        virtual void Write(const void* memory, size sourceOffset, size memorySize) = 0;
+        virtual void Write(const void* memory, size sourceOffset, size memorySize);
         void Write(const void* memory, size sourceOffset, size destinationOffset, size memorySize);
 
         /* --- GETTER METHODS --- */

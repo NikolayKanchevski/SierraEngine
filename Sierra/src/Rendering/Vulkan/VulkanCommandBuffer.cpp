@@ -12,7 +12,7 @@
 #include "VulkanGraphicsPipeline.h"
 #include "VulkanComputePipeline.h"
 
-#include "VulkanResultHandler.h"
+#include "VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -141,7 +141,7 @@ namespace Sierra
 
         // Create command pool
         VkResult result = queue.GetDevice().GetFunctionTable().vkCreateCommandPool(queue.GetDevice().GetVulkanDevice(), &commandPoolCreateInfo, nullptr, &commandPool);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create command buffer [{0}], as creation of command pool failed", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create command buffer [{0}], as creation of command pool failed", name));
         queue.GetDevice().SetResourceName(commandPool, VK_OBJECT_TYPE_COMMAND_POOL, SR_FORMAT("Command pool of command buffer [{0}]", name));
 
         // Set up allocate info
@@ -155,7 +155,7 @@ namespace Sierra
 
         // Allocate command buffer
         result = queue.GetDevice().GetFunctionTable().vkAllocateCommandBuffers(queue.GetDevice().GetVulkanDevice(), &allocateInfo, &commandBuffer);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create command buffer [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create command buffer [{0}]", name));
         queue.GetDevice().SetResourceName(commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, name);
     }
 
@@ -179,7 +179,7 @@ namespace Sierra
 
         // Begin command buffer
         const VkResult result = queue.GetDevice().GetFunctionTable().vkBeginCommandBuffer(commandBuffer, &beginInfo);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not begin command buffer [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not begin command buffer [{0}]", name));
 
         // Get new code & reset operations
         completionSemaphoreSignalValue = queue.GetDevice().GetNewSemaphoreSignalValue();
@@ -192,7 +192,7 @@ namespace Sierra
 
         // End command buffer
         const VkResult result = queue.GetDevice().GetFunctionTable().vkEndCommandBuffer(commandBuffer);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not end command buffer [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not end command buffer [{0}]", name));
 
         currentResourceTable = nullptr;
 
@@ -650,7 +650,7 @@ namespace Sierra
         SR_THROW_IF(currentGraphicsPipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw within command buffer [{0}], as no graphics pipeline has been begun", name)));
 
         const size vertexBufferOffset = initialVertexBufferOffset + (static_cast<uint64>(vertexOffset) * currentGraphicsPipeline->GetVertexStride());
-        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset > currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid vertex index in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), name), vertexBufferOffset, size(0), currentVertexBuffer->GetMemorySize()));
+        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset >= currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid vertex index in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), name), vertexBufferOffset, size(0), currentVertexBuffer->GetMemorySize()));
 
         queue.GetDevice().GetFunctionTable().vkCmdDraw(commandBuffer, vertexCount, 1, vertexOffset, 0);
     }
@@ -662,10 +662,10 @@ namespace Sierra
         SR_THROW_IF(currentIndexBuffer == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw indexed within command buffer [{0}], as no index buffer has been bound", name)));
 
         const size indexBufferOffset = initialIndexBufferOffset + indexOffset * sizeof(uint32);
-        SR_THROW_IF(indexBufferOffset > currentIndexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid index offset in index buffer [{0}] within command buffer [{1}]", currentIndexBuffer->GetName(), name), indexBufferOffset, size(0), currentVertexBuffer->GetMemorySize()));
+        SR_THROW_IF(indexBufferOffset >= currentIndexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid index offset in index buffer [{0}] within command buffer [{1}]", currentIndexBuffer->GetName(), name), indexBufferOffset, size(0), currentVertexBuffer->GetMemorySize()));
 
         const size vertexBufferOffset = initialVertexBufferOffset + (static_cast<uint64>(vertexOffset) * currentGraphicsPipeline->GetVertexStride());
-        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset > currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw indexed from invalid vertex offset in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), name), vertexBufferOffset, size(0), currentVertexBuffer->GetMemorySize()));
+        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset >= currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw indexed from invalid vertex offset in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), name), vertexBufferOffset, size(0), currentVertexBuffer->GetMemorySize()));
 
         queue.GetDevice().GetFunctionTable().vkCmdDrawIndexed(commandBuffer, indexCount, 1, indexOffset, static_cast<int32>(vertexOffset), 0);
     }

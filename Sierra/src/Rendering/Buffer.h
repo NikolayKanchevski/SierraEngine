@@ -39,7 +39,7 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual void Write(const void* memory, size sourceOffset, size offset, size memorySize);
+        virtual void Write(const void* memory, size sourceOffset, size destinationOffset, size memorySize);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual void* GetMemory() const noexcept = 0;

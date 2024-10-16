@@ -4,7 +4,7 @@
 
 #include "VulkanBuffer.h"
 
-#include "VulkanResultHandler.h"
+#include "VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -63,7 +63,7 @@ namespace Sierra
 
         // Create and allocate buffer
         const VkResult result = vmaCreateBuffer(device.GetVulkanMemoryAllocator(), &bufferCreateInfo, &allocationCreateInfo, &buffer, &allocation, nullptr);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create buffer [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create buffer [{0}]", name));
         device.SetResourceName(buffer, VK_OBJECT_TYPE_BUFFER, name);
 
         // Map and reset memory if CPU-visible

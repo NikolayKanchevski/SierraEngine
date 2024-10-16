@@ -5,7 +5,7 @@
 #include "VulkanQueue.h"
 
 #include "VulkanCommandBuffer.h"
-#include "VulkanResultHandler.h"
+#include "VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -104,7 +104,7 @@ namespace Sierra
 
         // Submit command buffer
         const VkResult result = device.GetFunctionTable().vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not submit command buffer [{0}] to queue [{1}]", vulkanCommandBuffer.GetName(), name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not submit command buffer [{0}] to queue [{1}]", vulkanCommandBuffer.GetName(), name));
     }
 
     void VulkanQueue::WaitForCommandBuffer(const CommandBuffer& commandBuffer) const

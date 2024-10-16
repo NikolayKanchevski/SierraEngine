@@ -58,7 +58,15 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     FileReadOnlyError::FileReadOnlyError(const std::string_view message, const std::filesystem::path& filePath) noexcept
-            : FileError(message, SR_FORMAT("File [{0}] is read-only", filePath.string()))
+        : FileError(message, SR_FORMAT("File [{0}] is read-only", filePath.string()))
+    {
+
+    }
+
+    /* --- CONSTRUCTORS --- */
+
+    InvalidFileOffset::InvalidFileOffset(const std::string_view message, const std::filesystem::path& filePath, const size offset, const size fileSize) noexcept
+        : FileError(message, SR_FORMAT("Invalid file offset [{0}] is outside file range [0-{1}] of file [{2}]", offset, fileSize, filePath.string()))
     {
 
     }

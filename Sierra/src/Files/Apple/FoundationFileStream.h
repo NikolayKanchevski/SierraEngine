@@ -55,7 +55,7 @@ namespace Sierra
 
     private:
         const std::filesystem::path filePath;
-        const NSFileHandle* fileHandle;
+        const NSFileHandle* fileHandle = nil;
 
     };
 

@@ -27,25 +27,6 @@ namespace Sierra
 
     };
 
-    class SIERRA_API UnknownPathError final : public PathError
-    {
-    public:
-        /* --- CONSTRUCTORS --- */
-        explicit UnknownPathError(std::string_view message, const std::filesystem::path& path) noexcept;
-
-        /* --- COPY SEMANTICS --- */
-        UnknownPathError(const UnknownPathError&) = delete;
-        UnknownPathError& operator=(const UnknownPathError&) = delete;
-
-        /* --- MOVE SEMANTICS --- */
-        UnknownPathError(UnknownPathError&&) = delete;
-        UnknownPathError& operator=(UnknownPathError&&) = delete;
-
-        /* --- DESTRUCTOR --- */
-        ~UnknownPathError() noexcept override = default;
-
-    };
-
     class SIERRA_API PathInvalidError final : public PathError
     {
     public:

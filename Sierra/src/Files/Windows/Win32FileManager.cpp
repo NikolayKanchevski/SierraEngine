@@ -6,97 +6,24 @@
 
 #include <ShlObj_core.h>
 
+#include "../FileErrors.h"
+#include "Win32FileStream.h"
+#include "Win32FileErrorHandler.h"
+
 namespace Sierra
 {
 
-    namespace
-    {
-        FileOperationResult ErrorCodeToFileOperationResult(const UINT errorCode)
-        {
-            switch (errorCode)
-            {
-                case ERROR_SUCCESS:                    return FileOperationResult::Success;
-                case ERROR_UNIDENTIFIED_ERROR:         return FileOperationResult::UnknownError;
-                case ERROR_BAD_PATHNAME:               return FileOperationResult::FilePathInvalid;
-                case ERROR_FILE_NOT_FOUND:             return FileOperationResult::NoSuchFilePath;
-                case ERROR_FILE_EXISTS:                return FileOperationResult::FilePathAlreadyExists;
-                case ERROR_ACCESS_DENIED:              return FileOperationResult::FileAccessDenied;
-                case ERROR_SHARING_VIOLATION:          return FileOperationResult::FileLocked;
-                case ERROR_FILE_CORRUPT:               return FileOperationResult::FileCorrupted;
-                case ERROR_FILE_READ_ONLY:             return FileOperationResult::FileReadOnly;
-                case ERROR_FILE_TOO_LARGE:             return FileOperationResult::FileTooLarge;
-                default:                               break;
-            }
-
-            return FileOperationResult::UnknownError;
-        }
-    }
-
-    /* --- CONSTRUCTORS --- */
-
-    Win32FileStream::Win32FileStream(HANDLE fileHandle)
-        : fileHandle(fileHandle)
-    {
-        SR_ERROR_IF(fileHandle == INVALID_HANDLE_VALUE, "File handle passed to Win32FileStream must not be [INVALID_HANDLE_VALUE]!");
-    }
 
     /* --- POLLING METHODS --- */
 
-    FileOperationResult Win32FileStream::Seek(const size offset)
-    {
-        const size currentOffset = GetCurrentOffset();
-        if (const DWORD errorCode = SetFilePointerEx(fileHandle, { static_cast<DWORD>(offset - currentOffset) }, nullptr, FILE_CURRENT); errorCode == 0)
-        {
-            return ErrorCodeToFileOperationResult(GetLastError());
-        }
-
-        return FileOperationResult::Success;
-    }
-
-    FileOperationResult Win32FileStream::Read(const size memorySize, std::vector<uint8>& outData)
-    {
-        outData = std::vector<uint8>(memorySize);
-        if (!ReadFile(fileHandle, outData.data(), memorySize, nullptr, nullptr)) return ErrorCodeToFileOperationResult(GetLastError());
-        return FileOperationResult::Success;
-    }
-
-    FileOperationResult Win32FileStream::Write(const void* memory, const size memorySize, const size offset)
-    {
-        if (!WriteFile(fileHandle, reinterpret_cast<const uint8*>(memory) + offset, memorySize, nullptr, nullptr)) return ErrorCodeToFileOperationResult(GetLastError());
-        return FileOperationResult::Success;
-    }
-
-    size Win32FileStream::GetMemorySize() const
-    {
-        LARGE_INTEGER memorySize = { };
-        GetFileSizeEx(fileHandle, &memorySize);
-        return memorySize.QuadPart;
-    }
-
-    size Win32FileStream::GetCurrentOffset() const
-    {
-        LARGE_INTEGER pointer = { };
-        SetFilePointerEx(fileHandle, { 0 }, &pointer, FILE_CURRENT);
-        return pointer.QuadPart;
-    }
-
-    /* --- DESTRUCTOR --- */
-
-    Win32FileStream::~Win32FileStream()
-    {
-        CloseHandle(fileHandle);
-    }
-
-    /* --- POLLING METHODS --- */
-
-    bool Win32FileManager::FileExists(const std::filesystem::path& filePath) const
+    bool Win32FileManager::FileExists(const std::filesystem::path& filePath) const noexcept
     {
         const std::wstring path = filePath.wstring();
         const DWORD attributes = GetFileAttributesW(path.c_str());
         return attributes != INVALID_FILE_ATTRIBUTES && !(attributes & FILE_ATTRIBUTE_DIRECTORY);
     }
 
-    FileOperationResult Win32FileManager::OpenFileStream(const std::filesystem::path& filePath, FileStreamAccess access, const FileStreamBuffering buffering, std::unique_ptr<FileStream> &outFileStream) const
+    std::unique_ptr<FileStream> Win32FileManager::OpenFileStream(const std::filesystem::path& filePath, const FileStreamAccess access, const FileStreamBuffering buffering) const
     {
         DWORD fileSharing = 0;
         DWORD fileAccess = 0;
@@ -110,169 +37,202 @@ namespace Sierra
         const std::wstring path = filePath.wstring();
 
         std::unique_ptr<std::remove_pointer_t<HANDLE>, std::function<void(HANDLE)>> fileHandle = { CreateFileW(path.c_str(), fileAccess, fileSharing, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | (static_cast<uint8>(buffering == FileStreamBuffering::Unbuffered) * FILE_FLAG_NO_BUFFERING), nullptr), CloseHandle };
-        if (fileHandle.get() == INVALID_HANDLE_VALUE) return ErrorCodeToFileOperationResult(GetLastError());
+        if (fileHandle.get() == INVALID_HANDLE_VALUE) HandleWin32FileError(GetLastError(), "Could not open file stream", filePath);
 
-        outFileStream = std::make_unique<Win32FileStream>(fileHandle.release());
-        return FileOperationResult::Success;
+        return std::make_unique<Win32FileStream>(fileHandle.release(), filePath);
     }
 
-    FileOperationResult Win32FileManager::CreateFile(const std::filesystem::path& filePath) const
+    void Win32FileManager::CreateFile(const std::filesystem::path& filePath, const FilePathConflictPolicy conflictPolicy) const
     {
-        if (const FileOperationResult result = CreateDirectory(filePath.parent_path()); result != FileOperationResult::Success)
-        {
-            return result;
-        }
+        FileManager::CreateFile(filePath, conflictPolicy);
 
-        const std::wstring path = filePath.wstring();
+        std::filesystem::path resolvedFilePath = filePath;
+        ResolveFilePathConflict(filePath, resolvedFilePath, conflictPolicy);
+        CreateDirectory(resolvedFilePath.parent_path());
 
+        const std::wstring path = resolvedFilePath.wstring();
         const std::unique_ptr<std::remove_pointer_t<HANDLE>, std::function<void(HANDLE)>> fileHandle = { CreateFileW(path.c_str(), GENERIC_WRITE, 0, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr), CloseHandle };
-        if (fileHandle.get() == INVALID_HANDLE_VALUE) return ErrorCodeToFileOperationResult(GetLastError());
-
-        return FileOperationResult::Success;
+        if (fileHandle.get() == INVALID_HANDLE_VALUE) HandleWin32FileError(GetLastError(), "Could create file", filePath);
     }
 
-    FileOperationResult Win32FileManager::RenameFile(const std::filesystem::path& filePath, const std::string_view name) const
+    void Win32FileManager::RenameFile(const std::filesystem::path& filePath, const std::string_view name) const
     {
+        FileManager::RenameFile(filePath, name);
+
         const std::wstring sourcePath = filePath.wstring();
         const std::wstring movedPath = (filePath.parent_path() / name).wstring();
 
-        if (!MoveFileW(sourcePath.c_str(), movedPath.c_str())) return ErrorCodeToFileOperationResult(GetLastError());
-        return FileOperationResult::Success;
+        if (!MoveFileW(sourcePath.c_str(), movedPath.c_str())) HandleWin32FileError(GetLastError(), SR_FORMAT("Could not rename file to [{0}]", name), filePath);
     }
 
-    FileOperationResult Win32FileManager::CopyFile(const std::filesystem::path &sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const
+    void Win32FileManager::CopyFile(const std::filesystem::path &sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
-        std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceFilePath.filename();
-        if (const FileOperationResult result = ResolveFilePathConflict(sourceFilePath, destinationFilePath, conflictPolicy); result != FileOperationResult::Success)
-        {
-            return result;
-        }
+        FileManager::CopyFile(sourceFilePath, destinationDirectoryPath, conflictPolicy);
 
-        if (const FileOperationResult result = CreateDirectory(destinationDirectoryPath); result != FileOperationResult::Success)
-        {
-            return result;
-        }
+        std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceFilePath.filename();
+        ResolveFilePathConflict(sourceFilePath, destinationFilePath, conflictPolicy);
+        CreateDirectory(destinationDirectoryPath);
 
         const std::wstring sourcePath = sourceFilePath.wstring();
         const std::wstring destinationPath = destinationFilePath.wstring();
 
-        if (!CopyFileW(sourcePath.c_str(), destinationPath.c_str(), conflictPolicy == FilePathConflictPolicy::KeepExisting)) return ErrorCodeToFileOperationResult(GetLastError());
-        return FileOperationResult::Success;
+        if (!CopyFileW(sourcePath.c_str(), destinationPath.c_str(), conflictPolicy == FilePathConflictPolicy::KeepExisting))
+        {
+            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not copy file to [{0}]", destinationFilePath.string()), sourceFilePath);
+        }
     }
 
-    FileOperationResult Win32FileManager::MoveFile(const std::filesystem::path &sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const
+    void Win32FileManager::MoveFile(const std::filesystem::path &sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
-        std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceFilePath.filename();
-        if (const FileOperationResult result = ResolveFilePathConflict(sourceFilePath, destinationFilePath, conflictPolicy); result != FileOperationResult::Success)
-        {
-            return result;
-        }
+        FileManager::MoveFile(sourceFilePath, destinationDirectoryPath, conflictPolicy);
 
-        if (const FileOperationResult result = CreateDirectory(destinationDirectoryPath); result != FileOperationResult::Success)
-        {
-            return result;
-        }
+        std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceFilePath.filename();
+        ResolveFilePathConflict(sourceFilePath, destinationFilePath, conflictPolicy);
+        CreateDirectory(destinationDirectoryPath);
 
         const std::wstring sourcePath = sourceFilePath.wstring();
         const std::wstring destinationPath = destinationFilePath.wstring();
 
-        if (!MoveFileW(sourcePath.c_str(), destinationPath.c_str())) return ErrorCodeToFileOperationResult(GetLastError());
-        return FileOperationResult::Success;
+        if (!MoveFileW(sourcePath.c_str(), destinationPath.c_str()))
+        {
+            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not move file to [{0}]", destinationFilePath.string()), sourceFilePath);
+        }
     }
 
-    FileOperationResult Win32FileManager::DeleteFile(const std::filesystem::path& filePath) const
+    void Win32FileManager::DeleteFile(const std::filesystem::path& filePath) const
     {
+        FileManager::DeleteFile(filePath);
         const std::wstring path = filePath.wstring();
 
-        if (!DeleteFileW(path.c_str())) return ErrorCodeToFileOperationResult(GetLastError());
-        return FileOperationResult::Success;
+        if (!DeleteFileW(path.c_str()))
+        {
+            HandleWin32FileError(GetLastError(), "Could not delete file", filePath);
+        }
     }
 
-    bool Win32FileManager::DirectoryExists(const std::filesystem::path& directoryPath) const
+    bool Win32FileManager::DirectoryExists(const std::filesystem::path& directoryPath) const noexcept
     {
         const std::wstring path = directoryPath.wstring();
         const DWORD attributes = GetFileAttributesW(path.c_str());
         return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY);
     }
 
-    FileOperationResult Win32FileManager::EnumerateDirectoryFiles(const std::filesystem::path& directoryPath, std::vector<std::filesystem::path>& outFiles, bool recursive) const
+    void Win32FileManager::EnumerateDirectoryFiles(const std::filesystem::path& directoryPath, bool recursive, const FileEnumerationPredicate& Predicate) const
     {
+        FileManager::EnumerateDirectoryFiles(directoryPath, recursive, Predicate);
+
         if (!recursive)
         {
             for (const std::filesystem::path& path : std::filesystem::directory_iterator(directoryPath))
             {
-                if (is_directory(path) || is_symlink(path)) continue;
-                outFiles.emplace_back(path);
+                if (!std::filesystem::is_regular_file(path)) continue;
+                Predicate(path);
             }
         }
         else
         {
             for (const std::filesystem::path& path : std::filesystem::recursive_directory_iterator(directoryPath))
             {
-                if (is_directory(path) || is_symlink(path)) continue;
-                outFiles.emplace_back(path);
+                if (!std::filesystem::is_regular_file(path)) continue;
+                Predicate(path);
             }
         }
-
-        return FileOperationResult::Success;
     }
 
-    FileOperationResult Win32FileManager::CreateDirectory(const std::filesystem::path& directoryPath) const
+    void Win32FileManager::CreateDirectory(const std::filesystem::path& directoryPath) const
     {
-        if (DirectoryExists(directoryPath)) return FileOperationResult::Success;
+        FileManager::CreateDirectory(directoryPath);
         const std::wstring path = directoryPath.wstring();
 
-        if (const DWORD errorCode = SHCreateDirectoryExW(nullptr, path.c_str(), nullptr); errorCode != ERROR_SUCCESS)
+        const DWORD errorCode = SHCreateDirectoryExW(nullptr, path.c_str(), nullptr);
+        if (errorCode != ERROR_SUCCESS)
         {
-            return ErrorCodeToFileOperationResult(errorCode);
+            HandleWin32FileError(GetLastError(), "Could not create directory", directoryPath);
         }
-        return FileOperationResult::Success;
     }
 
-    FileOperationResult Win32FileManager::RenameDirectory(const std::filesystem::path& directoryPath, const std::string_view name) const
+    void Win32FileManager::RenameDirectory(const std::filesystem::path& directoryPath, const std::string_view name) const
     {
-        return RenameFile(directoryPath, name);
+        FileManager::RenameDirectory(directoryPath, name);
+
+        const std::wstring sourcePath = directoryPath.wstring();
+        const std::wstring movedPath = (directoryPath.parent_path() / name).wstring();
+
+        if (!MoveFileW(sourcePath.c_str(), movedPath.c_str()))
+        {
+            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not rename directory to [{0}]", name), directoryPath);
+        }
     }
 
-    FileOperationResult Win32FileManager::CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const
+    void Win32FileManager::CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
-        return CopyFile(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
+        FileManager::CopyDirectory(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
+
+        std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceDirectoryPath.filename();
+        ResolveDirectoryPathConflict(sourceDirectoryPath, destinationFilePath, conflictPolicy);
+        CreateDirectory(destinationDirectoryPath);
+
+        const std::wstring sourcePath = sourceDirectoryPath.wstring();
+        const std::wstring destinationPath = destinationFilePath.wstring();
+
+        if (!CopyFileW(sourcePath.c_str(), destinationPath.c_str(), conflictPolicy == FilePathConflictPolicy::KeepExisting))
+        {
+            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not copy directory to [{0}]", destinationFilePath.string()), sourceDirectoryPath);
+        }
     }
 
-    FileOperationResult Win32FileManager::MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const
+    void Win32FileManager::MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
-        return MoveFile(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
+        FileManager::MoveDirectory(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
+
+        std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceDirectoryPath.filename();
+        ResolveDirectoryPathConflict(sourceDirectoryPath, destinationFilePath, conflictPolicy);
+        CreateDirectory(destinationDirectoryPath);
+
+        const std::wstring sourcePath = sourceDirectoryPath.wstring();
+        const std::wstring destinationPath = destinationFilePath.wstring();
+
+        if (!MoveFileW(sourcePath.c_str(), destinationPath.c_str()))
+        {
+            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not move directory to [{0}]", destinationFilePath.string()), sourceDirectoryPath);
+        }
     }
 
-    FileOperationResult Win32FileManager::DeleteDirectory(const std::filesystem::path& directoryPath) const
+    void Win32FileManager::DeleteDirectory(const std::filesystem::path& directoryPath) const
     {
-        return DeleteFile(directoryPath);
+        FileManager::DeleteDirectory(directoryPath);
+        const std::wstring path = directoryPath.wstring();
+
+        if (!DeleteFileW(path.c_str()))
+        {
+            HandleWin32FileError(GetLastError(), "Could not delete directory", directoryPath);
+        }
     }
 
     /* --- GETTER METHODS --- */
 
-    FileOperationResult Win32FileManager::GetFileMetadata(const std::filesystem::path& filePath, FileMetadata& outMetadata) const
+    FileMetadata Win32FileManager::GetFileMetadata(const std::filesystem::path& filePath) const
     {
         const std::wstring path = filePath.wstring();
 
         const std::unique_ptr<std::remove_pointer_t<HANDLE>, std::function<void(HANDLE)>> fileHandle = { CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_READ_ATTRIBUTES, nullptr), CloseHandle };
-        if (fileHandle.get() == INVALID_HANDLE_VALUE) return ErrorCodeToFileOperationResult(GetLastError());
+        if (fileHandle.get() == INVALID_HANDLE_VALUE) HandleWin32FileError(GetLastError(), "Could not get file metadata", filePath);
 
         LARGE_INTEGER memorySize = { };
-        if (GetFileSizeEx(fileHandle.get(), &memorySize) == 0) return ErrorCodeToFileOperationResult(GetLastError());
+        GetFileSizeEx(fileHandle.get(), &memorySize);
 
         FILETIME creationFileTime = { };
         FILETIME lastWriteFileTime = { };
-        if (GetFileTime(fileHandle.get(), &creationFileTime, nullptr, &lastWriteFileTime) == 0) return ErrorCodeToFileOperationResult(GetLastError());
+        GetFileTime(fileHandle.get(), &creationFileTime, nullptr, &lastWriteFileTime);
 
-        if (FileTimeToLocalFileTime(&creationFileTime, &creationFileTime) == 0) return ErrorCodeToFileOperationResult(GetLastError());
-        if (FileTimeToLocalFileTime(&lastWriteFileTime, &lastWriteFileTime) == 0) return ErrorCodeToFileOperationResult(GetLastError());
+        FileTimeToLocalFileTime(&creationFileTime, &creationFileTime);
+        FileTimeToLocalFileTime(&lastWriteFileTime, &lastWriteFileTime);
 
         SYSTEMTIME creationSystemTime = { };
-        if (FileTimeToSystemTime(&creationFileTime, &creationSystemTime) == 0) return ErrorCodeToFileOperationResult(GetLastError());
+        FileTimeToSystemTime(&creationFileTime, &creationSystemTime);
 
         SYSTEMTIME lastWriteSystemTime = { };
-        if (FileTimeToSystemTime(&lastWriteFileTime, &lastWriteSystemTime) == 0) return ErrorCodeToFileOperationResult(GetLastError());
+        FileTimeToSystemTime(&lastWriteFileTime, &lastWriteSystemTime);
 
         const Date dateCreated = Date({
             .second = static_cast<uint8>(creationSystemTime.wSecond),
@@ -292,35 +252,34 @@ namespace Sierra
             .year = lastWriteSystemTime.wYear
         });
 
-        outMetadata = {
+        return
+        {
             .type = FilePathToFileType(filePath),
             .memorySize = static_cast<size>(memorySize.QuadPart),
             .dateCreated = dateCreated,
             .dateLastModified = dateLastModified
         };
-
-        return FileOperationResult::Success;
     }
 
-    FileOperationResult Win32FileManager::GetDirectoryMetadata(const std::filesystem::path& directoryPath, DirectoryMetadata& outMetadata) const
+    DirectoryMetadata Win32FileManager::GetDirectoryMetadata(const std::filesystem::path& directoryPath) const
     {
         const std::wstring path = directoryPath.wstring();
 
         const std::unique_ptr<std::remove_pointer_t<HANDLE>, std::function<void(HANDLE)>> directoryHandle = { CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_READ_ATTRIBUTES, nullptr), CloseHandle };
-        if (directoryHandle.get() == INVALID_HANDLE_VALUE) return ErrorCodeToFileOperationResult(GetLastError());
+        if (directoryHandle.get() == INVALID_HANDLE_VALUE)  HandleWin32FileError(GetLastError(), "Could not get directory metadata", directoryPath);
 
         FILETIME creationFileTime = { };
         FILETIME lastWriteFileTime = { };
-        if (GetFileTime(directoryHandle.get(), &creationFileTime, nullptr, &lastWriteFileTime) == 0) return ErrorCodeToFileOperationResult(GetLastError());
+        GetFileTime(directoryHandle.get(), &creationFileTime, nullptr, &lastWriteFileTime);
 
-        if (FileTimeToLocalFileTime(&creationFileTime, &creationFileTime) == 0) return ErrorCodeToFileOperationResult(GetLastError());
-        if (FileTimeToLocalFileTime(&lastWriteFileTime, &lastWriteFileTime) == 0) return ErrorCodeToFileOperationResult(GetLastError());
+        FileTimeToLocalFileTime(&creationFileTime, &creationFileTime);
+        FileTimeToLocalFileTime(&lastWriteFileTime, &lastWriteFileTime);
 
         SYSTEMTIME creationSystemTime = { };
-        if (FileTimeToSystemTime(&creationFileTime, &creationSystemTime) == 0) return ErrorCodeToFileOperationResult(GetLastError());
+        FileTimeToSystemTime(&creationFileTime, &creationSystemTime);
 
         SYSTEMTIME lastWriteSystemTime = { };
-        if (FileTimeToSystemTime(&lastWriteFileTime, &lastWriteSystemTime) == 0) return ErrorCodeToFileOperationResult(GetLastError());
+        FileTimeToSystemTime(&lastWriteFileTime, &lastWriteSystemTime);
 
         const Date dateCreated = Date({
             .second = static_cast<uint8>(creationSystemTime.wSecond),
@@ -359,58 +318,57 @@ namespace Sierra
             memorySize += fileMemorySize.QuadPart;
         }
 
-        outMetadata = {
+        return
+        {
             .fileCount = fileCount,
             .memorySize = memorySize,
             .dateCreated = dateCreated,
             .dateLastModified = dateLastModified
         };
-
-        return FileOperationResult::Success;
     };
 
-    std::filesystem::path Win32FileManager::GetApplicationDirectoryPath() const
+    std::filesystem::path Win32FileManager::GetApplicationDirectoryPath() const noexcept
     {
         return GetExecutableDirectoryPath();
     }
 
-    std::filesystem::path Win32FileManager::GetExecutableDirectoryPath() const
+    std::filesystem::path Win32FileManager::GetExecutableDirectoryPath() const noexcept
     {
         WCHAR path[MAX_PATH];
         const DWORD size = GetModuleFileNameW(nullptr, path, MAX_PATH);
         return std::filesystem::path(path, path + size).parent_path();
     }
 
-    std::filesystem::path Win32FileManager::GetResourcesDirectoryPath() const
+    std::filesystem::path Win32FileManager::GetResourcesDirectoryPath() const noexcept
     {
         return GetExecutableDirectoryPath() / "Resources";
     }
 
-    std::filesystem::path Win32FileManager::GetHomeDirectoryPath() const
+    std::filesystem::path Win32FileManager::GetHomeDirectoryPath() const noexcept
     {
         return GetUserDirectoryPath().parent_path();
     }
 
-    std::filesystem::path Win32FileManager::GetUserDirectoryPath() const
+    std::filesystem::path Win32FileManager::GetUserDirectoryPath() const noexcept
     {
         WCHAR path[MAX_PATH];
         const DWORD size = GetEnvironmentVariableW(L"USERPROFILE", path, MAX_PATH);
         return { path, path + size };
     }
 
-    std::filesystem::path Win32FileManager::GetTemporaryDirectoryPath() const
+    std::filesystem::path Win32FileManager::GetTemporaryDirectoryPath() const noexcept
     {
         WCHAR path[MAX_PATH];
         const DWORD size = GetTempPathW(MAX_PATH, path);
         return { path, path + size };
     }
 
-    std::filesystem::path Win32FileManager::GetCachesDirectoryPath() const
+    std::filesystem::path Win32FileManager::GetCachesDirectoryPath() const noexcept
     {
         return GetTemporaryDirectoryPath() / "Sierra Caches";
     }
 
-    std::filesystem::path Win32FileManager::GetDesktopDirectoryPath() const
+    std::filesystem::path Win32FileManager::GetDesktopDirectoryPath() const noexcept
     {
         WCHAR* path = nullptr;
         const HRESULT result = SHGetKnownFolderPath(FOLDERID_Desktop, KF_FLAG_CREATE, nullptr, &path);
@@ -421,7 +379,7 @@ namespace Sierra
         return folderPath.get();
     }
 
-    std::filesystem::path Win32FileManager::GetDownloadsDirectoryPath() const
+    std::filesystem::path Win32FileManager::GetDownloadsDirectoryPath() const noexcept
     {
         WCHAR* path = nullptr;
         const HRESULT result = SHGetKnownFolderPath(FOLDERID_Downloads, KF_FLAG_CREATE, nullptr, &path);
@@ -432,7 +390,7 @@ namespace Sierra
         return folderPath.get();
     }
 
-    std::filesystem::path Win32FileManager::GetDocumentsDirectoryPath() const
+    std::filesystem::path Win32FileManager::GetDocumentsDirectoryPath() const noexcept
     {
         WCHAR* path = nullptr;
         const HRESULT result = SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_CREATE, nullptr, &path);
@@ -443,7 +401,7 @@ namespace Sierra
         return folderPath.get();
     }
 
-    std::filesystem::path Win32FileManager::GetPicturesDirectoryPath() const
+    std::filesystem::path Win32FileManager::GetPicturesDirectoryPath() const noexcept
     {
         WCHAR* path = nullptr;
         const HRESULT result = SHGetKnownFolderPath(FOLDERID_Pictures, KF_FLAG_CREATE, nullptr, &path);
@@ -454,7 +412,7 @@ namespace Sierra
         return folderPath.get();
     }
 
-    std::filesystem::path Win32FileManager::GetMusicDirectoryPath() const
+    std::filesystem::path Win32FileManager::GetMusicDirectoryPath() const noexcept
     {
         WCHAR* path = nullptr;
         const HRESULT result = SHGetKnownFolderPath(FOLDERID_Music, KF_FLAG_CREATE, nullptr, &path);
@@ -465,7 +423,7 @@ namespace Sierra
         return folderPath.get();
     }
 
-    std::filesystem::path Win32FileManager::GetVideosDirectoryPath() const
+    std::filesystem::path Win32FileManager::GetVideosDirectoryPath() const noexcept
     {
         WCHAR* path = nullptr;
         const HRESULT result = SHGetKnownFolderPath(FOLDERID_Videos, KF_FLAG_CREATE, nullptr, &path);

@@ -409,7 +409,7 @@ namespace Sierra
         SR_THROW_IF(currentGraphicsPipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw within command buffer [{0}], as no graphics pipeline has been begun", name)));
 
         const size vertexBufferOffset = initialVertexBufferOffset + (static_cast<uint64>(vertexOffset) * currentGraphicsPipeline->GetVertexStride());
-        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset > currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid vertex index in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), name), vertexBufferOffset, size(0), currentVertexBuffer->GetMemorySize()));
+        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset >= currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid vertex index in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), name), vertexBufferOffset, size(0), currentVertexBuffer->GetMemorySize()));
 
         if (vertexBufferOffset > 0) [currentRenderEncoder setVertexBufferOffset: vertexBufferOffset atIndex: MetalDevice::VERTEX_BUFFER_INDEX];
         [currentRenderEncoder drawPrimitives: MTLPrimitiveTypeTriangle vertexStart: 0 vertexCount: vertexCount];
@@ -422,10 +422,10 @@ namespace Sierra
         SR_THROW_IF(currentIndexBuffer == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw indexed within command buffer [{0}], as no index buffer has been bound", name)));
 
         const size indexBufferOffset = initialIndexBufferOffset + indexOffset * sizeof(uint32);
-        SR_THROW_IF(indexBufferOffset > currentIndexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid index offset in index buffer [{0}] within command buffer [{1}]", currentIndexBuffer->GetName(), name), indexBufferOffset, size(0), currentVertexBuffer->GetMemorySize()));
+        SR_THROW_IF(indexBufferOffset >= currentIndexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid index offset in index buffer [{0}] within command buffer [{1}]", currentIndexBuffer->GetName(), name), indexBufferOffset, size(0), currentVertexBuffer->GetMemorySize()));
 
         const size vertexBufferOffset = initialVertexBufferOffset + (static_cast<size>(vertexOffset) * currentGraphicsPipeline->GetVertexStride());
-        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset > currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw indexed from invalid vertex offset in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), name), vertexBufferOffset, size(0), currentVertexBuffer->GetMemorySize()));
+        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset >= currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw indexed from invalid vertex offset in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), name), vertexBufferOffset, size(0), currentVertexBuffer->GetMemorySize()));
 
         if (vertexBufferOffset > 0) [currentRenderEncoder setVertexBufferOffset: vertexBufferOffset atIndex: MetalDevice::VERTEX_BUFFER_INDEX];
         [currentRenderEncoder drawIndexedPrimitives: MTLPrimitiveTypeTriangle indexCount: indexCount indexType: MTLIndexTypeUInt32 indexBuffer: currentIndexBuffer->GetMetalBuffer() indexBufferOffset: indexBufferOffset instanceCount: 1];

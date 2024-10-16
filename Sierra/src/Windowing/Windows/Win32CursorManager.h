@@ -8,10 +8,10 @@
     #error "Including the Win32CursorManager.h file is only allowed in Windows builds!"
 #endif
 
-#include "../../CursorManager.h"
-
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+
+#include "../CursorManager.h"
 
 namespace Sierra
 {
@@ -30,9 +30,21 @@ namespace Sierra
         void SetCursorPosition(Vector2 position) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] bool IsCursorVisible() const override;
-        [[nodiscard]] Vector2 GetCursorPosition() const override;
-        [[nodiscard]] Vector2 GetCursorDelta() const override;
+        [[nodiscard]] bool IsCursorVisible() const noexcept override;
+        [[nodiscard]] Vector2 GetCursorPosition() const noexcept override;
+        [[nodiscard]] Vector2 GetCursorDelta() const noexcept override;
+        [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override;
+
+        /* --- COPY SEMANTICS --- */
+        Win32CursorManager(const Win32CursorManager&) = delete;
+        Win32CursorManager& operator=(const Win32CursorManager&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        Win32CursorManager(Win32CursorManager&&) = delete;
+        Win32CursorManager& operator=(Win32CursorManager&&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        ~Win32CursorManager() noexcept override = default;
 
     private:
         HWND window;
@@ -44,7 +56,6 @@ namespace Sierra
 
         friend class Win32Window;
         void Update();
-        void PostUpdate();
 
     };
 

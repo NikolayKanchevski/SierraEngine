@@ -29,7 +29,6 @@ namespace Sierra
         explicit CocoaCursorManager(const NSWindow* window);
 
         /* --- POLLING METHODS --- */
-        void Update();
         void RegisterCursorMove(Vector2 position) override;
 
         /* --- SETTER METHODS --- */
@@ -61,6 +60,9 @@ namespace Sierra
 
         bool cursorShown = true;
         bool justHidCursor = false;
+
+        friend class CocoaWindow;
+        void Update();
 
     };
 

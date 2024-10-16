@@ -4,7 +4,7 @@
 
 #include "VulkanImage.h"
 
-#include "VulkanResultHandler.h"
+#include "VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -275,7 +275,7 @@ namespace Sierra
 
         // Create and allocate image
         VkResult result = vmaCreateImage(device.GetVulkanMemoryAllocator(), &imageCreateInfo, &allocationCreateInfo, &image, &allocation, nullptr);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create image [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create image [{0}]", name));
 
         // Determine aspect flags
         if (createInfo.usage & ImageUsage::DepthAttachment) aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -305,7 +305,7 @@ namespace Sierra
 
         // Create the image view
         result = device.GetFunctionTable().vkCreateImageView(device.GetVulkanDevice(), &imageViewCreateInfo, nullptr, &imageView);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create image [{0}], as creation of image view failed", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create image [{0}], as creation of image view failed", name));
 
         // Set object names
         device.SetResourceName(image, VK_OBJECT_TYPE_IMAGE, name);
@@ -344,7 +344,7 @@ namespace Sierra
 
         // Create the image view
         const VkResult result = device.GetFunctionTable().vkCreateImageView(device.GetVulkanDevice(), &imageViewCreateInfo, nullptr, &imageView);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create swapchain image [{0}], as creation of image view failed", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create swapchain image [{0}], as creation of image view failed", name));
 
         // Set object names
         device.SetResourceName(image, VK_OBJECT_TYPE_IMAGE, name);

@@ -61,20 +61,20 @@ namespace Sierra
         [[nodiscard]] virtual bool FileExists(const std::filesystem::path& filePath) const noexcept = 0;
         [[nodiscard]] virtual std::unique_ptr<FileStream> OpenFileStream(const std::filesystem::path& filePath, FileStreamAccess access, FileStreamBuffering buffering) const = 0;
 
-        virtual void CreateFile(const std::filesystem::path& filePath) const = 0;
-        virtual void RenameFile(const std::filesystem::path& filePath, std::string_view name) const = 0;
-        virtual void CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const = 0;
-        virtual void MoveFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const = 0;
-        virtual void DeleteFile(const std::filesystem::path& filePath) const = 0;
+        virtual void CreateFile(const std::filesystem::path& filePath, FilePathConflictPolicy conflictPolicy) const;
+        virtual void RenameFile(const std::filesystem::path& filePath, std::string_view name) const;
+        virtual void CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const;
+        virtual void MoveFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const;
+        virtual void DeleteFile(const std::filesystem::path& filePath) const;
 
         [[nodiscard]] virtual bool DirectoryExists(const std::filesystem::path& directoryPath) const noexcept = 0;
-        virtual void EnumerateDirectoryFiles(const std::filesystem::path& directoryPath, const bool recursive, const FileEnumerationPredicate& Predicate) const = 0;
+        virtual void EnumerateDirectoryFiles(const std::filesystem::path& directoryPath, bool recursive, const FileEnumerationPredicate& Predicate) const;
 
-        virtual void CreateDirectory(const std::filesystem::path& directoryPath) const = 0;
-        virtual void RenameDirectory(const std::filesystem::path& directoryPath, std::string_view name) const = 0;
-        virtual void CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const = 0;
-        virtual void MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const = 0;
-        virtual void DeleteDirectory(const std::filesystem::path& directoryPath) const = 0;
+        virtual void CreateDirectory(const std::filesystem::path& directoryPath) const;
+        virtual void RenameDirectory(const std::filesystem::path& directoryPath, std::string_view name) const;
+        virtual void CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const;
+        virtual void MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const;
+        virtual void DeleteDirectory(const std::filesystem::path& directoryPath) const;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual FileMetadata GetFileMetadata(const std::filesystem::path& filePath) const = 0;
@@ -113,6 +113,7 @@ namespace Sierra
 
         /* --- POLLING METHODS --- */
         void ResolveFilePathConflict(const std::filesystem::path& sourceFilePath, std::filesystem::path& destinationFilePath, FilePathConflictPolicy conflictPolicy) const;
+        void ResolveDirectoryPathConflict(const std::filesystem::path& sourceDirectoryPath, std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const;
 
     };
 

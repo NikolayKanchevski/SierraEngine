@@ -17,14 +17,6 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    UnknownPathError::UnknownPathError(const std::string_view message, const std::filesystem::path& path) noexcept
-        : PathError(message, SR_FORMAT("Path [{0}] caused an unknown error", path.string()))
-    {
-
-    }
-
-    /* --- CONSTRUCTORS --- */
-
     PathInvalidError::PathInvalidError(const std::string_view message, const std::filesystem::path& path) noexcept
         : PathError(message, SR_FORMAT("Invalid path [{0}]", path.string()))
     {

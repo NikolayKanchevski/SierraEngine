@@ -19,7 +19,7 @@
 #endif
 
 #include "VulkanCommandBuffer.h"
-#include "VulkanResultHandler.h"
+#include "VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -39,6 +39,8 @@ namespace Sierra
 
     void VulkanSwapchain::AcquireNextImage()
     {
+        SR_THROW_IF(window.IsClosed(), InvalidOperationError(SR_FORMAT("Cannot acquire next image of swapchain [{0}], as its corresponding window [{1}] has been closed", name, window.GetTitle())));
+
         // Acquire next image
         VkResult result = device.GetFunctionTable().vkAcquireNextImageKHR(device.GetVulkanDevice(), swapchain, std::numeric_limits<uint64>::max(), isImageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &currentImage);
 
@@ -49,7 +51,7 @@ namespace Sierra
 
             // Try to re-acquire next image
             result = device.GetFunctionTable().vkAcquireNextImageKHR(device.GetVulkanDevice(), swapchain, std::numeric_limits<uint64>::max(), isImageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &currentImage);
-            if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not acquire image [{0}] of swapchain [{1}]", currentImage, name));
+            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not acquire image [{0}] of swapchain [{1}]", currentImage, name));
         }
 
         // Set up submit info
@@ -64,13 +66,15 @@ namespace Sierra
 
         // Wait until swapchain image has been acquired and is ready to be worked on
         result = device.GetFunctionTable().vkQueueSubmit(presentationQueue, 1, &submitInfo, VK_NULL_HANDLE);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not submit wait for swap-out of image [{0}] of swapchain [{1}] to device [{2}]", currentImage, name, device.GetName()));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not submit wait for swap-out of image [{0}] of swapchain [{1}] to device [{2}]", currentImage, name, device.GetName()));
     }
 
     void VulkanSwapchain::Present(CommandBuffer& commandBuffer)
     {
         SR_THROW_IF(commandBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot present swapchain [{0}] using command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", name, commandBuffer.GetName())));
         const VulkanCommandBuffer& vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(commandBuffer);
+
+        SR_THROW_IF(window.IsClosed(), InvalidOperationError(SR_FORMAT("Cannot present swapchain [{0}], as its corresponding window [{1}] has been closed", name, window.GetTitle())));
 
         const uint64 waitValue = vulkanCommandBuffer.GetCompletionSemaphoreSignalValue();
         constexpr uint64 BINARY_SEMAPHORE_SIGNAL_VALUE = 1; // Simply using 1, as we are signalling a binary semaphore
@@ -104,7 +108,7 @@ namespace Sierra
 
         // Wait for timeline semaphore to signal, and signal the binary one as well, as VkPresentInfoKHR forbids passing timeline one to it
         VkResult result = device.GetFunctionTable().vkQueueSubmit(presentationQueue, 1, &submitInfo, VK_NULL_HANDLE);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not wait for timeline semaphore on swapchain [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not wait for timeline semaphore on swapchain [{0}]", name));
 
         if (presentationQueueFamily != vulkanCommandBuffer.GetQueueFamily())
         {
@@ -154,21 +158,6 @@ namespace Sierra
 
         // Increment currentFrame
         currentFrame = (currentFrame + 1) % concurrentFrameCount;
-    }
-
-    /* --- DESTRUCTOR --- */
-
-    VulkanSwapchain::~VulkanSwapchain() noexcept
-    {
-        device.GetFunctionTable().vkDestroySwapchainKHR(device.GetVulkanDevice(), swapchain, nullptr);
-
-        for (size i = 0; i < concurrentFrameCount; i++)
-        {
-            device.GetFunctionTable().vkDestroySemaphore(device.GetVulkanDevice(), isImageAcquiredSemaphores[i], nullptr);
-            device.GetFunctionTable().vkDestroySemaphore(device.GetVulkanDevice(), isPresentationCommandBufferFreeSemaphores[i], nullptr);
-        }
-
-        context.GetFunctionTable().vkDestroySurfaceKHR(context.GetVulkanInstance(), surface, nullptr);
     }
 
     /* --- PRIVATE METHODS --- */
@@ -297,7 +286,7 @@ namespace Sierra
 
         // Create swapchain
         const VkResult result = device.GetFunctionTable().vkCreateSwapchainKHR(device.GetVulkanDevice(), &swapchainCreateInfo, nullptr, &swapchain);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create swapchain [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create swapchain [{0}]", name));
 
         // Set object name
         device.SetResourceName(swapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, name);
@@ -346,11 +335,11 @@ namespace Sierra
         for (size i = 0; i < concurrentFrameCount; i++)
         {
             result = device.GetFunctionTable().vkCreateSemaphore(device.GetVulkanDevice(), &semaphoreCreateInfo, nullptr, &isImageAcquiredSemaphores[i]);
-            if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Cannot create swapchain [{0}], as creation of semaphore indicating whether corresponding swapchain image is ready to be used failed", name));
+            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create swapchain [{0}], as creation of semaphore indicating whether corresponding swapchain image is ready to be used failed", name));
             device.SetResourceName(isImageAcquiredSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, SR_FORMAT("Image free semaphore [{0}] of swapchain [{1}]", i, name));
 
             result = device.GetFunctionTable().vkCreateSemaphore(device.GetVulkanDevice(), &semaphoreCreateInfo, nullptr, &isPresentationCommandBufferFreeSemaphores[i]);
-            if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Cannot create swapchain [{0}], as creation of semaphore indicating whether drawing command buffer has finished failed", name));
+            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create swapchain [{0}], as creation of semaphore indicating whether drawing command buffer has finished failed", name));
             device.SetResourceName(isPresentationCommandBufferFreeSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, SR_FORMAT("Presentation command buffer ready semaphore [{0}] of swapchain [{1}]", i, name));
         }
     }
@@ -369,6 +358,22 @@ namespace Sierra
         currentFrame = 0;
 
         if (const Vector2UInt newSize = { swapchainImages[0]->GetWidth(), swapchainImages[0]->GetHeight() }; lastSize != newSize) GetSwapchainResizeDispatcher().DispatchEvent(newSize.x, newSize.y, GetScaling());
+    }
+
+    /* --- DESTRUCTOR --- */
+
+    VulkanSwapchain::~VulkanSwapchain() noexcept
+    {
+        device.GetFunctionTable().vkQueueWaitIdle(presentationQueue);
+        device.GetFunctionTable().vkDestroySwapchainKHR(device.GetVulkanDevice(), swapchain, nullptr);
+
+        for (size i = 0; i < concurrentFrameCount; i++)
+        {
+            device.GetFunctionTable().vkDestroySemaphore(device.GetVulkanDevice(), isImageAcquiredSemaphores[i], nullptr);
+            device.GetFunctionTable().vkDestroySemaphore(device.GetVulkanDevice(), isPresentationCommandBufferFreeSemaphores[i], nullptr);
+        }
+
+        context.GetFunctionTable().vkDestroySurfaceKHR(context.GetVulkanInstance(), surface, nullptr);
     }
 
 }

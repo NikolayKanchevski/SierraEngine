@@ -222,10 +222,6 @@ namespace SierraEngine
         {
             ViewportPanel::Draw(*viewport.image);
         }
-
-        ImGui::Begin("Test");
-        ImGui::Image(10, { 540, 540 });
-        ImGui::End();
     }
 
     void EditorRenderer::Resize(const uint32 width, const uint32 height)

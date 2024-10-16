@@ -6,7 +6,7 @@
 #include "VulkanContext.h"
 
 #include "VulkanDevice.h"
-#include "VulkanResultHandler.h"
+#include "VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -336,13 +336,13 @@ namespace Sierra
 
         // Create instance
         VkResult result = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create rendering context [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create rendering context [{0}]", name));
 
         // Save loaded extensions
         loadedExtensions.resize(extensionCount);
         for (size i = 0; i < extensionCount; i++)
         {
-            loadedExtensions[i] = std::hash<const char*>{}(extensions[i]);
+            loadedExtensions[i] = std::hash<std::string_view>{}(extensions[i]);
         }
 
         #pragma region Function Pointers
@@ -571,7 +571,7 @@ namespace Sierra
         uint32 physicalDeviceCount = 0;
         VkResult result = functionTable.vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
 
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Rendering context [{0}] could not create requested device", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Rendering context [{0}] could not create requested device", name));
         SR_THROW_IF(physicalDeviceCount <= 0, UnsupportedFeatureError(SR_FORMAT("Cannot create requested device, as rendering context [{0}] could not find any supported devices", name)));
 
         // Retrieve GPUs

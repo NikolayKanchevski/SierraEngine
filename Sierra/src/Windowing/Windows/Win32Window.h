@@ -9,10 +9,13 @@
     #error "Including the Win32Window.h file is only allowed in Windows builds!"
 #endif
 
-#include "../../Window.h"
-#include "Win32Context.h"
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
+#include "../Window.h"
 #include "Win32InputManager.h"
 #include "Win32CursorManager.h"
+#include "../../Platform/Windows/Win32Context.h"
 
 namespace Sierra
 {
@@ -21,7 +24,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Win32Window(Win32Context& win32Context, const WindowCreateInfo& createInfo);
+        explicit Win32Window(const Win32Context& win32Context, const WindowCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         void Update() override;
@@ -39,35 +42,42 @@ namespace Sierra
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetTitle() const override;
-        [[nodiscard]] Vector2Int GetPosition() const override;
-        [[nodiscard]] uint32 GetWidth() const override;
-        [[nodiscard]] uint32 GetHeight() const override;
-        [[nodiscard]] uint32 GetFramebufferWidth() const override;
-        [[nodiscard]] uint32 GetFramebufferHeight() const override;
-        [[nodiscard]] float32 GetOpacity() const override;
+        [[nodiscard]] std::string_view GetTitle() const noexcept override;
+        [[nodiscard]] Vector2Int GetPosition() const noexcept override;
+        [[nodiscard]] uint32 GetWidth() const noexcept override;
+        [[nodiscard]] uint32 GetHeight() const noexcept override;
+        [[nodiscard]] uint32 GetFramebufferWidth() const noexcept override;
+        [[nodiscard]] uint32 GetFramebufferHeight() const noexcept override;
+        [[nodiscard]] float32 GetOpacity() const noexcept override;
 
-        [[nodiscard]] bool IsClosed() const override;
-        [[nodiscard]] bool IsMinimized() const override;
-        [[nodiscard]] bool IsMaximized() const override;
-        [[nodiscard]] bool IsFocused() const override;
-        [[nodiscard]] bool IsHidden() const override;
+        [[nodiscard]] bool IsClosed() const noexcept override;
+        [[nodiscard]] bool IsMinimized() const noexcept override;
+        [[nodiscard]] bool IsMaximized() const noexcept override;
+        [[nodiscard]] bool IsFocused() const noexcept override;
+        [[nodiscard]] bool IsHidden() const noexcept override;
 
-        [[nodiscard]] Screen& GetScreen() override;
-        [[nodiscard]] InputManager* GetInputManager() override;
-        [[nodiscard]] CursorManager* GetCursorManager() override;
-        [[nodiscard]] TouchManager* GetTouchManager() override;
-        [[nodiscard]] PlatformAPI GetAPI() const override;
+        [[nodiscard]] InputManager* GetInputManager() noexcept override;
+        [[nodiscard]] CursorManager* GetCursorManager() noexcept override;
+        [[nodiscard]] TouchManager* GetTouchManager() noexcept override;
+
+        [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override;
 
         [[nodiscard]] HWND GetHwnd() const { return window; }
         [[nodiscard]] HINSTANCE GetHInstance() const { return win32Context.GetHInstance(); }
 
+        /* --- MOVE SEMANTICS --- */
+        Win32Window(Win32Window&&) noexcept = delete;
+        Win32Window& operator=(Win32Window&&) noexcept = delete;
+
+        /* --- COPY SEMANTICS --- */
+        Win32Window(const Win32Window&) = delete;
+        Win32Window& operator=(const Win32Window&) = delete;
+
         /* --- DESTRUCTOR --- */
-        ~Win32Window() override;
+        ~Win32Window() noexcept override;
 
     private:
-        Win32Context& win32Context;
-
+        const Win32Context& win32Context;
         HWND window;
 
         Win32InputManager inputManager;

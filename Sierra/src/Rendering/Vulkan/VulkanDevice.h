@@ -851,7 +851,7 @@ namespace Sierra
         [[nodiscard]] bool IsSamplerAnisotropySupported(SamplerAnisotropy anisotropy) const noexcept override;
 
         [[nodiscard]] const VulkanDeviceFunctionTable& GetFunctionTable() const noexcept { return functionTable; }
-        [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const noexcept { return std::ranges::find(loadedExtensions, Hash64(std::hash<const char*>{}(extensionName.data()))) != loadedExtensions.end(); }
+        [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const noexcept { return std::ranges::find(loadedExtensions, Hash64(std::hash<std::string_view>{}(extensionName.data()))) != loadedExtensions.end(); }
 
         [[nodiscard]] VkPhysicalDevice GetVulkanPhysicalDevice() const noexcept { return physicalDevice; }
         [[nodiscard]] VkDevice GetVulkanDevice() const noexcept { return device; }

@@ -42,7 +42,7 @@ namespace Sierra
         [[nodiscard]] bool FileExists(const std::filesystem::path& filePath) const noexcept override;
         [[nodiscard]] std::unique_ptr<FileStream> OpenFileStream(const std::filesystem::path& filePath, FileStreamAccess access, FileStreamBuffering buffering) const override;
 
-        void CreateFile(const std::filesystem::path& filePath) const override;
+        void CreateFile(const std::filesystem::path& filePath, FilePathConflictPolicy conflictPolicy) const override;
         void RenameFile(const std::filesystem::path& filePath, std::string_view name) const override;
         void CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const override;
         void MoveFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const override;
@@ -76,6 +76,14 @@ namespace Sierra
         [[nodiscard]] std::filesystem::path GetPicturesDirectoryPath() const noexcept override;
         [[nodiscard]] std::filesystem::path GetMusicDirectoryPath() const noexcept override;
         [[nodiscard]] std::filesystem::path GetVideosDirectoryPath() const noexcept override;
+
+        /* --- COPY SEMANTICS --- */
+        FoundationFileManager(const FoundationFileManager&) = delete;
+        FoundationFileManager& operator=(const FoundationFileManager&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        FoundationFileManager(FoundationFileManager&&) = delete;
+        FoundationFileManager& operator=(FoundationFileManager&&) = delete;
 
         /* --- DESTRUCTOR --- */
         ~FoundationFileManager() noexcept override = default;

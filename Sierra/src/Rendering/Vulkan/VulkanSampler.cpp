@@ -4,7 +4,7 @@
 
 #include "VulkanSampler.h"
 
-#include "VulkanResultHandler.h"
+#include "VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -118,7 +118,7 @@ namespace Sierra
 
         // Create sampler
         const VkResult result = device.GetFunctionTable().vkCreateSampler(device.GetVulkanDevice(), &samplerCreateInfo, nullptr, &sampler);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create sampler [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create sampler [{0}]", name));
 
         // Assign name
         device.SetResourceName(sampler, VK_OBJECT_TYPE_SAMPLER, name);

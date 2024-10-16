@@ -7,7 +7,7 @@
 #include "VulkanBuffer.h"
 #include "VulkanImage.h"
 #include "VulkanSampler.h"
-#include "VulkanResultHandler.h"
+#include "VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -60,7 +60,7 @@ namespace Sierra
 
         // Create descriptor pool
         VkResult result = device.GetFunctionTable().vkCreateDescriptorPool(device.GetVulkanDevice(), &descriptorPoolCreateInfo, nullptr, &descriptorPool);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create resource table [{0}], as creation of descriptor pool failed", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create resource table [{0}], as creation of descriptor pool failed", name));
         device.SetResourceName(descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, SR_FORMAT("Descriptor pool of resource table [{0}]", name));
 
         // Set up set allocate info
@@ -75,7 +75,7 @@ namespace Sierra
 
         // Allocate descriptor set
         result = device.GetFunctionTable().vkAllocateDescriptorSets(device.GetVulkanDevice(), &descriptorSetAllocateInfo, &descriptorSet);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create resource table [{0}], as creation of descriptor set failed", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create resource table [{0}], as creation of descriptor set failed", name));
         device.SetResourceName(descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, SR_FORMAT("Descriptor set of resource table [{0}]", name));
     }
 

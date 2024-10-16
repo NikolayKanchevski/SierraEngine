@@ -4,6 +4,8 @@
 
 #include "FileManager.h"
 
+#include "PathErrors.h"
+
 namespace Sierra
 {
 
@@ -75,6 +77,64 @@ namespace Sierra
         return FileType::Unknown;
     }
 
+    /* --- POLLING METHODS --- */
+
+    void FileManager::CreateFile(const std::filesystem::path& filePath, const FilePathConflictPolicy conflictPolicy) const
+    {
+
+    }
+
+    void FileManager::RenameFile(const std::filesystem::path& filePath, std::string_view name) const
+    {
+        SR_THROW_IF(!FileExists(filePath), PathMissingError("Cannot rename file at path", filePath));
+    }
+
+    void FileManager::CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
+    {
+        SR_THROW_IF(!FileExists(sourceFilePath), PathMissingError("Cannot copy file", sourceFilePath));
+    }
+
+    void FileManager::MoveFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const
+    {
+        SR_THROW_IF(!FileExists(sourceFilePath), PathMissingError("Cannot move file", sourceFilePath));
+    }
+
+    void FileManager::DeleteFile(const std::filesystem::path& filePath) const
+    {
+        SR_THROW_IF(!FileExists(filePath), PathMissingError("Cannot delete file at path", filePath));
+    }
+
+    void FileManager::EnumerateDirectoryFiles(const std::filesystem::path& directoryPath, const bool recursive, const FileEnumerationPredicate& Predicate) const
+    {
+        SR_THROW_IF(!DirectoryExists(directoryPath), PathMissingError("Cannot enumerate files in directory", directoryPath));
+    }
+
+    void FileManager::CreateDirectory(const std::filesystem::path& directoryPath) const
+    {
+
+    }
+
+    void FileManager::RenameDirectory(const std::filesystem::path& directoryPath, std::string_view name) const
+    {
+        SR_THROW_IF(!DirectoryExists(directoryPath), PathMissingError("Cannot rename directory at path", directoryPath));
+    }
+
+    void FileManager::CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const
+    {
+        SR_THROW_IF(!DirectoryExists(sourceDirectoryPath), PathMissingError("Cannot copy directory", sourceDirectoryPath));
+    }
+
+    void FileManager::MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const
+    {
+        SR_THROW_IF(!DirectoryExists(sourceDirectoryPath), PathMissingError("Cannot move directory", sourceDirectoryPath));
+    }
+
+    void FileManager::DeleteDirectory(const std::filesystem::path& directoryPath) const
+    {
+        SR_THROW_IF(!DirectoryExists(directoryPath), PathMissingError("Cannot delete directory at path", directoryPath));
+    }
+
+
     /* --- PROTECTED METHODS --- */
 
     void FileManager::ResolveFilePathConflict(const std::filesystem::path& sourceFilePath, std::filesystem::path& destinationFilePath, const FilePathConflictPolicy conflictPolicy) const
@@ -100,6 +160,35 @@ namespace Sierra
                         destinationFilePath.replace_filename(SR_FORMAT("{0}_{1}{2}", sourceFilePath.stem().string(), copyIndex, sourceFilePath.extension().string()));
                         copyIndex++;
                     } while (FileExists(destinationFilePath));
+                    break;
+                }
+            }
+        }
+    }
+
+    void FileManager::ResolveDirectoryPathConflict(const std::filesystem::path& sourceDirectoryPath, std::filesystem::path& destinationDirectoryPath, Sierra::FilePathConflictPolicy conflictPolicy) const
+    {
+        if (DirectoryExists(destinationDirectoryPath))
+        {
+            switch (conflictPolicy)
+            {
+                case FilePathConflictPolicy::Overwrite:
+                {
+                    DeleteFile(destinationDirectoryPath);
+                    break;
+                }
+                case FilePathConflictPolicy::KeepExisting:
+                {
+                    return;
+                }
+                case FilePathConflictPolicy::KeepBoth:
+                {
+                    uint32 copyIndex = 0;
+                    do
+                    {
+                        destinationDirectoryPath.replace_filename(SR_FORMAT("{0}_{1}", sourceDirectoryPath.stem().string(), copyIndex));
+                        copyIndex++;
+                    } while (DirectoryExists(destinationDirectoryPath));
                     break;
                 }
             }

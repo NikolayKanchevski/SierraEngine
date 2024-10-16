@@ -61,7 +61,7 @@
     #endif
 #pragma endregion
 
-#include "Win32Screen.h"
+#include "../../Windowing/Windows/Win32Screen.h"
 
 namespace Sierra
 {
@@ -81,19 +81,16 @@ namespace Sierra
         [[nodiscard]] HWND CreateWindow(std::string_view title, UINT width, UINT height, DWORD style, WNDPROC windowProc) const;
         void DestroyWindow(HWND window) const;
 
-        [[nodiscard]] bool EventQueueEmpty(HWND window) const;
-        MSG PollNextEvent(HWND window) const;
-        MSG PeekNextEvent(HWND window) const;
-        [[nodiscard]] bool IsEventFiltered(HWND, UINT message, WPARAM wParam, LPARAM);
-
         void ReloadScreens();
-        void AdjustWindowRectForDPI(HWND window, RECT& rect) const;
+        void AdjustWindowRectForDPI(HWND window, RECT& rect) const noexcept;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] HINSTANCE GetHInstance() const { return hInstance; }
+        [[nodiscard]] HINSTANCE GetHInstance() const noexcept { return hInstance; }
+        [[nodiscard]] bool IsWindowsVersionOrGreater(DWORD major, DWORD minor, WORD servicePack) const noexcept;
 
-        [[nodiscard]] Win32Screen& GetPrimaryScreen();
+        [[nodiscard]] Win32Screen& GetPrimaryScreen() noexcept { return screens[0]; }
         [[nodiscard]] Win32Screen& GetWindowScreen(HWND window);
+        [[nodiscard]] std::span<Win32Screen> GetScreens() noexcept { return screens; }
 
         /* --- COPY SEMANTICS --- */
         Win32Context(const Win32Context&) = delete;
@@ -104,7 +101,7 @@ namespace Sierra
         Win32Context& operator=(Win32Context&&) = default;
 
         /* --- DESTRUCTOR --- */
-        ~Win32Context();
+        ~Win32Context() noexcept;
 
     private:
         HINSTANCE hInstance;
@@ -113,7 +110,9 @@ namespace Sierra
         HANDLE process;
         HICON processIcon;
 
-        [[nodiscard]] bool IsWindowsVersionOrGreater(DWORD major, DWORD minor, WORD servicePack) const;
+        friend class WindowsContext;
+        void Update();
+
         static BOOL CALLBACK EnumDisplayMonitorsProc(HMONITOR hMonitor, HDC hdc, LPRECT lrpcMonitor, LPARAM dwData);
 
     };

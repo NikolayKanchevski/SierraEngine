@@ -53,25 +53,26 @@ namespace Sierra
 
         // NOTE: From the tests I performed, no POSIX/fcntl/C-API buffering configuration causes any difference in speed at all on Apple platforms, which is why no accounting for buffering is done here
 
-        if (error != nil) HandleNSFileError(error, "Cannot open file stream", filePath);
+        if (error != nil) HandleNSFileError(error, "Could not open file stream", filePath);
         return std::make_unique<FoundationFileStream>(filePath, fileHandle);
     }
 
-    void FoundationFileManager::CreateFile(const std::filesystem::path& filePath) const
+    void FoundationFileManager::CreateFile(const std::filesystem::path& filePath, const FilePathConflictPolicy conflictPolicy) const
     {
-        if (!filePath.has_extension()) throw PathInvalidError("Cannot create file", filePath);
-        CreateDirectory(filePath.parent_path());
+        FileManager::CreateFile(filePath, conflictPolicy);
 
-        const std::string path = filePath.string();
-        if (![fileManager createFileAtPath: [NSString stringWithCString: path.c_str() length: path.size()] contents: [NSData data] attributes: nil])
-        {
-            throw UnknownFileError("Could not create file", filePath);
-        }
+        std::filesystem::path resolvedFilePath = filePath;
+        ResolveFilePathConflict(filePath, resolvedFilePath, conflictPolicy);
+        CreateDirectory(resolvedFilePath.parent_path());
+
+        const std::string path = resolvedFilePath.string();
+        BOOL success = [fileManager createFileAtPath: [NSString stringWithCString: path.c_str() length: path.size()] contents: [NSData data] attributes: nil];
+        SR_THROW_IF(!success, UnknownFileError("Could not create file", filePath));
     }
 
     void FoundationFileManager::RenameFile(const std::filesystem::path& filePath, const std::string_view name) const
     {
-        if (!filePath.has_extension()) throw PathInvalidError("Cannot rename file", filePath);
+        FileManager::RenameFile(filePath, name);
 
         NSURL* const sourceURL = PathToNSURL(filePath);
         NSURL* const destinationURL = PathToNSURL(filePath.parent_path() / name);
@@ -87,8 +88,7 @@ namespace Sierra
 
     void FoundationFileManager::CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
-        if (!sourceFilePath.has_extension()) throw PathInvalidError("Cannot copy file", sourceFilePath);
-        if (destinationDirectoryPath.has_extension()) throw PathInvalidError("Cannot copy file into directory", destinationDirectoryPath);
+        FileManager::CopyFile(sourceFilePath, destinationDirectoryPath, conflictPolicy);
 
         std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceFilePath.filename();
         ResolveFilePathConflict(sourceFilePath, destinationFilePath, conflictPolicy);
@@ -108,8 +108,7 @@ namespace Sierra
 
     void FoundationFileManager::MoveFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
-        if (!sourceFilePath.has_extension()) throw PathInvalidError("Cannot move file", sourceFilePath);
-        if (destinationDirectoryPath.has_extension()) throw PathInvalidError("Cannot move file into directory", destinationDirectoryPath);
+        FileManager::MoveFile(sourceFilePath, destinationDirectoryPath, conflictPolicy);
 
         std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceFilePath.filename();
         ResolveFilePathConflict(sourceFilePath, destinationFilePath, conflictPolicy);
@@ -129,7 +128,7 @@ namespace Sierra
 
     void FoundationFileManager::DeleteFile(const std::filesystem::path& filePath) const
     {
-        if (!filePath.has_extension()) throw PathInvalidError("Cannot delete file", filePath);
+        FileManager::DeleteFile(filePath);
         NSURL* const URL = PathToNSURL(filePath);
 
         NSError* error = nullptr;
@@ -147,8 +146,7 @@ namespace Sierra
 
     void FoundationFileManager::EnumerateDirectoryFiles(const std::filesystem::path& directoryPath, const bool recursive, const FileEnumerationPredicate& Predicate) const
     {
-        if (!DirectoryExists(directoryPath)) throw PathMissingError("Cannot enumerate files in directory", directoryPath);
-        if (directoryPath.has_extension()) throw PathInvalidError("Cannot enumerate files in directory", directoryPath);
+        FileManager::EnumerateDirectoryFiles(directoryPath, recursive, Predicate);
 
         if (!recursive)
         {
@@ -170,7 +168,7 @@ namespace Sierra
 
     void FoundationFileManager::CreateDirectory(const std::filesystem::path& directoryPath) const
     {
-        if (directoryPath.has_extension()) throw PathInvalidError("Cannot create directory", directoryPath);
+        FileManager::CreateDirectory(directoryPath);
         NSURL* const URL = PathToNSURL(directoryPath);
 
         NSError* error = nil;
@@ -182,7 +180,7 @@ namespace Sierra
 
     void FoundationFileManager::RenameDirectory(const std::filesystem::path& directoryPath, const std::string_view name) const
     {
-        if (directoryPath.has_extension()) throw PathInvalidError("Cannot rename directory", directoryPath);
+        FileManager::RenameDirectory(directoryPath, name);
 
         NSURL* const sourceURL = PathToNSURL(directoryPath);
         NSURL* const destinationURL = PathToNSURL(directoryPath.parent_path() / name);
@@ -198,11 +196,10 @@ namespace Sierra
 
     void FoundationFileManager::CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
-        if (sourceDirectoryPath.has_extension()) throw PathInvalidError("Cannot copy directory", sourceDirectoryPath);
-        if (destinationDirectoryPath.has_extension()) throw PathInvalidError("Cannot copy directory into directory", destinationDirectoryPath);
+        FileManager::CopyDirectory(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
 
         std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceDirectoryPath.filename();
-        ResolveFilePathConflict(sourceDirectoryPath, destinationFilePath, conflictPolicy);
+        ResolveDirectoryPathConflict(sourceDirectoryPath, destinationFilePath, conflictPolicy);
         CreateDirectory(destinationDirectoryPath);
 
         NSURL* const sourceURL = PathToNSURL(sourceDirectoryPath);
@@ -219,11 +216,10 @@ namespace Sierra
 
     void FoundationFileManager::MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
-        if (sourceDirectoryPath.has_extension()) throw PathInvalidError("Cannot move directory", sourceDirectoryPath);
-        if (destinationDirectoryPath.has_extension()) throw PathInvalidError("Cannot move directory into directory", destinationDirectoryPath);
+        FileManager::MoveDirectory(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
 
         std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceDirectoryPath.filename();
-        ResolveFilePathConflict(sourceDirectoryPath, destinationFilePath, conflictPolicy);
+        ResolveDirectoryPathConflict(sourceDirectoryPath, destinationFilePath, conflictPolicy);
         CreateDirectory(destinationDirectoryPath);
 
         NSURL* const sourceURL = PathToNSURL(sourceDirectoryPath);
@@ -254,7 +250,6 @@ namespace Sierra
 
     FileMetadata FoundationFileManager::GetFileMetadata(const std::filesystem::path& filePath) const
     {
-        if (!FileExists(filePath)) throw PathMissingError("Cannot retrieve metadata of file", filePath);
         const std::string path = filePath.string();
 
         NSError* error = nil;
@@ -280,7 +275,6 @@ namespace Sierra
 
     DirectoryMetadata FoundationFileManager::GetDirectoryMetadata(const std::filesystem::path& directoryPath) const
     {
-        if (!DirectoryExists(directoryPath)) throw PathMissingError("Cannot retrieve metadata of directory", directoryPath);
         const std::string path = directoryPath.string();
 
         NSError* error = nil;

@@ -8,7 +8,6 @@
     #error "Including the VulkanMetalSurface.h file is only allowed in Apple builds!"
 #endif
 
-#include "../VulkanResource.h"
 #include "../VulkanContext.h"
 #include "../../../Windowing/Window.h"
 

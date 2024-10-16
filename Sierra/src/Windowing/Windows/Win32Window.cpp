@@ -4,8 +4,6 @@
 
 #include "Win32Window.h"
 
-#include "WindowsContext.h"
-
 #include "Win32Screen.h"
 
 namespace Sierra
@@ -13,7 +11,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Win32Window::Win32Window(Win32Context& win32Context, const WindowCreateInfo& createInfo)
+    Win32Window::Win32Window(const Win32Context& win32Context, const WindowCreateInfo& createInfo)
         : Window(createInfo),
             win32Context(win32Context),
             window(win32Context.CreateWindow(createInfo.title, createInfo.width, createInfo.height, (!createInfo.hide ? WS_VISIBLE : 0) | WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | (createInfo.resizable ? (WS_SIZEBOX | WS_MAXIMIZEBOX) : 0) | (createInfo.maximize && createInfo.resizable ? WS_MAXIMIZE : 0), WindowProc)),
@@ -23,16 +21,30 @@ namespace Sierra
         // Manually maximize window if not resizable
         if (createInfo.maximize && !createInfo.resizable)
         {
-            // Get screen
-            const Win32Screen& screen = win32Context.GetWindowScreen(window);
+            // Allocate monitor info
+            MONITORINFOEX monitorInfo = { };
+            monitorInfo.cbSize = sizeof(MONITORINFOEX);
+
+            // Define monitor dimensions
+            Vector2UInt monitorWorkAreaOrigin = { 0, 0 };
+            Vector2UInt monitorWorkAreaSize = { 0, 0 };
+
+            // Get monitor info
+            HMONITOR monitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
+            if (GetMonitorInfo(monitor, &monitorInfo))
+            {
+                Vector2UInt size = { monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top };
+                monitorWorkAreaSize = { monitorInfo.rcWork.right - monitorInfo.rcWork.left, monitorInfo.rcWork.bottom - monitorInfo.rcWork.top };
+                monitorWorkAreaOrigin = { monitorInfo.rcMonitor.left + (size.x - monitorWorkAreaSize.x), monitorInfo.rcMonitor.top + (size.y - monitorWorkAreaSize.y) };
+            }
 
             // Construct rect
             RECT rect
             {
-                .left = screen.GetWorkAreaOrigin().x,
+                .left = static_cast<LONG>(monitorWorkAreaOrigin.x),
                 .top = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYBORDER),
-                .right = screen.GetWorkAreaOrigin().x + static_cast<LONG>(screen.GetWorkAreaWidth()),
-                .bottom = static_cast<LONG>(screen.GetWorkAreaHeight())
+                .right = static_cast<LONG>(monitorWorkAreaOrigin.x + static_cast<LONG>(monitorWorkAreaSize.x)),
+                .bottom = static_cast<LONG>(monitorWorkAreaSize.y)
             };
 
             // Resize
@@ -50,13 +62,6 @@ namespace Sierra
     {
         cursorManager.Update();
         inputManager.Update();
-
-        while (!win32Context.EventQueueEmpty(window))
-        {
-            win32Context.PollNextEvent(window);
-        }
-
-        cursorManager.PostUpdate();
         justBecameShown = false;
     }
 
@@ -144,12 +149,12 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    std::string_view Win32Window::GetTitle() const
+    std::string_view Win32Window::GetTitle() const noexcept
     {
         return title;
     }
 
-    Vector2Int Win32Window::GetPosition() const
+    Vector2Int Win32Window::GetPosition() const noexcept
     {
         // Get position
         POINT position = { 0, 0 };
@@ -157,35 +162,35 @@ namespace Sierra
         return { position.x, position.y - (GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYBORDER) * 2) };
     }
 
-    uint32 Win32Window::GetWidth() const
+    uint32 Win32Window::GetWidth() const noexcept
     {
         RECT rect = { };
         GetWindowRect(window, &rect);
         return rect.right - rect.left;
     }
 
-    uint32 Win32Window::GetHeight() const
+    uint32 Win32Window::GetHeight() const noexcept
     {
         RECT rect = { };
         GetWindowRect(window, &rect);
         return rect.bottom - rect.top;
     }
 
-    uint32 Win32Window::GetFramebufferWidth() const
+    uint32 Win32Window::GetFramebufferWidth() const noexcept
     {
         RECT rect = { };
         GetClientRect(window, &rect);
         return rect.right - rect.left;
     }
 
-    uint32 Win32Window::GetFramebufferHeight() const
+    uint32 Win32Window::GetFramebufferHeight() const noexcept
     {
         RECT rect = { };
         GetClientRect(window, &rect);
         return rect.bottom - rect.top;
     }
 
-    float32 Win32Window::GetOpacity() const
+    float32 Win32Window::GetOpacity() const noexcept
     {
         BYTE alpha;
         DWORD flags;
@@ -199,54 +204,49 @@ namespace Sierra
         return 1.0f;
     }
 
-    bool Win32Window::IsClosed() const
+    bool Win32Window::IsClosed() const noexcept
     {
         return closed;
     }
 
-    bool Win32Window::IsMinimized() const
+    bool Win32Window::IsMinimized() const noexcept
     {
         return IsIconic(window);
     }
 
-    bool Win32Window::IsMaximized() const
+    bool Win32Window::IsMaximized() const noexcept
     {
         return IsZoomed(window);
     }
 
-    bool Win32Window::IsFocused() const
+    bool Win32Window::IsFocused() const noexcept
     {
         return GetForegroundWindow() == window;
     }
 
-    bool Win32Window::IsHidden() const
+    bool Win32Window::IsHidden() const noexcept
     {
         return !IsWindowVisible(window);
     }
 
-    Screen& Win32Window::GetScreen()
-    {
-        return win32Context.GetWindowScreen(window);
-    }
-
-    InputManager* Win32Window::GetInputManager()
+    InputManager* Win32Window::GetInputManager() noexcept
     {
         return &inputManager;
     }
 
-    CursorManager* Win32Window::GetCursorManager()
+    CursorManager* Win32Window::GetCursorManager() noexcept
     {
         return &cursorManager;
     }
 
-    TouchManager* Win32Window::GetTouchManager()
+    TouchManager* Win32Window::GetTouchManager() noexcept
     {
         return nullptr;
     }
 
-    PlatformAPI Win32Window::GetAPI() const
+    WindowingBackendType Win32Window::GetBackendType() const noexcept
     {
-        return PlatformBackendTypeWin32;
+        return WindowingBackendType::Win32;
     }
 
     /* --- PRIVATE METHODS --- */
@@ -256,12 +256,6 @@ namespace Sierra
         Win32Window* window = reinterpret_cast<Win32Window*>(GetWindowLongPtr(callingWindow, GWLP_USERDATA));
         if (window != nullptr)
         {
-            if (window->win32Context.IsEventFiltered(callingWindow, message, wParam, lParam))
-            {
-                return 0;
-            }
-
-            if (window->win32Context.IsEventFiltered(callingWindow, message, wParam, lParam)) return 0;
             switch (message)
             {
                 case WM_SYSCOMMAND:
@@ -356,7 +350,7 @@ namespace Sierra
 
                     // Translate key
                     UINT keyCode = wParam != 0 ? static_cast<UINT>(wParam) : MapVirtualKeyW(static_cast<UINT>(wParam), MAPVK_VK_TO_VSC);
-                    Key key = Win32InputManager::VirtualKeyCodeToKey(keyCode);
+                    Key key = VirtualKeyCodeToKey(keyCode);
                     if (key == Key::Unknown) break;
 
                     // Distinguish double keys, as they share the same initial code
@@ -531,7 +525,7 @@ namespace Sierra
 
     /* --- DESTRUCTOR --- */
 
-    Win32Window::~Win32Window()
+    Win32Window::~Win32Window() noexcept
     {
         if (closed) return;
         WindowProc(window, WM_CLOSE, 0, 0);

@@ -62,58 +62,57 @@ namespace Sierra
         cursorPosition = position;
     }
 
+    /* --- GETTER METHODS --- */
+
+    bool Win32CursorManager::IsCursorVisible() const noexcept
+    {
+        return cursorShown;
+    }
+
+    Vector2 Win32CursorManager::GetCursorPosition() const noexcept
+    {
+        return cursorPosition;
+    }
+
+    Vector2 Win32CursorManager::GetCursorDelta() const noexcept
+    {
+        Vector2 delta = { cursorPosition.x - lastCursorPosition.x, cursorPosition.y - lastCursorPosition.y };
+        if (cursorShown) delta *= -1;
+        return delta;
+    }
+
+    WindowingBackendType Win32CursorManager::GetBackendType() const noexcept
+    {
+        return WindowingBackendType::Win32;
+    }
+
     /* --- PRIVATE METHODS --- */
 
     void Win32CursorManager::Update()
     {
+        if (GetForegroundWindow() != window) return;
         lastCursorPosition = cursorPosition;
-    }
-
-    void Win32CursorManager::PostUpdate()
-    {
-        if (cursorShown) return;
 
         // Get window dimensions
         RECT rect = { };
         GetClientRect(window, &rect);
 
-        // Manually re-center cursor after all window events have been polled (so none more would be handled and SetWindowCursorPosition() produces one)
-        const Vector2Int win32Center = Vector2Int(rect.left + rect.right, rect.top + rect.bottom) / 2;
-        if (static_cast<Vector2Int>(cursorPosition) != win32Center)
+        const Vector2 center = Vector2(rect.left + rect.right, rect.top + rect.bottom) / 2.0f;
+        if (cursorShown || cursorPosition == center) return;
+
+        // Move cursor to center
+        SetCursorPosition(center);
+
+        // Update mouse position
+        lastCursorPosition = cursorPosition;
+        cursorPosition = center;
+
+        // Reset mouse delta when re-centering for the first time
+        if (justHidCursor)
         {
-            // Move cursor to center
-            SetCursorPosition(win32Center);
-
-            // Update mouse position
             lastCursorPosition = cursorPosition;
-            cursorPosition = { win32Center.x, win32Center.y };
-
-            // Reset mouse delta when re-centering for the first time
-            if (justHidCursor)
-            {
-                lastCursorPosition = cursorPosition;
-                justHidCursor = false;
-            }
+            justHidCursor = false;
         }
-    }
-
-    /* --- GETTER METHODS --- */
-
-    bool Win32CursorManager::IsCursorVisible() const
-    {
-        return cursorShown;
-    }
-
-    Vector2 Win32CursorManager::GetCursorPosition() const
-    {
-        return cursorPosition;
-    }
-
-    Vector2 Win32CursorManager::GetCursorDelta() const
-    {
-        Vector2 delta = { cursorPosition.x - lastCursorPosition.x, cursorPosition.y - lastCursorPosition.y };
-        if (cursorShown) delta *= -1;
-        return delta;
     }
 
 }

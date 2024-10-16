@@ -61,7 +61,7 @@ namespace Sierra
 
     void CommandBuffer::PushConstants(const void* memory, const size offset, const size memorySize)
     {
-        SR_THROW_IF(memory == nullptr, InvalidValueError(SR_FORMAT("Cannot push null-pointed push constant range within command buffer [{0}]", GetName())));
+        SR_THROW_IF(memory == nullptr, InvalidValueError(SR_FORMAT("Cannot push push constant memory range [{0}-{1}] within command buffer [{2}], as specified memory pointer must not be null", GetName(), size(0), memorySize)));
         SR_THROW_IF(offset + memorySize > Device::MAX_PUSH_CONSTANT_SIZE, InvalidRangeError(SR_FORMAT("Cannot push invalid push constant range within command buffer [{0}]", GetName()), offset, memorySize, size(0), Device::MAX_PUSH_CONSTANT_SIZE));
     }
 
@@ -92,12 +92,12 @@ namespace Sierra
 
     void CommandBuffer::BindVertexBuffer(const Buffer& vertexBuffer, const size offset)
     {
-        SR_THROW_IF(offset > vertexBuffer.GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot bind invalid offset of vertex buffer [{0}] within command buffer [{1}]", vertexBuffer.GetName(), GetName()), offset, size(0), vertexBuffer.GetMemorySize()));
+        SR_THROW_IF(offset >= vertexBuffer.GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot bind invalid offset of vertex buffer [{0}] within command buffer [{1}]", vertexBuffer.GetName(), GetName()), offset, size(0), vertexBuffer.GetMemorySize()));
     }
 
     void CommandBuffer::BindIndexBuffer(const Buffer& indexBuffer, const size offset)
     {
-        SR_THROW_IF(offset > indexBuffer.GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot bind invalid offset of index buffer [{0}] within command buffer [{1}]", indexBuffer.GetName(), GetName()), offset, size(0), indexBuffer.GetMemorySize()));
+        SR_THROW_IF(offset >= indexBuffer.GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot bind invalid offset of index buffer [{0}] within command buffer [{1}]", indexBuffer.GetName(), GetName()), offset, size(0), indexBuffer.GetMemorySize()));
     }
 
     void CommandBuffer::SetScissor(const Vector4UInt scissor)

@@ -36,15 +36,12 @@ namespace SierraEngine
 
         std::unique_ptr<Sierra::Device> device = nullptr;
         std::unique_ptr<Sierra::Queue> queue = nullptr;
+        std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers = { };
 
         std::unique_ptr<Sierra::ResourceTable> resourceTable = nullptr;
-        std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers = { };
 
         Surface surface;
         std::unique_ptr<EditorRenderer> editorRenderer = nullptr;
-
-        std::vector<std::unique_ptr<Sierra::Image>> renderedImages;
-        TriangleRenderer triangleRenderer;
 
         Scene scene;
         Editor editor;

@@ -7,7 +7,7 @@
 #include "VulkanImage.h"
 #include "VulkanShader.h"
 #include "VulkanRenderPass.h"
-#include "VulkanResultHandler.h"
+#include "VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -276,7 +276,7 @@ namespace Sierra
 
         // Create pipeline
         const VkResult result = device.GetFunctionTable().vkCreateGraphicsPipelines(device.GetVulkanDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &pipeline);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create graphics pipeline [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create graphics pipeline [{0}]", name));
 
         // Set object name
         device.SetResourceName(pipeline, VK_OBJECT_TYPE_PIPELINE, name);

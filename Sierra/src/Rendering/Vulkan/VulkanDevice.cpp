@@ -24,7 +24,7 @@
 #include "VulkanComputePipeline.h"
 #include "VulkanResourceTable.h"
 #include "VulkanQueue.h"
-#include "VulkanResultHandler.h"
+#include "VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -72,7 +72,7 @@ namespace Sierra
 
         // Create device
         VkResult result = context.GetFunctionTable().vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create device [{0}]", createInfo.name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create device [{0}]", createInfo.name));
         SetResourceName(device, VK_OBJECT_TYPE_DEVICE, SR_FORMAT("Logical device of device [{0}]", name));
 
         // Retrieve hardware name
@@ -91,7 +91,7 @@ namespace Sierra
         loadedExtensions.reserve(extensions.size());
         for (const char* extension : extensions)
         {
-            loadedExtensions.emplace_back(std::hash<const char*>{}(extension));
+            loadedExtensions.emplace_back(std::hash<std::string_view>{}(extension));
         }
 
         #pragma region Function Pointers
@@ -925,7 +925,7 @@ namespace Sierra
 
         // Create allocator
         result = vmaCreateAllocator(&vmaCreteInfo, &vmaAllocator);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Cannot create Vulkan device [{0}], as creation of memory allocator failed", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create Vulkan device [{0}], as creation of memory allocator failed", name));
 
         // Create global timeline semaphore
         {
@@ -948,7 +948,7 @@ namespace Sierra
 
             // Create shared fence
             result = functionTable.vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &semaphore);
-            if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Cannot create Vulkan device [{0}], as creation of timeline semaphore failed", name));
+            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create Vulkan device [{0}], as creation of timeline semaphore failed", name));
             SetResourceName(semaphore, VK_OBJECT_TYPE_SEMAPHORE, SR_FORMAT("Semaphore of device [{0}]", name));
         }
 
@@ -1030,7 +1030,7 @@ namespace Sierra
 
             // Create bindless descriptor set layout
             result = functionTable.vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout);
-            if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Cannot create Vulkan device [{0}], as creation of descriptor set layout failed", name));
+            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create Vulkan device [{0}], as creation of descriptor set layout failed", name));
             SetResourceName(descriptorSetLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, SR_FORMAT("Descriptor set layout of device [{0}]", name));
         }
 
@@ -1062,7 +1062,7 @@ namespace Sierra
                 pipelineLayoutCreateInfo.pPushConstantRanges = reinterpret_cast<const VkPushConstantRange*>((i != 0) * std::uintptr_t(&pushConstantRange));
 
                 result = functionTable.vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayouts[i]);
-                if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Cannot create Vulkan device [{0}], as creation of pipeline layout [{1}] failed", name, i));
+                if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create Vulkan device [{0}], as creation of pipeline layout [{1}] failed", name, i));
                 SetResourceName(pipelineLayouts[i], VK_OBJECT_TYPE_PIPELINE_LAYOUT, SR_FORMAT("Pipeline layout [{0}] of device [{1}]", i, name));
             }
         }

@@ -5,7 +5,6 @@
 #include "Win32Context.h"
 
 #include <shellapi.h>
-#include "../../../Core/RNG.h"
 
 namespace Sierra
 {
@@ -102,71 +101,13 @@ namespace Sierra
         ::DestroyWindow(window);
     }
 
-    bool Win32Context::EventQueueEmpty(HWND window) const
-    {
-        MSG message = { };
-        return !PeekMessage(&message, window, 0, 0, PM_NOREMOVE);
-    }
-
-    MSG Win32Context::PollNextEvent(HWND window) const
-    {
-        MSG message = { };
-        if (PeekMessage(&message, window, 0, 0, PM_REMOVE))
-        {
-            TranslateMessage(&message);
-            DispatchMessage(&message);
-        }
-        return message;
-    }
-
-    MSG Win32Context::PeekNextEvent(HWND window) const
-    {
-        MSG message = { };
-        PeekMessage(&message, window, 0, 0, PM_NOREMOVE);
-        return message;
-    }
-
-    bool Win32Context::IsEventFiltered(HWND, const UINT message, const WPARAM wParam, const LPARAM)
-    {
-        switch (message)
-        {
-            case WM_DISPLAYCHANGE:
-            {
-                ReloadScreens();
-                return true;
-            }
-            case WM_SYSCOMMAND:
-            {
-                switch (wParam)
-                {
-                    case SC_SCREENSAVE:
-                    case SC_MONITORPOWER:
-                    {
-                        return true;
-                    }
-                    default:
-                    {
-                        break;
-                    }
-                }
-                break;
-            }
-            default:
-            {
-                break;
-            }
-        }
-
-        return false;
-    }
-
     void Win32Context::ReloadScreens()
     {
         screens.clear();
         EnumDisplayMonitors(nullptr, nullptr, EnumDisplayMonitorsProc, reinterpret_cast<LPARAM>(this));
     }
 
-    void Win32Context::AdjustWindowRectForDPI(HWND window, RECT& rect) const
+    void Win32Context::AdjustWindowRectForDPI(HWND window, RECT& rect) const noexcept
     {
         if (IsWindowsVersionOrGreater(10, 0, 14393)) // Windows 10 1607
         {
@@ -180,20 +121,7 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    Win32Screen& Win32Context::GetPrimaryScreen()
-    {
-        return screens[0];
-    }
-
-    Win32Screen& Win32Context::GetWindowScreen(HWND window)
-    {
-        HMONITOR windowMonitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
-        return *std::ranges::find_if(screens, [windowMonitor](const Win32Screen& item) { return item.GetHMonitor() == windowMonitor; });
-    }
-
-    /* --- PRIVATE METHODS --- */
-
-    bool Win32Context::IsWindowsVersionOrGreater(const DWORD major, const DWORD minor, const WORD servicePack) const
+    bool Win32Context::IsWindowsVersionOrGreater(const DWORD major, const DWORD minor, const WORD servicePack) const noexcept
     {
         OSVERSIONINFOEX versionInfo;
         ZeroMemory(&versionInfo, sizeof(OSVERSIONINFOEX));
@@ -211,6 +139,14 @@ namespace Sierra
         return VerifyVersionInfo(&versionInfo, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, conditionMask);
     }
 
+    Win32Screen& Win32Context::GetWindowScreen(HWND window)
+    {
+        HMONITOR windowMonitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
+        return *std::ranges::find_if(screens, [windowMonitor](const Win32Screen& item) { return item.GetHMonitor() == windowMonitor; });
+    }
+
+    /* --- PRIVATE METHODS --- */
+
     BOOL Win32Context::EnumDisplayMonitorsProc(HMONITOR hMonitor, HDC hdc, LPRECT lrpcMonitor, const LPARAM dwData)
     {
         // Get passed context
@@ -219,9 +155,44 @@ namespace Sierra
         return TRUE;
     }
 
+    /* --- PRIVATE METHODS --- */
+
+    void Win32Context::Update()
+    {
+        MSG message = { };
+        while (PeekMessage(&message, nullptr, 0, 0, PM_REMOVE))
+        {
+            switch (message.message)
+            {
+                case WM_DISPLAYCHANGE:
+                {
+                    ReloadScreens();
+                    continue;
+                }
+                case WM_SYSCOMMAND:
+                {
+                    switch (message.wParam)
+                    {
+                        case SC_SCREENSAVE:
+                        case SC_MONITORPOWER:       continue;
+                        default:                    break;
+                    }
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
+            }
+
+            TranslateMessage(&message);
+            DispatchMessage(&message);
+        }
+    }
+
     /* --- DESTRUCTOR --- */
 
-    Win32Context::~Win32Context()
+    Win32Context::~Win32Context() noexcept
     {
         CloseHandle(process);
     }

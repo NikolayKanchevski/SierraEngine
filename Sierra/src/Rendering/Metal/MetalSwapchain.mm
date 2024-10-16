@@ -86,6 +86,8 @@ namespace Sierra
 
     void MetalSwapchain::AcquireNextImage()
     {
+        SR_THROW_IF(window.IsClosed(), InvalidOperationError(SR_FORMAT("Cannot acquire next image of swapchain [{0}], as its corresponding window [{1}] has been closed", name, window.GetTitle())));
+
         // Wait until current frame has been presented
         dispatch_semaphore_wait(isFrameRenderedSemaphores, DISPATCH_TIME_FOREVER);
 
@@ -100,6 +102,8 @@ namespace Sierra
     {
         SR_THROW_IF(commandBuffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot present swapchain [{0}] using command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", name, commandBuffer.GetName())));
         const MetalCommandBuffer& metalCommandBuffer = static_cast<const MetalCommandBuffer&>(commandBuffer);
+
+        SR_THROW_IF(window.IsClosed(), InvalidOperationError(SR_FORMAT("Cannot present swapchain [{0}], as its corresponding window [{1}] has been closed", name, window.GetTitle())));
 
         // Record presentation commands to a new command buffer (width a dependency to passed one)
         const id<MTLCommandBuffer> presentationCommandBuffer = [metalCommandBuffer.GetQueue().GetMetalCommandQueue() commandBuffer];

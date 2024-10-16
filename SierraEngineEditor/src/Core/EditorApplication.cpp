@@ -6,25 +6,6 @@
 
 namespace SierraEngine
 {
-
-    // NOTE: This is only a test for a current bug on Apple platforms
-    auto CreateRenderedImages(const Sierra::Device& d, const Surface& s)
-    {
-        std::vector<std::unique_ptr<Sierra::Image>> v(s.GetSwapchain().GetConcurrentFrameCount());
-        for (size i = 0; i < v.size(); i++)
-        {
-            v[i] = d.CreateImage({
-                .name = SR_FORMAT("IMG [{0}]", i),
-                .width = 1080,
-                .height = 1080,
-                .format = Sierra::ImageFormat::R8G8B8A8_UNorm,
-                .usage = Sierra::ImageUsage::ColorAttachment | Sierra::ImageUsage::Sample | Sierra::ImageUsage::Filter,
-                .memoryLocation = Sierra::ImageMemoryLocation::GPU
-            });
-        }
-        return v;
-    }
-
     /* --- CONSTRUCTORS --- */
 
     EditorApplication::EditorApplication(const ApplicationCreateInfo& createInfo)
@@ -35,8 +16,6 @@ namespace SierraEngine
           queue(device->CreateQueue({ .name = "General Queue", .operations = Sierra::QueueOperations::All })),
           resourceTable(device->CreateResourceTable({ .name = "General Resource Table" })),
           surface({ .title = "Sierra Engine Editor", .platformContext = GetPlatformContext(), .device = *device }),
-          renderedImages(CreateRenderedImages(*device, surface)),
-          triangleRenderer({ .device = *device, .templateOutputImage = *renderedImages[0] }),
           scene({ .name = "Scene" }),
           editor({ .scene = scene }),
           assetManager({ .device = *device, .threadPool = threadPool })
@@ -69,11 +48,20 @@ namespace SierraEngine
     bool EditorApplication::Update()
     {
         Application::Update();
+
+        if (surface.GetWindow().IsClosed())
+        {
+            return true;
+        }
+
+        // Begin frame
         frameLimiter.BeginFrame();
 
+        // Retrieve current command buffer and wait until it is free
         Sierra::CommandBuffer& commandBuffer = *commandBuffers[surface.GetSwapchain().GetCurrentFrameIndex()];
         queue->WaitForCommandBuffer(commandBuffer);
 
+        // Update surface
         surface.Update();
         commandBuffer.Begin();
 
@@ -102,17 +90,9 @@ namespace SierraEngine
         editorRenderer->Update(editor, surface.GetWindow().GetInputManager(), surface.GetWindow().GetCursorManager(), surface.GetWindow().GetTouchManager());
 
         // Bind scene resources
+        commandBuffer.BindResourceTable(*resourceTable);
 //        commandBuffer.BindVertexBuffer(scene.GetArenaAllocator().GetVertexBuffer());
 //        commandBuffer.BindIndexBuffer(scene.GetArenaAllocator().GetIndexBuffer());
-
-        // Render triangle
-        const Sierra::Image& image = *renderedImages[surface.GetSwapchain().GetCurrentFrameIndex()];
-        commandBuffer.SynchronizeImageUsage(image, Sierra::ImageCommandUsage::None, Sierra::ImageCommandUsage::ColorWrite, 0, image.GetLevelCount(), 0, image.GetLayerCount());
-        triangleRenderer.Render(commandBuffer, image);
-        commandBuffer.SynchronizeImageUsage(image, Sierra::ImageCommandUsage::ColorWrite, Sierra::ImageCommandUsage::GraphicsRead, 0, image.GetLevelCount(), 0, image.GetLayerCount());
-
-        resourceTable->BindSampledImage(10, image);
-        commandBuffer.BindResourceTable(*resourceTable);
 
         // Render editor overlay
         commandBuffer.SynchronizeImageUsage(surface.GetSwapchain().GetCurrentImage(), Sierra::ImageCommandUsage::None, Sierra::ImageCommandUsage::ColorWrite, 0, surface.GetSwapchain().GetCurrentImage().GetLevelCount(), 0, surface.GetSwapchain().GetCurrentImage().GetLayerCount());
@@ -123,10 +103,11 @@ namespace SierraEngine
         commandBuffer.End();
         queue->SubmitCommandBuffer(commandBuffer);
 
+        // Present to window and end frame
         surface.Present(commandBuffer);
         frameLimiter.EndFrame();
 
-        return surface.GetWindow().IsClosed();
+        return false;
     }
 
     /* --- DESTRUCTOR --- */

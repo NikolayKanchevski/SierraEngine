@@ -135,11 +135,29 @@ namespace Sierra
         ~FileReadOnlyError() noexcept override = default;
     };
 
+    class SIERRA_API InvalidFileOffset final : public FileError
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        explicit InvalidFileOffset(std::string_view message, const std::filesystem::path& filePath, size offset, size fileSize) noexcept;
+
+        /* --- COPY SEMANTICS --- */
+        InvalidFileOffset(const InvalidFileOffset&) = delete;
+        InvalidFileOffset& operator=(const InvalidFileOffset&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        InvalidFileOffset(InvalidFileOffset&&) = delete;
+        InvalidFileOffset& operator=(InvalidFileOffset&&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        ~InvalidFileOffset() noexcept override = default;
+    };
+
     class SIERRA_API InvalidFileRange final : public FileError
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit InvalidFileRange(const std::string_view message, const std::filesystem::path& filePath, const size offset, const size memorySize, const size fileSize) noexcept;
+        explicit InvalidFileRange(std::string_view message, const std::filesystem::path& filePath, size offset, size memorySize, size fileSize) noexcept;
 
         /* --- COPY SEMANTICS --- */
         InvalidFileRange(const InvalidFileRange&) = delete;

@@ -6,7 +6,7 @@
 
 #include "VulkanShader.h"
 
-#include "VulkanResultHandler.h"
+#include "VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -40,7 +40,7 @@ namespace Sierra
 
         // Create pipeline
         const VkResult result = device.GetFunctionTable().vkCreateComputePipelines(device.GetVulkanDevice(), VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &pipeline);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create compute pipeline [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create compute pipeline [{0}]", name));
     }
 
     /* --- DESTRUCTOR --- */

@@ -59,6 +59,8 @@ if(Vulkan_LIBRARIES)
         VulkanContext.h
         VulkanDevice.cpp
         VulkanDevice.h
+        VulkanErrorHandler.cpp
+        VulkanErrorHandler.h
         VulkanGraphicsPipeline.cpp
         VulkanGraphicsPipeline.h
         VulkanImage.cpp
@@ -70,8 +72,6 @@ if(Vulkan_LIBRARIES)
         VulkanResource.h
         VulkanResourceTable.h
         VulkanResourceTable.cpp
-        VulkanResultHandler.h
-        VulkanResultHandler.cpp
         VulkanSampler.cpp
         VulkanSampler.h
         VulkanShader.cpp
@@ -97,5 +97,5 @@ if(Vulkan_LIBRARIES)
     target_link_libraries(Sierra PRIVATE VulkanMemoryAllocator)
     target_include_directories(Sierra SYSTEM PRIVATE ${VMA_DIRECTORY_PATH}/include/)
 else()
-    message(WARNING "[Sierra]: Vulkan is supported on the system and was requested to be built, but it could not be found! Did you install the Vulkan SDK from https://vulkan.lunarg.com/sdk/home#mac?")
+    message(WARNING "[Sierra]: Vulkan is supported on the system and was requested to be built, but it could not be found! Did you install the Vulkan SDK from https://vulkan.lunarg.com/sdk/home?")
 endif()

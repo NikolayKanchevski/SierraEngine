@@ -5,7 +5,7 @@
 #include "VulkanRenderPass.h"
 
 #include "VulkanImage.h"
-#include "VulkanResultHandler.h"
+#include "VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -267,7 +267,7 @@ namespace Sierra
 
         // Create render pass
         VkResult result = device.GetFunctionTable().vkCreateRenderPass(device.GetVulkanDevice(), &renderPassCreateInfo, nullptr, &renderPass);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create render pass [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create render pass [{0}]", name));
 
         // Set up framebuffer attachment create info
         const VkFramebufferAttachmentsCreateInfo framebufferAttachmentsCreateInfo
@@ -292,7 +292,7 @@ namespace Sierra
 
         // Create framebuffer
         result = device.GetFunctionTable().vkCreateFramebuffer(device.GetVulkanDevice(), &framebufferCreateInfo, nullptr, &framebuffer);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create render pass [{0}], as creation of framebuffer failed", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create render pass [{0}], as creation of framebuffer failed", name));
     }
 
     /* --- POLLING METHODS --- */
@@ -332,7 +332,7 @@ namespace Sierra
 
         // Recreate framebuffer
         const VkResult result = device.GetFunctionTable().vkCreateFramebuffer(device.GetVulkanDevice(), &framebufferCreateInfo, nullptr, &framebuffer);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not resize render pass [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not resize render pass [{0}]", name));
 
         // Set object names
         device.SetResourceName(renderPass, VK_OBJECT_TYPE_RENDER_PASS, name);

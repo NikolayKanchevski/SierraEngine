@@ -9,7 +9,7 @@
 #elif SR_PLATFORM_iOS
     #include "../../../Windowing/iOS/UIKitWindow.h"
 #endif
-#include "../VulkanResultHandler.h"
+#include "../VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -20,7 +20,7 @@ namespace Sierra
     {
         VkMetalSurfaceCreateInfoEXT surfaceCreateInfo = { .sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT };
         #if SR_PLATFORM_macOS
-            SR_THROW_IF(window.GetBackendType() != WindowingBackendType::Cocoa, UnexpectedTypeError(SR_FORMAT("Cannot create Metal Vulkan surface for window [{0}], as its platform backend differs from [PlatformBackendType::Cocoa]", window.GetTitle())));
+            SR_THROW_IF(window.GetBackendType() != WindowingBackendType::Cocoa, UnexpectedTypeError(SR_FORMAT("Cannot create Vulkan Metal surface for window [{0}], as its platform backend differs from [PlatformBackendType::Cocoa]", window.GetTitle())));
             const CocoaWindow& cocoaWindow = static_cast<const CocoaWindow&>(window);
             surfaceCreateInfo.pLayer = reinterpret_cast<CAMetalLayer*>(cocoaWindow.GetNSView().layer);
         #elif SR_PLATFORM_iOS
@@ -32,7 +32,7 @@ namespace Sierra
         // Create surface
         VkSurfaceKHR surface;
         const VkResult result = context.GetFunctionTable().vkCreateMetalSurfaceEXT(context.GetVulkanInstance(), &surfaceCreateInfo, nullptr, &surface);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create Vulkan Metal surface for window [{0}]", window.GetTitle()));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create Vulkan Metal surface for window [{0}]", window.GetTitle()));
 
         return surface;
     }

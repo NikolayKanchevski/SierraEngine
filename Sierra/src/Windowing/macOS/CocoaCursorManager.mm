@@ -17,29 +17,6 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void CocoaCursorManager::Update()
-    {
-        if (![window isKeyWindow]) return;
-        lastCursorPosition = cursorPosition;
-
-        const Vector2 center = Vector2(window.frame.size.width, window.frame.size.height) / 2.0f;
-        if (cursorShown || cursorPosition == center) return;
-
-        // Move cursor to center
-        SetCursorPosition(center);
-
-        // Update mouse position
-        lastCursorPosition = cursorPosition;
-        cursorPosition = center;
-
-        // Reset mouse delta when re-centering for the first time
-        if (justHidCursor)
-        {
-            lastCursorPosition = cursorPosition;
-            justHidCursor = false;
-        }
-    }
-
     void CocoaCursorManager::RegisterCursorMove(const Vector2 position)
     {
         cursorPosition = position;
@@ -89,6 +66,31 @@ namespace Sierra
     WindowingBackendType CocoaCursorManager::GetBackendType() const noexcept
     {
         return WindowingBackendType::Cocoa;
+    }
+
+    /* --- PRIVATE METHODS --- */
+
+    void CocoaCursorManager::Update()
+    {
+        if (![window isKeyWindow]) return;
+        lastCursorPosition = cursorPosition;
+
+        const Vector2 center = Vector2(window.frame.size.width, window.frame.size.height) / 2.0f;
+        if (cursorShown || cursorPosition == center) return;
+
+        // Move cursor to center
+        SetCursorPosition(center);
+
+        // Update mouse position
+        lastCursorPosition = cursorPosition;
+        cursorPosition = center;
+
+        // Reset mouse delta when re-centering for the first time
+        if (justHidCursor)
+        {
+            lastCursorPosition = cursorPosition;
+            justHidCursor = false;
+        }
     }
 
 }

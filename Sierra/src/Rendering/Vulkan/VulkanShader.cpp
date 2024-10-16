@@ -4,7 +4,7 @@
 
 #include "VulkanShader.h"
 
-#include "VulkanResultHandler.h"
+#include "VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -40,7 +40,7 @@ namespace Sierra
 
         // Create shader module
         const VkResult result = device.GetFunctionTable().vkCreateShaderModule(device.GetVulkanDevice(), &shaderModuleCreateInfo, nullptr, &shaderModule);
-        if (result != VK_SUCCESS) HandleVulkanResult(result, SR_FORMAT("Could not create shader [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create shader [{0}]", name));
 
         // Set object name
         device.SetResourceName(shaderModule, VK_OBJECT_TYPE_SHADER_MODULE, name);

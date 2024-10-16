@@ -19,10 +19,10 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void Buffer::Write(const void* memory, const size sourceOffset, const size offset, const size memorySize)
+    void Buffer::Write(const void* memory, const size sourceOffset, const size destinationOffset, const size memorySize)
     {
-        SR_THROW_IF(memory == nullptr, InvalidValueError(SR_FORMAT("Cannot write null-pointed memory range to buffer [{0}]", GetName())));
-        SR_THROW_IF(offset + memorySize > GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot write invalid memory range to buffer [{0}]", GetName()), offset, memorySize, size(0), GetMemorySize()));
+        SR_THROW_IF(memory == nullptr, InvalidValueError(SR_FORMAT("Cannot write memory range [{0}-{1}] to buffer [{1}], as specified memory pointer must not be null", destinationOffset, destinationOffset + memorySize, GetName())));
+        SR_THROW_IF(destinationOffset + memorySize > GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot write invalid memory range to buffer [{0}]", GetName()), destinationOffset, memorySize, size(0), GetMemorySize()));
     }
 
 }
