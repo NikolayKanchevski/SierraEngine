@@ -84,9 +84,10 @@ namespace Sierra
 
     }
 
-    void FileManager::RenameFile(const std::filesystem::path& filePath, std::string_view name) const
+    void FileManager::RenameFile(const std::filesystem::path& filePath, const std::string_view name) const
     {
         SR_THROW_IF(!FileExists(filePath), PathMissingError("Cannot rename file at path", filePath));
+        SR_THROW_IF(FileExists(filePath.parent_path() / name), PathAlreadyExistsError(SR_FORMAT("Cannot rename file to [{0}], as another file at the same location already exists", name), filePath.parent_path() / name));
     }
 
     void FileManager::CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
@@ -114,9 +115,10 @@ namespace Sierra
 
     }
 
-    void FileManager::RenameDirectory(const std::filesystem::path& directoryPath, std::string_view name) const
+    void FileManager::RenameDirectory(const std::filesystem::path& directoryPath, const std::string_view name) const
     {
         SR_THROW_IF(!DirectoryExists(directoryPath), PathMissingError("Cannot rename directory at path", directoryPath));
+        SR_THROW_IF(FileExists(directoryPath.parent_path() / name), PathAlreadyExistsError(SR_FORMAT("Cannot rename directory to [{0}], as another directory at the same location already exists", name), directoryPath.parent_path() / name));
     }
 
     void FileManager::CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const

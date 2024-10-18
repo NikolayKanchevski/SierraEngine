@@ -21,33 +21,16 @@ namespace Sierra
         // Manually maximize window if not resizable
         if (createInfo.maximize && !createInfo.resizable)
         {
-            // Allocate monitor info
-            MONITORINFOEX monitorInfo = { };
-            monitorInfo.cbSize = sizeof(MONITORINFOEX);
+            const Win32Screen& screen = win32Context.GetWindowScreen(window);
 
-            // Define monitor dimensions
-            Vector2UInt monitorWorkAreaOrigin = { 0, 0 };
-            Vector2UInt monitorWorkAreaSize = { 0, 0 };
-
-            // Get monitor info
-            HMONITOR monitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
-            if (GetMonitorInfo(monitor, &monitorInfo))
-            {
-                Vector2UInt size = { monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top };
-                monitorWorkAreaSize = { monitorInfo.rcWork.right - monitorInfo.rcWork.left, monitorInfo.rcWork.bottom - monitorInfo.rcWork.top };
-                monitorWorkAreaOrigin = { monitorInfo.rcMonitor.left + (size.x - monitorWorkAreaSize.x), monitorInfo.rcMonitor.top + (size.y - monitorWorkAreaSize.y) };
-            }
-
-            // Construct rect
             RECT rect
             {
-                .left = static_cast<LONG>(monitorWorkAreaOrigin.x),
+                .left = screen.GetWorkAreaOrigin().x,
                 .top = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYBORDER),
-                .right = static_cast<LONG>(monitorWorkAreaOrigin.x + static_cast<LONG>(monitorWorkAreaSize.x)),
-                .bottom = static_cast<LONG>(monitorWorkAreaSize.y)
+                .right = screen.GetWorkAreaOrigin().x + static_cast<LONG>(screen.GetWorkAreaWidth()),
+                .bottom = static_cast<LONG>(screen.GetWorkAreaHeight())
             };
 
-            // Resize
             win32Context.AdjustWindowRectForDPI(window, rect);
             SetWindowPos(window, nullptr, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SWP_NOACTIVATE | SWP_NOZORDER);
         }

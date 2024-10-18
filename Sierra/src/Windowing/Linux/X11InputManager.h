@@ -8,10 +8,9 @@
     #error "Including the X11InputManager.h file is only allowed in Linux builds!"
 #endif
 
-#include "../../InputManager.h"
+#include "../InputManager.h"
 
-#include <X11/Xlib.h>
-#include "X11Extensions.h"
+#include "../../Platform/Linux/X11Extensions.h"
 
 namespace Sierra
 {
@@ -20,19 +19,44 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit X11InputManager(const XkbExtension& xkbExtension, const InputManagerCreateInfo& createInfo);
+        explicit X11InputManager(const XkbExtension& xkbExtension);
+
+        /* --- POLLING METHODS --- */
+        void RegisterKeyPress(Key key) override;
+        void RegisterKeyRelease(Key key) override;
+
+        void RegisterMouseButtonPress(MouseButton mouseButton) override;
+        void RegisterMouseButtonRelease(MouseButton mouseButton) override;
+        void RegisterMouseScroll(Vector2 scroll) override;
 
         /* --- GETTER METHODS --- */
-        bool IsKeyPressed(Key key) const override;
-        bool IsKeyHeld(Key key) const override;
-        bool IsKeyReleased(Key key) const override;
-        bool IsKeyResting(Key key) const override;
+        [[nodiscard]] bool IsKeyPressed(Key key) const noexcept override;
+        [[nodiscard]] bool IsKeyHeld(Key key) const noexcept override;
+        [[nodiscard]] bool IsKeyReleased(Key key) const noexcept override;
+        [[nodiscard]] bool IsKeyResting(Key key) const noexcept override;
 
-        bool IsMouseButtonPressed(MouseButton mouseButton) const override;
-        bool IsMouseButtonHeld(MouseButton mouseButton) const override;
-        bool IsMouseButtonReleased(MouseButton mouseButton) const override;
-        bool IsMouseButtonResting(MouseButton mouseButton) const override;
-        Vector2 GetMouseScroll() const override;
+        [[nodiscard]] bool IsMouseButtonPressed(MouseButton mouseButton) const noexcept override;
+        [[nodiscard]] bool IsMouseButtonHeld(MouseButton mouseButton) const noexcept override;
+        [[nodiscard]] bool IsMouseButtonReleased(MouseButton mouseButton) const noexcept override;
+        [[nodiscard]] bool IsMouseButtonResting(MouseButton mouseButton) const noexcept override;
+        [[nodiscard]] Vector2 GetMouseScroll() const noexcept override;
+
+        [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override;
+
+        /* --- CONVERSIONS --- */
+        [[nodiscard]] Key XKeyCodeToKey(uint keyCode);
+        [[nodiscard]] MouseButton XButtonToMouseButton(uint button);
+
+        /* --- COPY SEMANTICS --- */
+        X11InputManager(const X11InputManager&) = delete;
+        X11InputManager& operator=(const X11InputManager&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        X11InputManager(X11InputManager&&) = delete;
+        X11InputManager& operator=(X11InputManager&&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        ~X11InputManager() noexcept override = default;
 
     private:
         const XkbExtension& xkbExtension;
@@ -47,10 +71,6 @@ namespace Sierra
 
         friend class X11Window;
         void Update();
-        void KeyPressEvent(const XEvent& event);
-        void KeyReleaseEvent(const XEvent& event);
-        void ButtonPressEvent(const XEvent& event);
-        void ButtonReleaseEvent(const XEvent& event);
 
     };
 

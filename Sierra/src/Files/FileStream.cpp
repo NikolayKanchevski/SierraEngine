@@ -30,7 +30,6 @@ namespace Sierra
     void FileStream::Write(const void* memory, const size sourceOffset, const size memorySize)
     {
         SR_THROW_IF(memory == nullptr, InvalidValueError(SR_FORMAT("Cannot write memory range [{0}-{1}] to file [{2}], as specified memory pointer must not be null", sourceOffset, sourceOffset + memorySize, GetFilePath().string())));
-        SR_THROW_IF(sourceOffset + memorySize > GetMemorySize(), InvalidFileRange("Cannot write invalid memory range to file", GetFilePath(), GetCurrentOffset(), memorySize, GetMemorySize()));
     }
 
     void FileStream::Write(const void* memory, const size sourceOffset, const size destinationOffset, const size memorySize)

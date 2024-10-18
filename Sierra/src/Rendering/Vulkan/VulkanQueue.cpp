@@ -86,7 +86,7 @@ namespace Sierra
         };
 
         VkCommandBuffer vkCommandBuffer = vulkanCommandBuffer.GetVulkanCommandBuffer();
-        constexpr VkPipelineStageFlags WAIT_STAGE = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        constexpr VkPipelineStageFlags WAIT_STAGE = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
         // Set up submit info
         VkSemaphore generalTimelineSemaphore = device.GetSemaphore();

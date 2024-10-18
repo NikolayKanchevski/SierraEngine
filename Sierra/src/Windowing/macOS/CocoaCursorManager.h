@@ -29,15 +29,15 @@ namespace Sierra
         explicit CocoaCursorManager(const NSWindow* window);
 
         /* --- POLLING METHODS --- */
-        void RegisterCursorMove(Vector2 position) override;
+        void RegisterCursorMove(Vector2Int position) override;
 
         /* --- SETTER METHODS --- */
         void SetCursorVisibility(bool visible) override;
-        void SetCursorPosition(Vector2 position) override;
+        void SetCursorPosition(Vector2Int position) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] bool IsCursorVisible() const noexcept override;
-        [[nodiscard]] Vector2 GetCursorPosition() const noexcept override;
+        [[nodiscard]] Vector2Int GetCursorPosition() const noexcept override;
         [[nodiscard]] Vector2 GetCursorDelta() const noexcept override;
         [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override;
 
@@ -55,8 +55,8 @@ namespace Sierra
     private:
         const NSWindow* window;
 
-        Vector2 cursorPosition = { 0, 0 };
-        Vector2 lastCursorPosition = { 0, 0 };
+        Vector2Int cursorPosition = { 0, 0 };
+        Vector2Int lastCursorPosition = { 0, 0 };
 
         bool cursorShown = true;
         bool justHidCursor = false;

@@ -25,17 +25,17 @@ namespace Sierra
         const size currentOffset = GetCurrentOffset();
 
         const DWORD errorCode = SetFilePointerEx(fileHandle, { static_cast<DWORD>(offset - currentOffset) }, nullptr, FILE_CURRENT);
-        if (errorCode == 0) HandleWin32FileError(GetLastError(), SR_FORMAT("Could not seek to offset [{0}] of file", offset), filePath);
+        if (errorCode == 0) HandleWin32FileError(GetLastError(), SR_FORMAT("Could not seek to offset [{0}] of file stream", offset), filePath);
     }
 
     std::vector<uint8> Win32FileStream::Read(const size memorySize)
     {
-        SR_THROW_IF(GetCurrentOffset() + memorySize > GetMemorySize(), InvalidFileRange("Cannot read invalid range from file", GetFilePath(), GetCurrentOffset(), memorySize, GetMemorySize()));
+        SR_THROW_IF(GetCurrentOffset() + memorySize > GetMemorySize(), InvalidFileRange("Cannot read invalid range from file stream", GetFilePath(), GetCurrentOffset(), memorySize, GetMemorySize()));
 
         std::vector<uint8> data(memorySize);
         if (!ReadFile(fileHandle, data.data(), memorySize, nullptr, nullptr))
         {
-            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not read [{0}] bytes from file", memorySize), filePath);
+            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not read [{0}] bytes from file stream", memorySize), filePath);
         }
 
         return data;
@@ -46,7 +46,7 @@ namespace Sierra
         FileStream::Write(memory, offset, memorySize);
         if (!WriteFile(fileHandle, reinterpret_cast<const uint8*>(memory) + offset, memorySize, nullptr, nullptr))
         {
-            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not write [{0}] bytes to file", memorySize), filePath);
+            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not write [{0}] bytes to file stream", memorySize), filePath);
         }
     }
 

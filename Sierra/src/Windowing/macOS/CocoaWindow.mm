@@ -214,7 +214,7 @@
     - (void) mouseMoved: (NSEvent*) event
     {
         const NSPoint point = [event locationInWindow];
-        static_cast<Sierra::CocoaCursorManager&>(*window->GetCursorManager()).RegisterCursorMove({ point.x, point.y });
+        static_cast<Sierra::CocoaCursorManager&>(*window->GetCursorManager()).RegisterCursorMove({ static_cast<int32>(point.x), static_cast<int32>(point.y) });
     }
 
     - (BOOL) canBecomeKeyView
@@ -328,8 +328,9 @@ namespace Sierra
             }
             else
             {
-                NSScreen* const screen = [window screen];
-                [window setFrame: screen.frame display: YES animate: YES];
+                const CocoaScreen& screen = cocoaContext.GetWindowScreen(window);
+                const NSRect newFrame = NSMakeRect(screen.GetOrigin().x, screen.GetOrigin().y, screen.GetWorkAreaWidth(), screen.GetWorkAreaHeight());
+                [window setFrame: newFrame display: YES animate: YES];
             }
         }
 

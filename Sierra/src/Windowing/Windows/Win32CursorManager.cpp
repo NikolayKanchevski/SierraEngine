@@ -28,7 +28,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void Win32CursorManager::RegisterCursorMove(const Vector2 position)
+    void Win32CursorManager::RegisterCursorMove(const Vector2Int position)
     {
         cursorPosition = position;
         if (cursorShown && cursorPosition != lastCursorPosition) GetCursorMoveDispatcher().DispatchEvent(cursorPosition);
@@ -44,7 +44,7 @@ namespace Sierra
         justHidCursor = !visible;
     }
 
-    void Win32CursorManager::SetCursorPosition(const Vector2 position)
+    void Win32CursorManager::SetCursorPosition(const Vector2Int position)
     {
         // Get window's dimensions
         RECT rect = { };
@@ -69,7 +69,7 @@ namespace Sierra
         return cursorShown;
     }
 
-    Vector2 Win32CursorManager::GetCursorPosition() const noexcept
+    Vector2Int Win32CursorManager::GetCursorPosition() const noexcept
     {
         return cursorPosition;
     }
@@ -77,7 +77,7 @@ namespace Sierra
     Vector2 Win32CursorManager::GetCursorDelta() const noexcept
     {
         Vector2 delta = { cursorPosition.x - lastCursorPosition.x, cursorPosition.y - lastCursorPosition.y };
-        if (cursorShown) delta *= -1;
+        if (!cursorShown) delta *= -1;
         return delta;
     }
 
@@ -97,7 +97,7 @@ namespace Sierra
         RECT rect = { };
         GetClientRect(window, &rect);
 
-        const Vector2 center = Vector2(rect.left + rect.right, rect.top + rect.bottom) / 2.0f;
+        const Vector2Int center = Vector2Int(rect.left + rect.right, rect.top + rect.bottom) / 2;
         if (cursorShown || cursorPosition == center) return;
 
         // Move cursor to center

@@ -14,17 +14,20 @@ namespace Sierra
     Win32Context::Win32Context(const Win32ContextCreateInfo& createInfo)
         : hInstance(createInfo.hInstance), process(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId()))
     {
-        SR_ERROR_IF(createInfo.hInstance == nullptr, "HINSTANCE pointer passed upon creation of Win32Context must not be null!");
+        SR_THROW_IF(createInfo.hInstance == nullptr, InvalidValueError("Cannot create Win32 context, as specified hInstance must not be null"));
 
-        // Get binary name
         CHAR executableName[MAX_PATH];
         DWORD binaryNameLength = sizeof(CHAR) * MAX_PATH;
-        SR_ERROR_IF(!QueryFullProcessImageNameA(process, 0, executableName, &binaryNameLength), "Could not get the name of the application's Windows process!");
 
-        // Load binary icon
-        processIcon = ExtractIconA(hInstance, executableName, 0);
+        if (QueryFullProcessImageNameA(process, 0, executableName, &binaryNameLength))
+        {
+            processIcon = ExtractIconA(hInstance, executableName, 0);
+        }
+        else
+        {
+            SR_ERROR("Could not get the name of the application's Windows process!");
+        }
 
-        // Detect screens
         ReloadScreens();
     }
 
@@ -70,7 +73,6 @@ namespace Sierra
             rect.right - rect.left, rect.bottom - rect.top,
             nullptr, nullptr, hInstance, NULL
         );
-        SR_ERROR_IF(window == nullptr, "Could not create Win32 window!");
 
         // Account for DPI scaling
         AdjustWindowRectForDPI(window, rect);
@@ -140,6 +142,11 @@ namespace Sierra
     }
 
     Win32Screen& Win32Context::GetWindowScreen(HWND window)
+    {
+        return const_cast<Win32Screen&>(const_cast<const Win32Context*>(this)->GetWindowScreen(window));
+    }
+
+    const Win32Screen& Win32Context::GetWindowScreen(HWND window) const
     {
         HMONITOR windowMonitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
         return *std::ranges::find_if(screens, [windowMonitor](const Win32Screen& item) { return item.GetHMonitor() == windowMonitor; });

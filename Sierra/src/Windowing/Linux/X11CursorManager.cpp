@@ -4,37 +4,63 @@
 
 #include "X11CursorManager.h"
 
+#include <X11/Xlib.h>
+
 namespace Sierra
 {
 
     /* --- CONSTRUCTORS --- */
 
-    X11CursorManager::X11CursorManager(const X11Context& x11Context, const XID window, const CursorManagerCreateInfo& createInfo)
-        : CursorManager(createInfo), x11Context(x11Context), window(window)
+    X11CursorManager::X11CursorManager(const X11Context& x11Context, const XID window)
+        : x11Context(x11Context), window(window)
     {
+        // Get window size
+        XWindowAttributes windowAttributes = { };
+        XGetWindowAttributes(x11Context.GetDisplay(), window, &windowAttributes);
 
+        uint mask;
+        XID rootWindow, childWindow;
+        int xRootCursorPosition, yRootCursorPosition;
+
+        // Retrieve current cursor position
+        int xChildCursorPosition, yChildCursorPosition;
+        XQueryPointer(x11Context.GetDisplay(), window, &rootWindow, &childWindow, &xRootCursorPosition, &yRootCursorPosition, &xChildCursorPosition, &yChildCursorPosition, &mask);
+
+        // Save cursor position
+        cursorPosition = { xChildCursorPosition, windowAttributes.height - yChildCursorPosition };
+        lastCursorPosition = cursorPosition;
+    }
+
+    /* --- POLLING METHODS --- */
+
+    void X11CursorManager::RegisterCursorMove(const Vector2Int position)
+    {
+        cursorPosition = position;
+        if (cursorShown && cursorPosition != lastCursorPosition) GetCursorMoveDispatcher().DispatchEvent(cursorPosition);
     }
 
     /* --- SETTER METHODS --- */
 
-    void X11CursorManager::ShowCursor()
+    void X11CursorManager::SetCursorVisibility(const bool visible)
     {
-        cursorHidden = false;
-        x11Context.ShowWindowCursor(window);
+        if (visible) XDefineCursor(x11Context.GetDisplay(), window, x11Context.GetInvisibleCursor());
+        else XUndefineCursor(x11Context.GetDisplay(), window);
+
+        cursorShown = visible;
     }
 
-    void X11CursorManager::HideCursor()
+    void X11CursorManager::SetCursorPosition(const Vector2Int position)
     {
-        cursorHidden = true;
-        justHidCursor = true;
-        x11Context.HideWindowCursor(window);
-    }
+        // Get window size
+        XWindowAttributes windowAttributes = { };
+        XGetWindowAttributes(x11Context.GetDisplay(), window, &windowAttributes);
 
-    void X11CursorManager::SetCursorPosition(const Vector2 position)
-    {
-        // Get X11-suited position and move cursor
-        const Vector2Int x11Position = { position.x, static_cast<int32>(x11Context.GetWindowSize(window).y) - static_cast<int32>(position.y) };
-        x11Context.SetWindowCursorPosition(window, x11Position);
+        // Invert Y coordinate
+        const Vector2Int x11Position = { position.x, windowAttributes.height - position.y };
+
+        // Update cursor position
+        XWarpPointer(x11Context.GetDisplay(), None, window, 0, 0, 0, 0, position.x, position.y);
+        XFlush(x11Context.GetDisplay());
 
         // Reset mouse delta
         lastCursorPosition = cursorPosition;
@@ -43,78 +69,58 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    bool X11CursorManager::IsCursorHidden() const
+    bool X11CursorManager::IsCursorVisible() const noexcept
     {
-        return cursorHidden;
+        return cursorShown;
     }
 
-    Vector2 X11CursorManager::GetCursorPosition() const
+    Vector2Int X11CursorManager::GetCursorPosition() const noexcept
     {
         return cursorPosition;
     }
 
-    float32 X11CursorManager::GetHorizontalDelta() const
+    Vector2 X11CursorManager::GetCursorDelta() const noexcept
     {
-        float32 delta = static_cast<float32>(cursorPosition.x) - static_cast<float32>(lastCursorPosition.x);
-        if (cursorHidden) delta *= -1;
+        Vector2 delta = { cursorPosition.x - lastCursorPosition.x, cursorPosition.y - lastCursorPosition.y };
+        delta *= static_cast<float32>(static_cast<uint8>(!cursorShown) * -1);
         return delta;
     }
 
-    float32 X11CursorManager::GetVerticalDelta() const
+    WindowingBackendType X11CursorManager::GetBackendType() const noexcept
     {
-        float32 delta = static_cast<float32>(cursorPosition.y) - static_cast<float32>(lastCursorPosition.y);
-        if (cursorHidden) delta *= -1;
-        return delta;
-    }
-
-    void X11CursorManager::OnWindowInitialize()
-    {
-        // Retrieve initial cursor position (not done in constructor, as X11 is async and window may not be initialized there)
-        cursorPosition = x11Context.GetWindowCursorPosition(window);
-        cursorPosition.y = static_cast<int32>(x11Context.GetWindowSize(window).y) - cursorPosition.y;
-        lastCursorPosition = cursorPosition;
+        return WindowingBackendType::X11;
     }
 
     /* --- PRIVATE METHODS --- */
 
     void X11CursorManager::Update()
     {
+        XID focusedWindow;
+        int focusedWindowState;
+        XGetInputFocus(x11Context.GetDisplay(), &focusedWindow, &focusedWindowState);
+
+        if (focusedWindow != window) return;
         lastCursorPosition = cursorPosition;
-    }
 
-    void X11CursorManager::PostUpdate()
-    {
-        if (!cursorHidden || !x11Context.IsWindowFocused(window)) return;
+        XWindowAttributes windowAttributes = { };
+        XGetWindowAttributes(x11Context.GetDisplay(), window, &windowAttributes);
 
-        // Manually re-center cursor after all window events have been polled (so none more would be handled and SetWindowCursorPosition() produces one)
-        const Vector2Int x11Center = static_cast<Vector2Int>(x11Context.GetWindowSize(window)) / 2;
-        if (cursorPosition != x11Center)
+        const Vector2Int center = Vector2Int(windowAttributes.width, windowAttributes.height) / 2;
+        if (cursorShown || cursorPosition == center) return;
+
+        // Move cursor to center
+        SetCursorPosition(center);
+
+        // Update mouse position
+        lastCursorPosition = cursorPosition;
+        cursorPosition = center;
+
+        // Reset mouse delta when re-centering for the first time
+        if (justHidCursor)
         {
-            // Move cursor to center
-            x11Context.SetWindowCursorPosition(window, x11Center);
-
-            // Update mouse position
             lastCursorPosition = cursorPosition;
-            cursorPosition = x11Center;
-
-            // Reset mouse delta when re-centering for the first time
-            if (justHidCursor)
-            {
-                lastCursorPosition = cursorPosition;
-                justHidCursor = false;
-            }
+            justHidCursor = false;
         }
-    }
-
-    /* --- EVENTS --- */
-
-    void X11CursorManager::MotionNotifyEvent(const XEvent& event)
-    {
-        const Vector2Int newPosition = { event.xmotion.x, x11Context.GetWindowSize(window).y - event.xmotion.y };
-        if (cursorPosition == newPosition) return;
-
-        cursorPosition = newPosition;
-        if (!cursorHidden) GetCursorMoveDispatcher().DispatchEvent(cursorPosition);
     }
 
 }

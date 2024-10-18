@@ -25,6 +25,8 @@ namespace Sierra
 
     std::unique_ptr<FileStream> Win32FileManager::OpenFileStream(const std::filesystem::path& filePath, const FileStreamAccess access, const FileStreamBuffering buffering) const
     {
+        SR_THROW_IF(!FileExists(filePath), PathMissingError("Cannot open file stream, as the specified file path does not exist", filePath));
+
         DWORD fileSharing = 0;
         DWORD fileAccess = 0;
         switch (access)
@@ -62,23 +64,26 @@ namespace Sierra
         const std::wstring sourcePath = filePath.wstring();
         const std::wstring movedPath = (filePath.parent_path() / name).wstring();
 
-        if (!MoveFileW(sourcePath.c_str(), movedPath.c_str())) HandleWin32FileError(GetLastError(), SR_FORMAT("Could not rename file to [{0}]", name), filePath);
+        if (!MoveFileW(sourcePath.c_str(), movedPath.c_str()))
+        {
+            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not rename file to [{0}]", name), filePath);
+        }
     }
 
     void Win32FileManager::CopyFile(const std::filesystem::path &sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
         FileManager::CopyFile(sourceFilePath, destinationDirectoryPath, conflictPolicy);
 
-        std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceFilePath.filename();
-        ResolveFilePathConflict(sourceFilePath, destinationFilePath, conflictPolicy);
+        std::filesystem::path resolvedFilePath = destinationDirectoryPath / sourceFilePath.filename();
+        ResolveFilePathConflict(sourceFilePath, resolvedFilePath, conflictPolicy);
         CreateDirectory(destinationDirectoryPath);
 
         const std::wstring sourcePath = sourceFilePath.wstring();
-        const std::wstring destinationPath = destinationFilePath.wstring();
+        const std::wstring destinationPath = resolvedFilePath.wstring();
 
         if (!CopyFileW(sourcePath.c_str(), destinationPath.c_str(), conflictPolicy == FilePathConflictPolicy::KeepExisting))
         {
-            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not copy file to [{0}]", destinationFilePath.string()), sourceFilePath);
+            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not copy file to [{0}]", resolvedFilePath.string()), sourceFilePath);
         }
     }
 
@@ -86,16 +91,16 @@ namespace Sierra
     {
         FileManager::MoveFile(sourceFilePath, destinationDirectoryPath, conflictPolicy);
 
-        std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceFilePath.filename();
-        ResolveFilePathConflict(sourceFilePath, destinationFilePath, conflictPolicy);
+        std::filesystem::path resolvedFilePath = destinationDirectoryPath / sourceFilePath.filename();
+        ResolveFilePathConflict(sourceFilePath, resolvedFilePath, conflictPolicy);
         CreateDirectory(destinationDirectoryPath);
 
         const std::wstring sourcePath = sourceFilePath.wstring();
-        const std::wstring destinationPath = destinationFilePath.wstring();
+        const std::wstring destinationPath = resolvedFilePath.wstring();
 
         if (!MoveFileW(sourcePath.c_str(), destinationPath.c_str()))
         {
-            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not move file to [{0}]", destinationFilePath.string()), sourceFilePath);
+            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not move file to [{0}]", resolvedFilePath.string()), sourceFilePath);
         }
     }
 
@@ -168,16 +173,16 @@ namespace Sierra
     {
         FileManager::CopyDirectory(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
 
-        std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceDirectoryPath.filename();
-        ResolveDirectoryPathConflict(sourceDirectoryPath, destinationFilePath, conflictPolicy);
+        std::filesystem::path resolvedDirectoryPath = destinationDirectoryPath / sourceDirectoryPath.filename();
+        ResolveDirectoryPathConflict(sourceDirectoryPath, resolvedDirectoryPath, conflictPolicy);
         CreateDirectory(destinationDirectoryPath);
 
         const std::wstring sourcePath = sourceDirectoryPath.wstring();
-        const std::wstring destinationPath = destinationFilePath.wstring();
+        const std::wstring destinationPath = resolvedDirectoryPath.wstring();
 
         if (!CopyFileW(sourcePath.c_str(), destinationPath.c_str(), conflictPolicy == FilePathConflictPolicy::KeepExisting))
         {
-            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not copy directory to [{0}]", destinationFilePath.string()), sourceDirectoryPath);
+            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not copy directory to [{0}]", resolvedDirectoryPath.string()), sourceDirectoryPath);
         }
     }
 
@@ -185,16 +190,16 @@ namespace Sierra
     {
         FileManager::MoveDirectory(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
 
-        std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceDirectoryPath.filename();
-        ResolveDirectoryPathConflict(sourceDirectoryPath, destinationFilePath, conflictPolicy);
+        std::filesystem::path resolvedDirectoryPath = destinationDirectoryPath / sourceDirectoryPath.filename();
+        ResolveDirectoryPathConflict(sourceDirectoryPath, resolvedDirectoryPath, conflictPolicy);
         CreateDirectory(destinationDirectoryPath);
 
         const std::wstring sourcePath = sourceDirectoryPath.wstring();
-        const std::wstring destinationPath = destinationFilePath.wstring();
+        const std::wstring destinationPath = resolvedDirectoryPath.wstring();
 
         if (!MoveFileW(sourcePath.c_str(), destinationPath.c_str()))
         {
-            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not move directory to [{0}]", destinationFilePath.string()), sourceDirectoryPath);
+            HandleWin32FileError(GetLastError(), SR_FORMAT("Could not move directory to [{0}]", resolvedDirectoryPath.string()), sourceDirectoryPath);
         }
     }
 
@@ -301,21 +306,11 @@ namespace Sierra
 
         uint32 fileCount = 0;
         size memorySize = 0;
-        for (const std::filesystem::path& currentPath : std::filesystem::recursive_directory_iterator(directoryPath))
+        for (const std::filesystem::path& filePath : std::filesystem::recursive_directory_iterator(directoryPath))
         {
-            const std::wstring filePath = currentPath.wstring();
-            const DWORD fileAttributes = GetFileAttributesW(currentPath.c_str());
-
-            if (fileAttributes == INVALID_FILE_ATTRIBUTES || (fileAttributes & FILE_ATTRIBUTE_DIRECTORY)) continue;
+            if (!std::filesystem::is_regular_file(filePath)) continue;
+            memorySize += std::filesystem::file_size(filePath);
             fileCount++;
-
-            const std::unique_ptr<std::remove_pointer_t<HANDLE>, std::function<void(HANDLE)>> fileHandle = { CreateFileW(filePath.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_READ_ATTRIBUTES, nullptr), CloseHandle };
-            if (fileHandle.get() == INVALID_HANDLE_VALUE) continue;
-
-            LARGE_INTEGER fileMemorySize = { };
-            if (GetFileSizeEx(fileHandle.get(), &fileMemorySize) == 0) continue;
-
-            memorySize += fileMemorySize.QuadPart;
         }
 
         return
@@ -429,8 +424,6 @@ namespace Sierra
         const HRESULT result = SHGetKnownFolderPath(FOLDERID_Videos, KF_FLAG_CREATE, nullptr, &path);
 
         const std::unique_ptr<WCHAR, std::function<void(LPVOID)>> folderPath = { path, CoTaskMemFree };
-        SR_ERROR_IF(!SUCCEEDED(result), "Could not retrieve Videos directory path!");
-
         return folderPath.get();
     }
 

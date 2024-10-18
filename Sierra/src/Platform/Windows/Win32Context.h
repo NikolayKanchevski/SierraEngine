@@ -89,8 +89,10 @@ namespace Sierra
         [[nodiscard]] bool IsWindowsVersionOrGreater(DWORD major, DWORD minor, WORD servicePack) const noexcept;
 
         [[nodiscard]] Win32Screen& GetPrimaryScreen() noexcept { return screens[0]; }
-        [[nodiscard]] Win32Screen& GetWindowScreen(HWND window);
         [[nodiscard]] std::span<Win32Screen> GetScreens() noexcept { return screens; }
+
+        [[nodiscard]] Win32Screen& GetWindowScreen(HWND window);
+        [[nodiscard]] const Win32Screen& GetWindowScreen(HWND window) const;
 
         /* --- COPY SEMANTICS --- */
         Win32Context(const Win32Context&) = delete;

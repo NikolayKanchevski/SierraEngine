@@ -33,10 +33,10 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit CursorMoveEvent(Vector2 position) noexcept;
+        explicit CursorMoveEvent(Vector2Int position) noexcept;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] Vector2 GetPosition() const noexcept { return position; }
+        [[nodiscard]] Vector2Int GetPosition() const noexcept { return position; }
 
         /* --- COPY SEMANTICS --- */
         CursorMoveEvent(const CursorMoveEvent&) = delete;
@@ -50,7 +50,7 @@ namespace Sierra
         ~CursorMoveEvent() noexcept override = default;
 
     private:
-        const Vector2 position;
+        const Vector2Int position;
 
     };
 

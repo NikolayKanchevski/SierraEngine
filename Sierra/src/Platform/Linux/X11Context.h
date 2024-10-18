@@ -9,8 +9,9 @@
 #endif
 
 #include <X11/Xlib.h>
-#include "X11Screen.h"
+
 #include "X11Extensions.h"
+#include "../../Windowing/Linux/X11Screen.h"
 
 namespace Sierra
 {
@@ -49,89 +50,73 @@ namespace Sierra
 
     struct X11ContextCreateInfo
     {
-
+        Display* display = nullptr;
     };
 
     class SIERRA_API X11Context final
     {
     public:
-        /* --- POLLING METHODS --- */
-        [[nodiscard]] XID CreateWindow(std::string_view title, uint32 width, uint32 height) const;
-        XEvent QueryWindowDestruction(XID window) const;
-        void DestroyWindow(XID window) const;
+        /* --- TYPE DEFINITIONS --- */
+        using WindowEventCallback = std::function<void(const XEvent&, XID, void*)>;
+        using EventWaitCallback = std::function<int(Display*, XEvent*, XPointer)>;
 
-        [[nodiscard]] bool IsEventQueueEmpty() const;
-        XEvent PollNextEvent() const;
-        XEvent PeekNextEvent() const;
-        [[nodiscard]] bool IsEventFiltered(XEvent& event) const;
-        XEvent WaitForEvent(void* eventData, int(EventCheck)(Display*, XEvent*, XPointer)) const;
-
-        XEvent RegisterWindowEvent(XID window, Atom type, long a = 0, long b = 0, long c = 0, long d = 0, int eventMask = NoEventMask) const;
-        XEvent RegisterRootWindowEvent(Atom type, long a = 0, long b = 0, long c = 0, long d = 0, int eventMask = NoEventMask) const;
-        void Flush() const;
-
-        void MinimizeWindow(XID window) const;
-        void MaximizeWindow(XID window) const;
-        void ShowWindow(XID window) const;
-        void HideWindow(XID window) const;
-        void FocusWindow(XID window) const;
-
-        /* --- SETTER METHODS --- */
-        void SetWindowTitle(XID window, std::string_view title) const;
-        void SetWindowPosition(XID window, Vector2Int position) const;
-        void SetWindowSize(XID window, Vector2UInt size) const;
-        void SetWindowSizeLimits(XID window, Vector2UInt minSize, Vector2UInt maxSize) const;
-        void SetWindowOpacity(XID window, float32 opacity) const;
-
-        void ShowWindowCursor(XID window) const;
-        void HideWindowCursor(XID window) const;
-        void SetWindowCursorPosition(XID window, Vector2Int position) const;
-
-        /* --- GETTER METHODS --- */
-        [[nodiscard]] X11Screen& GetPrimaryScreen() const;
-        [[nodiscard]] X11Screen& GetWindowScreen(XID window) const;
-        [[nodiscard]] std::optional<XID> GetFocusedWindow() const;
-
-        [[nodiscard]] std::string GetWindowTitle(XID window) const;
-        [[nodiscard]] Vector2Int GetWindowPosition(XID window) const;
-        [[nodiscard]] Vector2UInt GetWindowSize(XID window) const;
-        [[nodiscard]] float32 GetWindowOpacity(XID window) const;
-        [[nodiscard]] bool IsWindowMinimized(XID window) const;
-        [[nodiscard]] bool IsWindowMaximized(XID window) const;
-        [[nodiscard]] bool IsWindowFocused(XID window) const;
-        [[nodiscard]] bool IsWindowHidden(XID window) const;
-
-        [[nodiscard]] Vector2Int GetWindowCursorPosition(XID window) const;
-
-        [[nodiscard]] Vector4UInt GetWindowExtents(XID window) const;
-        [[nodiscard]] Atom GetAtom(const AtomType atomType) const { return atomTable[GetAtomTypeIndex(atomType)]; }
-
-        [[nodiscard]] Display* GetDisplay() const { return display; }
-        [[nodiscard]] const XkbExtension& GetXkbExtension() const { return xkbExtension; }
-        [[nodiscard]] const XrandrExtension& GetXrandrExtension() const { return xrandrExtension; }
-
-        /* --- DESTRUCTOR --- */
-        ~X11Context();
-
-    private:
-        friend class LinuxContext;
+        /* --- CONSTRUCTORS --- */
         explicit X11Context(const X11ContextCreateInfo& createInfo);
 
+        /* --- POLLING METHODS --- */
+        [[nodiscard]] XID CreateWindow(std::string_view title, uint32 width, uint32 height, const WindowEventCallback& Callback, void* userData = nullptr) const;
+        void DestroyWindow(XID window) const;
+
+        void ReloadScreens();
+
+        [[nodiscard]] XEvent PeekNextEvent() const;
+        XEvent RegisterWindowEvent(XID window, Atom type, long a = 0, long b = 0, long c = 0, long d = 0, int eventMask = NoEventMask) const;
+        XEvent WaitForEvent(int(Callback)(Display*, XEvent*, XPointer), void* userData = nullptr) const;
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] X11Screen& GetPrimaryScreen() noexcept { return screens[0]; }
+        [[nodiscard]] std::span<X11Screen> GetScreens() noexcept { return screens; }
+
+        [[nodiscard]] X11Screen& GetWindowScreen(XID window);
+        [[nodiscard]] const X11Screen& GetWindowScreen(XID window) const;
+
+        [[nodiscard]] Display* GetDisplay() const noexcept { return display; }
+        [[nodiscard]] int GetScreen() const noexcept { return screen; }
+        [[nodiscard]] XID GetRootWindow() const noexcept { return rootWindow; }
+        [[nodiscard]] XID GetInvisibleCursor() const noexcept { return invisibleCursor; }
+
+        [[nodiscard]] Atom GetAtom(const AtomType atomType) const noexcept { return atomTable[GetAtomTypeIndex(atomType)]; }
+        [[nodiscard]] uint32 GetWindowProperty(XID window, Atom property, Atom type, uchar** outValues) const noexcept;
+
+        [[nodiscard]] const XkbExtension& GetXkbExtension() const noexcept { return xkbExtension; }
+        [[nodiscard]] const XrandrExtension& GetXrandrExtension() const noexcept { return xrandrExtension; }
+
+        /* --- COPY SEMANTICS --- */
+        X11Context(const X11Context&) = delete;
+        X11Context& operator=(const X11Context&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        X11Context(X11Context&&) = default;
+        X11Context& operator=(X11Context&&) = default;
+
+        /* --- DESTRUCTOR --- */
+        ~X11Context() noexcept;
+
+    private:
         Display* display = nullptr;
         int screen = 0;
         XID rootWindow = 0;
-        XID invisibleCursor = 0;
 
+        XID invisibleCursor = 0;
         XkbExtension xkbExtension;
         XrandrExtension xrandrExtension;
 
-        std::array<Atom, static_cast<uint32>(AtomType::NET_REQUEST_FRAME_EXTENTS) + 1> atomTable { 0 };
-        Atom TryRetrieveAtom(const Atom* supportedAtoms, const ulong atomCount, const char* atomName);
-        [[nodiscard]] constexpr std::underlying_type<AtomType>::type GetAtomTypeIndex(const AtomType atomType) const { return static_cast<uint32>(atomType); }
+        std::vector<X11Screen> screens;
+        std::array<Atom, static_cast<uint32>(AtomType::NET_REQUEST_FRAME_EXTENTS) + 1> atomTable = { 0 };
+        [[nodiscard]] constexpr uint8 GetAtomTypeIndex(const AtomType atomType) const { return static_cast<uint32>(atomType); }
 
-        mutable std::vector<X11Screen> screens;
-        void ReloadScreens(XEvent* notifyEvent = nullptr) const;
-        [[nodiscard]] int32 GetWindowProperty(XID window, Atom property, Atom type, uchar** value) const;
+        friend class LinuxContext;
+        void Update();
 
     };
 

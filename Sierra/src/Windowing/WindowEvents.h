@@ -56,24 +56,6 @@ namespace Sierra
 
     };
 
-    class SIERRA_API WindowCloseEvent final : public WindowEvent
-    {
-    public:
-        /* --- CONSTRUCTORS --- */
-        WindowCloseEvent() noexcept = default;
-
-        /* --- COPY SEMANTICS --- */
-        WindowCloseEvent(const WindowCloseEvent&) = delete;
-        WindowCloseEvent& operator=(const WindowCloseEvent&) = delete;
-
-        /* --- MOVE SEMANTICS --- */
-        WindowCloseEvent(WindowCloseEvent&&) = delete;
-        WindowCloseEvent& operator=(WindowCloseEvent&&) = delete;
-
-        /* --- DESTRUCTOR --- */
-        ~WindowCloseEvent() noexcept override = default;
-    };
-
     class SIERRA_API WindowMoveEvent final : public WindowEvent
     {
     public:
@@ -158,6 +140,24 @@ namespace Sierra
 
         /* --- DESTRUCTOR --- */
         ~WindowMaximizeEvent() noexcept override = default;
+    };
+
+    class SIERRA_API WindowCloseEvent final : public WindowEvent
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        WindowCloseEvent() noexcept = default;
+
+        /* --- COPY SEMANTICS --- */
+        WindowCloseEvent(const WindowCloseEvent&) = delete;
+        WindowCloseEvent& operator=(const WindowCloseEvent&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        WindowCloseEvent(WindowCloseEvent&&) = delete;
+        WindowCloseEvent& operator=(WindowCloseEvent&&) = delete;
+
+        /* --- DESTRUCTOR --- */
+        ~WindowCloseEvent() noexcept override = default;
     };
 
 }

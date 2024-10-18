@@ -30,7 +30,7 @@ namespace Sierra
         #endif
 
         // Create surface
-        VkSurfaceKHR surface;
+        VkSurfaceKHR surface = VK_NULL_HANDLE;
         const VkResult result = context.GetFunctionTable().vkCreateMetalSurfaceEXT(context.GetVulkanInstance(), &surfaceCreateInfo, nullptr, &surface);
         if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create Vulkan Metal surface for window [{0}]", window.GetTitle()));
 

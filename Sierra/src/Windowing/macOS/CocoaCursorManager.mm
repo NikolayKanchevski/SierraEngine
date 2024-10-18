@@ -17,7 +17,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void CocoaCursorManager::RegisterCursorMove(const Vector2 position)
+    void CocoaCursorManager::RegisterCursorMove(const Vector2Int position)
     {
         cursorPosition = position;
         GetCursorMoveDispatcher().DispatchEvent(position);
@@ -40,7 +40,7 @@ namespace Sierra
         }
     }
 
-    void CocoaCursorManager::SetCursorPosition(const Vector2 position)
+    void CocoaCursorManager::SetCursorPosition(const Vector2Int position)
     {
         // Set mouse position (method takes -Y screen coordinates)
         CGWarpMouseCursorPosition(CGPointMake(window.frame.origin.x + position.x, window.screen.frame.size.height - window.frame.origin.y - position.y));
@@ -53,7 +53,7 @@ namespace Sierra
         return cursorShown;
     }
 
-    Vector2 CocoaCursorManager::GetCursorPosition() const noexcept
+    Vector2Int CocoaCursorManager::GetCursorPosition() const noexcept
     {
         return cursorPosition;
     }
@@ -75,7 +75,7 @@ namespace Sierra
         if (![window isKeyWindow]) return;
         lastCursorPosition = cursorPosition;
 
-        const Vector2 center = Vector2(window.frame.size.width, window.frame.size.height) / 2.0f;
+        const Vector2Int center = Vector2Int(window.frame.size.width, window.frame.size.height) / 2;
         if (cursorShown || cursorPosition == center) return;
 
         // Move cursor to center

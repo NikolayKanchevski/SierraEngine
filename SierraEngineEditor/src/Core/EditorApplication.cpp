@@ -114,7 +114,10 @@ namespace SierraEngine
 
     EditorApplication::~EditorApplication()
     {
-        queue->WaitForCommandBuffer(*commandBuffers[surface.GetSwapchain().GetCurrentImageIndex()]);
+        for (const std::unique_ptr<Sierra::CommandBuffer>& commandBuffer : commandBuffers)
+        {
+            queue->WaitForCommandBuffer(*commandBuffer);
+        }
     }
 
 }

@@ -38,7 +38,7 @@ namespace Sierra
 
     std::unique_ptr<FileStream> FoundationFileManager::OpenFileStream(const std::filesystem::path& filePath, const FileStreamAccess access, const FileStreamBuffering buffering) const
     {
-        if (!filePath.has_extension()) throw PathInvalidError("Cannot open file stream", filePath);
+        SR_THROW_IF(!FileExists(filePath), PathMissingError("Cannot open file stream, as the specified file path does not exist", filePath));
         NSURL* const URL = PathToNSURL(filePath);
 
         NSError* error = nil;
@@ -90,12 +90,12 @@ namespace Sierra
     {
         FileManager::CopyFile(sourceFilePath, destinationDirectoryPath, conflictPolicy);
 
-        std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceFilePath.filename();
-        ResolveFilePathConflict(sourceFilePath, destinationFilePath, conflictPolicy);
+        std::filesystem::path resolvedFilePath = destinationDirectoryPath / sourceFilePath.filename();
+        ResolveFilePathConflict(sourceFilePath, resolvedFilePath, conflictPolicy);
         CreateDirectory(destinationDirectoryPath);
 
         NSURL* const sourceURL = PathToNSURL(sourceFilePath);
-        NSURL* const destinationURL = PathToNSURL(destinationFilePath);
+        NSURL* const destinationURL = PathToNSURL(resolvedFilePath);
 
         NSError* error = nil;
         [fileManager copyItemAtURL: sourceURL toURL: destinationURL error: &error];
@@ -103,19 +103,19 @@ namespace Sierra
         [sourceURL release];
         [destinationURL release];
 
-        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not copy file to [{0}]", destinationFilePath.string()), sourceFilePath);
+        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not copy file to [{0}]", resolvedFilePath.string()), sourceFilePath);
     }
 
     void FoundationFileManager::MoveFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
         FileManager::MoveFile(sourceFilePath, destinationDirectoryPath, conflictPolicy);
 
-        std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceFilePath.filename();
-        ResolveFilePathConflict(sourceFilePath, destinationFilePath, conflictPolicy);
+        std::filesystem::path resolvedFilePath = destinationDirectoryPath / sourceFilePath.filename();
+        ResolveFilePathConflict(sourceFilePath, resolvedFilePath, conflictPolicy);
         CreateDirectory(destinationDirectoryPath);
 
         NSURL* const sourceURL = PathToNSURL(sourceFilePath);
-        NSURL* const destinationURL = PathToNSURL(destinationFilePath);
+        NSURL* const destinationURL = PathToNSURL(resolvedFilePath);
 
         NSError* error = nil;
         [fileManager moveItemAtURL: sourceURL toURL: destinationURL error: &error];
@@ -123,7 +123,7 @@ namespace Sierra
         [sourceURL release];
         [destinationURL release];
 
-        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not move file to [{0}]", destinationFilePath.string()), sourceFilePath);
+        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not move file to [{0}]", resolvedFilePath.string()), sourceFilePath);
     }
 
     void FoundationFileManager::DeleteFile(const std::filesystem::path& filePath) const
@@ -169,6 +169,8 @@ namespace Sierra
     void FoundationFileManager::CreateDirectory(const std::filesystem::path& directoryPath) const
     {
         FileManager::CreateDirectory(directoryPath);
+        if (DirectoryExists(directoryPath)) return;
+
         NSURL* const URL = PathToNSURL(directoryPath);
 
         NSError* error = nil;
@@ -198,12 +200,12 @@ namespace Sierra
     {
         FileManager::CopyDirectory(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
 
-        std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceDirectoryPath.filename();
-        ResolveDirectoryPathConflict(sourceDirectoryPath, destinationFilePath, conflictPolicy);
+        std::filesystem::path resolvedDirectoryPath = destinationDirectoryPath / sourceDirectoryPath.filename();
+        ResolveDirectoryPathConflict(sourceDirectoryPath, resolvedDirectoryPath, conflictPolicy);
         CreateDirectory(destinationDirectoryPath);
 
         NSURL* const sourceURL = PathToNSURL(sourceDirectoryPath);
-        NSURL* const destinationURL = PathToNSURL(destinationFilePath);
+        NSURL* const destinationURL = PathToNSURL(resolvedDirectoryPath);
 
         NSError* error = nil;
         [fileManager copyItemAtURL: sourceURL toURL: destinationURL error: &error];
@@ -211,19 +213,19 @@ namespace Sierra
         [sourceURL release];
         [destinationURL release];
 
-        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not copy directory to [{0}]", destinationFilePath.string()), sourceDirectoryPath);
+        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not copy directory to [{0}]", resolvedDirectoryPath.string()), sourceDirectoryPath);
     }
 
     void FoundationFileManager::MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
     {
         FileManager::MoveDirectory(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
 
-        std::filesystem::path destinationFilePath = destinationDirectoryPath / sourceDirectoryPath.filename();
-        ResolveDirectoryPathConflict(sourceDirectoryPath, destinationFilePath, conflictPolicy);
+        std::filesystem::path resolvedDirectoryPath = destinationDirectoryPath / sourceDirectoryPath.filename();
+        ResolveDirectoryPathConflict(sourceDirectoryPath, resolvedDirectoryPath, conflictPolicy);
         CreateDirectory(destinationDirectoryPath);
 
         NSURL* const sourceURL = PathToNSURL(sourceDirectoryPath);
-        NSURL* const destinationURL = PathToNSURL(destinationFilePath);
+        NSURL* const destinationURL = PathToNSURL(resolvedDirectoryPath);
 
         NSError* error = nil;
         [fileManager moveItemAtURL: sourceURL toURL: destinationURL error: &error];
@@ -231,7 +233,7 @@ namespace Sierra
         [sourceURL release];
         [destinationURL release];
 
-        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not move directory to [{0}]", destinationFilePath.string()), sourceDirectoryPath);
+        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not move directory to [{0}]", resolvedDirectoryPath.string()), sourceDirectoryPath);
     }
 
     void FoundationFileManager::DeleteDirectory(const std::filesystem::path& directoryPath) const
@@ -288,10 +290,10 @@ namespace Sierra
 
         uint32 fileCount = 0;
         size memorySize = 0;
-        for (const std::filesystem::path& currentPath : std::filesystem::recursive_directory_iterator(directoryPath))
+        for (const std::filesystem::path& filePath : std::filesystem::recursive_directory_iterator(directoryPath))
         {
-            if (!currentPath.has_extension()) continue;
-            memorySize += std::filesystem::file_size(currentPath);
+            if (!std::filesystem::is_regular_file(filePath)) continue;
+            memorySize += std::filesystem::file_size(filePath);
             fileCount++;
         }
 

@@ -14,6 +14,6 @@
 namespace Sierra
 {
 
-    [[nodiscard]] VkSurfaceKHR SIERRA_API CreateVulkanWin32Surface(const VulkanContext& context, const Window& window);
+    [[nodiscard]] SIERRA_API VkSurfaceKHR CreateVulkanWin32Surface(const VulkanContext& context, const Window& window);
 
 }

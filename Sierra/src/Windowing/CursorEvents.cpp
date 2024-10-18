@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    CursorMoveEvent::CursorMoveEvent(const Vector2 position) noexcept
+    CursorMoveEvent::CursorMoveEvent(const Vector2Int position) noexcept
         : position(position)
     {
 

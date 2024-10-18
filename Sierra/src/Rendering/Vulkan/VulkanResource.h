@@ -48,6 +48,10 @@
 #elif SR_PLATFORM_LINUX
     #include <X11/Xlib.h>
     #include <vulkan/vulkan_xlib.h>
+
+    #if defined(None)
+        #undef None
+    #endif
 #elif SR_PLATFORM_ANDROID
     #include <vulkan/vulkan_android.h>
 #endif

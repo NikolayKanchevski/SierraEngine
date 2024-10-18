@@ -5,4 +5,6 @@ target_sources(Sierra PRIVATE
     X11CursorManager.h
     X11InputManager.cpp
     X11InputManager.h
+    X11Window.cpp
+    X11Window.h
 )

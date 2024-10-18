@@ -364,7 +364,6 @@ namespace Sierra
 
     VulkanSwapchain::~VulkanSwapchain() noexcept
     {
-        device.GetFunctionTable().vkQueueWaitIdle(presentationQueue);
         device.GetFunctionTable().vkDestroySwapchainKHR(device.GetVulkanDevice(), swapchain, nullptr);
 
         for (size i = 0; i < concurrentFrameCount; i++)

@@ -130,7 +130,12 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    CocoaScreen& CocoaContext::GetWindowScreen(const NSWindow* window) noexcept
+    CocoaScreen& CocoaContext::GetWindowScreen(const NSWindow* window)
+    {
+        return const_cast<CocoaScreen&>(const_cast<const CocoaContext*>(this)->GetWindowScreen(window));
+    }
+
+    const CocoaScreen& CocoaContext::GetWindowScreen(const NSWindow* window) const
     {
         return *std::ranges::find_if(screens, [window](const CocoaScreen& cocoaScreen) -> bool { return cocoaScreen.GetNSScreen() == [window screen]; });
     }

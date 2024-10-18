@@ -23,15 +23,15 @@ namespace Sierra
         using EventCallback = std::function<bool(const EventType&)>;
 
         /* --- POLLING METHODS --- */
-        virtual void RegisterCursorMove(Vector2 position) = 0;
+        virtual void RegisterCursorMove(Vector2Int position) = 0;
 
         /* --- SETTER METHODS --- */
         virtual void SetCursorVisibility(bool visible) = 0;
-        virtual void SetCursorPosition(Vector2 position) = 0;
+        virtual void SetCursorPosition(Vector2Int position) = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual bool IsCursorVisible() const noexcept = 0;
-        [[nodiscard]] virtual Vector2 GetCursorPosition() const noexcept = 0;
+        [[nodiscard]] virtual Vector2Int GetCursorPosition() const noexcept = 0;
         [[nodiscard]] virtual Vector2 GetCursorDelta() const noexcept = 0;
         [[nodiscard]] virtual WindowingBackendType GetBackendType() const noexcept = 0;
 

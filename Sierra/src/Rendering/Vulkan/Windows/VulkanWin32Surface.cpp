@@ -26,7 +26,7 @@ namespace Sierra
         };
 
         // Create surface
-        VkSurfaceKHR surface;
+        VkSurfaceKHR surface = VK_NULL_HANDLE;
         const VkResult result = context.GetFunctionTable().vkCreateWin32SurfaceKHR(context.GetVulkanInstance(), &surfaceCreateInfo, nullptr, &surface);
         if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create Vulkan Win32 surface for window [{0}]", window.GetTitle()));
 

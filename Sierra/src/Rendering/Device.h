@@ -21,12 +21,6 @@
 namespace Sierra
 {
 
-    enum class DeviceFeatures : uint64
-    {
-        None     = 0x0000
-    };
-    SR_DEFINE_ENUM_FLAG_OPERATORS(DeviceFeatures);
-
     struct DeviceLimits
     {
         size maxUniformBufferSize = 0;
@@ -49,7 +43,6 @@ namespace Sierra
 
     struct DeviceRequirements
     {
-        DeviceFeatures features = DeviceFeatures::None;
         DeviceLimits limits = { };
     };
 

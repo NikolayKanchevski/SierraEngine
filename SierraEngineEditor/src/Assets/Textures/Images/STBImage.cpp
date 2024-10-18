@@ -2,12 +2,18 @@
 // Created by Nikolay Kanchevski on 20.07.24.
 //
 
+#if SR_PLATFORM_LINUX
+    #define STBI_NO_SIMD
+#endif
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_NO_STDIO
 #define STBI_NO_PIC
 #define STBI_NO_PNM
 #include <stb_image.h>
 
+#if SR_PLATFORM_LINUX
+    #define STBIR_NO_SIMD
+#endif
 #define STB_IMAGE_RESIZE2_IMPLEMENTATION
 #include <stb_image_resize2.h>
 
