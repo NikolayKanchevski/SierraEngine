@@ -12,7 +12,7 @@ namespace Sierra
         Win32,
         X11,
         Cocoa,
-        Activity,
+        GameKit,
         UIKit
     };
 

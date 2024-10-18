@@ -242,7 +242,9 @@ namespace Sierra
                         extensionCount++;
 
                         debugUtilsExtensionEnabled = debugUtilsExtensionEnabled || requestedExtension.name == VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
-                        portabilityEnumerationExtensionEnabled = portabilityEnumerationExtensionEnabled || requestedExtension.name == VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME;
+                        #if defined(VK_KHR_portability_enumeration)
+                            portabilityEnumerationExtensionEnabled = portabilityEnumerationExtensionEnabled || requestedExtension.name == VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME;
+                        #endif
 
                         extensionFound = true;
                         break;
@@ -292,7 +294,9 @@ namespace Sierra
         {
             .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
             .pNext = nullptr,
-            .flags = static_cast<uint32>(portabilityEnumerationExtensionEnabled) * VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
+            #if defined(VK_KHR_portability_enumeration)
+                .flags = static_cast<uint32>(portabilityEnumerationExtensionEnabled) * VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
+            #endif
             .pApplicationInfo = &applicationInfo,
             .enabledLayerCount = layerCount,
             .ppEnabledLayerNames = layers.data(),
@@ -307,7 +311,7 @@ namespace Sierra
                 debugMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
                 debugMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
                 debugMessengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-                debugMessengerCreateInfo.pfnUserCallback = [](const VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, const VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void*) -> VkBool32
+                debugMessengerCreateInfo.pfnUserCallback = [](const VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, const VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void*) VKAPI_PTR -> VkBool32
                 {
                     switch (messageSeverity)
                     {

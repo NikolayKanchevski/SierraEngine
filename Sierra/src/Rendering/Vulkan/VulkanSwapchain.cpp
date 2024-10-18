@@ -214,7 +214,8 @@ namespace Sierra
         VkSurfaceFormatKHR selectedFormat = { .format = supportedFormats[0].format, .colorSpace = supportedFormats[0].colorSpace };
         for (const VkFormat format : formatsToTry)
         {
-            if (const auto iterator = std::ranges::find_if(supportedFormats, [format](const VkSurfaceFormatKHR item) -> bool { return item.format == format && item.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR; }); iterator != supportedFormats.end())
+            const auto iterator = std::find_if(supportedFormats.begin(), supportedFormats.end(), [format](const VkSurfaceFormatKHR surfaceFormat) -> bool { return surfaceFormat.format == format && surfaceFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR; });
+            if (iterator != supportedFormats.end())
             {
                 selectedFormat.format = format;
                 break;

@@ -317,7 +317,7 @@ namespace Sierra
           width(createInfo.width), height(createInfo.height), format(SwapchainVkFormatToImageFormat(createInfo.format)),
           name(createInfo.name), image(createInfo.image), usageFlags(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT), aspectFlags(VK_IMAGE_ASPECT_COLOR_BIT), swapchainImage(true)
     {
-        SR_THROW_IF(createInfo.image == nullptr, InvalidValueError(SR_FORMAT("Cannot create swapchain image [{0}], as specified texture must not be nullptr", name)));
+        SR_THROW_IF(createInfo.image == VK_NULL_HANDLE, InvalidValueError(SR_FORMAT("Cannot create swapchain image [{0}], as specified texture must not be nullptr", name)));
         SR_THROW_IF(createInfo.format == VK_FORMAT_UNDEFINED, InvalidValueError(SR_FORMAT("Cannot create swapchain image [{0}], as format texture must not be [VK_FORMAT_UNDEFINED]", name)));
 
         // Set up image view create info

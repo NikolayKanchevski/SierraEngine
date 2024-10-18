@@ -44,17 +44,17 @@ namespace Sierra
 
         struct ShaderFileHeader
         {
-            uint64 spvMemorySize = 0;
-            uint64 macOSMetalLibMemorySize = 0;
-            uint64 iOSMetalLibMemorySize = 0;
-            uint64 iOSSimulatorMetalLibMemorySize = 0;
-            uint64 dxilMemorySize = 0;
+            size spvMemorySize = 0;
+            size macOSMetalLibMemorySize = 0;
+            size iOSMetalLibMemorySize = 0;
+            size iOSSimulatorMetalLibMemorySize = 0;
+            size dxilMemorySize = 0;
 
-            [[nodiscard]] constexpr uint64 GetSpvOffset() const noexcept { return 0; }
-            [[nodiscard]] uint64 GetMacOSMetalLibOffset() const noexcept { return GetSpvOffset() + spvMemorySize; }
-            [[nodiscard]] uint64 GetIOSMetalLibOffset() const noexcept { return GetMacOSMetalLibOffset() + macOSMetalLibMemorySize; }
-            [[nodiscard]] uint64 GetIOSSimulatorMetalLibOffset() const noexcept { return GetIOSMetalLibOffset() + iOSMetalLibMemorySize; }
-            [[nodiscard]] uint64 GetDxilOffset() const noexcept { return GetIOSSimulatorMetalLibOffset() + iOSSimulatorMetalLibMemorySize; }
+            [[nodiscard]] constexpr size GetSpvOffset() const noexcept { return 0; }
+            [[nodiscard]] size GetMacOSMetalLibOffset() const noexcept { return GetSpvOffset() + spvMemorySize; }
+            [[nodiscard]] size GetIOSMetalLibOffset() const noexcept { return GetMacOSMetalLibOffset() + macOSMetalLibMemorySize; }
+            [[nodiscard]] size GetIOSSimulatorMetalLibOffset() const noexcept { return GetIOSMetalLibOffset() + iOSMetalLibMemorySize; }
+            [[nodiscard]] size GetDxilOffset() const noexcept { return GetIOSSimulatorMetalLibOffset() + iOSSimulatorMetalLibMemorySize; }
         };
 
     };

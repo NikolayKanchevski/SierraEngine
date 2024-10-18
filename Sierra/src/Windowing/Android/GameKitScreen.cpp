@@ -2,14 +2,14 @@
 // Created by Nikolay Kanchevski on 12/14/23.
 //
 
-#include "GameActivityScreen.h"
+#include "GameKitScreen.h"
 
 namespace Sierra
 {
 
     /* --- CONSTRUCTORS --- */
 
-    GameActivityScreen::GameActivityScreen(const ConfigurationScreenCreateInfo& createInfo)
+    GameKitScreen::GameKitScreen(const GameScreenCreateInfo& createInfo)
         : configuration(createInfo.configuration)
     {
         // Attach thread to JNI
@@ -45,7 +45,7 @@ namespace Sierra
 
         // Get insets (STATUS_BARS | NAVIGATION_BARS)
         jmethodID getInsets = env->GetMethodID(windowInsetsClass, "getInsets", "(I)Landroid/graphics/Insets;");
-        jobject insets = env->CallObjectMethod(windowInsets, getInsets, 0b0011);
+        jobject insets = env->CallObjectMethod(windowInsets, getInsets, 0b0011); // TODO: 0b0011???
         jclass insetsClass = env->GetObjectClass(insets);
 
         // Read insets
@@ -87,13 +87,20 @@ namespace Sierra
         workAreaSize.y -= insetsBottom + insetsTop;
     }
 
-    /* --- GETTER METHODS --- */
+    /* --- POLLING METHODS --- */
 
-    ScreenOrientation GameActivityScreen::GetOrientation() const
+    void GameKitScreen::RegisterScreenReorient(const ScreenOrientation reorientation)
     {
-        const int32 orientation = AConfiguration_getOrientation(configuration);
-        if (orientation == ACONFIGURATION_ORIENTATION_PORT) return ScreenOrientation::Portrait;
-        return ScreenOrientation::Landscape;
+        Screen::RegisterScreenReorient(reorientation);
+        if (reorientation == orientation) return;
+
+        orientation = reorientation;
+        GetScreenReorientDispatcher().DispatchEvent(reorientation);
     }
+
+// TODO: REORIENT
+//    const int32 orientation = AConfiguration_getOrientation(configuration);
+//    if (orientation == ACONFIGURATION_ORIENTATION_PORT) return ScreenOrientation::Portrait;
+//    return ScreenOrientation::Landscape;
 
 }

@@ -35,7 +35,15 @@ namespace Sierra
 
     bool InputManager::IsKeyCombinationHeldImplementation(const std::initializer_list<Key>& keys) const
     {
-        return std::ranges::all_of(keys, [this](const Key key) -> bool { return IsKeyHeld(key); });
+        for (const Key key : keys)
+        {
+            if (!IsKeyHeld(key))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     bool InputManager::IsMouseButtonCombinationPressedImplementation(const std::initializer_list<MouseButton>& mouseButtons) const
@@ -59,7 +67,15 @@ namespace Sierra
 
     bool InputManager::IsMouseButtonCombinationHeldImplementation(const std::initializer_list<MouseButton>& mouseButtons) const
     {
-        return std::ranges::all_of(mouseButtons, [this](const MouseButton mouseButton) -> bool { return IsMouseButtonHeld(mouseButton); });
+        for (const MouseButton mouseButton : mouseButtons)
+        {
+            if (!IsMouseButtonHeld(mouseButton))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 }

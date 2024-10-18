@@ -23,11 +23,12 @@ namespace Sierra
         using EventCallback = std::function<bool(const EventType&)>;
 
         /* --- POLLING METHODS --- */
-        virtual void RegisterTouchPress(const Touch& touch) = 0;
-        virtual void RegisterTouchMove(TouchID ID, Vector2 position) = 0;
-        virtual void RegisterTouchRelease(TouchID ID) = 0;
+        virtual void RegisterTouchPress(const Touch& touch);
+        virtual void RegisterTouchMove(TouchID ID, Vector2 position);
+        virtual void RegisterTouchRelease(TouchID ID);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] bool TouchExists(TouchID ID) const noexcept;
         [[nodiscard]] virtual std::span<const Touch> GetTouches() const noexcept = 0;
         [[nodiscard]] virtual WindowingBackendType GetBackendType() const noexcept = 0;
 

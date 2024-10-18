@@ -26,7 +26,7 @@ namespace SierraEngine
 
     bool Relationship::RemoveChild(const EntityID child) noexcept
     {
-        const auto iterator = std::ranges::find(children, child);
+        const auto iterator = std::find(children.begin(), children.end(), child);
         if (iterator != children.end())
         {
             children.erase(iterator);

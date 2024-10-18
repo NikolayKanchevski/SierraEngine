@@ -91,7 +91,7 @@ namespace SierraEngine
         relationship->SetParent(parentID);
         newParentRelationship->AddChild(entityID);
 
-        const auto iterator = std::ranges::find(rootEntities, entityID);
+        const auto iterator = std::find(rootEntities.begin(), rootEntities.end(), entityID);
         if (iterator != rootEntities.end()) rootEntities.erase(iterator);
     }
 
@@ -136,7 +136,7 @@ namespace SierraEngine
         }
         else
         {
-            const auto iterator = std::ranges::find(rootEntities, childID);
+            const auto iterator = std::find(rootEntities.begin(), rootEntities.end(), childID);
             if (iterator != rootEntities.end()) rootEntities.erase(iterator);
         }
 

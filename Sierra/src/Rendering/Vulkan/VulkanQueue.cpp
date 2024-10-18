@@ -19,27 +19,34 @@ namespace Sierra
         {
             case QueuePriority::Dedicated:
             {
-                auto suitableQueueDescriptions = device.GetQueueDescriptions() | std::ranges::views::filter([createInfo](const std::shared_ptr<VulkanQueueDescription>& queueDescription) -> bool { return queueDescription->operations == createInfo.operations; });
-                if (!suitableQueueDescriptions.empty())
+                for (const std::shared_ptr<VulkanQueueDescription>& queueDescription : device.GetQueueDescriptions())
                 {
-                    auto iterator = std::ranges::min_element(suitableQueueDescriptions, [](const std::shared_ptr<VulkanQueueDescription>& left, const std::shared_ptr<VulkanQueueDescription>& right) -> bool { return left.use_count() < right.use_count(); });
-                    description = *iterator;
-
-                    device.GetFunctionTable().vkGetDeviceQueue(device.GetVulkanDevice(), description->family, 0, &queue);
-                    break;
+                    if (queueDescription.use_count() == 0 && queueDescription->operations & createInfo.operations)
+                    {
+                        description = queueDescription;
+                        device.GetFunctionTable().vkGetDeviceQueue(device.GetVulkanDevice(), description->family, 0, &queue);
+                        break;
+                    }
                 }
+                if (queue != VK_NULL_HANDLE) break;
 
                 // NOTE: We specifically do not break here, such that if a dedicated queue was not found we search for any supporting requested operations
                 [[fallthrough]];
             }
             case QueuePriority::LeastUsed:
             {
-                auto suitableQueueDescriptions = device.GetQueueDescriptions() | std::ranges::views::filter([createInfo](const std::shared_ptr<VulkanQueueDescription>& queueDescription) -> bool { return queueDescription->operations & createInfo.operations; });
-                SR_THROW_IF(suitableQueueDescriptions.empty(), UnsupportedFeatureError(SR_FORMAT("Cannot create queue [{0}], as device [{1}] does not support amy queues of specified type", createInfo.name, name)));
+                const std::shared_ptr<VulkanQueueDescription>* leastUsedQueueDescription = nullptr;
+                for (const std::shared_ptr<VulkanQueueDescription>& queueDescription : device.GetQueueDescriptions())
+                {
+                    if ((leastUsedQueueDescription == nullptr || queueDescription.use_count() < leastUsedQueueDescription->use_count()) && queueDescription->operations & createInfo.operations)
+                    {
+                        leastUsedQueueDescription = &queueDescription;
+                    }
+                }
 
-                auto iterator = std::ranges::min_element(suitableQueueDescriptions, [](const std::shared_ptr<VulkanQueueDescription>& left, const std::shared_ptr<VulkanQueueDescription>& right) -> bool { return left.use_count() < right.use_count(); });
-                description = *iterator;
+                SR_THROW_IF(leastUsedQueueDescription == nullptr, UnsupportedFeatureError(SR_FORMAT("Cannot create queue [{0}], as device [{1}] does not support any queues with specified operations", createInfo.name, name)));
 
+                description = *leastUsedQueueDescription;
                 device.GetFunctionTable().vkGetDeviceQueue(device.GetVulkanDevice(), description->family, 0, &queue);
                 break;
             }

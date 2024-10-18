@@ -12,7 +12,7 @@ namespace SierraEngine
     struct ImportedTexture
     {
         std::array<char, 64> name = { };
-        uint64 hash = 0;
+        Sierra::Hash64 hash = 0;
 
         uint32 width = 0;
         uint32 height = 0;

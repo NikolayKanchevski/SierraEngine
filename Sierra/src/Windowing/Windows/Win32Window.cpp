@@ -236,7 +236,7 @@ namespace Sierra
 
     LRESULT CALLBACK Win32Window::WindowProc(HWND callingWindow, const UINT message, const WPARAM wParam, const LPARAM lParam)
     {
-        Win32Window* window = reinterpret_cast<Win32Window*>(GetWindowLongPtr(callingWindow, GWLP_USERDATA));
+        Win32Window* const window = reinterpret_cast<Win32Window*>(GetWindowLongPtr(callingWindow, GWLP_USERDATA));
         if (window != nullptr)
         {
             switch (message)

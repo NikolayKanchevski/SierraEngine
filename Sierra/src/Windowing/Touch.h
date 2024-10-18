@@ -27,7 +27,7 @@ namespace Sierra
         float32 force = 0.0f;
 
         Vector2 position = { 0.0f, 0.0f };
-        Vector2 lastPosition = { 0.0f, 0.0f };
+        Vector2 lastPosition = position;
     };
 
     class SIERRA_API Touch

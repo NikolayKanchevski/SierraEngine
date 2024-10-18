@@ -237,7 +237,7 @@ namespace Sierra
 
         [[nodiscard]] VkInstance GetVulkanInstance() const noexcept { return instance; }
         [[nodiscard]] const VulkanContextFunctionTable& GetFunctionTable() const noexcept { return functionTable; }
-        [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const noexcept { return std::ranges::find(loadedExtensions, Hash64(std::hash<std::string_view>{}(extensionName.data()))) != loadedExtensions.end(); }
+        [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const noexcept { return std::find(loadedExtensions.begin(), loadedExtensions.end(), Hash64(std::hash<std::string_view>{}(extensionName.data()))) != loadedExtensions.end(); }
 
         /* --- COPY SEMANTICS --- */
         VulkanContext(const VulkanContext&) = delete;

@@ -13,7 +13,10 @@ namespace SierraEngine
         : running(true)
     {
         threads.resize(glm::clamp(createInfo.maxThreadCount, 1U, std::thread::hardware_concurrency()));
-        std::ranges::generate(threads, [this]() -> std::thread { return std::thread(&ThreadPool::ThreadLoop, this); });
+        for (uint32 i = 0; i < threads.size(); i++)
+        {
+            threads[i] = std::thread(&ThreadPool::ThreadLoop, this);
+        }
     }
 
     /* --- POLLING METHODS --- */

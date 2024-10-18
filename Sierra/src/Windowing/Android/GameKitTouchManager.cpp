@@ -1,26 +1,27 @@
 //
-// Created by Nikolay Kanchevski on 8.10.23.
+// Created by Nikolay Kanchevski on 12/14/23.
 //
 
-#include "UIKitTouchManager.h"
+#include "GameKitTouchManager.h"
 
 namespace Sierra
 {
 
     /* --- POLLING METHODS --- */
 
-    void UIKitTouchManager::RegisterTouchPress(const Touch& touch)
+    void GameKitTouchManager::RegisterTouchPress(const Touch& touch)
     {
         TouchManager::RegisterTouchPress(touch);
 
-        if (std::find(touches.begin(), touches.end(), touch) == touches.end())
+        const auto iterator = std::find(touches.begin(), touches.end(), touch);
+        if (iterator == touches.end())
         {
             touches.emplace_back(touch);
             GetTouchPressDispatcher().DispatchEvent(touch);
         }
     }
 
-    void UIKitTouchManager::RegisterTouchMove(const TouchID ID, const Vector2 position)
+    void GameKitTouchManager::RegisterTouchMove(const TouchID ID, const Vector2 position)
     {
         TouchManager::RegisterTouchMove(ID, position);
         const auto iterator = std::find_if(touches.begin(), touches.end(), [ID](const Touch& touch) -> bool { return touch.GetID() == ID; });
@@ -36,7 +37,7 @@ namespace Sierra
         GetTouchMoveDispatcher().DispatchEvent(*iterator);
     }
 
-    void UIKitTouchManager::RegisterTouchRelease(const TouchID ID)
+    void GameKitTouchManager::RegisterTouchRelease(TouchID ID)
     {
         TouchManager::RegisterTouchRelease(ID);
         const auto iterator = std::find_if(touches.begin(), touches.end(), [ID](const Touch& touch) -> bool { return touch.GetID() == ID; });
@@ -54,9 +55,9 @@ namespace Sierra
 
     /* --- PRIVATE METHODS --- */
 
-    void UIKitTouchManager::Update()
+    void GameKitTouchManager::Update(const android_input_buffer& inputBuffer)
     {
-        std::erase_if(touches, [](const Touch& item) -> bool { return item.GetType() == TouchType::Release; });
+        std::erase_if(touches, [](const Touch& touch) -> bool { return touch.GetType() == TouchType::Release; });
     }
 
 }

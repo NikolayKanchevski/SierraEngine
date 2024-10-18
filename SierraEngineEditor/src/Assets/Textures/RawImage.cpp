@@ -9,17 +9,29 @@ namespace SierraEngine
 
     namespace
     {
+        // NOTE: This is necessary, as bit_cast doesn't work on Android
+
+        uint32 ConvertFloatBitsToUInt(const float32 x)
+        {
+            return *reinterpret_cast<const uint32*>(&x);
+        }
+
+        float32 ConvertUIntBitsToFloat(const uint32 x)
+        {
+            return *reinterpret_cast<const float32*>(&x);
+        }
+
         float32 Float16ToFloat32(const uint16 x)
         {
             const uint32 e = (x & 0x7C00) >> 10;
             const uint32 m = (x & 0x03FF) << 13;
-            const uint32 v = std::bit_cast<uint32>(static_cast<float32>(m)) >> 23;
-            return std::bit_cast<float32>((x & 0x8000) << 16 | (e != 0) * ((e + 112) << 23 | m) | ((e == 0) & (m != 0)) * ((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)));
+            const uint32 v = ConvertFloatBitsToUInt(static_cast<float32>(m)) >> 23;
+            return ConvertUIntBitsToFloat((x & 0x8000) << 16 | (e != 0) * ((e + 112) << 23 | m) | ((e == 0) & (m != 0)) * ((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000)));
         }
 
         uint16 Float32ToFloat16(const float32 x)
         {
-            const uint32 b = std::bit_cast<uint32>(x) + 0x00001000;
+            const uint32 b = ConvertFloatBitsToUInt(x) + 0x00001000;
             const uint32 e = (b & 0x7F800000) >> 23;
             const uint32 m = b & 0x007FFFFF;
             return (b & 0x80000000) >> 16 | (e > 112) * ((((e - 112) << 10) &  0x7C00) | m >> 13) | ((e < 113) & (e > 101)) * ((((0x007FF000 + m) >> (125 - e)) + 1) >> 1) | (e > 143) * 0x7FFF;

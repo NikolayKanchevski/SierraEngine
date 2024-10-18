@@ -1222,7 +1222,12 @@ namespace Sierra
 
     /* --- SETTER METHODS --- */
 
-    void VulkanDevice::SetResourceName(VkHandle object, const VkObjectType type, const std::string_view resourceName) const noexcept
+    void VulkanDevice::SetResourceName(VkHandle64 object, const VkObjectType type, const std::string_view resourceName) const noexcept
+    {
+        SetResourceName(reinterpret_cast<VkHandle32>(object), type, resourceName);
+    }
+
+    void VulkanDevice::SetResourceName(const VkHandle32 object, const VkObjectType type, const std::string_view resourceName) const noexcept
     {
         if (!context.IsExtensionLoaded(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) return;
 
@@ -1265,6 +1270,7 @@ namespace Sierra
         functionTable.vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
         functionTable.vkDestroySemaphore(device, semaphore, nullptr);
+
         vmaDestroyAllocator(vmaAllocator);
         functionTable.vkDestroyDevice(device, nullptr);
     }

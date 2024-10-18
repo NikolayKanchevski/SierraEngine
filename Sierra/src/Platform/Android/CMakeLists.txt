@@ -1,33 +1,31 @@
 target_sources(Sierra PRIVATE
     AndroidContext.cpp
     AndroidContext.h
-    GameActivityContext.cpp
-    GameActivityContext.h
+    GameKitContext.cpp
+    GameKitContext.h
 )
 
-# Find game activity
-find_package(game-activity REQUIRED CONFIG)
-get_target_property(game-activity_INCLUDE_DIRECTORIES game-activity::game-activity INTERFACE_INCLUDE_DIRECTORIES)
+set(ANDROID_INCLUDE_DIRECTORY_PATH ${CMAKE_ANDROID_NDK}/sources)
+target_include_directories(Sierra PUBLIC ${ANDROID_INCLUDE_DIRECTORY_PATH})
 
-# Enable native activity
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u \ Java_com_google_androidgamesdk_GameActivity_initializeNativeCode")
+set(GAME_SDK_DIRECTORY_PATH ../../../vendor/android-game-sdk)
+
+set(GAME_ACTIVITY_DIRECTORY_PATH ${GAME_SDK_DIRECTORY_PATH}/game-activity/)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u \ Java_com_google_androidgamesdk_GameActivity_initializeNativeCode")
+add_subdirectory(${GAME_ACTIVITY_DIRECTORY_PATH} ${GAME_ACTIVITY_DIRECTORY_PATH})
+target_include_directories(Sierra PUBLIC ${GAME_ACTIVITY_DIRECTORY_PATH}/prefab-src/modules/game-activity/include/)
 
-# Build app_glue
-set(APP_GLUE_DIRECTORY_PATH "${game-activity_INCLUDE_DIRECTORIES}/game-activity/native_app_glue")
-target_sources(${SIERRA_APPLICATION_NAME} PRIVATE android_main.cpp ${APP_GLUE_DIRECTORY_PATH}/android_native_app_glue.h ${APP_GLUE_DIRECTORY_PATH}/android_native_app_glue.c ${game-activity_INCLUDE_DIRECTORIES}/game-activity/GameActivity.h ${game-activity_INCLUDE_DIRECTORIES}/game-activity/GameActivity.cpp)
-target_sources(Sierra PRIVATE ${game-activity_INCLUDE_DIRECTORIES}/game-activity/GameActivity.h)
-target_link_libraries(${SIERRA_APPLICATION_NAME} PUBLIC game-activity::game-activity_static)
+target_link_libraries(Sierra PRIVATE game-activity_static)
 
-# Link libraries
+# NOTE: We link shared library to application, just to register the entry point
+target_link_libraries(${SIERRA_APPLICATION_NAME} PRIVATE game-activity)
+
+# Link entry point
+target_sources(${SIERRA_APPLICATION_NAME} PRIVATE main.cpp)
 target_link_libraries(Sierra PUBLIC
     log
     android
-    game-activity::game-activity_static
+    game-activity_static
 )
 
-# Add include directories
-target_include_directories(Sierra PUBLIC
-    ${CMAKE_ANDROID_NDK}/sources
-    ${game-activity_INCLUDE_DIRECTORIES}
-)

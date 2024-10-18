@@ -851,7 +851,7 @@ namespace Sierra
         [[nodiscard]] bool IsSamplerAnisotropySupported(SamplerAnisotropy anisotropy) const noexcept override;
 
         [[nodiscard]] const VulkanDeviceFunctionTable& GetFunctionTable() const noexcept { return functionTable; }
-        [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const noexcept { return std::ranges::find(loadedExtensions, Hash64(std::hash<std::string_view>{}(extensionName.data()))) != loadedExtensions.end(); }
+        [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const noexcept { return std::find(loadedExtensions.begin(), loadedExtensions.end(), Hash64(std::hash<std::string_view>{}(extensionName.data()))) != loadedExtensions.end(); }
 
         [[nodiscard]] VkPhysicalDevice GetVulkanPhysicalDevice() const noexcept { return physicalDevice; }
         [[nodiscard]] VkDevice GetVulkanDevice() const noexcept { return device; }
@@ -872,7 +872,8 @@ namespace Sierra
         VkPhysicalDeviceFeatures2 GetPhysicalDeviceFeatures2(void* pNext = nullptr) const noexcept;
 
         /* --- SETTER METHODS --- */
-        void SetResourceName(VkHandle object, VkObjectType type, std::string_view name) const noexcept;
+        void SetResourceName(VkHandle64 object, VkObjectType type, std::string_view name) const noexcept;
+        void SetResourceName(VkHandle32 object, VkObjectType type, std::string_view name) const noexcept;
 
         /* --- CONSTANTS --- */
         constexpr static uint32 BINDLESS_UNIFORM_BUFFER_BINDING         = 0;

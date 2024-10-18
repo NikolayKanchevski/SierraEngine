@@ -1,8 +1,8 @@
 target_sources(Sierra PRIVATE
-    GameActivityScreen.cpp
-    GameActivityScreen.h
-    GameActivityTouchManager.cpp
-    GameActivityTouchManager.h
-    GameActivityWindow.cpp
-    GameActivityWindow.h
+    GameKitScreen.cpp
+    GameKitScreen.h
+    GameKitTouchManager.cpp
+    GameKitTouchManager.h
+    GameKitWindow.cpp
+    GameKitWindow.h
 )

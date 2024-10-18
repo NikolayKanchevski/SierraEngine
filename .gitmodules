@@ -29,3 +29,6 @@
 [submodule "SierraEngineEditor/vendor/rapidyaml"]
 	path = SierraEngineEditor/vendor/rapidyaml
 	url = https://github.com/biojppm/rapidyaml
+[submodule "Sierra/vendor/android-game-sdk"]
+	path = Sierra/vendor/android-game-sdk
+	url = https://android.googlesource.com/platform/frameworks/opt/gamesdk

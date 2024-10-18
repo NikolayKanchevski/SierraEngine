@@ -378,12 +378,12 @@ namespace Sierra
         if (drawData->DisplaySize.x * drawData->FramebufferScale.x <= 0 || drawData->DisplaySize.y * drawData->FramebufferScale.y <= 0) return;
 
         std::unique_ptr<Buffer>& vertexBuffer = vertexBuffers[currentFrame];
-        if (const uint64 requiredVertexMemorySize = drawData->TotalVtxCount * sizeof(ImDrawVert); requiredVertexMemorySize > vertexBuffer->GetMemorySize())
+        if (const size requiredVertexMemorySize = drawData->TotalVtxCount * sizeof(ImDrawVert); requiredVertexMemorySize > vertexBuffer->GetMemorySize())
         {
             // Create new buffer with bigger memory
             std::unique_ptr<Buffer> newVertexBuffer = device.CreateBuffer({
                 .name = "Vertex Buffer of ImGui Render Task",
-                .memorySize = glm::max(requiredVertexMemorySize, static_cast<uint64>(static_cast<float64>(vertexBuffer->GetMemorySize()) * VERTEX_BUFFER_GROWTH_FACTOR)),
+                .memorySize = glm::max(requiredVertexMemorySize, static_cast<size>(static_cast<float64>(vertexBuffer->GetMemorySize()) * VERTEX_BUFFER_GROWTH_FACTOR)),
                 .usage = BufferUsage::Vertex,
                 .memoryLocation = BufferMemoryLocation::CPU
             });
@@ -394,12 +394,12 @@ namespace Sierra
         }
 
         std::unique_ptr<Buffer>& indexBuffer = indexBuffers[currentFrame];
-        if (const uint64 requiredIndexMemorySize = drawData->TotalIdxCount * sizeof(ImDrawIdx); requiredIndexMemorySize > indexBuffer->GetMemorySize())
+        if (const size requiredIndexMemorySize = drawData->TotalIdxCount * sizeof(ImDrawIdx); requiredIndexMemorySize > indexBuffer->GetMemorySize())
         {
             // Create new buffer with bigger memory
             std::unique_ptr<Buffer> newIndexBuffer = device.CreateBuffer({
                 .name = "Index Buffer of ImGui Render Task",
-                .memorySize = glm::max(requiredIndexMemorySize, static_cast<uint64>(static_cast<float64>(indexBuffer->GetMemorySize()) * INDEX_BUFFER_GROWTH_FACTOR)),
+                .memorySize = glm::max(requiredIndexMemorySize, static_cast<size>(static_cast<float64>(indexBuffer->GetMemorySize()) * INDEX_BUFFER_GROWTH_FACTOR)),
                 .usage = BufferUsage::Index,
                 .memoryLocation = BufferMemoryLocation::CPU
             });

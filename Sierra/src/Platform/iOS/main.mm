@@ -36,10 +36,7 @@ namespace
 
         // Create application
         application = Sierra::CreateApplication(_argc, _argv);
-        if (application == nullptr)
-        {
-            APP_ERROR("Created application returned from Sierra::CreateApplication() must not be a null pointer!");
-        }
+        APP_THROW_IF(application == nullptr, Sierra::InvalidValueError("Cannot create iOS application, as application returned from Sierra::CreateApplication() must not be null"));
 
         // Create run loop
         timer = [NSTimer scheduledTimerWithTimeInterval: 0 target: self selector: @selector(applicationShouldUpdate) userInfo: nil repeats: true];

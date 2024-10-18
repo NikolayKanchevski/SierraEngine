@@ -149,7 +149,7 @@ namespace Sierra
     const Win32Screen& Win32Context::GetWindowScreen(HWND window) const
     {
         HMONITOR windowMonitor = MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST);
-        return *std::ranges::find_if(screens, [windowMonitor](const Win32Screen& item) { return item.GetHMonitor() == windowMonitor; });
+        return *std::find(screens.begin(), screens.end(), [windowMonitor](const Win32Screen& win32Screen) { return win32Screen.GetHMonitor() == windowMonitor; });
     }
 
     /* --- PRIVATE METHODS --- */

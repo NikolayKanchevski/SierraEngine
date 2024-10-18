@@ -21,7 +21,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        UIKitTouchManager();
+        UIKitTouchManager() = default;
 
         /* --- POLLING METHODS --- */
         void RegisterTouchPress(const Touch& touch) override;

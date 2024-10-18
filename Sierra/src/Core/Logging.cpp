@@ -33,7 +33,7 @@ namespace Sierra
             coreLogger = spdlog::stderr_color_mt("Sierra API");
             applicationLogger = spdlog::stderr_color_mt(applicationName.data());
         #else
-            engineLogger = spdlog::android_logger_mt("Sierra API");
+            coreLogger = spdlog::android_logger_mt("Sierra API");
             applicationLogger = spdlog::android_logger_mt(applicationName.data());
         #endif
         coreLogger->set_level(spdlog::level::info);

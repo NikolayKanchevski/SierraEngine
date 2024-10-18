@@ -52,7 +52,7 @@ namespace Sierra
         }
 
         // Try to find the semaphore counter of the command buffer
-        auto iterator = std::ranges::find_if(commandBufferQueue, [&metalCommandBuffer](const CommandBufferQueueEntry& item) -> bool { return item.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
+        auto iterator = std::find_if(commandBufferQueue.begin(), commandBufferQueue.end(), [&metalCommandBuffer](const CommandBufferQueueEntry& commandBufferEntry) -> bool { return commandBufferEntry.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
         if (iterator == commandBufferQueue.end())
         {
             commandBufferQueue.push_back({ .commandBuffer = metalCommandBuffer.GetMetalCommandBuffer(), .counter = static_cast<uint32>(commandBuffersToWait.size()) });
@@ -70,7 +70,7 @@ namespace Sierra
             SR_THROW_IF(&metalCommandBufferToWait == &metalCommandBuffer, InvalidValueError(SR_FORMAT("Cannot wait for the same command buffer [{0}] prior to submitting it", metalCommandBuffer.GetName())));
             [metalCommandBufferToWait.GetMetalCommandBuffer() addCompletedHandler: ^(id<MTLCommandBuffer>)
             {
-                auto semaphoreIterator = std::ranges::find_if(commandBufferQueue, [&metalCommandBuffer](const CommandBufferQueueEntry& item) -> bool { return item.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
+                auto semaphoreIterator = std::find_if(commandBufferQueue.begin(), commandBufferQueue.end(), [&metalCommandBuffer](const CommandBufferQueueEntry& commandBufferEntry) -> bool { return commandBufferEntry.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
                 if (semaphoreIterator->counter--; semaphoreIterator->counter == 0)
                 {
                     [semaphoreIterator->commandBuffer encodeSignalEvent: device.GetSemaphore() value: metalCommandBuffer.GetCompletionSemaphoreSignalValue()];

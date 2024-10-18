@@ -12,16 +12,16 @@ namespace SierraEngine
     struct ArenaAllocatorCreateInfo
     {
         const Sierra::Device& device;
-        uint64 initialVertexBufferCapacity = 4096;
-        uint64 initialIndexBufferCapacity = 8192;
+        uint32 initialVertexBufferCapacity = 4096;
+        uint32 initialIndexBufferCapacity = 8192;
     };
 
     struct ArenaMesh
     {
-        uint64 vertexOffset = 0;
+        size vertexOffset = 0;
         uint32 vertexCount = 0;
 
-        uint64 indexOffset = 0;
+        size indexOffset = 0;
         uint32 indexCount = 0;
     };
 

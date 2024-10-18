@@ -6,7 +6,7 @@
 
 #include <ShlObj_core.h>
 
-#include "../FileErrors.h"
+#include "../PathErrors.h"
 #include "Win32FileStream.h"
 #include "Win32FileErrorHandler.h"
 
