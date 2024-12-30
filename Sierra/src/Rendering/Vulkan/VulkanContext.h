@@ -7,7 +7,7 @@
 #include "../RenderingContext.h"
 #include "VulkanResource.h"
 
-#include "../../Utilities/Hash.hpp"
+#include "../../Utilities/Handle.hpp"
 
 namespace Sierra
 {
@@ -237,25 +237,25 @@ namespace Sierra
 
         [[nodiscard]] VkInstance GetVulkanInstance() const noexcept { return instance; }
         [[nodiscard]] const VulkanContextFunctionTable& GetFunctionTable() const noexcept { return functionTable; }
-        [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const noexcept { return std::find(loadedExtensions.begin(), loadedExtensions.end(), Hash64(std::hash<std::string_view>{}(extensionName.data()))) != loadedExtensions.end(); }
+        [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const noexcept { return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<std::string_view>{}(extensionName.data())) != loadedExtensions.end(); }
 
         /* --- COPY SEMANTICS --- */
         VulkanContext(const VulkanContext&) = delete;
         VulkanContext& operator=(const VulkanContext&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        VulkanContext(VulkanContext&&) = delete;
-        VulkanContext& operator=(VulkanContext&&) = delete;
+        VulkanContext(VulkanContext&&) noexcept = default;
+        VulkanContext& operator=(VulkanContext&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~VulkanContext() noexcept override;
 
     private:
-        const std::string name;
-        const Version vulkanVersion;
+        std::string name = { };
+        Version vulkanVersion = Version({ 1, 0, 0 });
 
         VkInstance instance = VK_NULL_HANDLE;
-        std::vector<Hash64> loadedExtensions = { };
+        std::vector<size> loadedExtensions = { };
         VulkanContextFunctionTable functionTable = { };
 
         #if SR_ENABLE_LOGGING

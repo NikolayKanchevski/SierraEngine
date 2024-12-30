@@ -8,6 +8,7 @@
 #include "MetalImage.h"
 #include "MetalSampler.h"
 #include "MetalRenderPass.h"
+#include "MetalFramebuffer.h"
 #include "MetalSwapchain.h"
 #include "MetalShader.h"
 #include "MetalGraphicsPipeline.h"
@@ -21,8 +22,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    MetalDevice::MetalDevice(const MetalContext& context, const id<MTLDevice> device, const DeviceCreateInfo& createInfo)
-        : Device(createInfo), context(context), device(device), name(createInfo.name)
+    MetalDevice::MetalDevice(const MetalContext& givenContext, const id<MTLDevice> device, const DeviceCreateInfo& createInfo)
+        : Device(createInfo), context(&givenContext), device(device), name(createInfo.name)
     {
         SR_THROW_IF(device == nil, InvalidValueError(SR_FORMAT("Cannot create Metal device [{0}], as specified device must not be null", createInfo.name)));
 
@@ -37,9 +38,9 @@ namespace Sierra
         #endif
 
         driverVersion = Version({
-            static_cast<uint32>(NSProcessInfo.processInfo.operatingSystemVersion.majorVersion),
-            static_cast<uint32>(NSProcessInfo.processInfo.operatingSystemVersion.minorVersion),
-            static_cast<uint32>(NSProcessInfo.processInfo.operatingSystemVersion.patchVersion)
+            static_cast<uint8>(NSProcessInfo.processInfo.operatingSystemVersion.majorVersion),
+            static_cast<uint8>(NSProcessInfo.processInfo.operatingSystemVersion.minorVersion),
+            static_cast<uint8>(NSProcessInfo.processInfo.operatingSystemVersion.patchVersion)
         });
 
         // Create synchronization
@@ -67,6 +68,11 @@ namespace Sierra
     std::unique_ptr<RenderPass> MetalDevice::CreateRenderPass(const RenderPassCreateInfo& createInfo) const
     {
         return std::make_unique<MetalRenderPass>(*this, createInfo);
+    }
+
+    std::unique_ptr<Framebuffer> MetalDevice::CreateFramebuffer(const FramebufferCreateInfo& createInfo) const
+    {
+        return std::make_unique<MetalFramebuffer>(*this, createInfo);
     }
 
     std::unique_ptr<Swapchain> MetalDevice::CreateSwapchain(const SwapchainCreateInfo& createInfo) const
@@ -130,8 +136,8 @@ namespace Sierra
             .resourceTableSampledImageCapacity = RESOURCE_TABLE_SAMPLED_IMAGE_CAPACITY,
             .resourceTableStorageImageCapacity = RESOURCE_TABLE_STORAGE_IMAGE_CAPACITY,
             .resourceTableSamplerCapacity = RESOURCE_TABLE_SAMPLER_CAPACITY,
-            .maxRenderPassWidth = [device supportsFamily: MTLGPUFamilyApple3]  ? 16384U : 8192U,
-            .maxRenderPassHeight = [device supportsFamily: MTLGPUFamilyApple3] ? 16384U : 8192U,
+            .maxFramebufferWidth = [device supportsFamily: MTLGPUFamilyApple3] ? 16384U : 8192U,
+            .maxFramebufferHeight = [device supportsFamily: MTLGPUFamilyApple3] ? 16384U : 8192U,
             .maxWorkGroupSize = { [device supportsFamily: MTLGPUFamilyApple4] ? 1024U : 512U, [device supportsFamily: MTLGPUFamilyApple4] ? 1024U : 512U, [device supportsFamily: MTLGPUFamilyApple4] ? 1024U : 512U },
             .highestImageSampling = GetHighestImageSamplingSupported(),
             .highestSamplerAnisotropy = GetHighestSamplerAnisotropySupported()

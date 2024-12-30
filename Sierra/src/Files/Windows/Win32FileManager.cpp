@@ -23,7 +23,7 @@ namespace Sierra
         return attributes != INVALID_FILE_ATTRIBUTES && !(attributes & FILE_ATTRIBUTE_DIRECTORY);
     }
 
-    std::unique_ptr<FileStream> Win32FileManager::OpenFileStream(const std::filesystem::path& filePath, const FileStreamAccess access, const FileStreamBuffering buffering) const
+    std::unique_ptr<FileStream> Win32FileManager::CreateFileStream(const FileStreamCreateInfo& createInfo) const
     {
         SR_THROW_IF(!FileExists(filePath), PathMissingError("Cannot open file stream, as the specified file path does not exist", filePath));
 

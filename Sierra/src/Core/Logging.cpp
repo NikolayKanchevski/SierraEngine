@@ -52,7 +52,6 @@ namespace Sierra
         return *applicationLogger;
     }
 
-
     /* --- CONSTRUCTORS --- */
 
     ScopeProfiler::ScopeProfiler(const std::string_view scopeName)

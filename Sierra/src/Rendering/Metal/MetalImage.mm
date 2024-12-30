@@ -176,18 +176,18 @@ namespace Sierra
         return 1;
     }
 
-    MTLTextureSwizzleChannels ImageComponentSwizzlesToTextureSwizzleChannels(const ImageComponentSwizzle redSwizzle, const ImageComponentSwizzle greenSwizzle, const ImageComponentSwizzle blueSwizzle, const ImageComponentSwizzle alphaSwizzle) noexcept
+    MTLTextureSwizzleChannels ImageComponentSwizzlesToTextureSwizzleChannels(const ImageChannelSwizzling redSwizzle, const ImageChannelSwizzling greenSwizzle, const ImageChannelSwizzling blueSwizzle, const ImageChannelSwizzling alphaSwizzle) noexcept
     {
-        constexpr auto NonIdentityImageComponentSwizzleToTextureSwizzle = [](const ImageComponentSwizzle componentSwizzle) -> MTLTextureSwizzle
+        constexpr auto NonIdentityImageComponentSwizzleToTextureSwizzle = [](const ImageChannelSwizzling componentSwizzle) -> MTLTextureSwizzle
         {
             switch (componentSwizzle)
             {
-                case ImageComponentSwizzle::Zero:       return MTLTextureSwizzleZero;
-                case ImageComponentSwizzle::One:        return MTLTextureSwizzleOne;
-                case ImageComponentSwizzle::Red:        return MTLTextureSwizzleRed;
-                case ImageComponentSwizzle::Green:      return MTLTextureSwizzleGreen;
-                case ImageComponentSwizzle::Blue:       return MTLTextureSwizzleBlue;
-                case ImageComponentSwizzle::Alpha:      return MTLTextureSwizzleAlpha;
+                case ImageChannelSwizzling::Zero:       return MTLTextureSwizzleZero;
+                case ImageChannelSwizzling::One:        return MTLTextureSwizzleOne;
+                case ImageChannelSwizzling::Red:        return MTLTextureSwizzleRed;
+                case ImageChannelSwizzling::Green:      return MTLTextureSwizzleGreen;
+                case ImageChannelSwizzling::Blue:       return MTLTextureSwizzleBlue;
+                case ImageChannelSwizzling::Alpha:      return MTLTextureSwizzleAlpha;
                 default:                                break;
             }
 
@@ -195,10 +195,10 @@ namespace Sierra
         };
 
         return MTLTextureSwizzleChannelsMake(
-            redSwizzle   == ImageComponentSwizzle::Identity ? MTLTextureSwizzleRed   : NonIdentityImageComponentSwizzleToTextureSwizzle(redSwizzle),
-            greenSwizzle == ImageComponentSwizzle::Identity ? MTLTextureSwizzleGreen : NonIdentityImageComponentSwizzleToTextureSwizzle(greenSwizzle),
-            blueSwizzle  == ImageComponentSwizzle::Identity ? MTLTextureSwizzleBlue  : NonIdentityImageComponentSwizzleToTextureSwizzle(blueSwizzle),
-            alphaSwizzle == ImageComponentSwizzle::Identity ? MTLTextureSwizzleAlpha : NonIdentityImageComponentSwizzleToTextureSwizzle(alphaSwizzle)
+            redSwizzle == ImageChannelSwizzling::Identity ? MTLTextureSwizzleRed : NonIdentityImageComponentSwizzleToTextureSwizzle(redSwizzle),
+            greenSwizzle == ImageChannelSwizzling::Identity ? MTLTextureSwizzleGreen : NonIdentityImageComponentSwizzleToTextureSwizzle(greenSwizzle),
+            blueSwizzle == ImageChannelSwizzling::Identity ? MTLTextureSwizzleBlue : NonIdentityImageComponentSwizzleToTextureSwizzle(blueSwizzle),
+            alphaSwizzle == ImageChannelSwizzling::Identity ? MTLTextureSwizzleAlpha : NonIdentityImageComponentSwizzleToTextureSwizzle(alphaSwizzle)
         );
     }
 
@@ -206,7 +206,7 @@ namespace Sierra
     {
         switch (memoryLocation)
         {
-            case ImageMemoryLocation::CPU:      return MTLStorageModeShared;
+            case ImageMemoryLocation::RAM:      return MTLStorageModeShared;
             case ImageMemoryLocation::GPU:      return MTLStorageModePrivate;
         }
 
@@ -217,7 +217,7 @@ namespace Sierra
     {
         switch (memoryLocation)
         {
-            case ImageMemoryLocation::CPU:      return MTLCPUCacheModeDefaultCache;
+            case ImageMemoryLocation::RAM:      return MTLCPUCacheModeDefaultCache;
             case ImageMemoryLocation::GPU:      return MTLCPUCacheModeWriteCombined;
         }
 
@@ -229,21 +229,21 @@ namespace Sierra
     MetalImage::MetalImage(const MetalDevice& device, const ImageCreateInfo& createInfo)
         : Image(createInfo), width(createInfo.width), height(createInfo.height), depth(createInfo.depth), format(createInfo.format), levelCount(createInfo.levelCount), layerCount(createInfo.layerCount), sampling(createInfo.sampling)
     {
-        SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.width > device.GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max line image dimensions", createInfo.name, device.GetName()), createInfo.width, 0U, device.GetLimits().maxLineImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.height > device.GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max line image dimensions", createInfo.name, device.GetName()), createInfo.height, 0U, device.GetLimits().maxLineImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.depth > device.GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max line image dimensions", createInfo.name, device.GetName()), createInfo.depth, 0U, device.GetLimits().maxLineImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.width > device.GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max line image dimensions", createInfo.name, device.GetName()), createInfo.width, uint32(0), device.GetLimits().maxLineImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.height > device.GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max line image dimensions", createInfo.name, device.GetName()), createInfo.height, uint32(0), device.GetLimits().maxLineImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.depth > device.GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max line image dimensions", createInfo.name, device.GetName()), createInfo.depth, uint32(0), device.GetLimits().maxLineImageDimensions));
 
-        SR_THROW_IF(createInfo.type == ImageType::Plane && createInfo.width > device.GetLimits().maxPlaneImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max plane image dimensions", createInfo.name, device.GetName()), createInfo.width, 0U, device.GetLimits().maxPlaneImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Plane && createInfo.height > device.GetLimits().maxPlaneImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max plane image dimensions", createInfo.name, device.GetName()), createInfo.height, 0U, device.GetLimits().maxPlaneImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Plane && createInfo.depth > device.GetLimits().maxPlaneImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max plane image dimensions", createInfo.name, device.GetName()), createInfo.depth, 0U, device.GetLimits().maxPlaneImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Plane && createInfo.width > device.GetLimits().maxPlaneImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max plane image dimensions", createInfo.name, device.GetName()), createInfo.width, uint32(0), device.GetLimits().maxPlaneImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Plane && createInfo.height > device.GetLimits().maxPlaneImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max plane image dimensions", createInfo.name, device.GetName()), createInfo.height, uint32(0), device.GetLimits().maxPlaneImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Plane && createInfo.depth > device.GetLimits().maxPlaneImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max plane image dimensions", createInfo.name, device.GetName()), createInfo.depth, uint32(0), device.GetLimits().maxPlaneImageDimensions));
 
-        SR_THROW_IF(createInfo.type == ImageType::Volume && createInfo.width > device.GetLimits().maxVolumeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max volume image dimensions", createInfo.name, device.GetName()), createInfo.width, 0U, device.GetLimits().maxVolumeImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Volume && createInfo.height > device.GetLimits().maxVolumeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max volume image dimensions", createInfo.name, device.GetName()), createInfo.height, 0U, device.GetLimits().maxVolumeImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Volume && createInfo.depth > device.GetLimits().maxVolumeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max volume image dimensions", createInfo.name, device.GetName()), createInfo.depth, 0U, device.GetLimits().maxVolumeImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Volume && createInfo.width > device.GetLimits().maxVolumeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max volume image dimensions", createInfo.name, device.GetName()), createInfo.width, uint32(0), device.GetLimits().maxVolumeImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Volume && createInfo.height > device.GetLimits().maxVolumeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max volume image dimensions", createInfo.name, device.GetName()), createInfo.height, uint32(0), device.GetLimits().maxVolumeImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Volume && createInfo.depth > device.GetLimits().maxVolumeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max volume image dimensions", createInfo.name, device.GetName()), createInfo.depth, uint32(0), device.GetLimits().maxVolumeImageDimensions));
 
-        SR_THROW_IF(createInfo.type == ImageType::Cube && createInfo.width > device.GetLimits().maxCubeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max cube image dimensions", createInfo.name, device.GetName()), createInfo.width, 0U, device.GetLimits().maxCubeImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Cube && createInfo.height > device.GetLimits().maxCubeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max cube image dimensions", createInfo.name, device.GetName()), createInfo.height, 0U, device.GetLimits().maxCubeImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Cube && createInfo.depth > device.GetLimits().maxCubeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max cube image dimensions", createInfo.name, device.GetName()), createInfo.depth, 0U, device.GetLimits().maxCubeImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Cube && createInfo.width > device.GetLimits().maxCubeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max cube image dimensions", createInfo.name, device.GetName()), createInfo.width, uint32(0), device.GetLimits().maxCubeImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Cube && createInfo.height > device.GetLimits().maxCubeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max cube image dimensions", createInfo.name, device.GetName()), createInfo.height, uint32(0), device.GetLimits().maxCubeImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Cube && createInfo.depth > device.GetLimits().maxCubeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max cube image dimensions", createInfo.name, device.GetName()), createInfo.depth, uint32(0), device.GetLimits().maxCubeImageDimensions));
 
         SR_THROW_IF(!device.IsImageFormatSupported(createInfo.format, createInfo.usage), UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create image [{1}] with unsupported format - use Device::IsImageFormatSupported() to query support", device.GetName(), createInfo.name)));
         SR_THROW_IF(!device.IsImageSamplingSupported(createInfo.sampling), UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create image [{1}] with unsupported sampling - use Device::IsImageSamplingSupported() to query support", device.GetName(), createInfo.name)));
@@ -259,7 +259,7 @@ namespace Sierra
         [textureDescriptor setPixelFormat: ImageFormatToPixelFormat(createInfo.format)];
         [textureDescriptor setUsage: ImageUsageToTextureUsage(createInfo.usage)];
         [textureDescriptor setSampleCount: ImageSamplingToUInteger(createInfo.sampling)];
-        [textureDescriptor setSwizzle: ImageComponentSwizzlesToTextureSwizzleChannels(createInfo.redSwizzle, createInfo.greenSwizzle, createInfo.blueSwizzle, createInfo.alphaSwizzle)];
+        [textureDescriptor setSwizzle: ImageComponentSwizzlesToTextureSwizzleChannels(createInfo.swizzling[0], createInfo.swizzling[1], createInfo.swizzling[2], createInfo.swizzling[3])];
         [textureDescriptor setStorageMode: createInfo.usage & ImageUsage::TransientAttachment ? MTLStorageModeMemoryless : ImageMemoryLocationToStorageMode(createInfo.memoryLocation)];
         [textureDescriptor setCpuCacheMode: ImageMemoryLocationToCPUCacheMode(createInfo.memoryLocation)];
         [textureDescriptor setHazardTrackingMode: MTLHazardTrackingModeUntracked];

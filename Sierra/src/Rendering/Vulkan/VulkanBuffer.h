@@ -24,34 +24,32 @@ namespace Sierra
         VulkanBuffer(const VulkanDevice& device, const BufferCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Write(const void* memory, size sourceOffset, size destinationOffset, size memorySize) override;
+        void Write(const void* memory, uint64 sourceOffset, uint64 destinationOffset, uint64 memorySize) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
 
-        [[nodiscard]] void* GetMemory() const noexcept override { return memory; }
-        [[nodiscard]] size GetMemorySize() const noexcept override { return memorySize; }
+        [[nodiscard]] const void* GetMemory() const noexcept override { return memory; }
+        [[nodiscard]] uint64 GetMemorySize() const noexcept override { return memorySize; }
 
         [[nodiscard]] VkBuffer GetVulkanBuffer() const noexcept { return buffer; }
-        [[nodiscard]] VkBufferUsageFlags GetVulkanUsageFlags() const noexcept { return usageFlags; }
 
         /* --- COPY SEMANTICS --- */
         VulkanBuffer(const VulkanBuffer&) = delete;
         VulkanBuffer& operator=(const VulkanBuffer&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        VulkanBuffer(VulkanBuffer&&) = delete;
-        VulkanBuffer& operator=(VulkanBuffer&&) = delete;
+        VulkanBuffer(VulkanBuffer&&) noexcept = default;
+        VulkanBuffer& operator=(VulkanBuffer&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~VulkanBuffer() noexcept override;
 
     private:
-        const VulkanDevice& device;
-        const std::string name;
+        const VulkanDevice* device = nullptr;
+        std::string name = { };
 
         VkBuffer buffer = VK_NULL_HANDLE;
-        VkBufferUsageFlags usageFlags = 0;
         VmaAllocation allocation = VK_NULL_HANDLE;
 
         void* memory = nullptr;

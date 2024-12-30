@@ -20,6 +20,46 @@ namespace Sierra
         iOS
     };
 
+    enum class AlertSeverity : uint8
+    {
+        Info,
+        Warning,
+        Error
+    };
+
+    struct AlertDialogOpenInfo
+    {
+        std::string_view title = "Alert";
+        std::string_view message = { };
+        AlertSeverity severity = AlertSeverity::Warning;
+
+        std::string_view acceptButtonText = "OK";
+        std::string_view declineButtonText = { };
+    };
+
+    struct FileSelectDialogOpenInfo
+    {
+        std::string_view message = { };
+        std::string_view buttonText = { };
+        const std::filesystem::path& directoryPath = { };
+
+        bool allowFiles = true;
+        bool allowDirectories = false;
+        bool allowMultipleSelection = false;
+        std::span<const std::string_view> allowedFileExtensions = { };
+    };
+
+    struct FileSaveDialogOpenInfo
+    {
+        std::string_view message = { };
+        std::string_view buttonText = { };
+
+        const std::filesystem::path& directoryPath = { };
+        std::string_view fileName = { };
+
+        std::span<const std::string_view> allowedFileExtensions = { };
+    };
+
     class SIERRA_API PlatformContext
     {
     public:
@@ -29,7 +69,12 @@ namespace Sierra
         /* --- POLLING METHODS --- */
         [[nodiscard]] virtual std::unique_ptr<Window> CreateWindow(const WindowCreateInfo& createInfo) const = 0;
 
+        virtual bool OpenAlertDialog(const AlertDialogOpenInfo& openInfo) const = 0;
+        [[nodiscard]] virtual std::vector<std::filesystem::path> OpenFileSelectDialog(const FileSelectDialogOpenInfo& openInfo) const noexcept = 0;
+        [[nodiscard]] virtual std::optional<std::filesystem::path> OpenFileSaveDialog(const FileSaveDialogOpenInfo& openInfo) const noexcept = 0;
+
         /* --- GETTER METHODS --- */
+        [[nodiscard]] virtual std::string_view GetUserName() const noexcept = 0;
         [[nodiscard]] virtual const FileManager& GetFileManager() const noexcept = 0;
 
         [[nodiscard]] virtual Screen& GetPrimaryScreen() noexcept = 0;

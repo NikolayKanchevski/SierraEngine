@@ -57,8 +57,8 @@ namespace Sierra
         UIKitScreen& operator=(const UIKitScreen&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        UIKitScreen(UIKitScreen&&) = default;
-        UIKitScreen& operator=(UIKitScreen&&) = default;
+        UIKitScreen(UIKitScreen&&) noexcept = default;
+        UIKitScreen& operator=(UIKitScreen&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~UIKitScreen() noexcept override;

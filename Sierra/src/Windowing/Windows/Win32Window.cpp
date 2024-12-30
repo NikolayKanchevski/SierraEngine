@@ -212,27 +212,7 @@ namespace Sierra
         return !IsWindowVisible(window);
     }
 
-    InputManager* Win32Window::GetInputManager() noexcept
-    {
-        return &inputManager;
-    }
-
-    CursorManager* Win32Window::GetCursorManager() noexcept
-    {
-        return &cursorManager;
-    }
-
-    TouchManager* Win32Window::GetTouchManager() noexcept
-    {
-        return nullptr;
-    }
-
-    WindowingBackendType Win32Window::GetBackendType() const noexcept
-    {
-        return WindowingBackendType::Win32;
-    }
-
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     LRESULT CALLBACK Win32Window::WindowProc(HWND callingWindow, const UINT message, const WPARAM wParam, const LPARAM lParam)
     {
@@ -503,6 +483,7 @@ namespace Sierra
                 }
             }
         }
+
         return DefWindowProc(callingWindow, message, wParam, lParam);
     }
 

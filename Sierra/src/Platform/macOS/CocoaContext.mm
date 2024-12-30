@@ -72,6 +72,52 @@
 namespace Sierra
 {
 
+    namespace
+    {
+        void AssignDefaultMenuBar(const NSApplication* const application)
+        {
+            const NSString* const processName = [[NSProcessInfo processInfo] processName];
+            NSMenu* const menuBar = [[NSMenu alloc] init];
+            const NSMenuItem* const appMenuItem = [menuBar addItemWithTitle: @"" action: nil keyEquivalent: @""];
+            NSMenu* const appMenu = [[NSMenu alloc] init];
+            [appMenu addItemWithTitle: [NSString stringWithFormat: @"About %@", processName] action: @selector(orderFrontStandardAboutPanel:) keyEquivalent: @""];
+            [appMenu addItem: [NSMenuItem separatorItem]];
+
+            NSMenu* const servicesMenu = [[NSMenu alloc] init];
+            [[appMenu addItemWithTitle: @"Services" action: nil keyEquivalent: @""] setSubmenu:servicesMenu];
+            [appMenu addItem: [NSMenuItem separatorItem]];
+            [appMenu addItemWithTitle: [NSString stringWithFormat: @"Hide %@", processName] action: @selector(hide:) keyEquivalent: @"h"];
+            [[appMenu addItemWithTitle: @"Hide Others" action: @selector(hideOtherApplications:) keyEquivalent: @"h"] setKeyEquivalentModifierMask:NSEventModifierFlagOption | NSEventModifierFlagCommand];
+            [appMenu addItemWithTitle: @"Show All" action: @selector(unhideAllApplications:) keyEquivalent: @""];
+            [appMenu addItem: [NSMenuItem separatorItem]];
+            [appMenu addItemWithTitle: [NSString stringWithFormat: @"Quit %@", processName] action: @selector(terminate:) keyEquivalent: @"q"];
+            [appMenuItem setSubmenu: appMenu];
+            [application setServicesMenu: servicesMenu];
+            [servicesMenu release];
+
+            const NSMenuItem* const windowMenuItem = [menuBar addItemWithTitle: @"" action: nil keyEquivalent: @""];
+            NSMenu* const windowMenu = [[NSMenu alloc] initWithTitle: @"Window"];
+            [windowMenu addItemWithTitle: @"Minimize" action: @selector(performMiniaturize:) keyEquivalent: @"m"];
+            [windowMenu addItemWithTitle: @"Zoom" action: @selector(performZoom:) keyEquivalent: @""];
+            [windowMenu addItem: [NSMenuItem separatorItem]];
+            [windowMenu addItemWithTitle: @"Bring All to Front" action: @selector(arrangeInFront:) keyEquivalent: @""];
+            [windowMenu addItem: [NSMenuItem separatorItem]];
+            [[windowMenu addItemWithTitle: @"Enter Full Screen" action: @selector(toggleFullScreen:) keyEquivalent: @"f"] setKeyEquivalentModifierMask:NSEventModifierFlagControl | NSEventModifierFlagCommand];
+            [application setWindowsMenu: windowMenu];
+            [windowMenuItem setSubmenu: windowMenu];
+            [windowMenu release];
+
+            [application setMainMenu: menuBar];
+            [menuBar release];
+
+            // This is required for macOS versions prior to Snow Leopard
+            SEL setAppleMenuSelector = NSSelectorFromString(@"setAppleMenu:");
+            [application performSelector: setAppleMenuSelector withObject: appMenu];
+            [appMenu release];
+
+        }
+    }
+
     /* --- CONSTRUCTORS --- */
 
     CocoaContext::CocoaContext(const CocoaContextCreateInfo& createInfo)
@@ -91,6 +137,8 @@ namespace Sierra
 
         NSDictionary* const defaults = @{@"ApplePressAndHoldEnabled": @NO};
         [[NSUserDefaults standardUserDefaults] registerDefaults: defaults];
+
+        AssignDefaultMenuBar(application);
 
         // Retrieve monitors
         ReloadScreens();
@@ -120,14 +168,6 @@ namespace Sierra
         return window;
     }
 
-    void CocoaContext::DestroyWindow(NSWindow* window) const
-    {
-        [window performClose: nil];
-        [window setDelegate: nil];
-        [window setContentView: nil];
-        [window release];
-    }
-
     /* --- GETTER METHODS --- */
 
     CocoaScreen& CocoaContext::GetWindowScreen(const NSWindow* window)
@@ -140,7 +180,7 @@ namespace Sierra
         return *std::find_if(screens.begin(), screens.end(), [window](const CocoaScreen& cocoaScreen) -> bool { return cocoaScreen.GetNSScreen() == [window screen]; });
     }
 
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void CocoaContext::Update()
     {

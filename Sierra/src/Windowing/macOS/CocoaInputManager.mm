@@ -250,7 +250,7 @@ namespace Sierra
         return WindowingBackendType::Cocoa;
     }
 
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void CocoaInputManager::Update()
     {

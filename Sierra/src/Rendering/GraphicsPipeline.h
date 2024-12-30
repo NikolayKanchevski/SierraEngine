@@ -126,7 +126,7 @@ namespace Sierra
         ShadeMode shadeMode = ShadeMode::Fill;
         DepthMode depthMode = DepthMode::None;
         BlendMode blendMode = BlendMode::None;
-        CullMode cullMode = CullMode::None;
+        CullMode cullMode = CullMode::Back;
         FrontFaceMode frontFaceMode = FrontFaceMode::CounterClockwise;
     };
 
@@ -138,8 +138,8 @@ namespace Sierra
         GraphicsPipeline& operator=(const GraphicsPipeline&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        GraphicsPipeline(GraphicsPipeline&&) = delete;
-        GraphicsPipeline& operator=(GraphicsPipeline&&) = delete;
+        GraphicsPipeline(GraphicsPipeline&&) noexcept = default;
+        GraphicsPipeline& operator=(GraphicsPipeline&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~GraphicsPipeline() noexcept override = default;

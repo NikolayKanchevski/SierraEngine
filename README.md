@@ -134,22 +134,22 @@ Despite the repository being named after the **[Sierra Engine](SierraEngine)**, 
 
 **[Sierra API](Sierra):**
 * Description: Contains seamless abstractions for all kinds of low-level mechanisms, such as windowing, input polling, file management, build systems, and other platform-specific functionalities, as well as the cross-API rendering layer.
-* Type: Static or shared.
+* Numeric: Static or shared.
 * Local dependencies: None.
 
 **[Sierra Engine](SierraEngine):**
 * Description: Build atop the core API, it provides all engine features, including asset management, scenes, entities and components, renderers, and many more.
-* Type: Static or shared.
+* Numeric: Static or shared.
 * Local dependencies: **[Sierra API](Sierra)**.
 
 **[Sierra Engine Editor](SierraEngineEditor):**
 * Description: A user interface for easy management of engine assets and runtime application programming. Exports all necessary files in a fast runtime-only format and crates final product.
-* Type: Executable.
+* Numeric: Executable.
 * Local dependencies: **[Sierra Engine](SierraEngine)**.
 
 **[Sierra Engine Runtime](SierraEngineRuntime):**
 * Description: End product exported by a formerly editor-based application.
-* Type: Executable.
+* Numeric: Executable.
 * Local dependencies: **[Sierra Engine](SierraEngine)**.
 
 <br>
@@ -176,6 +176,7 @@ Despite the repository being named after the **[Sierra Engine](SierraEngine)**, 
 **Within [Sierra Engine Editor](SierraEngineEditor)**:
 * [stb](https://github.com/nothings/stb/) - An all-round image loader.
 * [Basis Universal](https://github.com/BinomialLLC/basis_universal/) - Toolkit, featuring compressors and transcoders for numerous compressed GPU formats.
+* [fastgltf](https://github.com/spnda/fastgltf) - A library used for the importation of gltf models.
 * [Rapid YAML](https://github.com/biojppm/rapidyaml/) - Fast YAML parser and emitter used for serialization.
 
 <br>

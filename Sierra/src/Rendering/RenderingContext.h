@@ -33,11 +33,11 @@ namespace Sierra
         RenderingContext& operator=(const RenderingContext&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        RenderingContext(RenderingContext&&) = delete;
-        RenderingContext& operator=(RenderingContext&&) = delete;
+        RenderingContext(RenderingContext&&) noexcept = default;
+        RenderingContext& operator=(RenderingContext&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
-        virtual ~RenderingContext() noexcept = default;
+        virtual ~RenderingContext() noexcept override = default;
 
     protected:
         /* --- CONSTRUCTORS --- */

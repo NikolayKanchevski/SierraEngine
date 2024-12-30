@@ -1,6 +1,7 @@
 //
 // Created by Nikolay Kanchevski on 4.10.24.
 //
+
 #include "DeviceErrors.h"
 
 namespace Sierra

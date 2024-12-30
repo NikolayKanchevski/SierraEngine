@@ -795,5 +795,4 @@ namespace Sierra
         return SamplerAnisotropy::x1;
     }
 
-
 }

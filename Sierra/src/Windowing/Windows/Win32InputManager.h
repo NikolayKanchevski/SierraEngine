@@ -24,7 +24,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        Win32InputManager() = default;
+        Win32InputManager() noexcept = default;
 
         /* --- POLLING METHODS --- */
         void RegisterKeyPress(Key key) override;

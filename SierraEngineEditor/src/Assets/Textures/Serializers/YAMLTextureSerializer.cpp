@@ -7,21 +7,6 @@
 namespace SierraEngine
 {
 
-    /*
-     *     [=============== Serialized Texture ===============]
-     *
-     *      properties:
-     *        type: Albedo
-     *        width: 1024
-     *        height: 1024
-     *        format: Undefined
-     *        levelCount: 1
-     *        layerCount: 1
-     *        compression: None
-     *        filter: Nearest
-     *
-     */
-
     namespace
     {
         std::string_view TextureTypeToString(const TextureType type) noexcept
@@ -40,17 +25,6 @@ namespace SierraEngine
                 case TextureType::Occlusion:        return "Occlusion";
                 case TextureType::Shadow:           return "Shadow";
                 case TextureType::Environment:      return "Environment";
-            }
-
-            return "Unknown";
-        }
-
-        std::string_view ImageCompressorTypeToString(const ImageCompressorType type) noexcept
-        {
-            switch (type)
-            {
-                case ImageCompressorType::Undefined:        return "Undefined";
-                case ImageCompressorType::BasisUniversal:   return "BasisUniversal";
             }
 
             return "Unknown";
@@ -155,12 +129,12 @@ namespace SierraEngine
             return "Unknown";
         }
 
-        std::string_view SamplerFilterToString(const Sierra::SamplerFilter filter) noexcept
+        std::string_view TextureFilterToString(const TextureFilter filter) noexcept
         {
             switch (filter)
             {
-                case Sierra::SamplerFilter::Nearest:    return "Nearest";
-                case Sierra::SamplerFilter::Linear:     return "Linear";
+                case TextureFilter::Pixelated:    return "Pixelated";
+                case TextureFilter::Smooth:       return "Smooth";
             }
 
             return "Unknown";
@@ -169,42 +143,77 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    std::optional<std::vector<uint8>> YAMLTextureSerializer::Serialize(const TextureSerializeInfo& serializeInfo) const
+    std::optional<SerializedTexture> YAMLTextureSerializer::Serialize(const TextureSerializeInfo& serializeInfo) const
     {
-        const size nodeCapacity = GetMetadataNodeSize(serializeInfo.metadata) + 9;
-        const size arenaCapacity = GetMetadataArenaSize(serializeInfo.metadata) + 5 + 5 + 2 + 2;
+        if (serializeInfo.levels.empty() || serializeInfo.levels[0].layers.empty())
+        {
+            APP_WARNING("Cannot serialize texture, as specified levels and their corresponding layers must not be empty");
+            return std::nullopt;
+        }
+
+        const uint32 expectedLevelCount = static_cast<uint32>(glm::log2(glm::max(serializeInfo.levels[0].layers[0].GetWidth(), serializeInfo.levels[0].layers[0].GetHeight()))) + 1;
+        if (serializeInfo.levels.size() != 1 && serializeInfo.levels.size() != expectedLevelCount)
+        {
+            APP_WARNING("Cannot serialize texture, as the count of specified levels must be either [1] or [floor(log2(max(baseWidth, baseHeight))) + 1]");
+            return std::nullopt;
+        }
+
+        const size nodeCapacity = GetMetadataNodeCount(serializeInfo.metadata) + GetPropertiesNodeCount();
+        const size arenaCapacity = GetMetadataArenaSize(serializeInfo.metadata) + GetPropertiesArenaSize();
         ryml::Tree tree(nodeCapacity, arenaCapacity);
 
-        ryml::NodeRef root = tree.rootref(); root |= ryml::MAP;
+        ryml::NodeRef root = tree.rootref();
+        root |= ryml::MAP;
+
+        SerializeID(root, Sierra::RNG().Random<TextureID::ValueType>());
         SerializeMetadata(root, serializeInfo.metadata);
-        ryml::NodeRef properties = root["properties"]; properties |= ryml::MAP;
-
-        ryml::NodeRef type = properties["type"]; type |= ryml::VAL_PLAIN;
-        type = c4::to_csubstr(TextureTypeToString(serializeInfo.type));
-
-        ryml::NodeRef width = properties["width"]; width |= ryml::VAL_PLAIN;
-        width << std::to_string(serializeInfo.width); // Cost: ~5 chars
-
-        ryml::NodeRef height = properties["height"]; height |= ryml::VAL_PLAIN;
-        height << std::to_string(serializeInfo.height); // Cost: ~5 chars
-
-        ryml::NodeRef compression = properties["compression"]; compression |= ryml::VAL_PLAIN;
-        compression = c4::to_csubstr(ImageCompressorTypeToString(serializeInfo.compression));
-
-        ryml::NodeRef format = properties["format"]; format |= ryml::VAL_PLAIN;
-        format = c4::to_csubstr(ImageFormatToString(serializeInfo.compression == ImageCompressorType::Undefined ? serializeInfo.format : Sierra::ImageFormat::Undefined));
-
-        ryml::NodeRef filtering = properties["filtering"]; filtering |= ryml::VAL_PLAIN;
-        filtering = c4::to_csubstr(SamplerFilterToString(serializeInfo.filter));
-
-        ryml::NodeRef levelCount = properties["levelCount"]; levelCount |= ryml::VAL_PLAIN;
-        levelCount << std::to_string(serializeInfo.levelCount); // Cost: ~2 chars
-
-        ryml::NodeRef layerCount = properties["layerCount"]; layerCount |= ryml::VAL_PLAIN;
-        layerCount << std::to_string(serializeInfo.layerCount); // Cost: ~2 chars
+        SerializeProperties(root, serializeInfo.properties);
 
         const std::vector<char> data = ryml::emitrs_yaml<std::vector<char>>(tree);
-        return std::vector(reinterpret_cast<const uint8*>(data.data()), reinterpret_cast<const uint8*>(data.data()) + data.size());
+        if (data.empty())
+        {
+            APP_WARNING("Could not YAML serialize texture!");
+            return std::nullopt;
+        }
+
+        /* === Reference: https://gaim.umbc.edu/2010/05/27/mip-size/ === */
+        const size memorySize = sizeof(AssetHeader);
+        Sierra::MemoryWriteStream memoryStream(memorySize);
+
+        SerializeHeader(memoryStream);
+        SerializeMemory(memoryStream, serializeInfo);
+
+        SerializedTexture texture
+        {
+            .data = { reinterpret_cast<const uint8*>(data.data()), reinterpret_cast<const uint8*>(data.data()) + data.size() },
+            .memory = memoryStream.Release()
+        };
+
+        return texture;
+    }
+
+    /* --- POLLING METHODS --- */
+
+    void YAMLTextureSerializer::SerializeProperties(ryml::NodeRef root, const TextureProperties& properties) const
+    {
+        ryml::NodeRef node = root["properties"];
+        node |= ryml::MAP;
+
+        SerializeEnum(node["type"], properties.type, TextureTypeToString);
+        SerializeEnum(node["filter"], properties.filter, TextureFilterToString);
+    }
+
+    /* --- GETTER METHODS --- */
+
+    [[nodiscard]] size YAMLTextureSerializer::GetPropertiesNodeCount() const noexcept
+    {
+        // Node + members
+        return 1 + 2;
+    }
+
+    [[nodiscard]] size YAMLTextureSerializer::GetPropertiesArenaSize() const noexcept
+    {
+        return 0;
     }
 
 }

@@ -52,7 +52,7 @@ namespace Sierra
         GetTouchReleaseDispatcher().DispatchEvent(*iterator);
     }
 
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void UIKitTouchManager::Update()
     {

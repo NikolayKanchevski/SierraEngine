@@ -30,7 +30,7 @@ namespace Sierra
     [[nodiscard]] SIERRA_API MTLPixelFormat ImageFormatToPixelFormat(ImageFormat format) noexcept;
     [[nodiscard]] SIERRA_API MTLTextureUsage ImageUsageToTextureUsage(ImageUsage usage) noexcept;
     [[nodiscard]] SIERRA_API NSUInteger ImageSamplingToUInteger(ImageSampling sampling) noexcept;
-    [[nodiscard]] SIERRA_API MTLTextureSwizzleChannels ImageComponentSwizzlesToTextureSwizzleChannels(ImageComponentSwizzle redSwizzle, ImageComponentSwizzle greenSwizzle, ImageComponentSwizzle blueSwizzle, ImageComponentSwizzle alphaSwizzle) noexcept;
+    [[nodiscard]] SIERRA_API MTLTextureSwizzleChannels ImageComponentSwizzlesToTextureSwizzleChannels(ImageChannelSwizzling redSwizzle, ImageChannelSwizzling greenSwizzle, ImageChannelSwizzling blueSwizzle, ImageChannelSwizzling alphaSwizzle) noexcept;
     [[nodiscard]] SIERRA_API MTLStorageMode ImageMemoryLocationToStorageMode(ImageMemoryLocation memoryLocation) noexcept;
     [[nodiscard]] SIERRA_API MTLCPUCacheMode ImageMemoryLocationToCPUCacheMode(ImageMemoryLocation memoryLocation) noexcept;
 
@@ -59,28 +59,24 @@ namespace Sierra
         MetalImage& operator=(const MetalImage&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        MetalImage(MetalImage&&) = delete;
-        MetalImage& operator=(MetalImage&&) = delete;
+        MetalImage(MetalImage&&) noexcept = default;
+        MetalImage& operator=(MetalImage&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~MetalImage() noexcept override;
 
     private:
-        const uint32 width = 0;
-        const uint32 height = 0;
-        const uint32 depth = 0;
-        const ImageFormat format = ImageFormat::Undefined;
+        uint32 width = 0;
+        uint32 height = 0;
+        uint32 depth = 0;
+        ImageFormat format = ImageFormat::Undefined;
 
-        const uint32 levelCount = 1;
-        const uint32 layerCount = 1;
-        const ImageSampling sampling = ImageSampling::x1;
+        uint32 levelCount = 1;
+        uint32 layerCount = 1;
+        ImageSampling sampling = ImageSampling::x1;
 
         id<MTLTexture> texture = nil;
         bool swapchainImage = false;
-
-        #if !defined(__OBJC__)
-            using MTLPixelFormat = ulong;
-        #endif
 
         friend class MetalSwapchain;
         struct SwapchainImageCreateInfo
@@ -90,6 +86,10 @@ namespace Sierra
 
             uint32 width = 0;
             uint32 height = 0;
+
+            #if !defined(__OBJC__)
+                using MTLPixelFormat = ulong;
+            #endif
             MTLPixelFormat format = MTLPixelFormatInvalid;
         };
 

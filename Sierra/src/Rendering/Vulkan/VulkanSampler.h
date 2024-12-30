@@ -35,15 +35,15 @@ namespace Sierra
         VulkanSampler& operator=(const VulkanSampler&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        VulkanSampler(VulkanSampler&&) = delete;
-        VulkanSampler& operator=(VulkanSampler&&) = delete;
+        VulkanSampler(VulkanSampler&&) noexcept = default;
+        VulkanSampler& operator=(VulkanSampler&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~VulkanSampler() noexcept override;
 
     private:
-        const VulkanDevice& device;
-        const std::string name;
+        const VulkanDevice* device = nullptr;
+        std::string name = { };
 
         VkSampler sampler = VK_NULL_HANDLE;
 

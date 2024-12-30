@@ -28,14 +28,14 @@ namespace Sierra
         MetalContext& operator=(const MetalContext&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        MetalContext(MetalContext&&) = delete;
-        MetalContext& operator=(MetalContext&&) = delete;
+        MetalContext(MetalContext&&) noexcept = default;
+        MetalContext& operator=(MetalContext&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~MetalContext() noexcept override = default;
 
     private:
-        const std::string name;
+        std::string name = { };
         Version metalVersion = Version({ 0, 0, 0 });
 
     };

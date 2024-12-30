@@ -51,17 +51,21 @@ namespace Sierra
         [[nodiscard]] bool IsFocused() const noexcept override;
         [[nodiscard]] bool IsHidden() const noexcept override;
 
-        [[nodiscard]] InputManager* GetInputManager() noexcept override;
-        [[nodiscard]] CursorManager* GetCursorManager() noexcept override;
-        [[nodiscard]] TouchManager* GetTouchManager() noexcept override;
+        [[nodiscard]] InputManager* GetInputManager() noexcept override { return nullptr; }
+        [[nodiscard]] const InputManager* GetInputManager() const noexcept override { return nullptr; }
 
-        [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override;
+        [[nodiscard]] CursorManager* GetCursorManager() noexcept override { return nullptr; }
+        [[nodiscard]] const CursorManager* GetCursorManager() const noexcept override { return nullptr; }
 
+        [[nodiscard]] TouchManager* GetTouchManager() noexcept override { return &touchManager;  }
+        [[nodiscard]] const TouchManager* GetTouchManager() const noexcept override { return &touchManager;  }
+
+        [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override { return WindowingBackendType::GameKit; }
         [[nodiscard]] ANativeWindow* GetNativeWindow() const { return window; }
 
         /* --- MOVE SEMANTICS --- */
-        GameKitWindow(GameKitWindow&&) noexcept = delete;
-        GameKitWindow& operator=(GameKitWindow&&) noexcept = delete;
+        GameKitWindow(GameKitWindow&&) = delete;
+        GameKitWindow& operator=(GameKitWindow&&) = delete;
 
         /* --- COPY SEMANTICS --- */
         GameKitWindow(const GameKitWindow&) = delete;

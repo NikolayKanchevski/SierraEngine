@@ -31,10 +31,6 @@ namespace Sierra
         Shader(const Shader&) = delete;
         Shader& operator=(const Shader&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        Shader(Shader&&) = delete;
-        Shader& operator=(Shader&&) = delete;
-
         /* --- DESTRUCTOR --- */
         ~Shader() noexcept override = default;
 
@@ -42,6 +38,7 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         explicit Shader(const ShaderCreateInfo& createInfo);
 
+        /* --- TYPES --- */
         struct ShaderFileHeader
         {
             size spvMemorySize = 0;
@@ -56,6 +53,10 @@ namespace Sierra
             [[nodiscard]] size GetIOSSimulatorMetalLibOffset() const noexcept { return GetIOSMetalLibOffset() + iOSMetalLibMemorySize; }
             [[nodiscard]] size GetDxilOffset() const noexcept { return GetIOSSimulatorMetalLibOffset() + iOSSimulatorMetalLibMemorySize; }
         };
+
+        /* --- MOVE SEMANTICS --- */
+        Shader(Shader&&) noexcept = default;
+        Shader& operator=(Shader&&) noexcept = default;
 
     };
 

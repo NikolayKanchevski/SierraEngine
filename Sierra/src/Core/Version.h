@@ -9,21 +9,21 @@ namespace Sierra
 
     struct VersionCreateInfo
     {
-        uint32 major = 0;
-        uint32 minor = 0;
-        uint32 patch = 0;
+        uint8 major = 0;
+        uint8 minor = 0;
+        uint8 patch = 0;
     };
 
     class SIERRA_API Version final
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Version(VersionCreateInfo createInfo) noexcept;
+        explicit Version(const VersionCreateInfo& createInfo) noexcept;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] uint32 GetMajor() const noexcept { return major; }
-        [[nodiscard]] uint32 GetMinor() const noexcept { return minor; }
-        [[nodiscard]] uint32 GetPatch() const noexcept { return patch; }
+        [[nodiscard]] uint8 GetMajor() const noexcept { return major; }
+        [[nodiscard]] uint8 GetMinor() const noexcept { return minor; }
+        [[nodiscard]] uint8 GetPatch() const noexcept { return patch; }
 
         /* --- COPY SEMANTICS --- */
         Version(const Version&) noexcept = default;
@@ -45,9 +45,9 @@ namespace Sierra
         ~Version() noexcept = default;
 
     private:
-        uint32 major = 0;
-        uint32 minor = 0;
-        uint32 patch = 0;
+        uint8 major = 0;
+        uint8 minor = 0;
+        uint8 patch = 0;
 
     };
 

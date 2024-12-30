@@ -1,5 +1,5 @@
-#ifndef IMGUI_RENDER_TASK_GLSL
-#define IMGUI_RENDER_TASK_GLSL
+#ifndef IMGUI_RENDERER_GLSL
+#define IMGUI_RENDERER_GLSL
 
 #include "../../../../include/Sierra/Sierra.glsl"
 

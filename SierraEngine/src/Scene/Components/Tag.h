@@ -14,13 +14,13 @@ namespace SierraEngine
     public:
         /* --- CONSTRUCTORS --- */
         Tag() noexcept = default;
-        explicit Tag(std::string_view tag) noexcept;
+        explicit Tag(std::string_view tag);
 
         /* --- SETTER METHODS --- */
-        void SetTag(std::string_view tag) noexcept;
+        void SetTag(std::string_view tag);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetTag() const noexcept { return tag; }
+        [[nodiscard]] const std::string_view GetTag() const noexcept { return tag; }
 
         /* --- TYPE DATA --- */
         [[nodiscard]] constexpr static std::string_view GetName() { return "Tag"; }
@@ -37,7 +37,7 @@ namespace SierraEngine
         ~Tag() noexcept = default;
 
     private:
-        std::string tag;
+        std::string tag = { };
 
     };
 

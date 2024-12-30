@@ -99,8 +99,8 @@ namespace Sierra
         Win32Context& operator=(const Win32Context&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        Win32Context(Win32Context&&) = default;
-        Win32Context& operator=(Win32Context&&) = default;
+        Win32Context(Win32Context&&) noexcept = default;
+        Win32Context& operator=(Win32Context&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~Win32Context() noexcept;

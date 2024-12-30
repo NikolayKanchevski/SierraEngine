@@ -42,7 +42,7 @@ namespace Sierra
         }
     }
 
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void WindowsContext::Update()
     {

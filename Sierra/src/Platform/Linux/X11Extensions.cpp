@@ -231,7 +231,7 @@ namespace Sierra
         }
     }
 
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     Key XkbExtension::TranslateKeySyms(const KeySym* keySyms, int32 width)
     {

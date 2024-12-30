@@ -15,6 +15,7 @@
 #include "MetalResource.h"
 
 #include "MetalDevice.h"
+#include "../../Utilities/IndexPool.hpp"
 
 namespace Sierra
 {
@@ -28,12 +29,21 @@ namespace Sierra
         /* --- POLLING METHODS --- */
         [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
 
-        void BindUniformBuffer(uint32 index, const Buffer& buffer, size offset, size memorySize) override;
-        void BindStorageBuffer(uint32 index, const Buffer& buffer, size offset, size memorySize) override;
+        /* --- POLLING METHODS --- */
+        [[nodiscard]] UniformBufferID BindUniformBuffer(const Buffer& buffer, uint64 offset, uint64 memorySize) override;
+        bool FreeUniformBuffer(UniformBufferID ID) override;
 
-        void BindSampledImage(uint32 index, const Image& image) override;
-        void BindStorageImage(uint32 index, const Image& image) override;
-        void BindSampler(uint32 index, const Sampler& sampler) override;
+        [[nodiscard]] StorageBufferID BindStorageBuffer(const Buffer& buffer, uint64 offset, uint64 memorySize) override;
+        bool FreeStorageBuffer(StorageBufferID ID) override;
+
+        [[nodiscard]] SampledImageID BindSampledImage(const Image& image) override;
+        bool FreeSampledImage(SampledImageID ID) override;
+
+        [[nodiscard]] StorageImageID BindStorageImage(const Image& image) override;
+        bool FreeStorageImage(StorageImageID ID) override;
+
+        [[nodiscard]] SamplerID BindSampler(const Sampler& sampler) override;
+        bool FreeSampler(SamplerID ID) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint32 GetUniformBufferCapacity() const noexcept override { return UNIFORM_BUFFER_CAPACITY; }
@@ -54,8 +64,8 @@ namespace Sierra
         MetalResourceTable& operator=(const MetalResourceTable&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        MetalResourceTable(MetalResourceTable&&) = delete;
-        MetalResourceTable& operator=(MetalResourceTable&&) = delete;
+        MetalResourceTable(MetalResourceTable&&) noexcept = default;
+        MetalResourceTable& operator=(MetalResourceTable&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~MetalResourceTable() noexcept override;
@@ -65,9 +75,7 @@ namespace Sierra
             using MTLArgumentEncoder = void;
             using MTLResource = void;
         #endif
-
-        const MetalDevice& device;
-        const std::string name;
+        std::string name = { };
 
         // NOTE: These must match the values in specified in https://github.com/NikolayKanchevski/ShaderConnect/blob/sierra/src/Platform/MetalSL/MetalSLShaderCompiler.cpp#L104
         constexpr static uint32 UNIFORM_BUFFER_CAPACITY         = 8192;
@@ -85,10 +93,16 @@ namespace Sierra
         id<MTLArgumentEncoder> argumentEncoder = nil;
         id<MTLBuffer> argumentBuffer = nil;
 
-        std::unordered_map<uint32, id<MTLBuffer>> boundUniformBuffers;
-        std::unordered_map<uint32, id<MTLBuffer>> boundStorageBuffers;
-        std::unordered_map<uint32, id<MTLTexture>> boundSampledImages;
-        std::unordered_map<uint32, id<MTLTexture>> boundStorageImages;
+        std::unordered_map<uint32, id<MTLBuffer>> boundUniformBuffers = { };
+        std::unordered_map<uint32, id<MTLBuffer>> boundStorageBuffers = { };
+        std::unordered_map<uint32, id<MTLTexture>> boundSampledImages = { };
+        std::unordered_map<uint32, id<MTLTexture>> boundStorageImages = { };
+
+        IndexPool<UniformBufferID> uniformBufferIndexPool = { };
+        IndexPool<StorageBufferID> storageBufferIndexPool = { };
+        IndexPool<SampledImageID> sampledImageIndexPool = { };
+        IndexPool<StorageImageID> storageImageIndexPool = { };
+        IndexPool<SamplerID> samplerIndexPool = { };
 
     };
 

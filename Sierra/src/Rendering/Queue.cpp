@@ -1,6 +1,7 @@
 //
 // Created by Nikolay Kanchevski on 13.10.24.
 //
+
 #include "Queue.h"
 
 namespace Sierra
@@ -21,7 +22,7 @@ namespace Sierra
         SubmitCommandBuffer(commandBuffer, { });
     }
 
-    void Queue::SubmitCommandBuffer(const Sierra::CommandBuffer& commandBuffer, const std::span<const std::reference_wrapper<const CommandBuffer>> commandBuffersToWaitFor) const
+    void Queue::SubmitCommandBuffer(const CommandBuffer& commandBuffer, const std::span<const std::reference_wrapper<const CommandBuffer>> commandBuffersToWaitFor) const
     {
 
     }

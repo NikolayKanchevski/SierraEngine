@@ -3,9 +3,16 @@
 //
 
 #include "EditorApplication.h"
+#include "../Assets/Textures/Serializers/YAMLTextureSerializer.h"
+#include "../Assets/Textures/Loaders/AutoImageLoader.h"
+#include "../Assets/Textures/Importers/YAMLTextureImporter.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
 
 namespace SierraEngine
 {
+    
     /* --- CONSTRUCTORS --- */
 
     EditorApplication::EditorApplication(const ApplicationCreateInfo& createInfo)
@@ -15,16 +22,42 @@ namespace SierraEngine
           device(GetRenderingContext().CreateDevice({ .name = "General Device" })),
           queue(device->CreateQueue({ .name = "General Queue", .operations = Sierra::QueueOperations::All })),
           resourceTable(device->CreateResourceTable({ .name = "General Resource Table" })),
-          surface({ .title = "Sierra Engine Editor", .platformContext = GetPlatformContext(), .device = *device }),
+          arenaAllocator({ .device = *device }),
+          sceneRenderer({ .device = *device }),
           scene({ .name = "Scene" }),
-          editor({ .scene = scene }),
-          assetManager({ .device = *device, .threadPool = threadPool })
+          editor({ .device = *device, .platformContext = GetPlatformContext(), .scene = scene, .resourceTable = *resourceTable })
     {
-         commandBuffers.resize(surface.GetSwapchain().GetConcurrentFrameCount());
-         for (size i = 0; i < commandBuffers.size(); i++)
-         {
-             commandBuffers[i] = queue->CreateCommandBuffer({ .name = SR_FORMAT("General Command Buffer [{0}]", i) });
-         }
+        std::unique_ptr<Sierra::CommandBuffer> commandBuffer = queue->CreateCommandBuffer({ .name = "Staging command buffer" });
+        commandBuffer->Begin();
+
+        editorSurface.emplace(EditorSurfaceCreateInfo {
+            .editor = editor,
+            .commandBuffer = *commandBuffer
+        });
+
+        commandBuffers.resize(editorSurface->GetConcurrentFrameCount());
+        for (size i = 0; i < commandBuffers.size(); i++)
+        {
+            commandBuffers[i] = queue->CreateCommandBuffer({ .name = SR_FORMAT("General command buffer [{0}]", i) });
+        }
+
+        commandBuffer->End();
+        queue->SubmitCommandBuffer(*commandBuffer);
+
+        constexpr size VIEWPORT_COUNT = 2;
+        for (size i = 0; i < VIEWPORT_COUNT; i++)
+        {
+            const ViewportID viewportID = editor.CreateViewport({
+                .title = SR_FORMAT("Viewport [{0}]", i),
+                .device = *device,
+                .renderer = sceneRenderer,
+                .resourceTable = *resourceTable
+            });
+
+            ViewportPanel* viewport = editor.GetViewport(viewportID);
+            viewport->GetTransform().SetPosition({ 0.0f, 4.0f, -10.0f * (viewportID + 1) / 1.5f });
+            viewport->GetTransform().SetRotation({ 0.0f, -20.0f * (viewportID + 1) / 1.5f, 0.0f });
+        }
 
         // Create an example scene hierarchy
         const EntityID Entity1 = scene.CreateEntity("Entity1");
@@ -41,6 +74,8 @@ namespace SierraEngine
         const EntityID Entity4 = scene.CreateEntity("Entity4");
         const EntityID Entity5 = scene.CreateEntity("Entity5");
         const EntityID Entity6 = scene.CreateEntity("Entity6");
+
+        queue->WaitForCommandBuffer(*commandBuffer);
     }
 
     /* --- POLLING METHODS --- */
@@ -49,62 +84,28 @@ namespace SierraEngine
     {
         Application::Update();
 
-        if (surface.GetWindow().IsClosed())
-        {
-            return true;
-        }
-
         // Begin frame
         frameLimiter.BeginFrame();
 
         // Retrieve current command buffer and wait until it is free
-        Sierra::CommandBuffer& commandBuffer = *commandBuffers[surface.GetSwapchain().GetCurrentFrameIndex()];
+        Sierra::CommandBuffer& commandBuffer = *commandBuffers[editorSurface->GetCurrentFrameIndex()];
         queue->WaitForCommandBuffer(commandBuffer);
 
-        // Update surface
-        surface.Update();
+        // Begin rendering
+        if (editorSurface->Update()) return true;
         commandBuffer.Begin();
 
-        static bool firstTime = true;
-        if (firstTime)
-        {
-            const EditorRendererCreateInfo createInfo
-            {
-                .theme = EditorTheme::Dark,
-                .concurrentFrameCount = surface.GetSwapchain().GetConcurrentFrameCount(),
-                .scaling = surface.GetSwapchain().GetScaling(),
-                .device = *device,
-                .commandBuffer = commandBuffer,
-                .templateOutputImage = surface.GetSwapchain().GetCurrentImage(),
-                .resourceTable = *resourceTable
-            };
-
-            editorRenderer = std::make_unique<EditorRenderer>(createInfo);
-            firstTime = false;
-        }
-
-        // Update assets
-        assetManager.Update(commandBuffer);
-
-        // Update editor
-        editorRenderer->Update(editor, surface.GetWindow().GetInputManager(), surface.GetWindow().GetCursorManager(), surface.GetWindow().GetTouchManager());
-
         // Bind scene resources
+        arenaAllocator.Bind(commandBuffer);
         commandBuffer.BindResourceTable(*resourceTable);
-//        commandBuffer.BindVertexBuffer(scene.GetArenaAllocator().GetVertexBuffer());
-//        commandBuffer.BindIndexBuffer(scene.GetArenaAllocator().GetIndexBuffer());
 
-        // Render editor overlay
-        commandBuffer.SynchronizeImageUsage(surface.GetSwapchain().GetCurrentImage(), Sierra::ImageCommandUsage::None, Sierra::ImageCommandUsage::ColorWrite, 0, surface.GetSwapchain().GetCurrentImage().GetLevelCount(), 0, surface.GetSwapchain().GetCurrentImage().GetLayerCount());
-        editorRenderer->Render(commandBuffer, surface.GetSwapchain().GetCurrentImage());
-        commandBuffer.SynchronizeImageUsage(surface.GetSwapchain().GetCurrentImage(), Sierra::ImageCommandUsage::ColorWrite, Sierra::ImageCommandUsage::Present, 0, surface.GetSwapchain().GetCurrentImage().GetLevelCount(), 0, surface.GetSwapchain().GetCurrentImage().GetLayerCount());
+        editorSurface->Render(commandBuffer);
 
         // Submit work to GPU
         commandBuffer.End();
         queue->SubmitCommandBuffer(commandBuffer);
 
-        // Present to window and end frame
-        surface.Present(commandBuffer);
+        editorSurface->Present(commandBuffer);
         frameLimiter.EndFrame();
 
         return false;
@@ -112,7 +113,7 @@ namespace SierraEngine
 
     /* --- DESTRUCTOR --- */
 
-    EditorApplication::~EditorApplication()
+    EditorApplication::~EditorApplication() noexcept
     {
         for (const std::unique_ptr<Sierra::CommandBuffer>& commandBuffer : commandBuffers)
         {

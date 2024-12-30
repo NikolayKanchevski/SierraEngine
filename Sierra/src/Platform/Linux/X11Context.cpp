@@ -289,7 +289,7 @@ namespace Sierra
         return static_cast<uint32>(itemCount);
     }
 
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void X11Context::Update()
     {

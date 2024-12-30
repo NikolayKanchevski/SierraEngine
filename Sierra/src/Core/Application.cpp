@@ -106,7 +106,7 @@ namespace Sierra
         return false;
     }
 
-    /* --- PROTECTED METHODS --- */
+    /* --- GETTER METHODS --- */
 
     std::filesystem::path Application::GetApplicationTemporaryDirectoryPath() const noexcept
     {

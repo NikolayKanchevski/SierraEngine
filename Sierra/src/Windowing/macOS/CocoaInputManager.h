@@ -50,8 +50,8 @@ namespace Sierra
         CocoaInputManager& operator=(const CocoaInputManager&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        CocoaInputManager(CocoaInputManager&&) = delete;
-        CocoaInputManager& operator=(CocoaInputManager&&) = delete;
+        CocoaInputManager(CocoaInputManager&&) noexcept = default;
+        CocoaInputManager& operator=(CocoaInputManager&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~CocoaInputManager() noexcept override = default;

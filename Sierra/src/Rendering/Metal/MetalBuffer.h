@@ -30,13 +30,13 @@ namespace Sierra
         MetalBuffer(const MetalDevice& device, const BufferCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Write(const void* memory, size sourceOffset, size destinationOffset, size memorySize) override;
+        void Write(const void* memory, uint64 sourceOffset, uint64 destinationOffset, uint64 memorySize) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const noexcept override;
 
-        [[nodiscard]] void* GetMemory() const noexcept override;
-        [[nodiscard]] size GetMemorySize() const noexcept override;
+        [[nodiscard]] const void* GetMemory() const noexcept override;
+        [[nodiscard]] uint64 GetMemorySize() const noexcept override;
 
         [[nodiscard]] id<MTLBuffer> GetMetalBuffer() const noexcept { return buffer; }
 
@@ -45,8 +45,8 @@ namespace Sierra
         MetalBuffer& operator=(const MetalBuffer&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        MetalBuffer(MetalBuffer&&) = delete;
-        MetalBuffer& operator=(MetalBuffer&&) = delete;
+        MetalBuffer(MetalBuffer&&) noexcept = default;
+        MetalBuffer& operator=(MetalBuffer&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~MetalBuffer() noexcept override;

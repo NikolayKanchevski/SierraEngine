@@ -20,15 +20,15 @@
 [submodule "Sierra/vendor/ios-cmake"]
 	path = Sierra/vendor/ios-cmake
 	url = https://github.com/leetal/ios-cmake
-[submodule "SierraEngineEditor/vendor/basis_universal"]
-	path = SierraEngineEditor/vendor/basis_universal
-	url = https://github.com/BinomialLLC/basis_universal
 [submodule "SierraEngineEditor/vendor/stb"]
 	path = SierraEngineEditor/vendor/stb
 	url = https://github.com/nothings/stb
 [submodule "SierraEngineEditor/vendor/rapidyaml"]
 	path = SierraEngineEditor/vendor/rapidyaml
 	url = https://github.com/biojppm/rapidyaml
-[submodule "Sierra/vendor/android-game-sdk"]
-	path = Sierra/vendor/android-game-sdk
-	url = https://android.googlesource.com/platform/frameworks/opt/gamesdk
+[submodule "SierraEngineEditor/vendor/fastgltf"]
+	path = SierraEngineEditor/vendor/fastgltf
+	url = https://github.com/spnda/fastgltf
+[submodule "SierraEngine/vendor/basis_universal"]
+	path = SierraEngine/vendor/basis_universal
+	url = https://github.com/BinomialLLC/basis_universal

@@ -45,8 +45,8 @@ namespace Sierra
         GameKitContext& operator=(const GameKitContext&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        GameKitContext(GameKitContext&&) = default;
-        GameKitContext& operator=(GameKitContext&&) = default;
+        GameKitContext(GameKitContext&&) noexcept = default;
+        GameKitContext& operator=(GameKitContext&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~GameKitContext() noexcept = default;

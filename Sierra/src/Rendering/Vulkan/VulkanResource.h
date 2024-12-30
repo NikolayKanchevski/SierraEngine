@@ -75,10 +75,6 @@ namespace Sierra
         VulkanResource(const VulkanResource&) = delete;
         VulkanResource& operator=(const VulkanResource&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        VulkanResource(VulkanResource&&) = delete;
-        VulkanResource& operator=(VulkanResource&&) = delete;
-
         /* --- DESTRUCTORS --- */
         ~VulkanResource() noexcept override = default;
 
@@ -86,7 +82,7 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         VulkanResource() noexcept = default;
 
-        /* --- PROTECTED METHODS --- */
+        /* --- POLLING METHODS --- */
         void AddToPNextChain(void* mainStruct, void* newStruct) const noexcept
         {
             // We just cast them to any Vulkan structure, as they all have their pNext stored exactly 4 bytes within the struct
@@ -95,6 +91,10 @@ namespace Sierra
             newStructAsVkStruct->pNext = mainStructAsVkStruct->pNext;
             mainStructAsVkStruct->pNext = newStruct;
         }
+
+        /* --- MOVE SEMANTICS --- */
+        VulkanResource(VulkanResource&&) noexcept = default;
+        VulkanResource& operator=(VulkanResource&&) noexcept = default;
 
     };
 

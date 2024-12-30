@@ -15,7 +15,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        GameKitTouchManager() = default;
+        GameKitTouchManager() noexcept = default;
 
         /* --- POLLING METHODS --- */
         void RegisterTouchPress(const Touch& touch) override;
@@ -27,8 +27,8 @@ namespace Sierra
         [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override { return WindowingBackendType::GameKit; }
 
         /* --- MOVE SEMANTICS --- */
-        GameKitTouchManager(GameKitTouchManager&&) noexcept = delete;
-        GameKitTouchManager& operator=(GameKitTouchManager&&) noexcept = delete;
+        GameKitTouchManager(GameKitTouchManager&&) = delete;
+        GameKitTouchManager& operator=(GameKitTouchManager&&) = delete;
 
         /* --- COPY SEMANTICS --- */
         GameKitTouchManager(const GameKitTouchManager&) = delete;

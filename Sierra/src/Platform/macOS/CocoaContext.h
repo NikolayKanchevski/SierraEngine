@@ -16,6 +16,7 @@
         #define nil nullptr
         using NSApplication = void;
         using NSWindow = void;
+        using NSMenu = void;
         using NSEvent = void;
         using NSNotification = void;
     }
@@ -41,7 +42,6 @@ namespace Sierra
         void ReloadScreens();
 
         [[nodiscard]] NSWindow* CreateWindow(std::string_view title, uint32 width, uint32 height) const;
-        void DestroyWindow(NSWindow* window) const;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] const NSApplication* GetNSApplication() const noexcept { return application; }

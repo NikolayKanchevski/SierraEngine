@@ -24,6 +24,8 @@ target_sources(Sierra PRIVATE
     MetalContext.h
     MetalDevice.mm
     MetalDevice.h
+    MetalFramebuffer.mm
+    MetalFramebuffer.h
     MetalGraphicsPipeline.mm
     MetalGraphicsPipeline.h
     MetalImage.mm

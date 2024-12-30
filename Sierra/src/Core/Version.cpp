@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    Version::Version(const VersionCreateInfo createInfo) noexcept
+    Version::Version(const VersionCreateInfo& createInfo) noexcept
         : major(createInfo.major), minor(createInfo.minor), patch(createInfo.patch)
     {
 

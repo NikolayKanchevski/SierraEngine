@@ -6,13 +6,16 @@
 
 #include "Event.h"
 
-#include "../Utilities/RNG.h"
+#include "../Utilities/Handle.hpp"
+#include "../Utilities/IndexPool.hpp"
 
 namespace Sierra
 {
 
-    using EventSubscriptionID = uint32;
+    /* --- TYPE DEFINITIONS --- */
+    using EventSubscriptionID = Handle<uint32>;
 
+    /* --- CONCEPTS --- */
     template<typename T>
     concept EventType = !std::is_same_v<Event, T> && std::is_base_of_v<Event, T>;
 
@@ -27,34 +30,37 @@ namespace Sierra
         EventDispatcher() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        EventSubscriptionID Subscribe(const EventCallback& Callback)
+        [[nodiscard]] EventSubscriptionID Subscribe(const EventCallback& Callback)
         {
-            // Generate ID and assign callback
-            const EventSubscriptionID ID = RNG().Random<EventSubscriptionID>();
-            callbacks[ID] = Callback;
+            const EventSubscriptionID ID = indexPool.GenerateIndex();
+
+            if (ID >= callbacks.size()) callbacks.emplace_back(Callback);
+            else callbacks[ID].emplace(Callback);
+
             return ID;
         }
 
-        bool Unsubscribe(const EventSubscriptionID ID) noexcept
+        bool Unsubscribe(const EventSubscriptionID ID)
         {
-            // Check if ID has been registered
-            const auto iterator = callbacks.find(ID);
-            if (iterator == callbacks.end()) return false;
+            if (ID >= callbacks.size() || !callbacks[ID].has_value())
+            {
+                return false;
+            }
 
-            // Remove callback
-            callbacks.erase(iterator);
+            callbacks[ID] = std::nullopt;
+            indexPool.FreeIndex(ID);
+
             return true;
         }
 
         template<typename... Args>
         void DispatchEvent(Args&&... args)
         {
-            // Immediately handle requested event
             const EventType event = EventType(std::forward<Args>(args)...);
-            for (const auto& [ID, Callback] : callbacks)
+            for (const std::optional<EventCallback>& Callback : callbacks)
             {
-                // If event is handled, we break, so that deeper subscribers do not register it
-                if (Callback(event))
+                // If event is handled, we break, so that early subscribers do not register it
+                if (Callback.has_value() && Callback.value()(event))
                 {
                     break;
                 }
@@ -73,7 +79,8 @@ namespace Sierra
         ~EventDispatcher() noexcept = default;
 
     private:
-        std::unordered_map<EventSubscriptionID, EventCallback> callbacks = { };
+        IndexPool<EventSubscriptionID> indexPool;
+        std::vector<std::optional<EventCallback>> callbacks = { };
 
     };
 

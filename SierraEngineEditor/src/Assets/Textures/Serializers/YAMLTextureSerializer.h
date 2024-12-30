@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "../TextureSerializer.h"
 #include "../../Serializers/YAMLSerializer.h"
 
 namespace SierraEngine
@@ -17,7 +16,11 @@ namespace SierraEngine
         YAMLTextureSerializer() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::optional<std::vector<uint8>> Serialize(const TextureSerializeInfo& serializeInfo) const override;
+        [[nodiscard]] std::optional<SerializedTexture> Serialize(const TextureSerializeInfo& serializeInfo) const override;
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] AssetSignature GetSignature() const noexcept override { return { 'Y', 'A', 'T', 'X' }; }
+        [[nodiscard]] AssetVersion GetVersion() const noexcept override { return AssetVersion({ 1, 0, 0 }); }
 
         /* --- COPY SEMANTICS --- */
         YAMLTextureSerializer(const YAMLTextureSerializer&) = delete;
@@ -29,6 +32,15 @@ namespace SierraEngine
 
         /* --- DESTRUCTOR --- */
         ~YAMLTextureSerializer() noexcept override = default;
+
+    private:
+        /* --- POLLING METHODS --- */
+        void SerializeProperties(ryml::NodeRef root, const TextureProperties& properties) const;
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] size GetPropertiesNodeCount() const noexcept;
+        [[nodiscard]] size GetPropertiesArenaSize() const noexcept;
+
     };
 
 }

@@ -53,18 +53,22 @@ namespace Sierra
         [[nodiscard]] bool IsFocused() const noexcept override;
         [[nodiscard]] bool IsHidden() const noexcept override;
 
-        [[nodiscard]] InputManager* GetInputManager() noexcept override;
-        [[nodiscard]] CursorManager* GetCursorManager() noexcept override;
-        [[nodiscard]] TouchManager* GetTouchManager() noexcept override;
+        [[nodiscard]] InputManager* GetInputManager() noexcept override { return &inputManager; }
+        [[nodiscard]] const InputManager* GetInputManager() const noexcept override { return &inputManager; }
 
-        [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override;
+        [[nodiscard]] CursorManager* GetCursorManager() noexcept override { return &cursorManager; }
+        [[nodiscard]] const CursorManager* GetCursorManager() const noexcept override { return &cursorManager; }
 
+        [[nodiscard]] TouchManager* GetTouchManager() noexcept override { return nullptr;  }
+        [[nodiscard]] const TouchManager* GetTouchManager() const noexcept override { return nullptr;  }
+
+        [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override { return WindowingBackendType::X11; }
         [[nodiscard]] XID GetX11Window() const { return window; }
         [[nodiscard]] Display* GetDisplay() const { return x11Context.GetDisplay(); }
 
         /* --- MOVE SEMANTICS --- */
-        X11Window(X11Window&&) noexcept = delete;
-        X11Window& operator=(X11Window&&) noexcept = delete;
+        X11Window(X11Window&&) = delete;
+        X11Window& operator=(X11Window&&) = delete;
 
         /* --- COPY SEMANTICS --- */
         X11Window(const X11Window&) = delete;

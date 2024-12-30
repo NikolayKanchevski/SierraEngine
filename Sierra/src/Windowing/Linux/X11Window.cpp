@@ -340,27 +340,7 @@ namespace Sierra
         return windowAttributes.map_state != IsViewable;
     }
 
-    InputManager* X11Window::GetInputManager() noexcept
-    {
-        return &inputManager;
-    }
-
-    CursorManager* X11Window::GetCursorManager() noexcept
-    {
-        return &cursorManager;
-    }
-
-    TouchManager* X11Window::GetTouchManager() noexcept
-    {
-        return nullptr;
-    }
-
-    WindowingBackendType X11Window::GetBackendType() const noexcept
-    {
-        return WindowingBackendType::X11;
-    }
-
-    /* --- PRIVATE METHODS --- */
+    /* --- GETTER METHODS --- */
 
     Vector4UInt X11Window::GetExtents()
     {
@@ -417,6 +397,8 @@ namespace Sierra
 
         return extents;
     }
+
+    /* --- POLLING METHODS --- */
 
     void X11Window::WindowEventCallback(const XEvent& event, const XID windowID, void* userData)
     {

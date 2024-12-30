@@ -8,6 +8,7 @@
 
 #define IMGUI_API SIERRA_API
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+#define IMGUI_DEFINE_MATH_OPERATORS
 
 #define IM_VEC2_CLASS_EXTRA                                                                           \
     ImVec2(const Vector2 other) noexcept { x = other.x; y = other.y; }                                \

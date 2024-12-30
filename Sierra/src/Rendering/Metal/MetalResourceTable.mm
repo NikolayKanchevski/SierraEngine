@@ -16,7 +16,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalResourceTable::MetalResourceTable(const MetalDevice& device, const ResourceTableCreateInfo& createInfo)
-            : ResourceTable(createInfo), device(device), name(createInfo.name)
+        : ResourceTable(createInfo), name(createInfo.name)
     {
         SR_THROW_IF(device.GetMetalDevice().argumentBuffersSupport != MTLArgumentBuffersTier2, UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create resource table [{1}]", device.GetName(), name)));
 
@@ -71,60 +71,93 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void MetalResourceTable::BindUniformBuffer(const uint32 index, const Buffer& buffer, const size offset, const size memorySize)
+    UniformBufferID MetalResourceTable::BindUniformBuffer(const Buffer& buffer, const uint64 offset, const uint64 memorySize)
     {
         SR_THROW_IF(buffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind uniform buffer [{0}] to resource table [{1}], as its backend type differs from [RenderingBackendType::Metal]", buffer.GetName(), name)));
         const MetalBuffer& metalBuffer = static_cast<const MetalBuffer&>(buffer);
 
-        ResourceTable::BindUniformBuffer(index, metalBuffer, offset, memorySize);
+        SR_THROW_IF(offset + memorySize > buffer.GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot bind write invalid uniform buffer memory range to resource table [{0}]", GetName()), offset, memorySize, uint64(0), buffer.GetMemorySize()));
 
+        const UniformBufferID index = uniformBufferIndexPool.GenerateIndex();
         [argumentEncoder setBuffer: metalBuffer.GetMetalBuffer() offset: offset atIndex: UNIFORM_BUFFER_INDEX + index];
         boundUniformBuffers[index] = metalBuffer.GetMetalBuffer();
 
+        return index;
     }
 
-    void MetalResourceTable::BindStorageBuffer(const uint32 index, const Buffer& buffer, const size offset, const size memorySize)
+    bool MetalResourceTable::FreeUniformBuffer(const UniformBufferID ID)
+    {
+        return uniformBufferIndexPool.FreeIndex(ID);
+    }
+
+    StorageBufferID MetalResourceTable::BindStorageBuffer(const Buffer& buffer, const uint64 offset, const uint64 memorySize)
     {
         SR_THROW_IF(buffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind storage buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", buffer.GetName(), name)));
         const MetalBuffer& metalBuffer = static_cast<const MetalBuffer&>(buffer);
 
-        ResourceTable::BindStorageBuffer(index, metalBuffer, offset, memorySize);
+        SR_THROW_IF(offset + memorySize > buffer.GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot bind write invalid storage buffer memory range to resource table [{0}]", GetName()), offset, memorySize, uint64(0), buffer.GetMemorySize()));
 
+        const StorageBufferID index = storageBufferIndexPool.GenerateIndex();
         [argumentEncoder setBuffer: metalBuffer.GetMetalBuffer() offset: offset atIndex: STORAGE_BUFFER_INDEX + index];
         boundStorageBuffers[index] = metalBuffer.GetMetalBuffer();
+
+        return index;
     }
 
-    void MetalResourceTable::BindSampledImage(const uint32 index, const Image& image)
+    bool MetalResourceTable::FreeStorageBuffer(const StorageBufferID ID)
+    {
+        return storageBufferIndexPool.FreeIndex(ID);
+    }
+
+    SampledImageID MetalResourceTable::BindSampledImage(const Image& image)
     {
         SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind sampled image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", image.GetName(), name)));
         const MetalImage& metalImage = static_cast<const MetalImage&>(image);
 
-        ResourceTable::BindSampledImage(index, metalImage);
-
+        const SampledImageID index = sampledImageIndexPool.GenerateIndex();
         [argumentEncoder setTexture: metalImage.GetMetalTexture() atIndex: SAMPLED_IMAGE_INDEX + index];
         boundSampledImages[index] = metalImage.GetMetalTexture();
+
+        return index;
     }
 
-    void MetalResourceTable::BindStorageImage(const uint32 index, const Image& image)
+    bool MetalResourceTable::FreeSampledImage(const SampledImageID ID)
+    {
+        return sampledImageIndexPool.FreeIndex(ID);
+    }
+
+    StorageImageID MetalResourceTable::BindStorageImage(const Image& image)
     {
         SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind storage image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", image.GetName(), name)));
         const MetalImage& metalImage = static_cast<const MetalImage&>(image);
 
-        ResourceTable::BindStorageImage(index, metalImage);
-
+        const StorageImageID index = storageImageIndexPool.GenerateIndex();
         [argumentEncoder setTexture: metalImage.GetMetalTexture() atIndex: STORAGE_IMAGE_INDEX + index];
         boundStorageImages[index] = metalImage.GetMetalTexture();
+
+        return index;
     }
 
-    void MetalResourceTable::BindSampler(const uint32 index, const Sampler& sampler)
+    bool MetalResourceTable::FreeStorageImage(const StorageImageID ID)
+    {
+        return storageImageIndexPool.FreeIndex(ID);
+    }
+
+    SamplerID MetalResourceTable::BindSampler(const Sampler& sampler)
     {
         SR_THROW_IF(sampler.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind sampler [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", sampler.GetName(), name)));
         const MetalSampler& metalSampler = static_cast<const MetalSampler&>(sampler);
 
-        ResourceTable::BindSampler(index, sampler);
-
+        const SamplerID index = samplerIndexPool.GenerateIndex();
         [argumentEncoder setSamplerState: metalSampler.GetSamplerState() atIndex: SAMPLER_INDEX + index];
         // NOTE: Sampler states do not derive from MTLResource, so we do not need to add them to bound resource map
+
+        return index;
+    }
+
+    bool MetalResourceTable::FreeSampler(const SamplerID ID)
+    {
+        return samplerIndexPool.FreeIndex(ID);
     }
 
     /* --- DESTRUCTOR --- */

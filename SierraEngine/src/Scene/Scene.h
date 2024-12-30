@@ -27,11 +27,11 @@ namespace SierraEngine
         explicit Scene(const SceneCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] EntityID CreateEntity(std::string_view tag = "Entity") noexcept;
-        void DestroyEntity(EntityID entityID) noexcept;
+        [[nodiscard]] EntityID CreateEntity(std::string_view tag = "Entity");
+        void DestroyEntity(EntityID entityID);
 
         template<ComponentType Component, typename... Args>
-        Component& AddEntityComponent(const EntityID entityID, Args&&... args) noexcept
+        Component& AddEntityComponent(const EntityID entityID, Args&&... args)
         {
             return registry.get_or_emplace<Component>(static_cast<entt::entity>(entityID.GetValue()), std::forward<Args>(args)...);
         }
@@ -43,10 +43,28 @@ namespace SierraEngine
         }
 
         template<ComponentType Component>
-        void ForEachComponent(ComponentCallback<Component>& Callback) const { registry.view<Component>().each(Callback); }
+        void ForEachComponent(const ComponentCallback<Component>& Callback)
+        {
+            registry.view<Component>().each(Callback);
+        }
+
+        template<ComponentType Component>
+        void ForEachComponent(const ComponentCallback<const Component>& Callback) const
+        {
+            registry.view<const Component>().each(Callback);
+        }
 
         template<ComponentType... Components>
-        void ForEachComponentPair(ComponentCallback<Components...>& Callback) const { registry.view<Component>().each(Callback); }
+        void ForEachComponentPair(const ComponentCallback<Components...>& Callback)
+        {
+            registry.view<Components...>().each(Callback);
+        }
+
+        template<ComponentType... Components>
+        void ForEachComponentPair(const ComponentCallback<const Components...>& Callback) const
+        {
+            registry.view<const Components...>().each(Callback);
+        }
 
         /* --- SETTER METHODS --- */
         void SetEntityParent(EntityID entityID, EntityID parentID) noexcept;
@@ -76,7 +94,7 @@ namespace SierraEngine
         template<ComponentType Component>
         [[nodiscard]] const Component* GetEntityComponent(const EntityID entityID) const noexcept
         {
-            return registry.try_get<Component>(static_cast<entt::entity>(entityID.GetValue()));
+            return registry.try_get<const Component>(static_cast<entt::entity>(entityID.GetValue()));
         }
 
         [[nodiscard]] bool EntityHasParent(EntityID entityID) const noexcept;
@@ -97,7 +115,7 @@ namespace SierraEngine
         ~Scene() noexcept = default;
 
     private:
-        std::string name;
+        std::string name = { };
 
         uint32 entityCount = 0;
         entt::registry registry = { };

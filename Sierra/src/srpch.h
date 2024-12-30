@@ -155,7 +155,9 @@
                 #define SR_FUNCTION_SIGNATURE "Unknown function signature!"
             #endif
 
-            #define PROFILE_SCOPE() const ::Sierra::ScopeProfiler __PROFILER__LINE_##__LINE__(SR_FUNCTION_SIGNATURE)
+            #define _CONCAT_(x, y) x##y
+            #define _CONCAT(x, y) _CONCAT_(x, y)
+            #define SR_PROFILE_SCOPE() const ::Sierra::ScopeProfiler _CONCAT(_CONCAT(__PROFILER_LINE_, __LINE__), __)(SR_FUNCTION_SIGNATURE)
         #else
             #if defined(SR_LIBRARY_IMPLEMENTATION)
                 #define SR_INFO(...)

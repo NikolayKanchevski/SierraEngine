@@ -6,25 +6,26 @@
 
 #include "RenderingResource.h"
 
-#include "../Core/Version.h"
-#include "Buffer.h"
 #include "Image.h"
-#include "Sampler.h"
-#include "RenderPass.h"
-#include "Swapchain.h"
-#include "Shader.h"
-#include "GraphicsPipeline.h"
-#include "ComputePipeline.h"
-#include "ResourceTable.h"
 #include "Queue.h"
+#include "Buffer.h"
+#include "Shader.h"
+#include "Sampler.h"
+#include "Swapchain.h"
+#include "RenderPass.h"
+#include "Framebuffer.h"
+#include "ResourceTable.h"
+#include "ComputePipeline.h"
+#include "../Core/Version.h"
+#include "GraphicsPipeline.h"
 
 namespace Sierra
 {
 
     struct DeviceLimits
     {
-        size maxUniformBufferSize = 0;
-        size maxStorageBufferSize = 0;
+        uint64 maxUniformBufferSize = 0;
+        uint64 maxStorageBufferSize = 0;
         uint32 maxLineImageDimensions = 0;
         uint32 maxPlaneImageDimensions = 0;
         uint32 maxVolumeImageDimensions = 0;
@@ -34,8 +35,8 @@ namespace Sierra
         uint32 resourceTableSampledImageCapacity = 0;
         uint32 resourceTableStorageImageCapacity = 0;
         uint32 resourceTableSamplerCapacity = 0;
-        uint32 maxRenderPassWidth = 0;
-        uint32 maxRenderPassHeight = 0;
+        uint32 maxFramebufferWidth = 0;
+        uint32 maxFramebufferHeight = 0;
         Vector3UInt maxWorkGroupSize = { 0, 0, 0 };
         ImageSampling highestImageSampling = ImageSampling::x1;
         SamplerAnisotropy highestSamplerAnisotropy = SamplerAnisotropy::x1;
@@ -59,11 +60,15 @@ namespace Sierra
         [[nodiscard]] virtual std::unique_ptr<Buffer> CreateBuffer(const BufferCreateInfo& createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<Image> CreateImage(const ImageCreateInfo& createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<Sampler> CreateSampler(const SamplerCreateInfo& createInfo) const = 0;
+
         [[nodiscard]] virtual std::unique_ptr<RenderPass> CreateRenderPass(const RenderPassCreateInfo& createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<Framebuffer> CreateFramebuffer(const FramebufferCreateInfo& createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<Swapchain> CreateSwapchain(const SwapchainCreateInfo& createInfo) const = 0;
+
         [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(const ShaderCreateInfo& createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) const = 0;
+
         [[nodiscard]] virtual std::unique_ptr<ResourceTable> CreateResourceTable(const ResourceTableCreateInfo& createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<Queue> CreateQueue(const QueueCreateInfo& createInfo) const = 0;
 
@@ -83,15 +88,11 @@ namespace Sierra
         [[nodiscard]] SamplerAnisotropy GetHighestSamplerAnisotropySupported() const noexcept;
 
         /* --- CONSTANTS --- */
-        constexpr static size MAX_PUSH_CONSTANT_SIZE = 128;
+        constexpr static uint8 MAX_PUSH_CONSTANT_SIZE = 128;
 
         /* --- COPY SEMANTICS --- */
         Device(const Device&) = delete;
         Device& operator=(const Device&) = delete;
-
-        /* --- MOVE SEMANTICS --- */
-        Device(Device&&) = delete;
-        Device& operator=(Device&&) = delete;
 
         /* --- DESTRUCTOR --- */
         ~Device() noexcept override = default;
@@ -99,6 +100,10 @@ namespace Sierra
     protected:
         /* --- CONSTRUCTORS --- */
         explicit Device(const DeviceCreateInfo& createInfo);
+
+        /* --- MOVE SEMANTICS --- */
+        Device(Device&&) noexcept = default;
+        Device& operator=(Device&&) noexcept = default;
 
     };
 

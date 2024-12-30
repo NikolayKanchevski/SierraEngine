@@ -30,15 +30,15 @@ namespace Sierra
         VulkanShader& operator=(const VulkanShader&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        VulkanShader(VulkanShader&&) = delete;
-        VulkanShader& operator=(VulkanShader&&) = delete;
+        VulkanShader(VulkanShader&&) noexcept = default;
+        VulkanShader& operator=(VulkanShader&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~VulkanShader() noexcept override;
 
     private:
-        const VulkanDevice& device;
-        const std::string name;
+        const VulkanDevice* device = nullptr;
+        std::string name = { };
 
         VkShaderModule shaderModule = VK_NULL_HANDLE;
 

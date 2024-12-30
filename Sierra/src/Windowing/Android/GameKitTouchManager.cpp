@@ -53,7 +53,7 @@ namespace Sierra
         GetTouchReleaseDispatcher().DispatchEvent(*iterator);
     }
 
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void GameKitTouchManager::Update(const android_input_buffer& inputBuffer)
     {

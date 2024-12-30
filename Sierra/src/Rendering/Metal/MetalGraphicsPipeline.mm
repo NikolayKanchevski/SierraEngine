@@ -82,9 +82,9 @@ namespace Sierra
         for (NSUInteger i = 0; i < metalRenderPass.GetColorAttachmentCount(); i++)
         {
             const MTLRenderPipelineColorAttachmentDescriptor* const colorAttachment = [renderPipelineDescriptor.colorAttachments objectAtIndexedSubscript: i];
-            [colorAttachment setPixelFormat: [metalRenderPass.GetSubpass(createInfo.subpassIndex).colorAttachments objectAtIndexedSubscript: i].texture.pixelFormat];
-            [colorAttachment setBlendingEnabled: createInfo.blendMode != BlendMode::None];
-            [colorAttachment setRgbBlendOperation: MTLBlendOperationAdd];
+            [colorAttachment setPixelFormat: ImageFormatToPixelFormat(metalRenderPass.GetSubpassColorAttachmentFormat(createInfo.subpassIndex, i))];
+            [colorAttachment setBlendingEnabled:createInfo.blendMode != BlendMode::None];
+            [colorAttachment setRgbBlendOperation:MTLBlendOperationAdd];
             [colorAttachment setSourceRGBBlendFactor: MTLBlendFactorSourceAlpha];
             [colorAttachment setDestinationRGBBlendFactor: MTLBlendFactorOneMinusSourceAlpha];
             [colorAttachment setAlphaBlendOperation: MTLBlendOperationAdd];
@@ -94,7 +94,7 @@ namespace Sierra
 
         if (metalRenderPass.HasDepthAttachment())
         {
-            [renderPipelineDescriptor setDepthAttachmentPixelFormat: metalRenderPass.GetSubpass(createInfo.subpassIndex).depthAttachment.texture.pixelFormat];
+            [renderPipelineDescriptor setDepthAttachmentPixelFormat: ImageFormatToPixelFormat(metalRenderPass.GetSubpassDepthAttachmentFormat(createInfo.subpassIndex))];
         }
 
         // Set up vertex attributes

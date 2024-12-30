@@ -349,7 +349,7 @@ namespace Sierra
         return WindowingBackendType::Win32;
     }
 
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void Win32InputManager::Update()
     {

@@ -13,8 +13,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanComputePipeline::VulkanComputePipeline(const VulkanDevice& device, const ComputePipelineCreateInfo& createInfo)
-        : ComputePipeline(createInfo), device(device), name(createInfo.name), pushConstantSize(createInfo.pushConstantSize)
+    VulkanComputePipeline::VulkanComputePipeline(const VulkanDevice& givenDevice, const ComputePipelineCreateInfo& createInfo)
+        : ComputePipeline(createInfo), device(&givenDevice), name(createInfo.name), pushConstantSize(createInfo.pushConstantSize)
     {
         SR_THROW_IF(createInfo.computeShader.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create compute pipeline [{0}] with compute shader [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", name, createInfo.computeShader.GetName())));
         const VulkanShader& vulkanComputeShader = static_cast<const VulkanShader&>(createInfo.computeShader);
@@ -33,13 +33,13 @@ namespace Sierra
         {
             .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
             .stage = shaderStageCreateInfo,
-            .layout = device.GetPipelineLayout(createInfo.pushConstantSize),
+            .layout = device->GetPipelineLayout(createInfo.pushConstantSize),
             .basePipelineHandle = VK_NULL_HANDLE,
             .basePipelineIndex = -1
         };
 
         // Create pipeline
-        const VkResult result = device.GetFunctionTable().vkCreateComputePipelines(device.GetVulkanDevice(), VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &pipeline);
+        const VkResult result = device->GetFunctionTable().vkCreateComputePipelines(device->GetVulkanDevice(), VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &pipeline);
         if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create compute pipeline [{0}]", name));
     }
 
@@ -47,7 +47,7 @@ namespace Sierra
 
     VulkanComputePipeline::~VulkanComputePipeline() noexcept
     {
-        device.GetFunctionTable().vkDestroyPipeline(device.GetVulkanDevice(), pipeline, nullptr);
+        device->GetFunctionTable().vkDestroyPipeline(device->GetVulkanDevice(), pipeline, nullptr);
     }
 
 }

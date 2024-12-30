@@ -25,7 +25,12 @@ namespace Sierra
         /* --- POLLING METHODS --- */
         [[nodiscard]] std::unique_ptr<Window> CreateWindow(const WindowCreateInfo& createInfo) const override;
 
+        bool OpenAlertDialog(const AlertDialogOpenInfo& openInfo) const override;
+        [[nodiscard]] std::vector<std::filesystem::path> OpenFileSelectDialog(const FileSelectDialogOpenInfo& openInfo) const noexcept override;
+        [[nodiscard]] std::optional<std::filesystem::path> OpenFileSaveDialog(const FileSaveDialogOpenInfo& openInfo) const noexcept override;
+
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetUserName() const noexcept override;
         [[nodiscard]] const FileManager& GetFileManager() const noexcept override { return fileManager; }
 
         [[nodiscard]] Screen& GetPrimaryScreen() noexcept override { return cocoaContext.GetPrimaryScreen(); }

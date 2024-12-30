@@ -48,8 +48,8 @@ namespace Sierra
         UIKitContext& operator=(const UIKitContext&) = delete;
     
         /* --- MOVE SEMANTICS --- */
-        UIKitContext(UIKitContext&&) = default;
-        UIKitContext& operator=(UIKitContext&&) = default;
+        UIKitContext(UIKitContext&&) noexcept = default;
+        UIKitContext& operator=(UIKitContext&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~UIKitContext() noexcept = default;

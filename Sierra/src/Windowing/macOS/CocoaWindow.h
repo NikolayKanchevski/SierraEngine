@@ -64,32 +64,37 @@ namespace Sierra
         [[nodiscard]] bool IsFocused() const noexcept override;
         [[nodiscard]] bool IsHidden() const noexcept override;
 
-        [[nodiscard]] InputManager* GetInputManager() noexcept override;
-        [[nodiscard]] CursorManager* GetCursorManager() noexcept override;
-        [[nodiscard]] TouchManager* GetTouchManager() noexcept override;
+        [[nodiscard]] InputManager* GetInputManager() noexcept override { return &inputManager; }
+        [[nodiscard]] const InputManager* GetInputManager() const noexcept override { return &inputManager; }
 
-        [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override;
+        [[nodiscard]] CursorManager* GetCursorManager() noexcept override { return &cursorManager; }
+        [[nodiscard]] const CursorManager* GetCursorManager() const noexcept override { return &cursorManager; }
 
+        [[nodiscard]] TouchManager* GetTouchManager() noexcept override { return nullptr;  }
+        [[nodiscard]] const TouchManager* GetTouchManager() const noexcept override { return nullptr;  }
+
+        [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override { return WindowingBackendType::Cocoa; }
         [[nodiscard]] const NSView* GetNSView() const noexcept { return view; }
         [[nodiscard]] const NSWindow* GetNSWindow() const noexcept { return window; }
-
-        /* --- MOVE SEMANTICS --- */
-        CocoaWindow(CocoaWindow&&) noexcept = delete;
-        CocoaWindow& operator=(CocoaWindow&&) noexcept = delete;
 
         /* --- COPY SEMANTICS --- */
         CocoaWindow(const CocoaWindow&) = delete;
         CocoaWindow& operator=(const CocoaWindow&) = delete;
 
+        /* --- MOVE SEMANTICS --- */
+        CocoaWindow(CocoaWindow&&) noexcept = default;
+        CocoaWindow& operator=(CocoaWindow&&) noexcept = default;
+
         /* --- DESTRUCTOR --- */
         ~CocoaWindow() noexcept override;
 
     private:
-        const CocoaContext& cocoaContext;
+        const CocoaContext* cocoaContext;
 
-        NSView* view = nil;
         void* /* CocoaWindowDelegate* */ delegate = nil;
         NSWindow* window = nil;
+        NSView* view = nil;
+        NSMenu* menuBar = nil;
 
         CocoaInputManager inputManager;
         CocoaCursorManager cursorManager;

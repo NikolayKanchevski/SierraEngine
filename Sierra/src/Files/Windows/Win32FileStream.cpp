@@ -3,8 +3,6 @@
 //
 
 #include "Win32FileStream.h"
-
-#include "../FileErrors.h"
 #include "Win32FileErrorHandler.h"
 
 namespace Sierra

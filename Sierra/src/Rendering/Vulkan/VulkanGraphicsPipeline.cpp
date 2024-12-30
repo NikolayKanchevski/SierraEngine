@@ -50,8 +50,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanGraphicsPipeline::VulkanGraphicsPipeline(const VulkanDevice& device, const GraphicsPipelineCreateInfo& createInfo)
-        : GraphicsPipeline(createInfo), device(device), name(createInfo.name), pushConstantSize(createInfo.pushConstantSize)
+    VulkanGraphicsPipeline::VulkanGraphicsPipeline(const VulkanDevice& givenDevice, const GraphicsPipelineCreateInfo& createInfo)
+        : GraphicsPipeline(createInfo), device(&givenDevice), name(createInfo.name), pushConstantSize(createInfo.pushConstantSize)
     {
         SR_THROW_IF(createInfo.vertexShader.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", name, createInfo.vertexShader.GetName())));
         const VulkanShader& vulkanVertexShader = static_cast<const VulkanShader&>(createInfo.vertexShader);
@@ -189,7 +189,7 @@ namespace Sierra
         };
 
         // Set up multisampling state
-        bool enableSampleRateShading = createInfo.sampling != ImageSampling::x1 && device.GetPhysicalDeviceFeatures().sampleRateShading;
+        bool enableSampleRateShading = createInfo.sampling != ImageSampling::x1 && device->GetPhysicalDeviceFeatures().sampleRateShading;
         const VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
@@ -264,10 +264,10 @@ namespace Sierra
             .pViewportState = &viewportStateCreateInfo,
             .pRasterizationState = &rasterizationStateCreateInfo,
             .pMultisampleState = &multisampleStateCreateInfo,
-            .pDepthStencilState = vulkanRenderPass.HasDepthAttachment() ?& depthStencilStateCreateInfo : nullptr,
+            .pDepthStencilState = vulkanRenderPass.HasDepthAttachment() ? &depthStencilStateCreateInfo : nullptr,
             .pColorBlendState = &blendingStateCreateInfo,
             .pDynamicState = &dynamicStateCreateInfo,
-            .layout = device.GetPipelineLayout(createInfo.pushConstantSize),
+            .layout = device->GetPipelineLayout(createInfo.pushConstantSize),
             .renderPass = vulkanRenderPass.GetVulkanRenderPass(),
             .subpass = createInfo.subpassIndex,
             .basePipelineHandle = VK_NULL_HANDLE,
@@ -275,18 +275,18 @@ namespace Sierra
         };
 
         // Create pipeline
-        const VkResult result = device.GetFunctionTable().vkCreateGraphicsPipelines(device.GetVulkanDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &pipeline);
+        const VkResult result = device->GetFunctionTable().vkCreateGraphicsPipelines(device->GetVulkanDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &pipeline);
         if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create graphics pipeline [{0}]", name));
 
         // Set object name
-        device.SetResourceName(pipeline, VK_OBJECT_TYPE_PIPELINE, name);
+        device->SetResourceName(pipeline, VK_OBJECT_TYPE_PIPELINE, name);
     }
 
     /* --- DESTRUCTOR --- */
 
     VulkanGraphicsPipeline::~VulkanGraphicsPipeline() noexcept
     {
-        device.GetFunctionTable().vkDestroyPipeline(device.GetVulkanDevice(), pipeline, nullptr);
+        device->GetFunctionTable().vkDestroyPipeline(device->GetVulkanDevice(), pipeline, nullptr);
     }
 
 }

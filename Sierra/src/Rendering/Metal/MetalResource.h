@@ -40,16 +40,16 @@ namespace Sierra
         MetalResource(const MetalResource&) = delete;
         MetalResource& operator=(const MetalResource&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        MetalResource(MetalResource&&) = delete;
-        MetalResource& operator=(MetalResource&&) = delete;
-
         /* --- DESTRUCTORS --- */
         ~MetalResource() noexcept override = default;
 
     protected:
         /* --- CONSTRUCTORS --- */
         MetalResource() noexcept = default;
+
+        /* --- MOVE SEMANTICS --- */
+        MetalResource(MetalResource&&) noexcept = default;
+        MetalResource& operator=(MetalResource&&) noexcept = default;
 
     };
 

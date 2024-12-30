@@ -4,16 +4,13 @@
 
 #pragma once
 
+#include "../Utilities/Stream.h"
+
+#include "FileErrors.h"
+#include "PathErrors.h"
 
 namespace Sierra
 {
-
-    enum class FileStreamAccess : uint8
-    {
-        ReadOnly,
-        WriteOnly,
-        ReadWrite
-    };
 
     enum class FileStreamBuffering : uint8
     {
@@ -21,22 +18,17 @@ namespace Sierra
         Unbuffered
     };
 
-    class SIERRA_API FileStream
+    struct FileStreamCreateInfo
+    {
+        std::filesystem::path filePath = { };
+        StreamAccess access = StreamAccess::ReadWrite;
+        FileStreamBuffering buffering = FileStreamBuffering::Unbuffered;
+    };
+
+    class SIERRA_API FileStream : public Stream
     {
     public:
-        /* --- POLLING METHODS --- */
-        virtual void Seek(size offset);
-        void SeekToEnd();
-
-        [[nodiscard]] virtual std::vector<uint8> Read(size memorySize) = 0;
-        [[nodiscard]] std::vector<uint8> Read(size offset, size memorySize);
-
-        virtual void Write(const void* memory, size sourceOffset, size memorySize);
-        void Write(const void* memory, size sourceOffset, size destinationOffset, size memorySize);
-
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual size GetCurrentOffset() const = 0;
-        [[nodiscard]] virtual size GetMemorySize() const = 0;
         [[nodiscard]] virtual const std::filesystem::path& GetFilePath() const noexcept = 0;
 
         /* --- COPY SEMANTICS --- */
@@ -44,11 +36,11 @@ namespace Sierra
         FileStream& operator=(const FileStream&) = delete;
 
         /* --- DESTRUCTOR --- */
-        virtual ~FileStream() noexcept = default;
+        ~FileStream() noexcept override = default;
 
     protected:
         /* --- CONSTRUCTORS --- */
-        FileStream() noexcept = default;
+        explicit FileStream(const FileStreamCreateInfo& createInfo) noexcept;
 
         /* --- MOVE SEMANTICS --- */
         FileStream(FileStream&&) noexcept = default;

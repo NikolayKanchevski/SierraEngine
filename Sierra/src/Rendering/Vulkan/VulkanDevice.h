@@ -10,7 +10,7 @@
 #include "VulkanResource.h"
 
 #include "VulkanContext.h"
-#include "../../Utilities/Hash.hpp"
+#include "../../Utilities/Handle.hpp"
 
 namespace Sierra
 {
@@ -830,11 +830,15 @@ namespace Sierra
         [[nodiscard]] std::unique_ptr<Buffer> CreateBuffer(const BufferCreateInfo& createInfo) const override;
         [[nodiscard]] std::unique_ptr<Image> CreateImage(const ImageCreateInfo& createInfo) const override;
         [[nodiscard]] std::unique_ptr<Sampler> CreateSampler(const SamplerCreateInfo& createInfo) const override;
+
         [[nodiscard]] std::unique_ptr<RenderPass> CreateRenderPass(const RenderPassCreateInfo& createInfo) const override;
+        [[nodiscard]] std::unique_ptr<Framebuffer> CreateFramebuffer(const FramebufferCreateInfo& createInfo) const override;
         [[nodiscard]] std::unique_ptr<Swapchain> CreateSwapchain(const SwapchainCreateInfo& createInfo) const override;
+
         [[nodiscard]] std::unique_ptr<Shader> CreateShader(const ShaderCreateInfo& createInfo) const override;
         [[nodiscard]] std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) const override;
         [[nodiscard]] std::unique_ptr<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) const override;
+
         [[nodiscard]] std::unique_ptr<ResourceTable> CreateResourceTable(const ResourceTableCreateInfo& createInfo) const override;
         [[nodiscard]] std::unique_ptr<Queue> CreateQueue(const QueueCreateInfo& createInfo) const override;
 
@@ -851,7 +855,7 @@ namespace Sierra
         [[nodiscard]] bool IsSamplerAnisotropySupported(SamplerAnisotropy anisotropy) const noexcept override;
 
         [[nodiscard]] const VulkanDeviceFunctionTable& GetFunctionTable() const noexcept { return functionTable; }
-        [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const noexcept { return std::find(loadedExtensions.begin(), loadedExtensions.end(), Hash64(std::hash<std::string_view>{}(extensionName.data()))) != loadedExtensions.end(); }
+        [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const noexcept { return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<std::string_view>{}(extensionName.data())) != loadedExtensions.end(); }
 
         [[nodiscard]] VkPhysicalDevice GetVulkanPhysicalDevice() const noexcept { return physicalDevice; }
         [[nodiscard]] VkDevice GetVulkanDevice() const noexcept { return device; }
@@ -897,15 +901,15 @@ namespace Sierra
         VulkanDevice& operator=(const VulkanDevice&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        VulkanDevice(VulkanDevice&&) = delete;
-        VulkanDevice& operator=(VulkanDevice&&) = delete;
+        VulkanDevice(VulkanDevice&&) noexcept = default;
+        VulkanDevice& operator=(VulkanDevice&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~VulkanDevice() noexcept override;
 
     private:
-        const VulkanContext& context;
-        const std::string name;
+        const VulkanContext* context = nullptr;
+        std::string name = { };
 
         std::string hardwareName;
         Version vulkanVersion = Version({ 1, 0, 0 });
@@ -918,10 +922,10 @@ namespace Sierra
         std::vector<std::shared_ptr<VulkanQueueDescription>> queueDescriptions;
 
         VulkanDeviceFunctionTable functionTable = { };
-        std::vector<Hash64> loadedExtensions = { };
+        std::vector<size> loadedExtensions = { };
 
         VkSemaphore semaphore = VK_NULL_HANDLE;
-        mutable std::atomic<uint64> lastReservedSemaphoreSignalValue = 0;
+        mutable uint64 lastReservedSemaphoreSignalValue = 0;
 
         VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
         std::array<VkPipelineLayout, MAX_PUSH_CONSTANT_SIZE / 4 + 1> pipelineLayouts = { };

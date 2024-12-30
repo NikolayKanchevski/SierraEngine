@@ -1,9 +1,9 @@
 target_sources(SierraEngine PRIVATE
     ArenaAllocator.h
     ArenaAllocator.cpp
-    Surface.cpp
-    Surface.h
+    Material.h
+    Mesh.h
+    SceneRenderer.cpp
+    SceneRenderer.h
     Vertex.h
 )
-
-add_subdirectory(Renderers)

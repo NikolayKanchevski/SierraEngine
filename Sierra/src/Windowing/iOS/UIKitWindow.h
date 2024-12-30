@@ -64,31 +64,35 @@ namespace Sierra
         [[nodiscard]] bool IsFocused() const noexcept override;
         [[nodiscard]] bool IsHidden() const noexcept override;
 
-        [[nodiscard]] InputManager* GetInputManager() noexcept override;
-        [[nodiscard]] CursorManager* GetCursorManager() noexcept override;
-        [[nodiscard]] TouchManager* GetTouchManager() noexcept override;
+        [[nodiscard]] InputManager* GetInputManager() noexcept override { return nullptr; }
+        [[nodiscard]] const InputManager* GetInputManager() const noexcept override { return nullptr; }
 
-        [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override;
+        [[nodiscard]] CursorManager* GetCursorManager() noexcept override { return nullptr; }
+        [[nodiscard]] const CursorManager* GetCursorManager() const noexcept override { return nullptr; }
 
+        [[nodiscard]] TouchManager* GetTouchManager() noexcept override { return &touchManager;  }
+        [[nodiscard]] const TouchManager* GetTouchManager() const noexcept override { return &touchManager;  }
+
+        [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override { return WindowingBackendType::UIKit; }
         [[nodiscard]] UIWindow* GetUIWindow() const { return window; }
         [[nodiscard]] ScreenOrientation GetAllowedOrientations() const { return allowedOrientations; }
 
         [[nodiscard]] UIViewController* GetUIViewController() const { return viewController; }
         [[nodiscard]] UIView* GetUIView() const { return view; }
 
-        /* --- MOVE SEMANTICS --- */
-        UIKitWindow(UIKitWindow&&) noexcept = delete;
-        UIKitWindow& operator=(UIKitWindow&&) noexcept = delete;
-
         /* --- COPY SEMANTICS --- */
         UIKitWindow(const UIKitWindow&) = delete;
         UIKitWindow& operator=(const UIKitWindow&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        UIKitWindow(UIKitWindow&&) noexcept = default;
+        UIKitWindow& operator=(UIKitWindow&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~UIKitWindow() noexcept override;
 
     private:
-        const UIKitContext& uiKitContext;
+        const UIKitContext* uiKitContext;
         
         UIWindow* window = nil;
         UIViewController* viewController = nil;

@@ -41,8 +41,8 @@ namespace Sierra
         MetalSampler& operator=(const MetalSampler&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        MetalSampler(MetalSampler&&) = delete;
-        MetalSampler& operator=(MetalSampler&&) = delete;
+        MetalSampler(MetalSampler&&) noexcept = default;
+        MetalSampler& operator=(MetalSampler&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~MetalSampler() noexcept override;

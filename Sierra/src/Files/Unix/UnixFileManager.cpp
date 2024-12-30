@@ -24,7 +24,7 @@ namespace Sierra
         return (stat(path.c_str(), &buffer) == 0);
     }
 
-    std::unique_ptr<FileStream> UnixFileManager::OpenFileStream(const std::filesystem::path& filePath, const FileStreamAccess access, const FileStreamBuffering buffering) const
+    std::unique_ptr<FileStream> UnixFileManager::CreateFileStream(const FileStreamCreateInfo& createInfo) const
     {
         SR_THROW_IF(!FileExists(filePath), PathMissingError("Cannot open file stream, as the specified file path does not exist", filePath));
 

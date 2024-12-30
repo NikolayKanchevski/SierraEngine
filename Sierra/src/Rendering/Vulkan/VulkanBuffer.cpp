@@ -27,7 +27,7 @@ namespace Sierra
     {
         switch (memoryLocation)
         {
-            case BufferMemoryLocation::CPU:       return VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+            case BufferMemoryLocation::RAM:       return VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
             case BufferMemoryLocation::GPU:       return VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
             default:                              break;
         }
@@ -37,18 +37,18 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanBuffer::VulkanBuffer(const VulkanDevice& device, const BufferCreateInfo& createInfo)
-        : Buffer(createInfo), device(device), name(createInfo.name), usageFlags(BufferUsageToVkBufferUsageFlags(createInfo.usage)), memorySize(createInfo.memorySize)
+    VulkanBuffer::VulkanBuffer(const VulkanDevice& givenDevice, const BufferCreateInfo& createInfo)
+        : Buffer(createInfo), device(&givenDevice), name(createInfo.name), memorySize(createInfo.memorySize)
     {
-        SR_THROW_IF(createInfo.usage & BufferUsage::Uniform && createInfo.memorySize > device.GetLimits().maxUniformBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max uniform buffer size - use Device::GetLimits() to query limits", name, device.GetName()), createInfo.memorySize, size(0), device.GetLimits().maxUniformBufferSize));
-        SR_THROW_IF(createInfo.usage & BufferUsage::Storage && createInfo.memorySize > device.GetLimits().maxStorageBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max storage buffer size - use Device::GetLimits() to query limits", name, device.GetName()), createInfo.memorySize, size(0), device.GetLimits().maxUniformBufferSize));
+        SR_THROW_IF(createInfo.usage & BufferUsage::Uniform && createInfo.memorySize > device->GetLimits().maxUniformBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max uniform buffer size - use Device::GetLimits() to query limits", name, device->GetName()), createInfo.memorySize, uint64(0), device->GetLimits().maxUniformBufferSize));
+        SR_THROW_IF(createInfo.usage & BufferUsage::Storage && createInfo.memorySize > device->GetLimits().maxStorageBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max storage buffer size - use Device::GetLimits() to query limits", name, device->GetName()), createInfo.memorySize, uint64(0), device->GetLimits().maxUniformBufferSize));
 
         // Set up buffer create info
         const VkBufferCreateInfo bufferCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
             .size = createInfo.memorySize,
-            .usage = usageFlags,
+            .usage = BufferUsageToVkBufferUsageFlags(createInfo.usage),
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE
         };
 
@@ -62,34 +62,34 @@ namespace Sierra
         };
 
         // Create and allocate buffer
-        const VkResult result = vmaCreateBuffer(device.GetVulkanMemoryAllocator(), &bufferCreateInfo, &allocationCreateInfo, &buffer, &allocation, nullptr);
+        const VkResult result = vmaCreateBuffer(device->GetVulkanMemoryAllocator(), &bufferCreateInfo, &allocationCreateInfo, &buffer, &allocation, nullptr);
         if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create buffer [{0}]", name));
-        device.SetResourceName(buffer, VK_OBJECT_TYPE_BUFFER, name);
+        device->SetResourceName(buffer, VK_OBJECT_TYPE_BUFFER, name);
 
         // Map and reset memory if CPU-visible
-        if (createInfo.memoryLocation == BufferMemoryLocation::CPU)
+        if (createInfo.memoryLocation == BufferMemoryLocation::RAM)
         {
-            vmaMapMemory(device.GetVulkanMemoryAllocator(), allocation, &memory);
+            vmaMapMemory(device->GetVulkanMemoryAllocator(), allocation, &memory);
             std::memset(memory, 0, createInfo.memorySize);
         }
     }
 
     /* --- POLLING METHODS --- */
 
-    void VulkanBuffer::Write(const void* memoryPointer, const size sourceOffset, const size destinationOffset, const size memoryPointerSize)
+    void VulkanBuffer::Write(const void* memoryPointer, const uint64 sourceOffset, const uint64 destinationOffset, const uint64 memoryPointerSize)
     {
         Buffer::Write(memoryPointer, sourceOffset, destinationOffset, memoryPointerSize);
 
         std::memcpy(reinterpret_cast<uint8*>(memory) + destinationOffset, reinterpret_cast<const uint8*>(memoryPointer) + sourceOffset, memoryPointerSize);
-        vmaFlushAllocation(device.GetVulkanMemoryAllocator(), allocation, destinationOffset, memoryPointerSize);
+        vmaFlushAllocation(device->GetVulkanMemoryAllocator(), allocation, destinationOffset, memoryPointerSize);
     }
 
     /* --- DESTRUCTOR --- */
 
     VulkanBuffer::~VulkanBuffer() noexcept
     {
-        if (memory != nullptr) vmaUnmapMemory(device.GetVulkanMemoryAllocator(), allocation);
-        vmaDestroyBuffer(device.GetVulkanMemoryAllocator(), buffer, allocation);
+        if (memory != nullptr) vmaUnmapMemory(device->GetVulkanMemoryAllocator(), allocation);
+        vmaDestroyBuffer(device->GetVulkanMemoryAllocator(), buffer, allocation);
     }
 
 }

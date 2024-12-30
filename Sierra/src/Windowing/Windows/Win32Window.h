@@ -56,18 +56,22 @@ namespace Sierra
         [[nodiscard]] bool IsFocused() const noexcept override;
         [[nodiscard]] bool IsHidden() const noexcept override;
 
-        [[nodiscard]] InputManager* GetInputManager() noexcept override;
-        [[nodiscard]] CursorManager* GetCursorManager() noexcept override;
-        [[nodiscard]] TouchManager* GetTouchManager() noexcept override;
+        [[nodiscard]] InputManager* GetInputManager() noexcept override { return &inputManager; }
+        [[nodiscard]] const InputManager* GetInputManager() const noexcept override { return &inputManager; }
 
-        [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override;
+        [[nodiscard]] CursorManager* GetCursorManager() noexcept override { return &cursorManager; }
+        [[nodiscard]] const CursorManager* GetCursorManager() const noexcept override { return &cursorManager; }
 
+        [[nodiscard]] TouchManager* GetTouchManager() noexcept override { return nullptr;  }
+        [[nodiscard]] const TouchManager* GetTouchManager() const noexcept override { return nullptr;  }
+
+        [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override { return WindowingBackendType::Win32; }
         [[nodiscard]] HWND GetHwnd() const { return window; }
         [[nodiscard]] HINSTANCE GetHInstance() const { return win32Context.GetHInstance(); }
 
         /* --- MOVE SEMANTICS --- */
-        Win32Window(Win32Window&&) noexcept = delete;
-        Win32Window& operator=(Win32Window&&) noexcept = delete;
+        Win32Window(Win32Window&&) = delete;
+        Win32Window& operator=(Win32Window&&) = delete;
 
         /* --- COPY SEMANTICS --- */
         Win32Window(const Win32Window&) = delete;

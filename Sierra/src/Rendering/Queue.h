@@ -1,6 +1,7 @@
 //
 // Created by Nikolay Kanchevski on 13.10.24.
 //
+
 #pragma once
 
 #include "RenderingResource.h"
@@ -33,11 +34,6 @@ namespace Sierra
         QueuePriority priority = QueuePriority::LeastUsed;
     };
 
-    struct AAAA
-    {
-        CommandBuffer& c;
-    };
-
     class SIERRA_API Queue : public virtual RenderingResource
     {
     public:
@@ -54,16 +50,16 @@ namespace Sierra
         Queue(const Queue&) = delete;
         Queue& operator=(const Queue&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        Queue(Queue&&) = delete;
-        Queue& operator=(Queue&&) = delete;
-
         /* --- DESTRUCTOR --- */
         ~Queue() noexcept override = default;
 
     protected:
         /* --- CONSTRUCTORS --- */
         explicit Queue(const QueueCreateInfo& createInfo);
+
+        /* --- MOVE SEMANTICS --- */
+        Queue(Queue&&) noexcept = default;
+        Queue& operator=(Queue&&) noexcept = default;
 
     };
 

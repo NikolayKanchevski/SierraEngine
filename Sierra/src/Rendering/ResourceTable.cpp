@@ -4,6 +4,8 @@
 
 #include "ResourceTable.h"
 
+#include "../Utilities/Handle.hpp"
+
 namespace Sierra
 {
 
@@ -13,28 +15,5 @@ namespace Sierra
     {
         SR_THROW_IF(createInfo.name.empty(), InvalidValueError("Cannot create resource table, as specified name must not be empty"));
     }
-
-    /* --- POLLING METHODS --- */
-
-    void ResourceTable::BindUniformBuffer(const uint32 index, const Buffer& buffer, const size offset, const size memorySize)
-    {
-    }
-
-    void ResourceTable::BindStorageBuffer(const uint32 index, const Buffer& buffer, const size offset, const size memorySize)
-    {
-    }
-
-    void ResourceTable::BindSampledImage(const uint32 index, const Image& image)
-    {
-    }
-
-    void ResourceTable::BindStorageImage(const uint32 index, const Image& image)
-    {
-    }
-
-    void ResourceTable::BindSampler(const uint32 index, const Sampler& sampler)
-    {
-    }
-
 
 }

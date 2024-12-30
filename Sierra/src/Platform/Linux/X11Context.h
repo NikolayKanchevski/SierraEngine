@@ -96,8 +96,8 @@ namespace Sierra
         X11Context& operator=(const X11Context&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        X11Context(X11Context&&) = default;
-        X11Context& operator=(X11Context&&) = default;
+        X11Context(X11Context&&) noexcept = default;
+        X11Context& operator=(X11Context&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~X11Context() noexcept;

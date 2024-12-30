@@ -7,11 +7,14 @@
 namespace SierraEngine
 {
 
-    enum class AssetType : bool
+    enum class AssetType : uint8
     {
         Unknown,
-        Texture
-    }; 
+        Texture,
+        Shader,
+        Material,
+        Model
+    };
 
     class SIERRA_ENGINE_API Asset
     {

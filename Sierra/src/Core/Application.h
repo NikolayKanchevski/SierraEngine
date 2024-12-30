@@ -43,7 +43,7 @@ namespace Sierra
         Application& operator=(Application&&) = delete;
 
         /* --- DESTRUCTOR --- */
-        virtual ~Application() = default;
+        virtual ~Application() noexcept = default;
 
     protected:
         /* --- CONSTRUCTORS --- */

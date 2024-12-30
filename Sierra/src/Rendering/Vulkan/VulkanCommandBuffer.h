@@ -35,32 +35,32 @@ namespace Sierra
         void Begin() override;
         void End() override;
 
-        void SynchronizeBufferUsage(const Buffer& buffer, BufferCommandUsage previousUsage, BufferCommandUsage nextUsage, size offset, size memorySize) override;
-        void SynchronizeImageUsage(const Image& image, ImageCommandUsage previousUsage, ImageCommandUsage nextUsage, uint32 baseLevel, uint32 levelCount, uint32 baseLayer, uint32 layerCount) override;
+        void SynchronizeBufferUsage(const Buffer& buffer, const BufferSynchronizeInfo& synchronizeInfo) override;
+        void SynchronizeImageUsage(const Image& image, const ImageSynchronizeInfo& synchronizeInfo) override;
 
-        void CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, size sourceOffset, size destinationOffset, size memorySize) override;
-        void CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, uint32 level, uint32 layer, size sourceOffset, Vector3UInt destinationPixelOffset, Vector3UInt pixelRange) override;
+        void CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, const BufferToBufferCopyInfo& copyInfo) override;
+        void CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, const BufferToImageCopyInfo& copyInfo) override;
         void GenerateMipMapsForImage(const Image& image) override;
 
         void BindResourceTable(const ResourceTable& resourceTable) override;
-        void PushConstants(const void* memory, size sourceOffset, size memorySize) override;
+        void PushConstants(const void* memory, uint8 sourceOffset, uint8 memorySize) override;
 
-        void BeginRenderPass(const RenderPass& renderPass, std::span<const RenderPassBeginAttachment> attachments) override;
-        void BeginNextSubpass(const RenderPass& renderPass) override;
-        void EndRenderPass(const RenderPass& renderPass) override;
+        void BeginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer) override;
+        void BeginNextSubpass() override;
+        void EndRenderPass() override;
 
         void BeginGraphicsPipeline(const GraphicsPipeline& graphicsPipeline) override;
-        void EndGraphicsPipeline(const GraphicsPipeline& graphicsPipeline) override;
+        void EndGraphicsPipeline() override;
 
-        void BindVertexBuffer(const Buffer& vertexBuffer, size offset) override;
-        void BindIndexBuffer(const Buffer& indexBuffer, size offset) override;
+        void BindVertexBuffer(const Buffer& vertexBuffer, uint64 offset) override;
+        void BindIndexBuffer(const Buffer& indexBuffer, uint64 offset) override;
 
         void SetScissor(Vector4UInt scissor) override;
-        void Draw(uint32 vertexCount, size vertexOffset) override;
-        void DrawIndexed(uint32 indexCount, size indexOffset, size vertexOffset) override;
+        void Draw(uint32 vertexCount, uint64 vertexOffset) override;
+        void DrawIndexed(uint32 indexCount, uint64 indexOffset, uint64 vertexOffset) override;
 
         void BeginComputePipeline(const ComputePipeline& computePipeline) override;
-        void EndComputePipeline(const ComputePipeline& computePipeline) override;
+        void EndComputePipeline() override;
 
         void Dispatch(Vector3UInt workGroupSize) override;
 
@@ -75,7 +75,7 @@ namespace Sierra
         [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
 
         [[nodiscard]] VkCommandBuffer GetVulkanCommandBuffer() const noexcept { return commandBuffer; }
-        [[nodiscard]] uint32 GetQueueFamily() const noexcept { return queue.GetFamily(); }
+        [[nodiscard]] uint32 GetQueueFamily() const noexcept { return queue->GetFamily(); }
 
         [[nodiscard]] QueueOperations GetOperations() const noexcept { return operations; }
         [[nodiscard]] uint64 GetCompletionSemaphoreSignalValue() const noexcept { return completionSemaphoreSignalValue; }
@@ -84,8 +84,8 @@ namespace Sierra
         ~VulkanCommandBuffer() noexcept override;
 
     private:
-        const VulkanQueue& queue;
-        const std::string name;
+        const VulkanQueue* queue = nullptr;
+        std::string name = { };
 
         VkCommandPool commandPool = VK_NULL_HANDLE;
         VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
@@ -102,10 +102,7 @@ namespace Sierra
         const VulkanGraphicsPipeline* currentGraphicsPipeline = nullptr;
         const VulkanComputePipeline* currentComputePipeline = nullptr;
 
-        size initialVertexBufferOffset = 0;
         const VulkanBuffer* currentVertexBuffer = nullptr;
-
-        size initialIndexBufferOffset = 0;
         const VulkanBuffer* currentIndexBuffer = nullptr;
 
         std::queue<std::unique_ptr<Buffer>> queuedBuffersForDestruction;

@@ -13,6 +13,7 @@
 namespace Sierra
 {
 
+    /* --- CONCEPTS --- */
     template<typename T>
     concept SwapchainEventType = std::is_base_of_v<SwapchainEvent, T> && !std::is_same_v<SwapchainEvent, std::decay_t<T>>;
 
@@ -62,7 +63,7 @@ namespace Sierra
 
         [[nodiscard]] uint32 GetWidth() const noexcept { return GetImage(0).GetWidth(); }
         [[nodiscard]] uint32 GetHeight() const noexcept { return GetImage(0).GetHeight(); }
-        [[nodiscard]] virtual uint32 GetScaling() const noexcept = 0;
+        [[nodiscard]] virtual float32 GetScaling() const noexcept = 0;
 
         [[nodiscard]] virtual const Image& GetImage(uint32 frameIndex) const = 0;
         [[nodiscard]] const Image& GetCurrentImage() const noexcept { return GetImage(GetCurrentImageIndex()); }
@@ -78,16 +79,16 @@ namespace Sierra
         Swapchain(const Swapchain&) = delete;
         Swapchain& operator=(const Swapchain&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        Swapchain(Swapchain&&) = delete;
-        Swapchain& operator=(Swapchain&&) = delete;
-
         /* --- DESTRUCTOR --- */
         ~Swapchain() noexcept override = default;
 
     protected:
         /* --- CONSTRUCTORS --- */
         explicit Swapchain(const SwapchainCreateInfo& createInfo);
+
+        /* --- MOVE SEMANTICS --- */
+        Swapchain(Swapchain&&) noexcept = default;
+        Swapchain& operator=(Swapchain&&) noexcept = default;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] EventDispatcher<SwapchainResizeEvent>& GetSwapchainResizeDispatcher() noexcept { return swapchainResizeDispatcher; }

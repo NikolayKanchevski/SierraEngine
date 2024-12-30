@@ -12,6 +12,7 @@
 namespace Sierra
 {
 
+    /* --- CONCEPTS --- */
     template<typename T>
     concept CursorEventType = std::is_base_of_v<CursorEvent, T> && !std::is_same_v<CursorEvent, std::decay_t<T>>;
 
@@ -46,10 +47,6 @@ namespace Sierra
         CursorManager(const CursorManager&) = delete;
         CursorManager& operator=(const CursorManager&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        CursorManager(CursorManager&&) = delete;
-        CursorManager& operator=(CursorManager&&) = delete;
-
         /* --- DESTRUCTOR --- */
         virtual ~CursorManager() noexcept = default;
 
@@ -59,6 +56,10 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] EventDispatcher<CursorMoveEvent>& GetCursorMoveDispatcher() noexcept { return cursorMoveDispatcher; }
+
+        /* --- MOVE SEMANTICS --- */
+        CursorManager(CursorManager&&) noexcept = default;
+        CursorManager& operator=(CursorManager&&) noexcept = default;
 
     private:
         EventDispatcher<CursorMoveEvent> cursorMoveDispatcher = { };

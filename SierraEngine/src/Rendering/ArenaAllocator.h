@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "Mesh.h"
 #include "Vertex.h"
 
 namespace SierraEngine
@@ -16,15 +17,6 @@ namespace SierraEngine
         uint32 initialIndexBufferCapacity = 8192;
     };
 
-    struct ArenaMesh
-    {
-        size vertexOffset = 0;
-        uint32 vertexCount = 0;
-
-        size indexOffset = 0;
-        uint32 indexCount = 0;
-    };
-
     class SIERRA_ENGINE_API ArenaAllocator final
     {
     public:
@@ -32,7 +24,8 @@ namespace SierraEngine
         explicit ArenaAllocator(const ArenaAllocatorCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] ArenaMesh RegisterMesh(Sierra::CommandBuffer& commandBuffer, std::span<const Vertex> vertices, std::span<const uint32> indices);
+        void Bind(Sierra::CommandBuffer& commandBuffer);
+        [[nodiscard]] Mesh CreateMesh(Sierra::CommandBuffer& commandBuffer, std::span<const Vertex> vertices, std::span<const uint32> indices);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint32 GetVertexCount() const noexcept { return static_cast<uint32>(currentVertexOffset / sizeof(Vertex)); }
@@ -55,10 +48,10 @@ namespace SierraEngine
     private:
         const Sierra::Device& device;
 
-        size currentVertexOffset = 0;
+        uint64 currentVertexOffset = 0;
         std::unique_ptr<Sierra::Buffer> vertexBuffer = nullptr;
 
-        size currentIndexOffset = 0;
+        uint64 currentIndexOffset = 0;
         std::unique_ptr<Sierra::Buffer> indexBuffer = nullptr;
 
     };

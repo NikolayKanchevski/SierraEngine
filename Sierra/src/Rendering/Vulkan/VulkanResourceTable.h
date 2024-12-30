@@ -8,6 +8,7 @@
 #include "VulkanResource.h"
 
 #include "VulkanDevice.h"
+#include "../../Utilities/IndexPool.hpp"
 
 namespace Sierra
 {
@@ -19,11 +20,20 @@ namespace Sierra
         VulkanResourceTable(const VulkanDevice& device, const ResourceTableCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void BindUniformBuffer(uint32 index, const Buffer& buffer, size offset, size memorySize) override;
-        void BindStorageBuffer(uint32 index, const Buffer& buffer, size offset, size memorySize) override;
-        void BindSampledImage(uint32 index, const Image& image) override;
-        void BindStorageImage(uint32 index, const Image& image) override;
-        void BindSampler(uint32 index, const Sampler& sampler) override;
+        [[nodiscard]] UniformBufferID BindUniformBuffer(const Buffer& buffer, uint64 offset, uint64 memorySize) override;
+        bool FreeUniformBuffer(UniformBufferID ID) override;
+
+        [[nodiscard]] StorageBufferID BindStorageBuffer(const Buffer& buffer, uint64 offset, uint64 memorySize) override;
+        bool FreeStorageBuffer(StorageBufferID ID) override;
+
+        [[nodiscard]] SampledImageID BindSampledImage(const Image& image) override;
+        bool FreeSampledImage(SampledImageID ID) override;
+
+        [[nodiscard]] StorageImageID BindStorageImage(const Image& image) override;
+        bool FreeStorageImage(StorageImageID ID) override;
+
+        [[nodiscard]] SamplerID BindSampler(const Sampler& sampler) override;
+        bool FreeSampler(SamplerID ID) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
@@ -42,19 +52,24 @@ namespace Sierra
         VulkanResourceTable& operator=(const VulkanResourceTable&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        VulkanResourceTable(VulkanResourceTable&&) = delete;
-        VulkanResourceTable& operator=(VulkanResourceTable&&) = delete;
+        VulkanResourceTable(VulkanResourceTable&&) noexcept = default;
+        VulkanResourceTable& operator=(VulkanResourceTable&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~VulkanResourceTable() noexcept override;
 
     private:
-        const VulkanDevice& device;
-        const std::string name;
+        const VulkanDevice* device = nullptr;
+        std::string name = { };
 
         VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
         VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
 
+        IndexPool<UniformBufferID> uniformBufferIndexPool = { };
+        IndexPool<StorageBufferID> storageBufferIndexPool = { };
+        IndexPool<SampledImageID> sampledImageIndexPool = { };
+        IndexPool<StorageImageID> storageImageIndexPool = { };
+        IndexPool<SamplerID> samplerIndexPool = { };
     };
 
 }

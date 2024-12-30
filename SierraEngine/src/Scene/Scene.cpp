@@ -5,6 +5,7 @@
 #include "Scene.h"
 
 #include "Components/Tag.h"
+#include "Components/Transform.h"
 #include "Components/Relationship.h"
 
 namespace SierraEngine
@@ -36,17 +37,18 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    EntityID Scene::CreateEntity(const std::string_view tag) noexcept
+    EntityID Scene::CreateEntity(const std::string_view tag)
     {
         const EntityID entityID = EntityToEntityID(registry.create());
         AddEntityComponent<Tag>(entityID, tag);
+        AddEntityComponent<Transform>(entityID);
         AddEntityComponent<Relationship>(entityID);
 
         rootEntities.push_back(entityID);
         return entityID;
     }
 
-    void Scene::DestroyEntity(const EntityID entityID) noexcept
+    void Scene::DestroyEntity(const EntityID entityID)
     {
         if (!EntityExists(entityID))
         {
@@ -190,7 +192,7 @@ namespace SierraEngine
         if (!EntityExists(entityID))
         {
             APP_WARNING("Cannot get parent of invalid entity");
-            return EntityID();
+            return EntityID(0);
         }
 
         return GetEntityComponent<Relationship>(entityID)->GetParentID();

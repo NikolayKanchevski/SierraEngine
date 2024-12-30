@@ -1,5 +1,5 @@
 set(IMGUI_DIRECTORY_PATH ../../../vendor/ImGui)
-target_sources(Sierra PRIVATE
+set(IMGUI_SOURCE_FILES
     ${IMGUI_DIRECTORY_PATH}/imgui.h
     ${IMGUI_DIRECTORY_PATH}/imgui.cpp
     ${IMGUI_DIRECTORY_PATH}/imgui_demo.cpp
@@ -9,9 +9,11 @@ target_sources(Sierra PRIVATE
     ${IMGUI_DIRECTORY_PATH}/imgui_widgets.cpp
     ${IMGUI_DIRECTORY_PATH}/imstb_rectpack.h
     ${IMGUI_DIRECTORY_PATH}/imstb_truetype.h
+    ${IMGUI_DIRECTORY_PATH}/misc/cpp/imgui_stdlib.cpp
+    ${IMGUI_DIRECTORY_PATH}/misc/cpp/imgui_stdlib.h
 )
-
-target_include_directories(Sierra PUBLIC ${IMGUI_DIRECTORY_PATH})
+target_sources(Sierra PRIVATE ${IMGUI_SOURCE_FILES})
+target_include_directories(Sierra PUBLIC ${IMGUI_DIRECTORY_PATH} ${IMGUI_DIRECTORY_PATH}/misc/cpp)
 target_compile_definitions(Sierra PUBLIC "IMGUI_USER_CONFIG=\"../../src/Extensions/ImGui/ImGuiConfiguration.h\"")
 
 target_compile_definitions(Sierra PUBLIC "SR_BUILD_IMGUI_EXTENSION")

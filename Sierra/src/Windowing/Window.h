@@ -21,12 +21,10 @@ namespace Sierra
         uint32 height = 780;
 
         bool resizable = false;
-        ScreenOrientation allowedOrientations = ScreenOrientation::Any;
-
         bool maximize = false;
-        bool hide = false;
     };
 
+    /* --- CONCEPTS --- */
     template<typename T>
     concept WindowEventType = std::is_base_of_v<WindowEvent, T> && !std::is_same_v<WindowEvent, std::decay_t<T>>;
 
@@ -68,8 +66,14 @@ namespace Sierra
         [[nodiscard]] virtual bool IsHidden() const noexcept = 0;
 
         [[nodiscard]] virtual InputManager* GetInputManager() noexcept = 0;
+        [[nodiscard]] virtual const InputManager* GetInputManager() const noexcept = 0;
+
         [[nodiscard]] virtual CursorManager* GetCursorManager() noexcept = 0;
+        [[nodiscard]] virtual const CursorManager* GetCursorManager() const noexcept = 0;
+
         [[nodiscard]] virtual TouchManager* GetTouchManager() noexcept = 0;
+        [[nodiscard]] virtual const TouchManager* GetTouchManager() const noexcept = 0;
+
         [[nodiscard]] virtual WindowingBackendType GetBackendType() const noexcept = 0;
 
         /* --- EVENTS --- */
@@ -78,10 +82,6 @@ namespace Sierra
 
         template<WindowEventType EventType>
         bool RemoveEventListener(EventSubscriptionID) noexcept;
-
-        /* --- MOVE SEMANTICS --- */
-        Window(Window&&) noexcept = delete;
-        Window& operator=(Window&&) noexcept = delete;
 
         /* --- COPY SEMANTICS --- */
         Window(const Window&) = delete;
@@ -93,6 +93,10 @@ namespace Sierra
     protected:
         /* --- CONSTRUCTORS --- */
         explicit Window(const WindowCreateInfo& createInfo);
+
+        /* --- MOVE SEMANTICS --- */
+        Window(Window&&) noexcept = default;
+        Window& operator=(Window&&) noexcept = default;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] EventDispatcher<WindowMoveEvent>& GetWindowMoveDispatcher() noexcept { return windowMoveDispatcher; }

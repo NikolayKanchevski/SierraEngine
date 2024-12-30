@@ -136,8 +136,7 @@ namespace Sierra
         SR_THROW_IF(!DirectoryExists(directoryPath), PathMissingError("Cannot delete directory at path", directoryPath));
     }
 
-
-    /* --- PROTECTED METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void FileManager::ResolveFilePathConflict(const std::filesystem::path& sourceFilePath, std::filesystem::path& destinationFilePath, const FilePathConflictPolicy conflictPolicy) const
     {

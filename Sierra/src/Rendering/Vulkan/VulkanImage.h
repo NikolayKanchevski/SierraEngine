@@ -18,7 +18,7 @@ namespace Sierra
     [[nodiscard]] SIERRA_API VkFormat ImageFormatToVkFormat(ImageFormat format) noexcept;
     [[nodiscard]] SIERRA_API VkImageUsageFlags ImageUsageToVkImageUsageFlags(ImageUsage usage) noexcept;
     [[nodiscard]] SIERRA_API VkSampleCountFlagBits ImageSamplingToVkSampleCountFlags(ImageSampling sampling) noexcept;
-    [[nodiscard]] SIERRA_API VkComponentSwizzle ImageComponentSwizzleToVkComponentSwizzle(ImageComponentSwizzle componentSwizzle) noexcept;
+    [[nodiscard]] SIERRA_API VkComponentSwizzle ImageComponentSwizzleToVkComponentSwizzle(ImageChannelSwizzling componentSwizzle) noexcept;
     [[nodiscard]] SIERRA_API VmaMemoryUsage ImageMemoryLocationToVmaMemoryUsage(ImageMemoryLocation memoryLocation) noexcept;
 
     class SIERRA_API VulkanImage final : public Image, public VulkanResource
@@ -42,36 +42,34 @@ namespace Sierra
         [[nodiscard]] VkImage GetVulkanImage() const noexcept { return image; }
         [[nodiscard]] VkImageView GetVulkanImageView() const noexcept { return imageView; }
         [[nodiscard]] VkImageAspectFlags GetVulkanAspectFlags() const noexcept { return aspectFlags; }
-        [[nodiscard]] VkImageUsageFlags GetVulkanUsageFlags() const noexcept { return usageFlags; }
 
         /* --- COPY SEMANTICS --- */
         VulkanImage(const VulkanImage&) = delete;
         VulkanImage& operator=(const VulkanImage&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        VulkanImage(VulkanImage&&) = delete;
-        VulkanImage& operator=(VulkanImage&&) = delete;
+        VulkanImage(VulkanImage&&) noexcept = default;
+        VulkanImage& operator=(VulkanImage&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~VulkanImage() noexcept override;
 
     private:
-        const VulkanDevice& device;
-        const std::string name;
+        const VulkanDevice* device = nullptr;
+        std::string name = { };
 
-        const uint32 width = 0;
-        const uint32 height = 0;
-        const uint32 depth = 0;
-        const ImageFormat format = ImageFormat::Undefined;
+        uint32 width = 0;
+        uint32 height = 0;
+        uint32 depth = 0;
+        ImageFormat format = ImageFormat::Undefined;
 
-        const uint32 levelCount = 1;
-        const uint32 layerCount = 1;
-        const ImageSampling sampling = ImageSampling::x1;
+        uint32 levelCount = 1;
+        uint32 layerCount = 1;
+        ImageSampling sampling = ImageSampling::x1;
 
         VkImage image = VK_NULL_HANDLE;
         VkImageView imageView = VK_NULL_HANDLE;
 
-        VkImageUsageFlags usageFlags = 0;
         VkImageAspectFlags aspectFlags = 0;
         VmaAllocation allocation = nullptr;
 

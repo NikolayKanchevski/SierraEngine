@@ -6,5 +6,5 @@
 
 namespace SierraEngine
 {
-    using EntityID = Sierra::Hash<ENTT_ID_TYPE>;
+    using EntityID = Sierra::Handle<ENTT_ID_TYPE>;
 }

@@ -34,8 +34,8 @@ namespace Sierra
         MetalComputePipeline& operator=(const MetalComputePipeline&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        MetalComputePipeline(MetalComputePipeline&&) = delete;
-        MetalComputePipeline& operator=(MetalComputePipeline&&) = delete;
+        MetalComputePipeline(MetalComputePipeline&&) noexcept = default;
+        MetalComputePipeline& operator=(MetalComputePipeline&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~MetalComputePipeline() noexcept override;

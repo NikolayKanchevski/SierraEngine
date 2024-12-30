@@ -119,14 +119,16 @@ namespace Sierra
     };
 
     /* --- CONVERSIONS --- */
-    [[nodiscard]] SIERRA_API float32 ImageFormatToChannelMemorySize(ImageFormat format);
     [[nodiscard]] SIERRA_API float32 ImageFormatToPixelMemorySize(ImageFormat format);
     [[nodiscard]] SIERRA_API uint8 ImageFormatToChannelCount(ImageFormat format);
+    [[nodiscard]] SIERRA_API float32 ImageFormatToChannelMemorySize(ImageFormat format);
+
     [[nodiscard]] SIERRA_API uint8 ImageFormatToBlockSize(ImageFormat format);
+    [[nodiscard]] SIERRA_API uint8 ImageFormatToBlockMemorySize(ImageFormat format);
 
     enum class ImageMemoryLocation : bool
     {
-        CPU,
+        RAM,
         GPU
     };
 
@@ -157,7 +159,7 @@ namespace Sierra
         x64
     };
 
-    enum class ImageComponentSwizzle : uint8
+    enum class ImageChannelSwizzling : uint8
     {
         Identity,
         Zero,
@@ -181,14 +183,10 @@ namespace Sierra
         uint32 levelCount = 1;
         uint32 layerCount = 1;
         ImageUsage usage = ImageUsage::Undefined;
-
-        ImageComponentSwizzle redSwizzle = ImageComponentSwizzle::Identity;
-        ImageComponentSwizzle greenSwizzle = ImageComponentSwizzle::Identity;
-        ImageComponentSwizzle blueSwizzle = ImageComponentSwizzle::Identity;
-        ImageComponentSwizzle alphaSwizzle = ImageComponentSwizzle::Identity;
+        ImageChannelSwizzling swizzling[4] = { ImageChannelSwizzling::Identity, ImageChannelSwizzling::Identity, ImageChannelSwizzling::Identity, ImageChannelSwizzling::Identity };
 
         ImageSampling sampling = ImageSampling::x1;
-        ImageMemoryLocation memoryLocation = ImageMemoryLocation::CPU;
+        ImageMemoryLocation memoryLocation = ImageMemoryLocation::GPU;
     };
 
     class SIERRA_API Image : public virtual RenderingResource
@@ -200,7 +198,7 @@ namespace Sierra
         [[nodiscard]] virtual uint32 GetDepth() const noexcept = 0;
 
         [[nodiscard]] virtual ImageFormat GetFormat() const noexcept = 0;
-        [[nodiscard]] size GetMemorySize() const noexcept { return static_cast<size>(static_cast<float32>(GetWidth() * GetHeight() * GetDepth() * GetLayerCount()) * Sierra::ImageFormatToPixelMemorySize(GetFormat())); }
+        [[nodiscard]] uint64 GetMemorySize() const noexcept;
 
         [[nodiscard]] virtual uint32 GetLevelCount() const noexcept = 0;
         [[nodiscard]] virtual uint32 GetLayerCount() const noexcept = 0;
@@ -210,16 +208,16 @@ namespace Sierra
         Image(const Image&) = delete;
         Image& operator=(const Image&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        Image(Image&&) = delete;
-        Image& operator=(Image&&) = delete;
-
         /* --- DESTRUCTOR --- */
         ~Image() noexcept override = default;
 
     protected:
         /* --- CONSTRUCTORS --- */
         explicit Image(const ImageCreateInfo& createInfo);
+
+        /* --- MOVE SEMANTICS --- */
+        Image(Image&&) noexcept = default;
+        Image& operator=(Image&&) noexcept = default;
 
     };
 

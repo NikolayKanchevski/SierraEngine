@@ -1,6 +1,7 @@
 //
 // Created by Nikolay Kanchevski on 4.10.24.
 //
+
 #pragma once
 
 namespace Sierra
@@ -14,8 +15,8 @@ namespace Sierra
         DeviceError& operator=(const DeviceError&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        DeviceError(DeviceError&&) = delete;
-        DeviceError& operator=(DeviceError&&) = delete;
+        DeviceError(DeviceError&&) noexcept = default;
+        DeviceError& operator=(DeviceError&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~DeviceError() noexcept override = default;
@@ -37,8 +38,8 @@ namespace Sierra
         UnknownDeviceError& operator=(const UnknownDeviceError&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        UnknownDeviceError(UnknownDeviceError&&) = delete;
-        UnknownDeviceError& operator=(UnknownDeviceError&&) = delete;
+        UnknownDeviceError(UnknownDeviceError&&) noexcept = default;
+        UnknownDeviceError& operator=(UnknownDeviceError&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~UnknownDeviceError() noexcept override = default;
@@ -55,8 +56,8 @@ namespace Sierra
         DeviceOutOfMemory& operator=(const DeviceOutOfMemory&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        DeviceOutOfMemory(DeviceOutOfMemory&&) = delete;
-        DeviceOutOfMemory& operator=(DeviceOutOfMemory&&) = delete;
+        DeviceOutOfMemory(DeviceOutOfMemory&&) noexcept = default;
+        DeviceOutOfMemory& operator=(DeviceOutOfMemory&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~DeviceOutOfMemory() noexcept override = default;

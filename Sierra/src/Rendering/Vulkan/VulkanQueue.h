@@ -1,6 +1,7 @@
 //
 // Created by Nikolay Kanchevski on 13.10.24.
 //
+
 #pragma once
 
 #include "../Queue.h"
@@ -27,7 +28,7 @@ namespace Sierra
         [[nodiscard]] QueueOperations GetOperations() const noexcept override { return description->operations; }
 
         [[nodiscard]] uint32 GetFamily() const noexcept { return description->family; }
-        [[nodiscard]] const VulkanDevice& GetDevice() const noexcept { return device; }
+        [[nodiscard]] const VulkanDevice& GetDevice() const noexcept { return *device; }
 
         /* --- OPERATORS --- */
         [[nodiscard]] bool operator==(const VulkanQueue& other) noexcept { return description->family == other.description->family; }
@@ -38,15 +39,15 @@ namespace Sierra
         VulkanQueue& operator=(const VulkanQueue&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        VulkanQueue(VulkanQueue&&) = delete;
-        VulkanQueue& operator=(VulkanQueue&&) = delete;
+        VulkanQueue(VulkanQueue&&) noexcept = default;
+        VulkanQueue& operator=(VulkanQueue&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~VulkanQueue() noexcept override = default;
 
     private:
-        const VulkanDevice& device;
-        const std::string name;
+        const VulkanDevice* device = nullptr;
+        std::string name = { };
 
         VkQueue queue = VK_NULL_HANDLE;
         std::shared_ptr<VulkanQueueDescription> description;

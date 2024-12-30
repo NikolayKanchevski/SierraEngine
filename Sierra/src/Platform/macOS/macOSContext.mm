@@ -17,12 +17,122 @@ namespace Sierra
 
     }
 
+    /* --- POLLING METHODS --- */
+
     std::unique_ptr<Window> macOSContext::CreateWindow(const WindowCreateInfo& createInfo) const
     {
         return std::make_unique<CocoaWindow>(cocoaContext, createInfo);
     }
 
+    bool macOSContext::OpenAlertDialog(const AlertDialogOpenInfo& openInfo) const
+    {
+        NSAlert* const alert = [[NSAlert alloc] init];
+
+        [alert setMessageText: [NSString stringWithCString: openInfo.title.data() length: openInfo.title.size()]];
+        if (!openInfo.message.empty()) [alert setInformativeText: [NSString stringWithCString: openInfo.message.data() length: openInfo.message.size()]];
+
+        [alert addButtonWithTitle: [NSString stringWithCString: openInfo.acceptButtonText.data() length: openInfo.acceptButtonText.size()]];
+        if (!openInfo.declineButtonText.empty()) [alert addButtonWithTitle: [NSString stringWithCString: openInfo.declineButtonText.data() length: openInfo.declineButtonText.size()]];
+
+        switch (openInfo.severity)
+        {
+            case AlertSeverity::Info:    { [alert setAlertStyle: NSAlertStyleInformational]; break; }
+            case AlertSeverity::Warning: { [alert setAlertStyle: NSAlertStyleWarning]; break; }
+            case AlertSeverity::Error:   { [alert setAlertStyle: NSAlertStyleCritical]; break; }
+        }
+
+        return [alert runModal] == NSAlertFirstButtonReturn;
+    }
+
+    std::vector<std::filesystem::path> macOSContext::OpenFileSelectDialog(const FileSelectDialogOpenInfo& openInfo) const noexcept
+    {
+        NSOpenPanel* const panel = [NSOpenPanel openPanel];
+
+        if (!openInfo.directoryPath.empty())
+        {
+            const std::string path = openInfo.directoryPath.string();
+            [panel setDirectoryURL: [NSURL fileURLWithPath: [NSString stringWithCString: path.c_str() length: path.size()]]];
+        }
+
+        if (!openInfo.message.empty()) [panel setMessage: [NSString stringWithCString: openInfo.message.data() length: openInfo.message.size()]];
+        if (!openInfo.buttonText.empty()) [panel setPrompt: [NSString stringWithCString: openInfo.buttonText.data() length: openInfo.buttonText.size()]];
+
+        [panel setCanChooseFiles: openInfo.allowFiles];
+        [panel setCanChooseDirectories: openInfo.allowDirectories];
+        [panel setAllowsMultipleSelection: openInfo.allowMultipleSelection];
+
+        NSMutableArray<NSString*>* const allowedFileExtensions = [NSMutableArray<NSString*> arrayWithCapacity: openInfo.allowedFileExtensions.size()];
+        if (!openInfo.allowedFileExtensions.empty())
+        {
+            for (const std::string_view path : openInfo.allowedFileExtensions)
+            {
+                if (path.empty() || path.size() == 1) continue;
+
+                [allowedFileExtensions addObject: [NSString stringWithCString: path.data() + 1 length: path.size() - 1]];
+                [panel setAllowedFileTypes: allowedFileExtensions];
+            }
+        }
+
+        std::vector<std::filesystem::path> filePaths = { };
+        if ([panel runModal] == NSModalResponseOK)
+        {
+            filePaths.reserve(panel.URLs.count);
+            for (NSURL* const URL in panel.URLs)
+            {
+                const NSString* path = [URL.path stringByResolvingSymlinksInPath];
+                filePaths.emplace_back(std::string_view(path.UTF8String, path.length));
+            }
+        }
+
+        return filePaths;
+    }
+
+    std::optional<std::filesystem::path> macOSContext::OpenFileSaveDialog(const FileSaveDialogOpenInfo& openInfo) const noexcept
+    {
+        NSSavePanel* const panel = [NSSavePanel savePanel];
+
+        if (!openInfo.directoryPath.empty())
+        {
+            const std::string path = openInfo.directoryPath.string();
+            [panel setDirectoryURL: [NSURL fileURLWithPath: [NSString stringWithCString: path.c_str() length: path.size()]]];
+        }
+
+        if (!openInfo.message.empty()) [panel setMessage: [NSString stringWithCString: openInfo.message.data() length: openInfo.message.size()]];
+        if (!openInfo.buttonText.empty()) [panel setPrompt: [NSString stringWithCString: openInfo.buttonText.data() length: openInfo.buttonText.size()]];
+
+        if (!openInfo.fileName.empty()) [panel setNameFieldStringValue: [NSString stringWithCString: openInfo.fileName.data() length: openInfo.fileName.size()]];
+
+        [panel setExtensionHidden: NO];
+        [panel setAllowsOtherFileTypes: YES];
+        [panel setAccessibilityExpanded: YES];
+
+        NSMutableArray<NSString*>* const allowedFileExtensions = [NSMutableArray<NSString*> arrayWithCapacity: openInfo.allowedFileExtensions.size()];
+        if (!openInfo.allowedFileExtensions.empty())
+        {
+            for (const std::string_view path : openInfo.allowedFileExtensions)
+            {
+                if (path.empty() || path.size() == 1) continue;
+
+                [allowedFileExtensions addObject: [NSString stringWithCString: path.data() + 1 length: path.size() - 1]];
+                [panel setAllowedFileTypes: allowedFileExtensions];
+            }
+        }
+
+        if ([panel runModal] == NSModalResponseOK)
+        {
+            const NSString* path = [panel.URL.path stringByResolvingSymlinksInPath];
+            return { std::string_view(path.UTF8String, path.length) };
+        }
+
+        return std::nullopt;
+    }
+
     /* --- GETTER METHODS --- */
+
+    std::string_view macOSContext::GetUserName() const noexcept
+    {
+        return std::string_view(NSUserName().UTF8String, NSUserName().length);
+    }
 
     Screen& macOSContext::GetWindowScreen(const Window& window)
     {
@@ -40,7 +150,7 @@ namespace Sierra
         }
     }
 
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void macOSContext::Update()
     {

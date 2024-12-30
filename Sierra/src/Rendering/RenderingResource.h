@@ -20,16 +20,16 @@ namespace Sierra
         RenderingResource(const RenderingResource&) = delete;
         RenderingResource& operator=(const RenderingResource&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        RenderingResource(RenderingResource&&) = delete;
-        RenderingResource& operator=(RenderingResource&&) = delete;
-
         /* --- DESTRUCTORS --- */
         virtual ~RenderingResource() noexcept = default;
 
     protected:
         /* --- CONSTRUCTORS --- */
         RenderingResource() noexcept = default;
+
+        /* --- MOVE SEMANTICS --- */
+        RenderingResource(RenderingResource&&) noexcept = default;
+        RenderingResource& operator=(RenderingResource&&) noexcept = default;
 
     };
 

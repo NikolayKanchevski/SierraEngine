@@ -1,6 +1,7 @@
 //
 // Created by Nikolay Kanchevski on 30.09.24.
 //
+
 #pragma once
 
 namespace Sierra

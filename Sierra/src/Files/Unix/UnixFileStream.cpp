@@ -4,7 +4,6 @@
 
 #include "UnixFileStream.h"
 
-#include "../FileErrors.h"
 #include "UnixFileErrorHandler.h"
 
 namespace Sierra

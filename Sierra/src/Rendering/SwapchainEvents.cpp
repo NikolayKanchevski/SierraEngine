@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    SwapchainResizeEvent::SwapchainResizeEvent(const uint32 width, const uint32 height, const uint32 scaling) noexcept
+    SwapchainResizeEvent::SwapchainResizeEvent(const uint32 width, const uint32 height, const float32 scaling) noexcept
         : scaling(scaling), width(width), height(height)
     {
 

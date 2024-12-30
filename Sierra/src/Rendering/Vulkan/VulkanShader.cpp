@@ -26,8 +26,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
     
-    VulkanShader::VulkanShader(const VulkanDevice& device, const ShaderCreateInfo& createInfo)
-        : Shader(createInfo), device(device), name(createInfo.name)
+    VulkanShader::VulkanShader(const VulkanDevice& givenDevice, const ShaderCreateInfo& createInfo)
+        : Shader(createInfo), device(&givenDevice), name(createInfo.name)
     {
         // Set up module create info
         const ShaderFileHeader& fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.memory.data());
@@ -39,18 +39,18 @@ namespace Sierra
         };
 
         // Create shader module
-        const VkResult result = device.GetFunctionTable().vkCreateShaderModule(device.GetVulkanDevice(), &shaderModuleCreateInfo, nullptr, &shaderModule);
+        const VkResult result = device->GetFunctionTable().vkCreateShaderModule(device->GetVulkanDevice(), &shaderModuleCreateInfo, nullptr, &shaderModule);
         if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create shader [{0}]", name));
 
         // Set object name
-        device.SetResourceName(shaderModule, VK_OBJECT_TYPE_SHADER_MODULE, name);
+        device->SetResourceName(shaderModule, VK_OBJECT_TYPE_SHADER_MODULE, name);
     }
 
     /* --- DESTRUCTOR --- */
 
     VulkanShader::~VulkanShader() noexcept
     {
-        device.GetFunctionTable().vkDestroyShaderModule(device.GetVulkanDevice(), shaderModule, nullptr);
+        device->GetFunctionTable().vkDestroyShaderModule(device->GetVulkanDevice(), shaderModule, nullptr);
     }
 
 }

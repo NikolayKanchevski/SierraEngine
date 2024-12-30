@@ -6,6 +6,7 @@ target_include_directories(SierraEngine PUBLIC ${ENTT_DIRECTORY_PATH}/single_inc
 target_sources(SierraEngine PRIVATE
     Component.cpp
     Component.h
+    Components.h
     Scene.cpp
     EntityID.h
     Scene.h

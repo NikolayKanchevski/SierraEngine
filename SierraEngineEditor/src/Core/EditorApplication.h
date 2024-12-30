@@ -5,8 +5,7 @@
 #pragma once
 
 #include "../Editor/Editor.h"
-#include "../Assets/EditorAssetManager.h"
-#include "../Rendering/EditorRenderer.h"
+#include "../Rendering/EditorSurface.h"
 
 namespace SierraEngine
 {
@@ -26,7 +25,7 @@ namespace SierraEngine
         EditorApplication& operator=(EditorApplication&&) = delete;
 
         /* --- DESTRUCTOR --- */
-        ~EditorApplication() override;
+        ~EditorApplication() noexcept override;
 
     private:
         bool Update() override;
@@ -36,16 +35,17 @@ namespace SierraEngine
 
         std::unique_ptr<Sierra::Device> device = nullptr;
         std::unique_ptr<Sierra::Queue> queue = nullptr;
-        std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers = { };
 
         std::unique_ptr<Sierra::ResourceTable> resourceTable = nullptr;
+        std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers = { };
 
-        Surface surface;
-        std::unique_ptr<EditorRenderer> editorRenderer = nullptr;
+        ArenaAllocator arenaAllocator;
+        SceneRenderer sceneRenderer;
+
+        Editor editor;
+        std::optional<EditorSurface> editorSurface = std::nullopt;
 
         Scene scene;
-        Editor editor;
-        EditorAssetManager assetManager;
 
     };
 

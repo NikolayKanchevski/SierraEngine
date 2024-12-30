@@ -9,6 +9,7 @@
 #include "Buffer.h"
 #include "Image.h"
 #include "Sampler.h"
+#include "../Utilities/Handle.hpp"
 
 namespace Sierra
 {
@@ -18,16 +19,36 @@ namespace Sierra
         std::string_view name = "Resource Table";
     };
 
+    /* --- TYPE DEFINITIONS --- */
+    using ResourceID = Sierra::Handle<uint32>;
+    struct UniformBufferID final : public ResourceID { };
+    struct StorageBufferID final : public ResourceID { };
+    struct SampledImageID  final : public ResourceID { };
+    struct StorageImageID  final : public ResourceID { };
+    struct SamplerID       final : public ResourceID { };
+
+    /* --- CONCEPTS --- */
+    template<typename T>
+    concept ResourceIDType = std::is_base_of_v<ResourceID, T> && !std::is_same_v<ResourceID, T>;
+
     class SIERRA_API ResourceTable : public virtual RenderingResource
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual void BindUniformBuffer(uint32 index, const Buffer& buffer, size offset, size memorySize);
-        virtual void BindStorageBuffer(uint32 index, const Buffer& buffer, size offset, size memorySize);
+        [[nodiscard]] virtual UniformBufferID BindUniformBuffer(const Buffer& buffer, uint64 offset, uint64 memorySize) = 0;
+        virtual bool FreeUniformBuffer(UniformBufferID ID) = 0;
 
-        virtual void BindSampledImage(uint32 index, const Image& image);
-        virtual void BindStorageImage(uint32 index, const Image& image);
-        virtual void BindSampler(uint32 index, const Sampler& sampler);
+        [[nodiscard]] virtual StorageBufferID BindStorageBuffer(const Buffer& buffer, uint64 offset, uint64 memorySize) = 0;
+        virtual bool FreeStorageBuffer(StorageBufferID ID) = 0;
+
+        [[nodiscard]] virtual SampledImageID BindSampledImage(const Image& image) = 0;
+        virtual bool FreeSampledImage(SampledImageID ID) = 0;
+
+        [[nodiscard]] virtual StorageImageID BindStorageImage(const Image& image) = 0;
+        virtual bool FreeStorageImage(StorageImageID ID) = 0;
+
+        [[nodiscard]] virtual SamplerID BindSampler(const Sampler& sampler) = 0;
+        virtual bool FreeSampler(SamplerID ID) = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual uint32 GetUniformBufferCapacity() const noexcept = 0;
@@ -41,16 +62,16 @@ namespace Sierra
         ResourceTable(const ResourceTable&) = delete;
         ResourceTable& operator=(const ResourceTable&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        ResourceTable(ResourceTable&&) = delete;
-        ResourceTable& operator=(ResourceTable&&) = delete;
-
         /* --- DESTRUCTOR --- */
         ~ResourceTable() noexcept override = default;
 
     protected:
         /* --- CONSTRUCTORS --- */
         explicit ResourceTable(const ResourceTableCreateInfo& createInfo);
+
+        /* --- MOVE SEMANTICS --- */
+        ResourceTable(ResourceTable&&) noexcept = default;
+        ResourceTable& operator=(ResourceTable&&) noexcept = default;
 
     };
 

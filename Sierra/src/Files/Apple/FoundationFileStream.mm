@@ -2,35 +2,40 @@
 // Created by Nikolay Kanchevski on 23.09.24.
 //
 
-#include "FoundationFileStream.h"
+#include <utility>
 
-#include "../FileErrors.h"
-#include "NSFileErrorHandler.h"
+#include "FoundationFileStream.h"
+#include "FoundationFileUtilities.h"
 
 namespace Sierra
 {
 
     /* --- CONSTRUCTORS --- */
 
-    FoundationFileStream::FoundationFileStream(const std::filesystem::path& filePath, NSFileHandle* const fileHandle)
-        : filePath(filePath), fileHandle(fileHandle)
+    FoundationFileStream::FoundationFileStream(const FileStreamCreateInfo& createInfo)
+        : FileStream(createInfo), access(createInfo.access), filePath(createInfo.filePath)
     {
-        SR_THROW_IF(fileHandle == nil, InvalidValueError("Cannot create Foundation file stream, as specified file handle must not be nil"));
-        SR_THROW_IF(fileHandle.fileDescriptor == -1, InvalidValueError("Cannot create Foundation file stream, as specified file handle is invalid"));
-    }
-
-    void FoundationFileStream::Seek(const size offset)
-    {
-        FileStream::Seek(offset);
+        NSURL* const URL = PathToNSURL(createInfo.filePath);
 
         NSError* error = nil;
-        [fileHandle seekToOffset: offset error: &error];
-        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not seek to offset [{0}] of file stream", offset), filePath);
+        switch (createInfo.access)
+        {
+            case StreamAccess::ReadOnly:      { fileHandle = [NSFileHandle fileHandleForReadingFromURL: URL error: &error]; break; }
+            case StreamAccess::WriteOnly:     { fileHandle = [NSFileHandle fileHandleForWritingToURL: URL error: &error];   break; }
+            case StreamAccess::ReadWrite:     { fileHandle = [NSFileHandle fileHandleForUpdatingURL: URL error: &error];    break; }
+        }
+        [URL release];
+
+        // NOTE: From the tests I performed, no POSIX/fcntl/C-API buffering configuration results in any performance difference on Apple platforms, which is why no accounting for buffering is done here
+
+        if (error != nil) HandleNSFileError(error, "Could not open file stream", createInfo.filePath);
     }
+
+    /* --- POLLING METHODS --- */
 
     std::vector<uint8> FoundationFileStream::Read(const size memorySize)
     {
-        SR_THROW_IF(GetCurrentOffset() + memorySize > GetMemorySize(), InvalidFileRange("Cannot read invalid range from file stream", GetFilePath(), GetCurrentOffset(), memorySize, GetMemorySize()));
+        SR_THROW_IF(GetOffset() + memorySize > GetSize(), InvalidFileRange("Cannot read invalid range from file stream", GetFilePath(), GetOffset(), memorySize, GetSize()));
 
         NSError* error = nil;
         NSData* const data = [fileHandle readDataUpToLength: memorySize error: &error];
@@ -39,10 +44,10 @@ namespace Sierra
         return { reinterpret_cast<const uint8*>(data.bytes), reinterpret_cast<const uint8*>(data.bytes) + memorySize };
     }
 
-    void FoundationFileStream::Write(const void* memory, const size offset, const size memorySize)
+    void FoundationFileStream::Write(const void* memory, const size memorySize)
     {
-        FileStream::Write(memory, offset, memorySize);
-        NSData* const data = [NSData dataWithBytesNoCopy: const_cast<void*>(reinterpret_cast<const void*>(reinterpret_cast<const uint8*>(memory) + offset)) length: memorySize];
+        Stream::Write(memory, memorySize);
+        NSData* const data = [NSData dataWithBytesNoCopy: const_cast<void*>(memory) length: memorySize freeWhenDone: NO];
 
         NSError* error = nil;
         [fileHandle writeData: data error: &error];
@@ -50,30 +55,42 @@ namespace Sierra
         if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not write [{0}] bytes to file stream", memorySize), filePath);
     }
 
-    /* --- GETTER METHODS --- */
+    /* --- SETTER METHODS --- */
 
-    size FoundationFileStream::GetMemorySize() const
+    void FoundationFileStream::SetOffset(const size offset)
     {
-        size initialOffset = GetCurrentOffset();
-
-        ullong memorySize = 0;
-        [fileHandle seekToEndReturningOffset: &memorySize error: nil];
+        Stream::SetOffset(offset);
 
         NSError* error = nil;
-        [fileHandle seekToOffset: initialOffset error: &error];
+        [fileHandle seekToOffset: offset error: &error];
+        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not seek to offset [{0}] of file stream", offset), filePath);
+    }
 
-        if (error != nil) HandleNSFileError(error, "Could not retrieve memory size of file stream", filePath);
+    /* --- GETTER METHODS --- */
+
+    size FoundationFileStream::GetSize() const
+    {
+        size initialOffset = GetOffset();
+
+        ullong memorySize = 0;
+        NSError* error = nil;
+        [fileHandle seekToEndReturningOffset: &memorySize error: &error];
+        if (error != nil) HandleNSFileError(error, "Could not retrieve size of file stream", filePath);
+
+        [fileHandle seekToOffset: initialOffset error: &error];
+        if (error != nil) HandleNSFileError(error, "Could not retrieve size of file stream", filePath);
+
         return memorySize;
     }
 
-    size FoundationFileStream::GetCurrentOffset() const
+    size FoundationFileStream::GetOffset() const
     {
         ullong offset = 0;
 
         NSError* error = nil;
         [fileHandle getOffset: &offset error: nil];
 
-        if (error != nil) HandleNSFileError(error, "Could not retrieve current offset within file stream", filePath);
+        if (error != nil) HandleNSFileError(error, "Could not retrieve offset within file stream", filePath);
         return offset;
     }
 

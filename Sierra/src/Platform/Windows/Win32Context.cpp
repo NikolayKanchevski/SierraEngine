@@ -152,17 +152,7 @@ namespace Sierra
         return *std::find(screens.begin(), screens.end(), [windowMonitor](const Win32Screen& win32Screen) { return win32Screen.GetHMonitor() == windowMonitor; });
     }
 
-    /* --- PRIVATE METHODS --- */
-
-    BOOL Win32Context::EnumDisplayMonitorsProc(HMONITOR hMonitor, HDC hdc, LPRECT lrpcMonitor, const LPARAM dwData)
-    {
-        // Get passed context
-        Win32Context* context = reinterpret_cast<Win32Context*>(dwData);
-        context->screens.emplace_back(Win32Screen({ .hMonitor = hMonitor }));
-        return TRUE;
-    }
-
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void Win32Context::Update()
     {
@@ -196,6 +186,15 @@ namespace Sierra
             DispatchMessage(&message);
         }
     }
+
+    BOOL Win32Context::EnumDisplayMonitorsProc(HMONITOR hMonitor, HDC hdc, LPRECT lrpcMonitor, const LPARAM dwData)
+    {
+        // Get passed context
+        Win32Context* context = reinterpret_cast<Win32Context*>(dwData);
+        context->screens.emplace_back(Win32Screen({ .hMonitor = hMonitor }));
+        return TRUE;
+    }
+
 
     /* --- DESTRUCTOR --- */
 

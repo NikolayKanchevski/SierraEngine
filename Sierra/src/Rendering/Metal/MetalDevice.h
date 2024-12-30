@@ -27,17 +27,21 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        MetalDevice(const MetalContext& context, id<MTLDevice> device, const DeviceCreateInfo& createInfo);
+        MetalDevice(const MetalContext& givenContext, id<MTLDevice> device, const DeviceCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] std::unique_ptr<Buffer> CreateBuffer(const BufferCreateInfo& createInfo) const override;
         [[nodiscard]] std::unique_ptr<Image> CreateImage(const ImageCreateInfo& createInfo) const override;
         [[nodiscard]] std::unique_ptr<Sampler> CreateSampler(const SamplerCreateInfo& createInfo) const override;
+
         [[nodiscard]] std::unique_ptr<RenderPass> CreateRenderPass(const RenderPassCreateInfo& createInfo) const override;
+        [[nodiscard]] std::unique_ptr<Framebuffer> CreateFramebuffer(const FramebufferCreateInfo& createInfo) const override;
         [[nodiscard]] std::unique_ptr<Swapchain> CreateSwapchain(const SwapchainCreateInfo& createInfo) const override;
+
         [[nodiscard]] std::unique_ptr<Shader> CreateShader(const ShaderCreateInfo& createInfo) const override;
         [[nodiscard]] std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(const GraphicsPipelineCreateInfo& createInfo) const override;
         [[nodiscard]] std::unique_ptr<ComputePipeline> CreateComputePipeline(const ComputePipelineCreateInfo& createInfo) const override;
+
         [[nodiscard]] std::unique_ptr<ResourceTable> CreateResourceTable(const ResourceTableCreateInfo& createInfo) const override;
         [[nodiscard]] std::unique_ptr<Queue> CreateQueue(const QueueCreateInfo& createInfo) const override;
 
@@ -45,7 +49,7 @@ namespace Sierra
         [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
         [[nodiscard]] std::string_view GetHardwareName() const noexcept override;
 
-        [[nodiscard]] Version GetBackendVersion() const noexcept override { return context.GetBackendVersion(); }
+        [[nodiscard]] Version GetBackendVersion() const noexcept override { return context->GetBackendVersion(); }
         [[nodiscard]] Version GetDriverVersion() const noexcept override { return driverVersion; }
         [[nodiscard]] DeviceLimits GetLimits() const noexcept override;
 
@@ -81,20 +85,20 @@ namespace Sierra
         MetalDevice& operator=(const MetalDevice&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        MetalDevice(MetalDevice&&) = delete;
-        MetalDevice& operator=(MetalDevice&&) = delete;
+        MetalDevice(MetalDevice&&) noexcept = default;
+        MetalDevice& operator=(MetalDevice&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~MetalDevice() noexcept override;
 
     private:
-        const MetalContext& context;
-        const std::string name;
+        const MetalContext* context = nullptr;
+        std::string name = { };
 
-        const id<MTLDevice> device = nil;
+        id<MTLDevice> device = nil;
         Version driverVersion = Version({ 1, 0, 0 });
 
-        mutable std::atomic<uint64> lastReservedSemaphoreSignalValue = 0;
+        mutable uint64 lastReservedSemaphoreSignalValue = 0;
         id<MTLSharedEvent> semaphore = nil;
 
         // NOTE: These must match the values in specified in https://github.com/NikolayKanchevski/ShaderConnect/blob/sierra/src/Platform/MetalSL/MetalSLShaderCompiler.cpp#L104

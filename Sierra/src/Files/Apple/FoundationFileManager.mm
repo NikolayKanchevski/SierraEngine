@@ -4,21 +4,11 @@
 
 #include "FoundationFileManager.h"
 
-#include "../FileErrors.h"
-#include "../PathErrors.h"
-#include "NSFileErrorHandler.h"
 #include "FoundationFileStream.h"
+#include "FoundationFileUtilities.h"
 
 namespace Sierra
 {
-
-    /* --- CONVERSIONS --- */
-
-    NSURL* PathToNSURL(const std::filesystem::path& path) noexcept
-    {
-        const std::string pathString = path.string();
-        return [[NSURL alloc] initFileURLWithPath: [NSString stringWithCString: pathString.c_str() length: pathString.size()]];
-    }
 
     /* --- CONSTRUCTORS --- */
 
@@ -36,25 +26,10 @@ namespace Sierra
         return [fileManager fileExistsAtPath: [NSString stringWithCString: path.c_str() length: path.size()]];
     }
 
-    std::unique_ptr<FileStream> FoundationFileManager::OpenFileStream(const std::filesystem::path& filePath, const FileStreamAccess access, const FileStreamBuffering buffering) const
+    std::unique_ptr<FileStream> FoundationFileManager::CreateFileStream(const FileStreamCreateInfo& createInfo) const
     {
-        SR_THROW_IF(!FileExists(filePath), PathMissingError("Cannot open file stream, as the specified file path does not exist", filePath));
-        NSURL* const URL = PathToNSURL(filePath);
-
-        NSError* error = nil;
-        NSFileHandle* fileHandle = nil;
-        switch (access)
-        {
-            case FileStreamAccess::ReadOnly:      { fileHandle = [NSFileHandle fileHandleForReadingFromURL: URL error: &error]; break; }
-            case FileStreamAccess::WriteOnly:     { fileHandle = [NSFileHandle fileHandleForWritingToURL: URL error: &error];   break; }
-            case FileStreamAccess::ReadWrite:     { fileHandle = [NSFileHandle fileHandleForUpdatingURL: URL error: &error];    break; }
-        }
-        [URL release];
-
-        // NOTE: From the tests I performed, no POSIX/fcntl/C-API buffering configuration causes any difference in speed at all on Apple platforms, which is why no accounting for buffering is done here
-
-        if (error != nil) HandleNSFileError(error, "Could not open file stream", filePath);
-        return std::make_unique<FoundationFileStream>(filePath, fileHandle);
+        SR_THROW_IF(!FileExists(createInfo.filePath), PathMissingError("Cannot open file stream, as the specified file path does not exist", createInfo.filePath));
+        return std::make_unique<FoundationFileStream>(createInfo);
     }
 
     void FoundationFileManager::CreateFile(const std::filesystem::path& filePath, const FilePathConflictPolicy conflictPolicy) const
@@ -66,7 +41,7 @@ namespace Sierra
         CreateDirectory(resolvedFilePath.parent_path());
 
         const std::string path = resolvedFilePath.string();
-        BOOL success = [fileManager createFileAtPath: [NSString stringWithCString: path.c_str() length: path.size()] contents: [NSData data] attributes: nil];
+        const BOOL success = [fileManager createFileAtPath: [NSString stringWithCString: path.c_str() length: path.size()] contents: [NSData data] attributes: nil];
         SR_THROW_IF(!success, UnknownFileError("Could not create file", filePath));
     }
 

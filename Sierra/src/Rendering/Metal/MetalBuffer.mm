@@ -15,7 +15,7 @@ namespace Sierra
     {
         switch (memoryLocation)
         {
-            case BufferMemoryLocation::CPU:      return MTLResourceStorageModeShared | MTLResourceHazardTrackingModeUntracked | MTLResourceCPUCacheModeDefaultCache;
+            case BufferMemoryLocation::RAM:      return MTLResourceStorageModeShared | MTLResourceHazardTrackingModeUntracked | MTLResourceCPUCacheModeDefaultCache;
             case BufferMemoryLocation::GPU:      return MTLResourceStorageModePrivate | MTLResourceHazardTrackingModeUntracked | MTLResourceCPUCacheModeWriteCombined;
         }
 
@@ -27,8 +27,8 @@ namespace Sierra
     MetalBuffer::MetalBuffer(const MetalDevice& device, const BufferCreateInfo& createInfo)
         : Buffer(createInfo)
     {
-        SR_THROW_IF(createInfo.usage & BufferUsage::Uniform && createInfo.memorySize > device.GetLimits().maxUniformBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max uniform buffer size - use Device::GetLimits() to query limits", createInfo.name, device.GetName()), createInfo.memorySize, size(0), device.GetLimits().maxUniformBufferSize));
-        SR_THROW_IF(createInfo.usage & BufferUsage::Storage && createInfo.memorySize > device.GetLimits().maxStorageBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max storage buffer size - use Device::GetLimits() to query limits", createInfo.name, device.GetName()), createInfo.memorySize, size(0), device.GetLimits().maxUniformBufferSize));
+        SR_THROW_IF(createInfo.usage & BufferUsage::Uniform && createInfo.memorySize > device.GetLimits().maxUniformBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max uniform buffer size - use Device::GetLimits() to query limits", createInfo.name, device.GetName()), createInfo.memorySize, uint64(0), device.GetLimits().maxUniformBufferSize));
+        SR_THROW_IF(createInfo.usage & BufferUsage::Storage && createInfo.memorySize > device.GetLimits().maxStorageBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max storage buffer size - use Device::GetLimits() to query limits", createInfo.name, device.GetName()), createInfo.memorySize, uint64(0), device.GetLimits().maxUniformBufferSize));
 
         // Create buffer
         buffer = [device.GetMetalDevice() newBufferWithLength: createInfo.memorySize options: BufferMemoryLocationToResourceOptions(createInfo.memoryLocation)];
@@ -36,12 +36,12 @@ namespace Sierra
         device.SetResourceName(buffer, createInfo.name);
 
         // Map and reset memory if CPU-visible
-        if (createInfo.memoryLocation == BufferMemoryLocation::CPU) std::memset([buffer contents], 0, createInfo.memorySize);
+        if (createInfo.memoryLocation == BufferMemoryLocation::RAM) std::memset([buffer contents], 0, createInfo.memorySize);
     }
 
     /* --- POLLING METHODS --- */
 
-    void MetalBuffer::Write(const void* memory, const size sourceOffset, const size destinationOffset, const size memorySize)
+    void MetalBuffer::Write(const void* memory, const uint64 sourceOffset, const uint64 destinationOffset, const uint64 memorySize)
     {
         Buffer::Write(memory, sourceOffset, destinationOffset, memorySize);
         SR_THROW_IF(buffer.contents == nil, InvalidOperationError(SR_FORMAT("Cannot write memory range to buffer [{0}], as its memory location is not on the CPU", GetName())));
@@ -56,12 +56,12 @@ namespace Sierra
         return { buffer.label.UTF8String, buffer.label.length };
     }
 
-    void* MetalBuffer::GetMemory() const noexcept
+    const void* MetalBuffer::GetMemory() const noexcept
     {
         return buffer.contents;
     }
 
-    size MetalBuffer::GetMemorySize() const noexcept
+    uint64 MetalBuffer::GetMemorySize() const noexcept
     {
         return buffer.length;
     }

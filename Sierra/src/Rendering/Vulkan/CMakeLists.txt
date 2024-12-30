@@ -61,6 +61,8 @@ if(Vulkan_LIBRARIES)
         VulkanDevice.h
         VulkanErrorHandler.cpp
         VulkanErrorHandler.h
+        VulkanFramebuffer.cpp
+        VulkanFramebuffer.h
         VulkanGraphicsPipeline.cpp
         VulkanGraphicsPipeline.h
         VulkanImage.cpp

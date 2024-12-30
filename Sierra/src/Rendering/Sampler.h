@@ -71,16 +71,16 @@ namespace Sierra
         Sampler(const Sampler&) = delete;
         Sampler& operator=(const Sampler&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        Sampler(Sampler&&) = delete;
-        Sampler& operator=(Sampler&&) = delete;
-
         /* --- DESTRUCTOR --- */
         ~Sampler() noexcept override = default;
 
     protected:
         /* --- CONSTRUCTORS --- */
         explicit Sampler(const SamplerCreateInfo& createInfo);
+
+        /* --- MOVE SEMANTICS --- */
+        Sampler(Sampler&&) noexcept = default;
+        Sampler& operator=(Sampler&&) noexcept = default;
 
     };
 

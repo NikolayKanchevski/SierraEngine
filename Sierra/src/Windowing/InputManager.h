@@ -12,6 +12,7 @@
 namespace Sierra
 {
 
+    /* --- CONCEPTS --- */
     template<typename T>
     concept InputEventType = std::is_base_of_v<InputEvent, T> && !std::is_same_v<InputEvent, std::decay_t<T>>;
 
@@ -66,10 +67,6 @@ namespace Sierra
         InputManager(const InputManager&) = delete;
         InputManager& operator=(const InputManager&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        InputManager(InputManager&&) = delete;
-        InputManager& operator=(InputManager&&) = delete;
-
         /* --- DESTRUCTOR --- */
         virtual ~InputManager() noexcept = default;
 
@@ -77,6 +74,7 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         InputManager() noexcept = default;
 
+        /* --- TYPES --- */
         enum class InputAction : bool
         {
             Release = false,
@@ -97,6 +95,10 @@ namespace Sierra
         [[nodiscard]] EventDispatcher<MouseButtonPressEvent>& GetMouseButtonPressDispatcher() noexcept { return mouseButtonPressDispatcher; }
         [[nodiscard]] EventDispatcher<MouseButtonReleaseEvent>& GetMouseButtonReleaseDispatcher() noexcept { return mouseButtonReleaseDispatcher; }
         [[nodiscard]] EventDispatcher<MouseScrollEvent>& GetMouseScrollDispatcher() noexcept { return mouseScrollDispatcher; }
+
+        /* --- MOVE SEMANTICS --- */
+        InputManager(InputManager&&) noexcept = default;
+        InputManager& operator=(InputManager&&) noexcept = default;
 
     private:
         EventDispatcher<KeyPressEvent> keyPressDispatcher = { };

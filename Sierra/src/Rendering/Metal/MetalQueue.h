@@ -1,6 +1,7 @@
 //
 // Created by Nikolay Kanchevski on 15.10.24.
 //
+
 #pragma once
 
 #if !defined(__OBJC__)
@@ -34,22 +35,22 @@ namespace Sierra
         [[nodiscard]] QueueOperations GetOperations() const noexcept override { return QueueOperations::All; }
 
         [[nodiscard]] id<MTLCommandQueue> GetMetalCommandQueue() const noexcept { return commandQueue; }
-        [[nodiscard]] const MetalDevice& GetDevice() const noexcept { return device; }
+        [[nodiscard]] const MetalDevice& GetDevice() const noexcept { return *device; }
 
         /* --- COPY SEMANTICS --- */
         MetalQueue(const MetalQueue&) = delete;
         MetalQueue& operator=(const MetalQueue&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        MetalQueue(MetalQueue&&) = delete;
-        MetalQueue& operator=(MetalQueue&&) = delete;
+        MetalQueue(MetalQueue&&) noexcept = default;
+        MetalQueue& operator=(MetalQueue&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~MetalQueue() noexcept override;
 
     private:
-        const MetalDevice& device;
-        const std::string name;
+        const MetalDevice* device = nullptr;
+        std::string name = { };
 
         id<MTLCommandQueue> commandQueue = nil;
 

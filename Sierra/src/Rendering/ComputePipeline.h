@@ -26,8 +26,8 @@ namespace Sierra
         ComputePipeline& operator=(const ComputePipeline&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        ComputePipeline(ComputePipeline&&) = delete;
-        ComputePipeline& operator=(ComputePipeline&&) = delete;
+        ComputePipeline(ComputePipeline&&) noexcept = default;
+        ComputePipeline& operator=(ComputePipeline&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~ComputePipeline() noexcept override = default;

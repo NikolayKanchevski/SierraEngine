@@ -24,9 +24,6 @@
 namespace Sierra
 {
 
-    /* --- CONVERSIONS --- */
-    [[nodiscard]] SIERRA_API NSURL* PathToNSURL(const std::filesystem::path& path) noexcept;
-
     struct FoundationFileManagerCreateInfo
     {
         NSFileManager* fileManager = nil;
@@ -40,7 +37,7 @@ namespace Sierra
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] bool FileExists(const std::filesystem::path& filePath) const noexcept override;
-        [[nodiscard]] std::unique_ptr<FileStream> OpenFileStream(const std::filesystem::path& filePath, FileStreamAccess access, FileStreamBuffering buffering) const override;
+        [[nodiscard]] std::unique_ptr<FileStream> CreateFileStream(const FileStreamCreateInfo& createInfo) const override;
 
         void CreateFile(const std::filesystem::path& filePath, FilePathConflictPolicy conflictPolicy) const override;
         void RenameFile(const std::filesystem::path& filePath, std::string_view name) const override;

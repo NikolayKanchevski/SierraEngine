@@ -22,11 +22,11 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    MetalQueue::MetalQueue(const MetalDevice& device, const QueueCreateInfo& createInfo)
-        : Queue(createInfo), device(device), name(createInfo.name), commandQueue([device.GetMetalDevice() newCommandQueue])
+    MetalQueue::MetalQueue(const MetalDevice& givenDevice, const QueueCreateInfo& createInfo)
+        : Queue(createInfo), device(&givenDevice), name(createInfo.name), commandQueue([device->GetMetalDevice() newCommandQueue])
     {
         SR_THROW_IF(commandQueue == nil, UnknownDeviceError(SR_FORMAT("Could not create device [{0}], as creation of command queue failed", GetName())));
-        device.SetResourceName(commandQueue, SR_FORMAT("Command queue of queue [{0}]", name));
+        device->SetResourceName(commandQueue, SR_FORMAT("Command queue of queue [{0}]", name));
     }
 
     /* --- POLLING METHODS --- */
@@ -46,7 +46,7 @@ namespace Sierra
         // If we do not need any manual synchronization, directly submit command buffer
         if (commandBuffersToWait.empty())
         {
-            [metalCommandBuffer.GetMetalCommandBuffer() encodeSignalEvent: device.GetSemaphore() value: metalCommandBuffer.GetCompletionSemaphoreSignalValue()];
+            [metalCommandBuffer.GetMetalCommandBuffer() encodeSignalEvent: device->GetSemaphore() value: metalCommandBuffer.GetCompletionSemaphoreSignalValue()];
             [metalCommandBuffer.GetMetalCommandBuffer() commit];
             return;
         }
@@ -73,7 +73,7 @@ namespace Sierra
                 auto semaphoreIterator = std::find_if(commandBufferQueue.begin(), commandBufferQueue.end(), [&metalCommandBuffer](const CommandBufferQueueEntry& commandBufferEntry) -> bool { return commandBufferEntry.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
                 if (semaphoreIterator->counter--; semaphoreIterator->counter == 0)
                 {
-                    [semaphoreIterator->commandBuffer encodeSignalEvent: device.GetSemaphore() value: metalCommandBuffer.GetCompletionSemaphoreSignalValue()];
+                    [semaphoreIterator->commandBuffer encodeSignalEvent: device->GetSemaphore() value: metalCommandBuffer.GetCompletionSemaphoreSignalValue()];
                     [semaphoreIterator->commandBuffer commit];
                     commandBufferQueue.erase(semaphoreIterator);
                 }
@@ -90,7 +90,7 @@ namespace Sierra
         const uint64 waitValue = metalCommandBuffer.GetCompletionSemaphoreSignalValue();
 
         // Wait for completion
-        while (device.GetSemaphore().signaledValue < waitValue);
+        while (device->GetSemaphore().signaledValue < waitValue);
     }
 
     /* --- DESTRUCTOR --- */

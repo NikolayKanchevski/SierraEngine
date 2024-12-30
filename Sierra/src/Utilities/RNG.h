@@ -7,8 +7,9 @@
 namespace Sierra
 {
 
+    /* --- CONCEPTS --- */
     template<typename T>
-    concept RNGType = std::is_integral_v<T> || std::is_floating_point_v<T>;
+    concept RNGType = std::is_arithmetic_v<T>;
 
     class SIERRA_API RNG final
     {

@@ -36,21 +36,9 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanRenderPass::VulkanRenderPass(const VulkanDevice& device, const RenderPassCreateInfo& createInfo)
-        : RenderPass(createInfo), device(device), name(createInfo.name), subpassCount(createInfo.subpassDescriptions.size())
+    VulkanRenderPass::VulkanRenderPass(const VulkanDevice& givenDevice, const RenderPassCreateInfo& createInfo)
+        : RenderPass(createInfo), device(&givenDevice), name(createInfo.name), subpassCount(createInfo.subpassDescriptions.size())
     {
-        const uint32 expectedAttachmentWidth = createInfo.attachments.begin()->templateOutputImage.GetWidth();
-        const uint32 expectedAttachmentHeight = createInfo.attachments.begin()->templateOutputImage.GetHeight();
-        SR_THROW_IF(expectedAttachmentWidth > device.GetLimits().maxRenderPassWidth, ValueOutOfRangeError(SR_FORMAT("Cannot create render pass [{0}], as specified some attachments' width is greater than device [{1}]'s max render pass width - use Device::GetLimits() to query limits", name, device.GetName()), expectedAttachmentWidth, 1U, device.GetLimits().maxRenderPassWidth));
-        SR_THROW_IF(expectedAttachmentWidth > device.GetLimits().maxRenderPassHeight, ValueOutOfRangeError(SR_FORMAT("Cannot create render pass [{0}], as specified some attachments' height is greater than device [{1}]'s max render pass height - use Device::GetLimits() to query limits", name, device.GetName()), expectedAttachmentWidth, 1U, device.GetLimits().maxRenderPassHeight));
-
-        SR_THROW_IF(!device.IsExtensionLoaded(VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME), UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create render pass [{1}]", device.GetName(), name)));
-
-        // Allocate attachment data
-        framebufferImageAttachments.resize(createInfo.attachments.size());
-        framebufferAttachmentImageFormats.resize(createInfo.attachments.size());
-        framebufferAttachmentImageFormats.reserve(createInfo.attachments.size() * 2); // NOTE: We are reserving twice the space, so we can potentially put resolver images at back without reallocating and invalidating pointer connections
-
         // Set attachment descriptions
         std::vector<VkAttachmentDescription> attachmentDescriptions(createInfo.attachments.size());
         attachmentDescriptions.reserve(createInfo.attachments.size() * 2); // NOTE: We are reserving twice the space, so we can potentially put resolve attachments at back without reallocating and invalidating pointer connections
@@ -58,77 +46,46 @@ namespace Sierra
         {
             const RenderPassAttachment& attachment = createInfo.attachments[i];
 
-            SR_THROW_IF(attachment.templateOutputImage.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create render pass [{0}] using image [{1}] as template output of attachment [{2}], as its backend type differs from [RenderingBackendType::Vulkan]", name, attachment.templateOutputImage.GetName(), i)));
-            const VulkanImage& vulkanTemplateOutputImage = static_cast<const VulkanImage&>(attachment.templateOutputImage);
-
-            SR_THROW_IF(vulkanTemplateOutputImage.GetWidth() == 0, InvalidValueError(SR_FORMAT("Cannot create render pass [{0}], as specified attachment [{1}]'s template output image's width must be greater than [0]", createInfo.name, i)));
-            SR_THROW_IF(vulkanTemplateOutputImage.GetWidth() != expectedAttachmentWidth, InvalidValueError(SR_FORMAT("Cannot create render pass [{0}], as specified attachment [{1}] does not have the same width as the rest", createInfo.name, i)));
-            SR_THROW_IF(vulkanTemplateOutputImage.GetHeight() == 0, InvalidValueError(SR_FORMAT("Cannot create render pass [{0}], as specified attachment [{1}]'s template output image's height must be greater than [0]", createInfo.name, i)));
-            SR_THROW_IF(vulkanTemplateOutputImage.GetHeight() != expectedAttachmentHeight, InvalidValueError(SR_FORMAT("Cannot create render pass [{0}], as specified attachment [{1}] does not have the same height as the rest", createInfo.name, i)));
-
-            // Set up framebuffer attachment format of output image
-            VkFormat& framebufferAttachmentImageFormat = framebufferAttachmentImageFormats[i];
-            framebufferAttachmentImageFormat = ImageFormatToVkFormat(vulkanTemplateOutputImage.GetFormat());
-
-            // Set up framebuffer attachment of output image
-            VkFramebufferAttachmentImageInfo& framebufferOutputImageAttachment = framebufferImageAttachments[i];
-            framebufferOutputImageAttachment.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENT_IMAGE_INFO;
-            framebufferOutputImageAttachment.usage = vulkanTemplateOutputImage.GetVulkanUsageFlags();
-            framebufferOutputImageAttachment.width = vulkanTemplateOutputImage.GetWidth();
-            framebufferOutputImageAttachment.height = vulkanTemplateOutputImage.GetHeight();
-            framebufferOutputImageAttachment.layerCount = vulkanTemplateOutputImage.GetLayerCount();
-            framebufferOutputImageAttachment.viewFormatCount = 1;
-            framebufferOutputImageAttachment.pViewFormats = &framebufferAttachmentImageFormat;
-
             // Set up render pass attachment of output image
-            VkAttachmentDescription& outputImageAttachment = attachmentDescriptions[i];
-            outputImageAttachment.format = ImageFormatToVkFormat(vulkanTemplateOutputImage.GetFormat());
-            outputImageAttachment.samples = ImageSamplingToVkSampleCountFlags(vulkanTemplateOutputImage.GetSampling());
-            outputImageAttachment.loadOp = AttachmentLoadOperationToVkAttachmentLoadOp(attachment.loadOperation);
-            outputImageAttachment.storeOp = AttachmentStoreOperationToVkAttachmentStoreOp(attachment.storeOperation);
-            outputImageAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-            outputImageAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-            outputImageAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            outputImageAttachment.finalLayout = attachment.type == RenderPassAttachmentType::Color ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            VkAttachmentDescription& attachmentDescription = attachmentDescriptions[i];
+            attachmentDescription.format = ImageFormatToVkFormat(attachment.format);
+            attachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
+            attachmentDescription.loadOp = AttachmentLoadOperationToVkAttachmentLoadOp(attachment.loadOperation);
+            attachmentDescription.storeOp = AttachmentStoreOperationToVkAttachmentStoreOp(attachment.storeOperation);
+            attachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            attachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            attachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-            if (attachment.templateResolverImage != nullptr)
+            switch (attachment.type)
             {
-                SR_THROW_IF(attachment.templateResolverImage->GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create render pass [{0}] using image [{1}] as template resolver of attachment [{2}], as its backend type differs from [RenderingBackendType::Vulkan]", name, attachment.templateResolverImage->GetName(), i)));
-                const VulkanImage& vulkanTemplateResolverImage = static_cast<const VulkanImage&>(*attachment.templateResolverImage);
+                case RenderPassAttachmentType::Color:
+                {
+                    attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                    colorAttachmentCount++;
+                    break;
+                }
+                case RenderPassAttachmentType::Depth:
+                {
+                    attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                    hasDepthAttachment = true;
+                    break;
+                }
+            }
 
-                SR_THROW_IF(vulkanTemplateResolverImage.GetWidth() == 0, InvalidValueError(SR_FORMAT("Cannot create render pass [{0}], as specified attachment [{1}]'s template resolver image's width must be greater than [0]", createInfo.name, i)));
-                SR_THROW_IF(vulkanTemplateResolverImage.GetWidth() != expectedAttachmentWidth, InvalidValueError(SR_FORMAT("Cannot create render pass [{0}], as specified attachment [{1}] does not have the same width as the rest", createInfo.name, i)));
-                SR_THROW_IF(vulkanTemplateResolverImage.GetHeight() == 0, InvalidValueError(SR_FORMAT("Cannot create render pass [{0}], as specified attachment [{1}]'s template resolver image's height must be greater than [0]", createInfo.name, i)));
-                SR_THROW_IF(vulkanTemplateResolverImage.GetHeight() != expectedAttachmentHeight, InvalidValueError(SR_FORMAT("Cannot create render pass [{0}], as specified attachment [{1}] does not have the same height as the rest", createInfo.name, i)));
-
-                // Set up framebuffer attachment format of resolver image
-                VkFormat& resolveAttachmentImageFormat = framebufferAttachmentImageFormats.emplace_back();
-                resolveAttachmentImageFormat = ImageFormatToVkFormat(vulkanTemplateResolverImage.GetFormat());
-
-                // Set up framebuffer attachment of resolver image
-                VkFramebufferAttachmentImageInfo& framebufferResolverImageAttachment = framebufferImageAttachments.emplace_back();
-                framebufferResolverImageAttachment.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENT_IMAGE_INFO;
-                framebufferResolverImageAttachment.usage = vulkanTemplateResolverImage.GetVulkanUsageFlags();
-                framebufferResolverImageAttachment.width = vulkanTemplateResolverImage.GetWidth();
-                framebufferResolverImageAttachment.height = vulkanTemplateResolverImage.GetHeight();
-                framebufferResolverImageAttachment.layerCount = vulkanTemplateResolverImage.GetLayerCount();
-                framebufferResolverImageAttachment.viewFormatCount = 1;
-                framebufferResolverImageAttachment.pViewFormats = &resolveAttachmentImageFormat;
-
-                // Set up render pass attachment of resolver image
-                VkAttachmentDescription& resolverImageAttachment = attachmentDescriptions.emplace_back();
-                resolverImageAttachment.format = ImageFormatToVkFormat(vulkanTemplateResolverImage.GetFormat());
-                resolverImageAttachment.samples = ImageSamplingToVkSampleCountFlags(vulkanTemplateResolverImage.GetSampling());
-                resolverImageAttachment.loadOp = outputImageAttachment.loadOp;
-                resolverImageAttachment.storeOp = outputImageAttachment.storeOp;
-                resolverImageAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-                resolverImageAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-                resolverImageAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-                resolverImageAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            if (attachment.sampling != ImageSampling::x1)
+            {
+                VkAttachmentDescription& resolveAttachmentDescription = attachmentDescriptions.emplace_back();
+                resolveAttachmentDescription.format = attachmentDescription.format;
+                resolveAttachmentDescription.samples = ImageSamplingToVkSampleCountFlags(attachment.sampling);
+                resolveAttachmentDescription.loadOp = attachmentDescription.loadOp;
+                resolveAttachmentDescription.storeOp = attachmentDescription.storeOp;
+                resolveAttachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                resolveAttachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                resolveAttachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                resolveAttachmentDescription.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
                 // In order to resolve an image, it must be in VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL layout
-                outputImageAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                resolveAttachmentCount++;
+                attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             }
         }
 
@@ -160,15 +117,14 @@ namespace Sierra
                 // Check attachment type, then create and assign a VkAttachmentReference
                 if (renderTarget.type == RenderPassAttachmentType::Color)
                 {
-                    colorAttachmentReferences[i].push_back({ .attachment = (renderTarget.templateResolverImage != nullptr) * static_cast<uint32_t>(createInfo.attachments.size() + renderTargetIndex), .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
+                    colorAttachmentReferences[i].push_back({ .attachment = (renderTarget.sampling != ImageSampling::x1) * static_cast<uint32_t>(createInfo.attachments.size() + renderTargetIndex), .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
                 }
                 else if (renderTarget.type == RenderPassAttachmentType::Depth)
                 {
-                        depthAttachmentReference = { .attachment = renderTargetIndex, .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
-                    hasDepthAttachment = true;
+                    depthAttachmentReference = { .attachment = renderTargetIndex, .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
                 }
 
-                if (renderTarget.templateResolverImage != nullptr)
+                if (renderTarget.sampling != ImageSampling::x1)
                 {
                     resolveAttachmentReferences[i].push_back({ .attachment = renderTargetIndex, .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
                 }
@@ -185,12 +141,12 @@ namespace Sierra
             subpassDescriptions[i].pInputAttachments = inputAttachmentReferences[i].data();
             subpassDescriptions[i].colorAttachmentCount = static_cast<uint32>(colorAttachmentReferences[i].size());
             subpassDescriptions[i].pColorAttachments = colorAttachmentReferences[i].data();
-            subpassDescriptions[i].pDepthStencilAttachment = hasDepthAttachment ?& depthAttachmentReference : nullptr;
+            subpassDescriptions[i].pDepthStencilAttachment = hasDepthAttachment ? &depthAttachmentReference : nullptr;
             subpassDescriptions[i].pResolveAttachments = resolveAttachmentReferences[i].data();
         }
 
         // Create subpass dependencies
-        std::vector<VkSubpassDependency> subpassDependencies;
+        std::vector<VkSubpassDependency> subpassDependencies = { };
         if (subpassCount != 1)
         {
             // Resize dependencies (we need one before the first, one after the last and one between each two subpasses)
@@ -266,85 +222,16 @@ namespace Sierra
         };
 
         // Create render pass
-        VkResult result = device.GetFunctionTable().vkCreateRenderPass(device.GetVulkanDevice(), &renderPassCreateInfo, nullptr, &renderPass);
+        VkResult result = device->GetFunctionTable().vkCreateRenderPass(device->GetVulkanDevice(), &renderPassCreateInfo, nullptr, &renderPass);
         if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create render pass [{0}]", name));
-
-        // Set up framebuffer attachment create info
-        const VkFramebufferAttachmentsCreateInfo framebufferAttachmentsCreateInfo
-        {
-            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENTS_CREATE_INFO,
-            .attachmentImageInfoCount = static_cast<uint32>(framebufferImageAttachments.size()),
-            .pAttachmentImageInfos = framebufferImageAttachments.data()
-        };
-
-        // Set up framebuffer create info
-        const VkFramebufferCreateInfo framebufferCreateInfo
-        {
-            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .pNext = &framebufferAttachmentsCreateInfo,
-            .flags = VK_FRAMEBUFFER_CREATE_IMAGELESS_BIT,
-            .renderPass = renderPass,
-            .attachmentCount = framebufferAttachmentsCreateInfo.attachmentImageInfoCount,
-            .width = framebufferAttachmentsCreateInfo.pAttachmentImageInfos[0].width,
-            .height = framebufferAttachmentsCreateInfo.pAttachmentImageInfos[0].height,
-            .layers = framebufferAttachmentsCreateInfo.pAttachmentImageInfos[0].layerCount,
-        };
-
-        // Create framebuffer
-        result = device.GetFunctionTable().vkCreateFramebuffer(device.GetVulkanDevice(), &framebufferCreateInfo, nullptr, &framebuffer);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create render pass [{0}], as creation of framebuffer failed", name));
-    }
-
-    /* --- POLLING METHODS --- */
-
-    void VulkanRenderPass::Resize(const uint32 width, const uint32 height)
-    {
-        // Destroy old framebuffer
-        device.GetFunctionTable().vkDestroyFramebuffer(device.GetVulkanDevice(), framebuffer, nullptr);
-
-        // Change attachments' size
-        for (VkFramebufferAttachmentImageInfo& framebufferImageAttachment : framebufferImageAttachments)
-        {
-            framebufferImageAttachment.width = width;
-            framebufferImageAttachment.height = height;
-        }
-
-        // Set up framebuffer attachment create info
-        const VkFramebufferAttachmentsCreateInfo framebufferAttachmentsCreateInfo
-        {
-            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENTS_CREATE_INFO,
-            .attachmentImageInfoCount = static_cast<uint32>(framebufferImageAttachments.size()),
-            .pAttachmentImageInfos = framebufferImageAttachments.data()
-        };
-
-        // Set up framebuffer create info
-        const VkFramebufferCreateInfo framebufferCreateInfo
-        {
-            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .pNext = &framebufferAttachmentsCreateInfo,
-            .flags = VK_FRAMEBUFFER_CREATE_IMAGELESS_BIT,
-            .renderPass = renderPass,
-            .attachmentCount = framebufferAttachmentsCreateInfo.attachmentImageInfoCount,
-            .width = framebufferAttachmentsCreateInfo.pAttachmentImageInfos[0].width,
-            .height = framebufferAttachmentsCreateInfo.pAttachmentImageInfos[0].height,
-            .layers = 1
-        };
-
-        // Recreate framebuffer
-        const VkResult result = device.GetFunctionTable().vkCreateFramebuffer(device.GetVulkanDevice(), &framebufferCreateInfo, nullptr, &framebuffer);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not resize render pass [{0}]", name));
-
-        // Set object names
-        device.SetResourceName(renderPass, VK_OBJECT_TYPE_RENDER_PASS, name);
-        device.SetResourceName(framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, SR_FORMAT("Framebuffer of render pass [{0}]", name));
+        device->SetResourceName(renderPass, VK_OBJECT_TYPE_RENDER_PASS, name);
     }
 
     /* --- DESTRUCTOR --- */
 
     VulkanRenderPass::~VulkanRenderPass() noexcept
     {
-        device.GetFunctionTable().vkDestroyFramebuffer(device.GetVulkanDevice(), framebuffer, nullptr);
-        device.GetFunctionTable().vkDestroyRenderPass(device.GetVulkanDevice(), renderPass, nullptr);
+        device->GetFunctionTable().vkDestroyRenderPass(device->GetVulkanDevice(), renderPass, nullptr);
     }
 
 }

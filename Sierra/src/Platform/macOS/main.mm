@@ -29,51 +29,6 @@ namespace
         return YES;
     }
 
-    - (void) applicationWillFinishLaunching: (NSNotification*) notification
-    {
-        // Get process name
-        id appName = [[NSProcessInfo processInfo] processName];
-
-        // Create default application menu bar
-        NSMenu* const bar = [[NSMenu alloc] init];
-        const NSMenuItem* const appMenuItem = [bar addItemWithTitle: @"" action: nil keyEquivalent: @""];
-        NSMenu* const appMenu = [[NSMenu alloc] init];
-        [appMenu addItemWithTitle: [NSString stringWithFormat: @"About %@", appName] action: @selector(orderFrontStandardAboutPanel:) keyEquivalent: @""];
-        [appMenu addItem: [NSMenuItem separatorItem]];
-
-        NSMenu* const servicesMenu = [[NSMenu alloc] init];
-        [[appMenu addItemWithTitle: @"Services" action:nil keyEquivalent: @""] setSubmenu:servicesMenu];
-        [appMenu addItem: [NSMenuItem separatorItem]];
-        [appMenu addItemWithTitle: [NSString stringWithFormat: @"Hide %@", appName] action: @selector(hide:) keyEquivalent: @"h"];
-        [[appMenu addItemWithTitle: @"Hide Others" action: @selector(hideOtherApplications:) keyEquivalent: @"h"] setKeyEquivalentModifierMask:NSEventModifierFlagOption | NSEventModifierFlagCommand];
-        [appMenu addItemWithTitle: @"Show All" action: @selector(unhideAllApplications:) keyEquivalent: @""];
-        [appMenu addItem: [NSMenuItem separatorItem]];
-        [appMenu addItemWithTitle: [NSString stringWithFormat: @"Quit %@", appName] action: @selector(terminate:) keyEquivalent: @"q"];
-        [appMenuItem setSubmenu: appMenu];
-        [[NSApplication sharedApplication] setServicesMenu: servicesMenu];
-        [servicesMenu release];
-
-        const NSMenuItem* const windowMenuItem = [bar addItemWithTitle: @"" action:nil keyEquivalent: @""];
-        NSMenu* const windowMenu = [[NSMenu alloc] initWithTitle: @"Window"];
-        [windowMenu addItemWithTitle: @"Minimize" action: @selector(performMiniaturize:) keyEquivalent: @"m"];
-        [windowMenu addItemWithTitle: @"Zoom" action: @selector(performZoom:) keyEquivalent: @""];
-        [windowMenu addItem: [NSMenuItem separatorItem]];
-        [windowMenu addItemWithTitle: @"Bring All to Front" action: @selector(arrangeInFront:) keyEquivalent: @""];
-        [windowMenu addItem: [NSMenuItem separatorItem]];
-        [[windowMenu addItemWithTitle: @"Enter Full Screen" action: @selector(toggleFullScreen:) keyEquivalent: @"f"] setKeyEquivalentModifierMask:NSEventModifierFlagControl | NSEventModifierFlagCommand];
-        [[NSApplication sharedApplication] setWindowsMenu: windowMenu];
-        [windowMenuItem setSubmenu: windowMenu];
-        [windowMenu release];
-
-        [[NSApplication sharedApplication] setMainMenu: bar];
-        [bar release];
-
-        // This is required for macOS versions prior to Snow Leopard
-        SEL setAppleMenuSelector = NSSelectorFromString(@"setAppleMenu:");
-        [[NSApplication sharedApplication] performSelector: setAppleMenuSelector withObject: appMenu];
-        [appMenu release];
-    }
-
     - (void) applicationDidFinishLaunching: (NSNotification*) notification
     {
         // Create application
@@ -113,6 +68,9 @@ int main(const int argc, char* argv[])
     _argv = argv;
 
     // NOTE: This delegate is released in CocoaContext.mm, when overridden by a new one
-    [[NSApplication sharedApplication] setDelegate: [[CocoaEntryPointDelegate alloc] init]];
-    NSApplicationMain(argc, const_cast<const char**>(argv));
+//    [[NSApplication sharedApplication] setDelegate: [[CocoaEntryPointDelegate alloc] init]];
+//    NSApplicationMain(argc, const_cast<const char**>(argv));
+
+auto a =Sierra::CreateApplication(_argc, _argv);
+while (!a->Update());
 }

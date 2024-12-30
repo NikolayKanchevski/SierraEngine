@@ -12,19 +12,19 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanQueue::VulkanQueue(const VulkanDevice& device, const QueueCreateInfo& createInfo)
-        : Queue(createInfo), device(device), name(createInfo.name)
+    VulkanQueue::VulkanQueue(const VulkanDevice& givenDevice, const QueueCreateInfo& createInfo)
+        : Queue(createInfo), device(&givenDevice), name(createInfo.name)
     {
         switch (createInfo.priority)
         {
             case QueuePriority::Dedicated:
             {
-                for (const std::shared_ptr<VulkanQueueDescription>& queueDescription : device.GetQueueDescriptions())
+                for (const std::shared_ptr<VulkanQueueDescription>& queueDescription : device->GetQueueDescriptions())
                 {
                     if (queueDescription.use_count() == 0 && queueDescription->operations & createInfo.operations)
                     {
                         description = queueDescription;
-                        device.GetFunctionTable().vkGetDeviceQueue(device.GetVulkanDevice(), description->family, 0, &queue);
+                        device->GetFunctionTable().vkGetDeviceQueue(device->GetVulkanDevice(), description->family, 0, &queue);
                         break;
                     }
                 }
@@ -36,7 +36,7 @@ namespace Sierra
             case QueuePriority::LeastUsed:
             {
                 const std::shared_ptr<VulkanQueueDescription>* leastUsedQueueDescription = nullptr;
-                for (const std::shared_ptr<VulkanQueueDescription>& queueDescription : device.GetQueueDescriptions())
+                for (const std::shared_ptr<VulkanQueueDescription>& queueDescription : device->GetQueueDescriptions())
                 {
                     if ((leastUsedQueueDescription == nullptr || queueDescription.use_count() < leastUsedQueueDescription->use_count()) && queueDescription->operations & createInfo.operations)
                     {
@@ -47,7 +47,7 @@ namespace Sierra
                 SR_THROW_IF(leastUsedQueueDescription == nullptr, UnsupportedFeatureError(SR_FORMAT("Cannot create queue [{0}], as device [{1}] does not support any queues with specified operations", createInfo.name, name)));
 
                 description = *leastUsedQueueDescription;
-                device.GetFunctionTable().vkGetDeviceQueue(device.GetVulkanDevice(), description->family, 0, &queue);
+                device->GetFunctionTable().vkGetDeviceQueue(device->GetVulkanDevice(), description->family, 0, &queue);
                 break;
             }
         }
@@ -60,7 +60,7 @@ namespace Sierra
         return std::make_unique<VulkanCommandBuffer>(*this, createInfo);
     }
 
-    void VulkanQueue::SubmitCommandBuffer(const CommandBuffer& commandBuffer, std::span<const std::reference_wrapper<const CommandBuffer>> commandBuffersToWait) const
+    void VulkanQueue::SubmitCommandBuffer(const CommandBuffer& commandBuffer, const std::span<const std::reference_wrapper<const CommandBuffer>> commandBuffersToWait) const
     {
         SR_THROW_IF(commandBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot submit command buffer [{0}] to queue [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", commandBuffer.GetName(), GetName())));
         const VulkanCommandBuffer& vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(commandBuffer);
@@ -96,7 +96,7 @@ namespace Sierra
         constexpr VkPipelineStageFlags WAIT_STAGE = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
         // Set up submit info
-        VkSemaphore generalTimelineSemaphore = device.GetSemaphore();
+        VkSemaphore generalTimelineSemaphore = device->GetSemaphore();
         const VkSubmitInfo submitInfo
         {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -110,7 +110,7 @@ namespace Sierra
         };
 
         // Submit command buffer
-        const VkResult result = device.GetFunctionTable().vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
+        const VkResult result = device->GetFunctionTable().vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
         if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not submit command buffer [{0}] to queue [{1}]", vulkanCommandBuffer.GetName(), name));
     }
 
@@ -123,7 +123,7 @@ namespace Sierra
         const uint64 waitValue = vulkanCommandBuffer.GetCompletionSemaphoreSignalValue();
 
         // Set up wait info
-        VkSemaphore generalTimelineSemaphore = device.GetSemaphore();
+        VkSemaphore generalTimelineSemaphore = device->GetSemaphore();
         const VkSemaphoreWaitInfo waitInfo
         {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
@@ -133,7 +133,6 @@ namespace Sierra
         };
 
         // Wait for semaphore
-        device.GetFunctionTable().vkWaitSemaphores(device.GetVulkanDevice(), &waitInfo, std::numeric_limits<uint64>::max());
+        device->GetFunctionTable().vkWaitSemaphores(device->GetVulkanDevice(), &waitInfo, std::numeric_limits<uint64>::max());
     }
-
 }

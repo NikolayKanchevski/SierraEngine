@@ -33,8 +33,8 @@ namespace Sierra
     {
         RenderPassAttachmentType type = RenderPassAttachmentType::Color;
 
-        const Image& templateOutputImage;
-        const Image* templateResolverImage = nullptr;
+        ImageFormat format = ImageFormat::Undefined;
+        ImageSampling sampling = ImageSampling::x1;
 
         RenderPassAttachmentLoadOperation loadOperation = RenderPassAttachmentLoadOperation::Clear;
         RenderPassAttachmentStoreOperation storeOperation = RenderPassAttachmentStoreOperation::Store;
@@ -53,19 +53,9 @@ namespace Sierra
         std::span<const SubpassDescription> subpassDescriptions = { };
     };
 
-    struct RenderPassBeginAttachment
-    {
-        const Image& outputImage;
-        const Image* resolverImage = nullptr;
-        Color32 clearValue = { 0.0f, 0.0f, 0.0f, 1.0f };
-    };
-
     class SIERRA_API RenderPass : public virtual RenderingResource
     {
     public:
-        /* --- POLLING METHODS --- */
-        virtual void Resize(uint32 width, uint32 height);
-
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual uint32 GetSubpassCount() const noexcept = 0;
 
@@ -77,16 +67,16 @@ namespace Sierra
         RenderPass(const RenderPass&) = delete;
         RenderPass& operator=(const RenderPass&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        RenderPass(RenderPass&&) = delete;
-        RenderPass& operator=(RenderPass&&) = delete;
-
         /* --- DESTRUCTOR --- */
         ~RenderPass() noexcept override = default;
 
     protected:
         /* --- CONSTRUCTORS --- */
         explicit RenderPass(const RenderPassCreateInfo& createInfo);
+
+        /* --- MOVE SEMANTICS --- */
+        RenderPass(RenderPass&&) noexcept = default;
+        RenderPass& operator=(RenderPass&&) noexcept = default;
 
     };
 }

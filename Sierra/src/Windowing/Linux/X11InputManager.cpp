@@ -126,7 +126,7 @@ namespace Sierra
         return MouseButton::Unknown;
     }
 
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void X11InputManager::Update()
     {

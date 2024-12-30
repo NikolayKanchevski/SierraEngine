@@ -12,6 +12,7 @@
 namespace Sierra
 {
 
+    /* --- CONCEPTS --- */
     template<typename T>
     concept TouchEventType = std::is_base_of_v<TouchEvent, T> && !std::is_same_v<TouchEvent, std::decay_t<T>>;
 
@@ -43,10 +44,6 @@ namespace Sierra
         TouchManager(const TouchManager&) = delete;
         TouchManager& operator=(const TouchManager&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        TouchManager(TouchManager&&) = delete;
-        TouchManager& operator=(TouchManager&&) = delete;
-
         /* --- DESTRUCTOR --- */
         virtual ~TouchManager() noexcept = default;
 
@@ -58,6 +55,10 @@ namespace Sierra
         [[nodiscard]] EventDispatcher<TouchPressEvent>& GetTouchPressDispatcher() noexcept { return touchPressDispatcher; }
         [[nodiscard]] EventDispatcher<TouchMoveEvent>& GetTouchMoveDispatcher() noexcept { return touchMoveDispatcher; }
         [[nodiscard]] EventDispatcher<TouchReleaseEvent>& GetTouchReleaseDispatcher() noexcept { return touchReleaseDispatcher; }
+
+        /* --- MOVE SEMANTICS --- */
+        TouchManager(TouchManager&&) noexcept = default;
+        TouchManager& operator=(TouchManager&&) noexcept = default;
 
     private:
         EventDispatcher<TouchPressEvent> touchPressDispatcher = { };

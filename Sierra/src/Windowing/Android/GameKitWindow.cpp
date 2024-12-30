@@ -142,26 +142,6 @@ namespace Sierra
         return minimized;
     }
 
-    InputManager* GameKitWindow::GetInputManager() noexcept
-    {
-        return nullptr;
-    }
-
-    CursorManager* GameKitWindow::GetCursorManager() noexcept
-    {
-        return nullptr;
-    }
-
-    TouchManager* GameKitWindow::GetTouchManager() noexcept
-    {
-        return &touchManager;
-    }
-
-    WindowingBackendType GameKitWindow::GetBackendType() const noexcept
-    {
-        return WindowingBackendType::GameKit;
-    }
-
     /* --- DESTRUCTOR --- */
 
     GameKitWindow::~GameKitWindow() noexcept

@@ -21,7 +21,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        UIKitTouchManager() = default;
+        UIKitTouchManager() noexcept = default;
 
         /* --- POLLING METHODS --- */
         void RegisterTouchPress(const Touch& touch) override;
@@ -32,13 +32,13 @@ namespace Sierra
         [[nodiscard]] std::span<const Touch> GetTouches() const noexcept override { return touches; }
         [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override { return WindowingBackendType::UIKit; }
 
-        /* --- MOVE SEMANTICS --- */
-        UIKitTouchManager(UIKitTouchManager&&) noexcept = delete;
-        UIKitTouchManager& operator=(UIKitTouchManager&&) noexcept = delete;
-
         /* --- COPY SEMANTICS --- */
         UIKitTouchManager(const UIKitTouchManager&) = delete;
         UIKitTouchManager& operator=(const UIKitTouchManager&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        UIKitTouchManager(UIKitTouchManager&&) noexcept = default;
+        UIKitTouchManager& operator=(UIKitTouchManager&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~UIKitTouchManager() noexcept override = default;

@@ -105,8 +105,6 @@
     {
         const Sierra::Key key = Sierra::KeyCodeToKey([event keyCode]);
         static_cast<Sierra::CocoaInputManager&>(*window->GetInputManager()).RegisterKeyPress(key);
-
-        [self interpretKeyEvents: @[event]];
     }
 
     - (void) flagsChanged: (NSEvent*) event
@@ -206,15 +204,25 @@
         static_cast<Sierra::CocoaInputManager&>(*window->GetInputManager()).RegisterMouseScroll({ [event deltaX], [event scrollingDeltaY] });
     }
 
+    - (void) mouseMoved: (NSEvent*) event
+    {
+        const NSPoint point = [event locationInWindow];
+        static_cast<Sierra::CocoaCursorManager&>(*window->GetCursorManager()).RegisterCursorMove({ static_cast<int32>(point.x), static_cast<int32>(point.y) });
+    }
+
     - (void) mouseDragged: (NSEvent*) event
     {
         [self mouseMoved: event];
     }
 
-    - (void) mouseMoved: (NSEvent*) event
+    - (void) rightMouseDragged: (NSEvent*) event
     {
-        const NSPoint point = [event locationInWindow];
-        static_cast<Sierra::CocoaCursorManager&>(*window->GetCursorManager()).RegisterCursorMove({ static_cast<int32>(point.x), static_cast<int32>(point.y) });
+        [self mouseMoved: event];
+    }
+
+    - (void) otherMouseDragged: (NSEvent*) event
+    {
+        [self mouseMoved: event];
     }
 
     - (BOOL) canBecomeKeyView
@@ -304,11 +312,11 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     CocoaWindow::CocoaWindow(const CocoaContext& cocoaContext, const WindowCreateInfo& createInfo)
-        : Window(createInfo), cocoaContext(cocoaContext),
+        : Window(createInfo), cocoaContext(&cocoaContext),
             view([[CocoaWindowView alloc] initWithWindow: this]),
             delegate([[CocoaWindowDelegate alloc] initWithWindow: this]),
             window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
-            inputManager(), cursorManager(window),
+            cursorManager(window),
             title(createInfo.title)
     {
         // Assign Metal layer
@@ -346,13 +354,10 @@ namespace Sierra
         [window setContentView: view];
         [window makeFirstResponder: view];
 
-        if (!createInfo.hide)
-        {
-            // Show and focus window
-            [cocoaContext.GetNSApplication() activateIgnoringOtherApps: YES];
-            [window orderFrontRegardless];
-            [window makeKeyWindow];
-        }
+        // Show and focus window
+        [cocoaContext.GetNSApplication() activateIgnoringOtherApps: YES];
+        [window orderFrontRegardless];
+        [window makeKeyWindow];
 
         if (!createInfo.maximize)
         {
@@ -390,7 +395,7 @@ namespace Sierra
 
     void CocoaWindow::Show()
     {
-        [cocoaContext.GetNSApplication() activateIgnoringOtherApps: YES];
+        [cocoaContext->GetNSApplication() activateIgnoringOtherApps: YES];
         [window orderFrontRegardless];
         [window makeKeyWindow];
     }
@@ -402,7 +407,7 @@ namespace Sierra
 
     void CocoaWindow::Focus()
     {
-        [cocoaContext.GetNSApplication() activateIgnoringOtherApps: YES];
+        [cocoaContext->GetNSApplication() activateIgnoringOtherApps: YES];
         [window orderFrontRegardless];
         [window makeKeyWindow];
     }
@@ -417,8 +422,8 @@ namespace Sierra
         [view release];
         [reinterpret_cast<CocoaWindowDelegate*>(delegate) release];
 
-        cocoaContext.DestroyWindow(window);
-        window = nil;
+        [window release];
+        [menuBar release];
     }
 
     /* --- SETTER METHODS --- */
@@ -512,26 +517,6 @@ namespace Sierra
         return ![window isVisible];
     }
 
-    InputManager* CocoaWindow::GetInputManager() noexcept
-    {
-        return &inputManager;
-    }
-
-    CursorManager* CocoaWindow::GetCursorManager() noexcept
-    {
-        return &cursorManager;
-    }
-
-    TouchManager* CocoaWindow::GetTouchManager() noexcept
-    {
-        return nullptr;
-    }
-
-    WindowingBackendType CocoaWindow::GetBackendType() const noexcept
-    {
-        return WindowingBackendType::Cocoa;
-    }
-
     /* --- EVENTS --- */
 
     #if defined(__OBJC__) && defined(COCOA_WINDOW_IMPLEMENTATION)
@@ -581,7 +566,7 @@ namespace Sierra
         }
     #endif
 
-    /* --- PRIVATE METHODS --- */
+    /* --- GETTER METHODS --- */
 
     uint32 CocoaWindow::GetTitleBarHeight() const
     {
@@ -597,8 +582,8 @@ namespace Sierra
         [view release];
         [reinterpret_cast<CocoaWindowDelegate*>(delegate) release];
 
-        cocoaContext.DestroyWindow(window);
-        window = nil;
+        [window release];
+        [menuBar release];
     }
 
 }

@@ -19,7 +19,7 @@
 
 #include "../FileStream.h"
 
-#include "NSFileErrorHandler.h"
+#include "FoundationFileUtilities.h"
 
 namespace Sierra
 {
@@ -28,16 +28,20 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        FoundationFileStream(const std::filesystem::path& filePath, NSFileHandle* fileHandle);
+        explicit FoundationFileStream(const FileStreamCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Seek(size offset) override;
         [[nodiscard]] std::vector<uint8> Read(size memorySize) override;
-        void Write(const void* memory, size offset, size memorySize) override;
+        void Write(const void* memory, size memorySize) override;
+
+        /* --- SETTER METHODS --- */
+        void SetOffset(size offset) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] size GetCurrentOffset() const override;
-        [[nodiscard]] size GetMemorySize() const override;
+        [[nodiscard]] size GetOffset() const override;
+        [[nodiscard]] size GetSize() const override;
+
+        [[nodiscard]] StreamAccess GetAccess() const noexcept override { return access; }
         [[nodiscard]] const std::filesystem::path& GetFilePath() const noexcept override { return filePath; }
 
         [[nodiscard]] const NSFileHandle* GetNSFileHandle() const noexcept { return fileHandle; }
@@ -47,15 +51,16 @@ namespace Sierra
         FoundationFileStream& operator=(const FoundationFileStream&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        FoundationFileStream(FoundationFileStream&&) = delete;
-        FoundationFileStream& operator=(FoundationFileStream&&) = delete;
+        FoundationFileStream(FoundationFileStream&&) noexcept = default;
+        FoundationFileStream& operator=(FoundationFileStream&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~FoundationFileStream() noexcept override;
 
     private:
-        const std::filesystem::path filePath;
-        const NSFileHandle* fileHandle = nil;
+        NSFileHandle* fileHandle = nil;
+        StreamAccess access = StreamAccess::ReadWrite;
+        std::filesystem::path filePath = { };
 
     };
 

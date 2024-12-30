@@ -7,12 +7,7 @@
 namespace Sierra
 {
 
-
-
-    /* --- CONVERSIONS --- */
-
-
-    /* --- PRIVATE METHODS --- */
+    /* --- GETTER METHODS --- */
 
     bool InputManager::IsKeyCombinationPressedImplementation(const std::initializer_list<Key>& keys) const
     {

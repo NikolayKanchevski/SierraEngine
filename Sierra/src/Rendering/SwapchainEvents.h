@@ -33,12 +33,12 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit SwapchainResizeEvent( uint32 width, uint32 height, uint32 scaling) noexcept;
+        explicit SwapchainResizeEvent(uint32 width, uint32 height, float32 scaling) noexcept;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint32 GetWidth() const noexcept { return width; }
         [[nodiscard]] uint32 GetHeight() const noexcept { return height; }
-        [[nodiscard]] uint32 GetScaling() const noexcept { return scaling; }
+        [[nodiscard]] float32 GetScaling() const noexcept { return scaling; }
 
         /* --- COPY SEMANTICS --- */
         SwapchainResizeEvent(const SwapchainResizeEvent&) = delete;
@@ -52,7 +52,7 @@ namespace Sierra
         ~SwapchainResizeEvent() noexcept override = default;
 
     private:
-        const uint32 scaling;
+        const float32 scaling;
         const uint32 width;
         const uint32 height;
 

@@ -96,7 +96,7 @@ namespace Sierra
                 }
             #endif
 
-            return Version({ VK_API_VERSION_MAJOR(version), VK_API_VERSION_MINOR(version), VK_API_VERSION_PATCH(version) });
+            return Version({ static_cast<uint8>(VK_API_VERSION_MAJOR(version)), static_cast<uint8>(VK_API_VERSION_MINOR(version)), static_cast<uint8>(VK_API_VERSION_PATCH(version)) });
         }
 
         struct VulkanDeviceExtension
@@ -153,12 +153,6 @@ namespace Sierra
             {
                 // Core in Vulkan 1.2 (dependency of VK_KHR_imageless_framebuffer)
                 .name = VK_KHR_IMAGE_FORMAT_LIST_EXTENSION_NAME,
-            },
-            VulkanDeviceExtension
-            {
-                // Core in Vulkan 1.2
-                .name = VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME,
-                .data = &imagelessFramebufferFeatures
             },
             VulkanDeviceExtension
             {
@@ -693,19 +687,19 @@ namespace Sierra
             // Check if device meets requirements
             if (
                 createInfo.requirements.limits.maxUniformBufferSize > deviceLimits.maxUniformBufferSize                              ||
-                createInfo.requirements.limits.maxStorageBufferSize > deviceLimits.maxStorageBufferSize                              ||
-                createInfo.requirements.limits.maxLineImageDimensions > deviceLimits.maxLineImageDimensions                          ||
-                createInfo.requirements.limits.maxPlaneImageDimensions > deviceLimits.maxPlaneImageDimensions                        ||
-                createInfo.requirements.limits.maxVolumeImageDimensions > deviceLimits.maxVolumeImageDimensions                      ||
-                createInfo.requirements.limits.maxCubeImageDimensions > deviceLimits.maxCubeImageDimensions                          ||
-                createInfo.requirements.limits.resourceTableUniformBufferCapacity > deviceLimits.resourceTableUniformBufferCapacity  ||
-                createInfo.requirements.limits.resourceTableStorageBufferCapacity > deviceLimits.resourceTableStorageBufferCapacity  ||
-                createInfo.requirements.limits.resourceTableSampledImageCapacity > deviceLimits.resourceTableSampledImageCapacity    ||
-                createInfo.requirements.limits.resourceTableStorageImageCapacity > deviceLimits.resourceTableStorageImageCapacity    ||
-                createInfo.requirements.limits.resourceTableSamplerCapacity > deviceLimits.resourceTableSamplerCapacity              ||
-                createInfo.requirements.limits.maxRenderPassWidth > deviceLimits.maxRenderPassWidth                                  ||
-                createInfo.requirements.limits.maxRenderPassHeight > deviceLimits.maxRenderPassHeight                                ||
-                createInfo.requirements.limits.maxWorkGroupSize.x > deviceLimits.maxWorkGroupSize.x                                  ||
+                createInfo.requirements.limits.maxStorageBufferSize > deviceLimits.maxStorageBufferSize ||
+                createInfo.requirements.limits.maxLineImageDimensions > deviceLimits.maxLineImageDimensions ||
+                createInfo.requirements.limits.maxPlaneImageDimensions > deviceLimits.maxPlaneImageDimensions ||
+                createInfo.requirements.limits.maxVolumeImageDimensions > deviceLimits.maxVolumeImageDimensions ||
+                createInfo.requirements.limits.maxCubeImageDimensions > deviceLimits.maxCubeImageDimensions ||
+                createInfo.requirements.limits.resourceTableUniformBufferCapacity > deviceLimits.resourceTableUniformBufferCapacity ||
+                createInfo.requirements.limits.resourceTableStorageBufferCapacity > deviceLimits.resourceTableStorageBufferCapacity ||
+                createInfo.requirements.limits.resourceTableSampledImageCapacity > deviceLimits.resourceTableSampledImageCapacity ||
+                createInfo.requirements.limits.resourceTableStorageImageCapacity > deviceLimits.resourceTableStorageImageCapacity ||
+                createInfo.requirements.limits.resourceTableSamplerCapacity > deviceLimits.resourceTableSamplerCapacity ||
+                createInfo.requirements.limits.maxFramebufferWidth > deviceLimits.maxFramebufferWidth ||
+                createInfo.requirements.limits.maxFramebufferHeight > deviceLimits.maxFramebufferHeight ||
+                createInfo.requirements.limits.maxWorkGroupSize.x > deviceLimits.maxWorkGroupSize.x ||
                 createInfo.requirements.limits.maxWorkGroupSize.y > deviceLimits.maxWorkGroupSize.y                                  ||
                 createInfo.requirements.limits.maxWorkGroupSize.z > deviceLimits.maxWorkGroupSize.z                                  ||
                 createInfo.requirements.limits.highestImageSampling > deviceLimits.highestImageSampling                              ||

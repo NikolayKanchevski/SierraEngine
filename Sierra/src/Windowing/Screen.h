@@ -12,6 +12,7 @@
 namespace Sierra
 {
 
+    /* --- CONCEPTS --- */
     template<typename T>
     concept ScreenEventType = std::is_base_of_v<ScreenEvent, T> && !std::is_same_v<ScreenEvent, std::decay_t<T>>;
 

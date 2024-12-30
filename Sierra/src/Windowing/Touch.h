@@ -5,12 +5,12 @@
 #pragma once
 
 #include "../Utilities/Time.h"
-#include "../Utilities/Hash.hpp"
+#include "../Utilities/Handle.hpp"
 
 namespace Sierra
 {
 
-    using TouchID = Hash64;
+    using TouchID = Handle<size>;
 
     enum class TouchType : bool
     {

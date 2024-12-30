@@ -59,7 +59,7 @@ namespace Sierra
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] virtual bool FileExists(const std::filesystem::path& filePath) const noexcept = 0;
-        [[nodiscard]] virtual std::unique_ptr<FileStream> OpenFileStream(const std::filesystem::path& filePath, FileStreamAccess access, FileStreamBuffering buffering) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<FileStream> CreateFileStream(const FileStreamCreateInfo& createInfo) const = 0;
 
         virtual void CreateFile(const std::filesystem::path& filePath, FilePathConflictPolicy conflictPolicy) const;
         virtual void RenameFile(const std::filesystem::path& filePath, std::string_view name) const;

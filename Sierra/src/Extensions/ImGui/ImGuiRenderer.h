@@ -5,7 +5,8 @@
 #pragma once
 
 #include <imgui.h>
-#include "../../Rendering/Renderer.h"
+#include <imgui_stdlib.h>
+#include <imgui_internal.h>
 
 #include "../../Rendering/RenderingContext.h"
 #include "../../Rendering/Image.h"
@@ -25,69 +26,62 @@ namespace Sierra
         std::span<const uint8> ttfMemory = { };
     };
 
-    struct ImGuiRenderTaskCreateInfo
+    struct ImGuiRendererCreateInfo
     {
-        const ImGuiStyle& style = { };
-        std::span<const ImGuiFontCreateInfo> fontCreateInfos = { };
-
-        uint32 concurrentFrameCount = 0;
         const Device& device;
         CommandBuffer& commandBuffer;
 
-        uint32 scaling = 1;
-        ImageSampling sampling = ImageSampling::x1;
-        const Image& templateOutputImage;
+        uint32 concurrentFrameCount = 1;
+        ImageFormat format = ImageFormat::Undefined;
 
-        uint32 fontAtlasIndex = 0;
-        uint32 fontSamplerIndex = 0;
         ResourceTable& resourceTable;
+        std::span<const ImGuiFontCreateInfo> fontCreateInfos = { };
     };
 
-    class SIERRA_API ImGuiRenderer final : public Renderer
+    class SIERRA_API ImGuiRenderer final
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit ImGuiRenderer(const ImGuiRenderTaskCreateInfo& createInfo);
+        explicit ImGuiRenderer(const ImGuiRendererCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] ImFont* GetFont(const size index) const noexcept { return ImGui::GetIO().Fonts->Fonts[static_cast<int>(baseFontIndex + index)]; }
-        [[nodiscard]] ImGuiStyle& GetStyle() noexcept { return style; }
 
         /* --- POLLING METHODS --- */
-        void Update(const InputManager* inputManager = nullptr, const CursorManager* cursorManager = nullptr, const TouchManager* touchManager = nullptr);
-        void Resize(uint32 width, uint32 height) override;
-        void Render(CommandBuffer& commandBuffer, const Image& outputImage) override;
+        void Update(uint32 framebufferWidth, uint32 framebufferHeight, float32 scaling = 1.0f, const InputManager* inputManager = nullptr, const CursorManager* cursorManager = nullptr, const TouchManager* touchManager = nullptr);
+        void Render(CommandBuffer& commandBuffer, const Framebuffer& framebuffer);
 
         /* --- COPY SEMANTICS --- */
         ImGuiRenderer(const ImGuiRenderer&) = delete;
         ImGuiRenderer& operator=(const ImGuiRenderer&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        ImGuiRenderer(ImGuiRenderer&&) = delete;
-        ImGuiRenderer& operator=(ImGuiRenderer&&) = delete;
+        ImGuiRenderer(ImGuiRenderer&&) noexcept = default;
+        ImGuiRenderer& operator=(ImGuiRenderer&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
-        ~ImGuiRenderer() noexcept override;
+        ~ImGuiRenderer() noexcept;
 
     private:
-        const Device& device;
-        const uint32 concurrentFrameCount = 0;
+        const Device* device;
+        ResourceTable* resourceTable = nullptr;
 
-        uint32 scaling = 1;
-        Vector2 viewportSize = { 0.0f, 0.0f };
+        uint32 currentFrame = 0;
+        uint32 concurrentFrameCount = 0;
+
+        uint32 baseFontIndex = 0;
+
+        SampledImageID fontAtlasID = { };
+        SamplerID fontAtlasSamplerID = { };
+        std::unique_ptr<Image> fontAtlas = nullptr;
 
         std::unique_ptr<Image> resolverImage = nullptr;
         std::vector<std::unique_ptr<Buffer>> vertexBuffers = { };
         std::vector<std::unique_ptr<Buffer>> indexBuffers = { };
 
-        uint32 baseFontIndex = 0;
-        std::unique_ptr<Image> fontAtlas = nullptr;
+        std::unique_ptr<RenderPass> renderPass = nullptr;
+        std::unique_ptr<GraphicsPipeline> pipeline = nullptr;
 
-        std::unique_ptr<RenderPass> renderPass;
-        std::unique_ptr<GraphicsPipeline> pipeline;
-        ImGuiStyle style = { };
-
-        uint32 currentFrame = 0;
         struct PushConstant
         {
             uint32 textureIndex = 0;

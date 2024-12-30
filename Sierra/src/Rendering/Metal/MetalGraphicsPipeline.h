@@ -41,7 +41,7 @@ namespace Sierra
         [[nodiscard]] id<MTLRenderPipelineState> GetRenderPipelineState() const noexcept { return renderPipelineState; }
         [[nodiscard]] id<MTLDepthStencilState> GetDepthStencilState() const noexcept { return depthStencilState; }
 
-        [[nodiscard]] size GetVertexStride() const noexcept { return vertexStride; }
+        [[nodiscard]] uint32 GetVertexStride() const noexcept { return vertexStride; }
         [[nodiscard]] bool HasFragmentShader() const noexcept { return hasFragmentShader; }
 
         [[nodiscard]] MTLCullMode GetCullMode() const noexcept { return cullMode; }
@@ -53,16 +53,16 @@ namespace Sierra
         MetalGraphicsPipeline& operator=(const MetalGraphicsPipeline&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        MetalGraphicsPipeline(MetalGraphicsPipeline&&) = delete;
-        MetalGraphicsPipeline& operator=(MetalGraphicsPipeline&&) = delete;
+        MetalGraphicsPipeline(MetalGraphicsPipeline&&) noexcept = default;
+        MetalGraphicsPipeline& operator=(MetalGraphicsPipeline&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~MetalGraphicsPipeline() noexcept override;
 
     private:
-        const MTLCullMode cullMode;
-        const MTLTriangleFillMode triangleFillMode;
-        const MTLWinding winding;
+        MTLCullMode cullMode = MTLCullModeNone;
+        MTLTriangleFillMode triangleFillMode = MTLTriangleFillModeFill;
+        MTLWinding winding = MTLWindingCounterClockwise;
 
         id<MTLRenderPipelineState> renderPipelineState = nil;
         id<MTLDepthStencilState> depthStencilState = nil;

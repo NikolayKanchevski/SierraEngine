@@ -27,7 +27,7 @@ namespace Sierra
         [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
 
         [[nodiscard]] VkPipeline GetVulkanPipeline() const noexcept { return pipeline; }
-        [[nodiscard]] VkPipelineLayout GetVulkanPipelineLayout() const noexcept { return device.GetPipelineLayout(pushConstantSize); }
+        [[nodiscard]] VkPipelineLayout GetVulkanPipelineLayout() const noexcept { return device->GetPipelineLayout(pushConstantSize); }
         [[nodiscard]] size GetVertexStride() const noexcept { return vertexStride; }
 
         /* --- COPY SEMANTICS --- */
@@ -35,15 +35,15 @@ namespace Sierra
         VulkanGraphicsPipeline& operator=(const VulkanGraphicsPipeline&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        VulkanGraphicsPipeline(VulkanGraphicsPipeline&&) = delete;
-        VulkanGraphicsPipeline& operator=(VulkanGraphicsPipeline&&) = delete;
+        VulkanGraphicsPipeline(VulkanGraphicsPipeline&&) noexcept = default;
+        VulkanGraphicsPipeline& operator=(VulkanGraphicsPipeline&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~VulkanGraphicsPipeline() noexcept override;
 
     private:
-        const VulkanDevice& device;
-        const std::string name;
+        const VulkanDevice* device = nullptr;
+        std::string name = { };
 
         VkPipeline pipeline = VK_NULL_HANDLE;
         size vertexStride = 0;

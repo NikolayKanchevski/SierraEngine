@@ -34,8 +34,8 @@ namespace Sierra
         MetalShader& operator=(const MetalShader&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        MetalShader(MetalShader&&) = delete;
-        MetalShader& operator=(MetalShader&&) = delete;
+        MetalShader(MetalShader&&) noexcept = default;
+        MetalShader& operator=(MetalShader&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~MetalShader() noexcept override;

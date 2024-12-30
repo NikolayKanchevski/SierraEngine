@@ -16,12 +16,4 @@ namespace Sierra
         SR_THROW_IF(createInfo.subpassDescriptions.empty(), InvalidValueError(SR_FORMAT("Cannot create render pass [{0}], as specified subpass descriptions must not be empty", createInfo.name)));
     }
 
-    /* --- POLLING METHODS --- */
-
-    void RenderPass::Resize(const uint32 width, const uint32 height)
-    {
-        SR_THROW_IF(width <= 0, InvalidValueError(SR_FORMAT("Cannot resize render pass [{0}], as specified width must not be equal to [0]", GetName())));
-        SR_THROW_IF(height <= 0, InvalidValueError(SR_FORMAT("Cannot resize render pass [{0}], as specified height must not be equal to [0]", GetName())));
-    }
-
 }

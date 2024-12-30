@@ -91,7 +91,7 @@ namespace Sierra
         return WindowingBackendType::X11;
     }
 
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void X11CursorManager::Update()
     {

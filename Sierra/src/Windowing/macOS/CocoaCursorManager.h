@@ -46,8 +46,8 @@ namespace Sierra
         CocoaCursorManager& operator=(const CocoaCursorManager&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        CocoaCursorManager(CocoaCursorManager&&) = delete;
-        CocoaCursorManager& operator=(CocoaCursorManager&&) = delete;
+        CocoaCursorManager(CocoaCursorManager&&) noexcept = default;
+        CocoaCursorManager& operator=(CocoaCursorManager&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~CocoaCursorManager() noexcept override = default;

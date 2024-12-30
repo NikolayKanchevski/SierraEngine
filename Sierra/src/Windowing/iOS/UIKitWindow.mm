@@ -147,10 +147,10 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     UIKitWindow::UIKitWindow(const UIKitContext& uiKitContext, const WindowCreateInfo& createInfo)
-        : Window(createInfo), uiKitContext(uiKitContext), title(createInfo.title), allowedOrientations(createInfo.allowedOrientations)
+        : Window(createInfo), uiKitContext(&uiKitContext), title(createInfo.title), allowedOrientations(createInfo.allowedOrientations)
     {
         // Create window
-        window = uiKitContext.CreateWindow();
+        window = uiKitContext->CreateWindow();
         viewController = [[UIKitWindowViewController alloc] initWithWindow: this];
         view = viewController.view;
 
@@ -206,7 +206,7 @@ namespace Sierra
         closed = true;
 
         GetWindowCloseDispatcher().DispatchEvent();
-        uiKitContext.DestroyWindow(window);
+        uiKitContext->DestroyWindow(window);
 
         [viewController release];
         viewController = nil;
@@ -251,12 +251,12 @@ namespace Sierra
 
     uint32 UIKitWindow::GetWidth() const noexcept
     {
-        return uiKitContext.GetScreen().GetWidth();
+        return uiKitContext->GetScreen().GetWidth();
     }
 
     uint32 UIKitWindow::GetHeight() const noexcept
     {
-        return uiKitContext.GetScreen().GetHeight();
+        return uiKitContext->GetScreen().GetHeight();
     }
 
     uint32 UIKitWindow::GetFramebufferWidth() const noexcept
@@ -299,26 +299,6 @@ namespace Sierra
         return minimized;
     }
 
-    InputManager* UIKitWindow::GetInputManager() noexcept
-    {
-        return nullptr;
-    }
-
-    CursorManager* UIKitWindow::GetCursorManager() noexcept
-    {
-        return nullptr;
-    }
-
-    TouchManager* UIKitWindow::GetTouchManager() noexcept
-    {
-        return &touchManager;
-    }
-
-    WindowingBackendType UIKitWindow::GetBackendType() const noexcept
-    {
-        return WindowingBackendType::UIKit;
-    }
-
     /* --- EVENTS --- */
 
     #if defined(__OBJC__) && defined(UIKIT_WINDOW_IMPLEMENTATION)
@@ -351,7 +331,7 @@ namespace Sierra
         [[NSNotificationCenter defaultCenter] removeObserver: viewController];
         
         GetWindowCloseDispatcher().DispatchEvent();
-        uiKitContext.DestroyWindow(window);
+        uiKitContext->DestroyWindow(window);
 
         [viewController release];
         [window release];

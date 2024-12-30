@@ -31,40 +31,40 @@ namespace Sierra
         [[nodiscard]] uint32 GetCurrentImageIndex() const noexcept override { return currentImage; }
         [[nodiscard]] uint32 GetConcurrentFrameCount() const noexcept override { return concurrentFrameCount; }
 
-        [[nodiscard]] uint32 GetScaling() const noexcept override { return glm::max(1U, swapchainImages[currentImage]->GetWidth() / window.GetWidth()); }
-        [[nodiscard]] const Image& GetImage(const uint32 frameIndex) const override { SR_THROW_IF(frameIndex >= concurrentFrameCount, ValueOutOfRangeError(SR_FORMAT("Cannot get image [{0}] of swapchain [{1}]! Use Swapchain::GetConcurrentFrameCount() to query count", frameIndex, GetName()), frameIndex, 0U, GetConcurrentFrameCount() - 1)); return *swapchainImages[frameIndex]; }
+        [[nodiscard]] float32 GetScaling() const noexcept override { return glm::max(1.0f, static_cast<float32>(swapchainImages[currentImage]->GetWidth()) / static_cast<float32>(window->GetWidth())); }
+        [[nodiscard]] const Image& GetImage(const uint32 frameIndex) const override { SR_THROW_IF(frameIndex >= concurrentFrameCount, ValueOutOfRangeError(SR_FORMAT("Cannot get image [{0}] of swapchain [{1}]! Use Swapchain::GetConcurrentFrameCount() to query count", frameIndex, GetName()), frameIndex, uint32(0), GetConcurrentFrameCount() - 1)); return *swapchainImages[frameIndex]; }
 
         /* --- COPY SEMANTICS --- */
         VulkanSwapchain(const VulkanSwapchain&) = delete;
         VulkanSwapchain& operator=(const VulkanSwapchain&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        VulkanSwapchain(VulkanSwapchain&&) = delete;
-        VulkanSwapchain& operator=(VulkanSwapchain&&) = delete;
+        VulkanSwapchain(VulkanSwapchain&&) noexcept = default;
+        VulkanSwapchain& operator=(VulkanSwapchain&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~VulkanSwapchain() noexcept override;
 
     private:
-        const VulkanContext& context;
-        const VulkanDevice& device;
+        const VulkanContext* context = nullptr;
+        const VulkanDevice* device = nullptr;
 
-        const std::string name;
-        Window& window;
+        std::string name = { };
+        Window* window = nullptr;
 
         VkSurfaceKHR surface = VK_NULL_HANDLE;
         VkQueue presentationQueue = VK_NULL_HANDLE;
         uint32 presentationQueueFamily = std::numeric_limits<uint32>::max();
 
-        const SwapchainPresentationMode preferredPresentationMode = SwapchainPresentationMode::VSync;
-        const SwapchainBuffering preferredBuffering = SwapchainBuffering::DoubleBuffering;
-        const SwapchainImageMemoryType preferredImageMemoryType = SwapchainImageMemoryType::UNorm8;
+        SwapchainPresentationMode preferredPresentationMode = SwapchainPresentationMode::VSync;
+        SwapchainBuffering preferredBuffering = SwapchainBuffering::DoubleBuffering;
+        SwapchainImageMemoryType preferredImageMemoryType = SwapchainImageMemoryType::UNorm8;
 
         VkSwapchainKHR swapchain = VK_NULL_HANDLE;
-        std::vector<std::unique_ptr<Image>> swapchainImages;
+        std::vector<std::unique_ptr<VulkanImage>> swapchainImages = { };
 
-        std::vector<VkSemaphore> isImageAcquiredSemaphores;
-        std::vector<VkSemaphore> isPresentationCommandBufferFreeSemaphores;
+        std::vector<VkSemaphore> isImageAcquiredSemaphores = { };
+        std::vector<VkSemaphore> isPresentationCommandBufferFreeSemaphores = { };
 
         uint32 concurrentFrameCount = 0;
         uint32 currentFrame = 0; // On the CPU

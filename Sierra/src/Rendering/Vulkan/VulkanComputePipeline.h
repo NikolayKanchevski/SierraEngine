@@ -22,22 +22,22 @@ namespace Sierra
         [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
 
         [[nodiscard]] VkPipeline GetVulkanPipeline() const noexcept { return pipeline; }
-        [[nodiscard]] VkPipelineLayout GetVulkanPipelineLayout() const noexcept { return device.GetPipelineLayout(pushConstantSize); }
+        [[nodiscard]] VkPipelineLayout GetVulkanPipelineLayout() const noexcept { return device->GetPipelineLayout(pushConstantSize); }
 
         /* --- COPY SEMANTICS --- */
         VulkanComputePipeline(const VulkanComputePipeline&) = delete;
         VulkanComputePipeline& operator=(const VulkanComputePipeline&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        VulkanComputePipeline(VulkanComputePipeline&&) = delete;
-        VulkanComputePipeline& operator=(VulkanComputePipeline&&) = delete;
+        VulkanComputePipeline(VulkanComputePipeline&&) noexcept = default;
+        VulkanComputePipeline& operator=(VulkanComputePipeline&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~VulkanComputePipeline() noexcept override;
 
     private:
-        const VulkanDevice& device;
-        const std::string name;
+        const VulkanDevice* device = nullptr;
+        std::string name = { };
 
         VkPipeline pipeline = VK_NULL_HANDLE;
         uint16 pushConstantSize = 0;

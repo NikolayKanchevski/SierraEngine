@@ -14,25 +14,26 @@
 #define VMA_DYNAMIC_VULKAN_FUNCTIONS 0
 #include <vk_mem_alloc.h>
 
-#include "VulkanBuffer.h"
 #include "VulkanImage.h"
-#include "VulkanSampler.h"
-#include "VulkanRenderPass.h"
-#include "VulkanSwapchain.h"
-#include "VulkanShader.h"
-#include "VulkanGraphicsPipeline.h"
-#include "VulkanComputePipeline.h"
-#include "VulkanResourceTable.h"
 #include "VulkanQueue.h"
+#include "VulkanBuffer.h"
+#include "VulkanShader.h"
+#include "VulkanSampler.h"
+#include "VulkanSwapchain.h"
+#include "VulkanRenderPass.h"
+#include "VulkanFramebuffer.h"
 #include "VulkanErrorHandler.h"
+#include "VulkanResourceTable.h"
+#include "VulkanComputePipeline.h"
+#include "VulkanGraphicsPipeline.h"
 
 namespace Sierra
 {
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanDevice::VulkanDevice(const Sierra::VulkanContext& context, VkPhysicalDevice physicalDevice, std::span<const char*> extensions, std::span<const VulkanQueueDescription> givenQueueDescriptions, const void* pNext, const DeviceCreateInfo& createInfo)
-        : Device(createInfo), context(context), name(createInfo.name), physicalDevice(physicalDevice)
+    VulkanDevice::VulkanDevice(const VulkanContext& givenContext, VkPhysicalDevice physicalDevice, const std::span<const char*> extensions, std::span<const VulkanQueueDescription> givenQueueDescriptions, const void* pNext, const DeviceCreateInfo& createInfo)
+        : Device(createInfo), context(&givenContext), name(createInfo.name), physicalDevice(physicalDevice)
     {
         SR_THROW_IF(physicalDevice == VK_NULL_HANDLE, InvalidValueError(SR_FORMAT("Cannot create Vulkan device [{0}], as specified physical device must not be null", createInfo.name)));
 
@@ -71,20 +72,20 @@ namespace Sierra
         };
 
         // Create device
-        VkResult result = context.GetFunctionTable().vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device);
+        VkResult result = context->GetFunctionTable().vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device);
         if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create device [{0}]", createInfo.name));
         SetResourceName(device, VK_OBJECT_TYPE_DEVICE, SR_FORMAT("Logical device of device [{0}]", name));
 
         // Retrieve hardware name
         {
             VkPhysicalDeviceProperties physicalDeviceProperties = { };
-            context.GetFunctionTable().vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+            context->GetFunctionTable().vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
 
             hardwareName = physicalDeviceProperties.deviceName;
             SetResourceName(physicalDevice, VK_OBJECT_TYPE_PHYSICAL_DEVICE, hardwareName);
 
-            vulkanVersion = Version({ VK_VERSION_MAJOR(physicalDeviceProperties.apiVersion), VK_VERSION_MINOR(physicalDeviceProperties.apiVersion), VK_VERSION_PATCH(physicalDeviceProperties.apiVersion) });
-            driverVersion = Version({ VK_VERSION_MAJOR(physicalDeviceProperties.driverVersion), VK_VERSION_MINOR(physicalDeviceProperties.driverVersion), VK_VERSION_PATCH(physicalDeviceProperties.driverVersion) });
+            vulkanVersion = Version({ static_cast<uint8>(VK_VERSION_MAJOR(physicalDeviceProperties.apiVersion)), static_cast<uint8>(VK_VERSION_MINOR(physicalDeviceProperties.apiVersion)), static_cast<uint8>(VK_VERSION_PATCH(physicalDeviceProperties.apiVersion)) });
+            driverVersion = Version({ static_cast<uint8>(VK_VERSION_MAJOR(physicalDeviceProperties.driverVersion)), static_cast<uint8>(VK_VERSION_MINOR(physicalDeviceProperties.driverVersion)), static_cast<uint8>(VK_VERSION_PATCH(physicalDeviceProperties.driverVersion)) });
         }
 
         // Save loaded extensions
@@ -883,8 +884,8 @@ namespace Sierra
         {
             .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
             .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
-            .vkGetPhysicalDeviceProperties = context.GetFunctionTable().vkGetPhysicalDeviceProperties,
-            .vkGetPhysicalDeviceMemoryProperties = context.GetFunctionTable().vkGetPhysicalDeviceMemoryProperties,
+            .vkGetPhysicalDeviceProperties = context->GetFunctionTable().vkGetPhysicalDeviceProperties,
+            .vkGetPhysicalDeviceMemoryProperties = context->GetFunctionTable().vkGetPhysicalDeviceMemoryProperties,
             .vkAllocateMemory = functionTable.vkAllocateMemory,
             .vkFreeMemory = functionTable.vkFreeMemory,
             .vkMapMemory = functionTable.vkMapMemory,
@@ -905,21 +906,21 @@ namespace Sierra
             .vkGetImageMemoryRequirements2KHR = functionTable.vkGetImageMemoryRequirements2,
             .vkBindBufferMemory2KHR = functionTable.vkBindBufferMemory2,
             .vkBindImageMemory2KHR = functionTable.vkBindImageMemory2,
-            .vkGetPhysicalDeviceMemoryProperties2KHR = context.GetFunctionTable().vkGetPhysicalDeviceMemoryProperties2,
+            .vkGetPhysicalDeviceMemoryProperties2KHR = context->GetFunctionTable().vkGetPhysicalDeviceMemoryProperties2,
             // Vulkan 1.3.0 Functions
             .vkGetDeviceBufferMemoryRequirements = functionTable.vkGetDeviceBufferMemoryRequirements,
             .vkGetDeviceImageMemoryRequirements = functionTable.vkGetDeviceImageMemoryRequirements
         };
 
         // Set up allocator create info
-        const Version version = context.GetBackendVersion();
+        const Version version = context->GetBackendVersion();
         const VmaAllocatorCreateInfo vmaCreteInfo
         {
             .flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT,
             .physicalDevice = physicalDevice,
             .device = device,
             .pVulkanFunctions = &vulkanFunctions,
-            .instance = context.GetVulkanInstance(),
+            .instance = context->GetVulkanInstance(),
             .vulkanApiVersion = VK_MAKE_API_VERSION(0, version.GetMajor(), version.GetMinor(), version.GetPatch())
         };
 
@@ -1090,9 +1091,14 @@ namespace Sierra
         return std::make_unique<VulkanRenderPass>(*this, createInfo);
     }
 
+    std::unique_ptr<Framebuffer> VulkanDevice::CreateFramebuffer(const FramebufferCreateInfo& createInfo) const
+    {
+        return std::make_unique<VulkanFramebuffer>(*this, createInfo);
+    }
+
     std::unique_ptr<Swapchain> VulkanDevice::CreateSwapchain(const SwapchainCreateInfo& createInfo) const
     {
-        return std::make_unique<VulkanSwapchain>(context, *this, createInfo);
+        return std::make_unique<VulkanSwapchain>(*context, *this, createInfo);
     }
 
     std::unique_ptr<Shader> VulkanDevice::CreateShader(const ShaderCreateInfo& createInfo) const
@@ -1140,8 +1146,8 @@ namespace Sierra
             .resourceTableSampledImageCapacity = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages, MAX_SAMPLED_IMAGES_PER_RESOURCE_TABLE),
             .resourceTableStorageImageCapacity = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages, MAX_STORAGE_IMAGES_PER_RESOURCE_TABLE),
             .resourceTableSamplerCapacity = glm::min(descriptorIndexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers, MAX_SAMPLERS_PER_RESOURCE_TABLE),
-            .maxRenderPassWidth = physicalDeviceProperties.properties.limits.maxFramebufferWidth,
-            .maxRenderPassHeight = physicalDeviceProperties.properties.limits.maxFramebufferHeight,
+            .maxFramebufferWidth = physicalDeviceProperties.properties.limits.maxFramebufferWidth,
+            .maxFramebufferHeight = physicalDeviceProperties.properties.limits.maxFramebufferHeight,
             .maxWorkGroupSize = { physicalDeviceProperties.properties.limits.maxComputeWorkGroupSize[0], physicalDeviceProperties.properties.limits.maxComputeWorkGroupSize[1], physicalDeviceProperties.properties.limits.maxComputeWorkGroupSize[2] },
             .highestImageSampling = GetHighestImageSamplingSupported(),
             .highestSamplerAnisotropy = GetHighestSamplerAnisotropySupported()
@@ -1152,18 +1158,17 @@ namespace Sierra
     {
         // Get format properties
         VkFormatProperties formatProperties = { };
-        context.GetFunctionTable().vkGetPhysicalDeviceFormatProperties(physicalDevice, ImageFormatToVkFormat(format), &formatProperties);
+        context->GetFunctionTable().vkGetPhysicalDeviceFormatProperties(physicalDevice, ImageFormatToVkFormat(format), &formatProperties);
 
         // Check support
         if (usage & ImageUsage::SourceMemory        && !(formatProperties.linearTilingFeatures  & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT               )) return false;
         if (usage & ImageUsage::DestinationMemory   && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_DST_BIT               )) return false;
         if (usage & ImageUsage::Storage             && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT              )) return false;
         if (usage & ImageUsage::Sample              && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
-        if (usage & ImageUsage::Filter              && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
-        if (usage & ImageUsage::ColorAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) return false;
+        if (usage & ImageUsage::Filter              && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) return false;
+        if (usage & ImageUsage::ColorAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT           )) return false;
         if (usage & ImageUsage::DepthAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT   )) return false;
         if (usage & ImageUsage::InputAttachment     && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT              )) return false;
-        if (usage & ImageUsage::TransientAttachment && !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT           )) return false;
         return true;
     }
 
@@ -1195,28 +1200,28 @@ namespace Sierra
     VkPhysicalDeviceProperties VulkanDevice::GetPhysicalDeviceProperties() const noexcept
     {
         VkPhysicalDeviceProperties physicalDeviceProperties = { };
-        context.GetFunctionTable().vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+        context->GetFunctionTable().vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
         return physicalDeviceProperties;
     }
 
     VkPhysicalDeviceProperties2 VulkanDevice::GetPhysicalDeviceProperties2(void* pNext) const noexcept
     {
         VkPhysicalDeviceProperties2 physicalDeviceProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR, .pNext = pNext };
-        context.GetFunctionTable().vkGetPhysicalDeviceProperties2(physicalDevice, &physicalDeviceProperties);
+        context->GetFunctionTable().vkGetPhysicalDeviceProperties2(physicalDevice, &physicalDeviceProperties);
         return physicalDeviceProperties;
     }
 
     VkPhysicalDeviceFeatures VulkanDevice::GetPhysicalDeviceFeatures() const noexcept
     {
         VkPhysicalDeviceFeatures physicalDeviceFeatures = { };
-        context.GetFunctionTable().vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
+        context->GetFunctionTable().vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
         return physicalDeviceFeatures;
     }
 
     VkPhysicalDeviceFeatures2 VulkanDevice::GetPhysicalDeviceFeatures2(void* const pNext) const noexcept
     {
         VkPhysicalDeviceFeatures2 physicalDeviceFeatures = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR, .pNext = pNext };
-        context.GetFunctionTable().vkGetPhysicalDeviceFeatures2(physicalDevice, &physicalDeviceFeatures);
+        context->GetFunctionTable().vkGetPhysicalDeviceFeatures2(physicalDevice, &physicalDeviceFeatures);
         return physicalDeviceFeatures;
     }
 
@@ -1229,7 +1234,7 @@ namespace Sierra
 
     void VulkanDevice::SetResourceName(const VkHandle32 object, const VkObjectType type, const std::string_view resourceName) const noexcept
     {
-        if (!context.IsExtensionLoaded(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) return;
+        if (!context->IsExtensionLoaded(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) return;
 
         // Set up object name info
         const VkDebugUtilsObjectNameInfoEXT objectNameInfo
@@ -1241,7 +1246,7 @@ namespace Sierra
         };
 
         // Assign resource name
-        context.GetFunctionTable().vkSetDebugUtilsObjectNameEXT(device, &objectNameInfo);
+        context->GetFunctionTable().vkSetDebugUtilsObjectNameEXT(device, &objectNameInfo);
     }
 
     /* --- OPERATORS --- */
@@ -1249,10 +1254,10 @@ namespace Sierra
     bool VulkanDevice::operator==(const VulkanDevice& other) noexcept
     {
         VkPhysicalDeviceProperties thisPhysicalDeviceProperties = { };
-        context.GetFunctionTable().vkGetPhysicalDeviceProperties(physicalDevice, &thisPhysicalDeviceProperties);
+        context->GetFunctionTable().vkGetPhysicalDeviceProperties(physicalDevice, &thisPhysicalDeviceProperties);
 
         VkPhysicalDeviceProperties otherPhysicalDeviceProperties = { };
-        other.context.GetFunctionTable().vkGetPhysicalDeviceProperties(other.physicalDevice, &otherPhysicalDeviceProperties);
+        other.context->GetFunctionTable().vkGetPhysicalDeviceProperties(other.physicalDevice, &otherPhysicalDeviceProperties);
 
         return thisPhysicalDeviceProperties.deviceID == otherPhysicalDeviceProperties.deviceID;
     }

@@ -68,7 +68,7 @@ namespace Sierra
         return WindowingBackendType::Cocoa;
     }
 
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void CocoaCursorManager::Update()
     {

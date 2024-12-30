@@ -9,14 +9,14 @@ target_sources(Sierra PRIVATE
     Device.h
     DeviceErrors.cpp
     DeviceErrors.h
+    Framebuffer.cpp
+    Framebuffer.h
     GraphicsPipeline.cpp
     GraphicsPipeline.h
     Image.cpp
     Image.h
     Queue.cpp
     Queue.h
-    Renderer.cpp
-    Renderer.h
     RenderingBackendType.h
     RenderingContext.cpp
     RenderingContext.h

@@ -92,8 +92,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanSampler::VulkanSampler(const VulkanDevice& device, const SamplerCreateInfo& createInfo)
-        : Sampler(createInfo), device(device), name(createInfo.name)
+    VulkanSampler::VulkanSampler(const VulkanDevice& givenDevice, const SamplerCreateInfo& createInfo)
+        : Sampler(createInfo), device(&givenDevice), name(createInfo.name)
     {
         // Set up sampler create info
         const VkSamplerCreateInfo samplerCreateInfo
@@ -117,18 +117,18 @@ namespace Sierra
         };
 
         // Create sampler
-        const VkResult result = device.GetFunctionTable().vkCreateSampler(device.GetVulkanDevice(), &samplerCreateInfo, nullptr, &sampler);
+        const VkResult result = device->GetFunctionTable().vkCreateSampler(device->GetVulkanDevice(), &samplerCreateInfo, nullptr, &sampler);
         if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create sampler [{0}]", name));
 
         // Assign name
-        device.SetResourceName(sampler, VK_OBJECT_TYPE_SAMPLER, name);
+        device->SetResourceName(sampler, VK_OBJECT_TYPE_SAMPLER, name);
     }
 
     /* --- DESTRUCTOR --- */
 
     VulkanSampler::~VulkanSampler() noexcept
     {
-        device.GetFunctionTable().vkDestroySampler(device.GetVulkanDevice(), sampler, nullptr);
+        device->GetFunctionTable().vkDestroySampler(device->GetVulkanDevice(), sampler, nullptr);
     }
 
 }

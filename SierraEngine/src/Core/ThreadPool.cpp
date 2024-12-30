@@ -50,7 +50,7 @@ namespace SierraEngine
         for (std::thread &thread : threads) thread.join();
     }
 
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void ThreadPool::ThreadLoop()
     {

@@ -8,10 +8,7 @@ namespace SierraEngine
 {
 
     class SIERRA_ENGINE_API Component;
-    template<typename T> concept ComponentType = std::is_base_of_v<Component, T> && !std::is_same_v<Component, std::decay_t<T>> && std::is_default_constructible_v<T> && requires { T::GetName(); };
-
-    template<ComponentType...>
-    struct ComponentGroup { };
+    template<typename T> concept ComponentType = std::is_base_of_v<Component, T> && !std::is_same_v<Component, std::decay_t<T>> && requires { T::GetName(); };
 
     class SIERRA_ENGINE_API Component
     {

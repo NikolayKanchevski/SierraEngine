@@ -86,7 +86,7 @@ namespace Sierra
         return WindowingBackendType::Win32;
     }
 
-    /* --- PRIVATE METHODS --- */
+    /* --- POLLING METHODS --- */
 
     void Win32CursorManager::Update()
     {
