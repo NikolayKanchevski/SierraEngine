@@ -27,9 +27,6 @@ namespace SierraEngine
         /* --- CONSTRUCTORS --- */
         AssetImporter() noexcept = default;
 
-        /* --- POLLING METHODS --- */
-        [[nodiscard]] AssetHeader ImportHeader(Sierra::Stream& stream) const;
-
         /* --- MOVE SEMANTICS --- */
         AssetImporter(AssetImporter&&) noexcept = default;
         AssetImporter& operator=(AssetImporter&&) noexcept = default;

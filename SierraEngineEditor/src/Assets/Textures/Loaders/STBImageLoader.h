@@ -14,7 +14,7 @@ namespace SierraEngine
         STBImageLoader() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::optional<Image> Load(const ImageLoadInfo& loadInfo) const noexcept override;
+        [[nodiscard]] std::optional<LoadedImage> Load(const ImageLoadInfo& loadInfo) const noexcept override;
 
         /* --- COPY SEMANTICS --- */
         STBImageLoader(const STBImageLoader&) = delete;
@@ -25,7 +25,7 @@ namespace SierraEngine
         STBImageLoader& operator=(STBImageLoader&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
-        ~STBImageLoader() noexcept = default;
+        ~STBImageLoader() noexcept override = default;
     };
 
 }

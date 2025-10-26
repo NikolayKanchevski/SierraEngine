@@ -20,7 +20,7 @@ namespace Sierra
     };
 
     /* --- TYPE DEFINITIONS --- */
-    using ResourceID = Sierra::Handle<uint32>;
+    using ResourceID = Handle<uint32>;
     struct UniformBufferID final : public ResourceID { };
     struct StorageBufferID final : public ResourceID { };
     struct SampledImageID  final : public ResourceID { };

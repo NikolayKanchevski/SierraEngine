@@ -87,6 +87,9 @@ namespace Sierra
 
     bool MetalResourceTable::FreeUniformBuffer(const UniformBufferID ID)
     {
+        [argumentEncoder setBuffer: nil offset: 0 atIndex: UNIFORM_BUFFER_INDEX + ID];
+        boundUniformBuffers.erase(ID);
+
         return uniformBufferIndexPool.FreeIndex(ID);
     }
 
@@ -106,6 +109,9 @@ namespace Sierra
 
     bool MetalResourceTable::FreeStorageBuffer(const StorageBufferID ID)
     {
+        [argumentEncoder setBuffer: nil offset: 0 atIndex: STORAGE_BUFFER_INDEX + ID];
+        boundStorageBuffers.erase(ID);
+
         return storageBufferIndexPool.FreeIndex(ID);
     }
 
@@ -123,6 +129,9 @@ namespace Sierra
 
     bool MetalResourceTable::FreeSampledImage(const SampledImageID ID)
     {
+        [argumentEncoder setTexture: nil atIndex: SAMPLED_IMAGE_INDEX + ID];
+        boundSampledImages.erase(ID);
+
         return sampledImageIndexPool.FreeIndex(ID);
     }
 
@@ -140,6 +149,9 @@ namespace Sierra
 
     bool MetalResourceTable::FreeStorageImage(const StorageImageID ID)
     {
+        [argumentEncoder setTexture: nil atIndex: STORAGE_IMAGE_INDEX + ID];
+        boundStorageImages.erase(ID);
+
         return storageImageIndexPool.FreeIndex(ID);
     }
 
@@ -157,6 +169,7 @@ namespace Sierra
 
     bool MetalResourceTable::FreeSampler(const SamplerID ID)
     {
+        [argumentEncoder setSamplerState: nil atIndex: SAMPLER_INDEX + ID];
         return samplerIndexPool.FreeIndex(ID);
     }
 

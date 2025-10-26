@@ -9,7 +9,7 @@ namespace Sierra
 
     /* --- CONCEPTS --- */
     template<typename T>
-    concept HandleType = std::is_unsigned_v<T>;
+    concept HandleType = UnsignedType<T>;
 
     template<HandleType T>
     class Handle
@@ -34,11 +34,11 @@ namespace Sierra
         [[nodiscard]] bool operator==(const Handle other) const noexcept { return value == other.value; }
         [[nodiscard]] bool operator!=(const Handle other) const noexcept { return !(*this == other); }
 
-        template<typename ValueType> requires (std::is_convertible_v<ValueType, T>)
-        [[nodiscard]] bool operator==(const ValueType otherValue) const noexcept { return value == otherValue; }
+        template<NumericType Numeric>
+        [[nodiscard]] bool operator==(const Numeric other) const noexcept { return value == static_cast<T>(other); }
 
-        template<typename ValueType> requires (std::is_convertible_v<ValueType, T>)
-        [[nodiscard]] bool operator!=(const ValueType otherValue) const noexcept { return value != otherValue; }
+        template<NumericType Numeric>
+        [[nodiscard]] bool operator!=(const Numeric other) const noexcept { return value != static_cast<T>(other); }
 
         /* --- COPY SEMANTICS --- */
         Handle(const Handle&) noexcept = default;
@@ -54,17 +54,6 @@ namespace Sierra
     private:
         T value = T(0);
 
-    };
-
-}
-
-namespace std
-{
-
-    template<Sierra::HandleType T>
-    struct hash<Sierra::Handle<T>>
-    {
-        size_t operator()(const Sierra::Handle<T> handle) const noexcept { return handle.GetValue(); }
     };
 
 }

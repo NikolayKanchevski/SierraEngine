@@ -3,6 +3,7 @@
 //
 
 #include "TextureSerializer.h"
+#include "TextureImporter.h"
 
 #include "Compressors/BasisUniversalCompressor.h"
 
@@ -13,21 +14,11 @@ namespace SierraEngine
     {
         void SerializeRawMemory(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo)
         {
-            const TextureDetails details
+            for (const LoadedImageLevel& level : serializeInfo.levels)
             {
-                .width = serializeInfo.levels[0].layers[0].GetWidth(),
-                .height = serializeInfo.levels[0].layers[0].GetHeight(),
-                .levelCount = static_cast<uint32>(serializeInfo.levels.size()),
-                .layerCount = static_cast<uint32>(serializeInfo.levels[0].layers.size()),
-                .format = serializeInfo.levels[0].layers[0].GetFormat()
-            };
-            stream.Write(details);
-
-            for (const ImageLevel& level : serializeInfo.levels)
-            {
-                for (const Image& layer : level.layers)
+                for (const LoadedImage& layer : level.layers)
                 {
-                    stream.Write(layer.GetMemory(), layer.GetMemorySize());
+                    stream.Write(layer.memory.data(), layer.memory.size());
                 }
             }
         }
@@ -37,11 +28,11 @@ namespace SierraEngine
             std::unique_ptr<ImageCompressor> compressor = nullptr;
             switch (serializeInfo.compression)
             {
-                case TextureCompression::BasisUniversal:    { compressor = std::make_unique<BasisUniversalCompressor>(); break; }
-                default:                                    break;
+                case ImageCompression::BasisUniversal:    { compressor = std::make_unique<BasisUniversalCompressor>(); break; }
+                default:                                  break;
             }
 
-            std::optional<CompressedImage> compressedImage = compressor->Compress({ .levels = serializeInfo.levels, .compressionLevel = serializeInfo.compressionLevel, .qualityLevel = serializeInfo.qualityLevel });
+            std::optional<CompressedImage> compressedImage = compressor->Compress({ .levels = serializeInfo.levels, .compressionLevel = serializeInfo.compressionLevel, .qualityLevel = serializeInfo.compressionQualityLevel });
             if (!compressedImage.has_value())
             {
                 APP_WARNING("Could not compress image contents of texture [{0}], writing raw pixel memory instead", serializeInfo.metadata.name);
@@ -55,22 +46,39 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void TextureSerializer::SerializeMemory(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo) const
+    void TextureSerializer::SerializeBlob(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo) const
     {
         const TextureHeader header
         {
+            .width = serializeInfo.levels[0].layers[0].width,
+            .height = serializeInfo.levels[0].layers[0].height,
+            .levelCount = static_cast<uint32>(serializeInfo.levels.size()),
+            .layerCount = static_cast<uint32>(serializeInfo.levels[0].layers.size()),
+            .format = serializeInfo.levels[0].layers[0].format,
             .compression = serializeInfo.compression
         };
         stream.Write(header);
 
-        if (serializeInfo.compression == TextureCompression::None)
-        {
-            SerializeRawMemory(stream, serializeInfo);
-        }
-        else
+        if (serializeInfo.compression != ImageCompression::None)
         {
             SerializeCompressedMemory(stream, serializeInfo);
         }
+        else
+        {
+            SerializeRawMemory(stream, serializeInfo);
+        }
+    }
+
+    /* --- GETTER METHODS --- */
+
+    size TextureSerializer::GetTextureMemorySize(const TextureSerializeInfo& serializeInfo) const noexcept
+    {
+        const LoadedImage& image = serializeInfo.levels[0].layers[0];
+        const uint8 pixelMemorySize = Sierra::ImageFormatToBlockMemorySize(image.format);
+
+        /* === Reference: https://gaim.umbc.edu/2010/05/27/mip-size/ === */
+        const size approximatedMemorySize = (4 * (image.width * image.height * pixelMemorySize) - ((image.width >> (serializeInfo.levels.size() - 1)) * (image.height >> (serializeInfo.levels.size() - 1)) * pixelMemorySize)) / 3;
+        return approximatedMemorySize;
     }
 
 }

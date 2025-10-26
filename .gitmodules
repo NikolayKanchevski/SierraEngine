@@ -32,3 +32,9 @@
 [submodule "SierraEngine/vendor/basis_universal"]
 	path = SierraEngine/vendor/basis_universal
 	url = https://github.com/BinomialLLC/basis_universal
+[submodule "SierraEngine/vendor/meshoptimizer"]
+	path = SierraEngine/vendor/meshoptimizer
+	url = https://github.com/zeux/meshoptimizer
+[submodule "SierraEngineEditor/vendor/easy-args"]
+	path = SierraEngineEditor/vendor/easy-args
+	url = https://github.com/gouwsxander/easy-args

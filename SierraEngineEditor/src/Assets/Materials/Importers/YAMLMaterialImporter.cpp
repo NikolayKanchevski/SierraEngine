@@ -30,8 +30,9 @@ namespace SierraEngine
 
     std::optional<ImportedMaterial> YAMLMaterialImporter::Import(const MaterialImportInfo& importInfo) const
     {
-        Sierra::MemoryReadStream memoryStream(importInfo.serializedMaterial.memory);
-        AssetHeader header = ImportHeader(memoryStream);
+        Sierra::MemoryReadStream blobStream(importInfo.serializedMaterial.blob);
+
+        AssetHeader header = blobStream.ReadAs<AssetHeader>();
 
         if (header.signature != GetSignature())
         {

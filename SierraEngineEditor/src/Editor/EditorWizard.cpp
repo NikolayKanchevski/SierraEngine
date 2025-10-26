@@ -7,19 +7,40 @@
 namespace SierraEngine
 {
 
+    namespace
+    {
+        constexpr ImGuiWindowFlags MODAL_WINDOW_FLAGS = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking;
+    }
+
     /* --- POLLING METHODS --- */
 
-    void EditorWizard::DrawShadow()
+    bool EditorWizard::BeginWizard(const std::string_view title, bool& open) const noexcept
     {
-        constexpr float32 DIMMING_FACTOR = 0.5f;
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, DIMMING_FACTOR));
+        const ImGuiIO& io = ImGui::GetIO();
+        const Vector2 windowSize = { io.DisplaySize.x / 2.75f, io.DisplaySize.y / 1.25f };
 
-        ImGui::SetNextWindowPos({ 0, 0 });
-        ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-        ImGui::Begin("##WizardShadow", nullptr, ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+        ImGui::SetNextWindowSize(windowSize);
+        ImGui::SetNextWindowPos({ (io.DisplaySize.x - windowSize.x) / 2.0f, (io.DisplaySize.y - windowSize.y) / 2.0f });
+
+        ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImGui::GetStyle().CellPadding * 2);
+        if (open)
+        {
+            ImGui::OpenPopup(title.data());
+        }
+
+        if (ImGui::BeginPopupModal(title.data(), &open, MODAL_WINDOW_FLAGS))
+        {
+            return true;
+        }
+
+        ImGui::PopStyleVar();
+        return false;
+    }
+
+    void EditorWizard::EndWizard() const noexcept
+    {
+        ImGui::PopStyleVar();
         ImGui::End();
-
-        ImGui::PopStyleColor();
     }
 
 }

@@ -31,7 +31,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit UnknownFileError(std::string_view message, const std::filesystem::path& filePath) noexcept;
+        explicit UnknownFileError(std::string_view message, const std::filesystem::path& filePath, std::string_view reason = "Unknown") noexcept;
 
         /* --- COPY SEMANTICS --- */
         UnknownFileError(const UnknownFileError&) = delete;

@@ -4,13 +4,8 @@
 
 #pragma once
 
-#include "Image.h"
-
 namespace SierraEngine
 {
-
-    /* --- TYPE DEFINITIONS --- */
-    using ImageFormatSignature = std::span<const uint8>;
 
     enum class ImageLoadChannels : uint8
     {
@@ -27,18 +22,31 @@ namespace SierraEngine
         ImageLoadChannels loadChannels = ImageLoadChannels::All;
     };
 
+    struct LoadedImage
+    {
+        uint32 width = 0;
+        uint32 height = 0;
+        Sierra::ImageFormat format = Sierra::ImageFormat::Undefined;
+        std::vector<uint8> memory = { };
+    };
+
+    struct LoadedImageLevel
+    {
+        std::span<const LoadedImage> layers = { };
+    };
+
     class SIERRA_ENGINE_API ImageLoader
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual std::optional<Image> Load(const ImageLoadInfo& loadInfo) const = 0;
+        [[nodiscard]] virtual std::optional<LoadedImage> Load(const ImageLoadInfo& loadInfo) const = 0;
 
         /* --- COPY SEMANTICS --- */
         ImageLoader(const ImageLoader&) = delete;
         ImageLoader& operator=(const ImageLoader&) = delete;
 
         /* --- DESTRUCTOR --- */
-        ~ImageLoader() noexcept = default;
+        virtual ~ImageLoader() noexcept = default;
 
     protected:
         /* --- CONSTRUCTORS --- */

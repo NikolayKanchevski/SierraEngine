@@ -7,11 +7,4 @@
 namespace SierraEngine
 {
 
-    /* --- POLLING METHODS --- */
-
-    AssetHeader AssetImporter::ImportHeader(Sierra::Stream& stream) const
-    {
-        return stream.Read<AssetHeader>();
-    }
-
 }

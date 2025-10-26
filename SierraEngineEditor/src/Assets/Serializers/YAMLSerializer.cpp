@@ -21,7 +21,7 @@ namespace SierraEngine
 
         SerializeString(node["name"], metadata.name);
         SerializeString(node["author"], metadata.author);
-        SerializeContainer(node["tags"], std::span(metadata.tags), &YAMLSerializer::SerializeString);
+        SerializeContainer(node["tags"], std::span(metadata.tags));
     }
 
     /* --- GETTER METHODS --- */

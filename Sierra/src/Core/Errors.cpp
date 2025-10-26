@@ -26,7 +26,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     InvalidValueError::InvalidValueError(const std::string_view message) noexcept
-            : std::runtime_error(SR_FORMAT("{0}! Error: Argument value is invalid.", message))
+        : std::runtime_error(SR_FORMAT("{0}! Error: Argument value is invalid.", message))
     {
 
     }

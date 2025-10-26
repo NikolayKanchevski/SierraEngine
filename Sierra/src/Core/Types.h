@@ -65,30 +65,37 @@
     using size = size_t;
 
     template<size Length, NumericType Numeric>
-    using VectorBase = glm::vec<Length, Numeric>;
-    using Vector2 = VectorBase<2, float32>;
-    using Vector3 = VectorBase<3, float32>;
-    using Vector4 = VectorBase<4, float32>;
-    using Vector2Int = VectorBase<2, int32>;
-    using Vector3Int = VectorBase<3, int32>;
-    using Vector4Int = VectorBase<4, int32>;
-    using Vector2UInt = VectorBase<2, uint32>;
-    using Vector3UInt = VectorBase<3, uint32>;
-    using Vector4UInt = VectorBase<4, uint32>;
+    using Vector = glm::vec<Length, Numeric>;
 
-    template<FloatingPointType FloatingPoint>
-    using QuaternionBase = glm::qua<FloatingPoint>;
-    using Quaternion = QuaternionBase<float32>;
+    using Vector2 = Vector<2, float32>;
+    using Vector3 = Vector<3, float32>;
+    using Vector4 = Vector<4, float32>;
+    using Vector2Int = Vector<2, int32>;
+    using Vector3Int = Vector<3, int32>;
+    using Vector4Int = Vector<4, int32>;
+    using Vector2UInt = Vector<2, uint32>;
+    using Vector3UInt = Vector<3, uint32>;
+    using Vector4UInt = Vector<4, uint32>;
 
     template<size Columns, size Rows, NumericType Numeric>
-    using MatrixBase = glm::mat<Columns, Rows, Numeric>;
-    using Matrix3x3 = MatrixBase<3, 3, float32>;
-    using Matrix4x4 = MatrixBase<4, 4, float32>;
+    using Matrix = glm::mat<Columns, Rows, Numeric>;
+    using Matrix3x3 = Matrix<3, 3, float32>;
+    using Matrix4x4 = Matrix<4, 4, float32>;
 
-    template<size Length, FloatingPointType FloatingPoint>
-    using ColorBase = glm::vec<Length, FloatingPoint>;
-    using Color32 = ColorBase<4, float32>;
-    using Color64 = ColorBase<4, float64>;
+    template<FloatingPointType FloatingPoint>
+    using Quaternion = glm::qua<FloatingPoint>;
+    using Quaternion32 = Quaternion<float32>;
+    using Quaternion64 = Quaternion<float64>;
+
+    template<size Channels, NumericType Numeric>
+    using Color = glm::vec<Channels, Numeric>;
+
+    using Color32 = Color<4, float32>;
+    using Color64 = Color<4, float64>;
+
+    using ColorRG = Color<2, float32>;
+    using ColorRGB = Color<3, float32>;
+    using ColorRGBA = Color<4, float32>;
 #pragma endregion
 
 #pragma region Concepts
@@ -96,7 +103,7 @@
     struct IsVector : std::false_type { };
 
     template<size Length, NumericType Numeric>
-    struct IsVector<VectorBase<Length, Numeric>> : std::true_type { };
+    struct IsVector<Vector<Length, Numeric>> : std::true_type { };
 
     template<typename T>
     concept VectorType = IsVector<T>::value;
@@ -105,7 +112,7 @@
     struct IsQuaternion : std::false_type { };
 
     template<FloatingPointType FloatingPoint>
-    struct IsQuaternion<QuaternionBase<FloatingPoint>> : std::true_type { };
+    struct IsQuaternion<Quaternion<FloatingPoint>> : std::true_type { };
 
     template<typename T>
     concept QuaternionType = IsQuaternion<T>::value;
@@ -114,7 +121,7 @@
     struct IsMatrix : std::false_type { };
 
     template<size Columns, size Rows, NumericType Numeric>
-    struct IsMatrix<MatrixBase<Columns, Rows, Numeric>> : std::true_type { };
+    struct IsMatrix<Matrix<Columns, Rows, Numeric>> : std::true_type { };
 
     template<typename T>
     concept MatrixType = IsMatrix<T>::value;
@@ -122,8 +129,8 @@
     template<typename>
     struct IsColor : std::false_type { };
 
-    template<size Length, NumericType Numeric>
-    struct IsColor<ColorBase<Length, Numeric>> : std::true_type { };
+    template<size Channels, NumericType Numeric>
+    struct IsColor<Color<Channels, Numeric>> : std::true_type { };
 
     template<typename T>
     concept ColorType = IsColor<T>::value;

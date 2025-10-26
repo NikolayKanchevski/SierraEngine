@@ -5,9 +5,6 @@
 #pragma once
 
 #include "../AssetSerializer.h"
-#include "TextureAsset.h"
-
-#include "../AssetID.h"
 #include "../AssetMetadata.h"
 
 #include "ImageLoader.h"
@@ -16,24 +13,18 @@
 namespace SierraEngine
 {
 
+    enum class TextureFilter
+    {
+        Pixelated,
+        Smooth
+    };
+
     struct TextureProperties
     {
-        TextureType type = TextureType::Undefined;
-        TextureFilter filter = TextureFilter::Pixelated;
+        TextureFilter filter = TextureFilter::Smooth;
     };
 
-    struct TextureDetails
-    {
-        uint32 width = 0;
-        uint32 height = 0;
-
-        uint32 levelCount = 0;
-        uint32 layerCount = 0;
-
-        Sierra::ImageFormat format = Sierra::ImageFormat::Undefined;
-    };
-
-    enum class TextureCompression : bool
+    enum class ImageCompression : uint8
     {
         None,
         BasisUniversal
@@ -44,17 +35,28 @@ namespace SierraEngine
         AssetMetadata metadata = { };
         TextureProperties properties = { };
 
-        TextureCompression compression = TextureCompression::None;
+        ImageCompression compression = ImageCompression::None;
         ImageCompressionLevel compressionLevel = ImageCompressionLevel::Standard;
-        ImageQualityLevel qualityLevel = ImageQualityLevel::Standard;
+        ImageCompressionQualityLevel compressionQualityLevel = ImageCompressionQualityLevel::Standard;
+        std::span<const LoadedImageLevel> levels = { };
+    };
 
-        std::span<const ImageLevel> levels = { };
+    struct TextureHeader
+    {
+        uint32 width = 0;
+        uint32 height = 0;
+
+        uint32 levelCount = 0;
+        uint32 layerCount = 0;
+
+        Sierra::ImageFormat format = Sierra::ImageFormat::Undefined;
+        ImageCompression compression = ImageCompression::None;
     };
 
     struct SerializedTexture
     {
         std::vector<uint8> data = { };
-        std::vector<uint8> memory = { };
+        std::vector<uint8> blob = { };
     };
 
     class SIERRA_ENGINE_API TextureSerializer : public virtual AssetSerializer
@@ -75,18 +77,14 @@ namespace SierraEngine
         TextureSerializer() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        void SerializeMemory(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo) const;
+        void SerializeBlob(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo) const;
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] size GetTextureMemorySize(const TextureSerializeInfo& serializeInfo) const noexcept;
 
         /* --- MOVE SEMANTICS --- */
         TextureSerializer(TextureSerializer&&) noexcept = default;
         TextureSerializer& operator=(TextureSerializer&&) noexcept = default;
-
-    private:
-        friend class TextureImporter;
-        struct TextureHeader
-        {
-            TextureCompression compression = { };
-        };
 
     };
 

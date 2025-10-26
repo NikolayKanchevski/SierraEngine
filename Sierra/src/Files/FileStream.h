@@ -12,7 +12,7 @@
 namespace Sierra
 {
 
-    enum class FileStreamBuffering : uint8
+    enum class FileStreamBuffering : bool
     {
         Buffered,
         Unbuffered

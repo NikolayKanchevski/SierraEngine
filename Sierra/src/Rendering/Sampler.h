@@ -55,11 +55,13 @@ namespace Sierra
     struct SamplerCreateInfo
     {
         std::string_view name = "Sampler";
-        SamplerFilter filter = SamplerFilter::Nearest;
-        SamplerAddressMode extendMode = SamplerAddressMode::Repeat;
+
+        SamplerFilter magFilter = SamplerFilter::Nearest;
+        SamplerFilter minFilter = SamplerFilter::Nearest;
+        SamplerAddressMode addressMode = SamplerAddressMode::Repeat;
         SamplerCompareOperation compareOperation = SamplerCompareOperation::None;
 
-        uint32 highestSampledLevel = 1;
+        uint32 maxSampledLevel = 1;
         SamplerAnisotropy anisotropy = SamplerAnisotropy::x1;
         SamplerBorderColor borderColor = SamplerBorderColor::Black;
     };

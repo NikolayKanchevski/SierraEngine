@@ -20,6 +20,7 @@ namespace SierraEngine
     {
         AssetHeader header = { };
         AssetMetadata metadata = { };
+
         MaterialProperties properties = { };
     };
 

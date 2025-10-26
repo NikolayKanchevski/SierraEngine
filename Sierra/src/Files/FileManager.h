@@ -61,6 +61,9 @@ namespace Sierra
         [[nodiscard]] virtual bool FileExists(const std::filesystem::path& filePath) const noexcept = 0;
         [[nodiscard]] virtual std::unique_ptr<FileStream> CreateFileStream(const FileStreamCreateInfo& createInfo) const = 0;
 
+        void WriteFile(const std::filesystem::path& filePath, std::span<const uint8> memory) const;
+        [[nodiscard]] std::vector<uint8> ReadFile(const std::filesystem::path& filePath) const;
+
         virtual void CreateFile(const std::filesystem::path& filePath, FilePathConflictPolicy conflictPolicy) const;
         virtual void RenameFile(const std::filesystem::path& filePath, std::string_view name) const;
         virtual void CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const;

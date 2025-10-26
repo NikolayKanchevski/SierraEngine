@@ -16,3 +16,6 @@ SierraEngineBuildApplication(src/EntryPoint.cpp)
 
 # === LINK SOURCE FILES === #
 add_subdirectory(src)
+
+# === SET FLAGS === #
+set_property(TARGET SierraEngineEditor PROPERTY COMPILE_WARNING_AS_ERROR ON)

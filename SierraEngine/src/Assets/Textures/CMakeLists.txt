@@ -1,13 +1,11 @@
 target_sources(SierraEngine PRIVATE
-    Image.cpp
-    Image.h
+    ImageAccessor.h
+    ImageAccessor.cpp
     ImageCompressor.h
     ImageConverter.cpp
     ImageConverter.h
     ImageLoader.h
     ImageTranscoder.h
-    TextureAsset.cpp
-    TextureAsset.h
     TextureImporter.cpp
     TextureImporter.h
     TextureSerializer.cpp

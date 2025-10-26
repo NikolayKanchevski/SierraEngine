@@ -17,8 +17,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    UnknownFileError::UnknownFileError(const std::string_view message, const std::filesystem::path& filePath) noexcept
-        : FileError(message, SR_FORMAT("File [{0}] caused an unknown error", filePath.string()))
+    UnknownFileError::UnknownFileError(const std::string_view message, const std::filesystem::path& filePath, const std::string_view reason) noexcept
+        : FileError(message, SR_FORMAT("File [{0}] caused an unknown error! Possible reason: {1}", filePath.string(), reason))
     {
 
     }

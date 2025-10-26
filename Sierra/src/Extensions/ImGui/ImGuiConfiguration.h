@@ -7,7 +7,7 @@
 #include <cstdint>
 
 #define IMGUI_API SIERRA_API
-#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+// #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #define IM_VEC2_CLASS_EXTRA                                                                           \

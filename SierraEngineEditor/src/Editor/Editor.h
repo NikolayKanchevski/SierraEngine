@@ -37,7 +37,7 @@ namespace SierraEngine
         explicit Editor(const EditorCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Draw();
+        void Draw(Sierra::CommandBuffer& commandBuffer);
 
         ViewportID CreateViewport(const ViewportCreateInfo& createInfo);
         bool DestroyViewport(ViewportID ID);
@@ -69,8 +69,8 @@ namespace SierraEngine
         const Sierra::Device& device;
         const Sierra::PlatformContext& platformContext;
 
-        Scene& scene;
         Sierra::ResourceTable& resourceTable;
+        Scene& scene;
 
         ImGuiStyle style = { };
         std::unique_ptr<EditorWizard> currentWizard = nullptr;
@@ -81,6 +81,9 @@ namespace SierraEngine
         std::vector<ViewportID> viewportIDs = { };
         Sierra::IndexPool<ViewportID> viewportIndexPool = { };
         std::vector<std::optional<ViewportPanel>> viewports = { };
+
+        void DrawMenuBar();
+        ImGuiID DrawDockSpace();
 
     };
 

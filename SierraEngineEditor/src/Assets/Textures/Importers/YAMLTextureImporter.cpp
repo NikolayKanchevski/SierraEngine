@@ -9,22 +9,6 @@ namespace SierraEngine
 
     namespace
     {
-        TextureType StringToTextureType(const std::string_view string) noexcept
-        {
-            if (string == "Albedo")           return TextureType::Albedo;
-            if (string == "Specular")         return TextureType::Specular;
-            if (string == "Normal")           return TextureType::Normal;
-            if (string == "Opacity")          return TextureType::Opacity;
-            if (string == "Roughness")        return TextureType::Roughness;
-            if (string == "Metallic")         return TextureType::Metallic;
-            if (string == "Displacement")     return TextureType::Displacement;
-            if (string == "Emission")         return TextureType::Emission;
-            if (string == "Occlusion")        return TextureType::Occlusion;
-            if (string == "Shadow")           return TextureType::Shadow;
-            if (string == "Environment")      return TextureType::Environment;
-            return TextureType::Undefined;
-        }
-
         TextureFilter StringToTextureFilter(const std::string_view string) noexcept
         {
             if (string == "Pixelated")  return TextureFilter::Pixelated;
@@ -37,8 +21,10 @@ namespace SierraEngine
 
     std::optional<ImportedTexture> YAMLTextureImporter::Import(const TextureImportInfo& importInfo) const
     {
-        Sierra::MemoryReadStream memoryStream(importInfo.serializedTexture.memory);
-        AssetHeader header = ImportHeader(memoryStream);
+        Sierra::MemoryReadStream blobStream(importInfo.serializedTexture.blob);
+
+        AssetHeader header = blobStream.ReadAs<AssetHeader>();
+        TextureHeader textureHeader = blobStream.ReadAs<TextureHeader>();
 
         if (header.signature != GetSignature())
         {
@@ -65,15 +51,14 @@ namespace SierraEngine
         std::optional<TextureProperties> properties = ImportProperties(root);
         if (!properties.has_value())
         {
-            APP_WARNING("Cannot YAML import texture [{0}], as its properties are corrupted", metadata->name);
+            APP_WARNING("Cannot YAML import texture, as its properties are corrupted");
             return std::nullopt;
         }
 
-        std::vector<uint8> memory = { };
-        std::optional<TextureDetails> details = ImportMemory(memoryStream, importInfo, memory);
-        if (!details.has_value())
+        std::vector<uint8> blob = ImportBlob(textureHeader, importInfo.format, blobStream);
+        if (blob.empty())
         {
-            APP_WARNING("Could not YAML import texture [{0}], as its memory is corrupted", metadata->name);
+            APP_WARNING("Could not YAML import texture [{0}], its blob is corrupted", metadata->name);
             return std::nullopt;
         }
 
@@ -82,8 +67,8 @@ namespace SierraEngine
             .header = std::move(header),
             .metadata = std::move(*metadata),
             .properties = std::move(*properties),
-            .details = std::move(*details),
-            .memory = std::move(memory)
+            .textureHeader = std::move(textureHeader),
+            .memory = std::move(blob)
         };
 
         return texture;
@@ -95,8 +80,6 @@ namespace SierraEngine
         if (node.key_is_null()) return std::nullopt;
 
         TextureProperties properties = { };
-
-        properties.type = ImportEnum(node["type"], StringToTextureType).value_or(TextureType::Undefined);
         properties.filter = ImportEnum(node["filter"], StringToTextureFilter).value_or(TextureFilter::Pixelated);
 
         return properties;

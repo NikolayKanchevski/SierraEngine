@@ -34,7 +34,7 @@ namespace SierraEngine
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] Matrix4x4 GetTransformationMatrix() const noexcept;
-        [[nodiscard]] Quaternion GetOrientation() const noexcept;
+        [[nodiscard]] Quaternion32 GetOrientation() const noexcept;
 
         [[nodiscard]] Vector3 GetPosition() const noexcept { return position; }
         [[nodiscard]] Vector3 GetRotation() const noexcept { return rotation; }

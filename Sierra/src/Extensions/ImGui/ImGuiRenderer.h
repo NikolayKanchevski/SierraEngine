@@ -29,7 +29,6 @@ namespace Sierra
     struct ImGuiRendererCreateInfo
     {
         const Device& device;
-        CommandBuffer& commandBuffer;
 
         uint32 concurrentFrameCount = 1;
         ImageFormat format = ImageFormat::Undefined;
@@ -74,6 +73,7 @@ namespace Sierra
         SampledImageID fontAtlasID = { };
         SamplerID fontAtlasSamplerID = { };
         std::unique_ptr<Image> fontAtlas = nullptr;
+        std::unique_ptr<Sierra::Buffer> fontAtlasStagingBuffer = nullptr;
 
         std::unique_ptr<Image> resolverImage = nullptr;
         std::vector<std::unique_ptr<Buffer>> vertexBuffers = { };

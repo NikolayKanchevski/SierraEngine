@@ -5,7 +5,6 @@
 #pragma once
 
 #include "../AssetSerializer.h"
-#include "MaterialAsset.h"
 
 #include "../AssetID.h"
 #include "../AssetMetadata.h"
@@ -13,9 +12,21 @@
 namespace SierraEngine
 {
 
+    enum class MaterialAlphaMode : bool
+    {
+        Opaque,
+        Transparent
+    };
+
+    enum class MaterialCullMode : bool
+    {
+        SingleSided,
+        DoubleSided
+    };
+
     struct MaterialDiffuseProperty
     {
-        Color32 tint = { 1.0f, 1.0f, 1.0f, 1.0f };
+        Color<3, float32> tint = { 1.0f, 1.0f, 1.0f };
         TextureID texture = { };
     };
 
@@ -49,7 +60,7 @@ namespace SierraEngine
     struct SerializedMaterial
     {
         std::vector<uint8> data = { };
-        std::vector<uint8> memory = { };
+        std::vector<uint8> blob = { };
     };
 
     class SIERRA_ENGINE_API MaterialSerializer : public virtual AssetSerializer

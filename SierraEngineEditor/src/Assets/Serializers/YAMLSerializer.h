@@ -62,13 +62,17 @@ namespace SierraEngine
             SerializeString(node, Converter(value));
         }
 
-        template<typename T, typename U = T> requires (std::is_convertible_v<T, U>)
-        void SerializeContainer(ryml::NodeRef node, const std::span<const T> container, void(YAMLSerializer::*const Converter)(ryml::NodeRef, const U) const) const
+        template<typename T>
+        void SerializeContainer(ryml::NodeRef node, const std::span<const T> container) const
         {
-            node |= ryml::SEQ;
-            for (const T& item : container)
+            node |= ryml::SEQ | ryml::FLOW_SL;
+            for (size i = 0; i < container.size(); i++)
             {
-                (this->*Converter)(node.append_child(), item);
+                ryml::NodeRef child = node.append_child();
+                child |= ryml::VAL_PLAIN;
+
+                const std::string_view spacing = i == 0 ? "" : " ";
+                child << SR_FORMAT(!FloatingPointType<T> ? "{0}{1}" : "{0}{1:.2f}", spacing, container[i]);
             }
         }
 

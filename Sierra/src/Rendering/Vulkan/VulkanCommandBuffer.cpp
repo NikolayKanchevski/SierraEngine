@@ -346,7 +346,7 @@ namespace Sierra
                 .levelCount = 1,
                 .baseArrayLayer = 0,
                 .layerCount = image.GetLayerCount()
-            },
+            }
         };
 
         // Set up base blit command

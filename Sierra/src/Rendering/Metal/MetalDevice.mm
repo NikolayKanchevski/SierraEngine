@@ -109,7 +109,7 @@ namespace Sierra
 
     void MetalDevice::SetResourceName(const MTLResource* resource, const std::string_view resourceName) const noexcept
     {
-        const NSString* const label = [NSString stringWithCString: resourceName.data() length: resourceName.size()];
+        const NSString* const label = [NSString stringWithCString: resourceName.data() encoding: NSASCIIStringEncoding];
         [((__bridge id) resource) performSelector: @selector(setLabel:) withObject: label];
     }
 

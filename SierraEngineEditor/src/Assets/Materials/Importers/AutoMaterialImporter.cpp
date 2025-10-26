@@ -13,9 +13,9 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    std::optional<ImportedMaterial> AutoMaterialImporter::Import(const MaterialImportInfo& importInfo) const
+    std::optional<ImportedMaterial> AutoMaterialImporter::Import(const MaterialImportInfo& importInfo) noexcept
     {
-        const AssetSignature& signature = reinterpret_cast<const AssetSignature&>(*importInfo.serializedMaterial.memory.data());
+        const AssetSignature& signature = reinterpret_cast<const AssetSignature&>(*importInfo.serializedMaterial.blob.data());
 
         TRY_IMPORTER(YAMLMaterialImporter);
 

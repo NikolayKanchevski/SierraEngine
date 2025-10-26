@@ -30,16 +30,6 @@ namespace SierraEngine
         virtual void ImportTexture(const ImportedTexture& importedTexture) = 0;
         virtual void ImportMaterial(const ImportedMaterial& importedMaterial) = 0;
 
-        /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual const TextureAsset& GetDefaultTexture(TextureType textureType) const noexcept = 0;
-        [[nodiscard]] virtual const MaterialAsset& GetDefaultMaterial() const noexcept = 0;
-
-        [[nodiscard]] bool TextureExists(TextureID ID) const noexcept { return GetTexture(ID) != nullptr; }
-        [[nodiscard]] virtual const TextureAsset* GetTexture(TextureID ID) const noexcept = 0;
-
-        [[nodiscard]] bool MaterialExists(MaterialID ID) const noexcept { return GetMaterial(ID) != nullptr; }
-        [[nodiscard]] virtual const MaterialAsset* GetMaterial(MaterialID ID) const noexcept = 0;
-
         /* --- COPY SEMANTICS --- */
         AssetManager(const AssetManager&) = delete;
         AssetManager& operator=(const AssetManager&) = delete;

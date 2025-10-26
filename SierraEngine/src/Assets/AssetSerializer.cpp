@@ -4,6 +4,8 @@
 
 #include "AssetSerializer.h"
 
+#include "AssetHeader.h"
+
 namespace SierraEngine
 {
 

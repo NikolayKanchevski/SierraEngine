@@ -15,14 +15,25 @@ namespace Sierra
     {
         switch (sampleMode)
         {
-            case SamplerFilter::Linear:     return MTLSamplerMinMagFilterLinear;
             case SamplerFilter::Nearest:    return MTLSamplerMinMagFilterNearest;
+            case SamplerFilter::Linear:     return MTLSamplerMinMagFilterLinear;
         }
 
         return MTLSamplerMinMagFilterNearest;
     }
 
-    MTLSamplerAddressMode SamplerExtendModeToSamplerAddressMode(const SamplerAddressMode extendMode) noexcept
+    MTLSamplerMipFilter SamplerSampleModeToSamplerMTLSamplerMipFilter(const SamplerFilter sampleMode) noexcept
+    {
+        switch (sampleMode)
+        {
+            case SamplerFilter::Nearest:    return MTLSamplerMipFilterNearest;
+            case SamplerFilter::Linear:     return MTLSamplerMipFilterLinear;
+        }
+
+        return MTLSamplerMipFilterNotMipmapped;
+    }
+
+    MTLSamplerAddressMode SamplerAddressModeToSamplerAddressMode(const SamplerAddressMode extendMode) noexcept
     {
         switch (extendMode)
         {
@@ -90,15 +101,16 @@ namespace Sierra
         device.SetResourceName(samplerDescriptor, createInfo.name);
 
         // Set up sampler descriptor
-        [samplerDescriptor setMagFilter: SamplerSampleModeToSamplerMinMagFilter(createInfo.filter)];
-        [samplerDescriptor setMinFilter: samplerDescriptor.magFilter];
-        [samplerDescriptor setRAddressMode: SamplerExtendModeToSamplerAddressMode(createInfo.extendMode)];
+        [samplerDescriptor setMagFilter: SamplerSampleModeToSamplerMinMagFilter(createInfo.magFilter)];
+        [samplerDescriptor setMinFilter: SamplerSampleModeToSamplerMinMagFilter(createInfo.minFilter)];
+        [samplerDescriptor setMipFilter: SamplerSampleModeToSamplerMTLSamplerMipFilter(createInfo.minFilter)];
+        [samplerDescriptor setRAddressMode:SamplerAddressModeToSamplerAddressMode(createInfo.addressMode)];
         [samplerDescriptor setSAddressMode: samplerDescriptor.rAddressMode];
         [samplerDescriptor setTAddressMode: samplerDescriptor.rAddressMode];
         [samplerDescriptor setMaxAnisotropy: SamplerAnisotropyToUInteger(createInfo.anisotropy)];
         [samplerDescriptor setCompareFunction: SamplerCompareOperationToCompareFunction(createInfo.compareOperation)];
         [samplerDescriptor setLodMinClamp: 0.0f];
-        [samplerDescriptor setLodMaxClamp: static_cast<float32>(createInfo.highestSampledLevel)];
+        [samplerDescriptor setLodMaxClamp: static_cast<float32>(createInfo.maxSampledLevel)];
         [samplerDescriptor setBorderColor: SamplerBorderColorToSamplerBorderColor(createInfo.borderColor)];
         [samplerDescriptor setNormalizedCoordinates: YES];
         [samplerDescriptor setSupportArgumentBuffers: YES];

@@ -1,0 +1,7 @@
+ID: 9492828332309921088
+metadata:
+  name: DebugLevelTexture
+  author: nikolay
+  tags: [Debug]
+properties:
+  filter: Smooth

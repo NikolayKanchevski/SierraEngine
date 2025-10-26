@@ -11,7 +11,6 @@
 #include "../../src/Core/ThreadPool.h"
 
 #include "../../src/Rendering/ArenaAllocator.h"
-#include "../../src/Rendering/Material.h"
 #include "../../src/Rendering/Mesh.h"
 #include "../../src/Rendering/SceneRenderer.h"
 #include "../../src/Rendering/Vertex.h"
@@ -24,16 +23,14 @@
 #include "../../src/Assets/AssetMetadata.h"
 #include "../../src/Assets/AssetSerializer.h"
 
-#include "../../src/Assets/Materials/MaterialAsset.h"
 #include "../../src/Assets/Materials/MaterialImporter.h"
 #include "../../src/Assets/Materials/MaterialSerializer.h"
 
-#include "../../src/Assets/Textures/Image.h"
+#include "../../src/Assets/Textures/ImageAccessor.h"
 #include "../../src/Assets/Textures/ImageCompressor.h"
 #include "../../src/Assets/Textures/ImageConverter.h"
 #include "../../src/Assets/Textures/ImageLoader.h"
 #include "../../src/Assets/Textures/ImageTranscoder.h"
-#include "../../src/Assets/Textures/TextureAsset.h"
 #include "../../src/Assets/Textures/TextureImporter.h"
 #include "../../src/Assets/Textures/TextureSerializer.h"
 

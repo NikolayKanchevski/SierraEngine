@@ -16,7 +16,7 @@ namespace SierraEngine
         PropertiesPanel() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        void Draw(std::optional<EntityID> entityID, Scene& scene);
+        void Draw(std::optional<EntityID> entityID, Scene& scene) const;
 
         /* --- COPY SEMANTICS --- */
         PropertiesPanel(const PropertiesPanel&) = delete;

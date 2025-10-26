@@ -7,29 +7,9 @@
 namespace SierraEngine
 {
 
-    class AutoMaterialImporter final : public MaterialImporter
+    namespace AutoMaterialImporter
     {
-    public:
-        /* --- CONSTRUCTORS --- */
-        AutoMaterialImporter() noexcept = default;
-
-        /* --- POLLING METHODS --- */
-        [[nodiscard]] std::optional<ImportedMaterial> Import(const MaterialImportInfo& importInfo) const override;
-
-        /* --- GETTER METHODS --- */
-        [[nodiscard]] AssetSignature GetSignature() const noexcept override { return { '\0', '\0', '\0', '\0' }; }
-        [[nodiscard]] AssetVersion GetVersion() const noexcept override { return AssetVersion({ 0, 0, 0 }); }
-
-        /* --- COPY SEMANTICS --- */
-        AutoMaterialImporter(const AutoMaterialImporter&) = delete;
-        AutoMaterialImporter& operator=(const AutoMaterialImporter&) = delete;
-
-        /* --- MOVE SEMANTICS --- */
-        AutoMaterialImporter(AutoMaterialImporter&&) noexcept = default;
-        AutoMaterialImporter& operator=(AutoMaterialImporter&&) noexcept = default;
-
-        /* --- DESTRUCTOR --- */
-        ~AutoMaterialImporter() noexcept override = default;
+        [[nodiscard]] std::optional<ImportedMaterial> Import(const MaterialImportInfo& importInfo) noexcept;
     };
 
 }

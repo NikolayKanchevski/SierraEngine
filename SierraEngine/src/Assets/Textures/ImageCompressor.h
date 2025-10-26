@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Image.h"
+#include "ImageLoader.h"
 
 namespace SierraEngine
 {
@@ -18,7 +18,7 @@ namespace SierraEngine
         Highest
     };
 
-    enum class ImageQualityLevel : uint8
+    enum class ImageCompressionQualityLevel : uint8
     {
         Lowest,
         Low,
@@ -29,9 +29,9 @@ namespace SierraEngine
 
     struct ImageCompressInfo
     {
-        std::span<const ImageLevel> levels = { };
+        std::span<const LoadedImageLevel> levels = { };
         ImageCompressionLevel compressionLevel = ImageCompressionLevel::Standard;
-        ImageQualityLevel qualityLevel = ImageQualityLevel::Standard;
+        ImageCompressionQualityLevel qualityLevel = ImageCompressionQualityLevel::Standard;
     };
 
     struct CompressedImage

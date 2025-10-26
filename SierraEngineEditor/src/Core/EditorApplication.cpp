@@ -3,43 +3,38 @@
 //
 
 #include "EditorApplication.h"
-#include "../Assets/Textures/Serializers/YAMLTextureSerializer.h"
-#include "../Assets/Textures/Loaders/AutoImageLoader.h"
-#include "../Assets/Textures/Importers/YAMLTextureImporter.h"
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
 
 namespace SierraEngine
 {
-    
+
+    namespace
+    {
+        constexpr std::string_view APPLICATION_NAME = "Sierra Editor";
+        const Sierra::Version APPLICATION_VERSION = Sierra::Version({ 1, 0, 0 });
+    }
+
     /* --- CONSTRUCTORS --- */
 
-    EditorApplication::EditorApplication(const ApplicationCreateInfo& createInfo)
-        : Application(createInfo),
-          frameLimiter({ .maxFrameRate = 60 * SR_PLATFORM_MOBILE }),
-          threadPool({ .maxThreadCount = std::thread::hardware_concurrency() }),
-          device(GetRenderingContext().CreateDevice({ .name = "General Device" })),
-          queue(device->CreateQueue({ .name = "General Queue", .operations = Sierra::QueueOperations::All })),
-          resourceTable(device->CreateResourceTable({ .name = "General Resource Table" })),
-          arenaAllocator({ .device = *device }),
-          sceneRenderer({ .device = *device }),
-          scene({ .name = "Scene" }),
-          editor({ .device = *device, .platformContext = GetPlatformContext(), .scene = scene, .resourceTable = *resourceTable })
+    EditorApplication::EditorApplication(const EditorApplicationCreateInfo& createInfo)
+        : Application({ .name = APPLICATION_NAME, .version = APPLICATION_VERSION, .settings = createInfo.settings }),
+            frameLimiter({ .maxFrameRate = 60 * SR_PLATFORM_MOBILE }),
+            threadPool({ .maxThreadCount = std::thread::hardware_concurrency() }),
+            project({ .fileManager = GetFileManager(), .projectDirectoryPath = createInfo.projectDirectoryPath }),
+            device(GetRenderingContext().CreateDevice({ .name = "General Device" })),
+            resourceTable(device->CreateResourceTable({ .name = "General Resource Table" })),
+            queue(device->CreateQueue({ .name = "General Queue", .operations = Sierra::QueueOperations::All })),
+            arenaAllocator({ .device = *device }),
+            assetManager({ .device = *device }),
+            sceneRenderer({ .device = *device }),
+            editorSurface({ .platformContext = GetPlatformContext(), .device = *device, .resourceTable = *resourceTable }),
+            scene({ .name = "Scene" }),
+            editor({ .device = *device, .platformContext = GetPlatformContext(), .scene = scene, .resourceTable = *resourceTable })
     {
-        std::unique_ptr<Sierra::CommandBuffer> commandBuffer = queue->CreateCommandBuffer({ .name = "Staging command buffer" });
+        const std::unique_ptr<Sierra::CommandBuffer> commandBuffer = queue->CreateCommandBuffer({ .name = "Staging Command Buffer" });
         commandBuffer->Begin();
 
-        editorSurface.emplace(EditorSurfaceCreateInfo {
-            .editor = editor,
-            .commandBuffer = *commandBuffer
-        });
-
-        commandBuffers.resize(editorSurface->GetConcurrentFrameCount());
-        for (size i = 0; i < commandBuffers.size(); i++)
-        {
-            commandBuffers[i] = queue->CreateCommandBuffer({ .name = SR_FORMAT("General command buffer [{0}]", i) });
-        }
+        assetManager.LoadProjectAssets(GetFileManager(), project);
+        assetManager.Update(*commandBuffer);
 
         commandBuffer->End();
         queue->SubmitCommandBuffer(*commandBuffer);
@@ -76,6 +71,12 @@ namespace SierraEngine
         const EntityID Entity6 = scene.CreateEntity("Entity6");
 
         queue->WaitForCommandBuffer(*commandBuffer);
+
+        commandBuffers.resize(editorSurface.GetConcurrentFrameCount());
+        for (size i = 0; i < commandBuffers.size(); i++)
+        {
+            commandBuffers[i] = queue->CreateCommandBuffer({ .name = SR_FORMAT("General Command Buffer [{0}]", i) });
+        }
     }
 
     /* --- POLLING METHODS --- */
@@ -88,24 +89,24 @@ namespace SierraEngine
         frameLimiter.BeginFrame();
 
         // Retrieve current command buffer and wait until it is free
-        Sierra::CommandBuffer& commandBuffer = *commandBuffers[editorSurface->GetCurrentFrameIndex()];
+        Sierra::CommandBuffer& commandBuffer = *commandBuffers[editorSurface.GetCurrentFrameIndex()];
         queue->WaitForCommandBuffer(commandBuffer);
 
         // Begin rendering
-        if (editorSurface->Update()) return true;
+        if (editorSurface.Update()) return true;
         commandBuffer.Begin();
 
         // Bind scene resources
         arenaAllocator.Bind(commandBuffer);
         commandBuffer.BindResourceTable(*resourceTable);
 
-        editorSurface->Render(commandBuffer);
+        editorSurface.Render(commandBuffer, editor);
 
         // Submit work to GPU
         commandBuffer.End();
         queue->SubmitCommandBuffer(commandBuffer);
 
-        editorSurface->Present(commandBuffer);
+        editorSurface.Present(commandBuffer);
         frameLimiter.EndFrame();
 
         return false;

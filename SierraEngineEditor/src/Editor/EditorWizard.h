@@ -11,11 +11,15 @@ namespace SierraEngine
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual void Draw(bool& open) = 0;
+        virtual void Draw(bool& open, Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable) = 0;
 
         /* --- COPY SEMANTICS --- */
         EditorWizard(const EditorWizard&) = delete;
         EditorWizard& operator=(const EditorWizard&) = delete;
+
+        /* --- MOVE SEMANTICS --- */
+        EditorWizard(EditorWizard&&) = delete;
+        EditorWizard& operator=(EditorWizard&&) = delete;
 
         /* --- DESTRUCTOR --- */
         virtual ~EditorWizard() noexcept = default;
@@ -25,17 +29,8 @@ namespace SierraEngine
         EditorWizard() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        void DrawShadow();
-
-        /* --- CONSTANTS --- */
-        constexpr static ImGuiWindowFlags DEFAULT_WINDOW_FLAGS = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking;
-        constexpr static ImGuiTableFlags DEFAULT_HEADER_TABLE_FLAGS = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersInnerV;
-        constexpr static ImGuiTableFlags DEFAULT_BODY_TABLE_FLAGS = ImGuiTableFlags_PadOuterX | ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_BordersInner;
-        constexpr static ImGuiTreeNodeFlags DEFAULT_BODY_TREE_FLAGS = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_FramePadding;
-
-        /* --- MOVE SEMANTICS --- */
-        EditorWizard(EditorWizard&&) noexcept = default;
-        EditorWizard& operator=(EditorWizard&&) noexcept = default;
+        bool BeginWizard(std::string_view title, bool& open) const noexcept;
+        void EndWizard() const noexcept;
 
     };
 

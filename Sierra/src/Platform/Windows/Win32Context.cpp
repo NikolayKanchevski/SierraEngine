@@ -46,7 +46,7 @@ namespace Sierra
             .hIcon = LoadIcon(nullptr, IDI_WINLOGO),
             .hCursor = LoadCursor(nullptr, IDC_ARROW),
             .hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1),
-            .lpszClassName = className,
+            .lpszClassName = className
         };
 
         // Set up window class

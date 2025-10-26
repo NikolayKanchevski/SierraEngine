@@ -115,7 +115,7 @@ namespace Sierra
         bool debugRegionBegan = false;
         const MetalResourceTable* currentResourceTable = nullptr;
 
-        uint32 currentSubpass = 0;
+        int32 currentSubpass = -1;
         const MetalRenderPass* currentRenderPass = nullptr;
         const MetalFramebuffer* currentFramebuffer = nullptr;
 

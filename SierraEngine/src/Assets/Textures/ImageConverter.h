@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include "Image.h"
+#include "ImageLoader.h"
 
 namespace SierraEngine
 {
 
     struct ImageConvertInfo
     {
-        const Image& image;
+        const LoadedImage& image;
         Sierra::ImageFormat format = Sierra::ImageFormat::Undefined;
     };
 
@@ -22,7 +22,7 @@ namespace SierraEngine
         ImageConverter() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] Image Convert(const ImageConvertInfo& convertInfo) const;
+        [[nodiscard]] LoadedImage Convert(const ImageConvertInfo& convertInfo) const;
 
         /* --- COPY SEMANTICS --- */
         ImageConverter(const ImageConverter&) = delete;

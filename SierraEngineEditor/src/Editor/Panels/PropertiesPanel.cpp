@@ -11,8 +11,6 @@ namespace SierraEngine
 
     namespace
     {
-        constexpr ImGuiTableFlags DEFAULT_TABLE_FLAGS = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersInnerV;
-
         template<ComponentType Component>
         void DrawComponentProperties(Component&) { }
 
@@ -21,7 +19,7 @@ namespace SierraEngine
             ImGuiWidgets::BeginProperty("Tag");
             {
                 std::string modifiedTag = std::string(tag.GetTag());
-                if (ImGui::InputText("##TagInput", &modifiedTag)) tag.SetTag(modifiedTag);
+                if (ImGuiWidgets::TextInput("##TagInput", modifiedTag)) tag.SetTag(modifiedTag);
             }
             ImGuiWidgets::EndProperty();
         }
@@ -60,7 +58,7 @@ namespace SierraEngine
                     ImGuiDropdownOption { .text = "Orthographic" }
                 };
 
-                if (uint32 modifiedProjectionType = static_cast<uint32>(camera.GetProjectionType()); ImGuiWidgets::Dropdown("##ProjectionTypeDropdown", &modifiedProjectionType, { .options = PROJECTION_TYPE_OPTIONS }))
+                if (uint32 modifiedProjectionType = static_cast<uint32>(camera.GetProjectionType()); ImGuiWidgets::Dropdown("##ProjectionTypeDropdown", modifiedProjectionType, { .options = PROJECTION_TYPE_OPTIONS }))
                 {
                     camera.SetProjectionType(static_cast<ProjectionType>(modifiedProjectionType));
                 }
@@ -70,21 +68,21 @@ namespace SierraEngine
             ImGuiWidgets::BeginProperty("Near Clip");
             {
                 float32 modifiedNearClip = camera.GetNearClip();
-                if (ImGuiWidgets::NumericInput("##NearClip", &modifiedNearClip, 0.01f, camera.GetFarClip())) camera.SetNearClip(modifiedNearClip);
+                if (ImGuiWidgets::NumericInput("##NearClip", modifiedNearClip, 0.01f, camera.GetFarClip())) camera.SetNearClip(modifiedNearClip);
             }
             ImGuiWidgets::EndProperty();
 
             ImGuiWidgets::BeginProperty("Far Clip");
             {
                 float32 modifiedFarClip = camera.GetFarClip();
-                if (ImGuiWidgets::NumericInput("##FarClipInput", &modifiedFarClip, camera.GetNearClip())) camera.SetFarClip(modifiedFarClip);
+                if (ImGuiWidgets::NumericInput("##FarClipInput", modifiedFarClip, camera.GetNearClip())) camera.SetFarClip(modifiedFarClip);
             }
             ImGuiWidgets::EndProperty();
 
             ImGuiWidgets::BeginProperty("Field of View");
             {
                 float32 modifiedFieldOfView = camera.GetFieldOfView();
-                if (ImGuiWidgets::NumericInput("##FieldOfViewInput", &modifiedFieldOfView, 0.0f, 110.0f)) camera.SetFieldOfView(modifiedFieldOfView);
+                if (ImGuiWidgets::NumericInput("##FieldOfViewInput", modifiedFieldOfView, 0.0f, 110.0f)) camera.SetFieldOfView(modifiedFieldOfView);
             }
             ImGuiWidgets::EndProperty();
         }
@@ -96,10 +94,10 @@ namespace SierraEngine
             if (component == nullptr) return;
 
             const ImGuiStyle style = ImGui::GetStyle();
-            ImGuiWidgets::PushID(typeid(Component).hash_code());
+            ImGui::PushID(typeid(Component).hash_code());
 
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { style.FramePadding.x * 1.5f, style.FramePadding.y * 1.5f });
-            constexpr ImGuiTreeNodeFlags TREE_FLAGS = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowOverlap | ImGuiTreeNodeFlags_FramePadding;
+            constexpr ImGuiTreeNodeFlags TREE_FLAGS = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowOverlap | ImGuiTreeNodeFlags_FramePadding;
             const bool open = ImGui::TreeNodeEx(Component::GetName().data(), TREE_FLAGS);
             ImGui::PopStyleVar();
 
@@ -109,10 +107,7 @@ namespace SierraEngine
             bool removeComponent = false;
             if (ImGui::BeginPopup(COMPONENT_SETTINGS_ID.data()))
             {
-                if constexpr (RequiredComponents::Contains<Component>) ImGui::BeginDisabled();
-                removeComponent = ImGui::MenuItem("Remove component");
-                if constexpr (RequiredComponents::Contains<Component>) ImGui::EndDisabled();
-
+                removeComponent = ImGui::MenuItem("Remove component", nullptr, false, !RequiredComponents::Contains<Component>);
                 ImGui::EndPopup();
             }
 
@@ -122,12 +117,21 @@ namespace SierraEngine
             }
             else if (open)
             {
-                ImGuiWidgets::BeginPropertyTable(DEFAULT_TABLE_FLAGS);
-                DrawComponentProperties(*component);
-                ImGuiWidgets::EndPropertyTable();
+                ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, style.CellPadding * 2.0f);
+                if (ImGuiWidgets::BeginPropertyTable({ .tableFlags = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersInner }))
+                {
+                    DrawComponentProperties(*component);
+                    ImGuiWidgets::EndPropertyTable();
+                }
+                ImGui::PopStyleVar();
             }
 
-            ImGuiWidgets::PopID();
+            if (open)
+            {
+                ImGui::TreePop();
+            }
+
+            ImGui::PopID();
         }
 
         template<ComponentType... Components>
@@ -142,7 +146,7 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void PropertiesPanel::Draw(const std::optional<EntityID> entityID, Scene& scene)
+    void PropertiesPanel::Draw(const std::optional<EntityID> entityID, Scene& scene) const
     {
         if (ImGui::Begin("Properties", nullptr, DEFAULT_WINDOW_FLAGS))
         {

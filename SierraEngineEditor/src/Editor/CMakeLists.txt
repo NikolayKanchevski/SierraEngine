@@ -9,5 +9,6 @@ target_sources(SierraEngineEditor PRIVATE
 )
 
 add_subdirectory(Panels)
+add_subdirectory(Previews)
 add_subdirectory(Widgets)
 add_subdirectory(Wizards)

@@ -2,9 +2,35 @@
 // Created by Nikolay Kanchevski on 13.05.24.
 //
 
+
+#define REQUIRED_ARGS \
+    REQUIRED_STRING_ARG(projectDirectoryPath, "project_directory_path", "Directory where project is stored")
+
+#include <easyargs.h>
 #include "Core/EditorApplication.h"
 
-Sierra::Application* Sierra::CreateApplication(const int, char*[])
+using namespace SierraEngine;
+Sierra::Application* Sierra::CreateApplication(const int argc, char* argv[])
 {
-    return new SierraEngine::EditorApplication({ .name = "Sierra Engine", .version = Version({ 1, 0, 0 }) });
+    args_t args = make_default_args();
+    if (!parse_args(argc, argv, &args))
+    {
+        print_help(argv[0]);
+        throw std::invalid_argument("Failed to parse command-line arguments.");
+    }
+
+    const std::filesystem::path projectDirectoryPath = std::filesystem::path(args.projectDirectoryPath);
+
+    const Sierra::ApplicationSettings settings =
+    {
+        .renderingBackendType = Sierra::RenderingBackendType::Best
+    };
+
+    const EditorApplicationCreateInfo createInfo
+    {
+        .projectDirectoryPath = projectDirectoryPath,
+        .settings = settings
+    };
+
+    return new EditorApplication(createInfo);
 }

@@ -9,6 +9,25 @@
 namespace Sierra
 {
 
+    /* --- POLLING METHODS --- */
+
+    void FileManager::WriteFile(const std::filesystem::path& filePath, const std::span<const uint8> memory) const
+    {
+        if (!FileExists(filePath))
+        {
+            CreateFile(filePath, FilePathConflictPolicy::Overwrite);
+        }
+
+        const std::unique_ptr<FileStream> stream = CreateFileStream({ .filePath = filePath, .access = StreamAccess::WriteOnly });
+        stream->WriteMemory(memory);
+    }
+
+    std::vector<uint8> FileManager::ReadFile(const std::filesystem::path& filePath) const
+    {
+        const std::unique_ptr<FileStream> stream = CreateFileStream({ .filePath = filePath, .access = StreamAccess::ReadOnly });
+        return stream->ReadAll();
+    }
+
     /* --- CONVERSIONS --- */
 
     FileType FilePathToFileType(const std::filesystem::path& filePath) noexcept
@@ -67,7 +86,7 @@ namespace Sierra
             { ".env",       FileType::Configuration },
             { ".xml",       FileType::Configuration },
             { ".json",      FileType::Configuration },
-            { ".yaml",      FileType::Configuration },
+            { ".yaml",      FileType::Configuration }
         };
 
         const std::string extension = filePath.extension().string();

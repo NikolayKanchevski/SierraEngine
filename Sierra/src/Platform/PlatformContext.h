@@ -41,7 +41,7 @@ namespace Sierra
     {
         std::string_view message = { };
         std::string_view buttonText = { };
-        const std::filesystem::path& directoryPath = { };
+        const std::filesystem::path* directoryPath = nullptr;
 
         bool allowFiles = true;
         bool allowDirectories = false;
@@ -53,10 +53,9 @@ namespace Sierra
     {
         std::string_view message = { };
         std::string_view buttonText = { };
+        const std::filesystem::path* directoryPath = nullptr;
 
-        const std::filesystem::path& directoryPath = { };
         std::string_view fileName = { };
-
         std::span<const std::string_view> allowedFileExtensions = { };
     };
 
@@ -70,6 +69,8 @@ namespace Sierra
         [[nodiscard]] virtual std::unique_ptr<Window> CreateWindow(const WindowCreateInfo& createInfo) const = 0;
 
         virtual bool OpenAlertDialog(const AlertDialogOpenInfo& openInfo) const = 0;
+
+        [[nodiscard]] std::optional<std::filesystem::path> OpenSingleFileSelectDialog(const FileSelectDialogOpenInfo& openInfo) const noexcept;
         [[nodiscard]] virtual std::vector<std::filesystem::path> OpenFileSelectDialog(const FileSelectDialogOpenInfo& openInfo) const noexcept = 0;
         [[nodiscard]] virtual std::optional<std::filesystem::path> OpenFileSaveDialog(const FileSaveDialogOpenInfo& openInfo) const noexcept = 0;
 

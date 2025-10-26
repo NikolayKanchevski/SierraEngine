@@ -4,17 +4,26 @@
 
 #pragma once
 
+#include "Project.h"
+#include "../Assets/EditorAssetManager.h"
+
 #include "../Editor/Editor.h"
 #include "../Rendering/EditorSurface.h"
 
 namespace SierraEngine
 {
 
-    class EditorApplication final : public Application
+    struct EditorApplicationCreateInfo
+    {
+        const std::filesystem::path& projectDirectoryPath;
+        Sierra::ApplicationSettings settings = { };
+    };
+
+    class EditorApplication final : public Sierra::Application
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit EditorApplication(const ApplicationCreateInfo& createInfo);
+        EditorApplication(const EditorApplicationCreateInfo& createInfo);
 
         /* --- COPY SEMANTICS --- */
         EditorApplication(const EditorApplication&) = delete;
@@ -32,20 +41,21 @@ namespace SierraEngine
 
         FrameLimiter frameLimiter;
         ThreadPool threadPool;
+        Project project;
 
         std::unique_ptr<Sierra::Device> device = nullptr;
+        std::unique_ptr<Sierra::ResourceTable> resourceTable = nullptr;
         std::unique_ptr<Sierra::Queue> queue = nullptr;
 
-        std::unique_ptr<Sierra::ResourceTable> resourceTable = nullptr;
-        std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers = { };
-
         ArenaAllocator arenaAllocator;
+        EditorAssetManager assetManager;
         SceneRenderer sceneRenderer;
 
-        Editor editor;
-        std::optional<EditorSurface> editorSurface = std::nullopt;
-
+        EditorSurface editorSurface;
         Scene scene;
+        Editor editor;
+
+        std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers = { };
 
     };
 

@@ -1,4 +1,10 @@
 target_sources(SierraEngineEditor PRIVATE
-#    TextureSerializeWizard.cpp
-#    TextureSerializeWizard.h
+    AssetSerializeWizard.cpp
+    AssetSerializeWizard.h
+    FileInputWizard.cpp
+    FileInputWizard.h
+    FileOutputWizard.cpp
+    FileOutputWizard.h
 )
+
+add_subdirectory(Assets)

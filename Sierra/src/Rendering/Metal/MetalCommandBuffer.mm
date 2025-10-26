@@ -287,30 +287,20 @@ namespace Sierra
             currentBlitEncoder = nil;
         }
 
-        currentSubpass = 0;
+        currentSubpass = -1;
         currentRenderPass = &metalRenderPass;
         currentFramebuffer = &metalFramebuffer;
 
         BeginNextSubpass();
-
-        // Bind bindless argument buffer
-        if (currentResourceTable != nullptr)
-        {
-            [currentRenderEncoder setVertexBuffer: currentResourceTable->GetMetalArgumentBuffer() offset: 0 atIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_INDEX];
-            [currentRenderEncoder setFragmentBuffer: currentResourceTable->GetMetalArgumentBuffer() offset: 0 atIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_INDEX];
-
-            for (const auto &[key, resource] : currentResourceTable->GetBoundUniformBuffers()) [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead stages: MTLRenderStageVertex | MTLRenderStageFragment];
-            for (const auto &[key, resource] : currentResourceTable->GetBoundStorageBuffers()) [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite stages: MTLRenderStageVertex | MTLRenderStageFragment];
-            for (const auto &[key, resource] : currentResourceTable->GetBoundSampledImages()) [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead stages: MTLRenderStageVertex | MTLRenderStageFragment];
-            for (const auto &[key, resource] : currentResourceTable->GetBoundStorageImages()) [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite stages: MTLRenderStageVertex | MTLRenderStageFragment];
-        }
     }
 
     void MetalCommandBuffer::BeginNextSubpass()
     {
         CommandBuffer::BeginNextSubpass();
-        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin next subpass [{0}] of render pass [{1}] within command buffer [{2}], as it must have been begun first", currentSubpass + 1, currentRenderPass->GetName(), name)));
-        SR_THROW_IF(currentSubpass != 0 && currentSubpass + 1 >= currentRenderPass->GetSubpassCount(), ValueOutOfRangeError(SR_FORMAT("Cannot begin next subpass [{0}] of render pass [{1}] within command buffer [{2}]", currentSubpass + 1, currentRenderPass->GetName(), name), currentSubpass, uint32(0), currentRenderPass->GetSubpassCount() - 1));
+        currentSubpass++;
+
+        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin next subpass [{0}] of render pass [{1}] within command buffer [{2}], as it must have been begun first", currentSubpass, currentRenderPass->GetName(), name)));
+        SR_THROW_IF(currentSubpass >= currentRenderPass->GetSubpassCount(), ValueOutOfRangeError(SR_FORMAT("Cannot begin next subpass [{0}] of render pass [{1}] within command buffer [{2}]", static_cast<uint32>(currentSubpass), currentRenderPass->GetName(), name), static_cast<uint32>(currentSubpass), uint32(0), currentRenderPass->GetSubpassCount() - 1));
 
         MTLRenderPassDescriptor* const subpass = currentRenderPass->GetSubpassRenderPass(currentSubpass);
         [subpass setRenderTargetWidth: currentFramebuffer->GetWidth()];
@@ -346,8 +336,20 @@ namespace Sierra
         // Set scissor
         [currentRenderEncoder setScissorRect: scissor];
 
-        // Increment current subpass for future usage
-        currentSubpass++;
+        // Bind bindless argument buffer
+        if (currentResourceTable != nullptr)
+        {
+            [currentRenderEncoder setVertexBuffer: currentResourceTable->GetMetalArgumentBuffer() offset: 0 atIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_INDEX];
+            [currentRenderEncoder setFragmentBuffer: currentResourceTable->GetMetalArgumentBuffer() offset: 0 atIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_INDEX];
+
+            for (const auto &[key, resource] : currentResourceTable->GetBoundUniformBuffers()) [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead stages: MTLRenderStageVertex | MTLRenderStageFragment];
+            for (const auto &[key, resource] : currentResourceTable->GetBoundStorageBuffers()) [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite stages: MTLRenderStageVertex | MTLRenderStageFragment];
+            for (const auto &[key, resource] : currentResourceTable->GetBoundSampledImages()) [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead stages: MTLRenderStageVertex | MTLRenderStageFragment];
+            for (const auto &[key, resource] : currentResourceTable->GetBoundStorageImages()) [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite stages: MTLRenderStageVertex | MTLRenderStageFragment];
+        }
+
+        // Re-bind assigned vertex buffer
+        [currentRenderEncoder setVertexBuffer: currentVertexBuffer->GetMetalBuffer() offset: initialVertexBufferOffset atIndex: MetalDevice::VERTEX_BUFFER_INDEX];
     }
 
     void MetalCommandBuffer::EndRenderPass()
@@ -397,6 +399,8 @@ namespace Sierra
         CommandBuffer::BindVertexBuffer(metalVertexBuffer, offset);
 
         [currentRenderEncoder setVertexBuffer: metalVertexBuffer.GetMetalBuffer() offset: offset atIndex: MetalDevice::VERTEX_BUFFER_INDEX];
+
+        currentVertexBuffer = &metalVertexBuffer;
         initialVertexBufferOffset = offset;
     }
 
@@ -411,11 +415,13 @@ namespace Sierra
         initialIndexBufferOffset = offset;
     }
 
-    void MetalCommandBuffer::SetScissor(const Vector4UInt scissor)
+    void MetalCommandBuffer::SetScissor(Vector4UInt scissor)
     {
         CommandBuffer::SetScissor(scissor);
         SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot set scissor within command buffer [{0}], as no render pass has been begun", name)));
 
+        scissor.z = glm::min(static_cast<uint32>(currentRenderPass->GetSubpassRenderPass(currentSubpass).renderTargetWidth) - scissor.x, scissor.z);
+        scissor.w = glm::min(static_cast<uint32>(currentRenderPass->GetSubpassRenderPass(currentSubpass).renderTargetHeight) - scissor.y, scissor.w);
         [currentRenderEncoder setScissorRect: { scissor.x, scissor.y, scissor.z, scissor.w }];
     }
 
@@ -513,7 +519,7 @@ namespace Sierra
         CommandBuffer::BeginDebugRegion(regionName, color);
         SR_THROW_IF(debugRegionBegan, InvalidOperationError(SR_FORMAT("Cannot begin debug region [{0}] within command buffer [{1}], as current debug region has not been ended", regionName, name)));
 
-        NSString* const group = [NSString stringWithCString: regionName.data() length: regionName.size()];
+        NSString* const group = [NSString stringWithCString: regionName.data() encoding: NSASCIIStringEncoding];
         [commandBuffer pushDebugGroup: group];
 
         debugRegionBegan = true;
@@ -524,7 +530,7 @@ namespace Sierra
         CommandBuffer::InsertDebugMarker(markerName, color);
         SR_THROW_IF(debugRegionBegan, InvalidOperationError(SR_FORMAT("Cannot end debug region within command buffer [{0}], as one must have been begun first", name)));
 
-        NSString* const signpost = [NSString stringWithCString: markerName.data() length: markerName.size()];
+        NSString* const signpost = [NSString stringWithCString: markerName.data() encoding: NSASCIIStringEncoding];
         [currentRenderEncoder insertDebugSignpost: signpost];
     }
 

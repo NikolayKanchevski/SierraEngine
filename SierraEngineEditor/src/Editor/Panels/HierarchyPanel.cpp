@@ -32,7 +32,7 @@ namespace SierraEngine
         const bool selected = iterator != selectedEntities.end();
 
         const std::span<const EntityID> children = scene.GetEntityChildren(entityID);
-        const bool opened = ImGui::TreeNodeEx(std::to_string(entityID.GetValue()).data(), ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_SpanAvailWidth | (selected * ImGuiTreeNodeFlags_Selected) | (children.empty() * ImGuiTreeNodeFlags_Leaf), "%s", scene.GetEntityComponent<Tag>(entityID)->GetTag().data());
+        const bool opened = ImGui::TreeNodeEx(std::to_string(entityID.GetValue()).data(), ImGuiTreeNodeFlags_DrawLinesToNodes | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_SpanAvailWidth | (selected * ImGuiTreeNodeFlags_Selected) | (children.empty() * ImGuiTreeNodeFlags_Leaf), "%s", scene.GetEntityComponent<Tag>(entityID)->GetTag().data());
 
         if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
         {

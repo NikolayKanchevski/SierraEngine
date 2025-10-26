@@ -1242,7 +1242,7 @@ namespace Sierra
             .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
             .objectType = type,
             .objectHandle = reinterpret_cast<uint64>(object),
-            .pObjectName = resourceName.data(),
+            .pObjectName = resourceName.data()
         };
 
         // Assign resource name

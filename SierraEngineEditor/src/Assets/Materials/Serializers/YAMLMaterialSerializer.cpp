@@ -56,15 +56,15 @@ namespace SierraEngine
             return std::nullopt;
         }
 
-        const size memorySize = sizeof(AssetHeader);
-        Sierra::MemoryWriteStream memoryStream(memorySize);
+        const size blobMemorySize = sizeof(AssetHeader);
+        Sierra::MemoryWriteStream blobStream(blobMemorySize);
 
-        SerializeHeader(memoryStream);
+        SerializeHeader(blobStream);
 
         SerializedMaterial material
         {
             .data = { reinterpret_cast<const uint8*>(data.data()), reinterpret_cast<const uint8*>(data.data()) + data.size() },
-            .memory = memoryStream.Release()
+            .blob = blobStream.Release()
         };
 
         return material;

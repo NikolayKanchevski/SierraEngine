@@ -31,7 +31,7 @@ namespace SierraEngine
         return glm::translate(Matrix4x4(1.0f), position) * glm::toMat4(GetOrientation()) * glm::scale(Matrix4x4(1.0f), scale);
     }
 
-    Quaternion Transform::GetOrientation() const noexcept
+    Quaternion32 Transform::GetOrientation() const noexcept
     {
         return glm::inverse(glm::quat({ glm::radians(rotation.y), glm::radians(rotation.x), glm::radians(rotation.z) }));
     }

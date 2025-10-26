@@ -16,7 +16,7 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    std::optional<Image> STBImageLoader::Load(const ImageLoadInfo& loadInfo) const noexcept
+    std::optional<LoadedImage> STBImageLoader::Load(const ImageLoadInfo& loadInfo) const noexcept
     {
         int width, height, channelCount;
         if (stbi_info_from_memory(reinterpret_cast<const stbi_uc*>(loadInfo.memory.data()), static_cast<int>(loadInfo.memory.size_bytes()), &width, &height, &channelCount) != 1)
@@ -56,7 +56,7 @@ namespace SierraEngine
         std::vector<uint8> memory(width * height * channelLoadCount * (is16Bit + 1));
         std::memcpy(memory.data(), rawMemory.get(), memory.size());
 
-        const ImageCreateInfo createInfo
+        LoadedImage image
         {
             .width = static_cast<uint32>(width),
             .height = static_cast<uint32>(height),
@@ -64,7 +64,7 @@ namespace SierraEngine
             .memory = std::move(memory)
         };
 
-        return Image(createInfo);
+        return image;
     }
 
 }

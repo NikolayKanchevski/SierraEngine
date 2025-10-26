@@ -28,11 +28,11 @@ namespace Sierra
     {
         NSAlert* const alert = [[NSAlert alloc] init];
 
-        [alert setMessageText: [NSString stringWithCString: openInfo.title.data() length: openInfo.title.size()]];
-        if (!openInfo.message.empty()) [alert setInformativeText: [NSString stringWithCString: openInfo.message.data() length: openInfo.message.size()]];
+        [alert setMessageText: [NSString stringWithCString: openInfo.title.data() encoding: NSASCIIStringEncoding]];
+        if (!openInfo.message.empty()) [alert setInformativeText: [NSString stringWithCString: openInfo.message.data() encoding: NSASCIIStringEncoding]];
 
-        [alert addButtonWithTitle: [NSString stringWithCString: openInfo.acceptButtonText.data() length: openInfo.acceptButtonText.size()]];
-        if (!openInfo.declineButtonText.empty()) [alert addButtonWithTitle: [NSString stringWithCString: openInfo.declineButtonText.data() length: openInfo.declineButtonText.size()]];
+        [alert addButtonWithTitle: [NSString stringWithCString: openInfo.acceptButtonText.data() encoding: NSASCIIStringEncoding]];
+        if (!openInfo.declineButtonText.empty()) [alert addButtonWithTitle: [NSString stringWithCString: openInfo.declineButtonText.data() encoding: NSASCIIStringEncoding]];
 
         switch (openInfo.severity)
         {
@@ -48,14 +48,14 @@ namespace Sierra
     {
         NSOpenPanel* const panel = [NSOpenPanel openPanel];
 
-        if (!openInfo.directoryPath.empty())
+        if (openInfo.directoryPath != nullptr)
         {
-            const std::string path = openInfo.directoryPath.string();
-            [panel setDirectoryURL: [NSURL fileURLWithPath: [NSString stringWithCString: path.c_str() length: path.size()]]];
+            const std::string path = openInfo.directoryPath->string();
+            [panel setDirectoryURL: [NSURL fileURLWithPath: [NSString stringWithCString: path.c_str() encoding: NSASCIIStringEncoding]]];
         }
 
-        if (!openInfo.message.empty()) [panel setMessage: [NSString stringWithCString: openInfo.message.data() length: openInfo.message.size()]];
-        if (!openInfo.buttonText.empty()) [panel setPrompt: [NSString stringWithCString: openInfo.buttonText.data() length: openInfo.buttonText.size()]];
+        if (!openInfo.message.empty()) [panel setMessage: [NSString stringWithCString: openInfo.message.data() encoding: NSASCIIStringEncoding]];
+        if (!openInfo.buttonText.empty()) [panel setPrompt: [NSString stringWithCString: openInfo.buttonText.data() encoding: NSASCIIStringEncoding]];
 
         [panel setCanChooseFiles: openInfo.allowFiles];
         [panel setCanChooseDirectories: openInfo.allowDirectories];
@@ -68,9 +68,13 @@ namespace Sierra
             {
                 if (path.empty() || path.size() == 1) continue;
 
-                [allowedFileExtensions addObject: [NSString stringWithCString: path.data() + 1 length: path.size() - 1]];
-                [panel setAllowedFileTypes: allowedFileExtensions];
+                [allowedFileExtensions addObject: [NSString stringWithCString: path.data() + 1 encoding: NSASCIIStringEncoding]];
             }
+
+            #pragma clang diagnostic push
+            #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            [panel setAllowedFileTypes: allowedFileExtensions];
+            #pragma clang diagnostic pop
         }
 
         std::vector<std::filesystem::path> filePaths = { };
@@ -91,16 +95,16 @@ namespace Sierra
     {
         NSSavePanel* const panel = [NSSavePanel savePanel];
 
-        if (!openInfo.directoryPath.empty())
+        if (openInfo.directoryPath != nullptr)
         {
-            const std::string path = openInfo.directoryPath.string();
-            [panel setDirectoryURL: [NSURL fileURLWithPath: [NSString stringWithCString: path.c_str() length: path.size()]]];
+            const std::string path = openInfo.directoryPath->string();
+            [panel setDirectoryURL: [NSURL fileURLWithPath: [NSString stringWithCString: path.c_str() encoding: NSASCIIStringEncoding]]];
         }
 
-        if (!openInfo.message.empty()) [panel setMessage: [NSString stringWithCString: openInfo.message.data() length: openInfo.message.size()]];
-        if (!openInfo.buttonText.empty()) [panel setPrompt: [NSString stringWithCString: openInfo.buttonText.data() length: openInfo.buttonText.size()]];
+        if (!openInfo.message.empty()) [panel setMessage: [NSString stringWithCString: openInfo.message.data() encoding: NSASCIIStringEncoding]];
+        if (!openInfo.buttonText.empty()) [panel setPrompt: [NSString stringWithCString: openInfo.buttonText.data() encoding: NSASCIIStringEncoding]];
 
-        if (!openInfo.fileName.empty()) [panel setNameFieldStringValue: [NSString stringWithCString: openInfo.fileName.data() length: openInfo.fileName.size()]];
+        if (!openInfo.fileName.empty()) [panel setNameFieldStringValue: [NSString stringWithCString: openInfo.fileName.data() encoding: NSASCIIStringEncoding]];
 
         [panel setExtensionHidden: NO];
         [panel setAllowsOtherFileTypes: YES];
@@ -113,9 +117,13 @@ namespace Sierra
             {
                 if (path.empty() || path.size() == 1) continue;
 
-                [allowedFileExtensions addObject: [NSString stringWithCString: path.data() + 1 length: path.size() - 1]];
-                [panel setAllowedFileTypes: allowedFileExtensions];
+                [allowedFileExtensions addObject: [NSString stringWithCString: path.data() + 1 encoding: NSASCIIStringEncoding]];
             }
+
+            #pragma clang diagnostic push
+            #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+                [panel setAllowedFileTypes: allowedFileExtensions];
+            #pragma clang diagnostic pop
         }
 
         if ([panel runModal] == NSModalResponseOK)

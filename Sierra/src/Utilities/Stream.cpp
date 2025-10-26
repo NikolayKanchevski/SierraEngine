@@ -11,7 +11,7 @@ namespace Sierra
 
     void Stream::Write(const void* memory, const size memorySize)
     {
-        SR_THROW_IF(GetAccess() == StreamAccess::ReadOnly, InvalidOperationError(SR_FORMAT("Cannot write memory range [{0}-{1}] of stream, as it is read-only!", GetOffset(), GetOffset() + memorySize)));
+        SR_THROW_IF(GetAccess() == StreamAccess::ReadOnly, InvalidOperationError(SR_FORMAT("Cannot write memory range [{0}-{1}] of stream, as it is read-only", GetOffset(), GetOffset() + memorySize)));
     }
 
     void Stream::Write(const void* memory, const size destinationOffset, const size memorySize)

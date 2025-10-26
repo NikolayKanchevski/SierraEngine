@@ -10,21 +10,54 @@ namespace SierraEngine
     namespace
     {
         constexpr float32 DRAG_MOUSE_THRESHOLD_FACTOR = 0.50f;
+
+        bool FilePathInput(const std::string_view label, const std::filesystem::path& value, const float32 width)
+        {
+            const ImGuiStyle& style = ImGui::GetStyle();
+
+            constexpr std::string_view BROWSE_BUTTON_LABEL = "Browse";
+            float32 buttonWidth = ImGui::CalcTextSize(BROWSE_BUTTON_LABEL.begin(), BROWSE_BUTTON_LABEL.end()).x + 2 * style.FramePadding.x;
+
+            const float32 filePathWidth = width - (buttonWidth + style.ItemSpacing.x);
+
+            constexpr float32 MAX_BUTTON_WIDTH_OVER_INPUT_FIELD = 0.70f;
+            if (buttonWidth > MAX_BUTTON_WIDTH_OVER_INPUT_FIELD * filePathWidth)
+            {
+                buttonWidth += (filePathWidth + style.ItemSpacing.x);
+            }
+            else
+            {
+                ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+                std::string filePathString = value.string();
+                ImGuiWidgets::TextInput(label, filePathString, { .width = filePathWidth });
+                ImGui::PopItemFlag();
+                ImGui::SetNextItemWidth(filePathWidth);
+                ImGui::SameLine();
+            }
+
+            if (ImGuiWidgets::Button("Browse", { .width = buttonWidth }))
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 
-    void ImGuiWidgets::PushID(const std::string_view ID)
+    void ImGuiWidgets::HorizontalIndent(const float32 indent)
     {
-        ImGui::PushID(ID.begin(), ID.end());
+        ImGui::Dummy({ indent, 0.0f });
     }
 
-    void ImGuiWidgets::PushID(const int ID)
+    void ImGuiWidgets::VerticalIndent(const float32 indent)
     {
-        ImGui::PushID(ID);
+        ImGui::Dummy({ 0.0f, indent });
     }
 
-    void ImGuiWidgets::PopID()
+    void ImGuiWidgets::Indent(const Vector2 indent)
     {
-        ImGui::PopID();
+        HorizontalIndent(indent.x);
+        VerticalIndent(indent.y);
     }
 
     void ImGuiWidgets::BeginHorizontalPadding(const float32 padding)
@@ -53,6 +86,109 @@ namespace SierraEngine
         ImGui::EndChild();
     }
 
+    bool ImGuiWidgets::BeginPropertyTable(const ImGuiPropertyTableInfo& tableInfo)
+    {
+        if (ImGui::BeginTable("PropertyTable", 2, tableInfo.tableFlags))
+        {
+            ImGui::TableSetupColumn("PropertyTableLabelColumn", tableInfo.labelColumnFlags);
+            ImGui::TableSetupColumn("PropertyTableValueColumn", tableInfo.valueColumnFlags);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    void ImGuiWidgets::BeginProperty(const std::string_view label, const std::string_view tooltip)
+    {
+        ImGui::PushID(label.begin(), label.end());
+
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextEx(label.begin(), label.end());
+
+        if (!tooltip.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+        {
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, ImGui::GetStyle().FrameRounding * 1.5f);
+            {
+                ImGui::BeginTooltip();
+                ImGui::TextUnformatted(tooltip.data());
+                ImGui::EndTooltip();
+            }
+            ImGui::PopStyleVar();
+        }
+
+        ImGui::TableNextColumn();
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+    }
+
+    void ImGuiWidgets::EndProperty()
+    {
+        ImGui::PopID();
+    }
+
+    void ImGuiWidgets::EndPropertyTable()
+    {
+        ImGui::EndTable();
+    }
+
+    bool ImGuiWidgets::TextInput(const std::string_view label, std::string& value, const ImGuiTextInputInfo& inputInfo)
+    {
+        ImGui::SetNextItemWidth(inputInfo.width);
+        return ImGui::InputText(label.data(), &value, inputInfo.flags, inputInfo.CharacterCallback, inputInfo.userData);
+    }
+
+    bool ImGuiWidgets::FileSelectInput(const std::string_view label, std::filesystem::path& value, const Sierra::PlatformContext& platformContext, const ImGuiFileSelectInputInfo& inputInfo)
+    {
+        if (!FilePathInput(label, value, inputInfo.width))
+        {
+            return false;
+        }
+
+        const std::optional<std::filesystem::path> filePath = platformContext.OpenSingleFileSelectDialog({
+            .message = inputInfo.message,
+            .buttonText = inputInfo.buttonText,
+            .directoryPath = inputInfo.directoryPath,
+            .allowFiles = inputInfo.allowFiles,
+            .allowDirectories = inputInfo.allowDirectories,
+            .allowedFileExtensions = inputInfo.allowedFileExtensions
+        });
+
+        if (!filePath.has_value())
+        {
+            return false;
+        }
+
+        value = std::move(filePath.value());
+        return false;
+    }
+
+    bool ImGuiWidgets::FileSaveInput(const std::string_view label, std::filesystem::path& value, const Sierra::PlatformContext& platformContext, const ImGuiFileSaveInputInfo& inputInfo)
+    {
+        if (!FilePathInput(label, value, inputInfo.width))
+        {
+            return false;
+        }
+
+        const std::optional<std::filesystem::path> filePath = platformContext.OpenFileSaveDialog({
+            .message = inputInfo.message,
+            .buttonText = inputInfo.buttonText,
+            .directoryPath = inputInfo.directoryPath,
+            .fileName = inputInfo.fileName,
+            .allowedFileExtensions = inputInfo.allowedFileExtensions
+        });
+
+        if (!filePath.has_value())
+        {
+            return false;
+        }
+
+        value = std::move(filePath.value());
+        return false;
+    }
+
     bool ImGuiWidgets::NumericInput(const std::string_view label, void* value, const ImGuiDataType dataType, const ImGuiNumericInputInfo& inputInfo)
     {
         ImGuiWindow* window = ImGui::GetCurrentWindow();
@@ -62,10 +198,9 @@ namespace SierraEngine
         ImGuiContext& g = *GImGui;
         const ImGuiStyle& style = g.Style;
         const ImGuiID id = window->GetID(label.data());
-        const float w = ImGui::CalcItemWidth();
 
         const ImVec2 label_size = ImGui::CalcTextSize(label.data(), nullptr, true);
-        const ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + ImVec2(w, label_size.y + style.FramePadding.y * 2.0f));
+        const ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + ImVec2(inputInfo.width, label_size.y + style.FramePadding.y * 2.0f));
         const ImRect total_bb(frame_bb.Min, frame_bb.Max + ImVec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
 
         const bool temp_input_allowed = (inputInfo.flags & ImGuiSliderFlags_NoInput) == 0;
@@ -77,12 +212,12 @@ namespace SierraEngine
         const char* format = !inputInfo.format.empty() ? inputInfo.format.data() : nullptr;
         if (format == nullptr) format = ImGui::DataTypeGetInfo(dataType)->PrintFmt;
 
-        const bool hovered = ImGui::ItemHoverable(frame_bb, id, g.LastItemData.InFlags);
+        const bool hovered = ImGui::ItemHoverable(frame_bb, id, g.LastItemData.ItemFlags);
         bool temp_input_is_active = temp_input_allowed && ImGui::TempInputIsActive(id);
         if (!temp_input_is_active)
         {
             // Tabbing or CTRL-clicking on Drag turns it into an InputText
-            const bool clicked = hovered && ImGui::IsMouseClicked(0, id);
+            const bool clicked = hovered && ImGui::IsMouseClicked(0, 0, id);
             const bool double_clicked = (hovered && g.IO.MouseClickedCount[0] == 2 && ImGui::TestKeyOwner(ImGuiKey_MouseLeft, id));
             const bool make_active = (clicked || double_clicked || g.NavActivateId == id);
             if (make_active && (clicked || double_clicked))
@@ -121,8 +256,26 @@ namespace SierraEngine
         ImGui::RenderNavHighlight(frame_bb, id);
         ImGui::GetWindowDrawList()->AddRectFilled(frame_bb.Min, frame_bb.Max, frame_col, inputInfo.rounding, inputInfo.drawFlags);
 
+        float32 speed = 1.0f;
+        if (inputInfo.step != nullptr)
+        {
+            switch (dataType)
+            {
+                case ImGuiDataType_S8:      { speed = static_cast<float32>(*reinterpret_cast<const uint8*>(inputInfo.step));   break; }
+                case ImGuiDataType_U8:      { speed = static_cast<float32>(*reinterpret_cast<const int8*>(inputInfo.step));    break; }
+                case ImGuiDataType_S16:     { speed = static_cast<float32>(*reinterpret_cast<const uint16*>(inputInfo.step));  break; }
+                case ImGuiDataType_U16:     { speed = static_cast<float32>(*reinterpret_cast<const int16*>(inputInfo.step));   break; }
+                case ImGuiDataType_S32:     { speed = static_cast<float32>(*reinterpret_cast<const uint32*>(inputInfo.step));  break; }
+                case ImGuiDataType_U32:     { speed = static_cast<float32>(*reinterpret_cast<const int32*>(inputInfo.step));   break; }
+                case ImGuiDataType_S64:     { speed = static_cast<float32>(*reinterpret_cast<const uint64*>(inputInfo.step));  break; }
+                case ImGuiDataType_U64:     { speed = static_cast<float32>(*reinterpret_cast<const int64*>(inputInfo.step));   break; }
+                case ImGuiDataType_Double:  { speed = static_cast<float32>(*reinterpret_cast<const float64*>(inputInfo.step)); break; }
+                default:                    { break; }
+            }
+        }
+
         // Drag behavior
-        const bool value_changed = ImGui::DragBehavior(id, dataType, value, inputInfo.speed, inputInfo.min, inputInfo.max, format, inputInfo.flags);
+        const bool value_changed = ImGui::DragBehavior(id, dataType, value, speed, inputInfo.min, inputInfo.max, format, inputInfo.flags);
         if (value_changed) ImGui::MarkItemEdited(id);
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
@@ -139,28 +292,33 @@ namespace SierraEngine
         return value_changed;
     }
 
+    bool ImGuiWidgets::NumericEnterInput(const std::string_view label, void* value, const ImGuiDataType dataType, const ImGuiNumericInputInfo& inputInfo)
+    {
+        const bool result = ImGui::InputScalar(label.data(), dataType, value, inputInfo.step, nullptr, inputInfo.format.data(), inputInfo.flags);
+        ImGui::DataTypeClamp(dataType, value, inputInfo.min, inputInfo.max);
+        return result;
+    }
+
     bool ImGuiWidgets::VectorInput(const std::string_view label, void* value, const size length, const ImGuiDataType dataType, const ImGuiVectorInputInfo& inputInfo)
     {
-        PushID(label);
-
-        const float32 frameHeight = ImGui::GetFrameHeight();
-        const Vector2 buttonSize = { frameHeight, frameHeight };
+        ImGui::PushID(label.begin(), label.end());
+        const float32 buttonWidth = ImGui::GetFrameHeight();
 
         ImDrawFlags inputFieldRounding = ImDrawFlags_RoundCornersRight;
-        float32 inputFieldWidth = (ImGui::GetColumnWidth(1) - static_cast<float32>(length - 1) * ImGui::GetStyle().ItemSpacing.x) / static_cast<float32>(length) - buttonSize.x;
+        float32 inputFieldWidth = (inputInfo.width - static_cast<float32>(length - 1) * ImGui::GetStyle().ItemSpacing.x) / static_cast<float32>(length) - buttonWidth;
 
         bool drawButtons = true;
         bool splitIntoRows = false;
 
-        constexpr float32 MAX_BUTTON_WIDTH_OVER_INPUT_FIELD = 0.65f;
-        if (buttonSize.x > MAX_BUTTON_WIDTH_OVER_INPUT_FIELD * inputFieldWidth)
+        constexpr float32 MAX_BUTTON_WIDTH_OVER_INPUT_FIELD = 0.7f;
+        if (buttonWidth > MAX_BUTTON_WIDTH_OVER_INPUT_FIELD * inputFieldWidth)
         {
             if (length != 2 && length % 2 == 0)
             {
                 splitIntoRows = true;
-                inputFieldWidth += ImGui::GetStyle().ItemSpacing.x + inputFieldWidth + buttonSize.x;
+                inputFieldWidth += ImGui::GetStyle().ItemSpacing.x + inputFieldWidth + buttonWidth;
 
-                if (buttonSize.x > MAX_BUTTON_WIDTH_OVER_INPUT_FIELD * inputFieldWidth)
+                if (buttonWidth > MAX_BUTTON_WIDTH_OVER_INPUT_FIELD * inputFieldWidth)
                 {
                     drawButtons = false;
                 }
@@ -180,7 +338,7 @@ namespace SierraEngine
 
         if (!drawButtons)
         {
-            inputFieldWidth += buttonSize.x;
+            inputFieldWidth += buttonWidth;
             inputFieldRounding = ImDrawFlags_RoundCornersAll;
         }
 
@@ -206,7 +364,7 @@ namespace SierraEngine
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, BUTTON_COLORS[i]);
 
                 const char symbol[2] = { SYMBOLS[i % SYMBOLS.size()], '\0' };
-                if (ImGuiWidgets::Button(std::string_view(symbol, 1), { .size = buttonSize, .drawFlags = ImDrawFlags_RoundCornersLeft }))
+                if (Button(std::string_view(symbol, 1), { .width = buttonWidth, .drawFlags = ImDrawFlags_RoundCornersLeft }))
                 {
                     std::memcpy(reinterpret_cast<uint8*>(value) + (i * dataTypeSize), reinterpret_cast<const uint8*>(inputInfo.resetValues) + (i * dataTypeSize), dataTypeSize);
                     modified = true;
@@ -218,17 +376,18 @@ namespace SierraEngine
 
             const ImGuiNumericInputInfo numericInputInfo
             {
-                .speed = inputInfo.speed,
+                .step = inputInfo.step,
                 .min = inputInfo.min,
                 .max = inputInfo.max,
                 .format = format,
                 .flags = inputInfo.flags,
-                .drawFlags = inputFieldRounding
+                .width = inputFieldWidth,
+                .drawFlags = inputFieldRounding,
             };
 
             ImGui::SetNextItemWidth(inputFieldWidth);
             const char ID[4] = { '#', '#', SYMBOLS[i], '\0' };
-            if (ImGuiWidgets::NumericInput(ID, reinterpret_cast<uint8*>(value) + (i * dataTypeSize), dataType, numericInputInfo))
+            if (NumericInput(ID, reinterpret_cast<uint8*>(value) + (i * dataTypeSize), dataType, numericInputInfo))
             {
                 modified = true;
             }
@@ -244,8 +403,80 @@ namespace SierraEngine
             }
         }
 
-        PopID();
+        ImGui::PopID();
         return modified;
+    }
+
+    bool ImGuiWidgets::ColorInput(const std::string_view label, ColorRGB& value, const ImGuiColorInputInfo& inputInfo)
+    {
+        return ImGui::ColorEdit3(label.data(), &value[0], inputInfo.flags);
+    }
+
+    bool ImGuiWidgets::ColorInput(const std::string_view label, ColorRGBA& value, const ImGuiColorInputInfo& inputInfo)
+    {
+        return ImGui::ColorEdit4(label.data(), &value[0], inputInfo.flags);
+    }
+
+    bool ImGuiWidgets::ImageInput(const std::string_view label, std::filesystem::path& value, const Sierra::PlatformContext& platformContext, const ImGuiImageInputInfo& inputInfo)
+    {
+        const ImGuiWindow* window = ImGui::GetCurrentWindow();
+        if (!window || window->SkipItems) return false;
+
+        const float32 size = inputInfo.width;
+        const ImRect backgroundRect = ImRect(window->DC.CursorPos, window->DC.CursorPos + ImVec2(size, size));
+        ImGui::ItemSize(backgroundRect);
+
+        const ImGuiStyle& style = ImGui::GetStyle();
+        window->DrawList->AddRectFilled(backgroundRect.Min, backgroundRect.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), style.FrameRounding);
+        ImGui::RenderFrameBorder(backgroundRect.Min, backgroundRect.Max, style.FrameRounding);
+
+        if (inputInfo.previewID.has_value())
+        {
+            const float32 scaling = glm::min(
+                size / static_cast<float32>(inputInfo.imageWidth),
+                size / static_cast<float32>(inputInfo.imageHeight)
+            );
+
+            ImRect imageRect = { };
+            constexpr float32 PADDING = 2.0f;
+            switch (inputInfo.fitType)
+            {
+                case ImGuiImageInputFitType::Fit:
+                {
+                    const float32 width = static_cast<float32>(inputInfo.imageWidth) * scaling;
+                    const float32 height = static_cast<float32>(inputInfo.imageHeight) * scaling;
+
+                    const float32 widthPadding = (size - width) / 2.0f + PADDING;
+                    const float32 heightPadding = (size - height) / 2.0f + PADDING;
+                    imageRect = ImRect(ImVec2(backgroundRect.Min.x + widthPadding, backgroundRect.Min.y + heightPadding), ImVec2(backgroundRect.Max.x - widthPadding, backgroundRect.Max.y - heightPadding));
+
+                    break;
+                }
+                case ImGuiImageInputFitType::Stretch:
+                {
+                    ImRect(ImVec2(backgroundRect.Min.x + PADDING, backgroundRect.Min.y + PADDING), ImVec2(backgroundRect.Max.x - PADDING, backgroundRect.Max.y - PADDING));
+                    break;
+                }
+            }
+
+                window->DrawList->AddImage(ImTextureRef(inputInfo.previewID.value()), imageRect.Min, imageRect.Max);
+        }
+
+        constexpr std::string_view BROWSE_BUTTON_LABEL = "Browse";
+        const float32 browseButtonWidth = ImGui::CalcTextSize(BROWSE_BUTTON_LABEL.begin(), BROWSE_BUTTON_LABEL.end()).x + 2 * style.FramePadding.x;
+
+        ImGuiWidgets::BeginHorizontalPadding((size - browseButtonWidth) / 2.0f);
+
+        const ImGuiFileSelectInputInfo filePathInputInfo =
+        {
+            .directoryPath = inputInfo.directoryPath,
+            .allowedFileExtensions = inputInfo.allowedFileExtensions,
+            .width = browseButtonWidth
+        };
+        const bool result = ImGuiWidgets::FileSelectInput("##ImageInputFileSelectInput", value, platformContext, filePathInputInfo);
+
+        ImGuiWidgets::EndPadding();
+        return result;
     }
 
     bool ImGuiWidgets::Button(const std::string_view label, const ImGuiButtonInfo& buttonInfo)
@@ -264,7 +495,7 @@ namespace SierraEngine
         {
             position.y += window->DC.CurrLineTextBaseOffset - style.FramePadding.y;
         }
-        ImVec2 size = ImGui::CalcItemSize(buttonInfo.size, label_size.x + style.FramePadding.x * 2.0f, label_size.y + style.FramePadding.y * 2.0f);
+        ImVec2 size = ImGui::CalcItemSize({ buttonInfo.width, ImGui::GetFrameHeight() }, label_size.x + style.FramePadding.x * 2.0f, label_size.y + style.FramePadding.y * 2.0f);
 
         const ImRect bb(position, position + size);
         ImGui::ItemSize(size, style.FramePadding.y);
@@ -287,12 +518,12 @@ namespace SierraEngine
         return pressed;
     }
 
-    bool ImGuiWidgets::Dropdown(const std::string_view label, uint32* value, const ImGuiDropdownInfo& dropdownInfo)
+    bool ImGuiWidgets::Dropdown(const std::string_view label, uint32& value, const ImGuiDropdownInfo& dropdownInfo)
     {
         ImGuiContext& g = *GImGui;
         ImGuiWindow* window = ImGui::GetCurrentWindow();
 
-        ImGuiNextWindowDataFlags backup_next_window_data_flags = g.NextWindowData.Flags;
+        ImGuiNextWindowDataFlags backup_next_window_data_flags = g.NextWindowData.WindowFlags;
         g.NextWindowData.ClearFlags(); // We behave like Begin() and need to consume those values
         if (window->SkipItems)
             return false;
@@ -303,11 +534,11 @@ namespace SierraEngine
         if (dropdownInfo.flags & ImGuiComboFlags_WidthFitPreview)
             IM_ASSERT((dropdownInfo.flags & (ImGuiComboFlags_NoPreview | (ImGuiComboFlags)ImGuiComboFlags_CustomPreview)) == 0);
 
-        const char* preview_value = dropdownInfo.options[*value].text.data();
+        const char* preview_value = dropdownInfo.options[value].text.data();
         const float arrow_size = (dropdownInfo.flags & ImGuiComboFlags_NoArrowButton) ? 0.0f : ImGui::GetFrameHeight();
         const ImVec2 label_size = ImGui::CalcTextSize(label.data(), nullptr, true);
         const float preview_width = ((dropdownInfo.flags & ImGuiComboFlags_WidthFitPreview) && (preview_value != nullptr)) ? ImGui::CalcTextSize(preview_value, nullptr, true).x : 0.0f;
-        const float w = (dropdownInfo.flags & ImGuiComboFlags_NoPreview) ? arrow_size : ((dropdownInfo.flags & ImGuiComboFlags_WidthFitPreview) ? (arrow_size + preview_width + style.FramePadding.x * 2.0f) : ImGui::CalcItemWidth());
+        const float w = (dropdownInfo.flags & ImGuiComboFlags_NoPreview) ? arrow_size : ((dropdownInfo.flags & ImGuiComboFlags_WidthFitPreview) ? (arrow_size + preview_width + style.FramePadding.x * 2.0f) : dropdownInfo.width);
         const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + ImVec2(w, label_size.y + style.FramePadding.y * 2.0f));
         const ImRect total_bb(bb.Min, bb.Max + ImVec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
         ImGui::ItemSize(total_bb, style.FramePadding.y);
@@ -364,7 +595,7 @@ namespace SierraEngine
         if (!popup_open)
             return false;
 
-        g.NextWindowData.Flags = backup_next_window_data_flags;
+        g.NextWindowData.WindowFlags = backup_next_window_data_flags;
 
         bool modified = false;
         if (ImGui::BeginComboPopup(popup_id, bb, dropdownInfo.flags))
@@ -372,7 +603,7 @@ namespace SierraEngine
             for (size i = 0; i < dropdownInfo.options.size(); i++)
             {
                 const ImGuiDropdownOption& option = dropdownInfo.options[i];
-                bool selected = *value == i;
+                bool selected = value == i;
 
                 if (option.disabled)
                 {
@@ -381,7 +612,7 @@ namespace SierraEngine
 
                 if (ImGui::Selectable(option.text.data(), selected) && !selected)
                 {
-                    *value = i;
+                    value = i;
                     modified = true;
                 }
                 if (selected) ImGui::SetItemDefaultFocus();
@@ -396,65 +627,6 @@ namespace SierraEngine
         ImGui::EndCombo();
 
         return modified;
-    }
-
-    bool ImGuiWidgets::FilePathInput(const std::string_view label, const std::filesystem::path& value)
-    {
-        const ImGuiStyle& style = ImGui::GetStyle();
-
-        constexpr std::string_view BUTTON_TEXT = "Browse";
-        const float32 buttonWidth = ImGui::CalcTextSize(BUTTON_TEXT.begin(), BUTTON_TEXT.end()).x + 2 * style.FramePadding.x;
-
-        const float32 filePathWidth = ImGui::GetContentRegionAvail().x - (buttonWidth + style.ItemSpacing.x);
-        ImGui::SetNextItemWidth(filePathWidth);
-
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        std::string filePathString = value.string();
-        ImGui::InputText(label.data(), &filePathString);
-        ImGui::PopItemFlag();
-
-        ImGui::SameLine();
-        return Button("Browse", { .size = { buttonWidth, ImGui::GetFrameHeight() } });
-    }
-
-    void ImGuiWidgets::BeginPropertyTable(const ImGuiTableFlags flags)
-    {
-        ImGui::BeginTable("##Table", 2, flags);
-        ImGui::TableSetupColumn("##TableLabelColumn");
-        ImGui::TableSetupColumn("##TableDataColumn", ImGuiTableColumnFlags_WidthStretch);
-    }
-
-    void ImGuiWidgets::BeginProperty(const std::string_view label, const std::string_view tooltip)
-    {
-        ImGui::TableNextRow();
-        ImGui::TableNextColumn();
-
-        PushID(label);
-        ImGui::Text("%s", label.data());
-
-        if (!tooltip.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-        {
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, ImGui::GetStyle().FrameRounding * 1.5f);
-            {
-                ImGui::BeginTooltip();
-                ImGui::TextUnformatted(tooltip.data());
-                ImGui::EndTooltip();
-            }
-            ImGui::PopStyleVar();
-        }
-
-        ImGui::TableNextColumn();
-        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-    }
-
-    void ImGuiWidgets::EndProperty()
-    {
-        PopID();
-    }
-
-    void ImGuiWidgets::EndPropertyTable()
-    {
-        ImGui::EndTable();
     }
 
 }

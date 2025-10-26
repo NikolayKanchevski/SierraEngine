@@ -76,7 +76,7 @@ namespace SierraEngine
 
                 if (!transcoder.transcode_image_level(transcodeInfo.memory.data(), static_cast<uint32>(transcodeInfo.memory.size_bytes()), layer, level, memory.data(), imageInfo.m_orig_width * imageInfo.m_orig_height, format, 0, 0))
                 {
-                    APP_WARNING("Could not transcode level [{0}] layer [{1}] of Basis Universal image!", level, layer);
+                    APP_WARNING("Could not transcode level [{0}] layer [{1}] of Basis Universal image", level, layer);
                     return std::nullopt;
                 }
 

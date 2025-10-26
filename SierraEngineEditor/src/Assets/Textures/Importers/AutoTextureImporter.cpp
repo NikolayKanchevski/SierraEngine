@@ -13,9 +13,9 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    std::optional<ImportedTexture> AutoTextureImporter::Import(const TextureImportInfo& importInfo) const
+    std::optional<ImportedTexture> AutoTextureImporter::Import(const TextureImportInfo& importInfo) noexcept
     {
-        const AssetSignature& signature = reinterpret_cast<const AssetSignature&>(*importInfo.serializedTexture.memory.data());
+        const AssetSignature& signature = reinterpret_cast<const AssetSignature&>(*importInfo.serializedTexture.blob.data());
 
         TRY_IMPORTER(YAMLTextureImporter);
 

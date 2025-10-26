@@ -34,12 +34,12 @@ namespace Sierra
         Version& operator=(Version&&) noexcept = default;
 
         /* --- OPERATORS --- */
-        [[nodiscard]] bool operator<(Version other) const noexcept { return major < other.major || minor < other.minor || patch < other.patch; }
-        [[nodiscard]] bool operator>(Version other) const noexcept { return major > other.major || minor > other.minor || patch > other.patch; }
-        [[nodiscard]] bool operator<=(Version other) const noexcept { return major <= other.major || minor <= other.minor || patch <= other.patch; }
-        [[nodiscard]] bool operator>=(Version other) const noexcept { return major >= other.major || minor >= other.minor || patch >= other.patch; }
-		[[nodiscard]] bool operator==(Version other) const noexcept { return major == other.major && minor == other.minor && patch == other.patch; }
-		[[nodiscard]] bool operator!=(Version other) const noexcept { return !(*this == other); }
+        [[nodiscard]] bool operator<(const Version other) const noexcept { return major < other.major || minor < other.minor || patch < other.patch; }
+        [[nodiscard]] bool operator>(const Version other) const noexcept { return major > other.major || minor > other.minor || patch > other.patch; }
+        [[nodiscard]] bool operator<=(const Version other) const noexcept { return major <= other.major || minor <= other.minor || patch <= other.patch; }
+        [[nodiscard]] bool operator>=(const Version other) const noexcept { return major >= other.major || minor >= other.minor || patch >= other.patch; }
+		[[nodiscard]] bool operator==(const Version other) const noexcept { return major == other.major && minor == other.minor && patch == other.patch; }
+		[[nodiscard]] bool operator!=(const Version other) const noexcept { return !(*this == other); }
 
         /* --- DESTRUCTOR --- */
         ~Version() noexcept = default;

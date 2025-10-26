@@ -22,8 +22,8 @@ namespace Sierra
 
     bool FoundationFileManager::FileExists(const std::filesystem::path& filePath) const noexcept
     {
-        const std::string path = filePath.string();
-        return [fileManager fileExistsAtPath: [NSString stringWithCString: path.c_str() length: path.size()]];
+        const std::u16string path = filePath.u16string();
+        return [fileManager fileExistsAtPath: [NSString stringWithCharacters: reinterpret_cast<const unichar*>(path.c_str()) length: path.size()]];
     }
 
     std::unique_ptr<FileStream> FoundationFileManager::CreateFileStream(const FileStreamCreateInfo& createInfo) const
@@ -40,8 +40,8 @@ namespace Sierra
         ResolveFilePathConflict(filePath, resolvedFilePath, conflictPolicy);
         CreateDirectory(resolvedFilePath.parent_path());
 
-        const std::string path = resolvedFilePath.string();
-        const BOOL success = [fileManager createFileAtPath: [NSString stringWithCString: path.c_str() length: path.size()] contents: [NSData data] attributes: nil];
+        const std::u16string path = resolvedFilePath.u16string();
+        const BOOL success = [fileManager createFileAtPath: [NSString stringWithCharacters: reinterpret_cast<const unichar*>(path.c_str()) length:path.size()] contents: [NSData data] attributes: nil];
         SR_THROW_IF(!success, UnknownFileError("Could not create file", filePath));
     }
 
@@ -227,10 +227,10 @@ namespace Sierra
 
     FileMetadata FoundationFileManager::GetFileMetadata(const std::filesystem::path& filePath) const
     {
-        const std::string path = filePath.string();
+        const std::u16string path = filePath.u16string();
 
         NSError* error = nil;
-        const NSDictionary<NSFileAttributeKey, id>* const attributes = [fileManager attributesOfItemAtPath: [NSString stringWithCString: path.data() length: path.size()] error: &error];
+        const NSDictionary<NSFileAttributeKey, id>* const attributes = [fileManager attributesOfItemAtPath: [NSString stringWithCharacters:reinterpret_cast<const unichar*>(path.data()) length: path.size()] error: &error];
         if (error != nil) HandleNSFileError(error, "Could not get file metadata", filePath);
 
         const NSNumber* const memorySize = [attributes objectForKey: NSFileSize];
@@ -251,10 +251,10 @@ namespace Sierra
 
     DirectoryMetadata FoundationFileManager::GetDirectoryMetadata(const std::filesystem::path& directoryPath) const
     {
-        const std::string path = directoryPath.string();
+        const std::u16string path = directoryPath.u16string();
 
         NSError* error = nil;
-        const NSDictionary<NSFileAttributeKey, id>* const attributes = [fileManager attributesOfItemAtPath: [NSString stringWithCString: path.data() length: path.size()] error: &error];
+        const NSDictionary<NSFileAttributeKey, id>* const attributes = [fileManager attributesOfItemAtPath: [NSString stringWithCharacters: reinterpret_cast<const unichar*>(path.data()) length: path.size()] error: &error];
         if (error != nil) HandleNSFileError(error, "Could not get directory metadata", directoryPath);
 
         const NSDate* const dateCreated = [attributes objectForKey: NSFileCreationDate];

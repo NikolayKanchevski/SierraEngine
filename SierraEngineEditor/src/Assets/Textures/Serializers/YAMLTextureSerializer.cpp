@@ -9,27 +9,6 @@ namespace SierraEngine
 
     namespace
     {
-        std::string_view TextureTypeToString(const TextureType type) noexcept
-        {
-            switch (type)
-            {
-                case TextureType::Undefined:        return "Undefined";
-                case TextureType::Albedo:           return "Albedo";
-                case TextureType::Specular:         return "Specular";
-                case TextureType::Normal:           return "Normal";
-                case TextureType::Opacity:          return "Opacity";
-                case TextureType::Roughness:        return "Roughness";
-                case TextureType::Metallic:         return "Metallic";
-                case TextureType::Displacement:     return "Displacement";
-                case TextureType::Emission:         return "Emission";
-                case TextureType::Occlusion:        return "Occlusion";
-                case TextureType::Shadow:           return "Shadow";
-                case TextureType::Environment:      return "Environment";
-            }
-
-            return "Unknown";
-        }
-
         std::string_view ImageFormatToString(const Sierra::ImageFormat format) noexcept
         {
             switch (format)
@@ -151,15 +130,15 @@ namespace SierraEngine
             return std::nullopt;
         }
 
-        const uint32 expectedLevelCount = static_cast<uint32>(glm::log2(glm::max(serializeInfo.levels[0].layers[0].GetWidth(), serializeInfo.levels[0].layers[0].GetHeight()))) + 1;
+        const uint32 expectedLevelCount = glm::log2(glm::max(serializeInfo.levels[0].layers[0].width, serializeInfo.levels[0].layers[0].height)) + 1;
         if (serializeInfo.levels.size() != 1 && serializeInfo.levels.size() != expectedLevelCount)
         {
             APP_WARNING("Cannot serialize texture, as the count of specified levels must be either [1] or [floor(log2(max(baseWidth, baseHeight))) + 1]");
             return std::nullopt;
         }
 
-        const size nodeCapacity = GetMetadataNodeCount(serializeInfo.metadata) + GetPropertiesNodeCount();
-        const size arenaCapacity = GetMetadataArenaSize(serializeInfo.metadata) + GetPropertiesArenaSize();
+        const size nodeCapacity = GetMetadataNodeCount(serializeInfo.metadata);
+        const size arenaCapacity = GetMetadataArenaSize(serializeInfo.metadata);
         ryml::Tree tree(nodeCapacity, arenaCapacity);
 
         ryml::NodeRef root = tree.rootref();
@@ -176,17 +155,16 @@ namespace SierraEngine
             return std::nullopt;
         }
 
-        /* === Reference: https://gaim.umbc.edu/2010/05/27/mip-size/ === */
-        const size memorySize = sizeof(AssetHeader);
-        Sierra::MemoryWriteStream memoryStream(memorySize);
+        const size blobMemorySize = sizeof(AssetHeader) + sizeof(TextureHeader) + GetTextureMemorySize(serializeInfo);
+        Sierra::MemoryWriteStream blobStream(blobMemorySize);
 
-        SerializeHeader(memoryStream);
-        SerializeMemory(memoryStream, serializeInfo);
+        SerializeHeader(blobStream);
+        SerializeBlob(blobStream, serializeInfo);
 
         SerializedTexture texture
         {
             .data = { reinterpret_cast<const uint8*>(data.data()), reinterpret_cast<const uint8*>(data.data()) + data.size() },
-            .memory = memoryStream.Release()
+            .blob = blobStream.Release()
         };
 
         return texture;
@@ -199,7 +177,6 @@ namespace SierraEngine
         ryml::NodeRef node = root["properties"];
         node |= ryml::MAP;
 
-        SerializeEnum(node["type"], properties.type, TextureTypeToString);
         SerializeEnum(node["filter"], properties.filter, TextureFilterToString);
     }
 
@@ -207,8 +184,7 @@ namespace SierraEngine
 
     [[nodiscard]] size YAMLTextureSerializer::GetPropertiesNodeCount() const noexcept
     {
-        // Node + members
-        return 1 + 2;
+        return 0;
     }
 
     [[nodiscard]] size YAMLTextureSerializer::GetPropertiesArenaSize() const noexcept

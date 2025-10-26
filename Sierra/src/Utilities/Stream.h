@@ -22,10 +22,11 @@ namespace Sierra
         [[nodiscard]] std::vector<uint8> Read(size sourceOffset, size memorySize);
 
         template<typename T>
-        [[nodiscard]] T Read()
+        [[nodiscard]] T ReadAs()
         {
             return reinterpret_cast<const T&>(Read(sizeof(T)).front());
         }
+
         virtual void Write(const void* memory, size memorySize);
         void Write(const void* memory, size destinationOffset, size memorySize);
 

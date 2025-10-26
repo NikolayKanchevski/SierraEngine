@@ -79,28 +79,28 @@ namespace SierraEngine
 
         switch (compressInfo.qualityLevel)
         {
-            case ImageQualityLevel::Lowest:
+            case ImageCompressionQualityLevel::Lowest:
             {
                 qualityLevel = 51;
                 break;
             }
-            case ImageQualityLevel::Low:
+            case ImageCompressionQualityLevel::Low:
             {
                 qualityLevel = 102;
                 break;
             }
-            case ImageQualityLevel::Standard:
+            case ImageCompressionQualityLevel::Standard:
             {
                 qualityLevel = 153;
                 break;
             }
-            case ImageQualityLevel::High:
+            case ImageCompressionQualityLevel::High:
             {
                 useUASTC = true;
                 qualityLevel = 204;
                 break;
             }
-            case ImageQualityLevel::Highest:
+            case ImageCompressionQualityLevel::Highest:
             {
                 useUASTC = true;
                 qualityLevel = 255;
@@ -126,11 +126,11 @@ namespace SierraEngine
         compressorParameters.m_quality_level = qualityLevel;
         compressorParameters.m_pJob_pool = &jobPool;
 
-        const Image& rootImage = compressInfo.levels[0].layers[0];
+        const LoadedImage& rootImage = compressInfo.levels[0].layers[0];
         compressorParameters.m_source_images.resize(compressInfo.levels[0].layers.size());
         for (size layer = 0; layer < compressInfo.levels[0].layers.size(); layer++)
         {
-            compressorParameters.m_source_images[layer].init(reinterpret_cast<const uint8*>(rootImage.GetMemory()), rootImage.GetWidth(), rootImage.GetHeight(), ImageFormatToChannelCount(rootImage.GetFormat()));
+            compressorParameters.m_source_images[layer].init(rootImage.memory.data(), rootImage.width, rootImage.height, Sierra::ImageFormatToChannelCount(rootImage.format));
         }
 
         compressorParameters.m_source_mipmap_images.resize(compressInfo.levels.size() - 1);
@@ -138,8 +138,8 @@ namespace SierraEngine
         {
             for (size layer = 0; layer < compressInfo.levels.size(); layer++)
             {
-                const Image& layerImage = compressInfo.levels[level].layers[layer];
-                compressorParameters.m_source_images[level].init(reinterpret_cast<const uint8*>(layerImage.GetMemory()), glm::max(1U, rootImage.GetWidth() >> level), glm::max(1U, rootImage.GetHeight() >> level), ImageFormatToChannelCount(rootImage.GetFormat()));
+                const LoadedImage& layerImage = compressInfo.levels[level].layers[layer];
+                compressorParameters.m_source_mipmap_images[level][layer].init(layerImage.memory.data(), glm::max(1U, rootImage.width >> level), glm::max(1U, rootImage.height >> level), Sierra::ImageFormatToChannelCount(rootImage.format));
             }
         }
 

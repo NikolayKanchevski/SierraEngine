@@ -21,7 +21,7 @@ namespace Sierra
 
     /* --- CONVERSIONS --- */
     [[nodiscard]] SIERRA_API MTLSamplerMinMagFilter SamplerSampleModeToSamplerMinMagFilter(SamplerFilter sampleMode) noexcept;
-    [[nodiscard]] SIERRA_API MTLSamplerAddressMode SamplerExtendModeToSamplerAddressMode(SamplerAddressMode extendMode) noexcept;
+    [[nodiscard]] SIERRA_API MTLSamplerAddressMode SamplerAddressModeToSamplerAddressMode(SamplerAddressMode extendMode) noexcept;
     [[nodiscard]] SIERRA_API NSUInteger SamplerAnisotropyToUInteger(SamplerAnisotropy anisotropy) noexcept;
     [[nodiscard]] SIERRA_API MTLCompareFunction SamplerCompareOperationToCompareFunction(SamplerCompareOperation compareOperation) noexcept;
     [[nodiscard]] SIERRA_API MTLSamplerBorderColor SamplerBorderColorToSamplerBorderColor(SamplerBorderColor borderColor) noexcept;

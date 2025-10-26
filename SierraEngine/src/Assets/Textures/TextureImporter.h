@@ -7,7 +7,6 @@
 #include "../AssetImporter.h"
 
 #include "TextureSerializer.h"
-#include "ImageTranscoder.h"
 
 namespace SierraEngine
 {
@@ -24,7 +23,7 @@ namespace SierraEngine
         AssetMetadata metadata = { };
         TextureProperties properties = { };
 
-        TextureDetails details = { };
+        TextureHeader textureHeader = { };
         std::vector<uint8> memory = { };
     };
 
@@ -46,7 +45,7 @@ namespace SierraEngine
         TextureImporter() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::optional<TextureDetails> ImportMemory(Sierra::Stream& stream, const TextureImportInfo& importInfo, std::vector<uint8>& memory) const;
+        [[nodiscard]] std::vector<uint8> ImportBlob(const TextureHeader& header, Sierra::ImageFormat format, Sierra::Stream& stream) const;
 
         /* --- MOVE SEMANTICS --- */
         TextureImporter(TextureImporter&&) noexcept = default;

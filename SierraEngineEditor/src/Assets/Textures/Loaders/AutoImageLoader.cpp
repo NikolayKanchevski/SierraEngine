@@ -6,14 +6,14 @@
 
 #include "STBImageLoader.h"
 
-#define TRY_LOADER(TYPE) if (std::optional<Image> image = TYPE().Load(loadInfo); image.has_value()) return image;
+#define TRY_LOADER(TYPE) if (std::optional<LoadedImage> image = TYPE().Load(loadInfo); image.has_value()) return image;
 
 namespace SierraEngine
 {
 
     /* --- POLLING METHODS --- */
 
-    std::optional<Image> AutoImageLoader::Load(const ImageLoadInfo& loadInfo) const noexcept
+    std::optional<LoadedImage> AutoImageLoader::Load(const ImageLoadInfo& loadInfo) noexcept
     {
         TRY_LOADER(STBImageLoader);
 

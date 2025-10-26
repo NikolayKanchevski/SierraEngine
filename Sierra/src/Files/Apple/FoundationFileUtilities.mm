@@ -12,8 +12,8 @@ namespace Sierra
 
     NSURL* PathToNSURL(const std::filesystem::path& path) noexcept
     {
-        const std::string pathString = path.string();
-        return [[NSURL alloc] initFileURLWithPath: [NSString stringWithCString: pathString.c_str() length: pathString.size()]];
+        const std::u16string pathString = path.u16string();
+        return [[NSURL alloc] initFileURLWithPath: [NSString stringWithCharacters: reinterpret_cast<const unichar*>(pathString.c_str()) length: pathString.size()]];
     }
 
     void HandleNSFileError(const NSError* const error, const std::string_view message, const std::filesystem::path& path)
@@ -38,7 +38,7 @@ namespace Sierra
             default:                                                 break;
         }
 
-        throw UnknownFileError(message, path);
+        throw UnknownFileError(message, path, std::string_view([error.localizedDescription cStringUsingEncoding: NSASCIIStringEncoding], [error.localizedDescription lengthOfBytesUsingEncoding: NSASCIIStringEncoding]));
     }
 
 }

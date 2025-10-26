@@ -15,8 +15,8 @@ namespace Sierra
     {
         switch (sampleMode)
         {
-            case SamplerFilter::Linear:     return VK_FILTER_LINEAR;
             case SamplerFilter::Nearest:   return VK_FILTER_NEAREST;
+            case SamplerFilter::Linear:    return VK_FILTER_LINEAR;
         }
 
         return VK_FILTER_NEAREST;
@@ -26,8 +26,8 @@ namespace Sierra
     {
         switch (sampleMode)
         {
-            case SamplerFilter::Linear:         return VK_SAMPLER_MIPMAP_MODE_LINEAR;
-            case SamplerFilter::Nearest:        return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+            case SamplerFilter::Nearest:    return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+            case SamplerFilter::Linear:     return VK_SAMPLER_MIPMAP_MODE_LINEAR;
         }
 
         return VK_SAMPLER_MIPMAP_MODE_NEAREST;
@@ -99,21 +99,21 @@ namespace Sierra
         const VkSamplerCreateInfo samplerCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-            .magFilter = SamplerSampleModeToVkFilter(createInfo.filter),
-            .minFilter = SamplerSampleModeToVkFilter(createInfo.filter),
-            .mipmapMode = SamplerSampleModeToVkSamplerMipMapMode(createInfo.filter),
-            .addressModeU = SamplerExtendModeToVkSamplerAddressMode(createInfo.extendMode),
-            .addressModeV = SamplerExtendModeToVkSamplerAddressMode(createInfo.extendMode),
-            .addressModeW = SamplerExtendModeToVkSamplerAddressMode(createInfo.extendMode),
+            .magFilter = SamplerSampleModeToVkFilter(createInfo.magFilter),
+            .minFilter = SamplerSampleModeToVkFilter(createInfo.minFilter),
+            .mipmapMode = SamplerSampleModeToVkSamplerMipMapMode(createInfo.minFilter),
+            .addressModeU = SamplerExtendModeToVkSamplerAddressMode(createInfo.addressMode),
+            .addressModeV = SamplerExtendModeToVkSamplerAddressMode(createInfo.addressMode),
+            .addressModeW = SamplerExtendModeToVkSamplerAddressMode(createInfo.addressMode),
             .mipLodBias = 0.0f,
             .anisotropyEnable = createInfo.anisotropy != SamplerAnisotropy::x1,
             .maxAnisotropy = SamplerAnisotropyToFloat32(createInfo.anisotropy),
             .compareEnable = createInfo.compareOperation != SamplerCompareOperation::None,
-            .compareOp = createInfo.anisotropy != SamplerAnisotropy::x1 ? SamplerCompareOperationToVkCompareOp(createInfo.compareOperation) : VK_COMPARE_OP_ALWAYS,
+            .compareOp = SamplerCompareOperationToVkCompareOp(createInfo.compareOperation),
             .minLod = 0.0f,
-            .maxLod = static_cast<float32>(createInfo.highestSampledLevel),
+            .maxLod = static_cast<float32>(createInfo.maxSampledLevel),
             .borderColor = SamplerBorderColorToVkBorderColor(createInfo.borderColor),
-            .unnormalizedCoordinates = VK_FALSE,
+            .unnormalizedCoordinates = VK_FALSE
         };
 
         // Create sampler
