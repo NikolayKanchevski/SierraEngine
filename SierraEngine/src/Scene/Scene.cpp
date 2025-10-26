@@ -11,22 +11,6 @@
 namespace SierraEngine
 {
 
-    namespace
-    {
-        // NOTE: The point of these functions is to reserve the hash & index of 0 as null,
-        // as entt uses std::numeric_limits<ENTT_ID_TYPE>::max() for its null ID
-
-        [[nodiscard]] entt::entity EntityIDToEntity(const EntityID entityID) noexcept
-        {
-            return entt::entity(entityID.GetValue() - 1);
-        }
-
-        [[nodiscard]] EntityID EntityToEntityID(const entt::entity entity) noexcept
-        {
-            return { static_cast<ENTT_ID_TYPE>(entity) + 1 };
-        }
-    }
-
     /* --- CONSTRUCTORS --- */
 
     Scene::Scene(const SceneCreateInfo& createInfo)
@@ -39,7 +23,7 @@ namespace SierraEngine
 
     EntityID Scene::CreateEntity(const std::string_view tag)
     {
-        const EntityID entityID = EntityToEntityID(registry.create());
+        const EntityID entityID = EntityID(static_cast<EntityID::ValueType>(registry.create()));
         AddEntityComponent<Tag>(entityID, tag);
         AddEntityComponent<Transform>(entityID);
         AddEntityComponent<Relationship>(entityID);
@@ -62,7 +46,7 @@ namespace SierraEngine
             RemoveEntityChild(entityID, childID);
         }
 
-        registry.destroy(EntityIDToEntity(entityID));
+        registry.destroy(static_cast<entt::entity>(entityID.GetValue()));
     }
 
     /* --- SETTER METHODS --- */

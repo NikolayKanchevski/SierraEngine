@@ -81,29 +81,29 @@ namespace SierraEngine
         {
             case ImageCompressionQualityLevel::Lowest:
             {
-                qualityLevel = 51;
+                qualityLevel = basisu::BASISU_QUALITY_MIN;
                 break;
             }
             case ImageCompressionQualityLevel::Low:
             {
-                qualityLevel = 102;
+                qualityLevel = (basisu::BASISU_QUALITY_MIN + basisu::BASISU_DEFAULT_QUALITY) / 2;
                 break;
             }
             case ImageCompressionQualityLevel::Standard:
             {
-                qualityLevel = 153;
+                qualityLevel = basisu::BASISU_DEFAULT_QUALITY;
                 break;
             }
             case ImageCompressionQualityLevel::High:
             {
                 useUASTC = true;
-                qualityLevel = 204;
+                qualityLevel = (basisu::BASISU_DEFAULT_QUALITY + basisu::BASISU_QUALITY_MAX) / 2;
                 break;
             }
             case ImageCompressionQualityLevel::Highest:
             {
                 useUASTC = true;
-                qualityLevel = 255;
+                qualityLevel = basisu::BASISU_QUALITY_MAX;
                 break;
             }
         }
@@ -123,7 +123,7 @@ namespace SierraEngine
         compressorParameters.m_perceptual = true;
         compressorParameters.m_print_stats = ENABLE_DEBUGGING;
         compressorParameters.m_mip_gen = false;
-        compressorParameters.m_quality_level = qualityLevel;
+        compressorParameters.m_etc1s_quality_level = qualityLevel;
         compressorParameters.m_pJob_pool = &jobPool;
 
         const LoadedImage& rootImage = compressInfo.levels[0].layers[0];
