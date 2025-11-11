@@ -23,7 +23,6 @@ namespace Sierra
         VulkanRenderPass(const VulkanDevice& device, const RenderPassCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
         [[nodiscard]] uint32 GetSubpassCount() const noexcept override { return subpassCount; }
 
         [[nodiscard]] uint32 GetColorAttachmentCount() const noexcept override { return colorAttachmentCount; }
@@ -44,7 +43,6 @@ namespace Sierra
 
     private:
         const VulkanDevice* device = nullptr;
-        std::string name = { };
 
         uint32 subpassCount = 0;
         VkRenderPass renderPass = VK_NULL_HANDLE;

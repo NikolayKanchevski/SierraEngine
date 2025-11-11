@@ -22,7 +22,7 @@ namespace Sierra
     void Buffer::Write(const void* memory, const uint64 sourceOffset, const uint64 destinationOffset, const uint64 memorySize)
     {
         SR_THROW_IF(memory == nullptr, InvalidValueError(SR_FORMAT("Cannot write memory range [{0}-{1}] to buffer [{1}], as specified memory pointer must not be null", destinationOffset, destinationOffset + memorySize, GetName())));
-        SR_THROW_IF(destinationOffset + memorySize > GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot write invalid memory range to buffer [{0}]", GetName()), destinationOffset, memorySize, uint64(0), GetMemorySize()));
+        SR_THROW_IF(destinationOffset + memorySize > GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot write invalid memory range to buffer [{0}]", GetName()), destinationOffset, memorySize, static_cast<uint64>(0), GetMemorySize()));
     }
 
 }

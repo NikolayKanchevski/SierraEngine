@@ -12,8 +12,9 @@ namespace SierraEngine
     struct EditorSurfaceCreateInfo
     {
         const Sierra::PlatformContext& platformContext;
-        const Sierra::Device& device;
-        Sierra::ResourceTable& resourceTable;
+        const RenderingContext& renderingContext;
+
+        Sierra::CommandBuffer& commandBuffer;
     };
 
     class EditorSurface final
@@ -23,9 +24,9 @@ namespace SierraEngine
         explicit EditorSurface(const EditorSurfaceCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        bool Update();
+        bool Update() const;
         void Render(Sierra::CommandBuffer& commandBuffer, Editor& editor);
-        void Present(Sierra::CommandBuffer& commandBuffer);
+        void Present(Sierra::CommandBuffer& commandBuffer) const;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint32 GetCurrentFrameIndex() const noexcept { return swapchain->GetCurrentFrameIndex(); };
@@ -43,13 +44,13 @@ namespace SierraEngine
         ~EditorSurface() noexcept = default;
 
     private:
-        const Sierra::Device& device;
+        const RenderingContext* renderingContext;
 
         std::unique_ptr<Sierra::Window> window = nullptr;
         std::unique_ptr<Sierra::Swapchain> swapchain = nullptr;
-        Sierra::ImGuiRenderer imGuiRenderer;
-
         std::unique_ptr<Sierra::RenderPass> renderPass = nullptr;
+        std::optional<Sierra::ImGuiRenderer> imGuiRenderer = std::nullopt;
+
         std::vector<std::unique_ptr<Sierra::Framebuffer>> framebuffers = { };
         void CreateFramebuffers();
 

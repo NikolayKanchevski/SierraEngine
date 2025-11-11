@@ -25,14 +25,13 @@ namespace Sierra
         void Present(CommandBuffer& commandBuffer) override;
 
         /* -- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
 
         [[nodiscard]] uint32 GetCurrentFrameIndex() const noexcept override { return currentFrame; }
         [[nodiscard]] uint32 GetCurrentImageIndex() const noexcept override { return currentFrame; }
         [[nodiscard]] uint32 GetConcurrentFrameCount() const noexcept override { return concurrentFrameCount; }
 
         [[nodiscard]] float32 GetScaling() const noexcept override { return static_cast<float32>(swapchainImage->GetWidth()) / static_cast<float32>(window->GetWidth()); }
-        [[nodiscard]] const Image& GetImage(const uint32 frameIndex) const override { SR_THROW_IF(frameIndex >= concurrentFrameCount, ValueOutOfRangeError(SR_FORMAT("Cannot get image [{0}] of swapchain [{1}]! Use Swapchain::GetConcurrentFrameCount() to query count", frameIndex, name), frameIndex, uint32(0), GetConcurrentFrameCount() - 1)); return *swapchainImage; }
+        [[nodiscard]] const Image& GetImage(const uint32 frameIndex) const override { SR_THROW_IF(frameIndex >= concurrentFrameCount, ValueOutOfRangeError(SR_FORMAT("Cannot get image [{0}] of swapchain [{1}]! Use Swapchain::GetConcurrentFrameCount() to query count", frameIndex, GetName()), frameIndex, uint32(0), GetConcurrentFrameCount() - 1)); return *swapchainImage; }
 
         /* --- COPY SEMANTICS --- */
         MetalSwapchain(const MetalSwapchain&) = delete;
@@ -49,7 +48,6 @@ namespace Sierra
         const MetalDevice* device = nullptr;
         Window* window = nullptr;
 
-        std::string name = { };
 
         #if !defined(__OBJC__)
           using CAMetalLayer = void;

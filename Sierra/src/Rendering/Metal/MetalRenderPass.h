@@ -31,7 +31,6 @@ namespace Sierra
         MetalRenderPass(const MetalDevice& device, const RenderPassCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
         [[nodiscard]] uint32 GetSubpassCount() const noexcept override { return subpasses.size(); }
 
         [[nodiscard]] uint32 GetColorAttachmentCount() const noexcept override { return colorAttachmentCount; }
@@ -54,7 +53,6 @@ namespace Sierra
         ~MetalRenderPass() noexcept override;
 
     private:
-        std::string name = { };
 
         struct MetalSubpass
         {

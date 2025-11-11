@@ -9,10 +9,9 @@ namespace SierraEngine
 
     struct ImagePreviewInfo
     {
-        const Sierra::Device& device;
-        const LoadedImage& image;
-
+        const RenderingContext& renderingContext;
         Sierra::CommandBuffer& commandBuffer;
+        const LoadedImage& image;
     };
 
     struct ImagePreview

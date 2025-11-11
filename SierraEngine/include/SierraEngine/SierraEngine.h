@@ -11,9 +11,11 @@
 #include "../../src/Core/ThreadPool.h"
 
 #include "../../src/Rendering/ArenaAllocator.h"
-#include "../../src/Rendering/Mesh.h"
 #include "../../src/Rendering/SceneRenderer.h"
-#include "../../src/Rendering/Vertex.h"
+#include "../../src/Rendering/RenderingContext.h"
+
+#include "../../src/Rendering/Primitives/Mesh.h"
+#include "../../src/Rendering/Primitives/Vertex.h"
 
 #include "../../src/Assets/Asset.h"
 #include "../../src/Assets/AssetHeader.h"

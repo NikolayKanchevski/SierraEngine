@@ -39,7 +39,7 @@ namespace Sierra
         char className[11 + 1];
         sprintf_s(className, "%i", RNG().Random<int32>());
 
-        const WNDCLASS windowClass =
+        const WNDCLASS windowClass
         {
             .lpfnWndProc = windowProc,
             .hInstance = hInstance,

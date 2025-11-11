@@ -25,10 +25,10 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalBuffer::MetalBuffer(const MetalDevice& device, const BufferCreateInfo& createInfo)
-        : Buffer(createInfo)
+        : MetalResource(createInfo.name), Buffer(createInfo)
     {
-        SR_THROW_IF(createInfo.usage & BufferUsage::Uniform && createInfo.memorySize > device.GetLimits().maxUniformBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max uniform buffer size - use Device::GetLimits() to query limits", createInfo.name, device.GetName()), createInfo.memorySize, uint64(0), device.GetLimits().maxUniformBufferSize));
-        SR_THROW_IF(createInfo.usage & BufferUsage::Storage && createInfo.memorySize > device.GetLimits().maxStorageBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max storage buffer size - use Device::GetLimits() to query limits", createInfo.name, device.GetName()), createInfo.memorySize, uint64(0), device.GetLimits().maxUniformBufferSize));
+        SR_THROW_IF(createInfo.usage & BufferUsage::Uniform && createInfo.memorySize > device.GetLimits().maxUniformBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max uniform buffer size - use Device::GetLimits() to query limits", createInfo.name, device.GetName()), createInfo.memorySize, static_cast<uint64>(0), device.GetLimits().maxUniformBufferSize));
+        SR_THROW_IF(createInfo.usage & BufferUsage::Storage && createInfo.memorySize > device.GetLimits().maxStorageBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max storage buffer size - use Device::GetLimits() to query limits", createInfo.name, device.GetName()), createInfo.memorySize, static_cast<uint64>(0), device.GetLimits().maxUniformBufferSize));
 
         // Create buffer
         buffer = [device.GetMetalDevice() newBufferWithLength: createInfo.memorySize options: BufferMemoryLocationToResourceOptions(createInfo.memoryLocation)];

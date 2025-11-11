@@ -33,11 +33,11 @@ namespace SierraEngine
         EditorAssetManager& operator=(const EditorAssetManager &) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        EditorAssetManager(EditorAssetManager &&) = delete;
-        EditorAssetManager& operator=(EditorAssetManager &&) = delete;
+        EditorAssetManager(EditorAssetManager &&) noexcept = default;
+        EditorAssetManager& operator=(EditorAssetManager &&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
-        ~EditorAssetManager() noexcept = default;
+        ~EditorAssetManager() noexcept override = default;
 
     private:
 

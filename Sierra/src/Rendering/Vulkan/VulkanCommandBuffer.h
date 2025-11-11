@@ -68,12 +68,7 @@ namespace Sierra
         void InsertDebugMarker(std::string_view markerName, Color32 color) override;
         void EndDebugRegion() override;
 
-        std::unique_ptr<Buffer>& QueueBufferForDestruction(std::unique_ptr<Buffer> &&buffer) override;
-        std::unique_ptr<Image>& QueueImageForDestruction(std::unique_ptr<Image> &&image) override;
-
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
-
         [[nodiscard]] VkCommandBuffer GetVulkanCommandBuffer() const noexcept { return commandBuffer; }
         [[nodiscard]] uint32 GetQueueFamily() const noexcept { return queue->GetFamily(); }
 
@@ -85,7 +80,6 @@ namespace Sierra
 
     private:
         const VulkanQueue* queue = nullptr;
-        std::string name = { };
 
         VkCommandPool commandPool = VK_NULL_HANDLE;
         VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
@@ -104,9 +98,6 @@ namespace Sierra
 
         const VulkanBuffer* currentVertexBuffer = nullptr;
         const VulkanBuffer* currentIndexBuffer = nullptr;
-
-        std::queue<std::unique_ptr<Buffer>> queuedBuffersForDestruction;
-        std::queue<std::unique_ptr<Image>> queuedImagesForDestruction;
 
     };
 

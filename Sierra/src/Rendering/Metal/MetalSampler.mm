@@ -93,7 +93,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalSampler::MetalSampler(const MetalDevice& device, const SamplerCreateInfo& createInfo)
-        : Sampler(createInfo)
+        : MetalResource(createInfo.name), Sampler(createInfo)
     {
         SR_THROW_IF(!device.IsSamplerAnisotropySupported(createInfo.anisotropy), UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create sampler [{1}] with unsupported anisotropy - use Device::IsSamplerAnisotropySupported() to query support", device.GetName(), createInfo.name)));
 

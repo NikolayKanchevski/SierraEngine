@@ -19,7 +19,6 @@ namespace Sierra
         MetalFramebuffer(const MetalDevice& device, const FramebufferCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
 
         [[nodiscard]] uint32 GetWidth() const noexcept override { return attachments[0].image.GetWidth(); }
         [[nodiscard]] uint32 GetHeight() const noexcept override { return attachments[0].image.GetHeight(); }
@@ -38,7 +37,6 @@ namespace Sierra
         ~MetalFramebuffer() noexcept override = default;
 
     private:
-        std::string name = { };
         std::vector<FramebufferAttachment> attachments = { };
 
     };

@@ -2,7 +2,7 @@
 // Created by Nikolay Kanchevski on 21.11.23.
 //
 
-#include "MetalContext.h"
+#include "MetalInstance.h"
 
 #include "MetalDevice.h"
 
@@ -11,8 +11,8 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    MetalContext::MetalContext(const RenderingContextCreateInfo& createInfo)
-        : RenderingContext(createInfo), name(createInfo.name)
+    MetalInstance::MetalInstance(const RenderingInstanceCreateInfo& createInfo)
+        : MetalResource(createInfo.name), RenderingInstance(createInfo)
     {
         /* === Reference: https://support.apple.com/en-us/102894 === */
         const uint32 systemVersionMajor = NSProcessInfo.processInfo.operatingSystemVersion.majorVersion;
@@ -29,7 +29,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    std::unique_ptr<Device> MetalContext::CreateDevice(const DeviceCreateInfo& createInfo) const
+    std::unique_ptr<Device> MetalInstance::CreateDevice(const DeviceCreateInfo& createInfo) const
     {
         NSArray<id<MTLDevice>>* const devices = MTLCopyAllDevices();
 
@@ -46,7 +46,7 @@ namespace Sierra
         }
         [devices release];
 
-        SR_THROW_IF(selectedDevice == nil, UnsupportedFeatureError(SR_FORMAT("Rendering context [{0}] failed to create device [{1}], as no supported GPU was found on the system", name, createInfo.name)));
+        SR_THROW_IF(selectedDevice == nil, UnsupportedFeatureError(SR_FORMAT("Rendering context [{0}] failed to create device [{1}], as no supported GPU was found on the system", GetName(), createInfo.name)));
         return std::make_unique<MetalDevice>(*this, selectedDevice, createInfo);
     }
 

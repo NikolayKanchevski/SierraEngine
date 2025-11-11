@@ -20,8 +20,8 @@ target_sources(Sierra PRIVATE
     MetalCommandBuffer.h
     MetalComputePipeline.mm
     MetalComputePipeline.h
-    MetalContext.mm
-    MetalContext.h
+    MetalDestructionScheduler.mm
+    MetalDestructionScheduler.h
     MetalDevice.mm
     MetalDevice.h
     MetalFramebuffer.mm
@@ -30,10 +30,13 @@ target_sources(Sierra PRIVATE
     MetalGraphicsPipeline.h
     MetalImage.mm
     MetalImage.h
+    MetalInstance.mm
+    MetalInstance.h
     MetalQueue.mm
     MetalQueue.h
     MetalRenderPass.mm
     MetalRenderPass.h
+    MetalResource.mm
     MetalResource.h
     MetalResourceTable.mm
     MetalResourceTable.h

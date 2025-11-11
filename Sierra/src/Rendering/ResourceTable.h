@@ -9,7 +9,7 @@
 #include "Buffer.h"
 #include "Image.h"
 #include "Sampler.h"
-#include "../Utilities/Handle.hpp"
+#include "../Core/Handle.hpp"
 
 namespace Sierra
 {
@@ -21,11 +21,12 @@ namespace Sierra
 
     /* --- TYPE DEFINITIONS --- */
     using ResourceID = Handle<uint32>;
-    struct UniformBufferID final : public ResourceID { };
-    struct StorageBufferID final : public ResourceID { };
-    struct SampledImageID  final : public ResourceID { };
-    struct StorageImageID  final : public ResourceID { };
-    struct SamplerID       final : public ResourceID { };
+
+    struct UniformBufferID final : ResourceID { };
+    struct StorageBufferID final : ResourceID { };
+    struct SampledImageID  final : ResourceID { };
+    struct StorageImageID  final : ResourceID { };
+    struct SamplerID       final : ResourceID { };
 
     /* --- CONCEPTS --- */
     template<typename T>
@@ -35,19 +36,29 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual UniformBufferID BindUniformBuffer(const Buffer& buffer, uint64 offset, uint64 memorySize) = 0;
+        [[nodiscard]] UniformBufferID BindUniformBuffer(const Buffer& buffer, uint64 offset, uint64 memorySize);
+        [[nodiscard]] virtual UniformBufferID ReserveUniformBuffer() = 0;
+        virtual void UpdateUniformBuffer(UniformBufferID ID, const Buffer& buffer, uint64 offset, uint64 memorySize);
         virtual bool FreeUniformBuffer(UniformBufferID ID) = 0;
 
-        [[nodiscard]] virtual StorageBufferID BindStorageBuffer(const Buffer& buffer, uint64 offset, uint64 memorySize) = 0;
+        [[nodiscard]] StorageBufferID BindStorageBuffer(const Buffer& buffer, uint64 offset, uint64 memorySize);
+        [[nodiscard]] virtual StorageBufferID ReserveStorageBuffer() = 0;
+        virtual void UpdateStorageBuffer(StorageBufferID ID, const Buffer& buffer, uint64 offset, uint64 memorySize);
         virtual bool FreeStorageBuffer(StorageBufferID ID) = 0;
 
-        [[nodiscard]] virtual SampledImageID BindSampledImage(const Image& image) = 0;
+        [[nodiscard]] SampledImageID BindSampledImage(const Image& image);
+        [[nodiscard]] virtual SampledImageID ReserveSampledImage() = 0;
+        virtual void UpdateSampledImage(SampledImageID ID, const Image& image);
         virtual bool FreeSampledImage(SampledImageID ID) = 0;
 
-        [[nodiscard]] virtual StorageImageID BindStorageImage(const Image& image) = 0;
+        [[nodiscard]] StorageImageID BindStorageImage(const Image& image);
+        [[nodiscard]] virtual StorageImageID ReserveStorageImage() = 0;
+        virtual void UpdateStorageImage(StorageImageID ID, const Image& image);
         virtual bool FreeStorageImage(StorageImageID ID) = 0;
 
-        [[nodiscard]] virtual SamplerID BindSampler(const Sampler& sampler) = 0;
+        [[nodiscard]] SamplerID BindSampler(const Sampler& sampler);
+        [[nodiscard]] virtual SamplerID ReserveSampler() = 0;
+        virtual void UpdateSampler(SamplerID ID, const Sampler& sampler);
         virtual bool FreeSampler(SamplerID ID) = 0;
 
         /* --- GETTER METHODS --- */

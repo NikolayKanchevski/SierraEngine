@@ -11,30 +11,36 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    std::optional<SierraEngine::ImagePreview> ImagePreviewer::Preview(const SierraEngine::ImagePreviewInfo& previewInfo)
+    std::optional<SierraEngine::ImagePreview> ImagePreviewer::Preview(const ImagePreviewInfo& previewInfo)
     {
+        const Sierra::Device& device = previewInfo.renderingContext.GetDevice();
+
+        Sierra::CommandBuffer& commandBuffer = previewInfo.commandBuffer;
+        Sierra::DestructionScheduler& destructionScheduler = previewInfo.renderingContext.GetDestructionScheduler();
+
         constexpr Sierra::ImageUsage USAGE = Sierra::ImageUsage::DestinationMemory | Sierra::ImageUsage::Sample;
-        const std::optional<Sierra::ImageFormat> format = previewInfo.device.GetSupportedImageFormat(previewInfo.image.format, USAGE);
+        const std::optional<Sierra::ImageFormat> format = device.GetSupportedImageFormat(previewInfo.image.format, USAGE);
 
         if (!format.has_value())
         {
-            APP_WARNING("Device [{0}] cannot create image preview, as no suitable format is supported", previewInfo.device.GetName());
+            APP_WARNING("Device [{0}] cannot create image preview, as no suitable format is supported", device.GetName());
             return std::nullopt;
         }
+
 
         const ImageConverter converter = { };
         const LoadedImage convertedImage = converter.Convert({previewInfo.image, format.value() });
 
-        std::unique_ptr<Sierra::Image> image = previewInfo.device.CreateImage({
+        std::unique_ptr<Sierra::Image> image = device.CreateImage({
             .name = "Image Preview",
             .width = previewInfo.image.width,
             .height = previewInfo.image.height,
             .format = format.value(),
             .usage = USAGE
         });
-        previewInfo.commandBuffer.SynchronizeImageUsage(*image, { .nextUsage = Sierra::ImageCommandUsage::MemoryWrite });
+        commandBuffer.SynchronizeImageUsage(*image, { .nextUsage = Sierra::ImageCommandUsage::MemoryWrite });
 
-        std::unique_ptr<Sierra::Buffer> stagingBuffer = previewInfo.device.CreateBuffer({
+        std::unique_ptr<Sierra::Buffer> stagingBuffer = device.CreateBuffer({
             .name = "Image Preview Staging Buffer",
             .memorySize = convertedImage.memory.size(),
             .usage = Sierra::BufferUsage::SourceMemory,
@@ -42,10 +48,10 @@ namespace SierraEngine
         });
         stagingBuffer->Write(convertedImage.memory.data(), 0, 0, convertedImage.memory.size());
 
-        previewInfo.commandBuffer.CopyBufferToImage(*stagingBuffer, *image, { .pixelRange = {image->GetWidth(), image->GetHeight(), image->GetDepth() } });
-        previewInfo.commandBuffer.QueueBufferForDestruction(std::move(stagingBuffer));
+        commandBuffer.CopyBufferToImage(*stagingBuffer, *image, { .pixelRange = {image->GetWidth(), image->GetHeight(), image->GetDepth() } });
+        destructionScheduler.QueueResource(std::move(stagingBuffer));
 
-        previewInfo.commandBuffer.SynchronizeImageUsage(*image, { .previousUsage = Sierra::ImageCommandUsage::MemoryWrite, .nextUsage = Sierra::ImageCommandUsage::GraphicsRead });
+        commandBuffer.SynchronizeImageUsage(*image, { .previousUsage = Sierra::ImageCommandUsage::MemoryWrite, .nextUsage = Sierra::ImageCommandUsage::GraphicsRead });
 
         ImagePreview preview
         {

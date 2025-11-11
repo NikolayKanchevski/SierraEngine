@@ -34,7 +34,7 @@ namespace Sierra
     {
         if (!filePath.has_extension()) return FileType::Unknown;
 
-        static const std::unordered_map<std::string_view, FileType> FILE_EXTENSION_TABLE =
+        static const std::unordered_map<std::string_view, FileType> FILE_EXTENSION_TABLE
         {
             { ".txt",       FileType::Text },
             { ".md",        FileType::Text },

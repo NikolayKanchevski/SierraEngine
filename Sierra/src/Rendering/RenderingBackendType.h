@@ -23,9 +23,9 @@ namespace Sierra
         #elif SR_OPENGL_SUPPORTED
             Best = OpenGL
         #elif SR_WEBGPU_SUPPORTED
-            Best = OpenGL
+            Best = WebGPU
         #else
-            Best
+            #error "No rendering backends built!"
         #endif
     };
 

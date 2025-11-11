@@ -59,7 +59,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalCommandBuffer::MetalCommandBuffer(const MetalQueue& givenQueue, const CommandBufferCreateInfo& createInfo)
-        : CommandBuffer(createInfo), queue(&givenQueue), name(createInfo.name)
+        : MetalResource(createInfo.name), CommandBuffer(createInfo), queue(&givenQueue)
     {
         // Since in Metal you cannot reuse a command buffer after submitting it, one is created upon every Begin() call
     }
@@ -68,10 +68,6 @@ namespace Sierra
 
     void MetalCommandBuffer::Begin()
     {
-        // Free queued resources
-        queuedBuffersForDestruction = { };
-        queuedImagesForDestruction = { };
-
         // Set up command buffer descriptor
         MTLCommandBufferDescriptor* const commandBufferDescriptor = [[MTLCommandBufferDescriptor alloc] init];
         #if SR_ENABLE_LOGGING
@@ -80,7 +76,7 @@ namespace Sierra
 
         // Create command buffer
         commandBuffer = [queue->GetMetalCommandQueue() commandBufferWithDescriptor: commandBufferDescriptor];
-        queue->GetDevice().SetResourceName(commandBuffer, name);
+        queue->GetDevice().SetResourceName(commandBuffer, GetName());
 
         // Create completion synchronization
         completionSemaphoreSignalValue = queue->GetDevice().GetNewSemaphoreSignalValue();
@@ -88,10 +84,7 @@ namespace Sierra
             [commandBuffer addCompletedHandler: ^(id<MTLCommandBuffer> executedCommandBuffer)
             {
                 const NSError* const error = executedCommandBuffer.error;
-                //  SR_THROW_IF(error != nil, UnknownDeviceError(SR_FORMAT("Could not execute command buffer [{0}]", std::string_view(executedCommandBuffer.label.UTF8String, executedCommandBuffer.label.length))));
-
-                // NOTE: This has been left like this in hopes of finding an annoying page fault bug on Apple platforms
-                if (error != nil) SR_ERROR("Command buffer [{0}] errored out: {1}", std::string_view(executedCommandBuffer.label.UTF8String, executedCommandBuffer.label.length), std::string_view(error.localizedDescription.UTF8String, error.localizedDescription.length));
+                SR_THROW_IF(error != nil, UnknownDeviceError(SR_FORMAT("Could not execute command buffer [{0}]", std::string_view(executedCommandBuffer.label.UTF8String, executedCommandBuffer.label.length))));
             }];
         #endif
 
@@ -100,7 +93,7 @@ namespace Sierra
 
     void MetalCommandBuffer::End()
     {
-        SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot end command buffer [{0}], as current render pass [{1}] has not been ended", name, currentRenderPass->GetName())));
+        SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot end command buffer [{0}], as current render pass [{1}] has not been ended", GetName(), currentRenderPass->GetName())));
 
         if (currentBlitEncoder != nil)
         {
@@ -119,7 +112,7 @@ namespace Sierra
 
     void MetalCommandBuffer::SynchronizeBufferUsage(const Buffer& buffer, const BufferSynchronizeInfo& synchronizeInfo)
     {
-        SR_THROW_IF(buffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot synchronize usage of buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", buffer.GetName(), name)));
+        SR_THROW_IF(buffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot synchronize usage of buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", buffer.GetName(), GetName())));
         const MetalBuffer& metalBuffer = static_cast<const MetalBuffer&>(buffer);
 
         CommandBuffer::SynchronizeBufferUsage(metalBuffer, synchronizeInfo);
@@ -134,7 +127,7 @@ namespace Sierra
 
     void MetalCommandBuffer::SynchronizeImageUsage(const Image& image, const ImageSynchronizeInfo& synchronizeInfo)
     {
-        SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot synchronize usage of image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", image.GetName(), name)));
+        SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot synchronize usage of image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", image.GetName(), GetName())));
         const MetalImage& metalImage = static_cast<const MetalImage&>(image);
 
         CommandBuffer::SynchronizeImageUsage(metalImage, synchronizeInfo);
@@ -149,10 +142,10 @@ namespace Sierra
 
     void MetalCommandBuffer::CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, const BufferToBufferCopyInfo& copyInfo)
     {
-        SR_THROW_IF(sourceBuffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot copy from buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", sourceBuffer.GetName(), name)));
+        SR_THROW_IF(sourceBuffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot copy from buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", sourceBuffer.GetName(), GetName())));
         const MetalBuffer& metalSourceBuffer = static_cast<const MetalBuffer&>(sourceBuffer);
 
-        SR_THROW_IF(destinationBuffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot copy to buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", destinationBuffer.GetName(), name)));
+        SR_THROW_IF(destinationBuffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot copy to buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", destinationBuffer.GetName(), GetName())));
         const MetalBuffer& metalDestinationBuffer = static_cast<const MetalBuffer&>(destinationBuffer);
 
         CommandBuffer::CopyBufferToBuffer(metalSourceBuffer, metalDestinationBuffer, copyInfo);
@@ -168,10 +161,10 @@ namespace Sierra
 
     void MetalCommandBuffer::CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, const BufferToImageCopyInfo& copyInfo)
     {
-        SR_THROW_IF(sourceBuffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot copy from buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", sourceBuffer.GetName(), name)));
+        SR_THROW_IF(sourceBuffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot copy from buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", sourceBuffer.GetName(), GetName())));
         const MetalBuffer& metalSourceBuffer = static_cast<const MetalBuffer&>(sourceBuffer);
 
-        SR_THROW_IF(destinationImage.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot copy to image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", destinationImage.GetName(), name)));
+        SR_THROW_IF(destinationImage.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot copy to image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", destinationImage.GetName(), GetName())));
         const MetalImage& metalDestinationImage = static_cast<const MetalImage&>(destinationImage);
 
         CommandBuffer::CopyBufferToImage(metalSourceBuffer, metalDestinationImage, copyInfo);
@@ -193,7 +186,7 @@ namespace Sierra
 
     void MetalCommandBuffer::GenerateMipMapsForImage(const Image& image)
     {
-        SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot generate mip maps for image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", image.GetName(), name)));
+        SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot generate mip maps for image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", image.GetName(), GetName())));
         const MetalImage& metalImage = static_cast<const MetalImage&>(image);
 
         CommandBuffer::GenerateMipMapsForImage(metalImage);
@@ -211,7 +204,7 @@ namespace Sierra
 
     void MetalCommandBuffer::BindResourceTable(const ResourceTable& resourceTable)
     {
-        SR_THROW_IF(resourceTable.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind resource table [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", resourceTable.GetName(), name)));
+        SR_THROW_IF(resourceTable.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind resource table [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", resourceTable.GetName(), GetName())));
         const MetalResourceTable& metalResourceTable = static_cast<const MetalResourceTable&>(resourceTable);
 
         CommandBuffer::BindResourceTable(metalResourceTable);
@@ -224,7 +217,7 @@ namespace Sierra
     void MetalCommandBuffer::PushConstants(const void* memory, const uint8 sourceOffset, const uint8 memorySize)
     {
         CommandBuffer::PushConstants(memory, sourceOffset, memorySize);
-        SR_THROW_IF(currentGraphicsPipeline == nullptr && currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot push constants within command buffer [{0}] if no pipeline has been begun", name)));
+        SR_THROW_IF(currentGraphicsPipeline == nullptr && currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot push constants within command buffer [{0}] if no pipeline has been begun", GetName())));
 
         if (currentGraphicsPipeline != nullptr)
         {
@@ -240,14 +233,14 @@ namespace Sierra
 
     void MetalCommandBuffer::BeginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer)
     {
-        SR_THROW_IF(renderPass.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot begin render pass [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", renderPass.GetName(), name)));
+        SR_THROW_IF(renderPass.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot begin render pass [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", renderPass.GetName(), GetName())));
         const MetalRenderPass& metalRenderPass = static_cast<const MetalRenderPass&>(renderPass);
 
-        SR_THROW_IF(framebuffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot begin render pass [{0}] within command buffer [{1}], as specified specified framebuffer [{2}]'s backend differs from [RenderingBackendType::Metal]", metalRenderPass.GetName(), framebuffer.GetName(), name)));
+        SR_THROW_IF(framebuffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot begin render pass [{0}] within command buffer [{1}], as specified specified framebuffer [{2}]'s backend differs from [RenderingBackendType::Metal]", metalRenderPass.GetName(), framebuffer.GetName(), GetName())));
         const MetalFramebuffer& metalFramebuffer = static_cast<const MetalFramebuffer&>(framebuffer);
 
         CommandBuffer::BeginRenderPass(metalRenderPass, metalFramebuffer);
-        SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot begin render pass [{0}] within command buffer [{1}], as current render pass [{2}] has not been ended", metalRenderPass.GetName(), name, currentRenderPass->GetName())));
+        SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot begin render pass [{0}] within command buffer [{1}], as current render pass [{2}] has not been ended", metalRenderPass.GetName(), GetName(), currentRenderPass->GetName())));
 
         for (size i = 0; i < metalFramebuffer.GetAttachments().size(); i++)
         {
@@ -299,8 +292,8 @@ namespace Sierra
         CommandBuffer::BeginNextSubpass();
         currentSubpass++;
 
-        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin next subpass [{0}] of render pass [{1}] within command buffer [{2}], as it must have been begun first", currentSubpass, currentRenderPass->GetName(), name)));
-        SR_THROW_IF(currentSubpass >= currentRenderPass->GetSubpassCount(), ValueOutOfRangeError(SR_FORMAT("Cannot begin next subpass [{0}] of render pass [{1}] within command buffer [{2}]", static_cast<uint32>(currentSubpass), currentRenderPass->GetName(), name), static_cast<uint32>(currentSubpass), uint32(0), currentRenderPass->GetSubpassCount() - 1));
+        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin next subpass [{0}] of render pass [{1}] within command buffer [{2}], as it must have been begun first", currentSubpass, currentRenderPass->GetName(), GetName())));
+        SR_THROW_IF(currentSubpass >= currentRenderPass->GetSubpassCount(), ValueOutOfRangeError(SR_FORMAT("Cannot begin next subpass [{0}] of render pass [{1}] within command buffer [{2}]", static_cast<uint32>(currentSubpass), currentRenderPass->GetName(), GetName()), static_cast<uint32>(currentSubpass), uint32(0), currentRenderPass->GetSubpassCount() - 1));
 
         MTLRenderPassDescriptor* const subpass = currentRenderPass->GetSubpassRenderPass(currentSubpass);
         [subpass setRenderTargetWidth: currentFramebuffer->GetWidth()];
@@ -308,7 +301,7 @@ namespace Sierra
 
         // Begin encoding next subpass
         currentRenderEncoder = [commandBuffer renderCommandEncoderWithDescriptor: subpass];
-        queue->GetDevice().SetResourceName(currentRenderEncoder, SR_FORMAT("Render encoder for render pass [{0}]", name));
+        queue->GetDevice().SetResourceName(currentRenderEncoder, SR_FORMAT("Render encoder for render pass [{0}]", GetName()));
 
         // Define viewport
         const MTLViewport viewport
@@ -342,10 +335,10 @@ namespace Sierra
             [currentRenderEncoder setVertexBuffer: currentResourceTable->GetMetalArgumentBuffer() offset: 0 atIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_INDEX];
             [currentRenderEncoder setFragmentBuffer: currentResourceTable->GetMetalArgumentBuffer() offset: 0 atIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_INDEX];
 
-            for (const auto &[key, resource] : currentResourceTable->GetBoundUniformBuffers()) [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead stages: MTLRenderStageVertex | MTLRenderStageFragment];
-            for (const auto &[key, resource] : currentResourceTable->GetBoundStorageBuffers()) [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite stages: MTLRenderStageVertex | MTLRenderStageFragment];
-            for (const auto &[key, resource] : currentResourceTable->GetBoundSampledImages()) [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead stages: MTLRenderStageVertex | MTLRenderStageFragment];
-            for (const auto &[key, resource] : currentResourceTable->GetBoundStorageImages()) [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite stages: MTLRenderStageVertex | MTLRenderStageFragment];
+            currentResourceTable->GetUniformBuffers().ForEach([this](const id<MTLBuffer> resource) -> void { [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead stages: MTLRenderStageVertex | MTLRenderStageFragment]; });
+            currentResourceTable->GetStorageBuffers().ForEach([this](const id<MTLBuffer> resource) -> void { [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite stages: MTLRenderStageVertex | MTLRenderStageFragment]; });
+            currentResourceTable->GetSampledImages().ForEach([this](const id<MTLTexture> resource) -> void { [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead stages: MTLRenderStageVertex | MTLRenderStageFragment]; });
+            currentResourceTable->GetStorageImages().ForEach([this](const id<MTLTexture> resource) -> void { [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite stages: MTLRenderStageVertex | MTLRenderStageFragment]; });
         }
 
         // Re-bind assigned vertex buffer
@@ -355,7 +348,7 @@ namespace Sierra
     void MetalCommandBuffer::EndRenderPass()
     {
         CommandBuffer::EndRenderPass();
-        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot end render pass within command buffer [{0}], as none has been begun yet", name)));
+        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot end render pass within command buffer [{0}], as none has been begun yet", GetName())));
 
         [currentRenderEncoder endEncoding];
         currentRenderEncoder = nil;
@@ -366,12 +359,12 @@ namespace Sierra
 
     void MetalCommandBuffer::BeginGraphicsPipeline(const GraphicsPipeline& graphicsPipeline)
     {
-        SR_THROW_IF(graphicsPipeline.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot begin graphics pipeline [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", graphicsPipeline.GetName(), name)));
+        SR_THROW_IF(graphicsPipeline.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot begin graphics pipeline [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", graphicsPipeline.GetName(), GetName())));
         const MetalGraphicsPipeline& metalGraphicsPipeline = static_cast<const MetalGraphicsPipeline&>(graphicsPipeline);
 
         CommandBuffer::BeginGraphicsPipeline(graphicsPipeline);
-        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin graphics pipeline [{0}] within command buffer [{1}], as no render pass has been begun", metalGraphicsPipeline.GetName(), name)));
-        SR_THROW_IF(currentGraphicsPipeline != nullptr && currentGraphicsPipeline != &metalGraphicsPipeline, InvalidOperationError(SR_FORMAT("Cannot begin graphics pipeline [{0}] within command buffer [{1}], as current graphics pipeline [{2}] has not been ended", metalGraphicsPipeline.GetName(), name, currentGraphicsPipeline->GetName())));
+        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin graphics pipeline [{0}] within command buffer [{1}], as no render pass has been begun", metalGraphicsPipeline.GetName(), GetName())));
+        SR_THROW_IF(currentGraphicsPipeline != nullptr && currentGraphicsPipeline != &metalGraphicsPipeline, InvalidOperationError(SR_FORMAT("Cannot begin graphics pipeline [{0}] within command buffer [{1}], as current graphics pipeline [{2}] has not been ended", metalGraphicsPipeline.GetName(), GetName(), currentGraphicsPipeline->GetName())));
 
         // Bind pipeline and set appropriate settings
         [currentRenderEncoder setCullMode: metalGraphicsPipeline.GetCullMode()];
@@ -386,14 +379,14 @@ namespace Sierra
     void MetalCommandBuffer::EndGraphicsPipeline()
     {
         CommandBuffer::EndGraphicsPipeline();
-        SR_THROW_IF(currentGraphicsPipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot end graphics pipeline within command buffer [{0}], as none been begun yet", name)));
+        SR_THROW_IF(currentGraphicsPipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot end graphics pipeline within command buffer [{0}], as none been begun yet", GetName())));
 
         currentGraphicsPipeline = nullptr;
     }
 
     void MetalCommandBuffer::BindVertexBuffer(const Buffer& vertexBuffer, const uint64 offset)
     {
-        SR_THROW_IF(vertexBuffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind vertex buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", vertexBuffer.GetName(), name)));
+        SR_THROW_IF(vertexBuffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind vertex buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", vertexBuffer.GetName(), GetName())));
         const MetalBuffer& metalVertexBuffer = static_cast<const MetalBuffer&>(vertexBuffer);
 
         CommandBuffer::BindVertexBuffer(metalVertexBuffer, offset);
@@ -406,7 +399,7 @@ namespace Sierra
 
     void MetalCommandBuffer::BindIndexBuffer(const Buffer& indexBuffer, const uint64 offset)
     {
-        SR_THROW_IF(indexBuffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind index buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", indexBuffer.GetName(), name)));
+        SR_THROW_IF(indexBuffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind index buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", indexBuffer.GetName(), GetName())));
         const MetalBuffer& metalIndexBuffer = static_cast<const MetalBuffer&>(indexBuffer);
 
         CommandBuffer::BindIndexBuffer(metalIndexBuffer, offset);
@@ -418,7 +411,7 @@ namespace Sierra
     void MetalCommandBuffer::SetScissor(Vector4UInt scissor)
     {
         CommandBuffer::SetScissor(scissor);
-        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot set scissor within command buffer [{0}], as no render pass has been begun", name)));
+        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot set scissor within command buffer [{0}], as no render pass has been begun", GetName())));
 
         scissor.z = glm::min(static_cast<uint32>(currentRenderPass->GetSubpassRenderPass(currentSubpass).renderTargetWidth) - scissor.x, scissor.z);
         scissor.w = glm::min(static_cast<uint32>(currentRenderPass->GetSubpassRenderPass(currentSubpass).renderTargetHeight) - scissor.y, scissor.w);
@@ -428,10 +421,10 @@ namespace Sierra
     void MetalCommandBuffer::Draw(const uint32 vertexCount, const uint64 vertexOffset)
     {
         CommandBuffer::Draw(vertexCount, vertexOffset);
-        SR_THROW_IF(currentGraphicsPipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw within command buffer [{0}], as no graphics pipeline has been begun", name)));
+        SR_THROW_IF(currentGraphicsPipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw within command buffer [{0}], as no graphics pipeline has been begun", GetName())));
 
         const uint64 vertexBufferOffset = initialVertexBufferOffset + (static_cast<uint64>(vertexOffset) * currentGraphicsPipeline->GetVertexStride());
-        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset >= currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid vertex index in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), name), vertexBufferOffset, uint64(0), currentVertexBuffer->GetMemorySize()));
+        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset >= currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid vertex index in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), GetName()), vertexBufferOffset, static_cast<uint64>(0), currentVertexBuffer->GetMemorySize()));
 
         if (vertexBufferOffset > 0) [currentRenderEncoder setVertexBufferOffset: vertexBufferOffset atIndex: MetalDevice::VERTEX_BUFFER_INDEX];
         [currentRenderEncoder drawPrimitives: MTLPrimitiveTypeTriangle vertexStart: 0 vertexCount: vertexCount];
@@ -440,14 +433,14 @@ namespace Sierra
     void MetalCommandBuffer::DrawIndexed(const uint32 indexCount, const uint64 indexOffset, const uint64 vertexOffset)
     {
         CommandBuffer::DrawIndexed(indexCount, indexOffset, vertexOffset);
-        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw indexed within command buffer [{0}], as no graphics pipeline has been begun", name)));
-        SR_THROW_IF(currentIndexBuffer == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw indexed within command buffer [{0}], as no index buffer has been bound", name)));
+        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw indexed within command buffer [{0}], as no graphics pipeline has been begun", GetName())));
+        SR_THROW_IF(currentIndexBuffer == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw indexed within command buffer [{0}], as no index buffer has been bound", GetName())));
 
         const uint64 indexBufferOffset = initialIndexBufferOffset + indexOffset * sizeof(uint32);
-        SR_THROW_IF(indexBufferOffset >= currentIndexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid index offset in index buffer [{0}] within command buffer [{1}]", currentIndexBuffer->GetName(), name), indexBufferOffset, uint64(0), currentVertexBuffer->GetMemorySize()));
+        SR_THROW_IF(indexBufferOffset >= currentIndexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid index offset in index buffer [{0}] within command buffer [{1}]", currentIndexBuffer->GetName(), GetName()), indexBufferOffset, static_cast<uint64>(0), currentVertexBuffer->GetMemorySize()));
 
         const uint64 vertexBufferOffset = initialVertexBufferOffset + vertexOffset * currentGraphicsPipeline->GetVertexStride();
-        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset >= currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw indexed from invalid vertex offset in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), name), vertexBufferOffset, uint64(0), currentVertexBuffer->GetMemorySize()));
+        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset >= currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw indexed from invalid vertex offset in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), GetName()), vertexBufferOffset, static_cast<uint64>(0), currentVertexBuffer->GetMemorySize()));
 
         if (vertexBufferOffset > 0) [currentRenderEncoder setVertexBufferOffset: vertexBufferOffset atIndex: MetalDevice::VERTEX_BUFFER_INDEX];
         [currentRenderEncoder drawIndexedPrimitives: MTLPrimitiveTypeTriangle indexCount: indexCount indexType: MTLIndexTypeUInt32 indexBuffer: currentIndexBuffer->GetMetalBuffer() indexBufferOffset: indexBufferOffset instanceCount: 1];
@@ -455,12 +448,12 @@ namespace Sierra
 
     void MetalCommandBuffer::BeginComputePipeline(const ComputePipeline& computePipeline)
     {
-        SR_THROW_IF(computePipeline.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", computePipeline.GetName(), name)));
+        SR_THROW_IF(computePipeline.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", computePipeline.GetName(), GetName())));
         const MetalComputePipeline& metalComputePipeline = static_cast<const MetalComputePipeline&>(computePipeline);
 
         CommandBuffer::BeginComputePipeline(metalComputePipeline);
-        SR_THROW_IF(currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as no render pass has been begun", metalComputePipeline.GetName(), name)));
-        SR_THROW_IF(currentComputePipeline != nullptr && currentComputePipeline != &metalComputePipeline, InvalidOperationError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as current compute pipeline [{2}] has not been ended", metalComputePipeline.GetName(), name, currentComputePipeline->GetName())));
+        SR_THROW_IF(currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as no render pass has been begun", metalComputePipeline.GetName(), GetName())));
+        SR_THROW_IF(currentComputePipeline != nullptr && currentComputePipeline != &metalComputePipeline, InvalidOperationError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as current compute pipeline [{2}] has not been ended", metalComputePipeline.GetName(), GetName(), currentComputePipeline->GetName())));
 
         // End any prior transfer operations
         if (currentBlitEncoder != nil)
@@ -471,7 +464,7 @@ namespace Sierra
 
         // Begin encoding compute commands
         currentComputeEncoder = [commandBuffer computeCommandEncoderWithDispatchType: MTLDispatchTypeConcurrent];
-        queue->GetDevice().SetResourceName(currentComputeEncoder, SR_FORMAT("Compute encoder for pipeline [{0}]", name));
+        queue->GetDevice().SetResourceName(currentComputeEncoder, SR_FORMAT("Compute encoder for pipeline [{0}]", GetName()));
 
         // Assign provided compute pipeline
         [currentComputeEncoder setComputePipelineState: metalComputePipeline.GetComputePipelineState()];
@@ -481,17 +474,18 @@ namespace Sierra
         if (currentResourceTable != nullptr)
         {
             [currentComputeEncoder setBuffer: currentResourceTable->GetMetalArgumentBuffer() offset: 0 atIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_INDEX];
-            for (const auto &[key, resource] : currentResourceTable->GetBoundUniformBuffers()) [currentComputeEncoder useResource: resource usage: MTLResourceUsageRead];
-            for (const auto &[key, resource] : currentResourceTable->GetBoundStorageBuffers()) [currentComputeEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite];
-            for (const auto &[key, resource] : currentResourceTable->GetBoundSampledImages()) [currentComputeEncoder useResource: resource usage: MTLResourceUsageRead];
-            for (const auto &[key, resource] : currentResourceTable->GetBoundStorageImages()) [currentComputeEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite];
+
+            currentResourceTable->GetUniformBuffers().ForEach([this](const id<MTLBuffer> resource) -> void { [currentComputeEncoder useResource: resource usage: MTLResourceUsageRead]; });
+            currentResourceTable->GetStorageBuffers().ForEach([this](const id<MTLBuffer> resource) -> void { [currentComputeEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite]; });
+            currentResourceTable->GetSampledImages().ForEach([this](const id<MTLTexture> resource) -> void { [currentComputeEncoder useResource: resource usage: MTLResourceUsageRead]; });
+            currentResourceTable->GetStorageImages().ForEach([this](const id<MTLTexture> resource) -> void { [currentComputeEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite]; });
         }
     }
 
     void MetalCommandBuffer::EndComputePipeline()
     {
         CommandBuffer::EndComputePipeline();
-        SR_THROW_IF(currentGraphicsPipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot end compute pipeline within command buffer [{0}], as none been begun yet", name)));
+        SR_THROW_IF(currentGraphicsPipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot end compute pipeline within command buffer [{0}], as none been begun yet", GetName())));
 
         [currentComputeEncoder endEncoding];
         currentComputeEncoder = nil;
@@ -503,12 +497,12 @@ namespace Sierra
     {
         CommandBuffer::Dispatch(workGroupSize);
 
-        SR_THROW_IF(currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot dispatch within command buffer [{0}], as no compute pipeline has been begun", name)));
-        SR_THROW_IF(workGroupSize.x > queue->GetDevice().GetLimits().maxWorkGroupSize.x, ValueOutOfRangeError(SR_FORMAT("Cannot dispatch command buffer [{0}], as specified work group's horizontal axis is greater than the max work group horizontal axis of device [{1}] - use Device::GetLimits() to query limits", name, queue->GetDevice().GetName()), workGroupSize.x, 1U, queue->GetDevice().GetLimits().maxWorkGroupSize.x));
-        SR_THROW_IF(workGroupSize.y > queue->GetDevice().GetLimits().maxWorkGroupSize.y, ValueOutOfRangeError(SR_FORMAT("Cannot dispatch command buffer [{0}], as specified work group's horizontal axis is greater than the max work group vertical axis of device [{1}] - use Device::GetLimits() to query limits", name, queue->GetDevice().GetName()), workGroupSize.x, 1U, queue->GetDevice().GetLimits().maxWorkGroupSize.y));
-        SR_THROW_IF(workGroupSize.z > queue->GetDevice().GetLimits().maxWorkGroupSize.z, ValueOutOfRangeError(SR_FORMAT("Cannot dispatch command buffer [{0}], as specified work group's horizontal axis is greater than the max work group depth axis of device [{1}] - use Device::GetLimits() to query limits", name, queue->GetDevice().GetName()), workGroupSize.x, 1U, queue->GetDevice().GetLimits().maxWorkGroupSize.z));
+        SR_THROW_IF(currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot dispatch within command buffer [{0}], as no compute pipeline has been begun", GetName())));
+        SR_THROW_IF(workGroupSize.x > queue->GetDevice().GetLimits().maxWorkGroupSize.x, ValueOutOfRangeError(SR_FORMAT("Cannot dispatch command buffer [{0}], as specified work group's horizontal axis is greater than the max work group horizontal axis of device [{1}] - use Device::GetLimits() to query limits", GetName(), queue->GetDevice().GetName()), workGroupSize.x, 1U, queue->GetDevice().GetLimits().maxWorkGroupSize.x));
+        SR_THROW_IF(workGroupSize.y > queue->GetDevice().GetLimits().maxWorkGroupSize.y, ValueOutOfRangeError(SR_FORMAT("Cannot dispatch command buffer [{0}], as specified work group's horizontal axis is greater than the max work group vertical axis of device [{1}] - use Device::GetLimits() to query limits", GetName(), queue->GetDevice().GetName()), workGroupSize.x, 1U, queue->GetDevice().GetLimits().maxWorkGroupSize.y));
+        SR_THROW_IF(workGroupSize.z > queue->GetDevice().GetLimits().maxWorkGroupSize.z, ValueOutOfRangeError(SR_FORMAT("Cannot dispatch command buffer [{0}], as specified work group's horizontal axis is greater than the max work group depth axis of device [{1}] - use Device::GetLimits() to query limits", GetName(), queue->GetDevice().GetName()), workGroupSize.x, 1U, queue->GetDevice().GetLimits().maxWorkGroupSize.z));
 
-        SR_THROW_IF(currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot dispatch within command buffer [{0}], as no compute pipeline has been begun", name)));
+        SR_THROW_IF(currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot dispatch within command buffer [{0}], as no compute pipeline has been begun", GetName())));
 
         // Dispatch work groups
         [currentComputeEncoder dispatchThreadgroups: MTLSizeMake(workGroupSize.x, workGroupSize.y, workGroupSize.z) threadsPerThreadgroup: MTLSizeMake(1, 1, 1)];
@@ -517,7 +511,7 @@ namespace Sierra
     void MetalCommandBuffer::BeginDebugRegion(const std::string_view regionName, const Color32 color)
     {
         CommandBuffer::BeginDebugRegion(regionName, color);
-        SR_THROW_IF(debugRegionBegan, InvalidOperationError(SR_FORMAT("Cannot begin debug region [{0}] within command buffer [{1}], as current debug region has not been ended", regionName, name)));
+        SR_THROW_IF(debugRegionBegan, InvalidOperationError(SR_FORMAT("Cannot begin debug region [{0}] within command buffer [{1}], as current debug region has not been ended", regionName, GetName())));
 
         NSString* const group = [NSString stringWithCString: regionName.data() encoding: NSASCIIStringEncoding];
         [commandBuffer pushDebugGroup: group];
@@ -528,7 +522,7 @@ namespace Sierra
     void MetalCommandBuffer::InsertDebugMarker(const std::string_view markerName, const Color32 color)
     {
         CommandBuffer::InsertDebugMarker(markerName, color);
-        SR_THROW_IF(debugRegionBegan, InvalidOperationError(SR_FORMAT("Cannot end debug region within command buffer [{0}], as one must have been begun first", name)));
+        SR_THROW_IF(debugRegionBegan, InvalidOperationError(SR_FORMAT("Cannot end debug region within command buffer [{0}], as one must have been begun first", GetName())));
 
         NSString* const signpost = [NSString stringWithCString: markerName.data() encoding: NSASCIIStringEncoding];
         [currentRenderEncoder insertDebugSignpost: signpost];
@@ -539,16 +533,6 @@ namespace Sierra
         [commandBuffer popDebugGroup];
 
         debugRegionBegan = false;
-    }
-
-    std::unique_ptr<Buffer>& MetalCommandBuffer::QueueBufferForDestruction(std::unique_ptr<Buffer> &&buffer)
-    {
-        return queuedBuffersForDestruction.emplace(std::move(buffer));
-    }
-
-    std::unique_ptr<Image>& MetalCommandBuffer::QueueImageForDestruction(std::unique_ptr<Image> &&image)
-    {
-        return queuedImagesForDestruction.emplace(std::move(image));
     }
 
     /* --- POLLING METHODS --- */

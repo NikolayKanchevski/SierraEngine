@@ -14,12 +14,12 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanFramebuffer::VulkanFramebuffer(const VulkanDevice& givenDevice, const FramebufferCreateInfo& createInfo)
-        : Framebuffer(createInfo), device(&givenDevice), name(createInfo.name), width(createInfo.width), height(createInfo.height)
+        : VulkanResource(createInfo.name), Framebuffer(createInfo), device(&givenDevice), width(createInfo.width), height(createInfo.height)
     {
-        SR_THROW_IF(createInfo.width > device->GetLimits().maxFramebufferWidth, ValueOutOfRangeError(SR_FORMAT("Cannot create framebuffer [{0}], as specified width is exceeds device [{1}]'s max framebuffer width - use Device::GetLimits() to query limits", name, device->GetName()), createInfo.width, 1U, device->GetLimits().maxFramebufferWidth));
-        SR_THROW_IF(createInfo.height > device->GetLimits().maxFramebufferHeight, ValueOutOfRangeError(SR_FORMAT("Cannot create framebuffer [{0}], as specified height is exceeds device [{1}]'s max framebuffer height - use Device::GetLimits() to query limits", name, device->GetName()), createInfo.height, 1U, device->GetLimits().maxFramebufferHeight));
+        SR_THROW_IF(createInfo.width > device->GetLimits().maxFramebufferWidth, ValueOutOfRangeError(SR_FORMAT("Cannot create framebuffer [{0}], as specified width is exceeds device [{1}]'s max framebuffer width - use Device::GetLimits() to query limits", createInfo.name, device->GetName()), createInfo.width, 1U, device->GetLimits().maxFramebufferWidth));
+        SR_THROW_IF(createInfo.height > device->GetLimits().maxFramebufferHeight, ValueOutOfRangeError(SR_FORMAT("Cannot create framebuffer [{0}], as specified height is exceeds device [{1}]'s max framebuffer height - use Device::GetLimits() to query limits", createInfo.name, device->GetName()), createInfo.height, 1U, device->GetLimits().maxFramebufferHeight));
 
-        SR_THROW_IF(createInfo.templateRenderPass.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create framebuffer [{0}] using render pass [{1}] as template, as its backend type differs from [RenderingBackendType::Vulkan]", name, createInfo.templateRenderPass.GetName())));
+        SR_THROW_IF(createInfo.templateRenderPass.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create framebuffer [{0}] using render pass [{1}] as template, as its backend type differs from [RenderingBackendType::Vulkan]", createInfo.name, createInfo.templateRenderPass.GetName())));
         const VulkanRenderPass& vulkanTemplateRenderPass = static_cast<const VulkanRenderPass&>(createInfo.templateRenderPass);
 
         std::vector<VkImageView> attachments(createInfo.attachments.size());
@@ -29,7 +29,7 @@ namespace Sierra
         {
             const FramebufferAttachment& attachment = createInfo.attachments[i];
 
-            SR_THROW_IF(attachment.image.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create framebuffer [{0}] using image [{1}] for attachment [{2}], as its backend type differs from [RenderingBackendType::Vulkan]", name, attachment.image.GetName(), i)));
+            SR_THROW_IF(attachment.image.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create framebuffer [{0}] using image [{1}] for attachment [{2}], as its backend type differs from [RenderingBackendType::Vulkan]", createInfo.name, attachment.image.GetName(), i)));
             const VulkanImage& vulkanImage = static_cast<const VulkanImage&>(attachment.image);
 
             attachments[i] = vulkanImage.GetVulkanImageView();
@@ -50,7 +50,7 @@ namespace Sierra
 
             if (attachment.resolveImage != nullptr)
             {
-                SR_THROW_IF(attachment.resolveImage->GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create framebuffer [{0}] using image [{1}] for resolve of attachment [{2}], as its backend type differs from [RenderingBackendType::Vulkan]", name, attachment.resolveImage->GetName(), i)));
+                SR_THROW_IF(attachment.resolveImage->GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create framebuffer [{0}] using image [{1}] for resolve of attachment [{2}], as its backend type differs from [RenderingBackendType::Vulkan]", createInfo.name, attachment.resolveImage->GetName(), i)));
                 const VulkanImage& vulkanResolveImage = static_cast<const VulkanImage&>(*attachment.resolveImage);
 
                 attachments.emplace_back(vulkanResolveImage.GetVulkanImageView());
@@ -84,8 +84,8 @@ namespace Sierra
 
         // Create framebuffer
         const VkResult result = device->GetFunctionTable().vkCreateFramebuffer(device->GetVulkanDevice(), &framebufferCreateInfo, nullptr, &framebuffer);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create framebuffer [{0}]", name));
-        device->SetResourceName(framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, name);
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create framebuffer [{0}]", createInfo.name));
+        device->SetResourceName(framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, createInfo.name);
     }
 
     /* --- DESTRUCTOR --- */

@@ -23,18 +23,20 @@ namespace SierraEngine
     /* --- CONSTRUCTORS --- */
 
     SceneRenderer::SceneRenderer(const SceneRendererCreateInfo& createInfo)
-        : device(&createInfo.device)
+        : renderingContext(&createInfo.renderingContext)
     {
-        const std::optional<Sierra::ImageFormat> suitableColorFormat = device->GetSupportedImageFormat(PREFERRED_COLOR_IMAGE_FORMAT, REQUIRED_COLOR_IMAGE_USAGE);
-        APP_THROW_IF(!suitableColorFormat.has_value(), Sierra::UnsupportedFeatureError(SR_FORMAT("Cannot create scene renderer, as device [{0}] does not support any suitable color image format", device->GetName())));
+        const Sierra::Device& device = renderingContext->GetDevice();
+
+        const std::optional<Sierra::ImageFormat> suitableColorFormat = device.GetSupportedImageFormat(PREFERRED_COLOR_IMAGE_FORMAT, REQUIRED_COLOR_IMAGE_USAGE);
+        APP_THROW_IF(!suitableColorFormat.has_value(), Sierra::UnsupportedFeatureError(SR_FORMAT("Cannot create scene renderer, as device [{0}] does not support any suitable color image format", device.GetName())));
         colorFormat = *suitableColorFormat;
 
-        const std::optional<Sierra::ImageFormat> suitableDepthFormat = device->GetSupportedImageFormat(PREFERRED_DEPTH_IMAGE_FORMAT, REQUIRED_DEPTH_IMAGE_USAGE);
-        APP_THROW_IF(!suitableDepthFormat.has_value(), Sierra::UnsupportedFeatureError(SR_FORMAT("Cannot create scene renderer, as device [{0}] does not support any suitable depth image format", device->GetName())));
+        const std::optional<Sierra::ImageFormat> suitableDepthFormat = device.GetSupportedImageFormat(PREFERRED_DEPTH_IMAGE_FORMAT, REQUIRED_DEPTH_IMAGE_USAGE);
+        APP_THROW_IF(!suitableDepthFormat.has_value(), Sierra::UnsupportedFeatureError(SR_FORMAT("Cannot create scene renderer, as device [{0}] does not support any suitable depth image format", device.GetName())));
         depthFormat = *suitableDepthFormat;
 
-        renderPass = device->CreateRenderPass({
-            .name = "Render pass of scene renderer",
+        renderPass = device.CreateRenderPass({
+            .name = "Render Pass of Scene Renderer",
             .attachments = {{
                 Sierra::RenderPassAttachment {
                     .type = Sierra::RenderPassAttachmentType::Color,
@@ -56,20 +58,20 @@ namespace SierraEngine
             }}
         });
 
-        vertexShader = device->CreateShader({
-            .name = "Vertex shader of scene renderer",
+        vertexShader = device.CreateShader({
+            .name = "Vertex Shader of Scene Renderer",
             .memory = VERTEX_SHADER_MEMORY,
             .shaderType = Sierra::ShaderType::Vertex
         });
 
-        fragmentShader = device->CreateShader({
-            .name = "Fragment shader of scene renderer",
+        fragmentShader = device.CreateShader({
+            .name = "Fragment Shader of Scene Renderer",
             .memory = FRAGMENT_SHADER_MEMORY,
             .shaderType = Sierra::ShaderType::Fragment
         });
 
-        graphicsPipeline = device->CreateGraphicsPipeline({
-            .name = "Graphics pipeline of scene renderer",
+        graphicsPipeline = device.CreateGraphicsPipeline({
+            .name = "Graphics Pipeline of Scene Renderer",
             .vertexInputs = {{ Sierra::VertexInput::Position_3D, Sierra::VertexInput::Normal_3D, Sierra::VertexInput::UV }},
             .vertexShader = *vertexShader,
             .fragmentShader = fragmentShader.get(),
@@ -81,44 +83,42 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    RenderTargetID SceneRenderer::CreateRenderTarget(const RenderTargetCreateInfo& createInfo)
+    RenderTargetID SceneRenderer::CreateRenderTarget()
     {
-        const RenderTargetID ID = renderTargetIndexPool.GenerateIndex();
-        if (ID >= renderTargets.size()) renderTargets.emplace_back().emplace();
-        else renderTargets[ID].emplace();
-
-        ResizeRenderTarget(ID, createInfo.width, createInfo.height);
-        return ID;
+        return renderTargets.AddItem();
     }
 
     bool SceneRenderer::DestroyRenderTarget(const RenderTargetID ID)
     {
-        if (ID < renderTargets.size() && renderTargets[ID].has_value())
-        {
-            renderTargets[ID] = std::nullopt;
-            return true;
-        }
+        RenderTarget* renderTarget = renderTargets.GetItem(ID);
+        if (renderTarget == nullptr) return false;
 
-        return false;
+        DestroyRenderTarget(*renderTarget);
+        return renderTargets.RemoveItem(ID);
     }
 
-    void SceneRenderer::Render(Sierra::CommandBuffer& commandBuffer, const RenderTargetID renderTargetID, const SceneRenderInfo& renderInfo)
+    const Sierra::Image& SceneRenderer::Render(Sierra::CommandBuffer& commandBuffer, const SceneRenderInfo& renderInfo)
     {
-        RenderTarget& renderTarget = renderTargets[renderTargetID].value();
-        if (renderInfo.width != renderTarget.framebuffer->GetWidth() || renderInfo.height != renderTarget.framebuffer->GetHeight())
+        RenderTarget* renderTarget = renderTargets.GetItem(renderInfo.renderTarget);
+        APP_THROW_IF(renderTarget == nullptr, Sierra::InvalidValueError(SR_FORMAT("Cannot render scene, as specified render target handle [{0}] is invalid", renderInfo.renderTarget.GetValue())));
+
+        if (!renderTarget->IsValid())
         {
-            commandBuffer.QueueImageForDestruction(std::move(renderTarget.colorImage));
-            commandBuffer.QueueImageForDestruction(std::move(renderTarget.depthImage));
-            ResizeRenderTarget(renderTargetID, renderInfo.width, renderInfo.height);
+            CreateRenderTarget(*renderTarget, renderInfo.width, renderInfo.height);
+        }
+        else if (renderInfo.width != renderTarget->framebuffer->GetWidth() || renderInfo.height != renderTarget->framebuffer->GetHeight())
+        {
+            DestroyRenderTarget(*renderTarget);
+            CreateRenderTarget(*renderTarget, renderInfo.width, renderInfo.height);
         }
 
-        commandBuffer.SynchronizeImageUsage(*renderTarget.colorImage, { .nextUsage = Sierra::ImageCommandUsage::ColorWrite });
-        commandBuffer.SynchronizeImageUsage(*renderTarget.depthImage, { .nextUsage = Sierra::ImageCommandUsage::DepthWrite });
+        commandBuffer.SynchronizeImageUsage(*renderTarget->colorImage, { .nextUsage = Sierra::ImageCommandUsage::ColorWrite });
+        commandBuffer.SynchronizeImageUsage(*renderTarget->depthImage, { .nextUsage = Sierra::ImageCommandUsage::DepthWrite });
 
-        commandBuffer.BeginRenderPass(*renderPass, *renderTarget.framebuffer);
+        commandBuffer.BeginRenderPass(*renderPass, *renderTarget->framebuffer);
         commandBuffer.BeginGraphicsPipeline(*graphicsPipeline);
 
-        PushConstant pushConstant
+        const PushConstant pushConstant
         {
             .view = renderInfo.camera.GetViewMatrix(renderInfo.eye),
             .projection = renderInfo.camera.GetProjectionMatrix(static_cast<float32>(renderInfo.width), static_cast<float32>(renderInfo.height))
@@ -129,37 +129,50 @@ namespace SierraEngine
         {
             commandBuffer.DrawIndexed(meshRenderer.GetMesh().indexCount, meshRenderer.GetMesh().indexOffset, meshRenderer.GetMesh().vertexOffset);
         });
+
         commandBuffer.EndGraphicsPipeline();
         commandBuffer.EndRenderPass();
 
-        commandBuffer.SynchronizeImageUsage(*renderTarget.colorImage, { .previousUsage = Sierra::ImageCommandUsage::ColorWrite, .nextUsage = Sierra::ImageCommandUsage::GraphicsRead });
-        commandBuffer.SynchronizeImageUsage(*renderTarget.depthImage, { .previousUsage = Sierra::ImageCommandUsage::DepthWrite, .nextUsage = Sierra::ImageCommandUsage::GraphicsRead });
+        commandBuffer.SynchronizeImageUsage(*renderTarget->colorImage, { .previousUsage = Sierra::ImageCommandUsage::ColorWrite, .nextUsage = Sierra::ImageCommandUsage::GraphicsRead });
+        return *renderTarget->colorImage;
+    }
+
+    /* --- GETTER METHODS --- */
+
+    const Sierra::Image* SceneRenderer::GetRenderTargetImage(const RenderTargetID ID)
+    {
+        if (const RenderTarget* renderTarget = renderTargets.GetItem(ID))
+        {
+            return renderTarget->colorImage.get();
+        }
+
+        return nullptr;
     }
 
     /* --- POLLING METHODS --- */
 
-    void SceneRenderer::ResizeRenderTarget(const RenderTargetID ID, const uint32 width, const uint32 height)
+    void SceneRenderer::CreateRenderTarget(RenderTarget& renderTarget, const uint32 width, const uint32 height) const
     {
-        RenderTarget& renderTarget = renderTargets[ID].value();
-
-        renderTarget.colorImage = device->CreateImage({
-            .name = SR_FORMAT("Color image of render target [{0}]", ID.GetValue()),
+        const Sierra::Device& device = renderingContext->GetDevice();
+        
+        renderTarget.colorImage = device.CreateImage({
+            .name = SR_FORMAT("Color Image of Render Target"),
             .width = width,
             .height = height,
             .format = colorFormat,
             .usage = REQUIRED_COLOR_IMAGE_USAGE
         });
 
-        renderTarget.depthImage = device->CreateImage({
-            .name = SR_FORMAT("Depth image of render target [{0}]", ID.GetValue()),
+        renderTarget.depthImage = device.CreateImage({
+            .name = SR_FORMAT("Depth Image of Render Target"),
             .width = width,
             .height = height,
             .format = depthFormat,
             .usage = REQUIRED_DEPTH_IMAGE_USAGE
         });
 
-        renderTarget.framebuffer = device->CreateFramebuffer({
-            .name = SR_FORMAT("Framebuffer of render target [{0}]", ID.GetValue()),
+        renderTarget.framebuffer = device.CreateFramebuffer({
+            .name = SR_FORMAT("Framebuffer of Render Target"),
             .width = width,
             .height = height,
             .templateRenderPass = *renderPass,
@@ -174,16 +187,10 @@ namespace SierraEngine
         });
     }
 
-    /* --- GETTER METHODS --- */
-
-    const Sierra::Image* SceneRenderer::GetRenderTargetImage(const RenderTargetID ID)
+    void SceneRenderer::DestroyRenderTarget(RenderTarget& renderTarget) const
     {
-        if (ID < renderTargets.size() && renderTargets[ID].has_value())
-        {
-            return renderTargets[ID]->colorImage.get();
-        }
-
-        return nullptr;
+        Sierra::DestructionScheduler& destructionScheduler = renderingContext->GetDestructionScheduler();
+        destructionScheduler.QueueResources(std::move(renderTarget.colorImage), std::move(renderTarget.depthImage), std::move(renderTarget.framebuffer));
     }
 
 }

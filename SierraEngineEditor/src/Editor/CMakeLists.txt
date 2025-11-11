@@ -1,7 +1,6 @@
 target_sources(SierraEngineEditor PRIVATE
     Editor.cpp
     Editor.h
-    EditorPanel.h
     EditorThemes.cpp
     EditorThemes.h
     EditorWizard.h

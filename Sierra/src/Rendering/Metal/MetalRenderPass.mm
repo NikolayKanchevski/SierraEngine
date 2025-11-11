@@ -36,7 +36,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalRenderPass::MetalRenderPass(const MetalDevice& device, const RenderPassCreateInfo& createInfo)
-        : RenderPass(createInfo), name(createInfo.name)
+        : MetalResource(createInfo.name), RenderPass(createInfo)
     {
         attachmentReferences.resize(createInfo.attachments.size());
         subpasses.resize(createInfo.subpassDescriptions.size());
@@ -91,29 +91,29 @@ namespace Sierra
 
     MTLRenderPassDescriptor* MetalRenderPass::GetSubpassRenderPass(const size subpassIndex) const
     {
-        SR_THROW_IF(subpassIndex >= subpasses.size(), ValueOutOfRangeError(SR_FORMAT("Cannot get invalid subpass [{0}] of Metal render pass [{1}]", subpassIndex, name), subpassIndex, size(0), subpasses.size() - 1));
+        SR_THROW_IF(subpassIndex >= subpasses.size(), ValueOutOfRangeError(SR_FORMAT("Cannot get invalid subpass [{0}] of Metal render pass [{1}]", subpassIndex, GetName()), subpassIndex, size(0), subpasses.size() - 1));
         return subpasses[subpassIndex].renderPass;
     }
 
     ImageFormat MetalRenderPass::GetSubpassColorAttachmentFormat(const size subpassIndex, const size attachmentIndex) const
     {
-        SR_THROW_IF(subpassIndex >= subpasses.size(), ValueOutOfRangeError(SR_FORMAT("Cannot get depth attachment format of invalid subpass [{0}] of Metal render pass [{1}]", subpassIndex, name), subpassIndex, size(0), subpasses.size() - 1));
+        SR_THROW_IF(subpassIndex >= subpasses.size(), ValueOutOfRangeError(SR_FORMAT("Cannot get depth attachment format of invalid subpass [{0}] of Metal render pass [{1}]", subpassIndex, GetName()), subpassIndex, size(0), subpasses.size() - 1));
 
         const MetalSubpass& subpass = subpasses[subpassIndex];
-        SR_THROW_IF(attachmentIndex >= subpass.colorFormats.size(), ValueOutOfRangeError(SR_FORMAT("Cannot get format of invalid color attachment [{0}] of Metal render pass [{1}]", attachmentIndex, name), attachmentIndex, size(0), subpass.colorFormats.size() - 1));
+        SR_THROW_IF(attachmentIndex >= subpass.colorFormats.size(), ValueOutOfRangeError(SR_FORMAT("Cannot get format of invalid color attachment [{0}] of Metal render pass [{1}]", attachmentIndex, GetName()), attachmentIndex, size(0), subpass.colorFormats.size() - 1));
 
         return subpass.colorFormats[attachmentIndex];
     }
 
     ImageFormat MetalRenderPass::GetSubpassDepthAttachmentFormat(const size subpassIndex) const
     {
-        SR_THROW_IF(subpassIndex >= subpasses.size(), ValueOutOfRangeError(SR_FORMAT("Cannot get depth attachment's format of invalid subpass [{0}] of Metal render pass [{1}]", subpassIndex, name), subpassIndex, size(0), subpasses.size() - 1));
+        SR_THROW_IF(subpassIndex >= subpasses.size(), ValueOutOfRangeError(SR_FORMAT("Cannot get depth attachment's format of invalid subpass [{0}] of Metal render pass [{1}]", subpassIndex, GetName()), subpassIndex, size(0), subpasses.size() - 1));
         return subpasses[subpassIndex].depthFormat;
     }
 
     std::span<MTLRenderPassAttachmentDescriptor* const> MetalRenderPass::GetAttachmentReferences(const size attachmentIndex) const
     {
-        SR_THROW_IF(attachmentIndex >= attachmentReferences.size(), ValueOutOfRangeError(SR_FORMAT("Cannot get invalid attachment [{0}]'s references of Metal render pass [{1}]", attachmentIndex, name), attachmentIndex, size(0), attachmentReferences.size() - 1));
+        SR_THROW_IF(attachmentIndex >= attachmentReferences.size(), ValueOutOfRangeError(SR_FORMAT("Cannot get invalid attachment [{0}]'s references of Metal render pass [{1}]", attachmentIndex, GetName()), attachmentIndex, size(0), attachmentReferences.size() - 1));
         return attachmentReferences[attachmentIndex];
     }
 

@@ -15,7 +15,7 @@ namespace SierraEngine
     struct TextureSerializeWizardCreateInfo
     {
         const Sierra::PlatformContext& platformContext;
-        const Sierra::Device& device;
+        const RenderingContext& renderingContext;
 
         const std::filesystem::path* inputFilePath = nullptr;
         const std::filesystem::path* outputDirectoryPath = nullptr;
@@ -28,7 +28,7 @@ namespace SierraEngine
         explicit TextureSerializeWizard(const TextureSerializeWizardCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Draw(bool& open, Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable) override;
+        void Draw(bool& open, Sierra::CommandBuffer& commandBuffer) override;
 
         /* --- CONSTANTS --- */
         constexpr static std::array<std::string_view, 3> INPUT_FILE_EXTENSIONS = { ".jpg", ".jpeg", ".png" };
@@ -39,14 +39,14 @@ namespace SierraEngine
         TextureSerializeWizard& operator=(const TextureSerializeWizard&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        TextureSerializeWizard(TextureSerializeWizard&&) = delete;
-        TextureSerializeWizard& operator=(TextureSerializeWizard&&) = delete;
+        TextureSerializeWizard(TextureSerializeWizard&&) noexcept = default;
+        TextureSerializeWizard& operator=(TextureSerializeWizard&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~TextureSerializeWizard() noexcept override = default;
 
     private:
-        const Sierra::Device& device;
+        const RenderingContext* renderingContext;
 
         enum class TextureSerializeFormat : uint8
         {
@@ -88,16 +88,16 @@ namespace SierraEngine
         [[nodiscard]] LoadedImage* GetRootImage() noexcept;
         [[nodiscard]] bool ImageMatchesLevelDimensions(const LoadedImage& image, uint32 levelIndex);
 
-        void ReloadRootLayer(Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable) noexcept;
-        void ReloadLevels(Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable) noexcept;
-        void ReloadLayers(uint32 lastLayerCount, Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable) noexcept;
-        void ResetLayers(Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable) noexcept;
-        void ResetLayer(ImageLayerData& layer, Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable) noexcept;
+        void ReloadRootLayer(Sierra::CommandBuffer& commandBuffer) noexcept;
+        void ReloadLevels(Sierra::CommandBuffer& commandBuffer) noexcept;
+        void ReloadLayers(uint32 lastLayerCount, Sierra::CommandBuffer& commandBuffer) noexcept;
+        void ResetLayers(Sierra::CommandBuffer& commandBuffer) noexcept;
+        void ResetLayer(ImageLayerData& layer, Sierra::CommandBuffer& commandBuffer) const noexcept;
         bool Serialize() noexcept;
 
         void DrawPropertiesMenu() noexcept;
         void DrawSerializeInfoMenu() noexcept;
-        void DrawExtrasMenu(Sierra::CommandBuffer& level, Sierra::ResourceTable& resourceTable) noexcept;
+        void DrawExtrasMenu(Sierra::CommandBuffer& commandBuffer) noexcept;
 
     };
 

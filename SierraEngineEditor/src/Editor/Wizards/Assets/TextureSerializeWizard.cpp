@@ -53,7 +53,7 @@ namespace SierraEngine
             .outputFileExtension = OUTPUT_FILE_EXTENSION,
             .outputDirectoryPath = createInfo.outputDirectoryPath
           }),
-          device(createInfo.device)
+          renderingContext(&createInfo.renderingContext)
     {
         if (createInfo.inputFilePath != nullptr)
         {
@@ -63,19 +63,19 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void TextureSerializeWizard::Draw(bool& open, Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable)
+    void TextureSerializeWizard::Draw(bool& open, Sierra::CommandBuffer& commandBuffer)
     {
         if (ImGui::IsKeyPressed(ImGuiKey_Escape))
         {
             open = false;
 
-            ResetLayers(commandBuffer, resourceTable);
+            ResetLayers(commandBuffer);
             return;
         }
 
         if (rootLayerDirty)
         {
-            ReloadRootLayer(commandBuffer, resourceTable);
+            ReloadRootLayer(commandBuffer);
             rootLayerDirty = false;
         }
 
@@ -86,7 +86,7 @@ namespace SierraEngine
 
             DrawPropertiesMenu();
             DrawSerializeInfoMenu();
-            DrawExtrasMenu(commandBuffer, resourceTable);
+            DrawExtrasMenu(commandBuffer);
 
             constexpr std::array OPTIONS
             {
@@ -104,7 +104,7 @@ namespace SierraEngine
             EndWizard();
         }
 
-        if (!open) ResetLayers(commandBuffer, resourceTable);
+        if (!open) ResetLayers(commandBuffer);
     }
 
     void TextureSerializeWizard::SetInputFilePath(const std::filesystem::path& inputFilePath) noexcept
@@ -158,7 +158,7 @@ namespace SierraEngine
         return image.width == glm::max(1U, rootImage->width >> levelIndex) && image.height == glm::max(1U, rootImage->height >> levelIndex);
     }
 
-    void TextureSerializeWizard::ReloadRootLayer(Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable) noexcept
+    void TextureSerializeWizard::ReloadRootLayer(Sierra::CommandBuffer& commandBuffer) noexcept
     {
         ImageLayerData* rootLayer = GetRootLayer();
         if (rootLayer == nullptr) return;
@@ -184,15 +184,16 @@ namespace SierraEngine
                 if (level == 0 && layer == 0) continue;
 
                 ImageLayerData& layerData = levels[level].layers[layer];
-                ResetLayer(layerData, commandBuffer, resourceTable);
+                ResetLayer(layerData, commandBuffer);
             }
         }
 
-        ResetLayer(*rootLayer, commandBuffer, resourceTable);
+        ResetLayer(*rootLayer, commandBuffer);
 
-        std::optional<ImagePreview> preview = ImagePreviewer::Preview({ .device = device, .image = *image, .commandBuffer = commandBuffer });
+        std::optional<ImagePreview> preview = ImagePreviewer::Preview({ .renderingContext = *renderingContext, .commandBuffer = commandBuffer, .image = *image });
         if (preview.has_value())
         {
+            Sierra::ResourceTable& resourceTable = renderingContext->GetResourceTable();
             preview->ID = resourceTable.BindSampledImage(*preview->image);
         }
 
@@ -205,7 +206,7 @@ namespace SierraEngine
         };
     }
 
-    void TextureSerializeWizard::ReloadLevels(Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable) noexcept
+    void TextureSerializeWizard::ReloadLevels(Sierra::CommandBuffer& commandBuffer) noexcept
     {
         const LoadedImage* rootImage = GetRootImage();
         if (rootImage == nullptr) return;
@@ -220,7 +221,7 @@ namespace SierraEngine
                 if (level == 0 && layer == 0) continue;
 
                 ImageLayerData& layerData = levels[level].layers[layer];
-                ResetLayer(layerData, commandBuffer, resourceTable);
+                ResetLayer(layerData, commandBuffer);
             }
         }
 
@@ -233,7 +234,7 @@ namespace SierraEngine
         }
     }
 
-    void TextureSerializeWizard::ReloadLayers(uint32 lastLayerCount, Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable) noexcept
+    void TextureSerializeWizard::ReloadLayers(uint32 lastLayerCount, Sierra::CommandBuffer& commandBuffer) noexcept
     {
         if (layerCount < lastLayerCount)
         {
@@ -244,7 +245,7 @@ namespace SierraEngine
                     if (level == 0 && layer == 0) continue;
 
                     ImageLayerData& layerData = levels[level].layers[layer];
-                    ResetLayer(layerData, commandBuffer, resourceTable);
+                    ResetLayer(layerData, commandBuffer);
                 }
             }
         }
@@ -255,23 +256,27 @@ namespace SierraEngine
         }
     }
 
-    void TextureSerializeWizard::ResetLayers(Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable) noexcept
+    void TextureSerializeWizard::ResetLayers(Sierra::CommandBuffer& commandBuffer) noexcept
     {
         for (ImageLevelData& level : levels)
         {
             for (ImageLayerData& layer : level.layers)
             {
-                ResetLayer(layer, commandBuffer, resourceTable);
+                ResetLayer(layer, commandBuffer);
             }
         }
     }
 
-    void TextureSerializeWizard::ResetLayer(ImageLayerData& layer, Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable) noexcept
+    void TextureSerializeWizard::ResetLayer(ImageLayerData& layer, Sierra::CommandBuffer& commandBuffer) const noexcept
     {
         if (!layer.preview.has_value()) return;
 
-        commandBuffer.QueueImageForDestruction(std::move(layer.preview->image));
+        Sierra::DestructionScheduler& destructionScheduler = renderingContext->GetDestructionScheduler();
+        destructionScheduler.QueueResource(std::move(layer.preview->image));
+
+        Sierra::ResourceTable& resourceTable = renderingContext->GetResourceTable();
         resourceTable.FreeSampledImage(layer.preview->ID);
+
         layer.preview = std::nullopt;
     }
 
@@ -425,7 +430,7 @@ namespace SierraEngine
         }
     }
 
-    void TextureSerializeWizard::DrawExtrasMenu(Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable) noexcept
+    void TextureSerializeWizard::DrawExtrasMenu(Sierra::CommandBuffer& commandBuffer) noexcept
     {
         if (ImGui::TreeNodeEx("Extras", MENU_TREE_FLAGS))
         {
@@ -442,7 +447,7 @@ namespace SierraEngine
                     if (uint32 levelOptionsIndex = static_cast<uint32>(levelOptions); ImGuiWidgets::Dropdown("##LevelOptionsDropdown", levelOptionsIndex, { .options = OPTIONS }))
                     {
                         levelOptions = static_cast<LevelOptions>(levelOptionsIndex);
-                        ReloadLevels(commandBuffer, resourceTable);
+                        ReloadLevels(commandBuffer);
                     }
                 }
                 ImGuiWidgets::EndProperty();
@@ -452,14 +457,14 @@ namespace SierraEngine
                     uint32 lastLayerCount = layerCount;
                     if (ImGuiWidgets::NumericEnterInput("##LayerCountInput", layerCount, 1U, 16U))
                     {
-                        ReloadLayers(lastLayerCount, commandBuffer, resourceTable);
+                        ReloadLayers(lastLayerCount, commandBuffer);
                     }
                 }
                 ImGuiWidgets::EndProperty();
 
                 ImGuiWidgets::BeginProperty("Levels");
                 {
-                    const ImGuiListInputItemCallback<ImageLevelData> ItemCallback = [this, &commandBuffer, &resourceTable](ImageLevelData& level, const uint32 levelIndex) -> void
+                    const ImGuiListInputItemCallback<ImageLevelData> ItemCallback = [this, &commandBuffer](ImageLevelData& level, const uint32 levelIndex) -> void
                     {
                         const ImGuiStyle& style = ImGui::GetStyle();
                         const float32 availableHorizontalSpace = ImGui::GetContentRegionAvail().x;
@@ -484,12 +489,14 @@ namespace SierraEngine
                                 ImageLayerData& layer = level.layers[layerIndex];
                                 if (layer.dirty)
                                 {
-                                    std::optional<ImagePreview> preview = ImagePreviewer::Preview({ .device = device, .image = *layer.image, .commandBuffer = commandBuffer });
-                                    ResetLayer(layer, commandBuffer, resourceTable);
+                                    std::optional<ImagePreview> preview = ImagePreviewer::Preview({ .renderingContext = *renderingContext, .commandBuffer = commandBuffer, .image = *layer.image });
+                                    ResetLayer(layer, commandBuffer);
+
+                                    Sierra::ResourceTable& resourceTable = renderingContext->GetResourceTable();
+                                    layer.dirty = false;
 
                                     layer.preview = std::move(preview.value());
                                     layer.preview->ID = resourceTable.BindSampledImage(*layer.preview->image);
-                                    layer.dirty = false;
                                 }
 
                                 const ImGuiImageInputInfo inputInfo

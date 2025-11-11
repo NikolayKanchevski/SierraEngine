@@ -223,26 +223,26 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanImage::VulkanImage(const VulkanDevice& givenDevice, const ImageCreateInfo& createInfo)
-        : Image(createInfo), device(&givenDevice), name(createInfo.name), width(createInfo.width), height(createInfo.height), depth(createInfo.depth), format(createInfo.format), levelCount(createInfo.levelCount), layerCount(createInfo.layerCount), sampling(createInfo.sampling)
+        : VulkanResource(createInfo.name), Image(createInfo), device(&givenDevice), width(createInfo.width), height(createInfo.height), depth(createInfo.depth), format(createInfo.format), levelCount(createInfo.levelCount), layerCount(createInfo.layerCount), sampling(createInfo.sampling)
     {
-        SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.width > device->GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max line image dimensions", name, device->GetName()), createInfo.width, uint32(0), device->GetLimits().maxLineImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.height > device->GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max line image dimensions", name, device->GetName()), createInfo.height, uint32(0), device->GetLimits().maxLineImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.depth > device->GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max line image dimensions", name, device->GetName()), createInfo.depth, uint32(0), device->GetLimits().maxLineImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.width > device->GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max line image dimensions", createInfo.name, device->GetName()), createInfo.width, uint32(0), device->GetLimits().maxLineImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.height > device->GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max line image dimensions", createInfo.name, device->GetName()), createInfo.height, uint32(0), device->GetLimits().maxLineImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.depth > device->GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max line image dimensions", createInfo.name, device->GetName()), createInfo.depth, uint32(0), device->GetLimits().maxLineImageDimensions));
 
-        SR_THROW_IF(createInfo.type == ImageType::Plane && createInfo.width > device->GetLimits().maxPlaneImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max plane image dimensions", name, device->GetName()), createInfo.width, uint32(0), device->GetLimits().maxPlaneImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Plane && createInfo.height > device->GetLimits().maxPlaneImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max plane image dimensions", name, device->GetName()), createInfo.height, uint32(0), device->GetLimits().maxPlaneImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Plane && createInfo.depth > device->GetLimits().maxPlaneImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max plane image dimensions", name, device->GetName()), createInfo.depth, uint32(0), device->GetLimits().maxPlaneImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Plane && createInfo.width > device->GetLimits().maxPlaneImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max plane image dimensions", createInfo.name, device->GetName()), createInfo.width, uint32(0), device->GetLimits().maxPlaneImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Plane && createInfo.height > device->GetLimits().maxPlaneImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max plane image dimensions", createInfo.name, device->GetName()), createInfo.height, uint32(0), device->GetLimits().maxPlaneImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Plane && createInfo.depth > device->GetLimits().maxPlaneImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max plane image dimensions", createInfo.name, device->GetName()), createInfo.depth, uint32(0), device->GetLimits().maxPlaneImageDimensions));
 
-        SR_THROW_IF(createInfo.type == ImageType::Volume && createInfo.width > device->GetLimits().maxVolumeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max volume image dimensions", name, device->GetName()), createInfo.width, uint32(0), device->GetLimits().maxVolumeImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Volume && createInfo.height > device->GetLimits().maxVolumeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max volume image dimensions", name, device->GetName()), createInfo.height, uint32(0), device->GetLimits().maxVolumeImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Volume && createInfo.depth > device->GetLimits().maxVolumeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max volume image dimensions", name, device->GetName()), createInfo.depth, uint32(0), device->GetLimits().maxVolumeImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Volume && createInfo.width > device->GetLimits().maxVolumeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max volume image dimensions", createInfo.name, device->GetName()), createInfo.width, uint32(0), device->GetLimits().maxVolumeImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Volume && createInfo.height > device->GetLimits().maxVolumeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max volume image dimensions", createInfo.name, device->GetName()), createInfo.height, uint32(0), device->GetLimits().maxVolumeImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Volume && createInfo.depth > device->GetLimits().maxVolumeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max volume image dimensions", createInfo.name, device->GetName()), createInfo.depth, uint32(0), device->GetLimits().maxVolumeImageDimensions));
 
-        SR_THROW_IF(createInfo.type == ImageType::Cube && createInfo.width > device->GetLimits().maxCubeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max cube image dimensions", name, device->GetName()), createInfo.width, uint32(0), device->GetLimits().maxCubeImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Cube && createInfo.height > device->GetLimits().maxCubeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max cube image dimensions", name, device->GetName()), createInfo.height, uint32(0), device->GetLimits().maxCubeImageDimensions));
-        SR_THROW_IF(createInfo.type == ImageType::Cube && createInfo.depth > device->GetLimits().maxCubeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max cube image dimensions", name, device->GetName()), createInfo.depth, uint32(0), device->GetLimits().maxCubeImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Cube && createInfo.width > device->GetLimits().maxCubeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max cube image dimensions", createInfo.name, device->GetName()), createInfo.width, uint32(0), device->GetLimits().maxCubeImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Cube && createInfo.height > device->GetLimits().maxCubeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max cube image dimensions", createInfo.name, device->GetName()), createInfo.height, uint32(0), device->GetLimits().maxCubeImageDimensions));
+        SR_THROW_IF(createInfo.type == ImageType::Cube && createInfo.depth > device->GetLimits().maxCubeImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified depth is greater than device [{1}]'s max cube image dimensions", createInfo.name, device->GetName()), createInfo.depth, uint32(0), device->GetLimits().maxCubeImageDimensions));
 
-        SR_THROW_IF(!device->IsImageFormatSupported(createInfo.format, createInfo.usage), UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create image [{1}] with unsupported format - use Device::IsImageFormatSupported() to query support", device->GetName(), name)));
-        SR_THROW_IF(!device->IsImageSamplingSupported(createInfo.sampling), UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create image [{1}] with unsupported sampling - use Device::IsImageSamplingSupported() to query support", device->GetName(), name)));
+        SR_THROW_IF(!device->IsImageFormatSupported(createInfo.format, createInfo.usage), UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create image [{1}] with unsupported format - use Device::IsImageFormatSupported() to query support", device->GetName(), createInfo.name)));
+        SR_THROW_IF(!device->IsImageSamplingSupported(createInfo.sampling), UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create image [{1}] with unsupported sampling - use Device::IsImageSamplingSupported() to query support", device->GetName(), createInfo.name)));
 
         // Set up image create info
         const VkImageCreateInfo imageCreateInfo
@@ -275,7 +275,7 @@ namespace Sierra
 
         // Create and allocate image
         VkResult result = vmaCreateImage(device->GetVulkanMemoryAllocator(), &imageCreateInfo, &allocationCreateInfo, &image, &allocation, nullptr);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create image [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create image [{0}]", createInfo.name));
 
         // Determine aspect flags
         if (createInfo.usage & ImageUsage::DepthAttachment) aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -305,20 +305,20 @@ namespace Sierra
 
         // Create the image view
         result = device->GetFunctionTable().vkCreateImageView(device->GetVulkanDevice(), &imageViewCreateInfo, nullptr, &imageView);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create image [{0}], as creation of image view failed", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create image [{0}], as creation of image view failed", createInfo.name));
 
         // Set object names
-        device->SetResourceName(image, VK_OBJECT_TYPE_IMAGE, name);
-        device->SetResourceName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, SR_FORMAT("Image view of image [{0}]", name));
+        device->SetResourceName(image, VK_OBJECT_TYPE_IMAGE, createInfo.name);
+        device->SetResourceName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, SR_FORMAT("Image view of image [{0}]", createInfo.name));
     }
 
     VulkanImage::VulkanImage(const VulkanDevice& givenDevice, const SwapchainImageCreateInfo& createInfo)
-        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainVkFormatToImageFormat(createInfo.format), .usage = ImageUsage::SourceMemory | ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }), device(&givenDevice),
+        : VulkanResource(createInfo.name), Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainVkFormatToImageFormat(createInfo.format), .usage = ImageUsage::SourceMemory | ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }), device(&givenDevice),
           width(createInfo.width), height(createInfo.height), format(SwapchainVkFormatToImageFormat(createInfo.format)),
-          name(createInfo.name), image(createInfo.image), aspectFlags(VK_IMAGE_ASPECT_COLOR_BIT), swapchainImage(true)
+          image(createInfo.image), aspectFlags(VK_IMAGE_ASPECT_COLOR_BIT), swapchainImage(true)
     {
-        SR_THROW_IF(createInfo.image == VK_NULL_HANDLE, InvalidValueError(SR_FORMAT("Cannot create swapchain image [{0}], as specified texture must not be nullptr", name)));
-        SR_THROW_IF(createInfo.format == VK_FORMAT_UNDEFINED, InvalidValueError(SR_FORMAT("Cannot create swapchain image [{0}], as format texture must not be [VK_FORMAT_UNDEFINED]", name)));
+        SR_THROW_IF(createInfo.image == VK_NULL_HANDLE, InvalidValueError(SR_FORMAT("Cannot create swapchain image [{0}], as specified texture must not be nullptr", createInfo.name)));
+        SR_THROW_IF(createInfo.format == VK_FORMAT_UNDEFINED, InvalidValueError(SR_FORMAT("Cannot create swapchain image [{0}], as format texture must not be [VK_FORMAT_UNDEFINED]", createInfo.name)));
 
         // Set up image view create info
         const VkImageViewCreateInfo imageViewCreateInfo
@@ -344,11 +344,11 @@ namespace Sierra
 
         // Create the image view
         const VkResult result = device->GetFunctionTable().vkCreateImageView(device->GetVulkanDevice(), &imageViewCreateInfo, nullptr, &imageView);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create swapchain image [{0}], as creation of image view failed", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create swapchain image [{0}], as creation of image view failed", createInfo.name));
 
         // Set object names
-        device->SetResourceName(image, VK_OBJECT_TYPE_IMAGE, name);
-        device->SetResourceName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, SR_FORMAT("Image view of image [{0}]", name));
+        device->SetResourceName(image, VK_OBJECT_TYPE_IMAGE, createInfo.name);
+        device->SetResourceName(imageView, VK_OBJECT_TYPE_IMAGE_VIEW, SR_FORMAT("Image view of image [{0}]", createInfo.name));
     }
 
     /* --- DESTRUCTOR --- */

@@ -8,12 +8,12 @@
     #error "Including the VulkanX11Surface.h file is only allowed in Linux builds!"
 #endif
 
-#include "../VulkanContext.h"
+#include "../VulkanInstance.h"
 #include "../../../Windowing/Window.h"
 
 namespace Sierra
 {
 
-    [[nodiscard]] SIERRA_API VkSurfaceKHR CreateVulkanX11Surface(const VulkanContext& context, const Window& window);
+    [[nodiscard]] SIERRA_API VkSurfaceKHR CreateVulkanX11Surface(const VulkanInstance& instance, const Window& window);
 
 }

@@ -24,7 +24,7 @@ namespace Sierra
         std::unique_ptr<Shader> fragmentShader = nullptr;
         std::unique_ptr<Sampler> fontSampler = nullptr;
 
-        void CreateContext(const Sierra::Device& device)
+        void CreateContext(const Device& device)
         {
             if (contextCount > 0)
             {
@@ -75,7 +75,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     ImGuiRenderer::ImGuiRenderer(const ImGuiRendererCreateInfo& createInfo)
-        : device(&createInfo.device), resourceTable(&createInfo.resourceTable), concurrentFrameCount(createInfo.concurrentFrameCount)
+        : device(&createInfo.device), resourceTable(&createInfo.resourceTable), destructionScheduler(&createInfo.destructionScheduler), concurrentFrameCount(createInfo.concurrentFrameCount)
     {
         SR_THROW_IF(createInfo.fontCreateInfos.empty(), InvalidValueError("Cannot create ImGui renderer, as specified fonts must not be empty"));
         SR_THROW_IF(createInfo.concurrentFrameCount == 0, InvalidValueError("Cannot create ImGui renderer, as specified concurrent frame count must be greater than [0]"));
@@ -128,7 +128,7 @@ namespace Sierra
         }
 
         // Save base font index within singleton pool
-        ImGuiIO& io = ImGui::GetIO();
+        const ImGuiIO& io = ImGui::GetIO();
         baseFontIndex = io.Fonts->Fonts.size();
 
         // Process fonts memory
@@ -144,7 +144,7 @@ namespace Sierra
         // Load font atlas
         int atlasWidth, atlasHeight;
         uint8* atlasMemory = nullptr;
-        ImGui::GetIO().Fonts->GetTexDataAsAlpha8(reinterpret_cast<uchar**>(&atlasMemory), &atlasWidth, &atlasHeight);
+        ImGui::GetIO().Fonts->GetTexDataAsAlpha8(&atlasMemory, &atlasWidth, &atlasHeight);
 
         constexpr ImageFormat FONT_ATLAS_IMAGE_FORMAT = ImageFormat::R8_UNorm;
         constexpr ImageUsage FONT_ATLAS_IMAGE_USAGE = ImageUsage::Sample | ImageUsage::DestinationMemory;
@@ -162,13 +162,24 @@ namespace Sierra
         });
 
         // Create staging buffer to hold atlas data
-        fontAtlasStagingBuffer = device->CreateBuffer({
+        std::unique_ptr<Buffer> stagingBuffer = device->CreateBuffer({
             .name = "Default ImGui Render Task font staging buffer",
             .memorySize = fontAtlas->GetMemorySize(),
             .usage = BufferUsage::SourceMemory,
             .memoryLocation = BufferMemoryLocation::RAM
         });
-        fontAtlasStagingBuffer->Write(atlasMemory, 0, 0, fontAtlas->GetMemorySize());
+        stagingBuffer->Write(atlasMemory, 0, 0, fontAtlas->GetMemorySize());
+
+        // Prepare image for writing
+        CommandBuffer& commandBuffer = createInfo.commandBuffer;
+        commandBuffer.SynchronizeImageUsage(*fontAtlas, { .nextUsage = ImageCommandUsage::MemoryWrite, .levelCount = fontAtlas->GetLevelCount(), .layerCount = fontAtlas->GetLayerCount() });
+
+        // Copy atlas to image
+        commandBuffer.CopyBufferToImage(*stagingBuffer, *fontAtlas, { .pixelRange = { fontAtlas->GetWidth(), fontAtlas->GetHeight(), fontAtlas->GetDepth() } });
+        createInfo.destructionScheduler.QueueResource(std::move(stagingBuffer));
+
+        // Prepare image for shader reading
+        commandBuffer.SynchronizeImageUsage(*fontAtlas, { .previousUsage = ImageCommandUsage::MemoryWrite, .nextUsage = ImageCommandUsage::GraphicsRead, .levelCount = fontAtlas->GetLevelCount(), .layerCount =  fontAtlas->GetLayerCount() });
 
         // Bind font atlas & sampler
         fontAtlasID = resourceTable->BindSampledImage(*fontAtlas);
@@ -178,7 +189,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void ImGuiRenderer::Update(uint32 framebufferWidth, uint32 framebufferHeight, const float32 scaling, const InputManager* const inputManager, const CursorManager* const cursorManager, const TouchManager* const touchManager)
+    void ImGuiRenderer::Update(const uint32 framebufferWidth, const uint32 framebufferHeight, const float32 scaling, const InputManager* const inputManager, const CursorManager* const cursorManager, const TouchManager* const touchManager) const
     {
         const uint32 width = static_cast<uint32>(static_cast<float32>(framebufferWidth) / scaling);
         const uint32 height = static_cast<uint32>(static_cast<float32>(framebufferHeight) / scaling);
@@ -349,19 +360,6 @@ namespace Sierra
 
     void ImGuiRenderer::Render(CommandBuffer& commandBuffer, const Framebuffer& framebuffer)
     {
-        if (fontAtlasStagingBuffer != nullptr)
-        {
-            // Prepare image for writing
-            commandBuffer.SynchronizeImageUsage(*fontAtlas, { .nextUsage = ImageCommandUsage::MemoryWrite, .levelCount = fontAtlas->GetLevelCount(), .layerCount = fontAtlas->GetLayerCount() });
-
-            // Copy atlas to image
-            commandBuffer.CopyBufferToImage(*fontAtlasStagingBuffer, *fontAtlas, { .pixelRange = { fontAtlas->GetWidth(), fontAtlas->GetHeight(), fontAtlas->GetDepth() } });
-            commandBuffer.QueueBufferForDestruction(std::move(fontAtlasStagingBuffer));
-
-            // Prepare image for shader reading
-            commandBuffer.SynchronizeImageUsage(*fontAtlas, { .previousUsage = ImageCommandUsage::MemoryWrite, .nextUsage = ImageCommandUsage::GraphicsRead, .levelCount = fontAtlas->GetLevelCount(), .layerCount =  fontAtlas->GetLayerCount() });
-        }
-
         ImGui::Render();
         const ImDrawData* drawData = ImGui::GetDrawData();
 
@@ -383,7 +381,7 @@ namespace Sierra
             });
 
             // Query old buffer for destruction and replace it with the new one
-            commandBuffer.QueueBufferForDestruction(std::move(vertexBuffer));
+            destructionScheduler->QueueResource(std::move(vertexBuffer));
             vertexBuffer = std::move(newVertexBuffer);
         }
 
@@ -399,7 +397,7 @@ namespace Sierra
             });
 
             // Query old buffer for destruction and replace it with the new one
-            commandBuffer.QueueBufferForDestruction(std::move(indexBuffer));
+            destructionScheduler->QueueResource(std::move(indexBuffer));
             indexBuffer = std::move(newIndexBuffer);
         }
 

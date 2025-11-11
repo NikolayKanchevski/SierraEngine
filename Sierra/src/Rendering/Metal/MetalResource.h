@@ -34,6 +34,7 @@ namespace Sierra
     {
     public:
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
         [[nodiscard]] RenderingBackendType GetBackendType() const noexcept override { return RenderingBackendType::Metal; }
 
         /* --- COPY SEMANTICS --- */
@@ -45,11 +46,14 @@ namespace Sierra
 
     protected:
         /* --- CONSTRUCTORS --- */
-        MetalResource() noexcept = default;
+        explicit MetalResource(std::string_view name);
 
         /* --- MOVE SEMANTICS --- */
         MetalResource(MetalResource&&) noexcept = default;
         MetalResource& operator=(MetalResource&&) noexcept = default;
+
+    private:
+        std::string name = { };
 
     };
 

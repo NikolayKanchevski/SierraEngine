@@ -131,6 +131,7 @@ namespace SierraEngine
             style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 0.00f, 0.00f, 0.70f);
             style.Colors[ImGuiCol_NavWindowingDimBg]     = ImVec4(1.00f, 0.00f, 0.00f, 0.20f);
             style.Colors[ImGuiCol_ModalWindowDimBg]      = ImVec4(0.00f, 0.00f, 0.00f, 0.50f);
+            style.Colors[ImGuiCol_TabSelectedOverline]   = ImVec4(0.70f, 0.00f, 0.00f, 1.00f);
         }
     }
 

@@ -23,10 +23,10 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalQueue::MetalQueue(const MetalDevice& givenDevice, const QueueCreateInfo& createInfo)
-        : Queue(createInfo), device(&givenDevice), name(createInfo.name), commandQueue([device->GetMetalDevice() newCommandQueue])
+        : MetalResource(createInfo.name), Queue(createInfo), device(&givenDevice), commandQueue([device->GetMetalDevice() newCommandQueue])
     {
         SR_THROW_IF(commandQueue == nil, UnknownDeviceError(SR_FORMAT("Could not create device [{0}], as creation of command queue failed", GetName())));
-        device->SetResourceName(commandQueue, SR_FORMAT("Command queue of queue [{0}]", name));
+        device->SetResourceName(commandQueue, SR_FORMAT("Command queue of queue [{0}]", GetName()));
     }
 
     /* --- POLLING METHODS --- */
@@ -64,7 +64,7 @@ namespace Sierra
         {
             const CommandBuffer& commandBufferToWait = commandBufferToWaitReference;
 
-            SR_THROW_IF(commandBufferToWait.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot wait for command buffer [{0}] prior to submitting command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", commandBufferToWait.GetName(), name)));
+            SR_THROW_IF(commandBufferToWait.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot wait for command buffer [{0}] prior to submitting command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", commandBufferToWait.GetName(), GetName())));
             const MetalCommandBuffer& metalCommandBufferToWait = static_cast<const MetalCommandBuffer&>(commandBufferToWait);
 
             SR_THROW_IF(&metalCommandBufferToWait == &metalCommandBuffer, InvalidValueError(SR_FORMAT("Cannot wait for the same command buffer [{0}] prior to submitting it", metalCommandBuffer.GetName())));

@@ -8,13 +8,14 @@
 
 #include "Textures/TextureImporter.h"
 #include "Materials/MaterialImporter.h"
+#include "../Rendering/RenderingContext.h"
 
 namespace SierraEngine
 {
 
     struct AssetManagerCreateInfo
     {
-        const Sierra::Device& device;
+        const RenderingContext& renderingContext;
     };
 
     class SIERRA_ENGINE_API AssetManager
@@ -34,16 +35,16 @@ namespace SierraEngine
         AssetManager(const AssetManager&) = delete;
         AssetManager& operator=(const AssetManager&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        AssetManager(AssetManager&&) = delete;
-        AssetManager& operator=(AssetManager&&) = delete;
-
         /* --- DESTRUCTOR --- */
         virtual ~AssetManager() noexcept = default;
 
     protected:
         /* --- CONSTRUCTORS --- */
         explicit AssetManager(const AssetManagerCreateInfo& createInfo) noexcept;
+
+        /* --- MOVE SEMANTICS --- */
+        AssetManager(AssetManager&&) noexcept = default;
+        AssetManager& operator=(AssetManager&&) noexcept = default;
 
     };
 

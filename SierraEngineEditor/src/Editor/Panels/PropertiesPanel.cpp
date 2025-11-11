@@ -146,13 +146,13 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void PropertiesPanel::Draw(const std::optional<EntityID> entityID, Scene& scene) const
+    void PropertiesPanel::Draw(const PropertiesPanelDrawInfo& drawInfo)
     {
-        if (ImGui::Begin("Properties", nullptr, DEFAULT_WINDOW_FLAGS))
+        if (ImGui::Begin("Properties", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNav))
         {
-            if (entityID.has_value())
+            if (drawInfo.selectedEntity != nullptr)
             {
-                DrawComponents(*entityID, scene, AllComponents());
+                DrawComponents(*drawInfo.selectedEntity, drawInfo.scene, AllComponents());
             }
         }
         ImGui::End();

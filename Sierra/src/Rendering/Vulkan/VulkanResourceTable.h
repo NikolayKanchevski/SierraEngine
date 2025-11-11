@@ -8,7 +8,6 @@
 #include "VulkanResource.h"
 
 #include "VulkanDevice.h"
-#include "../../Utilities/IndexPool.hpp"
 
 namespace Sierra
 {
@@ -20,24 +19,27 @@ namespace Sierra
         VulkanResourceTable(const VulkanDevice& device, const ResourceTableCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] UniformBufferID BindUniformBuffer(const Buffer& buffer, uint64 offset, uint64 memorySize) override;
+        [[nodiscard]] UniformBufferID ReserveUniformBuffer() override;
+        void UpdateUniformBuffer(UniformBufferID ID, const Buffer& buffer, uint64 offset, uint64 memorySize) override;
         bool FreeUniformBuffer(UniformBufferID ID) override;
 
-        [[nodiscard]] StorageBufferID BindStorageBuffer(const Buffer& buffer, uint64 offset, uint64 memorySize) override;
+        [[nodiscard]] StorageBufferID ReserveStorageBuffer() override;
+        void UpdateStorageBuffer(StorageBufferID ID, const Buffer& buffer, uint64 offset, uint64 memorySize) override;
         bool FreeStorageBuffer(StorageBufferID ID) override;
 
-        [[nodiscard]] SampledImageID BindSampledImage(const Image& image) override;
+        [[nodiscard]] SampledImageID ReserveSampledImage() override;
+        void UpdateSampledImage(SampledImageID ID, const Image& image) override;
         bool FreeSampledImage(SampledImageID ID) override;
 
-        [[nodiscard]] StorageImageID BindStorageImage(const Image& image) override;
+        [[nodiscard]] StorageImageID ReserveStorageImage() override;
+        void UpdateStorageImage(StorageImageID ID, const Image& image) override;
         bool FreeStorageImage(StorageImageID ID) override;
 
-        [[nodiscard]] SamplerID BindSampler(const Sampler& sampler) override;
+        [[nodiscard]] SamplerID ReserveSampler() override;
+        void UpdateSampler(SamplerID ID, const Sampler& sampler) override;
         bool FreeSampler(SamplerID ID) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
-
         [[nodiscard]] uint32 GetUniformBufferCapacity() const noexcept override;
         [[nodiscard]] uint32 GetStorageBufferCapacity() const noexcept override;
 
@@ -60,16 +62,16 @@ namespace Sierra
 
     private:
         const VulkanDevice* device = nullptr;
-        std::string name = { };
 
         VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
         VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
 
-        IndexPool<UniformBufferID> uniformBufferIndexPool = { };
-        IndexPool<StorageBufferID> storageBufferIndexPool = { };
-        IndexPool<SampledImageID> sampledImageIndexPool = { };
-        IndexPool<StorageImageID> storageImageIndexPool = { };
-        IndexPool<SamplerID> samplerIndexPool = { };
+        HandleManager<UniformBufferID> uniformBuffers = { };
+        HandleManager<StorageBufferID> storageBuffers = { };
+        HandleManager<SampledImageID> sampledImages = { };
+        HandleManager<StorageImageID> storageImages = { };
+        HandleManager<SamplerID> samplers = { };
+
     };
 
 }

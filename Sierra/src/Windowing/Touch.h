@@ -5,7 +5,7 @@
 #pragma once
 
 #include "../Utilities/Time.h"
-#include "../Utilities/Handle.hpp"
+#include "../Core/Handle.hpp"
 
 namespace Sierra
 {

@@ -38,10 +38,10 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanBuffer::VulkanBuffer(const VulkanDevice& givenDevice, const BufferCreateInfo& createInfo)
-        : Buffer(createInfo), device(&givenDevice), name(createInfo.name), memorySize(createInfo.memorySize)
+        : VulkanResource(createInfo.name), Buffer(createInfo), device(&givenDevice), memorySize(createInfo.memorySize)
     {
-        SR_THROW_IF(createInfo.usage & BufferUsage::Uniform && createInfo.memorySize > device->GetLimits().maxUniformBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max uniform buffer size - use Device::GetLimits() to query limits", name, device->GetName()), createInfo.memorySize, uint64(0), device->GetLimits().maxUniformBufferSize));
-        SR_THROW_IF(createInfo.usage & BufferUsage::Storage && createInfo.memorySize > device->GetLimits().maxStorageBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max storage buffer size - use Device::GetLimits() to query limits", name, device->GetName()), createInfo.memorySize, uint64(0), device->GetLimits().maxUniformBufferSize));
+        SR_THROW_IF(createInfo.usage & BufferUsage::Uniform && createInfo.memorySize > device->GetLimits().maxUniformBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max uniform buffer size - use Device::GetLimits() to query limits", createInfo.name, device->GetName()), createInfo.memorySize, static_cast<uint64>(0), device->GetLimits().maxUniformBufferSize));
+        SR_THROW_IF(createInfo.usage & BufferUsage::Storage && createInfo.memorySize > device->GetLimits().maxStorageBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max storage buffer size - use Device::GetLimits() to query limits", createInfo.name, device->GetName()), createInfo.memorySize, static_cast<uint64>(0), device->GetLimits().maxUniformBufferSize));
 
         // Set up buffer create info
         const VkBufferCreateInfo bufferCreateInfo
@@ -63,8 +63,8 @@ namespace Sierra
 
         // Create and allocate buffer
         const VkResult result = vmaCreateBuffer(device->GetVulkanMemoryAllocator(), &bufferCreateInfo, &allocationCreateInfo, &buffer, &allocation, nullptr);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create buffer [{0}]", name));
-        device->SetResourceName(buffer, VK_OBJECT_TYPE_BUFFER, name);
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create buffer [{0}]", createInfo.name));
+        device->SetResourceName(buffer, VK_OBJECT_TYPE_BUFFER, createInfo.name);
 
         // Map and reset memory if CPU-visible
         if (createInfo.memoryLocation == BufferMemoryLocation::RAM)

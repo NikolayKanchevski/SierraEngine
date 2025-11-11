@@ -7,7 +7,7 @@
 #include "../Swapchain.h"
 #include "VulkanResource.h"
 
-#include "VulkanContext.h"
+#include "VulkanInstance.h"
 #include "VulkanDevice.h"
 #include "VulkanImage.h"
 
@@ -18,21 +18,19 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        VulkanSwapchain(const VulkanContext& context, const VulkanDevice& device, const SwapchainCreateInfo& createInfo);
+        VulkanSwapchain(const VulkanInstance& instance, const VulkanDevice& device, const SwapchainCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         void AcquireNextImage() override;
         void Present(CommandBuffer& commandBuffer) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
-
         [[nodiscard]] uint32 GetCurrentFrameIndex() const noexcept override { return currentFrame; }
         [[nodiscard]] uint32 GetCurrentImageIndex() const noexcept override { return currentImage; }
         [[nodiscard]] uint32 GetConcurrentFrameCount() const noexcept override { return concurrentFrameCount; }
 
-        [[nodiscard]] float32 GetScaling() const noexcept override { return glm::max(1.0f, static_cast<float32>(swapchainImages[currentImage]->GetWidth()) / static_cast<float32>(window->GetWidth())); }
-        [[nodiscard]] const Image& GetImage(const uint32 frameIndex) const override { SR_THROW_IF(frameIndex >= concurrentFrameCount, ValueOutOfRangeError(SR_FORMAT("Cannot get image [{0}] of swapchain [{1}]! Use Swapchain::GetConcurrentFrameCount() to query count", frameIndex, GetName()), frameIndex, uint32(0), GetConcurrentFrameCount() - 1)); return *swapchainImages[frameIndex]; }
+        [[nodiscard]] float32 GetScaling() const noexcept override;
+        [[nodiscard]] const Image& GetImage(uint32 frameIndex) const override;
 
         /* --- COPY SEMANTICS --- */
         VulkanSwapchain(const VulkanSwapchain&) = delete;
@@ -46,10 +44,8 @@ namespace Sierra
         ~VulkanSwapchain() noexcept override;
 
     private:
-        const VulkanContext* context = nullptr;
+        const VulkanInstance* instance = nullptr;
         const VulkanDevice* device = nullptr;
-
-        std::string name = { };
         Window* window = nullptr;
 
         VkSurfaceKHR surface = VK_NULL_HANDLE;

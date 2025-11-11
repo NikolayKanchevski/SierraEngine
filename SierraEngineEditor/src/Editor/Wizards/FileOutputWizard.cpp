@@ -20,7 +20,7 @@ namespace SierraEngine
     /* --- POLLING METHODS --- */
 
     FileOutputWizard::FileOutputWizard(const FileOutputWizardCreateInfo& createInfo) noexcept
-        : platformContext(createInfo.platformContext),
+        : platformContext(&createInfo.platformContext),
           outputFileExtension(createInfo.outputFileExtension)
     {
         if (createInfo.inputFilePath == nullptr) return;
@@ -66,7 +66,7 @@ namespace SierraEngine
                     .allowedFileExtensions = allowedExtensions
                 };
 
-                if (ImGuiWidgets::FileSaveInput("##OutputFileSaveInput", outputFilePath, platformContext, inputInfo))
+                if (ImGuiWidgets::FileSaveInput("##OutputFileSaveInput", outputFilePath, *platformContext, inputInfo))
                 {
                     SetOutputFilePath(outputFilePath);
                 }

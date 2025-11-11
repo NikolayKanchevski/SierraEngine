@@ -52,7 +52,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalGraphicsPipeline::MetalGraphicsPipeline(const MetalDevice& device, const GraphicsPipelineCreateInfo& createInfo)
-        : GraphicsPipeline(createInfo), cullMode(CullModeToCullMode(createInfo.cullMode)), triangleFillMode(ShadeModeToTriangleFillMode(createInfo.shadeMode)), winding(FrontFaceModeToWinding(createInfo.frontFaceMode))
+        : MetalResource(createInfo.name), GraphicsPipeline(createInfo), cullMode(CullModeToCullMode(createInfo.cullMode)), triangleFillMode(ShadeModeToTriangleFillMode(createInfo.shadeMode)), winding(FrontFaceModeToWinding(createInfo.frontFaceMode))
     {
         SR_THROW_IF(createInfo.vertexShader.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its backend type differs from [RenderingBackendType::Metal]", createInfo.name, createInfo.vertexShader.GetName())));
         const MetalShader& metalVertexShader = static_cast<const MetalShader&>(createInfo.vertexShader);

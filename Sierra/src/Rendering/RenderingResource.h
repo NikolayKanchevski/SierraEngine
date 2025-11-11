@@ -33,4 +33,8 @@ namespace Sierra
 
     };
 
+    /* --- CONCEPTS --- */
+    template<typename T>
+    concept RenderingResourceType = std::is_base_of_v<RenderingResource, T> && !std::is_same_v<RenderingResource, T>;
+
 }

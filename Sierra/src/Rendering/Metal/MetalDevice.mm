@@ -4,26 +4,27 @@
 
 #include "MetalDevice.h"
 
-#include "MetalBuffer.h"
 #include "MetalImage.h"
+#include "MetalQueue.h"
+#include "MetalBuffer.h"
+#include "MetalShader.h"
 #include "MetalSampler.h"
+#include "MetalSwapchain.h"
+#include "../DeviceErrors.h"
 #include "MetalRenderPass.h"
 #include "MetalFramebuffer.h"
-#include "MetalSwapchain.h"
-#include "MetalShader.h"
-#include "MetalGraphicsPipeline.h"
-#include "MetalComputePipeline.h"
 #include "MetalResourceTable.h"
-#include "MetalQueue.h"
-#include "../DeviceErrors.h"
+#include "MetalComputePipeline.h"
+#include "MetalGraphicsPipeline.h"
+#include "MetalDestructionScheduler.h"
 
 namespace Sierra
 {
 
     /* --- CONSTRUCTORS --- */
 
-    MetalDevice::MetalDevice(const MetalContext& givenContext, const id<MTLDevice> device, const DeviceCreateInfo& createInfo)
-        : Device(createInfo), context(&givenContext), device(device), name(createInfo.name)
+    MetalDevice::MetalDevice(const MetalInstance& givenContext, const id<MTLDevice> device, const DeviceCreateInfo& createInfo)
+        : MetalResource(createInfo.name), Device(createInfo), context(&givenContext), device(device)
     {
         SR_THROW_IF(device == nil, InvalidValueError(SR_FORMAT("Cannot create Metal device [{0}], as specified device must not be null", createInfo.name)));
 
@@ -103,6 +104,11 @@ namespace Sierra
     std::unique_ptr<Queue> MetalDevice::CreateQueue(const QueueCreateInfo& createInfo) const
     {
         return std::make_unique<MetalQueue>(*this, createInfo);
+    }
+
+    std::unique_ptr<Sierra::DestructionScheduler> MetalDevice::CreateDestructionScheduler(const DestructionSchedulerCreateInfo& createInfo) const
+    {
+        return std::make_unique<MetalDestructionScheduler>(*this, createInfo);
     }
 
     /* --- SETTER METHODS --- */

@@ -7,55 +7,56 @@
 namespace SierraEngine
 {
 
-    /* --- POLLING METHODS --- */
-
-    void HierarchyPanel::Draw(const Scene& scene)
+    namespace
     {
-        if (ImGui::Begin("Hierarchy", nullptr, DEFAULT_WINDOW_FLAGS))
+        void DrawEntity(const EntityID entityID, const Scene& scene, std::vector<EntityID>& selectedEntities)
         {
-            ImGui::Separator();
+            const auto iterator = std::find(selectedEntities.begin(), selectedEntities.end(), entityID);
+            const bool selected = iterator != selectedEntities.end();
 
-            for (const EntityID entityID : scene.GetRootEntities())
+            const std::span<const EntityID> children = scene.GetEntityChildren(entityID);
+            const bool opened = ImGui::TreeNodeEx(std::to_string(entityID.GetValue()).data(), ImGuiTreeNodeFlags_DrawLinesToNodes | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_SpanAvailWidth | (selected * ImGuiTreeNodeFlags_Selected) | (children.empty() * ImGuiTreeNodeFlags_Leaf), "%s", scene.GetEntityComponent<Tag>(entityID)->GetTag().data());
+
+            if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
             {
-                DrawEntity(scene, entityID);
-                ImGui::Separator();
+                if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_LeftSuper))
+                {
+                    if (!selected) selectedEntities.emplace_back(entityID);
+                    else selectedEntities.erase(iterator);
+                }
+                else
+                {
+                    selectedEntities = { entityID };
+                }
+            }
+
+            if (opened)
+            {
+                for (const EntityID child : children)
+                {
+                    DrawEntity(child, scene, selectedEntities);
+                }
+
+                ImGui::TreePop();
             }
         }
-        ImGui::End();
     }
 
     /* --- POLLING METHODS --- */
 
-    void HierarchyPanel::DrawEntity(const Scene& scene, const EntityID entityID)
+    void HierarchyPanel::Draw(const HierarchyPanelDrawInfo& drawInfo)
     {
-        const auto iterator = std::find(selectedEntities.begin(), selectedEntities.end(), entityID);
-        const bool selected = iterator != selectedEntities.end();
-
-        const std::span<const EntityID> children = scene.GetEntityChildren(entityID);
-        const bool opened = ImGui::TreeNodeEx(std::to_string(entityID.GetValue()).data(), ImGuiTreeNodeFlags_DrawLinesToNodes | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_SpanAvailWidth | (selected * ImGuiTreeNodeFlags_Selected) | (children.empty() * ImGuiTreeNodeFlags_Leaf), "%s", scene.GetEntityComponent<Tag>(entityID)->GetTag().data());
-
-        if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+        if (ImGui::Begin("Hierarchy", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoNav))
         {
-            if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_LeftSuper))
+            ImGui::Separator();
+
+            for (const EntityID entityID : drawInfo.scene.GetRootEntities())
             {
-                if (!selected) selectedEntities.emplace_back(entityID);
-                else selectedEntities.erase(iterator);
-            }
-            else
-            {
-                selectedEntities = { entityID };
+                DrawEntity(entityID, drawInfo.scene, drawInfo.selectedEntities);
+                ImGui::Separator();
             }
         }
-
-        if (opened)
-        {
-            for (const EntityID child : children)
-            {
-                DrawEntity(scene, child);
-            }
-
-            ImGui::TreePop();
-        }
+        ImGui::End();
     }
 
 }

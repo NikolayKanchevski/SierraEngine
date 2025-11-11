@@ -68,9 +68,6 @@ int main(const int argc, char* argv[])
     _argv = argv;
 
     // NOTE: This delegate is released in CocoaContext.mm, when overridden by a new one
-//    [[NSApplication sharedApplication] setDelegate: [[CocoaEntryPointDelegate alloc] init]];
-//    NSApplicationMain(argc, const_cast<const char**>(argv));
-
-auto a =Sierra::CreateApplication(_argc, _argv);
-while (!a->Update());
+    [[NSApplication sharedApplication] setDelegate: [[CocoaEntryPointDelegate alloc] init]];
+    NSApplicationMain(argc, const_cast<const char**>(argv));
 }

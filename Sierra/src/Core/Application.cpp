@@ -17,10 +17,10 @@
 #endif
 
 #if SR_VULKAN_SUPPORTED
-    #include "../Rendering/Vulkan/VulkanContext.h"
+    #include "../Rendering/Vulkan/VulkanInstance.h"
 #endif
 #if SR_METAL_SUPPORTED
-    #include "../Rendering/Metal/MetalContext.h"
+    #include "../Rendering/Metal/MetalInstance.h"
 #endif
 
 namespace Sierra
@@ -53,7 +53,7 @@ namespace Sierra
 
         // Create rendering context
         {
-            const RenderingContextCreateInfo renderingContextCreateInfo
+            const RenderingInstanceCreateInfo renderingInstanceCreateInfo
             {
                 .applicationName = GetName(),
                 .applicationVersion = GetVersion()
@@ -66,7 +66,7 @@ namespace Sierra
                     #if !SR_VULKAN_SUPPORTED
                         SR_THROW(UnsupportedFeatureError(SR_FORMAT("Cannot create application [{0}], as specified backend type [RenderingBackendType::Vulkan] is either unsupported on this system, or the CMake option [SIERRA_BUILD_VULKAN] is not turned on", name)));
                     #else
-                        renderingContext = std::make_unique<VulkanContext>(renderingContextCreateInfo);
+                        renderingInstance = std::make_unique<VulkanInstance>(renderingInstanceCreateInfo);
                     #endif
                     break;
                 }
@@ -80,7 +80,7 @@ namespace Sierra
                     #if !SR_METAL_SUPPORTED
                         SR_THROW(UnsupportedFeatureError(SR_FORMAT("Cannot create application [{0}], as specified backend type [RenderingBackendType::Metal] is either unsupported on this system, or the CMake option [SIERRA_BUILD_METAL] is not turned on", name)));
                     #else
-                        renderingContext = std::make_unique<MetalContext>(renderingContextCreateInfo);
+                        renderingInstance = std::make_unique<MetalInstance>(renderingInstanceCreateInfo);
                     #endif
                     break;
                 }

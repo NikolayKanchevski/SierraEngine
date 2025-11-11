@@ -31,7 +31,6 @@ namespace Sierra
         void WaitForCommandBuffer(const CommandBuffer& commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
         [[nodiscard]] QueueOperations GetOperations() const noexcept override { return QueueOperations::All; }
 
         [[nodiscard]] id<MTLCommandQueue> GetMetalCommandQueue() const noexcept { return commandQueue; }
@@ -50,7 +49,6 @@ namespace Sierra
 
     private:
         const MetalDevice* device = nullptr;
-        std::string name = { };
 
         id<MTLCommandQueue> commandQueue = nil;
 

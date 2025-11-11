@@ -16,9 +16,9 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalResourceTable::MetalResourceTable(const MetalDevice& device, const ResourceTableCreateInfo& createInfo)
-        : ResourceTable(createInfo), name(createInfo.name)
+        : MetalResource(createInfo.name), ResourceTable(createInfo)
     {
-        SR_THROW_IF(device.GetMetalDevice().argumentBuffersSupport != MTLArgumentBuffersTier2, UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create resource table [{1}]", device.GetName(), name)));
+        SR_THROW_IF(device.GetMetalDevice().argumentBuffersSupport != MTLArgumentBuffersTier2, UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create resource table [{1}]", device.GetName(), GetName())));
 
         // Set up argument descriptors
         constexpr uint32 ARGUMENT_BUFFER_INDEX_COUNT = 5;
@@ -58,12 +58,12 @@ namespace Sierra
 
         // Create encoder
         argumentEncoder = [device.GetMetalDevice() newArgumentEncoderWithArguments: argumentDescriptors];
-        device.SetResourceName(argumentEncoder, SR_FORMAT("Argument encoder of resource table [{0}]", name));
+        device.SetResourceName(argumentEncoder, SR_FORMAT("Argument encoder of resource table [{0}]", GetName()));
 
         // Create argument buffer
         argumentBuffer = [device.GetMetalDevice() newBufferWithLength: [argumentEncoder encodedLength] options: MTLResourceStorageModeShared | MTLResourceHazardTrackingModeUntracked];
-        SR_THROW_IF(argumentBuffer == nil, UnknownDeviceError(SR_FORMAT("Could not create resource table [{0}], as creation of argument buffer failed", name)));
-        device.SetResourceName(argumentBuffer, SR_FORMAT("Argument buffer of resource table [{0}]", name));
+        SR_THROW_IF(argumentBuffer == nil, UnknownDeviceError(SR_FORMAT("Could not create resource table [{0}], as creation of argument buffer failed", GetName())));
+        device.SetResourceName(argumentBuffer, SR_FORMAT("Argument buffer of resource table [{0}]", GetName()));
 
         // Assign argument buffer
         [argumentEncoder setArgumentBuffer: argumentBuffer offset: 0];
@@ -71,106 +71,139 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    UniformBufferID MetalResourceTable::BindUniformBuffer(const Buffer& buffer, const uint64 offset, const uint64 memorySize)
+    UniformBufferID MetalResourceTable::ReserveUniformBuffer()
     {
-        SR_THROW_IF(buffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind uniform buffer [{0}] to resource table [{1}], as its backend type differs from [RenderingBackendType::Metal]", buffer.GetName(), name)));
+        return uniformBuffers.AddItem();
+    }
+
+    void MetalResourceTable::UpdateUniformBuffer(const UniformBufferID ID, const Buffer& buffer, const uint64 offset, const uint64 memorySize)
+    {
+        ResourceTable::UpdateUniformBuffer(ID, buffer, offset, memorySize);
+
+        SR_THROW_IF(buffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind uniform buffer [{0}] to resource table [{1}], as its backend type differs from [RenderingBackendType::Metal]", buffer.GetName(), GetName())));
         const MetalBuffer& metalBuffer = static_cast<const MetalBuffer&>(buffer);
 
-        SR_THROW_IF(offset + memorySize > buffer.GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot bind write invalid uniform buffer memory range to resource table [{0}]", GetName()), offset, memorySize, uint64(0), buffer.GetMemorySize()));
-
-        const UniformBufferID index = uniformBufferIndexPool.GenerateIndex();
-        [argumentEncoder setBuffer: metalBuffer.GetMetalBuffer() offset: offset atIndex: UNIFORM_BUFFER_INDEX + index];
-        boundUniformBuffers[index] = metalBuffer.GetMetalBuffer();
-
-        return index;
+        [argumentEncoder setBuffer: metalBuffer.GetMetalBuffer() offset: offset atIndex: UNIFORM_BUFFER_INDEX + ID.GetValue()];
+        *uniformBuffers.GetItem(ID) = metalBuffer.GetMetalBuffer();
     }
 
     bool MetalResourceTable::FreeUniformBuffer(const UniformBufferID ID)
     {
-        [argumentEncoder setBuffer: nil offset: 0 atIndex: UNIFORM_BUFFER_INDEX + ID];
-        boundUniformBuffers.erase(ID);
+        if (uniformBuffers.RemoveItem(ID))
+        {
+            [argumentEncoder setBuffer: nil offset: 0 atIndex: UNIFORM_BUFFER_INDEX + ID];
+            return true;
+        }
 
-        return uniformBufferIndexPool.FreeIndex(ID);
+        return false;
     }
 
-    StorageBufferID MetalResourceTable::BindStorageBuffer(const Buffer& buffer, const uint64 offset, const uint64 memorySize)
+    StorageBufferID MetalResourceTable::ReserveStorageBuffer()
     {
-        SR_THROW_IF(buffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind storage buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", buffer.GetName(), name)));
+        return storageBuffers.AddItem();
+    }
+
+    void MetalResourceTable::UpdateStorageBuffer(const StorageBufferID ID, const Buffer& buffer, const uint64 offset, const uint64 memorySize)
+    {
+        ResourceTable::UpdateStorageBuffer(ID, buffer, offset, memorySize);
+
+        SR_THROW_IF(buffer.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind storage buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", buffer.GetName(), GetName())));
         const MetalBuffer& metalBuffer = static_cast<const MetalBuffer&>(buffer);
 
-        SR_THROW_IF(offset + memorySize > buffer.GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot bind write invalid storage buffer memory range to resource table [{0}]", GetName()), offset, memorySize, uint64(0), buffer.GetMemorySize()));
-
-        const StorageBufferID index = storageBufferIndexPool.GenerateIndex();
-        [argumentEncoder setBuffer: metalBuffer.GetMetalBuffer() offset: offset atIndex: STORAGE_BUFFER_INDEX + index];
-        boundStorageBuffers[index] = metalBuffer.GetMetalBuffer();
-
-        return index;
+        [argumentEncoder setBuffer: metalBuffer.GetMetalBuffer() offset: offset atIndex: STORAGE_BUFFER_INDEX + ID.GetValue()];
+        *storageBuffers.GetItem(ID) = metalBuffer.GetMetalBuffer();
     }
 
     bool MetalResourceTable::FreeStorageBuffer(const StorageBufferID ID)
     {
-        [argumentEncoder setBuffer: nil offset: 0 atIndex: STORAGE_BUFFER_INDEX + ID];
-        boundStorageBuffers.erase(ID);
+        if (storageBuffers.RemoveItem(ID))
+        {
+            [argumentEncoder setBuffer: nil offset: 0 atIndex: STORAGE_BUFFER_INDEX + ID];
+            return true;
+        }
 
-        return storageBufferIndexPool.FreeIndex(ID);
+        return false;
     }
 
-    SampledImageID MetalResourceTable::BindSampledImage(const Image& image)
+    SampledImageID MetalResourceTable::ReserveSampledImage()
     {
-        SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind sampled image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", image.GetName(), name)));
+        return sampledImages.AddItem();
+    }
+
+    void MetalResourceTable::UpdateSampledImage(const SampledImageID ID, const Image& image)
+    {
+        ResourceTable::UpdateSampledImage(ID, image);
+
+        SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind sampled image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", image.GetName(), GetName())));
         const MetalImage& metalImage = static_cast<const MetalImage&>(image);
 
-        const SampledImageID index = sampledImageIndexPool.GenerateIndex();
-        [argumentEncoder setTexture: metalImage.GetMetalTexture() atIndex: SAMPLED_IMAGE_INDEX + index];
-        boundSampledImages[index] = metalImage.GetMetalTexture();
-
-        return index;
+        [argumentEncoder setTexture: metalImage.GetMetalTexture() atIndex: SAMPLED_IMAGE_INDEX + ID.GetValue()];
+        *sampledImages.GetItem(ID) = metalImage.GetMetalTexture();
     }
 
     bool MetalResourceTable::FreeSampledImage(const SampledImageID ID)
     {
-        [argumentEncoder setTexture: nil atIndex: SAMPLED_IMAGE_INDEX + ID];
-        boundSampledImages.erase(ID);
+        if (sampledImages.RemoveItem(ID))
+        {
+            [argumentEncoder setTexture: nil atIndex: SAMPLED_IMAGE_INDEX + ID];
+            return true;
+        }
 
-        return sampledImageIndexPool.FreeIndex(ID);
+        return false;
     }
 
-    StorageImageID MetalResourceTable::BindStorageImage(const Image& image)
+    StorageImageID MetalResourceTable::ReserveStorageImage()
     {
-        SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind storage image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", image.GetName(), name)));
+        return storageImages.AddItem();
+    }
+
+    void MetalResourceTable::UpdateStorageImage(const StorageImageID ID, const Image& image)
+    {
+        ResourceTable::UpdateStorageImage(ID, image);
+
+        SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind storage image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", image.GetName(), GetName())));
         const MetalImage& metalImage = static_cast<const MetalImage&>(image);
 
-        const StorageImageID index = storageImageIndexPool.GenerateIndex();
-        [argumentEncoder setTexture: metalImage.GetMetalTexture() atIndex: STORAGE_IMAGE_INDEX + index];
-        boundStorageImages[index] = metalImage.GetMetalTexture();
-
-        return index;
+        [argumentEncoder setTexture: metalImage.GetMetalTexture() atIndex: STORAGE_IMAGE_INDEX + ID.GetValue()];
+        *storageImages.GetItem(ID) = metalImage.GetMetalTexture();
     }
 
     bool MetalResourceTable::FreeStorageImage(const StorageImageID ID)
     {
-        [argumentEncoder setTexture: nil atIndex: STORAGE_IMAGE_INDEX + ID];
-        boundStorageImages.erase(ID);
+        if (storageImages.RemoveItem(ID))
+        {
+            [argumentEncoder setTexture: nil atIndex: STORAGE_IMAGE_INDEX + ID];
+            return true;
+        }
 
-        return storageImageIndexPool.FreeIndex(ID);
+        return false;
     }
 
-    SamplerID MetalResourceTable::BindSampler(const Sampler& sampler)
+    SamplerID MetalResourceTable::ReserveSampler()
     {
-        SR_THROW_IF(sampler.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind sampler [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", sampler.GetName(), name)));
+        return samplers.AddItem();
+    }
+
+    void MetalResourceTable::UpdateSampler(const SamplerID ID, const Sampler& sampler)
+    {
+        ResourceTable::UpdateSampler(ID, sampler);
+
+        SR_THROW_IF(sampler.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot bind sampler [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Metal]", sampler.GetName(), GetName())));
         const MetalSampler& metalSampler = static_cast<const MetalSampler&>(sampler);
 
-        const SamplerID index = samplerIndexPool.GenerateIndex();
-        [argumentEncoder setSamplerState: metalSampler.GetSamplerState() atIndex: SAMPLER_INDEX + index];
+        [argumentEncoder setSamplerState: metalSampler.GetSamplerState() atIndex: SAMPLER_INDEX + ID.GetValue()];
         // NOTE: Sampler states do not derive from MTLResource, so we do not need to add them to bound resource map
-
-        return index;
     }
 
     bool MetalResourceTable::FreeSampler(const SamplerID ID)
     {
-        [argumentEncoder setSamplerState: nil atIndex: SAMPLER_INDEX + ID];
-        return samplerIndexPool.FreeIndex(ID);
+        if (samplers.RemoveItem(ID))
+        {
+            [argumentEncoder setSamplerState: nil atIndex: SAMPLER_INDEX + ID];
+            return true;
+        }
+
+        return false;
     }
 
     /* --- DESTRUCTOR --- */

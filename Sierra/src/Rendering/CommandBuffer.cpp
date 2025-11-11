@@ -21,7 +21,7 @@ namespace Sierra
     void CommandBuffer::SynchronizeBufferUsage(const Buffer& buffer, const BufferSynchronizeInfo& synchronizeInfo)
     {
         SR_THROW_IF(synchronizeInfo.nextUsage == BufferCommandUsage::None, InvalidValueError(SR_FORMAT("Cannot synchronize memory range of buffer [{0}] within command buffer [{1}], as specified next usage must not be [BufferCommandUsage::None]", buffer.GetName(), GetName())));
-        SR_THROW_IF(synchronizeInfo.offset + synchronizeInfo.memorySize > buffer.GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot synchronize invalid memory range of buffer [{0}] within command buffer [{1}]", buffer.GetName(), GetName()), synchronizeInfo.offset, synchronizeInfo.memorySize, uint64(0), buffer.GetMemorySize()));
+        SR_THROW_IF(synchronizeInfo.offset + synchronizeInfo.memorySize > buffer.GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot synchronize invalid memory range of buffer [{0}] within command buffer [{1}]", buffer.GetName(), GetName()), synchronizeInfo.offset, synchronizeInfo.memorySize, static_cast<uint64>(0), buffer.GetMemorySize()));
     }
 
     void CommandBuffer::SynchronizeImageUsage(const Image& image, const ImageSynchronizeInfo& synchronizeInfo)
@@ -35,8 +35,8 @@ namespace Sierra
 
     void CommandBuffer::CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, const BufferToBufferCopyInfo& copyInfo)
     {
-        SR_THROW_IF(copyInfo.sourceOffset + copyInfo.memorySize > sourceBuffer.GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot copy invalid memory range from buffer [{0}] within command buffer [{1}]", sourceBuffer.GetName(), GetName()), copyInfo.sourceOffset, copyInfo.memorySize, uint64(0), sourceBuffer.GetMemorySize()));
-        SR_THROW_IF(copyInfo.destinationOffset + copyInfo.memorySize > destinationBuffer.GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot copy to invalid memory range of buffer [{0}] within command buffer [{1}]", sourceBuffer.GetName(), GetName()), copyInfo.destinationOffset, copyInfo.memorySize, uint64(0), destinationBuffer.GetMemorySize()));
+        SR_THROW_IF(copyInfo.sourceOffset + copyInfo.memorySize > sourceBuffer.GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot copy invalid memory range from buffer [{0}] within command buffer [{1}]", sourceBuffer.GetName(), GetName()), copyInfo.sourceOffset, copyInfo.memorySize, static_cast<uint64>(0), sourceBuffer.GetMemorySize()));
+        SR_THROW_IF(copyInfo.destinationOffset + copyInfo.memorySize > destinationBuffer.GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot copy to invalid memory range of buffer [{0}] within command buffer [{1}]", sourceBuffer.GetName(), GetName()), copyInfo.destinationOffset, copyInfo.memorySize, static_cast<uint64>(0), destinationBuffer.GetMemorySize()));
     }
 
     void CommandBuffer::CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, const BufferToImageCopyInfo& copyInfo)
@@ -61,7 +61,7 @@ namespace Sierra
 
     void CommandBuffer::PushConstants(const void* memory, const uint8 offset, const uint8 memorySize)
     {
-        SR_THROW_IF(memory == nullptr, InvalidValueError(SR_FORMAT("Cannot push push constant memory range [{0}-{1}] within command buffer [{2}], as specified memory pointer must not be null", GetName(), uint64(0), memorySize)));
+        SR_THROW_IF(memory == nullptr, InvalidValueError(SR_FORMAT("Cannot push push constant memory range [{0}-{1}] within command buffer [{2}], as specified memory pointer must not be null", GetName(), static_cast<uint64>(0), memorySize)));
         SR_THROW_IF(offset + memorySize > Device::MAX_PUSH_CONSTANT_SIZE, InvalidRangeError(SR_FORMAT("Cannot push invalid push constant range within command buffer [{0}]", GetName()), offset, memorySize, uint8(0), Device::MAX_PUSH_CONSTANT_SIZE));
     }
 
@@ -92,12 +92,12 @@ namespace Sierra
 
     void CommandBuffer::BindVertexBuffer(const Buffer& vertexBuffer, const uint64 offset)
     {
-        SR_THROW_IF(offset >= vertexBuffer.GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot bind invalid offset of vertex buffer [{0}] within command buffer [{1}]", vertexBuffer.GetName(), GetName()), offset, uint64(0), vertexBuffer.GetMemorySize()));
+        SR_THROW_IF(offset >= vertexBuffer.GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot bind invalid offset of vertex buffer [{0}] within command buffer [{1}]", vertexBuffer.GetName(), GetName()), offset, static_cast<uint64>(0), vertexBuffer.GetMemorySize()));
     }
 
     void CommandBuffer::BindIndexBuffer(const Buffer& indexBuffer, const uint64 offset)
     {
-        SR_THROW_IF(offset >= indexBuffer.GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot bind invalid offset of index buffer [{0}] within command buffer [{1}]", indexBuffer.GetName(), GetName()), offset, uint64(0), indexBuffer.GetMemorySize()));
+        SR_THROW_IF(offset >= indexBuffer.GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot bind invalid offset of index buffer [{0}] within command buffer [{1}]", indexBuffer.GetName(), GetName()), offset, static_cast<uint64>(0), indexBuffer.GetMemorySize()));
     }
 
     void CommandBuffer::SetScissor(const Vector4UInt scissor)

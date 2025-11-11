@@ -93,7 +93,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanSampler::VulkanSampler(const VulkanDevice& givenDevice, const SamplerCreateInfo& createInfo)
-        : Sampler(createInfo), device(&givenDevice), name(createInfo.name)
+        : VulkanResource(createInfo.name), Sampler(createInfo), device(&givenDevice)
     {
         // Set up sampler create info
         const VkSamplerCreateInfo samplerCreateInfo
@@ -118,10 +118,10 @@ namespace Sierra
 
         // Create sampler
         const VkResult result = device->GetFunctionTable().vkCreateSampler(device->GetVulkanDevice(), &samplerCreateInfo, nullptr, &sampler);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create sampler [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create sampler [{0}]", createInfo.name));
 
         // Assign name
-        device->SetResourceName(sampler, VK_OBJECT_TYPE_SAMPLER, name);
+        device->SetResourceName(sampler, VK_OBJECT_TYPE_SAMPLER, createInfo.name);
     }
 
     /* --- DESTRUCTOR --- */

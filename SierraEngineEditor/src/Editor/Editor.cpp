@@ -4,6 +4,11 @@
 
 #include "Editor.h"
 
+#include "Panels/MenuPanel.h"
+#include "Panels/ViewportPanel.h"
+#include "Panels/HierarchyPanel.h"
+#include "Panels/PropertiesPanel.h"
+
 #include "Wizards/Assets/TextureSerializeWizard.h"
 #include "Wizards/Assets/MaterialSerializeWizard.h"
 
@@ -13,7 +18,7 @@ namespace SierraEngine
     /* --- CONSTRUCTORS --- */
 
     Editor::Editor(const EditorCreateInfo& createInfo)
-        : device(createInfo.device), platformContext(createInfo.platformContext), resourceTable(createInfo.resourceTable), scene(createInfo.scene)
+        : platformContext(&createInfo.platformContext), renderingContext(&createInfo.renderingContext), scene({ .name = "Scene" })
     {
         style = EditorThemeToImGuiStyle(createInfo.theme);
     }
@@ -26,23 +31,30 @@ namespace SierraEngine
         const ImGuiID dockID = DrawDockSpace();
 
         ImGui::SetNextWindowDockID(dockID, ImGuiCond_FirstUseEver);
-        hierarchy.Draw(scene);
+        HierarchyPanel::Draw({ .scene = scene, .selectedEntities = selectedEntities });
 
         ImGui::SetNextWindowDockID(dockID, ImGuiCond_FirstUseEver);
-        propertiesPanel.Draw(hierarchy.GetSelectedEntity(), scene);
+        PropertiesPanel::Draw({ .scene = scene, .selectedEntity = !selectedEntities.empty() ? &selectedEntities[0] : nullptr });
 
-        for (std::optional<ViewportPanel>& viewport : viewports)
+        uint32 i = 0;
+        viewports.ForEach([dockID, &i](Viewport& viewport) -> void
         {
-            if (!viewport.has_value()) continue;
+            const std::string title = SR_FORMAT("Viewport [{0}]", i);
+            const ViewportPanelDrawInfo drawInfo
+            {
+                .title = title,
+                .viewport = viewport
+            };
 
             ImGui::SetNextWindowDockID(dockID, ImGuiCond_FirstUseEver);
-            viewport->Draw();
-        }
+            ViewportPanel::Draw(drawInfo);
+            i++;
+        });
 
         if (currentWizard != nullptr)
         {
             bool open = true;
-            currentWizard->Draw(open, commandBuffer, resourceTable);
+            currentWizard->Draw(open, commandBuffer);
 
             if (!open)
             {
@@ -51,76 +63,55 @@ namespace SierraEngine
         }
     }
 
-    ViewportID Editor::CreateViewport(const ViewportCreateInfo& createInfo)
+    Viewport& Editor::CreateViewport(ViewportID& ID, const ViewportCreateInfo& createInfo)
     {
-        const ViewportID ID = viewportIndexPool.GenerateIndex();
+        return viewports.AddItem(ID, createInfo);
+    }
 
-        if (ID >= viewports.size()) viewports.emplace_back(createInfo);
-        else viewports[ID].emplace(createInfo);
-
-        viewportIDs.emplace_back(ID);
-        return ID;
+    void Editor::ForEachViewport(const ViewportEnumerationPredicate& Predicate)
+    {
+        viewports.ForEach(Predicate);
     }
 
     bool Editor::DestroyViewport(const ViewportID ID)
     {
-        if (ID >= viewports.size() || !viewports[ID].has_value())
-        {
-            return false;
-        }
-
-        viewports[ID] = std::nullopt;
-        viewportIndexPool.FreeIndex(ID);
-
-        const auto iterator = std::find(viewportIDs.begin(), viewportIDs.end(), ID);
-        if (iterator != viewportIDs.end()) viewportIDs.erase(iterator);
-
-        return true;
+        return viewports.RemoveItem(ID);
     }
 
     void Editor::DrawMenuBar()
     {
-        if (ImGui::BeginMenuBar())
+        const std::array fileSerializeItems
         {
-            if (ImGui::BeginMenu("File"))
-            {
-                if (ImGui::BeginMenu("Serialize"))
-                {
-                    if (ImGui::MenuItem("Texture"))
-                    {
-                        const std::optional<std::filesystem::path> filePath = platformContext.OpenSingleFileSelectDialog({ .allowedFileExtensions = TextureSerializeWizard::INPUT_FILE_EXTENSIONS });
-                        if (filePath.has_value())
-                        {
-                            const TextureSerializeWizardCreateInfo createInfo
-                            {
-                                .platformContext = platformContext,
-                                .device = device,
-                                .inputFilePath = &filePath.value()
-                            };
-
-                            currentWizard = std::make_unique<TextureSerializeWizard>(createInfo);
-                        }
-                    }
-                    else if (ImGui::MenuItem("Material"))
-                    {
-                        const MaterialSerializeWizardCreateInfo createInfo
-                        {
-                            .platformContext = platformContext,
-                            .device = device
-                        };
-
-                        currentWizard = std::make_unique<MaterialSerializeWizard>(createInfo);
-                    }
-                    ImGui::EndMenu();
-                }
-                if (ImGui::BeginMenu("Import"))
-                {
-                    ImGui::EndMenu();
-                }
-                ImGui::EndMenu();
+            MenuItem {
+                .title = "Texture",
+                .Callback = [this]() -> void { OpenTextureSerializeWizard(); }
+            },
+            MenuItem {
+                .title = "Material",
+                .Callback = [this]() -> void { OpenMaterialSerializeWizard(); }
             }
-            ImGui::EndMenuBar();
-        }
+        };
+
+        const std::array fileItems
+        {
+            MenuItem {
+                .title = "Serialize",
+                .items = fileSerializeItems
+            },
+            MenuItem {
+                .title = "Import"
+            }
+        };
+
+        const std::array items
+        {
+            MenuItem {
+                .title = "File",
+                .items = fileItems
+            }
+        };
+
+        MenuPanel::Draw({ .items = items });
     }
 
     ImGuiID Editor::DrawDockSpace()
@@ -149,5 +140,34 @@ namespace SierraEngine
 
         return dockID;
     }
+
+    void Editor::OpenTextureSerializeWizard()
+    {
+        const std::optional<std::filesystem::path> filePath = platformContext->OpenSingleFileSelectDialog({ .allowedFileExtensions = TextureSerializeWizard::INPUT_FILE_EXTENSIONS });
+        if (filePath.has_value())
+        {
+            const TextureSerializeWizardCreateInfo createInfo
+            {
+                .platformContext = *platformContext,
+                .renderingContext = *renderingContext,
+                .inputFilePath = &filePath.value()
+            };
+
+            currentWizard = std::make_unique<TextureSerializeWizard>(createInfo);
+        }
+    }
+
+    void Editor::OpenMaterialSerializeWizard()
+    {
+        const MaterialSerializeWizardCreateInfo createInfo
+        {
+            .platformContext = *platformContext,
+            .renderingContext = *renderingContext
+        };
+
+        currentWizard = std::make_unique<MaterialSerializeWizard>(createInfo);
+    }
+
+
 
 }

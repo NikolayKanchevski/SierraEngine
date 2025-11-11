@@ -11,6 +11,8 @@ namespace SierraEngine
     {
         constexpr std::string_view APPLICATION_NAME = "Sierra Editor";
         const Sierra::Version APPLICATION_VERSION = Sierra::Version({ 1, 0, 0 });
+
+        constexpr uint32 VIEWPORT_COUNT = 4;
     }
 
     /* --- CONSTRUCTORS --- */
@@ -18,43 +20,39 @@ namespace SierraEngine
     EditorApplication::EditorApplication(const EditorApplicationCreateInfo& createInfo)
         : Application({ .name = APPLICATION_NAME, .version = APPLICATION_VERSION, .settings = createInfo.settings }),
             frameLimiter({ .maxFrameRate = 60 * SR_PLATFORM_MOBILE }),
-            threadPool({ .maxThreadCount = std::thread::hardware_concurrency() }),
+            // threadPool({ .maxThreadCount = std::thread::hardware_concurrency() }),
             project({ .fileManager = GetFileManager(), .projectDirectoryPath = createInfo.projectDirectoryPath }),
-            device(GetRenderingContext().CreateDevice({ .name = "General Device" })),
-            resourceTable(device->CreateResourceTable({ .name = "General Resource Table" })),
-            queue(device->CreateQueue({ .name = "General Queue", .operations = Sierra::QueueOperations::All })),
-            arenaAllocator({ .device = *device }),
-            assetManager({ .device = *device }),
-            sceneRenderer({ .device = *device }),
-            editorSurface({ .platformContext = GetPlatformContext(), .device = *device, .resourceTable = *resourceTable }),
-            scene({ .name = "Scene" }),
-            editor({ .device = *device, .platformContext = GetPlatformContext(), .scene = scene, .resourceTable = *resourceTable })
+            renderingContext({ .renderingInstance = GetRenderingInstance() }),
+            queue(renderingContext.GetDevice().CreateQueue({ .name = "General Queue" })),
+            arenaAllocator({ .renderingContext = renderingContext }),
+            assetManager({ .renderingContext = renderingContext }),
+            editor({ .platformContext = GetPlatformContext(), .renderingContext = renderingContext })
     {
-        const std::unique_ptr<Sierra::CommandBuffer> commandBuffer = queue->CreateCommandBuffer({ .name = "Staging Command Buffer" });
-        commandBuffer->Begin();
-
         assetManager.LoadProjectAssets(GetFileManager(), project);
+
+        const std::unique_ptr<Sierra::CommandBuffer> commandBuffer = queue->CreateCommandBuffer({ .name = "Staging Command Buffer" });
+
+        commandBuffer->Begin();
+        renderingContext.Bind(*commandBuffer);
+
+        // std::optional
+        surface.emplace(EditorSurfaceCreateInfo { .platformContext = GetPlatformContext(), .renderingContext = renderingContext, .commandBuffer = *commandBuffer });
         assetManager.Update(*commandBuffer);
 
         commandBuffer->End();
         queue->SubmitCommandBuffer(*commandBuffer);
 
-        constexpr size VIEWPORT_COUNT = 2;
+        sceneRenderer = std::make_shared<SceneRenderer>(SceneRendererCreateInfo { .renderingContext = renderingContext });
         for (size i = 0; i < VIEWPORT_COUNT; i++)
         {
-            const ViewportID viewportID = editor.CreateViewport({
-                .title = SR_FORMAT("Viewport [{0}]", i),
-                .device = *device,
-                .renderer = sceneRenderer,
-                .resourceTable = *resourceTable
-            });
+            ViewportID viewportID;
+            Viewport& viewport = editor.CreateViewport(viewportID, { .renderingContext = renderingContext, .renderer = sceneRenderer });
 
-            ViewportPanel* viewport = editor.GetViewport(viewportID);
-            viewport->GetTransform().SetPosition({ 0.0f, 4.0f, -10.0f * (viewportID + 1) / 1.5f });
-            viewport->GetTransform().SetRotation({ 0.0f, -20.0f * (viewportID + 1) / 1.5f, 0.0f });
+            viewport.GetTransform().SetPosition({ 0.0f, 4.0f, -10.0f * (viewportID + 1) / 1.5f });
+            viewport.GetTransform().SetRotation({ 0.0f, -20.0f * (viewportID + 1) / 1.5f, 0.0f });
         }
 
-        // Create an example scene hierarchy
+        Scene& scene = editor.GetScene();
         const EntityID Entity1 = scene.CreateEntity("Entity1");
         const EntityID Entity2 = scene.CreateEntity("Entity2");
 
@@ -70,13 +68,13 @@ namespace SierraEngine
         const EntityID Entity5 = scene.CreateEntity("Entity5");
         const EntityID Entity6 = scene.CreateEntity("Entity6");
 
-        queue->WaitForCommandBuffer(*commandBuffer);
-
-        commandBuffers.resize(editorSurface.GetConcurrentFrameCount());
+        commandBuffers.resize(surface->GetConcurrentFrameCount());
         for (size i = 0; i < commandBuffers.size(); i++)
         {
             commandBuffers[i] = queue->CreateCommandBuffer({ .name = SR_FORMAT("General Command Buffer [{0}]", i) });
         }
+
+        queue->WaitForCommandBuffer(*commandBuffer);
     }
 
     /* --- POLLING METHODS --- */
@@ -84,29 +82,25 @@ namespace SierraEngine
     bool EditorApplication::Update()
     {
         Application::Update();
-
-        // Begin frame
         frameLimiter.BeginFrame();
 
-        // Retrieve current command buffer and wait until it is free
-        Sierra::CommandBuffer& commandBuffer = *commandBuffers[editorSurface.GetCurrentFrameIndex()];
+        Sierra::CommandBuffer& commandBuffer = *commandBuffers[surface->GetCurrentFrameIndex()];
         queue->WaitForCommandBuffer(commandBuffer);
 
-        // Begin rendering
-        if (editorSurface.Update()) return true;
+        if (surface->Update()) return true;
+
         commandBuffer.Begin();
+        renderingContext.Bind(commandBuffer);
 
-        // Bind scene resources
+        assetManager.Update(commandBuffer);
+
         arenaAllocator.Bind(commandBuffer);
-        commandBuffer.BindResourceTable(*resourceTable);
+        surface->Render(commandBuffer, editor);
 
-        editorSurface.Render(commandBuffer, editor);
-
-        // Submit work to GPU
         commandBuffer.End();
         queue->SubmitCommandBuffer(commandBuffer);
 
-        editorSurface.Present(commandBuffer);
+        surface->Present(commandBuffer);
         frameLimiter.EndFrame();
 
         return false;

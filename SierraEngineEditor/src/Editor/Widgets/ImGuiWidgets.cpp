@@ -162,7 +162,7 @@ namespace SierraEngine
         }
 
         value = std::move(filePath.value());
-        return false;
+        return true;
     }
 
     bool ImGuiWidgets::FileSaveInput(const std::string_view label, std::filesystem::path& value, const Sierra::PlatformContext& platformContext, const ImGuiFileSaveInputInfo& inputInfo)
@@ -186,7 +186,7 @@ namespace SierraEngine
         }
 
         value = std::move(filePath.value());
-        return false;
+        return true;
     }
 
     bool ImGuiWidgets::NumericInput(const std::string_view label, void* value, const ImGuiDataType dataType, const ImGuiNumericInputInfo& inputInfo)
@@ -459,7 +459,7 @@ namespace SierraEngine
                 }
             }
 
-                window->DrawList->AddImage(ImTextureRef(inputInfo.previewID.value()), imageRect.Min, imageRect.Max);
+            window->DrawList->AddImage(ImTextureRef(inputInfo.previewID.value()), imageRect.Min, imageRect.Max);
         }
 
         constexpr std::string_view BROWSE_BUTTON_LABEL = "Browse";
@@ -467,7 +467,7 @@ namespace SierraEngine
 
         ImGuiWidgets::BeginHorizontalPadding((size - browseButtonWidth) / 2.0f);
 
-        const ImGuiFileSelectInputInfo filePathInputInfo =
+        const ImGuiFileSelectInputInfo filePathInputInfo
         {
             .directoryPath = inputInfo.directoryPath,
             .allowedFileExtensions = inputInfo.allowedFileExtensions,

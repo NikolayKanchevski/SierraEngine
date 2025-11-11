@@ -74,12 +74,7 @@ namespace Sierra
         void InsertDebugMarker(std::string_view markerName, Color32 color) override;
         void EndDebugRegion() override;
 
-        std::unique_ptr<Buffer>& QueueBufferForDestruction(std::unique_ptr<Buffer> &&buffer) override;
-        std::unique_ptr<Image>& QueueImageForDestruction(std::unique_ptr<Image> &&image) override;
-
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
-
         [[nodiscard]] id<MTLCommandBuffer> GetMetalCommandBuffer() const noexcept { return commandBuffer; }
         [[nodiscard]] const MetalQueue& GetQueue() const noexcept { return *queue; }
         [[nodiscard]] uint64 GetCompletionSemaphoreSignalValue() const noexcept { return completionSemaphoreSignalValue; }
@@ -97,7 +92,6 @@ namespace Sierra
 
     private:
         const MetalQueue* queue = nullptr;
-        std::string name = { };
 
         id<MTLCommandBuffer> commandBuffer = nil;
         uint64 completionSemaphoreSignalValue = 0;
@@ -127,9 +121,6 @@ namespace Sierra
 
         uint64 initialIndexBufferOffset = 0;
         const MetalBuffer* currentIndexBuffer = nullptr;
-
-        std::queue<std::unique_ptr<Buffer>> queuedBuffersForDestruction;
-        std::queue<std::unique_ptr<Image>> queuedImagesForDestruction;
 
         void UpdateBlitEncoder();
 

@@ -7,7 +7,7 @@
 #include "Version.h"
 #include "../Files/FileManager.h"
 #include "../Platform/PlatformContext.h"
-#include "../Rendering/RenderingContext.h"
+#include "../Rendering/RenderingInstance.h"
 
 namespace Sierra
 {
@@ -51,7 +51,7 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] const PlatformContext& GetPlatformContext() noexcept { return *platformContext; }
-        [[nodiscard]] const RenderingContext& GetRenderingContext() const noexcept { return *renderingContext; }
+        [[nodiscard]] const RenderingInstance& GetRenderingInstance() const noexcept { return *renderingInstance; }
 
         [[nodiscard]] const FileManager& GetFileManager() const noexcept { return platformContext->GetFileManager(); }
 
@@ -63,7 +63,7 @@ namespace Sierra
         const Version version;
 
         std::unique_ptr<PlatformContext> platformContext = nullptr;
-        std::unique_ptr<RenderingContext> renderingContext = nullptr;
+        std::unique_ptr<RenderingInstance> renderingInstance = nullptr;
 
     };
 

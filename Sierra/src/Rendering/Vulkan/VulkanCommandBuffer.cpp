@@ -128,7 +128,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanCommandBuffer::VulkanCommandBuffer(const VulkanQueue& givenQueue, const CommandBufferCreateInfo& createInfo)
-        : CommandBuffer(createInfo), queue(&givenQueue), name(createInfo.name)
+        : VulkanResource(createInfo.name), CommandBuffer(createInfo), queue(&givenQueue)
     {
         // Set up pool create info
         const VkCommandPoolCreateInfo commandPoolCreateInfo
@@ -140,8 +140,8 @@ namespace Sierra
 
         // Create command pool
         VkResult result = queue->GetDevice().GetFunctionTable().vkCreateCommandPool(queue->GetDevice().GetVulkanDevice(), &commandPoolCreateInfo, nullptr, &commandPool);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create command buffer [{0}], as creation of command pool failed", name));
-        queue->GetDevice().SetResourceName(commandPool, VK_OBJECT_TYPE_COMMAND_POOL, SR_FORMAT("Command pool of command buffer [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create command buffer [{0}], as creation of command pool failed", createInfo.name));
+        queue->GetDevice().SetResourceName(commandPool, VK_OBJECT_TYPE_COMMAND_POOL, SR_FORMAT("Command pool of command buffer [{0}]", createInfo.name));
 
         // Set up allocate info
         const VkCommandBufferAllocateInfo allocateInfo
@@ -154,18 +154,14 @@ namespace Sierra
 
         // Allocate command buffer
         result = queue->GetDevice().GetFunctionTable().vkAllocateCommandBuffers(queue->GetDevice().GetVulkanDevice(), &allocateInfo, &commandBuffer);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create command buffer [{0}]", name));
-        queue->GetDevice().SetResourceName(commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, name);
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create command buffer [{0}]", createInfo.name));
+        queue->GetDevice().SetResourceName(commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, createInfo.name);
     }
 
     /* --- POLLING METHODS --- */
 
     void VulkanCommandBuffer::Begin()
     {
-        // Free queued resources
-        queuedBuffersForDestruction = { };
-        queuedImagesForDestruction = { };
-
         // Reset command buffer
         queue->GetDevice().GetFunctionTable().vkResetCommandPool(queue->GetDevice().GetVulkanDevice(), commandPool, 0);
 
@@ -178,22 +174,22 @@ namespace Sierra
 
         // Begin command buffer
         const VkResult result = queue->GetDevice().GetFunctionTable().vkBeginCommandBuffer(commandBuffer, &beginInfo);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not begin command buffer [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not begin command buffer [{0}]", GetName()));
 
         // Get new code
         completionSemaphoreSignalValue = queue->GetDevice().GetNewSemaphoreSignalValue();
-        queue->GetDevice().SetResourceName(commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, SR_FORMAT("{0} - {1}", name, completionSemaphoreSignalValue));
+        queue->GetDevice().SetResourceName(commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, SR_FORMAT("{0} - {1}", GetName(), completionSemaphoreSignalValue));
 
         operations = QueueOperations::None;
     }
 
     void VulkanCommandBuffer::End()
     {
-        SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot end command buffer [{0}], as current render pass [{1}] has not been ended", name, currentRenderPass->GetName())));
+        SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot end command buffer [{0}], as current render pass [{1}] has not been ended", GetName(), currentRenderPass->GetName())));
 
         // End command buffer
         const VkResult result = queue->GetDevice().GetFunctionTable().vkEndCommandBuffer(commandBuffer);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not end command buffer [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not end command buffer [{0}]", GetName()));
 
         currentResourceTable = nullptr;
 
@@ -203,7 +199,7 @@ namespace Sierra
 
     void VulkanCommandBuffer::SynchronizeBufferUsage(const Buffer& buffer, const BufferSynchronizeInfo& synchronizeInfo)
     {
-        SR_THROW_IF(buffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot synchronize usage of buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", buffer.GetName(), name)));
+        SR_THROW_IF(buffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot synchronize usage of buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", buffer.GetName(), GetName())));
         const VulkanBuffer& vulkanBuffer = static_cast<const VulkanBuffer&>(buffer);
 
         CommandBuffer::SynchronizeBufferUsage(vulkanBuffer, synchronizeInfo);
@@ -227,7 +223,7 @@ namespace Sierra
 
     void VulkanCommandBuffer::SynchronizeImageUsage(const Image& image, const ImageSynchronizeInfo& synchronizeInfo)
     {
-        SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot synchronize usage of image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", image.GetName(), name)));
+        SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot synchronize usage of image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", image.GetName(), GetName())));
         const VulkanImage& vulkanImage = static_cast<const VulkanImage&>(image);
 
         CommandBuffer::SynchronizeImageUsage(vulkanImage, synchronizeInfo);
@@ -258,10 +254,10 @@ namespace Sierra
 
     void VulkanCommandBuffer::CopyBufferToBuffer(const Buffer& sourceBuffer, const Buffer& destinationBuffer, const BufferToBufferCopyInfo& copyInfo)
     {
-        SR_THROW_IF(sourceBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot copy from buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", sourceBuffer.GetName(), name)));
+        SR_THROW_IF(sourceBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot copy from buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", sourceBuffer.GetName(), GetName())));
         const VulkanBuffer& vulkanSourceBuffer = static_cast<const VulkanBuffer&>(sourceBuffer);
 
-        SR_THROW_IF(destinationBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot copy to buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", destinationBuffer.GetName(), name)));
+        SR_THROW_IF(destinationBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot copy to buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", destinationBuffer.GetName(), GetName())));
         const VulkanBuffer& vulkanDestinationBuffer = static_cast<const VulkanBuffer&>(destinationBuffer);
 
         CommandBuffer::CopyBufferToBuffer(vulkanSourceBuffer, vulkanDestinationBuffer, copyInfo);
@@ -280,10 +276,10 @@ namespace Sierra
 
     void VulkanCommandBuffer::CopyBufferToImage(const Buffer& sourceBuffer, const Image& destinationImage, const BufferToImageCopyInfo& copyInfo)
     {
-        SR_THROW_IF(sourceBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot copy from buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", sourceBuffer.GetName(), name)));
+        SR_THROW_IF(sourceBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot copy from buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", sourceBuffer.GetName(), GetName())));
         const VulkanBuffer& vulkanSourceBuffer = static_cast<const VulkanBuffer&>(sourceBuffer);
 
-        SR_THROW_IF(destinationImage.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot copy to image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", destinationImage.GetName(), name)));
+        SR_THROW_IF(destinationImage.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot copy to image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", destinationImage.GetName(), GetName())));
         const VulkanImage& vulkanDestinationImage = static_cast<const VulkanImage&>(destinationImage);
 
         CommandBuffer::CopyBufferToImage(vulkanSourceBuffer, vulkanDestinationImage, copyInfo);
@@ -319,7 +315,7 @@ namespace Sierra
 
     void VulkanCommandBuffer::GenerateMipMapsForImage(const Image& image)
     {
-        SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot generate mip maps for image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", image.GetName(), name)));
+        SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot generate mip maps for image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", image.GetName(), GetName())));
         const VulkanImage& vulkanImage = static_cast<const VulkanImage&>(image);
 
         CommandBuffer::GenerateMipMapsForImage(vulkanImage);
@@ -388,7 +384,7 @@ namespace Sierra
 
     void VulkanCommandBuffer::BindResourceTable(const ResourceTable& resourceTable)
     {
-        SR_THROW_IF(resourceTable.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot bind resource table [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", resourceTable.GetName(), name)));
+        SR_THROW_IF(resourceTable.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot bind resource table [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", resourceTable.GetName(), GetName())));
         const VulkanResourceTable& vulkanResourceTable = static_cast<const VulkanResourceTable&>(resourceTable);
 
         CommandBuffer::BindResourceTable(vulkanResourceTable);
@@ -401,7 +397,7 @@ namespace Sierra
     void VulkanCommandBuffer::PushConstants(const void* memory, const uint8 sourceOffset, const uint8 memorySize)
     {
         CommandBuffer::PushConstants(memory, sourceOffset, memorySize);
-        SR_THROW_IF(currentGraphicsPipeline == nullptr && currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot push constants within command buffer [{0}] if no pipeline has been begun", name)));
+        SR_THROW_IF(currentGraphicsPipeline == nullptr && currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot push constants within command buffer [{0}] if no pipeline has been begun", GetName())));
 
         if (currentGraphicsPipeline != nullptr) queue->GetDevice().GetFunctionTable().vkCmdPushConstants(commandBuffer, currentGraphicsPipeline->GetVulkanPipelineLayout(), VK_SHADER_STAGE_ALL, 0, memorySize, reinterpret_cast<const uint8*>(memory) + sourceOffset);
         if (currentComputePipeline != nullptr) queue->GetDevice().GetFunctionTable().vkCmdPushConstants(commandBuffer, currentComputePipeline->GetVulkanPipelineLayout(), VK_SHADER_STAGE_ALL, 0, memorySize, reinterpret_cast<const uint8*>(memory) + sourceOffset);
@@ -409,14 +405,14 @@ namespace Sierra
 
     void VulkanCommandBuffer::BeginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer)
     {
-        SR_THROW_IF(renderPass.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot begin render pass [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", renderPass.GetName(), name)));
+        SR_THROW_IF(renderPass.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot begin render pass [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", renderPass.GetName(), GetName())));
         const VulkanRenderPass& vulkanRenderPass = static_cast<const VulkanRenderPass&>(renderPass);
 
-        SR_THROW_IF(framebuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot begin render pass [{0}] within command buffer [{1}], as specified specified framebuffer [{2}]'s backend differs from [RenderingBackendType::Vulkan]", vulkanRenderPass.GetName(), framebuffer.GetName(), name)));
+        SR_THROW_IF(framebuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot begin render pass [{0}] within command buffer [{1}], as specified specified framebuffer [{2}]'s backend differs from [RenderingBackendType::Vulkan]", vulkanRenderPass.GetName(), framebuffer.GetName(), GetName())));
         const VulkanFramebuffer& vulkanFramebuffer = static_cast<const VulkanFramebuffer&>(framebuffer);
 
         CommandBuffer::BeginRenderPass(vulkanRenderPass, framebuffer);
-        SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot begin render pass [{0}] within command buffer [{1}], as current render pass [{2}] has not been ended", vulkanRenderPass.GetName(), name, currentRenderPass->GetName())));
+        SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot begin render pass [{0}] within command buffer [{1}], as current render pass [{2}] has not been ended", vulkanRenderPass.GetName(), GetName(), currentRenderPass->GetName())));
 
         // Set up begin info
         const VkRenderPassBeginInfo renderPassBeginInfo
@@ -480,8 +476,8 @@ namespace Sierra
     void VulkanCommandBuffer::BeginNextSubpass()
     {
         CommandBuffer::BeginNextSubpass();
-        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin next subpass of render pass within command buffer [{0}], as none has been begun", name)));
-        SR_THROW_IF(currentSubpass + 1 >= currentRenderPass->GetSubpassCount(), ValueOutOfRangeError(SR_FORMAT("Cannot begin next subpass [{0}] of render pass [{1}] within command buffer [{2}]", currentSubpass + 1, currentRenderPass->GetName(), name), currentSubpass, uint32(0), currentRenderPass->GetSubpassCount() - 1));
+        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin next subpass of render pass within command buffer [{0}], as none has been begun", GetName())));
+        SR_THROW_IF(currentSubpass + 1 >= currentRenderPass->GetSubpassCount(), ValueOutOfRangeError(SR_FORMAT("Cannot begin next subpass [{0}] of render pass [{1}] within command buffer [{2}]", currentSubpass + 1, currentRenderPass->GetName(), GetName()), currentSubpass, uint32(0), currentRenderPass->GetSubpassCount() - 1));
 
         queue->GetDevice().GetFunctionTable().vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
         currentRenderPass++;
@@ -490,7 +486,7 @@ namespace Sierra
     void VulkanCommandBuffer::EndRenderPass()
     {
         CommandBuffer::EndRenderPass();
-        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot end render pass within command buffer [{0}], as none has been begun yet", name)));
+        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot end render pass within command buffer [{0}], as none has been begun yet", GetName())));
 
         queue->GetDevice().GetFunctionTable().vkCmdEndRenderPass(commandBuffer);
 
@@ -500,12 +496,12 @@ namespace Sierra
 
     void VulkanCommandBuffer::BeginGraphicsPipeline(const GraphicsPipeline& graphicsPipeline)
     {
-        SR_THROW_IF(graphicsPipeline.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot begin graphics pipeline [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", graphicsPipeline.GetName(), name)));
+        SR_THROW_IF(graphicsPipeline.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot begin graphics pipeline [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", graphicsPipeline.GetName(), GetName())));
         const VulkanGraphicsPipeline& vulkanGraphicsPipeline = static_cast<const VulkanGraphicsPipeline&>(graphicsPipeline);
 
         CommandBuffer::BeginGraphicsPipeline(graphicsPipeline);
-        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin graphics pipeline [{0}] within command buffer [{1}], as no render pass has been begun", vulkanGraphicsPipeline.GetName(), name)));
-        SR_THROW_IF(currentGraphicsPipeline != nullptr && currentGraphicsPipeline != &vulkanGraphicsPipeline, InvalidOperationError(SR_FORMAT("Cannot begin graphics pipeline [{0}] within command buffer [{1}], as current graphics pipeline [{2}] has not been ended", vulkanGraphicsPipeline.GetName(), name, currentGraphicsPipeline->GetName())));
+        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin graphics pipeline [{0}] within command buffer [{1}], as no render pass has been begun", vulkanGraphicsPipeline.GetName(), GetName())));
+        SR_THROW_IF(currentGraphicsPipeline != nullptr && currentGraphicsPipeline != &vulkanGraphicsPipeline, InvalidOperationError(SR_FORMAT("Cannot begin graphics pipeline [{0}] within command buffer [{1}], as current graphics pipeline [{2}] has not been ended", vulkanGraphicsPipeline.GetName(), GetName(), currentGraphicsPipeline->GetName())));
 
         if (currentResourceTable != nullptr)
         {
@@ -521,13 +517,13 @@ namespace Sierra
     {
         CommandBuffer::EndGraphicsPipeline();
 
-        SR_THROW_IF(currentGraphicsPipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot end graphics pipeline within command buffer [{0}], as none been begun yet", name)));
+        SR_THROW_IF(currentGraphicsPipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot end graphics pipeline within command buffer [{0}], as none been begun yet", GetName())));
         currentGraphicsPipeline = nullptr;
     }
 
     void VulkanCommandBuffer::BindVertexBuffer(const Buffer& vertexBuffer, const uint64 offset)
     {
-        SR_THROW_IF(vertexBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot bind vertex buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", vertexBuffer.GetName(), name)));
+        SR_THROW_IF(vertexBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot bind vertex buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", vertexBuffer.GetName(), GetName())));
         const VulkanBuffer& vulkanVertexBuffer = static_cast<const VulkanBuffer&>(vertexBuffer);
 
         CommandBuffer::BindVertexBuffer(vulkanVertexBuffer, offset);
@@ -541,7 +537,7 @@ namespace Sierra
 
     void VulkanCommandBuffer::BindIndexBuffer(const Buffer& indexBuffer, const uint64 offset)
     {
-        SR_THROW_IF(indexBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot bind index buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", indexBuffer.GetName(), name)));
+        SR_THROW_IF(indexBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot bind index buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", indexBuffer.GetName(), GetName())));
         const VulkanBuffer& vulkanIndexBuffer = static_cast<const VulkanBuffer&>(indexBuffer);
 
         CommandBuffer::BindIndexBuffer(vulkanIndexBuffer, offset);
@@ -553,7 +549,7 @@ namespace Sierra
     void VulkanCommandBuffer::SetScissor(const Vector4UInt scissor)
     {
         CommandBuffer::SetScissor(scissor);
-        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot set scissor within command buffer [{0}], as no render pass has been begun", name)));
+        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot set scissor within command buffer [{0}], as no render pass has been begun", GetName())));
 
         // Set up scissor rect
         const VkRect2D scissorRect
@@ -575,10 +571,10 @@ namespace Sierra
     void VulkanCommandBuffer::Draw(const uint32 vertexCount, const uint64 vertexOffset)
     {
         CommandBuffer::Draw(vertexCount, vertexOffset);
-        SR_THROW_IF(currentGraphicsPipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw within command buffer [{0}], as no graphics pipeline has been begun", name)));
+        SR_THROW_IF(currentGraphicsPipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw within command buffer [{0}], as no graphics pipeline has been begun", GetName())));
 
         const uint64 vertexBufferOffset = static_cast<uint64>(vertexOffset) * currentGraphicsPipeline->GetVertexStride();
-        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset >= currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid vertex index in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), name), vertexBufferOffset, uint64(0), currentVertexBuffer->GetMemorySize()));
+        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset >= currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid vertex index in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), GetName()), vertexBufferOffset, static_cast<uint64>(0), currentVertexBuffer->GetMemorySize()));
 
         queue->GetDevice().GetFunctionTable().vkCmdDraw(commandBuffer, vertexCount, 1, vertexOffset, 0);
     }
@@ -586,26 +582,26 @@ namespace Sierra
     void VulkanCommandBuffer::DrawIndexed(const uint32 indexCount, const uint64 indexOffset, const uint64 vertexOffset)
     {
         CommandBuffer::DrawIndexed(indexCount, indexOffset, vertexOffset);
-        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw indexed within command buffer [{0}], as no graphics pipeline has been begun", name)));
-        SR_THROW_IF(currentIndexBuffer == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw indexed within command buffer [{0}], as no index buffer has been bound", name)));
+        SR_THROW_IF(currentRenderPass == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw indexed within command buffer [{0}], as no graphics pipeline has been begun", GetName())));
+        SR_THROW_IF(currentIndexBuffer == nullptr, InvalidOperationError(SR_FORMAT("Cannot draw indexed within command buffer [{0}], as no index buffer has been bound", GetName())));
 
         const uint64 indexBufferOffset = indexOffset * sizeof(uint32);
-        SR_THROW_IF(currentIndexBuffer != nullptr && indexBufferOffset >= currentIndexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid index offset in index buffer [{0}] within command buffer [{1}]", currentIndexBuffer->GetName(), name), indexBufferOffset, uint64(0), currentVertexBuffer->GetMemorySize()));
+        SR_THROW_IF(currentIndexBuffer != nullptr && indexBufferOffset >= currentIndexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw from invalid index offset in index buffer [{0}] within command buffer [{1}]", currentIndexBuffer->GetName(), GetName()), indexBufferOffset, static_cast<uint64>(0), currentVertexBuffer->GetMemorySize()));
 
         const uint64 vertexBufferOffset = static_cast<uint64>(vertexOffset) * currentGraphicsPipeline->GetVertexStride();
-        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset >= currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw indexed from invalid vertex offset in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), name), vertexBufferOffset, uint64(0), currentVertexBuffer->GetMemorySize()));
+        SR_THROW_IF(currentVertexBuffer != nullptr && vertexBufferOffset >= currentVertexBuffer->GetMemorySize(), ValueOutOfRangeError(SR_FORMAT("Cannot draw indexed from invalid vertex offset in vertex buffer [{0}] within command buffer [{1}]", currentVertexBuffer->GetName(), GetName()), vertexBufferOffset, static_cast<uint64>(0), currentVertexBuffer->GetMemorySize()));
 
         queue->GetDevice().GetFunctionTable().vkCmdDrawIndexed(commandBuffer, indexCount, 1, indexOffset, static_cast<int32>(vertexOffset), 0);
     }
 
     void VulkanCommandBuffer::BeginComputePipeline(const ComputePipeline& computePipeline)
     {
-        SR_THROW_IF(computePipeline.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", computePipeline.GetName(), name)));
+        SR_THROW_IF(computePipeline.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", computePipeline.GetName(), GetName())));
         const VulkanComputePipeline& vulkanComputePipeline = static_cast<const VulkanComputePipeline&>(computePipeline);
 
         CommandBuffer::BeginComputePipeline(vulkanComputePipeline);
-        SR_THROW_IF(currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as no render pass has been begun", vulkanComputePipeline.GetName(), name)));
-        SR_THROW_IF(currentComputePipeline != nullptr && currentComputePipeline != &vulkanComputePipeline, InvalidOperationError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as current compute pipeline [{2}] has not been ended", vulkanComputePipeline.GetName(), name, currentComputePipeline->GetName())));
+        SR_THROW_IF(currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as no render pass has been begun", vulkanComputePipeline.GetName(), GetName())));
+        SR_THROW_IF(currentComputePipeline != nullptr && currentComputePipeline != &vulkanComputePipeline, InvalidOperationError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as current compute pipeline [{2}] has not been ended", vulkanComputePipeline.GetName(), GetName(), currentComputePipeline->GetName())));
 
         if (currentResourceTable != nullptr)
         {
@@ -623,7 +619,7 @@ namespace Sierra
     {
         CommandBuffer::EndComputePipeline();
 
-        SR_THROW_IF(currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot end compute pipeline within command buffer [{0}], as none has been begun yet", name)));
+        SR_THROW_IF(currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot end compute pipeline within command buffer [{0}], as none has been begun yet", GetName())));
         currentComputePipeline = nullptr;
     }
 
@@ -631,10 +627,10 @@ namespace Sierra
     {
         CommandBuffer::Dispatch(workGroupSize);
 
-        SR_THROW_IF(currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot dispatch within command buffer [{0}], as no compute pipeline has been begun", name)));
-        SR_THROW_IF(workGroupSize.x > queue->GetDevice().GetLimits().maxWorkGroupSize.x, ValueOutOfRangeError(SR_FORMAT("Cannot dispatch command buffer [{0}], as specified work group's horizontal axis is greater than the max work group horizontal axis of device [{1}] - use Device::GetLimits() to query limits", name, queue->GetDevice().GetName()), workGroupSize.x, 1U, queue->GetDevice().GetLimits().maxWorkGroupSize.x));
-        SR_THROW_IF(workGroupSize.y > queue->GetDevice().GetLimits().maxWorkGroupSize.y, ValueOutOfRangeError(SR_FORMAT("Cannot dispatch command buffer [{0}], as specified work group's horizontal axis is greater than the max work group vertical axis of device [{1}] - use Device::GetLimits() to query limits", name, queue->GetDevice().GetName()), workGroupSize.x, 1U, queue->GetDevice().GetLimits().maxWorkGroupSize.y));
-        SR_THROW_IF(workGroupSize.z > queue->GetDevice().GetLimits().maxWorkGroupSize.z, ValueOutOfRangeError(SR_FORMAT("Cannot dispatch command buffer [{0}], as specified work group's horizontal axis is greater than the max work group depth axis of device [{1}] - use Device::GetLimits() to query limits", name, queue->GetDevice().GetName()), workGroupSize.x, 1U, queue->GetDevice().GetLimits().maxWorkGroupSize.z));
+        SR_THROW_IF(currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot dispatch within command buffer [{0}], as no compute pipeline has been begun", GetName())));
+        SR_THROW_IF(workGroupSize.x > queue->GetDevice().GetLimits().maxWorkGroupSize.x, ValueOutOfRangeError(SR_FORMAT("Cannot dispatch command buffer [{0}], as specified work group's horizontal axis is greater than the max work group horizontal axis of device [{1}] - use Device::GetLimits() to query limits", GetName(), queue->GetDevice().GetName()), workGroupSize.x, 1U, queue->GetDevice().GetLimits().maxWorkGroupSize.x));
+        SR_THROW_IF(workGroupSize.y > queue->GetDevice().GetLimits().maxWorkGroupSize.y, ValueOutOfRangeError(SR_FORMAT("Cannot dispatch command buffer [{0}], as specified work group's horizontal axis is greater than the max work group vertical axis of device [{1}] - use Device::GetLimits() to query limits", GetName(), queue->GetDevice().GetName()), workGroupSize.x, 1U, queue->GetDevice().GetLimits().maxWorkGroupSize.y));
+        SR_THROW_IF(workGroupSize.z > queue->GetDevice().GetLimits().maxWorkGroupSize.z, ValueOutOfRangeError(SR_FORMAT("Cannot dispatch command buffer [{0}], as specified work group's horizontal axis is greater than the max work group depth axis of device [{1}] - use Device::GetLimits() to query limits", GetName(), queue->GetDevice().GetName()), workGroupSize.x, 1U, queue->GetDevice().GetLimits().maxWorkGroupSize.z));
 
         queue->GetDevice().GetFunctionTable().vkCmdDispatch(commandBuffer, workGroupSize.x, workGroupSize.y, workGroupSize.z);
     }
@@ -642,11 +638,11 @@ namespace Sierra
     void VulkanCommandBuffer::BeginDebugRegion(const std::string_view regionName, const Color32 color)
     {
         CommandBuffer::BeginDebugRegion(regionName, color);
-        SR_THROW_IF(debugRegionBegan, InvalidOperationError(SR_FORMAT("Cannot begin debug region [{0}] within command buffer [{1}], as current debug region has not been ended", regionName, name)));
+        SR_THROW_IF(debugRegionBegan, InvalidOperationError(SR_FORMAT("Cannot begin debug region [{0}] within command buffer [{1}], as current debug region has not been ended", regionName, GetName())));
 
         if (!queue->GetDevice().IsExtensionLoaded(VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
         {
-            SR_WARNING("Cannot begin debug region [{0}] within command buffer [{1}], as device [{2}] does not support this feature.", regionName, name, queue->GetDevice().GetName());
+            SR_WARNING("Cannot begin debug region [{0}] within command buffer [{1}], as device [{2}] does not support this feature.", regionName, GetName(), queue->GetDevice().GetName());
             return;
         }
 
@@ -668,7 +664,7 @@ namespace Sierra
 
         if (!queue->GetDevice().IsExtensionLoaded(VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
         {
-            SR_WARNING("Cannot insert debug marker [{0}] within command buffer [{1}], as device [{2}] does not support this feature.", markerName, name, queue->GetDevice().GetName());
+            SR_WARNING("Cannot insert debug marker [{0}] within command buffer [{1}], as device [{2}] does not support this feature.", markerName, GetName(), queue->GetDevice().GetName());
             return;
         }
 
@@ -687,26 +683,16 @@ namespace Sierra
     void VulkanCommandBuffer::EndDebugRegion()
     {
         CommandBuffer::EndDebugRegion();
-        SR_THROW_IF(debugRegionBegan, InvalidOperationError(SR_FORMAT("Cannot end debug region within command buffer [{0}], as one must have been begun first", name)));
+        SR_THROW_IF(debugRegionBegan, InvalidOperationError(SR_FORMAT("Cannot end debug region within command buffer [{0}], as one must have been begun first", GetName())));
 
         if (!queue->GetDevice().IsExtensionLoaded(VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
         {
-            SR_WARNING("Cannot end debug region within command buffer [{0}], as device [{1}] does not support this feature.", name, queue->GetDevice().GetName());
+            SR_WARNING("Cannot end debug region within command buffer [{0}], as device [{1}] does not support this feature.", GetName(), queue->GetDevice().GetName());
             return;
         }
 
         queue->GetDevice().GetFunctionTable().vkCmdDebugMarkerEndEXT(commandBuffer);
         debugRegionBegan = false;
-    }
-
-    std::unique_ptr<Buffer>& VulkanCommandBuffer::QueueBufferForDestruction(std::unique_ptr<Buffer> &&buffer)
-    {
-        return queuedBuffersForDestruction.emplace(std::move(buffer));
-    }
-
-    std::unique_ptr<Image>& VulkanCommandBuffer::QueueImageForDestruction(std::unique_ptr<Image> &&image)
-    {
-        return queuedImagesForDestruction.emplace(std::move(image));
     }
 
     /* --- DESTRUCTOR --- */
@@ -715,9 +701,6 @@ namespace Sierra
     {
         queue->GetDevice().GetFunctionTable().vkFreeCommandBuffers(queue->GetDevice().GetVulkanDevice(), commandPool, 1, &commandBuffer);
         queue->GetDevice().GetFunctionTable().vkDestroyCommandPool(queue->GetDevice().GetVulkanDevice(), commandPool, nullptr);
-
-        queuedBuffersForDestruction = { };
-        queuedImagesForDestruction = { };
     }
 
 }

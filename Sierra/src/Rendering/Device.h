@@ -18,6 +18,7 @@
 #include "ComputePipeline.h"
 #include "../Core/Version.h"
 #include "GraphicsPipeline.h"
+#include "DestructionScheduler.h"
 
 namespace Sierra
 {
@@ -71,6 +72,7 @@ namespace Sierra
 
         [[nodiscard]] virtual std::unique_ptr<ResourceTable> CreateResourceTable(const ResourceTableCreateInfo& createInfo) const = 0;
         [[nodiscard]] virtual std::unique_ptr<Queue> CreateQueue(const QueueCreateInfo& createInfo) const = 0;
+        [[nodiscard]] virtual std::unique_ptr<DestructionScheduler> CreateDestructionScheduler(const DestructionSchedulerCreateInfo& createInfo) const = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual std::string_view GetHardwareName() const noexcept = 0;

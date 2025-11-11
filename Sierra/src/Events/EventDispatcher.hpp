@@ -6,8 +6,7 @@
 
 #include "Event.h"
 
-#include "../Utilities/Handle.hpp"
-#include "../Utilities/IndexPool.hpp"
+#import "../Core/HandleManager.hpp"
 
 namespace Sierra
 {
@@ -17,7 +16,7 @@ namespace Sierra
 
     /* --- CONCEPTS --- */
     template<typename T>
-    concept EventType = !std::is_same_v<Event, T> && std::is_base_of_v<Event, T>;
+    concept EventType = std::is_base_of_v<Event, T> && !std::is_same_v<Event, T>;
 
     template<EventType EventType>
     class SIERRA_API EventDispatcher final
@@ -32,39 +31,27 @@ namespace Sierra
         /* --- POLLING METHODS --- */
         [[nodiscard]] EventSubscriptionID Subscribe(const EventCallback& Callback)
         {
-            const EventSubscriptionID ID = indexPool.GenerateIndex();
-
-            if (ID >= callbacks.size()) callbacks.emplace_back(Callback);
-            else callbacks[ID].emplace(Callback);
-
-            return ID;
+            return callbacks.AddItem(Callback);
         }
 
         bool Unsubscribe(const EventSubscriptionID ID)
         {
-            if (ID >= callbacks.size() || !callbacks[ID].has_value())
-            {
-                return false;
-            }
-
-            callbacks[ID] = std::nullopt;
-            indexPool.FreeIndex(ID);
-
-            return true;
+            return callbacks.RemoveItem(ID);
         }
 
         template<typename... Args>
         void DispatchEvent(Args&&... args)
         {
+            bool handled = false;
             const EventType event = EventType(std::forward<Args>(args)...);
-            for (const std::optional<EventCallback>& Callback : callbacks)
+
+            callbacks.ForEach([&handled, &event](const EventCallback& Callback) -> void
             {
-                // If event is handled, we break, so that early subscribers do not register it
-                if (Callback.has_value() && Callback.value()(event))
+                if (!handled && Callback(event))
                 {
-                    break;
+                    handled = true;
                 }
-            }
+            });
         }
 
         /* --- COPY SEMANTICS --- */
@@ -79,8 +66,7 @@ namespace Sierra
         ~EventDispatcher() noexcept = default;
 
     private:
-        IndexPool<EventSubscriptionID> indexPool;
-        std::vector<std::optional<EventCallback>> callbacks = { };
+        HandleManager<EventSubscriptionID, EventCallback> callbacks = { };
 
     };
 

@@ -40,22 +40,19 @@ namespace SierraEngine
         bool Update() override;
 
         FrameLimiter frameLimiter;
-        ThreadPool threadPool;
+        // ThreadPool threadPool;
         Project project;
 
-        std::unique_ptr<Sierra::Device> device = nullptr;
-        std::unique_ptr<Sierra::ResourceTable> resourceTable = nullptr;
+        RenderingContext renderingContext;
         std::unique_ptr<Sierra::Queue> queue = nullptr;
+        std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers = { };
+
+        std::optional<EditorSurface> surface;
+        std::shared_ptr<SceneRenderer> sceneRenderer = nullptr;
 
         ArenaAllocator arenaAllocator;
         EditorAssetManager assetManager;
-        SceneRenderer sceneRenderer;
-
-        EditorSurface editorSurface;
-        Scene scene;
         Editor editor;
-
-        std::vector<std::unique_ptr<Sierra::CommandBuffer>> commandBuffers = { };
 
     };
 

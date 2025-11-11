@@ -227,7 +227,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalImage::MetalImage(const MetalDevice& device, const ImageCreateInfo& createInfo)
-        : Image(createInfo), width(createInfo.width), height(createInfo.height), depth(createInfo.depth), format(createInfo.format), levelCount(createInfo.levelCount), layerCount(createInfo.layerCount), sampling(createInfo.sampling)
+        : MetalResource(createInfo.name), Image(createInfo), width(createInfo.width), height(createInfo.height), depth(createInfo.depth), format(createInfo.format), levelCount(createInfo.levelCount), layerCount(createInfo.layerCount), sampling(createInfo.sampling)
     {
         SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.width > device.GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max line image dimensions", createInfo.name, device.GetName()), createInfo.width, uint32(0), device.GetLimits().maxLineImageDimensions));
         SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.height > device.GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max line image dimensions", createInfo.name, device.GetName()), createInfo.height, uint32(0), device.GetLimits().maxLineImageDimensions));
@@ -273,7 +273,7 @@ namespace Sierra
     }
 
     MetalImage::MetalImage(const MetalDevice& device, const SwapchainImageCreateInfo& createInfo)
-        : Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainPixelFormatToImageFormat(createInfo.format), .usage = ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }),
+        : MetalResource(createInfo.name), Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainPixelFormatToImageFormat(createInfo.format), .usage = ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }),
           width(createInfo.width), height(createInfo.height), format(SwapchainPixelFormatToImageFormat(createInfo.format)), texture(createInfo.texture), swapchainImage(true)
     {
         SR_THROW_IF(createInfo.texture == nil, InvalidValueError(SR_FORMAT("Cannot create swapchain image [{0}], as specified texture must not be nil", createInfo.name)));

@@ -27,7 +27,7 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void EditorAssetManager::Update(Sierra::CommandBuffer &commandBuffer)
+    void EditorAssetManager::Update(Sierra::CommandBuffer& commandBuffer)
     {
 
     }

@@ -14,7 +14,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalComputePipeline::MetalComputePipeline(const MetalDevice& device, const ComputePipelineCreateInfo& createInfo)
-        : ComputePipeline(createInfo)
+        : MetalResource(createInfo.name), ComputePipeline(createInfo)
     {
         SR_THROW_IF(createInfo.computeShader.GetBackendType() != RenderingBackendType::Metal, UnexpectedTypeError(SR_FORMAT("Cannot create compute pipeline [{0}] with compute shader [{1}], as its backend type differs from [RenderingBackendType::Metal]", createInfo.name, createInfo.computeShader.GetName())));
         const MetalShader& metalComputeShader = static_cast<const MetalShader&>(createInfo.computeShader);

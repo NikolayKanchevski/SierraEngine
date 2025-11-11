@@ -9,9 +9,9 @@ namespace Sierra
 
     /* --- CONCEPTS --- */
     template<typename T>
-    concept HandleType = UnsignedType<T>;
+    concept HandleValueType = UnsignedType<T>;
 
-    template<HandleType T>
+    template<HandleValueType T, T NullValue = std::numeric_limits<T>::max()>
     class Handle
     {
     public:
@@ -19,13 +19,16 @@ namespace Sierra
         using ValueType = T;
 
         /* --- CONSTRUCTORS --- */
-        constexpr Handle(const T value = T(0)) noexcept
+        constexpr Handle() noexcept = default;
+
+        constexpr Handle(const T value) noexcept
             : value(value)
         {
 
         }
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] bool HasValue() const noexcept { return value != NullValue; }
         [[nodiscard]] T GetValue() const noexcept { return value; }
 
         /* --- OPERATORS --- */
@@ -52,7 +55,7 @@ namespace Sierra
         ~Handle() noexcept = default;
 
     private:
-        T value = T(0);
+        T value = NullValue;
 
     };
 

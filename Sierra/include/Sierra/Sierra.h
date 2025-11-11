@@ -7,7 +7,12 @@
 #include "../../src/srpch.h"
 
 #include "../../src/Core/Application.h"
-#include "../../src/Core/Logging.h"
+#if SR_ENABLE_LOGGING
+    #include "../../src/Core/Logger.h"
+#endif
+#include "../../src/Core/Errors.h"
+#include "../../src/Core/Handle.hpp"
+#include "../../src/Core/HandleManager.hpp"
 #include "../../src/Core/Version.h"
 
 #include "../../src/Events/Event.h"
@@ -29,8 +34,6 @@
 #include "../../src/Platform/PlatformContext.h"
 
 #include "../../src/Utilities/Date.h"
-#include "../../src/Utilities/Handle.hpp"
-#include "../../src/Utilities/IndexPool.hpp"
 #include "../../src/Utilities/RNG.h"
 #include "../../src/Utilities/Stream.h"
 #include "../../src/Utilities/Time.h"
@@ -39,10 +42,11 @@
 #include "../../src/Rendering/CommandBuffer.h"
 #include "../../src/Rendering/ComputePipeline.h"
 #include "../../src/Rendering/Device.h"
+#include "../../src/Rendering/DestructionScheduler.h"
 #include "../../src/Rendering/Framebuffer.h"
 #include "../../src/Rendering/GraphicsPipeline.h"
 #include "../../src/Rendering/Image.h"
-#include "../../src/Rendering/RenderingContext.h"
+#include "../../src/Rendering/RenderingInstance.h"
 #include "../../src/Rendering/RenderingResource.h"
 #include "../../src/Rendering/RenderPass.h"
 #include "../../src/Rendering/ResourceTable.h"

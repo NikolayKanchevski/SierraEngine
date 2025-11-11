@@ -27,8 +27,6 @@ namespace Sierra
         void Write(const void* memory, uint64 sourceOffset, uint64 destinationOffset, uint64 memorySize) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
-
         [[nodiscard]] const void* GetMemory() const noexcept override { return memory; }
         [[nodiscard]] uint64 GetMemorySize() const noexcept override { return memorySize; }
 
@@ -47,7 +45,6 @@ namespace Sierra
 
     private:
         const VulkanDevice* device = nullptr;
-        std::string name = { };
 
         VkBuffer buffer = VK_NULL_HANDLE;
         VmaAllocation allocation = VK_NULL_HANDLE;

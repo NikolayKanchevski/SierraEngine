@@ -18,7 +18,7 @@
 #include "../Device.h"
 #include "MetalResource.h"
 
-#include "MetalContext.h"
+#include "MetalInstance.h"
 
 namespace Sierra
 {
@@ -27,7 +27,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        MetalDevice(const MetalContext& givenContext, id<MTLDevice> device, const DeviceCreateInfo& createInfo);
+        MetalDevice(const MetalInstance& givenContext, id<MTLDevice> device, const DeviceCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] std::unique_ptr<Buffer> CreateBuffer(const BufferCreateInfo& createInfo) const override;
@@ -44,9 +44,9 @@ namespace Sierra
 
         [[nodiscard]] std::unique_ptr<ResourceTable> CreateResourceTable(const ResourceTableCreateInfo& createInfo) const override;
         [[nodiscard]] std::unique_ptr<Queue> CreateQueue(const QueueCreateInfo& createInfo) const override;
+        [[nodiscard]] std::unique_ptr<DestructionScheduler> CreateDestructionScheduler(const DestructionSchedulerCreateInfo& createInfo) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
         [[nodiscard]] std::string_view GetHardwareName() const noexcept override;
 
         [[nodiscard]] Version GetBackendVersion() const noexcept override { return context->GetBackendVersion(); }
@@ -60,6 +60,7 @@ namespace Sierra
         [[nodiscard]] id<MTLDevice> GetMetalDevice() const noexcept { return device; }
 
         [[nodiscard]] id<MTLSharedEvent> GetSemaphore() const noexcept { return semaphore; }
+        [[nodiscard]] uint64 GetLastSemaphoreSignalValue() const noexcept { return lastReservedSemaphoreSignalValue; }
         [[nodiscard]] uint64 GetNewSemaphoreSignalValue() const noexcept { return ++lastReservedSemaphoreSignalValue; }
 
         /* --- SETTER METHODS --- */
@@ -92,8 +93,7 @@ namespace Sierra
         ~MetalDevice() noexcept override;
 
     private:
-        const MetalContext* context = nullptr;
-        std::string name = { };
+        const MetalInstance* context = nullptr;
 
         id<MTLDevice> device = nil;
         Version driverVersion = Version({ 1, 0, 0 });

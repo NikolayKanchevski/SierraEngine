@@ -3,7 +3,7 @@
 //
 
 #include <vulkan/vulkan.h>
-#include "VulkanContext.h"
+#include "VulkanInstance.h"
 
 #include "VulkanDevice.h"
 #include "VulkanErrorHandler.h"
@@ -186,13 +186,16 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanContext::VulkanContext(const RenderingContextCreateInfo& createInfo)
-        : RenderingContext(createInfo), name(createInfo.name), vulkanVersion(GetVulkanVersion())
+    VulkanInstance::VulkanInstance(const RenderingInstanceCreateInfo& createInfo)
+        : VulkanResource(createInfo.name), RenderingInstance(createInfo), vulkanVersion(GetVulkanVersion())
     {
         // Optional MoltenVK features must be explicitly enabled prior to performing any API calls
         #if SR_PLATFORM_APPLE
             #if SR_ENABLE_LOGGING
                 setenv("MVK_DEBUG", "1", true);
+                // setenv("MVK_CONFIG_DEBUG", "1", true);
+                // setenv("MVK_CONFIG_LOG_LEVEL", "4", true);
+                // setenv("MVK_CONFIG_TRACE_VULKAN_CALLS", "1", true);
             #endif
             setenv("MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS", "2", true);
         #endif
@@ -245,7 +248,7 @@ namespace Sierra
                     }
                 }
 
-                SR_THROW_IF(!extensionFound && !requestedExtension.optional, UnsupportedFeatureError(SR_FORMAT("Cannot create rendering context [{0}], as required Vulkan instance extension [{1}] is unsupported", name, requestedExtension.name)));
+                SR_THROW_IF(!extensionFound && !requestedExtension.optional, UnsupportedFeatureError(SR_FORMAT("Cannot create rendering context [{0}], as required Vulkan instance extension [{1}] is unsupported", createInfo.name, requestedExtension.name)));
             }
         }
 
@@ -279,7 +282,7 @@ namespace Sierra
                     }
                 }
 
-                SR_THROW_IF(!layerFound && !requestedLayer.optional, UnsupportedFeatureError(SR_FORMAT("Cannot create rendering context [{0}], as required Vulkan instance layer [{1}] is unsupported", name, requestedLayer.name)));
+                SR_THROW_IF(!layerFound && !requestedLayer.optional, UnsupportedFeatureError(SR_FORMAT("Cannot create rendering context [{0}], as required Vulkan instance layer [{1}] is unsupported", createInfo.name, requestedLayer.name)));
             }
         }
 
@@ -334,7 +337,7 @@ namespace Sierra
 
         // Create instance
         VkResult result = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create rendering context [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create rendering context [{0}]", createInfo.name));
 
         // Save loaded extensions
         loadedExtensions.resize(extensionCount);
@@ -556,21 +559,21 @@ namespace Sierra
             if (debugUtilsExtensionEnabled)
             {
                 result = functionTable.vkCreateDebugUtilsMessengerEXT(instance, &debugMessengerCreateInfo, nullptr, &debugMessenger);
-                SR_WARNING_IF(result != VK_SUCCESS, "Could not create debug messenger for rendering context [{0}], despite required Vulkan extension being supported", name);
+                SR_WARNING_IF(result != VK_SUCCESS, "Could not create debug messenger for rendering context [{0}], despite required Vulkan extension being supported", createInfo.name);
             }
         #endif
     }
 
     /* --- POLLING METHODS --- */
 
-    std::unique_ptr<Device> VulkanContext::CreateDevice(const DeviceCreateInfo& createInfo) const
+    std::unique_ptr<Device> VulkanInstance::CreateDevice(const DeviceCreateInfo& createInfo) const
     {
         // Retrieve number of GPUs found
         uint32 physicalDeviceCount = 0;
         VkResult result = functionTable.vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
 
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Rendering context [{0}] could not create requested device", name));
-        SR_THROW_IF(physicalDeviceCount <= 0, UnsupportedFeatureError(SR_FORMAT("Cannot create requested device, as rendering context [{0}] could not find any supported devices", name)));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Rendering context [{0}] could not create requested device", createInfo.name));
+        SR_THROW_IF(physicalDeviceCount <= 0, UnsupportedFeatureError(SR_FORMAT("Cannot create requested device, as rendering context [{0}] could not find any supported devices", createInfo.name)));
 
         // Retrieve GPUs
         std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
@@ -712,13 +715,13 @@ namespace Sierra
             return device;
         }
 
-        SR_THROW(UnsupportedFeatureError(SR_FORMAT("Rendering context [{0}] failed to create device [{1}], as no supported GPU, which matches the specified requirements was found on the system", name, createInfo.name)));
+        SR_THROW(UnsupportedFeatureError(SR_FORMAT("Rendering context [{0}] failed to create device [{1}], as no supported GPU, which matches the specified requirements was found on the system", createInfo.name, createInfo.name)));
         return nullptr;
     }
 
     /* --- DESTRUCTOR --- */
 
-    VulkanContext::~VulkanContext() noexcept
+    VulkanInstance::~VulkanInstance() noexcept
     {
         #if SR_ENABLE_LOGGING
             if (debugMessenger != VK_NULL_HANDLE) functionTable.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);

@@ -185,7 +185,7 @@
         #pragma region Source Files
             #include "Core/API.h"
             #include "Core/Types.h"
-            #include "Core/Logging.h"
+            #include "Core/Logger.h"
             #include "Core/Errors.h"
         #pragma endregion
     #pragma endregion

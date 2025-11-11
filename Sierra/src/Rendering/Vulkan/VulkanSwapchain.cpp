@@ -6,16 +6,16 @@
 
 #if SR_PLATFORM_WINDOWS
     #include "Windows/VulkanWin32Surface.h"
-    constexpr VkSurfaceKHR (*vkCreateSurfaceKHR)(const Sierra::VulkanContext&, const Sierra::Window&) = &Sierra::CreateVulkanWin32Surface;
+    constexpr VkSurfaceKHR (*vkCreateSurfaceKHR)(const Sierra::VulkanInstance&, const Sierra::Window&) = &Sierra::CreateVulkanWin32Surface;
 #elif SR_PLATFORM_LINUX
     #include "Linux/VulkanX11Surface.h"
-    constexpr VkSurfaceKHR (*vkCreateSurfaceKHR)(const Sierra::VulkanContext&, const Sierra::Window&) = &Sierra::CreateVulkanX11Surface;
+    constexpr VkSurfaceKHR (*vkCreateSurfaceKHR)(const Sierra::VulkanInstance&, const Sierra::Window&) = &Sierra::CreateVulkanX11Surface;
 #elif SR_PLATFORM_APPLE
     #include "Apple/VulkanMetalSurface.h"
-    constexpr VkSurfaceKHR (*vkCreateSurfaceKHR)(const Sierra::VulkanContext&, const Sierra::Window&) = &Sierra::CreateVulkanMetalSurface;
+    constexpr VkSurfaceKHR (*vkCreateSurfaceKHR)(const Sierra::VulkanInstance&, const Sierra::Window&) = &Sierra::CreateVulkanMetalSurface;
 #elif SR_PLATFORM_ANDROID
     #include "Android/VulkanGameKitSurface.h"
-    constexpr VkSurfaceKHR (*vkCreateSurfaceKHR)(const Sierra::VulkanContext&, const Sierra::Window&) = &Sierra::CreateVulkanGameKitSurface;
+    constexpr VkSurfaceKHR (*vkCreateSurfaceKHR)(const Sierra::VulkanInstance&, const Sierra::Window&) = &Sierra::CreateVulkanGameKitSurface;
 #endif
 
 #include "VulkanCommandBuffer.h"
@@ -26,10 +26,10 @@ namespace Sierra
 
     /* --- CONSTRUCTORS --- */
 
-    VulkanSwapchain::VulkanSwapchain(const VulkanContext& givenContext, const VulkanDevice& givenDevice, const SwapchainCreateInfo& createInfo)
-        : Swapchain(createInfo), context(&givenContext), device(&givenDevice), name(createInfo.name), window(&createInfo.window), surface(vkCreateSurfaceKHR(givenContext, createInfo.window)), preferredPresentationMode(createInfo.preferredPresentationMode), preferredBuffering(createInfo.preferredBuffering), preferredImageMemoryType(createInfo.preferredImageMemoryType)
+    VulkanSwapchain::VulkanSwapchain(const VulkanInstance& givenInstance, const VulkanDevice& givenDevice, const SwapchainCreateInfo& createInfo)
+        : VulkanResource(createInfo.name), Swapchain(createInfo), instance(&givenInstance), device(&givenDevice), window(&createInfo.window), surface(vkCreateSurfaceKHR(givenInstance, createInfo.window)), preferredPresentationMode(createInfo.preferredPresentationMode), preferredBuffering(createInfo.preferredBuffering), preferredImageMemoryType(createInfo.preferredImageMemoryType)
     {
-        SR_THROW_IF(!device->IsExtensionLoaded(VK_KHR_SWAPCHAIN_EXTENSION_NAME), UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create resource table [{1}]", device->GetName(), name)));
+        SR_THROW_IF(!device->IsExtensionLoaded(VK_KHR_SWAPCHAIN_EXTENSION_NAME), UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create resource table [{1}]", device->GetName(), createInfo.name)));
 
         CreateSwapchain();
         CreateSynchronization();
@@ -39,7 +39,7 @@ namespace Sierra
 
     void VulkanSwapchain::AcquireNextImage()
     {
-        SR_THROW_IF(window->IsClosed(), InvalidOperationError(SR_FORMAT("Cannot acquire next image of swapchain [{0}], as its corresponding window [{1}] has been closed", name, window->GetTitle())));
+        SR_THROW_IF(window->IsClosed(), InvalidOperationError(SR_FORMAT("Cannot acquire next image of swapchain [{0}], as its corresponding window [{1}] has been closed", GetName(), window->GetTitle())));
 
         // Acquire next image
         VkResult result = device->GetFunctionTable().vkAcquireNextImageKHR(device->GetVulkanDevice(), swapchain, std::numeric_limits<uint64>::max(), isImageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &currentImage);
@@ -51,7 +51,7 @@ namespace Sierra
 
             // Try to re-acquire next image
             result = device->GetFunctionTable().vkAcquireNextImageKHR(device->GetVulkanDevice(), swapchain, std::numeric_limits<uint64>::max(), isImageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &currentImage);
-            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not acquire image [{0}] of swapchain [{1}]", currentImage, name));
+            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not acquire image [{0}] of swapchain [{1}]", currentImage, GetName()));
         }
 
         constexpr VkPipelineStageFlags IMAGE_ACQUIRE_WAIT_STAGE = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -65,14 +65,14 @@ namespace Sierra
 
         // Wait until swapchain image has been acquired
         result = device->GetFunctionTable().vkQueueSubmit(presentationQueue, 1, &imageAcquireWaitSubmitInfo, VK_NULL_HANDLE);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot present swapchain [{0}], as awaiting image [{1}]'s swap-out failed", name, currentImage));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot present swapchain [{0}], as awaiting image [{1}]'s swap-out failed", GetName(), currentImage));
     }
 
     void VulkanSwapchain::Present(CommandBuffer& commandBuffer)
     {
-        SR_THROW_IF(window->IsClosed(), InvalidOperationError(SR_FORMAT("Cannot present swapchain [{0}], as its corresponding window [{1}] has been closed", name, window->GetTitle())));
+        SR_THROW_IF(window->IsClosed(), InvalidOperationError(SR_FORMAT("Cannot present swapchain [{0}], as its corresponding window [{1}] has been closed", GetName(), window->GetTitle())));
 
-        SR_THROW_IF(commandBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot present swapchain [{0}] using command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", name, commandBuffer.GetName())));
+        SR_THROW_IF(commandBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot present swapchain [{0}] using command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", GetName(), commandBuffer.GetName())));
         const VulkanCommandBuffer& vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(commandBuffer);
 
         const uint64 commandBufferWaitValue = vulkanCommandBuffer.GetCompletionSemaphoreSignalValue();
@@ -107,7 +107,7 @@ namespace Sierra
 
         // Wait for command buffer to signal timeline semaphore, and immediately signal binary one
         VkResult result = device->GetFunctionTable().vkQueueSubmit(presentationQueue, 1, &commandBufferWaitSubmitInfo, VK_NULL_HANDLE);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot present swapchain [{0}], as awaiting command buffer [{1}]'s end of execution failed", name, vulkanCommandBuffer.GetName()));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot present swapchain [{0}], as awaiting command buffer [{1}]'s end of execution failed", GetName(), vulkanCommandBuffer.GetName()));
 
         if (presentationQueueFamily != vulkanCommandBuffer.GetQueueFamily())
         {
@@ -156,11 +156,24 @@ namespace Sierra
         }
         else if (result != VK_SUCCESS)
         {
-            HandleVulkanError(result, SR_FORMAT("Could not present swapchain [{0}]! Error: {1}", name, static_cast<int32>(result)));
+            HandleVulkanError(result, SR_FORMAT("Could not present swapchain [{0}]! Error: {1}", GetName(), static_cast<int32>(result)));
         }
 
         // Increment currentFrame
         currentFrame = (currentFrame + 1) % concurrentFrameCount;
+    }
+
+    /* --- GETTER METHODS --- */
+
+    float32 VulkanSwapchain::GetScaling() const noexcept
+    {
+        return glm::max(1.0f, static_cast<float32>(swapchainImages[currentImage]->GetWidth()) / static_cast<float32>(window->GetWidth()));
+    }
+
+    const Image& VulkanSwapchain::GetImage(const uint32 frameIndex) const
+    {
+        SR_THROW_IF(frameIndex >= concurrentFrameCount, ValueOutOfRangeError(SR_FORMAT("Cannot get image [{0}] of swapchain [{1}]! Use Swapchain::GetConcurrentFrameCount() to query count", frameIndex, GetName()), frameIndex, static_cast<uint32>(0), GetConcurrentFrameCount() - 1));
+        return *swapchainImages[frameIndex];
     }
 
     /* --- POLLING METHODS --- */
@@ -169,18 +182,18 @@ namespace Sierra
     {
         // Retrieve queue family properties count
         uint32 queueFamilyPropertiesCount = 0;
-        context->GetFunctionTable().vkGetPhysicalDeviceQueueFamilyProperties(device->GetVulkanPhysicalDevice(), &queueFamilyPropertiesCount, nullptr);
+        instance->GetFunctionTable().vkGetPhysicalDeviceQueueFamilyProperties(device->GetVulkanPhysicalDevice(), &queueFamilyPropertiesCount, nullptr);
 
         // Retrieve queue family properties
         std::vector<VkQueueFamilyProperties> queueFamilyProperties;
-        context->GetFunctionTable().vkGetPhysicalDeviceQueueFamilyProperties(device->GetVulkanPhysicalDevice(), &queueFamilyPropertiesCount, queueFamilyProperties.data());
+        instance->GetFunctionTable().vkGetPhysicalDeviceQueueFamilyProperties(device->GetVulkanPhysicalDevice(), &queueFamilyPropertiesCount, queueFamilyProperties.data());
 
         // Try to find a queue family, which supports presentation for the surface
         for (uint32 i = 0; i < queueFamilyPropertiesCount; i++)
         {
             // Check if current family supports presentation
             VkBool32 presentationSupported = VK_FALSE;
-            context->GetFunctionTable().vkGetPhysicalDeviceSurfaceSupportKHR(device->GetVulkanPhysicalDevice(), i, surface, &presentationSupported);
+            instance->GetFunctionTable().vkGetPhysicalDeviceSurfaceSupportKHR(device->GetVulkanPhysicalDevice(), i, surface, &presentationSupported);
 
             // Save family
             if (presentationSupported == VK_TRUE)
@@ -189,19 +202,19 @@ namespace Sierra
                 break;
             }
         }
-        SR_THROW_IF(presentationQueueFamily == std::numeric_limits<uint32>::max(), UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create swapchain [{1}], as it does not support presentation", name, device->GetName())));
+        SR_THROW_IF(presentationQueueFamily == std::numeric_limits<uint32>::max(), UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create swapchain [{1}], as it does not support presentation", GetName(), device->GetName())));
 
         // Retrieve presentation queue
         device->GetFunctionTable().vkGetDeviceQueue(device->GetVulkanDevice(), presentationQueueFamily, 0, &presentationQueue);
 
         // Retrieve supported format count
         uint32 supportedFormatCount = 0;
-        context->GetFunctionTable().vkGetPhysicalDeviceSurfaceFormatsKHR(device->GetVulkanPhysicalDevice(), surface, &supportedFormatCount, nullptr);
-        SR_THROW_IF(supportedFormatCount == 0, UnsupportedFeatureError(SR_FORMAT("Cannot create swapchain [{0}], as it does not support any valid surface formats", name)));
+        instance->GetFunctionTable().vkGetPhysicalDeviceSurfaceFormatsKHR(device->GetVulkanPhysicalDevice(), surface, &supportedFormatCount, nullptr);
+        SR_THROW_IF(supportedFormatCount == 0, UnsupportedFeatureError(SR_FORMAT("Cannot create swapchain [{0}], as it does not support any valid surface formats", GetName())));
 
         // Retrieve supported formats
         std::vector<VkSurfaceFormatKHR> supportedFormats(supportedFormatCount);
-        context->GetFunctionTable().vkGetPhysicalDeviceSurfaceFormatsKHR(device->GetVulkanPhysicalDevice(), surface, &supportedFormatCount, supportedFormats.data());
+        instance->GetFunctionTable().vkGetPhysicalDeviceSurfaceFormatsKHR(device->GetVulkanPhysicalDevice(), surface, &supportedFormatCount, supportedFormats.data());
 
         // Depending on user's preference, see which formats work
         std::vector<VkFormat> formatsToTry;
@@ -227,11 +240,11 @@ namespace Sierra
 
         // Retrieve supported present mode count
         uint32 supportedPresentModeCount = 0;
-        context->GetFunctionTable().vkGetPhysicalDeviceSurfacePresentModesKHR(device->GetVulkanPhysicalDevice(), surface, &supportedPresentModeCount, nullptr);
+        instance->GetFunctionTable().vkGetPhysicalDeviceSurfacePresentModesKHR(device->GetVulkanPhysicalDevice(), surface, &supportedPresentModeCount, nullptr);
 
         // Retrieve supported present modes
         std::vector<VkPresentModeKHR> supportedPresentModes(supportedPresentModeCount);
-        context->GetFunctionTable().vkGetPhysicalDeviceSurfacePresentModesKHR(device->GetVulkanPhysicalDevice(), surface, &supportedFormatCount, supportedPresentModes.data());
+        instance->GetFunctionTable().vkGetPhysicalDeviceSurfacePresentModesKHR(device->GetVulkanPhysicalDevice(), surface, &supportedFormatCount, supportedPresentModes.data());
 
         // Select a present mode in regard to requested
         VkPresentModeKHR selectedPresentMode = VK_PRESENT_MODE_FIFO_KHR; // FIFO is guaranteed to be supported
@@ -255,7 +268,7 @@ namespace Sierra
 
         // Get surface capabilities
         VkSurfaceCapabilitiesKHR surfaceCapabilities = { };
-        context->GetFunctionTable().vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->GetVulkanPhysicalDevice(), surface, &surfaceCapabilities);
+        instance->GetFunctionTable().vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->GetVulkanPhysicalDevice(), surface, &surfaceCapabilities);
 
         // Determine concurrent image count in regard to requested
         uint32 preferredConcurrentFrameCount = 0;
@@ -290,10 +303,10 @@ namespace Sierra
 
         // Create swapchain
         const VkResult result = device->GetFunctionTable().vkCreateSwapchainKHR(device->GetVulkanDevice(), &swapchainCreateInfo, nullptr, &swapchain);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create swapchain [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create swapchain [{0}]", GetName()));
 
         // Set object name
-        device->SetResourceName(swapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, name);
+        device->SetResourceName(swapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, GetName());
 
         // If an old swapchain was reused, destroy that
         if (swapchainCreateInfo.oldSwapchain != VK_NULL_HANDLE)
@@ -314,7 +327,7 @@ namespace Sierra
         for (size i = 0; i < concurrentFrameCount; i++)
         {
             swapchainImages[i] = std::unique_ptr<VulkanImage>(new VulkanImage(*device, VulkanImage::SwapchainImageCreateInfo {
-                .name = SR_FORMAT("Image [{0}] of swapchain [{1}]", i, name),
+                .name = SR_FORMAT("Image [{0}] of swapchain [{1}]", i, GetName()),
                 .image = vulkanSwapchainImages[i],
                 .width = swapchainCreateInfo.imageExtent.width,
                 .height = swapchainCreateInfo.imageExtent.height,
@@ -335,16 +348,15 @@ namespace Sierra
         isImageAcquiredSemaphores.resize(concurrentFrameCount);
         isPresentationCommandBufferFreeSemaphores.resize(concurrentFrameCount);
 
-        VkResult result;
         for (size i = 0; i < concurrentFrameCount; i++)
         {
-            result = device->GetFunctionTable().vkCreateSemaphore(device->GetVulkanDevice(), &semaphoreCreateInfo, nullptr, &isImageAcquiredSemaphores[i]);
-            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create swapchain [{0}], as creation of semaphore indicating whether corresponding swapchain image is ready to be used failed", name));
-            device->SetResourceName(isImageAcquiredSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, SR_FORMAT("Image free semaphore [{0}] of swapchain [{1}]", i, name));
+            VkResult result = device->GetFunctionTable().vkCreateSemaphore(device->GetVulkanDevice(), &semaphoreCreateInfo, nullptr, &isImageAcquiredSemaphores[i]);
+            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create swapchain [{0}], as creation of semaphore indicating whether corresponding swapchain image is ready to be used failed", GetName()));
+            device->SetResourceName(isImageAcquiredSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, SR_FORMAT("Image free semaphore [{0}] of swapchain [{1}]", i, GetName()));
 
             result = device->GetFunctionTable().vkCreateSemaphore(device->GetVulkanDevice(), &semaphoreCreateInfo, nullptr, &isPresentationCommandBufferFreeSemaphores[i]);
-            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create swapchain [{0}], as creation of semaphore indicating whether drawing command buffer has finished failed", name));
-            device->SetResourceName(isPresentationCommandBufferFreeSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, SR_FORMAT("Presentation command buffer ready semaphore [{0}] of swapchain [{1}]", i, name));
+            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create swapchain [{0}], as creation of semaphore indicating whether drawing command buffer has finished failed", GetName()));
+            device->SetResourceName(isPresentationCommandBufferFreeSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, SR_FORMAT("Presentation command buffer ready semaphore [{0}] of swapchain [{1}]", i, GetName()));
         }
     }
 
@@ -376,7 +388,7 @@ namespace Sierra
             device->GetFunctionTable().vkDestroySemaphore(device->GetVulkanDevice(), isPresentationCommandBufferFreeSemaphores[i], nullptr);
         }
 
-        context->GetFunctionTable().vkDestroySurfaceKHR(context->GetVulkanInstance(), surface, nullptr);
+        instance->GetFunctionTable().vkDestroySurfaceKHR(instance->GetVulkanInstance(), surface, nullptr);
     }
 
 }

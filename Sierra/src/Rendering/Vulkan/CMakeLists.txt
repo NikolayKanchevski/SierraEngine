@@ -55,8 +55,8 @@ if(Vulkan_LIBRARIES)
         VulkanCommandBuffer.h
         VulkanComputePipeline.cpp
         VulkanComputePipeline.h
-        VulkanContext.cpp
-        VulkanContext.h
+        VulkanDestructionScheduler.cpp
+        VulkanDestructionScheduler.h
         VulkanDevice.cpp
         VulkanDevice.h
         VulkanErrorHandler.cpp
@@ -67,10 +67,13 @@ if(Vulkan_LIBRARIES)
         VulkanGraphicsPipeline.h
         VulkanImage.cpp
         VulkanImage.h
+        VulkanInstance.cpp
+        VulkanInstance.h
         VulkanQueue.cpp
         VulkanQueue.h
         VulkanRenderPass.cpp
         VulkanRenderPass.h
+        VulkanResource.cpp
         VulkanResource.h
         VulkanResourceTable.h
         VulkanResourceTable.cpp

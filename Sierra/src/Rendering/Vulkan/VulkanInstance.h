@@ -4,15 +4,15 @@
 
 #pragma once
 
-#include "../RenderingContext.h"
+#include "../RenderingInstance.h"
 #include "VulkanResource.h"
 
-#include "../../Utilities/Handle.hpp"
+#include "../../Core/Handle.hpp"
 
 namespace Sierra
 {
 
-    struct VulkanContextFunctionTable
+    struct VulkanInstanceFunctionTable
     {
         #if defined(VK_VERSION_1_0)
             PFN_vkCreateDevice vkCreateDevice = nullptr;
@@ -222,41 +222,39 @@ namespace Sierra
         #endif
     };
 
-    class SIERRA_API VulkanContext final : public RenderingContext, public VulkanResource
+    class SIERRA_API VulkanInstance final : public RenderingInstance, public VulkanResource
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit VulkanContext(const RenderingContextCreateInfo& createInfo);
+        explicit VulkanInstance(const RenderingInstanceCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] std::unique_ptr<Device> CreateDevice(const DeviceCreateInfo& createInfo) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
         [[nodiscard]] Version GetBackendVersion() const noexcept override { return vulkanVersion; }
 
         [[nodiscard]] VkInstance GetVulkanInstance() const noexcept { return instance; }
-        [[nodiscard]] const VulkanContextFunctionTable& GetFunctionTable() const noexcept { return functionTable; }
+        [[nodiscard]] const VulkanInstanceFunctionTable& GetFunctionTable() const noexcept { return functionTable; }
         [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const noexcept { return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<std::string_view>{}(extensionName.data())) != loadedExtensions.end(); }
 
         /* --- COPY SEMANTICS --- */
-        VulkanContext(const VulkanContext&) = delete;
-        VulkanContext& operator=(const VulkanContext&) = delete;
+        VulkanInstance(const VulkanInstance&) = delete;
+        VulkanInstance& operator=(const VulkanInstance&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        VulkanContext(VulkanContext&&) noexcept = default;
-        VulkanContext& operator=(VulkanContext&&) noexcept = default;
+        VulkanInstance(VulkanInstance&&) noexcept = default;
+        VulkanInstance& operator=(VulkanInstance&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
-        ~VulkanContext() noexcept override;
+        ~VulkanInstance() noexcept override;
 
     private:
-        std::string name = { };
         Version vulkanVersion = Version({ 1, 0, 0 });
 
         VkInstance instance = VK_NULL_HANDLE;
         std::vector<size> loadedExtensions = { };
-        VulkanContextFunctionTable functionTable = { };
+        VulkanInstanceFunctionTable functionTable = { };
 
         #if SR_ENABLE_LOGGING
             VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;

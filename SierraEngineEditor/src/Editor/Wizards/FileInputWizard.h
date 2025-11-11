@@ -27,10 +27,6 @@ namespace SierraEngine
         FileInputWizard(const FileInputWizard&) = delete;
         FileInputWizard& operator=(const FileInputWizard&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        FileInputWizard(FileInputWizard&&) = delete;
-        FileInputWizard& operator=(FileInputWizard&&) = delete;
-
         /* --- DESTRUCTOR --- */
         ~FileInputWizard() noexcept override = default;
 
@@ -45,13 +41,17 @@ namespace SierraEngine
         virtual void SetInputFilePath(const std::filesystem::path& inputFilePath) noexcept;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] const Sierra::PlatformContext& GetPlatformContext() const noexcept { return platformContext; }
+        [[nodiscard]] const Sierra::PlatformContext& GetPlatformContext() const noexcept { return *platformContext; }
 
         [[nodiscard]] std::span<const std::string_view> GetInputFileExtensions() const noexcept { return inputFileExtensions; }
         [[nodiscard]] const std::filesystem::path& GetInputFilePath() const noexcept { return inputFilePath; }
 
+        /* --- MOVE SEMANTICS --- */
+        FileInputWizard(FileInputWizard&&) noexcept = default;
+        FileInputWizard& operator=(FileInputWizard&&) noexcept = default;
+
     private:
-        const Sierra::PlatformContext& platformContext;
+        const Sierra::PlatformContext* platformContext;
 
         std::filesystem::path inputFilePath = { };
         std::span<const std::string_view> inputFileExtensions = { };

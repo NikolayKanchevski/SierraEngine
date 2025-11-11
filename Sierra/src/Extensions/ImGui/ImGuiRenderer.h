@@ -8,7 +8,7 @@
 #include <imgui_stdlib.h>
 #include <imgui_internal.h>
 
-#include "../../Rendering/RenderingContext.h"
+#include "../../Rendering/RenderingInstance.h"
 #include "../../Rendering/Image.h"
 #include "../../Rendering/RenderPass.h"
 #include "../../Rendering/CommandBuffer.h"
@@ -29,11 +29,13 @@ namespace Sierra
     struct ImGuiRendererCreateInfo
     {
         const Device& device;
+        CommandBuffer& commandBuffer;
+
+        ResourceTable& resourceTable;
+        DestructionScheduler& destructionScheduler;
 
         uint32 concurrentFrameCount = 1;
         ImageFormat format = ImageFormat::Undefined;
-
-        ResourceTable& resourceTable;
         std::span<const ImGuiFontCreateInfo> fontCreateInfos = { };
     };
 
@@ -47,7 +49,7 @@ namespace Sierra
         [[nodiscard]] ImFont* GetFont(const size index) const noexcept { return ImGui::GetIO().Fonts->Fonts[static_cast<int>(baseFontIndex + index)]; }
 
         /* --- POLLING METHODS --- */
-        void Update(uint32 framebufferWidth, uint32 framebufferHeight, float32 scaling = 1.0f, const InputManager* inputManager = nullptr, const CursorManager* cursorManager = nullptr, const TouchManager* touchManager = nullptr);
+        void Update(uint32 framebufferWidth, uint32 framebufferHeight, float32 scaling = 1.0f, const InputManager* inputManager = nullptr, const CursorManager* cursorManager = nullptr, const TouchManager* touchManager = nullptr) const;
         void Render(CommandBuffer& commandBuffer, const Framebuffer& framebuffer);
 
         /* --- COPY SEMANTICS --- */
@@ -55,15 +57,16 @@ namespace Sierra
         ImGuiRenderer& operator=(const ImGuiRenderer&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        ImGuiRenderer(ImGuiRenderer&&) noexcept = default;
-        ImGuiRenderer& operator=(ImGuiRenderer&&) noexcept = default;
+        ImGuiRenderer(ImGuiRenderer&& other) = delete;
+        ImGuiRenderer& operator=(ImGuiRenderer&&) = delete;
 
         /* --- DESTRUCTOR --- */
         ~ImGuiRenderer() noexcept;
 
     private:
         const Device* device;
-        ResourceTable* resourceTable = nullptr;
+        ResourceTable* resourceTable;
+        DestructionScheduler* destructionScheduler;
 
         uint32 currentFrame = 0;
         uint32 concurrentFrameCount = 0;
@@ -73,7 +76,6 @@ namespace Sierra
         SampledImageID fontAtlasID = { };
         SamplerID fontAtlasSamplerID = { };
         std::unique_ptr<Image> fontAtlas = nullptr;
-        std::unique_ptr<Sierra::Buffer> fontAtlasStagingBuffer = nullptr;
 
         std::unique_ptr<Image> resolverImage = nullptr;
         std::vector<std::unique_ptr<Buffer>> vertexBuffers = { };

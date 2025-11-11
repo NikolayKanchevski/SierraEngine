@@ -13,8 +13,10 @@ namespace SierraEngine
     /* --- CONSTRUCTORS --- */
 
     ArenaAllocator::ArenaAllocator(const ArenaAllocatorCreateInfo& createInfo)
-        : device(createInfo.device)
+        : renderingContext(&createInfo.renderingContext)
     {
+        const Sierra::Device& device = renderingContext->GetDevice();
+
         vertexBuffer = device.CreateBuffer({
             .name = "Arena Allocator Vertex Buffer",
             .memorySize = createInfo.initialVertexBufferCapacity * sizeof(Vertex),
@@ -32,7 +34,7 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void ArenaAllocator::Bind(Sierra::CommandBuffer& commandBuffer)
+    void ArenaAllocator::Bind(Sierra::CommandBuffer& commandBuffer) const
     {
         commandBuffer.BindVertexBuffer(*vertexBuffer, 0);
         commandBuffer.BindIndexBuffer(*indexBuffer, 0);
@@ -40,7 +42,10 @@ namespace SierraEngine
 
     Mesh ArenaAllocator::CreateMesh(Sierra::CommandBuffer& commandBuffer, const std::span<const Vertex> vertices, const std::span<const uint32> indices)
     {
-        Mesh mesh
+        const Sierra::Device& device = renderingContext->GetDevice();
+        Sierra::DestructionScheduler& destructionScheduler = renderingContext->GetDestructionScheduler();
+        
+        const Mesh mesh
         {
             .vertexOffset = static_cast<uint32>(currentVertexOffset / sizeof(Vertex)),
             .vertexCount = static_cast<uint32>(vertices.size()),
@@ -67,7 +72,7 @@ namespace SierraEngine
 
             // Save old memory size and query old buffer for destruction
             const uint64 oldVertexBufferSize = vertexBuffer->GetMemorySize();
-            commandBuffer.QueueBufferForDestruction(std::move(vertexBuffer));
+            destructionScheduler.QueueResource(std::move(vertexBuffer));
 
             // Recreate vertex buffer with more space
             vertexBuffer = device.CreateBuffer({
@@ -82,7 +87,7 @@ namespace SierraEngine
             commandBuffer.CopyBufferToBuffer(*stagingBuffer, *vertexBuffer, { .memorySize = stagingBuffer->GetMemorySize() });
 
             // Discard temporary buffer
-            commandBuffer.QueueBufferForDestruction(std::move(stagingBuffer));
+            destructionScheduler.QueueResource(std::move(stagingBuffer));
             commandBuffer.SynchronizeBufferUsage(*vertexBuffer, { .previousUsage = Sierra::BufferCommandUsage::MemoryWrite, .nextUsage = Sierra::BufferCommandUsage::VertexRead, .memorySize = endVertexOffset });
         }
         else
@@ -103,7 +108,7 @@ namespace SierraEngine
 
             // Discard temporary buffer
             commandBuffer.SynchronizeBufferUsage(*vertexBuffer, { .previousUsage = Sierra::BufferCommandUsage::MemoryWrite, .nextUsage = Sierra::BufferCommandUsage::VertexRead, .offset = currentVertexOffset, .memorySize = stagingBuffer->GetMemorySize() });
-            commandBuffer.QueueBufferForDestruction(std::move(stagingBuffer));
+            destructionScheduler.QueueResource(std::move(stagingBuffer));
         }
         currentVertexOffset += vertices.size_bytes();
 
@@ -126,10 +131,10 @@ namespace SierraEngine
 
             // Save old memory size and query old buffer for destruction
             const uint64 oldIndexBufferSize = indexBuffer->GetMemorySize();
-            commandBuffer.QueueBufferForDestruction(std::move(indexBuffer));
+            destructionScheduler.QueueResource(std::move(indexBuffer));
 
             // Recreate index buffer with more space
-            commandBuffer.QueueBufferForDestruction(std::move(indexBuffer));
+            destructionScheduler.QueueResource(std::move(indexBuffer));
             indexBuffer = device.CreateBuffer({
                 .name = "Arena Allocator Index Buffer",
                 .memorySize = glm::max(endIndexOffset, static_cast<size>(static_cast<float64>(oldIndexBufferSize) * INDEX_BUFFER_GROWTH_FACTOR)),
@@ -142,7 +147,7 @@ namespace SierraEngine
             commandBuffer.CopyBufferToBuffer(*stagingBuffer, *indexBuffer, { .memorySize = stagingBuffer->GetMemorySize() });
 
             // Discard temporary buffer
-            commandBuffer.QueueBufferForDestruction(std::move(stagingBuffer));
+            destructionScheduler.QueueResource(std::move(stagingBuffer));
             commandBuffer.SynchronizeBufferUsage(*indexBuffer, { .previousUsage = Sierra::BufferCommandUsage::MemoryWrite, .nextUsage = Sierra::BufferCommandUsage::IndexRead, .memorySize = endIndexOffset });
         }
         else
@@ -163,7 +168,7 @@ namespace SierraEngine
 
             // Discard temporary buffer
             commandBuffer.SynchronizeBufferUsage(*indexBuffer, { .previousUsage = Sierra::BufferCommandUsage::MemoryWrite, .nextUsage = Sierra::BufferCommandUsage::IndexRead, .offset = currentIndexOffset, .memorySize = stagingBuffer->GetMemorySize() });
-            commandBuffer.QueueBufferForDestruction(std::move(stagingBuffer));
+            destructionScheduler.QueueResource(std::move(stagingBuffer));
         }
         currentIndexOffset += indices.size_bytes();
 

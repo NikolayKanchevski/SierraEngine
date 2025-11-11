@@ -24,8 +24,6 @@ namespace Sierra
         VulkanGraphicsPipeline(const VulkanDevice& device, const GraphicsPipelineCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
-
         [[nodiscard]] VkPipeline GetVulkanPipeline() const noexcept { return pipeline; }
         [[nodiscard]] VkPipelineLayout GetVulkanPipelineLayout() const noexcept { return device->GetPipelineLayout(pushConstantSize); }
         [[nodiscard]] size GetVertexStride() const noexcept { return vertexStride; }
@@ -43,7 +41,6 @@ namespace Sierra
 
     private:
         const VulkanDevice* device = nullptr;
-        std::string name = { };
 
         VkPipeline pipeline = VK_NULL_HANDLE;
         size vertexStride = 0;

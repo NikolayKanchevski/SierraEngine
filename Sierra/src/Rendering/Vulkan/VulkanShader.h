@@ -22,7 +22,6 @@ namespace Sierra
         VulkanShader(const VulkanDevice& device, const ShaderCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
         [[nodiscard]] VkShaderModule GetVulkanShaderModule() const noexcept { return shaderModule; }
 
         /* --- COPY SEMANTICS --- */
@@ -38,7 +37,6 @@ namespace Sierra
 
     private:
         const VulkanDevice* device = nullptr;
-        std::string name = { };
 
         VkShaderModule shaderModule = VK_NULL_HANDLE;
 

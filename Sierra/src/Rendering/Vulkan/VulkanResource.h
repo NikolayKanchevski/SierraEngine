@@ -69,7 +69,8 @@ namespace Sierra
     {
     public:
         /* --- GETTER METHODS --- */
-        [[nodiscard]] RenderingBackendType GetBackendType() const noexcept override { return RenderingBackendType ::Vulkan; }
+        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
+        [[nodiscard]] RenderingBackendType GetBackendType() const noexcept override { return RenderingBackendType::Vulkan; }
 
         /* --- COPY SEMANTICS --- */
         VulkanResource(const VulkanResource&) = delete;
@@ -80,21 +81,17 @@ namespace Sierra
 
     protected:
         /* --- CONSTRUCTORS --- */
-        VulkanResource() noexcept = default;
+        explicit VulkanResource(std::string_view name);
 
         /* --- POLLING METHODS --- */
-        void AddToPNextChain(void* mainStruct, void* newStruct) const noexcept
-        {
-            // We just cast them to any Vulkan structure, as they all have their pNext stored exactly 4 bytes within the struct
-            VkBufferMemoryBarrier* mainStructAsVkStruct = reinterpret_cast<VkBufferMemoryBarrier*>(mainStruct);
-            VkBufferMemoryBarrier* newStructAsVkStruct = reinterpret_cast<VkBufferMemoryBarrier*>(newStruct);
-            newStructAsVkStruct->pNext = mainStructAsVkStruct->pNext;
-            mainStructAsVkStruct->pNext = newStruct;
-        }
+        void AddToPNextChain(void* mainStruct, void* newStruct) const noexcept;
 
         /* --- MOVE SEMANTICS --- */
         VulkanResource(VulkanResource&&) noexcept = default;
         VulkanResource& operator=(VulkanResource&&) noexcept = default;
+
+    private:
+        std::string name = { };
 
     };
 

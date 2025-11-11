@@ -37,7 +37,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanRenderPass::VulkanRenderPass(const VulkanDevice& givenDevice, const RenderPassCreateInfo& createInfo)
-        : RenderPass(createInfo), device(&givenDevice), name(createInfo.name), subpassCount(createInfo.subpassDescriptions.size())
+        : VulkanResource(createInfo.name), RenderPass(createInfo), device(&givenDevice), subpassCount(createInfo.subpassDescriptions.size())
     {
         // Set attachment descriptions
         std::vector<VkAttachmentDescription> attachmentDescriptions(createInfo.attachments.size());
@@ -223,8 +223,8 @@ namespace Sierra
 
         // Create render pass
         VkResult result = device->GetFunctionTable().vkCreateRenderPass(device->GetVulkanDevice(), &renderPassCreateInfo, nullptr, &renderPass);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create render pass [{0}]", name));
-        device->SetResourceName(renderPass, VK_OBJECT_TYPE_RENDER_PASS, name);
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create render pass [{0}]", createInfo.name));
+        device->SetResourceName(renderPass, VK_OBJECT_TYPE_RENDER_PASS, createInfo.name);
     }
 
     /* --- DESTRUCTOR --- */

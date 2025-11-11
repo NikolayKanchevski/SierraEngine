@@ -12,14 +12,14 @@
 namespace Sierra
 {
 
-    struct RenderingContextCreateInfo
+    struct RenderingInstanceCreateInfo
     {
         std::string_view name = "Rendering Context";
         std::string_view applicationName = "Sierra Application";
         Version applicationVersion = Version({ 1, 0, 0 });
     };
 
-    class SIERRA_API RenderingContext : public virtual RenderingResource
+    class SIERRA_API RenderingInstance : public virtual RenderingResource
     {
     public:
         /* --- POLLING METHODS --- */
@@ -29,19 +29,19 @@ namespace Sierra
         [[nodiscard]] virtual Version GetBackendVersion() const noexcept = 0;
 
         /* --- COPY SEMANTICS --- */
-        RenderingContext(const RenderingContext&) = delete;
-        RenderingContext& operator=(const RenderingContext&) = delete;
+        RenderingInstance(const RenderingInstance&) = delete;
+        RenderingInstance& operator=(const RenderingInstance&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        RenderingContext(RenderingContext&&) noexcept = default;
-        RenderingContext& operator=(RenderingContext&&) noexcept = default;
+        RenderingInstance(RenderingInstance&&) noexcept = default;
+        RenderingInstance& operator=(RenderingInstance&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
-        virtual ~RenderingContext() noexcept override = default;
+        virtual ~RenderingInstance() noexcept override = default;
 
     protected:
         /* --- CONSTRUCTORS --- */
-        explicit RenderingContext(const RenderingContextCreateInfo& createInfo);
+        explicit RenderingInstance(const RenderingInstanceCreateInfo& createInfo);
 
     };
 

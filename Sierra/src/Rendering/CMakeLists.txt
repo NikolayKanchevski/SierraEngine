@@ -5,6 +5,8 @@ target_sources(Sierra PRIVATE
     CommandBuffer.h
     ComputePipeline.cpp
     ComputePipeline.h
+    DestructionScheduler.cpp
+    DestructionScheduler.h
     Device.cpp
     Device.h
     DeviceErrors.cpp
@@ -18,8 +20,8 @@ target_sources(Sierra PRIVATE
     Queue.cpp
     Queue.h
     RenderingBackendType.h
-    RenderingContext.cpp
-    RenderingContext.h
+    RenderingInstance.cpp
+    RenderingInstance.h
     RenderingResource.h
     RenderPass.cpp
     RenderPass.h

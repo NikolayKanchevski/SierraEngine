@@ -128,16 +128,9 @@ namespace Sierra
         virtual void InsertDebugMarker(std::string_view markerName, Color32 color);
         virtual void EndDebugRegion();
 
-        virtual std::unique_ptr<Buffer>& QueueBufferForDestruction(std::unique_ptr<Buffer>&& buffer) = 0;
-        virtual std::unique_ptr<Image>& QueueImageForDestruction(std::unique_ptr<Image>&& image) = 0;
-
         /* --- COPY SEMANTICS --- */
         CommandBuffer(const CommandBuffer&) = delete;
         CommandBuffer& operator=(const CommandBuffer&) = delete;
-
-        /* --- MOVE SEMANTICS --- */
-        CommandBuffer(CommandBuffer&&) noexcept = default;
-        CommandBuffer& operator=(CommandBuffer&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~CommandBuffer() noexcept override = default;
@@ -145,6 +138,10 @@ namespace Sierra
     protected:
         /* --- CONSTRUCTORS --- */
         explicit CommandBuffer(const CommandBufferCreateInfo& createInfo);
+
+        /* --- MOVE SEMANTICS --- */
+        CommandBuffer(CommandBuffer&&) noexcept = default;
+        CommandBuffer& operator=(CommandBuffer&&) noexcept = default;
 
     };
 

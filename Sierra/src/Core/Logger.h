@@ -4,8 +4,6 @@
 
 #pragma once
 
-#if SR_ENABLE_LOGGING
-
 #include <spdlog/spdlog.h>
 
 namespace Sierra
@@ -61,5 +59,3 @@ namespace Sierra
     };
 
 }
-
-#endif

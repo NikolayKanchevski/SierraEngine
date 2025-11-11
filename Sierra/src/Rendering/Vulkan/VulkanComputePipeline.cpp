@@ -14,9 +14,9 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanComputePipeline::VulkanComputePipeline(const VulkanDevice& givenDevice, const ComputePipelineCreateInfo& createInfo)
-        : ComputePipeline(createInfo), device(&givenDevice), name(createInfo.name), pushConstantSize(createInfo.pushConstantSize)
+        : VulkanResource(createInfo.name), ComputePipeline(createInfo), device(&givenDevice), pushConstantSize(createInfo.pushConstantSize)
     {
-        SR_THROW_IF(createInfo.computeShader.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create compute pipeline [{0}] with compute shader [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", name, createInfo.computeShader.GetName())));
+        SR_THROW_IF(createInfo.computeShader.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create compute pipeline [{0}] with compute shader [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", createInfo.name, createInfo.computeShader.GetName())));
         const VulkanShader& vulkanComputeShader = static_cast<const VulkanShader&>(createInfo.computeShader);
 
         // Set up only shader stage
@@ -40,7 +40,7 @@ namespace Sierra
 
         // Create pipeline
         const VkResult result = device->GetFunctionTable().vkCreateComputePipelines(device->GetVulkanDevice(), VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &pipeline);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create compute pipeline [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create compute pipeline [{0}]", createInfo.name));
     }
 
     /* --- DESTRUCTOR --- */

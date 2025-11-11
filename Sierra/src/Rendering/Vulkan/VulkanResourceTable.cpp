@@ -15,9 +15,9 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanResourceTable::VulkanResourceTable(const VulkanDevice& givenDevice, const ResourceTableCreateInfo& createInfo)
-        : ResourceTable(createInfo), device(&givenDevice), name(createInfo.name)
+        : VulkanResource(createInfo.name), ResourceTable(createInfo), device(&givenDevice)
     {
-        SR_THROW_IF(!device->IsExtensionLoaded(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME), UnsupportedFeatureError(SR_FORMAT("Cannot create resource table [{0}] from device [{1}]", name, device->GetName())));
+        SR_THROW_IF(!device->IsExtensionLoaded(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME), UnsupportedFeatureError(SR_FORMAT("Cannot create resource table [{0}] from device [{1}]", createInfo.name, device->GetName())));
 
         // Retrieve descriptor indexing properties
         VkPhysicalDeviceDescriptorIndexingPropertiesEXT descriptorIndexingProperties = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT };
@@ -60,8 +60,8 @@ namespace Sierra
 
         // Create descriptor pool
         VkResult result = device->GetFunctionTable().vkCreateDescriptorPool(device->GetVulkanDevice(), &descriptorPoolCreateInfo, nullptr, &descriptorPool);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create resource table [{0}], as creation of descriptor pool failed", name));
-        device->SetResourceName(descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, SR_FORMAT("Descriptor pool of resource table [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create resource table [{0}], as creation of descriptor pool failed", createInfo.name));
+        device->SetResourceName(descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, SR_FORMAT("Descriptor pool of resource table [{0}]", createInfo.name));
 
         // Set up set allocate info
         VkDescriptorSetLayout descriptorSetLayout = device->GetDescriptorSetLayout();
@@ -75,29 +75,31 @@ namespace Sierra
 
         // Allocate descriptor set
         result = device->GetFunctionTable().vkAllocateDescriptorSets(device->GetVulkanDevice(), &descriptorSetAllocateInfo, &descriptorSet);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create resource table [{0}], as creation of descriptor set failed", name));
-        device->SetResourceName(descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, SR_FORMAT("Descriptor set of resource table [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create resource table [{0}], as creation of descriptor set failed", createInfo.name));
+        device->SetResourceName(descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, SR_FORMAT("Descriptor set of resource table [{0}]", createInfo.name));
     }
 
-    /* --- POLLING METHODS --- */
-
-    UniformBufferID VulkanResourceTable::BindUniformBuffer(const Buffer& buffer, const uint64 offset, const uint64 memorySize)
+    UniformBufferID VulkanResourceTable::ReserveUniformBuffer()
     {
-        SR_THROW_IF(buffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot bind uniform buffer [{0}] to resource table [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", buffer.GetName(), name)));
-        const VulkanBuffer& vulkanBuffer = static_cast<const VulkanBuffer&>(buffer);
+        return uniformBuffers.AddItem();
+    }
 
-        SR_THROW_IF(offset + memorySize > buffer.GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot bind write invalid uniform buffer memory range to resource table [{0}]", GetName()), offset, memorySize, uint64(0), buffer.GetMemorySize()));
+    void VulkanResourceTable::UpdateUniformBuffer(const UniformBufferID ID, const Buffer& buffer, uint64 const offset, const uint64 memorySize)
+    {
+        ResourceTable::UpdateUniformBuffer(ID, buffer, offset, memorySize);
+
+        SR_THROW_IF(buffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot update uniform buffer [{0}] to resource table [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", buffer.GetName(), GetName())));
+        const VulkanBuffer& vulkanBuffer = static_cast<const VulkanBuffer&>(buffer);
 
         // Set up buffer info
         const VkDescriptorBufferInfo bufferInfo
         {
             .buffer = vulkanBuffer.GetVulkanBuffer(),
             .offset = offset,
-            .range = memorySize != 0 ? memorySize : buffer.GetMemorySize()
+            .range = memorySize
         };
 
         // Set up write info
-        const UniformBufferID ID = uniformBufferIndexPool.GenerateIndex();
         const VkWriteDescriptorSet writeDescriptorSet
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -111,20 +113,24 @@ namespace Sierra
 
         // Update descriptor set
         device->GetFunctionTable().vkUpdateDescriptorSets(device->GetVulkanDevice(), 1, &writeDescriptorSet, 0, nullptr);
-        return ID;
     }
 
-    bool VulkanResourceTable::FreeUniformBuffer(const UniformBufferID index)
+    bool VulkanResourceTable::FreeUniformBuffer(const UniformBufferID ID)
     {
-        return uniformBufferIndexPool.FreeIndex(index);
+        return uniformBuffers.RemoveItem(ID);
     }
 
-    StorageBufferID VulkanResourceTable::BindStorageBuffer(const Buffer& buffer, const uint64 offset, const uint64 memorySize)
+    StorageBufferID VulkanResourceTable::ReserveStorageBuffer()
     {
-        SR_THROW_IF(buffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot bind storage buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", buffer.GetName(), name)));
+        return storageBuffers.AddItem();
+    }
+
+    void VulkanResourceTable::UpdateStorageBuffer(const StorageBufferID ID, const Buffer& buffer, uint64 const offset, const uint64 memorySize)
+    {
+        ResourceTable::UpdateStorageBuffer(ID, buffer, offset, memorySize);
+
+        SR_THROW_IF(buffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot update storage buffer [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", buffer.GetName(), GetName())));
         const VulkanBuffer& vulkanBuffer = static_cast<const VulkanBuffer&>(buffer);
-
-        SR_THROW_IF(offset + memorySize > buffer.GetMemorySize(), InvalidRangeError(SR_FORMAT("Cannot bind write invalid storage buffer memory range to resource table [{0}]", GetName()), offset, memorySize, uint64(0), buffer.GetMemorySize()));
 
         // Set up buffer info
         const VkDescriptorBufferInfo bufferInfo
@@ -135,7 +141,6 @@ namespace Sierra
         };
 
         // Set up write info
-        const StorageBufferID ID = storageBufferIndexPool.GenerateIndex();
         const VkWriteDescriptorSet writeDescriptorSet
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -149,17 +154,23 @@ namespace Sierra
 
         // Update descriptor set
         device->GetFunctionTable().vkUpdateDescriptorSets(device->GetVulkanDevice(), 1, &writeDescriptorSet, 0, nullptr);
-        return ID;
     }
 
-    bool VulkanResourceTable::FreeStorageBuffer(const StorageBufferID index)
+    bool VulkanResourceTable::FreeStorageBuffer(const StorageBufferID ID)
     {
-        return storageBufferIndexPool.FreeIndex(index);
+        return storageBuffers.RemoveItem(ID);
     }
 
-    SampledImageID VulkanResourceTable::BindSampledImage(const Image& image)
+    SampledImageID VulkanResourceTable::ReserveSampledImage()
     {
-        SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot bind sampled image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", image.GetName(), name)));
+        return sampledImages.AddItem();
+    }
+
+    void VulkanResourceTable::UpdateSampledImage(const SampledImageID ID, const Image& image)
+    {
+        ResourceTable::UpdateSampledImage(ID, image);
+
+        SR_THROW_IF(GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot update sampled image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", image.GetName(), GetName())));;
         const VulkanImage& vulkanImage = static_cast<const VulkanImage&>(image);
 
         // Set up image info
@@ -171,7 +182,6 @@ namespace Sierra
         };
 
         // Set up write info
-        const SampledImageID ID = sampledImageIndexPool.GenerateIndex();
         const VkWriteDescriptorSet writeDescriptorSet
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -185,17 +195,23 @@ namespace Sierra
 
         // Update descriptor set
         device->GetFunctionTable().vkUpdateDescriptorSets(device->GetVulkanDevice(), 1, &writeDescriptorSet, 0, nullptr);
-        return ID;
     }
 
-    bool VulkanResourceTable::FreeSampledImage(const SampledImageID index)
+    bool VulkanResourceTable::FreeSampledImage(const SampledImageID ID)
     {
-        return sampledImageIndexPool.FreeIndex(index);
+        return sampledImages.RemoveItem(ID);
     }
 
-    StorageImageID VulkanResourceTable::BindStorageImage(const Image& image)
+    StorageImageID VulkanResourceTable::ReserveStorageImage()
     {
-        SR_THROW_IF(image.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot bind storage image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", image.GetName(), name)));
+        return storageImages.AddItem();
+    }
+
+    void VulkanResourceTable::UpdateStorageImage(const StorageImageID ID, const Image& image)
+    {
+        ResourceTable::UpdateStorageImage(ID, image);
+
+        SR_THROW_IF(GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot update storage image [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", image.GetName(), GetName())));;
         const VulkanImage& vulkanImage = static_cast<const VulkanImage&>(image);
 
         // Set up image info
@@ -207,7 +223,6 @@ namespace Sierra
         };
 
         // Set up write info
-        const StorageImageID ID = storageImageIndexPool.GenerateIndex();
         const VkWriteDescriptorSet writeDescriptorSet
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -221,17 +236,23 @@ namespace Sierra
 
         // Update descriptor set
         device->GetFunctionTable().vkUpdateDescriptorSets(device->GetVulkanDevice(), 1, &writeDescriptorSet, 0, nullptr);
-        return ID;
     }
 
-    bool VulkanResourceTable::FreeStorageImage(const StorageImageID index)
+    bool VulkanResourceTable::FreeStorageImage(const StorageImageID ID)
     {
-        return storageImageIndexPool.FreeIndex(index);
+        return storageImages.RemoveItem(ID);
     }
 
-    SamplerID VulkanResourceTable::BindSampler(const Sampler& sampler)
+    SamplerID VulkanResourceTable::ReserveSampler()
     {
-        SR_THROW_IF(sampler.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot bind sampler [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", sampler.GetName(), name)));
+        return samplers.AddItem();
+    }
+
+    void VulkanResourceTable::UpdateSampler(const SamplerID ID, const Sampler& sampler)
+    {
+        ResourceTable::UpdateSampler(ID, sampler);
+
+        SR_THROW_IF(GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot update sampler [{0}] within command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", sampler.GetName(), GetName())));;
         const VulkanSampler& vulkanSampler = static_cast<const VulkanSampler&>(sampler);
 
         // Set up image info
@@ -243,7 +264,6 @@ namespace Sierra
         };
 
         // Set up write info
-        const SamplerID ID = samplerIndexPool.GenerateIndex();
         const VkWriteDescriptorSet writeDescriptorSet
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -257,13 +277,13 @@ namespace Sierra
 
         // Update descriptor set
         device->GetFunctionTable().vkUpdateDescriptorSets(device->GetVulkanDevice(), 1, &writeDescriptorSet, 0, nullptr);
-        return ID;
     }
 
-    bool VulkanResourceTable::FreeSampler(const SamplerID index)
+    bool VulkanResourceTable::FreeSampler(const SamplerID ID)
     {
-        return samplerIndexPool.FreeIndex(index);
+        return samplers.RemoveItem(ID);
     }
+
 
     /* --- GETTER METHODS --- */
 

@@ -2,7 +2,6 @@
 // Created by Nikolay Kanchevski on 13.05.24.
 //
 
-
 #define REQUIRED_ARGS \
     REQUIRED_STRING_ARG(projectDirectoryPath, "project_directory_path", "Directory where project is stored")
 
@@ -21,15 +20,12 @@ Sierra::Application* Sierra::CreateApplication(const int argc, char* argv[])
 
     const std::filesystem::path projectDirectoryPath = std::filesystem::path(args.projectDirectoryPath);
 
-    const Sierra::ApplicationSettings settings =
-    {
-        .renderingBackendType = Sierra::RenderingBackendType::Best
-    };
-
     const EditorApplicationCreateInfo createInfo
     {
         .projectDirectoryPath = projectDirectoryPath,
-        .settings = settings
+        .settings = {
+            .renderingBackendType = RenderingBackendType::Best
+        }
     };
 
     return new EditorApplication(createInfo);

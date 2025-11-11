@@ -51,12 +51,12 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanGraphicsPipeline::VulkanGraphicsPipeline(const VulkanDevice& givenDevice, const GraphicsPipelineCreateInfo& createInfo)
-        : GraphicsPipeline(createInfo), device(&givenDevice), name(createInfo.name), pushConstantSize(createInfo.pushConstantSize)
+        : VulkanResource(createInfo.name), GraphicsPipeline(createInfo), device(&givenDevice), pushConstantSize(createInfo.pushConstantSize)
     {
-        SR_THROW_IF(createInfo.vertexShader.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", name, createInfo.vertexShader.GetName())));
+        SR_THROW_IF(createInfo.vertexShader.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", createInfo.name, createInfo.vertexShader.GetName())));
         const VulkanShader& vulkanVertexShader = static_cast<const VulkanShader&>(createInfo.vertexShader);
 
-        SR_THROW_IF(createInfo.templateRenderPass.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create graphics pipeline [{0}] with template render pass [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", name, createInfo.templateRenderPass.GetName())));
+        SR_THROW_IF(createInfo.templateRenderPass.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create graphics pipeline [{0}] with template render pass [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", createInfo.name, createInfo.templateRenderPass.GetName())));
         const VulkanRenderPass& vulkanRenderPass = static_cast<const VulkanRenderPass&>(createInfo.templateRenderPass);
 
         // Set up shader stages
@@ -67,7 +67,7 @@ namespace Sierra
         shaderStages[0].pName = "main";
         if (createInfo.fragmentShader != nullptr)
         {
-            SR_THROW_IF(createInfo.fragmentShader->GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", name, createInfo.fragmentShader->GetName())));
+            SR_THROW_IF(createInfo.fragmentShader->GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create graphics pipeline [{0}] with fragment shader [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", createInfo.name, createInfo.fragmentShader->GetName())));
             const VulkanShader& vulkanFragmentShader = static_cast<const VulkanShader&>(*createInfo.fragmentShader);
 
             shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -276,10 +276,10 @@ namespace Sierra
 
         // Create pipeline
         const VkResult result = device->GetFunctionTable().vkCreateGraphicsPipelines(device->GetVulkanDevice(), VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &pipeline);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create graphics pipeline [{0}]", name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create graphics pipeline [{0}]", createInfo.name));
 
         // Set object name
-        device->SetResourceName(pipeline, VK_OBJECT_TYPE_PIPELINE, name);
+        device->SetResourceName(pipeline, VK_OBJECT_TYPE_PIPELINE, createInfo.name);
     }
 
     /* --- DESTRUCTOR --- */

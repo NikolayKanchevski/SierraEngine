@@ -9,8 +9,8 @@
 #include "../Device.h"
 #include "VulkanResource.h"
 
-#include "VulkanContext.h"
-#include "../../Utilities/Handle.hpp"
+#include "VulkanInstance.h"
+#include "../../Core/Handle.hpp"
 
 namespace Sierra
 {
@@ -824,7 +824,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        VulkanDevice(const VulkanContext& context, VkPhysicalDevice physicalDevice, std::span<const char*> extensions, std::span<const VulkanQueueDescription> queueDescriptions, const void* pNext, const DeviceCreateInfo& createInfo);
+        VulkanDevice(const VulkanInstance& instance, VkPhysicalDevice physicalDevice, std::span<const char*> extensions, std::span<const VulkanQueueDescription> queueDescriptions, const void* pNext, const DeviceCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] std::unique_ptr<Buffer> CreateBuffer(const BufferCreateInfo& createInfo) const override;
@@ -841,9 +841,9 @@ namespace Sierra
 
         [[nodiscard]] std::unique_ptr<ResourceTable> CreateResourceTable(const ResourceTableCreateInfo& createInfo) const override;
         [[nodiscard]] std::unique_ptr<Queue> CreateQueue(const QueueCreateInfo& createInfo) const override;
+        [[nodiscard]] std::unique_ptr<DestructionScheduler> CreateDestructionScheduler(const DestructionSchedulerCreateInfo& createInfo) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
         [[nodiscard]] std::string_view GetHardwareName() const noexcept override { return hardwareName; }
 
         [[nodiscard]] Version GetBackendVersion() const noexcept override { return vulkanVersion; }
@@ -864,6 +864,7 @@ namespace Sierra
         [[nodiscard]] std::span<const std::shared_ptr<VulkanQueueDescription>> GetQueueDescriptions() const noexcept { return queueDescriptions; }
 
         [[nodiscard]] VkSemaphore GetSemaphore() const noexcept { return semaphore; }
+        [[nodiscard]] uint64 GetLastSemaphoreSignalValue() const noexcept { return lastReservedSemaphoreSignalValue; }
         [[nodiscard]] uint64 GetNewSemaphoreSignalValue() const noexcept { return ++lastReservedSemaphoreSignalValue; }
 
         [[nodiscard]] VkDescriptorSetLayout GetDescriptorSetLayout() const noexcept { return descriptorSetLayout; }
@@ -908,8 +909,7 @@ namespace Sierra
         ~VulkanDevice() noexcept override;
 
     private:
-        const VulkanContext* context = nullptr;
-        std::string name = { };
+        const VulkanInstance* instance = nullptr;
 
         std::string hardwareName;
         Version vulkanVersion = Version({ 1, 0, 0 });
@@ -919,7 +919,7 @@ namespace Sierra
         VkDevice device = VK_NULL_HANDLE;
 
         VmaAllocator vmaAllocator = VK_NULL_HANDLE;
-        std::vector<std::shared_ptr<VulkanQueueDescription>> queueDescriptions;
+        std::vector<std::shared_ptr<VulkanQueueDescription>> queueDescriptions = { };
 
         VulkanDeviceFunctionTable functionTable = { };
         std::vector<size> loadedExtensions = { };
@@ -929,6 +929,16 @@ namespace Sierra
 
         VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
         std::array<VkPipelineLayout, MAX_PUSH_CONSTANT_SIZE / 4 + 1> pipelineLayouts = { };
+
+        template<typename T>
+        struct DestructionQueueEntry
+        {
+            uint64 waitValue = 0;
+            std::unique_ptr<T> resource = nullptr;
+        };
+
+        std::deque<DestructionQueueEntry<Buffer>> bufferQueue = { };
+        std::deque<DestructionQueueEntry<Image>> imageQueue = { };
 
     };
 

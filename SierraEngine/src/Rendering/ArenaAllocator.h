@@ -4,15 +4,16 @@
 
 #pragma once
 
-#include "Mesh.h"
-#include "Vertex.h"
+#include "Primitives/Mesh.h"
+#include "RenderingContext.h"
+#include "Primitives/Vertex.h"
 
 namespace SierraEngine
 {
 
     struct ArenaAllocatorCreateInfo
     {
-        const Sierra::Device& device;
+        const RenderingContext& renderingContext;
         uint32 initialVertexBufferCapacity = 4096;
         uint32 initialIndexBufferCapacity = 8192;
     };
@@ -24,7 +25,7 @@ namespace SierraEngine
         explicit ArenaAllocator(const ArenaAllocatorCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Bind(Sierra::CommandBuffer& commandBuffer);
+        void Bind(Sierra::CommandBuffer& commandBuffer) const;
         [[nodiscard]] Mesh CreateMesh(Sierra::CommandBuffer& commandBuffer, std::span<const Vertex> vertices, std::span<const uint32> indices);
 
         /* --- GETTER METHODS --- */
@@ -39,14 +40,14 @@ namespace SierraEngine
         ArenaAllocator& operator=(const ArenaAllocator&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        ArenaAllocator(ArenaAllocator&&) = delete;
-        ArenaAllocator& operator=(ArenaAllocator&&) = delete;
+        ArenaAllocator(ArenaAllocator&&) noexcept = default;
+        ArenaAllocator& operator=(ArenaAllocator&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~ArenaAllocator() noexcept = default;
 
     private:
-        const Sierra::Device& device;
+        const RenderingContext* renderingContext;
 
         uint64 currentVertexOffset = 0;
         std::unique_ptr<Sierra::Buffer> vertexBuffer = nullptr;

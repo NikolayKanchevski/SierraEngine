@@ -13,17 +13,15 @@ namespace SierraEngine
 
     struct SceneRendererCreateInfo
     {
-        const Sierra::Device& device;
+        const RenderingContext& renderingContext;
     };
 
-    struct RenderTargetCreateInfo
-    {
-        uint32 width = 0;
-        uint32 height = 0;
-    };
+    /* --- TYPE DEFINITIONS --- */
+    using RenderTargetID = Sierra::Handle<uint32>;
 
     struct SceneRenderInfo
     {
+        RenderTargetID renderTarget = 0;
         uint32 width = 0;
         uint32 height = 0;
 
@@ -32,9 +30,6 @@ namespace SierraEngine
         const Transform& eye;
     };
 
-    /* --- TYPE DEFINITIONS --- */
-    using RenderTargetID = Sierra::Handle<uint32>;
-
     class SIERRA_ENGINE_API SceneRenderer final
     {
     public:
@@ -42,27 +37,27 @@ namespace SierraEngine
         explicit SceneRenderer(const SceneRendererCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] RenderTargetID CreateRenderTarget(const RenderTargetCreateInfo& createInfo);
+        [[nodiscard]] RenderTargetID CreateRenderTarget();
         bool DestroyRenderTarget(RenderTargetID ID);
 
-        void Render(Sierra::CommandBuffer& commandBuffer, RenderTargetID renderTargetID, const SceneRenderInfo& renderInfo);
+        [[nodiscard]] const Sierra::Image& Render(Sierra::CommandBuffer& commandBuffer, const SceneRenderInfo& renderInfo);
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] const Sierra::Image* GetRenderTargetImage(const RenderTargetID ID);
+        [[nodiscard]] const Sierra::Image* GetRenderTargetImage(RenderTargetID ID);
 
         /* --- COPY SEMANTICS --- */
         SceneRenderer(const SceneRenderer&) = delete;
         SceneRenderer& operator=(const SceneRenderer&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        SceneRenderer(SceneRenderer&&) = delete;
-        SceneRenderer& operator=(SceneRenderer&&) = delete;
+        SceneRenderer(SceneRenderer&&) = default;
+        SceneRenderer& operator=(SceneRenderer&&) = default;
 
         /* --- DESTRUCTOR --- */
         ~SceneRenderer() noexcept = default;
 
     private:
-        const Sierra::Device* device;
+        const RenderingContext* renderingContext;
 
         std::unique_ptr<Sierra::RenderPass> renderPass = nullptr;
         std::unique_ptr<Sierra::Shader> vertexShader = nullptr;
@@ -83,11 +78,13 @@ namespace SierraEngine
             std::unique_ptr<Sierra::Image> colorImage = nullptr;
             std::unique_ptr<Sierra::Image> depthImage = nullptr;
             std::unique_ptr<Sierra::Framebuffer> framebuffer = nullptr;
+
+            [[nodiscard]] bool IsValid() const noexcept { return colorImage != nullptr && depthImage != nullptr && framebuffer != nullptr; }
         };
 
-        Sierra::IndexPool<RenderTargetID> renderTargetIndexPool = { };
-        std::vector<std::optional<RenderTarget>> renderTargets = { };
-        void ResizeRenderTarget(RenderTargetID ID, uint32 width, uint32 height);
+        Sierra::HandleManager<RenderTargetID, RenderTarget> renderTargets = { };
+        void CreateRenderTarget(RenderTarget& renderTarget, uint32 width, uint32 height) const;
+        void DestroyRenderTarget(RenderTarget& renderTarget) const;
 
     };
 

@@ -13,7 +13,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanQueue::VulkanQueue(const VulkanDevice& givenDevice, const QueueCreateInfo& createInfo)
-        : Queue(createInfo), device(&givenDevice), name(createInfo.name)
+        : VulkanResource(createInfo.name), Queue(createInfo), device(&givenDevice)
     {
         switch (createInfo.priority)
         {
@@ -44,7 +44,7 @@ namespace Sierra
                     }
                 }
 
-                SR_THROW_IF(leastUsedQueueDescription == nullptr, UnsupportedFeatureError(SR_FORMAT("Cannot create queue [{0}], as device [{1}] does not support any queues with specified operations", createInfo.name, name)));
+                SR_THROW_IF(leastUsedQueueDescription == nullptr, UnsupportedFeatureError(SR_FORMAT("Cannot create queue [{0}], as device [{1}] does not support any queues with specified operations", createInfo.name, createInfo.name)));
 
                 description = *leastUsedQueueDescription;
                 device->GetFunctionTable().vkGetDeviceQueue(device->GetVulkanDevice(), description->family, 0, &queue);
@@ -66,7 +66,7 @@ namespace Sierra
         const VulkanCommandBuffer& vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(commandBuffer);
 
         Queue::SubmitCommandBuffer(vulkanCommandBuffer, commandBuffersToWait);
-        SR_THROW_IF(!(vulkanCommandBuffer.GetOperations() & description->operations), InvalidOperationError(SR_FORMAT("Cannot submit command buffer [{0}] to queue [{1}], as it does not support all recoded operations within the command buffer", vulkanCommandBuffer.GetName(), name)));
+        SR_THROW_IF((description->operations | vulkanCommandBuffer.GetOperations()) != description->operations, InvalidOperationError(SR_FORMAT("Cannot submit command buffer [{0}] to queue [{1}], as it does not support all recoded operations within the command buffer", vulkanCommandBuffer.GetName(), GetName())));
 
         // Determine what value to wait for
         uint64 waitValue = 0;
@@ -74,7 +74,7 @@ namespace Sierra
         {
             const CommandBuffer& commandBufferToWait = commandBufferToWaitReference;
 
-            SR_THROW_IF(commandBufferToWait.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot wait for command buffer [{0}] prior to submitting command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", commandBufferToWait.GetName(), name)));
+            SR_THROW_IF(commandBufferToWait.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot wait for command buffer [{0}] prior to submitting command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", commandBufferToWait.GetName(), GetName())));
             const VulkanCommandBuffer& vulkanCommandBufferToWait = static_cast<const VulkanCommandBuffer&>(commandBufferToWait);
 
             SR_THROW_IF(&vulkanCommandBufferToWait == &vulkanCommandBuffer, InvalidValueError(SR_FORMAT("Cannot wait for the same command buffer [{0}] prior to submitting it", vulkanCommandBuffer.GetName())));
@@ -111,7 +111,7 @@ namespace Sierra
 
         // Submit command buffer
         const VkResult result = device->GetFunctionTable().vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not submit command buffer [{0}] to queue [{1}]", vulkanCommandBuffer.GetName(), name));
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not submit command buffer [{0}] to queue [{1}]", vulkanCommandBuffer.GetName(), GetName()));
     }
 
     void VulkanQueue::WaitForCommandBuffer(const CommandBuffer& commandBuffer) const

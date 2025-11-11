@@ -17,14 +17,14 @@ namespace SierraEngine
             .outputFileExtension = OUTPUT_FILE_EXTENSION,
             .outputDirectoryPath = createInfo.outputDirectoryPath
           }),
-          device(createInfo.device)
+          renderingContext(&createInfo.renderingContext)
     {
         DefaultMetadata(serializeInfo.metadata, "Material");
     }
 
     /* --- POLLING METHODS --- */
 
-    void MaterialSerializeWizard::Draw(bool& open, Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable)
+    void MaterialSerializeWizard::Draw(bool& open, Sierra::CommandBuffer&)
     {
         if (ImGui::IsKeyPressed(ImGuiKey_Escape))
         {

@@ -8,12 +8,12 @@
     #error "Including the VulkanWin32Surface.h file is only allowed in Windows builds!"
 #endif
 
-#include "../VulkanContext.h"
+#include "../VulkanInstance.h"
 #include "../../../Windowing/Window.h"
 
 namespace Sierra
 {
 
-    [[nodiscard]] SIERRA_API VkSurfaceKHR CreateVulkanWin32Surface(const VulkanContext& context, const Window& window);
+    [[nodiscard]] SIERRA_API VkSurfaceKHR CreateVulkanWin32Surface(const VulkanInstance& instance, const Window& window);
 
 }

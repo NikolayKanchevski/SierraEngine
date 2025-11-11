@@ -3,6 +3,8 @@ target_sources(Sierra PRIVATE
     Application.h
     Errors.cpp
     Errors.h
+    Handle.hpp
+    HandleManager.hpp
     Types.h
     Version.cpp
     Version.h
@@ -10,8 +12,8 @@ target_sources(Sierra PRIVATE
 
 if (SIERRA_ENABLE_LOGGING)
     target_sources(Sierra PRIVATE
-        Logging.cpp
-        Logging.h
+        Logger.cpp
+        Logger.h
     )
 endif()
 

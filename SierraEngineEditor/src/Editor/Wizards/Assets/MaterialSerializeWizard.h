@@ -12,7 +12,7 @@ namespace SierraEngine
     struct MaterialSerializeWizardCreateInfo
     {
         const Sierra::PlatformContext& platformContext;
-        const Sierra::Device& device;
+        const RenderingContext& renderingContext;
 
         const std::filesystem::path* outputDirectoryPath = nullptr;
     };
@@ -24,7 +24,7 @@ namespace SierraEngine
         explicit MaterialSerializeWizard(const MaterialSerializeWizardCreateInfo& createInfo) noexcept;
 
         /* --- POLLING METHODS --- */
-        void Draw(bool& open, Sierra::CommandBuffer& commandBuffer, Sierra::ResourceTable& resourceTable) override;
+        void Draw(bool& open, Sierra::CommandBuffer& commandBuffer) override;
 
         /* --- CONSTANTS --- */
         constexpr static std::string_view OUTPUT_FILE_EXTENSION = ".material";
@@ -34,14 +34,14 @@ namespace SierraEngine
         MaterialSerializeWizard& operator=(const MaterialSerializeWizard&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        MaterialSerializeWizard(MaterialSerializeWizard&&) = delete;
-        MaterialSerializeWizard& operator=(MaterialSerializeWizard&&) = delete;
+        MaterialSerializeWizard(MaterialSerializeWizard&&) noexcept = default;
+        MaterialSerializeWizard& operator=(MaterialSerializeWizard&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~MaterialSerializeWizard() noexcept override = default;
 
     private:
-        const Sierra::Device& device;
+        const RenderingContext* renderingContext;
 
         enum class MaterialSerializeFormat : uint8
         {

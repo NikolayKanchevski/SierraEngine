@@ -2,14 +2,12 @@
 // Created by Nikolay Kanchevski on 8.11.2023.
 //
 
-#include "Logging.h"
+#include "Logger.h"
 
-#if SR_ENABLE_LOGGING
-    #if !SR_PLATFORM_ANDROID
-        #include <spdlog/sinks/stdout_color_sinks.h>
-    #else
-        #include <spdlog/sinks/android_sink.h>
-    #endif
+#if !SR_PLATFORM_ANDROID
+    #include <spdlog/sinks/stdout_color_sinks.h>
+#else
+    #include <spdlog/sinks/android_sink.h>
 #endif
 
 namespace Sierra

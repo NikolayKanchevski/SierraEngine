@@ -12,7 +12,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalShader::MetalShader(const MetalDevice& device, const ShaderCreateInfo& createInfo)
-        : Shader(createInfo)
+        : MetalResource(createInfo.name), Shader(createInfo)
     {
         const ShaderFileHeader& fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.memory.data());
         #if SR_PLATFORM_macOS

@@ -29,10 +29,6 @@ namespace SierraEngine
         FileOutputWizard(const FileOutputWizard&) = delete;
         FileOutputWizard& operator=(const FileOutputWizard&) = delete;
 
-        /* --- MOVE SEMANTICS --- */
-        FileOutputWizard(FileOutputWizard&&) = delete;
-        FileOutputWizard& operator=(FileOutputWizard&&) = delete;
-
         /* --- DESTRUCTOR --- */
         ~FileOutputWizard() noexcept override = default;
 
@@ -47,13 +43,17 @@ namespace SierraEngine
         virtual void SetOutputFilePath(const std::filesystem::path& inputFilePath) noexcept;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] const Sierra::PlatformContext& GetPlatformContext() const noexcept { return platformContext; }
+        [[nodiscard]] const Sierra::PlatformContext& GetPlatformContext() const noexcept { return *platformContext; }
 
         [[nodiscard]] std::string_view GetOutputFileExtension() const noexcept { return outputFileExtension; }
         [[nodiscard]] const std::filesystem::path& GetOutputFilePath() const noexcept { return outputFilePath; }
 
+        /* --- MOVE SEMANTICS --- */
+        FileOutputWizard(FileOutputWizard&&) noexcept = default;
+        FileOutputWizard& operator=(FileOutputWizard&&) noexcept = default;
+
     private:
-        const Sierra::PlatformContext& platformContext;
+        const Sierra::PlatformContext* platformContext;
 
         std::filesystem::path outputFilePath = { };
         std::string_view outputFileExtension = { };
