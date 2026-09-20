@@ -9,7 +9,7 @@
 namespace SierraEngine
 {
 
-    enum class ImageCompressionLevel : uint8
+    enum class TextureCompressionAggressiveness : uint8
     {
         Lowest,
         Low,
@@ -18,7 +18,7 @@ namespace SierraEngine
         Highest
     };
 
-    enum class ImageCompressionQualityLevel : uint8
+    enum class TextureCompressionQuality : uint8
     {
         Lowest,
         Low,
@@ -30,8 +30,8 @@ namespace SierraEngine
     struct ImageCompressInfo
     {
         std::span<const LoadedImageLevel> levels = { };
-        ImageCompressionLevel compressionLevel = ImageCompressionLevel::Standard;
-        ImageCompressionQualityLevel qualityLevel = ImageCompressionQualityLevel::Standard;
+        TextureCompressionAggressiveness compressionLevel = TextureCompressionAggressiveness::Standard;
+        TextureCompressionQuality qualityLevel = TextureCompressionQuality::Standard;
     };
 
     struct CompressedImage

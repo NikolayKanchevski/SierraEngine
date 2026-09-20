@@ -36,7 +36,7 @@ namespace SierraEngine
         {
             DrawMetadataMenu(serializeInfo.metadata);
 
-            DrawPropertiesMenu();
+            DrawSettingsMenu();
 
             constexpr std::array OPTIONS
             {
@@ -55,9 +55,9 @@ namespace SierraEngine
         }
     }
 
-    void MaterialSerializeWizard::DrawPropertiesMenu() noexcept
+    void MaterialSerializeWizard::DrawSettingsMenu() noexcept
     {
-        if (ImGui::TreeNodeEx("Properties", MENU_TREE_FLAGS))
+        if (ImGui::TreeNodeEx("Settings", MENU_TREE_FLAGS))
         {
             if (ImGui::TreeNodeEx("Diffuse", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_FramePadding ))
             {
@@ -65,7 +65,7 @@ namespace SierraEngine
                 {
                     ImGuiWidgets::BeginProperty("Tint");
                     {
-                        ImGuiWidgets::ColorInput("##DiffuseColorInput", serializeInfo.properties.diffuse.tint);
+                        ImGuiWidgets::ColorInput("##DiffuseColorInput", serializeInfo.settings.diffuse.tint);
                     }
                     ImGuiWidgets::EndProperty();
 
@@ -88,7 +88,7 @@ namespace SierraEngine
                 {
                     ImGuiWidgets::BeginProperty("Shininess");
                     {
-                        ImGuiWidgets::NumericInput("##SpecularShininessInput", serializeInfo.properties.specular.shininess, 0.0f, 512.0f);
+                        ImGuiWidgets::NumericInput("##SpecularShininessInput", serializeInfo.settings.specular.shininess, 0.0f, 512.0f);
                     }
                     ImGuiWidgets::EndProperty();
 
@@ -115,9 +115,9 @@ namespace SierraEngine
                         ImGuiDropdownOption { .text = "Transparent" }
                     };
 
-                    if (uint32 alphaModeIndex = static_cast<uint32>(serializeInfo.properties.alphaMode); ImGuiWidgets::Dropdown("##CullModeDropdown", alphaModeIndex, { .options = OPTIONS }))
+                    if (uint32 alphaModeIndex = static_cast<uint32>(serializeInfo.settings.alphaMode); ImGuiWidgets::Dropdown("##CullModeDropdown", alphaModeIndex, { .options = OPTIONS }))
                     {
-                        serializeInfo.properties.alphaMode = static_cast<MaterialAlphaMode>(alphaModeIndex);
+                        serializeInfo.settings.alphaMode = static_cast<AlphaMode>(alphaModeIndex);
                     }
                 }
                 ImGuiWidgets::EndProperty();
@@ -130,9 +130,9 @@ namespace SierraEngine
                         ImGuiDropdownOption { .text = "Double Sided" }
                     };
 
-                    if (uint32 cullModeIndex = static_cast<uint32>(serializeInfo.properties.cullMode); ImGuiWidgets::Dropdown("##CullModeDropdown", cullModeIndex, { .options = OPTIONS }))
+                    if (uint32 cullModeIndex = static_cast<uint32>(serializeInfo.settings.cullMode); ImGuiWidgets::Dropdown("##CullModeDropdown", cullModeIndex, { .options = OPTIONS }))
                     {
-                        serializeInfo.properties.cullMode = static_cast<MaterialCullMode>(cullModeIndex);
+                        serializeInfo.settings.cullMode = static_cast<CullMode>(cullModeIndex);
                     }
                 }
                 ImGuiWidgets::EndProperty();
@@ -153,16 +153,24 @@ namespace SierraEngine
             case MaterialSerializeFormat::YAML: { serializer = std::make_unique<YAMLMaterialSerializer>(); break; }
         }
 
-        const std::optional<SerializedMaterial> serializedMaterial = serializer->Serialize(serializeInfo);
+        MaterialID ID = { };
+        const std::optional<SerializedMaterial> serializedMaterial = serializer->Serialize(serializeInfo, ID);
+
         if (!serializedMaterial.has_value())
         {
             APP_WARNING("Could not serialize material [{0}]", serializeInfo.metadata.name);
             return false;
         }
 
-        const Sierra::FileManager& fileManager = FileOutputWizard::GetPlatformContext().GetFileManager();
+        const Sierra::FileManager& fileManager = GetPlatformContext().GetFileManager();
 
         const std::filesystem::path& outputDataFilePath = GetOutputFilePath();
+        if (outputDataFilePath.empty())
+        {
+            APP_WARNING("Cannot serialize material [{0}] at invalid location [{1}]", serializeInfo.metadata.name, outputDataFilePath.string());
+            return false;
+        }
+
         fileManager.CreateFile(outputDataFilePath, Sierra::FilePathConflictPolicy::Overwrite);
         fileManager.WriteFile(outputDataFilePath, serializedMaterial->data);
 

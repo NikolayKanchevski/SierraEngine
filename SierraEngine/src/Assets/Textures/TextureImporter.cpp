@@ -12,11 +12,14 @@ namespace SierraEngine
 
     namespace
     {
-        std::vector<uint8> ImportRawMemory(const TextureHeader& header, const Sierra::ImageFormat format, Sierra::Stream& stream)
+        [[nodiscard]] ImportedTextureBuffer ImportRawBlob(const TextureProperties& header, const Sierra::ImageFormat format, Sierra::Stream& stream)
         {
+            ImportedTextureBuffer buffer = { };
+
             if (header.format == format)
             {
-                return stream.ReadToEnd();
+                buffer.memory = stream.ReadToEnd();
+                return buffer;
             }
 
             /* === Reference: https://gaim.umbc.edu/2010/05/27/mip-size/ === */
@@ -40,27 +43,31 @@ namespace SierraEngine
                 }
             }
 
-            return writeStream.Release();
+            buffer.memory = writeStream.Release();
+            return buffer;
         }
     }
 
-    std::vector<uint8> TextureImporter::ImportBlob(const TextureHeader& header, const Sierra::ImageFormat format, Sierra::Stream& stream) const
+    std::optional<ImportedTextureBuffer> TextureImporter::ImportBlob(Sierra::Stream& blob, const Sierra::ImageFormat format, const TextureProperties& properties) const
     {
         std::unique_ptr<ImageTranscoder> transcoder = nullptr;
-        switch (header.compression)
+        switch (properties.compression)
         {
-            case ImageCompression::None:              { return ImportRawMemory(header, format, stream); }
-            case ImageCompression::BasisUniversal:    { transcoder = std::make_unique<BasisUniversalTranscoder>(); break; }
+            case TextureCompression::None:              { return ImportRawBlob(properties, format, blob); }
+            case TextureCompression::BasisUniversal:    { transcoder = std::make_unique<BasisUniversalTranscoder>(); break; }
         }
 
-        std::optional<TranscodedImage> transcodedImage = transcoder->Transcode({ .memory = stream.ReadToEnd(), .format = format });
+        std::optional<TranscodedImage> transcodedImage = transcoder->Transcode({ .memory = blob.ReadToEnd(), .format = format });
         if (!transcodedImage.has_value())
         {
             APP_WARNING("Could import texture, as transcoding compressed contents into desired format failed");
-            return { };
+            return std::nullopt;
         }
 
-        return transcodedImage->memory;
+        ImportedTextureBuffer buffer = { };
+        buffer.memory = std::move(transcodedImage->memory);
+
+        return buffer;
     }
 
 }

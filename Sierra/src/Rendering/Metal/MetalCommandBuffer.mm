@@ -335,10 +335,10 @@ namespace Sierra
             [currentRenderEncoder setVertexBuffer: currentResourceTable->GetMetalArgumentBuffer() offset: 0 atIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_INDEX];
             [currentRenderEncoder setFragmentBuffer: currentResourceTable->GetMetalArgumentBuffer() offset: 0 atIndex: MetalDevice::BINDLESS_ARGUMENT_BUFFER_INDEX];
 
-            currentResourceTable->GetUniformBuffers().ForEach([this](const id<MTLBuffer> resource) -> void { [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead stages: MTLRenderStageVertex | MTLRenderStageFragment]; });
-            currentResourceTable->GetStorageBuffers().ForEach([this](const id<MTLBuffer> resource) -> void { [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite stages: MTLRenderStageVertex | MTLRenderStageFragment]; });
-            currentResourceTable->GetSampledImages().ForEach([this](const id<MTLTexture> resource) -> void { [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead stages: MTLRenderStageVertex | MTLRenderStageFragment]; });
-            currentResourceTable->GetStorageImages().ForEach([this](const id<MTLTexture> resource) -> void { [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite stages: MTLRenderStageVertex | MTLRenderStageFragment]; });
+            currentResourceTable->GetUniformBuffers().ForEach([this](const id<MTLBuffer> resource) -> void { if (resource == nil) { return; } [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead stages: MTLRenderStageVertex | MTLRenderStageFragment]; }); // TODO:
+            currentResourceTable->GetStorageBuffers().ForEach([this](const id<MTLBuffer> resource) -> void { if (resource == nil) { return; } [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite stages: MTLRenderStageVertex | MTLRenderStageFragment]; });
+            currentResourceTable->GetSampledImages().ForEach([this](const id<MTLTexture> resource) -> void { if (resource == nil) { return; } [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead stages: MTLRenderStageVertex | MTLRenderStageFragment]; });
+            currentResourceTable->GetStorageImages().ForEach([this](const id<MTLTexture> resource) -> void { if (resource == nil) { return; } [currentRenderEncoder useResource: resource usage: MTLResourceUsageRead | MTLResourceUsageWrite stages: MTLRenderStageVertex | MTLRenderStageFragment]; });
         }
 
         // Re-bind assigned vertex buffer

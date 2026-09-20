@@ -4,50 +4,89 @@
 
 #include "YAMLMaterialSerializer.h"
 
+#include "../../Formats/YAML.h"
+
 namespace SierraEngine
 {
 
     namespace
     {
-        std::string_view MaterialAlphaModeToString(const MaterialAlphaMode alphaMode)
+        // Node + members + diffuse children + specular children + normal children
+        constexpr size SETTINGS_NODE_COUNT = 1 + 5 + 3 + 2;
+
+        // Diffuse tint + diffuse texture + specular shininess + specular texture + normal texture
+        constexpr size SETTINGS_ARENA_SIZE =  15 + 20 + 6 + 20 + 20;
+
+        std::string_view MaterialAlphaModeToString(const AlphaMode alphaMode)
         {
             switch (alphaMode)
             {
-                case MaterialAlphaMode::Opaque:         return "Opaque";
-                case MaterialAlphaMode::Transparent:    return "Transparent";
+                case AlphaMode::Opaque:         return "Opaque";
+                case AlphaMode::Transparent:    return "Transparent";
+                default:                        break;
+            }
+
+            return "Undefined";
+        }
+
+        std::string_view MaterialCullModeToString(const CullMode cullMode)
+        {
+            switch (cullMode)
+            {
+                case CullMode::SingleSided:     return "SingleSided";
+                case CullMode::DoubleSided:     return "DoubleSided";
                 default:                                break;
             }
 
             return "Undefined";
         }
 
-        std::string_view MaterialCullModeToString(const MaterialCullMode cullMode)
+        void SerializeSettings(ryml::NodeRef rootNode, const MaterialSettings& settings)
         {
-            switch (cullMode)
+            ryml::NodeRef settingsNode = rootNode["settings"];
+            settingsNode |= ryml::MAP;
+
+            ryml::NodeRef diffuseNode = settingsNode["diffuse"];
+            diffuseNode |= ryml::MAP;
             {
-                case MaterialCullMode::SingleSided:     return "SingleSided";
-                case MaterialCullMode::DoubleSided:     return "DoubleSided";
-                default:                                break;
+                YAML::SerializeVector(diffuseNode["tint"], glm::clamp(settings.diffuse.tint, 0.0f, 1.0f)); // Cost: ~15 chars
+                YAML::SerializeNumeric(diffuseNode["texture"], settings.diffuseTexture.GetValue());       // Cost: ~20 chars
             }
 
-            return "Undefined";
+            ryml::NodeRef specularNode = settingsNode["specular"];
+            specularNode |= ryml::MAP;
+            {
+                YAML::SerializeNumeric(specularNode["shininess"], glm::clamp(settings.specular.shininess, 0.0f, 512.0f)); // Cost: ~6 chars
+                YAML::SerializeNumeric(specularNode["texture"], settings.specularTexture.GetValue());                    // Cost: ~20 chars
+            }
+
+            ryml::NodeRef normalNode = settingsNode["normal"];
+            normalNode |= ryml::MAP;
+            {
+                YAML::SerializeNumeric(normalNode["texture"], settings.normalTexture.GetValue()); // Cost: ~20 chars
+            }
+
+            YAML::SerializeEnum(settingsNode["alphaMode"], settings.alphaMode, MaterialAlphaModeToString);
+            YAML::SerializeEnum(settingsNode["cullMode"], settings.cullMode, MaterialCullModeToString);
         }
     }
 
     /* --- POLLING METHODS --- */
 
-    std::optional<SerializedMaterial> YAMLMaterialSerializer::Serialize(const MaterialSerializeInfo& serializeInfo) const
+    std::optional<SerializedMaterial> YAMLMaterialSerializer::Serialize(const MaterialSerializeInfo& serializeInfo, MaterialID& outID) const
     {
-        const size nodeCapacity = GetMetadataNodeCount(serializeInfo.metadata) + GetPropertiesNodeCount();
-        const size arenaCapacity = GetMetadataArenaSize(serializeInfo.metadata) + GetPropertiesArenaSize();
-        ryml::Tree tree(nodeCapacity, arenaCapacity);
+        const size nodeCount = MANDATORY_NODE_COUNT + GetMetadataNodeCount(serializeInfo.metadata) + SETTINGS_NODE_COUNT;
+        const size arenaSize = GetMetadataArenaSize(serializeInfo.metadata) + SETTINGS_ARENA_SIZE;
 
-        ryml::NodeRef root = tree.rootref();
-        root |= ryml::MAP;
+        ryml::Tree tree(nodeCount, arenaSize);
+        outID = MaterialID(Sierra::RNG().Random<MaterialID::ValueType>());
 
-        SerializeID(root, Sierra::RNG().Random<MaterialID::ValueType>());
-        SerializeMetadata(root, serializeInfo.metadata);
-        SerializeProperties(root, serializeInfo.properties);
+        ryml::NodeRef rootNode = tree.rootref();
+        rootNode |= ryml::MAP;
+
+        SerializeID(rootNode, outID);
+        SerializeMetadata(rootNode, serializeInfo.metadata);
+        SerializeSettings(rootNode, serializeInfo.settings);
 
         const std::vector<char> data = ryml::emitrs_yaml<std::vector<char>>(tree);
         if (data.empty())
@@ -68,51 +107,6 @@ namespace SierraEngine
         };
 
         return material;
-    }
-
-    /* --- POLLING METHODS --- */
-
-    void YAMLMaterialSerializer::SerializeProperties(ryml::NodeRef root, const MaterialProperties& properties) const
-    {
-        ryml::NodeRef node = root["properties"];
-        node |= ryml::MAP;
-
-        ryml::NodeRef diffuse = node["diffuse"];
-        diffuse |= ryml::MAP;
-        {
-            SerializeVector(diffuse["tint"], glm::clamp(properties.diffuse.tint, 0.0f, 1.0f)); // Cost: ~15 chars
-            SerializeNumeric(diffuse["texture"], properties.diffuse.texture.GetValue());       // Cost: ~19 chars
-        }
-
-        ryml::NodeRef specular = node["specular"];
-        specular |= ryml::MAP;
-        {
-            SerializeNumeric(specular["shininess"], glm::clamp(properties.specular.shininess, 0.0f, 512.0f));        // Cost: ~6 chars
-            SerializeNumeric(specular["texture"], properties.specular.texture.GetValue()); // Cost: ~19 chars
-        }
-
-        ryml::NodeRef normal = node["normal"];
-        normal |= ryml::MAP;
-        {
-            SerializeNumeric(normal["texture"], properties.normal.texture.GetValue()); // Cost: ~19 chars
-        }
-
-        SerializeEnum(node["alphaMode"], properties.alphaMode, MaterialAlphaModeToString);
-        SerializeEnum(node["cullMode"], properties.cullMode, MaterialCullModeToString);
-    }
-
-    /* --- GETTER METHODS --- */
-
-    [[nodiscard]] size YAMLMaterialSerializer::GetPropertiesNodeCount() const noexcept
-    {
-        // Node + members + diffuse children + specular children + normal children
-        return 1 + 5 + 3 + 2;
-    }
-
-    [[nodiscard]] size YAMLMaterialSerializer::GetPropertiesArenaSize() const noexcept
-    {
-        // Diffuse tint + diffuse texture + specular shininess + specular texture + normal texture
-        return 15 + 19 + 6 + 19 + 19;
     }
 
 }

@@ -184,7 +184,7 @@ namespace Sierra
         // Bind font atlas & sampler
         fontAtlasID = resourceTable->BindSampledImage(*fontAtlas);
         fontAtlasSamplerID = resourceTable->BindSampler(*fontSampler);
-        io.Fonts->SetTexID(fontAtlasID);
+        io.Fonts->SetTexID(fontAtlasID.GetValue());
     }
 
     /* --- POLLING METHODS --- */
@@ -408,7 +408,7 @@ namespace Sierra
         // Bind perspective settings
         PushConstant pushConstant
         {
-            .samplerIndex = fontAtlasSamplerID,
+            .samplerIndex = fontAtlasSamplerID.GetValue(),
             .scale = { 2.0f / drawData->DisplaySize.x, -2.0f / drawData->DisplaySize.y }
         };
 

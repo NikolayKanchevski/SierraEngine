@@ -12,4 +12,5 @@ target_sources(SierraEngine PRIVATE
 )
 
 add_subdirectory(Materials)
+add_subdirectory(Models)
 add_subdirectory(Textures)

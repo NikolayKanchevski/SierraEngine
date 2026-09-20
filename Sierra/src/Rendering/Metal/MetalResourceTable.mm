@@ -91,7 +91,7 @@ namespace Sierra
     {
         if (uniformBuffers.RemoveItem(ID))
         {
-            [argumentEncoder setBuffer: nil offset: 0 atIndex: UNIFORM_BUFFER_INDEX + ID];
+            [argumentEncoder setBuffer: nil offset: 0 atIndex: UNIFORM_BUFFER_INDEX + ID.GetValue()];
             return true;
         }
 
@@ -118,7 +118,7 @@ namespace Sierra
     {
         if (storageBuffers.RemoveItem(ID))
         {
-            [argumentEncoder setBuffer: nil offset: 0 atIndex: STORAGE_BUFFER_INDEX + ID];
+            [argumentEncoder setBuffer: nil offset: 0 atIndex: STORAGE_BUFFER_INDEX + ID.GetValue()];
             return true;
         }
 
@@ -145,7 +145,7 @@ namespace Sierra
     {
         if (sampledImages.RemoveItem(ID))
         {
-            [argumentEncoder setTexture: nil atIndex: SAMPLED_IMAGE_INDEX + ID];
+            [argumentEncoder setTexture: nil atIndex: SAMPLED_IMAGE_INDEX + ID.GetValue()];
             return true;
         }
 
@@ -172,7 +172,7 @@ namespace Sierra
     {
         if (storageImages.RemoveItem(ID))
         {
-            [argumentEncoder setTexture: nil atIndex: STORAGE_IMAGE_INDEX + ID];
+            [argumentEncoder setTexture: nil atIndex: STORAGE_IMAGE_INDEX + ID.GetValue()];
             return true;
         }
 
@@ -199,7 +199,7 @@ namespace Sierra
     {
         if (samplers.RemoveItem(ID))
         {
-            [argumentEncoder setSamplerState: nil atIndex: SAMPLER_INDEX + ID];
+            [argumentEncoder setSamplerState: nil atIndex: SAMPLER_INDEX + ID.GetValue()];
             return true;
         }
 

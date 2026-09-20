@@ -12,49 +12,52 @@
 namespace SierraEngine
 {
 
-    enum class MaterialAlphaMode : bool
+    enum class AlphaMode : bool
     {
         Opaque,
         Transparent
     };
 
-    enum class MaterialCullMode : bool
+    enum class CullMode : bool
     {
         SingleSided,
         DoubleSided
     };
 
-    struct MaterialDiffuseProperty
+    struct MaterialDiffuse
     {
         Color<3, float32> tint = { 1.0f, 1.0f, 1.0f };
-        TextureID texture = { };
     };
 
-    struct MaterialSpecularProperty
+    struct MaterialSpecular
     {
         float32 shininess = 1.0f;
-        TextureID texture = { };
     };
 
-    struct MaterialNormalProperty
+    struct MaterialNormal
     {
-        TextureID texture = { };
+
     };
 
-    struct MaterialProperties
+    struct MaterialSettings
     {
-        MaterialDiffuseProperty diffuse = { };
-        MaterialSpecularProperty specular = { };
-        MaterialNormalProperty normal = { };
+        MaterialDiffuse diffuse = { };
+        TextureID diffuseTexture = { };
 
-        MaterialAlphaMode alphaMode = MaterialAlphaMode::Opaque;
-        MaterialCullMode cullMode = MaterialCullMode::SingleSided;
+        MaterialSpecular specular = { };
+        TextureID specularTexture = { };
+
+        MaterialNormal normal = { };
+        TextureID normalTexture = { };
+
+        AlphaMode alphaMode = AlphaMode::Opaque;
+        CullMode cullMode = CullMode::SingleSided;
     };
 
     struct MaterialSerializeInfo
     {
         AssetMetadata metadata = { };
-        MaterialProperties properties = { };
+        MaterialSettings settings = { };
     };
 
     struct SerializedMaterial
@@ -67,7 +70,7 @@ namespace SierraEngine
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual std::optional<SerializedMaterial> Serialize(const MaterialSerializeInfo& serializeInfo) const = 0;
+        [[nodiscard]] virtual std::optional<SerializedMaterial> Serialize(const MaterialSerializeInfo& serializeInfo, MaterialID& outID) const = 0;
 
         /* --- COPY SEMANTICS --- */
         MaterialSerializer(const MaterialSerializer&) = delete;

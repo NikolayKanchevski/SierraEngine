@@ -32,10 +32,6 @@ namespace SierraEngine
 
         /* --- DESTRUCTOR --- */
         ~YAMLMaterialImporter() noexcept override = default;
-
-    private:
-        [[nodiscard]] std::optional<MaterialProperties> ImportProperties(ryml::ConstNodeRef root) const;
-
     };
 
 }

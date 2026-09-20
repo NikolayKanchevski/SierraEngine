@@ -23,7 +23,7 @@ namespace SierraEngine
             viewport.SetWidth(width);
             viewport.SetHeight(height);
 
-            ImGui::Image(ImTextureRef(viewport.GetImageID()), { static_cast<float32>(width), static_cast<float32>(height) });
+            ImGui::Image(ImTextureRef(viewport.GetImageID().GetValue()), { static_cast<float32>(width), static_cast<float32>(height) });
             if (ImGui::IsWindowHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Right))
             {
                 constexpr float32 CAMERA_MOVE_SPEED = 0.25f;

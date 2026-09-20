@@ -14,8 +14,8 @@
 #include "../../src/Rendering/SceneRenderer.h"
 #include "../../src/Rendering/RenderingContext.h"
 
-#include "../../src/Rendering/Primitives/Mesh.h"
-#include "../../src/Rendering/Primitives/Vertex.h"
+#include "../../src/Assets/Models/Mesh.h"
+#include "../../src/Assets/Models/Vertex.h"
 
 #include "../../src/Assets/Asset.h"
 #include "../../src/Assets/AssetHeader.h"
@@ -27,6 +27,10 @@
 
 #include "../../src/Assets/Materials/MaterialImporter.h"
 #include "../../src/Assets/Materials/MaterialSerializer.h"
+
+#include "../../src/Assets/Models/ModelImporter.h"
+#include "../../src/Assets/Models/ModelLoader.h"
+#include "../../src/Assets/Models/ModelSerializer.h"
 
 #include "../../src/Assets/Textures/ImageAccessor.h"
 #include "../../src/Assets/Textures/ImageCompressor.h"

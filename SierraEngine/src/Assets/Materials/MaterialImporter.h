@@ -18,10 +18,11 @@ namespace SierraEngine
 
     struct ImportedMaterial
     {
+        MaterialID ID = { };
         AssetHeader header = { };
         AssetMetadata metadata = { };
 
-        MaterialProperties properties = { };
+        MaterialSettings settings = { };
     };
 
     class SIERRA_ENGINE_API MaterialImporter : public virtual AssetImporter

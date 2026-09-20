@@ -51,7 +51,7 @@ namespace SierraEngine
         uint32 materialFormatIndex = 0;
         MaterialSerializeInfo serializeInfo = { };
 
-        void DrawPropertiesMenu() noexcept;
+        void DrawSettingsMenu() noexcept;
         bool Serialize() noexcept;
 
     };

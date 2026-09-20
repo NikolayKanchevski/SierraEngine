@@ -30,6 +30,7 @@ namespace SierraEngine
         std::vector<uint8> memory = { };
     };
 
+    using LoadedImageLayer = LoadedImage;
     struct LoadedImageLevel
     {
         std::span<const LoadedImage> layers = { };

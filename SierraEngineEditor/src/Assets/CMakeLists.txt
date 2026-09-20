@@ -3,7 +3,9 @@ target_sources(SierraEngineEditor PRIVATE
     EditorAssetManager.h
 )
 
+add_subdirectory(Formats)
 add_subdirectory(Importers)
 add_subdirectory(Materials)
+add_subdirectory(Models)
 add_subdirectory(Serializers)
 add_subdirectory(Textures)

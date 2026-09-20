@@ -4,109 +4,22 @@
 
 #include "YAMLTextureSerializer.h"
 
+#include "../../Formats/YAML.h"
+
 namespace SierraEngine
 {
 
     namespace
     {
-        std::string_view ImageFormatToString(const Sierra::ImageFormat format) noexcept
-        {
-            switch (format)
-            {
+        // Node + members
+        constexpr size SETTINGS_NODE_COUNT = 1 + 1;
+        constexpr size SETTINGS_ARENA_SIZE = 0;
 
-                case Sierra::ImageFormat::Undefined:            return "Undefined";
-                case Sierra::ImageFormat::R8_Int:               return "R8_Int";
-                case Sierra::ImageFormat::R8_UInt:              return "R8_UInt";
-                case Sierra::ImageFormat::R8_Norm:              return "R8_Norm";
-                case Sierra::ImageFormat::R8_UNorm:             return "R8_UNorm";
-                case Sierra::ImageFormat::R8_SRGB:              return "R8_SRGB";
-                case Sierra::ImageFormat::R8G8_Int:             return "R8G8_Int";
-                case Sierra::ImageFormat::R8G8_UInt:            return "R8G8_UInt";
-                case Sierra::ImageFormat::R8G8_Norm:            return "R8G8_Norm";
-                case Sierra::ImageFormat::R8G8_UNorm:           return "R8G8_UNorm";
-                case Sierra::ImageFormat::R8G8_SRGB:            return "R8G8_SRGB";
-                case Sierra::ImageFormat::R8G8B8_Int:           return "R8G8B8_Int";
-                case Sierra::ImageFormat::R8G8B8_UInt:          return "R8G8B8_UInt";
-                case Sierra::ImageFormat::R8G8B8_Norm:          return "R8G8B8_Norm";
-                case Sierra::ImageFormat::R8G8B8_UNorm:         return "R8G8B8_UNorm";
-                case Sierra::ImageFormat::R8G8B8_SRGB:          return "R8G8B8_SRGB";
-                case Sierra::ImageFormat::R8G8B8A8_Int:         return "R8G8B8A8_Int";
-                case Sierra::ImageFormat::R8G8B8A8_UInt:        return "R8G8B8A8_UInt";
-                case Sierra::ImageFormat::R8G8B8A8_Norm:        return "R8G8B8A8_Norm";
-                case Sierra::ImageFormat::R8G8B8A8_UNorm:       return "R8G8B8A8_UNorm";
-                case Sierra::ImageFormat::R8G8B8A8_SRGB:        return "R8G8B8A8_SRGB";
-                case Sierra::ImageFormat::B8G8R8A8_UNorm:       return "B8G8R8A8_UNorm";
-                case Sierra::ImageFormat::B8G8R8A8_SRGB:        return "B8G8R8A8_SRGB";
-                case Sierra::ImageFormat::R16_Int:              return "R16_Int";
-                case Sierra::ImageFormat::R16_UInt:             return "R16_UInt";
-                case Sierra::ImageFormat::R16_Norm:             return "R16_Norm";
-                case Sierra::ImageFormat::R16_UNorm:            return "R16_UNorm";
-                case Sierra::ImageFormat::R16_Float:            return "R16_Float";
-                case Sierra::ImageFormat::R16G16_Int:           return "R16G16_Int";
-                case Sierra::ImageFormat::R16G16_UInt:          return "R16G16_UInt";
-                case Sierra::ImageFormat::R16G16_Norm:          return "R16G16_Norm";
-                case Sierra::ImageFormat::R16G16_UNorm:         return "R16G16_UNorm";
-                case Sierra::ImageFormat::R16G16_Float:         return "R16G16_Float";
-                case Sierra::ImageFormat::R16G16B16_Int:        return "R16G16B16_Int";
-                case Sierra::ImageFormat::R16G16B16_UInt:       return "R16G16B16_UInt";
-                case Sierra::ImageFormat::R16G16B16_Norm:       return "R16G16B16_Norm";
-                case Sierra::ImageFormat::R16G16B16_UNorm:      return "R16G16B16_UNorm";
-                case Sierra::ImageFormat::R16G16B16_Float:      return "R16G16B16_Float";
-                case Sierra::ImageFormat::R16G16B16A16_Int:     return "R16G16B16A16_Int";
-                case Sierra::ImageFormat::R16G16B16A16_UInt:    return "R16G16B16A16_UInt";
-                case Sierra::ImageFormat::R16G16B16A16_Norm:    return "R16G16B16A16_Norm";
-                case Sierra::ImageFormat::R16G16B16A16_UNorm:   return "R16G16B16A16_UNorm";
-                case Sierra::ImageFormat::R16G16B16A16_Float:   return "R16G16B16A16_Float";
-                case Sierra::ImageFormat::R32_Int:              return "R32_Int";
-                case Sierra::ImageFormat::R32_UInt:             return "R32_UInt";
-                case Sierra::ImageFormat::R32_Float:            return "R32_Float";
-                case Sierra::ImageFormat::R32G32_Int:           return "R32G32_Int";
-                case Sierra::ImageFormat::R32G32_UInt:          return "R32G32_UInt";
-                case Sierra::ImageFormat::R32G32_Float:         return "R32G32_Float";
-                case Sierra::ImageFormat::R32G32B32_Int:        return "R32G32B32_Int";
-                case Sierra::ImageFormat::R32G32B32_UInt:       return "R32G32B32_UInt";
-                case Sierra::ImageFormat::R32G32B32_Float:      return "R32G32B32_Float";
-                case Sierra::ImageFormat::R32G32B32A32_Int:     return "R32G32B32A32_Int";
-                case Sierra::ImageFormat::R32G32B32A32_UInt:    return "R32G32B32A32_UInt";
-                case Sierra::ImageFormat::R32G32B32A32_Float:   return "R32G32B32A32_Float";
-                case Sierra::ImageFormat::R64_Int:              return "R64_Int";
-                case Sierra::ImageFormat::R64_UInt:             return "R64_UInt";
-                case Sierra::ImageFormat::R64_Float:            return "R64_Float";
-                case Sierra::ImageFormat::R64G64_Int:           return "R64G64_Int";
-                case Sierra::ImageFormat::R64G64_UInt:          return "R64G64_UInt";
-                case Sierra::ImageFormat::R64G64_Float:         return "R64G64_Float";
-                case Sierra::ImageFormat::R64G64B64_Int:        return "R64G64B64_Int";
-                case Sierra::ImageFormat::R64G64B64_UInt:       return "R64G64B64_UInt";
-                case Sierra::ImageFormat::R64G64B64_Float:      return "R64G64B64_Float";
-                case Sierra::ImageFormat::R64G64B64A64_Int:     return "R64G64B64A64_Int";
-                case Sierra::ImageFormat::R64G64B64A64_UInt:    return "R64G64B64A64_UInt";
-                case Sierra::ImageFormat::R64G64B64A64_Float:   return "R64G64B64A64_Float";
-                case Sierra::ImageFormat::D16_UNorm:            return "D16_UNorm";
-                case Sierra::ImageFormat::D32_Float:            return "D32_Float";
-                case Sierra::ImageFormat::BC1_RGB_UNorm:        return "BC1_RGB_UNorm";
-                case Sierra::ImageFormat::BC1_RGB_SRGB:         return "BC1_RGB_SRGB";
-                case Sierra::ImageFormat::BC1_RGBA_UNorm:       return "BC1_RGBA_UNorm";
-                case Sierra::ImageFormat::BC1_RGBA_SRGB:        return "BC1_RGBA_SRGB";
-                case Sierra::ImageFormat::BC3_RGBA_UNorm:       return "BC3_RGBA_UNorm";
-                case Sierra::ImageFormat::BC3_RGBA_SRGB:        return "BC3_RGBA_SRGB";
-                case Sierra::ImageFormat::BC4_R_Norm:           return "BC4_R_Norm";
-                case Sierra::ImageFormat::BC4_R_UNorm:          return "BC4_R_UNorm";
-                case Sierra::ImageFormat::BC5_RG_Norm:          return "BC5_RG_Norm";
-                case Sierra::ImageFormat::BC5_RG_UNorm:         return "BC5_RG_UNorm";
-                case Sierra::ImageFormat::BC6_HDR_RGB_Float:    return "BC6_HDR_RGB_Float";
-                case Sierra::ImageFormat::BC6_HDR_RGB_UFloat:   return "BC6_HDR_RGB_UFloat";
-                case Sierra::ImageFormat::BC7_RGB_UNorm:        return "BC7_RGB_UNorm";
-                case Sierra::ImageFormat::BC7_RGB_SRGB:         return "BC7_RGB_SRGB";
-                case Sierra::ImageFormat::BC7_RGBA_UNorm:       return "BC7_RGBA_UNorm";
-                case Sierra::ImageFormat::BC7_RGBA_SRGB:        return "BC7_RGBA_SRGB";
-                case Sierra::ImageFormat::ASTC_4x4_UNorm:       return "ASTC_4x4_UNorm";
-                case Sierra::ImageFormat::ASTC_4x4_SRGB:        return "ASTC_4x4_SRGB";
-                case Sierra::ImageFormat::ASTC_8x8_UNorm:       return "ASTC_8x8_UNorm";
-                case Sierra::ImageFormat::ASTC_8x8_SRGB:        return "ASTC_8x8_SRGB";
-            }
+        // Node + members
+        constexpr size PROPERTIES_NODE_COUNT = 1 + 6;
 
-            return "Unknown";
-        }
+        // Width + height + levels + layers
+        constexpr size PROPERTIES_ARENA_SIZE = 6 + 6 + 2 + 1;
 
         std::string_view TextureFilterToString(const TextureFilter filter) noexcept
         {
@@ -118,11 +31,142 @@ namespace SierraEngine
 
             return "Unknown";
         }
+
+        std::string_view TextureFormatToString(const TextureFormat format) noexcept
+        {
+            switch (format)
+            {
+                case TextureFormat::Undefined:             return "Undefined";
+                case TextureFormat::R8_Int:                return "R8_Int";
+                case TextureFormat::R8_UInt:               return "R8_UInt";
+                case TextureFormat::R8_Norm:               return "R8_Norm";
+                case TextureFormat::R8_UNorm:              return "R8_UNorm";
+                case TextureFormat::R8_SRGB:               return "R8_SRGB";
+                case TextureFormat::R8G8_Int:              return "R8G8_Int";
+                case TextureFormat::R8G8_UInt:             return "R8G8_UInt";
+                case TextureFormat::R8G8_Norm:             return "R8G8_Norm";
+                case TextureFormat::R8G8_UNorm:            return "R8G8_UNorm";
+                case TextureFormat::R8G8_SRGB:             return "R8G8_SRGB";
+                case TextureFormat::R8G8B8_Int:            return "R8G8B8_Int";
+                case TextureFormat::R8G8B8_UInt:           return "R8G8B8_UInt";
+                case TextureFormat::R8G8B8_Norm:           return "R8G8B8_Norm";
+                case TextureFormat::R8G8B8_UNorm:          return "R8G8B8_UNorm";
+                case TextureFormat::R8G8B8_SRGB:           return "R8G8B8_SRGB";
+                case TextureFormat::R8G8B8A8_Int:          return "R8G8B8A8_Int";
+                case TextureFormat::R8G8B8A8_UInt:         return "R8G8B8A8_UInt";
+                case TextureFormat::R8G8B8A8_Norm:         return "R8G8B8A8_Norm";
+                case TextureFormat::R8G8B8A8_UNorm:        return "R8G8B8A8_UNorm";
+                case TextureFormat::R8G8B8A8_SRGB:         return "R8G8B8A8_SRGB";
+                case TextureFormat::B8G8R8A8_UNorm:        return "B8G8R8A8_UNorm";
+                case TextureFormat::B8G8R8A8_SRGB:         return "B8G8R8A8_SRGB";
+                case TextureFormat::R16_Int:               return "R16_Int";
+                case TextureFormat::R16_UInt:              return "R16_UInt";
+                case TextureFormat::R16_Norm:              return "R16_Norm";
+                case TextureFormat::R16_UNorm:             return "R16_UNorm";
+                case TextureFormat::R16_Float:             return "R16_Float";
+                case TextureFormat::R16G16_Int:            return "R16G16_Int";
+                case TextureFormat::R16G16_UInt:           return "R16G16_UInt";
+                case TextureFormat::R16G16_Norm:           return "R16G16_Norm";
+                case TextureFormat::R16G16_UNorm:          return "R16G16_UNorm";
+                case TextureFormat::R16G16_Float:          return "R16G16_Float";
+                case TextureFormat::R16G16B16_Int:         return "R16G16B16_Int";
+                case TextureFormat::R16G16B16_UInt:        return "R16G16B16_UInt";
+                case TextureFormat::R16G16B16_Norm:        return "R16G16B16_Norm";
+                case TextureFormat::R16G16B16_UNorm:       return "R16G16B16_UNorm";
+                case TextureFormat::R16G16B16_Float:       return "R16G16B16_Float";
+                case TextureFormat::R16G16B16A16_Int:      return "R16G16B16A16_Int";
+                case TextureFormat::R16G16B16A16_UInt:     return "R16G16B16A16_UInt";
+                case TextureFormat::R16G16B16A16_Norm:     return "R16G16B16A16_Norm";
+                case TextureFormat::R16G16B16A16_UNorm:    return "R16G16B16A16_UNorm";
+                case TextureFormat::R16G16B16A16_Float:    return "R16G16B16A16_Float";
+                case TextureFormat::R32_Int:               return "R32_Int";
+                case TextureFormat::R32_UInt:              return "R32_UInt";
+                case TextureFormat::R32_Float:             return "R32_Float";
+                case TextureFormat::R32G32_Int:            return "R32G32_Int";
+                case TextureFormat::R32G32_UInt:           return "R32G32_UInt";
+                case TextureFormat::R32G32_Float:          return "R32G32_Float";
+                case TextureFormat::R32G32B32_Int:         return "R32G32B32_Int";
+                case TextureFormat::R32G32B32_UInt:        return "R32G32B32_UInt";
+                case TextureFormat::R32G32B32_Float:       return "R32G32B32_Float";
+                case TextureFormat::R32G32B32A32_Int:      return "R32G32B32A32_Int";
+                case TextureFormat::R32G32B32A32_UInt:     return "R32G32B32A32_UInt";
+                case TextureFormat::R32G32B32A32_Float:    return "R32G32B32A32_Float";
+                case TextureFormat::R64_Int:               return "R64_Int";
+                case TextureFormat::R64_UInt:              return "R64_UInt";
+                case TextureFormat::R64_Float:             return "R64_Float";
+                case TextureFormat::R64G64_Int:            return "R64G64_Int";
+                case TextureFormat::R64G64_UInt:           return "R64G64_UInt";
+                case TextureFormat::R64G64_Float:          return "R64G64_Float";
+                case TextureFormat::R64G64B64_Int:         return "R64G64B64_Int";
+                case TextureFormat::R64G64B64_UInt:        return "R64G64B64_UInt";
+                case TextureFormat::R64G64B64_Float:       return "R64G64B64_Float";
+                case TextureFormat::R64G64B64A64_Int:      return "R64G64B64A64_Int";
+                case TextureFormat::R64G64B64A64_UInt:     return "R64G64B64A64_UInt";
+                case TextureFormat::R64G64B64A64_Float:    return "R64G64B64A64_Float";
+                case TextureFormat::D16_UNorm:             return "D16_UNorm";
+                case TextureFormat::D32_Float:             return "D32_Float";
+                case TextureFormat::BC1_RGB_UNorm:         return "BC1_RGB_UNorm";
+                case TextureFormat::BC1_RGB_SRGB:          return "BC1_RGB_SRGB";
+                case TextureFormat::BC1_RGBA_UNorm:        return "BC1_RGBA_UNorm";
+                case TextureFormat::BC1_RGBA_SRGB:         return "BC1_RGBA_SRGB";
+                case TextureFormat::BC3_RGBA_UNorm:        return "BC3_RGBA_UNorm";
+                case TextureFormat::BC3_RGBA_SRGB:         return "BC3_RGBA_SRGB";
+                case TextureFormat::BC4_R_Norm:            return "BC4_R_Norm";
+                case TextureFormat::BC4_R_UNorm:           return "BC4_R_UNorm";
+                case TextureFormat::BC5_RG_Norm:           return "BC5_RG_Norm";
+                case TextureFormat::BC5_RG_UNorm:          return "BC5_RG_UNorm";
+                case TextureFormat::BC6_HDR_RGB_Float:     return "BC6_HDR_RGB_Float";
+                case TextureFormat::BC6_HDR_RGB_UFloat:    return "BC6_HDR_RGB_UFloat";
+                case TextureFormat::BC7_RGB_UNorm:         return "BC7_RGB_UNorm";
+                case TextureFormat::BC7_RGB_SRGB:          return "BC7_RGB_SRGB";
+                case TextureFormat::BC7_RGBA_UNorm:        return "BC7_RGBA_UNorm";
+                case TextureFormat::BC7_RGBA_SRGB:         return "BC7_RGBA_SRGB";
+                case TextureFormat::ASTC_4x4_UNorm:        return "ASTC_4x4_UNorm";
+                case TextureFormat::ASTC_4x4_SRGB:         return "ASTC_4x4_SRGB";
+                case TextureFormat::ASTC_8x8_UNorm:        return "ASTC_8x8_UNorm";
+                case TextureFormat::ASTC_8x8_SRGB:         return "ASTC_8x8_SRGB";
+            }
+
+            return "Unknown";
+        }
+
+        std::string_view TextureCompressionToString(const TextureCompression compression) noexcept
+        {
+            switch (compression)
+            {
+                case TextureCompression::None:           return "None";
+                case TextureCompression::BasisUniversal: return "BasisUniversal";
+            }
+
+            return "Unknown";
+        }
+
+        void SerializeSettings(ryml::NodeRef rootNode, const TextureSettings& settings)
+        {
+            ryml::NodeRef settingsNode = rootNode["settings"];
+            settingsNode |= ryml::MAP;
+
+            YAML::SerializeEnum(settingsNode["filter"], settings.filter, TextureFilterToString);
+        }
+
+        void SerializeProperties(ryml::NodeRef rootNode, const TextureSerializeInfo& serializeInfo)
+        {
+            ryml::NodeRef propertiesNode = rootNode["properties"];
+            propertiesNode |= ryml::MAP;
+
+            YAML::SerializeNumeric(propertiesNode["width"], serializeInfo.levels[0].layers[0].width);                         // Cost: ~6 chars
+            YAML::SerializeNumeric(propertiesNode["height"], serializeInfo.levels[0].layers[0].height);                       // Cost: ~6 chars
+            YAML::SerializeNumeric(propertiesNode["levelCount"], static_cast<uint32>(serializeInfo.levels.size()));           // Cost: ~2 chars
+            YAML::SerializeNumeric(propertiesNode["layerCount"], static_cast<uint32>(serializeInfo.levels[0].layers.size())); // Cost: ~1 chars
+
+            YAML::SerializeEnum(propertiesNode["format"], serializeInfo.levels[0].layers[0].format, TextureFormatToString);
+            YAML::SerializeEnum(propertiesNode["compression"], serializeInfo.compressionSettings.compression, TextureCompressionToString);
+        }
     }
 
     /* --- POLLING METHODS --- */
 
-    std::optional<SerializedTexture> YAMLTextureSerializer::Serialize(const TextureSerializeInfo& serializeInfo) const
+    std::optional<SerializedTexture> YAMLTextureSerializer::Serialize(const TextureSerializeInfo& serializeInfo, TextureID& outID) const
     {
         if (serializeInfo.levels.empty() || serializeInfo.levels[0].layers.empty())
         {
@@ -137,16 +181,19 @@ namespace SierraEngine
             return std::nullopt;
         }
 
-        const size nodeCapacity = GetMetadataNodeCount(serializeInfo.metadata);
-        const size arenaCapacity = GetMetadataArenaSize(serializeInfo.metadata);
-        ryml::Tree tree(nodeCapacity, arenaCapacity);
+        const size nodeCount = MANDATORY_NODE_COUNT + GetMetadataNodeCount(serializeInfo.metadata) + SETTINGS_NODE_COUNT + PROPERTIES_NODE_COUNT;
+        const size arenaSize = GetMetadataArenaSize(serializeInfo.metadata) + SETTINGS_ARENA_SIZE + PROPERTIES_ARENA_SIZE;
 
-        ryml::NodeRef root = tree.rootref();
-        root |= ryml::MAP;
+        ryml::Tree tree(nodeCount, arenaSize);
+        outID = TextureID(Sierra::RNG().Random<TextureID::ValueType>());
 
-        SerializeID(root, Sierra::RNG().Random<TextureID::ValueType>());
-        SerializeMetadata(root, serializeInfo.metadata);
-        SerializeProperties(root, serializeInfo.properties);
+        ryml::NodeRef rootNode = tree.rootref();
+        rootNode |= ryml::MAP;
+
+        SerializeID(rootNode, outID);
+        SerializeMetadata(rootNode, serializeInfo.metadata);
+        SerializeSettings(rootNode, serializeInfo.settings);
+        SerializeProperties(rootNode, serializeInfo);
 
         const std::vector<char> data = ryml::emitrs_yaml<std::vector<char>>(tree);
         if (data.empty())
@@ -155,7 +202,7 @@ namespace SierraEngine
             return std::nullopt;
         }
 
-        const size blobMemorySize = sizeof(AssetHeader) + sizeof(TextureHeader) + GetTextureMemorySize(serializeInfo);
+        const size blobMemorySize = sizeof(AssetHeader) + GetTextureMemorySize(serializeInfo);
         Sierra::MemoryWriteStream blobStream(blobMemorySize);
 
         SerializeHeader(blobStream);
@@ -168,28 +215,6 @@ namespace SierraEngine
         };
 
         return texture;
-    }
-
-    /* --- POLLING METHODS --- */
-
-    void YAMLTextureSerializer::SerializeProperties(ryml::NodeRef root, const TextureProperties& properties) const
-    {
-        ryml::NodeRef node = root["properties"];
-        node |= ryml::MAP;
-
-        SerializeEnum(node["filter"], properties.filter, TextureFilterToString);
-    }
-
-    /* --- GETTER METHODS --- */
-
-    [[nodiscard]] size YAMLTextureSerializer::GetPropertiesNodeCount() const noexcept
-    {
-        return 0;
-    }
-
-    [[nodiscard]] size YAMLTextureSerializer::GetPropertiesArenaSize() const noexcept
-    {
-        return 0;
     }
 
 }

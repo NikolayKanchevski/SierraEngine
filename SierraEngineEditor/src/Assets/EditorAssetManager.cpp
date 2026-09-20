@@ -14,7 +14,8 @@ namespace SierraEngine
     const std::unordered_map<std::string_view, AssetType> ASSET_FILE_EXTENSION_MAP
     {
         { ".texture", AssetType::Texture },
-        { ".material", AssetType::Material }
+        { ".material", AssetType::Material },
+        { ".model", AssetType::Model },
     };
 
     /* --- CONSTRUCTORS --- */
@@ -35,7 +36,7 @@ namespace SierraEngine
     void EditorAssetManager::LoadProjectAssets(const Sierra::FileManager& fileManager, const Project& project)
     {
         const std::filesystem::path assetDirectoryPath = project.GetAssetPath();
-        fileManager.EnumerateDirectoryFiles(assetDirectoryPath, true, [this, &fileManager](const std::filesystem::path& filePath) -> void
+        fileManager.EnumerateDirectoryFiles(assetDirectoryPath, false, [this, &fileManager](const std::filesystem::path& filePath) -> void
         {
             if (!filePath.has_extension())
                 return;

@@ -4,6 +4,14 @@
 
 #include "EditorApplication.h"
 
+// TODO:
+#include "../Assets/Materials/Serializers/YAMLMaterialSerializer.h"
+#include "../Assets/Models/Importers/YAMLModelImporter.h"
+#include "../Assets/Models/Loaders/glTFModelLoader.h"
+#include "../Assets/Models/Serializers/YAMLModelSerializer.h"
+#include "../Assets/Textures/Loaders/AutoImageLoader.h"
+#include "../Assets/Textures/Serializers/YAMLTextureSerializer.h"
+
 namespace SierraEngine
 {
 
@@ -20,7 +28,6 @@ namespace SierraEngine
     EditorApplication::EditorApplication(const EditorApplicationCreateInfo& createInfo)
         : Application({ .name = APPLICATION_NAME, .version = APPLICATION_VERSION, .settings = createInfo.settings }),
             frameLimiter({ .maxFrameRate = 60 * SR_PLATFORM_MOBILE }),
-            // threadPool({ .maxThreadCount = std::thread::hardware_concurrency() }),
             project({ .fileManager = GetFileManager(), .projectDirectoryPath = createInfo.projectDirectoryPath }),
             renderingContext({ .renderingInstance = GetRenderingInstance() }),
             queue(renderingContext.GetDevice().CreateQueue({ .name = "General Queue" })),
@@ -48,8 +55,8 @@ namespace SierraEngine
             ViewportID viewportID;
             Viewport& viewport = editor.CreateViewport(viewportID, { .renderingContext = renderingContext, .renderer = sceneRenderer });
 
-            viewport.GetTransform().SetPosition({ 0.0f, 4.0f, -10.0f * (viewportID + 1) / 1.5f });
-            viewport.GetTransform().SetRotation({ 0.0f, -20.0f * (viewportID + 1) / 1.5f, 0.0f });
+            viewport.GetTransform().SetPosition({ 0.0f, 4.0f, -10.0f * static_cast<float32>(viewportID.GetValue() + 1) / 1.5f });
+            viewport.GetTransform().SetRotation({ 0.0f, -20.0f * static_cast<float32>(viewportID.GetValue() + 1) / 1.5f, 0.0f });
         }
 
         Scene& scene = editor.GetScene();

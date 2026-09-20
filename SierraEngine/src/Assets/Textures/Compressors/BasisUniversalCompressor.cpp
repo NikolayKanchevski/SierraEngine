@@ -48,28 +48,28 @@ namespace SierraEngine
 
         switch (compressInfo.compressionLevel)
         {
-            case ImageCompressionLevel::Lowest:
+            case TextureCompressionAggressiveness::Lowest:
             {
                 compressionLevel = 1;
                 break;
             }
-            case ImageCompressionLevel::Low:
+            case TextureCompressionAggressiveness::Low:
             {
                 compressionLevel = 3;
                 break;
             }
-            case ImageCompressionLevel::Standard:
+            case TextureCompressionAggressiveness::Standard:
             {
                 compressionLevel = 4;
                 break;
             }
-            case ImageCompressionLevel::High:
+            case TextureCompressionAggressiveness::High:
             {
                 useUASTC = false;
                 compressionLevel = 5;
                 break;
             }
-            case ImageCompressionLevel::Highest:
+            case TextureCompressionAggressiveness::Highest:
             {
                 useUASTC = false;
                 compressionLevel = 6;
@@ -79,28 +79,28 @@ namespace SierraEngine
 
         switch (compressInfo.qualityLevel)
         {
-            case ImageCompressionQualityLevel::Lowest:
+            case TextureCompressionQuality::Lowest:
             {
                 qualityLevel = basisu::BASISU_QUALITY_MIN;
                 break;
             }
-            case ImageCompressionQualityLevel::Low:
+            case TextureCompressionQuality::Low:
             {
                 qualityLevel = (basisu::BASISU_QUALITY_MIN + basisu::BASISU_DEFAULT_QUALITY) / 2;
                 break;
             }
-            case ImageCompressionQualityLevel::Standard:
+            case TextureCompressionQuality::Standard:
             {
                 qualityLevel = basisu::BASISU_DEFAULT_QUALITY;
                 break;
             }
-            case ImageCompressionQualityLevel::High:
+            case TextureCompressionQuality::High:
             {
                 useUASTC = true;
                 qualityLevel = (basisu::BASISU_DEFAULT_QUALITY + basisu::BASISU_QUALITY_MAX) / 2;
                 break;
             }
-            case ImageCompressionQualityLevel::Highest:
+            case TextureCompressionQuality::Highest:
             {
                 useUASTC = true;
                 qualityLevel = basisu::BASISU_QUALITY_MAX;

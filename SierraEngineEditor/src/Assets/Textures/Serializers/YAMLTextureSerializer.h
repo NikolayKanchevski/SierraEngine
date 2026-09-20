@@ -16,7 +16,7 @@ namespace SierraEngine
         YAMLTextureSerializer() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::optional<SerializedTexture> Serialize(const TextureSerializeInfo& serializeInfo) const override;
+        [[nodiscard]] std::optional<SerializedTexture> Serialize(const TextureSerializeInfo& serializeInfo, TextureID& outID) const override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] AssetSignature GetSignature() const noexcept override { return { 'Y', 'A', 'T', 'X' }; }
@@ -32,14 +32,6 @@ namespace SierraEngine
 
         /* --- DESTRUCTOR --- */
         ~YAMLTextureSerializer() noexcept override = default;
-
-    private:
-        /* --- POLLING METHODS --- */
-        void SerializeProperties(ryml::NodeRef root, const TextureProperties& properties) const;
-
-        /* --- GETTER METHODS --- */
-        [[nodiscard]] size GetPropertiesNodeCount() const noexcept;
-        [[nodiscard]] size GetPropertiesArenaSize() const noexcept;
 
     };
 

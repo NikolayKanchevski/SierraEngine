@@ -1,0 +1,14 @@
+ID: 12488998662101836762
+metadata:
+  name: Debug Texture
+  author: nikolay
+  tags: []
+settings:
+  filter: Smooth
+properties:
+  width: 2
+  height: 2
+  levelCount: 1
+  layerCount: 1
+  format: R8G8B8_UNorm
+  compression: None

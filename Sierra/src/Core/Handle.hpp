@@ -11,12 +11,15 @@ namespace Sierra
     template<typename T>
     concept HandleValueType = UnsignedType<T>;
 
-    template<HandleValueType T, T NullValue = std::numeric_limits<T>::max()>
+    template<HandleValueType T, T _NullValue = std::numeric_limits<T>::max()>
     class Handle
     {
     public:
         /* --- TYPE DEFINITIONS --- */
         using ValueType = T;
+
+        /* --- CONSTANTS --- */
+        constexpr static T NullValue = _NullValue;
 
         /* --- CONSTRUCTORS --- */
         constexpr Handle() noexcept = default;
@@ -32,8 +35,6 @@ namespace Sierra
         [[nodiscard]] T GetValue() const noexcept { return value; }
 
         /* --- OPERATORS --- */
-        [[nodiscard]] operator T() const noexcept { return value; }
-
         [[nodiscard]] bool operator==(const Handle other) const noexcept { return value == other.value; }
         [[nodiscard]] bool operator!=(const Handle other) const noexcept { return !(*this == other); }
 

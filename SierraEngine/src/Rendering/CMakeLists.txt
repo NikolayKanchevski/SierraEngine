@@ -6,5 +6,3 @@ target_sources(SierraEngine PRIVATE
     SceneRenderer.cpp
     SceneRenderer.h
 )
-
-add_subdirectory(Primitives)

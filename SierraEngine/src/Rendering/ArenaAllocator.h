@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "Primitives/Mesh.h"
+#include "../Assets/Models/Mesh.h"
 #include "RenderingContext.h"
-#include "Primitives/Vertex.h"
+#include "../Assets/Models/Vertex.h"
 
 namespace SierraEngine
 {

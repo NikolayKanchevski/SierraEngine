@@ -40,7 +40,6 @@ namespace SierraEngine
         bool Update() override;
 
         FrameLimiter frameLimiter;
-        // ThreadPool threadPool;
         Project project;
 
         RenderingContext renderingContext;

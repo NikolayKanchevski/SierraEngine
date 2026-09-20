@@ -6,7 +6,7 @@
 
 #include "../Component.h"
 
-#include "../../Rendering/Primitives/Mesh.h"
+#include "../../Assets/Models/Mesh.h"
 
 namespace SierraEngine
 {

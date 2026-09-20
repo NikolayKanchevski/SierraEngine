@@ -459,7 +459,7 @@ namespace SierraEngine
                 }
             }
 
-            window->DrawList->AddImage(ImTextureRef(inputInfo.previewID.value()), imageRect.Min, imageRect.Max);
+            window->DrawList->AddImage(ImTextureRef(inputInfo.previewID->GetValue()), imageRect.Min, imageRect.Max);
         }
 
         constexpr std::string_view BROWSE_BUTTON_LABEL = "Browse";

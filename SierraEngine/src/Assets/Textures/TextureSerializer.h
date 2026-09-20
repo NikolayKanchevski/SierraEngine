@@ -19,38 +19,31 @@ namespace SierraEngine
         Smooth
     };
 
-    struct TextureProperties
+    struct TextureSettings
     {
         TextureFilter filter = TextureFilter::Smooth;
     };
 
-    enum class ImageCompression : uint8
+    enum class TextureCompression : uint8
     {
         None,
         BasisUniversal
     };
 
+    struct TextureCompressionSettings
+    {
+        TextureCompression compression = TextureCompression::None;
+        TextureCompressionAggressiveness aggressiveness = TextureCompressionAggressiveness::Standard;
+        TextureCompressionQuality quality = TextureCompressionQuality::Standard;
+    };
+
     struct TextureSerializeInfo
     {
         AssetMetadata metadata = { };
-        TextureProperties properties = { };
+        TextureSettings settings = { };
 
-        ImageCompression compression = ImageCompression::None;
-        ImageCompressionLevel compressionLevel = ImageCompressionLevel::Standard;
-        ImageCompressionQualityLevel compressionQualityLevel = ImageCompressionQualityLevel::Standard;
+        TextureCompressionSettings compressionSettings = { };
         std::span<const LoadedImageLevel> levels = { };
-    };
-
-    struct TextureHeader
-    {
-        uint32 width = 0;
-        uint32 height = 0;
-
-        uint32 levelCount = 0;
-        uint32 layerCount = 0;
-
-        Sierra::ImageFormat format = Sierra::ImageFormat::Undefined;
-        ImageCompression compression = ImageCompression::None;
     };
 
     struct SerializedTexture
@@ -63,7 +56,7 @@ namespace SierraEngine
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual std::optional<SerializedTexture> Serialize(const TextureSerializeInfo& serializeInfo) const = 0;
+        [[nodiscard]] virtual std::optional<SerializedTexture> Serialize(const TextureSerializeInfo& serializeInfo, TextureID& outID) const = 0;
 
         /* --- COPY SEMANTICS --- */
         TextureSerializer(const TextureSerializer&) = delete;
@@ -77,7 +70,7 @@ namespace SierraEngine
         TextureSerializer() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        void SerializeBlob(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo) const;
+        void SerializeBlob(Sierra::Stream& blob, const TextureSerializeInfo& serializeInfo) const;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] size GetTextureMemorySize(const TextureSerializeInfo& serializeInfo) const noexcept;
@@ -85,7 +78,6 @@ namespace SierraEngine
         /* --- MOVE SEMANTICS --- */
         TextureSerializer(TextureSerializer&&) noexcept = default;
         TextureSerializer& operator=(TextureSerializer&&) noexcept = default;
-
     };
 
 }

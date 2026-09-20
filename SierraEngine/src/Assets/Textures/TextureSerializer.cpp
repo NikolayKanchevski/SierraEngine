@@ -3,7 +3,6 @@
 //
 
 #include "TextureSerializer.h"
-#include "TextureImporter.h"
 
 #include "Compressors/BasisUniversalCompressor.h"
 
@@ -12,7 +11,7 @@ namespace SierraEngine
 
     namespace
     {
-        void SerializeRawMemory(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo)
+        void SerializeRawBlob(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo)
         {
             for (const LoadedImageLevel& level : serializeInfo.levels)
             {
@@ -23,20 +22,20 @@ namespace SierraEngine
             }
         }
 
-        void SerializeCompressedMemory(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo)
+        void SerializeCompressedBlob(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo)
         {
             std::unique_ptr<ImageCompressor> compressor = nullptr;
-            switch (serializeInfo.compression)
+            switch (serializeInfo.compressionSettings.compression)
             {
-                case ImageCompression::BasisUniversal:    { compressor = std::make_unique<BasisUniversalCompressor>(); break; }
+                case TextureCompression::BasisUniversal:    { compressor = std::make_unique<BasisUniversalCompressor>(); break; }
                 default:                                  break;
             }
 
-            std::optional<CompressedImage> compressedImage = compressor->Compress({ .levels = serializeInfo.levels, .compressionLevel = serializeInfo.compressionLevel, .qualityLevel = serializeInfo.compressionQualityLevel });
+            std::optional<CompressedImage> compressedImage = compressor->Compress({ .levels = serializeInfo.levels, .compressionLevel = serializeInfo.compressionSettings.aggressiveness, .qualityLevel = serializeInfo.compressionSettings.quality });
             if (!compressedImage.has_value())
             {
                 APP_WARNING("Could not compress image contents of texture [{0}], writing raw pixel memory instead", serializeInfo.metadata.name);
-                SerializeRawMemory(stream, serializeInfo);
+                SerializeRawBlob(stream, serializeInfo);
                 return;
             }
 
@@ -46,27 +45,15 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void TextureSerializer::SerializeBlob(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo) const
+    void TextureSerializer::SerializeBlob(Sierra::Stream& blob, const TextureSerializeInfo& serializeInfo) const
     {
-        const TextureHeader header
+        if (serializeInfo.compressionSettings.compression != TextureCompression::None)
         {
-            .width = serializeInfo.levels[0].layers[0].width,
-            .height = serializeInfo.levels[0].layers[0].height,
-            .levelCount = static_cast<uint32>(serializeInfo.levels.size()),
-            .layerCount = static_cast<uint32>(serializeInfo.levels[0].layers.size()),
-            .format = serializeInfo.levels[0].layers[0].format,
-            .compression = serializeInfo.compression
-        };
-        stream.Write(header);
+            SerializeCompressedBlob(blob, serializeInfo);
+            return;
+        }
 
-        if (serializeInfo.compression != ImageCompression::None)
-        {
-            SerializeCompressedMemory(stream, serializeInfo);
-        }
-        else
-        {
-            SerializeRawMemory(stream, serializeInfo);
-        }
+        SerializeRawBlob(blob, serializeInfo);
     }
 
     /* --- GETTER METHODS --- */

@@ -95,7 +95,7 @@ namespace SierraEngine
         void ResetLayer(ImageLayerData& layer, Sierra::CommandBuffer& commandBuffer) const noexcept;
         bool Serialize() noexcept;
 
-        void DrawPropertiesMenu() noexcept;
+        void DrawSettingsMenu() noexcept;
         void DrawSerializeInfoMenu() noexcept;
         void DrawExtrasMenu(Sierra::CommandBuffer& commandBuffer) noexcept;
 

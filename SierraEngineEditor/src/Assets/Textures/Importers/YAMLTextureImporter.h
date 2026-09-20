@@ -32,10 +32,6 @@ namespace SierraEngine
 
         /* --- DESTRUCTOR --- */
         ~YAMLTextureImporter() noexcept override = default;
-
-    private:
-        [[nodiscard]] std::optional<TextureProperties> ImportProperties(ryml::ConstNodeRef root) const;
-
     };
 
 }

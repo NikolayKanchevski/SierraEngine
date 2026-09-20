@@ -17,14 +17,33 @@ namespace SierraEngine
         Sierra::ImageFormat format = Sierra::ImageFormat::Undefined;
     };
 
+    using TextureFormat = Sierra::ImageFormat;
+    struct TextureProperties
+    {
+        uint32 width = 0;
+        uint32 height = 0;
+
+        uint32 levelCount = 0;
+        uint32 layerCount = 0;
+
+        TextureFormat format = TextureFormat::Undefined;
+        TextureCompression compression = TextureCompression::None;
+    };
+
+    struct ImportedTextureBuffer
+    {
+        std::vector<uint8> memory = { };
+    };
+
     struct ImportedTexture
     {
+        TextureID ID = { };
         AssetHeader header = { };
         AssetMetadata metadata = { };
-        TextureProperties properties = { };
+        TextureSettings settings = { };
 
-        TextureHeader textureHeader = { };
-        std::vector<uint8> memory = { };
+        TextureProperties properties = { };
+        ImportedTextureBuffer buffer = { };
     };
 
     class SIERRA_ENGINE_API TextureImporter : public virtual AssetImporter
@@ -45,7 +64,7 @@ namespace SierraEngine
         TextureImporter() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::vector<uint8> ImportBlob(const TextureHeader& header, Sierra::ImageFormat format, Sierra::Stream& stream) const;
+        [[nodiscard]] std::optional<ImportedTextureBuffer> ImportBlob(Sierra::Stream& blob, Sierra::ImageFormat format, const TextureProperties& properties) const;
 
         /* --- MOVE SEMANTICS --- */
         TextureImporter(TextureImporter&&) noexcept = default;

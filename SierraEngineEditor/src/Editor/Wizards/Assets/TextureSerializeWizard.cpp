@@ -84,7 +84,7 @@ namespace SierraEngine
             DrawFileInputHeader();
             DrawMetadataMenu(serializeInfo.metadata);
 
-            DrawPropertiesMenu();
+            DrawSettingsMenu();
             DrawSerializeInfoMenu();
             DrawExtrasMenu(commandBuffer);
 
@@ -317,7 +317,9 @@ namespace SierraEngine
             case TextureSerializeFormat::YAML: { serializer = std::make_unique<YAMLTextureSerializer>(); break; }
         }
 
-        const std::optional<SerializedTexture> serializedTexture = serializer->Serialize(serializeInfo);
+        TextureID ID = { };
+        const std::optional<SerializedTexture> serializedTexture = serializer->Serialize(serializeInfo, ID);
+
         if (!serializedTexture.has_value())
         {
             APP_WARNING("Could not serialize texture [{0}]", serializeInfo.metadata.name);
@@ -327,6 +329,12 @@ namespace SierraEngine
         const Sierra::FileManager& fileManager = FileOutputWizard::GetPlatformContext().GetFileManager();
 
         const std::filesystem::path& outputDataFilePath = GetOutputFilePath();
+        if (outputDataFilePath.empty())
+        {
+            APP_WARNING("Cannot serialize texture [{0}] at invalid location [{1}]", serializeInfo.metadata.name, outputDataFilePath.string());
+            return false;
+        }
+
         fileManager.CreateFile(outputDataFilePath, Sierra::FilePathConflictPolicy::Overwrite);
         fileManager.WriteFile(outputDataFilePath, serializedTexture->data);
 
@@ -337,9 +345,9 @@ namespace SierraEngine
         return true;
     }
 
-    void TextureSerializeWizard::DrawPropertiesMenu() noexcept
+    void TextureSerializeWizard::DrawSettingsMenu() noexcept
     {
-        if (ImGui::TreeNodeEx("Properties", MENU_TREE_FLAGS))
+        if (ImGui::TreeNodeEx("Settings", MENU_TREE_FLAGS))
         {
             if (ImGuiWidgets::BeginPropertyTable())
             {
@@ -351,9 +359,9 @@ namespace SierraEngine
                         ImGuiDropdownOption { .text = "Smooth" }
                     };
 
-                    if (uint32 filterTypeIndex = static_cast<uint32>(serializeInfo.properties.filter); ImGuiWidgets::Dropdown("##FilterDropdown", filterTypeIndex, { .options = OPTIONS }))
+                    if (uint32 filterTypeIndex = static_cast<uint32>(serializeInfo.settings.filter); ImGuiWidgets::Dropdown("##FilterDropdown", filterTypeIndex, { .options = OPTIONS }))
                     {
-                        serializeInfo.properties.filter = static_cast<TextureFilter>(filterTypeIndex);
+                        serializeInfo.settings.filter = static_cast<TextureFilter>(filterTypeIndex);
                     }
                 }
                 ImGuiWidgets::EndProperty();
@@ -378,14 +386,14 @@ namespace SierraEngine
                         ImGuiDropdownOption { .text = "Basis Universal" }
                     };
 
-                    if (uint32 compressorTypeIndex = static_cast<uint32>(serializeInfo.compression); ImGuiWidgets::Dropdown("##CompressorTypeDropdown", compressorTypeIndex, { .options = OPTIONS }))
+                    if (uint32 compressorTypeIndex = static_cast<uint32>(serializeInfo.compressionSettings.compression); ImGuiWidgets::Dropdown("##CompressorTypeDropdown", compressorTypeIndex, { .options = OPTIONS }))
                     {
-                        serializeInfo.compression = static_cast<ImageCompression>(compressorTypeIndex);
+                        serializeInfo.compressionSettings.compression = static_cast<TextureCompression>(compressorTypeIndex);
                     }
                 }
                 ImGuiWidgets::EndProperty();
 
-                if (serializeInfo.compression != ImageCompression::None)
+                if (TextureCompressionSettings& compressionSettings = serializeInfo.compressionSettings; compressionSettings.compression != TextureCompression::None)
                 {
                     ImGuiWidgets::BeginProperty("Compression Level");
                     {
@@ -398,9 +406,9 @@ namespace SierraEngine
                             ImGuiDropdownOption { .text = "Highest" }
                         };
 
-                        if (uint32 compressionLevelIndex = static_cast<uint32>(serializeInfo.compressionLevel); ImGuiWidgets::Dropdown("##CompressionLevelDropdown", compressionLevelIndex, { .options = OPTIONS }))
+                        if (uint32 compressionLevelIndex = static_cast<uint32>(compressionSettings.aggressiveness); ImGuiWidgets::Dropdown("##CompressionAggressivenessDropdown", compressionLevelIndex, { .options = OPTIONS }))
                         {
-                            serializeInfo.compressionLevel = static_cast<ImageCompressionLevel>(compressionLevelIndex);
+                            compressionSettings.aggressiveness = static_cast<TextureCompressionAggressiveness>(compressionLevelIndex);
                         }
                     }
                     ImGuiWidgets::EndProperty();
@@ -416,9 +424,9 @@ namespace SierraEngine
                             ImGuiDropdownOption { .text = "Highest" }
                         };
 
-                        if (uint32 qualityLevelIndex = static_cast<uint32>(serializeInfo.compressionQualityLevel); ImGuiWidgets::Dropdown("##QualityLevelDropdown", qualityLevelIndex, { .options = OPTIONS }))
+                        if (uint32 qualityLevelIndex = static_cast<uint32>(compressionSettings.quality); ImGuiWidgets::Dropdown("##QualityDropdown", qualityLevelIndex, { .options = OPTIONS }))
                         {
-                            serializeInfo.compressionQualityLevel = static_cast<ImageCompressionQualityLevel>(qualityLevelIndex);
+                            compressionSettings.quality = static_cast<TextureCompressionQuality>(qualityLevelIndex);
                         }
                     }
                     ImGuiWidgets::EndProperty();

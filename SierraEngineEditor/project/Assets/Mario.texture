@@ -1,7 +1,14 @@
-ID: 377899620255983053
+ID: 17941795008866587485
 metadata:
-  name: Mario
+  name: Mario Texture
   author: nikolay
   tags: []
-properties:
+settings:
   filter: Smooth
+properties:
+  width: 1080
+  height: 1879
+  levelCount: 1
+  layerCount: 1
+  format: R8G8B8A8_UNorm
+  compression: None
