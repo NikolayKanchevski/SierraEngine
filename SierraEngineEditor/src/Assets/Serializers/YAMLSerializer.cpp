@@ -19,7 +19,7 @@ namespace SierraEngine
     void YAMLSerializer::SerializeMetadata(ryml::NodeRef rootNode, const AssetMetadata& metadata) const
     {
         ryml::NodeRef metadataNode = rootNode["metadata"];
-        metadataNode |= ryml::MAP;
+        metadataNode.set_map();
 
         YAML::SerializeString(metadataNode["name"], metadata.name);
         YAML::SerializeString(metadataNode["author"], metadata.author);

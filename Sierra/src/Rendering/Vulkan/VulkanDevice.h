@@ -855,7 +855,7 @@ namespace Sierra
         [[nodiscard]] bool IsSamplerAnisotropySupported(SamplerAnisotropy anisotropy) const noexcept override;
 
         [[nodiscard]] const VulkanDeviceFunctionTable& GetFunctionTable() const noexcept { return functionTable; }
-        [[nodiscard]] bool IsExtensionLoaded(std::string_view extensionName) const noexcept { return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<std::string_view>{}(extensionName.data())) != loadedExtensions.end(); }
+        [[nodiscard]] bool IsExtensionLoaded(const std::string_view extensionName) const noexcept { return std::find(loadedExtensions.begin(), loadedExtensions.end(), std::hash<std::string_view>{}(extensionName.data())) != loadedExtensions.end(); }
 
         [[nodiscard]] VkPhysicalDevice GetVulkanPhysicalDevice() const noexcept { return physicalDevice; }
         [[nodiscard]] VkDevice GetVulkanDevice() const noexcept { return device; }
@@ -894,7 +894,7 @@ namespace Sierra
         constexpr static uint32 MAX_SAMPLERS_PER_RESOURCE_TABLE         = 8192;
 
         /* --- OPERATORS --- */
-        [[nodiscard]] bool operator==(const VulkanDevice& other) noexcept;
+        [[nodiscard]] bool operator==(const VulkanDevice& other) const noexcept;
         [[nodiscard]] bool operator!=(const VulkanDevice& other) noexcept;
 
         /* --- COPY SEMANTICS --- */

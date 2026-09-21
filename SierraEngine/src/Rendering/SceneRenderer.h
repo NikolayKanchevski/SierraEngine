@@ -7,6 +7,7 @@
 #include "../Scene/Scene.h"
 #include "../Scene/Components/Camera.h"
 #include "../Scene/Components/Transform.h"
+#include "../Rendering/RenderingContext.h"
 
 namespace SierraEngine
 {

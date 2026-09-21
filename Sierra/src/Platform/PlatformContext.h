@@ -75,7 +75,7 @@ namespace Sierra
         [[nodiscard]] virtual std::optional<std::filesystem::path> OpenFileSaveDialog(const FileSaveDialogOpenInfo& openInfo) const noexcept = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual std::string_view GetUserName() const noexcept = 0;
+        [[nodiscard]] virtual std::string GetUserName() const noexcept = 0;
         [[nodiscard]] virtual const FileManager& GetFileManager() const noexcept = 0;
 
         [[nodiscard]] virtual Screen& GetPrimaryScreen() noexcept = 0;

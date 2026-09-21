@@ -31,7 +31,7 @@ namespace SierraEngine
         void SerializeNode(ryml::NodeRef parent, const ModelNode& nodeInfo) noexcept
         {
             ryml::NodeRef nodeNode = parent.append_child();
-            nodeNode |= ryml::MAP;
+            nodeNode.set_map();
 
             YAML::SerializeString(nodeNode["name"], nodeInfo.name);
             YAML::SerializeContainer(nodeNode["meshIndices"], std::span(nodeInfo.meshIndices), YAML::SerializeNumeric); // Cost: ~2 chars each
@@ -39,7 +39,7 @@ namespace SierraEngine
             for (const ModelNode& child : nodeInfo.children)
             {
                 ryml::NodeRef childrenNode = nodeNode["children"];
-                childrenNode |= ryml::SEQ;
+                childrenNode.set_seq();
 
                 SerializeNode(childrenNode, child);
             }
@@ -48,7 +48,7 @@ namespace SierraEngine
         void SerializeNodes(ryml::NodeRef parent, const std::span<const ModelNode> nodes) noexcept
         {
             ryml::NodeRef nodesNode = parent["nodes"];
-            nodesNode |= ryml::SEQ;
+            nodesNode.set_seq();
 
             for (const ModelNode& modelNode : nodes)
             {
@@ -69,7 +69,7 @@ namespace SierraEngine
         void SerializeGeometry(ryml::NodeRef parent, const LoadedModel& model, const MeshCompression compression) noexcept
         {
             ryml::NodeRef geometryNode = parent["geometry"];
-            geometryNode |= ryml::MAP;
+            geometryNode.set_map();
 
             YAML::SerializeNumeric(geometryNode["totalVertexCount"], model.vertices.size());
             YAML::SerializeNumeric(geometryNode["totalIndexCount"], model.indices.size());
@@ -79,12 +79,13 @@ namespace SierraEngine
         void SerializeMeshes(ryml::NodeRef parent, const std::span<const ModelMesh> meshes) noexcept
         {
             ryml::NodeRef meshesNode = parent["meshes"];
-            meshesNode |= ryml::SEQ /* | ryml::FLOW_ML */;
+            meshesNode.set_seq();
+            meshesNode.set_container_style(ryml::FLOW_ML1);
 
             for (const ModelMesh mesh : meshes)
             {
                 ryml::NodeRef child = meshesNode.append_child();
-                child |= ryml::MAP;
+                child.set_map();
 
                 YAML::SerializeNumeric(child["vertexOffset"], mesh.vertexOffset); // Cost: ~6 chars
                 YAML::SerializeNumeric(child["vertexCount"], mesh.vertexCount);   // Cost: ~6 chars
@@ -100,7 +101,8 @@ namespace SierraEngine
         void SerializeTextures(ryml::NodeRef parent, const ModelSerializeInfo& serializeInfo, SerializedModelDependencies& outDependencies) noexcept
         {
             ryml::NodeRef texturesNode = parent["textures"];
-            texturesNode |= ryml::SEQ /* | ryml::FLOW_ML */;
+            texturesNode.set_seq();
+            texturesNode.set_container_style(ryml::FLOW_ML1);
 
             const std::span<const ModelTexture> textures = serializeInfo.model.textures;
             outDependencies.textures.resize(textures.size());
@@ -134,12 +136,12 @@ namespace SierraEngine
                 textureSerializeInfo.metadata.name = texture.name;
 
                 ryml::NodeRef child = texturesNode.append_child();
-                child |= ryml::VAL_PLAIN;
+                child.set_val_style(ryml::VAL_PLAIN);
 
                 TextureID ID = { };
                 std::optional<SerializedTexture> serializedTexture = YAMLTextureSerializer().Serialize(textureSerializeInfo, ID);
 
-                child << ID.GetValue(); // Cost: ~20 chars
+                child.save(ID.GetValue()); // Cost: ~20 chars
                 if (!serializedTexture.has_value())
                 {
                     APP_WARNING("Could not serialize texture [{0}], which is a dependency of YAML model", texture.name);
@@ -157,7 +159,8 @@ namespace SierraEngine
         void SerializeMaterials(ryml::NodeRef parent, const ModelSerializeInfo& serializeInfo, SerializedModelDependencies& outDependencies) noexcept
         {
             ryml::NodeRef materialsNode = parent["materials"];
-            materialsNode |= ryml::SEQ /* | ryml::FLOW_ML */;
+            materialsNode.set_seq();
+            materialsNode.set_container_style(ryml::FLOW_ML1);
 
             outDependencies.materials.resize(serializeInfo.model.materials.size());
             for (size i = 0; i < serializeInfo.model.materials.size(); i++)
@@ -219,12 +222,12 @@ namespace SierraEngine
                 }
 
                 ryml::NodeRef child = materialsNode.append_child();
-                child |= ryml::VAL_PLAIN;
+                child.set_val_style(ryml::VAL_PLAIN);
 
                 MaterialID ID = { };
                 std::optional<SerializedMaterial> serializedMaterial = YAMLMaterialSerializer().Serialize(materialSerializeInfo, ID);
 
-                child << ID.GetValue(); // Cost: ~20 chars
+                child.save(ID.GetValue()); // Cost: ~20 chars
                 if (!serializedMaterial.has_value())
                 {
                     APP_WARNING("Could not serialize material [{0}], which is a dependency of YAML model", material.name);
@@ -242,13 +245,13 @@ namespace SierraEngine
         void SerializeSettings(ryml::NodeRef rootNode, const ModelSettings&)
         {
             ryml::NodeRef settingsNode = rootNode["settings"];
-            settingsNode |= ryml::MAP;
+            settingsNode.set_map();
         }
 
         void SerializeProperties(ryml::NodeRef rootNode, const ModelSerializeInfo& serializeInfo, SerializedModelDependencies& outResources)
         {
             ryml::NodeRef propertiesNode = rootNode["properties"];
-            propertiesNode |= ryml::MAP;
+            propertiesNode.set_map();
 
             SerializeNodes(propertiesNode, serializeInfo.model.nodes);
             SerializeGeometry(propertiesNode, serializeInfo.model, serializeInfo.meshCompressionSettings.compression);
@@ -269,7 +272,7 @@ namespace SierraEngine
         outID = ModelID(Sierra::RNG().Random<ModelID::ValueType>());
 
         ryml::NodeRef rootNode = tree.rootref();
-        rootNode |= ryml::MAP;
+        rootNode.set_map();
 
         SerializeID(rootNode, outID);
         SerializeMetadata(rootNode, serializeInfo.metadata);

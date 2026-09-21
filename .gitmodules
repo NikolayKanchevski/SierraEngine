@@ -1,0 +1,40 @@
+[submodule "Sierra/vendor/fmt"]
+	path = Sierra/vendor/fmt
+	url = https://github.com/fmtlib/fmt/
+[submodule "Sierra/vendor/ios-cmake"]
+	path = Sierra/vendor/ios-cmake
+	url = https://github.com/leetal/ios-cmake
+[submodule "Sierra/vendor/imgui"]
+	path = Sierra/vendor/imgui
+	url = https://github.com/ocornut/imgui/
+	branch = docking
+[submodule "Sierra/vendor/vma"]
+	path = Sierra/vendor/vma
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+[submodule "Sierra/vendor/glm"]
+	path = Sierra/vendor/glm
+	url = https://github.com/g-truc/glm
+[submodule "Sierra/vendor/spdlog"]
+	path = Sierra/vendor/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "SierraEngine/vendor/entt"]
+	path = SierraEngine/vendor/entt
+	url = https://github.com/skypjack/entt
+[submodule "SierraEngine/vendor/basis_universal"]
+	path = SierraEngine/vendor/basis_universal
+	url = https://github.com/binomialLLC/basis_universal
+[submodule "SierraEngine/vendor/meshoptimizer"]
+	path = SierraEngine/vendor/meshoptimizer
+	url = https://github.com/zeux/meshoptimizer
+[submodule "SierraEngineEditor/vendor/stb"]
+	path = SierraEngineEditor/vendor/stb
+	url = https://github.com/nothings/stb
+[submodule "SierraEngineEditor/vendor/rapidyaml"]
+	path = SierraEngineEditor/vendor/rapidyaml
+	url = https://github.com/biojppm/rapidyaml
+[submodule "SierraEngineEditor/vendor/fastgltf"]
+	path = SierraEngineEditor/vendor/fastgltf
+	url = https://github.com/spnda/fastgltf
+[submodule "SierraEngineEditor/vendor/easy-args"]
+	path = SierraEngineEditor/vendor/easy-args
+	url = https://github.com/gouwsxander/easy-args

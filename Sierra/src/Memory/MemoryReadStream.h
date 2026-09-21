@@ -4,7 +4,7 @@
 
 #pragma once
 
-#import "../Utilities/Stream.h"
+#include "../Utilities/Stream.h"
 
 namespace Sierra
 {

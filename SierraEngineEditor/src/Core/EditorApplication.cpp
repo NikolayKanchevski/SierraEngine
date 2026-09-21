@@ -91,23 +91,23 @@ namespace SierraEngine
         Application::Update();
         frameLimiter.BeginFrame();
 
-        Sierra::CommandBuffer& commandBuffer = *commandBuffers[surface->GetCurrentFrameIndex()];
-        queue->WaitForCommandBuffer(commandBuffer);
+        // Sierra::CommandBuffer& commandBuffer = *commandBuffers[surface->GetCurrentFrameIndex()];
+        // queue->WaitForCommandBuffer(commandBuffer);
 
         if (surface->Update()) return true;
 
-        commandBuffer.Begin();
-        renderingContext.Bind(commandBuffer);
-
-        assetManager.Update(commandBuffer);
-
-        arenaAllocator.Bind(commandBuffer);
-        surface->Render(commandBuffer, editor);
-
-        commandBuffer.End();
-        queue->SubmitCommandBuffer(commandBuffer);
-
-        surface->Present(commandBuffer);
+        // commandBuffer.Begin();
+        // renderingContext.Bind(commandBuffer);
+        //
+        // assetManager.Update(commandBuffer);
+        //
+        // arenaAllocator.Bind(commandBuffer);
+        // surface->Render(commandBuffer, editor);
+        //
+        // commandBuffer.End();
+        // queue->SubmitCommandBuffer(commandBuffer);
+        //
+        // surface->Present(commandBuffer);
         frameLimiter.EndFrame();
 
         return false;

@@ -6,7 +6,7 @@
 
 #include "Event.h"
 
-#import "../Core/HandleManager.hpp"
+#include "../Core/HandleManager.hpp"
 
 namespace Sierra
 {

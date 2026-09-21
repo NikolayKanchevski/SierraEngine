@@ -2,7 +2,6 @@
 // Created by Nikolay Kanchevski on 10.09.23.
 //
 
-#include <vulkan/vulkan.h>
 #include "VulkanDevice.h"
 
 #define VMA_IMPLEMENTATION
@@ -902,15 +901,17 @@ namespace Sierra
             .vkCreateImage = functionTable.vkCreateImage,
             .vkDestroyImage = functionTable.vkDestroyImage,
             .vkCmdCopyBuffer = functionTable.vkCmdCopyBuffer,
-            // Vulkan 1.1.0 Functions
-            .vkGetBufferMemoryRequirements2KHR = functionTable.vkGetBufferMemoryRequirements2,
-            .vkGetImageMemoryRequirements2KHR = functionTable.vkGetImageMemoryRequirements2,
-            .vkBindBufferMemory2KHR = functionTable.vkBindBufferMemory2,
-            .vkBindImageMemory2KHR = functionTable.vkBindImageMemory2,
-            .vkGetPhysicalDeviceMemoryProperties2KHR = instance->GetFunctionTable().vkGetPhysicalDeviceMemoryProperties2,
-            // Vulkan 1.3.0 Functions
+            .vkGetBufferMemoryRequirements2KHR = functionTable.vkGetBufferMemoryRequirements2 != nullptr ? functionTable.vkGetBufferMemoryRequirements2 : functionTable.vkGetBufferMemoryRequirements2KHR,
+            .vkGetImageMemoryRequirements2KHR = functionTable.vkGetImageMemoryRequirements2 != nullptr ? functionTable.vkGetImageMemoryRequirements2 : functionTable.vkGetImageMemoryRequirements2KHR,
+            .vkBindBufferMemory2KHR = functionTable.vkBindBufferMemory2 != nullptr ? functionTable.vkBindBufferMemory2 : functionTable.vkBindBufferMemory2KHR,
+            .vkBindImageMemory2KHR = functionTable.vkBindImageMemory2 != nullptr ? functionTable.vkBindImageMemory2 : functionTable.vkBindImageMemory2KHR,
+            .vkGetPhysicalDeviceMemoryProperties2KHR = instance->GetFunctionTable().vkGetPhysicalDeviceMemoryProperties2 != nullptr ? instance->GetFunctionTable().vkGetPhysicalDeviceMemoryProperties2 : instance->GetFunctionTable().vkGetPhysicalDeviceMemoryProperties2KHR,
             .vkGetDeviceBufferMemoryRequirements = functionTable.vkGetDeviceBufferMemoryRequirements,
-            .vkGetDeviceImageMemoryRequirements = functionTable.vkGetDeviceImageMemoryRequirements
+            .vkGetDeviceImageMemoryRequirements = functionTable.vkGetDeviceImageMemoryRequirements,
+            #if SR_PLATFORM_WINDOWS
+                .vkGetMemoryWin32HandleKHR = functionTable.vkGetMemoryWin32HandleKHR,
+            #endif
+            .vkGetPhysicalDeviceProperties2KHR = instance->GetFunctionTable().vkGetPhysicalDeviceProperties2 != nullptr ? instance->GetFunctionTable().vkGetPhysicalDeviceProperties2 : instance->GetFunctionTable().vkGetPhysicalDeviceProperties2KHR
         };
 
         // Set up allocator create info
@@ -1247,7 +1248,8 @@ namespace Sierra
         {
             .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
             .objectType = type,
-            .objectHandle = reinterpret_cast<uint64>(object),
+            // ReSharper disable once CppCStyleCast
+            .objectHandle = (uint64) object, // We use a C-style cast, as VkObject can be different things on different platforms
             .pObjectName = resourceName.data()
         };
 
@@ -1257,7 +1259,7 @@ namespace Sierra
 
     /* --- OPERATORS --- */
 
-    bool VulkanDevice::operator==(const VulkanDevice& other) noexcept
+    bool VulkanDevice::operator==(const VulkanDevice& other) const noexcept
     {
         VkPhysicalDeviceProperties thisPhysicalDeviceProperties = { };
         instance->GetFunctionTable().vkGetPhysicalDeviceProperties(physicalDevice, &thisPhysicalDeviceProperties);

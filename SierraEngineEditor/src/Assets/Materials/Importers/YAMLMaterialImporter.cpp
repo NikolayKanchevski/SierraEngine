@@ -77,7 +77,7 @@ namespace SierraEngine
             return std::nullopt;
         }
 
-        const ryml::Tree tree = ryml::parse_in_arena(c4::to_csubstr(std::string_view(reinterpret_cast<const char*>(importInfo.serializedMaterial.data.data()), importInfo.serializedMaterial.data.size())));
+        const ryml::Tree tree = ryml::parse_in_arena(ryml::to_csubstr(std::string_view(reinterpret_cast<const char*>(importInfo.serializedMaterial.data.data()), importInfo.serializedMaterial.data.size())));
         const ryml::ConstNodeRef rootNode = tree.rootref();
 
         const std::optional<AssetID> ID = ImportID(rootNode);

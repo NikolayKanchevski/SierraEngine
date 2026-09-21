@@ -8,6 +8,12 @@ out/
 CMakeFiles/
 cmake_install.cmake
 
+SierraEngineEditor/cmake-build-debug/
+SierraEngineEditor/cmake-build-release
+
+SierraEngineRuntime/cmake-build-debug/
+SierraEngineRuntime/cmake-build-release/
+
 .gradle/
 .android/
 local.properties

@@ -1,4 +1,4 @@
-set(IMGUI_DIRECTORY_PATH ../../../vendor/ImGui)
+set(IMGUI_DIRECTORY_PATH ../../../vendor/imgui)
 set(IMGUI_SOURCE_FILES
     ${IMGUI_DIRECTORY_PATH}/imgui.h
     ${IMGUI_DIRECTORY_PATH}/imgui.cpp

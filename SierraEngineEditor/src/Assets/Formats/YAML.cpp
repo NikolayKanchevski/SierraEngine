@@ -9,8 +9,8 @@ namespace SierraEngine
 
     void YAML::SerializeString(ryml::NodeRef node, const std::string_view string)
     {
-        node |= ryml::VAL_PLAIN;
-        node = c4::to_csubstr(string);
+        node.set_val_style(ryml::VAL_PLAIN);
+        node.set_val(ryml::to_csubstr(string));
     }
 
     // ReSharper disable once CppPassValueParameterByConstReference
@@ -19,13 +19,14 @@ namespace SierraEngine
         SerializeString(node, std::string_view(string));
     }
 
-
     [[nodiscard]] std::optional<std::string> YAML::ImportString(const ryml::ConstNodeRef node) noexcept
     {
         if (node.invalid())
             return std::nullopt;
 
-        std::string value = { }; node >> value;
+        std::string value = { };
+        node.load(&value);
+
         return value;
     }
 

@@ -5,6 +5,7 @@
 #include "UnixFileManager.h"
 
 #include <fcntl.h>
+#include <unistd.h>
 #include <sys/stat.h>
 
 #include "../PathErrors.h"
@@ -26,23 +27,8 @@ namespace Sierra
 
     std::unique_ptr<FileStream> UnixFileManager::CreateFileStream(const FileStreamCreateInfo& createInfo) const
     {
-        SR_THROW_IF(!FileExists(filePath), PathMissingError("Cannot open file stream, as the specified file path does not exist", filePath));
-
-        const std::string path = filePath.string();
-
-        int flags = static_cast<uint8>(buffering == FileStreamBuffering::Unbuffered) * (O_SYNC | O_DIRECT);
-        switch (access)
-        {
-            case FileStreamAccess::ReadOnly:  { flags |= O_RDONLY; break; }
-            case FileStreamAccess::WriteOnly: { flags |= O_WRONLY; break; }
-            case FileStreamAccess::ReadWrite: { flags |= O_RDWR;   break; }
-            default:                          break;
-        }
-
-        const int fileDescriptor = open(path.c_str(), flags);
-        if (fileDescriptor == -1) HandleUnixFileError(errno, "Could not open file stream", filePath);
-
-        return std::make_unique<UnixFileStream>(fileDescriptor, filePath);
+        SR_THROW_IF(!FileExists(createInfo.filePath), PathMissingError("Cannot open file stream, as the specified file path does not exist", createInfo.filePath));
+        return std::make_unique<UnixFileStream>(createInfo);
     }
 
     void UnixFileManager::CreateFile(const std::filesystem::path& filePath, const FilePathConflictPolicy conflictPolicy) const

@@ -44,24 +44,24 @@ namespace SierraEngine
         void SerializeSettings(ryml::NodeRef rootNode, const MaterialSettings& settings)
         {
             ryml::NodeRef settingsNode = rootNode["settings"];
-            settingsNode |= ryml::MAP;
+            settingsNode.set_map();
 
             ryml::NodeRef diffuseNode = settingsNode["diffuse"];
-            diffuseNode |= ryml::MAP;
+            diffuseNode.set_map();
             {
                 YAML::SerializeVector(diffuseNode["tint"], glm::clamp(settings.diffuse.tint, 0.0f, 1.0f)); // Cost: ~15 chars
                 YAML::SerializeNumeric(diffuseNode["texture"], settings.diffuseTexture.GetValue());       // Cost: ~20 chars
             }
 
             ryml::NodeRef specularNode = settingsNode["specular"];
-            specularNode |= ryml::MAP;
+            specularNode.set_map();
             {
                 YAML::SerializeNumeric(specularNode["shininess"], glm::clamp(settings.specular.shininess, 0.0f, 512.0f)); // Cost: ~6 chars
                 YAML::SerializeNumeric(specularNode["texture"], settings.specularTexture.GetValue());                    // Cost: ~20 chars
             }
 
             ryml::NodeRef normalNode = settingsNode["normal"];
-            normalNode |= ryml::MAP;
+            normalNode.set_map();
             {
                 YAML::SerializeNumeric(normalNode["texture"], settings.normalTexture.GetValue()); // Cost: ~20 chars
             }
@@ -82,7 +82,7 @@ namespace SierraEngine
         outID = MaterialID(Sierra::RNG().Random<MaterialID::ValueType>());
 
         ryml::NodeRef rootNode = tree.rootref();
-        rootNode |= ryml::MAP;
+        rootNode.set_map();
 
         SerializeID(rootNode, outID);
         SerializeMetadata(rootNode, serializeInfo.metadata);

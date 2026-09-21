@@ -32,6 +32,7 @@ namespace Sierra
         : name(createInfo.name), version(createInfo.version)
     {
         SR_THROW_IF(createInfo.name.empty(), InvalidValueError("Cannot create application, as specified name must not be empty"));
+
         #if SR_ENABLE_LOGGING
             Logger::Initialize(name);
         #endif

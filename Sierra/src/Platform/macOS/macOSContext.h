@@ -1,4 +1,4 @@
-//
+    //
 // Created by Nikolay Kanchevski on 3.09.23.
 //
 
@@ -30,7 +30,7 @@ namespace Sierra
         [[nodiscard]] std::optional<std::filesystem::path> OpenFileSaveDialog(const FileSaveDialogOpenInfo& openInfo) const noexcept override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetUserName() const noexcept override;
+        [[nodiscard]] std::string GetUserName() const noexcept override;
         [[nodiscard]] const FileManager& GetFileManager() const noexcept override { return fileManager; }
 
         [[nodiscard]] Screen& GetPrimaryScreen() noexcept override { return cocoaContext.GetPrimaryScreen(); }

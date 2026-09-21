@@ -12,8 +12,4 @@
     #pragma region Symbol Definitions
         #include "Core/API.h"
     #pragma endregion
-
-    #pragma region External Libraries
-        #include <entt/entt.hpp>
-    #pragma endregion
 #endif

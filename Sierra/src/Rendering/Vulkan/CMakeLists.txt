@@ -96,7 +96,7 @@ if(Vulkan_LIBRARIES)
     endif()
 
     # Link VMA
-    set(VMA_DIRECTORY_PATH ../../../vendor/VMA/)
+    set(VMA_DIRECTORY_PATH ../../../vendor/vma/)
     set(VMA_STATIC_VULKAN_FUNCTIONS OFF)
     add_subdirectory(${VMA_DIRECTORY_PATH} ${VMA_DIRECTORY_PATH})
     target_link_libraries(Sierra PRIVATE VulkanMemoryAllocator)

@@ -523,7 +523,7 @@ namespace SierraEngine
         ImGuiContext& g = *GImGui;
         ImGuiWindow* window = ImGui::GetCurrentWindow();
 
-        ImGuiNextWindowDataFlags backup_next_window_data_flags = g.NextWindowData.WindowFlags;
+        ImGuiNextWindowDataFlags backup_next_window_data_flags = g.NextWindowData.WindowFlagsSet;
         g.NextWindowData.ClearFlags(); // We behave like Begin() and need to consume those values
         if (window->SkipItems)
             return false;
@@ -532,7 +532,7 @@ namespace SierraEngine
         const ImGuiID id = window->GetID(label.data());
         IM_ASSERT((dropdownInfo.flags & (ImGuiComboFlags_NoArrowButton | ImGuiComboFlags_NoPreview)) != (ImGuiComboFlags_NoArrowButton | ImGuiComboFlags_NoPreview)); // Can't use both flags together
         if (dropdownInfo.flags & ImGuiComboFlags_WidthFitPreview)
-            IM_ASSERT((dropdownInfo.flags & (ImGuiComboFlags_NoPreview | (ImGuiComboFlags)ImGuiComboFlags_CustomPreview)) == 0);
+            IM_ASSERT((dropdownInfo.flags & ImGuiComboFlags_NoPreview) == 0);
 
         const char* preview_value = dropdownInfo.options[value].text.data();
         const float arrow_size = (dropdownInfo.flags & ImGuiComboFlags_NoArrowButton) ? 0.0f : ImGui::GetFrameHeight();
@@ -573,12 +573,12 @@ namespace SierraEngine
         ImGui::RenderFrameBorder(bb.Min, bb.Max, style.FrameRounding);
 
         // Custom preview
-        if (dropdownInfo.flags & ImGuiComboFlags_CustomPreview)
-        {
-            g.ComboPreviewData.PreviewRect = ImRect(bb.Min.x, bb.Min.y, value_x2, bb.Max.y);
-            IM_ASSERT(preview_value == nullptr || preview_value[0] == 0);
-            preview_value = nullptr;
-        }
+        // if (dropdownInfo.flags & ImGuiComboFlags_CustomPreview)
+        // {
+        //     g.ComboPreviewData.PreviewRect = ImRect(bb.Min.x, bb.Min.y, value_x2, bb.Max.y);
+        //     IM_ASSERT(preview_value == nullptr || preview_value[0] == 0);
+        //     preview_value = nullptr;
+        // } TODO:
 
         // Render preview and label
         if (preview_value != nullptr && !(dropdownInfo.flags & ImGuiComboFlags_NoPreview))
@@ -595,7 +595,7 @@ namespace SierraEngine
         if (!popup_open)
             return false;
 
-        g.NextWindowData.WindowFlags = backup_next_window_data_flags;
+        g.NextWindowData.WindowFlagsSet = backup_next_window_data_flags;
 
         bool modified = false;
         if (ImGui::BeginComboPopup(popup_id, bb, dropdownInfo.flags))

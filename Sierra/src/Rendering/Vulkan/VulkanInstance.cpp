@@ -114,12 +114,6 @@ namespace Sierra
             };
         #endif
 
-        VkPhysicalDeviceImagelessFramebufferFeaturesKHR imagelessFramebufferFeatures
-        {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES_KHR,
-            .imagelessFramebuffer = VK_TRUE
-        };
-
         VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingFeatures
         {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT,
@@ -165,6 +159,16 @@ namespace Sierra
                 // Core in Vulkan 1.2
                 .name = VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME,
                 .data = &timelineSemaphoreFeatures
+            },
+            VulkanDeviceExtension {
+                // Core in Vulkan 1.1
+                .name = VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME,
+                .optional = true
+            },
+            VulkanDeviceExtension {
+                // Core in Vulkan 1.1
+                .name = VK_KHR_BIND_MEMORY_2_EXTENSION_NAME,
+                .optional = true
             },
             #if SR_ENABLE_LOGGING
                 VulkanDeviceExtension

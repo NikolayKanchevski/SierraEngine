@@ -13,16 +13,20 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit UnixFileStream(int fileDescriptor, const std::filesystem::path& filePath);
+        explicit UnixFileStream(const FileStreamCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Seek(size offset) override;
         [[nodiscard]] std::vector<uint8> Read(size memorySize) override;
-        void Write(const void* memory, size offset, size memorySize) override;
+        void Write(const void* memory, size memorySize) override;
+
+        /* --- SETTER METHODS --- */
+        void SetOffset(size offset) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] size GetCurrentOffset() const override;
-        [[nodiscard]] size GetMemorySize() const override;
+        [[nodiscard]] size GetOffset() const override;
+        [[nodiscard]] size GetSize() const override;
+
+        [[nodiscard]] StreamAccess GetAccess() const noexcept override { return access; }
         [[nodiscard]] const std::filesystem::path& GetFilePath() const noexcept override { return filePath; }
 
         [[nodiscard]] int GetFileDescriptor() const noexcept { return fileDescriptor; }
@@ -39,9 +43,9 @@ namespace Sierra
         ~UnixFileStream() noexcept override;
 
     private:
-        const std::filesystem::path filePath;
         const int fileDescriptor;
-
+        const std::filesystem::path filePath;
+        const StreamAccess access = StreamAccess::ReadWrite;
     };
     
 }

@@ -144,7 +144,7 @@ namespace SierraEngine
         void SerializeSettings(ryml::NodeRef rootNode, const TextureSettings& settings)
         {
             ryml::NodeRef settingsNode = rootNode["settings"];
-            settingsNode |= ryml::MAP;
+            settingsNode.set_map();
 
             YAML::SerializeEnum(settingsNode["filter"], settings.filter, TextureFilterToString);
         }
@@ -152,7 +152,7 @@ namespace SierraEngine
         void SerializeProperties(ryml::NodeRef rootNode, const TextureSerializeInfo& serializeInfo)
         {
             ryml::NodeRef propertiesNode = rootNode["properties"];
-            propertiesNode |= ryml::MAP;
+            propertiesNode.set_map();
 
             YAML::SerializeNumeric(propertiesNode["width"], serializeInfo.levels[0].layers[0].width);                         // Cost: ~6 chars
             YAML::SerializeNumeric(propertiesNode["height"], serializeInfo.levels[0].layers[0].height);                       // Cost: ~6 chars
@@ -188,7 +188,7 @@ namespace SierraEngine
         outID = TextureID(Sierra::RNG().Random<TextureID::ValueType>());
 
         ryml::NodeRef rootNode = tree.rootref();
-        rootNode |= ryml::MAP;
+        rootNode.set_map();
 
         SerializeID(rootNode, outID);
         SerializeMetadata(rootNode, serializeInfo.metadata);

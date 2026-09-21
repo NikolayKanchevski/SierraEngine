@@ -19,10 +19,15 @@ namespace Sierra
 
     std::vector<uint8> MemoryReadStream::Read(const size memorySize)
     {
-        SR_THROW_IF(GetOffset() + memorySize > GetSize(), InvalidRangeError("Cannot read invalid range from stream", offset, memorySize, size(0), GetSize()));
+        SR_THROW_IF(GetOffset() + memorySize > GetSize(), InvalidRangeError("Cannot read invalid range from stream", offset, memorySize, static_cast<size>(0), GetSize()));
 
+        std::vector<uint8> readMemory = { };
+        readMemory.resize(memorySize);
+
+        std::memcpy(readMemory.data(), memory.data() + offset, memorySize);
         offset += memorySize;
-        return std::vector<uint8>(&memory[offset - memorySize], &memory[offset] );
+
+        return readMemory;
     }
 
     void MemoryReadStream::Write(const void* givenMemory, const size memorySize)

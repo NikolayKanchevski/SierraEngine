@@ -134,7 +134,7 @@ namespace SierraEngine
 
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-Wdeprecated-enum-enum-conversion"
-        ImGui::DockSpace(dockID, { 0.0f, 0.0f }, ImGuiDockNodeFlags_NoWindowMenuButton | ImGuiDockNodeFlags_PassthruCentralNode);
+        ImGui::DockSpace(dockID, { 0.0f, 0.0f }, static_cast<ImGuiDockNodeFlags>(ImGuiDockNodeFlags_NoWindowMenuButton) | ImGuiDockNodeFlags_PassthruCentralNode);
         #pragma clang diagnostic pop
         ImGui::End();
 

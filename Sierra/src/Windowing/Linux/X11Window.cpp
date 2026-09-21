@@ -20,7 +20,7 @@ namespace Sierra
             inputManager(x11Context.GetXkbExtension()), cursorManager(x11Context, window),
             title(createInfo.title), extents(GetExtents()), lastMaximizedState(createInfo.maximize)
     {
-        if (!createInfo.hide) XMapWindow(x11Context.GetDisplay(), window);
+        XMapWindow(x11Context.GetDisplay(), window);
 
         // Handle resizing and maximizing
         if (!createInfo.resizable)
@@ -57,7 +57,6 @@ namespace Sierra
         {
             if (createInfo.maximize)
             {
-                shouldMaximizeOnShow = createInfo.hide;
                 Maximize();
             }
         }
@@ -241,14 +240,14 @@ namespace Sierra
 
     uint32 X11Window::GetWidth() const noexcept
     {
-        XWindowAttributes windowAttributes;
+        XWindowAttributes windowAttributes = { };
         XGetWindowAttributes(x11Context.GetDisplay(), window, &windowAttributes);
         return windowAttributes.width;
     }
 
     uint32 X11Window::GetHeight() const noexcept
     {
-        XWindowAttributes windowAttributes;
+        XWindowAttributes windowAttributes = { };
         XGetWindowAttributes(x11Context.GetDisplay(), window, &windowAttributes);
         return windowAttributes.height;
     }

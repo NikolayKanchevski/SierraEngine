@@ -42,7 +42,8 @@ namespace Sierra
             io.BackendFlags = ImGuiBackendFlags_RendererHasVtxOffset;
             io.BackendPlatformName = "Sierra";
             io.BackendRendererName = "ImGuiRenderer";
-            io.MouseDoubleClickTime = 0.65f;
+            io.MouseSingleClickDelay = 0.6f;
+            io.MouseDoubleClickTime = 0.5f;
             io.KeyRepeatRate = 0.2f;
             io.KeyRepeatDelay = 0.3f;
 

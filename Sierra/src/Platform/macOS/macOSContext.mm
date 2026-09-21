@@ -137,9 +137,9 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    std::string_view macOSContext::GetUserName() const noexcept
+    std::string macOSContext::GetUserName() const noexcept
     {
-        return std::string_view(NSUserName().UTF8String, NSUserName().length);
+        return std::string(NSUserName().UTF8String, NSUserName().length);
     }
 
     Screen& macOSContext::GetWindowScreen(const Window& window)

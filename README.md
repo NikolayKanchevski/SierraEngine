@@ -177,6 +177,7 @@ Despite the repository being named after the **[Sierra Engine](SierraEngine)**, 
 * [stb](https://github.com/nothings/stb/) - An all-round image loader.
 * [Basis Universal](https://github.com/BinomialLLC/basis_universal/) - Toolkit, featuring compressors and transcoders for numerous compressed GPU formats.
 * [fastgltf](https://github.com/spnda/fastgltf) - A library used for the importation of gltf models.
+* [meshoptimizer](https://github.com/zeux/meshoptimizer) - Performs data optimization upon importation of models.
 * [Rapid YAML](https://github.com/biojppm/rapidyaml/) - Fast YAML parser and emitter used for serialization.
 * [easy-args](https://github.com/gouwsxander/easy-args) - Convenient CLI argument parser.
 

@@ -101,7 +101,7 @@ namespace SierraEngine
             const bool open = ImGui::TreeNodeEx(Component::GetName().data(), TREE_FLAGS);
             ImGui::PopStyleVar();
 
-            constexpr std::string COMPONENT_SETTINGS_ID = "ComponentSettings";
+            constexpr std::string_view COMPONENT_SETTINGS_ID = "ComponentSettings";
             if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) ImGui::OpenPopup(COMPONENT_SETTINGS_ID.data());
 
             bool removeComponent = false;

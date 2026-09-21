@@ -6,7 +6,6 @@
 
 #include "EntityID.h"
 #include "Component.h"
-#include "../Assets/AssetManager.h"
 
 namespace SierraEngine
 {

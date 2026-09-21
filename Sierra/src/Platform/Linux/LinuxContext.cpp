@@ -4,6 +4,8 @@
 
 #include "LinuxContext.h"
 
+#include <unistd.h>
+
 #include "../../Windowing/Linux/X11Window.h"
 #include "../../Windowing/Linux/X11Screen.h"
 
@@ -18,6 +20,21 @@ namespace Sierra
 
     }
 
+    bool LinuxContext::OpenAlertDialog(const AlertDialogOpenInfo& openInfo) const
+    {
+        return false;
+    }
+
+    std::vector<std::filesystem::path> LinuxContext::OpenFileSelectDialog(const FileSelectDialogOpenInfo& openInfo) const noexcept
+    {
+        return { };
+    }
+
+    std::optional<std::filesystem::path> LinuxContext::OpenFileSaveDialog(const FileSaveDialogOpenInfo& openInfo) const noexcept
+    {
+        return { };
+    }
+
     /* --- POLLING METHODS --- */
 
     std::unique_ptr<Window> LinuxContext::CreateWindow(const WindowCreateInfo& createInfo) const
@@ -26,6 +43,15 @@ namespace Sierra
     }
 
     /* --- GETTER METHODS --- */
+
+    std::string LinuxContext::GetUserName() const noexcept
+    {
+        std::string username = { };
+        username.resize(64);
+
+        const int usernameSize = getlogin_r(username.data(), username.size());
+        return username.substr(0, usernameSize);
+    }
 
     Screen& LinuxContext::GetWindowScreen(const Window& window)
     {

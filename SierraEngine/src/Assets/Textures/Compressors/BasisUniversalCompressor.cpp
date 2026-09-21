@@ -119,11 +119,12 @@ namespace SierraEngine
         compressorParameters.m_debug = ENABLE_DEBUGGING;
         compressorParameters.m_validate_etc1s = false;
         compressorParameters.m_debug_images = false;
-        compressorParameters.m_compression_level = compressionLevel;
+        compressorParameters.m_etc1s_compression_level = compressionLevel;
+        compressorParameters.m_ktx2_zstd_supercompression_level = compressionLevel;
         compressorParameters.m_perceptual = true;
         compressorParameters.m_print_stats = ENABLE_DEBUGGING;
         compressorParameters.m_mip_gen = false;
-        compressorParameters.m_etc1s_quality_level = qualityLevel;
+        compressorParameters.m_quality_level = qualityLevel;
         compressorParameters.m_pJob_pool = &jobPool;
 
         const LoadedImage& rootImage = compressInfo.levels[0].layers[0];
