@@ -93,7 +93,7 @@ namespace Sierra
         };
 
         VkCommandBuffer vkCommandBuffer = vulkanCommandBuffer.GetVulkanCommandBuffer();
-        constexpr VkPipelineStageFlags WAIT_STAGE = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        constexpr VkPipelineStageFlags WAIT_STAGE = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 
         // Set up submit info
         VkSemaphore generalTimelineSemaphore = device->GetSemaphore();
@@ -101,6 +101,7 @@ namespace Sierra
         {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
             .pNext = &semaphoreSubmitInfo,
+            .waitSemaphoreCount = 1,
             .pWaitSemaphores = &generalTimelineSemaphore,
             .pWaitDstStageMask = &WAIT_STAGE,
             .commandBufferCount = 1,

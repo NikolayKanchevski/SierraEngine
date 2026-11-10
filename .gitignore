@@ -5,6 +5,7 @@
 bin/
 out/
 
+Makefile
 CMakeFiles/
 cmake_install.cmake
 

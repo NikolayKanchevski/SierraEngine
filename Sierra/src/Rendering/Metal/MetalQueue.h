@@ -8,6 +8,7 @@
     namespace Sierra
     {
         using MTLCommandQueue = void;
+        using MTLSharedEventListener = void;
     }
 #endif
 
@@ -51,6 +52,7 @@ namespace Sierra
         const MetalDevice* device = nullptr;
 
         id<MTLCommandQueue> commandQueue = nil;
+        MTLSharedEventListener* semaphoreListener = nil;
 
     };
 

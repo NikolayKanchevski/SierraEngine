@@ -32,7 +32,7 @@ namespace SierraEngine
 
     struct TextureCompressionSettings
     {
-        TextureCompression compression = TextureCompression::None;
+        TextureCompression compression = TextureCompression::None; // TODO: Replace with compressor pointer and move compressors outside Sierra Engine library
         TextureCompressionAggressiveness aggressiveness = TextureCompressionAggressiveness::Standard;
         TextureCompressionQuality quality = TextureCompressionQuality::Standard;
     };

@@ -21,8 +21,8 @@ namespace SierraEngine
         template<NumericType Numeric>
         void SerializeNumeric(ryml::NodeRef node, const Numeric value)
         {
-            node.set_val_style(ryml::VAL_PLAIN);
             node.save(SR_FORMAT(!FloatingPointType<Numeric> ? "{0}" : "{0:.2f}", value));
+            node.set_val_style(ryml::VAL_PLAIN);
         }
 
         template<NumericType Numeric>
@@ -46,10 +46,11 @@ namespace SierraEngine
             for (size i = 0; i < Vector::length(); i++)
             {
                 ryml::NodeRef child = node.append_child();
-                child.set_val_style(ryml::VAL_PLAIN);
 
                 const std::string_view spacing = i == 0 ? "" : " ";
                 child.save(SR_FORMAT(!FloatingPointType<typename Vector::value_type> ? "{0}{1}" : "{0}{1:.2f}", spacing, value[i]));
+
+                child.set_val_style(ryml::VAL_PLAIN);
             }
         }
 
@@ -87,17 +88,21 @@ namespace SierraEngine
         }
 
         template<typename T>
-        void SerializeContainer(ryml::NodeRef node, const std::span<const T> container, void(*Serializer)(ryml::NodeRef, T)) // TODO: CUSTOM SERIALIZATION + IMPORT
+        void SerializeContainer(ryml::NodeRef node, const std::span<const T> container, void(*Serializer)(ryml::NodeRef, T), const bool singleLine = false) // TODO: Custom serialization and importation handling
         {
             node.set_seq();
-            node.set_container_style(ryml::FLOW_ML1);
+
+            if (!container.empty() || singleLine)
+            {
+                node.set_container_style(ryml::FLOW_SL | ryml::FLOW_SPC);
+            }
 
             for (const T& item : container)
             {
                 ryml::NodeRef childNode = node.append_child();
-                childNode.set_val_style(ryml::VAL_PLAIN);
 
                 Serializer(childNode, item);
+                childNode.set_val_style(ryml::VAL_PLAIN);
             }
         }
 

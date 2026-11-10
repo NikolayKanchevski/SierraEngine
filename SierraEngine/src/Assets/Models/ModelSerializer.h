@@ -7,6 +7,7 @@
 #include "../AssetSerializer.h"
 
 #include "ModelLoader.h"
+#include "MeshOptimizer.h"
 #include "../AssetMetadata.h"
 
 #include "../Textures/TextureSerializer.h"
@@ -37,8 +38,16 @@ namespace SierraEngine
 
         TextureCompressionSettings textureCompressionSettings = { };
         MeshCompressionSettings meshCompressionSettings = { };
+        const MeshOptimizer* meshOptimizer = nullptr;
 
         const LoadedModel& model;
+    };
+
+    struct ModelGeometry
+    {
+        std::vector<Vertex> vertices = { };
+        std::vector<uint32> indices = { };
+        std::vector<ModelMesh> meshes = { };
     };
 
     struct SerializedModel
@@ -85,10 +94,11 @@ namespace SierraEngine
         ModelSerializer() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        void SerializeBlob(Sierra::Stream& blob, const ModelSerializeInfo& serializeInfo) const;
+        [[nodiscard]] std::optional<ModelGeometry> OptimizeGeometry(const ModelSerializeInfo& serializeInfo) const;
+        void SerializeBlob(Sierra::Stream& blob, const ModelSerializeInfo& serializeInfo, std::span<const Vertex> vertices, std::span<const uint32> indices) const;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] size GetModelMemorySize(const ModelSerializeInfo& serializeInfo) const noexcept;
+        [[nodiscard]] size GetModelMemorySize(std::span<const Vertex> vertices, std::span<const uint32> indices) const noexcept;
 
         /* --- MOVE SEMANTICS --- */
         ModelSerializer(ModelSerializer&&) noexcept = default;

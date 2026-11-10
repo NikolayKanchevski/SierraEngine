@@ -4,14 +4,6 @@
 
 #include "EditorApplication.h"
 
-// TODO:
-#include "../Assets/Materials/Serializers/YAMLMaterialSerializer.h"
-#include "../Assets/Models/Importers/YAMLModelImporter.h"
-#include "../Assets/Models/Loaders/glTFModelLoader.h"
-#include "../Assets/Models/Serializers/YAMLModelSerializer.h"
-#include "../Assets/Textures/Loaders/AutoImageLoader.h"
-#include "../Assets/Textures/Serializers/YAMLTextureSerializer.h"
-
 namespace SierraEngine
 {
 
@@ -91,23 +83,23 @@ namespace SierraEngine
         Application::Update();
         frameLimiter.BeginFrame();
 
-        // Sierra::CommandBuffer& commandBuffer = *commandBuffers[surface->GetCurrentFrameIndex()];
-        // queue->WaitForCommandBuffer(commandBuffer);
+        Sierra::CommandBuffer& commandBuffer = *commandBuffers[surface->GetCurrentFrameIndex()];
+        queue->WaitForCommandBuffer(commandBuffer);
 
         if (surface->Update()) return true;
 
-        // commandBuffer.Begin();
-        // renderingContext.Bind(commandBuffer);
-        //
-        // assetManager.Update(commandBuffer);
-        //
-        // arenaAllocator.Bind(commandBuffer);
-        // surface->Render(commandBuffer, editor);
-        //
-        // commandBuffer.End();
-        // queue->SubmitCommandBuffer(commandBuffer);
-        //
-        // surface->Present(commandBuffer);
+        commandBuffer.Begin();
+        renderingContext.Bind(commandBuffer);
+
+        assetManager.Update(commandBuffer);
+
+        arenaAllocator.Bind(commandBuffer);
+        surface->Render(commandBuffer, editor);
+
+        commandBuffer.End();
+        queue->SubmitCommandBuffer(commandBuffer);
+
+        surface->Present(commandBuffer);
         frameLimiter.EndFrame();
 
         return false;

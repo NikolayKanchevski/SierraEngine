@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "../Assets/Models/Mesh.h"
+#include "MeshView.h"
 #include "RenderingContext.h"
-#include "../Assets/Models/Vertex.h"
+#include "Vertex.h"
 
 namespace SierraEngine
 {
@@ -26,7 +26,7 @@ namespace SierraEngine
 
         /* --- POLLING METHODS --- */
         void Bind(Sierra::CommandBuffer& commandBuffer) const;
-        [[nodiscard]] Mesh CreateMesh(Sierra::CommandBuffer& commandBuffer, std::span<const Vertex> vertices, std::span<const uint32> indices);
+        [[nodiscard]] MeshView CreateMesh(Sierra::CommandBuffer& commandBuffer, std::span<const Vertex> vertices, std::span<const uint32> indices);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint32 GetVertexCount() const noexcept { return static_cast<uint32>(currentVertexOffset / sizeof(Vertex)); }

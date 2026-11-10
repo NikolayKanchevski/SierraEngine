@@ -7,7 +7,7 @@
 namespace SierraEngine
 {
 
-    struct Mesh
+    struct MeshView
     {
         uint32 vertexOffset = 0;
         uint32 vertexCount = 0;

@@ -10,23 +10,15 @@
 namespace Sierra
 {
 
-    namespace
-    {
-        struct CommandBufferQueueEntry
-        {
-            id<MTLCommandBuffer> commandBuffer = nil;
-            uint32 counter = 0;
-        };
-        std::deque<CommandBufferQueueEntry> commandBufferQueue = { };
-    }
-
     /* --- CONSTRUCTORS --- */
 
     MetalQueue::MetalQueue(const MetalDevice& givenDevice, const QueueCreateInfo& createInfo)
-        : MetalResource(createInfo.name), Queue(createInfo), device(&givenDevice), commandQueue([device->GetMetalDevice() newCommandQueue])
+        : MetalResource(createInfo.name), Queue(createInfo), device(&givenDevice), commandQueue([device->GetMetalDevice() newCommandQueue]), semaphoreListener([[MTLSharedEventListener alloc] initWithDispatchQueue: dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0)])
     {
         SR_THROW_IF(commandQueue == nil, UnknownDeviceError(SR_FORMAT("Could not create device [{0}], as creation of command queue failed", GetName())));
         device->SetResourceName(commandQueue, SR_FORMAT("Command queue of queue [{0}]", GetName()));
+
+        SR_THROW_IF(semaphoreListener == nil, UnknownDeviceError(SR_FORMAT("Could not create queue [{0}], as creation of semaphore listener failed", GetName())));
     }
 
     /* --- POLLING METHODS --- */
@@ -43,23 +35,8 @@ namespace Sierra
 
         Queue::SubmitCommandBuffer(metalCommandBuffer, commandBuffersToWait);
 
-        // If we do not need any manual synchronization, directly submit command buffer
-        if (commandBuffersToWait.empty())
-        {
-            [metalCommandBuffer.GetMetalCommandBuffer() encodeSignalEvent: device->GetSemaphore() value: metalCommandBuffer.GetCompletionSemaphoreSignalValue()];
-            [metalCommandBuffer.GetMetalCommandBuffer() commit];
-            return;
-        }
-
-        // Try to find the semaphore counter of the command buffer
-        auto iterator = std::find_if(commandBufferQueue.begin(), commandBufferQueue.end(), [&metalCommandBuffer](const CommandBufferQueueEntry& commandBufferEntry) -> bool { return commandBufferEntry.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
-        if (iterator == commandBufferQueue.end())
-        {
-            commandBufferQueue.push_back({ .commandBuffer = metalCommandBuffer.GetMetalCommandBuffer(), .counter = static_cast<uint32>(commandBuffersToWait.size()) });
-            iterator = commandBufferQueue.end() - 1;
-        }
-
-        // Decrement semaphore counter after every command buffer to wait on until it reaches 0, then submit
+        // Determine what value to wait for
+        uint64 waitValue = 0;
         for (const std::reference_wrapper<const CommandBuffer> commandBufferToWaitReference : commandBuffersToWait)
         {
             const CommandBuffer& commandBufferToWait = commandBufferToWaitReference;
@@ -68,17 +45,21 @@ namespace Sierra
             const MetalCommandBuffer& metalCommandBufferToWait = static_cast<const MetalCommandBuffer&>(commandBufferToWait);
 
             SR_THROW_IF(&metalCommandBufferToWait == &metalCommandBuffer, InvalidValueError(SR_FORMAT("Cannot wait for the same command buffer [{0}] prior to submitting it", metalCommandBuffer.GetName())));
-            [metalCommandBufferToWait.GetMetalCommandBuffer() addCompletedHandler: ^(id<MTLCommandBuffer>)
-            {
-                auto semaphoreIterator = std::find_if(commandBufferQueue.begin(), commandBufferQueue.end(), [&metalCommandBuffer](const CommandBufferQueueEntry& commandBufferEntry) -> bool { return commandBufferEntry.commandBuffer == metalCommandBuffer.GetMetalCommandBuffer(); });
-                if (semaphoreIterator->counter--; semaphoreIterator->counter == 0)
-                {
-                    [semaphoreIterator->commandBuffer encodeSignalEvent: device->GetSemaphore() value: metalCommandBuffer.GetCompletionSemaphoreSignalValue()];
-                    [semaphoreIterator->commandBuffer commit];
-                    commandBufferQueue.erase(semaphoreIterator);
-                }
-            }];
+            waitValue = glm::max(waitValue, metalCommandBufferToWait.GetCompletionSemaphoreSignalValue());
         }
+
+        // A wait only blocks what is encoded after it, and the command buffer has already been recorded, so it is encoded into a separate command buffer, submitted right before (a queue executes its command buffers in order of submission)
+        if (waitValue > 0)
+        {
+            const id<MTLCommandBuffer> waitCommandBuffer = [metalCommandBuffer.GetQueue().GetMetalCommandQueue() commandBuffer];
+            device->SetResourceName(waitCommandBuffer, SR_FORMAT("Wait command buffer of command buffer [{0}]", metalCommandBuffer.GetName()));
+            [waitCommandBuffer encodeWaitForEvent: device->GetSemaphore() value: waitValue];
+            [waitCommandBuffer commit];
+        }
+
+        // Submit command buffer
+        [metalCommandBuffer.GetMetalCommandBuffer() encodeSignalEvent: device->GetSemaphore() value: metalCommandBuffer.GetCompletionSemaphoreSignalValue()];
+        [metalCommandBuffer.GetMetalCommandBuffer() commit];
     }
 
     void MetalQueue::WaitForCommandBuffer(const CommandBuffer& commandBuffer) const
@@ -89,14 +70,27 @@ namespace Sierra
         Queue::WaitForCommandBuffer(metalCommandBuffer);
         const uint64 waitValue = metalCommandBuffer.GetCompletionSemaphoreSignalValue();
 
-        // Wait for completion
-        while (device->GetSemaphore().signaledValue < waitValue);
+        // If command buffer has already been completed, there is nothing to wait for
+        const id<MTLSharedEvent> semaphore = device->GetSemaphore();
+        if (semaphore.signaledValue >= waitValue) return;
+
+        // Otherwise, have the semaphore notify us once it reaches the completion value of the command buffer
+        const dispatch_semaphore_t completionSemaphore = dispatch_semaphore_create(0);
+        [semaphore notifyListener: semaphoreListener atValue: waitValue block: ^(id<MTLSharedEvent>, uint64)
+        {
+            dispatch_semaphore_signal(completionSemaphore);
+        }];
+
+        // Put thread to sleep until then (value is checked once more, in case it was reached right before the notification was registered)
+        if (semaphore.signaledValue < waitValue) dispatch_semaphore_wait(completionSemaphore, DISPATCH_TIME_FOREVER);
+        dispatch_release(completionSemaphore);
     }
 
     /* --- DESTRUCTOR --- */
 
     MetalQueue::~MetalQueue() noexcept
     {
+        [semaphoreListener release];
         [commandQueue release];
     }
 
