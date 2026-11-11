@@ -36,7 +36,7 @@ namespace SierraEngine
     void EditorAssetManager::LoadProjectAssets(const Sierra::FileManager& fileManager, const Project& project)
     {
         const std::filesystem::path assetDirectoryPath = project.GetAssetPath();
-        fileManager.EnumerateDirectoryFiles(assetDirectoryPath, false, [this, &fileManager](const std::filesystem::path& filePath) -> void
+        fileManager.EnumerateDirectoryFiles(assetDirectoryPath, true, [this, &fileManager](const std::filesystem::path& filePath) -> void
         {
             if (!filePath.has_extension())
                 return;

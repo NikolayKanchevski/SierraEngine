@@ -335,8 +335,18 @@ namespace Sierra
         if (cursorManager != nullptr)
         {
             // Update position
-            if (cursorManager->IsCursorVisible()) io.AddMousePosEvent(static_cast<float32>(cursorManager->GetCursorPosition().x), static_cast<float32>(height - cursorManager->GetCursorPosition().y));
-            else io.AddMousePosEvent(-FLT_MIN, -FLT_MAX); // ImGui uses these two specific values to signal, that cursor is not present
+            if (cursorManager->IsCursorVisible())
+            {
+                io.AddMousePosEvent(
+                    static_cast<float32>(cursorManager->GetCursorPosition().x) / scaling,
+                    static_cast<float32>(height) - static_cast<float32>(cursorManager->GetCursorPosition().y) / scaling
+                );
+            }
+            else
+            {
+                // ImGui uses these two specific values to signal, that cursor is not present
+                io.AddMousePosEvent(-std::numeric_limits<float32>::min(), -std::numeric_limits<float32>::max());
+            }
 
             // Update delta
             io.MouseDelta = cursorManager->GetCursorDelta();
@@ -345,9 +355,19 @@ namespace Sierra
         {
             if (!touchManager->GetTouches().empty())
             {
-                io.MousePos = ImVec2(touchManager->GetTouches()[0].GetPosition().x, static_cast<float32>(height) - touchManager->GetTouches()[0].GetPosition().y);
-                if (touchManager->GetTouches()[0].GetType() == TouchType::Press) io.MouseDown[ImGuiMouseButton_Left] = true;
-                else io.MouseReleased[ImGuiMouseButton_Left] = true;
+                io.MousePos = ImVec2(
+                    touchManager->GetTouches()[0].GetPosition().x / scaling,
+                    static_cast<float32>(height) - touchManager->GetTouches()[0].GetPosition().y / scaling
+                );
+
+                if (touchManager->GetTouches()[0].GetType() == TouchType::Press)
+                {
+                    io.MouseDown[ImGuiMouseButton_Left] = true;
+                }
+                else
+                {
+                    io.MouseReleased[ImGuiMouseButton_Left] = true;
+                }
             }
         }
 

@@ -11,6 +11,7 @@
 
 #include "Wizards/Assets/TextureSerializeWizard.h"
 #include "Wizards/Assets/MaterialSerializeWizard.h"
+#include "Wizards/Assets/ModelSerializeWizard.h"
 
 namespace SierraEngine
 {
@@ -89,6 +90,10 @@ namespace SierraEngine
             MenuItem {
                 .title = "Material",
                 .Callback = [this]() -> void { OpenMaterialSerializeWizard(); }
+            },
+            MenuItem {
+                .title = "Model",
+                .Callback = [this]() -> void { OpenModelSerializeWizard(); }
             }
         };
 
@@ -168,6 +173,21 @@ namespace SierraEngine
         currentWizard = std::make_unique<MaterialSerializeWizard>(createInfo);
     }
 
+    void Editor::OpenModelSerializeWizard()
+    {
+        const std::optional<std::filesystem::path> filePath = platformContext->OpenSingleFileSelectDialog({ .allowedFileExtensions = ModelSerializeWizard::INPUT_FILE_EXTENSIONS });
+        if (filePath.has_value())
+        {
+            const ModelSerializeWizardCreateInfo createInfo
+            {
+                .platformContext = *platformContext,
+                .renderingContext = *renderingContext,
+                .inputFilePath = &filePath.value()
+            };
+
+            currentWizard = std::make_unique<ModelSerializeWizard>(createInfo);
+        }
+    }
 
 
 }

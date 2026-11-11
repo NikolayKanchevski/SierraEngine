@@ -74,6 +74,7 @@ namespace SierraEngine
 
         void OpenTextureSerializeWizard();
         void OpenMaterialSerializeWizard();
+        void OpenModelSerializeWizard();
 
     };
 

@@ -65,8 +65,8 @@ namespace Sierra
             Key::Backspace,
             Key::Unknown,
             Key::Escape,
-            Key::LeftCommand,
             Key::RightCommand,
+            Key::LeftCommand,
             Key::LeftShift,
             Key::CapsLock,
             Key::LeftOption,
@@ -128,7 +128,7 @@ namespace Sierra
             Key::Unknown,
             Key::Home,
             Key::PageUp,
-            Key::Unknown,
+            Key::Delete,
             Key::F4,
             Key::End,
             Key::F2,
@@ -151,7 +151,8 @@ namespace Sierra
 
     MouseButton ButtonNumberToMouseButton(const uint32 buttonNumber) noexcept
     {
-        if (buttonNumber >= static_cast<uint32>(buttonNumber)) return MouseButton::Unknown;
+        // Button numbers are zero-based, while MouseButton values start after Unknown, so buttons beyond Extra2 are not mapped
+        if (buttonNumber + 1 > static_cast<uint32>(MouseButton::Extra2)) return MouseButton::Unknown;
         return static_cast<MouseButton>(buttonNumber + 1);
     }
 
@@ -195,7 +196,7 @@ namespace Sierra
 
     void CocoaInputManager::RegisterMouseScroll(const Vector2 scroll)
     {
-        mouseScroll = scroll;
+        mouseScroll += scroll;
     }
 
     /* --- GETTER METHODS --- */

@@ -29,7 +29,9 @@ namespace SierraEngine
         [[nodiscard]] std::optional<Numeric> ImportNumeric(const ryml::ConstNodeRef node) noexcept
         {
             if (node.invalid())
+            {
                 return std::nullopt;
+            }
 
             Numeric value = { };
             node.load(&value);
@@ -41,7 +43,7 @@ namespace SierraEngine
         void SerializeVector(ryml::NodeRef node, const Vector value)
         {
             node.set_seq();
-            node.set_container_style(ryml::FLOW_ML1);
+            node.set_container_style(ryml::FLOW_SL | ryml::FLOW_SPC);
 
             for (size i = 0; i < Vector::length(); i++)
             {
@@ -58,7 +60,9 @@ namespace SierraEngine
         [[nodiscard]] std::optional<Vector> ImportVector(const ryml::ConstNodeRef node) noexcept
         {
             if (node.invalid())
+            {
                 return std::nullopt;
+            }
 
             Vector value = { };
             for (size i = 0; i < Vector::length(); i++)
@@ -88,7 +92,7 @@ namespace SierraEngine
         }
 
         template<typename T>
-        void SerializeContainer(ryml::NodeRef node, const std::span<const T> container, void(*Serializer)(ryml::NodeRef, T), const bool singleLine = false) // TODO: Custom serialization and importation handling
+        void SerializeContainer(ryml::NodeRef node, const std::span<const T> container, void(*Serializer)(ryml::NodeRef, T), const bool singleLine = false)
         {
             node.set_seq();
 
@@ -110,7 +114,9 @@ namespace SierraEngine
         [[nodiscard]] std::optional<std::vector<T>> ImportContainer(const ryml::ConstNodeRef node, std::optional<T>(*Importer)(ryml::ConstNodeRef) noexcept)
         {
             if (node.invalid())
+            {
                 return std::nullopt;
+            }
 
             std::vector<T> container = { };
             container.reserve(node.num_children());

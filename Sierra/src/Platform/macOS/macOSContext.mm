@@ -4,10 +4,29 @@
 
 #include "macOSContext.h"
 
+#include <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+
 #include "../../Windowing/macOS/CocoaWindow.h"
 
 namespace Sierra
 {
+
+    namespace
+    {
+        NSArray<UTType*>* CreateAllowedContentTypes(const std::span<const std::string_view> allowedFileExtensions)
+        {
+            NSMutableArray<UTType*>* const contentTypes = [NSMutableArray<UTType*> arrayWithCapacity: allowedFileExtensions.size()];
+            for (const std::string_view extension : allowedFileExtensions)
+            {
+                if (extension.size() <= 1) continue;
+
+                UTType* const contentType = [UTType typeWithFilenameExtension: [NSString stringWithCString: extension.substr(1).data() encoding: NSUTF8StringEncoding]];
+                if (contentType != nil) [contentTypes addObject: contentType];
+            }
+
+            return [contentTypes count] > 0 ? contentTypes : nil;
+        }
+    }
 
     /* --- CONSTRUCTORS --- */
 
@@ -28,11 +47,11 @@ namespace Sierra
     {
         NSAlert* const alert = [[NSAlert alloc] init];
 
-        [alert setMessageText: [NSString stringWithCString: openInfo.title.data() encoding: NSASCIIStringEncoding]];
-        if (!openInfo.message.empty()) [alert setInformativeText: [NSString stringWithCString: openInfo.message.data() encoding: NSASCIIStringEncoding]];
+        [alert setMessageText: [NSString stringWithCString: openInfo.title.data() encoding: NSUTF8StringEncoding]];
+        if (!openInfo.message.empty()) [alert setInformativeText: [NSString stringWithCString: openInfo.message.data() encoding: NSUTF8StringEncoding]];
 
-        [alert addButtonWithTitle: [NSString stringWithCString: openInfo.acceptButtonText.data() encoding: NSASCIIStringEncoding]];
-        if (!openInfo.declineButtonText.empty()) [alert addButtonWithTitle: [NSString stringWithCString: openInfo.declineButtonText.data() encoding: NSASCIIStringEncoding]];
+        [alert addButtonWithTitle: [NSString stringWithCString: openInfo.acceptButtonText.data() encoding: NSUTF8StringEncoding]];
+        if (!openInfo.declineButtonText.empty()) [alert addButtonWithTitle: [NSString stringWithCString: openInfo.declineButtonText.data() encoding: NSUTF8StringEncoding]];
 
         switch (openInfo.severity)
         {
@@ -41,7 +60,10 @@ namespace Sierra
             case AlertSeverity::Error:   { [alert setAlertStyle: NSAlertStyleCritical]; break; }
         }
 
-        return [alert runModal] == NSAlertFirstButtonReturn;
+        const bool accepted = [alert runModal] == NSAlertFirstButtonReturn;
+        [alert release];
+
+        return accepted;
     }
 
     std::vector<std::filesystem::path> macOSContext::OpenFileSelectDialog(const FileSelectDialogOpenInfo& openInfo) const noexcept
@@ -50,31 +72,19 @@ namespace Sierra
 
         if (openInfo.directoryPath != nullptr)
         {
-            const std::string path = openInfo.directoryPath->string();
-            [panel setDirectoryURL: [NSURL fileURLWithPath: [NSString stringWithCString: path.c_str() encoding: NSASCIIStringEncoding]]];
+            [panel setDirectoryURL: [NSURL fileURLWithPath: [NSString stringWithCString: openInfo.directoryPath->string().data() encoding: NSUTF8StringEncoding]]];
         }
 
-        if (!openInfo.message.empty()) [panel setMessage: [NSString stringWithCString: openInfo.message.data() encoding: NSASCIIStringEncoding]];
-        if (!openInfo.buttonText.empty()) [panel setPrompt: [NSString stringWithCString: openInfo.buttonText.data() encoding: NSASCIIStringEncoding]];
+        if (!openInfo.message.empty()) [panel setMessage: [NSString stringWithCString: openInfo.message.data() encoding: NSUTF8StringEncoding]];
+        if (!openInfo.buttonText.empty()) [panel setPrompt: [NSString stringWithCString: openInfo.buttonText.data() encoding: NSUTF8StringEncoding]];
 
         [panel setCanChooseFiles: openInfo.allowFiles];
         [panel setCanChooseDirectories: openInfo.allowDirectories];
         [panel setAllowsMultipleSelection: openInfo.allowMultipleSelection];
 
-        NSMutableArray<NSString*>* const allowedFileExtensions = [NSMutableArray<NSString*> arrayWithCapacity: openInfo.allowedFileExtensions.size()];
-        if (!openInfo.allowedFileExtensions.empty())
+        if (NSArray<UTType*>* const allowedContentTypes = CreateAllowedContentTypes(openInfo.allowedFileExtensions))
         {
-            for (const std::string_view path : openInfo.allowedFileExtensions)
-            {
-                if (path.empty() || path.size() == 1) continue;
-
-                [allowedFileExtensions addObject: [NSString stringWithCString: path.data() + 1 encoding: NSASCIIStringEncoding]];
-            }
-
-            #pragma clang diagnostic push
-            #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-            [panel setAllowedFileTypes: allowedFileExtensions];
-            #pragma clang diagnostic pop
+            [panel setAllowedContentTypes: allowedContentTypes];
         }
 
         std::vector<std::filesystem::path> filePaths = { };
@@ -83,8 +93,8 @@ namespace Sierra
             filePaths.reserve(panel.URLs.count);
             for (NSURL* const URL in panel.URLs)
             {
-                const NSString* path = [URL.path stringByResolvingSymlinksInPath];
-                filePaths.emplace_back(std::string_view(path.UTF8String, path.length));
+                const NSString* const path = [URL.path stringByResolvingSymlinksInPath];
+                filePaths.emplace_back(std::string(path.UTF8String));
             }
         }
 
@@ -97,39 +107,27 @@ namespace Sierra
 
         if (openInfo.directoryPath != nullptr)
         {
-            const std::string path = openInfo.directoryPath->string();
-            [panel setDirectoryURL: [NSURL fileURLWithPath: [NSString stringWithCString: path.c_str() encoding: NSASCIIStringEncoding]]];
+            [panel setDirectoryURL: [NSURL fileURLWithPath: [NSString stringWithCString: openInfo.directoryPath->string().data() encoding: NSUTF8StringEncoding]]];
         }
 
-        if (!openInfo.message.empty()) [panel setMessage: [NSString stringWithCString: openInfo.message.data() encoding: NSASCIIStringEncoding]];
-        if (!openInfo.buttonText.empty()) [panel setPrompt: [NSString stringWithCString: openInfo.buttonText.data() encoding: NSASCIIStringEncoding]];
+        if (!openInfo.message.empty()) [panel setMessage: [NSString stringWithCString: openInfo.message.data() encoding: NSUTF8StringEncoding]];
+        if (!openInfo.buttonText.empty()) [panel setPrompt: [NSString stringWithCString: openInfo.buttonText.data() encoding: NSUTF8StringEncoding]];
 
-        if (!openInfo.fileName.empty()) [panel setNameFieldStringValue: [NSString stringWithCString: openInfo.fileName.data() encoding: NSASCIIStringEncoding]];
+        if (!openInfo.fileName.empty()) [panel setNameFieldStringValue: [NSString stringWithCString: openInfo.fileName.data() encoding: NSUTF8StringEncoding]];
 
         [panel setExtensionHidden: NO];
         [panel setAllowsOtherFileTypes: YES];
         [panel setAccessibilityExpanded: YES];
 
-        NSMutableArray<NSString*>* const allowedFileExtensions = [NSMutableArray<NSString*> arrayWithCapacity: openInfo.allowedFileExtensions.size()];
-        if (!openInfo.allowedFileExtensions.empty())
+        if (NSArray<UTType*>* const allowedContentTypes = CreateAllowedContentTypes(openInfo.allowedFileExtensions))
         {
-            for (const std::string_view path : openInfo.allowedFileExtensions)
-            {
-                if (path.empty() || path.size() == 1) continue;
-
-                [allowedFileExtensions addObject: [NSString stringWithCString: path.data() + 1 encoding: NSASCIIStringEncoding]];
-            }
-
-            #pragma clang diagnostic push
-            #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-                [panel setAllowedFileTypes: allowedFileExtensions];
-            #pragma clang diagnostic pop
+            [panel setAllowedContentTypes: allowedContentTypes];
         }
 
         if ([panel runModal] == NSModalResponseOK)
         {
-            const NSString* path = [panel.URL.path stringByResolvingSymlinksInPath];
-            return { std::string_view(path.UTF8String, path.length) };
+            const NSString* const path = [panel.URL.path stringByResolvingSymlinksInPath];
+            return std::filesystem::path(std::string(path.UTF8String));
         }
 
         return std::nullopt;
@@ -139,7 +137,8 @@ namespace Sierra
 
     std::string macOSContext::GetUserName() const noexcept
     {
-        return std::string(NSUserName().UTF8String, NSUserName().length);
+        const NSString* const userName = NSUserName();
+        return userName != nil ? std::string(userName.UTF8String) : "Unknown User";
     }
 
     Screen& macOSContext::GetWindowScreen(const Window& window)

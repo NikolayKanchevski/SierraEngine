@@ -32,7 +32,7 @@ namespace SierraEngine
             return;
         }
 
-        if (BeginWizard("Texture Serialize Wizard", open))
+        if (BeginWizard("Material Serialize Wizard", open))
         {
             DrawMetadataMenu(serializeInfo.metadata);
 

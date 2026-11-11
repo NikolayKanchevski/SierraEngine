@@ -191,7 +191,7 @@ namespace SierraEngine
                         return;
                     }
 
-                    if (const auto& texture = textures[*textureIndex]; texture.has_value())
+                    if (const std::optional<SerializedModelTextureDependency>& texture = textures[*textureIndex]; texture.has_value())
                     {
                         outID = texture->ID;
                     }
@@ -266,9 +266,6 @@ namespace SierraEngine
         SerializeProperties(rootNode, serializeInfo, vertices, indices, meshes, outDependencies);
 
         const std::vector<char> data = ryml::emitrs_yaml<std::vector<char>>(tree);
-
-        APP_INFO("{0}", std::string_view(data.data(), data.size()));
-
         if (data.empty())
         {
             APP_WARNING("Could not YAML serialize model!");

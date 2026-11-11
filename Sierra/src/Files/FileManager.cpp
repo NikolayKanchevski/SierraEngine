@@ -98,6 +98,16 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
+    std::string FileManager::SanitizeFileName(const std::string_view fileName) const noexcept
+    {
+        constexpr std::string_view FORBIDDEN_CHARACTERS = "/\\:*?\"<>|";
+
+        std::string sanitizedFileName = std::string(fileName);
+        std::ranges::replace_if(sanitizedFileName, [FORBIDDEN_CHARACTERS](const char character) -> bool { return FORBIDDEN_CHARACTERS.find(character) != std::string_view::npos; }, '-');
+
+        return sanitizedFileName;
+    }
+
     void FileManager::CreateFile(const std::filesystem::path& filePath, const FilePathConflictPolicy conflictPolicy) const
     {
 
