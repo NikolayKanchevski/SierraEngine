@@ -28,6 +28,8 @@ namespace Sierra
         VulkanImage(const VulkanDevice& device, const ImageCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
+
         [[nodiscard]] uint32 GetWidth() const noexcept override { return width; }
         [[nodiscard]] uint32 GetHeight() const noexcept override { return height; }
         [[nodiscard]] uint32 GetDepth() const noexcept override { return depth; }
@@ -53,6 +55,7 @@ namespace Sierra
         ~VulkanImage() noexcept override;
 
     private:
+        std::string name = { };
         const VulkanDevice* device = nullptr;
 
         uint32 width = 0;

@@ -101,17 +101,19 @@ namespace Sierra
 
     void X11InputManager::RegisterMouseScroll(Vector2 scroll)
     {
-        mouseScroll = scroll;
+        // Several scroll steps may happen between two updates, so they are accumulated
+        mouseScroll += scroll;
+        GetMouseScrollDispatcher().DispatchEvent(scroll);
     }
 
     /* --- CONVERSIONS --- */
 
-    Key X11InputManager::XKeyCodeToKey(const uint keyCode)
+    Key X11InputManager::XKeyCodeToKey(const uint keyCode) const
     {
         return xkbExtension.XKeyCodeToKey(keyCode);
     }
 
-    MouseButton X11InputManager::XButtonToMouseButton(const uint button)
+    MouseButton X11InputManager::XButtonToMouseButton(const uint button) const
     {
         switch (button)
         {
@@ -130,9 +132,27 @@ namespace Sierra
 
     void X11InputManager::Update()
     {
-        std::copy(keyStates.begin(), keyStates.end(), lastKeyStates.begin());
-        std::copy(mouseButtonStates.begin(), mouseButtonStates.end(), lastMouseButtonStates.begin());
+        std::ranges::copy(keyStates, lastKeyStates.begin());
+        std::ranges::copy(mouseButtonStates, lastMouseButtonStates.begin());
         mouseScroll = { 0, 0 };
+    }
+
+    /* --- PRIVATE METHODS --- */
+
+    void X11InputManager::ReleaseKeys()
+    {
+        for (uint32 i = 0; i < KEY_COUNT; i++)
+        {
+            if (keyStates[i] == InputAction::Press) RegisterKeyRelease(static_cast<Key>(i));
+        }
+    }
+
+    void X11InputManager::ReleaseMouseButtons()
+    {
+        for (uint32 i = 0; i < MOUSE_BUTTON_COUNT; i++)
+        {
+            if (mouseButtonStates[i] == InputAction::Press) RegisterMouseButtonRelease(static_cast<MouseButton>(i));
+        }
     }
 
 }

@@ -40,7 +40,7 @@ namespace SierraEngine
     void EditorWizard::EndWizard() const noexcept
     {
         ImGui::PopStyleVar();
-        ImGui::End();
+        ImGui::EndPopup();
     }
 
 }

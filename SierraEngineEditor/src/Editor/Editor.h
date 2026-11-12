@@ -7,15 +7,17 @@
 #include "EditorThemes.h"
 #include "EditorWizard.h"
 #include "../Rendering/Viewport.h"
+#include "../Platform/EditorPlatformContext.h"
 
 namespace SierraEngine
 {
-    class Viewport;
 
     struct EditorCreateInfo
     {
-        const Sierra::PlatformContext& platformContext;
+        const EditorPlatformContext& platformContext;
         const RenderingContext& renderingContext;
+
+        const Sierra::FileManager& fileManager;
         EditorTheme theme = EditorTheme::Dark;
     };
 
@@ -59,8 +61,9 @@ namespace SierraEngine
         ~Editor() noexcept = default;
 
     private:
-        const Sierra::PlatformContext* platformContext;
+        const EditorPlatformContext* platformContext;
         const RenderingContext* renderingContext;
+        const Sierra::FileManager* fileManager;
 
         Scene scene;
         std::vector<EntityID> selectedEntities = { };

@@ -111,9 +111,13 @@ namespace SierraEngine
             style.Colors[ImGuiCol_ResizeGripActive]      = ImVec4(0.40f, 0.44f, 0.47f, 1.00f);
             style.Colors[ImGuiCol_Tab]                   = ImVec4(0.00f, 0.00f, 0.00f, 0.52f);
             style.Colors[ImGuiCol_TabHovered]            = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-            style.Colors[ImGuiCol_TabActive]             = ImVec4(0.20f, 0.20f, 0.20f, 0.36f);
-            style.Colors[ImGuiCol_TabUnfocused]          = ImVec4(0.00f, 0.00f, 0.00f, 0.52f);
-            style.Colors[ImGuiCol_TabUnfocusedActive]    = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+            style.Colors[ImGuiCol_TabSelected]           = ImVec4(0.20f, 0.20f, 0.20f, 0.36f);
+            style.Colors[ImGuiCol_TabDimmed]             = ImVec4(0.00f, 0.00f, 0.00f, 0.52f);
+            style.Colors[ImGuiCol_TabDimmedSelected]     = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+
+            // Overlines are not part of this theme, so they are kept transparent, as they default to a visible colour
+            style.Colors[ImGuiCol_TabSelectedOverline]         = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+            style.Colors[ImGuiCol_TabDimmedSelectedOverline]   = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
             style.Colors[ImGuiCol_DockingPreview]        = ImVec4(0.33f, 0.67f, 0.86f, 1.00f);
             style.Colors[ImGuiCol_DockingEmptyBg]        = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);
             style.Colors[ImGuiCol_PlotLines]             = ImVec4(1.00f, 0.00f, 0.00f, 1.00f);

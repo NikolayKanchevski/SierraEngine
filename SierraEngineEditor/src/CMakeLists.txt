@@ -1,8 +1,9 @@
 # Link modules
 add_subdirectory(Assets)
 add_subdirectory(Core)
-add_subdirectory(Rendering)
 add_subdirectory(Editor)
+add_subdirectory(Platform)
+add_subdirectory(Rendering)
 
 # Link precompiled headers
 target_precompile_headers(SierraEngineEditor PRIVATE pch.h)

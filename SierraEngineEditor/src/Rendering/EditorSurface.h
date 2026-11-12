@@ -11,7 +11,7 @@ namespace SierraEngine
 
     struct EditorSurfaceCreateInfo
     {
-        const Sierra::PlatformContext& platformContext;
+        const Sierra::WindowManager& windowManager;
         const RenderingContext& renderingContext;
 
         Sierra::CommandBuffer& commandBuffer;

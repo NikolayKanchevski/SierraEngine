@@ -4,7 +4,7 @@
 
 #include "VulkanX11Surface.h"
 
-#include "../../../Windowing/Linux/X11Window.h"
+#include "../../../Windowing/Linux/X11/X11Window.h"
 #include "../VulkanErrorHandler.h"
 
 namespace Sierra

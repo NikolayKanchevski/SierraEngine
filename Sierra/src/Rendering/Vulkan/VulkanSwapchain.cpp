@@ -9,7 +9,20 @@
     constexpr VkSurfaceKHR (*vkCreateSurfaceKHR)(const Sierra::VulkanInstance&, const Sierra::Window&) = &Sierra::CreateVulkanWin32Surface;
 #elif SR_PLATFORM_LINUX
     #include "Linux/VulkanX11Surface.h"
-    constexpr VkSurfaceKHR (*vkCreateSurfaceKHR)(const Sierra::VulkanInstance&, const Sierra::Window&) = &Sierra::CreateVulkanX11Surface;
+    #include "Linux/VulkanWaylandSurface.h"
+    namespace Sierra
+    {
+        namespace
+        {
+            // Windowing backend is only known at runtime, so the surface is created for whichever one the window belongs to
+            VkSurfaceKHR CreateVulkanLinuxSurface(const VulkanInstance& instance, const Window& window)
+            {
+                if (window.GetBackendType() == WindowingBackendType::Wayland) return CreateVulkanWaylandSurface(instance, window);
+                return CreateVulkanX11Surface(instance, window);
+            }
+        }
+    }
+    constexpr VkSurfaceKHR (*vkCreateSurfaceKHR)(const Sierra::VulkanInstance&, const Sierra::Window&) = &Sierra::CreateVulkanLinuxSurface;
 #elif SR_PLATFORM_APPLE
     #include "Apple/VulkanMetalSurface.h"
     constexpr VkSurfaceKHR (*vkCreateSurfaceKHR)(const Sierra::VulkanInstance&, const Sierra::Window&) = &Sierra::CreateVulkanMetalSurface;
@@ -27,7 +40,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanSwapchain::VulkanSwapchain(const VulkanInstance& givenInstance, const VulkanDevice& givenDevice, const SwapchainCreateInfo& createInfo)
-        : VulkanResource(createInfo.name), Swapchain(createInfo), instance(&givenInstance), device(&givenDevice), window(&createInfo.window), surface(vkCreateSurfaceKHR(givenInstance, createInfo.window)), preferredPresentationMode(createInfo.preferredPresentationMode), preferredBuffering(createInfo.preferredBuffering), preferredImageMemoryType(createInfo.preferredImageMemoryType)
+        : Swapchain(createInfo), name(createInfo.name), instance(&givenInstance), device(&givenDevice), window(&createInfo.window), surface(vkCreateSurfaceKHR(givenInstance, createInfo.window)), preferredPresentationMode(createInfo.preferredPresentationMode), preferredBuffering(createInfo.preferredBuffering), preferredImageMemoryType(createInfo.preferredImageMemoryType)
     {
         SR_THROW_IF(!device->IsExtensionLoaded(VK_KHR_SWAPCHAIN_EXTENSION_NAME), UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create resource table [{1}]", device->GetName(), createInfo.name)));
 
@@ -40,6 +53,9 @@ namespace Sierra
     void VulkanSwapchain::AcquireNextImage()
     {
         SR_THROW_IF(window->IsClosed(), InvalidOperationError(SR_FORMAT("Cannot acquire next image of swapchain [{0}], as its corresponding window [{1}] has been closed", GetName(), window->GetTitle())));
+
+        // Drivers do not always report a change of framebuffer (such as when the scale of a Wayland window changes), so the swapchain is checked against it, and recreated if it differs
+        if (window->GetFramebufferSize() != requestedFramebufferSize) Recreate();
 
         // Acquire next image
         VkResult result = device->GetFunctionTable().vkAcquireNextImageKHR(device->GetVulkanDevice(), swapchain, std::numeric_limits<uint64>::max(), isImageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &currentImage);
@@ -154,7 +170,8 @@ namespace Sierra
             Recreate();
             return;
         }
-        else if (result != VK_SUCCESS)
+
+        if (result != VK_SUCCESS)
         {
             HandleVulkanError(result, SR_FORMAT("Could not present swapchain [{0}]! Error: {1}", GetName(), static_cast<int32>(result)));
         }
@@ -258,7 +275,7 @@ namespace Sierra
             #if !SR_PLATFORM_MOBILE
                 if (preferredPresentationMode == SwapchainPresentationMode::VSync && presentMode == VK_PRESENT_MODE_MAILBOX_KHR)     // VSync with no tearing, no GPU idling, low latency, and high energy consumption
             #else
-                if (preferredPresentationMode == SwapchainPresentationMode::VSync && presentMode == VK_PRESENT_MODE_FIFO_KHR)        // VSync with no tearing, low GPU idling, moderate latency, minimal energy consuption
+                if (preferredPresentationMode == SwapchainPresentationMode::VSync && presentMode == VK_PRESENT_MODE_FIFO_KHR)        // VSync with no tearing, low GPU idling, moderate latency, minimal energy consumption
             #endif
             {
                 selectedPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
@@ -278,6 +295,9 @@ namespace Sierra
             case SwapchainBuffering::TripleBuffering:       { preferredConcurrentFrameCount = 3; break; }
         }
         preferredConcurrentFrameCount = glm::clamp(preferredConcurrentFrameCount, surfaceCapabilities.minImageCount, glm::max(surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount));
+
+        // Remember which framebuffer the swapchain is created for, so that a change of it is noticed
+        requestedFramebufferSize = window->GetFramebufferSize();
 
         // Set up swapchain creation info
         const VkSwapchainCreateInfoKHR swapchainCreateInfo
@@ -360,6 +380,7 @@ namespace Sierra
         }
     }
 
+    /* --- DESTRUCTOR --- */
     void VulkanSwapchain::Recreate()
     {
         while (window->IsMinimized())
@@ -368,15 +389,14 @@ namespace Sierra
         }
 
         device->GetFunctionTable().vkQueueWaitIdle(presentationQueue);
-        const Vector2UInt lastSize = { swapchainImages[0]->GetWidth(), swapchainImages[0]->GetHeight() };
 
         CreateSwapchain();
         currentFrame = 0;
 
-        if (const Vector2UInt newSize = { swapchainImages[0]->GetWidth(), swapchainImages[0]->GetHeight() }; lastSize != newSize) GetSwapchainResizeDispatcher().DispatchEvent(newSize.x, newSize.y, GetScaling());
+        const uint32 width = swapchainImages[0]->GetWidth();
+        const uint32 height = swapchainImages[0]->GetHeight();
+        GetSwapchainResizeDispatcher().DispatchEvent(width, height, GetScaling());
     }
-
-    /* --- DESTRUCTOR --- */
 
     VulkanSwapchain::~VulkanSwapchain() noexcept
     {

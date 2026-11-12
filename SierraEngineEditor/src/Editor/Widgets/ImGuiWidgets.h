@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "../../Platform/EditorPlatformContext.h"
+
 namespace SierraEngine
 {
 
@@ -173,14 +175,14 @@ namespace SierraEngine
         void EndPropertyTable();
 
         bool TextInput(std::string_view label, std::string& value, const ImGuiTextInputInfo& inputInfo = { });
-        bool FileSelectInput(std::string_view label, std::filesystem::path& value, const Sierra::PlatformContext& platformContext, const ImGuiFileSelectInputInfo& inputInfo = { });
-        bool FileSaveInput(std::string_view label, std::filesystem::path& value, const Sierra::PlatformContext& platformContext, const ImGuiFileSaveInputInfo& inputInfo = { });
+        bool FileSelectInput(std::string_view label, std::filesystem::path& value, const EditorPlatformContext& platformContext, const ImGuiFileSelectInputInfo& inputInfo = { });
+        bool FileSaveInput(std::string_view label, std::filesystem::path& value, const EditorPlatformContext& platformContext, const ImGuiFileSaveInputInfo& inputInfo = { });
         bool NumericInput(std::string_view label, void* value, ImGuiDataType dataType, const ImGuiNumericInputInfo& inputInfo = { });
         bool NumericEnterInput(std::string_view label, void* value, ImGuiDataType dataType, const ImGuiNumericInputInfo& inputInfo = { });
         bool VectorInput(std::string_view label, void* value, size length, ImGuiDataType dataType, const ImGuiVectorInputInfo& inputInfo = { });
         bool ColorInput(std::string_view label, ColorRGB& value, const ImGuiColorInputInfo& inputInfo = { });
         bool ColorInput(std::string_view label, ColorRGBA& value, const ImGuiColorInputInfo& inputInfo = { });
-        bool ImageInput(std::string_view label, std::filesystem::path& value, const Sierra::PlatformContext& platformContext, const ImGuiImageInputInfo& inputInfo = { });
+        bool ImageInput(std::string_view label, std::filesystem::path& value, const EditorPlatformContext& platformContext, const ImGuiImageInputInfo& inputInfo = { });
 
         bool Button(std::string_view label, const ImGuiButtonInfo& buttonInfo = { });
         bool Dropdown(std::string_view label, uint32& value, const ImGuiDropdownInfo& dropdownInfo);

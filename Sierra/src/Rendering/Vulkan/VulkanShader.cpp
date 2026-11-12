@@ -27,7 +27,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
     
     VulkanShader::VulkanShader(const VulkanDevice& givenDevice, const ShaderCreateInfo& createInfo)
-        : VulkanResource(createInfo.name), Shader(createInfo), device(&givenDevice)
+        : Shader(createInfo), name(createInfo.name), device(&givenDevice)
     {
         // Set up module create info
         const ShaderFileHeader& fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.memory.data());

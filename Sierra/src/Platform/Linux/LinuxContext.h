@@ -10,8 +10,9 @@
 
 #include "../PlatformContext.h"
 
-#include "X11Context.h"
 #include "../../Files/Unix/UnixFileManager.h"
+#include "../../Windowing/Linux/Wayland/WaylandContext.h"
+#include "../../Windowing/Linux/X11/X11Context.h"
 
 namespace Sierra
 {
@@ -22,23 +23,12 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         LinuxContext();
 
-        /* --- POLLING METHODS --- */
-        [[nodiscard]] std::unique_ptr<Window> CreateWindow(const WindowCreateInfo& createInfo) const override;
-
-        bool OpenAlertDialog(const AlertDialogOpenInfo& openInfo) const override;
-        [[nodiscard]] std::vector<std::filesystem::path> OpenFileSelectDialog(const FileSelectDialogOpenInfo& openInfo) const noexcept override;
-        [[nodiscard]] std::optional<std::filesystem::path> OpenFileSaveDialog(const FileSaveDialogOpenInfo& openInfo) const noexcept override;
-
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string GetUserName() const noexcept override;
+        [[nodiscard]] const WindowManager& GetWindowManager() const noexcept override { return *windowManager; }
         [[nodiscard]] const FileManager& GetFileManager() const noexcept override { return fileManager; }
 
-        [[nodiscard]] Screen& GetPrimaryScreen() noexcept override { return x11Context.GetPrimaryScreen(); }
-        [[nodiscard]] Screen& GetWindowScreen(const Window& window) override;
-        void EnumerateScreens(const ScreenEnumerationPredicate& Predicate) override;
-
         [[nodiscard]] PlatformType GetType() const noexcept override { return PlatformType::Linux; }
-        [[nodiscard]] X11Context& GetX11Context() { return x11Context; }
+        [[nodiscard]] WindowingBackendType GetWindowingBackendType() const noexcept { return windowingBackendType; }
 
         /* --- COPY SEMANTICS --- */
         LinuxContext(const LinuxContext&) = delete;
@@ -52,8 +42,14 @@ namespace Sierra
         ~LinuxContext() noexcept override = default;
 
     private:
-        X11Context x11Context;
+        // Exactly one of these is created, as the windowing backend is picked upon construction
+        std::unique_ptr<WaylandContext> waylandContext = nullptr;
+        std::unique_ptr<X11Context> x11Context = nullptr;
+
+        // NOTE: Window manager references the context above, so it must be destroyed before it, which is why it is declared after
+        std::unique_ptr<WindowManager> windowManager = nullptr;
         UnixFileManager fileManager;
+        WindowingBackendType windowingBackendType = WindowingBackendType::X11;
 
         void Update() override;
 

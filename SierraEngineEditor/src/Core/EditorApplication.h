@@ -8,6 +8,7 @@
 #include "../Assets/EditorAssetManager.h"
 
 #include "../Editor/Editor.h"
+#include "../Platform/EditorPlatformContext.h"
 #include "../Rendering/EditorSurface.h"
 
 namespace SierraEngine
@@ -23,7 +24,7 @@ namespace SierraEngine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        EditorApplication(const EditorApplicationCreateInfo& createInfo);
+        explicit EditorApplication(const EditorApplicationCreateInfo& createInfo);
 
         /* --- COPY SEMANTICS --- */
         EditorApplication(const EditorApplication&) = delete;
@@ -38,6 +39,7 @@ namespace SierraEngine
 
     private:
         bool Update() override;
+        std::unique_ptr<EditorPlatformContext> platformContext;
 
         FrameLimiter frameLimiter;
         Project project;

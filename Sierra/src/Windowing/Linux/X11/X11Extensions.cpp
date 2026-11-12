@@ -4,14 +4,145 @@
 
 #include "X11Extensions.h"
 
-#include <X11/keysym.h>
-
 #include <X11/XKBlib.h>
-#include <X11/extensions/XInput2.h>
 #include <X11/extensions/Xrandr.h>
 
 namespace Sierra
 {
+
+    namespace
+    {
+        struct KeyNameEntry
+        {
+            Key key = Key::Unknown;
+            std::string_view name = { };
+        };
+
+        constexpr std::array<KeyNameEntry, 121> KEY_TABLE
+        {
+            KeyNameEntry { .key = Key::Grave, .name = "TLDE" },
+            KeyNameEntry { .key = Key::Number1, .name = "AE01" },
+            KeyNameEntry { .key = Key::Number2, .name = "AE02" },
+            KeyNameEntry { .key = Key::Number3, .name = "AE03" },
+            KeyNameEntry { .key = Key::Number4, .name = "AE04" },
+            KeyNameEntry { .key = Key::Number5, .name = "AE05" },
+            KeyNameEntry { .key = Key::Number6, .name = "AE06" },
+            KeyNameEntry { .key = Key::Number7, .name = "AE07" },
+            KeyNameEntry { .key = Key::Number8, .name = "AE08" },
+            KeyNameEntry { .key = Key::Number9, .name = "AE09" },
+            KeyNameEntry { .key = Key::Number0, .name = "AE10" },
+            KeyNameEntry { .key = Key::Minus, .name = "AE11" },
+            KeyNameEntry { .key = Key::Equal, .name = "AE12" },
+            KeyNameEntry { .key = Key::Q, .name = "AD01" },
+            KeyNameEntry { .key = Key::W, .name = "AD02" },
+            KeyNameEntry { .key = Key::E, .name = "AD03" },
+            KeyNameEntry { .key = Key::R, .name = "AD04" },
+            KeyNameEntry { .key = Key::T, .name = "AD05" },
+            KeyNameEntry { .key = Key::Y, .name = "AD06" },
+            KeyNameEntry { .key = Key::U, .name = "AD07" },
+            KeyNameEntry { .key = Key::I, .name = "AD08" },
+            KeyNameEntry { .key = Key::O, .name = "AD09" },
+            KeyNameEntry { .key = Key::P, .name = "AD10" },
+            KeyNameEntry { .key = Key::LeftBracket, .name = "AD11" },
+            KeyNameEntry { .key = Key::RightBracket, .name = "AD12" },
+            KeyNameEntry { .key = Key::A, .name = "AC01" },
+            KeyNameEntry { .key = Key::S, .name = "AC02" },
+            KeyNameEntry { .key = Key::D, .name = "AC03" },
+            KeyNameEntry { .key = Key::F, .name = "AC04" },
+            KeyNameEntry { .key = Key::G, .name = "AC05" },
+            KeyNameEntry { .key = Key::H, .name = "AC06" },
+            KeyNameEntry { .key = Key::J, .name = "AC07" },
+            KeyNameEntry { .key = Key::K, .name = "AC08" },
+            KeyNameEntry { .key = Key::L, .name = "AC09" },
+            KeyNameEntry { .key = Key::Semicolon, .name = "AC10" },
+            KeyNameEntry { .key = Key::Apostrophe, .name = "AC11" },
+            KeyNameEntry { .key = Key::Z, .name = "AB01" },
+            KeyNameEntry { .key = Key::X, .name = "AB02" },
+            KeyNameEntry { .key = Key::C, .name = "AB03" },
+            KeyNameEntry { .key = Key::V, .name = "AB04" },
+            KeyNameEntry { .key = Key::B, .name = "AB05" },
+            KeyNameEntry { .key = Key::N, .name = "AB06" },
+            KeyNameEntry { .key = Key::M, .name = "AB07" },
+            KeyNameEntry { .key = Key::Comma, .name = "AB08" },
+            KeyNameEntry { .key = Key::Period, .name = "AB09" },
+            KeyNameEntry { .key = Key::Slash, .name = "AB10" },
+            KeyNameEntry { .key = Key::Backslash, .name = "BKSL" },
+            KeyNameEntry { .key = Key::World1, .name = "LSGT" },
+            KeyNameEntry { .key = Key::Space, .name = "SPCE" },
+            KeyNameEntry { .key = Key::Escape, .name = "ESC" },
+            KeyNameEntry { .key = Key::Enter, .name = "RTRN" },
+            KeyNameEntry { .key = Key::Tab, .name = "TAB" },
+            KeyNameEntry { .key = Key::Backspace, .name = "BKSP" },
+            KeyNameEntry { .key = Key::Insert, .name = "INS" },
+            KeyNameEntry { .key = Key::Delete, .name = "DELE" },
+            KeyNameEntry { .key = Key::RightArrow, .name = "RGHT" },
+            KeyNameEntry { .key = Key::LeftArrow, .name = "LEFT" },
+            KeyNameEntry { .key = Key::DownArrow, .name = "DOWN" },
+            KeyNameEntry { .key = Key::UpArrow, .name = "UP" },
+            KeyNameEntry { .key = Key::PageUp, .name = "PGUP" },
+            KeyNameEntry { .key = Key::PageDown, .name = "PGDN" },
+            KeyNameEntry { .key = Key::Home, .name = "HOME" },
+            KeyNameEntry { .key = Key::End, .name = "END" },
+            KeyNameEntry { .key = Key::CapsLock, .name = "CAPS" },
+            KeyNameEntry { .key = Key::ScrollLock, .name = "SCLK" },
+            KeyNameEntry { .key = Key::NumpadLock, .name = "NMLK" },
+            KeyNameEntry { .key = Key::PrintScreen, .name = "PRSC" },
+            KeyNameEntry { .key = Key::Pause, .name = "PAUS" },
+            KeyNameEntry { .key = Key::F1, .name = "FK01" },
+            KeyNameEntry { .key = Key::F2, .name = "FK02" },
+            KeyNameEntry { .key = Key::F3, .name = "FK03" },
+            KeyNameEntry { .key = Key::F4, .name = "FK04" },
+            KeyNameEntry { .key = Key::F5, .name = "FK05" },
+            KeyNameEntry { .key = Key::F6, .name = "FK06" },
+            KeyNameEntry { .key = Key::F7, .name = "FK07" },
+            KeyNameEntry { .key = Key::F8, .name = "FK08" },
+            KeyNameEntry { .key = Key::F9, .name = "FK09" },
+            KeyNameEntry { .key = Key::F10, .name = "FK10" },
+            KeyNameEntry { .key = Key::F11, .name = "FK11" },
+            KeyNameEntry { .key = Key::F12, .name = "FK12" },
+            KeyNameEntry { .key = Key::F13, .name = "FK13" },
+            KeyNameEntry { .key = Key::F14, .name = "FK14" },
+            KeyNameEntry { .key = Key::F15, .name = "FK15" },
+            KeyNameEntry { .key = Key::F16, .name = "FK16" },
+            KeyNameEntry { .key = Key::F17, .name = "FK17" },
+            KeyNameEntry { .key = Key::F18, .name = "FK18" },
+            KeyNameEntry { .key = Key::F19, .name = "FK19" },
+            KeyNameEntry { .key = Key::F20, .name = "FK20" },
+            KeyNameEntry { .key = Key::F21, .name = "FK21" },
+            KeyNameEntry { .key = Key::F22, .name = "FK22" },
+            KeyNameEntry { .key = Key::F23, .name = "FK23" },
+            KeyNameEntry { .key = Key::F24, .name = "FK24" },
+            KeyNameEntry { .key = Key::F25, .name = "FK25" },
+            KeyNameEntry { .key = Key::KeypadNumber0, .name = "KP0" },
+            KeyNameEntry { .key = Key::KeypadNumber1, .name = "KP1" },
+            KeyNameEntry { .key = Key::KeypadNumber2, .name = "KP2" },
+            KeyNameEntry { .key = Key::KeypadNumber3, .name = "KP3" },
+            KeyNameEntry { .key = Key::KeypadNumber4, .name = "KP4" },
+            KeyNameEntry { .key = Key::KeypadNumber5, .name = "KP5" },
+            KeyNameEntry { .key = Key::KeypadNumber6, .name = "KP6" },
+            KeyNameEntry { .key = Key::KeypadNumber7, .name = "KP7" },
+            KeyNameEntry { .key = Key::KeypadNumber8, .name = "KP8" },
+            KeyNameEntry { .key = Key::KeypadNumber9, .name = "KP9" },
+            KeyNameEntry { .key = Key::KeypadPeriod, .name = "KPDL" },
+            KeyNameEntry { .key = Key::KeypadSlash, .name = "KPDV" },
+            KeyNameEntry { .key = Key::KeypadAsterisk, .name = "KPMU" },
+            KeyNameEntry { .key = Key::KeypadMinus, .name = "KPSU" },
+            KeyNameEntry { .key = Key::KeypadPlus, .name = "KPAD" },
+            KeyNameEntry { .key = Key::KeypadEnter, .name = "KPEN" },
+            KeyNameEntry { .key = Key::KeypadEqual, .name = "KPEQ" },
+            KeyNameEntry { .key = Key::LeftShift, .name = "LFSH" },
+            KeyNameEntry { .key = Key::LeftControl, .name = "LCTL" },
+            KeyNameEntry { .key = Key::LeftAlt, .name = "LALT" },
+            KeyNameEntry { .key = Key::LeftSystem, .name = "LWIN" },
+            KeyNameEntry { .key = Key::RightShift, .name = "RTSH" },
+            KeyNameEntry { .key = Key::RightControl, .name = "RCTL" },
+            KeyNameEntry { .key = Key::RightAlt, .name = "RALT" },
+            KeyNameEntry { .key = Key::RightAlt, .name = "LVL3" },
+            KeyNameEntry { .key = Key::RightAlt, .name = "MDSW" },
+            KeyNameEntry { .key = Key::RightSystem, .name = "RWIN" },
+            KeyNameEntry { .key = Key::Menu, .name = "MENU" }
+        };
+    }
 
     /* --- CONSTRUCTORS --- */
 
@@ -40,146 +171,15 @@ namespace Sierra
             minKeyCode = keyboardDescription->min_key_code;
             maxKeyCode = keyboardDescription->max_key_code;
 
-            struct KeyNameEntry
-            {
-                Key key;
-                const char* name;
-            };
-
-            constexpr static KeyNameEntry keyNameTable[] =
-            {
-                { Key::Grave, "TLDE" },
-                { Key::Number1, "AE01" },
-                { Key::Number2, "AE02" },
-                { Key::Number3, "AE03" },
-                { Key::Number4, "AE04" },
-                { Key::Number5, "AE05" },
-                { Key::Number6, "AE06" },
-                { Key::Number7, "AE07" },
-                { Key::Number8, "AE08" },
-                { Key::Number9, "AE09" },
-                { Key::Number0, "AE10" },
-                { Key::Minus, "AE11" },
-                { Key::Equals, "AE12" },
-                { Key::Q, "AD01" },
-                { Key::W, "AD02" },
-                { Key::E, "AD03" },
-                { Key::R, "AD04" },
-                { Key::T, "AD05" },
-                { Key::Y, "AD06" },
-                { Key::U, "AD07" },
-                { Key::I, "AD08" },
-                { Key::O, "AD09" },
-                { Key::P, "AD10" },
-                { Key::LeftBracket, "AD11" },
-                { Key::RightBracket, "AD12" },
-                { Key::A, "AC01" },
-                { Key::S, "AC02" },
-                { Key::D, "AC03" },
-                { Key::F, "AC04" },
-                { Key::G, "AC05" },
-                { Key::H, "AC06" },
-                { Key::J, "AC07" },
-                { Key::K, "AC08" },
-                { Key::L, "AC09" },
-                { Key::Semicolon, "AC10" },
-                { Key::Apostrophe, "AC11" },
-                { Key::Z, "AB01" },
-                { Key::X, "AB02" },
-                { Key::C, "AB03" },
-                { Key::V, "AB04" },
-                { Key::B, "AB05" },
-                { Key::N, "AB06" },
-                { Key::M, "AB07" },
-                { Key::Comma, "AB08" },
-                { Key::Period, "AB09" },
-                { Key::Slash, "AB10" },
-                { Key::Backslash, "BKSL" },
-                { Key::World1, "LSGT" },
-                { Key::Space, "SPCE" },
-                { Key::Escape, "ESC" },
-                { Key::Enter, "RTRN" },
-                { Key::Tab, "TAB" },
-                { Key::Backspace, "BKSP" },
-                { Key::Insert, "INS" },
-                { Key::Delete, "DELE" },
-                { Key::RightArrow, "RGHT" },
-                { Key::LeftArrow, "LEFT" },
-                { Key::DownArrow, "DOWN" },
-                { Key::UpArrow, "UP" },
-                { Key::PageUp, "PGUP" },
-                { Key::PageDown, "PGDN" },
-                { Key::Home, "HOME" },
-                { Key::End, "END" },
-                { Key::CapsLock, "CAPS" },
-                { Key::ScrollLock, "SCLK" },
-                { Key::NumpadLock, "NMLK" },
-                { Key::PrintScreen, "PRSC" },
-                { Key::Pause, "PAUS" },
-                { Key::F1, "FK01" },
-                { Key::F2, "FK02" },
-                { Key::F3, "FK03" },
-                { Key::F4, "FK04" },
-                { Key::F5, "FK05" },
-                { Key::F6, "FK06" },
-                { Key::F7, "FK07" },
-                { Key::F8, "FK08" },
-                { Key::F9, "FK09" },
-                { Key::F10, "FK10" },
-                { Key::F11, "FK11" },
-                { Key::F12, "FK12" },
-                { Key::F13, "FK13" },
-                { Key::F14, "FK14" },
-                { Key::F15, "FK15" },
-                { Key::F16, "FK16" },
-                { Key::F17, "FK17" },
-                { Key::F18, "FK18" },
-                { Key::F19, "FK19" },
-                { Key::F20, "FK20" },
-                { Key::F21, "FK21" },
-                { Key::F22, "FK22" },
-                { Key::F23, "FK23" },
-                { Key::F24, "FK24" },
-                { Key::F25, "FK25" },
-                { Key::KeypadNumber0, "KP0" },
-                { Key::KeypadNumber1, "KP1" },
-                { Key::KeypadNumber2, "KP2" },
-                { Key::KeypadNumber3, "KP3" },
-                { Key::KeypadNumber4, "KP4" },
-                { Key::KeypadNumber5, "KP5" },
-                { Key::KeypadNumber6, "KP6" },
-                { Key::KeypadNumber7, "KP7" },
-                { Key::KeypadNumber8, "KP8" },
-                { Key::KeypadNumber9, "KP9" },
-                { Key::KeypadDecimal, "KPDL" },
-                { Key::KeypadDivide, "KPDV" },
-                { Key::KeypadMultiply, "KPMU" },
-                { Key::KeypadSubtract, "KPSU" },
-                { Key::KeypadAdd, "KPAD" },
-                { Key::KeypadEnter, "KPEN" },
-                { Key::KeypadEquals, "KPEQ" },
-                { Key::LeftShift, "LFSH" },
-                { Key::LeftControl, "LCTL" },
-                { Key::LeftAlt, "LALT" },
-                { Key::LeftSystem, "LWIN" },
-                { Key::RightShift, "RTSH" },
-                { Key::RightControl, "RCTL" },
-                { Key::RightAlt, "RALT" },
-                { Key::RightAlt, "LVL3" },
-                { Key::RightAlt, "MDSW" },
-                { Key::RightSystem, "RWIN" },
-                { Key::Menu, "MENU" }
-            };
-
             // Map every X11 key code to an index in the key table
             for (size i = minKeyCode; i <= glm::min(static_cast<size>(maxKeyCode), keyTable.size() - 1); i++)
             {
                 Key key = Key::Unknown;
 
                 // Try to map key using the US layout
-                for (const auto [currentKey, currentKeyName] : keyNameTable)
+                for (const auto [currentKey, currentKeyName] : KEY_TABLE)
                 {
-                    if (std::strncmp(keyboardDescription->names->keys[i].name, currentKeyName, XkbKeyNameLength) == 0)
+                    if (std::strncmp(keyboardDescription->names->keys[i].name, currentKeyName.data(), XkbKeyNameLength) == 0)
                     {
                         key = currentKey;
                         break;
@@ -196,9 +196,9 @@ namespace Sierra
                             continue;
                         }
 
-                        for (const auto [currentKey, currentKeyName] : keyNameTable)
+                        for (const auto [currentKey, currentKeyName] : KEY_TABLE)
                         {
-                            if (std::strncmp(keyboardDescription->names->key_aliases[j].alias, currentKeyName, XkbKeyNameLength) == 0)
+                            if (std::strncmp(keyboardDescription->names->key_aliases[j].alias, currentKeyName.data(), XkbKeyNameLength) == 0)
                             {
                                 key = currentKey;
                                 break;
@@ -233,7 +233,7 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    Key XkbExtension::TranslateKeySyms(const KeySym* keySyms, int32 width)
+    Key XkbExtension::TranslateKeySyms(const KeySym* keySyms, const int32 width) const
     {
         if (width > 1)
         {
@@ -250,8 +250,8 @@ namespace Sierra
                 case XK_KP_8:           return Key::KeypadNumber8;
                 case XK_KP_9:           return Key::KeypadNumber9;
                 case XK_KP_Separator:
-                case XK_KP_Decimal:     return Key::KeypadDecimal;
-                case XK_KP_Equal:       return Key::KeypadEquals;
+                case XK_KP_Decimal:     return Key::KeypadPeriod;
+                case XK_KP_Equal:       return Key::KeypadEqual;
                 case XK_KP_Enter:       return Key::KeypadEnter;
                 default:                break;
             }
@@ -316,10 +316,10 @@ namespace Sierra
             case XK_F23:            return Key::F23;
             case XK_F24:            return Key::F24;
             case XK_F25:            return Key::F25;
-            case XK_KP_Divide:      return Key::KeypadDivide;
-            case XK_KP_Multiply:    return Key::KeypadMultiply;
-            case XK_KP_Subtract:    return Key::KeypadSubtract;
-            case XK_KP_Add:         return Key::KeypadAdd;
+            case XK_KP_Divide:      return Key::KeypadSlash;
+            case XK_KP_Multiply:    return Key::KeypadAsterisk;
+            case XK_KP_Subtract:    return Key::KeypadMinus;
+            case XK_KP_Add:         return Key::KeypadPlus;
             case XK_KP_Insert:      return Key::KeypadNumber0;
             case XK_KP_End:         return Key::KeypadNumber1;
             case XK_KP_Down:        return Key::KeypadNumber2;
@@ -329,8 +329,8 @@ namespace Sierra
             case XK_KP_Home:        return Key::KeypadNumber7;
             case XK_KP_Up:          return Key::KeypadNumber8;
             case XK_KP_Page_Up:     return Key::KeypadNumber9;
-            case XK_KP_Delete:      return Key::KeypadDecimal;
-            case XK_KP_Equal:       return Key::KeypadEquals;
+            case XK_KP_Delete:      return Key::KeypadPeriod;
+            case XK_KP_Equal:       return Key::KeypadEqual;
             case XK_KP_Enter:       return Key::KeypadEnter;
             case XK_a:              return Key::A;
             case XK_b:              return Key::B;
@@ -370,7 +370,7 @@ namespace Sierra
             case XK_0:              return Key::Number0;
             case XK_space:          return Key::Space;
             case XK_minus:          return Key::Minus;
-            case XK_equal:          return Key::Equals;
+            case XK_equal:          return Key::Equal;
             case XK_bracketleft:    return Key::LeftBracket;
             case XK_bracketright:   return Key::RightBracket;
             case XK_backslash:      return Key::Backslash;
@@ -394,6 +394,7 @@ namespace Sierra
         int versionMajor, versionMinor;
         if (XRRQueryExtension(createInfo.display, &eventBase, &versionMajor))
         {
+            supported = true;
             if (XRRQueryVersion(createInfo.display, &versionMajor, &versionMinor))
             {
                 SR_THROW_IF(!(versionMajor > 1 || versionMinor >= 3), UnsupportedFeatureError("X11 does not support the Xrandr extension, which is mandatory"));

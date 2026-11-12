@@ -93,7 +93,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanSampler::VulkanSampler(const VulkanDevice& givenDevice, const SamplerCreateInfo& createInfo)
-        : VulkanResource(createInfo.name), Sampler(createInfo), device(&givenDevice)
+        : Sampler(createInfo), name(createInfo.name), device(&givenDevice)
     {
         // Set up sampler create info
         const VkSamplerCreateInfo samplerCreateInfo

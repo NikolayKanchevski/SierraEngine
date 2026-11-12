@@ -49,6 +49,7 @@ if(Vulkan_LIBRARIES)
 
     # Add Vulkan source files
     target_sources(Sierra PRIVATE
+        vulkan.h
         VulkanBuffer.cpp
         VulkanBuffer.h
         VulkanCommandBuffer.cpp
@@ -59,6 +60,8 @@ if(Vulkan_LIBRARIES)
         VulkanDestructionScheduler.h
         VulkanDevice.cpp
         VulkanDevice.h
+        VulkanDeviceFunctionTable.cpp
+        VulkanDeviceFunctionTable.h
         VulkanErrorHandler.cpp
         VulkanErrorHandler.h
         VulkanFramebuffer.cpp
@@ -69,6 +72,8 @@ if(Vulkan_LIBRARIES)
         VulkanImage.h
         VulkanInstance.cpp
         VulkanInstance.h
+        VulkanInstanceFunctionTable.cpp
+        VulkanInstanceFunctionTable.h
         VulkanQueue.cpp
         VulkanQueue.h
         VulkanRenderPass.cpp

@@ -22,6 +22,7 @@ namespace Sierra
 
         bool resizable = false;
         bool maximize = false;
+        bool transparent = false;
     };
 
     /* --- CONCEPTS --- */
@@ -51,19 +52,28 @@ namespace Sierra
         virtual void SetOpacity(float32 opacity) = 0;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual std::string_view GetTitle() const noexcept = 0;
+        [[nodiscard]] virtual std::string GetTitle() const noexcept = 0;
+        [[nodiscard]] virtual float32 GetOpacity() const noexcept = 0;
         [[nodiscard]] virtual Vector2Int GetPosition() const noexcept = 0;
+
         [[nodiscard]] virtual uint32 GetWidth() const noexcept = 0;
         [[nodiscard]] virtual uint32 GetHeight() const noexcept = 0;
+        [[nodiscard]] Vector2UInt GetSize() const noexcept { return { GetWidth(), GetHeight() }; }
+
         [[nodiscard]] virtual uint32 GetFramebufferWidth() const noexcept = 0;
         [[nodiscard]] virtual uint32 GetFramebufferHeight() const noexcept = 0;
-        [[nodiscard]] virtual float32 GetOpacity() const noexcept = 0;
+        [[nodiscard]] Vector2UInt GetFramebufferSize() const noexcept { return { GetFramebufferWidth(), GetFramebufferHeight() }; }
 
-        [[nodiscard]] virtual bool IsClosed() const noexcept = 0;
+        [[nodiscard]] virtual bool IsVisible() const noexcept = 0;
+        [[nodiscard]] bool IsHidden() const noexcept { return !IsVisible(); }
+
+        [[nodiscard]] virtual bool IsTransparent() const noexcept = 0;
+        [[nodiscard]] bool IsOpaque() const noexcept { return !IsTransparent(); }
+
         [[nodiscard]] virtual bool IsMinimized() const noexcept = 0;
         [[nodiscard]] virtual bool IsMaximized() const noexcept = 0;
         [[nodiscard]] virtual bool IsFocused() const noexcept = 0;
-        [[nodiscard]] virtual bool IsHidden() const noexcept = 0;
+        [[nodiscard]] virtual bool IsClosed() const noexcept = 0;
 
         [[nodiscard]] virtual InputManager* GetInputManager() noexcept = 0;
         [[nodiscard]] virtual const InputManager* GetInputManager() const noexcept = 0;
@@ -75,6 +85,7 @@ namespace Sierra
         [[nodiscard]] virtual const TouchManager* GetTouchManager() const noexcept = 0;
 
         [[nodiscard]] virtual WindowingBackendType GetBackendType() const noexcept = 0;
+
 
         /* --- EVENTS --- */
         template<WindowEventType EventType>

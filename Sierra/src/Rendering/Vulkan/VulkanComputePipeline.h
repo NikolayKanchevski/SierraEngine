@@ -19,6 +19,8 @@ namespace Sierra
         VulkanComputePipeline(const VulkanDevice& device, const ComputePipelineCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
+
         [[nodiscard]] VkPipeline GetVulkanPipeline() const noexcept { return pipeline; }
         [[nodiscard]] VkPipelineLayout GetVulkanPipelineLayout() const noexcept { return device->GetPipelineLayout(pushConstantSize); }
 
@@ -34,6 +36,7 @@ namespace Sierra
         ~VulkanComputePipeline() noexcept override;
 
     private:
+        std::string name = { };
         const VulkanDevice* device = nullptr;
 
         VkPipeline pipeline = VK_NULL_HANDLE;

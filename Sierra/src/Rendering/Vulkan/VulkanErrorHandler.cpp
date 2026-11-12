@@ -2,8 +2,7 @@
 // Created by Nikolay Kanchevski on 4.10.24.
 //
 
-#define VK_NO_PROTOTYPES
-#include <vulkan/vulkan.h>
+#include "vulkan.h"
 
 #include "../DeviceErrors.h"
 

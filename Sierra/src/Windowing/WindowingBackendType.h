@@ -11,6 +11,7 @@ namespace Sierra
     {
         Win32,
         X11,
+        Wayland,
         Cocoa,
         GameKit,
         UIKit

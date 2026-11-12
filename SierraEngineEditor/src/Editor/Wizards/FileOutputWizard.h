@@ -13,8 +13,6 @@ namespace SierraEngine
 
     struct FileOutputWizardCreateInfo
     {
-        const Sierra::PlatformContext& platformContext;
-
         std::span<const std::string_view> inputFileExtensions = { };
         const std::filesystem::path* inputFilePath = nullptr;
 
@@ -37,14 +35,12 @@ namespace SierraEngine
         explicit FileOutputWizard(const FileOutputWizardCreateInfo& createInfo) noexcept;
 
         /* --- POLLING METHODS --- */
-        bool DrawFileOutputFooter(uint32& formatIndex, std::span<const ImGuiDropdownOption> formatOptions) noexcept;
+        bool DrawFileOutputFooter(const EditorPlatformContext& platformContext, uint32& formatIndex, std::span<const ImGuiDropdownOption> formatOptions) noexcept;
 
         /* --- SETTER METHODS --- */
         virtual void SetOutputFilePath(const std::filesystem::path& inputFilePath) noexcept;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] const Sierra::PlatformContext& GetPlatformContext() const noexcept { return *platformContext; }
-
         [[nodiscard]] std::string_view GetOutputFileExtension() const noexcept { return outputFileExtension; }
         [[nodiscard]] const std::filesystem::path& GetOutputFilePath() const noexcept { return outputFilePath; }
 
@@ -53,8 +49,6 @@ namespace SierraEngine
         FileOutputWizard& operator=(FileOutputWizard&&) noexcept = default;
 
     private:
-        const Sierra::PlatformContext* platformContext;
-
         std::filesystem::path outputFilePath = { };
         std::string_view outputFileExtension = { };
 

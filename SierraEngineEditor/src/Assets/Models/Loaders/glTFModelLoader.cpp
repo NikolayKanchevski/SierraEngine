@@ -95,7 +95,7 @@ namespace SierraEngine
                         });
                     }
 
-                    const fastgltf::Attribute* positionAttribute = primitive.findAttribute("POSITION");
+                    const auto positionAttribute = primitive.findAttribute("POSITION");
                     if (positionAttribute != primitive.attributes.end())
                     {
                         const fastgltf::Accessor& positionAccessor = asset.accessors[positionAttribute->accessorIndex];
@@ -108,7 +108,7 @@ namespace SierraEngine
                     mesh.vertexCount = vertexBuffer.size() - mesh.vertexOffset;
                     mesh.indexCount = indexBuffer.size() - mesh.indexOffset;
 
-                    const fastgltf::Attribute* normalAttribute = primitive.findAttribute("NORMAL");
+                    const auto normalAttribute = primitive.findAttribute("NORMAL");
                     if (normalAttribute != primitive.attributes.end())
                     {
                         const fastgltf::Accessor& normalAccessor = asset.accessors[normalAttribute->accessorIndex];
@@ -117,7 +117,7 @@ namespace SierraEngine
                         });
                     }
 
-                    const fastgltf::Attribute* UVAttribute = primitive.findAttribute("TEXCOORD_0");
+                    const auto UVAttribute = primitive.findAttribute("TEXCOORD_0");
                     if (UVAttribute != primitive.attributes.end())
                     {
                         const fastgltf::Accessor& UVAccessor = asset.accessors[UVAttribute->accessorIndex];
@@ -208,7 +208,7 @@ namespace SierraEngine
                 texture.name = !textureInfo.name.empty() ? std::string(textureInfo.name) : SR_FORMAT("Texture [{0}]", textures.size());
 
                 texture.imageIndex = *textureInfo.imageIndex;
-                if (const fastgltf::Optional<size_t> samplerIndex = textureInfo.samplerIndex; samplerIndex.has_value())
+                if (const auto samplerIndex = textureInfo.samplerIndex; samplerIndex.has_value())
                 {
                     const fastgltf::Sampler& sampler = asset.samplers[*samplerIndex];
 
@@ -236,7 +236,7 @@ namespace SierraEngine
                     material.diffuseTextureIndex = textureInfo->textureIndex;
                 }
 
-                if (materialInfo.specular != nullptr)
+                if (materialInfo.specular.has_value())
                 {
                     material.specular.shininess = materialInfo.specular->specularFactor;
                     if (const std::optional<fastgltf::TextureInfo>& textureInfo = materialInfo.specular->specularColorTexture; textureInfo.has_value())
@@ -268,7 +268,7 @@ namespace SierraEngine
         constexpr fastgltf::Extensions EXTENSIONS = fastgltf::Extensions::KHR_materials_specular;
         fastgltf::Parser parser(EXTENSIONS);
 
-        constexpr fastgltf::Options OPTIONS = fastgltf::Options::DontRequireValidAssetMember | fastgltf::Options::LoadExternalBuffers | fastgltf::Options::LoadExternalImages;
+        constexpr fastgltf::Options OPTIONS = fastgltf::Options::LoadExternalBuffers | fastgltf::Options::LoadExternalImages;
         fastgltf::Expected<fastgltf::Asset> asset = parser.loadGltf(data.get(), std::filesystem::temp_directory_path(), OPTIONS);
         if (asset.error() != fastgltf::Error::None)
         {

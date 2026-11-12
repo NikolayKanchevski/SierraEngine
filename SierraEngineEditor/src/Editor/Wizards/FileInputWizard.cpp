@@ -20,14 +20,13 @@ namespace SierraEngine
     /* --- POLLING METHODS --- */
 
     FileInputWizard::FileInputWizard(const FileInputWizardCreateInfo& createInfo) noexcept
-        : platformContext(&createInfo.platformContext),
-          inputFileExtensions(createInfo.inputFileExtensions.begin(), createInfo.inputFileExtensions.end())
+        : inputFileExtensions(createInfo.inputFileExtensions.begin(), createInfo.inputFileExtensions.end())
     {
         if (createInfo.inputFilePath == nullptr) return;
         inputFilePath = *createInfo.inputFilePath;
     }
 
-    void FileInputWizard::DrawFileInputHeader() noexcept
+    void FileInputWizard::DrawFileInputHeader(const EditorPlatformContext& platformContext) noexcept
     {
         if (ImGuiWidgets::BeginPropertyTable(PROPERTY_TABLE_INFO))
         {
@@ -38,7 +37,7 @@ namespace SierraEngine
                     .allowedFileExtensions = inputFileExtensions
                 };
 
-                if (ImGuiWidgets::FileSelectInput("##SourceFileSelectInput", inputFilePath, *platformContext, inputInfo))
+                if (ImGuiWidgets::FileSelectInput("##SourceFileSelectInput", inputFilePath, platformContext, inputInfo))
                 {
                     SetInputFilePath(inputFilePath);
                 }

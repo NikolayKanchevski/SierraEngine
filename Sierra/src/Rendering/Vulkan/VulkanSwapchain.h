@@ -25,6 +25,8 @@ namespace Sierra
         void Present(CommandBuffer& commandBuffer) override;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
+
         [[nodiscard]] uint32 GetCurrentFrameIndex() const noexcept override { return currentFrame; }
         [[nodiscard]] uint32 GetCurrentImageIndex() const noexcept override { return currentImage; }
         [[nodiscard]] uint32 GetConcurrentFrameCount() const noexcept override { return concurrentFrameCount; }
@@ -44,6 +46,7 @@ namespace Sierra
         ~VulkanSwapchain() noexcept override;
 
     private:
+        std::string name = { };
         const VulkanInstance* instance = nullptr;
         const VulkanDevice* device = nullptr;
         Window* window = nullptr;
@@ -63,6 +66,9 @@ namespace Sierra
         std::vector<VkSemaphore> isPresentationCommandBufferFreeSemaphores = { };
 
         uint32 concurrentFrameCount = 0;
+
+        // Framebuffer of the window the swapchain was last created for, which changes with the window's scale as well as its size
+        Vector2UInt requestedFramebufferSize = { 0, 0 };
         uint32 currentFrame = 0; // On the CPU
         uint32 currentImage = 0; // On the GPU
 

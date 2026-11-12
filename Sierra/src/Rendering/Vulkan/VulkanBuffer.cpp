@@ -38,7 +38,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanBuffer::VulkanBuffer(const VulkanDevice& givenDevice, const BufferCreateInfo& createInfo)
-        : VulkanResource(createInfo.name), Buffer(createInfo), device(&givenDevice), memorySize(createInfo.memorySize)
+        : Buffer(createInfo), name(createInfo.name), device(&givenDevice), memorySize(createInfo.memorySize)
     {
         SR_THROW_IF(createInfo.usage & BufferUsage::Uniform && createInfo.memorySize > device->GetLimits().maxUniformBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max uniform buffer size - use Device::GetLimits() to query limits", createInfo.name, device->GetName()), createInfo.memorySize, static_cast<uint64>(0), device->GetLimits().maxUniformBufferSize));
         SR_THROW_IF(createInfo.usage & BufferUsage::Storage && createInfo.memorySize > device->GetLimits().maxStorageBufferSize, ValueOutOfRangeError(SR_FORMAT("Cannot create buffer [{0}], as specified memory size is greater than device [{1}]'s max storage buffer size - use Device::GetLimits() to query limits", createInfo.name, device->GetName()), createInfo.memorySize, static_cast<uint64>(0), device->GetLimits().maxUniformBufferSize));

@@ -1,10 +1,2 @@
-target_sources(Sierra PRIVATE
-    X11Screen.cpp
-    X11Screen.h
-    X11CursorManager.cpp
-    X11CursorManager.h
-    X11InputManager.cpp
-    X11InputManager.h
-    X11Window.cpp
-    X11Window.h
-)
+add_subdirectory(Wayland)
+add_subdirectory(X11)

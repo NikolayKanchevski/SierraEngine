@@ -40,6 +40,8 @@ namespace Sierra
         bool FreeSampler(SamplerID ID) override;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
+
         [[nodiscard]] uint32 GetUniformBufferCapacity() const noexcept override;
         [[nodiscard]] uint32 GetStorageBufferCapacity() const noexcept override;
 
@@ -61,6 +63,7 @@ namespace Sierra
         ~VulkanResourceTable() noexcept override;
 
     private:
+        std::string name = { };
         const VulkanDevice* device = nullptr;
 
         VkDescriptorPool descriptorPool = VK_NULL_HANDLE;

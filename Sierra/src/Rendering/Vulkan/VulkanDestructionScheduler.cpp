@@ -12,7 +12,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanDestructionScheduler::VulkanDestructionScheduler(const VulkanDevice& device, const DestructionSchedulerCreateInfo& createInfo)
-        : VulkanResource(createInfo.name), DestructionScheduler(createInfo), device(&device)
+        : DestructionScheduler(createInfo), name(createInfo.name), device(&device)
     {
 
     }

@@ -8,7 +8,7 @@
     #error "Including the X11Extensions.h file is only allowed in Linux builds!"
 #endif
 
-#include "../../Windowing/Key.h"
+#include "../../Key.h"
 
 #include <X11/Xlib.h>
 
@@ -34,7 +34,7 @@ namespace Sierra
         bool autoRepeatDetectable = false;
         std::array<Key, 256> keyTable = { };
 
-        [[nodiscard]] Key TranslateKeySyms(const KeySym* keySyms, int32 width);
+        [[nodiscard]] Key TranslateKeySyms(const KeySym* keySyms, int32 width) const;
 
     };
 
@@ -51,9 +51,11 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] int GetEventBase() const { return eventBase; }
+        [[nodiscard]] bool IsSupported() const { return supported; }
 
     private:
         int eventBase = 0;
+        bool supported = false;
 
     };
 

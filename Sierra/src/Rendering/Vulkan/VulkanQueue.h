@@ -24,6 +24,7 @@ namespace Sierra
         void WaitForCommandBuffer(const CommandBuffer& commandBuffer) const override;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
         [[nodiscard]] QueueOperations GetOperations() const noexcept override { return description->operations; }
 
         [[nodiscard]] uint32 GetFamily() const noexcept { return description->family; }
@@ -45,6 +46,7 @@ namespace Sierra
         ~VulkanQueue() noexcept override = default;
 
     private:
+        std::string name = { };
         const VulkanDevice* device = nullptr;
 
         VkQueue queue = VK_NULL_HANDLE;

@@ -69,6 +69,8 @@ namespace Sierra
         void EndDebugRegion() override;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
+
         [[nodiscard]] VkCommandBuffer GetVulkanCommandBuffer() const noexcept { return commandBuffer; }
         [[nodiscard]] uint32 GetQueueFamily() const noexcept { return queue->GetFamily(); }
 
@@ -79,6 +81,7 @@ namespace Sierra
         ~VulkanCommandBuffer() noexcept override;
 
     private:
+        std::string name = { };
         const VulkanQueue* queue = nullptr;
 
         VkCommandPool commandPool = VK_NULL_HANDLE;

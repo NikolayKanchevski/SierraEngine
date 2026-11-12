@@ -4,16 +4,10 @@
 
 #include "VulkanResource.h"
 
+#include "vulkan.h"
+
 namespace Sierra
 {
-
-    /* --- CONSTRUCTORS --- */
-
-    VulkanResource::VulkanResource(const std::string_view name)
-        : name(name)
-    {
-
-    }
 
     /* --- POLLING METHODS --- */
 

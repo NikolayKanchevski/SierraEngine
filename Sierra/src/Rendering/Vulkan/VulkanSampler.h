@@ -27,6 +27,8 @@ namespace Sierra
         VulkanSampler(const VulkanDevice& device, const SamplerCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
+
         [[nodiscard]] VkSampler GetVulkanSampler() const noexcept { return sampler; }
 
         /* --- COPY SEMANTICS --- */
@@ -41,6 +43,7 @@ namespace Sierra
         ~VulkanSampler() noexcept override;
 
     private:
+        std::string name = { };
         const VulkanDevice* device = nullptr;
 
         VkSampler sampler = VK_NULL_HANDLE;

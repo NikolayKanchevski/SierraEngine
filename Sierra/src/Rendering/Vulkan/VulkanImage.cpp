@@ -223,7 +223,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanImage::VulkanImage(const VulkanDevice& givenDevice, const ImageCreateInfo& createInfo)
-        : VulkanResource(createInfo.name), Image(createInfo), device(&givenDevice), width(createInfo.width), height(createInfo.height), depth(createInfo.depth), format(createInfo.format), levelCount(createInfo.levelCount), layerCount(createInfo.layerCount), sampling(createInfo.sampling)
+        : Image(createInfo), name(createInfo.name), device(&givenDevice), width(createInfo.width), height(createInfo.height), depth(createInfo.depth), format(createInfo.format), levelCount(createInfo.levelCount), layerCount(createInfo.layerCount), sampling(createInfo.sampling)
     {
         SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.width > device->GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified width is greater than device [{1}]'s max line image dimensions", createInfo.name, device->GetName()), createInfo.width, uint32(0), device->GetLimits().maxLineImageDimensions));
         SR_THROW_IF(createInfo.type == ImageType::Line && createInfo.height > device->GetLimits().maxLineImageDimensions, ValueOutOfRangeError(SR_FORMAT("Cannot create image [{0}], as specified height is greater than device [{1}]'s max line image dimensions", createInfo.name, device->GetName()), createInfo.height, uint32(0), device->GetLimits().maxLineImageDimensions));
@@ -313,7 +313,7 @@ namespace Sierra
     }
 
     VulkanImage::VulkanImage(const VulkanDevice& givenDevice, const SwapchainImageCreateInfo& createInfo)
-        : VulkanResource(createInfo.name), Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainVkFormatToImageFormat(createInfo.format), .usage = ImageUsage::SourceMemory | ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }), device(&givenDevice),
+        : name(createInfo.name), Image({ .name = createInfo.name, .width = createInfo.width, .height = createInfo.height, .format = SwapchainVkFormatToImageFormat(createInfo.format), .usage = ImageUsage::SourceMemory | ImageUsage::ColorAttachment, .memoryLocation = ImageMemoryLocation::GPU }), device(&givenDevice),
           width(createInfo.width), height(createInfo.height), format(SwapchainVkFormatToImageFormat(createInfo.format)),
           image(createInfo.image), aspectFlags(VK_IMAGE_ASPECT_COLOR_BIT), swapchainImage(true)
     {

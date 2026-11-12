@@ -27,9 +27,8 @@ namespace SierraEngine
             return std::nullopt;
         }
 
-
         const ImageConverter converter = { };
-        const LoadedImage convertedImage = converter.Convert({previewInfo.image, format.value() });
+        const LoadedImage convertedImage = converter.Convert({ .image = previewInfo.image, .format = format.value() });
 
         std::unique_ptr<Sierra::Image> image = device.CreateImage({
             .name = "Image Preview",

@@ -128,7 +128,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanCommandBuffer::VulkanCommandBuffer(const VulkanQueue& givenQueue, const CommandBufferCreateInfo& createInfo)
-        : VulkanResource(createInfo.name), CommandBuffer(createInfo), queue(&givenQueue)
+        : CommandBuffer(createInfo), name(createInfo.name), queue(&givenQueue)
     {
         // Set up pool create info
         const VkCommandPoolCreateInfo commandPoolCreateInfo

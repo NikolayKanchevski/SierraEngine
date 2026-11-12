@@ -51,7 +51,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanGraphicsPipeline::VulkanGraphicsPipeline(const VulkanDevice& givenDevice, const GraphicsPipelineCreateInfo& createInfo)
-        : VulkanResource(createInfo.name), GraphicsPipeline(createInfo), device(&givenDevice), pushConstantSize(createInfo.pushConstantSize)
+        : GraphicsPipeline(createInfo), name(createInfo.name), device(&givenDevice), pushConstantSize(createInfo.pushConstantSize)
     {
         SR_THROW_IF(createInfo.vertexShader.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create graphics pipeline [{0}] with vertex shader [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", createInfo.name, createInfo.vertexShader.GetName())));
         const VulkanShader& vulkanVertexShader = static_cast<const VulkanShader&>(createInfo.vertexShader);

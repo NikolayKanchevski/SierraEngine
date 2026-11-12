@@ -19,6 +19,8 @@ namespace Sierra
         VulkanFramebuffer(const VulkanDevice& device, const FramebufferCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
+
         [[nodiscard]] uint32 GetWidth() const noexcept override { return width; }
         [[nodiscard]] uint32 GetHeight() const noexcept override { return height; }
 
@@ -37,6 +39,7 @@ namespace Sierra
         ~VulkanFramebuffer() noexcept override;
 
     private:
+        std::string name = { };
         const VulkanDevice* device;
 
         uint32 width = 0;

@@ -31,3 +31,7 @@ if(SIERRA_ENABLE_LOGGING)
 else()
     target_compile_definitions(Sierra PUBLIC "SR_ENABLE_LOGGING=0")
 endif()
+
+target_compile_definitions(Sierra PRIVATE "SR_VERSION_MAJOR=1")
+target_compile_definitions(Sierra PRIVATE "SR_VERSION_MINOR=0")
+target_compile_definitions(Sierra PRIVATE "SR_VERSION_PATCH=0")

@@ -4,13 +4,17 @@
 
 #include "EditorApplication.h"
 
-// TODO:
-#include "../Assets/Materials/Serializers/YAMLMaterialSerializer.h"
-#include "../Assets/Models/Importers/YAMLModelImporter.h"
-#include "../Assets/Models/Loaders/glTFModelLoader.h"
-#include "../Assets/Models/Serializers/YAMLModelSerializer.h"
-#include "../Assets/Textures/Loaders/AutoImageLoader.h"
-#include "../Assets/Textures/Serializers/YAMLTextureSerializer.h"
+#if SR_PLATFORM_WINDOWS
+    #include "../Platform/Windows/WindowsEditorPlatformContext.h"
+#elif SR_PLATFORM_LINUX
+    #include "../Platform/Linux/LinuxEditorPlatformContext.h"
+#elif SR_PLATFORM_macOS
+    #include "../Platform/macOS/macOSEditorPlatformContext.h"
+#elif SR_PLATFORM_iOS
+    #include "../Platform/iOS/iOSEditorPlatformContext.h"
+#elif SR_PLATFORM_ANDROID
+    #include "../Platform/Android/AndroidEditorPlatformContext.h"
+#endif
 
 namespace SierraEngine
 {
@@ -20,30 +24,45 @@ namespace SierraEngine
         constexpr std::string_view APPLICATION_NAME = "Sierra Editor";
         const Sierra::Version APPLICATION_VERSION = Sierra::Version({ 1, 0, 0 });
 
-        constexpr uint32 VIEWPORT_COUNT = 4;
+        constexpr uint32 VIEWPORT_COUNT = 1;
+
+        [[nodiscard]] std::unique_ptr<EditorPlatformContext> CreatePlatformContext() noexcept
+        {
+            #if SR_PLATFORM_WINDOWS
+
+            #elif SR_PLATFORM_LINUX
+                return std::make_unique<LinuxEditorPlatformContext>();
+            #elif SR_PLATFORM_macOS
+
+            #elif SR_PLATFORM_iOS
+
+            #elif SR_PLATFORM_ANDROID
+
+            #endif
+        }
     }
 
     /* --- CONSTRUCTORS --- */
 
     EditorApplication::EditorApplication(const EditorApplicationCreateInfo& createInfo)
         : Application({ .name = APPLICATION_NAME, .version = APPLICATION_VERSION, .settings = createInfo.settings }),
+            platformContext(CreatePlatformContext()),
             frameLimiter({ .maxFrameRate = 60 * SR_PLATFORM_MOBILE }),
             project({ .fileManager = GetFileManager(), .projectDirectoryPath = createInfo.projectDirectoryPath }),
             renderingContext({ .renderingInstance = GetRenderingInstance() }),
             queue(renderingContext.GetDevice().CreateQueue({ .name = "General Queue" })),
             arenaAllocator({ .renderingContext = renderingContext }),
             assetManager({ .renderingContext = renderingContext }),
-            editor({ .platformContext = GetPlatformContext(), .renderingContext = renderingContext })
+            editor({ .platformContext = *platformContext, .renderingContext = renderingContext, .fileManager = GetFileManager() })
     {
         assetManager.LoadProjectAssets(GetFileManager(), project);
-
         const std::unique_ptr<Sierra::CommandBuffer> commandBuffer = queue->CreateCommandBuffer({ .name = "Staging Command Buffer" });
 
         commandBuffer->Begin();
         renderingContext.Bind(*commandBuffer);
 
         // std::optional
-        surface.emplace(EditorSurfaceCreateInfo { .platformContext = GetPlatformContext(), .renderingContext = renderingContext, .commandBuffer = *commandBuffer });
+        surface.emplace(EditorSurfaceCreateInfo { .windowManager = GetWindowManager(), .renderingContext = renderingContext, .commandBuffer = *commandBuffer });
         assetManager.Update(*commandBuffer);
 
         commandBuffer->End();
@@ -91,23 +110,23 @@ namespace SierraEngine
         Application::Update();
         frameLimiter.BeginFrame();
 
-        // Sierra::CommandBuffer& commandBuffer = *commandBuffers[surface->GetCurrentFrameIndex()];
-        // queue->WaitForCommandBuffer(commandBuffer);
+        Sierra::CommandBuffer& commandBuffer = *commandBuffers[surface->GetCurrentFrameIndex()];
+        queue->WaitForCommandBuffer(commandBuffer);
 
         if (surface->Update()) return true;
 
-        // commandBuffer.Begin();
-        // renderingContext.Bind(commandBuffer);
-        //
-        // assetManager.Update(commandBuffer);
-        //
-        // arenaAllocator.Bind(commandBuffer);
-        // surface->Render(commandBuffer, editor);
-        //
-        // commandBuffer.End();
-        // queue->SubmitCommandBuffer(commandBuffer);
-        //
-        // surface->Present(commandBuffer);
+        commandBuffer.Begin();
+        renderingContext.Bind(commandBuffer);
+
+        assetManager.Update(commandBuffer);
+
+        arenaAllocator.Bind(commandBuffer);
+        surface->Render(commandBuffer, editor);
+
+        commandBuffer.End();
+        queue->SubmitCommandBuffer(commandBuffer);
+
+        surface->Present(commandBuffer);
         frameLimiter.EndFrame();
 
         return false;

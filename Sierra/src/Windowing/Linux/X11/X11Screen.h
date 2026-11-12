@@ -8,9 +8,8 @@
     #error "Including the X11Screen.h file is only allowed in Linux builds!"
 #endif
 
-#include "../Screen.h"
+#include "../../Screen.h"
 
-#include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
 
 namespace Sierra
@@ -22,6 +21,7 @@ namespace Sierra
         XRRCrtcInfo* crtcInfo = nullptr;
         XRROutputInfo* outputInfo = nullptr;
         const Vector4UInt& workAreaExtents = { 0, 0, 0, 0 };
+        float32 scaling = 1.0f;
     };
 
     class SIERRA_API X11Screen final : public Screen
@@ -42,6 +42,7 @@ namespace Sierra
         [[nodiscard]] Vector2Int GetWorkAreaOrigin() const noexcept override { return workAreaOrigin; }
         [[nodiscard]] uint32 GetWorkAreaWidth() const noexcept override { return workAreaSize.x; }
         [[nodiscard]] uint32 GetWorkAreaHeight() const noexcept override { return workAreaSize.y; }
+
         [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override { return WindowingBackendType::X11; }
 
         /* --- COPY SEMANTICS --- */
@@ -56,7 +57,7 @@ namespace Sierra
         ~X11Screen() noexcept override = default;
 
     private:
-        std::string name;
+        std::string name = { };
         Vector2Int origin = { 0, 0 };
         Vector2UInt size = { 0, 0 };
         Vector2Int workAreaOrigin = { 0, 0 };

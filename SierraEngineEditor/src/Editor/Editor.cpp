@@ -18,7 +18,7 @@ namespace SierraEngine
     /* --- CONSTRUCTORS --- */
 
     Editor::Editor(const EditorCreateInfo& createInfo)
-        : platformContext(&createInfo.platformContext), renderingContext(&createInfo.renderingContext), scene({ .name = "Scene" })
+        : platformContext(&createInfo.platformContext), renderingContext(&createInfo.renderingContext), fileManager(&createInfo.fileManager), scene({ .name = "Scene" })
     {
         style = EditorThemeToImGuiStyle(createInfo.theme);
     }
@@ -143,14 +143,15 @@ namespace SierraEngine
 
     void Editor::OpenTextureSerializeWizard()
     {
-        const std::optional<std::filesystem::path> filePath = platformContext->OpenSingleFileSelectDialog({ .allowedFileExtensions = TextureSerializeWizard::INPUT_FILE_EXTENSIONS });
-        if (filePath.has_value())
+        const std::vector<std::filesystem::path> filePath = platformContext->OpenFileSelectDialog({ .allowedFileExtensions = TextureSerializeWizard::INPUT_FILE_EXTENSIONS });
+        if (!filePath.empty())
         {
             const TextureSerializeWizardCreateInfo createInfo
             {
                 .platformContext = *platformContext,
                 .renderingContext = *renderingContext,
-                .inputFilePath = &filePath.value()
+                .fileManager = *fileManager,
+                .inputFilePath = &filePath.front()
             };
 
             currentWizard = std::make_unique<TextureSerializeWizard>(createInfo);
@@ -162,7 +163,7 @@ namespace SierraEngine
         const MaterialSerializeWizardCreateInfo createInfo
         {
             .platformContext = *platformContext,
-            .renderingContext = *renderingContext
+            .fileManager = *fileManager
         };
 
         currentWizard = std::make_unique<MaterialSerializeWizard>(createInfo);

@@ -40,21 +40,25 @@ namespace SierraEngine
 
     TextureSerializeWizard::TextureSerializeWizard(const TextureSerializeWizardCreateInfo& createInfo)
         : FileInputWizard({
-            .platformContext = createInfo.platformContext,
             .inputFileExtensions = INPUT_FILE_EXTENSIONS,
             .inputFilePath = createInfo.inputFilePath,
             .outputFileExtension = OUTPUT_FILE_EXTENSION,
             .outputDirectoryPath = createInfo.outputDirectoryPath
           }),
           AssetSerializeWizard({
-            .platformContext = createInfo.platformContext,
             .inputFileExtensions = INPUT_FILE_EXTENSIONS,
             .inputFilePath = createInfo.inputFilePath,
             .outputFileExtension = OUTPUT_FILE_EXTENSION,
             .outputDirectoryPath = createInfo.outputDirectoryPath
           }),
-          renderingContext(&createInfo.renderingContext)
+          platformContext(createInfo.platformContext),
+          renderingContext(createInfo.renderingContext),
+          fileManager(createInfo.fileManager)
     {
+        AssetMetadata& metadata = serializeInfo.metadata;
+        metadata.author = createInfo.platformContext.GetUserName();
+        metadata.name = "Texture";
+
         if (createInfo.inputFilePath != nullptr)
         {
             SetInputFilePath(*createInfo.inputFilePath);
@@ -81,7 +85,7 @@ namespace SierraEngine
 
         if (BeginWizard("Texture Serialize Wizard", open))
         {
-            DrawFileInputHeader();
+            DrawFileInputHeader(platformContext);
             DrawMetadataMenu(serializeInfo.metadata);
 
             DrawSettingsMenu();
@@ -93,7 +97,7 @@ namespace SierraEngine
                 ImGuiDropdownOption { .text = "YAML" }
             };
 
-            if (DrawFileOutputFooter(textureFormatIndex, OPTIONS))
+            if (DrawFileOutputFooter(platformContext, textureFormatIndex, OPTIONS))
             {
                 if (Serialize())
                 {
@@ -109,7 +113,7 @@ namespace SierraEngine
 
     void TextureSerializeWizard::SetInputFilePath(const std::filesystem::path& inputFilePath) noexcept
     {
-        std::optional<LoadedImage> image = LoadLayerImage(FileInputWizard::GetPlatformContext().GetFileManager(), inputFilePath);
+        std::optional<LoadedImage> image = LoadLayerImage(fileManager, inputFilePath);
         if (!image.has_value())
         {
             FileInputWizard::SetInputFilePath({ });
@@ -120,7 +124,8 @@ namespace SierraEngine
 
         FileInputWizard::SetInputFilePath(inputFilePath);
         FileOutputWizard::SetOutputFilePath(std::filesystem::path(inputFilePath).replace_extension(OUTPUT_FILE_EXTENSION));
-        DefaultMetadata(serializeInfo.metadata, inputFilePath.stem().string());
+
+        serializeInfo.metadata.name = inputFilePath.stem().string();
 
         if (levels.empty() || levels[0].layers.empty())
         {
@@ -164,7 +169,7 @@ namespace SierraEngine
         if (rootLayer == nullptr) return;
 
         const std::filesystem::path& inputFilePath = rootLayer->filePath;
-        std::optional<LoadedImage> image = LoadLayerImage(FileInputWizard::GetPlatformContext().GetFileManager(), inputFilePath);
+        std::optional<LoadedImage> image = LoadLayerImage(fileManager, inputFilePath);
         if (!image.has_value())
         {
             FileInputWizard::SetInputFilePath({ });
@@ -175,7 +180,8 @@ namespace SierraEngine
 
         FileInputWizard::SetInputFilePath(inputFilePath);
         FileOutputWizard::SetOutputFilePath(std::filesystem::path(inputFilePath).replace_extension(OUTPUT_FILE_EXTENSION));
-        DefaultMetadata(serializeInfo.metadata, inputFilePath.stem().string());
+
+        serializeInfo.metadata.name = inputFilePath.stem().string();
 
         for (uint32 level = 0; level < levels.size(); level++)
         {
@@ -190,10 +196,10 @@ namespace SierraEngine
 
         ResetLayer(*rootLayer, commandBuffer);
 
-        std::optional<ImagePreview> preview = ImagePreviewer::Preview({ .renderingContext = *renderingContext, .commandBuffer = commandBuffer, .image = *image });
+        std::optional<ImagePreview> preview = ImagePreviewer::Preview({ .renderingContext = renderingContext, .commandBuffer = commandBuffer, .image = *image });
         if (preview.has_value())
         {
-            Sierra::ResourceTable& resourceTable = renderingContext->GetResourceTable();
+            Sierra::ResourceTable& resourceTable = renderingContext.GetResourceTable();
             preview->ID = resourceTable.BindSampledImage(*preview->image);
         }
 
@@ -271,10 +277,10 @@ namespace SierraEngine
     {
         if (!layer.preview.has_value()) return;
 
-        Sierra::DestructionScheduler& destructionScheduler = renderingContext->GetDestructionScheduler();
+        Sierra::DestructionScheduler& destructionScheduler = renderingContext.GetDestructionScheduler();
         destructionScheduler.QueueResource(std::move(layer.preview->image));
 
-        Sierra::ResourceTable& resourceTable = renderingContext->GetResourceTable();
+        Sierra::ResourceTable& resourceTable = renderingContext.GetResourceTable();
         resourceTable.FreeSampledImage(layer.preview->ID);
 
         layer.preview = std::nullopt;
@@ -325,8 +331,6 @@ namespace SierraEngine
             APP_WARNING("Could not serialize texture [{0}]", serializeInfo.metadata.name);
             return false;
         }
-
-        const Sierra::FileManager& fileManager = FileOutputWizard::GetPlatformContext().GetFileManager();
 
         const std::filesystem::path& outputDataFilePath = GetOutputFilePath();
         if (outputDataFilePath.empty())
@@ -497,10 +501,10 @@ namespace SierraEngine
                                 ImageLayerData& layer = level.layers[layerIndex];
                                 if (layer.dirty)
                                 {
-                                    std::optional<ImagePreview> preview = ImagePreviewer::Preview({ .renderingContext = *renderingContext, .commandBuffer = commandBuffer, .image = *layer.image });
+                                    std::optional<ImagePreview> preview = ImagePreviewer::Preview({ .renderingContext = renderingContext, .commandBuffer = commandBuffer, .image = *layer.image });
                                     ResetLayer(layer, commandBuffer);
 
-                                    Sierra::ResourceTable& resourceTable = renderingContext->GetResourceTable();
+                                    Sierra::ResourceTable& resourceTable = renderingContext.GetResourceTable();
                                     layer.dirty = false;
 
                                     layer.preview = std::move(preview.value());
@@ -516,9 +520,8 @@ namespace SierraEngine
                                     .width = size
                                 };
 
-                                if (ImGuiWidgets::ImageInput("##LevelsLayerImageInput", layer.filePath, FileInputWizard::GetPlatformContext(), inputInfo))
+                                if (ImGuiWidgets::ImageInput("##LevelsLayerImageInput", layer.filePath, platformContext, inputInfo))
                                 {
-                                    const Sierra::FileManager& fileManager = FileInputWizard::GetPlatformContext().GetFileManager();
                                     if (std::optional<LoadedImage> layerImage = LoadLayerImage(fileManager, layer.filePath); layerImage.has_value())
                                     {
                                         const bool rootLayer = levelIndex == 0 && layerIndex == 0;

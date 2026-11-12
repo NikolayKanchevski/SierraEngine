@@ -20,8 +20,7 @@ namespace SierraEngine
     /* --- POLLING METHODS --- */
 
     FileOutputWizard::FileOutputWizard(const FileOutputWizardCreateInfo& createInfo) noexcept
-        : platformContext(&createInfo.platformContext),
-          outputFileExtension(createInfo.outputFileExtension)
+        : outputFileExtension(createInfo.outputFileExtension)
     {
         if (createInfo.inputFilePath == nullptr) return;
 
@@ -35,7 +34,7 @@ namespace SierraEngine
         }
     }
 
-    bool FileOutputWizard::DrawFileOutputFooter(uint32& formatIndex, std::span<const ImGuiDropdownOption> formatOptions) noexcept
+    bool FileOutputWizard::DrawFileOutputFooter(const EditorPlatformContext& platformContext, uint32& formatIndex, const std::span<const ImGuiDropdownOption> formatOptions) noexcept
     {
         const ImGuiStyle& style = ImGui::GetStyle();
         const float32 buttonHeight = ImGui::GetFrameHeight() * 1.35f;
@@ -66,7 +65,7 @@ namespace SierraEngine
                     .allowedFileExtensions = allowedExtensions
                 };
 
-                if (ImGuiWidgets::FileSaveInput("##OutputFileSaveInput", outputFilePath, *platformContext, inputInfo))
+                if (ImGuiWidgets::FileSaveInput("##OutputFileSaveInput", outputFilePath, platformContext, inputInfo))
                 {
                     SetOutputFilePath(outputFilePath);
                 }

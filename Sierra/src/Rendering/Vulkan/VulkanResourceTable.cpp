@@ -15,7 +15,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanResourceTable::VulkanResourceTable(const VulkanDevice& givenDevice, const ResourceTableCreateInfo& createInfo)
-        : VulkanResource(createInfo.name), ResourceTable(createInfo), device(&givenDevice)
+        : ResourceTable(createInfo), name(createInfo.name), device(&givenDevice)
     {
         SR_THROW_IF(!device->IsExtensionLoaded(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME), UnsupportedFeatureError(SR_FORMAT("Cannot create resource table [{0}] from device [{1}]", createInfo.name, device->GetName())));
 

@@ -195,7 +195,6 @@ namespace Sierra
         return TRUE;
     }
 
-
     /* --- DESTRUCTOR --- */
 
     Win32Context::~Win32Context() noexcept

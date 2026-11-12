@@ -14,8 +14,9 @@ namespace SierraEngine
 
     struct TextureSerializeWizardCreateInfo
     {
-        const Sierra::PlatformContext& platformContext;
+        const EditorPlatformContext& platformContext;
         const RenderingContext& renderingContext;
+        const Sierra::FileManager& fileManager;
 
         const std::filesystem::path* inputFilePath = nullptr;
         const std::filesystem::path* outputDirectoryPath = nullptr;
@@ -39,14 +40,16 @@ namespace SierraEngine
         TextureSerializeWizard& operator=(const TextureSerializeWizard&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        TextureSerializeWizard(TextureSerializeWizard&&) noexcept = default;
-        TextureSerializeWizard& operator=(TextureSerializeWizard&&) noexcept = default;
+        TextureSerializeWizard(TextureSerializeWizard&&) = delete;
+        TextureSerializeWizard& operator=(TextureSerializeWizard&&) = delete;
 
         /* --- DESTRUCTOR --- */
         ~TextureSerializeWizard() noexcept override = default;
 
     private:
-        const RenderingContext* renderingContext;
+        const EditorPlatformContext& platformContext;
+        const RenderingContext& renderingContext;
+        const Sierra::FileManager& fileManager;
 
         enum class TextureSerializeFormat : uint8
         {

@@ -49,7 +49,7 @@ namespace Sierra
 
             vertexShader = device.CreateShader({ .name = "Shared ImGui Render Task Vertex Shader", .memory = VERTEX_SHADER_DATA, .shaderType = ShaderType::Vertex });
             fragmentShader = device.CreateShader({ .name = "Shared ImGui Render Task Fragment Shader", .memory = FRAGMENT_SHADER_DATA, .shaderType = ShaderType::Fragment });
-            fontSampler = device.CreateSampler({ .name = "Shared ImGui Render Task Font Sampler", .magFilter = SamplerFilter::Linear });
+            fontSampler = device.CreateSampler({ .name = "Shared ImGui Render Task Font Sampler", .magFilter = SamplerFilter::Linear, .minFilter = SamplerFilter::Linear });
 
             contextCount++;
         }
@@ -129,13 +129,24 @@ namespace Sierra
         }
 
         // Save base font index within singleton pool
-        const ImGuiIO& io = ImGui::GetIO();
-        baseFontIndex = io.Fonts->Fonts.size();
+        baseFontIndex = ImGui::GetIO().Fonts->Fonts.size();
+
+        BuildFontAtlas(createInfo.commandBuffer, createInfo.fontCreateInfos, createInfo.scaling);
+    }
+
+    /* --- PRIVATE METHODS --- */
+
+    void ImGuiRenderer::BuildFontAtlas(CommandBuffer& commandBuffer, const std::span<const ImGuiFontCreateInfo> fontCreateInfos, const float32 scaling)
+    {
+        ImGuiIO& io = ImGui::GetIO();
 
         // Process fonts memory
         ImFontConfig configuration = { };
         configuration.FontDataOwnedByAtlas = false;
-        for (const ImGuiFontCreateInfo& fontCreateInfo : createInfo.fontCreateInfos)
+
+        // Glyphs are rasterized at the scale of the display, while font metrics stay in logical units, which is what makes text sharp on HiDPI displays
+        configuration.RasterizerDensity = scaling;
+        for (const ImGuiFontCreateInfo& fontCreateInfo : fontCreateInfos)
         {
             io.Fonts->AddFontFromMemoryTTF(const_cast<uint8*>(fontCreateInfo.ttfMemory.data()), static_cast<int>(fontCreateInfo.ttfMemory.size_bytes()), fontCreateInfo.size * 3, &configuration);
             configuration.MergeMode = true;
@@ -145,7 +156,7 @@ namespace Sierra
         // Load font atlas
         int atlasWidth, atlasHeight;
         uint8* atlasMemory = nullptr;
-        ImGui::GetIO().Fonts->GetTexDataAsAlpha8(&atlasMemory, &atlasWidth, &atlasHeight);
+        io.Fonts->GetTexDataAsAlpha8(&atlasMemory, &atlasWidth, &atlasHeight);
 
         constexpr ImageFormat FONT_ATLAS_IMAGE_FORMAT = ImageFormat::R8_UNorm;
         constexpr ImageUsage FONT_ATLAS_IMAGE_USAGE = ImageUsage::Sample | ImageUsage::DestinationMemory;
@@ -172,15 +183,14 @@ namespace Sierra
         stagingBuffer->Write(atlasMemory, 0, 0, fontAtlas->GetMemorySize());
 
         // Prepare image for writing
-        CommandBuffer& commandBuffer = createInfo.commandBuffer;
         commandBuffer.SynchronizeImageUsage(*fontAtlas, { .nextUsage = ImageCommandUsage::MemoryWrite, .levelCount = fontAtlas->GetLevelCount(), .layerCount = fontAtlas->GetLayerCount() });
 
         // Copy atlas to image
         commandBuffer.CopyBufferToImage(*stagingBuffer, *fontAtlas, { .pixelRange = { fontAtlas->GetWidth(), fontAtlas->GetHeight(), fontAtlas->GetDepth() } });
-        createInfo.destructionScheduler.QueueResource(std::move(stagingBuffer));
+        destructionScheduler->QueueResource(std::move(stagingBuffer));
 
         // Prepare image for shader reading
-        commandBuffer.SynchronizeImageUsage(*fontAtlas, { .previousUsage = ImageCommandUsage::MemoryWrite, .nextUsage = ImageCommandUsage::GraphicsRead, .levelCount = fontAtlas->GetLevelCount(), .layerCount =  fontAtlas->GetLayerCount() });
+        commandBuffer.SynchronizeImageUsage(*fontAtlas, { .previousUsage = ImageCommandUsage::MemoryWrite, .nextUsage = ImageCommandUsage::GraphicsRead, .levelCount = fontAtlas->GetLevelCount(), .layerCount = fontAtlas->GetLayerCount() });
 
         // Bind font atlas & sampler
         fontAtlasID = resourceTable->BindSampledImage(*fontAtlas);
@@ -192,8 +202,9 @@ namespace Sierra
 
     void ImGuiRenderer::Update(const uint32 framebufferWidth, const uint32 framebufferHeight, const float32 scaling, const InputManager* const inputManager, const CursorManager* const cursorManager, const TouchManager* const touchManager) const
     {
-        const uint32 width = static_cast<uint32>(static_cast<float32>(framebufferWidth) / scaling);
-        const uint32 height = static_cast<uint32>(static_cast<float32>(framebufferHeight) / scaling);
+        // UI is laid out in logical units, so that it is the same size on every platform, whatever the scale of the display is. Framebuffer is those units scaled up, where fonts are sharp
+        const float32 width = static_cast<float32>(framebufferWidth) / scaling;
+        const float32 height = static_cast<float32>(framebufferHeight) / scaling;
 
         ImGuiIO& io = ImGui::GetIO();
         if (inputManager != nullptr)
@@ -289,7 +300,7 @@ namespace Sierra
             io.AddKeyEvent(ImGuiKey_Period,             inputManager->IsKeyHeld(Key::Period));
             io.AddKeyEvent(ImGuiKey_Slash,              inputManager->IsKeyHeld(Key::Slash));
             io.AddKeyEvent(ImGuiKey_Semicolon,          inputManager->IsKeyHeld(Key::Semicolon));
-            io.AddKeyEvent(ImGuiKey_Equal,              inputManager->IsKeyHeld(Key::Equals));
+            io.AddKeyEvent(ImGuiKey_Equal,              inputManager->IsKeyHeld(Key::Equal));
             io.AddKeyEvent(ImGuiKey_LeftBracket,        inputManager->IsKeyHeld(Key::LeftBracket));
             io.AddKeyEvent(ImGuiKey_Backslash,          inputManager->IsKeyHeld(Key::Backslash));
             io.AddKeyEvent(ImGuiKey_RightBracket,       inputManager->IsKeyHeld(Key::RightBracket));
@@ -301,13 +312,13 @@ namespace Sierra
             io.AddKeyEvent(ImGuiKey_Pause,              inputManager->IsKeyHeld(Key::Pause));
             io.AddKeyEvent(ImGuiKey_Keypad0,            inputManager->IsKeyHeld(Key::KeypadNumber0));
             io.AddKeyEvent(ImGuiKey_Keypad5,            inputManager->IsKeyHeld(Key::KeypadNumber5));
-            io.AddKeyEvent(ImGuiKey_KeypadDecimal,      inputManager->IsKeyHeld(Key::KeypadDecimal));
-            io.AddKeyEvent(ImGuiKey_KeypadDivide,       inputManager->IsKeyHeld(Key::KeypadDivide));
-            io.AddKeyEvent(ImGuiKey_KeypadMultiply,     inputManager->IsKeyHeld(Key::KeypadMultiply));
-            io.AddKeyEvent(ImGuiKey_KeypadSubtract,     inputManager->IsKeyHeld(Key::KeypadSubtract));
-            io.AddKeyEvent(ImGuiKey_KeypadAdd,          inputManager->IsKeyHeld(Key::KeypadAdd));
+            io.AddKeyEvent(ImGuiKey_KeypadDecimal,      inputManager->IsKeyHeld(Key::KeypadPeriod));
+            io.AddKeyEvent(ImGuiKey_KeypadDivide,       inputManager->IsKeyHeld(Key::KeypadSlash));
+            io.AddKeyEvent(ImGuiKey_KeypadMultiply,     inputManager->IsKeyHeld(Key::KeypadAsterisk));
+            io.AddKeyEvent(ImGuiKey_KeypadSubtract,     inputManager->IsKeyHeld(Key::KeypadMinus));
+            io.AddKeyEvent(ImGuiKey_KeypadAdd,          inputManager->IsKeyHeld(Key::KeypadPlus));
             io.AddKeyEvent(ImGuiKey_KeypadEnter,        inputManager->IsKeyHeld(Key::KeypadEnter));
-            io.AddKeyEvent(ImGuiKey_KeypadEqual,        inputManager->IsKeyHeld(Key::KeypadEquals));
+            io.AddKeyEvent(ImGuiKey_KeypadEqual,        inputManager->IsKeyHeld(Key::KeypadEqual));
 
             // Handle character entering
             const bool shiftHeld = inputManager->IsKeyHeld(Key::LeftShift) || inputManager->IsKeyHeld(Key::RightShift);
@@ -335,7 +346,7 @@ namespace Sierra
         if (cursorManager != nullptr)
         {
             // Update position
-            if (cursorManager->IsCursorVisible()) io.AddMousePosEvent(static_cast<float32>(cursorManager->GetCursorPosition().x), static_cast<float32>(height - cursorManager->GetCursorPosition().y));
+            if (cursorManager->IsCursorVisible()) io.AddMousePosEvent(static_cast<float32>(cursorManager->GetCursorPosition().x), height - static_cast<float32>(cursorManager->GetCursorPosition().y));
             else io.AddMousePosEvent(-FLT_MIN, -FLT_MAX); // ImGui uses these two specific values to signal, that cursor is not present
 
             // Update delta
@@ -345,15 +356,15 @@ namespace Sierra
         {
             if (!touchManager->GetTouches().empty())
             {
-                io.MousePos = ImVec2(touchManager->GetTouches()[0].GetPosition().x, static_cast<float32>(height) - touchManager->GetTouches()[0].GetPosition().y);
+                io.MousePos = ImVec2(touchManager->GetTouches()[0].GetPosition().x, height - touchManager->GetTouches()[0].GetPosition().y);
                 if (touchManager->GetTouches()[0].GetType() == TouchType::Press) io.MouseDown[ImGuiMouseButton_Left] = true;
                 else io.MouseReleased[ImGuiMouseButton_Left] = true;
             }
         }
 
         // Update display settings
-        io.DisplaySize             = { static_cast<float32>(width), static_cast<float32>(height) };
-        io.DisplayFramebufferScale = { static_cast<float32>(scaling), static_cast<float32>(scaling) };
+        io.DisplaySize             = { width, height };
+        io.DisplayFramebufferScale = { scaling, scaling };
 
         // Begin new frame
         ImGui::NewFrame();

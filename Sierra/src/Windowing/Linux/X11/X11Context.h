@@ -11,7 +11,7 @@
 #include <X11/Xlib.h>
 
 #include "X11Extensions.h"
-#include "../../Windowing/Linux/X11Screen.h"
+#include "X11Screen.h"
 
 namespace Sierra
 {
@@ -56,40 +56,46 @@ namespace Sierra
     class SIERRA_API X11Context final
     {
     public:
-        /* --- TYPE DEFINITIONS --- */
-        using WindowEventCallback = std::function<void(const XEvent&, XID, void*)>;
-        using EventWaitCallback = std::function<int(Display*, XEvent*, XPointer)>;
-
         /* --- CONSTRUCTORS --- */
         explicit X11Context(const X11ContextCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] XID CreateWindow(std::string_view title, uint32 width, uint32 height, const WindowEventCallback& Callback, void* userData = nullptr) const;
-        void DestroyWindow(XID window) const;
-
-        void ReloadScreens();
+        // Reads all events, that the server has sent, and dispatches them to their windows. Never blocks
+        void Update() noexcept;
 
         [[nodiscard]] XEvent PeekNextEvent() const;
-        XEvent RegisterWindowEvent(XID window, Atom type, long a = 0, long b = 0, long c = 0, long d = 0, int eventMask = NoEventMask) const;
-        XEvent WaitForEvent(int(Callback)(Display*, XEvent*, XPointer), void* userData = nullptr) const;
+
+        // Sends a client message about the window to the window manager, which is what it expects for requests such as activation
+        void RegisterWindowEvent(XID window, Atom type, long a = 0, long b = 0, long c = 0, long d = 0, int eventMask = SubstructureNotifyMask | SubstructureRedirectMask) const;
+
+        // Sends a client message, received from the window manager, back to it as a reply (such as the answer to a ping)
+        void ReplyToRootEvent(const XEvent& event) const;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] X11Screen& GetPrimaryScreen() noexcept { return screens[0]; }
-        [[nodiscard]] std::span<X11Screen> GetScreens() noexcept { return screens; }
-
-        [[nodiscard]] X11Screen& GetWindowScreen(XID window);
-        [[nodiscard]] const X11Screen& GetWindowScreen(XID window) const;
-
         [[nodiscard]] Display* GetDisplay() const noexcept { return display; }
+        [[nodiscard]] XContext GetContext() const noexcept { return context; }
+
         [[nodiscard]] int GetScreen() const noexcept { return screen; }
         [[nodiscard]] XID GetRootWindow() const noexcept { return rootWindow; }
+
         [[nodiscard]] XID GetInvisibleCursor() const noexcept { return invisibleCursor; }
 
-        [[nodiscard]] Atom GetAtom(const AtomType atomType) const noexcept { return atomTable[GetAtomTypeIndex(atomType)]; }
+        // Returns the number of items of the property, and sets the data of the property, which must be released using XFree() if it is not null
         [[nodiscard]] uint32 GetWindowProperty(XID window, Atom property, Atom type, uchar** outValues) const noexcept;
+        [[nodiscard]] Atom GetAtom(AtomType atomType) const noexcept;
+
+        [[nodiscard]] const X11Screen& GetWindowScreen(XID window) const noexcept;
+        [[nodiscard]] std::span<const X11Screen> GetScreens() const noexcept { return screens; }
 
         [[nodiscard]] const XkbExtension& GetXkbExtension() const noexcept { return xkbExtension; }
         [[nodiscard]] const XrandrExtension& GetXrandrExtension() const noexcept { return xrandrExtension; }
+
+        // Scale of the desktop, which windows are laid out in logical units of. Physical units are those of the framebuffer and of the server
+        [[nodiscard]] float32 GetScaling() const noexcept { return scaling; }
+        [[nodiscard]] Vector2UInt GetPhysicalSize(const Vector2UInt logicalSize) const noexcept { return { static_cast<uint32>(glm::round(logicalSize.x * scaling)), static_cast<uint32>(glm::round(logicalSize.y * scaling)) }; }
+        [[nodiscard]] Vector2UInt GetLogicalSize(const Vector2UInt physicalSize) const noexcept { return { static_cast<uint32>(glm::round(physicalSize.x / scaling)), static_cast<uint32>(glm::round(physicalSize.y / scaling)) }; }
+        [[nodiscard]] Vector2Int GetPhysicalPosition(const Vector2Int logicalPosition) const noexcept { return { static_cast<int32>(glm::round(logicalPosition.x * scaling)), static_cast<int32>(glm::round(logicalPosition.y * scaling)) }; }
+        [[nodiscard]] Vector2Int GetLogicalPosition(const Vector2Int physicalPosition) const noexcept { return { static_cast<int32>(glm::round(physicalPosition.x / scaling)), static_cast<int32>(glm::round(physicalPosition.y / scaling)) }; }
 
         /* --- COPY SEMANTICS --- */
         X11Context(const X11Context&) = delete;
@@ -104,20 +110,20 @@ namespace Sierra
 
     private:
         Display* display = nullptr;
+        XContext context = { };
+
         int screen = 0;
+        float32 scaling = 1.0f;
         XID rootWindow = 0;
 
         XID invisibleCursor = 0;
+        std::array<Atom, static_cast<uint32>(AtomType::NET_REQUEST_FRAME_EXTENTS) + 1> atomTable = { };
+
         XkbExtension xkbExtension;
         XrandrExtension xrandrExtension;
 
-        std::vector<X11Screen> screens;
-        std::array<Atom, static_cast<uint32>(AtomType::NET_REQUEST_FRAME_EXTENTS) + 1> atomTable = { 0 };
-        [[nodiscard]] constexpr uint8 GetAtomTypeIndex(const AtomType atomType) const { return static_cast<uint32>(atomType); }
-
-        friend class LinuxContext;
-        void Update();
-
+        std::vector<X11Screen> screens = {  };
+        void ReloadScreens() noexcept;
     };
 
 }

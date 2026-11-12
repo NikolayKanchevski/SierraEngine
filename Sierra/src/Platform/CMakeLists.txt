@@ -1,5 +1,4 @@
 target_sources(Sierra PRIVATE
-    PlatformContext.cpp
     PlatformContext.h
 )
 

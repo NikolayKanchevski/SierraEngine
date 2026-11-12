@@ -19,7 +19,6 @@ namespace SierraEngine
 
     AssetSerializeWizard::AssetSerializeWizard(const AssetSerializeWizardCreateInfo& createInfo) noexcept
         : FileOutputWizard({
-            .platformContext = createInfo.platformContext,
             .inputFileExtensions = createInfo.inputFileExtensions,
             .inputFilePath = createInfo.inputFilePath,
             .outputFileExtension = createInfo.outputFileExtension,
@@ -30,13 +29,6 @@ namespace SierraEngine
     }
 
     /* --- POLLING METHODS --- */
-
-    void AssetSerializeWizard::DefaultMetadata(AssetMetadata& metadata, const std::string_view name) const noexcept
-    {
-        metadata.name = name;
-        metadata.author = GetPlatformContext().GetUserName();
-        metadata.tags = { };
-    }
 
     void AssetSerializeWizard::DrawMetadataMenu(AssetMetadata& metadata) const noexcept
     {

@@ -5,14 +5,13 @@
 #pragma once
 
 #include "../EditorWizard.h"
+#include "../../Platform/EditorPlatformContext.h"
 
 namespace SierraEngine
 {
 
     struct FileInputWizardCreateInfo
     {
-        const Sierra::PlatformContext& platformContext;
-
         std::span<const std::string_view> inputFileExtensions = { };
         const std::filesystem::path* inputFilePath = nullptr;
 
@@ -35,14 +34,12 @@ namespace SierraEngine
         explicit FileInputWizard(const FileInputWizardCreateInfo& createInfo) noexcept;
 
         /* --- POLLING METHODS --- */
-        void DrawFileInputHeader() noexcept;
+        void DrawFileInputHeader(const EditorPlatformContext& platformContext) noexcept;
 
         /* --- SETTER METHODS --- */
         virtual void SetInputFilePath(const std::filesystem::path& inputFilePath) noexcept;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] const Sierra::PlatformContext& GetPlatformContext() const noexcept { return *platformContext; }
-
         [[nodiscard]] std::span<const std::string_view> GetInputFileExtensions() const noexcept { return inputFileExtensions; }
         [[nodiscard]] const std::filesystem::path& GetInputFilePath() const noexcept { return inputFilePath; }
 
@@ -51,8 +48,6 @@ namespace SierraEngine
         FileInputWizard& operator=(FileInputWizard&&) noexcept = default;
 
     private:
-        const Sierra::PlatformContext* platformContext;
-
         std::filesystem::path inputFilePath = { };
         std::span<const std::string_view> inputFileExtensions = { };
 

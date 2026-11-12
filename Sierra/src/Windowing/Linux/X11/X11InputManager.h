@@ -8,9 +8,9 @@
     #error "Including the X11InputManager.h file is only allowed in Linux builds!"
 #endif
 
-#include "../InputManager.h"
+#include "../../InputManager.h"
 
-#include "../../Platform/Linux/X11Extensions.h"
+#include "X11Extensions.h"
 
 namespace Sierra
 {
@@ -44,8 +44,8 @@ namespace Sierra
         [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override;
 
         /* --- CONVERSIONS --- */
-        [[nodiscard]] Key XKeyCodeToKey(uint keyCode);
-        [[nodiscard]] MouseButton XButtonToMouseButton(uint button);
+        [[nodiscard]] Key XKeyCodeToKey(uint keyCode) const;
+        [[nodiscard]] MouseButton XButtonToMouseButton(uint button) const;
 
         /* --- COPY SEMANTICS --- */
         X11InputManager(const X11InputManager&) = delete;
@@ -71,6 +71,8 @@ namespace Sierra
 
         friend class X11Window;
         void Update();
+        void ReleaseKeys();
+        void ReleaseMouseButtons();
 
     };
 

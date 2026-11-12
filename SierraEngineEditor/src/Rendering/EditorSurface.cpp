@@ -17,7 +17,7 @@ namespace SierraEngine
     EditorSurface::EditorSurface(const EditorSurfaceCreateInfo& createInfo)
         : renderingContext(&createInfo.renderingContext)
     {
-        window = createInfo.platformContext.CreateWindow({
+        window = createInfo.windowManager.CreateWindow({
             .title = "Sierra Engine Editor",
             .resizable = true,
             .maximize = true
@@ -62,7 +62,8 @@ namespace SierraEngine
             .format = swapchain->GetCurrentImage().GetFormat(),
             .fontCreateInfos = {{
                 { .size = 7.0f, .ttfMemory = INTER_FONT_TTF }
-            }}
+            }},
+            .scaling = swapchain->GetScaling()
         });
 
         CreateFramebuffers();
@@ -102,7 +103,10 @@ namespace SierraEngine
             resourceTable.UpdateSampledImage(viewport.GetImageID(), image);
         });
 
+        commandBuffer.SynchronizeImageUsage(swapchain->GetCurrentImage(), { .previousUsage =  Sierra::ImageCommandUsage::None, .nextUsage = Sierra::ImageCommandUsage::ColorWrite });
+
         imGuiRenderer->Render(commandBuffer, *framebuffers[swapchain->GetCurrentImageIndex()]);
+
         commandBuffer.SynchronizeImageUsage(swapchain->GetCurrentImage(), { .previousUsage =  Sierra::ImageCommandUsage::ColorWrite, .nextUsage = Sierra::ImageCommandUsage::Present });
     }
 

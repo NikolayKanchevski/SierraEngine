@@ -13,7 +13,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanQueue::VulkanQueue(const VulkanDevice& givenDevice, const QueueCreateInfo& createInfo)
-        : VulkanResource(createInfo.name), Queue(createInfo), device(&givenDevice)
+        : Queue(createInfo), name(createInfo.name), device(&givenDevice)
     {
         switch (createInfo.priority)
         {

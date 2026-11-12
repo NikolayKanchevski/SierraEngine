@@ -14,7 +14,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanComputePipeline::VulkanComputePipeline(const VulkanDevice& givenDevice, const ComputePipelineCreateInfo& createInfo)
-        : VulkanResource(createInfo.name), ComputePipeline(createInfo), device(&givenDevice), pushConstantSize(createInfo.pushConstantSize)
+        : ComputePipeline(createInfo), name(createInfo.name), device(&givenDevice), pushConstantSize(createInfo.pushConstantSize)
     {
         SR_THROW_IF(createInfo.computeShader.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot create compute pipeline [{0}] with compute shader [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", createInfo.name, createInfo.computeShader.GetName())));
         const VulkanShader& vulkanComputeShader = static_cast<const VulkanShader&>(createInfo.computeShader);

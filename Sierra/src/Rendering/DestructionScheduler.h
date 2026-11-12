@@ -35,7 +35,7 @@ namespace Sierra
         DestructionScheduler& operator=(const DestructionScheduler&) = delete;
 
         /* --- DESTRUCTOR --- */
-        virtual ~DestructionScheduler() noexcept = default;
+        ~DestructionScheduler() noexcept override = default;
 
     protected:
         /* --- CONSTRUCTORS --- */

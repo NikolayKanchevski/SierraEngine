@@ -140,19 +140,17 @@ namespace SierraEngine
         return ImGui::InputText(label.data(), &value, inputInfo.flags, inputInfo.CharacterCallback, inputInfo.userData);
     }
 
-    bool ImGuiWidgets::FileSelectInput(const std::string_view label, std::filesystem::path& value, const Sierra::PlatformContext& platformContext, const ImGuiFileSelectInputInfo& inputInfo)
+    bool ImGuiWidgets::FileSelectInput(const std::string_view label, std::filesystem::path& value, const EditorPlatformContext& platformContext, const ImGuiFileSelectInputInfo& inputInfo)
     {
         if (!FilePathInput(label, value, inputInfo.width))
         {
             return false;
         }
 
-        const std::optional<std::filesystem::path> filePath = platformContext.OpenSingleFileSelectDialog({
+        const std::optional<std::filesystem::path> filePath = platformContext.OpenFileSaveDialog({
             .message = inputInfo.message,
             .buttonText = inputInfo.buttonText,
             .directoryPath = inputInfo.directoryPath,
-            .allowFiles = inputInfo.allowFiles,
-            .allowDirectories = inputInfo.allowDirectories,
             .allowedFileExtensions = inputInfo.allowedFileExtensions
         });
 
@@ -165,7 +163,7 @@ namespace SierraEngine
         return true;
     }
 
-    bool ImGuiWidgets::FileSaveInput(const std::string_view label, std::filesystem::path& value, const Sierra::PlatformContext& platformContext, const ImGuiFileSaveInputInfo& inputInfo)
+    bool ImGuiWidgets::FileSaveInput(const std::string_view label, std::filesystem::path& value, const EditorPlatformContext& platformContext, const ImGuiFileSaveInputInfo& inputInfo)
     {
         if (!FilePathInput(label, value, inputInfo.width))
         {
@@ -417,7 +415,7 @@ namespace SierraEngine
         return ImGui::ColorEdit4(label.data(), &value[0], inputInfo.flags);
     }
 
-    bool ImGuiWidgets::ImageInput(const std::string_view label, std::filesystem::path& value, const Sierra::PlatformContext& platformContext, const ImGuiImageInputInfo& inputInfo)
+    bool ImGuiWidgets::ImageInput(const std::string_view label, std::filesystem::path& value, const EditorPlatformContext& platformContext, const ImGuiImageInputInfo& inputInfo)
     {
         const ImGuiWindow* window = ImGui::GetCurrentWindow();
         if (!window || window->SkipItems) return false;
@@ -578,7 +576,7 @@ namespace SierraEngine
         //     g.ComboPreviewData.PreviewRect = ImRect(bb.Min.x, bb.Min.y, value_x2, bb.Max.y);
         //     IM_ASSERT(preview_value == nullptr || preview_value[0] == 0);
         //     preview_value = nullptr;
-        // } TODO:
+        // }
 
         // Render preview and label
         if (preview_value != nullptr && !(dropdownInfo.flags & ImGuiComboFlags_NoPreview))

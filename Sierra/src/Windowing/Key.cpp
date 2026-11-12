@@ -51,7 +51,7 @@ namespace Sierra
             case Key::Space:                    return "Space";
             case Key::Escape:                   return "Escape";
             case Key::Minus:                    return "Minus";
-            case Key::Equals:                   return "Equals";
+            case Key::Equal:                   return "Equals";
             case Key::Comma:                    return "Comma";
             case Key::Period:                   return "Period";
             case Key::Apostrophe:               return "Apostrophe";
@@ -117,13 +117,13 @@ namespace Sierra
             case Key::KeypadNumber7:            return "Keypad Number 7";
             case Key::KeypadNumber8:            return "Keypad Number 8";
             case Key::KeypadNumber9:            return "Keypad Number 9";
-            case Key::KeypadDecimal:            return "Keypad Decimal";
-            case Key::KeypadDivide:             return "Keypad Divide";
-            case Key::KeypadMultiply:           return "Keypad Multiply";
-            case Key::KeypadSubtract:           return "Keypad Subtract";
-            case Key::KeypadAdd:                return "Keypad Add";
+            case Key::KeypadPeriod:            return "Keypad Decimal";
+            case Key::KeypadSlash:             return "Keypad Divide";
+            case Key::KeypadAsterisk:           return "Keypad Multiply";
+            case Key::KeypadMinus:           return "Keypad Subtract";
+            case Key::KeypadPlus:                return "Keypad Add";
             case Key::KeypadEnter:              return "Keypad Enter";
-            case Key::KeypadEquals:             return "Keypad Equals";
+            case Key::KeypadEqual:             return "Keypad Equals";
             case Key::LeftShift:                return "Left Shift";
             case Key::RightShift:               return "Right Shift";
             case Key::LeftControl:              return "Left Control";
@@ -203,22 +203,22 @@ namespace Sierra
             case Key::KeypadNumber9:            return '9';
             case Key::Space:                    return ' ';
             case Key::Minus:
-            case Key::KeypadSubtract:           return '-';
-            case Key::Equals:
-            case Key::KeypadEquals:             return '=';
+            case Key::KeypadMinus:           return '-';
+            case Key::Equal:
+            case Key::KeypadEqual:             return '=';
             case Key::Comma:                    return ',';
             case Key::Period:
-            case Key::KeypadDecimal:            return '.';
+            case Key::KeypadPeriod:            return '.';
             case Key::Apostrophe:               return '\'';
             case Key::Semicolon:                return ';';
             case Key::Slash:
-            case Key::KeypadDivide:             return '/';
+            case Key::KeypadSlash:             return '/';
             case Key::Backslash:                return '\\';
             case Key::LeftBracket:              return '(';
             case Key::RightBracket:             return ')';
             case Key::Grave:                    return '`';
-            case Key::KeypadMultiply:           return '*';
-            case Key::KeypadAdd:                return '+';
+            case Key::KeypadAsterisk:           return '*';
+            case Key::KeypadPlus:                return '+';
             default:                            break;
         }
 

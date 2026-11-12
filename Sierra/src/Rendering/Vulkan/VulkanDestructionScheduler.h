@@ -18,6 +18,9 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         explicit VulkanDestructionScheduler(const VulkanDevice& device, const DestructionSchedulerCreateInfo& createInfo);
 
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
+
         /* --- POLLING METHODS --- */
         void QueueResource(std::unique_ptr<RenderingResource>&& resource) override;
         void Flush() override;
@@ -34,6 +37,7 @@ namespace Sierra
         ~VulkanDestructionScheduler() noexcept override = default;
 
     private:
+        std::string name = { };
         const VulkanDevice* device;
 
         struct ResourceQueueEntry

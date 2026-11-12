@@ -13,13 +13,15 @@ namespace SierraEngine
 
     MaterialSerializeWizard::MaterialSerializeWizard(const MaterialSerializeWizardCreateInfo& createInfo) noexcept
         : AssetSerializeWizard({
-            .platformContext = createInfo.platformContext,
             .outputFileExtension = OUTPUT_FILE_EXTENSION,
             .outputDirectoryPath = createInfo.outputDirectoryPath
           }),
-          renderingContext(&createInfo.renderingContext)
+          platformContext(createInfo.platformContext),
+          fileManager(createInfo.fileManager)
     {
-        DefaultMetadata(serializeInfo.metadata, "Material");
+        AssetMetadata& metadata = serializeInfo.metadata;
+        metadata.author = createInfo.platformContext.GetUserName();
+        metadata.name = "Material";
     }
 
     /* --- POLLING METHODS --- */
@@ -43,7 +45,7 @@ namespace SierraEngine
                 ImGuiDropdownOption { .text = "YAML" }
             };
 
-            if (DrawFileOutputFooter(materialFormatIndex, OPTIONS))
+            if (DrawFileOutputFooter(platformContext,materialFormatIndex, OPTIONS))
             {
                 if (Serialize())
                 {
@@ -161,8 +163,6 @@ namespace SierraEngine
             APP_WARNING("Could not serialize material [{0}]", serializeInfo.metadata.name);
             return false;
         }
-
-        const Sierra::FileManager& fileManager = GetPlatformContext().GetFileManager();
 
         const std::filesystem::path& outputDataFilePath = GetOutputFilePath();
         if (outputDataFilePath.empty())

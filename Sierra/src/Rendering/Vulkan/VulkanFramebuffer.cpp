@@ -14,7 +14,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanFramebuffer::VulkanFramebuffer(const VulkanDevice& givenDevice, const FramebufferCreateInfo& createInfo)
-        : VulkanResource(createInfo.name), Framebuffer(createInfo), device(&givenDevice), width(createInfo.width), height(createInfo.height)
+        : Framebuffer(createInfo), name(createInfo.name), device(&givenDevice), width(createInfo.width), height(createInfo.height)
     {
         SR_THROW_IF(createInfo.width > device->GetLimits().maxFramebufferWidth, ValueOutOfRangeError(SR_FORMAT("Cannot create framebuffer [{0}], as specified width is exceeds device [{1}]'s max framebuffer width - use Device::GetLimits() to query limits", createInfo.name, device->GetName()), createInfo.width, 1U, device->GetLimits().maxFramebufferWidth));
         SR_THROW_IF(createInfo.height > device->GetLimits().maxFramebufferHeight, ValueOutOfRangeError(SR_FORMAT("Cannot create framebuffer [{0}], as specified height is exceeds device [{1}]'s max framebuffer height - use Device::GetLimits() to query limits", createInfo.name, device->GetName()), createInfo.height, 1U, device->GetLimits().maxFramebufferHeight));

@@ -68,3 +68,4 @@
 #include "../../src/Windowing/TouchManager.h"
 #include "../../src/Windowing/Window.h"
 #include "../../src/Windowing/WindowEvents.h"
+#include "../../src/Windowing/WindowManager.h"

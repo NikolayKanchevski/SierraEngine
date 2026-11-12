@@ -37,6 +37,9 @@ namespace Sierra
         uint32 concurrentFrameCount = 1;
         ImageFormat format = ImageFormat::Undefined;
         std::span<const ImGuiFontCreateInfo> fontCreateInfos = { };
+
+        // Scale of the display, which fonts are rasterized at, so that they are sharp on it
+        float32 scaling = 1.0f;
     };
 
     class SIERRA_API ImGuiRenderer final
@@ -83,6 +86,8 @@ namespace Sierra
 
         std::unique_ptr<RenderPass> renderPass = nullptr;
         std::unique_ptr<GraphicsPipeline> pipeline = nullptr;
+
+        void BuildFontAtlas(CommandBuffer& commandBuffer, std::span<const ImGuiFontCreateInfo> fontCreateInfos, float32 scaling);
 
         struct PushConstant
         {

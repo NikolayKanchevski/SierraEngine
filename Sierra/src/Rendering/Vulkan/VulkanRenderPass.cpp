@@ -37,7 +37,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     VulkanRenderPass::VulkanRenderPass(const VulkanDevice& givenDevice, const RenderPassCreateInfo& createInfo)
-        : VulkanResource(createInfo.name), RenderPass(createInfo), device(&givenDevice), subpassCount(createInfo.subpassDescriptions.size())
+        : RenderPass(createInfo), name(createInfo.name), device(&givenDevice), subpassCount(createInfo.subpassDescriptions.size())
     {
         // Set attachment descriptions
         std::vector<VkAttachmentDescription> attachmentDescriptions(createInfo.attachments.size());
