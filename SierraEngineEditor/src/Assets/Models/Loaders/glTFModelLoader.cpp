@@ -205,7 +205,7 @@ namespace SierraEngine
             for (const fastgltf::Texture& textureInfo : asset.textures)
             {
                 ModelTexture& texture = textures.emplace_back();
-                texture.name = !textureInfo.name.empty() ? std::string(textureInfo.name) : SR_FORMAT("Texture [{0}]", textures.size());
+                texture.name = !textureInfo.name.empty() ? std::string(textureInfo.name) : SR_FORMAT("Texture_[{0}]", textures.size());
 
                 texture.imageIndex = *textureInfo.imageIndex;
                 if (const auto samplerIndex = textureInfo.samplerIndex; samplerIndex.has_value())

@@ -58,6 +58,8 @@ namespace Sierra
         using FileEnumerationPredicate = std::function<void(const std::filesystem::path&)>;
 
         /* --- POLLING METHODS --- */
+        [[nodiscard]] std::string SanitizeFileName(std::string_view fileName) const noexcept;
+
         [[nodiscard]] virtual bool FileExists(const std::filesystem::path& filePath) const noexcept = 0;
         [[nodiscard]] virtual std::unique_ptr<FileStream> CreateFileStream(const FileStreamCreateInfo& createInfo) const = 0;
 

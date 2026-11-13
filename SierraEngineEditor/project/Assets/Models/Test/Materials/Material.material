@@ -1,0 +1,16 @@
+ID: 3712176535786462439
+metadata:
+  name: Material
+  author: nikolay
+  tags: []
+settings:
+  diffuse:
+    tint: [0.80,  0.80,  0.80]
+    texture: 18446744073709551615
+  specular:
+    shininess: 1.00
+    texture: 18446744073709551615
+  normal:
+    texture: 18446744073709551615
+  alphaMode: Opaque
+  cullMode: SingleSided

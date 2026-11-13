@@ -40,12 +40,12 @@ namespace SierraEngine
         commandBuffer.BindIndexBuffer(*indexBuffer, 0);
     }
 
-    Mesh ArenaAllocator::CreateMesh(Sierra::CommandBuffer& commandBuffer, const std::span<const Vertex> vertices, const std::span<const uint32> indices)
+    MeshView ArenaAllocator::CreateMesh(Sierra::CommandBuffer& commandBuffer, const std::span<const Vertex> vertices, const std::span<const uint32> indices)
     {
         const Sierra::Device& device = renderingContext->GetDevice();
         Sierra::DestructionScheduler& destructionScheduler = renderingContext->GetDestructionScheduler();
         
-        const Mesh mesh
+        const MeshView mesh
         {
             .vertexOffset = static_cast<uint32>(currentVertexOffset / sizeof(Vertex)),
             .vertexCount = static_cast<uint32>(vertices.size()),

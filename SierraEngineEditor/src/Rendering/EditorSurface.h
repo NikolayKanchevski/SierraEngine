@@ -29,6 +29,7 @@ namespace SierraEngine
         void Present(Sierra::CommandBuffer& commandBuffer) const;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] Sierra::Window& GetWindow() noexcept { return  *window; }
         [[nodiscard]] uint32 GetCurrentFrameIndex() const noexcept { return swapchain->GetCurrentFrameIndex(); };
         [[nodiscard]] uint32 GetConcurrentFrameCount() const noexcept { return swapchain->GetConcurrentFrameCount(); };
 

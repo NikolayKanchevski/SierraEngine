@@ -94,7 +94,6 @@ namespace Sierra
         void* /* CocoaWindowDelegate* */ delegate = nil;
         NSWindow* window = nil;
         NSView* view = nil;
-        NSMenu* menuBar = nil;
 
         CocoaInputManager inputManager;
         CocoaCursorManager cursorManager;
@@ -114,6 +113,7 @@ namespace Sierra
         void WindowDidMiniaturize(const NSNotification* notification);
         void WindowDidBecomeKey(const NSNotification* notification);
         void WindowDidResignKey(const NSNotification* notification);
+        void WindowDidChangeBackingProperties();
     #endif
 
     };

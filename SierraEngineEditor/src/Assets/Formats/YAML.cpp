@@ -9,8 +9,8 @@ namespace SierraEngine
 
     void YAML::SerializeString(ryml::NodeRef node, const std::string_view string)
     {
+        node.save(ryml::to_csubstr(string));
         node.set_val_style(ryml::VAL_PLAIN);
-        node.set_val(ryml::to_csubstr(string));
     }
 
     // ReSharper disable once CppPassValueParameterByConstReference

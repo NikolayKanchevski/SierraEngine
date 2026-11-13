@@ -6,7 +6,7 @@
 
 #include "../Component.h"
 
-#include "../../Assets/Models/Mesh.h"
+#include "../../Rendering/MeshView.h"
 
 namespace SierraEngine
 {
@@ -15,10 +15,10 @@ namespace SierraEngine
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit MeshRenderer(const Mesh& mesh) noexcept;
+        explicit MeshRenderer(const MeshView& mesh) noexcept;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] const Mesh& GetMesh() const noexcept { return mesh; }
+        [[nodiscard]] const MeshView& GetMesh() const noexcept { return mesh; }
 
         /* --- TYPE DATA --- */
         [[nodiscard]] constexpr static std::string_view GetName() { return "Mesh Renderer"; }
@@ -35,7 +35,7 @@ namespace SierraEngine
         ~MeshRenderer() noexcept = default;
 
     private:
-        Mesh mesh = { };
+        MeshView mesh = { };
 
     };
 

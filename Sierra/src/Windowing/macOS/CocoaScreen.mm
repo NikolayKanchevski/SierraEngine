@@ -14,7 +14,7 @@ namespace Sierra
     {
         SR_THROW_IF(createInfo.screen == nil, InvalidValueError("Cannot create Cocoa screen, as specified screen must not be nil"));
 
-        name = { [createInfo.screen localizedName].UTF8String, [createInfo.screen localizedName].length };
+        name = [createInfo.screen localizedName].UTF8String;
         refreshRate = { static_cast<uint16>(createInfo.screen.maximumFramesPerSecond) };
 
         origin = { createInfo.screen.frame.origin.x, createInfo.screen.frame.origin.y };

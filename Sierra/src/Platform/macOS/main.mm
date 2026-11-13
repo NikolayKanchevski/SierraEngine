@@ -45,19 +45,8 @@ namespace
         if (application->Update())
         {
             [timer invalidate];
-            [timer release];
-
             [[NSApplication sharedApplication] terminate: nil];
         }
-    }
-
-    - (NSApplicationTerminateReply) applicationShouldTerminate: (NSApplication*) sender
-    {
-        NSArray<NSWindow*>* windows = [[NSApplication sharedApplication] windows];
-        for (NSWindow* window in windows) [window performClose: nil];
-
-        delete(application);
-        return NSTerminateCancel;
     }
 
 @end

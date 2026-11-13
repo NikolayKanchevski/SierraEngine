@@ -1,0 +1,49 @@
+ID: 4462577738716890246
+metadata:
+  name: Test
+  author: nikolay
+  tags: []
+settings: {}
+properties:
+  nodes:
+    - name: Cube
+      meshIndices: [0]
+    - name: Icosphere
+      meshIndices: [1]
+    - name: Torus
+      meshIndices: [4]
+      children:
+        - name: Cone
+          meshIndices: [3]
+          children:
+            - name: Cylinder
+              meshIndices: [2]
+  geometry:
+    totalVertexCount: 2888
+    totalIndexCount: 4290
+    compression: None
+  meshes:
+    - vertexOffset: 0
+      vertexCount: 24
+      indexOffset: 0
+      indexCount: 36
+      materialIndex: 0
+    - vertexOffset: 24
+      vertexCount: 240
+      indexOffset: 36
+      indexCount: 240
+    - vertexOffset: 264
+      vertexCount: 192
+      indexOffset: 276
+      indexCount: 372
+    - vertexOffset: 456
+      vertexCount: 128
+      indexOffset: 648
+      indexCount: 186
+    - vertexOffset: 584
+      vertexCount: 2304
+      indexOffset: 834
+      indexCount: 3456
+  textures: []
+  materials:
+    - 3712176535786462439

@@ -44,7 +44,7 @@
     - (instancetype) initWithTitle: (const std::string_view) title width: (const uint32) width height: (const uint32) height
     {
         self = [super initWithContentRect: NSMakeRect(0.0f, 0.0f, static_cast<float32>(width), static_cast<float32>(height)) styleMask: NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable backing: NSBackingStoreBuffered defer: NO];
-        [self setTitle: @(title.data())];
+        [self setTitle: [NSString stringWithCString: title.data() encoding: NSUTF8StringEncoding]];
         return self;
     }
 
@@ -58,13 +58,6 @@
     - (BOOL) canBecomeMainWindow
     {
         return YES;
-    }
-
-    /* --- DESTRUCTOR --- */
-
-    - (void) dealloc
-    {
-        [super dealloc];
     }
 
 @end
@@ -107,14 +100,10 @@ namespace Sierra
             [windowMenuItem setSubmenu: windowMenu];
             [windowMenu release];
 
+            // The first menu of the main menu is treated as the application menu, so no further setup is needed for it
             [application setMainMenu: menuBar];
             [menuBar release];
-
-            // This is required for macOS versions prior to Snow Leopard
-            SEL setAppleMenuSelector = NSSelectorFromString(@"setAppleMenu:");
-            [application performSelector: setAppleMenuSelector withObject: appMenu];
             [appMenu release];
-
         }
     }
 
@@ -125,7 +114,7 @@ namespace Sierra
     {
         SR_THROW_IF(createInfo.application == nil, InvalidValueError("Cannot create Cocoa context, as specified application must not be nil"));
 
-        // Entry point assigns a temporary delegate, so we free and override that
+        // Entry point assigns a temporary delegate, which is still running its launch callback, so we free and override that
         [[application delegate] release];
         [application setDelegate: [[CocoaApplicationDelegate alloc] initWithContext: this]];
 
@@ -158,6 +147,9 @@ namespace Sierra
     NSWindow* CocoaContext::CreateWindow(const std::string_view title, const uint32 width, const uint32 height) const
     {
         NSWindow* const window = [[CocoaWindow alloc] initWithTitle: title width: width height: height];
+
+        // The window is owned and released by the Sierra window, so AppKit must not release it when it is closed
+        [window setReleasedWhenClosed: NO];
         [window center];
         [window setCollectionBehavior: NSWindowCollectionBehaviorFullScreenPrimary | NSWindowCollectionBehaviorManaged];
         [window setAcceptsMouseMovedEvents: YES];
@@ -177,7 +169,8 @@ namespace Sierra
 
     const CocoaScreen& CocoaContext::GetWindowScreen(const NSWindow* window) const
     {
-        return *std::find_if(screens.begin(), screens.end(), [window](const CocoaScreen& cocoaScreen) -> bool { return cocoaScreen.GetNSScreen() == [window screen]; });
+        const auto iterator = std::find_if(screens.begin(), screens.end(), [window](const CocoaScreen& cocoaScreen) -> bool { return cocoaScreen.GetNSScreen() == [window screen]; });
+        return iterator != screens.end() ? *iterator : screens.front();
     }
 
     /* --- POLLING METHODS --- */

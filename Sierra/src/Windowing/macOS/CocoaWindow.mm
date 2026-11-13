@@ -6,6 +6,7 @@
 #include "CocoaWindow.h"
 
 #include <QuartzCore/QuartzCore.h>
+#include <IOKit/hidsystem/IOLLEvent.h>
 
 @interface CocoaWindowDelegate : NSObject<NSWindowDelegate>
 
@@ -20,7 +21,7 @@
 
     /* --- CONSTRUCTORS --- */
 
-    - (instancetype) initWithWindow: (Sierra::CocoaWindow*) initWindow;
+    - (instancetype) initWithWindow: (Sierra::CocoaWindow*) initWindow
     {
         self = [super init];
         window = initWindow;
@@ -31,8 +32,9 @@
 
     - (BOOL) windowShouldClose: (id) sender
     {
+        // The Sierra window closes itself, so AppKit must not close it as well
         window->WindowShouldClose();
-        return YES;
+        return NO;
     }
 
     - (void) windowDidResize: (NSNotification*) notification
@@ -60,6 +62,11 @@
         window->WindowDidResignKey(notification);
     }
 
+    - (void) windowDidChangeBackingProperties: (NSNotification*) notification
+    {
+        window->WindowDidChangeBackingProperties();
+    }
+
     /* --- DESTRUCTOR --- */
 
     - (void) dealloc
@@ -78,22 +85,26 @@
     /* --- MEMBERS --- */
     {
         Sierra::CocoaWindow* window;
+        id keyUpMonitor;
     }
 
     /* --- CONSTRUCTORS --- */
 
-    - (instancetype) initWithWindow: (Sierra::CocoaWindow*) initWindow;
+    - (instancetype) initWithWindow: (Sierra::CocoaWindow*) initWindow
     {
         self = [super init];
         window = initWindow;
 
         // Modifiers prevent keyUp from being called, so we intercept such events and handle them manually
-        [NSEvent addLocalMonitorForEventsMatchingMask: (NSEventMaskKeyUp) handler: ^(NSEvent* event)
+        keyUpMonitor = [NSEvent addLocalMonitorForEventsMatchingMask: NSEventMaskKeyUp handler: ^NSEvent* (NSEvent* event)
         {
-            [self keyUp: event];
-            event = nil;
+            if ([event window] != [self window])
+            {
+                return event;
+            }
 
-            return event;
+            [self keyUp: event];
+            return nil;
         }];
 
         return self;
@@ -115,50 +126,26 @@
         NSEventModifierFlags keyModifierFlag = 0;
         switch (key)
         {
-            case Sierra::Key::LeftShift:
-            case Sierra::Key::RightShift:
-            {
-                keyModifierFlag = NSEventModifierFlagShift;
-                break;
-            }
-            case Sierra::Key::LeftControl:
-            case Sierra::Key::RightControl:
-            {
-                keyModifierFlag = NSEventModifierFlagControl;
-                break;
-            }
-            case Sierra::Key::LeftOption:
-            case Sierra::Key::RightOption:
-            {
-                keyModifierFlag = NSEventModifierFlagOption;
-                break;
-            }
-            case Sierra::Key::LeftCommand:
-            case Sierra::Key::RightCommand:
-            {
-                keyModifierFlag = NSEventModifierFlagCommand;
-                break;
-            }
-            case Sierra::Key::CapsLock:
-            {
-                keyModifierFlag = NSEventModifierFlagCapsLock;
-                break;
-            }
-            default:
-            {
-                break;
-            }
+            case Sierra::Key::LeftShift:    { keyModifierFlag = NX_DEVICELSHIFTKEYMASK; break; }
+            case Sierra::Key::RightShift:   { keyModifierFlag = NX_DEVICERSHIFTKEYMASK; break; }
+            case Sierra::Key::LeftControl:  { keyModifierFlag = NX_DEVICELCTLKEYMASK; break; }
+            case Sierra::Key::RightControl: { keyModifierFlag = NX_DEVICERCTLKEYMASK; break; }
+            case Sierra::Key::LeftOption:   { keyModifierFlag = NX_DEVICELALTKEYMASK; break; }
+            case Sierra::Key::RightOption:  { keyModifierFlag = NX_DEVICERALTKEYMASK; break; }
+            case Sierra::Key::LeftCommand:  { keyModifierFlag = NX_DEVICELCMDKEYMASK; break; }
+            case Sierra::Key::RightCommand: { keyModifierFlag = NX_DEVICERCMDKEYMASK; break; }
+            case Sierra::Key::CapsLock:     { keyModifierFlag = NSEventModifierFlagCapsLock; break; }
+            case Sierra::Key::Function:     { keyModifierFlag = NSEventModifierFlagFunction; break; }
+            default:                        { break; }
         }
 
+        // Only register changes, as the modifier flags of one key also reflect the state of the other key with the same modifier
         Sierra::CocoaInputManager& inputManager = static_cast<Sierra::CocoaInputManager&>(*window->GetInputManager());
-        if(!inputManager.IsKeyPressed(key) && keyModifierFlag & [event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask)
-        {
-            inputManager.RegisterKeyPress(key);
-        }
-        else
-        {
-            inputManager.RegisterKeyRelease(key);
-        }
+        const bool pressed = ([event modifierFlags] & keyModifierFlag) != 0;
+        const bool wasPressed = inputManager.IsKeyPressed(key) || inputManager.IsKeyHeld(key);
+
+        if (pressed && !wasPressed) inputManager.RegisterKeyPress(key);
+        else if (!pressed && wasPressed) inputManager.RegisterKeyRelease(key);
     }
 
     - (void) keyUp: (NSEvent*) event
@@ -206,7 +193,7 @@
 
     - (void) mouseMoved: (NSEvent*) event
     {
-        const NSPoint point = [event locationInWindow];
+        const NSPoint point = [self convertPointToBacking: [self convertPoint: [event locationInWindow] fromView: nil]];
         static_cast<Sierra::CocoaCursorManager&>(*window->GetCursorManager()).RegisterCursorMove({ static_cast<int32>(point.x), static_cast<int32>(point.y) });
     }
 
@@ -224,6 +211,8 @@
     {
         [self mouseMoved: event];
     }
+
+    /* --- GETTER METHODS --- */
 
     - (BOOL) canBecomeKeyView
     {
@@ -284,6 +273,8 @@
 
     - (void) dealloc
     {
+        [NSEvent removeMonitor: keyUpMonitor];
+
         [self setLayer: nil];
         [self setWantsLayer: NO];
         [super dealloc];
@@ -313,9 +304,9 @@ namespace Sierra
 
     CocoaWindow::CocoaWindow(const CocoaContext& cocoaContext, const WindowCreateInfo& createInfo)
         : Window(createInfo), cocoaContext(&cocoaContext),
-            view([[CocoaWindowView alloc] initWithWindow: this]),
             delegate([[CocoaWindowDelegate alloc] initWithWindow: this]),
             window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
+            view([[CocoaWindowView alloc] initWithWindow: this]),
             cursorManager(window),
             title(createInfo.title)
     {
@@ -327,27 +318,15 @@ namespace Sierra
         [view.layer setFrame: view.bounds];
         [view.layer setContentsScale: window.backingScaleFactor];
 
-        // Maximize window manually, or through Cocoa if resizable
-        if (createInfo.maximize)
-        {
-            if (createInfo.resizable)
-            {
-                [window performZoom: nil];
-            }
-            else
-            {
-                const CocoaScreen& screen = cocoaContext.GetWindowScreen(window);
-                const NSRect newFrame = NSMakeRect(screen.GetOrigin().x, screen.GetOrigin().y, screen.GetWorkAreaWidth(), screen.GetWorkAreaHeight());
-                [window setFrame: newFrame display: YES animate: YES];
-            }
-        }
-
-        // Disable resizing
+        // Disable resizing (done before maximizing, as maximizing depends on whether the window is resizable)
         if (!createInfo.resizable)
         {
             [window setCollectionBehavior: NSWindowCollectionBehaviorFullScreenNone];
             [window setStyleMask: [window styleMask] & ~NSWindowStyleMaskResizable];
         }
+
+        // Maximize window
+        if (createInfo.maximize) Maximize();
 
         // Assign window handlers
         [window setDelegate: reinterpret_cast<CocoaWindowDelegate*>(delegate)];
@@ -366,6 +345,8 @@ namespace Sierra
             contentRect.size = NSMakeSize([view frame].size.width, [view frame].size.height - GetTitleBarHeight());
             [window setFrame: [window frameRectForContentRect: contentRect] display: YES];
         }
+
+        maximized = [window isZoomed];
     }
 
     /* --- POLLING METHODS --- */
@@ -386,10 +367,19 @@ namespace Sierra
 
     void CocoaWindow::Maximize()
     {
-        if (![window isZoomed])
+        if ([window isMiniaturized]) [window deminiaturize: nil];
+        if ([window isZoomed]) return;
+
+        if ([window styleMask] & NSWindowStyleMaskResizable)
         {
-            if ([window isMiniaturized]) [window deminiaturize: nil];
             [window performZoom: nil];
+        }
+        else
+        {
+            // Non-resizable windows cannot be zoomed, so they are expanded to the work area of their screen manually
+            const CocoaScreen& screen = cocoaContext->GetWindowScreen(window);
+            const NSRect newFrame = NSMakeRect(screen.GetWorkAreaOrigin().x, screen.GetWorkAreaOrigin().y, screen.GetWorkAreaWidth(), screen.GetWorkAreaHeight());
+            [window setFrame: newFrame display: YES animate: YES];
         }
     }
 
@@ -419,11 +409,8 @@ namespace Sierra
 
         GetWindowCloseDispatcher().DispatchEvent();
 
-        [view release];
-        [reinterpret_cast<CocoaWindowDelegate*>(delegate) release];
-
-        [window release];
-        [menuBar release];
+        // The window is only hidden here, and is released in the destructor, as AppKit may still reference it while it is closing
+        [window close];
     }
 
     /* --- SETTER METHODS --- */
@@ -431,20 +418,24 @@ namespace Sierra
     void CocoaWindow::SetTitle(const std::string_view newTitle)
     {
         title = newTitle;
-        [window setTitle: @(newTitle.data())];
+        [window setTitle: [NSString stringWithCString: title.data() encoding: NSUTF8StringEncoding]];
     }
 
     void CocoaWindow::SetPosition(const Vector2Int position)
     {
-        [window setFrameOrigin: [window frameRectForContentRect: NSMakeRect(position.x, position.y - GetHeight(), 0, 0)].origin];
+        // Position is the top left corner of the window, while the frame origin is the bottom left corner, so the height is subtracted (as a signed value, which may be negative)
+        const NSPoint origin = [window frameRectForContentRect: NSMakeRect(position.x, static_cast<float32>(position.y) - static_cast<float32>(GetHeight()), 0, 0)].origin;
+        [window setFrameOrigin: origin];
     }
 
     void CocoaWindow::SetSize(const Vector2UInt size)
     {
-        // Set new size and move window up, so that it retains its top Y position
-        NSRect contentRect = [window contentRectForFrameRect: [window frame]];
-        contentRect.size = NSMakeSize(size.x, static_cast<float32>(size.y - GetTitleBarHeight()));
-        [window setFrame: [window frameRectForContentRect: contentRect] display: YES];
+        // The frame grows downwards in Cocoa coordinates, so its origin is moved to keep the top edge of the window in place
+        NSRect frame = [window frame];
+        frame.origin.y += frame.size.height - static_cast<float32>(size.y);
+        frame.size = NSMakeSize(static_cast<float32>(size.x), static_cast<float32>(size.y));
+
+        [window setFrame: frame display: YES];
     }
 
     void CocoaWindow::SetOpacity(float32 opacity)
@@ -472,19 +463,18 @@ namespace Sierra
 
     uint32 CocoaWindow::GetHeight() const noexcept
     {
-        return static_cast<uint32>([window frame].size.height) + GetTitleBarHeight();
+        // Frame already includes the title bar
+        return static_cast<uint32>([window frame].size.height);
     }
 
     uint32 CocoaWindow::GetFramebufferWidth() const noexcept
     {
-        const NSRect contentRect = [window convertRectToBacking: view.frame];
-        return static_cast<uint32>(contentRect.size.width);
+        return static_cast<uint32>([view convertRectToBacking: [view bounds]].size.width);
     }
 
     uint32 CocoaWindow::GetFramebufferHeight() const noexcept
     {
-        const NSRect contentRect = [window convertRectToBacking: view.frame];
-        return static_cast<uint32>(contentRect.size.height);
+        return static_cast<uint32>([view convertRectToBacking: [view bounds]].size.height);
     }
 
     float32 CocoaWindow::GetOpacity() const noexcept
@@ -504,7 +494,7 @@ namespace Sierra
 
     bool CocoaWindow::IsMaximized() const noexcept
     {
-        return maximized;
+        return [window isZoomed];
     }
 
     bool CocoaWindow::IsFocused() const noexcept
@@ -564,6 +554,13 @@ namespace Sierra
             if (closed) return;
             GetWindowFocusDispatcher().DispatchEvent(false);
         }
+
+        void CocoaWindow::WindowDidChangeBackingProperties()
+        {
+            // Window may have moved to a screen with a different scale factor, which changes the size of its framebuffer in pixels
+            [view.layer setContentsScale: [window backingScaleFactor]];
+            GetWindowResizeDispatcher().DispatchEvent(GetWidth(), GetHeight());
+        }
     #endif
 
     /* --- GETTER METHODS --- */
@@ -577,13 +574,12 @@ namespace Sierra
 
     CocoaWindow::~CocoaWindow() noexcept
     {
-        if (closed) return;
+        [window setDelegate: nil];
+        [window close];
 
         [view release];
-        [reinterpret_cast<CocoaWindowDelegate*>(delegate) release];
-
         [window release];
-        [menuBar release];
+        [reinterpret_cast<CocoaWindowDelegate*>(delegate) release];
     }
 
 }

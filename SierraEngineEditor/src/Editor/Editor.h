@@ -34,6 +34,7 @@ namespace SierraEngine
 
         /* --- POLLING METHODS --- */
         void Draw(Sierra::CommandBuffer& commandBuffer);
+        void OpenModelSerializeWizard();
 
         Viewport& CreateViewport(ViewportID& ID, const ViewportCreateInfo& createInfo);
         void ForEachViewport(const ViewportEnumerationPredicate& Predicate);

@@ -41,6 +41,7 @@ namespace SierraEngine
         explicit AssetSerializeWizard(const AssetSerializeWizardCreateInfo& createInfo) noexcept;
 
         /* --- POLLING METHODS --- */
+        void DefaultMetadata(AssetMetadata& metadata, std::string_view name, const EditorPlatformContext& platformContext) const noexcept;
         void DrawMetadataMenu(AssetMetadata& metadata) const noexcept;
 
     };

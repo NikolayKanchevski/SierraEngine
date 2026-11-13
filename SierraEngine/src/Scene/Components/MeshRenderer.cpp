@@ -9,7 +9,7 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    MeshRenderer::MeshRenderer(const Mesh& mesh) noexcept
+    MeshRenderer::MeshRenderer(const MeshView& mesh) noexcept
         : mesh(mesh)
     {
 

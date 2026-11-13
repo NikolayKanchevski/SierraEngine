@@ -1,3 +1,4 @@
 add_subdirectory(Importers)
 add_subdirectory(Loaders)
+add_subdirectory(Optimizers)
 add_subdirectory(Serializers)

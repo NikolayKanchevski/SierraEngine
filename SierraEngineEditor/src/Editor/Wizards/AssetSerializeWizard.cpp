@@ -30,6 +30,13 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
+    void AssetSerializeWizard::DefaultMetadata(AssetMetadata& metadata, const std::string_view name, const EditorPlatformContext& platformContext) const noexcept
+    {
+        metadata.name = name;
+        metadata.author = platformContext.GetUserName();
+        metadata.tags = { };
+    }
+
     void AssetSerializeWizard::DrawMetadataMenu(AssetMetadata& metadata) const noexcept
     {
         if (ImGui::TreeNodeEx("Metadata", MENU_TREE_FLAGS))

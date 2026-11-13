@@ -6,7 +6,7 @@
 
 #include "../AssetImporter.h"
 
-#include "Mesh.h"
+#include "../../Rendering/MeshView.h"
 #include "ModelSerializer.h"
 #include "../Textures/TextureImporter.h"
 #include "../Materials/MaterialImporter.h"

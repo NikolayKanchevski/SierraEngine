@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Vertex.h"
+#include "../../Rendering/Vertex.h"
 #include "../Textures/ImageLoader.h"
 #include "../Materials/MaterialSerializer.h"
 

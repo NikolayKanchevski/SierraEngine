@@ -21,15 +21,17 @@ namespace SierraEngine
         template<NumericType Numeric>
         void SerializeNumeric(ryml::NodeRef node, const Numeric value)
         {
-            node.set_val_style(ryml::VAL_PLAIN);
             node.save(SR_FORMAT(!FloatingPointType<Numeric> ? "{0}" : "{0:.2f}", value));
+            node.set_val_style(ryml::VAL_PLAIN);
         }
 
         template<NumericType Numeric>
         [[nodiscard]] std::optional<Numeric> ImportNumeric(const ryml::ConstNodeRef node) noexcept
         {
             if (node.invalid())
+            {
                 return std::nullopt;
+            }
 
             Numeric value = { };
             node.load(&value);
@@ -41,15 +43,16 @@ namespace SierraEngine
         void SerializeVector(ryml::NodeRef node, const Vector value)
         {
             node.set_seq();
-            node.set_container_style(ryml::FLOW_ML1);
+            node.set_container_style(ryml::FLOW_SL | ryml::FLOW_SPC);
 
             for (size i = 0; i < Vector::length(); i++)
             {
                 ryml::NodeRef child = node.append_child();
-                child.set_val_style(ryml::VAL_PLAIN);
 
                 const std::string_view spacing = i == 0 ? "" : " ";
                 child.save(SR_FORMAT(!FloatingPointType<typename Vector::value_type> ? "{0}{1}" : "{0}{1:.2f}", spacing, value[i]));
+
+                child.set_val_style(ryml::VAL_PLAIN);
             }
         }
 
@@ -57,7 +60,9 @@ namespace SierraEngine
         [[nodiscard]] std::optional<Vector> ImportVector(const ryml::ConstNodeRef node) noexcept
         {
             if (node.invalid())
+            {
                 return std::nullopt;
+            }
 
             Vector value = { };
             for (size i = 0; i < Vector::length(); i++)
@@ -87,17 +92,21 @@ namespace SierraEngine
         }
 
         template<typename T>
-        void SerializeContainer(ryml::NodeRef node, const std::span<const T> container, void(*Serializer)(ryml::NodeRef, T)) // TODO: CUSTOM SERIALIZATION + IMPORT
+        void SerializeContainer(ryml::NodeRef node, const std::span<const T> container, void(*Serializer)(ryml::NodeRef, T), const bool singleLine = false)
         {
             node.set_seq();
-            node.set_container_style(ryml::FLOW_ML1);
+
+            if (!container.empty() || singleLine)
+            {
+                node.set_container_style(ryml::FLOW_SL | ryml::FLOW_SPC);
+            }
 
             for (const T& item : container)
             {
                 ryml::NodeRef childNode = node.append_child();
-                childNode.set_val_style(ryml::VAL_PLAIN);
 
                 Serializer(childNode, item);
+                childNode.set_val_style(ryml::VAL_PLAIN);
             }
         }
 
@@ -105,7 +114,9 @@ namespace SierraEngine
         [[nodiscard]] std::optional<std::vector<T>> ImportContainer(const ryml::ConstNodeRef node, std::optional<T>(*Importer)(ryml::ConstNodeRef) noexcept)
         {
             if (node.invalid())
+            {
                 return std::nullopt;
+            }
 
             std::vector<T> container = { };
             container.reserve(node.num_children());
