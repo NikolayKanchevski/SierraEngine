@@ -100,8 +100,6 @@ namespace SierraEngine
             commandBuffers[i] = queue->CreateCommandBuffer({ .name = SR_FORMAT("General Command Buffer [{0}]", i) });
         }
 
-        editor.OpenModelSerializeWizard();
-
         queue->WaitForCommandBuffer(*commandBuffer);
     }
 
