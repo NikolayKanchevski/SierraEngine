@@ -139,11 +139,53 @@ namespace Sierra
         LeftCommand = LeftSystem,
         RightCommand = RightSystem,
         LeftOption = LeftAlt,
-        RightOption = RightAlt
+        RightOption = RightAlt,
+        // Platform Distinction
+        #if SR_PLATFORM_APPLE
+            LeftPlatformModifier = LeftCommand,
+            RightPlatformModifier = RightCommand,
+        #else
+            LeftPlatformModifier = LeftControl,
+            RightPlatformModifier = RightControl,
+        #endif
+        // Shorthands
+        Shift = LeftShift,
+        Control = LeftControl,
+        Alt = LeftAlt,
+        System = LeftSystem,
+        Windows = LeftWindows,
+        Command = LeftCommand,
+        Option = LeftOption,
+        PlatformModifier = LeftPlatformModifier
     };
 
     /* --- CONVERSIONS --- */
-    [[nodiscard]] SIERRA_API std::string_view GetKeyName(Key key) noexcept;
-    [[nodiscard]] SIERRA_API char GetKeyCharacter(Key key) noexcept;
+    [[nodiscard]] SIERRA_API Key KeyToAlternativeKey(Key key) noexcept;
+    [[nodiscard]] SIERRA_API char KeyToCharacter(Key key) noexcept;
+    [[nodiscard]] SIERRA_API std::string_view KeyToString(Key key) noexcept;
+    [[nodiscard]] SIERRA_API std::string KeyCombinationToString(std::span<const Key> keys) noexcept;
+
+    template<size Size>
+    class KeyCombination
+    {
+    public:
+        /* --- CONSTRUCTORS --- */
+        template<typename... Args> requires (sizeof...(Args) + 1 == Size && (std::same_as<Args, Key> && ...))
+        consteval KeyCombination(const Key first, const Args... rest) noexcept
+            : keys { first, rest... }
+        {
+
+        }
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] consteval operator std::span<const Key>() const noexcept { return keys; }
+
+    private:
+        std::array<Key, Size> keys = { };
+
+    };
+
+    template<typename... Args>
+    KeyCombination(Key, Args...) -> KeyCombination<sizeof...(Args) + 1>;
 
 }

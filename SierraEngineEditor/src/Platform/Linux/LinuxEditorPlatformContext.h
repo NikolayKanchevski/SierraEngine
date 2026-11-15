@@ -4,6 +4,10 @@
 
 #pragma once
 
+#if !SR_PLATFORM_Linux
+    #error "Including the LinuxEditorPlatformContext.h file is only allowed in Linux builds!"
+#endif
+
 #include <QApplication>
 
 #include "../EditorPlatformContext.h"

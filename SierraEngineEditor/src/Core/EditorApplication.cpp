@@ -24,7 +24,7 @@ namespace SierraEngine
         constexpr std::string_view APPLICATION_NAME = "Sierra Editor";
         const Sierra::Version APPLICATION_VERSION = Sierra::Version({ 1, 0, 0 });
 
-        constexpr uint32 VIEWPORT_COUNT = 1;
+        constexpr uint32 VIEWPORT_COUNT = 4;
 
         [[nodiscard]] std::unique_ptr<EditorPlatformContext> CreatePlatformContext() noexcept
         {
@@ -33,7 +33,7 @@ namespace SierraEngine
             #elif SR_PLATFORM_LINUX
                 return std::make_unique<LinuxEditorPlatformContext>();
             #elif SR_PLATFORM_macOS
-
+                return std::make_unique<macOSEditorPlatformContext>();
             #elif SR_PLATFORM_iOS
 
             #elif SR_PLATFORM_ANDROID
@@ -48,21 +48,21 @@ namespace SierraEngine
         : Application({ .name = APPLICATION_NAME, .version = APPLICATION_VERSION, .settings = createInfo.settings }),
             platformContext(CreatePlatformContext()),
             frameLimiter({ .maxFrameRate = 60 * SR_PLATFORM_MOBILE }),
-            project({ .fileManager = GetFileManager(), .projectDirectoryPath = createInfo.projectDirectoryPath }),
+            project({ .directoryPath = createInfo.projectDirectoryPath }),
             renderingContext({ .renderingInstance = GetRenderingInstance() }),
             queue(renderingContext.GetDevice().CreateQueue({ .name = "General Queue" })),
             arenaAllocator({ .renderingContext = renderingContext }),
-            assetManager({ .renderingContext = renderingContext }),
-            editor({ .platformContext = *platformContext, .renderingContext = renderingContext, .fileManager = GetFileManager() })
+            assetManager({ .renderingContext = renderingContext })
     {
         assetManager.LoadProjectAssets(GetFileManager(), project);
+
         const std::unique_ptr<Sierra::CommandBuffer> commandBuffer = queue->CreateCommandBuffer({ .name = "Staging Command Buffer" });
 
         commandBuffer->Begin();
         renderingContext.Bind(*commandBuffer);
 
-        // std::optional
         surface.emplace(EditorSurfaceCreateInfo { .windowManager = GetWindowManager(), .renderingContext = renderingContext, .commandBuffer = *commandBuffer });
+        editor.emplace(EditorCreateInfo{ .platformContext = *platformContext, .fileManager = GetFileManager(), .renderingContext = renderingContext, .project = project, .window = surface->GetWindow() });
         assetManager.Update(*commandBuffer);
 
         commandBuffer->End();
@@ -72,13 +72,13 @@ namespace SierraEngine
         for (size i = 0; i < VIEWPORT_COUNT; i++)
         {
             ViewportID viewportID;
-            Viewport& viewport = editor.CreateViewport(viewportID, { .renderingContext = renderingContext, .renderer = sceneRenderer });
+            Viewport& viewport = editor->CreateViewport(viewportID, { .renderingContext = renderingContext, .renderer = sceneRenderer });
 
             viewport.GetTransform().SetPosition({ 0.0f, 4.0f, -10.0f * static_cast<float32>(viewportID.GetValue() + 1) / 1.5f });
             viewport.GetTransform().SetRotation({ 0.0f, -20.0f * static_cast<float32>(viewportID.GetValue() + 1) / 1.5f, 0.0f });
         }
 
-        Scene& scene = editor.GetScene();
+        Scene& scene = editor->GetScene();
         const EntityID Entity1 = scene.CreateEntity("Entity1");
         const EntityID Entity2 = scene.CreateEntity("Entity2");
 
@@ -121,7 +121,7 @@ namespace SierraEngine
         assetManager.Update(commandBuffer);
 
         arenaAllocator.Bind(commandBuffer);
-        surface->Render(commandBuffer, editor);
+        surface->Render(commandBuffer, *editor);
 
         commandBuffer.End();
         queue->SubmitCommandBuffer(commandBuffer);

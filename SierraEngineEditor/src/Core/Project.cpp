@@ -10,8 +10,9 @@ namespace SierraEngine
     /* --- CONSTRUCTORS --- */
 
     Project::Project(const ProjectCreateInfo& createInfo)
-        : directoryPath(createInfo.projectDirectoryPath)
+        : directoryPath(createInfo.directoryPath)
     {
+
     }
 
 }

@@ -10,7 +10,10 @@ namespace SierraEngine
 {
 
     /* --- TYPE DEFINITIONS --- */
-    using AssetSignature = std::array<char, 4>;
+    using AssetFormatSignature = std::array<char, 2>;
+    using AssetTypeSignature   = std::array<char, 2>;
+
+    using AssetSignature = std::array<char, 2 + 2>;
     using AssetVersion = Sierra::Version;
 
     struct AssetHeader

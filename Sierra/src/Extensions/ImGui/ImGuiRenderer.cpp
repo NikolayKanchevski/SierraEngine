@@ -327,7 +327,7 @@ namespace Sierra
                 const Key key = static_cast<Key>(keyCode);
                 if (inputManager->IsKeyPressed(key))
                 {
-                    const char keyCharacter = GetKeyCharacter(key);
+                    const char keyCharacter = KeyToCharacter(key);
                     if (keyCharacter == '\0') continue;
 
                     io.AddInputCharacter(!shiftHeld ? keyCharacter : std::toupper(keyCharacter));
@@ -346,7 +346,7 @@ namespace Sierra
         if (cursorManager != nullptr)
         {
             // Update position
-            if (cursorManager->IsCursorVisible()) io.AddMousePosEvent(static_cast<float32>(cursorManager->GetCursorPosition().x), height - static_cast<float32>(cursorManager->GetCursorPosition().y));
+            if (cursorManager->IsCursorVisible()) io.AddMousePosEvent(static_cast<float32>(cursorManager->GetCursorPosition().x / scaling), height - static_cast<float32>(cursorManager->GetCursorPosition().y) / scaling);
             else io.AddMousePosEvent(-FLT_MIN, -FLT_MAX); // ImGui uses these two specific values to signal, that cursor is not present
 
             // Update delta
@@ -356,7 +356,7 @@ namespace Sierra
         {
             if (!touchManager->GetTouches().empty())
             {
-                io.MousePos = ImVec2(touchManager->GetTouches()[0].GetPosition().x, height - touchManager->GetTouches()[0].GetPosition().y);
+                io.MousePos = ImVec2(touchManager->GetTouches()[0].GetPosition().x / scaling, height - touchManager->GetTouches()[0].GetPosition().y / scaling);
                 if (touchManager->GetTouches()[0].GetType() == TouchType::Press) io.MouseDown[ImGuiMouseButton_Left] = true;
                 else io.MouseReleased[ImGuiMouseButton_Left] = true;
             }

@@ -4,8 +4,6 @@
 
 #include "FileOutputWizard.h"
 
-#include "../Widgets/ImGuiWidgets.h"
-
 namespace SierraEngine
 {
 
@@ -38,12 +36,6 @@ namespace SierraEngine
     {
         const ImGuiStyle& style = ImGui::GetStyle();
         const float32 buttonHeight = ImGui::GetFrameHeight() * 1.35f;
-
-        const float32 stickyBottomIndent = style.FramePadding.y + buttonHeight + style.ItemSpacing.y + 2 * (2 * style.FramePadding.y + ImGui::GetFrameHeight() + style.CellPadding.y);
-        if (const float32 availableVerticalSpace = ImGui::GetContentRegionAvail().y; stickyBottomIndent < availableVerticalSpace)
-        {
-            ImGuiWidgets::VerticalIndent(availableVerticalSpace - stickyBottomIndent);
-        }
 
         if (ImGuiWidgets::BeginPropertyTable(PROPERTY_TABLE_INFO))
         {

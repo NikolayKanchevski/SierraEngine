@@ -47,7 +47,7 @@ namespace Sierra
         [[nodiscard]] const NSApplication* GetNSApplication() const noexcept { return application; }
 
         [[nodiscard]] CocoaScreen& GetPrimaryScreen() noexcept { return screens[0]; }
-        [[nodiscard]] std::span<CocoaScreen> GetScreens() noexcept { return screens; }
+        [[nodiscard]] std::span<const CocoaScreen> GetScreens() const noexcept { return screens; }
 
         [[nodiscard]] CocoaScreen& GetWindowScreen(const NSWindow* window);
         [[nodiscard]] const CocoaScreen& GetWindowScreen(const NSWindow* window) const;

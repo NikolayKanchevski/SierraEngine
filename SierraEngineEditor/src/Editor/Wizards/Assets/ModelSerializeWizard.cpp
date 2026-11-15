@@ -74,15 +74,10 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void ModelSerializeWizard::Draw(bool& open, Sierra::CommandBuffer&)
+    bool ModelSerializeWizard::Draw(Sierra::CommandBuffer&)
     {
-        if (ImGui::IsKeyPressed(ImGuiKey_Escape))
-        {
-            open = false;
-            return;
-        }
-
-        if (BeginWizard("Model Serialize Wizard", open))
+        bool open = BeginWizard("Model Serialize Wizard");
+        if (open)
         {
             DrawFileInputHeader(platformContext);
             DrawMetadataMenu(metadata);
@@ -103,6 +98,8 @@ namespace SierraEngine
 
             EndWizard();
         }
+
+        return open;
     }
 
     void ModelSerializeWizard::SetInputFilePath(const std::filesystem::path& inputFilePath) noexcept
@@ -173,7 +170,7 @@ namespace SierraEngine
             return false;
         }
 
-        WriteAssetFiles(fileManager, outputDataFilePath, ASSET_OUTPUT_FILE_BLOB_EXTENSION, serializedModel->data, serializedModel->blob);
+        WriteAssetFiles(fileManager, outputDataFilePath, BLOB_OUTPUT_FILE_EXTENSION, serializedModel->data, serializedModel->blob);
 
         const std::filesystem::path outputDirectoryPath = outputDataFilePath.parent_path() / GetInputFilePath().stem();
         for (const std::optional<SerializedModelTextureDependency>& texture : dependencies.textures)
@@ -181,7 +178,7 @@ namespace SierraEngine
             if (!texture.has_value()) continue;
 
             const std::filesystem::path filePath = outputDirectoryPath / "Textures" / SR_FORMAT("{0}{1}", texture->name, TextureSerializeWizard::OUTPUT_FILE_EXTENSION);
-            WriteAssetFiles(fileManager, filePath, ASSET_OUTPUT_FILE_BLOB_EXTENSION, texture->texture.data, texture->texture.blob);
+            WriteAssetFiles(fileManager, filePath, BLOB_OUTPUT_FILE_EXTENSION, texture->texture.data, texture->texture.blob);
         }
 
         for (const std::optional<SerializedModelMaterialDependency>& material : dependencies.materials)
@@ -189,7 +186,7 @@ namespace SierraEngine
             if (!material.has_value()) continue;
 
             const std::filesystem::path filePath = outputDirectoryPath / "Materials" / SR_FORMAT("{0}{1}", material->name, MaterialSerializeWizard::OUTPUT_FILE_EXTENSION);
-            WriteAssetFiles(fileManager, filePath, ASSET_OUTPUT_FILE_BLOB_EXTENSION, material->material.data, material->material.blob);
+            WriteAssetFiles(fileManager, filePath, BLOB_OUTPUT_FILE_EXTENSION, material->material.data, material->material.blob);
         }
 
         return true;

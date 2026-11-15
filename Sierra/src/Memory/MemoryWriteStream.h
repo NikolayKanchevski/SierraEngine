@@ -16,7 +16,7 @@ namespace Sierra
         explicit MemoryWriteStream(size capacity = 0);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::vector<uint8> Read(size memorySize) override;
+        void Read(std::span<uint8> outBuffer) override;
         void Write(const void* memory, size memorySize) override;
 
         std::vector<uint8> Release() noexcept;

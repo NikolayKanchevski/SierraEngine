@@ -29,7 +29,7 @@ namespace SierraEngine
             style.FramePadding                = ImVec2(7.50f, 3.50f);
             style.FrameRounding               = 3.0f;
             style.FrameBorderSize             = 1.0f;
-            style.ItemSpacing                 = ImVec2(6.00f, 6.00f);
+            style.ItemSpacing                 = ImVec2(6.00f, 8.00f);
             style.ItemInnerSpacing            = ImVec2(6.00f, 6.00f);
             style.CellPadding                 = ImVec2(6.00f, 3.00f);
             style.TouchExtraPadding           = ImVec2(0.00f, 0.00f);

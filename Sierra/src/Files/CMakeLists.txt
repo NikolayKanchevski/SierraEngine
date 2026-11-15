@@ -5,6 +5,8 @@ target_sources(Sierra PRIVATE
     FileManager.h
     FileStream.cpp
     FileStream.h
+    Path.cpp
+    Path.h
     PathErrors.cpp
     PathErrors.h
 )

@@ -7,7 +7,99 @@
 namespace Sierra
 {
 
-    std::string_view GetKeyName(const Key key) noexcept
+    Key KeyToAlternativeKey(const Key key) noexcept
+    {
+        switch (key)
+        {
+            case Key::LeftShift:    return Key::RightShift;
+            case Key::RightShift:   return Key::LeftShift;
+            case Key::LeftControl:  return Key::RightControl;
+            case Key::RightControl: return Key::LeftControl;
+            case Key::LeftAlt:      return Key::RightAlt;
+            case Key::RightAlt:     return Key::LeftAlt;
+            case Key::LeftSystem:   return Key::RightSystem;
+            case Key::RightSystem:  return Key::LeftSystem;
+            default:                break;
+        }
+
+        return Key::Unknown;
+    }
+
+    char KeyToCharacter(const Key key) noexcept
+    {
+        switch (key)
+        {
+            case Key::A:                        return 'a';
+            case Key::B:                        return 'b';
+            case Key::C:                        return 'c';
+            case Key::D:                        return 'd';
+            case Key::E:                        return 'e';
+            case Key::F:                        return 'f';
+            case Key::G:                        return 'g';
+            case Key::H:                        return 'h';
+            case Key::I:                        return 'i';
+            case Key::J:                        return 'j';
+            case Key::K:                        return 'k';
+            case Key::L:                        return 'l';
+            case Key::M:                        return 'm';
+            case Key::N:                        return 'n';
+            case Key::O:                        return 'o';
+            case Key::P:                        return 'p';
+            case Key::Q:                        return 'q';
+            case Key::R:                        return 'r';
+            case Key::S:                        return 's';
+            case Key::T:                        return 't';
+            case Key::U:                        return 'u';
+            case Key::V:                        return 'v';
+            case Key::W:                        return 'w';
+            case Key::X:                        return 'x';
+            case Key::Y:                        return 'y';
+            case Key::Z:                        return 'z';
+            case Key::Number0:
+            case Key::KeypadNumber0:            return '0';
+            case Key::Number1:
+            case Key::KeypadNumber1:            return '1';
+            case Key::Number2:
+            case Key::KeypadNumber2:            return '2';
+            case Key::Number3:
+            case Key::KeypadNumber3:            return '3';
+            case Key::Number4:
+            case Key::KeypadNumber4:            return '4';
+            case Key::Number5:
+            case Key::KeypadNumber5:            return '5';
+            case Key::Number6:
+            case Key::KeypadNumber6:            return '6';
+            case Key::Number7:
+            case Key::KeypadNumber7:            return '7';
+            case Key::Number8:
+            case Key::KeypadNumber8:            return '8';
+            case Key::Number9:
+            case Key::KeypadNumber9:            return '9';
+            case Key::Space:                    return ' ';
+            case Key::Minus:
+            case Key::KeypadMinus:              return '-';
+            case Key::Equal:
+            case Key::KeypadEqual:              return '=';
+            case Key::Comma:                    return ',';
+            case Key::Period:
+            case Key::KeypadPeriod:             return '.';
+            case Key::Apostrophe:               return '\'';
+            case Key::Semicolon:                return ';';
+            case Key::Slash:
+            case Key::KeypadSlash:              return '/';
+            case Key::Backslash:                return '\\';
+            case Key::LeftBracket:              return '(';
+            case Key::RightBracket:             return ')';
+            case Key::Grave:                    return '`';
+            case Key::KeypadAsterisk:           return '*';
+            case Key::KeypadPlus:               return '+';
+            default:                            break;
+        }
+
+        return '\0';
+    }
+
+    std::string_view KeyToString(const Key key) noexcept
     {
         switch (key)
         {
@@ -51,7 +143,7 @@ namespace Sierra
             case Key::Space:                    return "Space";
             case Key::Escape:                   return "Escape";
             case Key::Minus:                    return "Minus";
-            case Key::Equal:                   return "Equals";
+            case Key::Equal:                    return "Equals";
             case Key::Comma:                    return "Comma";
             case Key::Period:                   return "Period";
             case Key::Apostrophe:               return "Apostrophe";
@@ -117,33 +209,33 @@ namespace Sierra
             case Key::KeypadNumber7:            return "Keypad Number 7";
             case Key::KeypadNumber8:            return "Keypad Number 8";
             case Key::KeypadNumber9:            return "Keypad Number 9";
-            case Key::KeypadPeriod:            return "Keypad Decimal";
-            case Key::KeypadSlash:             return "Keypad Divide";
+            case Key::KeypadPeriod:             return "Keypad Decimal";
+            case Key::KeypadSlash:              return "Keypad Divide";
             case Key::KeypadAsterisk:           return "Keypad Multiply";
-            case Key::KeypadMinus:           return "Keypad Subtract";
-            case Key::KeypadPlus:                return "Keypad Add";
+            case Key::KeypadMinus:              return "Keypad Subtract";
+            case Key::KeypadPlus:               return "Keypad Add";
             case Key::KeypadEnter:              return "Keypad Enter";
             case Key::KeypadEqual:             return "Keypad Equals";
-            case Key::LeftShift:                return "Left Shift";
+            case Key::LeftShift:                return "Shift";
             case Key::RightShift:               return "Right Shift";
-            case Key::LeftControl:              return "Left Control";
+            case Key::LeftControl:              return "Control";
             case Key::RightControl:             return "Right Control";
             case Key::Function:                 return "Function";
             case Key::Menu:                     return "Menu";
             #if SR_PLATFORM_WINDOWS
-                case Key::LeftWindows:          return "Left Windows";
+                case Key::LeftWindows:          return "Windows";
                 case Key::RightWindows:         return "Right Windows";
-                case Key::LeftAlt:              return "Left Alt";
+                case Key::LeftAlt:              return "Alt";
                 case Key::RightAlt:             return "Right Alt";
             #elif SR_PLATFORM_macOS
-                case Key::LeftCommand:          return "Left Command";
+                case Key::LeftCommand:          return "Command";
                 case Key::RightCommand:         return "Right Command";
-                case Key::LeftOption:           return "Left Option";
+                case Key::LeftOption:           return "Option";
                 case Key::RightOption:          return "Right Option";
             #else
-                case Key::LeftSystem:           return "Left System";
+                case Key::LeftSystem:           return "System";
                 case Key::RightSystem:          return "Right System";
-                case Key::LeftAlt:              return "Left Alt";
+                case Key::LeftAlt:              return "Alt";
                 case Key::RightAlt:             return "Right Alt";
             #endif
         }
@@ -151,78 +243,20 @@ namespace Sierra
         return "Unknown";
     }
 
-    char GetKeyCharacter(const Key key) noexcept
+    std::string KeyCombinationToString(const std::span<const Key> keys) noexcept
     {
-        switch (key)
+        constexpr std::string_view SEPARATOR = " + ";
+
+        std::string string = { };
+        for (const Key key : keys)
         {
-            case Key::A:                        return 'a';
-            case Key::B:                        return 'b';
-            case Key::C:                        return 'c';
-            case Key::D:                        return 'd';
-            case Key::E:                        return 'e';
-            case Key::F:                        return 'f';
-            case Key::G:                        return 'g';
-            case Key::H:                        return 'h';
-            case Key::I:                        return 'i';
-            case Key::J:                        return 'j';
-            case Key::K:                        return 'k';
-            case Key::L:                        return 'l';
-            case Key::M:                        return 'm';
-            case Key::N:                        return 'n';
-            case Key::O:                        return 'o';
-            case Key::P:                        return 'p';
-            case Key::Q:                        return 'q';
-            case Key::R:                        return 'r';
-            case Key::S:                        return 's';
-            case Key::T:                        return 't';
-            case Key::U:                        return 'u';
-            case Key::V:                        return 'v';
-            case Key::W:                        return 'w';
-            case Key::X:                        return 'x';
-            case Key::Y:                        return 'y';
-            case Key::Z:                        return 'z';
-            case Key::Number0:
-            case Key::KeypadNumber0:            return '0';
-            case Key::Number1:
-            case Key::KeypadNumber1:            return '1';
-            case Key::Number2:
-            case Key::KeypadNumber2:            return '2';
-            case Key::Number3:
-            case Key::KeypadNumber3:            return '3';
-            case Key::Number4:
-            case Key::KeypadNumber4:            return '4';
-            case Key::Number5:
-            case Key::KeypadNumber5:            return '5';
-            case Key::Number6:
-            case Key::KeypadNumber6:            return '6';
-            case Key::Number7:
-            case Key::KeypadNumber7:            return '7';
-            case Key::Number8:
-            case Key::KeypadNumber8:            return '8';
-            case Key::Number9:
-            case Key::KeypadNumber9:            return '9';
-            case Key::Space:                    return ' ';
-            case Key::Minus:
-            case Key::KeypadMinus:           return '-';
-            case Key::Equal:
-            case Key::KeypadEqual:             return '=';
-            case Key::Comma:                    return ',';
-            case Key::Period:
-            case Key::KeypadPeriod:            return '.';
-            case Key::Apostrophe:               return '\'';
-            case Key::Semicolon:                return ';';
-            case Key::Slash:
-            case Key::KeypadSlash:             return '/';
-            case Key::Backslash:                return '\\';
-            case Key::LeftBracket:              return '(';
-            case Key::RightBracket:             return ')';
-            case Key::Grave:                    return '`';
-            case Key::KeypadAsterisk:           return '*';
-            case Key::KeypadPlus:                return '+';
-            default:                            break;
+            string += KeyToString(key);
+            string += SEPARATOR;
         }
 
-        return '\0';
+        if (!string.empty()) string.resize(string.size() - SEPARATOR.size());
+        return string;
     }
+
 
 }

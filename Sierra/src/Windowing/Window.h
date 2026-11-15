@@ -22,7 +22,13 @@ namespace Sierra
 
         bool resizable = false;
         bool maximize = false;
-        bool transparent = false;
+        float32 opacity = 1.0f;
+    };
+
+    enum class WindowFocusRequestType : bool
+    {
+        Informational,
+        Critical
     };
 
     /* --- CONCEPTS --- */
@@ -40,8 +46,10 @@ namespace Sierra
         virtual void Update() = 0;
         virtual void Minimize() = 0;
         virtual void Maximize() = 0;
+        virtual void Restore() = 0;
         virtual void Show() = 0;
         virtual void Hide() = 0;
+        virtual void RequestFocus(WindowFocusRequestType requestType) = 0;
         virtual void Focus() = 0;
         virtual void Close() = 0;
 
@@ -49,27 +57,26 @@ namespace Sierra
         virtual void SetTitle(std::string_view title) = 0;
         virtual void SetPosition(Vector2Int position) = 0;
         virtual void SetSize(Vector2UInt size) = 0;
+        virtual void SetSizeLimits(Vector2UInt minimumSize, Vector2UInt maximumSize) = 0;
+        virtual void SetAspectRatio(uint32 numerator, uint32 denominator) = 0;
         virtual void SetOpacity(float32 opacity) = 0;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual std::string GetTitle() const noexcept = 0;
-        [[nodiscard]] virtual float32 GetOpacity() const noexcept = 0;
         [[nodiscard]] virtual Vector2Int GetPosition() const noexcept = 0;
+        [[nodiscard]] virtual float32 GetOpacity() const noexcept = 0;
+        [[nodiscard]] virtual float32 GetScaling() const noexcept = 0;
 
-        [[nodiscard]] virtual uint32 GetWidth() const noexcept = 0;
-        [[nodiscard]] virtual uint32 GetHeight() const noexcept = 0;
-        [[nodiscard]] Vector2UInt GetSize() const noexcept { return { GetWidth(), GetHeight() }; }
+        [[nodiscard]] uint32 GetWidth() const noexcept;
+        [[nodiscard]] uint32 GetHeight() const noexcept;
+        [[nodiscard]] virtual Vector2UInt GetSize() const noexcept = 0;
 
-        [[nodiscard]] virtual uint32 GetFramebufferWidth() const noexcept = 0;
-        [[nodiscard]] virtual uint32 GetFramebufferHeight() const noexcept = 0;
-        [[nodiscard]] Vector2UInt GetFramebufferSize() const noexcept { return { GetFramebufferWidth(), GetFramebufferHeight() }; }
+        [[nodiscard]] uint32 GetFramebufferWidth() const noexcept;
+        [[nodiscard]] uint32 GetFramebufferHeight() const noexcept;
+        [[nodiscard]] virtual Vector2UInt GetFramebufferSize() const noexcept = 0;
 
         [[nodiscard]] virtual bool IsVisible() const noexcept = 0;
-        [[nodiscard]] bool IsHidden() const noexcept { return !IsVisible(); }
-
         [[nodiscard]] virtual bool IsTransparent() const noexcept = 0;
-        [[nodiscard]] bool IsOpaque() const noexcept { return !IsTransparent(); }
-
         [[nodiscard]] virtual bool IsMinimized() const noexcept = 0;
         [[nodiscard]] virtual bool IsMaximized() const noexcept = 0;
         [[nodiscard]] virtual bool IsFocused() const noexcept = 0;

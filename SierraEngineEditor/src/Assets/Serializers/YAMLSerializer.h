@@ -12,6 +12,12 @@ namespace SierraEngine
     class YAMLSerializer : public virtual AssetSerializer
     {
     public:
+        /* --- CONSTANTS --- */
+        constexpr static AssetFormatSignature FORMAT_SIGNATURE = { 'Y', 'A' };
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] AssetFormatSignature GetFormatSignature() const noexcept override { return FORMAT_SIGNATURE; }
+
         /* --- COPY SEMANTICS --- */
         YAMLSerializer(const YAMLSerializer&) = delete;
         YAMLSerializer& operator=(const YAMLSerializer&) = delete;

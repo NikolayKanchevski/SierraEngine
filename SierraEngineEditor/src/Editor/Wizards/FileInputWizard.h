@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../EditorWizard.h"
+#include "../EditorModal.h"
 #include "../../Platform/EditorPlatformContext.h"
 
 namespace SierraEngine
@@ -19,7 +19,7 @@ namespace SierraEngine
         const std::filesystem::path* outputDirectoryPath = nullptr;
     };
 
-    class FileInputWizard : public virtual EditorWizard
+    class FileInputWizard : public virtual EditorModal
     {
     public:
         /* --- COPY SEMANTICS --- */

@@ -24,7 +24,7 @@ namespace SierraEngine
         explicit MaterialSerializeWizard(const MaterialSerializeWizardCreateInfo& createInfo) noexcept;
 
         /* --- POLLING METHODS --- */
-        void Draw(bool& open, Sierra::CommandBuffer& commandBuffer) override;
+        [[nodiscard]] bool Draw(Sierra::CommandBuffer& commandBuffer) override;
 
         /* --- CONSTANTS --- */
         constexpr static std::string_view OUTPUT_FILE_EXTENSION = ".material";

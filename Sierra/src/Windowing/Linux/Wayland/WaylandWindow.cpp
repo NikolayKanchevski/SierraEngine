@@ -200,7 +200,7 @@ namespace Sierra
 
     WaylandWindow::WaylandWindow(WaylandContext& waylandContext, const WindowCreateInfo& createInfo)
         : Window(createInfo), waylandContext(waylandContext), cursorManager(waylandContext, *this),
-            title(createInfo.title), resizable(createInfo.resizable), transparent(createInfo.transparent),
+            title(createInfo.title), resizable(createInfo.resizable),
             size(createInfo.width, createInfo.height), framebufferSize(size), floatingSize(size), maximized(createInfo.maximize)
     {
         surface = wl_compositor_create_surface(waylandContext.GetCompositor());
@@ -281,7 +281,7 @@ namespace Sierra
         static_cast<void>(waylandContext.Flush());
     }
 
-    void WaylandWindow::RequestAttention()
+    void WaylandWindow::RequestFocus(const WindowFocusRequestType)
     {
         RequestActivation(false);
     }
@@ -368,34 +368,24 @@ namespace Sierra
         return title;
     }
 
+    Vector2Int WaylandWindow::GetPosition() const noexcept
+    {
+        return { 0, 0 }; // TODO: Figure out a way
+    }
+
     float32 WaylandWindow::GetOpacity() const noexcept
     {
         return 1.0f;
     }
 
-    Vector2Int WaylandWindow::GetPosition() const noexcept
+    uint32 WaylandWindow::GetSize() const noexcept
     {
-        return { 0, 0 };
+        return size;
     }
 
-    uint32 WaylandWindow::GetWidth() const noexcept
+    uint32 WaylandWindow::GetFramebufferSize() const noexcept
     {
-        return size.x;
-    }
-
-    uint32 WaylandWindow::GetHeight() const noexcept
-    {
-        return size.y;
-    }
-
-    uint32 WaylandWindow::GetFramebufferWidth() const noexcept
-    {
-        return framebufferSize.x;
-    }
-
-    uint32 WaylandWindow::GetFramebufferHeight() const noexcept
-    {
-        return framebufferSize.y;
+        return framebufferSize;
     }
 
     float32 WaylandWindow::GetScaling() const noexcept
@@ -411,7 +401,7 @@ namespace Sierra
 
     bool WaylandWindow::IsTransparent() const noexcept
     {
-        return transparent;
+        return false;
     }
 
     bool WaylandWindow::IsMinimized() const noexcept
@@ -666,8 +656,6 @@ namespace Sierra
 
     void WaylandWindow::UpdateOpaqueRegion() const noexcept
     {
-        if (transparent) return;
-
         // Lets compositor skip drawing whatever is behind the window
         wl_region* const region = wl_compositor_create_region(waylandContext.GetCompositor());
         if (region == nullptr) return;

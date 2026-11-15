@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../EditorWizard.h"
+#include "../EditorModal.h"
 
 #include "../Widgets/ImGuiWidgets.h"
 
@@ -20,7 +20,7 @@ namespace SierraEngine
         const std::filesystem::path* outputDirectoryPath = nullptr;
     };
 
-    class FileOutputWizard : public virtual EditorWizard
+    class FileOutputWizard : public virtual EditorModal
     {
     public:
         /* --- COPY SEMANTICS --- */

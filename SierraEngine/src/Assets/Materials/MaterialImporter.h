@@ -28,8 +28,14 @@ namespace SierraEngine
     class SIERRA_ENGINE_API MaterialImporter : public virtual AssetImporter
     {
     public:
+        /* --- CONSTANTS METHODS --- */
+        constexpr static AssetTypeSignature TYPE_SIGNATURE = { 'M', 'T' };
+
         /* --- POLLING METHODS --- */
         [[nodiscard]] virtual std::optional<ImportedMaterial> Import(const MaterialImportInfo& importInfo) const = 0;
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] AssetTypeSignature GetTypeSignature() const noexcept override { return TYPE_SIGNATURE; }
 
         /* --- COPY SEMANTICS --- */
         MaterialImporter(const MaterialImporter&) = delete;

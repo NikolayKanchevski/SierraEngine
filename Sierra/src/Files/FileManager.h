@@ -5,7 +5,7 @@
 #pragma once
 
 #include "FileStream.h"
-#include "../Utilities/Date.h"
+#include "../Utilities/TimePoint.h"
 
 namespace Sierra
 {
@@ -35,8 +35,8 @@ namespace Sierra
         FileType type = FileType::Unknown;
         size memorySize = 0;
 
-        Date dateCreated = { };
-        Date dateLastModified = { };
+        TimePoint dateCreated = { };
+        TimePoint dateLastModified = { };
     };
 
     struct DirectoryMetadata
@@ -44,8 +44,8 @@ namespace Sierra
         uint32 fileCount = 0;
         size memorySize = 0;
 
-        Date dateCreated = { };
-        Date dateLastModified = { };
+        TimePoint dateCreated = { };
+        TimePoint dateLastModified = { };
     };
 
     /* --- CONVERSIONS --- */

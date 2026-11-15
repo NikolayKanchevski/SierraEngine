@@ -19,14 +19,23 @@ namespace SierraEngine
     /* --- CONSTRUCTORS --- */
 
     Editor::Editor(const EditorCreateInfo& createInfo)
-        : platformContext(&createInfo.platformContext), renderingContext(&createInfo.renderingContext), fileManager(&createInfo.fileManager), scene({ .name = "Scene" })
+        : platformContext(&createInfo.platformContext), fileManager(&createInfo.fileManager), renderingContext(&createInfo.renderingContext),
+          scene({ .name = "Scene" }),
+          assetBrowserPanel({ .fileManager = createInfo.fileManager, .renderingContext = createInfo.renderingContext, .rootDirectoryPath = createInfo.project.GetAssetPath() }),
+          logPanel({ .logger = Sierra::Logger::GetApplicationLogger() })
     {
         style = EditorThemeToImGuiStyle(createInfo.theme);
+
+        createInfo.window.AddEventListener<Sierra::WindowFocusEvent>([this](const Sierra::WindowFocusEvent& event) -> bool
+        {
+            assetBrowserPanel.Refresh();
+            return false;
+        });
     }
 
     /* --- POLLING METHODS --- */
 
-    void Editor::Draw(Sierra::CommandBuffer& commandBuffer)
+    void Editor::Draw(Sierra::CommandBuffer& commandBuffer, const Sierra::InputManager& inputManager)
     {
         ImGui::GetStyle() = style;
         const ImGuiID dockID = DrawDockSpace();
@@ -36,6 +45,12 @@ namespace SierraEngine
 
         ImGui::SetNextWindowDockID(dockID, ImGuiCond_FirstUseEver);
         PropertiesPanel::Draw({ .scene = scene, .selectedEntity = !selectedEntities.empty() ? &selectedEntities[0] : nullptr });
+
+        ImGui::SetNextWindowDockID(dockID, ImGuiCond_FirstUseEver);
+        assetBrowserPanel.Draw({ .commandBuffer = commandBuffer, .inputManager = inputManager });
+
+        ImGui::SetNextWindowDockID(dockID, ImGuiCond_FirstUseEver);
+        logPanel.Draw();
 
         uint32 i = 0;
         viewports.ForEach([dockID, &i](Viewport& viewport) -> void
@@ -52,15 +67,9 @@ namespace SierraEngine
             i++;
         });
 
-        if (currentWizard != nullptr)
+        if (currentWizard != nullptr && !currentWizard->Draw(commandBuffer))
         {
-            bool open = true;
-            currentWizard->Draw(open, commandBuffer);
-
-            if (!open)
-            {
-                currentWizard = nullptr;
-            }
+            currentWizard.reset();
         }
     }
 
@@ -81,6 +90,7 @@ namespace SierraEngine
 
     void Editor::DrawMenuBar()
     {
+        // TODO: Fix bug
         const std::array fileSerializeItems
         {
             MenuItem {
@@ -146,49 +156,50 @@ namespace SierraEngine
         return dockID;
     }
 
-    void Editor::OpenTextureSerializeWizard()
+    void Editor::OpenTextureSerializeWizard(const std::filesystem::path* outputDirectoryPath)
     {
         const std::vector<std::filesystem::path> filePath = platformContext->OpenFileSelectDialog({ .allowedFileExtensions = TextureSerializeWizard::INPUT_FILE_EXTENSIONS });
-        if (!filePath.empty())
-        {
-            const TextureSerializeWizardCreateInfo createInfo
-            {
-                .platformContext = *platformContext,
-                .renderingContext = *renderingContext,
-                .fileManager = *fileManager,
-                .inputFilePath = &filePath.front()
-            };
+        if (filePath.empty()) return;
 
-            currentWizard = std::make_unique<TextureSerializeWizard>(createInfo);
-        }
+        const TextureSerializeWizardCreateInfo createInfo
+        {
+            .platformContext = *platformContext,
+            .renderingContext = *renderingContext,
+            .fileManager = *fileManager,
+            .inputFilePath = &filePath.front(),
+            .outputDirectoryPath = outputDirectoryPath
+        };
+
+        currentWizard = std::make_unique<TextureSerializeWizard>(createInfo);
     }
 
-    void Editor::OpenMaterialSerializeWizard()
+    void Editor::OpenMaterialSerializeWizard(const std::filesystem::path* outputDirectoryPath)
     {
         const MaterialSerializeWizardCreateInfo createInfo
         {
             .platformContext = *platformContext,
-            .fileManager = *fileManager
+            .fileManager = *fileManager,
+            .outputDirectoryPath = outputDirectoryPath
         };
 
         currentWizard = std::make_unique<MaterialSerializeWizard>(createInfo);
     }
 
-    void Editor::OpenModelSerializeWizard()
+    void Editor::OpenModelSerializeWizard(const std::filesystem::path* outputDirectoryPath)
     {
         const std::vector<std::filesystem::path> filePath = platformContext->OpenFileSelectDialog({ .allowedFileExtensions = ModelSerializeWizard::INPUT_FILE_EXTENSIONS });
-        if (!filePath.empty())
-        {
-            const ModelSerializeWizardCreateInfo createInfo
-            {
-                .platformContext = *platformContext,
-                .renderingContext = *renderingContext,
-                .fileManager = *fileManager,
-                .inputFilePath = &filePath.front()
-            };
+        if (filePath.empty()) return;
 
-            currentWizard = std::make_unique<ModelSerializeWizard>(createInfo);
-        }
+        const ModelSerializeWizardCreateInfo createInfo
+        {
+            .platformContext = *platformContext,
+            .renderingContext = *renderingContext,
+            .fileManager = *fileManager,
+            .inputFilePath = &filePath.front(),
+            .outputDirectoryPath = outputDirectoryPath
+        };
+
+        currentWizard = std::make_unique<ModelSerializeWizard>(createInfo);
     }
 
 

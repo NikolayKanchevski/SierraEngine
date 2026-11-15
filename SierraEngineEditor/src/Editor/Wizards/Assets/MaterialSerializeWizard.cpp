@@ -26,15 +26,10 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void MaterialSerializeWizard::Draw(bool& open, Sierra::CommandBuffer&)
+    bool MaterialSerializeWizard::Draw(Sierra::CommandBuffer&)
     {
-        if (ImGui::IsKeyPressed(ImGuiKey_Escape))
-        {
-            open = false;
-            return;
-        }
-
-        if (BeginWizard("Material Serialize Wizard", open))
+        bool open = BeginWizard("Material Serialize Wizard");
+        if (open)
         {
             DrawMetadataMenu(serializeInfo.metadata);
 
@@ -55,6 +50,8 @@ namespace SierraEngine
 
             EndWizard();
         }
+
+        return open;
     }
 
     void MaterialSerializeWizard::DrawSettingsMenu() noexcept
@@ -174,7 +171,7 @@ namespace SierraEngine
         fileManager.CreateFile(outputDataFilePath, Sierra::FilePathConflictPolicy::Overwrite);
         fileManager.WriteFile(outputDataFilePath, serializedMaterial->data);
 
-        const std::filesystem::path outputBlobFilePath = std::filesystem::path(outputDataFilePath).replace_extension(ASSET_OUTPUT_FILE_BLOB_EXTENSION);
+        const std::filesystem::path outputBlobFilePath = std::filesystem::path(outputDataFilePath).replace_extension(BLOB_OUTPUT_FILE_EXTENSION);
         fileManager.CreateFile(outputBlobFilePath, Sierra::FilePathConflictPolicy::Overwrite);
         fileManager.WriteFile(outputBlobFilePath, serializedMaterial->blob);
 

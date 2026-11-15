@@ -38,8 +38,10 @@ namespace Sierra
         void Update() override;
         void Minimize() override;
         void Maximize() override;
+        void Restore() override;
         void Show() override;
         void Hide() override;
+        void RequestFocus(WindowFocusRequestType requestType) override;
         void Focus() override;
         void Close() override;
 
@@ -47,22 +49,25 @@ namespace Sierra
         void SetTitle(std::string_view title) override;
         void SetPosition(Vector2Int position) override;
         void SetSize(Vector2UInt size) override;
+        void SetSizeLimits(Vector2UInt minimumSize, Vector2UInt maximumSize) override;
+        void SetAspectRatio(uint32 numerator, uint32 denominator) override;
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetTitle() const noexcept override;
+        [[nodiscard]] std::string GetTitle() const noexcept override;
         [[nodiscard]] Vector2Int GetPosition() const noexcept override;
-        [[nodiscard]] uint32 GetWidth() const noexcept override;
-        [[nodiscard]] uint32 GetHeight() const noexcept override;
-        [[nodiscard]] uint32 GetFramebufferWidth() const noexcept override;
-        [[nodiscard]] uint32 GetFramebufferHeight() const noexcept override;
         [[nodiscard]] float32 GetOpacity() const noexcept override;
 
-        [[nodiscard]] bool IsClosed() const noexcept override;
+        [[nodiscard]] Vector2UInt GetSize() const noexcept override;
+        [[nodiscard]] Vector2UInt GetFramebufferSize() const noexcept override;
+        [[nodiscard]] float32 GetScaling() const noexcept override;
+
+        [[nodiscard]] bool IsVisible() const noexcept override;
+        [[nodiscard]] bool IsTransparent() const noexcept override;
         [[nodiscard]] bool IsMinimized() const noexcept override;
         [[nodiscard]] bool IsMaximized() const noexcept override;
         [[nodiscard]] bool IsFocused() const noexcept override;
-        [[nodiscard]] bool IsHidden() const noexcept override;
+        [[nodiscard]] bool IsClosed() const noexcept override;
 
         [[nodiscard]] InputManager* GetInputManager() noexcept override { return &inputManager; }
         [[nodiscard]] const InputManager* GetInputManager() const noexcept override { return &inputManager; }
@@ -74,8 +79,9 @@ namespace Sierra
         [[nodiscard]] const TouchManager* GetTouchManager() const noexcept override { return nullptr;  }
 
         [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override { return WindowingBackendType::Cocoa; }
-        [[nodiscard]] const NSView* GetNSView() const noexcept { return view; }
+
         [[nodiscard]] const NSWindow* GetNSWindow() const noexcept { return window; }
+        [[nodiscard]] const NSView* GetNSView() const noexcept { return view; }
 
         /* --- COPY SEMANTICS --- */
         CocoaWindow(const CocoaWindow&) = delete;
@@ -98,7 +104,6 @@ namespace Sierra
         CocoaInputManager inputManager;
         CocoaCursorManager cursorManager;
 
-        std::string title;
         bool maximized = false;
         bool closed = false;
 

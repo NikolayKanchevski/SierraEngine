@@ -18,8 +18,8 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual std::vector<uint8> Read(size memorySize) = 0;
-        [[nodiscard]] std::vector<uint8> Read(size sourceOffset, size memorySize);
+        virtual void Read(std::span<uint8> outBuffer) = 0;
+        [[nodiscard]] std::vector<uint8> Read(size memorySize);
 
         template<typename T>
         [[nodiscard]] T ReadAs()

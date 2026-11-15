@@ -69,8 +69,14 @@ namespace SierraEngine
     class SIERRA_ENGINE_API MaterialSerializer : public virtual AssetSerializer
     {
     public:
+        /* --- CONSTANTS METHODS --- */
+        constexpr static AssetTypeSignature TYPE_SIGNATURE = { 'M', 'T' };
+
         /* --- POLLING METHODS --- */
         [[nodiscard]] virtual std::optional<SerializedMaterial> Serialize(const MaterialSerializeInfo& serializeInfo, MaterialID& outID) const = 0;
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] AssetTypeSignature GetTypeSignature() const noexcept override { return TYPE_SIGNATURE; }
 
         /* --- COPY SEMANTICS --- */
         MaterialSerializer(const MaterialSerializer&) = delete;

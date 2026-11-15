@@ -21,6 +21,9 @@ namespace SierraEngine
     class AssetSerializeWizard : public FileOutputWizard
     {
     public:
+        /* --- CONSTANTS --- */
+        constexpr static std::string_view BLOB_OUTPUT_FILE_EXTENSION = ".blob";
+
         /* --- COPY SEMANTICS --- */
         AssetSerializeWizard(const AssetSerializeWizard&) = delete;
         AssetSerializeWizard& operator=(const AssetSerializeWizard&) = delete;
@@ -34,7 +37,6 @@ namespace SierraEngine
 
     protected:
         /* --- CONSTANTS --- */
-        constexpr static std::string_view ASSET_OUTPUT_FILE_BLOB_EXTENSION = ".blob";
         constexpr static ImGuiTreeNodeFlags MENU_TREE_FLAGS = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_SpanAvailWidth;
 
         /* --- CONSTRUCTORS --- */

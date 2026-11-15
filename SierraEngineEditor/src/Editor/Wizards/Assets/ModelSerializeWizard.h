@@ -27,7 +27,7 @@ namespace SierraEngine
         explicit ModelSerializeWizard(const ModelSerializeWizardCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Draw(bool& open, Sierra::CommandBuffer& commandBuffer) override;
+        [[nodiscard]] bool Draw(Sierra::CommandBuffer& commandBuffer) override;
 
         /* --- CONSTANTS --- */
         constexpr static std::array<std::string_view, 2> INPUT_FILE_EXTENSIONS = { ".glb", ".gltf" };
@@ -38,8 +38,8 @@ namespace SierraEngine
         ModelSerializeWizard& operator=(const ModelSerializeWizard&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        ModelSerializeWizard(ModelSerializeWizard&&) noexcept = default;
-        ModelSerializeWizard& operator=(ModelSerializeWizard&&) noexcept = default;
+        ModelSerializeWizard(ModelSerializeWizard&&) = delete;
+        ModelSerializeWizard& operator=(ModelSerializeWizard&&) = delete;
 
         /* --- DESTRUCTOR --- */
         ~ModelSerializeWizard() noexcept override = default;

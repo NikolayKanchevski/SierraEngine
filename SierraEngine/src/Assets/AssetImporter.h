@@ -13,8 +13,11 @@ namespace SierraEngine
     {
     public:
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual AssetSignature GetSignature() const noexcept = 0;
+        [[nodiscard]] virtual AssetSignature GetSignature() const noexcept;
         [[nodiscard]] virtual AssetVersion GetVersion() const noexcept = 0;
+
+        [[nodiscard]] virtual AssetFormatSignature GetFormatSignature() const noexcept = 0;
+        [[nodiscard]] virtual AssetTypeSignature GetTypeSignature() const noexcept = 0;
 
         /* --- COPY SEMANTICS --- */
         AssetImporter(const AssetImporter&) = delete;

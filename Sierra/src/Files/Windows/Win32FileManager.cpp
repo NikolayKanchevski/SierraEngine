@@ -13,6 +13,17 @@
 namespace Sierra
 {
 
+    namespace
+    {
+        TimePoint FileTimeToTimePoint(const FILETIME fileTime) noexcept
+        {
+            // File times count intervals of 100 nanoseconds since 1601, while the system clock counts from 1970
+            constexpr int64 UNIX_EPOCH_OFFSET = 116'444'736'000'000'000;
+            const int64 intervals = static_cast<int64>((static_cast<uint64>(fileTime.dwHighDateTime) << 32) | fileTime.dwLowDateTime);
+
+            return TimePoint(std::chrono::system_clock::time_point(std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::duration<int64, std::ratio<1, 10'000'000>>(intervals - UNIX_EPOCH_OFFSET))));
+        }
+    }
 
     /* --- POLLING METHODS --- */
 
@@ -230,32 +241,8 @@ namespace Sierra
         FILETIME lastWriteFileTime = { };
         GetFileTime(fileHandle.get(), &creationFileTime, nullptr, &lastWriteFileTime);
 
-        FileTimeToLocalFileTime(&creationFileTime, &creationFileTime);
-        FileTimeToLocalFileTime(&lastWriteFileTime, &lastWriteFileTime);
-
-        SYSTEMTIME creationSystemTime = { };
-        FileTimeToSystemTime(&creationFileTime, &creationSystemTime);
-
-        SYSTEMTIME lastWriteSystemTime = { };
-        FileTimeToSystemTime(&lastWriteFileTime, &lastWriteSystemTime);
-
-        const Date dateCreated = Date({
-            .second = static_cast<uint8>(creationSystemTime.wSecond),
-            .minute = static_cast<uint8>(creationSystemTime.wMinute),
-            .hour = static_cast<uint8>(creationSystemTime.wHour),
-            .month = static_cast<Month>(creationSystemTime.wMonth - 1),
-            .day = static_cast<uint8>(creationSystemTime.wDay),
-            .year = creationSystemTime.wYear
-        });
-
-        const Date dateLastModified = Date({
-            .second = static_cast<uint8>(lastWriteSystemTime.wSecond),
-            .minute = static_cast<uint8>(lastWriteSystemTime.wMinute),
-            .hour = static_cast<uint8>(lastWriteSystemTime.wHour),
-            .month = static_cast<Month>(lastWriteSystemTime.wMonth - 1),
-            .day = static_cast<uint8>(lastWriteSystemTime.wDay),
-            .year = lastWriteSystemTime.wYear
-        });
+        const TimePoint dateCreated = FileTimeToTimePoint(creationFileTime);
+        const TimePoint dateLastModified = FileTimeToTimePoint(lastWriteFileTime);
 
         return
         {
@@ -277,32 +264,8 @@ namespace Sierra
         FILETIME lastWriteFileTime = { };
         GetFileTime(directoryHandle.get(), &creationFileTime, nullptr, &lastWriteFileTime);
 
-        FileTimeToLocalFileTime(&creationFileTime, &creationFileTime);
-        FileTimeToLocalFileTime(&lastWriteFileTime, &lastWriteFileTime);
-
-        SYSTEMTIME creationSystemTime = { };
-        FileTimeToSystemTime(&creationFileTime, &creationSystemTime);
-
-        SYSTEMTIME lastWriteSystemTime = { };
-        FileTimeToSystemTime(&lastWriteFileTime, &lastWriteSystemTime);
-
-        const Date dateCreated = Date({
-            .second = static_cast<uint8>(creationSystemTime.wSecond),
-            .minute = static_cast<uint8>(creationSystemTime.wMinute),
-            .hour = static_cast<uint8>(creationSystemTime.wHour),
-            .month = static_cast<Month>(creationSystemTime.wMonth - 1),
-            .day = static_cast<uint8>(creationSystemTime.wDay),
-            .year = creationSystemTime.wYear
-        });
-
-        const Date dateLastModified = Date({
-            .second = static_cast<uint8>(lastWriteSystemTime.wSecond),
-            .minute = static_cast<uint8>(lastWriteSystemTime.wMinute),
-            .hour = static_cast<uint8>(lastWriteSystemTime.wHour),
-            .month = static_cast<Month>(lastWriteSystemTime.wMonth - 1),
-            .day = static_cast<uint8>(lastWriteSystemTime.wDay),
-            .year = lastWriteSystemTime.wYear
-        });
+        const TimePoint dateCreated = FileTimeToTimePoint(creationFileTime);
+        const TimePoint dateLastModified = FileTimeToTimePoint(lastWriteFileTime);
 
         uint32 fileCount = 0;
         size memorySize = 0;

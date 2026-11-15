@@ -67,23 +67,16 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void TextureSerializeWizard::Draw(bool& open, Sierra::CommandBuffer& commandBuffer)
+    bool TextureSerializeWizard::Draw(Sierra::CommandBuffer& commandBuffer)
     {
-        if (ImGui::IsKeyPressed(ImGuiKey_Escape))
-        {
-            open = false;
-
-            ResetLayers(commandBuffer);
-            return;
-        }
-
         if (rootLayerDirty)
         {
             ReloadRootLayer(commandBuffer);
             rootLayerDirty = false;
         }
 
-        if (BeginWizard("Texture Serialize Wizard", open))
+        bool open = BeginWizard("Texture Serialize Wizard");
+        if (open)
         {
             DrawFileInputHeader(platformContext);
             DrawMetadataMenu(serializeInfo.metadata);
@@ -108,7 +101,10 @@ namespace SierraEngine
             EndWizard();
         }
 
-        if (!open) ResetLayers(commandBuffer);
+        if (!open)
+            ResetLayers(commandBuffer);
+
+        return open;
     }
 
     void TextureSerializeWizard::SetInputFilePath(const std::filesystem::path& inputFilePath) noexcept
@@ -342,7 +338,7 @@ namespace SierraEngine
         fileManager.CreateFile(outputDataFilePath, Sierra::FilePathConflictPolicy::Overwrite);
         fileManager.WriteFile(outputDataFilePath, serializedTexture->data);
 
-        const std::filesystem::path outputBlobFilePath = std::filesystem::path(outputDataFilePath).replace_extension(ASSET_OUTPUT_FILE_BLOB_EXTENSION);
+        const std::filesystem::path outputBlobFilePath = std::filesystem::path(outputDataFilePath).replace_extension(BLOB_OUTPUT_FILE_EXTENSION);
         fileManager.CreateFile(outputBlobFilePath, Sierra::FilePathConflictPolicy::Overwrite);
         fileManager.WriteFile(outputBlobFilePath, serializedTexture->blob);
 

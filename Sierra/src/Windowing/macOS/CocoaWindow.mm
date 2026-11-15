@@ -307,8 +307,7 @@ namespace Sierra
             delegate([[CocoaWindowDelegate alloc] initWithWindow: this]),
             window(cocoaContext.CreateWindow(createInfo.title, createInfo.width, createInfo.height)),
             view([[CocoaWindowView alloc] initWithWindow: this]),
-            cursorManager(window),
-            title(createInfo.title)
+            cursorManager(window)
     {
         // Assign Metal layer
         [view setLayer: [CAMetalLayer layer]];
@@ -327,6 +326,8 @@ namespace Sierra
 
         // Maximize window
         if (createInfo.maximize) Maximize();
+
+        if (createInfo.opacity < 1.0f) [window setAlphaValue: createInfo.opacity];
 
         // Assign window handlers
         [window setDelegate: reinterpret_cast<CocoaWindowDelegate*>(delegate)];
@@ -383,6 +384,18 @@ namespace Sierra
         }
     }
 
+    void CocoaWindow::Restore()
+    {
+        if ([window isMiniaturized])
+        {
+            [window deminiaturize: nil];
+        }
+        else if ([window isZoomed])
+        {
+            [window zoom: nil];
+        }
+    }
+
     void CocoaWindow::Show()
     {
         [cocoaContext->GetNSApplication() activateIgnoringOtherApps: YES];
@@ -393,6 +406,11 @@ namespace Sierra
     void CocoaWindow::Hide()
     {
         [window orderOut: nil];
+    }
+
+    void CocoaWindow::RequestFocus(const WindowFocusRequestType requestType)
+    {
+        [NSApp requestUserAttention: requestType == WindowFocusRequestType::Informational ? NSInformationalRequest : NSCriticalRequest];
     }
 
     void CocoaWindow::Focus()
@@ -415,9 +433,8 @@ namespace Sierra
 
     /* --- SETTER METHODS --- */
 
-    void CocoaWindow::SetTitle(const std::string_view newTitle)
+    void CocoaWindow::SetTitle(const std::string_view title)
     {
-        title = newTitle;
         [window setTitle: [NSString stringWithCString: title.data() encoding: NSUTF8StringEncoding]];
     }
 
@@ -438,6 +455,39 @@ namespace Sierra
         [window setFrame: frame display: YES];
     }
 
+    void CocoaWindow::SetSizeLimits(const Vector2UInt minimumSize, const Vector2UInt maximumSize)
+    {
+        if (minimumSize.x == 0 || minimumSize.x == 0)
+        {
+            [window setContentMinSize:NSMakeSize(0, 0)];
+        }
+        else
+        {
+            [window setContentMinSize:NSMakeSize(minimumSize.x, minimumSize.x)];
+        }
+
+        if (maximumSize.x == 0 || maximumSize.y == 0)
+        {
+            [window setContentMaxSize: NSMakeSize(DBL_MAX, DBL_MAX)];
+        }
+        else
+        {
+            [window setContentMaxSize: NSMakeSize(maximumSize.x, maximumSize.y)];
+        }
+    }
+
+    void CocoaWindow::SetAspectRatio(const uint32 numerator, const uint32 denominator)
+    {
+        if (numerator == 0 || denominator == 0)
+        {
+            [window setResizeIncrements: NSMakeSize(1.0, 1.0)];
+        }
+        else
+        {
+            [window setContentAspectRatio: NSMakeSize(numerator, denominator)];
+        }
+    }
+
     void CocoaWindow::SetOpacity(float32 opacity)
     {
         [window setAlphaValue: opacity];
@@ -445,9 +495,9 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    std::string_view CocoaWindow::GetTitle() const noexcept
+    std::string CocoaWindow::GetTitle() const noexcept
     {
-        return title;
+        return std::string(window.title.UTF8String, window.title.length);
     }
 
     Vector2Int CocoaWindow::GetPosition() const noexcept
@@ -456,35 +506,38 @@ namespace Sierra
         return { static_cast<int32>(contentRect.origin.x), static_cast<int32>(contentRect.origin.y + contentRect.size.height) };
     }
 
-    uint32 CocoaWindow::GetWidth() const noexcept
-    {
-        return static_cast<uint32>([window frame].size.width);
-    }
-
-    uint32 CocoaWindow::GetHeight() const noexcept
-    {
-        // Frame already includes the title bar
-        return static_cast<uint32>([window frame].size.height);
-    }
-
-    uint32 CocoaWindow::GetFramebufferWidth() const noexcept
-    {
-        return static_cast<uint32>([view convertRectToBacking: [view bounds]].size.width);
-    }
-
-    uint32 CocoaWindow::GetFramebufferHeight() const noexcept
-    {
-        return static_cast<uint32>([view convertRectToBacking: [view bounds]].size.height);
-    }
-
     float32 CocoaWindow::GetOpacity() const noexcept
     {
         return static_cast<float32>([window alphaValue]);
     }
 
-    bool CocoaWindow::IsClosed() const noexcept
+    Vector2UInt CocoaWindow::GetSize() const noexcept
     {
-        return closed;
+        const NSSize size = window.frame.size;
+        return { static_cast<uint32>(size.width), static_cast<uint32>(size.height) };
+    }
+
+    Vector2UInt CocoaWindow::GetFramebufferSize() const noexcept
+    {
+        const NSSize size = [view convertRectToBacking: [view bounds]].size;
+        return { static_cast<uint32>(size.width), static_cast<uint32>(size.height) };
+    }
+
+    float32 CocoaWindow::GetScaling() const noexcept
+    {
+        const NSRect points = [window frame];
+        const NSRect pixels = [window convertRectToBacking: points];
+        return static_cast<float32>(pixels.size.width / points.size.width);
+    }
+
+    bool CocoaWindow::IsVisible() const noexcept
+    {
+        return [window isVisible];
+    }
+
+    bool CocoaWindow::IsTransparent() const noexcept
+    {
+        return ![window isOpaque];
     }
 
     bool CocoaWindow::IsMinimized() const noexcept
@@ -502,9 +555,9 @@ namespace Sierra
         return [window isKeyWindow];
     }
 
-    bool CocoaWindow::IsHidden() const noexcept
+    bool CocoaWindow::IsClosed() const noexcept
     {
-        return ![window isVisible];
+        return closed;
     }
 
     /* --- EVENTS --- */

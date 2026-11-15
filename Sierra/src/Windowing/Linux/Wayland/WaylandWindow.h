@@ -27,10 +27,10 @@ namespace Sierra
         void Update() override;
         void Minimize() override;
         void Maximize() override;
-        void Restore();
+        void Restore() override;
         void Show() override;
         void Hide() override;
-        void RequestAttention();
+        void RequestFocus(WindowFocusRequestType requestType) override;
         void Focus() override;
         void Close() override;
 
@@ -38,20 +38,18 @@ namespace Sierra
         void SetTitle(std::string_view title) override;
         void SetPosition(Vector2Int position) override;
         void SetSize(Vector2UInt size) override;
-        void SetSizeLimits(Vector2UInt minimumSize, Vector2UInt maximumSize);
-        void SetAspectRatio(uint32 numerator, uint32 denominator);
+        void SetSizeLimits(Vector2UInt minimumSize, Vector2UInt maximumSize) override;
+        void SetAspectRatio(uint32 numerator, uint32 denominator) override;
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string GetTitle() const noexcept override;
-        [[nodiscard]] float32 GetOpacity() const noexcept override;
         [[nodiscard]] Vector2Int GetPosition() const noexcept override;
+        [[nodiscard]] float32 GetOpacity() const noexcept override;
 
-        [[nodiscard]] uint32 GetWidth() const noexcept override;
-        [[nodiscard]] uint32 GetHeight() const noexcept override;
-        [[nodiscard]] uint32 GetFramebufferWidth() const noexcept override;
-        [[nodiscard]] uint32 GetFramebufferHeight() const noexcept override;
-        [[nodiscard]] float32 GetScaling() const noexcept;
+        [[nodiscard]] Vector2UInt GetSize() const noexcept override;
+        [[nodiscard]] Vector2UInt GetFramebufferSize() const noexcept override;
+        [[nodiscard]] float32 GetScaling() const noexcept override;
 
         [[nodiscard]] bool IsVisible() const noexcept override;
         [[nodiscard]] bool IsTransparent() const noexcept override;
@@ -95,7 +93,6 @@ namespace Sierra
 
         std::string title = { };
         bool resizable = false;
-        bool transparent = false;
 
         wl_surface* surface = nullptr;
         std::vector<wl_output*> outputs = { };

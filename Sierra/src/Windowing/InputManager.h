@@ -37,22 +37,14 @@ namespace Sierra
         [[nodiscard]] virtual bool IsKeyReleased(Key key) const noexcept = 0;
         [[nodiscard]] virtual bool IsKeyResting(Key key) const noexcept = 0;
 
-        template<typename... Args>
-        [[nodiscard]] bool IsKeyCombinationPressed(const Key first, const Args... rest) const noexcept { return IsKeyCombinationPressedImplementation({ first, rest... }); }
-
-        template<typename... Args>
-        [[nodiscard]] bool IsKeyCombinationHeld(const Key first, const Args... rest) const noexcept { return IsKeyCombinationHeldImplementation({ first, rest... }); }
+        [[nodiscard]] bool IsKeyCombinationPressed(std::span<const Key> keys) const;
+        [[nodiscard]] bool IsKeyCombinationHeld(std::span<const Key> keys) const;
 
         [[nodiscard]] virtual bool IsMouseButtonPressed(MouseButton mouseButton) const noexcept = 0;
         [[nodiscard]] virtual bool IsMouseButtonHeld(MouseButton mouseButton) const noexcept = 0;
         [[nodiscard]] virtual bool IsMouseButtonReleased(MouseButton mouseButton) const noexcept = 0;
         [[nodiscard]] virtual bool IsMouseButtonResting(MouseButton mouseButton) const noexcept = 0;
         [[nodiscard]] virtual Vector2 GetMouseScroll() const noexcept = 0;
-
-        template<typename... Args>
-        [[nodiscard]] bool IsMouseButtonCombinationPressed(const MouseButton first, const Args... rest) const noexcept { return IsMouseButtonCombinationPressedImplementation({ first, rest... }); }
-        template<typename... Args>
-        [[nodiscard]] bool IsMouseButtonCombinationHeld(const MouseButton first, const Args... rest) const noexcept { return IsMouseButtonCombinationHeldImplementation({ first, rest... }); }
 
         [[nodiscard]] virtual WindowingBackendType GetBackendType() const noexcept = 0;
 
@@ -107,9 +99,6 @@ namespace Sierra
         EventDispatcher<MouseButtonPressEvent> mouseButtonPressDispatcher = { };
         EventDispatcher<MouseButtonReleaseEvent> mouseButtonReleaseDispatcher = { };
         EventDispatcher<MouseScrollEvent> mouseScrollDispatcher = { };
-
-        [[nodiscard]] bool IsKeyCombinationPressedImplementation(const std::initializer_list<Key>& keys) const;
-        [[nodiscard]] bool IsKeyCombinationHeldImplementation(const std::initializer_list<Key>& keys) const;
 
         [[nodiscard]] bool IsMouseButtonCombinationPressedImplementation(const std::initializer_list<MouseButton>& mouseButtons) const;
         [[nodiscard]] bool IsMouseButtonCombinationHeldImplementation(const std::initializer_list<MouseButton>& mouseButtons) const;

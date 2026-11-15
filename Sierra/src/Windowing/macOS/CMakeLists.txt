@@ -7,9 +7,12 @@ target_sources(Sierra PRIVATE
     CocoaScreen.h
     CocoaWindow.mm
     CocoaWindow.h
+    CocoaWindowManager.mm
+    CocoaWindowManager.h
 )
 
-target_link_libraries(Sierra PRIVATE
+target_link_libraries(Sierra PUBLIC
     "-framework Cocoa"
     "-framework QuartzCore"
+    "-framework UniformTypeIdentifiers"
 )

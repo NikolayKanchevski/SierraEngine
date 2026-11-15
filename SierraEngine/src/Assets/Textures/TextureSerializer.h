@@ -55,8 +55,14 @@ namespace SierraEngine
     class SIERRA_ENGINE_API TextureSerializer : public virtual AssetSerializer
     {
     public:
+        /* --- CONSTANTS METHODS --- */
+        constexpr static AssetTypeSignature TYPE_SIGNATURE = { 'T', 'X' };
+
         /* --- POLLING METHODS --- */
         [[nodiscard]] virtual std::optional<SerializedTexture> Serialize(const TextureSerializeInfo& serializeInfo, TextureID& outID) const = 0;
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] AssetTypeSignature GetTypeSignature() const noexcept override { return TYPE_SIGNATURE; }
 
         /* --- COPY SEMANTICS --- */
         TextureSerializer(const TextureSerializer&) = delete;

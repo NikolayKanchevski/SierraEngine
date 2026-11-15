@@ -52,8 +52,14 @@ namespace SierraEngine
     class SIERRA_ENGINE_API ModelImporter : public virtual AssetImporter
     {
     public:
+        /* --- CONSTANTS METHODS --- */
+        constexpr static AssetTypeSignature TYPE_SIGNATURE = { 'M', 'D' };
+
         /* --- POLLING METHODS --- */
         [[nodiscard]] virtual std::optional<ImportedModel> Import(const ModelImportInfo& importInfo) const = 0;
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] AssetTypeSignature GetTypeSignature() const noexcept override { return TYPE_SIGNATURE; }
 
         /* --- COPY SEMANTICS --- */
         ModelImporter(const ModelImporter&) = delete;

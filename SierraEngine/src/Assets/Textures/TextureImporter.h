@@ -49,8 +49,14 @@ namespace SierraEngine
     class SIERRA_ENGINE_API TextureImporter : public virtual AssetImporter
     {
     public:
+        /* --- CONSTANTS METHODS --- */
+        constexpr static AssetTypeSignature TYPE_SIGNATURE = { 'T', 'X' };
+
         /* --- POLLING METHODS --- */
         [[nodiscard]] virtual std::optional<ImportedTexture> Import(const TextureImportInfo& importInfo) const = 0;
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] AssetTypeSignature GetTypeSignature() const noexcept override { return TYPE_SIGNATURE; }
 
         /* --- COPY SEMANTICS --- */
         TextureImporter(const TextureImporter&) = delete;

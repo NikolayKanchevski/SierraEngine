@@ -16,4 +16,26 @@ namespace Sierra
         SR_THROW_IF(createInfo.height <= 0, InvalidValueError(SR_FORMAT("Cannot create window [{0}], as specified height must be greater than [0]", createInfo.title)));
     }
 
+    /* --- GETTER METHODS --- */
+
+    uint32 Window::GetWidth() const noexcept
+    {
+        return GetSize().x;
+    }
+
+    uint32 Window::GetHeight() const noexcept
+    {
+        return GetSize().y;
+    }
+
+    uint32 Window::GetFramebufferWidth() const noexcept
+    {
+        return GetFramebufferSize().x;
+    }
+
+    uint32 Window::GetFramebufferHeight() const noexcept
+    {
+        return GetFramebufferSize().y;
+    }
+
 }

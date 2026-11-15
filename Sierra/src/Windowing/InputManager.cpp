@@ -9,14 +9,16 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    bool InputManager::IsKeyCombinationPressedImplementation(const std::initializer_list<Key>& keys) const
+    bool InputManager::IsKeyCombinationPressed(const std::span<const Key> keys) const
     {
         bool atLeastOneKeyPressed = false;
         for (const Key key : keys)
         {
-            if (IsKeyHeld(key)) continue;
+            const Key alternativeKey = KeyToAlternativeKey(key);
 
-            if (IsKeyPressed(key))
+            if (IsKeyHeld(key) || (alternativeKey != Key::Unknown && IsKeyHeld(alternativeKey))) continue;
+
+            if (IsKeyPressed(key) || (alternativeKey != Key::Unknown && IsKeyPressed(alternativeKey)))
             {
                 atLeastOneKeyPressed = true;
                 continue;
@@ -28,17 +30,13 @@ namespace Sierra
         return atLeastOneKeyPressed;
     }
 
-    bool InputManager::IsKeyCombinationHeldImplementation(const std::initializer_list<Key>& keys) const
+    bool InputManager::IsKeyCombinationHeld(const std::span<const Key> keys) const
     {
-        for (const Key key : keys)
+        return std::ranges::all_of(keys, [this](const Key key) -> bool
         {
-            if (!IsKeyHeld(key))
-            {
-                return false;
-            }
-        }
-
-        return true;
+            const Key alternativeKey = KeyToAlternativeKey(key);
+            return IsKeyHeld(key) || (alternativeKey != Key::Unknown && IsKeyHeld(alternativeKey));
+        });
     }
 
     bool InputManager::IsMouseButtonCombinationPressedImplementation(const std::initializer_list<MouseButton>& mouseButtons) const
@@ -62,15 +60,7 @@ namespace Sierra
 
     bool InputManager::IsMouseButtonCombinationHeldImplementation(const std::initializer_list<MouseButton>& mouseButtons) const
     {
-        for (const MouseButton mouseButton : mouseButtons)
-        {
-            if (!IsMouseButtonHeld(mouseButton))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return std::ranges::all_of(mouseButtons, [this](const MouseButton mouseButton) -> bool { return IsMouseButtonHeld(mouseButton); });
     }
 
 }

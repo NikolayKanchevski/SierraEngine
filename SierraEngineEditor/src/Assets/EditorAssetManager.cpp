@@ -4,12 +4,11 @@
 
 #include "EditorAssetManager.h"
 
+#include "../Editor/Wizards/AssetSerializeWizard.h"
 #include "Textures/Importers/AutoTextureImporter.h"
 
 namespace SierraEngine
 {
-
-    constexpr std::string_view ASSET_BLOB_EXTENSION = ".blob";
 
     const std::unordered_map<std::string_view, AssetType> ASSET_FILE_EXTENSION_MAP
     {
@@ -49,7 +48,7 @@ namespace SierraEngine
                 {
                     case AssetType::Texture:
                     {
-                        const std::filesystem::path blobFilePath = std::filesystem::path(filePath).replace_extension(ASSET_BLOB_EXTENSION);
+                        const std::filesystem::path blobFilePath = std::filesystem::path(filePath).replace_extension(AssetSerializeWizard::BLOB_OUTPUT_FILE_EXTENSION);
                         if (!fileManager.FileExists(blobFilePath))
                         {
                             APP_WARNING("Asset manager cannot load asset [{0}], as its corresponding memory [.blob] file [{1}] is missing", filePath.string(), blobFilePath.string());

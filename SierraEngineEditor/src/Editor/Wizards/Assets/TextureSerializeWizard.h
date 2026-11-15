@@ -12,7 +12,7 @@
 namespace SierraEngine
 {
 
-    struct TextureSerializeWizardCreateInfo
+    struct  TextureSerializeWizardCreateInfo
     {
         const EditorPlatformContext& platformContext;
         const RenderingContext& renderingContext;
@@ -25,15 +25,15 @@ namespace SierraEngine
     class TextureSerializeWizard final : public FileInputWizard, public AssetSerializeWizard
     {
     public:
+        /* --- CONSTANTS --- */
+        constexpr static std::array<std::string_view, 3> INPUT_FILE_EXTENSIONS = { ".jpg", ".jpeg", ".png" };
+        constexpr static std::string_view OUTPUT_FILE_EXTENSION = ".texture";
+
         /* --- CONSTRUCTORS --- */
         explicit TextureSerializeWizard(const TextureSerializeWizardCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Draw(bool& open, Sierra::CommandBuffer& commandBuffer) override;
-
-        /* --- CONSTANTS --- */
-        constexpr static std::array<std::string_view, 3> INPUT_FILE_EXTENSIONS = { ".jpg", ".jpeg", ".png" };
-        constexpr static std::string_view OUTPUT_FILE_EXTENSION = ".texture";
+        [[nodiscard]] bool Draw(Sierra::CommandBuffer& commandBuffer) override;
 
         /* --- COPY SEMANTICS --- */
         TextureSerializeWizard(const TextureSerializeWizard&) = delete;

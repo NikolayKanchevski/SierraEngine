@@ -7,4 +7,12 @@
 namespace SierraEngine
 {
 
+    AssetSignature AssetImporter::GetSignature() const noexcept
+    {
+        const AssetFormatSignature formatSignature = GetFormatSignature();
+        const AssetTypeSignature typeSignature = GetTypeSignature();
+
+        return { formatSignature[0], formatSignature[1], typeSignature[0], typeSignature[1] };
+    }
+
 }

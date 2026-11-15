@@ -16,12 +16,12 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    std::vector<uint8> MemoryWriteStream::Read(const size memorySize)
+    void MemoryWriteStream::Read(std::span<uint8> outBuffer)
     {
-        SR_THROW_IF(GetOffset() + memorySize > GetSize(), InvalidRangeError("Cannot read invalid range from stream", offset, memorySize, size(0), GetSize()));
+        SR_THROW_IF(GetOffset() + outBuffer.size() > GetSize(), InvalidRangeError("Cannot read invalid range from stream", offset, outBuffer.size(), size(0), GetSize()));
 
-        offset += memorySize;
-        return { &memory[offset - memorySize], &memory[offset] };
+        offset += outBuffer.size();
+        std::memcpy(outBuffer.data(), &memory[offset - outBuffer.size()], outBuffer.size());
     }
 
     void MemoryWriteStream::Write(const void* givenMemory, const size memorySize)

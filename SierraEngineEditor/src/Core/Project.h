@@ -9,8 +9,7 @@ namespace SierraEngine
 
     struct ProjectCreateInfo
     {
-        const Sierra::FileManager& fileManager;
-        const std::filesystem::path& projectDirectoryPath = { };
+        const std::filesystem::path& directoryPath = { };
     };
 
     class Project final
@@ -24,7 +23,6 @@ namespace SierraEngine
         [[nodiscard]] std::filesystem::path GetAssetPath() const noexcept { return directoryPath / "Assets"; }
         [[nodiscard]] std::filesystem::path GetDataPath() const noexcept { return directoryPath / "Data"; }
 
-
         /* --- COPY SEMANTICS --- */
         Project(const Project&) = delete;
         Project& operator=(const Project&) = delete;
@@ -35,6 +33,7 @@ namespace SierraEngine
 
         /* --- DESTRUCTOR --- */
         ~Project() noexcept = default;
+
     private:
         std::filesystem::path directoryPath = { };
 

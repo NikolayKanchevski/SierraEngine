@@ -219,6 +219,7 @@ namespace SierraEngine
             return std::nullopt;
         }
 
+        // TODO: USE STRAMS NOT SPANS
         std::optional<ImportedTextureBuffer> blob = ImportBlob(blobStream, importInfo.format, *properties);
         if (!blob.has_value())
         {

@@ -7,4 +7,8 @@ target_sources(SierraEngineEditor PRIVATE
     PropertiesPanel.h
     ViewportPanel.cpp
     ViewportPanel.h
+    AssetBrowserPanel.cpp
+    AssetBrowserPanel.h
+    LogPanel.cpp
+    LogPanel.h
 )

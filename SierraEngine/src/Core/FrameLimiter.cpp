@@ -32,7 +32,7 @@ namespace SierraEngine
             const Sierra::TimeStep expectedFrameTime = Sierra::TimeStep(1'000.0f / static_cast<float64>(maxFrameRate));
             if (const Sierra::TimeStep frameTime = Sierra::TimePoint::Now() - frameStartTime; frameTime < expectedFrameTime)
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<llong>((expectedFrameTime - frameTime).GetDurationInMilliseconds())));
+                std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<llong>((expectedFrameTime - frameTime).GetDuration(Sierra::TimeStepUnit::Milliseconds))));
             }
         }
 

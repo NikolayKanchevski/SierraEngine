@@ -1,4 +1,4 @@
 target_sources(SierraEngineEditor PRIVATE
-        ImagePreviewer.cpp
-        ImagePreviewer.h
+    ImagePreviewer.cpp
+    ImagePreviewer.h
 )

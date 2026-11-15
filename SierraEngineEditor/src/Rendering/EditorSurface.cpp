@@ -82,7 +82,7 @@ namespace SierraEngine
     void EditorSurface::Render(Sierra::CommandBuffer& commandBuffer, Editor& editor)
     {
         imGuiRenderer->Update(window->GetFramebufferWidth(), window->GetFramebufferHeight(), swapchain->GetScaling(), window->GetInputManager(), window->GetCursorManager(), window->GetTouchManager());
-        editor.Draw(commandBuffer);
+        editor.Draw(commandBuffer, *window->GetInputManager());
 
         editor.ForEachViewport([this, &commandBuffer, &editor](Viewport& viewport) -> void
         {

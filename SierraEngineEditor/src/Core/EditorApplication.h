@@ -53,7 +53,7 @@ namespace SierraEngine
 
         ArenaAllocator arenaAllocator;
         EditorAssetManager assetManager;
-        Editor editor;
+        std::optional<Editor> editor = std::nullopt;
 
     };
 

@@ -16,7 +16,7 @@ namespace Sierra
         explicit MemoryReadStream(std::span<const uint8> memory);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::vector<uint8> Read(size memorySize) override;
+        void Read(std::span<uint8> outBuffer) override;
         void Write(const void* memory, size memorySize) override;
 
         /* --- SETTER METHODS --- */

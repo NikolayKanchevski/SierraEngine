@@ -7,7 +7,7 @@
 namespace Sierra
 {
 
-    std::string_view GetMouseButtonName(const MouseButton mouseButton) noexcept
+    std::string_view MouseButtonToString(const MouseButton mouseButton) noexcept
     {
         switch (mouseButton)
         {
@@ -21,5 +21,21 @@ namespace Sierra
 
         return "Unknown";
     }
+
+    std::string MouseButtonCombinationToString(const std::span<const MouseButton> mouseButtons) noexcept
+    {
+        constexpr std::string_view SEPARATOR = " + ";
+
+        std::string string = { };
+        for (const MouseButton mouseButton : mouseButtons)
+        {
+            string += MouseButtonToString(mouseButton);
+            string += SEPARATOR;
+        }
+
+        if (!string.empty()) string.resize(string.size() - SEPARATOR.size());
+        return string;
+    }
+
 
 }

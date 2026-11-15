@@ -232,8 +232,8 @@ namespace Sierra
         struct stat status = { };
         if (stat(path.c_str(), &status) != 0) HandleUnixFileError(errno, "Could not get file metadata", filePath);
 
-        const Date dateCreated = Date(TimePoint(std::chrono::system_clock::from_time_t(status.st_ctime)));
-        const Date dateLastModified = Date(TimePoint(std::chrono::system_clock::from_time_t(status.st_mtime)));
+        const TimePoint dateCreated = TimePoint(std::chrono::system_clock::from_time_t(status.st_ctime));
+        const TimePoint dateLastModified = TimePoint(std::chrono::system_clock::from_time_t(status.st_mtime));
 
         return
         {
@@ -251,8 +251,8 @@ namespace Sierra
         struct stat status = { };
         if (stat(path.c_str(), &status) != 0) HandleUnixFileError(errno, "Could not get directory metadata", directoryPath);
 
-        const Date dateCreated = Date(TimePoint(std::chrono::system_clock::from_time_t(status.st_ctime)));
-        const Date dateLastModified = Date(TimePoint(std::chrono::system_clock::from_time_t(status.st_mtime)));
+        const TimePoint dateCreated = TimePoint(std::chrono::system_clock::from_time_t(status.st_ctime));
+        const TimePoint dateLastModified = TimePoint(std::chrono::system_clock::from_time_t(status.st_mtime));
 
         uint32 fileCount = 0;
         size memorySize = 0;

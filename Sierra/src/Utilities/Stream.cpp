@@ -9,6 +9,15 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
+    std::vector<uint8> Stream::Read(const size memorySize)
+    {
+        std::vector<uint8> memory = { };
+        memory.resize(memorySize);
+
+        Read(memory);
+        return memory;
+    }
+
     void Stream::Write(const void* memory, const size memorySize)
     {
         SR_THROW_IF(GetAccess() == StreamAccess::ReadOnly, InvalidOperationError(SR_FORMAT("Cannot write memory range [{0}-{1}] of stream, as it is read-only", GetOffset(), GetOffset() + memorySize)));
@@ -29,12 +38,6 @@ namespace Sierra
     {
         SetOffset(destinationOffset);
         WriteMemory(memory);
-    }
-
-    std::vector<uint8> Stream::Read(const size sourceOffset, const size memorySize)
-    {
-        SetOffset(sourceOffset);
-        return Read(memorySize);
     }
 
     std::vector<uint8> Stream::Peek(const size memorySize)

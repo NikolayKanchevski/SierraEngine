@@ -4,20 +4,27 @@
 
 #pragma once
 
+#include "EditorModal.h"
 #include "EditorThemes.h"
-#include "EditorWizard.h"
+
+#include "../Core/Project.h"
 #include "../Rendering/Viewport.h"
+
+#include "Panels/LogPanel.h"
+#include "Panels/AssetBrowserPanel.h"
+
 #include "../Platform/EditorPlatformContext.h"
 
 namespace SierraEngine
 {
-
     struct EditorCreateInfo
     {
         const EditorPlatformContext& platformContext;
+        const Sierra::FileManager& fileManager;
         const RenderingContext& renderingContext;
 
-        const Sierra::FileManager& fileManager;
+        Project& project;
+        Sierra::Window& window;
         EditorTheme theme = EditorTheme::Dark;
     };
 
@@ -33,7 +40,7 @@ namespace SierraEngine
         explicit Editor(const EditorCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Draw(Sierra::CommandBuffer& commandBuffer);
+        void Draw(Sierra::CommandBuffer& commandBuffer, const Sierra::InputManager& inputManager);
 
         Viewport& CreateViewport(ViewportID& ID, const ViewportCreateInfo& createInfo);
         void ForEachViewport(const ViewportEnumerationPredicate& Predicate);
@@ -62,22 +69,24 @@ namespace SierraEngine
 
     private:
         const EditorPlatformContext* platformContext;
-        const RenderingContext* renderingContext;
         const Sierra::FileManager* fileManager;
+        const RenderingContext* renderingContext;
 
         Scene scene;
+        AssetBrowserPanel assetBrowserPanel;
+        LogPanel logPanel;
         std::vector<EntityID> selectedEntities = { };
         Sierra::HandleManager<ViewportID, Viewport> viewports = { };
 
         ImGuiStyle style = { };
-        std::unique_ptr<EditorWizard> currentWizard = nullptr;
+        std::unique_ptr<EditorModal> currentWizard = nullptr;
 
         void DrawMenuBar();
         ImGuiID DrawDockSpace();
 
-        void OpenTextureSerializeWizard();
-        void OpenMaterialSerializeWizard();
-        void OpenModelSerializeWizard();
+        void OpenTextureSerializeWizard(const std::filesystem::path* outputDirectoryPath = nullptr);
+        void OpenMaterialSerializeWizard(const std::filesystem::path* outputDirectoryPath = nullptr);
+        void OpenModelSerializeWizard(const std::filesystem::path* outputDirectoryPath = nullptr);
 
     };
 

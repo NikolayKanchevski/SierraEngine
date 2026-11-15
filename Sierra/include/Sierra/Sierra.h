@@ -9,6 +9,7 @@
 #include "../../src/Core/Application.h"
 #if SR_ENABLE_LOGGING
     #include "../../src/Core/Logger.h"
+    #include "../../src/Utilities/ScopeProfiler.h"
 #endif
 #include "../../src/Core/Errors.h"
 #include "../../src/Core/Handle.hpp"
@@ -25,6 +26,7 @@
 #include "../../src/Files/FileErrors.h"
 #include "../../src/Files/FileManager.h"
 #include "../../src/Files/FileStream.h"
+#include "../../src/Files/Path.h"
 #include "../../src/Files/PathErrors.h"
 
 #include "../../src/Memory/MemoryReadStream.h"
@@ -33,10 +35,10 @@
 #include "../../src/Platform/EntryPoint.h"
 #include "../../src/Platform/PlatformContext.h"
 
-#include "../../src/Utilities/Date.h"
 #include "../../src/Utilities/RNG.h"
 #include "../../src/Utilities/Stream.h"
-#include "../../src/Utilities/Time.h"
+#include "../../src/Utilities/TimePoint.h"
+#include "../../src/Utilities/TimeStep.h"
 
 #include "../../src/Rendering/Buffer.h"
 #include "../../src/Rendering/CommandBuffer.h"

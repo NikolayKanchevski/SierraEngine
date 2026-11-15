@@ -27,21 +27,20 @@ namespace Sierra
         [URL release];
 
         // NOTE: From the tests I performed, no POSIX/fcntl/C-API buffering configuration results in any performance difference on Apple platforms, which is why no accounting for buffering is done here
-
         if (error != nil) HandleNSFileError(error, "Could not open file stream", createInfo.filePath);
     }
 
     /* --- POLLING METHODS --- */
 
-    std::vector<uint8> FoundationFileStream::Read(const size memorySize)
+    void FoundationFileStream::Read(const std::span<uint8> outBuffer)
     {
-        SR_THROW_IF(GetOffset() + memorySize > GetSize(), InvalidFileRange("Cannot read invalid range from file stream", GetFilePath(), GetOffset(), memorySize, GetSize()));
+        SR_THROW_IF(GetOffset() + outBuffer.size() > GetSize(), InvalidFileRange("Cannot read invalid range from file stream", GetFilePath(), GetOffset(), outBuffer.size(), GetSize()));
 
         NSError* error = nil;
-        NSData* const data = [fileHandle readDataUpToLength: memorySize error: &error];
+        NSData* const data = [fileHandle readDataUpToLength: outBuffer.size() error: &error];
 
-        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not read [{0}] bytes from file stream", memorySize), filePath);
-        return { reinterpret_cast<const uint8*>(data.bytes), reinterpret_cast<const uint8*>(data.bytes) + memorySize };
+        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not read [{0}] bytes from file stream", outBuffer.size()), filePath);
+        std::memcpy(outBuffer.data(), reinterpret_cast<const uint8*>(data.bytes), outBuffer.size());
     }
 
     void FoundationFileStream::Write(const void* memory, const size memorySize)

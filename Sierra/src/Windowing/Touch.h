@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../Utilities/Time.h"
+#include "../Utilities/TimePoint.h"
 #include "../Core/Handle.hpp"
 
 namespace Sierra

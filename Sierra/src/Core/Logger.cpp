@@ -23,8 +23,6 @@ namespace Sierra
 
     void Logger::Initialize(const std::string_view applicationName)
     {
-        // Set global logging pattern [Time / Logger Name / Arguments]
-        spdlog::set_pattern("%^[%T] %n: %v%$");
 
         // Create loggers
         #if !SR_PLATFORM_ANDROID
@@ -34,6 +32,10 @@ namespace Sierra
             coreLogger = spdlog::android_logger_mt("Sierra API");
             applicationLogger = spdlog::android_logger_mt(applicationName.data());
         #endif
+        // Pattern [Time / Logger Name / Message], with the whole line coloured by level. Set on each logger directly
+        coreLogger->set_pattern("%^[%T] %n: %v%$");
+        applicationLogger->set_pattern("%^[%T] %n: %v%$");
+
         coreLogger->set_level(spdlog::level::info);
         applicationLogger->set_level(spdlog::level::info);
     }
@@ -48,23 +50,6 @@ namespace Sierra
     spdlog::logger& Logger::GetApplicationLogger() noexcept
     {
         return *applicationLogger;
-    }
-
-    /* --- CONSTRUCTORS --- */
-
-    ScopeProfiler::ScopeProfiler(const std::string_view scopeName)
-        : scopeName(scopeName), startTime(std::chrono::high_resolution_clock::now())
-    {
-
-    }
-
-    /* --- DESTRUCTOR --- */
-
-    ScopeProfiler::~ScopeProfiler() noexcept
-    {
-        const auto endTime = std::chrono::high_resolution_clock::now();
-        const uint64 duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
-        SR_INFO("Scope [{0}] took {1}ms to execute", scopeName, duration);
     }
 
 }

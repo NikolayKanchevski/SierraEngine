@@ -10,8 +10,8 @@
 
 #include "../PlatformContext.h"
 
-#include "CocoaContext.h"
 #include "../../Files/Apple/FoundationFileManager.h"
+#include "../../Windowing/macOS/CocoaWindowManager.h"
 
 namespace Sierra
 {
@@ -22,23 +22,12 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         macOSContext();
 
-        /* --- POLLING METHODS --- */
-        [[nodiscard]] std::unique_ptr<Window> CreateWindow(const WindowCreateInfo& createInfo) const override;
-
-        bool OpenAlertDialog(const AlertDialogOpenInfo& openInfo) const override;
-        [[nodiscard]] std::vector<std::filesystem::path> OpenFileSelectDialog(const FileSelectDialogOpenInfo& openInfo) const noexcept override;
-        [[nodiscard]] std::optional<std::filesystem::path> OpenFileSaveDialog(const FileSaveDialogOpenInfo& openInfo) const noexcept override;
-
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string GetUserName() const noexcept override;
+        [[nodiscard]] const WindowManager& GetWindowManager() const noexcept override { return windowManager; }
         [[nodiscard]] const FileManager& GetFileManager() const noexcept override { return fileManager; }
 
-        [[nodiscard]] Screen& GetPrimaryScreen() noexcept override { return cocoaContext.GetPrimaryScreen(); }
-        [[nodiscard]] Screen& GetWindowScreen(const Window& window) override;
-        void EnumerateScreens(const ScreenEnumerationPredicate& Predicate) override;
-
+        /* --- POLLING METHODS --- */
         [[nodiscard]] PlatformType GetType() const noexcept override { return PlatformType::macOS; }
-        [[nodiscard]] CocoaContext& GetCocoaContext() noexcept { return cocoaContext; }
 
         /* --- COPY SEMANTICS --- */
         macOSContext(const macOSContext&) = delete;
@@ -52,10 +41,10 @@ namespace Sierra
         ~macOSContext() noexcept override = default;
 
     private:
-        CocoaContext cocoaContext;
+        CocoaWindowManager windowManager;
         FoundationFileManager fileManager;
 
-        void Update() override;
+        void Update() override { };
 
     };
 

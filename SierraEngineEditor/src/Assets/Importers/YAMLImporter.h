@@ -9,9 +9,16 @@
 namespace SierraEngine
 {
 
+
     class YAMLImporter : public virtual AssetImporter
     {
     public:
+        /* --- CONSTANTS --- */
+        constexpr static AssetFormatSignature FORMAT_SIGNATURE = { 'Y', 'A' };
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] AssetFormatSignature GetFormatSignature() const noexcept override { return FORMAT_SIGNATURE; }
+
         /* --- COPY SEMANTICS --- */
         YAMLImporter(const YAMLImporter&) = delete;
         YAMLImporter& operator=(const YAMLImporter&) = delete;

@@ -9,6 +9,14 @@
 namespace SierraEngine
 {
 
+    AssetSignature AssetSerializer::GetSignature() const noexcept
+    {
+        const AssetFormatSignature formatSignature = GetFormatSignature();
+        const AssetTypeSignature typeSignature = GetTypeSignature();
+
+        return { formatSignature[0], formatSignature[1], typeSignature[0], typeSignature[1] };
+    }
+
     /* --- POLLING METHODS --- */
 
     void AssetSerializer::SerializeHeader(Sierra::Stream& stream) const
@@ -18,7 +26,7 @@ namespace SierraEngine
             .signature = GetSignature(),
             .version = GetVersion()
         };
-        stream.Write(header);
+        stream.Write(header); // TODO: WHY NO READ
     }
 
 }

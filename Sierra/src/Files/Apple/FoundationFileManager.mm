@@ -127,7 +127,7 @@ namespace Sierra
         {
             for (const std::filesystem::path& path : std::filesystem::directory_iterator(directoryPath))
             {
-                if (!std::filesystem::is_regular_file(path)) continue;
+                //if (!std::filesystem::is_regular_file(path)) continue; TODO: FIX
                 Predicate(path);
             }
         }
@@ -135,7 +135,7 @@ namespace Sierra
         {
             for (const std::filesystem::path& path : std::filesystem::recursive_directory_iterator(directoryPath))
             {
-                if (!std::filesystem::is_regular_file(path)) continue;
+                //if (!std::filesystem::is_regular_file(path)) continue; TODO: FIX
                 Predicate(path);
             }
         }
@@ -244,8 +244,8 @@ namespace Sierra
         {
             .type = FilePathToFileType(filePath),
             .memorySize = static_cast<uint64>([memorySize longLongValue]),
-            .dateCreated = Date(TimePoint(dateCreatedTimePoint)),
-            .dateLastModified = Date(TimePoint(dateModifiedTimePoint))
+            .dateCreated = TimePoint(dateCreatedTimePoint),
+            .dateLastModified = TimePoint(dateModifiedTimePoint)
         };
     }
 
@@ -276,8 +276,8 @@ namespace Sierra
         {
             .fileCount = fileCount,
             .memorySize = memorySize,
-            .dateCreated = Date(TimePoint(dateCreatedTimePoint)),
-            .dateLastModified = Date(TimePoint(dateModifiedTimePoint))
+            .dateCreated = TimePoint(dateCreatedTimePoint),
+            .dateLastModified = TimePoint(dateModifiedTimePoint)
         };
     }
 
