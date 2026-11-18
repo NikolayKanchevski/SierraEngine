@@ -203,15 +203,24 @@ namespace SierraEngine
         }
 
         const size blobMemorySize = sizeof(AssetHeader) + GetTextureMemorySize(serializeInfo);
-        Sierra::MemoryWriteStream blobStream(blobMemorySize);
+        Sierra::WriteStream stream(blobMemorySize);
 
-        SerializeHeader(blobStream);
-        SerializeBlob(blobStream, serializeInfo);
+        if (SerializeHeader(stream) != Sierra::StreamResult::Success)
+        {
+            APP_WARNING("Could not YAML serialize texture, as writing asset header to stream failed");
+            return std::nullopt;
+        }
+
+        if (SerializeBlob(stream, serializeInfo) != Sierra::StreamResult::Success)
+        {
+            APP_WARNING("Could not YAML serialize texture, as writing its blob to stream failed");
+            return std::nullopt;
+        }
 
         SerializedTexture texture
         {
             .data = { reinterpret_cast<const uint8*>(data.data()), reinterpret_cast<const uint8*>(data.data()) + data.size() },
-            .blob = blobStream.Release()
+            .blob = stream.Release()
         };
 
         return texture;

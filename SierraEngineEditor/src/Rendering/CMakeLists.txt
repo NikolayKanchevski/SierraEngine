@@ -4,3 +4,5 @@ target_sources(SierraEngineEditor PRIVATE
     Viewport.cpp
     Viewport.h
 )
+
+add_subdirectory(ImGui)

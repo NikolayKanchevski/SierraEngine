@@ -46,11 +46,7 @@ namespace SierraEngine
         std::span<const LoadedImageLevel> levels = { };
     };
 
-    struct SerializedTexture
-    {
-        std::vector<uint8> data = { };
-        std::vector<uint8> blob = { };
-    };
+    using SerializedTexture = SerializedAsset;
 
     class SIERRA_ENGINE_API TextureSerializer : public virtual AssetSerializer
     {
@@ -76,7 +72,7 @@ namespace SierraEngine
         TextureSerializer() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        void SerializeBlob(Sierra::Stream& blob, const TextureSerializeInfo& serializeInfo) const;
+        [[nodiscard]] Sierra::StreamResult SerializeBlob(Sierra::Stream& blob, const TextureSerializeInfo& serializeInfo) const;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] size GetTextureMemorySize(const TextureSerializeInfo& serializeInfo) const noexcept;

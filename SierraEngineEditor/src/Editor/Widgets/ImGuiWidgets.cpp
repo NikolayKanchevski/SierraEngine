@@ -11,7 +11,7 @@ namespace SierraEngine
     {
         constexpr float32 DRAG_MOUSE_THRESHOLD_FACTOR = 0.50f;
 
-        bool FilePathInput(const std::string_view label, const std::filesystem::path& value, const float32 width)
+        bool FilePathInput(const std::string_view label, const Sierra::Path& value, const float32 width)
         {
             const ImGuiStyle& style = ImGui::GetStyle();
 
@@ -28,7 +28,7 @@ namespace SierraEngine
             else
             {
                 ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-                std::string filePathString = value.string();
+                std::string filePathString = value;
                 ImGuiWidgets::TextInput(label, filePathString, { .width = filePathWidth });
                 ImGui::PopItemFlag();
                 ImGui::SetNextItemWidth(filePathWidth);
@@ -42,6 +42,32 @@ namespace SierraEngine
 
             return false;
         }
+    }
+
+    std::string ImGuiWidgets::TruncateText(const float32 fontSize, const std::string_view text, const float32 maxWidth, ImFont* font)
+    {
+        if (font == nullptr)
+            return std::string(text);
+
+        if (font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, text.data(), text.data() + text.size()).x <= maxWidth)
+            return std::string(text);
+
+        constexpr std::string_view ELLIPSIS = "...";
+        const float32 ellipsisWidth = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, ELLIPSIS.data(), ELLIPSIS.data() + ELLIPSIS.size()).x;
+
+        size end = text.size();
+        while (end > 0)
+        {
+            end--;
+
+            // Step back to the start of a UTF-8 character
+            while (end > 0 && (static_cast<uint8>(text[end]) & 0xC0) == 0x80) end--;
+
+            const float32 width = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, text.data(), text.data() + end).x + ellipsisWidth;
+            if (width <= maxWidth) return std::string(text.substr(0, end)) + std::string(ELLIPSIS);
+        }
+
+        return std::string(ELLIPSIS);
     }
 
     void ImGuiWidgets::HorizontalIndent(const float32 indent)
@@ -140,19 +166,19 @@ namespace SierraEngine
         return ImGui::InputText(label.data(), &value, inputInfo.flags, inputInfo.CharacterCallback, inputInfo.userData);
     }
 
-    bool ImGuiWidgets::FileSelectInput(const std::string_view label, std::filesystem::path& value, const EditorPlatformContext& platformContext, const ImGuiFileSelectInputInfo& inputInfo)
+    bool ImGuiWidgets::FileSelectInput(const std::string_view label, Sierra::Path& value, const Sierra::PlatformContext& platformContext, const ImGuiFileSelectInputInfo& inputInfo)
     {
         if (!FilePathInput(label, value, inputInfo.width))
         {
             return false;
         }
 
-        const std::optional<std::filesystem::path> filePath = platformContext.OpenFileSaveDialog({
-            .message = inputInfo.message,
-            .buttonText = inputInfo.buttonText,
-            .directoryPath = inputInfo.directoryPath,
-            .allowedFileExtensions = inputInfo.allowedFileExtensions
-        });
+        const std::optional<Sierra::Path> filePath = platformContext.OpenPathSaveDialog({
+                                                                                                .message = inputInfo.message,
+                                                                                                .buttonText = inputInfo.buttonText,
+                                                                                                .directoryPath = inputInfo.directoryPath,
+                                                                                                .allowedFileExtensions = inputInfo.allowedFileExtensions
+                                                                                        });
 
         if (!filePath.has_value())
         {
@@ -163,18 +189,18 @@ namespace SierraEngine
         return true;
     }
 
-    bool ImGuiWidgets::FileSaveInput(const std::string_view label, std::filesystem::path& value, const EditorPlatformContext& platformContext, const ImGuiFileSaveInputInfo& inputInfo)
+    bool ImGuiWidgets::FileSaveInput(const std::string_view label, Sierra::Path& value, const Sierra::PlatformContext& platformContext, const ImGuiFileSaveInputInfo& inputInfo)
     {
         if (!FilePathInput(label, value, inputInfo.width))
         {
             return false;
         }
 
-        const std::optional<std::filesystem::path> filePath = platformContext.OpenFileSaveDialog({
+        const std::optional<Sierra::Path> filePath = platformContext.OpenPathSaveDialog({
             .message = inputInfo.message,
             .buttonText = inputInfo.buttonText,
             .directoryPath = inputInfo.directoryPath,
-            .fileName = inputInfo.fileName,
+            .pathName = inputInfo.fileName,
             .allowedFileExtensions = inputInfo.allowedFileExtensions
         });
 
@@ -415,7 +441,7 @@ namespace SierraEngine
         return ImGui::ColorEdit4(label.data(), &value[0], inputInfo.flags);
     }
 
-    bool ImGuiWidgets::ImageInput(const std::string_view label, std::filesystem::path& value, const EditorPlatformContext& platformContext, const ImGuiImageInputInfo& inputInfo)
+    bool ImGuiWidgets::ImageInput(const std::string_view label, Sierra::Path& value, const Sierra::PlatformContext& platformContext, const ImGuiImageInputInfo& inputInfo)
     {
         const ImGuiWindow* window = ImGui::GetCurrentWindow();
         if (!window || window->SkipItems) return false;

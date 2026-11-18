@@ -2,7 +2,12 @@ name: Linux GCC Build
 run-name: Build project modules on Linux with CMake and GCC
 
 on:
-  push
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   Build:
@@ -19,23 +24,22 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
 
-      - name: Update Package Index
-        run: sudo apt-get update
-
-      - name: Install X11
-        run: sudo apt-get install libx11-dev libxcb-xkb-dev libxcursor-dev libxrandr-dev
+      # Installed before the Vulkan SDK, as its loader is built with support for whichever windowing systems it finds
+      - name: Install Windowing Libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libx11-dev libxcb-xkb-dev libxcursor-dev libxrandr-dev libwayland-dev libwayland-bin libxkbcommon-dev libdecor-0-dev
 
       - name: Prepare Vulkan SDK
-        uses: humbletim/setup-vulkan-sdk@v1.2.0
+        uses: humbletim/setup-vulkan-sdk@v1.2.1
         with:
           vulkan-query-version: latest
           vulkan-components: Vulkan-Headers, Vulkan-Loader
           vulkan-use-cache: true
-
-      - name: Update Git Submodules
-        run: git submodule update --init --recursive
 
       - name: Configure Editor Build Directory
         id: editorStrings
@@ -51,4 +55,4 @@ jobs:
           -S ${{ github.workspace }}/SierraEngineEditor/
 
       - name: Build Editor CMake Project
-        run: cmake --build ${{ steps.editorStrings.outputs.buildDirectory }} --config ${{ matrix.build_type }}
+        run: cmake --build ${{ steps.editorStrings.outputs.buildDirectory }} --config ${{ matrix.build_type }} --parallel

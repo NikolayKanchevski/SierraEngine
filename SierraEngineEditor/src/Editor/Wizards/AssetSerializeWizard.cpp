@@ -30,11 +30,23 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void AssetSerializeWizard::DefaultMetadata(AssetMetadata& metadata, const std::string_view name, const EditorPlatformContext& platformContext) const noexcept
+    void AssetSerializeWizard::DefaultMetadata(AssetMetadata& metadata, const std::string_view name, const Sierra::PlatformContext& platformContext) const noexcept
     {
         metadata.name = name;
         metadata.author = platformContext.GetUserName();
         metadata.tags = { };
+    }
+
+    bool AssetSerializeWizard::WriteAssetFiles(const Sierra::FileManager& fileManager, const Sierra::Path& assetFilePath, const SerializedAsset& serializedAsset) const
+    {
+        if (fileManager.WriteFile(assetFilePath, serializedAsset.data, Sierra::PathConflictPolicy::Overwrite).has_value())
+            return false;
+
+        const Sierra::Path blobFilePath = Sierra::Path(assetFilePath).ChangeExtension(BLOB_OUTPUT_FILE_EXTENSION);
+        if (fileManager.WriteFile(blobFilePath, serializedAsset.blob, Sierra::PathConflictPolicy::Overwrite).has_value())
+            return false;
+
+        return true;
     }
 
     void AssetSerializeWizard::DrawMetadataMenu(AssetMetadata& metadata) const noexcept

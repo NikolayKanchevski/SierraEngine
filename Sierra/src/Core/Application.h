@@ -50,13 +50,14 @@ namespace Sierra
         explicit Application(const ApplicationCreateInfo& createInfo);
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] const PlatformContext& GetPlatformContext() const noexcept { return *platformContext; }
+        [[nodiscard]] const RenderingInstance& GetRenderingInstance() const noexcept { return *renderingInstance; }
+
         [[nodiscard]] const WindowManager& GetWindowManager() const noexcept { return platformContext->GetWindowManager(); }
         [[nodiscard]] const FileManager& GetFileManager() const noexcept { return platformContext->GetFileManager(); }
 
-        [[nodiscard]] const RenderingInstance& GetRenderingInstance() const noexcept { return *renderingInstance; }
-
-        [[nodiscard]] std::filesystem::path GetApplicationCachesDirectoryPath() const noexcept;
-        [[nodiscard]] std::filesystem::path GetApplicationTemporaryDirectoryPath() const noexcept;
+        [[nodiscard]] Path GetApplicationCachesDirectoryPath() const noexcept;
+        [[nodiscard]] Path GetApplicationTemporaryDirectoryPath() const noexcept;
 
     private:
         const std::string_view name;

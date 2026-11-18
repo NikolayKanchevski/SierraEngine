@@ -43,7 +43,7 @@ namespace Sierra
         void GenerateMipMapsForImage(const Image& image) override;
 
         void BindResourceTable(const ResourceTable& resourceTable) override;
-        void PushConstants(const void* memory, uint8 sourceOffset, uint8 memorySize) override;
+        void PushConstants(std::span<const uint8> buffer) override;
 
         void BeginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer) override;
         void BeginNextSubpass() override;

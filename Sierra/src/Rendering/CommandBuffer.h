@@ -103,7 +103,13 @@ namespace Sierra
         virtual void GenerateMipMapsForImage(const Image& image);
 
         virtual void BindResourceTable(const ResourceTable& resourceTable);
-        virtual void PushConstants(const void* memory, uint8 offset, uint8 memorySize);
+        virtual void PushConstants(std::span<const uint8> buffer);
+
+        template<typename T>
+        void PushConstantsAs(const T& t)
+        {
+            PushConstants({ reinterpret_cast<const uint8*>(&t), sizeof(T) });
+        }
 
         virtual void BeginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer);
         virtual void BeginNextSubpass();

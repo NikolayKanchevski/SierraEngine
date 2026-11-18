@@ -42,7 +42,7 @@ namespace Sierra
 
         [[nodiscard]] float32 GetForce() const noexcept { return force; }
         [[nodiscard]] TimePoint GetTapTime() const noexcept { return tapTime; }
-        [[nodiscard]] TimeStep GetHoldDuration() const noexcept { return TimeStep(TimePoint::Now() - tapTime); }
+        [[nodiscard]] TimeStep GetHoldDuration() const noexcept { return TimePoint::Now() - tapTime; }
 
         [[nodiscard]] Vector2 GetPosition() const noexcept { return position; }
         [[nodiscard]] Vector2 GetLastPosition() const noexcept { return lastPosition; }

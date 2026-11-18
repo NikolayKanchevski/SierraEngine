@@ -15,7 +15,7 @@ namespace SierraEngine
 
     struct AssetManagerCreateInfo
     {
-        const RenderingContext& renderingContext;
+
     };
 
     class SIERRA_ENGINE_API AssetManager
@@ -26,7 +26,7 @@ namespace SierraEngine
         using AssetLoadCallback = std::function<void(IDType)>;
 
         /* --- POLLING METHODS --- */
-        virtual void Update(Sierra::CommandBuffer& commandBuffer) = 0;
+        virtual void Update(const DrawFrame& drawFrame) = 0;
 
         virtual void ImportTexture(const ImportedTexture& importedTexture) = 0;
         virtual void ImportMaterial(const ImportedMaterial& importedMaterial) = 0;

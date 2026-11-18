@@ -17,7 +17,7 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    bool ConfirmationDialog::Draw(Sierra::CommandBuffer& commandBuffer)
+    bool ConfirmationDialog::Draw(const ApplicationFrame& applicationFrame, const DrawFrame&)
     {
         constexpr ImVec4 DESTRUCTIVE_BUTTON_COLOR         = { 0.72f, 0.22f, 0.22f, 1.0f };
         constexpr ImVec4 DESTRUCTIVE_BUTTON_HOVERED_COLOR = { 0.85f, 0.28f, 0.28f, 1.0f };
@@ -39,7 +39,7 @@ namespace SierraEngine
             }
 
             // Enter is intentionally not bound to confirm, so a stray keypress cannot trigger the action
-            const bool confirmed = ImGui::Button(confirmationText.c_str(), { buttonWidth, 0.0f });
+            const bool confirmed = ImGui::Button(confirmationText.c_str(), { buttonWidth, 0.0f }) || (applicationFrame.inputManager != nullptr && applicationFrame.inputManager->IsKeyPressed(Sierra::Key::Enter));
 
             if (destructive) ImGui::PopStyleColor(2);
 

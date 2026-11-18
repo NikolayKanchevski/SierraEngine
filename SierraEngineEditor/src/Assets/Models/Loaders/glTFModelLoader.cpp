@@ -144,10 +144,10 @@ namespace SierraEngine
             for (const fastgltf::Image& imageInfo : asset.images)
             {
                 std::visit(fastgltf::visitor {
-                    [](auto& arg) -> void { },
+                    [](auto&) -> void { },
                     [&images, &imageInfo](const fastgltf::sources::Array& array)-> void
                     {
-                        std::optional<LoadedImage> image = AutoImageLoader::Load({ .memory = { reinterpret_cast<const uint8*>(array.bytes.data()), array.bytes.size() } });
+                        std::optional<LoadedImage> image = AutoImageLoader::Load({ .buffer = { reinterpret_cast<const uint8*>(array.bytes.data()), array.bytes.size() } });
                         if (image.has_value())
                         {
                             images.emplace_back(std::move(*image));
@@ -162,10 +162,10 @@ namespace SierraEngine
                         const fastgltf::Buffer& buffer = asset.buffers[bufferView.bufferIndex];
 
                         std::visit(fastgltf::visitor {
-                            [](auto& arg) -> void { },
+                            [](auto&) -> void { },
                             [&bufferView, &images, &imageInfo](const fastgltf::sources::Array& array) -> void
                             {
-                                std::optional<LoadedImage> image = AutoImageLoader::Load({ .memory = { reinterpret_cast<const uint8*>(array.bytes.data()) + bufferView.byteOffset, bufferView.byteLength } });
+                                std::optional<LoadedImage> image = AutoImageLoader::Load({ .buffer = { reinterpret_cast<const uint8*>(array.bytes.data()) + bufferView.byteOffset, bufferView.byteLength } });
                                 if (image.has_value())
                                 {
                                     images.emplace_back(std::move(*image));
@@ -259,7 +259,14 @@ namespace SierraEngine
 
     std::optional<LoadedModel> glTFModelLoader::Load(const ModelLoadInfo& loadInfo) const
     {
-        fastgltf::Expected<fastgltf::GltfDataBuffer> data = fastgltf::GltfDataBuffer::FromBytes(reinterpret_cast<const std::byte*>(loadInfo.memory.data()), loadInfo.memory.size());
+        std::vector<uint8> buffer = { };
+        if (loadInfo.stream.ReadToEnd(buffer) != Sierra::StreamResult::Success)
+        {
+            APP_INFO("Could not read glTF model from stream");
+            return std::nullopt;
+        }
+
+        fastgltf::Expected<fastgltf::GltfDataBuffer> data = fastgltf::GltfDataBuffer::FromSpan({ reinterpret_cast<std::byte*>(buffer.data()), buffer.size() });
         if (data.error() != fastgltf::Error::None)
         {
             return std::nullopt;

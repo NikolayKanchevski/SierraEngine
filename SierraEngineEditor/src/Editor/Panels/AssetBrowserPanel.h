@@ -4,24 +4,16 @@
 
 #pragma once
 
-#include "../EditorModal.h"
-#include "../../Platform/EditorPlatformContext.h"
+#include "../EditorFrame.h"
+#include "../Modal.h"
+#include "../../Core/ApplicationFrame.h"
 
 namespace SierraEngine
 {
 
     struct AssetBrowserPanelCreateInfo
     {
-        const Sierra::FileManager& fileManager;
-        const RenderingContext& renderingContext;
-
         const Sierra::Path& rootDirectoryPath = { };
-    };
-
-    struct AssetBrowserDrawInfo
-    {
-        Sierra::CommandBuffer& commandBuffer;
-        const Sierra::InputManager& inputManager;
     };
 
     enum class AssetBrowserEntryType : uint8
@@ -42,38 +34,38 @@ namespace SierraEngine
         AssetBrowserEntryType type = AssetBrowserEntryType::Unknown;
 
         size memorySize = 0;
-        Sierra::TimePoint dateLastModified = { };
-        std::filesystem::file_time_type lastWriteTime = { };
+        Sierra::TimePoint timeCreated = { };
+        Sierra::TimePoint timeLastModified = { };
     };
 
     class AssetBrowserPanel final
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit AssetBrowserPanel(const AssetBrowserPanelCreateInfo& createInfo);
+        explicit AssetBrowserPanel(const ApplicationFrame& applicationFrame, const AssetBrowserPanelCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Draw(const AssetBrowserDrawInfo& drawInfo);
+        void Draw(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame);
 
-        void Refresh();
+        void Refresh(const ApplicationFrame& applicationFrame);
 
-        bool NavigateBack();
-        bool NavigateForward();
-        bool NavigateUp();
-        bool NavigateTo(const Sierra::Path& relativeDirectoryPath);
+        bool NavigateBack(const ApplicationFrame& applicationFrame);
+        bool NavigateForward(const ApplicationFrame& applicationFrame);
+        bool NavigateUp(const ApplicationFrame& applicationFrame);
+        bool NavigateTo(const ApplicationFrame& applicationFrame, const Sierra::Path& relativeDirectoryPath);
 
-        bool Select(const Sierra::Path& relativePath);
-        bool Select(std::span<const Sierra::Path> relativePaths);
-        bool DeleteSelection();
+        bool Select(const ApplicationFrame& applicationFrame, const Sierra::Path& relativePath);
+        bool Select(const ApplicationFrame& applicationFrame, std::span<const Sierra::Path> relativePaths);
+        bool OpenSelection(const ApplicationFrame& applicationFrame);
+        bool DeleteSelection(const ApplicationFrame& applicationFrame);
         void ClearSelection();
 
-        bool OpenNewFolderDialog();
-        bool OpenRenameDialog();
-        bool OpenDeleteDialog();
+        bool OpenNewFolderDialog(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame);
+        bool OpenRenameDialog(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame);
+        bool OpenDeleteDialog(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] bool IsSelected(const Sierra::Path& relativePath) const noexcept;
-
         [[nodiscard]] bool IsSelectionEmpty() const noexcept { return selectedEntryIndices.empty(); }
         [[nodiscard]] const AssetBrowserEntry* GetSelectedEntry() const noexcept { return !selectedEntryIndices.empty() ? &entries[selectedEntryIndices.front()] : nullptr; }
 
@@ -89,17 +81,14 @@ namespace SierraEngine
         ~AssetBrowserPanel() noexcept = default;
 
     private:
-        const Sierra::FileManager* fileManager;
-        const RenderingContext* renderingContext;
-
-        void HandleShortcuts(const Sierra::InputManager& inputManager);
+        void HandleShortcuts(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame);
         void RefreshEntryVisibility();
         void RefreshEntryOrder();
 
         Sierra::Path rootDirectoryPath = { };
         Sierra::Path relativeDirectoryPath = { };
-        void UpdateRelativeDirectoryPath(const Sierra::Path& relativeDirectoryPath);
-        void DrawNavigation();
+        void UpdateRelativeDirectoryPath(const ApplicationFrame& applicationFrame, const Sierra::Path& relativeDirectoryPath);
+        void DrawNavigation(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame);
 
         uint32 filterIndex = 0;
         uint32 sortIndex = 0;
@@ -109,41 +98,41 @@ namespace SierraEngine
         float32 tileSize = 64.0f;
         bool showExtensions = false;
         bool showHiddenEntries = false;
-        bool showCompanionFiles = true;
+        bool showCompanionFiles = false;
         bool showDetails = false;
-        void DrawToolBar();
+        void DrawToolBar(const ApplicationFrame& applicationFrame);
 
         bool revealCurrentDirectory = true;
-        void DrawTree(float32 height);
-        void DrawTreeNode(const Sierra::Path& relativeDirectoryPath);
+        void DrawTree(const ApplicationFrame& applicationFrame, float32 height);
+        void DrawTreeNode(const ApplicationFrame& applicationFrame, const Sierra::Path& relativeDirectoryPath);
 
         std::vector<AssetBrowserEntry> entries = { };
         std::vector<size> visibleEntryIndices = { };
         std::vector<size> selectedEntryIndices = { };
-        void AddEntry(const Sierra::Path& relativeEntryPath);
-        void DrawEntries(Vector2 size);
+        void AddEntry(const ApplicationFrame& applicationFrame, const Sierra::Path& relativeEntryPath);
+        void AddEntry(AssetBrowserEntry&& entry);
+        void DrawEntries(const ApplicationFrame& applicationFrame, Vector2 size);
         void DrawEmptyEntries();
-        void DrawGridEntries();
-        void DrawGridEntry(const AssetBrowserEntry& entry, Vector2 size);
-        void DrawListEntries();
-        void DrawListEntry(const AssetBrowserEntry& entry);
-        void HandleEntryInteraction(const AssetBrowserEntry& entry);
+        void DrawGridEntries(const ApplicationFrame& applicationFrame);
+        void DrawGridEntry(const ApplicationFrame& applicationFrame, const AssetBrowserEntry& entry, Vector2 size);
+        void DrawListEntries(const ApplicationFrame& applicationFrame);
+        void DrawListEntry(const ApplicationFrame& applicationFrame, const AssetBrowserEntry& entry);
+        void HandleEntryInteraction(const ApplicationFrame& applicationFrame, const AssetBrowserEntry& entry);
         void DrawDetails(float32 height);
         void DrawFolderDetails();
         void DrawFileEntryDetails(const AssetBrowserEntry& entry);
 
         std::string statusMessage = { };
-        AlertSeverity statusSeverity = AlertSeverity::Info;
+        Sierra::AlertSeverity statusSeverity = Sierra::AlertSeverity::Info;
         float64 statusMessageTime = 0.0;
-        void UpdateStatus(const std::string& message, AlertSeverity severity);
+        void UpdateStatus(const std::string& message, Sierra::AlertSeverity severity);
         void DrawStatusBar();
 
         bool openBackgroundContextMenu = false;
         bool openSelectionContextMenu = false;
-        std::unique_ptr<EditorModal> modal = nullptr;
-        void DrawPopups();
-        void DrawBackgroundContextMenu();
-        void DrawSelectionContextMenu();
+        void DrawPopups(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame);
+        void DrawBackgroundContextMenu(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame);
+        void DrawSelectionContextMenu(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame);
 
         std::vector<Sierra::Path> backHistory = { };
         std::vector<Sierra::Path> forwardHistory = { };

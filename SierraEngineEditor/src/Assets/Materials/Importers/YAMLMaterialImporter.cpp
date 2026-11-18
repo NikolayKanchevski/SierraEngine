@@ -62,9 +62,11 @@ namespace SierraEngine
 
     std::optional<ImportedMaterial> YAMLMaterialImporter::Import(const MaterialImportInfo& importInfo) const
     {
-        Sierra::MemoryReadStream blobStream(importInfo.serializedMaterial.blob);
+        Sierra::ReadStream blob(importInfo.serializedMaterial.blob);
 
-        AssetHeader header = blobStream.ReadAs<AssetHeader>();
+        AssetHeader header = { };
+        blob.ReadAs<AssetHeader>(header);
+
         if (header.signature != GetSignature())
         {
             APP_WARNING("Cannot YAML import material, as it was not serialized with YAML");

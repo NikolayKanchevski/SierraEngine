@@ -24,15 +24,15 @@ namespace SierraEngine
 
         if (createInfo.outputDirectoryPath != nullptr)
         {
-            outputFilePath = *createInfo.outputDirectoryPath / createInfo.inputFilePath->filename().replace_extension(outputFileExtension);
+            outputFilePath = *createInfo.outputDirectoryPath / Sierra::Path(createInfo.inputFilePath->GetFileName()).ChangeExtension(outputFileExtension);
         }
         else
         {
-            outputFilePath = std::filesystem::path(*createInfo.inputFilePath).replace_extension(outputFileExtension);
+            outputFilePath = Sierra::Path(*createInfo.inputFilePath).ChangeExtension(outputFileExtension);
         }
     }
 
-    bool FileOutputWizard::DrawFileOutputFooter(const EditorPlatformContext& platformContext, uint32& formatIndex, const std::span<const ImGuiDropdownOption> formatOptions) noexcept
+    bool FileOutputWizard::DrawFileOutputFooter(const Sierra::PlatformContext& platformContext, uint32& formatIndex, const std::span<const ImGuiDropdownOption> formatOptions) noexcept
     {
         const ImGuiStyle& style = ImGui::GetStyle();
         const float32 buttonHeight = ImGui::GetFrameHeight() * 1.35f;
@@ -47,7 +47,7 @@ namespace SierraEngine
 
             ImGuiWidgets::BeginProperty("Output");
             {
-                const std::string fileName = outputFilePath.stem().string();
+                const std::string fileName = outputFilePath.GetStem();
                 const std::array allowedExtensions = { outputFileExtension };
 
                 const ImGuiFileSaveInputInfo inputInfo
@@ -73,7 +73,7 @@ namespace SierraEngine
 
     /* --- SETTER METHODS --- */
 
-    void FileOutputWizard::SetOutputFilePath(const std::filesystem::path& givenOutputFilePath) noexcept
+    void FileOutputWizard::SetOutputFilePath(const Sierra::Path& givenOutputFilePath) noexcept
     {
         outputFilePath = givenOutputFilePath;
     }

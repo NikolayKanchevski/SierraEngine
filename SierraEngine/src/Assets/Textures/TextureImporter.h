@@ -30,11 +30,6 @@ namespace SierraEngine
         TextureCompression compression = TextureCompression::None;
     };
 
-    struct ImportedTextureBuffer
-    {
-        std::vector<uint8> memory = { };
-    };
-
     struct ImportedTexture
     {
         TextureID ID = { };
@@ -43,7 +38,7 @@ namespace SierraEngine
         TextureSettings settings = { };
 
         TextureProperties properties = { };
-        ImportedTextureBuffer buffer = { };
+        std::vector<uint8> buffer = { };
     };
 
     class SIERRA_ENGINE_API TextureImporter : public virtual AssetImporter
@@ -70,7 +65,7 @@ namespace SierraEngine
         TextureImporter() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::optional<ImportedTextureBuffer> ImportBlob(Sierra::Stream& blob, Sierra::ImageFormat format, const TextureProperties& properties) const;
+        [[nodiscard]] Sierra::StreamResult ImportBlob(Sierra::Stream& blob, Sierra::ImageFormat format, const TextureProperties& properties, std::vector<uint8>& outBuffer) const;
 
         /* --- MOVE SEMANTICS --- */
         TextureImporter(TextureImporter&&) noexcept = default;

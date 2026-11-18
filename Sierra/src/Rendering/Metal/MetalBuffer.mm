@@ -41,12 +41,16 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    void MetalBuffer::Write(const void* memory, const uint64 sourceOffset, const uint64 destinationOffset, const uint64 memorySize)
+    bool MetalBuffer::Write(const uint64 destinationOffset, const std::span<const uint8> givenBuffer)
     {
-        Buffer::Write(memory, sourceOffset, destinationOffset, memorySize);
-        SR_THROW_IF(buffer.contents == nil, InvalidOperationError(SR_FORMAT("Cannot write memory range to buffer [{0}], as its memory location is not on the CPU", GetName())));
+        if (!Buffer::Write(destinationOffset, givenBuffer))
+            return false;
 
-        std::memcpy(reinterpret_cast<uint8*>(buffer.contents) + destinationOffset, reinterpret_cast<const uint8*>(memory) + sourceOffset, memorySize);
+        if (buffer.contents == nil)
+            return false;
+
+        std::memcpy(reinterpret_cast<uint8*>(buffer.contents) + destinationOffset, givenBuffer.data(), givenBuffer.size());
+        return true;
     }
 
     /* --- GETTER METHODS --- */
@@ -54,11 +58,6 @@ namespace Sierra
     std::string_view MetalBuffer::GetName() const noexcept
     {
         return { buffer.label.UTF8String, buffer.label.length };
-    }
-
-    const void* MetalBuffer::GetMemory() const noexcept
-    {
-        return buffer.contents;
     }
 
     uint64 MetalBuffer::GetMemorySize() const noexcept

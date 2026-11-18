@@ -30,12 +30,12 @@ namespace Sierra
         : Shader(createInfo), name(createInfo.name), device(&givenDevice)
     {
         // Set up module create info
-        const ShaderFileHeader& fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.memory.data());
+        const ShaderFileHeader& fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.buffer.data());
         const VkShaderModuleCreateInfo shaderModuleCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
             .codeSize = fileHeader.spvMemorySize,
-            .pCode = reinterpret_cast<const uint32*>(createInfo.memory.data() + sizeof(ShaderFileHeader) + fileHeader.GetSpvOffset())
+            .pCode = reinterpret_cast<const uint32*>(createInfo.buffer.data() + sizeof(ShaderFileHeader) + fileHeader.GetSpvOffset())
         };
 
         // Create shader module

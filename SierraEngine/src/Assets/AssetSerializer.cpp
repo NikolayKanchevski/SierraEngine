@@ -19,14 +19,15 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void AssetSerializer::SerializeHeader(Sierra::Stream& stream) const
+    Sierra::StreamResult AssetSerializer::SerializeHeader(Sierra::Stream& stream) const
     {
         const AssetHeader header
         {
             .signature = GetSignature(),
             .version = GetVersion()
         };
-        stream.Write(header); // TODO: WHY NO READ
+
+        return stream.WriteAs(header);
     }
 
 }

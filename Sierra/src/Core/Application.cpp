@@ -109,12 +109,12 @@ namespace Sierra
 
     /* --- GETTER METHODS --- */
 
-    std::filesystem::path Application::GetApplicationTemporaryDirectoryPath() const noexcept
+    Path Application::GetApplicationTemporaryDirectoryPath() const noexcept
     {
         return GetFileManager().GetTemporaryDirectoryPath() / name;
     }
 
-    std::filesystem::path Application::GetApplicationCachesDirectoryPath() const noexcept
+    Path Application::GetApplicationCachesDirectoryPath() const noexcept
     {
         return GetFileManager().GetCachesDirectoryPath() / name;
     }

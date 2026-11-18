@@ -9,6 +9,12 @@
 namespace SierraEngine
 {
 
+    struct SerializedAsset
+    {
+        std::vector<uint8> data = { };
+        std::vector<uint8> blob = { };
+    };
+
     class SIERRA_ENGINE_API AssetSerializer
     {
     public:
@@ -31,7 +37,7 @@ namespace SierraEngine
         AssetSerializer() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        void SerializeHeader(Sierra::Stream& stream) const;
+        [[nodiscard]] Sierra::StreamResult SerializeHeader(Sierra::Stream& stream) const;
 
         /* --- MOVE SEMANTICS --- */
         AssetSerializer(AssetSerializer&&) noexcept = default;

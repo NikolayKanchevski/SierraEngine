@@ -4,26 +4,20 @@
 
 #pragma once
 
-#include "EditorModal.h"
+#include "EditorFrame.h"
 #include "EditorThemes.h"
+#include "../Core/ApplicationFrame.h"
 
-#include "../Core/Project.h"
 #include "../Rendering/Viewport.h"
 
 #include "Panels/LogPanel.h"
 #include "Panels/AssetBrowserPanel.h"
-
-#include "../Platform/EditorPlatformContext.h"
+#include "Panels/HierarchyPanel.h"
 
 namespace SierraEngine
 {
     struct EditorCreateInfo
     {
-        const EditorPlatformContext& platformContext;
-        const Sierra::FileManager& fileManager;
-        const RenderingContext& renderingContext;
-
-        Project& project;
         Sierra::Window& window;
         EditorTheme theme = EditorTheme::Dark;
     };
@@ -37,10 +31,10 @@ namespace SierraEngine
         using ViewportEnumerationPredicate = std::function<void(Viewport&)>;
 
         /* --- CONSTRUCTORS --- */
-        explicit Editor(const EditorCreateInfo& createInfo);
+        explicit Editor(const ApplicationFrame& applicationFrame, const EditorCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Draw(Sierra::CommandBuffer& commandBuffer, const Sierra::InputManager& inputManager);
+        void Draw(const ApplicationFrame& applicationFrame, const DrawFrame& drawFrame);
 
         Viewport& CreateViewport(ViewportID& ID, const ViewportCreateInfo& createInfo);
         void ForEachViewport(const ViewportEnumerationPredicate& Predicate);
@@ -50,8 +44,8 @@ namespace SierraEngine
         [[nodiscard]] Scene& GetScene() noexcept { return scene; }
         [[nodiscard]] const Scene& GetScene() const noexcept { return scene; }
 
-        [[nodiscard]] std::optional<EntityID> GetSelectedEntity() const noexcept { return !selectedEntities.empty() ? std::optional(selectedEntities[0]) : std::nullopt; }
-        [[nodiscard]] std::span<const EntityID> GetSelectedEntities() const noexcept { return selectedEntities; }
+        // [[nodiscard]] std::optional<EntityID> GetSelectedEntity() const noexcept { return !selectedEntities.empty() ? std::optional(selectedEntities[0]) : std::nullopt; }
+        // [[nodiscard]] std::span<const EntityID> GetSelectedEntities() const noexcept { return selectedEntities; }
 
         [[nodiscard]] Viewport* GetViewport(const ViewportID ID) noexcept { return viewports.GetItem(ID); }
         [[nodiscard]] const Viewport* GetViewport(const ViewportID ID) const noexcept { return viewports.GetItem(ID); }
@@ -68,25 +62,22 @@ namespace SierraEngine
         ~Editor() noexcept = default;
 
     private:
-        const EditorPlatformContext* platformContext;
-        const Sierra::FileManager* fileManager;
-        const RenderingContext* renderingContext;
-
         Scene scene;
+
+        ModalManager modalManager = { };
+
+        bool refreshAssetBrowserPanel = false;
         AssetBrowserPanel assetBrowserPanel;
+
         LogPanel logPanel;
-        std::vector<EntityID> selectedEntities = { };
+        HierarchyPanel hierarchyPanel = { };
+
         Sierra::HandleManager<ViewportID, Viewport> viewports = { };
 
         ImGuiStyle style = { };
-        std::unique_ptr<EditorModal> currentWizard = nullptr;
 
-        void DrawMenuBar();
-        ImGuiID DrawDockSpace();
-
-        void OpenTextureSerializeWizard(const std::filesystem::path* outputDirectoryPath = nullptr);
-        void OpenMaterialSerializeWizard(const std::filesystem::path* outputDirectoryPath = nullptr);
-        void OpenModelSerializeWizard(const std::filesystem::path* outputDirectoryPath = nullptr);
+        [[nodiscard]] EditorFrame Bind();
+        ImGuiID DrawDockSpace(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame) const;
 
     };
 

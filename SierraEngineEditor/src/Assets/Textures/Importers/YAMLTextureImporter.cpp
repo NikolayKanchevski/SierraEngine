@@ -173,8 +173,10 @@ namespace SierraEngine
 
     std::optional<ImportedTexture> YAMLTextureImporter::Import(const TextureImportInfo& importInfo) const
     {
-        Sierra::MemoryReadStream blobStream(importInfo.serializedTexture.blob);
-        AssetHeader header = blobStream.ReadAs<AssetHeader>();
+        Sierra::ReadStream blob(importInfo.serializedTexture.blob);
+
+        AssetHeader header = { };
+        blob.ReadAs<AssetHeader>(header);
 
         if (header.signature != GetSignature())
         {
@@ -219,11 +221,10 @@ namespace SierraEngine
             return std::nullopt;
         }
 
-        // TODO: USE STRAMS NOT SPANS
-        std::optional<ImportedTextureBuffer> blob = ImportBlob(blobStream, importInfo.format, *properties);
-        if (!blob.has_value())
+        std::vector<uint8> buffer = { };
+        if (ImportBlob(blob, importInfo.format, *properties, buffer) != Sierra::StreamResult::Success)
         {
-            APP_WARNING("Could not YAML import texture [{0}], its blob is corrupted", metadata->name);
+            APP_WARNING("Cannot YAML import texture [{0}], as its blob is corrupted", metadata->name);
             return std::nullopt;
         }
 
@@ -234,7 +235,7 @@ namespace SierraEngine
             .metadata = std::move(*metadata),
             .settings = std::move(*settings),
             .properties = std::move(*properties),
-            .buffer = std::move(*blob)
+            .buffer = std::move(buffer)
         };
 
         return texture;

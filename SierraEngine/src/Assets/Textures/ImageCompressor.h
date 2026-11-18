@@ -36,7 +36,7 @@ namespace SierraEngine
 
     struct CompressedImage
     {
-        std::vector<uint8> memory = { };
+        std::vector<uint8> buffer = { };
     };
 
     class SIERRA_ENGINE_API ImageCompressor

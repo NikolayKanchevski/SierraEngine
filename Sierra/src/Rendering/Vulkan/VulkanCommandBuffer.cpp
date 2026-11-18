@@ -394,13 +394,13 @@ namespace Sierra
         currentResourceTable = &vulkanResourceTable;
     }
 
-    void VulkanCommandBuffer::PushConstants(const void* memory, const uint8 sourceOffset, const uint8 memorySize)
+    void VulkanCommandBuffer::PushConstants(std::span<const uint8> buffer)
     {
-        CommandBuffer::PushConstants(memory, sourceOffset, memorySize);
+        CommandBuffer::PushConstants(buffer);
         SR_THROW_IF(currentGraphicsPipeline == nullptr && currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot push constants within command buffer [{0}] if no pipeline has been begun", GetName())));
 
-        if (currentGraphicsPipeline != nullptr) queue->GetDevice().GetFunctionTable().vkCmdPushConstants(commandBuffer, currentGraphicsPipeline->GetVulkanPipelineLayout(), VK_SHADER_STAGE_ALL, 0, memorySize, reinterpret_cast<const uint8*>(memory) + sourceOffset);
-        if (currentComputePipeline != nullptr) queue->GetDevice().GetFunctionTable().vkCmdPushConstants(commandBuffer, currentComputePipeline->GetVulkanPipelineLayout(), VK_SHADER_STAGE_ALL, 0, memorySize, reinterpret_cast<const uint8*>(memory) + sourceOffset);
+        if (currentGraphicsPipeline != nullptr) queue->GetDevice().GetFunctionTable().vkCmdPushConstants(commandBuffer, currentGraphicsPipeline->GetVulkanPipelineLayout(), VK_SHADER_STAGE_ALL, 0, buffer.size(), buffer.data());
+        if (currentComputePipeline != nullptr) queue->GetDevice().GetFunctionTable().vkCmdPushConstants(commandBuffer, currentComputePipeline->GetVulkanPipelineLayout(), VK_SHADER_STAGE_ALL, 0, buffer.size(), buffer.data());
     }
 
     void VulkanCommandBuffer::BeginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer)

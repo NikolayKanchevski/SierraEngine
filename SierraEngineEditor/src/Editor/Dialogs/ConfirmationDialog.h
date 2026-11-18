@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../EditorModal.h"
+#include "../Modal.h"
 
 namespace SierraEngine
 {
@@ -22,14 +22,14 @@ namespace SierraEngine
         ConfirmationDialogActionCallback ActionCallback = nullptr;
     };
 
-    class ConfirmationDialog final : public EditorModal
+    class ConfirmationDialog final : public Modal
     {
     public:
         /* --- CONSTRUCTORS --- */
         explicit ConfirmationDialog(const ConfirmationDialogCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] bool Draw(Sierra::CommandBuffer& commandBuffer) override;
+        [[nodiscard]] bool Draw(const ApplicationFrame& applicationFrame, const DrawFrame& drawFrame) override;
 
         /* --- COPY SEMANTICS --- */
         ConfirmationDialog(const ConfirmationDialog&) = delete;

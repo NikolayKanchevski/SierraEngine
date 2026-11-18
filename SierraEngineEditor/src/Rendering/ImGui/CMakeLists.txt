@@ -12,12 +12,11 @@ set(IMGUI_SOURCE_FILES
     ${IMGUI_DIRECTORY_PATH}/misc/cpp/imgui_stdlib.cpp
     ${IMGUI_DIRECTORY_PATH}/misc/cpp/imgui_stdlib.h
 )
-target_sources(Sierra PRIVATE ${IMGUI_SOURCE_FILES})
-target_include_directories(Sierra PUBLIC ${IMGUI_DIRECTORY_PATH} ${IMGUI_DIRECTORY_PATH}/misc/cpp)
-target_compile_definitions(Sierra PUBLIC "IMGUI_USER_CONFIG=\"../../src/Extensions/ImGui/ImGuiConfiguration.h\"")
+target_sources(SierraEngineEditor PRIVATE ${IMGUI_SOURCE_FILES})
+target_include_directories(SierraEngineEditor PRIVATE ${IMGUI_DIRECTORY_PATH} ${IMGUI_DIRECTORY_PATH}/misc/cpp)
+target_compile_definitions(SierraEngineEditor PRIVATE "IMGUI_USER_CONFIG=\"../../src/Rendering/ImGui/ImGuiConfiguration.h\"")
 
-target_compile_definitions(Sierra PUBLIC "SR_BUILD_IMGUI_EXTENSION")
-target_sources(Sierra PRIVATE
+target_sources(SierraEngineEditor PRIVATE
     ImGuiConfiguration.h
     ImGuiRenderer.h
     ImGuiRenderer.cpp

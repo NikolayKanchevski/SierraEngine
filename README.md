@@ -4,7 +4,7 @@
 
 <div align="center">
 
-![Sierra Logo](Media/SierraLogoTextBackground.png)
+![Sierra Logo](media/SierraLogoTextBackground.png)
 
 ![Windows Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/WindowsBuild.yaml/badge.svg) 
 ![Linux Build Status](https://github.com/NikolayKanchevski/SierraEngine/actions/workflows/LinuxBuild.yaml/badge.svg) 
@@ -18,7 +18,7 @@ An **open-source** rendering engine based on **[C++20](https://en.cppreference.c
 
 <div align="center">
 
-![Sierra Showcase](Media/SierraShowcase.png)
+![Sierra Showcase](media/SierraShowcase.png)
 
 </div>
 

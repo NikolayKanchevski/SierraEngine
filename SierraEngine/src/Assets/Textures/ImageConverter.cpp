@@ -25,7 +25,7 @@ namespace SierraEngine
         const uint8 channelCount = ImageFormatToChannelCount(convertInfo.format);
 
         LoadedImage convertedImage = LoadedImage({ .width = convertInfo.image.width, .height = convertInfo.image.height, .format = convertInfo.format });
-        convertedImage.memory.resize(convertedImage.width * convertedImage.height * Sierra::ImageFormatToBlockMemorySize(convertedImage.format));
+        convertedImage.buffer.resize(convertedImage.width * convertedImage.height * Sierra::ImageFormatToBlockMemorySize(convertedImage.format));
 
         for (size x = 0; x < convertInfo.image.width; x++)
         {

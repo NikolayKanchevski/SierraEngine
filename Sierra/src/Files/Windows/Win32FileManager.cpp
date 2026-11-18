@@ -42,9 +42,9 @@ namespace Sierra
         DWORD fileAccess = 0;
         switch (access)
         {
-            case FileStreamAccess::ReadOnly:  { fileAccess = GENERIC_READ;                 fileSharing = FILE_SHARE_READ;                    break; }
-            case FileStreamAccess::WriteOnly: { fileAccess = GENERIC_WRITE;                fileSharing = FILE_SHARE_WRITE;                   break; }
-            case FileStreamAccess::ReadWrite: { fileAccess = GENERIC_READ | GENERIC_WRITE; fileSharing = FILE_SHARE_READ | FILE_SHARE_WRITE; break; }
+            case StreamAccess::ReadOnly:  { fileAccess = GENERIC_READ;                 fileSharing = FILE_SHARE_READ;                    break; }
+            case StreamAccess::WriteOnly: { fileAccess = GENERIC_WRITE;                fileSharing = FILE_SHARE_WRITE;                   break; }
+            case StreamAccess::ReadWrite: { fileAccess = GENERIC_READ | GENERIC_WRITE; fileSharing = FILE_SHARE_READ | FILE_SHARE_WRITE; break; }
         }
 
         const std::wstring path = filePath.wstring();

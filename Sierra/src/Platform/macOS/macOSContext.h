@@ -22,11 +22,18 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         macOSContext();
 
-        /* --- GETTER METHODS --- */
+        /* --- POLLING METHODS --- */
         [[nodiscard]] const WindowManager& GetWindowManager() const noexcept override { return windowManager; }
         [[nodiscard]] const FileManager& GetFileManager() const noexcept override { return fileManager; }
 
-        /* --- POLLING METHODS --- */
+        bool OpenAlertDialog(const AlertDialogOpenInfo& openInfo) const noexcept override;
+        [[nodiscard]] std::vector<Path> OpenPathSelectionDialog(const PathSelectionDialogOpenInfo& openInfo) const noexcept override;
+        [[nodiscard]] std::optional<Path> OpenPathSaveDialog(const PathSaveDialogOpenInfo& openInfo) const noexcept override;
+        bool OpenPath(const Path& path) const noexcept override;
+
+        /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string GetUserName() const noexcept override;
+
         [[nodiscard]] PlatformType GetType() const noexcept override { return PlatformType::macOS; }
 
         /* --- COPY SEMANTICS --- */

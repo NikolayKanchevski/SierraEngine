@@ -9,8 +9,6 @@ namespace SierraEngine
 
     struct ImagePreviewInfo
     {
-        const RenderingContext& renderingContext;
-        Sierra::CommandBuffer& commandBuffer;
         const LoadedImage& image;
     };
 
@@ -22,7 +20,7 @@ namespace SierraEngine
 
     namespace ImagePreviewer
     {
-        [[nodiscard]] std::optional<ImagePreview> Preview(const ImagePreviewInfo& previewInfo);
+        [[nodiscard]] std::optional<ImagePreview> Preview(const DrawFrame& drawFrame, const ImagePreviewInfo& previewInfo);
     }
 
 }

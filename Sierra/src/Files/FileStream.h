@@ -4,39 +4,37 @@
 
 #pragma once
 
+#include "Path.h"
 #include "../Utilities/Stream.h"
-
-#include "FileErrors.h"
-#include "PathErrors.h"
 
 namespace Sierra
 {
 
     enum class FileStreamBuffering : bool
     {
-        Buffered,
-        Unbuffered
+        Unbuffered,
+        Buffered
     };
 
     struct FileStreamCreateInfo
     {
-        std::filesystem::path filePath = { };
+        const Path& filePath = { };
         StreamAccess access = StreamAccess::ReadWrite;
         FileStreamBuffering buffering = FileStreamBuffering::Unbuffered;
     };
 
-    class SIERRA_API FileStream : public Stream
+    class SIERRA_API FileStream : public virtual Stream
     {
     public:
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual const std::filesystem::path& GetFilePath() const noexcept = 0;
+        [[nodiscard]] virtual const Path& GetFilePath() const noexcept = 0;
 
         /* --- COPY SEMANTICS --- */
         FileStream(const FileStream&) = delete;
         FileStream& operator=(const FileStream&) = delete;
 
         /* --- DESTRUCTOR --- */
-        ~FileStream() noexcept override = default;
+        virtual ~FileStream() noexcept = default;
 
     protected:
         /* --- CONSTRUCTORS --- */

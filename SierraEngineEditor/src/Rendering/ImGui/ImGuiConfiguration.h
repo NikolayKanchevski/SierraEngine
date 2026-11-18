@@ -6,8 +6,7 @@
 
 #include <cstdint>
 
-#define IMGUI_API SIERRA_API
-// #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+// #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS // Editor UI code still uses some functions ImGui has obsoleted (the renderer does not)
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 #define IM_VEC2_CLASS_EXTRA                                                                           \
@@ -19,4 +18,5 @@
     operator Vector4() const noexcept { return Vector4(x, y, z, w); }
 
 #define ImTextureID uint64_t
+#define ImTextureID_Invalid ((ImTextureID)-1) // Texture IDs are resource table slots, where 0 is a valid one
 #define ImDrawIdx uint32_t

@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "../EditorModal.h"
+#include "../Modal.h"
 
 namespace SierraEngine
 {
 
     using TextDialogValidationCallback = std::function<std::string(std::string_view input)>;
-    using TextDialogActionCallback = std::function<void(std::string_view input)>;
+    using TextDialogActionCallback = std::function<bool(std::string_view input)>;
 
     struct TextDialogCreateInfo
     {
@@ -26,14 +26,14 @@ namespace SierraEngine
         size inputBufferSize = 256;
     };
 
-    class TextDialog final : public EditorModal
+    class TextDialog final : public Modal
     {
     public:
         /* --- CONSTRUCTORS --- */
         explicit TextDialog(const TextDialogCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] bool Draw(Sierra::CommandBuffer& commandBuffer) override;
+        [[nodiscard]] bool Draw(const ApplicationFrame& applicationFrame, const DrawFrame& drawFrame) override;
 
         /* --- COPY SEMANTICS --- */
         TextDialog(const TextDialog&) = delete;

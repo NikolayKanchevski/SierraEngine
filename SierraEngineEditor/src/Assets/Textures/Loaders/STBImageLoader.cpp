@@ -19,12 +19,12 @@ namespace SierraEngine
     std::optional<LoadedImage> STBImageLoader::Load(const ImageLoadInfo& loadInfo) const noexcept
     {
         int width, height, channelCount;
-        if (stbi_info_from_memory(reinterpret_cast<const stbi_uc*>(loadInfo.memory.data()), static_cast<int>(loadInfo.memory.size_bytes()), &width, &height, &channelCount) != 1)
+        if (stbi_info_from_memory(loadInfo.buffer.data(), static_cast<int>(loadInfo.buffer.size_bytes()), &width, &height, &channelCount) != 1)
         {
             return std::nullopt;
         }
 
-        const bool is16Bit = static_cast<bool>(stbi_is_16_bit_from_memory(reinterpret_cast<const stbi_uc*>(loadInfo.memory.data()), static_cast<int>(loadInfo.memory.size_bytes())));
+        const bool is16Bit = static_cast<bool>(stbi_is_16_bit_from_memory(loadInfo.buffer.data(), static_cast<int>(loadInfo.buffer.size_bytes())));
 
         int channelLoadCount = channelCount;
         switch (loadInfo.loadChannels)
@@ -36,8 +36,8 @@ namespace SierraEngine
             default:                            break;
         }
 
-        const std::unique_ptr<void, std::function<void(void*)>> rawMemory = { is16Bit ? reinterpret_cast<void*>(stbi_load_16_from_memory(reinterpret_cast<const stbi_uc*>(loadInfo.memory.data()), static_cast<int>(loadInfo.memory.size_bytes()), &width, &height, &channelCount, channelLoadCount)) : reinterpret_cast<void*>(stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(loadInfo.memory.data()), static_cast<int>(loadInfo.memory.size_bytes()), &width, &height, &channelCount, channelLoadCount)), stbi_image_free };
-        if (rawMemory == nullptr)
+        const std::unique_ptr<void, void(*)(void*)> stbiBuffer = { is16Bit ? reinterpret_cast<void*>(stbi_load_16_from_memory(reinterpret_cast<const stbi_uc*>(loadInfo.buffer.data()), static_cast<int>(loadInfo.buffer.size_bytes()), &width, &height, &channelCount, channelLoadCount)) : reinterpret_cast<void*>(stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(loadInfo.buffer.data()), static_cast<int>(loadInfo.buffer.size_bytes()), &width, &height, &channelCount, channelLoadCount)), stbi_image_free };
+        if (stbiBuffer == nullptr)
         {
             APP_WARNING("Failed to STB load image! Error: {0}.", stbi_failure_reason());
             return std::nullopt;
@@ -53,15 +53,15 @@ namespace SierraEngine
             default:        break;
         }
 
-        std::vector<uint8> memory(width * height * channelLoadCount * (is16Bit + 1));
-        std::memcpy(memory.data(), rawMemory.get(), memory.size());
+        std::vector<uint8> buffer(width * height * channelLoadCount * (is16Bit + 1));
+        std::memcpy(buffer.data(), stbiBuffer.get(), buffer.size());
 
         LoadedImage image
         {
             .width = static_cast<uint32>(width),
             .height = static_cast<uint32>(height),
             .format = format,
-            .memory = std::move(memory)
+            .buffer = std::move(buffer)
         };
 
         return image;

@@ -11,6 +11,7 @@
 #include "../../src/Core/ThreadPool.h"
 
 #include "../../src/Rendering/ArenaAllocator.h"
+#include "../../src/Rendering/DrawFrame.h"
 #include "../../src/Rendering/Mesh.h"
 #include "../../src/Rendering/MeshView.h"
 #include "../../src/Rendering/SceneRenderer.h"

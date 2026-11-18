@@ -150,7 +150,7 @@ namespace SierraEngine
     {
         if (ImGui::Begin("Properties", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNav))
         {
-            if (drawInfo.selectedEntity != nullptr)
+            if (drawInfo.selectedEntity.has_value())
             {
                 DrawComponents(*drawInfo.selectedEntity, drawInfo.scene, AllComponents());
             }

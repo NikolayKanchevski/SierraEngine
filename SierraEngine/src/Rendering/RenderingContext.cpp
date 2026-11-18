@@ -18,10 +18,18 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    void RenderingContext::Bind(Sierra::CommandBuffer& commandBuffer) const
+    DrawFrame RenderingContext::Bind(Sierra::CommandBuffer& commandBuffer) const
     {
         destructionScheduler->Flush();
         commandBuffer.BindResourceTable(*resourceTable);
+
+        return
+        {
+            .device = *device,
+            .commandBuffer = commandBuffer,
+            .resourceTable = *resourceTable,
+            .destructionScheduler = *destructionScheduler
+        };
     }
 
 }

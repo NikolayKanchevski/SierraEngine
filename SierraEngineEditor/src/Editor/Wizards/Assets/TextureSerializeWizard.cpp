@@ -12,27 +12,56 @@ namespace SierraEngine
 
     namespace
     {
-        std::optional<LoadedImage> LoadLayerImage(const Sierra::FileManager& fileManager, const std::filesystem::path& filePath) noexcept
+        constexpr float32 SINGLE_LAYER_PREVIEW_SCALE = 0.35f;
+
+        constexpr std::array COMPRESSION_LEVEL_OPTIONS
         {
-            const std::vector<uint8> memory = fileManager.ReadFile(filePath);
+            ImGuiDropdownOption { .text = "Lowest" },
+            ImGuiDropdownOption { .text = "Low" },
+            ImGuiDropdownOption { .text = "Standard" },
+            ImGuiDropdownOption { .text = "High" },
+            ImGuiDropdownOption { .text = "Highest" }
+        };
+
+        std::optional<LoadedImage> LoadImage(const Sierra::FileManager& fileManager, const Sierra::Path& filePath) noexcept
+        {
+            std::vector<uint8> memory = { };
+            static_cast<void>(fileManager.ReadFile(filePath, memory));
+
             if (memory.empty())
             {
-                APP_WARNING("Failed to read image file [{0}]", filePath.string());
+                APP_WARNING("Failed to read image file [{0}]", filePath.GetString());
                 return std::nullopt;
             }
 
             std::optional<LoadedImage> image = AutoImageLoader::Load({
-                .memory = memory,
+                .buffer = memory,
                 .loadChannels = ImageLoadChannels::All
             });
 
             if (!image.has_value())
             {
-                APP_WARNING("Failed to load image [{0}]", filePath.string());
+                APP_WARNING("Failed to load image [{0}]", filePath.GetString());
                 return std::nullopt;
             }
 
             return image;
+        }
+
+        bool HasImage(const LoadedImage& image) noexcept
+        {
+            return !image.buffer.empty();
+        }
+
+        void FreePreview(const DrawFrame& drawFrame, std::optional<ImagePreview>& preview) noexcept
+        {
+            if (!preview.has_value())
+                return;
+
+            drawFrame.destructionScheduler.QueueResource(std::move(preview->image));
+            drawFrame.resourceTable.FreeSampledImage(preview->ID);
+
+            preview = std::nullopt;
         }
     }
 
@@ -50,297 +79,280 @@ namespace SierraEngine
             .inputFilePath = createInfo.inputFilePath,
             .outputFileExtension = OUTPUT_FILE_EXTENSION,
             .outputDirectoryPath = createInfo.outputDirectoryPath
-          }),
-          platformContext(createInfo.platformContext),
-          renderingContext(createInfo.renderingContext),
-          fileManager(createInfo.fileManager)
+          })
     {
-        AssetMetadata& metadata = serializeInfo.metadata;
-        metadata.author = createInfo.platformContext.GetUserName();
-        metadata.name = "Texture";
+        DefaultMetadata(serializeInfo.metadata, "Texture", createInfo.platformContext);
+
+        // The root level and layer always exist, so the source image always has a slot
+        levels.resize(1);
+        levels.front().images.resize(layerCount);
+        levels.front().layers.resize(layerCount);
 
         if (createInfo.inputFilePath != nullptr)
         {
-            SetInputFilePath(*createInfo.inputFilePath);
+            pendingInputFilePath = *createInfo.inputFilePath;
         }
     }
 
     /* --- POLLING METHODS --- */
 
-    bool TextureSerializeWizard::Draw(Sierra::CommandBuffer& commandBuffer)
+    bool TextureSerializeWizard::Draw(const ApplicationFrame& applicationFrame, const DrawFrame& drawFrame)
     {
-        if (rootLayerDirty)
+        if (const std::optional<Sierra::Path> inputFilePath = std::exchange(pendingInputFilePath, std::nullopt); inputFilePath.has_value())
         {
-            ReloadRootLayer(commandBuffer);
-            rootLayerDirty = false;
+            LoadInputFile(applicationFrame, drawFrame, *inputFilePath);
         }
+        UpdatePreviews(drawFrame);
 
         bool open = BeginWizard("Texture Serialize Wizard");
         if (open)
         {
-            DrawFileInputHeader(platformContext);
+            DrawFileInputHeader(applicationFrame.platformContext);
             DrawMetadataMenu(serializeInfo.metadata);
 
             DrawSettingsMenu();
             DrawSerializeInfoMenu();
-            DrawExtrasMenu(commandBuffer);
+            DrawExtrasMenu(applicationFrame, drawFrame);
 
-            constexpr std::array OPTIONS
+            constexpr std::array FORMAT_OPTIONS
             {
                 ImGuiDropdownOption { .text = "YAML" }
             };
 
-            if (DrawFileOutputFooter(platformContext, textureFormatIndex, OPTIONS))
+            if (DrawFileOutputFooter(applicationFrame.platformContext, textureFormatIndex, FORMAT_OPTIONS) && Serialize(applicationFrame))
             {
-                if (Serialize())
-                {
-                    open = false;
-                }
+                open = false;
             }
 
             EndWizard();
         }
 
         if (!open)
-            ResetLayers(commandBuffer);
+        {
+            FreePreviews(drawFrame);
+        }
 
         return open;
     }
 
-    void TextureSerializeWizard::SetInputFilePath(const std::filesystem::path& inputFilePath) noexcept
+    /* --- SETTER METHODS --- */
+
+    void TextureSerializeWizard::SetInputFilePath(const Sierra::Path& inputFilePath) noexcept
     {
-        std::optional<LoadedImage> image = LoadLayerImage(fileManager, inputFilePath);
+        // Loading needs the current frame (for the file manager and to create previews), so it is deferred to the start of the next draw
+        pendingInputFilePath = inputFilePath;
+    }
+
+    /* --- PRIVATE METHODS --- */
+
+    void TextureSerializeWizard::LoadInputFile(const ApplicationFrame& applicationFrame, const DrawFrame& drawFrame, const Sierra::Path& inputFilePath) noexcept
+    {
+        LoadedImage& rootImage = levels.front().images.front();
+        ImageLayerData& rootLayer = levels.front().layers.front();
+
+        std::optional<LoadedImage> image = LoadImage(applicationFrame.platformContext.GetFileManager(), inputFilePath);
         if (!image.has_value())
         {
-            FileInputWizard::SetInputFilePath({ });
-
-            APP_WARNING("File [{0}] cannot be serialized, as its image data failed to load", inputFilePath.string());
+            // Keep showing the source that is actually loaded
+            FileInputWizard::SetInputFilePath(rootLayer.filePath);
             return;
         }
 
-        FileInputWizard::SetInputFilePath(inputFilePath);
-        FileOutputWizard::SetOutputFilePath(std::filesystem::path(inputFilePath).replace_extension(OUTPUT_FILE_EXTENSION));
+        const bool layoutChanged = image->width != rootImage.width || image->height != rootImage.height || image->format != rootImage.format;
 
-        serializeInfo.metadata.name = inputFilePath.stem().string();
-
-        if (levels.empty() || levels[0].layers.empty())
-        {
-            levels.resize(1);
-            levels[0].layers.resize(1);
-        }
-
-        ImageLayerData& rootLayer = levels[0].layers[0];
-        rootLayer.dirty = true;
+        rootImage = std::move(*image);
         rootLayer.filePath = inputFilePath;
-        rootLayer.image = std::move(image);
+        rootLayer.previewOutdated = true;
 
-        rootLayerDirty = true;
-    }
-
-    TextureSerializeWizard::ImageLayerData* TextureSerializeWizard::GetRootLayer() noexcept
-    {
-        return (!levels.empty() && !levels[0].layers.empty()) ? &levels[0].layers[0] : nullptr;
-    }
-
-    LoadedImage* TextureSerializeWizard::GetRootImage() noexcept
-    {
-        if (ImageLayerData* rootLayer = GetRootLayer(); rootLayer->image.has_value())
+        if (layoutChanged)
         {
-            return &(*rootLayer->image);
-        }
-        return nullptr;
-    }
-
-    bool TextureSerializeWizard::ImageMatchesLevelDimensions(const LoadedImage& image, const uint32 levelIndex)
-    {
-        const LoadedImage* rootImage = GetRootImage();
-        if (rootImage == nullptr) return true;
-
-        return image.width == glm::max(1U, rootImage->width >> levelIndex) && image.height == glm::max(1U, rootImage->height >> levelIndex);
-    }
-
-    void TextureSerializeWizard::ReloadRootLayer(Sierra::CommandBuffer& commandBuffer) noexcept
-    {
-        ImageLayerData* rootLayer = GetRootLayer();
-        if (rootLayer == nullptr) return;
-
-        const std::filesystem::path& inputFilePath = rootLayer->filePath;
-        std::optional<LoadedImage> image = LoadLayerImage(fileManager, inputFilePath);
-        if (!image.has_value())
-        {
-            FileInputWizard::SetInputFilePath({ });
-
-            APP_WARNING("File [{0}] cannot be serialized, as its image data failed to load", inputFilePath.string());
-            return;
-        }
-
-        FileInputWizard::SetInputFilePath(inputFilePath);
-        FileOutputWizard::SetOutputFilePath(std::filesystem::path(inputFilePath).replace_extension(OUTPUT_FILE_EXTENSION));
-
-        serializeInfo.metadata.name = inputFilePath.stem().string();
-
-        for (uint32 level = 0; level < levels.size(); level++)
-        {
-            for (uint32 layer = 0; layer < levels[level].layers.size(); layer++)
+            // Every other level and layer must match the source's dimensions and format, so the level count is recalculated and layers that no longer fit are dropped
+            ResizeLevels(drawFrame);
+            for (uint32 levelIndex = 0; levelIndex < levels.size(); levelIndex++)
             {
-                if (level == 0 && layer == 0) continue;
-
-                ImageLayerData& layerData = levels[level].layers[layer];
-                ResetLayer(layerData, commandBuffer);
-            }
-        }
-
-        ResetLayer(*rootLayer, commandBuffer);
-
-        std::optional<ImagePreview> preview = ImagePreviewer::Preview({ .renderingContext = renderingContext, .commandBuffer = commandBuffer, .image = *image });
-        if (preview.has_value())
-        {
-            Sierra::ResourceTable& resourceTable = renderingContext.GetResourceTable();
-            preview->ID = resourceTable.BindSampledImage(*preview->image);
-        }
-
-        *rootLayer =
-        {
-            .dirty = false,
-            .filePath = inputFilePath,
-            .image = std::move(image),
-            .preview = std::move(preview)
-        };
-    }
-
-    void TextureSerializeWizard::ReloadLevels(Sierra::CommandBuffer& commandBuffer) noexcept
-    {
-        const LoadedImage* rootImage = GetRootImage();
-        if (rootImage == nullptr) return;
-
-        const uint32 levelCount = ((levelOptions == LevelOptions::Load) * glm::log2(glm::max(rootImage->width, rootImage->height))) + 1;
-        if (levels.size() == levelCount) return;
-
-        for (uint32 level = 1; level < levels.size(); level++)
-        {
-            for (uint32 layer = 0; layer < levels[level].layers.size(); layer++)
-            {
-                if (level == 0 && layer == 0) continue;
-
-                ImageLayerData& layerData = levels[level].layers[layer];
-                ResetLayer(layerData, commandBuffer);
-            }
-        }
-
-        levels.resize(1);
-        levels.resize(levelCount);
-
-        for (ImageLevelData& level : levels)
-        {
-            level.layers.resize(layerCount);
-        }
-    }
-
-    void TextureSerializeWizard::ReloadLayers(uint32 lastLayerCount, Sierra::CommandBuffer& commandBuffer) noexcept
-    {
-        if (layerCount < lastLayerCount)
-        {
-            for (uint32 level = 0; level < levels.size(); level++)
-            {
-                for (uint32 layer = lastLayerCount - 1; layer < lastLayerCount; layer++)
+                ImageLevelData& level = levels[levelIndex];
+                for (uint32 layerIndex = (levelIndex == 0 ? 1 : 0); layerIndex < level.layers.size(); layerIndex++)
                 {
-                    if (level == 0 && layer == 0) continue;
+                    LoadedImage& layerImage = level.images[layerIndex];
+                    if (!HasImage(layerImage) || FitsLevel(layerImage, levelIndex))
+                        continue;
 
-                    ImageLayerData& layerData = levels[level].layers[layer];
-                    ResetLayer(layerData, commandBuffer);
+                    ImageLayerData& layer = level.layers[layerIndex];
+                    FreePreview(drawFrame, layer.preview);
+
+                    layerImage = { };
+                    layer = { };
                 }
             }
         }
 
+        FileInputWizard::SetInputFilePath(inputFilePath);
+        serializeInfo.metadata.name = inputFilePath.GetStem();
+
+        // The output stays in its directory (which may have been picked by the user or the wizard's creator), but follows the source's name
+        const Sierra::Path& outputFilePath = GetOutputFilePath();
+        const Sierra::Path outputDirectoryPath = !outputFilePath.IsEmpty() ? outputFilePath.GetParentPath() : inputFilePath.GetParentPath();
+        FileOutputWizard::SetOutputFilePath(outputDirectoryPath / Sierra::Path(inputFilePath.GetFileName()).ChangeExtension(OUTPUT_FILE_EXTENSION));
+    }
+
+    void TextureSerializeWizard::LoadLayer(const ApplicationFrame& applicationFrame, ImageLevelData& level, const uint32 levelIndex, const uint32 layerIndex, const Sierra::Path& filePath) noexcept
+    {
+        std::optional<LoadedImage> image = LoadImage(applicationFrame.platformContext.GetFileManager(), filePath);
+        if (!image.has_value())
+            return;
+
+        if (!FitsLevel(*image, levelIndex))
+        {
+            const Vector2UInt levelDimensions = GetLevelDimensions(levelIndex);
+            APP_WARNING("Cannot use image [{0}] as level [{1}] layer [{2}] of texture [{3}], as it must be {4}x{5} and share the format of the source image", filePath.GetString(), levelIndex, layerIndex, serializeInfo.metadata.name, levelDimensions.x, levelDimensions.y);
+            return;
+        }
+
+        level.images[layerIndex] = std::move(*image);
+
+        ImageLayerData& layer = level.layers[layerIndex];
+        layer.filePath = filePath;
+        layer.previewOutdated = true;
+    }
+
+    uint32 TextureSerializeWizard::GetLevelCount() const noexcept
+    {
+        const LoadedImage& rootImage = GetRootImage();
+        if (levelOptions == LevelOptions::None || !HasImage(rootImage))
+            return 1;
+
+        // Full chain down to 1x1, calculated the same way the serializer validates it
+        return glm::log2(glm::max(rootImage.width, rootImage.height)) + 1;
+    }
+
+    Vector2UInt TextureSerializeWizard::GetLevelDimensions(const uint32 levelIndex) const noexcept
+    {
+        const LoadedImage& rootImage = GetRootImage();
+        return { glm::max(1U, rootImage.width >> levelIndex), glm::max(1U, rootImage.height >> levelIndex) };
+    }
+
+    bool TextureSerializeWizard::FitsLevel(const LoadedImage& image, const uint32 levelIndex) const noexcept
+    {
+        // Without a source image there is nothing to compare against yet; once one is loaded, layers that do not fit are dropped
+        const LoadedImage& rootImage = GetRootImage();
+        if (!HasImage(rootImage))
+            return true;
+
+        return Vector2UInt(image.width, image.height) == GetLevelDimensions(levelIndex) && image.format == rootImage.format;
+    }
+
+    void TextureSerializeWizard::ResizeLevels(const DrawFrame& drawFrame) noexcept
+    {
+        const uint32 levelCount = GetLevelCount();
+        for (uint32 levelIndex = levelCount; levelIndex < levels.size(); levelIndex++)
+        {
+            for (ImageLayerData& layer : levels[levelIndex].layers)
+            {
+                FreePreview(drawFrame, layer.preview);
+            }
+        }
+        levels.resize(levelCount);
+
         for (ImageLevelData& level : levels)
         {
+            for (uint32 layerIndex = layerCount; layerIndex < level.layers.size(); layerIndex++)
+            {
+                FreePreview(drawFrame, level.layers[layerIndex].preview);
+            }
+
+            level.images.resize(layerCount);
             level.layers.resize(layerCount);
         }
     }
 
-    void TextureSerializeWizard::ResetLayers(Sierra::CommandBuffer& commandBuffer) noexcept
+    void TextureSerializeWizard::UpdatePreviews(const DrawFrame& drawFrame) noexcept
+    {
+        for (ImageLevelData& level : levels)
+        {
+            for (uint32 layerIndex = 0; layerIndex < level.layers.size(); layerIndex++)
+            {
+                ImageLayerData& layer = level.layers[layerIndex];
+                if (!layer.previewOutdated)
+                    continue;
+
+                layer.previewOutdated = false;
+
+                std::optional<ImagePreview> preview = ImagePreviewer::Preview(drawFrame, { .image = level.images[layerIndex] });
+                if (preview.has_value())
+                {
+                    preview->ID = drawFrame.resourceTable.BindSampledImage(*preview->image);
+                }
+                else
+                {
+                    APP_WARNING("Could not create a preview of image [{0}]", layer.filePath.GetString());
+                }
+
+                FreePreview(drawFrame, layer.preview);
+                layer.preview = std::move(preview);
+            }
+        }
+    }
+
+    void TextureSerializeWizard::FreePreviews(const DrawFrame& drawFrame) noexcept
     {
         for (ImageLevelData& level : levels)
         {
             for (ImageLayerData& layer : level.layers)
             {
-                ResetLayer(layer, commandBuffer);
+                FreePreview(drawFrame, layer.preview);
             }
         }
     }
 
-    void TextureSerializeWizard::ResetLayer(ImageLayerData& layer, Sierra::CommandBuffer& commandBuffer) const noexcept
+    bool TextureSerializeWizard::Serialize(const ApplicationFrame& applicationFrame) const noexcept
     {
-        if (!layer.preview.has_value()) return;
-
-        Sierra::DestructionScheduler& destructionScheduler = renderingContext.GetDestructionScheduler();
-        destructionScheduler.QueueResource(std::move(layer.preview->image));
-
-        Sierra::ResourceTable& resourceTable = renderingContext.GetResourceTable();
-        resourceTable.FreeSampledImage(layer.preview->ID);
-
-        layer.preview = std::nullopt;
-    }
-
-    bool TextureSerializeWizard::Serialize() noexcept
-    {
-        if (levels.empty() || levels[0].layers.empty() || !levels[0].layers[0].image.has_value())
+        const Sierra::Path& outputFilePath = GetOutputFilePath();
+        if (outputFilePath.IsEmpty())
         {
+            APP_WARNING("Cannot serialize texture [{0}], as no output location has been specified", serializeInfo.metadata.name);
             return false;
         }
 
-        std::vector<LoadedImageLevel> serializeLevels(levels.size());
-        std::vector<std::vector<LoadedImage>> serializeLayers(levels.size());
+        std::vector<LoadedImageLevel> serializeLevels = { };
+        serializeLevels.reserve(levels.size());
 
-        for (uint32 level = 0; level < levels.size(); level++)
+        for (uint32 levelIndex = 0; levelIndex < levels.size(); levelIndex++)
         {
-            serializeLayers[level].resize(layerCount);
-            for (uint32 layer = 0; layer < levels[level].layers.size(); layer++)
+            const ImageLevelData& level = levels[levelIndex];
+            for (uint32 layerIndex = 0; layerIndex < level.images.size(); layerIndex++)
             {
-                std::optional<LoadedImage>& layerImage = levels[level].layers[layer].image;
-                if (!layerImage.has_value())
+                if (!HasImage(level.images[layerIndex]))
                 {
-                    APP_WARNING("Cannot serialize texture [{0}] if level options are set to [Load], unless all layers have an image file specified");
+                    APP_WARNING("Cannot serialize texture [{0}], as level [{1}] layer [{2}] has no image assigned", serializeInfo.metadata.name, levelIndex, layerIndex);
                     return false;
                 }
-
-                serializeLayers[level][layer] = std::move(layerImage.value());
             }
 
-            serializeLevels[level].layers = serializeLayers[level];
+            serializeLevels.push_back({ .layers = level.images });
         }
-        serializeInfo.levels = serializeLevels;
 
-        const TextureSerializeFormat format = static_cast<TextureSerializeFormat>(textureFormatIndex);
+        TextureSerializeInfo textureSerializeInfo = serializeInfo;
+        textureSerializeInfo.levels = serializeLevels;
+
         std::unique_ptr<TextureSerializer> serializer = nullptr;
-
-        switch (format)
+        switch (static_cast<TextureSerializeFormat>(textureFormatIndex))
         {
             case TextureSerializeFormat::YAML: { serializer = std::make_unique<YAMLTextureSerializer>(); break; }
         }
 
         TextureID ID = { };
-        const std::optional<SerializedTexture> serializedTexture = serializer->Serialize(serializeInfo, ID);
-
+        const std::optional<SerializedTexture> serializedTexture = serializer->Serialize(textureSerializeInfo, ID);
         if (!serializedTexture.has_value())
         {
             APP_WARNING("Could not serialize texture [{0}]", serializeInfo.metadata.name);
             return false;
         }
 
-        const std::filesystem::path& outputDataFilePath = GetOutputFilePath();
-        if (outputDataFilePath.empty())
+        if (!WriteAssetFiles(applicationFrame.platformContext.GetFileManager(), outputFilePath, *serializedTexture))
         {
-            APP_WARNING("Cannot serialize texture [{0}] at invalid location [{1}]", serializeInfo.metadata.name, outputDataFilePath.string());
+            APP_WARNING("Failed to write serialized texture [{0}] to [{1}]", serializeInfo.metadata.name, outputFilePath.GetString());
             return false;
         }
-
-        fileManager.CreateFile(outputDataFilePath, Sierra::FilePathConflictPolicy::Overwrite);
-        fileManager.WriteFile(outputDataFilePath, serializedTexture->data);
-
-        const std::filesystem::path outputBlobFilePath = std::filesystem::path(outputDataFilePath).replace_extension(BLOB_OUTPUT_FILE_EXTENSION);
-        fileManager.CreateFile(outputBlobFilePath, Sierra::FilePathConflictPolicy::Overwrite);
-        fileManager.WriteFile(outputBlobFilePath, serializedTexture->blob);
 
         return true;
     }
@@ -359,9 +371,9 @@ namespace SierraEngine
                         ImGuiDropdownOption { .text = "Smooth" }
                     };
 
-                    if (uint32 filterTypeIndex = static_cast<uint32>(serializeInfo.settings.filter); ImGuiWidgets::Dropdown("##FilterDropdown", filterTypeIndex, { .options = OPTIONS }))
+                    if (uint32 filterIndex = static_cast<uint32>(serializeInfo.settings.filter); ImGuiWidgets::Dropdown("##FilterDropdown", filterIndex, { .options = OPTIONS }))
                     {
-                        serializeInfo.settings.filter = static_cast<TextureFilter>(filterTypeIndex);
+                        serializeInfo.settings.filter = static_cast<TextureFilter>(filterIndex);
                     }
                 }
                 ImGuiWidgets::EndProperty();
@@ -378,6 +390,8 @@ namespace SierraEngine
         {
             if (ImGuiWidgets::BeginPropertyTable())
             {
+                TextureCompressionSettings& compressionSettings = serializeInfo.compressionSettings;
+
                 ImGuiWidgets::BeginProperty("Compression");
                 {
                     constexpr std::array OPTIONS
@@ -386,47 +400,29 @@ namespace SierraEngine
                         ImGuiDropdownOption { .text = "Basis Universal" }
                     };
 
-                    if (uint32 compressorTypeIndex = static_cast<uint32>(serializeInfo.compressionSettings.compression); ImGuiWidgets::Dropdown("##CompressorTypeDropdown", compressorTypeIndex, { .options = OPTIONS }))
+                    if (uint32 compressionIndex = static_cast<uint32>(compressionSettings.compression); ImGuiWidgets::Dropdown("##CompressionDropdown", compressionIndex, { .options = OPTIONS }))
                     {
-                        serializeInfo.compressionSettings.compression = static_cast<TextureCompression>(compressorTypeIndex);
+                        compressionSettings.compression = static_cast<TextureCompression>(compressionIndex);
                     }
                 }
                 ImGuiWidgets::EndProperty();
 
-                if (TextureCompressionSettings& compressionSettings = serializeInfo.compressionSettings; compressionSettings.compression != TextureCompression::None)
+                if (compressionSettings.compression != TextureCompression::None)
                 {
                     ImGuiWidgets::BeginProperty("Compression Level");
                     {
-                        constexpr std::array OPTIONS
+                        if (uint32 aggressivenessIndex = static_cast<uint32>(compressionSettings.aggressiveness); ImGuiWidgets::Dropdown("##CompressionAggressivenessDropdown", aggressivenessIndex, { .options = COMPRESSION_LEVEL_OPTIONS }))
                         {
-                            ImGuiDropdownOption { .text = "Lowest" },
-                            ImGuiDropdownOption { .text = "Low" },
-                            ImGuiDropdownOption { .text = "Standard" },
-                            ImGuiDropdownOption { .text = "High" },
-                            ImGuiDropdownOption { .text = "Highest" }
-                        };
-
-                        if (uint32 compressionLevelIndex = static_cast<uint32>(compressionSettings.aggressiveness); ImGuiWidgets::Dropdown("##CompressionAggressivenessDropdown", compressionLevelIndex, { .options = OPTIONS }))
-                        {
-                            compressionSettings.aggressiveness = static_cast<TextureCompressionAggressiveness>(compressionLevelIndex);
+                            compressionSettings.aggressiveness = static_cast<TextureCompressionAggressiveness>(aggressivenessIndex);
                         }
                     }
                     ImGuiWidgets::EndProperty();
 
                     ImGuiWidgets::BeginProperty("Quality Level");
                     {
-                        constexpr std::array OPTIONS
+                        if (uint32 qualityIndex = static_cast<uint32>(compressionSettings.quality); ImGuiWidgets::Dropdown("##QualityDropdown", qualityIndex, { .options = COMPRESSION_LEVEL_OPTIONS }))
                         {
-                            ImGuiDropdownOption { .text = "Lowest" },
-                            ImGuiDropdownOption { .text = "Low" },
-                            ImGuiDropdownOption { .text = "Standard" },
-                            ImGuiDropdownOption { .text = "High" },
-                            ImGuiDropdownOption { .text = "Highest" }
-                        };
-
-                        if (uint32 qualityLevelIndex = static_cast<uint32>(compressionSettings.quality); ImGuiWidgets::Dropdown("##QualityDropdown", qualityLevelIndex, { .options = OPTIONS }))
-                        {
-                            compressionSettings.quality = static_cast<TextureCompressionQuality>(qualityLevelIndex);
+                            compressionSettings.quality = static_cast<TextureCompressionQuality>(qualityIndex);
                         }
                     }
                     ImGuiWidgets::EndProperty();
@@ -438,7 +434,7 @@ namespace SierraEngine
         }
     }
 
-    void TextureSerializeWizard::DrawExtrasMenu(Sierra::CommandBuffer& commandBuffer) noexcept
+    void TextureSerializeWizard::DrawExtrasMenu(const ApplicationFrame& applicationFrame, const DrawFrame& drawFrame) noexcept
     {
         if (ImGui::TreeNodeEx("Extras", MENU_TREE_FLAGS))
         {
@@ -449,124 +445,107 @@ namespace SierraEngine
                     constexpr std::array OPTIONS
                     {
                         ImGuiDropdownOption { .text = "None" },
-                        ImGuiDropdownOption { .text = "Load" },
+                        ImGuiDropdownOption { .text = "Load" }
                     };
 
                     if (uint32 levelOptionsIndex = static_cast<uint32>(levelOptions); ImGuiWidgets::Dropdown("##LevelOptionsDropdown", levelOptionsIndex, { .options = OPTIONS }))
                     {
                         levelOptions = static_cast<LevelOptions>(levelOptionsIndex);
-                        ReloadLevels(commandBuffer);
+                        ResizeLevels(drawFrame);
                     }
                 }
                 ImGuiWidgets::EndProperty();
 
                 ImGuiWidgets::BeginProperty("Layer Count");
                 {
-                    uint32 lastLayerCount = layerCount;
-                    if (ImGuiWidgets::NumericEnterInput("##LayerCountInput", layerCount, 1U, 16U))
+                    if (ImGuiWidgets::NumericEnterInput("##LayerCountInput", layerCount, 1U, MAX_LAYER_COUNT))
                     {
-                        ReloadLayers(lastLayerCount, commandBuffer);
+                        ResizeLevels(drawFrame);
                     }
                 }
                 ImGuiWidgets::EndProperty();
 
                 ImGuiWidgets::BeginProperty("Levels");
                 {
-                    const ImGuiListInputItemCallback<ImageLevelData> ItemCallback = [this, &commandBuffer](ImageLevelData& level, const uint32 levelIndex) -> void
+                    const ImGuiListInputItemCallback<ImageLevelData> ItemCallback = [this, &applicationFrame](ImageLevelData& level, const uint32 levelIndex) -> void
                     {
-                        const ImGuiStyle& style = ImGui::GetStyle();
-                        const float32 availableHorizontalSpace = ImGui::GetContentRegionAvail().x;
-
-                        const uint32 levelsPerRow = glm::min(size(2), level.layers.size());
-                        const float32 size = (availableHorizontalSpace - (2.0f * static_cast<float32>(levelsPerRow - 1) + static_cast<float32>(levelsPerRow > 1) * 2.0f) * style.CellPadding.x) / static_cast<float32>(levelsPerRow) * (layerCount == 1 ? 0.35f : 1.0f);
-
-                        if (level.layers.size() == 1)
-                        {
-                            ImGuiWidgets::BeginHorizontalPadding((availableHorizontalSpace - size) / 2.0f);
-                        }
-
-                        if (ImGui::BeginTable("##LevelsTable", static_cast<int>(levelsPerRow)))
-                        {
-                            ImGui::TableNextRow();
-
-                            for (uint32 layerIndex = 0; layerIndex < level.layers.size(); layerIndex++)
-                            {
-                                ImGui::TableNextColumn();
-                                ImGui::PushID(static_cast<int>(layerIndex));
-
-                                ImageLayerData& layer = level.layers[layerIndex];
-                                if (layer.dirty)
-                                {
-                                    std::optional<ImagePreview> preview = ImagePreviewer::Preview({ .renderingContext = renderingContext, .commandBuffer = commandBuffer, .image = *layer.image });
-                                    ResetLayer(layer, commandBuffer);
-
-                                    Sierra::ResourceTable& resourceTable = renderingContext.GetResourceTable();
-                                    layer.dirty = false;
-
-                                    layer.preview = std::move(preview.value());
-                                    layer.preview->ID = resourceTable.BindSampledImage(*layer.preview->image);
-                                }
-
-                                const ImGuiImageInputInfo inputInfo
-                                {
-                                    .previewID = layer.preview.has_value() ? std::optional(layer.preview->ID) : std::nullopt,
-                                    .allowedFileExtensions = INPUT_FILE_EXTENSIONS,
-                                    .imageWidth = layer.image.has_value() ? layer.image->width : 0,
-                                    .imageHeight = layer.image.has_value() ? layer.image->height : 0,
-                                    .width = size
-                                };
-
-                                if (ImGuiWidgets::ImageInput("##LevelsLayerImageInput", layer.filePath, platformContext, inputInfo))
-                                {
-                                    if (std::optional<LoadedImage> layerImage = LoadLayerImage(fileManager, layer.filePath); layerImage.has_value())
-                                    {
-                                        const bool rootLayer = levelIndex == 0 && layerIndex == 0;
-                                        if (!rootLayer && !ImageMatchesLevelDimensions(*layerImage, levelIndex))
-                                        {
-                                            APP_WARNING("Cannot use image [{0}] as level [{1}] layer [{2}] of texture [{3}], as its dimensions do not match those of the level", layer.filePath.string(), levelIndex, layerIndex, serializeInfo.metadata.name);
-                                        }
-                                        else
-                                        {
-                                            layer.image.emplace(std::move(layerImage.value()));
-                                            layer.dirty = true;
-                                        }
-
-                                        rootLayerDirty = rootLayer;
-                                    }
-                                }
-
-                                if ((layerIndex + 1) % levelsPerRow == 0)
-                                {
-                                    ImGui::TableNextRow();
-                                }
-
-                                ImGui::PopID();
-                            }
-                            ImGui::EndTable();
-                        }
-
-                        if (level.layers.size() == 1)
-                        {
-                            ImGuiWidgets::EndPadding();
-                        }
+                        DrawLevel(applicationFrame, level, levelIndex);
                     };
 
-                    const ImGuiListInputLabelCallback LabelCallback = [this](const uint32 i) -> std::string
+                    const ImGuiListInputLabelCallback LabelCallback = [this](const uint32 levelIndex) -> std::string
                     {
-                        if (const LoadedImage* rootImage = GetRootImage(); rootImage != nullptr)
-                        {
-                            return SR_FORMAT("{0}x{1}:", glm::max(1U, rootImage->width >> i), glm::max(1U, rootImage->height >> i));
-                        }
+                        if (!HasImage(GetRootImage()))
+                            return SR_FORMAT("{0}", levelIndex);
 
-                        return SR_FORMAT("{0}", i);
+                        const Vector2UInt levelDimensions = GetLevelDimensions(levelIndex);
+                        return SR_FORMAT("{0}x{1}:", levelDimensions.x, levelDimensions.y);
                     };
 
                     ImGuiWidgets::ListInput("##LevelsListInput", levels, { .allowOperations = false, .ItemCallback = ItemCallback, .LabelCallback = LabelCallback });
                 }
                 ImGuiWidgets::EndProperty();
+
+                ImGuiWidgets::EndPropertyTable();
             }
-            ImGuiWidgets::EndPropertyTable();
             ImGui::TreePop();
+        }
+    }
+
+    void TextureSerializeWizard::DrawLevel(const ApplicationFrame& applicationFrame, ImageLevelData& level, const uint32 levelIndex) noexcept
+    {
+        const uint32 columnCount = glm::min(2U, layerCount);
+        const float32 availableWidth = ImGui::GetContentRegionAvail().x;
+        const float32 imageSize = columnCount == 1
+            ? availableWidth * SINGLE_LAYER_PREVIEW_SCALE
+            : (availableWidth - 2.0f * ImGui::GetStyle().CellPadding.x * static_cast<float32>(columnCount)) / static_cast<float32>(columnCount);
+
+        // A lone layer is drawn smaller, so it is centered
+        if (columnCount == 1)
+        {
+            ImGuiWidgets::BeginHorizontalPadding((availableWidth - imageSize) / 2.0f);
+        }
+
+        if (ImGui::BeginTable("##LayersTable", static_cast<int>(columnCount)))
+        {
+            for (uint32 layerIndex = 0; layerIndex < level.layers.size(); layerIndex++)
+            {
+                ImGui::TableNextColumn();
+                ImGui::PushID(static_cast<int>(layerIndex));
+
+                const ImageLayerData& layer = level.layers[layerIndex];
+                const LoadedImage& image = level.images[layerIndex];
+
+                const ImGuiImageInputInfo inputInfo
+                {
+                    .previewID = layer.preview.has_value() ? std::optional(layer.preview->ID) : std::nullopt,
+                    .allowedFileExtensions = INPUT_FILE_EXTENSIONS,
+                    .imageWidth = image.width,
+                    .imageHeight = image.height,
+                    .width = imageSize
+                };
+
+                // The widget writes into a copy, so a file that fails to load or does not fit never replaces the layer's current one
+                if (Sierra::Path filePath = layer.filePath; ImGuiWidgets::ImageInput("##LayerImageInput", filePath, applicationFrame.platformContext, inputInfo))
+                {
+                    if (levelIndex == 0 && layerIndex == 0)
+                    {
+                        // The root layer is the source image, and changing it may resize the levels being drawn, so it goes through the same deferred path as the source input
+                        SetInputFilePath(filePath);
+                    }
+                    else
+                    {
+                        LoadLayer(applicationFrame, level, levelIndex, layerIndex, filePath);
+                    }
+                }
+
+                ImGui::PopID();
+            }
+            ImGui::EndTable();
+        }
+
+        if (columnCount == 1)
+        {
+            ImGuiWidgets::EndPadding();
         }
     }
 

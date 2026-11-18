@@ -1,6 +1,6 @@
 target_sources(Sierra PRIVATE
-    MemoryReadStream.cpp
-    MemoryReadStream.h
-    MemoryWriteStream.cpp
-    MemoryWriteStream.h
+    ReadStream.cpp
+    ReadStream.h
+    WriteStream.cpp
+    WriteStream.h
 )

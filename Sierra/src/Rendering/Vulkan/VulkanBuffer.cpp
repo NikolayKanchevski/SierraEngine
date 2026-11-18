@@ -69,26 +69,32 @@ namespace Sierra
         // Map and reset memory if CPU-visible
         if (createInfo.memoryLocation == BufferMemoryLocation::RAM)
         {
-            vmaMapMemory(device->GetVulkanMemoryAllocator(), allocation, &memory);
-            std::memset(memory, 0, createInfo.memorySize);
+            vmaMapMemory(device->GetVulkanMemoryAllocator(), allocation, &mappedMemory);
+            std::memset(mappedMemory, 0, createInfo.memorySize);
         }
     }
 
     /* --- POLLING METHODS --- */
 
-    void VulkanBuffer::Write(const void* memoryPointer, const uint64 sourceOffset, const uint64 destinationOffset, const uint64 memoryPointerSize)
+    bool VulkanBuffer::Write(const uint64 destinationOffset, const std::span<const uint8> givenBuffer)
     {
-        Buffer::Write(memoryPointer, sourceOffset, destinationOffset, memoryPointerSize);
+        if (!Buffer::Write(destinationOffset, givenBuffer))
+            return false;
 
-        std::memcpy(reinterpret_cast<uint8*>(memory) + destinationOffset, reinterpret_cast<const uint8*>(memoryPointer) + sourceOffset, memoryPointerSize);
-        vmaFlushAllocation(device->GetVulkanMemoryAllocator(), allocation, destinationOffset, memoryPointerSize);
+        if (mappedMemory == nullptr)
+            return false;
+
+        std::memcpy(reinterpret_cast<uint8*>(mappedMemory) + destinationOffset, givenBuffer.data(), givenBuffer.size());
+        vmaFlushAllocation(device->GetVulkanMemoryAllocator(), allocation, destinationOffset, givenBuffer.size());
+
+        return true;
     }
 
     /* --- DESTRUCTOR --- */
 
     VulkanBuffer::~VulkanBuffer() noexcept
     {
-        if (memory != nullptr) vmaUnmapMemory(device->GetVulkanMemoryAllocator(), allocation);
+        if (mappedMemory != nullptr) vmaUnmapMemory(device->GetVulkanMemoryAllocator(), allocation);
         vmaDestroyBuffer(device->GetVulkanMemoryAllocator(), buffer, allocation);
     }
 

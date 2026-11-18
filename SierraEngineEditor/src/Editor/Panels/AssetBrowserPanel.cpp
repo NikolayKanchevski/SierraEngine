@@ -42,6 +42,12 @@ namespace SierraEngine
         constexpr Sierra::KeyCombination OPEN_SHORTCUT = { Sierra::Key::Enter };
         constexpr Sierra::KeyCombination RENAME_SHORTCUT = { Sierra::Key::F2 };
 
+        #if !SR_PLATFORM_APPLE
+            constexpr Sierra::KeyCombination DELETE_SHORTCUT = { Sierra::Key::Delete };
+        #else
+            constexpr Sierra::KeyCombination DELETE_SHORTCUT = { Sierra::Key::Backspace };
+        #endif
+
         constexpr float32 MIN_TILE_SIZE = 56.0f;
         constexpr float32 MAX_TILE_SIZE = 200.0f;
         constexpr float32 TILE_PADDING = 8.0f;
@@ -105,29 +111,6 @@ namespace SierraEngine
             return text;
         }
 
-        // Truncates text with an ellipsis, so that it fits within the given width TODO: IN WIDGETS OR SOME
-        std::string TruncateText(ImFont* font, const float32 fontSize, const std::string_view text, const float32 maxWidth)
-        {
-            if (font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, text.data(), text.data() + text.size()).x <= maxWidth) return std::string(text);
-
-            constexpr std::string_view ELLIPSIS = "...";
-            const float32 ellipsisWidth = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, ELLIPSIS.data(), ELLIPSIS.data() + ELLIPSIS.size()).x;
-
-            size end = text.size();
-            while (end > 0)
-            {
-                end--;
-
-                // Step back to the start of a UTF-8 character
-                while (end > 0 && (static_cast<uint8>(text[end]) & 0xC0) == 0x80) end--;
-
-                const float32 width = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, text.data(), text.data() + end).x + ellipsisWidth;
-                if (width <= maxWidth) return std::string(text.substr(0, end)) + std::string(ELLIPSIS);
-            }
-
-            return std::string(ELLIPSIS);
-        }
-
         std::string FormatSize(const size bytes)
         {
             constexpr std::array<std::string_view, 4> UNITS = { "B", "KB", "MB", "GB" };
@@ -145,7 +128,7 @@ namespace SierraEngine
             return SR_FORMAT("{0:.1f} {1}", value, UNITS[unit]);
         }
 
-        std::string BuildSubtitle(const AssetBrowserEntry& entry) // TODO: RENAME & REORDER ALL
+        std::string BuildSubtitle(const AssetBrowserEntry& entry)
         {
             return SR_FORMAT("{0} - {1}", AssetBrowserEntryTypeToString(entry.type), FormatSize(entry.memorySize));
         }
@@ -171,9 +154,12 @@ namespace SierraEngine
             std::vector<Sierra::Path> directoryPaths = { };
             directoryPaths.reserve(5);
 
-            fileManager.EnumerateDirectoryFiles(directoryPath, false, [&directoryPaths](const Sierra::Path& path) -> void {
-                if (!std::filesystem::is_directory(path)) return;
-                directoryPaths.emplace_back(path);
+            fileManager.EnumeratePaths(directoryPath, [&fileManager, &directoryPaths](const Sierra::Path& path) -> bool
+            {
+                if (fileManager.IsDirectory(path))
+                    directoryPaths.emplace_back(path);
+
+                return true;
             });
 
             std::sort(directoryPaths.begin(), directoryPaths.end(), [](const Sierra::Path& left, const Sierra::Path& right) -> bool
@@ -191,28 +177,28 @@ namespace SierraEngine
             return (color & 0x00FFFFFFu) | (alpha << 24);
         }
 
-        ImU32 GetKindColor(const AssetBrowserEntryType kind) noexcept
+        ImU32 GetTypeColor(const AssetBrowserEntryType type) noexcept
         {
-            switch (kind)
+            switch (type)
             {
-                case AssetBrowserEntryType::Folder:   return IM_COL32(232, 183, 84, 255);
-                case AssetBrowserEntryType::Texture:  return IM_COL32(86, 164, 235, 255);
-                case AssetBrowserEntryType::Model:    return IM_COL32(112, 204, 136, 255);
-                case AssetBrowserEntryType::Material: return IM_COL32(178, 128, 232, 255);
-                case AssetBrowserEntryType::Image:    return IM_COL32(234, 142, 92, 255);
-                case AssetBrowserEntryType::Blob:     return IM_COL32(150, 152, 164, 255);
+                case AssetBrowserEntryType::Folder:     return IM_COL32(232, 183, 84, 255);
+                case AssetBrowserEntryType::Texture:    return IM_COL32(86, 164, 235, 255);
+                case AssetBrowserEntryType::Model:      return IM_COL32(112, 204, 136, 255);
+                case AssetBrowserEntryType::Material:   return IM_COL32(178, 128, 232, 255);
+                case AssetBrowserEntryType::Image:      return IM_COL32(234, 142, 92, 255);
+                case AssetBrowserEntryType::Blob:       return IM_COL32(150, 152, 164, 255);
                 case AssetBrowserEntryType::Unknown:    return IM_COL32(140, 146, 158, 255);
             }
 
             return IM_COL32(140, 146, 158, 255);
         }
 
-        // TODO: Replace this AI-generated nonsense with a texture map
+        // TODO: Replace these AI-generated glyphs with a texture map
         void DrawItemGlyph(ImDrawList* drawList, const ImVec2 min, const ImVec2 max, const AssetBrowserEntryType type)
         {
             const float32 extent = max.x - min.x;
             const ImVec2 center = { (min.x + max.x) * 0.5f, (min.y + max.y) * 0.5f };
-            const ImU32 color = GetKindColor(type);
+            const ImU32 color = GetTypeColor(type);
 
             if (type == AssetBrowserEntryType::Folder)
             {
@@ -323,22 +309,22 @@ namespace SierraEngine
 
     /* --- CONSTRUCTORS --- */
 
-    AssetBrowserPanel::AssetBrowserPanel(const AssetBrowserPanelCreateInfo& createInfo)
-            : fileManager(&createInfo.fileManager), renderingContext(&createInfo.renderingContext), rootDirectoryPath(createInfo.rootDirectoryPath)
+    AssetBrowserPanel::AssetBrowserPanel(const ApplicationFrame& applicationFrame, const AssetBrowserPanelCreateInfo& createInfo)
+        : rootDirectoryPath(createInfo.rootDirectoryPath)
     {
-        Refresh();
+        Refresh(applicationFrame);
     }
 
     /* --- POLLING METHODS --- */
 
-    void AssetBrowserPanel::Draw(const AssetBrowserDrawInfo& drawInfo)
+    void AssetBrowserPanel::Draw(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame)
     {
         if (ImGui::Begin(PANEL_TITLE.data(), nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoNav))
         {
-            HandleShortcuts(drawInfo.inputManager);
+            HandleShortcuts(applicationFrame, editorFrame);
 
-            DrawToolBar();
-            DrawNavigation();
+            DrawToolBar(applicationFrame);
+            DrawNavigation(applicationFrame, editorFrame);
 
             ImGui::Separator();
 
@@ -349,9 +335,9 @@ namespace SierraEngine
             const float32 detailsSpace = showDetails ? style.ItemSpacing.x + DETAILS_WIDTH : 0.0f;
             const float32 entriesWidth = glm::max(0.0f, ImGui::GetContentRegionAvail().x - TREE_WIDTH - style.ItemSpacing.x - detailsSpace);
 
-            DrawTree(bodyHeight);
+            DrawTree(applicationFrame, bodyHeight);
             ImGui::SameLine();
-            DrawEntries({ entriesWidth, bodyHeight});
+            DrawEntries(applicationFrame, { entriesWidth, bodyHeight });
 
             if (showDetails)
             {
@@ -360,12 +346,12 @@ namespace SierraEngine
             }
 
             DrawStatusBar();
-            DrawPopups();
+            DrawPopups(applicationFrame, editorFrame);
         }
         ImGui::End();
     }
 
-    void AssetBrowserPanel::Refresh()
+    void AssetBrowserPanel::Refresh(const ApplicationFrame& applicationFrame)
     {
         selectedEntryIndices.clear();
         entries.clear();
@@ -376,32 +362,35 @@ namespace SierraEngine
         const Sierra::Path absolutePath = rootDirectoryPath / relativeDirectoryPath;
         if (!searching)
         {
-            fileManager->EnumerateDirectoryFiles(absolutePath, false, [this](const Sierra::Path& path) -> void
+            applicationFrame.platformContext.GetFileManager().EnumeratePaths(absolutePath, [this, &applicationFrame](const Sierra::Path& path) -> bool
             {
-                const Sierra::Path relativePath = std::filesystem::relative(path, rootDirectoryPath);
-                AddEntry(relativePath);
+                const Sierra::Path relativePath = path.GetRelativePath(rootDirectoryPath);
+                AddEntry(applicationFrame, relativePath);
+
+                return true;
             });
         }
         else
         {
-            fileManager->EnumerateDirectoryFiles(absolutePath, true, [this, &query](const Sierra::Path& searchPath) -> void
+            applicationFrame.platformContext.GetFileManager().EnumeratePaths(absolutePath, [this, &applicationFrame, &query](const Sierra::Path& searchPath) -> bool
             {
-                const Sierra::Path relativePath = std::filesystem::relative(searchPath, rootDirectoryPath);
+                const Sierra::Path relativePath = searchPath.GetRelativePath(rootDirectoryPath);
 
-                if (relativePath.IsWithinHiddenPath() || ToLower(searchPath.GetFileName()).find(query) == std::string::npos)
-                {
-                    // return false; // TODO: BREAK RECURSION
-                    return;
-                }
+                if (relativePath.IsWithinHiddenPath())
+                    return true;
 
-                AddEntry(relativePath);
+                if (ToLower(searchPath.GetFileName()).find(query) == std::string::npos)
+                    return false;
+
+                AddEntry(applicationFrame, relativePath);
+                return false;
             });
         }
 
         RefreshEntryVisibility();
     }
 
-    bool AssetBrowserPanel::NavigateBack()
+    bool AssetBrowserPanel::NavigateBack(const ApplicationFrame& applicationFrame) // TODO: Validate history
     {
         if (backHistory.empty())
             return false;
@@ -411,11 +400,11 @@ namespace SierraEngine
         const Sierra::Path previousDirectoryPath = backHistory.back();
         backHistory.pop_back();
 
-        UpdateRelativeDirectoryPath(previousDirectoryPath);
+        UpdateRelativeDirectoryPath(applicationFrame, previousDirectoryPath);
         return true;
     }
 
-    bool AssetBrowserPanel::NavigateForward()
+    bool AssetBrowserPanel::NavigateForward(const ApplicationFrame& applicationFrame)
     {
         if (forwardHistory.empty())
             return false;
@@ -425,38 +414,37 @@ namespace SierraEngine
         const Sierra::Path nextDirectoryPath = forwardHistory.back();
         forwardHistory.pop_back();
 
-        UpdateRelativeDirectoryPath(nextDirectoryPath);
+        UpdateRelativeDirectoryPath(applicationFrame, nextDirectoryPath);
         return true;
     }
 
-    bool AssetBrowserPanel::NavigateUp()
+    bool AssetBrowserPanel::NavigateUp(const ApplicationFrame& applicationFrame)
     {
         if (relativeDirectoryPath.IsEmpty())
             return false;
 
-        NavigateTo(relativeDirectoryPath.GetParentPath());
-        return true;
+        return NavigateTo(applicationFrame, relativeDirectoryPath.GetParentPath());
     }
 
-    bool AssetBrowserPanel::NavigateTo(const Sierra::Path& givenRelativeDirectoryPath)
+    bool AssetBrowserPanel::NavigateTo(const ApplicationFrame& applicationFrame, const Sierra::Path& givenRelativeDirectoryPath)
     {
-        if (givenRelativeDirectoryPath == relativeDirectoryPath || !fileManager->DirectoryExists(rootDirectoryPath / givenRelativeDirectoryPath))
+        if (givenRelativeDirectoryPath == relativeDirectoryPath || !applicationFrame.platformContext.GetFileManager().IsDirectory(rootDirectoryPath / givenRelativeDirectoryPath))
             return false;
 
         backHistory.push_back(relativeDirectoryPath);
         forwardHistory.clear();
 
-        UpdateRelativeDirectoryPath(givenRelativeDirectoryPath);
+        UpdateRelativeDirectoryPath(applicationFrame, givenRelativeDirectoryPath);
         return true;
     }
 
-    bool AssetBrowserPanel::Select(const Sierra::Path& relativePath)
+    bool AssetBrowserPanel::Select(const ApplicationFrame& applicationFrame, const Sierra::Path& relativePath)
     {
         ClearSelection();
-        return Select(std::span(&relativePath, 1));
+        return Select(applicationFrame, std::span(&relativePath, 1));
     }
 
-    bool AssetBrowserPanel::Select(std::span<const Sierra::Path> relativePaths)
+    bool AssetBrowserPanel::Select(const ApplicationFrame& applicationFrame, std::span<const Sierra::Path> relativePaths)
     {
         bool success = !relativePaths.empty();
 
@@ -464,7 +452,7 @@ namespace SierraEngine
         for (const Sierra::Path& relativePath: relativePaths)
         {
             const Sierra::Path absolutePath = rootDirectoryPath / relativePath;
-            if (!fileManager->FileExists(absolutePath) && !fileManager->DirectoryExists(absolutePath)) // TODO:
+            if (!applicationFrame.platformContext.GetFileManager().PathExists(absolutePath))
             {
                 success = false;
                 continue;
@@ -484,7 +472,22 @@ namespace SierraEngine
         return success;
     }
 
-    bool AssetBrowserPanel::DeleteSelection()
+    bool AssetBrowserPanel::OpenSelection(const ApplicationFrame& applicationFrame)
+    {
+        const AssetBrowserEntry* entry = GetSelectedEntry();
+        if (entry == nullptr) return false;
+
+        const Sierra::Path absolutePath = rootDirectoryPath / entry->relativePath;
+        if (applicationFrame.platformContext.GetFileManager().IsDirectory(absolutePath))
+        {
+            NavigateTo(applicationFrame, entry->relativePath);
+            return true;
+        }
+
+        return applicationFrame.platformContext.OpenPath(absolutePath);
+    }
+
+    bool AssetBrowserPanel::DeleteSelection(const ApplicationFrame& applicationFrame)
     {
         size deletedCount = 0;
         for (const size entryIndex : selectedEntryIndices)
@@ -492,18 +495,12 @@ namespace SierraEngine
             const AssetBrowserEntry& entry = entries[entryIndex];
 
             const Sierra::Path absolutePath = rootDirectoryPath / entry.relativePath;
-            if (std::filesystem::is_directory(absolutePath))
-            {
-                fileManager->DeleteDirectory(absolutePath);
-            }
-            else
-            {
-                fileManager->DeleteFile(absolutePath);
+            static_cast<void>(applicationFrame.platformContext.GetFileManager().DeletePath(absolutePath));
 
-                Sierra::Path blobPath = Sierra::Path(absolutePath);
-                blobPath.ChangeExtension(AssetSerializeWizard::BLOB_OUTPUT_FILE_EXTENSION);
-
-                if (fileManager->FileExists(blobPath)) fileManager->DeleteFile(blobPath);
+            if (applicationFrame.platformContext.GetFileManager().IsFile(absolutePath))
+            {
+                const Sierra::Path blobPath = Sierra::Path(absolutePath).ChangeExtension(AssetSerializeWizard::BLOB_OUTPUT_FILE_EXTENSION);
+                static_cast<void>(applicationFrame.platformContext.GetFileManager().DeletePath(blobPath));
             }
 
             deletedCount++;
@@ -511,10 +508,10 @@ namespace SierraEngine
 
         bool success = deletedCount == selectedEntryIndices.size();
         const std::string message = SR_FORMAT("Deleted [{0}] of [{1}] item{2}", deletedCount, selectedEntryIndices.size(), deletedCount == 0 ? "" : "s");
-        UpdateStatus(message, success ? AlertSeverity::Info : AlertSeverity::Warning);
+        UpdateStatus(message, success ? Sierra::AlertSeverity::Info : Sierra::AlertSeverity::Warning);
 
         ClearSelection();
-        Refresh();
+        Refresh(applicationFrame);
 
         return success;
     }
@@ -524,45 +521,47 @@ namespace SierraEngine
         selectedEntryIndices.clear();
     }
 
-    bool AssetBrowserPanel::OpenNewFolderDialog()
+    bool AssetBrowserPanel::OpenNewFolderDialog(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame)
     {
         const TextDialogCreateInfo createInfo
         {
             .title = "New Folder",
             .text = "Folder name:",
             .placeholder = "Folder",
-            .ValidationCallback = nullptr,
-            .ActionCallback = [this](const std::string_view input) -> void
+            .ValidationCallback = [this, &applicationFrame](const std::string_view name) -> std::string
             {
-                const Sierra::Path absolutePath = rootDirectoryPath / relativeDirectoryPath / input;
-                fileManager->CreateDirectory(absolutePath);
+                if (!Sierra::IsPathNameValid(name))
+                    return SR_FORMAT("Cannot create create folder [{0}], as chosen name is invalid", name);
 
-                const Sierra::DirectoryMetadata metadata = fileManager->GetDirectoryMetadata(absolutePath);
-                AssetBrowserEntry entry
+                const Sierra::Path absolutePath = rootDirectoryPath / relativeDirectoryPath / name;
+                if (applicationFrame.platformContext.GetFileManager().PathExists(absolutePath))
+                    return SR_FORMAT("Cannot create folder [{0}], as this path already exists", name);
+
+                return { };
+            },
+            .ActionCallback = [this, &applicationFrame](const std::string_view name) -> bool
+            {
+                const Sierra::Path absolutePath = rootDirectoryPath / relativeDirectoryPath / name;
+                if (const Sierra::PathResult result = applicationFrame.platformContext.GetFileManager().CreateDirectory(absolutePath, Sierra::PathConflictPolicy::Overwrite); result != Sierra::PathResult::Success)
                 {
-                    .name = std::string(input),
-                    .relativePath = relativeDirectoryPath / input,
-                    .type = AssetBrowserEntryType::Folder,
-                    .memorySize = metadata.memorySize,
-                    .dateLastModified = metadata.dateLastModified,
-                    .lastWriteTime = std::filesystem::last_write_time(absolutePath) // TODO:
-                };
+                    APP_WARNING("Could not create folder [{0}] due to Sierra::PathOperationResult error code [{1}]", name, static_cast<uint32>(result));
+                    return false;
+                }
 
-                entries.emplace_back(std::move(entry));
-                const size entryIndex = entries.size() - 1;
+                visibleEntryIndices.emplace_back(visibleEntryIndices.size());
+                AddEntry(applicationFrame, relativeDirectoryPath / name);
 
-                visibleEntryIndices.emplace_back(entryIndex);
-                selectedEntryIndices = { entryIndex };
-
-                RefreshEntryOrder();
+                return true;
             }
         };
 
-        modal = std::make_unique<TextDialog>(createInfo);
+        std::unique_ptr<Modal> modal = std::make_unique<TextDialog>(createInfo);
+        editorFrame.modalManager.PushModal(std::move(modal));
+
         return true;
     }
 
-    bool AssetBrowserPanel::OpenRenameDialog()
+    bool AssetBrowserPanel::OpenRenameDialog(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame)
     {
         if (IsSelectionEmpty())
             return false;
@@ -573,39 +572,45 @@ namespace SierraEngine
             .title = "Rename",
             .text = "New name:",
             .placeholder = placeholder,
-            .ValidationCallback = [this](const std::string_view input) -> std::string
+            .ValidationCallback = [this, &applicationFrame](const std::string_view name) -> std::string
             {
+                 if (!Sierra::IsPathNameValid(name))
+                     return SR_FORMAT("Cannot rename to [{0}], as chosen name is invalid", name);
+
                 const AssetBrowserEntry& entry = *GetSelectedEntry();
-                const Sierra::Path absolutePath = rootDirectoryPath / entry.relativePath.GetParentPath() / (std::string(input) + entry.relativePath.GetExtension());
-
-                 if (!Sierra::Path(input).IsValid())
-                     return SR_FORMAT("Cannot rename [{0}] to [{1}], as chosen name is invalid", entry.relativePath.GetString(), input);
-
-                if (fileManager->FileExists(absolutePath) || fileManager->DirectoryExists(absolutePath)) // TODO:
-                    return SR_FORMAT("Cannot rename [{0}] to [{1}], as this path already exists", entry.relativePath.GetString(), input);
+                const Sierra::Path absolutePath = rootDirectoryPath / entry.relativePath.GetParentPath() / (std::string(name) + entry.relativePath.GetExtension());
+                if (applicationFrame.platformContext.GetFileManager().PathExists(absolutePath))
+                    return SR_FORMAT("Cannot rename to [{0}], as this path already exists", name);
 
                 return { };
             },
-            .ActionCallback = [this](const std::string_view input) -> void
+            .ActionCallback = [this, &applicationFrame](const std::string_view name) -> bool
             {
                 AssetBrowserEntry& entry = *GetSelectedEntry();
                 const Sierra::Path& absolutePath = rootDirectoryPath / entry.relativePath;
 
-                const std::string newName = std::string(input);
-                if (std::filesystem::is_directory(absolutePath)) fileManager->RenameDirectory(absolutePath, newName);
-                else fileManager->RenameFile(absolutePath, newName);
+                const std::string newName = std::string(name);
+                if (const Sierra::PathResult result = applicationFrame.platformContext.GetFileManager().RenamePath(absolutePath, newName); result != Sierra::PathResult::Success)
+                {
+                    APP_WARNING("Could not rename [{0}] to [{1}] due to Sierra::PathOperationResult error code [{2}]", absolutePath.GetString(), name, static_cast<uint32>(result));
+                    return false;
+                }
 
-                const size extensionSize = newName.size() - input.size();
+                const size extensionSize = newName.size() - name.size();
                 entry.name = newName.substr(0, newName.size() - extensionSize);
                 entry.relativePath.ChangeFileName(newName);
+
+                return true;
             }
         };
 
-        modal = std::make_unique<TextDialog>(createInfo);
+        std::unique_ptr<Modal> modal = std::make_unique<TextDialog>(createInfo);
+        editorFrame.modalManager.PushModal(std::move(modal));
+
         return true;
     }
 
-    bool AssetBrowserPanel::OpenDeleteDialog()
+    bool AssetBrowserPanel::OpenDeleteDialog(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame)
     {
         if (IsSelectionEmpty())
             return false;
@@ -615,10 +620,13 @@ namespace SierraEngine
             .title = "Delete Items",
             .text = "Permanently delete the selected items? This cannot be undone.",
             .confirmationText = "Delete",
-            .ActionCallback = [this]() -> void { DeleteSelection(); }
+            .ActionCallback = [this, &applicationFrame]() -> void { DeleteSelection(applicationFrame); }
         };
 
-        modal = std::make_unique<ConfirmationDialog>(createInfo);
+
+        std::unique_ptr<Modal> modal = std::make_unique<ConfirmationDialog>(createInfo);
+        editorFrame.modalManager.PushModal(std::move(modal));
+
         return true;
     }
 
@@ -632,12 +640,18 @@ namespace SierraEngine
 
     /* --- PRIVATE METHODS --- */
 
-    void AssetBrowserPanel::HandleShortcuts(const Sierra::InputManager& inputManager)
+    void AssetBrowserPanel::HandleShortcuts(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame)
     {
-        if (inputManager.IsKeyCombinationPressed(NEW_FOLDER_SHORTCUT)) OpenNewFolderDialog();
-        if (inputManager.IsKeyCombinationPressed(REFRESH_SHORTCUT)) Refresh();
-        if (inputManager.IsKeyCombinationPressed(OPEN_SHORTCUT)) { } // TODO: IMPLEMENT
-        if (inputManager.IsKeyCombinationPressed(RENAME_SHORTCUT)) OpenRenameDialog();
+        if (applicationFrame.inputManager == nullptr)
+            return;
+
+        const Sierra::InputManager& inputManager = *applicationFrame.inputManager;
+        if (inputManager.IsKeyCombinationPressed(NEW_FOLDER_SHORTCUT)) OpenNewFolderDialog(applicationFrame, editorFrame);
+        if (inputManager.IsKeyCombinationPressed(REFRESH_SHORTCUT)) Refresh(applicationFrame);
+
+        if (inputManager.IsKeyCombinationPressed(OPEN_SHORTCUT)) OpenSelection(applicationFrame);
+        if (inputManager.IsKeyCombinationPressed(RENAME_SHORTCUT)) OpenRenameDialog(applicationFrame, editorFrame);
+        if (inputManager.IsKeyCombinationPressed(DELETE_SHORTCUT)) OpenDeleteDialog(applicationFrame, editorFrame);
     }
 
     void AssetBrowserPanel::RefreshEntryVisibility()
@@ -710,8 +724,8 @@ namespace SierraEngine
                 }
                 case SortType::Modified:
                 {
-                    if (left.dateLastModified < right.dateLastModified) comparison = -1;
-                    else if (right.dateLastModified < left.dateLastModified) comparison = 1;
+                    if (left.timeLastModified < right.timeLastModified) comparison = -1;
+                    else if (right.timeLastModified < left.timeLastModified) comparison = 1;
                     break;
                 }
                 case SortType::Size:
@@ -745,31 +759,31 @@ namespace SierraEngine
         });
     }
 
-    void AssetBrowserPanel::UpdateRelativeDirectoryPath(const Sierra::Path& givenRelativeDirectoryPath)
+    void AssetBrowserPanel::UpdateRelativeDirectoryPath(const ApplicationFrame& applicationFrame, const Sierra::Path& givenRelativeDirectoryPath)
     {
         relativeDirectoryPath = givenRelativeDirectoryPath;
-        Refresh();
+        Refresh(applicationFrame);
 
         searchText.clear();
         revealCurrentDirectory = true;
     }
 
-    void AssetBrowserPanel::DrawNavigation()
+    void AssetBrowserPanel::DrawNavigation(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame)
     {
         const ImGuiStyle& style = ImGui::GetStyle();
 
         ImGui::BeginDisabled(backHistory.empty());
-        if (ImGui::ArrowButton("##Back", ImGuiDir_Left)) NavigateBack();
+        if (ImGui::ArrowButton("##Back", ImGuiDir_Left)) NavigateBack(applicationFrame);
         ImGui::EndDisabled();
 
         ImGui::SameLine();
         ImGui::BeginDisabled(forwardHistory.empty());
-        if (ImGui::ArrowButton("##Forward", ImGuiDir_Right)) NavigateForward();
+        if (ImGui::ArrowButton("##Forward", ImGuiDir_Right)) NavigateForward(applicationFrame);
         ImGui::EndDisabled();
 
         ImGui::SameLine();
         ImGui::BeginDisabled(relativeDirectoryPath.IsEmpty());
-        if (ImGui::ArrowButton("##Up", ImGuiDir_Up)) NavigateUp();
+        if (ImGui::ArrowButton("##Up", ImGuiDir_Up)) NavigateUp(applicationFrame);
         ImGui::EndDisabled();
 
         // Breadcrumbs, where every folder of the current path can be opened
@@ -777,7 +791,7 @@ namespace SierraEngine
 
         int32 i = 0;
         const std::string rootDirectoryName = rootDirectoryPath.GetStem();
-        if (DrawBreadcrumb(i, rootDirectoryName, true)) NavigateTo({ });
+        if (DrawBreadcrumb(i, rootDirectoryName, true)) NavigateTo(applicationFrame, { });
         i++;
 
         Sierra::Path currentRelativeDirectoryPath = { };
@@ -786,7 +800,7 @@ namespace SierraEngine
             currentRelativeDirectoryPath /= segment;
 
             const std::string  directoryName = segment.GetStem();
-            if (DrawBreadcrumb(i, directoryName)) NavigateTo(currentRelativeDirectoryPath);
+            if (DrawBreadcrumb(i, directoryName)) NavigateTo(applicationFrame, currentRelativeDirectoryPath);
 
             i++;
         }
@@ -796,16 +810,16 @@ namespace SierraEngine
         const float32 actionsWidth = ButtonWidth("New Folder") + ButtonWidth("Refresh") + style.ItemSpacing.x * 2.0f;
 
         ImGui::SameLine(std::max(ImGui::GetCursorPosX() + style.ItemSpacing.x, ImGui::GetContentRegionMax().x - actionsWidth));
-        if (ImGui::Button("New Folder")) OpenNewFolderDialog();
+        if (ImGui::Button("New Folder")) OpenNewFolderDialog(applicationFrame, editorFrame);
 
         ImGui::SameLine();
         if (ImGui::Button("Refresh"))
         {
-            Refresh();
+            Refresh(applicationFrame);
         }
     }
 
-    void AssetBrowserPanel::DrawToolBar()
+    void AssetBrowserPanel::DrawToolBar(const ApplicationFrame& applicationFrame)
     {
         const ImGuiStyle& style = ImGui::GetStyle();
 
@@ -839,7 +853,7 @@ namespace SierraEngine
         ImGui::SameLine();
         if (ImGuiWidgets::TextInput("##SearchInput", searchText, { .width = 200.0f }))
         {
-            Refresh();
+            Refresh(applicationFrame);
         }
 
         // View mode and tile size
@@ -881,18 +895,18 @@ namespace SierraEngine
         }
     }
 
-    void AssetBrowserPanel::DrawTree(const float32 height)
+    void AssetBrowserPanel::DrawTree(const ApplicationFrame& applicationFrame, const float32 height)
     {
         if (ImGui::BeginChild("##Tree", ImVec2(TREE_WIDTH, height), ImGuiChildFlags_Borders))
         {
-            DrawTreeNode({ });
+            DrawTreeNode(applicationFrame, { });
         }
         ImGui::EndChild();
 
         revealCurrentDirectory = false;
     }
 
-    void AssetBrowserPanel::DrawTreeNode(const Sierra::Path& givenRelativeDirectoryPath)
+    void AssetBrowserPanel::DrawTreeNode(const ApplicationFrame& applicationFrame, const Sierra::Path& givenRelativeDirectoryPath)
     {
         const std::string directoryName = givenRelativeDirectoryPath.IsEmpty() ? rootDirectoryPath.GetStem() : givenRelativeDirectoryPath.GetStem();
         const Sierra::Path absoluteDirectoryPath = rootDirectoryPath / givenRelativeDirectoryPath;
@@ -901,9 +915,9 @@ namespace SierraEngine
         ImGui::PushID(idString.c_str(), idString.c_str() + idString.size());
 
         const bool current = givenRelativeDirectoryPath == relativeDirectoryPath;
-        const bool ancestor = givenRelativeDirectoryPath.IsAncestor(relativeDirectoryPath); // TODO: CHECK
+        const bool ancestor = givenRelativeDirectoryPath.IsAncestor(relativeDirectoryPath);
 
-        std::vector<Sierra::Path> children = ListChildDirectoryPaths(*fileManager, absoluteDirectoryPath);
+        std::vector<Sierra::Path> children = ListChildDirectoryPaths(applicationFrame.platformContext.GetFileManager(), absoluteDirectoryPath);
         const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DrawLinesToNodes | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth | (givenRelativeDirectoryPath.IsEmpty() * ImGuiTreeNodeFlags_DefaultOpen) | (current * ImGuiTreeNodeFlags_Selected) | (children.empty() * ImGuiTreeNodeFlags_Leaf);
 
         // Folders leading to the current one are opened when navigating to it
@@ -912,14 +926,14 @@ namespace SierraEngine
         const bool open = ImGui::TreeNodeEx("##Node", flags, "%s", directoryName.c_str());
         if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen())
         {
-            NavigateTo(givenRelativeDirectoryPath);
+            NavigateTo(applicationFrame, givenRelativeDirectoryPath);
         }
 
         if (open)
         {
             for (const Sierra::Path& child : children)
             {
-                DrawTreeNode(std::filesystem::relative(child, rootDirectoryPath));
+                DrawTreeNode(applicationFrame, child.GetRelativePath(rootDirectoryPath));
             }
 
             ImGui::TreePop();
@@ -928,7 +942,7 @@ namespace SierraEngine
         ImGui::PopID();
     }
 
-    void AssetBrowserPanel::AddEntry(const Sierra::Path& relativeEntryPath)
+    void AssetBrowserPanel::AddEntry(const ApplicationFrame& applicationFrame, const Sierra::Path& relativeEntryPath)
     {
         const Sierra::Path absoluteEntryPath = rootDirectoryPath / relativeEntryPath;
 
@@ -937,24 +951,27 @@ namespace SierraEngine
         entry.relativePath = relativeEntryPath;
         entry.type = std::filesystem::is_directory(absoluteEntryPath) ? AssetBrowserEntryType::Folder : ExtensionToEntryType(relativeEntryPath.GetExtension());
 
-        if (std::filesystem::is_directory(absoluteEntryPath))
+        Sierra::PathMetadata metadata = { };
+        if (applicationFrame.platformContext.GetFileManager().GetPathMetadata(absoluteEntryPath, metadata) != Sierra::PathResult::Success)
         {
-            const Sierra::DirectoryMetadata directoryMetadata = fileManager->GetDirectoryMetadata(absoluteEntryPath);
-            entry.memorySize = directoryMetadata.memorySize;
-            entry.dateLastModified = directoryMetadata.dateLastModified;
+            APP_WARNING("Could not retrieve metadata of path [{0}]", absoluteEntryPath.GetString());
         }
         else
         {
-            const Sierra::FileMetadata fileMetadata = fileManager->GetFileMetadata(absoluteEntryPath);
-            entry.memorySize = fileMetadata.memorySize;
-            entry.dateLastModified = fileMetadata.dateLastModified;
+            entry.memorySize = metadata.memorySize;
+            entry.timeCreated = metadata.timeCreated;
+            entry.timeLastModified = metadata.timeLastModified;
         }
-        entry.lastWriteTime = std::filesystem::last_write_time(absoluteEntryPath); // TODO: IN FILEMANAGER
 
-        entries.emplace_back(entry);
+        AddEntry(std::move(entry));
     }
 
-    void AssetBrowserPanel::DrawEntries(const Vector2 size)
+    void AssetBrowserPanel::AddEntry(AssetBrowserEntry&& entry)
+    {
+        entries.emplace_back(std::move(entry));
+    }
+
+    void AssetBrowserPanel::DrawEntries(const ApplicationFrame& applicationFrame, const Vector2 size)
     {
         if (ImGui::BeginChild("##AssetEntries", size, ImGuiChildFlags_Borders))
         {
@@ -964,11 +981,11 @@ namespace SierraEngine
             }
             else if (listView)
             {
-                DrawListEntries();
+                DrawListEntries(applicationFrame);
             }
             else
             {
-                DrawGridEntries();
+                DrawGridEntries(applicationFrame);
             }
 
             // Clicks on empty space clear the selection, and right clicks open the menu of the folder
@@ -996,7 +1013,7 @@ namespace SierraEngine
         ImGui::TextDisabled("%s", hint.data());
     }
 
-    void AssetBrowserPanel::DrawGridEntries()
+    void AssetBrowserPanel::DrawGridEntries(const ApplicationFrame& applicationFrame)
     {
         const float32 fontSize = ImGui::GetFontSize();
         const float32 spacing = ImGui::GetStyle().ItemSpacing.x;
@@ -1016,19 +1033,19 @@ namespace SierraEngine
             if (i % columns != 0) ImGui::SameLine();
 
             ImGui::PushID(static_cast<int>(i));
-            DrawGridEntry(entry, tileSizeVector);
+            DrawGridEntry(applicationFrame, entry, tileSizeVector);
             ImGui::PopID();
         }
     }
 
-    void AssetBrowserPanel::DrawGridEntry(const AssetBrowserEntry& entry, Vector2 size)
+    void AssetBrowserPanel::DrawGridEntry(const ApplicationFrame& applicationFrame, const AssetBrowserEntry& entry, Vector2 size)
     {
         const ImVec2 origin = ImGui::GetCursorScreenPos();
         ImGui::InvisibleButton("##Tile", size);
 
         const bool visible = ImGui::IsItemVisible();
         const bool hovered = ImGui::IsItemHovered();
-        HandleEntryInteraction(entry);
+        HandleEntryInteraction(applicationFrame, entry);
         if (!visible) return;
 
         ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -1055,14 +1072,15 @@ namespace SierraEngine
 
         const ImVec2 namePosition = { origin.x + TILE_PADDING, thumbnailMax.y + 6.0f };
 
-        const std::string name = TruncateText(font, fontSize, showExtensions ? entry.name : Sierra::Path(entry.name).RemoveExtension().GetString(), textWidth);
-        drawList->AddText(font, fontSize, namePosition, ImGui::GetColorU32(ImGuiCol_Text), TruncateText(font, fontSize, name, textWidth).c_str());
+        const std::string name = ImGuiWidgets::TruncateText(fontSize, showExtensions ? entry.name : Sierra::Path(entry.name).RemoveExtension().GetString(), textWidth);
+        drawList->AddText(font, fontSize, namePosition, ImGui::GetColorU32(ImGuiCol_Text), name.c_str());
 
         const ImVec2 subtitlePosition = { namePosition.x, namePosition.y + fontSize + 3.0f };
-        drawList->AddText(font, fontSize * 0.85f, subtitlePosition, ImGui::GetColorU32(ImGuiCol_TextDisabled), TruncateText(font, fontSize * 0.85f, BuildSubtitle(entry), textWidth).c_str());
+        const std::string subtitle = ImGuiWidgets::TruncateText(fontSize * 0.85f, BuildSubtitle(entry), textWidth);
+        drawList->AddText(font, fontSize * 0.85f, subtitlePosition, ImGui::GetColorU32(ImGuiCol_TextDisabled), subtitle.c_str());
     }
 
-    void AssetBrowserPanel::DrawListEntries()
+    void AssetBrowserPanel::DrawListEntries(const ApplicationFrame& applicationFrame)
     {
         constexpr ImGuiTableFlags TABLE_FLAGS = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingStretchProp;
         if (!ImGui::BeginTable("##AssetList", 4, TABLE_FLAGS)) return;
@@ -1083,14 +1101,14 @@ namespace SierraEngine
             }
 
             ImGui::PushID(static_cast<int>(i));
-            DrawListEntry(entry);
+            DrawListEntry(applicationFrame, entry);
             ImGui::PopID();
         }
 
         ImGui::EndTable();
     }
 
-    void AssetBrowserPanel::DrawListEntry(const AssetBrowserEntry& entry)
+    void AssetBrowserPanel::DrawListEntry(const ApplicationFrame& applicationFrame, const AssetBrowserEntry& entry)
     {
         ImFont* font = ImGui::GetFont();
         const float32 fontSize = ImGui::GetFontSize();
@@ -1101,9 +1119,10 @@ namespace SierraEngine
         ImGui::Selectable("##Row", IsSelected(entry.relativePath), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap, ImVec2(0.0f, LIST_ROW_HEIGHT));
 
         const bool visible = ImGui::IsItemVisible();
-        const ImVec2 rowMin = ImGui::GetItemRectMin();
+        const ImGuiStyle& style = ImGui::GetStyle();
+        const ImVec2 rowMin = ImGui::GetItemRectMin() + ImVec2(0, style.ItemSpacing.y / 2.0f);
         const ImVec2 rowMax = ImGui::GetItemRectMax();
-        HandleEntryInteraction(entry);
+        HandleEntryInteraction(applicationFrame, entry);
 
         if (visible)
         {
@@ -1114,7 +1133,7 @@ namespace SierraEngine
             const float32 textLeft = rowMin.x + 4.0f + LIST_ICON_SIZE + 8.0f;
             const float32 textWidth = rowMax.x - textLeft - 8.0f;
 
-            const std::string name = TruncateText(font, fontSize, showExtensions ? entry.name : Sierra::Path(entry.name).RemoveExtension().GetString(), textWidth);
+            const std::string name = ImGuiWidgets::TruncateText(fontSize, showExtensions ? entry.name : Sierra::Path(entry.name).RemoveExtension().GetString(), textWidth, font);
             drawList->AddText(font, fontSize, { textLeft, rowMin.y + (LIST_ROW_HEIGHT - fontSize) * 0.5f }, ImGui::GetColorU32(ImGuiCol_Text), name.c_str());
         }
 
@@ -1126,26 +1145,26 @@ namespace SierraEngine
         ImGui::TextUnformatted(entry.memorySize > 0 ? FormatSize(entry.memorySize).c_str() : "-");
 
         ImGui::TableSetColumnIndex(3);
-        ImGui::TextUnformatted(Sierra::TimePointToString(entry.dateLastModified).c_str());
+        ImGui::TextUnformatted(Sierra::TimePointToString(entry.timeLastModified).c_str());
     }
 
 
-    void AssetBrowserPanel::HandleEntryInteraction(const AssetBrowserEntry& entry)
+    void AssetBrowserPanel::HandleEntryInteraction(const ApplicationFrame& applicationFrame, const AssetBrowserEntry& entry)
     {
         if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
         {
-            Select(entry.relativePath);
+            Select(applicationFrame, entry.relativePath);
         }
 
         if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
         {
-            if (!IsSelected(entry.relativePath)) Select(entry.relativePath);
+            if (!IsSelected(entry.relativePath)) Select(applicationFrame, entry.relativePath);
             openSelectionContextMenu = true;
         }
 
         if (entry.type == AssetBrowserEntryType::Folder && ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
         {
-            NavigateTo(entry.relativePath);
+            NavigateTo(applicationFrame, entry.relativePath);
         }
 
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) && !ImGui::IsMouseDragging(ImGuiMouseButton_Left))
@@ -1153,7 +1172,6 @@ namespace SierraEngine
             ImGui::BeginTooltip();
             ImGui::TextUnformatted(entry.name.c_str());
             ImGui::TextDisabled("%s", BuildSubtitle(entry).c_str());
-//            if (!entry.location.IsEmpty()) ImGui::TextDisabled("Location: %s", FormatProjectPath(entry.location).c_str());
             ImGui::EndTooltip();
         }
     }
@@ -1243,7 +1261,7 @@ namespace SierraEngine
         ImGui::Separator();
 
         if (entry.type != AssetBrowserEntryType::Folder) DrawDetailRow("Size", FormatSize(entry.memorySize));
-        DrawDetailRow("Modified", Sierra::TimePointToString(entry.dateLastModified));
+        DrawDetailRow("Modified", Sierra::TimePointToString(entry.timeLastModified));
         DrawDetailRow("Location", entry.relativePath.GetParentPath());
 
         switch (entry.type)
@@ -1261,7 +1279,7 @@ namespace SierraEngine
         }
     }
 
-    void AssetBrowserPanel::UpdateStatus(const std::string& message, const AlertSeverity severity)
+    void AssetBrowserPanel::UpdateStatus(const std::string& message, const Sierra::AlertSeverity severity)
     {
         statusMessage = std::move(message);
         statusSeverity = severity;
@@ -1286,9 +1304,9 @@ namespace SierraEngine
             ImColor color = { };
             switch (statusSeverity)
             {
-                case AlertSeverity::Info:    {  color = INFO_COLOR; break; }
-                case AlertSeverity::Warning: {  color = WARNING_COLOR; break; }
-                case AlertSeverity::Error:   {  color = ERROR_COLOR; break; }
+                case Sierra::AlertSeverity::Info:    {  color = INFO_COLOR; break; }
+                case Sierra::AlertSeverity::Warning: {  color = WARNING_COLOR; break; }
+                case Sierra::AlertSeverity::Error:   {  color = ERROR_COLOR; break; }
                 default:                     break;
             }
 
@@ -1296,7 +1314,7 @@ namespace SierraEngine
         }
     }
 
-    void AssetBrowserPanel::DrawPopups()
+    void AssetBrowserPanel::DrawPopups(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame)
     {
         if (openBackgroundContextMenu)
         {
@@ -1312,46 +1330,46 @@ namespace SierraEngine
 
         if (ImGui::BeginPopup("##BackgroundContextMenu"))
         {
-            DrawBackgroundContextMenu();
+            DrawBackgroundContextMenu(applicationFrame, editorFrame);
             ImGui::EndPopup();
         }
 
         if (ImGui::BeginPopup("##SelectionContextMenu"))
         {
-            DrawSelectionContextMenu();
+            DrawSelectionContextMenu(applicationFrame, editorFrame);
             ImGui::EndPopup();
-        }
-
-        if (modal != nullptr && !modal->Draw(*((Sierra::CommandBuffer*) std::intptr_t(243)))) // TODO:
-        {
-            modal.reset();
         }
     }
 
-    void AssetBrowserPanel::DrawBackgroundContextMenu()
+    void AssetBrowserPanel::DrawBackgroundContextMenu(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame)
     {
-
         if (ImGui::MenuItem("New Folder", Sierra::KeyCombinationToString(NEW_FOLDER_SHORTCUT).data()))
-            OpenNewFolderDialog();
+            OpenNewFolderDialog(applicationFrame, editorFrame);
 
         ImGui::Separator();
 
         if (ImGui::MenuItem("Refresh", Sierra::KeyCombinationToString(REFRESH_SHORTCUT).data()))
-            Refresh();
+            Refresh(applicationFrame);
     }
 
-    void AssetBrowserPanel::DrawSelectionContextMenu()
+    void AssetBrowserPanel::DrawSelectionContextMenu(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame)
     {
         const bool singleEntry = selectedEntryIndices.size() == 1;
-        const AssetBrowserEntry* entry = singleEntry ? GetSelectedEntry() : nullptr;
+
+        const AssetBrowserEntry* entry = GetSelectedEntry();
         const bool entryIsFolder = singleEntry && entry->type == AssetBrowserEntryType::Folder;
 
-        if (singleEntry && ImGui::MenuItem("Open", Sierra::KeyCombinationToString(OPEN_SHORTCUT).data(), false, entryIsFolder)) NavigateTo(entry->relativePath.GetParentPath());
-        if (ImGui::MenuItem("Rename", Sierra::KeyCombinationToString(RENAME_SHORTCUT).data(), false, singleEntry)) OpenRenameDialog();
+        if (singleEntry && ImGui::MenuItem("Open", Sierra::KeyCombinationToString(OPEN_SHORTCUT).data(), false, entryIsFolder)) OpenSelection(applicationFrame);
+        if (ImGui::MenuItem("Rename", Sierra::KeyCombinationToString(RENAME_SHORTCUT).data(), false, singleEntry)) OpenRenameDialog(applicationFrame, editorFrame);
 
         ImGui::Separator();
+        if (!searchText.empty())
+        {
+            if (ImGui::MenuItem("Go to containing folder")) NavigateTo(applicationFrame, entry->relativePath.GetParentPath());
+            ImGui::Separator();
+        }
 
-        if (ImGui::MenuItem("Delete", Sierra::KeyToString(Sierra::Key::Delete).data(), false, !selectedEntryIndices.empty())) OpenDeleteDialog();
+        if (ImGui::MenuItem("Delete", Sierra::KeyToString(Sierra::Key::Delete).data(), false, !selectedEntryIndices.empty())) OpenDeleteDialog(applicationFrame, editorFrame);
     }
 
 }

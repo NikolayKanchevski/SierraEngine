@@ -6,10 +6,8 @@
 
 #include "../AssetImporter.h"
 
-#include "../../Rendering/MeshView.h"
 #include "ModelSerializer.h"
 #include "../Textures/TextureImporter.h"
-#include "../Materials/MaterialImporter.h"
 
 namespace SierraEngine
 {
@@ -32,12 +30,6 @@ namespace SierraEngine
         std::vector<MaterialID> materials = { };
     };
 
-    struct ImportedModelBuffer
-    {
-        std::vector<Vertex> vertices = { };
-        std::vector<uint32> indices = { };
-    };
-
     struct ImportedModel
     {
         ModelID ID = { };
@@ -46,7 +38,8 @@ namespace SierraEngine
         ModelSettings settings = { };
 
         ModelProperties properties = { };
-        ImportedModelBuffer buffer = { };
+        std::vector<Vertex> vertexBuffer = { };
+        std::vector<uint32> indexBuffer = { };
     };
 
     class SIERRA_ENGINE_API ModelImporter : public virtual AssetImporter
@@ -73,7 +66,7 @@ namespace SierraEngine
         ModelImporter() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::optional<ImportedModelBuffer> ImportBlob(Sierra::Stream& blobStream, const ModelProperties& properties) const;
+        [[nodiscard]] Sierra::StreamResult ImportBlob(Sierra::Stream& stream, const ModelProperties& properties, std::vector<Vertex>& outVertexBuffer, std::vector<uint32>& outIndexBuffer) const;
 
         /* --- MOVE SEMANTICS --- */
         ModelImporter(ModelImporter&&) noexcept = default;

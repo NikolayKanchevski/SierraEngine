@@ -24,12 +24,10 @@ namespace Sierra
         VulkanBuffer(const VulkanDevice& device, const BufferCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Write(const void* memory, uint64 sourceOffset, uint64 destinationOffset, uint64 memorySize) override;
+        bool Write(uint64 destinationOffset, std::span<const uint8> buffer) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
-
-        [[nodiscard]] const void* GetMemory() const noexcept override { return memory; }
         [[nodiscard]] uint64 GetMemorySize() const noexcept override { return memorySize; }
 
         [[nodiscard]] VkBuffer GetVulkanBuffer() const noexcept { return buffer; }
@@ -52,7 +50,7 @@ namespace Sierra
         VkBuffer buffer = VK_NULL_HANDLE;
         VmaAllocation allocation = VK_NULL_HANDLE;
 
-        void* memory = nullptr;
+        void* mappedMemory = nullptr;
         size memorySize = 0;
 
     };

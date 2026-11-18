@@ -30,12 +30,10 @@ namespace Sierra
         MetalBuffer(const MetalDevice& device, const BufferCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Write(const void* memory, uint64 sourceOffset, uint64 destinationOffset, uint64 memorySize) override;
+        bool Write(uint64 destinationOffset, std::span<const uint8> buffer) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string_view GetName() const noexcept override;
-
-        [[nodiscard]] const void* GetMemory() const noexcept override;
         [[nodiscard]] uint64 GetMemorySize() const noexcept override;
 
         [[nodiscard]] id<MTLBuffer> GetMetalBuffer() const noexcept { return buffer; }

@@ -4,10 +4,9 @@
 
 #include "ModelSerializeWizard.h"
 
-#include <unordered_set>
-
 #include "MaterialSerializeWizard.h"
 #include "TextureSerializeWizard.h"
+
 #include "../../../Assets/Models/Loaders/AutoModelLoader.h"
 #include "../../../Assets/Models/Optimizers/ZeuxMeshOptimizer.h"
 #include "../../../Assets/Models/Serializers/YAMLModelSerializer.h"
@@ -17,33 +16,23 @@ namespace SierraEngine
 
     namespace
     {
-        [[nodiscard]] std::optional<LoadedModel> LoadModel(const Sierra::FileManager& fileManager, const std::filesystem::path& filePath) noexcept
+        [[nodiscard]] std::optional<LoadedModel> LoadModel(const Sierra::FileManager& fileManager, const Sierra::Path& filePath) noexcept
         {
-            const std::vector<uint8> memory = fileManager.ReadFile(filePath);
-            if (memory.empty())
+            std::unique_ptr<Sierra::FileStream> fileStream = nullptr;
+            if (fileManager.OpenFileStream({ .filePath = filePath, .access = Sierra::StreamAccess::ReadOnly }, fileStream) != Sierra::PathResult::Success)
             {
-                APP_WARNING("Failed to read model file [{0}]", filePath.string());
+                APP_WARNING("Could not open file [{0}] to load model from it", filePath.GetString());
                 return std::nullopt;
             }
 
-            std::optional<LoadedModel> model = AutoModelLoader::Load({ .memory = memory });
+            std::optional<LoadedModel> model = AutoModelLoader::Load({ .stream = *fileStream });
             if (!model.has_value())
             {
-                APP_WARNING("Failed to load model [{0}]", filePath.string());
+                APP_WARNING("Failed to load model [{0}]", filePath.GetString());
                 return std::nullopt;
             }
 
             return model;
-        }
-
-        void WriteAssetFiles(const Sierra::FileManager& fileManager, const std::filesystem::path& dataFilePath, const std::string_view blobFileExtension, const std::span<const uint8> data, const std::span<const uint8> blob)
-        {
-            fileManager.CreateFile(dataFilePath, Sierra::FilePathConflictPolicy::Overwrite);
-            fileManager.WriteFile(dataFilePath, data);
-
-            const std::filesystem::path blobFilePath = std::filesystem::path(dataFilePath).replace_extension(blobFileExtension);
-            fileManager.CreateFile(blobFilePath, Sierra::FilePathConflictPolicy::Overwrite);
-            fileManager.WriteFile(blobFilePath, blob);
         }
     }
 
@@ -61,25 +50,22 @@ namespace SierraEngine
             .inputFilePath = createInfo.inputFilePath,
             .outputFileExtension = OUTPUT_FILE_EXTENSION,
             .outputDirectoryPath = createInfo.outputDirectoryPath
-          }),
-          platformContext(createInfo.platformContext),
-          fileManager(createInfo.fileManager),
-          renderingContext(&createInfo.renderingContext)
+          })
     {
         if (createInfo.inputFilePath != nullptr)
         {
-            SetInputFilePath(*createInfo.inputFilePath);
+            SetInputFilePath(createInfo.platformContext, *createInfo.inputFilePath);
         }
     }
 
     /* --- POLLING METHODS --- */
 
-    bool ModelSerializeWizard::Draw(Sierra::CommandBuffer&)
+    bool ModelSerializeWizard::Draw(const ApplicationFrame& applicationFrame, const DrawFrame& drawFrame)
     {
         bool open = BeginWizard("Model Serialize Wizard");
         if (open)
         {
-            DrawFileInputHeader(platformContext);
+            DrawFileInputHeader(applicationFrame.platformContext);
             DrawMetadataMenu(metadata);
             DrawSerializeInfoMenu();
 
@@ -88,9 +74,9 @@ namespace SierraEngine
                 ImGuiDropdownOption { .text = "YAML" }
             };
 
-            if (DrawFileOutputFooter(platformContext, modelFormatIndex, OPTIONS))
+            if (DrawFileOutputFooter(applicationFrame.platformContext, modelFormatIndex, OPTIONS))
             {
-                if (Serialize())
+                if (Serialize(applicationFrame))
                 {
                     open = false;
                 }
@@ -102,36 +88,36 @@ namespace SierraEngine
         return open;
     }
 
-    void ModelSerializeWizard::SetInputFilePath(const std::filesystem::path& inputFilePath) noexcept
+    void ModelSerializeWizard::SetInputFilePath(const Sierra::PlatformContext& platformContext, const Sierra::Path& inputFilePath) noexcept
     {
-        std::optional<LoadedModel> loadedModel = LoadModel(fileManager, inputFilePath);
+        std::optional<LoadedModel> loadedModel = LoadModel(platformContext.GetFileManager(), inputFilePath);
         if (!loadedModel.has_value())
         {
             FileInputWizard::SetInputFilePath({ });
             model = std::nullopt;
 
-            APP_WARNING("File [{0}] cannot be serialized, as its model data failed to load", inputFilePath.string());
+            APP_WARNING("File [{0}] cannot be serialized, as its model data failed to load", inputFilePath.GetString());
             return;
         }
 
         FileInputWizard::SetInputFilePath(inputFilePath);
-        FileOutputWizard::SetOutputFilePath(std::filesystem::path(inputFilePath).replace_extension(OUTPUT_FILE_EXTENSION));
-        DefaultMetadata(metadata, inputFilePath.stem().string(), platformContext);
+        FileOutputWizard::SetOutputFilePath(Sierra::Path(inputFilePath).ChangeExtension(OUTPUT_FILE_EXTENSION));
+        DefaultMetadata(metadata, inputFilePath.GetStem(), platformContext);
 
         model = std::move(loadedModel);
     }
 
-    bool ModelSerializeWizard::Serialize() noexcept
+    bool ModelSerializeWizard::Serialize(const ApplicationFrame& applicationFrame) noexcept
     {
         if (!model.has_value())
         {
             return false;
         }
 
-        const std::filesystem::path& outputDataFilePath = GetOutputFilePath();
-        if (outputDataFilePath.empty())
+        const Sierra::Path& outputDataFilePath = GetOutputFilePath();
+        if (outputDataFilePath.IsEmpty())
         {
-            APP_WARNING("Cannot serialize model [{0}] at invalid location [{1}]", metadata.name, outputDataFilePath.string());
+            APP_WARNING("Cannot serialize model [{0}] at invalid location [{1}]", metadata.name, outputDataFilePath.GetString());
             return false;
         }
 
@@ -170,23 +156,29 @@ namespace SierraEngine
             return false;
         }
 
-        WriteAssetFiles(fileManager, outputDataFilePath, BLOB_OUTPUT_FILE_EXTENSION, serializedModel->data, serializedModel->blob);
-
-        const std::filesystem::path outputDirectoryPath = outputDataFilePath.parent_path() / GetInputFilePath().stem();
-        for (const std::optional<SerializedModelTextureDependency>& texture : dependencies.textures)
+        if (!WriteAssetFiles(applicationFrame.platformContext.GetFileManager(), outputDataFilePath, *serializedModel))
         {
-            if (!texture.has_value()) continue;
-
-            const std::filesystem::path filePath = outputDirectoryPath / "Textures" / SR_FORMAT("{0}{1}", texture->name, TextureSerializeWizard::OUTPUT_FILE_EXTENSION);
-            WriteAssetFiles(fileManager, filePath, BLOB_OUTPUT_FILE_EXTENSION, texture->texture.data, texture->texture.blob);
+            APP_WARNING("Failed to write serialized model to file storage");
+            return false;
         }
 
-        for (const std::optional<SerializedModelMaterialDependency>& material : dependencies.materials)
+        const Sierra::Path outputDirectoryPath = outputDataFilePath.GetParentPath() / GetInputFilePath().GetStem();
+        for (const std::optional<SerializedModelTextureDependency>& dependency : dependencies.textures)
         {
-            if (!material.has_value()) continue;
+            if (!dependency.has_value())
+                continue;
 
-            const std::filesystem::path filePath = outputDirectoryPath / "Materials" / SR_FORMAT("{0}{1}", material->name, MaterialSerializeWizard::OUTPUT_FILE_EXTENSION);
-            WriteAssetFiles(fileManager, filePath, BLOB_OUTPUT_FILE_EXTENSION, material->material.data, material->material.blob);
+            const Sierra::Path filePath = outputDirectoryPath / "Textures" / SR_FORMAT("{0}{1}", dependency->name, TextureSerializeWizard::OUTPUT_FILE_EXTENSION);
+            APP_WARNING_IF(!WriteAssetFiles(applicationFrame.platformContext.GetFileManager(), filePath, dependency->texture), "Could not write serialized model's texture dependency to file storage");
+        }
+
+        for (const std::optional<SerializedModelMaterialDependency>& dependency : dependencies.materials)
+        {
+            if (!dependency.has_value())
+                continue;
+
+            const Sierra::Path filePath = outputDirectoryPath / "Materials" / SR_FORMAT("{0}{1}", dependency->name, MaterialSerializeWizard::OUTPUT_FILE_EXTENSION);
+            APP_WARNING_IF(!WriteAssetFiles(applicationFrame.platformContext.GetFileManager(), filePath, dependency->material), "Could not write serialized model's material dependency to file storage");
         }
 
         return true;

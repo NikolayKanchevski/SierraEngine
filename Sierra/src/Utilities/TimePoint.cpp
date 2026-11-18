@@ -99,7 +99,7 @@ namespace Sierra
 
     TimeStep TimePoint::operator-(const TimePoint other) const noexcept
     {
-        return TimeStep(std::chrono::duration<float64, std::milli>(timePoint - other.timePoint).count());
+        return TimeStep(std::chrono::duration<float64, std::milli>(timePoint - other.timePoint).count(), TimeStepUnit::Milliseconds);
     }
 
     /* --- CONVERSIONS --- */
@@ -107,8 +107,8 @@ namespace Sierra
     std::string TimePointToString(const TimePoint timePoint) noexcept
     {
         return SR_FORMAT(
-            "{0:04}-{1:02}-{2:02} {3:02}:{4:02}:{5:02}",
-            static_cast<uint32>(timePoint.GetYear()), static_cast<uint32>(timePoint.GetMonth()) + 1, static_cast<uint32>(timePoint.GetDay()),
+            "{0:02}/{1:02}/{2:04} {3:02}:{4:02}:{5:02}",
+            static_cast<uint32>(timePoint.GetDay()), static_cast<uint32>(timePoint.GetMonth()) + 1, static_cast<uint32>(timePoint.GetYear()),
             static_cast<uint32>(timePoint.GetHour()), static_cast<uint32>(timePoint.GetMinute()), static_cast<uint32>(timePoint.GetSecond())
         );
     }

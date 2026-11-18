@@ -13,6 +13,7 @@ namespace SierraEngine
     {
         std::string_view title = "Viewport";
         Viewport& viewport;
+        Sierra::TimeStep timeStep = { };
     };
 
     namespace ViewportPanel

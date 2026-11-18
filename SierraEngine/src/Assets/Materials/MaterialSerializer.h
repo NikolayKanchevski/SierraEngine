@@ -60,11 +60,7 @@ namespace SierraEngine
         MaterialSettings settings = { };
     };
 
-    struct SerializedMaterial
-    {
-        std::vector<uint8> data = { };
-        std::vector<uint8> blob = { };
-    };
+    using SerializedMaterial = SerializedAsset;
 
     class SIERRA_ENGINE_API MaterialSerializer : public virtual AssetSerializer
     {

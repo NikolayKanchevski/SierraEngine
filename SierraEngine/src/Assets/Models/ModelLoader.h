@@ -13,7 +13,7 @@ namespace SierraEngine
 
     struct ModelLoadInfo
     {
-        std::span<const uint8> memory = { };
+        Sierra::Stream& stream;
     };
 
     struct ModelNode

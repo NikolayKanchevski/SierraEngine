@@ -12,12 +12,9 @@ namespace SierraEngine
 
     struct ModelSerializeWizardCreateInfo
     {
-        const EditorPlatformContext& platformContext;
-        const RenderingContext& renderingContext;
-        const Sierra::FileManager& fileManager;
-
-        const std::filesystem::path* inputFilePath = nullptr;
-        const std::filesystem::path* outputDirectoryPath = nullptr;
+        const Sierra::PlatformContext& platformContext;
+        const Sierra::Path* inputFilePath = nullptr;
+        const Sierra::Path* outputDirectoryPath = nullptr;
     };
 
     class ModelSerializeWizard final : public FileInputWizard, public AssetSerializeWizard
@@ -27,7 +24,7 @@ namespace SierraEngine
         explicit ModelSerializeWizard(const ModelSerializeWizardCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] bool Draw(Sierra::CommandBuffer& commandBuffer) override;
+        [[nodiscard]] bool Draw(const ApplicationFrame& applicationFrame, const DrawFrame& drawFrame) override;
 
         /* --- CONSTANTS --- */
         constexpr static std::array<std::string_view, 2> INPUT_FILE_EXTENSIONS = { ".glb", ".gltf" };
@@ -45,10 +42,6 @@ namespace SierraEngine
         ~ModelSerializeWizard() noexcept override = default;
 
     private:
-        const EditorPlatformContext& platformContext;
-        const Sierra::FileManager& fileManager;
-        const RenderingContext* renderingContext;
-
         enum class ModelSerializeFormat : uint8
         {
             YAML
@@ -70,8 +63,8 @@ namespace SierraEngine
         MeshCompressionSettings meshCompressionSettings = { };
         MeshOptimization meshOptimization = MeshOptimization::Zeux;
 
-        void SetInputFilePath(const std::filesystem::path& inputFilePath) noexcept override;
-        bool Serialize() noexcept;
+        void SetInputFilePath(const Sierra::PlatformContext& platformContext, const Sierra::Path& inputFilePath) noexcept;
+        bool Serialize(const ApplicationFrame& applicationFrame) noexcept;
         void DrawSerializeInfoMenu() noexcept;
 
     };

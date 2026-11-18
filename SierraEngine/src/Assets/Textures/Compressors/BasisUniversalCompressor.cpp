@@ -131,7 +131,7 @@ namespace SierraEngine
         compressorParameters.m_source_images.resize(compressInfo.levels[0].layers.size());
         for (size layer = 0; layer < compressInfo.levels[0].layers.size(); layer++)
         {
-            compressorParameters.m_source_images[layer].init(rootImage.memory.data(), rootImage.width, rootImage.height, Sierra::ImageFormatToChannelCount(rootImage.format));
+            compressorParameters.m_source_images[layer].init(rootImage.buffer.data(), rootImage.width, rootImage.height, Sierra::ImageFormatToChannelCount(rootImage.format));
         }
 
         compressorParameters.m_source_mipmap_images.resize(compressInfo.levels.size() - 1);
@@ -140,7 +140,7 @@ namespace SierraEngine
             for (size layer = 0; layer < compressInfo.levels.size(); layer++)
             {
                 const LoadedImage& layerImage = compressInfo.levels[level].layers[layer];
-                compressorParameters.m_source_mipmap_images[level][layer].init(layerImage.memory.data(), glm::max(1U, rootImage.width >> level), glm::max(1U, rootImage.height >> level), Sierra::ImageFormatToChannelCount(rootImage.format));
+                compressorParameters.m_source_mipmap_images[level][layer].init(layerImage.buffer.data(), glm::max(1U, rootImage.width >> level), glm::max(1U, rootImage.height >> level), Sierra::ImageFormatToChannelCount(rootImage.format));
             }
         }
 
@@ -160,7 +160,7 @@ namespace SierraEngine
 
         CompressedImage compressedImage
         {
-            .memory = { compressor.get_output_basis_file().data(), compressor.get_output_basis_file().data() + compressor.get_output_basis_file().size() }
+            .buffer = { compressor.get_output_basis_file().data(), compressor.get_output_basis_file().data() + compressor.get_output_basis_file().size() }
         };
 
         return compressedImage;

@@ -11,10 +11,8 @@ namespace SierraEngine
 
     struct MaterialSerializeWizardCreateInfo
     {
-        const EditorPlatformContext& platformContext;
-        const Sierra::FileManager& fileManager;
-
-        const std::filesystem::path* outputDirectoryPath = nullptr;
+        const Sierra::PlatformContext& platformContext;
+        const Sierra::Path* outputDirectoryPath = nullptr;
     };
 
     class MaterialSerializeWizard final : public AssetSerializeWizard
@@ -24,7 +22,7 @@ namespace SierraEngine
         explicit MaterialSerializeWizard(const MaterialSerializeWizardCreateInfo& createInfo) noexcept;
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] bool Draw(Sierra::CommandBuffer& commandBuffer) override;
+        [[nodiscard]] bool Draw(const ApplicationFrame& applicationFrame, const DrawFrame& drawFrame) override;
 
         /* --- CONSTANTS --- */
         constexpr static std::string_view OUTPUT_FILE_EXTENSION = ".material";
@@ -41,9 +39,6 @@ namespace SierraEngine
         ~MaterialSerializeWizard() noexcept override = default;
 
     private:
-        const EditorPlatformContext& platformContext;
-        const Sierra::FileManager& fileManager;
-
         enum class MaterialSerializeFormat : uint8
         {
             YAML
@@ -53,7 +48,7 @@ namespace SierraEngine
         MaterialSerializeInfo serializeInfo = { };
 
         void DrawSettingsMenu() noexcept;
-        bool Serialize() noexcept;
+        bool Serialize(const ApplicationFrame& applicationFrame) noexcept;
 
     };
 

@@ -39,10 +39,15 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual void Write(const void* memory, uint64 sourceOffset, uint64 destinationOffset, uint64 memorySize);
+        virtual bool Write(uint64 destinationOffset, std::span<const uint8> buffer);
+
+        template<typename T>
+        bool WriteAs(const uint64 destinationOffset, const T& t)
+        {
+            return Write(destinationOffset, { reinterpret_cast<const uint8*>(&t), sizeof(T) });
+        }
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual const void* GetMemory() const noexcept = 0;
         [[nodiscard]] virtual uint64 GetMemorySize() const noexcept = 0;
 
         /* --- COPY SEMANTICS --- */

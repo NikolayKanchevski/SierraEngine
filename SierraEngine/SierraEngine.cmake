@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.14)
 
 # === OPTIONS === #
 set(SIERRA_ENGINE_APPLICATION_NAME ${PROJECT_NAME} CACHE STRING "Name of the application (used for the binary and code signing).")
-set(SIERRA_ENGINE_APPLICATION_ICON_ICO "../Media/SierraExecutableIcon.ico" CACHE FILEPATH "Absolute path to an .ico image to use as an icon for the generated binary on non-Apple desktop platforms.")
-set(SIERRA_ENGINE_APPLICATION_ICON_ICNS "../Media/SierraExecutableIcon.icns" CACHE FILEPATH "Absolute path to an .icns image to use as an icon for the generated binary on Apple platforms.")
-set(SIERRA_ENGINE_APPLICATION_ICON_PNG "../Media/SierraExecutableIcon.png" CACHE FILEPATH "Absolute path to an .png image to use as an icon for the generated binary on Linux platforms.")
+set(SIERRA_ENGINE_APPLICATION_ICON_ICO "../media/SierraExecutableIcon.ico" CACHE FILEPATH "Absolute path to an .ico image to use as an icon for the generated binary on non-Apple desktop platforms.")
+set(SIERRA_ENGINE_APPLICATION_ICON_ICNS "../media/SierraExecutableIcon.icns" CACHE FILEPATH "Absolute path to an .icns image to use as an icon for the generated binary on Apple platforms.")
+set(SIERRA_ENGINE_APPLICATION_ICON_PNG "../media/SierraExecutableIcon.png" CACHE FILEPATH "Absolute path to an .png image to use as an icon for the generated binary on Linux platforms.")
 
 option(SIERRA_ENGINE_BUILD_STATIC_LIBRARY "Whether to build the engine as a static library, which is embedded in the application." OFF)
 option(SIERRA_ENGINE_BUILD_SHARED_LIBRARY "Whether to build the engine as a shared library, which is shipped as a separate file (.dll, .dylib, etc.)" OFF)

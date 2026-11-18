@@ -5,6 +5,7 @@
 #include "TextureImporter.h"
 
 #include "ImageConverter.h"
+#include "../../../../SierraEngineEditor/bin/arm64-Clang-Debug/vendor/fastgltf/simdjson/simdjson.h"
 #include "Transcoders/BasisUniversalTranscoder.h"
 
 namespace SierraEngine
@@ -12,20 +13,15 @@ namespace SierraEngine
 
     namespace
     {
-        [[nodiscard]] ImportedTextureBuffer ImportRawBlob(const TextureProperties& header, const Sierra::ImageFormat format, Sierra::Stream& stream)
+        [[nodiscard]] Sierra::StreamResult ImportRawBlob(const TextureProperties& header, const Sierra::ImageFormat format, Sierra::Stream& stream, std::vector<uint8>& outBuffer)
         {
-            ImportedTextureBuffer buffer = { };
-
             if (header.format == format)
-            {
-                buffer.memory = stream.ReadToEnd();
-                return buffer;
-            }
+                return stream.ReadToEnd(outBuffer);
 
             /* === Reference: https://gaim.umbc.edu/2010/05/27/mip-size/ === */
             const uint8 pixelMemorySize = Sierra::ImageFormatToBlockMemorySize(header.format);
             const size approximatedMemorySize = (4 * (header.width * header.height * pixelMemorySize) - ((header.width >> (header.levelCount - 1)) * (header.height >> (header.levelCount - 1)) * pixelMemorySize)) / 3;
-            Sierra::MemoryWriteStream writeStream(approximatedMemorySize);
+            Sierra::WriteStream blob(approximatedMemorySize);
 
             const ImageConverter converter = { };
             for (size level = 0; level < header.levelCount; level++)
@@ -36,38 +32,45 @@ namespace SierraEngine
                 const size layerMemorySize = width * height * pixelMemorySize;
                 for (size layer = 0; layer < header.layerCount; layer++)
                 {
-                    const LoadedImage image = LoadedImage({ .width = width, .height = height, .format = header.format, .memory = stream.Read(layerMemorySize) });
+                    std::vector<uint8> layerBuffer = { };
+                    layerBuffer.resize(layerMemorySize);
 
+                    if (const Sierra::StreamResult result = stream.Read(layerBuffer); result != Sierra::StreamResult::Success)
+                        return result;
+
+                    const LoadedImage image = LoadedImage({ .width = width, .height = height, .format = header.format, .buffer = layerBuffer });
                     const LoadedImage convertedImage = converter.Convert({ .image = image, .format = format });
-                    writeStream.WriteMemory(convertedImage.memory);
+
+                    if (const Sierra::StreamResult result = blob.Write(convertedImage.buffer); result != Sierra::StreamResult::Success)
+                    {
+                        return result;
+                    }
                 }
             }
 
-            buffer.memory = writeStream.Release();
-            return buffer;
+            outBuffer = blob.Release();
+            return Sierra::StreamResult::Success;
         }
     }
 
-    std::optional<ImportedTextureBuffer> TextureImporter::ImportBlob(Sierra::Stream& blob, const Sierra::ImageFormat format, const TextureProperties& properties) const
+    Sierra::StreamResult TextureImporter::ImportBlob(Sierra::Stream& blob, const Sierra::ImageFormat format, const TextureProperties& properties, std::vector<uint8>& outBuffer) const
     {
         std::unique_ptr<ImageTranscoder> transcoder = nullptr;
         switch (properties.compression)
         {
-            case TextureCompression::None:              { return ImportRawBlob(properties, format, blob); }
+            case TextureCompression::None:              { return ImportRawBlob(properties, format, blob, outBuffer); }
             case TextureCompression::BasisUniversal:    { transcoder = std::make_unique<BasisUniversalTranscoder>(); break; }
         }
 
-        std::optional<TranscodedImage> transcodedImage = transcoder->Transcode({ .memory = blob.ReadToEnd(), .format = format });
+        std::optional<TranscodedImage> transcodedImage = transcoder->Transcode({ .stream = blob, .format = format });
         if (!transcodedImage.has_value())
         {
             APP_WARNING("Could import texture, as transcoding compressed contents into desired format failed");
-            return std::nullopt;
+            return Sierra::StreamResult::Unknown;
         }
 
-        ImportedTextureBuffer buffer = { };
-        buffer.memory = std::move(transcodedImage->memory);
-
-        return buffer;
+        outBuffer = std::move(transcodedImage->buffer);
+        return Sierra::StreamResult::Success;
     }
 
 }

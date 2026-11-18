@@ -4,6 +4,8 @@
 
 #pragma once
 
+#import "DrawFrame.h"
+
 namespace SierraEngine
 {
 
@@ -19,11 +21,10 @@ namespace SierraEngine
         explicit RenderingContext(const RenderingContextCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Bind(Sierra::CommandBuffer& commandBuffer) const;
+        [[nodiscard]] DrawFrame Bind(Sierra::CommandBuffer& commandBuffer) const;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] const Sierra::Device& GetDevice() const noexcept { return *device; }
-
         [[nodiscard]] Sierra::ResourceTable& GetResourceTable() const noexcept { return *resourceTable; }
         [[nodiscard]] Sierra::DestructionScheduler& GetDestructionScheduler() const noexcept { return *destructionScheduler; }
 

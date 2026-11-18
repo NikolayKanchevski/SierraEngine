@@ -29,7 +29,7 @@ namespace SierraEngine
         if (maxFrameRate != 0)
         {
             // If frame time has been less than limit, sleep until it is time for next frame
-            const Sierra::TimeStep expectedFrameTime = Sierra::TimeStep(1'000.0f / static_cast<float64>(maxFrameRate));
+            const Sierra::TimeStep expectedFrameTime = Sierra::TimeStep(1.0 / static_cast<float64>(maxFrameRate), Sierra::TimeStepUnit::Seconds);
             if (const Sierra::TimeStep frameTime = Sierra::TimePoint::Now() - frameStartTime; frameTime < expectedFrameTime)
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<llong>((expectedFrameTime - frameTime).GetDuration(Sierra::TimeStepUnit::Milliseconds))));

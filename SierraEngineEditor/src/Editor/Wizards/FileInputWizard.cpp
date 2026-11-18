@@ -26,7 +26,7 @@ namespace SierraEngine
         inputFilePath = *createInfo.inputFilePath;
     }
 
-    void FileInputWizard::DrawFileInputHeader(const EditorPlatformContext& platformContext) noexcept
+    void FileInputWizard::DrawFileInputHeader(const Sierra::PlatformContext& platformContext) noexcept
     {
         if (ImGuiWidgets::BeginPropertyTable(PROPERTY_TABLE_INFO))
         {
@@ -49,7 +49,7 @@ namespace SierraEngine
 
     /* --- SETTER METHODS --- */
 
-    void FileInputWizard::SetInputFilePath(const std::filesystem::path& givenInputFilePath) noexcept
+    void FileInputWizard::SetInputFilePath(const Sierra::Path& givenInputFilePath) noexcept
     {
         inputFilePath = givenInputFilePath;
     }

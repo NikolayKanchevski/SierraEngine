@@ -19,7 +19,7 @@ namespace SierraEngine
         std::ranges::copy(createInfo.placeholder.substr(0, inputBuffer.size()), inputBuffer.begin());
     }
 
-    bool TextDialog::Draw(Sierra::CommandBuffer& commandBuffer)
+    bool TextDialog::Draw(const ApplicationFrame&, const DrawFrame&)
     {
         bool open = BeginWizard(title);
         if (open)
@@ -37,7 +37,7 @@ namespace SierraEngine
             ImGui::SetNextItemWidth(availableWidth);
             const bool submitted = ImGui::InputText("##TextDialogInput", inputBuffer.data(), inputBuffer.size(), ImGuiInputTextFlags_EnterReturnsTrue);
 
-            constexpr ImColor ERROR_COLOR   = { 0.95f, 0.35f, 0.35f, 1.0f }; // TODO:
+            constexpr ImColor ERROR_COLOR  = { 0.95f, 0.35f, 0.35f, 1.0f }; // TODO: Create custom theme, and move out such values
             if (!error.empty()) ImGui::TextColored(ERROR_COLOR, "%s!", error.c_str());
 
             const ImGuiStyle& style = ImGui::GetStyle();
@@ -57,8 +57,8 @@ namespace SierraEngine
 
                 if (error.empty())
                 {
-                    ActionCallback(input);
-                    open = false;
+                    open = !ActionCallback(input);
+                    if (!open) error = "Unknown error occurred";
                 }
             }
             else if (cancelled)

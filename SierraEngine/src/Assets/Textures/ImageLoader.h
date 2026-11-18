@@ -18,7 +18,7 @@ namespace SierraEngine
 
     struct ImageLoadInfo
     {
-        std::span<const uint8> memory = { };
+        std::span<const uint8> buffer = { };
         ImageLoadChannels loadChannels = ImageLoadChannels::All;
     };
 
@@ -27,10 +27,9 @@ namespace SierraEngine
         uint32 width = 0;
         uint32 height = 0;
         Sierra::ImageFormat format = Sierra::ImageFormat::Undefined;
-        std::vector<uint8> memory = { };
+        std::vector<uint8> buffer = { };
     };
 
-    using LoadedImageLayer = LoadedImage;
     struct LoadedImageLevel
     {
         std::span<const LoadedImage> layers = { };

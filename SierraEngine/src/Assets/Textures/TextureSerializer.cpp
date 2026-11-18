@@ -11,49 +11,52 @@ namespace SierraEngine
 
     namespace
     {
-        void SerializeRawBlob(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo)
+        [[nodiscard]] Sierra::StreamResult SerializeRawBlob(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo)
         {
             for (const LoadedImageLevel& level : serializeInfo.levels)
             {
                 for (const LoadedImage& layer : level.layers)
                 {
-                    stream.Write(layer.memory.data(), layer.memory.size());
+                    if (const Sierra::StreamResult result = stream.Write(layer.buffer); result != Sierra::StreamResult::Success)
+                    {
+                        return result;
+                    }
                 }
             }
+
+            return Sierra::StreamResult::Success;
         }
 
-        void SerializeCompressedBlob(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo)
+        [[nodiscard]] Sierra::StreamResult SerializeCompressedBlob(Sierra::Stream& stream, const TextureSerializeInfo& serializeInfo)
         {
             std::unique_ptr<ImageCompressor> compressor = nullptr;
             switch (serializeInfo.compressionSettings.compression)
             {
-                case TextureCompression::BasisUniversal:    { compressor = std::make_unique<BasisUniversalCompressor>(); break; }
+                case TextureCompression::BasisUniversal:  { compressor = std::make_unique<BasisUniversalCompressor>(); break; }
                 default:                                  break;
             }
 
             std::optional<CompressedImage> compressedImage = compressor->Compress({ .levels = serializeInfo.levels, .compressionLevel = serializeInfo.compressionSettings.aggressiveness, .qualityLevel = serializeInfo.compressionSettings.quality });
             if (!compressedImage.has_value())
             {
-                APP_WARNING("Could not compress image contents of texture [{0}], writing raw pixel memory instead", serializeInfo.metadata.name);
-                SerializeRawBlob(stream, serializeInfo);
-                return;
+                APP_WARNING("Could not compress image contents of texture [{0}], writing raw pixel buffer instead", serializeInfo.metadata.name);
+                return Sierra::StreamResult::Unknown;
             }
 
-            stream.WriteMemory(compressedImage->memory);
+            return stream.Write(compressedImage->buffer);
         }
     }
 
     /* --- POLLING METHODS --- */
 
-    void TextureSerializer::SerializeBlob(Sierra::Stream& blob, const TextureSerializeInfo& serializeInfo) const
+    Sierra::StreamResult TextureSerializer::SerializeBlob(Sierra::Stream& blob, const TextureSerializeInfo& serializeInfo) const
     {
         if (serializeInfo.compressionSettings.compression != TextureCompression::None)
         {
-            SerializeCompressedBlob(blob, serializeInfo);
-            return;
+            return SerializeCompressedBlob(blob, serializeInfo);
         }
 
-        SerializeRawBlob(blob, serializeInfo);
+        return SerializeRawBlob(blob, serializeInfo);
     }
 
     /* --- GETTER METHODS --- */

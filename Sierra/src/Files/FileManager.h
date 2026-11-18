@@ -4,102 +4,72 @@
 
 #pragma once
 
+#include "Path.h"
+
 #include "FileStream.h"
 #include "../Utilities/TimePoint.h"
 
 namespace Sierra
 {
 
-    enum class FilePathConflictPolicy : uint8
+    enum class PathConflictPolicy : uint8
     {
         Overwrite,
         KeepExisting,
         KeepBoth
     };
 
-    enum class FileType : uint8
+    struct PathMetadata
     {
-        Unknown,
-        Text,
-        Document,
-        Image,
-        Audio,
-        Video,
-        Archive,
-        Executable,
-        Configuration
-    };
-
-    struct FileMetadata
-    {
-        FileType type = FileType::Unknown;
+        uint32 itemCount = 0;
         size memorySize = 0;
 
-        TimePoint dateCreated = { };
-        TimePoint dateLastModified = { };
+        TimePoint timeCreated = { };
+        TimePoint timeLastModified = { };
     };
-
-    struct DirectoryMetadata
-    {
-        uint32 fileCount = 0;
-        size memorySize = 0;
-
-        TimePoint dateCreated = { };
-        TimePoint dateLastModified = { };
-    };
-
-    /* --- CONVERSIONS --- */
-    [[nodiscard]] SIERRA_API FileType FilePathToFileType(const std::filesystem::path& filePath) noexcept;
 
     class SIERRA_API FileManager
     {
     public:
         /* --- TYPE DEFINITIONS --- */
-        using FileEnumerationPredicate = std::function<void(const std::filesystem::path&)>;
+        using PathEnumerationPredicate = std::function<bool(const Path&)>;
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::string SanitizeFileName(std::string_view fileName) const noexcept;
+        [[nodiscard]] virtual bool PathExists(const Path& path) const noexcept = 0;
+        [[nodiscard]] virtual PathResult CreateFile(const Path& filePath, PathConflictPolicy conflictPolicy) const;
+        [[nodiscard]] virtual PathResult CreateDirectory(const Path& directoryPath, PathConflictPolicy conflictPolicy) const;
 
-        [[nodiscard]] virtual bool FileExists(const std::filesystem::path& filePath) const noexcept = 0;
-        [[nodiscard]] virtual std::unique_ptr<FileStream> CreateFileStream(const FileStreamCreateInfo& createInfo) const = 0;
+        [[nodiscard]] virtual PathResult CopyPath(const Path& sourcePath, const Path& destinationPath, PathConflictPolicy conflictPolicy) const;
+        [[nodiscard]] virtual PathResult RenamePath(const Path& path, std::string_view name) const;
+        [[nodiscard]] virtual PathResult MovePath(const Path& sourcePath, const Path& destinationPath, PathConflictPolicy conflictPolicy) const;
+        [[nodiscard]] virtual PathResult DeletePath(const Path& path) const;
 
-        void WriteFile(const std::filesystem::path& filePath, std::span<const uint8> memory) const;
-        [[nodiscard]] std::vector<uint8> ReadFile(const std::filesystem::path& filePath) const;
+        [[nodiscard]] virtual PathResult OpenFileStream(const FileStreamCreateInfo& createInfo, std::unique_ptr<FileStream>& outFileStream) const = 0;
+        virtual PathResult EnumeratePaths(const Path& path, const PathEnumerationPredicate& Predicate) const;
 
-        virtual void CreateFile(const std::filesystem::path& filePath, FilePathConflictPolicy conflictPolicy) const;
-        virtual void RenameFile(const std::filesystem::path& filePath, std::string_view name) const;
-        virtual void CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const;
-        virtual void MoveFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const;
-        virtual void DeleteFile(const std::filesystem::path& filePath) const;
-
-        [[nodiscard]] virtual bool DirectoryExists(const std::filesystem::path& directoryPath) const noexcept = 0;
-        virtual void EnumerateDirectoryFiles(const std::filesystem::path& directoryPath, bool recursive, const FileEnumerationPredicate& Predicate) const;
-
-        virtual void CreateDirectory(const std::filesystem::path& directoryPath) const;
-        virtual void RenameDirectory(const std::filesystem::path& directoryPath, std::string_view name) const;
-        virtual void CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const;
-        virtual void MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const;
-        virtual void DeleteDirectory(const std::filesystem::path& directoryPath) const;
+        [[nodiscard]] std::optional<std::variant<PathResult, StreamResult>> WriteFile(const Path& path, std::span<const uint8> memory, PathConflictPolicy conflictPolicy) const;
+        std::optional<std::variant<PathResult, StreamResult>> ReadFile(const Path& filePath, std::vector<uint8>& outMemory) const;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual FileMetadata GetFileMetadata(const std::filesystem::path& filePath) const = 0;
-        [[nodiscard]] virtual DirectoryMetadata GetDirectoryMetadata(const std::filesystem::path& directoryPath) const = 0;
+        [[nodiscard]] virtual bool IsFile(const Path& path) const = 0;
+        [[nodiscard]] virtual bool IsDirectory(const Path& path) const = 0;
+        [[nodiscard]] virtual PathResult GetPathMetadata(const Path& path, PathMetadata& outMetadata) const = 0;
 
-        [[nodiscard]] virtual std::filesystem::path GetApplicationDirectoryPath() const noexcept = 0;
-        [[nodiscard]] virtual std::filesystem::path GetExecutableDirectoryPath() const noexcept = 0;
-        [[nodiscard]] virtual std::filesystem::path GetResourcesDirectoryPath() const noexcept = 0;
+        [[nodiscard]] virtual Path GetApplicationDirectoryPath() const noexcept = 0;
+        [[nodiscard]] virtual Path GetExecutableDirectoryPath() const noexcept = 0;
+        [[nodiscard]] virtual Path GetResourcesDirectoryPath() const noexcept = 0;
 
-        [[nodiscard]] virtual std::filesystem::path GetHomeDirectoryPath() const noexcept = 0;
-        [[nodiscard]] virtual std::filesystem::path GetUserDirectoryPath() const noexcept = 0;
-        [[nodiscard]] virtual std::filesystem::path GetTemporaryDirectoryPath() const noexcept = 0;
-        [[nodiscard]] virtual std::filesystem::path GetCachesDirectoryPath() const noexcept = 0;
+        [[nodiscard]] virtual Path GetHomeDirectoryPath() const noexcept = 0;
+        [[nodiscard]] virtual Path GetUserDirectoryPath() const noexcept = 0;
+        [[nodiscard]] virtual Path GetTemporaryDirectoryPath() const noexcept = 0;
+        [[nodiscard]] virtual Path GetCachesDirectoryPath() const noexcept = 0;
 
-        [[nodiscard]] virtual std::filesystem::path GetDesktopDirectoryPath() const noexcept = 0;
-        [[nodiscard]] virtual std::filesystem::path GetDownloadsDirectoryPath() const noexcept = 0;
-        [[nodiscard]] virtual std::filesystem::path GetDocumentsDirectoryPath() const noexcept = 0;
-        [[nodiscard]] virtual std::filesystem::path GetPicturesDirectoryPath() const noexcept = 0;
-        [[nodiscard]] virtual std::filesystem::path GetMusicDirectoryPath() const noexcept = 0;
-        [[nodiscard]] virtual std::filesystem::path GetVideosDirectoryPath() const noexcept = 0;
+        [[nodiscard]] virtual Path GetDesktopDirectoryPath() const noexcept = 0;
+        [[nodiscard]] virtual Path GetDownloadsDirectoryPath() const noexcept = 0;
+        [[nodiscard]] virtual Path GetDocumentsDirectoryPath() const noexcept = 0;
+        [[nodiscard]] virtual Path GetPicturesDirectoryPath() const noexcept = 0;
+        [[nodiscard]] virtual Path GetMusicDirectoryPath() const noexcept = 0;
+        [[nodiscard]] virtual Path GetVideosDirectoryPath() const noexcept = 0;
 
         /* --- COPY SEMANTICS --- */
         FileManager(const FileManager&) = delete;
@@ -117,8 +87,7 @@ namespace Sierra
         FileManager() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        void ResolveFilePathConflict(const std::filesystem::path& sourceFilePath, std::filesystem::path& destinationFilePath, FilePathConflictPolicy conflictPolicy) const;
-        void ResolveDirectoryPathConflict(const std::filesystem::path& sourceDirectoryPath, std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const;
+        [[nodiscard]] PathResult ResolvePathConflict(const Path& path, PathConflictPolicy conflictPolicy, Path& outResolvedPath) const;
 
     };
 

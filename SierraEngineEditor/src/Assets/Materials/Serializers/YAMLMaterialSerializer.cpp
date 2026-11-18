@@ -95,15 +95,19 @@ namespace SierraEngine
             return std::nullopt;
         }
 
-        const size blobMemorySize = sizeof(AssetHeader);
-        Sierra::MemoryWriteStream blobStream(blobMemorySize);
+        constexpr size blobMemorySize = sizeof(AssetHeader);
+        Sierra::WriteStream blob(blobMemorySize);
 
-        SerializeHeader(blobStream);
+        if (const Sierra::StreamResult result = SerializeHeader(blob); result != Sierra::StreamResult::Success)
+        {
+            APP_WARNING("Could not write YAML serialize material, as writing asset header to stream failed");
+            return std::nullopt;
+        }
 
         SerializedMaterial material
         {
             .data = { reinterpret_cast<const uint8*>(data.data()), reinterpret_cast<const uint8*>(data.data()) + data.size() },
-            .blob = blobStream.Release()
+            .blob = blob.Release()
         };
 
         return material;

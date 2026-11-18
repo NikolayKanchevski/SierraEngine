@@ -10,7 +10,7 @@ namespace SierraEngine
     struct PropertiesPanelDrawInfo
     {
         Scene& scene;
-        EntityID* selectedEntity = nullptr;
+        std::optional<EntityID> selectedEntity = std::nullopt;
     };
 
     namespace PropertiesPanel

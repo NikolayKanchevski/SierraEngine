@@ -9,10 +9,17 @@ namespace Sierra
 
     namespace
     {
+        constexpr std::string_view FORBIDDEN_CHARACTERS = "/\\:*?\"<>|";
+
         bool IsHiddenName(const std::filesystem::path::string_type& name) noexcept
         {
             return name.size() > 1 && name[0] == '.' && !(name.size() == 2 && name[1] == '.');
         }
+    }
+
+    bool IsPathNameValid(const std::string_view name) noexcept
+    {
+        return !std::ranges::any_of(FORBIDDEN_CHARACTERS, [name](const char character) -> bool { return name.find(character) != std::string_view::npos; });
     }
 
     /* --- CONSTRUCTORS --- */
@@ -47,6 +54,11 @@ namespace Sierra
 
     }
 
+    void Path::Clear() noexcept
+    {
+        path.clear();
+    }
+
     /* --- SETTER METHODS --- */
 
     Path& Path::ChangeFileName(const std::string_view fileName)
@@ -77,16 +89,6 @@ namespace Sierra
     }
 
     /* --- GETTER METHODS --- */
-
-    bool Path::IsValid() const noexcept
-    {
-        const std::string name = GetFileName();
-
-        if (name.empty() || name == "." || name == "..")
-            return false;
-
-        return name.find_first_of("/:") == std::string::npos;
-    }
 
     bool Path::HasParentPath() const
     {
@@ -146,7 +148,7 @@ namespace Sierra
 
     Path Path::GetRelativePath(const Path& basePath) const
     {
-        return path.lexically_relative(basePath.path);
+        return std::filesystem::relative(path, basePath);
     }
 
     /* --- OPERATORS --- */

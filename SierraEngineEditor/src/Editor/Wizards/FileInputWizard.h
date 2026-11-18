@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include "../EditorModal.h"
-#include "../../Platform/EditorPlatformContext.h"
+#include "../Modal.h"
 
 namespace SierraEngine
 {
@@ -13,13 +12,13 @@ namespace SierraEngine
     struct FileInputWizardCreateInfo
     {
         std::span<const std::string_view> inputFileExtensions = { };
-        const std::filesystem::path* inputFilePath = nullptr;
+        const Sierra::Path* inputFilePath = nullptr;
 
         std::string_view outputFileExtension = { };
-        const std::filesystem::path* outputDirectoryPath = nullptr;
+        const Sierra::Path* outputDirectoryPath = nullptr;
     };
 
-    class FileInputWizard : public virtual EditorModal
+    class FileInputWizard : public virtual Modal
     {
     public:
         /* --- COPY SEMANTICS --- */
@@ -34,21 +33,21 @@ namespace SierraEngine
         explicit FileInputWizard(const FileInputWizardCreateInfo& createInfo) noexcept;
 
         /* --- POLLING METHODS --- */
-        void DrawFileInputHeader(const EditorPlatformContext& platformContext) noexcept;
+        void DrawFileInputHeader(const Sierra::PlatformContext& platformContext) noexcept;
 
         /* --- SETTER METHODS --- */
-        virtual void SetInputFilePath(const std::filesystem::path& inputFilePath) noexcept;
+        virtual void SetInputFilePath(const Sierra::Path& inputFilePath) noexcept;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::span<const std::string_view> GetInputFileExtensions() const noexcept { return inputFileExtensions; }
-        [[nodiscard]] const std::filesystem::path& GetInputFilePath() const noexcept { return inputFilePath; }
+        [[nodiscard]] const Sierra::Path& GetInputFilePath() const noexcept { return inputFilePath; }
 
         /* --- MOVE SEMANTICS --- */
         FileInputWizard(FileInputWizard&&) noexcept = default;
         FileInputWizard& operator=(FileInputWizard&&) noexcept = default;
 
     private:
-        std::filesystem::path inputFilePath = { };
+        Sierra::Path inputFilePath = { };
         std::span<const std::string_view> inputFileExtensions = { };
 
     };

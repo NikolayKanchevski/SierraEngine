@@ -18,7 +18,7 @@ Sierra::Application* Sierra::CreateApplication(const int argc, char* argv[])
         throw std::invalid_argument("Failed to parse command-line arguments.");
     }
 
-    const std::filesystem::path projectDirectoryPath = std::filesystem::path(args.projectDirectoryPath);
+    const Path projectDirectoryPath = Path(args.projectDirectoryPath);
 
     const EditorApplicationCreateInfo createInfo
     {

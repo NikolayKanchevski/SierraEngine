@@ -5,10 +5,51 @@
 #include "FoundationFileManager.h"
 
 #include "FoundationFileStream.h"
-#include "FoundationFileUtilities.h"
 
 namespace Sierra
 {
+
+    namespace
+    {
+        NSURL* PathToNSURL(const Path& path) noexcept
+        {
+            NSString* pathString = [NSString stringWithCString: path.GetString().data() encoding: NSUTF8StringEncoding];
+            return [[NSURL alloc] initFileURLWithPath: pathString];
+        }
+
+        PathResult NSErrorToPathOperationResult(const NSError* error)
+        {
+            if (error == nil || error.code == 0)
+                return PathResult::Success;
+
+            switch (error.code)
+            {
+                case NSFileLockingError:                            return PathResult::Locked;
+                case NSFileReadNoPermissionError:
+                case NSFileWriteNoPermissionError:                  return PathResult::PermissionDenied;
+                case NSFileReadCorruptFileError:                    return PathResult::Corrupted;
+                case NSFileNoSuchFileError:
+                case NSFileReadNoSuchFileError:                     return PathResult::NotFound;
+                case NSFileReadTooLargeError:
+                case NSFileWriteOutOfSpaceError:                    return PathResult::SizeExceeded;
+                case NSFileWriteFileExistsError:                    return PathResult::AlreadyExists;
+                case NSFileWriteVolumeReadOnlyError:                return PathResult::ReadOnly;
+
+                case NSFileReadUnknownError:
+                case NSFileWriteUnknownError:
+                case NSFileReadInvalidFileNameError:
+                case NSFileReadInapplicableStringEncodingError:
+                case NSFileReadUnsupportedSchemeError:
+                case NSFileReadUnknownStringEncodingError:
+                case NSFileWriteInvalidFileNameError:
+                case NSFileWriteInapplicableStringEncodingError:
+                case NSFileWriteUnsupportedSchemeError:
+                default:                                            break;
+            }
+
+            return PathResult::Unknown;
+        }
+    }
 
     /* --- CONSTRUCTORS --- */
 
@@ -20,167 +61,75 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    bool FoundationFileManager::FileExists(const std::filesystem::path& filePath) const noexcept
+    bool FoundationFileManager::PathExists(const Path& path) const noexcept
     {
-        const std::u16string path = filePath.u16string();
-        return [fileManager fileExistsAtPath: [NSString stringWithCharacters: reinterpret_cast<const unichar*>(path.c_str()) length: path.size()]];
+        const std::string pathString = path;
+        return [fileManager fileExistsAtPath: [NSString stringWithCString: pathString.data() encoding: NSUTF8StringEncoding]];
     }
 
-    std::unique_ptr<FileStream> FoundationFileManager::CreateFileStream(const FileStreamCreateInfo& createInfo) const
+    PathResult FoundationFileManager::CreateFile(const Path& filePath, const PathConflictPolicy conflictPolicy) const
     {
-        SR_THROW_IF(!FileExists(createInfo.filePath), PathMissingError("Cannot open file stream, as the specified file path does not exist", createInfo.filePath));
-        return std::make_unique<FoundationFileStream>(createInfo);
+        if (const PathResult result = FileManager::CreateFile(filePath, conflictPolicy); result != PathResult::Success)
+            return result;
+
+        Path resolvedFilePath = filePath;
+        if (const PathResult result = ResolvePathConflict(filePath, conflictPolicy, resolvedFilePath); result != PathResult::Success)
+            return result;
+
+        if (const PathResult result = CreateDirectory(resolvedFilePath.GetParentPath(), PathConflictPolicy::Overwrite); result != PathResult::Success)
+            return result;
+
+        const std::string pathString = resolvedFilePath.GetString();
+        NSString* path = [NSString stringWithCString: pathString.data() encoding: NSUTF8StringEncoding];
+
+        const BOOL success = [fileManager createFileAtPath: path contents: [NSData data] attributes: nil];
+        return success ? PathResult::Success : PathResult::Unknown;
     }
 
-    void FoundationFileManager::CreateFile(const std::filesystem::path& filePath, const FilePathConflictPolicy conflictPolicy) const
+    PathResult FoundationFileManager::CreateDirectory(const Path& directoryPath, const PathConflictPolicy conflictPolicy) const
     {
-        FileManager::CreateFile(filePath, conflictPolicy);
+        if (const PathResult result = FileManager::CreateDirectory(directoryPath, conflictPolicy); result != PathResult::Success)
+            return result;
 
-        std::filesystem::path resolvedFilePath = filePath;
-        ResolveFilePathConflict(filePath, resolvedFilePath, conflictPolicy);
-        CreateDirectory(resolvedFilePath.parent_path());
+        Path resolvedDirectoryPath = directoryPath;
+        if (const PathResult result = ResolvePathConflict(directoryPath, conflictPolicy, resolvedDirectoryPath); result != PathResult::Success)
+            return result;
 
-        const std::u16string path = resolvedFilePath.u16string();
-        const BOOL success = [fileManager createFileAtPath: [NSString stringWithCharacters: reinterpret_cast<const unichar*>(path.c_str()) length:path.size()] contents: [NSData data] attributes: nil];
-        SR_THROW_IF(!success, UnknownFileError("Could not create file", filePath));
-    }
-
-    void FoundationFileManager::RenameFile(const std::filesystem::path& filePath, const std::string_view name) const
-    {
-        FileManager::RenameFile(filePath, name);
-
-        NSURL* const sourceURL = PathToNSURL(filePath);
-        NSURL* const destinationURL = PathToNSURL(filePath.parent_path() / name);
-
-        NSError* error = nil;
-        [fileManager moveItemAtURL: sourceURL toURL: destinationURL error: &error];
-
-        [sourceURL release];
-        [destinationURL release];
-
-        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not rename file to [{0}]", name), filePath);
-    }
-
-    void FoundationFileManager::CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
-    {
-        FileManager::CopyFile(sourceFilePath, destinationDirectoryPath, conflictPolicy);
-
-        std::filesystem::path resolvedFilePath = destinationDirectoryPath / sourceFilePath.filename();
-        ResolveFilePathConflict(sourceFilePath, resolvedFilePath, conflictPolicy);
-        CreateDirectory(destinationDirectoryPath);
-
-        NSURL* const sourceURL = PathToNSURL(sourceFilePath);
-        NSURL* const destinationURL = PathToNSURL(resolvedFilePath);
-
-        NSError* error = nil;
-        [fileManager copyItemAtURL: sourceURL toURL: destinationURL error: &error];
-
-        [sourceURL release];
-        [destinationURL release];
-
-        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not copy file to [{0}]", resolvedFilePath.string()), sourceFilePath);
-    }
-
-    void FoundationFileManager::MoveFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
-    {
-        FileManager::MoveFile(sourceFilePath, destinationDirectoryPath, conflictPolicy);
-
-        std::filesystem::path resolvedFilePath = destinationDirectoryPath / sourceFilePath.filename();
-        ResolveFilePathConflict(sourceFilePath, resolvedFilePath, conflictPolicy);
-        CreateDirectory(destinationDirectoryPath);
-
-        NSURL* const sourceURL = PathToNSURL(sourceFilePath);
-        NSURL* const destinationURL = PathToNSURL(resolvedFilePath);
-
-        NSError* error = nil;
-        [fileManager moveItemAtURL: sourceURL toURL: destinationURL error: &error];
-
-        [sourceURL release];
-        [destinationURL release];
-
-        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not move file to [{0}]", resolvedFilePath.string()), sourceFilePath);
-    }
-
-    void FoundationFileManager::DeleteFile(const std::filesystem::path& filePath) const
-    {
-        FileManager::DeleteFile(filePath);
-        NSURL* const URL = PathToNSURL(filePath);
-
-        NSError* error = nullptr;
-        [fileManager removeItemAtURL: URL error: &error];
-        [URL release];
-
-        if (error != nil) HandleNSFileError(error, "Could not delete file", filePath);
-    }
-
-    bool FoundationFileManager::DirectoryExists(const std::filesystem::path& directoryPath) const noexcept
-    {
-        const std::string path = directoryPath.string();
-        return [fileManager fileExistsAtPath: [NSString stringWithUTF8String: path.c_str()]];
-    }
-
-    void FoundationFileManager::EnumerateDirectoryFiles(const std::filesystem::path& directoryPath, const bool recursive, const FileEnumerationPredicate& Predicate) const
-    {
-        FileManager::EnumerateDirectoryFiles(directoryPath, recursive, Predicate);
-
-        if (!recursive)
-        {
-            for (const std::filesystem::path& path : std::filesystem::directory_iterator(directoryPath))
-            {
-                //if (!std::filesystem::is_regular_file(path)) continue; TODO: FIX
-                Predicate(path);
-            }
-        }
-        else
-        {
-            for (const std::filesystem::path& path : std::filesystem::recursive_directory_iterator(directoryPath))
-            {
-                //if (!std::filesystem::is_regular_file(path)) continue; TODO: FIX
-                Predicate(path);
-            }
-        }
-    }
-
-    void FoundationFileManager::CreateDirectory(const std::filesystem::path& directoryPath) const
-    {
-        FileManager::CreateDirectory(directoryPath);
-        if (DirectoryExists(directoryPath)) return;
-
-        NSURL* const URL = PathToNSURL(directoryPath);
+        NSURL* URL = PathToNSURL(directoryPath);
 
         NSError* error = nil;
         [fileManager createDirectoryAtURL: URL withIntermediateDirectories: YES attributes: nil error: &error];
         [URL release];
 
-        if (error != nil) HandleNSFileError(error, "Could not create directory", directoryPath);
+        return NSErrorToPathOperationResult(error);
     }
 
-    void FoundationFileManager::RenameDirectory(const std::filesystem::path& directoryPath, const std::string_view name) const
+    PathResult FoundationFileManager::CopyPath(const Path& sourcePath, const Path& destinationPath, const PathConflictPolicy conflictPolicy) const
     {
-        FileManager::RenameDirectory(directoryPath, name);
+        if (const PathResult result = FileManager::CopyPath(sourcePath, destinationPath, conflictPolicy); result != PathResult::Success)
+            return result;
 
-        NSURL* const sourceURL = PathToNSURL(directoryPath);
-        NSURL* const destinationURL = PathToNSURL(directoryPath.parent_path() / name);
+        Path resolvedPath = destinationPath / sourcePath.GetFileName();
+        if (const PathResult result = ResolvePathConflict(sourcePath, conflictPolicy, resolvedPath); result != PathResult::Success)
+            return result;
 
-        NSError* error = nil;
-        [fileManager moveItemAtURL: sourceURL toURL: destinationURL error: &error];
+        if (IsFile(sourcePath))
+        {
+            if (const PathResult result = CreateFile(resolvedPath, PathConflictPolicy::Overwrite); result != PathResult::Success)
+                return result;
+        }
+        else if (IsDirectory(sourcePath))
+        {
+            if (const PathResult result = CreateDirectory(resolvedPath, PathConflictPolicy::Overwrite); result != PathResult::Success)
+                return result;
+        }
+        else
+        {
+            return PathResult::Unknown;
+        }
 
-        [sourceURL release];
-        [destinationURL release];
-
-        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not rename directory to [{0}]", name), directoryPath);
-    }
-
-    void FoundationFileManager::CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
-    {
-        FileManager::CopyDirectory(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
-
-        std::filesystem::path resolvedDirectoryPath = destinationDirectoryPath / sourceDirectoryPath.filename();
-        ResolveDirectoryPathConflict(sourceDirectoryPath, resolvedDirectoryPath, conflictPolicy);
-        CreateDirectory(destinationDirectoryPath);
-
-        NSURL* const sourceURL = PathToNSURL(sourceDirectoryPath);
-        NSURL* const destinationURL = PathToNSURL(resolvedDirectoryPath);
+        NSURL* sourceURL = PathToNSURL(sourcePath);
+        NSURL* destinationURL = PathToNSURL(resolvedPath);
 
         NSError* error = nil;
         [fileManager copyItemAtURL: sourceURL toURL: destinationURL error: &error];
@@ -188,19 +137,16 @@ namespace Sierra
         [sourceURL release];
         [destinationURL release];
 
-        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not copy directory to [{0}]", resolvedDirectoryPath.string()), sourceDirectoryPath);
+        return NSErrorToPathOperationResult(error);
     }
 
-    void FoundationFileManager::MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
+    PathResult FoundationFileManager::RenamePath(const Path& path, const std::string_view name) const
     {
-        FileManager::MoveDirectory(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
+        if (const PathResult result = FileManager::RenamePath(path, name); result != PathResult::Success)
+            return result;
 
-        std::filesystem::path resolvedDirectoryPath = destinationDirectoryPath / sourceDirectoryPath.filename();
-        ResolveDirectoryPathConflict(sourceDirectoryPath, resolvedDirectoryPath, conflictPolicy);
-        CreateDirectory(destinationDirectoryPath);
-
-        NSURL* const sourceURL = PathToNSURL(sourceDirectoryPath);
-        NSURL* const destinationURL = PathToNSURL(resolvedDirectoryPath);
+        NSURL* sourceURL = PathToNSURL(path);
+        NSURL* destinationURL = PathToNSURL(path.GetParentPath() / name);
 
         NSError* error = nil;
         [fileManager moveItemAtURL: sourceURL toURL: destinationURL error: &error];
@@ -208,100 +154,185 @@ namespace Sierra
         [sourceURL release];
         [destinationURL release];
 
-        if (error != nil) HandleNSFileError(error, SR_FORMAT("Could not move directory to [{0}]", resolvedDirectoryPath.string()), sourceDirectoryPath);
+        return NSErrorToPathOperationResult(error);
     }
 
-    void FoundationFileManager::DeleteDirectory(const std::filesystem::path& directoryPath) const
+    PathResult FoundationFileManager::MovePath(const Path& sourcePath, const Path& destinationPath, const PathConflictPolicy conflictPolicy) const
     {
-        if (directoryPath.has_extension()) throw PathInvalidError("Cannot delete directory", directoryPath);
-        NSURL* const URL = PathToNSURL(directoryPath);
+        if (const PathResult result = FileManager::MovePath(sourcePath, destinationPath, conflictPolicy); result != PathResult::Success)
+            return result;
+
+        Path resolvedPath = destinationPath / sourcePath.GetFileName();
+        if (const PathResult result = ResolvePathConflict(sourcePath, conflictPolicy, resolvedPath); result != PathResult::Success)
+            return result;
+
+        if (IsFile(sourcePath))
+        {
+            if (const PathResult result = CreateFile(resolvedPath, PathConflictPolicy::Overwrite); result != PathResult::Success)
+                return result;
+        }
+        else if (IsDirectory(sourcePath))
+        {
+            if (const PathResult result = CreateDirectory(resolvedPath, PathConflictPolicy::Overwrite); result != PathResult::Success)
+                return result;
+        }
+        else
+        {
+            return PathResult::Unknown;
+        }
+
+        NSURL* sourceURL = PathToNSURL(sourcePath);
+        NSURL* destinationURL = PathToNSURL(resolvedPath);
+
+        NSError* error = nil;
+        [fileManager moveItemAtURL: sourceURL toURL: destinationURL error: &error];
+
+        [sourceURL release];
+        [destinationURL release];
+
+        return NSErrorToPathOperationResult(error);
+    }
+
+    PathResult FoundationFileManager::DeletePath(const Path& path) const
+    {
+        if (const PathResult result = FileManager::DeletePath(path); result != PathResult::Success)
+            return result;
+
+        NSURL* URL = PathToNSURL(path);
 
         NSError* error = nullptr;
         [fileManager removeItemAtURL: URL error: &error];
         [URL release];
 
-        if (error != nil) HandleNSFileError(error, "Could not delete directory", directoryPath);
+        return NSErrorToPathOperationResult(error);
+    }
+
+    PathResult FoundationFileManager::OpenFileStream(const FileStreamCreateInfo& createInfo, std::unique_ptr<FileStream>& outFileStream) const
+    {
+        if (!PathExists(createInfo.filePath) || !IsFile(createInfo.filePath))
+            return PathResult::NotFound;
+
+        NSURL* URL = PathToNSURL(createInfo.filePath);
+        NSFileHandle* fileHandle = nil;
+
+        NSError* error = nil;
+        switch (createInfo.access)
+        {
+            case StreamAccess::ReadOnly:      { fileHandle = [NSFileHandle fileHandleForReadingFromURL: URL error: &error]; break; }
+            case StreamAccess::WriteOnly:     { fileHandle = [NSFileHandle fileHandleForWritingToURL: URL error: &error];   break; }
+            case StreamAccess::ReadWrite:     { fileHandle = [NSFileHandle fileHandleForUpdatingURL: URL error: &error];    break; }
+        }
+        [URL release];
+
+        if (const PathResult result = NSErrorToPathOperationResult(error); result != PathResult::Success)
+            return result;
+
+        // NOTE: From the tests I performed, no POSIX/fcntl/C-API buffering configuration results in any performance difference on Apple platforms, which is why no accounting for buffering is done here
+        outFileStream = std::make_unique<FoundationFileStream>(fileHandle, createInfo);
+        return PathResult::Success;
+    }
+
+    PathResult FoundationFileManager::EnumeratePaths(const Path& path, const PathEnumerationPredicate& Predicate) const
+    {
+        if (const PathResult result = FileManager::EnumeratePaths(path, Predicate); result != PathResult::Success)
+            return result;
+
+        if (!IsDirectory(path))
+        {
+            Predicate(path);
+            return PathResult::Success;
+        }
+
+        std::filesystem::recursive_directory_iterator iterator(path);
+        const std::filesystem::recursive_directory_iterator end;
+
+        for (; iterator != end; ++iterator)
+        {
+            if (Predicate(iterator->path()))
+            {
+                iterator.disable_recursion_pending();
+            }
+        }
+
+        return PathResult::Success;
     }
 
     /* --- GETTER METHODS --- */
 
-    FileMetadata FoundationFileManager::GetFileMetadata(const std::filesystem::path& filePath) const
+    bool FoundationFileManager::IsFile(const Path& path) const
     {
-        const std::u16string path = filePath.u16string();
+        const std::string pathString = path;
 
-        NSError* error = nil;
-        const NSDictionary<NSFileAttributeKey, id>* const attributes = [fileManager attributesOfItemAtPath: [NSString stringWithCharacters:reinterpret_cast<const unichar*>(path.data()) length: path.size()] error: &error];
-        if (error != nil) HandleNSFileError(error, "Could not get file metadata", filePath);
-
-        const NSNumber* const memorySize = [attributes objectForKey: NSFileSize];
-        const NSDate* const dateCreated = [attributes objectForKey: NSFileCreationDate];
-        const NSDate* const dateModified = [attributes objectForKey: NSFileModificationDate];
-
-        const std::chrono::system_clock::time_point dateCreatedTimePoint(std::chrono::seconds(static_cast<uint64>(dateCreated.timeIntervalSince1970)));
-        const std::chrono::system_clock::time_point dateModifiedTimePoint(std::chrono::seconds(static_cast<uint64>(dateModified.timeIntervalSince1970)));
-
-        return
-        {
-            .type = FilePathToFileType(filePath),
-            .memorySize = static_cast<uint64>([memorySize longLongValue]),
-            .dateCreated = TimePoint(dateCreatedTimePoint),
-            .dateLastModified = TimePoint(dateModifiedTimePoint)
-        };
+        BOOL isDirectory = NO;
+        return [fileManager fileExistsAtPath: [NSString stringWithCString: pathString.data() encoding: NSUTF8StringEncoding] isDirectory: &isDirectory] && !isDirectory;
     }
 
-    DirectoryMetadata FoundationFileManager::GetDirectoryMetadata(const std::filesystem::path& directoryPath) const
+    bool FoundationFileManager::IsDirectory(const Path& path) const
     {
-        const std::u16string path = directoryPath.u16string();
+        const std::string pathString = path;
+
+        BOOL isDirectory = NO;
+        return [fileManager fileExistsAtPath: [NSString stringWithCString: pathString.data() encoding: NSUTF8StringEncoding] isDirectory: &isDirectory] && isDirectory;
+    }
+
+    PathResult FoundationFileManager::GetPathMetadata(const Path& path, PathMetadata& outMetadata) const
+    {
+        const NSURL* URL = PathToNSURL(path);
 
         NSError* error = nil;
-        const NSDictionary<NSFileAttributeKey, id>* const attributes = [fileManager attributesOfItemAtPath: [NSString stringWithCharacters: reinterpret_cast<const unichar*>(path.data()) length: path.size()] error: &error];
-        if (error != nil) HandleNSFileError(error, "Could not get directory metadata", directoryPath);
+        const NSDictionary<NSFileAttributeKey, id>* const attributes = [fileManager attributesOfItemAtPath: URL.path error: &error];
 
-        const NSDate* const dateCreated = [attributes objectForKey: NSFileCreationDate];
-        const NSDate* const dateModified = [attributes objectForKey: NSFileModificationDate];
-
-        const std::chrono::system_clock::time_point dateCreatedTimePoint(std::chrono::seconds(static_cast<uint64>(dateCreated.timeIntervalSince1970)));
-        const std::chrono::system_clock::time_point dateModifiedTimePoint(std::chrono::seconds(static_cast<uint64>(dateModified.timeIntervalSince1970)));
-
-        uint32 fileCount = 0;
-        size memorySize = 0;
-        for (const std::filesystem::path& filePath : std::filesystem::recursive_directory_iterator(directoryPath))
+        if (const PathResult result = NSErrorToPathOperationResult(error); result != PathResult::Success)
         {
-            if (!std::filesystem::is_regular_file(filePath)) continue;
-            memorySize += std::filesystem::file_size(filePath);
-            fileCount++;
+            [URL release];
+            return result;
         }
 
-        return
+        const NSDate* const dateCreated = [attributes objectForKey: NSFileCreationDate];
+        const NSDate* const dateModified = [attributes objectForKey: NSFileModificationDate];
+
+        const std::chrono::system_clock::time_point timeCreatedTimePoint(std::chrono::system_clock::time_point(std::chrono::seconds(static_cast<uint64>(dateCreated.timeIntervalSince1970))));
+        const std::chrono::system_clock::time_point timeModifiedTimePoint(std::chrono::system_clock::time_point(std::chrono::seconds(static_cast<uint64>(dateModified.timeIntervalSince1970))));
+
+        outMetadata =
         {
-            .fileCount = fileCount,
-            .memorySize = memorySize,
-            .dateCreated = TimePoint(dateCreatedTimePoint),
-            .dateLastModified = TimePoint(dateModifiedTimePoint)
+            .itemCount = 1,
+            .memorySize = [[attributes objectForKey: NSFileSize] unsignedLongValue],
+            .timeCreated = TimePoint(timeCreatedTimePoint),
+            .timeLastModified = TimePoint(timeModifiedTimePoint)
         };
+
+        if ([[attributes objectForKey: NSFileTypeDirectory] boolValue])
+        {
+            NSArray<NSString*>* contents = [fileManager contentsOfDirectoryAtPath: URL.path error: &error];
+            if (contents != nil) outMetadata.itemCount = [contents count];
+        }
+        [URL release];
+
+        return PathResult::Success;
     }
 
-    std::filesystem::path FoundationFileManager::GetApplicationDirectoryPath() const noexcept
+    Path FoundationFileManager::GetApplicationDirectoryPath() const noexcept
     {
         return { std::string_view(NSBundle.mainBundle.bundlePath.UTF8String, NSBundle.mainBundle.bundlePath.length) };
     }
 
-    std::filesystem::path FoundationFileManager::GetExecutableDirectoryPath() const noexcept
+    Path FoundationFileManager::GetExecutableDirectoryPath() const noexcept
     {
         return { std::string_view(NSBundle.mainBundle.executablePath.UTF8String, NSBundle.mainBundle.executablePath.length) };
     }
 
-    std::filesystem::path FoundationFileManager::GetResourcesDirectoryPath() const noexcept
+    Path FoundationFileManager::GetResourcesDirectoryPath() const noexcept
     {
         return { std::string_view(NSBundle.mainBundle.executablePath.UTF8String, NSBundle.mainBundle.resourcePath.length) };
     }
 
-    std::filesystem::path FoundationFileManager::GetHomeDirectoryPath() const noexcept
+    Path FoundationFileManager::GetHomeDirectoryPath() const noexcept
     {
         return { std::string_view(NSHomeDirectory().UTF8String, NSHomeDirectory().length) };
     }
 
-    std::filesystem::path FoundationFileManager::GetUserDirectoryPath() const noexcept
+    Path FoundationFileManager::GetUserDirectoryPath() const noexcept
     {
         // NOTE: Only macOS has user folders
         #if SR_PLATFORM_macOS
@@ -311,51 +342,50 @@ namespace Sierra
         #endif
     }
 
-    std::filesystem::path FoundationFileManager::GetTemporaryDirectoryPath() const noexcept
+    Path FoundationFileManager::GetTemporaryDirectoryPath() const noexcept
     {
         return { std::string_view(NSTemporaryDirectory().UTF8String, NSTemporaryDirectory().length) };
     }
 
-    std::filesystem::path FoundationFileManager::GetCachesDirectoryPath() const noexcept
+    Path FoundationFileManager::GetCachesDirectoryPath() const noexcept
     {
         NSURL* const URL = [fileManager URLForDirectory: NSCachesDirectory inDomain: NSUserDomainMask appropriateForURL: [NSURL fileURLWithPath: fileManager.currentDirectoryPath] create: YES error: nil];
         return { std::string_view(URL.path.UTF8String, URL.path.length) };
     }
 
-    std::filesystem::path FoundationFileManager::GetDesktopDirectoryPath() const noexcept
+    Path FoundationFileManager::GetDesktopDirectoryPath() const noexcept
     {
         NSURL* const URL = [fileManager URLForDirectory: NSDesktopDirectory inDomain: NSUserDomainMask appropriateForURL: [NSURL fileURLWithPath: fileManager.currentDirectoryPath] create: YES error: nil];
         return { std::string_view(URL.path.UTF8String, URL.path.length) };
     }
 
-    std::filesystem::path FoundationFileManager::GetDownloadsDirectoryPath() const noexcept
+    Path FoundationFileManager::GetDownloadsDirectoryPath() const noexcept
     {
         NSURL* const URL = [fileManager URLForDirectory: NSDownloadsDirectory inDomain: NSUserDomainMask appropriateForURL: [NSURL fileURLWithPath: fileManager.currentDirectoryPath] create: YES error: nil];
         return { std::string_view(URL.path.UTF8String, URL.path.length) };
     }
 
-    std::filesystem::path FoundationFileManager::GetDocumentsDirectoryPath() const noexcept
+    Path FoundationFileManager::GetDocumentsDirectoryPath() const noexcept
     {
         NSURL* const URL = [fileManager URLForDirectory: NSDocumentDirectory inDomain: NSUserDomainMask appropriateForURL: [NSURL fileURLWithPath: fileManager.currentDirectoryPath] create: YES error: nil];
         return { std::string_view(URL.path.UTF8String, URL.path.length) };
     }
 
-    std::filesystem::path FoundationFileManager::GetPicturesDirectoryPath() const noexcept
+    Path FoundationFileManager::GetPicturesDirectoryPath() const noexcept
     {
         NSURL* const URL = [fileManager URLForDirectory: NSPicturesDirectory inDomain: NSUserDomainMask appropriateForURL: [NSURL fileURLWithPath: fileManager.currentDirectoryPath] create: YES error: nil];
         return { std::string_view(URL.path.UTF8String, URL.path.length) };
     }
 
-    std::filesystem::path FoundationFileManager::GetMusicDirectoryPath() const noexcept
+    Path FoundationFileManager::GetMusicDirectoryPath() const noexcept
     {
         NSURL* const URL = [fileManager URLForDirectory: NSMusicDirectory inDomain: NSUserDomainMask appropriateForURL: [NSURL fileURLWithPath: fileManager.currentDirectoryPath] create: YES error: nil];
         return { std::string_view(URL.path.UTF8String, URL.path.length) };
     }
 
-    std::filesystem::path FoundationFileManager::GetVideosDirectoryPath() const noexcept
+    Path FoundationFileManager::GetVideosDirectoryPath() const noexcept
     {
         NSURL* const URL = [fileManager URLForDirectory: NSMoviesDirectory inDomain: NSUserDomainMask appropriateForURL: [NSURL fileURLWithPath: fileManager.currentDirectoryPath] create: YES error: nil];
         return { std::string_view(URL.path.UTF8String, URL.path.length) };
     }
-
 }

@@ -19,8 +19,6 @@
 
 #include "../FileStream.h"
 
-#include "FoundationFileUtilities.h"
-
 namespace Sierra
 {
 
@@ -28,21 +26,20 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit FoundationFileStream(const FileStreamCreateInfo& createInfo);
+        explicit FoundationFileStream(NSFileHandle* fileHandle, const FileStreamCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Read(std::span<uint8> outBuffer) override;
-        void Write(const void* memory, size memorySize) override;
+        [[nodiscard]] StreamResult Read(std::span<uint8> outMemory) override;
+        [[nodiscard]] StreamResult Write(std::span<const uint8> memory) override;
 
         /* --- SETTER METHODS --- */
-        void SetOffset(size offset) override;
+        [[nodiscard]] StreamResult SetOffset(size offset) override;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] const Path& GetFilePath() const noexcept override { return filePath; }
         [[nodiscard]] size GetOffset() const override;
         [[nodiscard]] size GetSize() const override;
-
         [[nodiscard]] StreamAccess GetAccess() const noexcept override { return access; }
-        [[nodiscard]] const std::filesystem::path& GetFilePath() const noexcept override { return filePath; }
 
         [[nodiscard]] const NSFileHandle* GetNSFileHandle() const noexcept { return fileHandle; }
 
@@ -59,8 +56,9 @@ namespace Sierra
 
     private:
         NSFileHandle* fileHandle = nil;
+
+        Path filePath = { };
         StreamAccess access = StreamAccess::ReadWrite;
-        std::filesystem::path filePath = { };
 
     };
 

@@ -167,8 +167,10 @@ namespace SierraEngine
 
     std::optional<ImportedModel> YAMLModelImporter::Import(const ModelImportInfo& importInfo) const
     {
-        Sierra::MemoryReadStream blobStream(importInfo.serializedModel.blob);
-        AssetHeader header = blobStream.ReadAs<AssetHeader>();
+        Sierra::ReadStream blob(importInfo.serializedModel.blob);
+
+        AssetHeader header = { };
+        blob.ReadAs<AssetHeader>(header);
 
         if (header.signature != GetSignature())
         {
@@ -213,10 +215,11 @@ namespace SierraEngine
             return std::nullopt;
         }
 
-        std::optional<ImportedModelBuffer> blob = ImportBlob(blobStream, *properties);
-        if (!blob.has_value())
+        std::vector<Vertex> vertexBuffer = { };
+        std::vector<uint32> indexBuffer = { };
+        if (ImportBlob(blob, *properties, vertexBuffer, indexBuffer) != Sierra::StreamResult::Success)
         {
-            APP_WARNING("Could not YAML import model [{0}], its blob is corrupted", metadata->name);
+            APP_WARNING("Could not YAML import model [{0}], as its blob is corrupted", metadata->name);
             return std::nullopt;
         }
 
@@ -227,7 +230,8 @@ namespace SierraEngine
             .metadata = std::move(*metadata),
             .settings = std::move(*settings),
             .properties = std::move(*properties),
-            .buffer = std::move(*blob)
+            .vertexBuffer = std::move(vertexBuffer),
+            .indexBuffer = std::move(indexBuffer)
         };
 
         return model;

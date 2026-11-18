@@ -9,57 +9,61 @@
 #include "Panels/HierarchyPanel.h"
 #include "Panels/PropertiesPanel.h"
 
-#include "Wizards/Assets/TextureSerializeWizard.h"
-#include "Wizards/Assets/MaterialSerializeWizard.h"
-#include "Wizards/Assets/ModelSerializeWizard.h"
-
 namespace SierraEngine
 {
 
     /* --- CONSTRUCTORS --- */
 
-    Editor::Editor(const EditorCreateInfo& createInfo)
-        : platformContext(&createInfo.platformContext), fileManager(&createInfo.fileManager), renderingContext(&createInfo.renderingContext),
-          scene({ .name = "Scene" }),
-          assetBrowserPanel({ .fileManager = createInfo.fileManager, .renderingContext = createInfo.renderingContext, .rootDirectoryPath = createInfo.project.GetAssetPath() }),
+    Editor::Editor(const ApplicationFrame& applicationFrame, const EditorCreateInfo& createInfo)
+        : scene({ .name = "Scene" }),
+          assetBrowserPanel(applicationFrame, { .rootDirectoryPath = applicationFrame.project.GetAssetPath() }),
           logPanel({ .logger = Sierra::Logger::GetApplicationLogger() })
     {
         style = EditorThemeToImGuiStyle(createInfo.theme);
 
         createInfo.window.AddEventListener<Sierra::WindowFocusEvent>([this](const Sierra::WindowFocusEvent& event) -> bool
         {
-            assetBrowserPanel.Refresh();
+            refreshAssetBrowserPanel = event.IsFocused();
             return false;
         });
     }
 
     /* --- POLLING METHODS --- */
 
-    void Editor::Draw(Sierra::CommandBuffer& commandBuffer, const Sierra::InputManager& inputManager)
+    void Editor::Draw(const ApplicationFrame& applicationFrame, const DrawFrame& drawFrame)
     {
         ImGui::GetStyle() = style;
-        const ImGuiID dockID = DrawDockSpace();
+
+        const EditorFrame editorFrame = Bind();
+        const ImGuiID dockID = DrawDockSpace(applicationFrame, editorFrame);
 
         ImGui::SetNextWindowDockID(dockID, ImGuiCond_FirstUseEver);
-        HierarchyPanel::Draw({ .scene = scene, .selectedEntities = selectedEntities });
+        hierarchyPanel.Draw(scene);
 
         ImGui::SetNextWindowDockID(dockID, ImGuiCond_FirstUseEver);
-        PropertiesPanel::Draw({ .scene = scene, .selectedEntity = !selectedEntities.empty() ? &selectedEntities[0] : nullptr });
+        PropertiesPanel::Draw({ .scene = scene, .selectedEntity = hierarchyPanel.GeSelectedEntity() });
+
+        if (refreshAssetBrowserPanel)
+        {
+            assetBrowserPanel.Refresh(applicationFrame);
+            refreshAssetBrowserPanel = false;
+        }
 
         ImGui::SetNextWindowDockID(dockID, ImGuiCond_FirstUseEver);
-        assetBrowserPanel.Draw({ .commandBuffer = commandBuffer, .inputManager = inputManager });
+        assetBrowserPanel.Draw(applicationFrame, editorFrame);
 
         ImGui::SetNextWindowDockID(dockID, ImGuiCond_FirstUseEver);
         logPanel.Draw();
 
         uint32 i = 0;
-        viewports.ForEach([dockID, &i](Viewport& viewport) -> void
+        viewports.ForEach([dockID, &i, &applicationFrame](Viewport& viewport) -> void
         {
             const std::string title = SR_FORMAT("Viewport [{0}]", i);
             const ViewportPanelDrawInfo drawInfo
             {
                 .title = title,
-                .viewport = viewport
+                .viewport = viewport,
+                .timeStep = applicationFrame.timeStep
             };
 
             ImGui::SetNextWindowDockID(dockID, ImGuiCond_FirstUseEver);
@@ -67,10 +71,7 @@ namespace SierraEngine
             i++;
         });
 
-        if (currentWizard != nullptr && !currentWizard->Draw(commandBuffer))
-        {
-            currentWizard.reset();
-        }
+        modalManager.Draw(applicationFrame, drawFrame);
     }
 
     Viewport& Editor::CreateViewport(ViewportID& ID, const ViewportCreateInfo& createInfo)
@@ -88,52 +89,21 @@ namespace SierraEngine
         return viewports.RemoveItem(ID);
     }
 
-    void Editor::DrawMenuBar()
+    /* --- PRIVATE METHODS --- */
+
+    EditorFrame Editor::Bind()
     {
-        // TODO: Fix bug
-        const std::array fileSerializeItems
+        return
         {
-            MenuItem {
-                .title = "Texture",
-                .Callback = [this]() -> void { OpenTextureSerializeWizard(); }
-            },
-            MenuItem {
-                .title = "Material",
-                .Callback = [this]() -> void { OpenMaterialSerializeWizard(); }
-            },
-            MenuItem {
-                .title = "Model",
-                .Callback = [this]() -> void { OpenModelSerializeWizard(); }
-            }
+            .modalManager = modalManager
         };
-
-        const std::array fileItems
-        {
-            MenuItem {
-                .title = "Serialize",
-                .items = fileSerializeItems
-            },
-            MenuItem {
-                .title = "Import"
-            }
-        };
-
-        const std::array items
-        {
-            MenuItem {
-                .title = "File",
-                .items = fileItems
-            }
-        };
-
-        MenuPanel::Draw({ .items = items });
     }
 
-    ImGuiID Editor::DrawDockSpace()
+    ImGuiID Editor::DrawDockSpace(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame) const
     {
         const ImGuiID dockID = ImGui::GetID("Dockspace");
 
-        const ImGuiViewport* const viewport = ImGui::GetMainViewport();
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowViewport(viewport->ID);
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
@@ -145,61 +115,16 @@ namespace SierraEngine
         ImGui::Begin("##BackgroundViewport", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_MenuBar);
         ImGui::PopStyleVar(2);
 
-        DrawMenuBar();
+        MenuPanel::Draw(applicationFrame, editorFrame);
 
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-Wdeprecated-enum-enum-conversion"
         ImGui::DockSpace(dockID, { 0.0f, 0.0f }, static_cast<ImGuiDockNodeFlags>(ImGuiDockNodeFlags_NoWindowMenuButton) | ImGuiDockNodeFlags_PassthruCentralNode);
         #pragma clang diagnostic pop
+
         ImGui::End();
 
         return dockID;
-    }
-
-    void Editor::OpenTextureSerializeWizard(const std::filesystem::path* outputDirectoryPath)
-    {
-        const std::vector<std::filesystem::path> filePath = platformContext->OpenFileSelectDialog({ .allowedFileExtensions = TextureSerializeWizard::INPUT_FILE_EXTENSIONS });
-        if (filePath.empty()) return;
-
-        const TextureSerializeWizardCreateInfo createInfo
-        {
-            .platformContext = *platformContext,
-            .renderingContext = *renderingContext,
-            .fileManager = *fileManager,
-            .inputFilePath = &filePath.front(),
-            .outputDirectoryPath = outputDirectoryPath
-        };
-
-        currentWizard = std::make_unique<TextureSerializeWizard>(createInfo);
-    }
-
-    void Editor::OpenMaterialSerializeWizard(const std::filesystem::path* outputDirectoryPath)
-    {
-        const MaterialSerializeWizardCreateInfo createInfo
-        {
-            .platformContext = *platformContext,
-            .fileManager = *fileManager,
-            .outputDirectoryPath = outputDirectoryPath
-        };
-
-        currentWizard = std::make_unique<MaterialSerializeWizard>(createInfo);
-    }
-
-    void Editor::OpenModelSerializeWizard(const std::filesystem::path* outputDirectoryPath)
-    {
-        const std::vector<std::filesystem::path> filePath = platformContext->OpenFileSelectDialog({ .allowedFileExtensions = ModelSerializeWizard::INPUT_FILE_EXTENSIONS });
-        if (filePath.empty()) return;
-
-        const ModelSerializeWizardCreateInfo createInfo
-        {
-            .platformContext = *platformContext,
-            .renderingContext = *renderingContext,
-            .fileManager = *fileManager,
-            .inputFilePath = &filePath.front(),
-            .outputDirectoryPath = outputDirectoryPath
-        };
-
-        currentWizard = std::make_unique<ModelSerializeWizard>(createInfo);
     }
 
 

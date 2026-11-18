@@ -5,7 +5,7 @@
 	path = Sierra/vendor/ios-cmake
 	url = https://github.com/leetal/ios-cmake
 [submodule "Sierra/vendor/imgui"]
-	path = Sierra/vendor/imgui
+	path = SierraEngineEditor/vendor/imgui
 	url = https://github.com/ocornut/imgui/
 	branch = docking
 [submodule "Sierra/vendor/vma"]

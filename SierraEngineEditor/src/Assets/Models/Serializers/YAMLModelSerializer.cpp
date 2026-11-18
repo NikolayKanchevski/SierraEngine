@@ -273,15 +273,24 @@ namespace SierraEngine
         }
 
         const size blobMemorySize = sizeof(AssetHeader) + GetModelMemorySize(vertices, indices);
-        Sierra::MemoryWriteStream blobStream(blobMemorySize);
+        Sierra::WriteStream blob(blobMemorySize);
 
-        SerializeHeader(blobStream);
-        SerializeBlob(blobStream, serializeInfo, vertices, indices);
+        if (SerializeHeader(blob) != Sierra::StreamResult::Success)
+        {
+            APP_WARNING("Could not YAML serialize model, as writing its asset header to stream failed");
+            return std::nullopt;
+        }
+
+        if (SerializeBlob(blob, serializeInfo, vertices, indices) != Sierra::StreamResult::Success)
+        {
+            APP_WARNING("Could not YAML serialize model, as writing its blob to stream failed");
+            return std::nullopt;
+        }
 
         SerializedModel serializedModel
         {
             .data = { reinterpret_cast<const uint8*>(data.data()), reinterpret_cast<const uint8*>(data.data()) + data.size() },
-            .blob = blobStream.Release()
+            .blob = blob.Release()
         };
 
         return serializedModel;

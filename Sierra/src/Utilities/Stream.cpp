@@ -9,67 +9,51 @@ namespace Sierra
 
     /* --- POLLING METHODS --- */
 
-    std::vector<uint8> Stream::Read(const size memorySize)
+    StreamResult Stream::Read(const std::span<uint8> outMemory)
     {
-        std::vector<uint8> memory = { };
-        memory.resize(memorySize);
+        if (GetAccess() == StreamAccess::WriteOnly)
+            return StreamResult::InvalidAccess;
 
-        Read(memory);
-        return memory;
+        if (GetOffset() + outMemory.size() > GetSize())
+            return StreamResult::InvalidRange;
+
+        return StreamResult::Success;
     }
 
-    void Stream::Write(const void* memory, const size memorySize)
+    StreamResult Stream::Write(std::span<const uint8> memory)
     {
-        SR_THROW_IF(GetAccess() == StreamAccess::ReadOnly, InvalidOperationError(SR_FORMAT("Cannot write memory range [{0}-{1}] of stream, as it is read-only", GetOffset(), GetOffset() + memorySize)));
+        if (GetAccess() == StreamAccess::ReadOnly)
+            return StreamResult::InvalidAccess;
+
+        if (GetOffset() + memory.size() > GetSize())
+            return StreamResult::InvalidRange;
+
+        return StreamResult::Success;
     }
 
-    void Stream::Write(const void* memory, const size destinationOffset, const size memorySize)
+    StreamResult Stream::ReadToEnd(std::vector<uint8>& outMemory)
     {
-        SetOffset(destinationOffset);
-        Write(memory, memorySize);
+        outMemory.resize(GetSize() - GetOffset());
+        return Read(outMemory);
     }
 
-    void Stream::WriteMemory(const std::span<const uint8> memory)
+    StreamResult Stream::ReadAll(std::vector<uint8>& outMemory)
     {
-        Write(memory.data(), memory.size());
-    }
+        if (const StreamResult result = SetOffset(0); result != StreamResult::Success)
+            return result;
 
-    void Stream::WriteMemory(std::span<const uint8> memory, const size destinationOffset)
-    {
-        SetOffset(destinationOffset);
-        WriteMemory(memory);
-    }
-
-    std::vector<uint8> Stream::Peek(const size memorySize)
-    {
-        std::vector<uint8> memory = Read(memorySize);
-        SetOffset(GetOffset() - memorySize);
-        return memory;
-    }
-
-    std::vector<uint8> Stream::Peek(const size sourceOffset, const size memorySize)
-    {
-        SetOffset(sourceOffset);
-        return Peek(memorySize);
-    }
-
-    std::vector<uint8> Stream::ReadAll()
-    {
-        SetOffset(0);
-        return Read(GetSize());
-    }
-
-    std::vector<uint8> Stream::ReadToEnd()
-    {
-        return Read(GetSize() - GetOffset());
+        outMemory.resize(GetSize());
+        return Read(outMemory);
     }
 
     /* --- SETTER METHODS --- */
 
-    void Stream::SetOffset(const size offset)
+    StreamResult Stream::SetOffset(const size offset)
     {
-        SR_THROW_IF(offset >= GetSize(), InvalidValueError(SR_FORMAT("Cannot seek to invalid offset [{0}] in stream", offset)));
+        if (offset >= GetSize())
+            return StreamResult::InvalidOffset;
 
+        return StreamResult::Success;
     }
 
 }

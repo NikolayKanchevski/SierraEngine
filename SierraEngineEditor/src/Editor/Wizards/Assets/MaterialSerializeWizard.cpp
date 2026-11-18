@@ -15,9 +15,7 @@ namespace SierraEngine
         : AssetSerializeWizard({
             .outputFileExtension = OUTPUT_FILE_EXTENSION,
             .outputDirectoryPath = createInfo.outputDirectoryPath
-          }),
-          platformContext(createInfo.platformContext),
-          fileManager(createInfo.fileManager)
+          })
     {
         AssetMetadata& metadata = serializeInfo.metadata;
         metadata.author = createInfo.platformContext.GetUserName();
@@ -26,7 +24,7 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    bool MaterialSerializeWizard::Draw(Sierra::CommandBuffer&)
+    bool MaterialSerializeWizard::Draw(const ApplicationFrame& applicationFrame, const DrawFrame& drawFrame)
     {
         bool open = BeginWizard("Material Serialize Wizard");
         if (open)
@@ -40,9 +38,9 @@ namespace SierraEngine
                 ImGuiDropdownOption { .text = "YAML" }
             };
 
-            if (DrawFileOutputFooter(platformContext,materialFormatIndex, OPTIONS))
+            if (DrawFileOutputFooter(applicationFrame.platformContext, materialFormatIndex, OPTIONS))
             {
-                if (Serialize())
+                if (Serialize(applicationFrame))
                 {
                     open = false;
                 }
@@ -142,7 +140,7 @@ namespace SierraEngine
         }
     }
 
-    bool MaterialSerializeWizard::Serialize() noexcept
+    bool MaterialSerializeWizard::Serialize(const ApplicationFrame& applicationFrame) noexcept
     {
         const MaterialSerializeFormat format = static_cast<MaterialSerializeFormat>(materialFormatIndex);
         std::unique_ptr<MaterialSerializer> serializer = nullptr;
@@ -161,19 +159,18 @@ namespace SierraEngine
             return false;
         }
 
-        const std::filesystem::path& outputDataFilePath = GetOutputFilePath();
-        if (outputDataFilePath.empty())
+        const Sierra::Path& outputDataFilePath = GetOutputFilePath();
+        if (outputDataFilePath.IsEmpty())
         {
-            APP_WARNING("Cannot serialize material [{0}] at invalid location [{1}]", serializeInfo.metadata.name, outputDataFilePath.string());
+            APP_WARNING("Cannot serialize material [{0}] at invalid location [{1}]", serializeInfo.metadata.name, outputDataFilePath.GetString());
             return false;
         }
 
-        fileManager.CreateFile(outputDataFilePath, Sierra::FilePathConflictPolicy::Overwrite);
-        fileManager.WriteFile(outputDataFilePath, serializedMaterial->data);
-
-        const std::filesystem::path outputBlobFilePath = std::filesystem::path(outputDataFilePath).replace_extension(BLOB_OUTPUT_FILE_EXTENSION);
-        fileManager.CreateFile(outputBlobFilePath, Sierra::FilePathConflictPolicy::Overwrite);
-        fileManager.WriteFile(outputBlobFilePath, serializedMaterial->blob);
+        if (!WriteAssetFiles(applicationFrame.platformContext.GetFileManager(), outputDataFilePath, *serializedMaterial))
+        {
+            APP_WARNING("Failed to write serialized material to file storage");
+            return false;
+        }
 
         return true;
     }

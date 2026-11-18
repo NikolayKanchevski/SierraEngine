@@ -41,7 +41,7 @@ namespace SierraEngine
         [[nodiscard]] RenderTargetID CreateRenderTarget();
         bool DestroyRenderTarget(RenderTargetID ID);
 
-        [[nodiscard]] const Sierra::Image& Render(Sierra::CommandBuffer& commandBuffer, const SceneRenderInfo& renderInfo);
+        [[nodiscard]] const Sierra::Image& Render(const DrawFrame& drawFrame, const SceneRenderInfo& renderInfo);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] const Sierra::Image* GetRenderTargetImage(RenderTargetID ID);

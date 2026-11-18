@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "../../Platform/EditorPlatformContext.h"
-
 namespace SierraEngine
 {
 
@@ -35,7 +33,7 @@ namespace SierraEngine
     {
         std::string_view message = { };
         std::string_view buttonText = { };
-        const std::filesystem::path* directoryPath = nullptr;
+        const Sierra::Path* directoryPath = nullptr;
 
         bool allowFiles = true;
         bool allowDirectories = false;
@@ -48,7 +46,7 @@ namespace SierraEngine
     {
         std::string_view message = { };
         std::string_view buttonText = { };
-        const std::filesystem::path* directoryPath = nullptr;
+        const Sierra::Path* directoryPath = nullptr;
 
         std::string_view fileName = { };
         std::span<const std::string_view> allowedFileExtensions = { };
@@ -96,7 +94,7 @@ namespace SierraEngine
         std::optional<Sierra::SampledImageID> previewID = std::nullopt;
         ImGuiImageInputFitType fitType = ImGuiImageInputFitType::Fit;
 
-        const std::filesystem::path* directoryPath = nullptr;
+        const Sierra::Path* directoryPath = nullptr;
         std::span<const std::string_view> allowedFileExtensions = { };
 
         uint32 imageWidth = 0;
@@ -160,6 +158,8 @@ namespace SierraEngine
 
     namespace ImGuiWidgets
     {
+        [[nodiscard]] std::string TruncateText(float32 fontSize, std::string_view text, float32 maxWidth, ImFont* font = ImGui::GetFont());
+
         void HorizontalIndent(float32 indent = ImGui::GetStyle().IndentSpacing);
         void VerticalIndent(float32 indent = ImGui::GetStyle().IndentSpacing);
         void Indent(Vector2 indent = { ImGui::GetStyle().IndentSpacing, ImGui::GetStyle().IndentSpacing });
@@ -175,14 +175,14 @@ namespace SierraEngine
         void EndPropertyTable();
 
         bool TextInput(std::string_view label, std::string& value, const ImGuiTextInputInfo& inputInfo = { });
-        bool FileSelectInput(std::string_view label, std::filesystem::path& value, const EditorPlatformContext& platformContext, const ImGuiFileSelectInputInfo& inputInfo = { });
-        bool FileSaveInput(std::string_view label, std::filesystem::path& value, const EditorPlatformContext& platformContext, const ImGuiFileSaveInputInfo& inputInfo = { });
+        bool FileSelectInput(std::string_view label, Sierra::Path& value, const Sierra::PlatformContext& platformContext, const ImGuiFileSelectInputInfo& inputInfo = { });
+        bool FileSaveInput(std::string_view label, Sierra::Path& value, const Sierra::PlatformContext& platformContext, const ImGuiFileSaveInputInfo& inputInfo = { });
         bool NumericInput(std::string_view label, void* value, ImGuiDataType dataType, const ImGuiNumericInputInfo& inputInfo = { });
         bool NumericEnterInput(std::string_view label, void* value, ImGuiDataType dataType, const ImGuiNumericInputInfo& inputInfo = { });
         bool VectorInput(std::string_view label, void* value, size length, ImGuiDataType dataType, const ImGuiVectorInputInfo& inputInfo = { });
         bool ColorInput(std::string_view label, ColorRGB& value, const ImGuiColorInputInfo& inputInfo = { });
         bool ColorInput(std::string_view label, ColorRGBA& value, const ImGuiColorInputInfo& inputInfo = { });
-        bool ImageInput(std::string_view label, std::filesystem::path& value, const EditorPlatformContext& platformContext, const ImGuiImageInputInfo& inputInfo = { });
+        bool ImageInput(std::string_view label, Sierra::Path& value, const Sierra::PlatformContext& platformContext, const ImGuiImageInputInfo& inputInfo = { });
 
         bool Button(std::string_view label, const ImGuiButtonInfo& buttonInfo = { });
         bool Dropdown(std::string_view label, uint32& value, const ImGuiDropdownInfo& dropdownInfo);

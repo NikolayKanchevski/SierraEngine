@@ -7,8 +7,8 @@
 #include "Project.h"
 #include "../Assets/EditorAssetManager.h"
 
+#include "ApplicationFrame.h"
 #include "../Editor/Editor.h"
-#include "../Platform/EditorPlatformContext.h"
 #include "../Rendering/EditorSurface.h"
 
 namespace SierraEngine
@@ -16,7 +16,7 @@ namespace SierraEngine
 
     struct EditorApplicationCreateInfo
     {
-        const std::filesystem::path& projectDirectoryPath;
+        const Sierra::Path& projectDirectoryPath;
         Sierra::ApplicationSettings settings = { };
     };
 
@@ -39,7 +39,9 @@ namespace SierraEngine
 
     private:
         bool Update() override;
-        std::unique_ptr<EditorPlatformContext> platformContext;
+
+        Sierra::TimePoint lastBindTime = Sierra::TimePoint::Now();
+        [[nodiscard]] ApplicationFrame Bind();
 
         FrameLimiter frameLimiter;
         Project project;
@@ -52,7 +54,7 @@ namespace SierraEngine
         std::shared_ptr<SceneRenderer> sceneRenderer = nullptr;
 
         ArenaAllocator arenaAllocator;
-        EditorAssetManager assetManager;
+        EditorAssetManager assetManager = EditorAssetManager({ });
         std::optional<Editor> editor = std::nullopt;
 
     };

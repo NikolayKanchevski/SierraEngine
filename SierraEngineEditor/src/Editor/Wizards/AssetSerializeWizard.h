@@ -12,10 +12,10 @@ namespace SierraEngine
     struct AssetSerializeWizardCreateInfo
     {
         std::span<const std::string_view> inputFileExtensions = { };
-        const std::filesystem::path* inputFilePath = nullptr;
+        const Sierra::Path* inputFilePath = nullptr;
 
         std::string_view outputFileExtension = { };
-        const std::filesystem::path* outputDirectoryPath = nullptr;
+        const Sierra::Path* outputDirectoryPath = nullptr;
     };
 
     class AssetSerializeWizard : public FileOutputWizard
@@ -43,7 +43,9 @@ namespace SierraEngine
         explicit AssetSerializeWizard(const AssetSerializeWizardCreateInfo& createInfo) noexcept;
 
         /* --- POLLING METHODS --- */
-        void DefaultMetadata(AssetMetadata& metadata, std::string_view name, const EditorPlatformContext& platformContext) const noexcept;
+        void DefaultMetadata(AssetMetadata& metadata, std::string_view name, const Sierra::PlatformContext& platformContext) const noexcept;
+        [[nodiscard]] bool WriteAssetFiles(const Sierra::FileManager& fileManager, const Sierra::Path& assetFilePath, const SerializedAsset& serializedAsset) const;
+
         void DrawMetadataMenu(AssetMetadata& metadata) const noexcept;
 
     };

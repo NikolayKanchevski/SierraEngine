@@ -60,13 +60,13 @@ namespace SierraEngine
 
         vertexShader = device.CreateShader({
             .name = "Vertex Shader of Scene Renderer",
-            .memory = VERTEX_SHADER_MEMORY,
+            .buffer = VERTEX_SHADER_MEMORY,
             .shaderType = Sierra::ShaderType::Vertex
         });
 
         fragmentShader = device.CreateShader({
             .name = "Fragment Shader of Scene Renderer",
-            .memory = FRAGMENT_SHADER_MEMORY,
+            .buffer = FRAGMENT_SHADER_MEMORY,
             .shaderType = Sierra::ShaderType::Fragment
         });
 
@@ -97,7 +97,7 @@ namespace SierraEngine
         return renderTargets.RemoveItem(ID);
     }
 
-    const Sierra::Image& SceneRenderer::Render(Sierra::CommandBuffer& commandBuffer, const SceneRenderInfo& renderInfo)
+    const Sierra::Image& SceneRenderer::Render(const DrawFrame& drawFrame, const SceneRenderInfo& renderInfo)
     {
         RenderTarget* renderTarget = renderTargets.GetItem(renderInfo.renderTarget);
         APP_THROW_IF(renderTarget == nullptr, Sierra::InvalidValueError(SR_FORMAT("Cannot render scene, as specified render target handle [{0}] is invalid", renderInfo.renderTarget.GetValue())));
@@ -112,28 +112,28 @@ namespace SierraEngine
             CreateRenderTarget(*renderTarget, renderInfo.width, renderInfo.height);
         }
 
-        commandBuffer.SynchronizeImageUsage(*renderTarget->colorImage, { .nextUsage = Sierra::ImageCommandUsage::ColorWrite });
-        commandBuffer.SynchronizeImageUsage(*renderTarget->depthImage, { .nextUsage = Sierra::ImageCommandUsage::DepthWrite });
+        drawFrame.commandBuffer.SynchronizeImageUsage(*renderTarget->colorImage, { .nextUsage = Sierra::ImageCommandUsage::ColorWrite });
+        drawFrame.commandBuffer.SynchronizeImageUsage(*renderTarget->depthImage, { .nextUsage = Sierra::ImageCommandUsage::DepthWrite });
 
-        commandBuffer.BeginRenderPass(*renderPass, *renderTarget->framebuffer);
-        commandBuffer.BeginGraphicsPipeline(*graphicsPipeline);
+        drawFrame.commandBuffer.BeginRenderPass(*renderPass, *renderTarget->framebuffer);
+        drawFrame.commandBuffer.BeginGraphicsPipeline(*graphicsPipeline);
 
         const PushConstant pushConstant
         {
             .view = renderInfo.camera.GetViewMatrix(renderInfo.eye),
             .projection = renderInfo.camera.GetProjectionMatrix(static_cast<float32>(renderInfo.width), static_cast<float32>(renderInfo.height))
         };
-        commandBuffer.PushConstants(&pushConstant, 0, sizeof(PushConstant));
+        drawFrame.commandBuffer.PushConstantsAs(pushConstant);
 
-        renderInfo.scene.ForEachComponent<MeshRenderer>([&commandBuffer](const MeshRenderer& meshRenderer) -> void
+        renderInfo.scene.ForEachComponent<MeshRenderer>([&drawFrame](const MeshRenderer& meshRenderer) -> void
         {
-            commandBuffer.DrawIndexed(meshRenderer.GetMesh().indexCount, meshRenderer.GetMesh().indexOffset, meshRenderer.GetMesh().vertexOffset);
+            drawFrame.commandBuffer.DrawIndexed(meshRenderer.GetMesh().indexCount, meshRenderer.GetMesh().indexOffset, meshRenderer.GetMesh().vertexOffset);
         });
 
-        commandBuffer.EndGraphicsPipeline();
-        commandBuffer.EndRenderPass();
+        drawFrame.commandBuffer.EndGraphicsPipeline();
+        drawFrame.commandBuffer.EndRenderPass();
 
-        commandBuffer.SynchronizeImageUsage(*renderTarget->colorImage, { .previousUsage = Sierra::ImageCommandUsage::ColorWrite, .nextUsage = Sierra::ImageCommandUsage::GraphicsRead });
+        drawFrame.commandBuffer.SynchronizeImageUsage(*renderTarget->colorImage, { .previousUsage = Sierra::ImageCommandUsage::ColorWrite, .nextUsage = Sierra::ImageCommandUsage::GraphicsRead });
         return *renderTarget->colorImage;
     }
 

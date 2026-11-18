@@ -9,7 +9,7 @@ namespace SierraEngine
 
     struct ImageTranscodeInfo
     {
-        std::span<const uint8> memory = { };
+        Sierra::Stream& stream;
         Sierra::ImageFormat format = Sierra::ImageFormat::Undefined;
     };
 
@@ -21,7 +21,7 @@ namespace SierraEngine
         uint32 levelCount = 0;
         uint32 layerCount = 0;
 
-        std::vector<uint8> memory = { };
+        std::vector<uint8> buffer = { };
     };
 
     class SIERRA_ENGINE_API ImageTranscoder

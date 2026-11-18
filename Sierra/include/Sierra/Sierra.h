@@ -19,18 +19,12 @@
 #include "../../src/Events/Event.h"
 #include "../../src/Events/EventDispatcher.hpp"
 
-#if defined(SR_BUILD_IMGUI_EXTENSION)
-    #include "../../src/Extensions/ImGui/ImGuiRenderer.h"
-#endif
-
-#include "../../src/Files/FileErrors.h"
 #include "../../src/Files/FileManager.h"
 #include "../../src/Files/FileStream.h"
 #include "../../src/Files/Path.h"
-#include "../../src/Files/PathErrors.h"
 
-#include "../../src/Memory/MemoryReadStream.h"
-#include "../../src/Memory/MemoryWriteStream.h"
+#include "../../src/Memory/ReadStream.h"
+#include "../../src/Memory/WriteStream.h"
 
 #include "../../src/Platform/EntryPoint.h"
 #include "../../src/Platform/PlatformContext.h"

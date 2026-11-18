@@ -7,37 +7,70 @@
 namespace Sierra
 {
 
+    namespace
+    {
+        constexpr std::array<std::string_view, 10> SUFFIXES
+        {
+            "ns",
+            "us",
+            "ms",
+            "s" ,
+            "min",
+            "h" ,
+            "d" ,
+            "w" ,
+            "mo",
+            "y"
+        };
+
+        float64 UnitToDuration(const TimeStepUnit unit) noexcept
+        {
+            switch (unit)
+            {
+                case TimeStepUnit::Nanoseconds:     return 0.000'001;
+                case TimeStepUnit::Microseconds:    return 0.001;
+                case TimeStepUnit::Milliseconds:    return 1.0;
+                case TimeStepUnit::Seconds:         return 1'000.0;
+                case TimeStepUnit::Minutes:         return 60'000.0;
+                case TimeStepUnit::Hours:           return 3'600'000.0;
+                case TimeStepUnit::Days:            return 86'400'000.0;
+                case TimeStepUnit::Weeks:           return 604'800'000.0;
+                case TimeStepUnit::Months:          return 2'629'746'000.0;
+                case TimeStepUnit::Years:           return 31'556'952'000.0;
+            }
+
+            return 1.0;
+        }
+    }
+
+    /* --- CONSTRUCTORS --- */
+
+    TimeStep::TimeStep(const float64 givenDuration, const TimeStepUnit unit) noexcept
+        : duration(givenDuration * UnitToDuration(unit))
+    {
+
+    }
+
+    /* --- GETTER METHODS --- */
+
+    float64 TimeStep::GetDuration(const TimeStepUnit unit) const noexcept
+    {
+        return duration / UnitToDuration(unit);
+    }
+
     /* --- CONVERSIONS --- */
 
     std::string TimeStepToString(const TimeStep timeStep) noexcept
     {
-        struct Unit
+        for (size i = SUFFIXES.size(); i-- > 0;)
         {
-            TimeStepUnit unit = TimeStepUnit::Milliseconds;
-            std::string_view suffix = { };
-        };
+            const TimeStepUnit unit = static_cast<TimeStepUnit>(i);
 
-        constexpr std::array UNITS
-        {
-            Unit { .unit = TimeStepUnit::Years,         .suffix = "y" },
-            Unit { .unit = TimeStepUnit::Months,        .suffix = "mo" },
-            Unit { .unit = TimeStepUnit::Weeks,         .suffix = "w" },
-            Unit { .unit = TimeStepUnit::Days,          .suffix = "d" },
-            Unit { .unit = TimeStepUnit::Hours,         .suffix = "h" },
-            Unit { .unit = TimeStepUnit::Minutes,       .suffix = "min" },
-            Unit { .unit = TimeStepUnit::Seconds,       .suffix = "s" },
-            Unit { .unit = TimeStepUnit::Milliseconds,  .suffix = "ms" },
-            Unit { .unit = TimeStepUnit::Microseconds,  .suffix = "us" }
-        };
-
-        // Use the largest unit in which the step is at least one
-        for (const Unit& unit : UNITS)
-        {
-            const float64 duration = timeStep.GetDuration(unit.unit);
-            if (std::abs(duration) >= 1.0) return SR_FORMAT("{0:.2f} {1}", duration, unit.suffix);
+            const float64 duration = timeStep.GetDuration(unit);
+            if (glm::abs(duration) >= 1.0) return SR_FORMAT("{0:.2f} {1}", duration, SUFFIXES[i]);
         }
 
-        return SR_FORMAT("{0:.2f} ns", timeStep.GetDuration(TimeStepUnit::Nanoseconds));
+        return "Unknown";
     }
 
 }

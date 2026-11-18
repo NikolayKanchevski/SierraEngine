@@ -1,7 +1,6 @@
 # Link modules
 add_subdirectory(Core)
 add_subdirectory(Events)
-add_subdirectory(Extensions)
 add_subdirectory(Files)
 add_subdirectory(Memory)
 add_subdirectory(Platform)

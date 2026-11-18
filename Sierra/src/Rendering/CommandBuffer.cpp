@@ -59,10 +59,9 @@ namespace Sierra
 
     }
 
-    void CommandBuffer::PushConstants(const void* memory, const uint8 offset, const uint8 memorySize)
+    void CommandBuffer::PushConstants(std::span<const uint8> buffer)
     {
-        SR_THROW_IF(memory == nullptr, InvalidValueError(SR_FORMAT("Cannot push push constant memory range [{0}-{1}] within command buffer [{2}], as specified memory pointer must not be null", GetName(), static_cast<uint64>(0), memorySize)));
-        SR_THROW_IF(offset + memorySize > Device::MAX_PUSH_CONSTANT_SIZE, InvalidRangeError(SR_FORMAT("Cannot push invalid push constant range within command buffer [{0}]", GetName()), offset, memorySize, uint8(0), Device::MAX_PUSH_CONSTANT_SIZE));
+
     }
 
     void CommandBuffer::BeginRenderPass(const RenderPass& renderPass, const Framebuffer& framebuffer)

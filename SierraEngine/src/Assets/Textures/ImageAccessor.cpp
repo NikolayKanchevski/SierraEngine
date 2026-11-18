@@ -74,7 +74,7 @@ namespace SierraEngine
         const uint8 channelCount = Sierra::ImageFormatToChannelCount(image.format);
         const uint8 channelMemorySize = static_cast<uint8>(Sierra::ImageFormatToChannelMemorySize(image.format));
 
-        const uint8* pixel = image.memory.data() + (coordinate.y * image.width + coordinate.x) * channelCount * channelMemorySize;
+        const uint8* pixel = image.buffer.data() + (coordinate.y * image.width + coordinate.x) * channelCount * channelMemorySize;
         switch (image.format)
         {
             case Sierra::ImageFormat::R8_Int:
@@ -208,7 +208,7 @@ namespace SierraEngine
         const uint8 channelCount = Sierra::ImageFormatToChannelCount(image.format);
         const uint8 channelMemorySize = static_cast<uint8>(Sierra::ImageFormatToChannelMemorySize(image.format));
 
-        uint8* pixel = image.memory.data() + (coordinate.y * image.width + coordinate.x) * channelCount * channelMemorySize;
+        uint8* pixel = image.buffer.data() + (coordinate.y * image.width + coordinate.x) * channelCount * channelMemorySize;
         switch (image.format)
         {
             case Sierra::ImageFormat::R8_Int:

@@ -1,8 +1,11 @@
 target_sources(SierraEngineEditor PRIVATE
     Editor.cpp
     Editor.h
-    EditorModal.h
-    EditorModal.cpp
+    EditorFrame.h
+        Modal.h
+        Modal.cpp
+        ModalManager.cpp
+        ModalManager.h
     EditorThemes.cpp
     EditorThemes.h
 )

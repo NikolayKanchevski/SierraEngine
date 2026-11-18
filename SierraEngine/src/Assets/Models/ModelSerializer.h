@@ -50,11 +50,7 @@ namespace SierraEngine
         std::vector<ModelMesh> meshes = { };
     };
 
-    struct SerializedModel
-    {
-        std::vector<uint8> data = { };
-        std::vector<uint8> blob = { };
-    };
+    using SerializedModel = SerializedAsset;
 
     struct SerializedModelTextureDependency
     {
@@ -101,7 +97,7 @@ namespace SierraEngine
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] std::optional<ModelGeometry> OptimizeGeometry(const ModelSerializeInfo& serializeInfo) const;
-        void SerializeBlob(Sierra::Stream& blob, const ModelSerializeInfo& serializeInfo, std::span<const Vertex> vertices, std::span<const uint32> indices) const;
+        [[nodiscard]] Sierra::StreamResult SerializeBlob(Sierra::Stream& blob, const ModelSerializeInfo& serializeInfo, std::span<const Vertex> vertices, std::span<const uint32> indices) const;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] size GetModelMemorySize(std::span<const Vertex> vertices, std::span<const uint32> indices) const noexcept;

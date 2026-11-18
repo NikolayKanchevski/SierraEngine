@@ -14,39 +14,46 @@ namespace Sierra
         ReadWrite
     };
 
+    enum class StreamResult : uint8
+    {
+        Unknown,
+        Success,
+        InvalidAccess,
+        InvalidOffset,
+        InvalidRange
+    };
+
     class SIERRA_API Stream
     {
     public:
         /* --- POLLING METHODS --- */
-        virtual void Read(std::span<uint8> outBuffer) = 0;
-        [[nodiscard]] std::vector<uint8> Read(size memorySize);
+        [[nodiscard]] virtual StreamResult Write(std::span<const uint8> memory);
+        virtual StreamResult Read(std::span<uint8> outMemory);
+
+        [[nodiscard]] StreamResult ReadToEnd(std::vector<uint8>& outMemory);
+        [[nodiscard]] StreamResult ReadAll(std::vector<uint8>& outMemory);
 
         template<typename T>
-        [[nodiscard]] T ReadAs()
+        StreamResult ReadAs(T& outT)
         {
-            return reinterpret_cast<const T&>(Read(sizeof(T)).front());
+            std::vector<uint8> buffer = { };
+            buffer.resize(sizeof(T));
+
+            if (const StreamResult result = Read(buffer); result != StreamResult::Success)
+                return result;
+
+            outT = reinterpret_cast<const T&>(buffer.front());
+            return StreamResult::Success;
         }
-
-        virtual void Write(const void* memory, size memorySize);
-        void Write(const void* memory, size destinationOffset, size memorySize);
-
-        void WriteMemory(std::span<const uint8> memory);
-        void WriteMemory(std::span<const uint8> memory, size destinationOffset);
 
         template<typename T>
-        void Write(const T value)
+        [[nodiscard]] StreamResult WriteAs(const T& value)
         {
-            Write(&value, sizeof(T));
+            return Write({ reinterpret_cast<const uint8*>(&value), sizeof(T) });
         }
-
-        [[nodiscard]] std::vector<uint8> Peek(size memorySize);
-        [[nodiscard]] std::vector<uint8> Peek(size sourceOffset, size memorySize);
-
-        [[nodiscard]] std::vector<uint8> ReadAll();
-        [[nodiscard]] std::vector<uint8> ReadToEnd();
 
         /* --- SETTER METHODS --- */
-        virtual void SetOffset(size offset);
+        [[nodiscard]] virtual StreamResult SetOffset(size offset);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual size GetOffset() const = 0;

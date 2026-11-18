@@ -2,7 +2,12 @@ name: Windows MSVC Build
 run-name: Build project modules on Windows with CMake and MSVC
 
 on:
-  push
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   Build:
@@ -19,7 +24,9 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
 
       - name: Prepare Vulkan SDK
         uses: humbletim/setup-vulkan-sdk@v1.2.1
@@ -28,13 +35,10 @@ jobs:
           vulkan-components: Vulkan-Headers, Vulkan-Loader
           vulkan-use-cache: true
 
-      - name: Update Git Submodules
-        run: git submodule update --init --recursive
-
       - name: Configure Editor Build Directory
         id: editorStrings
         shell: bash
-        run: echo "buildDirectory=${{ github.workspace }}/bin/SierraEngineEditor-Windows-MSVC/" >> $GITHUB_OUTPUT
+        run: echo "buildDirectory=${{ github.workspace }}/bin/SierraEngineEditor-Windows-MSVC/" >> "$GITHUB_OUTPUT"
 
       - name: Configure Editor CMake Project
         run: >
@@ -45,4 +49,4 @@ jobs:
           -S ${{ github.workspace }}/SierraEngineEditor/
 
       - name: Build Editor CMake Project
-        run: cmake --build ${{ steps.editorStrings.outputs.buildDirectory }} --config ${{ matrix.build_type }}
+        run: cmake --build ${{ steps.editorStrings.outputs.buildDirectory }} --config ${{ matrix.build_type }} --parallel

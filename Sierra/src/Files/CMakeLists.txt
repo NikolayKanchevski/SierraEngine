@@ -1,14 +1,10 @@
 target_sources(Sierra PRIVATE
-    FileErrors.cpp
-    FileErrors.h
     FileManager.cpp
     FileManager.h
     FileStream.cpp
     FileStream.h
     Path.cpp
     Path.h
-    PathErrors.cpp
-    PathErrors.h
 )
 
 if(SIERRA_PLATFORM_WINDOWS)

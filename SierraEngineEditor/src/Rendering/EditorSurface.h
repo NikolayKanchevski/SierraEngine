@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../Editor/Editor.h"
+#include "ImGui/ImGuiRenderer.h"
 
 namespace SierraEngine
 {
@@ -12,24 +13,21 @@ namespace SierraEngine
     struct EditorSurfaceCreateInfo
     {
         const Sierra::WindowManager& windowManager;
-        const RenderingContext& renderingContext;
-
-        Sierra::CommandBuffer& commandBuffer;
     };
 
     class EditorSurface final
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit EditorSurface(const EditorSurfaceCreateInfo& createInfo);
+        explicit EditorSurface(const DrawFrame& drawFrame, const EditorSurfaceCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         bool Update() const;
-        void Render(Sierra::CommandBuffer& commandBuffer, Editor& editor);
-        void Present(Sierra::CommandBuffer& commandBuffer) const;
+        void Render(const ApplicationFrame& applicationFrame, const DrawFrame& drawFrame, Editor& editor);
+        void Present(const DrawFrame& drawFrame) const;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] Sierra::Window& GetWindow() noexcept { return  *window; }
+        [[nodiscard]] Sierra::Window& GetWindow() noexcept { return *window; }
         [[nodiscard]] uint32 GetCurrentFrameIndex() const noexcept { return swapchain->GetCurrentFrameIndex(); };
         [[nodiscard]] uint32 GetConcurrentFrameCount() const noexcept { return swapchain->GetConcurrentFrameCount(); };
 
@@ -45,15 +43,15 @@ namespace SierraEngine
         ~EditorSurface() noexcept = default;
 
     private:
-        const RenderingContext* renderingContext;
-
         std::unique_ptr<Sierra::Window> window = nullptr;
         std::unique_ptr<Sierra::Swapchain> swapchain = nullptr;
-        std::unique_ptr<Sierra::RenderPass> renderPass = nullptr;
-        std::optional<Sierra::ImGuiRenderer> imGuiRenderer = std::nullopt;
+        ImGuiRenderer imGuiRenderer;
 
+        std::unique_ptr<Sierra::RenderPass> renderPass = nullptr;
         std::vector<std::unique_ptr<Sierra::Framebuffer>> framebuffers = { };
-        void CreateFramebuffers();
+
+        bool swapchainResized = false;
+        void CreateFramebuffers(const DrawFrame& drawFrame);
 
     };
 

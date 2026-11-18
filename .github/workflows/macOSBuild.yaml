@@ -2,7 +2,12 @@ name: macOS Apple Clang Build
 run-name: Build project modules on macOS with CMake and Apple Clang
 
 on:
-  push
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   Build:
@@ -19,10 +24,9 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Update Git Submodules
-        run: git submodule update --init --recursive
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
 
       - name: Configure Editor Build Directory
         id: editorStrings
@@ -38,4 +42,4 @@ jobs:
           -S ${{ github.workspace }}/SierraEngineEditor/
 
       - name: Build Editor CMake Project
-        run: cmake --build ${{ steps.editorStrings.outputs.buildDirectory }} --config ${{ matrix.build_type }}
+        run: cmake --build ${{ steps.editorStrings.outputs.buildDirectory }} --config ${{ matrix.build_type }} --parallel

@@ -2,7 +2,7 @@
 // Created by Nikolay Kanchevski on 7.11.24.
 //
 
-#include "EditorModal.h"
+#include "Modal.h"
 
 namespace SierraEngine
 {
@@ -14,7 +14,7 @@ namespace SierraEngine
 
     /* --- POLLING METHODS --- */
 
-    bool EditorModal::BeginWizard(const std::string_view title) const noexcept
+    bool Modal::BeginWizard(const std::string_view title) const noexcept
     {
         if (ImGui::IsKeyPressed(ImGuiKey_Escape))
             return false;
@@ -37,7 +37,7 @@ namespace SierraEngine
         return false;
     }
 
-    void EditorModal::EndWizard() const noexcept
+    void Modal::EndWizard() const noexcept
     {
         ImGuiWindow* window = ImGui::GetCurrentWindow();
         const Vector2 windowSize = ImGui::GetWindowSize();

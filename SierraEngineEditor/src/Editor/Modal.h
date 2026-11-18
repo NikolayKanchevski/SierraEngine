@@ -4,33 +4,35 @@
 
 #pragma once
 
+#include "../Core/ApplicationFrame.h"
+
 namespace SierraEngine
 {
 
-    class EditorModal
+    class Modal
     {
     public:
         /* --- POLLING METHODS --- */
-        [[nodiscard]] virtual bool Draw(Sierra::CommandBuffer& commandBuffer) = 0;
+        [[nodiscard]] virtual bool Draw(const ApplicationFrame& applicationFrame, const DrawFrame& drawFrame) = 0;
 
         /* --- COPY SEMANTICS --- */
-        EditorModal(const EditorModal&) = delete;
-        EditorModal& operator=(const EditorModal&) = delete;
+        Modal(const Modal&) = delete;
+        Modal& operator=(const Modal&) = delete;
 
         /* --- DESTRUCTOR --- */
-        virtual ~EditorModal() noexcept = default;
+        virtual ~Modal() noexcept = default;
 
     protected:
         /* --- CONSTRUCTORS --- */
-        EditorModal() noexcept = default;
+        Modal() noexcept = default;
 
         /* --- POLLING METHODS --- */
         bool BeginWizard(std::string_view title) const noexcept;
         void EndWizard() const noexcept;
 
         /* --- MOVE SEMANTICS --- */
-        EditorModal(EditorModal&&) noexcept = default;
-        EditorModal& operator=(EditorModal&&) noexcept = default;
+        Modal(Modal&&) noexcept = default;
+        Modal& operator=(Modal&&) noexcept = default;
 
     };
 

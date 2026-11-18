@@ -174,7 +174,7 @@ namespace Sierra
         [currentBlitEncoder optimizeContentsForGPUAccess: metalDestinationImage.GetMetalTexture() slice: copyInfo.layer level: copyInfo.level];
         [currentBlitEncoder copyFromBuffer: metalSourceBuffer.GetMetalBuffer()
             sourceOffset: copyInfo.sourceOffset
-            sourceBytesPerRow: static_cast<uint64>(static_cast<float32>(destinationImage.GetWidth() * ImageFormatToBlockSize(destinationImage.GetFormat())) * Sierra::ImageFormatToPixelMemorySize(destinationImage.GetFormat()))
+            sourceBytesPerRow: static_cast<uint64>(static_cast<float32>(copyInfo.pixelRange.x * ImageFormatToBlockSize(destinationImage.GetFormat())) * Sierra::ImageFormatToPixelMemorySize(destinationImage.GetFormat())) // Source rows are tightly packed to the copied width (as on Vulkan, where bufferRowLength is 0), not to the image's
             sourceBytesPerImage: 0
             sourceSize: MTLSizeMake(copyInfo.pixelRange.x, copyInfo.pixelRange.y, copyInfo.pixelRange.z)
             toTexture: metalDestinationImage.GetMetalTexture()
@@ -214,20 +214,20 @@ namespace Sierra
         currentResourceTable = &metalResourceTable;
     }
 
-    void MetalCommandBuffer::PushConstants(const void* memory, const uint8 sourceOffset, const uint8 memorySize)
+    void MetalCommandBuffer::PushConstants(std::span<const uint8> buffer)
     {
-        CommandBuffer::PushConstants(memory, sourceOffset, memorySize);
+        CommandBuffer::PushConstants(buffer);
         SR_THROW_IF(currentGraphicsPipeline == nullptr && currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot push constants within command buffer [{0}] if no pipeline has been begun", GetName())));
 
         if (currentGraphicsPipeline != nullptr)
         {
-            [currentRenderEncoder setVertexBytes: reinterpret_cast<const uint8*>(memory) + sourceOffset length: memorySize atIndex: MetalDevice::PUSH_CONSTANT_INDEX];
-            if (currentGraphicsPipeline->HasFragmentShader()) [currentRenderEncoder setFragmentBytes: reinterpret_cast<const uint8*>(memory) + sourceOffset length: memorySize atIndex: MetalDevice::PUSH_CONSTANT_INDEX];
+            [currentRenderEncoder setVertexBytes: buffer.data() length: buffer.size() atIndex: MetalDevice::PUSH_CONSTANT_INDEX];
+            if (currentGraphicsPipeline->HasFragmentShader()) [currentRenderEncoder setFragmentBytes: buffer.data() length: buffer.size() atIndex: MetalDevice::PUSH_CONSTANT_INDEX];
         }
 
         if (currentComputePipeline != nullptr)
         {
-            [currentComputeEncoder setBytes: reinterpret_cast<const uint8*>(memory) + sourceOffset length: memorySize atIndex: MetalDevice::PUSH_CONSTANT_INDEX];
+            [currentComputeEncoder setBytes: buffer.data() length: buffer.size() atIndex: MetalDevice::PUSH_CONSTANT_INDEX];
         }
     }
 

@@ -7,6 +7,21 @@
 namespace Sierra
 {
 
+    [[nodiscard]] SIERRA_API bool IsPathNameValid(std::string_view name) noexcept;
+
+    enum class PathResult : uint8
+    {
+        Unknown,
+        Success,
+        NotFound,
+        AlreadyExists,
+        PermissionDenied,
+        ReadOnly,
+        Corrupted,
+        Locked,
+        SizeExceeded
+    };
+
     class SIERRA_API Path final
     {
     public:
@@ -23,12 +38,10 @@ namespace Sierra
         Path& ChangeStem(std::string_view stem);
         Path& ChangeExtension(std::string_view extension);
         Path& RemoveExtension();
-        void Clear() noexcept { path.clear(); }
+        void Clear() noexcept;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] bool IsEmpty() const noexcept { return path.empty(); }
-        [[nodiscard]] bool IsValid() const noexcept;
-
         [[nodiscard]] bool IsAbsolute() const { return path.is_absolute(); }
         [[nodiscard]] bool IsRelative() const { return path.is_relative(); }
 
@@ -51,6 +64,7 @@ namespace Sierra
         [[nodiscard]] Path GetNormalizedPath() const;
 
         [[nodiscard]] Path GetRelativePath(const Path& basePath) const;
+        [[nodiscard]] const std::filesystem::path& GetStandardPath() const noexcept { return path; }
 
         /* --- ITERATORS --- */
         [[nodiscard]] std::filesystem::path::iterator begin() const { return path.begin(); }
@@ -65,15 +79,14 @@ namespace Sierra
         Path& operator=(Path&&) noexcept = default;
 
         /* --- OPERATORS --- */
-        [[nodiscard]] bool operator==(const Path& other) const noexcept { return path == other.path; }
-        [[nodiscard]] bool operator!=(const Path& other) const noexcept { return !(*this == other); }
-
-        // TODO:
-        [[nodiscard]] operator std::filesystem::path() const { return path; }
         [[nodiscard]] operator std::string() const { return GetString(); }
+        [[nodiscard]] operator std::filesystem::path() const { return path; }
 
         [[nodiscard]] Path operator/(const Path& other) const;
         Path& operator/=(const Path& other);
+
+        [[nodiscard]] bool operator==(const Path& other) const noexcept { return path == other.path; }
+        [[nodiscard]] bool operator!=(const Path& other) const noexcept { return !(*this == other); }
 
         /* --- DESTRUCTOR --- */
         ~Path() noexcept = default;

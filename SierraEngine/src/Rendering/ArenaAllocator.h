@@ -13,7 +13,7 @@ namespace SierraEngine
 
     struct ArenaAllocatorCreateInfo
     {
-        const RenderingContext& renderingContext;
+        const Sierra::Device& device;
         uint32 initialVertexBufferCapacity = 4096;
         uint32 initialIndexBufferCapacity = 8192;
     };
@@ -25,8 +25,8 @@ namespace SierraEngine
         explicit ArenaAllocator(const ArenaAllocatorCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Bind(Sierra::CommandBuffer& commandBuffer) const;
-        [[nodiscard]] MeshView CreateMesh(Sierra::CommandBuffer& commandBuffer, std::span<const Vertex> vertices, std::span<const uint32> indices);
+        void Bind(const DrawFrame& drawFrame) const;
+        [[nodiscard]] MeshView CreateMesh(const DrawFrame& drawFrame, std::span<const Vertex> vertices, std::span<const uint32> indices);
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] uint32 GetVertexCount() const noexcept { return static_cast<uint32>(currentVertexOffset / sizeof(Vertex)); }
@@ -47,8 +47,6 @@ namespace SierraEngine
         ~ArenaAllocator() noexcept = default;
 
     private:
-        const RenderingContext* renderingContext;
-
         uint64 currentVertexOffset = 0;
         std::unique_ptr<Sierra::Buffer> vertexBuffer = nullptr;
 

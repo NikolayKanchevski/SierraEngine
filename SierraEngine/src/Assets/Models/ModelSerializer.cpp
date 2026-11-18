@@ -9,15 +9,21 @@ namespace SierraEngine
 
     namespace
     {
-        void SerializeRawBlob(Sierra::Stream& stream, const std::span<const Vertex> vertices, const std::span<const uint32> indices)
+        [[nodiscard]] Sierra::StreamResult SerializeRawBlob(Sierra::Stream& stream, const std::span<const Vertex> vertices, const std::span<const uint32> indices)
         {
-            stream.Write(vertices.data(), sizeof(Vertex) * vertices.size());
-            stream.Write(indices.data(), sizeof(uint32) * indices.size());
+            if (const Sierra::StreamResult result = stream.Write({ reinterpret_cast<const uint8*>(vertices.data()), sizeof(Vertex) * vertices.size() }); result != Sierra::StreamResult::Success)
+                return result;
+
+            if (const Sierra::StreamResult result = stream.Write({ reinterpret_cast<const uint8*>(indices.data()), sizeof(uint32) * indices.size() }); result != Sierra::StreamResult::Success)
+                return result;
+
+            return Sierra::StreamResult::Success;
         }
 
-        void SerializeCompressedBlob(Sierra::Stream& stream, const std::span<const Vertex> vertices, const std::span<const uint32> indices)
+        [[nodiscard]] Sierra::StreamResult SerializeCompressedBlob(Sierra::Stream& stream, const std::span<const Vertex> vertices, const std::span<const uint32> indices)
         {
             APP_ERROR("Unimplemented");
+            return Sierra::StreamResult::Unknown;
         }
     }
 
@@ -70,15 +76,20 @@ namespace SierraEngine
         return geometry;
     }
 
-    void ModelSerializer::SerializeBlob(Sierra::Stream& blob, const ModelSerializeInfo& serializeInfo, const std::span<const Vertex> vertices, const std::span<const uint32> indices) const
+    Sierra::StreamResult ModelSerializer::SerializeBlob(Sierra::Stream& blob, const ModelSerializeInfo& serializeInfo, const std::span<const Vertex> vertices, const std::span<const uint32> indices) const
     {
         if (serializeInfo.meshCompressionSettings.compression == MeshCompression::None)
         {
-            SerializeRawBlob(blob, vertices, indices);
-            return;
+            if (const Sierra::StreamResult result = SerializeRawBlob(blob, vertices, indices); result != Sierra::StreamResult::Success)
+                return result;
+
+            return Sierra::StreamResult::Success;
         }
 
-        SerializeCompressedBlob(blob, vertices, indices);
+        if (const Sierra::StreamResult result = SerializeCompressedBlob(blob, vertices, indices); result != Sierra::StreamResult::Success)
+            return result;
+
+        return Sierra::StreamResult::Success;
     }
 
     /* --- GETTER METHODS --- */
