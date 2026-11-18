@@ -558,10 +558,10 @@ namespace Sierra
         : display(createInfo.display)
     {
         xkbContext = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-        SR_ERROR_IF(xkbContext == nullptr, "Wayland: Could not create xkb context, so held keys are not going to be repeated");
+        SR_THROW_IF(xkbContext == nullptr, UnsupportedFeatureError("Cannot create Wayland context! Error: Could not create xkb context, so held keys are not going to be repeated"));
 
         keyRepeatTimer = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
-        SR_ERROR_IF(keyRepeatTimer == -1, "Wayland: Could not create key repeat timer, so held keys are not going to be repeated - {0}", std::strerror(errno));
+        SR_WARNING_IF(keyRepeatTimer == -1, "Wayland: Could not create key repeat timer, so held keys are not going to be repeated - {0}", std::strerror(errno));
 
         registry = wl_display_get_registry(display);
         wl_registry_add_listener(registry, &Callbacks::REGISTRY_LISTENER, this);
@@ -570,9 +570,8 @@ namespace Sierra
         wl_display_roundtrip(display);
         wl_display_roundtrip(display);
 
-        SR_ERROR_IF(compositor == nullptr, "Wayland: Compositor does not provide the required [wl_compositor] interface");
-        SR_ERROR_IF(wmBase == nullptr, "Wayland: Compositor does not provide the required [xdg_wm_base] interface");
-        if (!IsValid()) return;
+        SR_THROW_IF(compositor == nullptr, UnsupportedFeatureError("Cannot create Wayland context! Error: Compositor does not provide the required [wl_compositor] interface"));
+        SR_THROW_IF(wmBase == nullptr, UnsupportedFeatureError("Cannot create Wayland context! Error: Compositor does not provide the required [xdg_wm_base] interface"));
 
         // Not all compositors can decorate windows, in which case libdecor does so within the client instead
         libdecorContext = libdecor_new(display, &Callbacks::LIBDECOR_INTERFACE);
@@ -609,7 +608,7 @@ namespace Sierra
 
             const char* const cursorThemeName = std::getenv("XCURSOR_THEME");
             cursorTheme = wl_cursor_theme_load(cursorThemeName, cursorSize, shm);
-            SR_ERROR_IF(cursorTheme == nullptr, "Wayland: Could not load cursor theme");
+            SR_THROW_IF(cursorTheme == nullptr, UnsupportedFeatureError("Cannot create Wayland context! Error: Could not load cursor theme"));
 
             cursorThemeHiDPI = wl_cursor_theme_load(cursorThemeName, cursorSize * 2, shm);
             cursorSurface = wl_compositor_create_surface(compositor);
@@ -894,7 +893,6 @@ namespace Sierra
         StopKeyRepeat();
         for (WaylandWindow* const window : windows)
         {
-            // TODO: WHY
             window->closeRequested = true;
         }
     }

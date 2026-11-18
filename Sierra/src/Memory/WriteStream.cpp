@@ -29,7 +29,7 @@ namespace Sierra
 
     StreamResult WriteStream::Write(const std::span<const uint8> givenMemory)
     {
-        if (const StreamResult result = Stream::Write(buffer); result != StreamResult::Success)
+        if (const StreamResult result = Stream::Write(givenMemory); result != StreamResult::Success)
             return result;
 
         if (const size requiredMemorySize = offset + givenMemory.size(); requiredMemorySize >= buffer.size())
@@ -37,7 +37,7 @@ namespace Sierra
             buffer.resize(requiredMemorySize);
         }
 
-        std::memcpy(&buffer[offset], givenMemory.data(), givenMemory.size());
+        std::memcpy(buffer.data() + offset, givenMemory.data(), givenMemory.size());
         offset += givenMemory.size();
 
         return StreamResult::Success;
@@ -57,7 +57,7 @@ namespace Sierra
 
     StreamResult WriteStream::SetOffset(const size givenOffset)
     {
-        if (const StreamResult result = Stream::SetOffset(offset); result != StreamResult::Success)
+        if (const StreamResult result = Stream::SetOffset(givenOffset); result != StreamResult::Success)
             return result;
 
         offset = givenOffset;

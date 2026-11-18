@@ -331,7 +331,18 @@ namespace Sierra
     {
         // Size of windows, which are not floating, is dictated by the compositor
         if (closed || !IsFloating()) return;
-        if (!Resize(newSize)) return;
+
+        // NOTE: Compositor only keeps sizes it picks itself within limits, so those picked by the window are limited here (limits of windows, which are not resizable, are their size)
+        Vector2UInt limitedSize = newSize;
+        if (resizable)
+        {
+            if (minimumSize.x != 0) limitedSize.x = glm::max(limitedSize.x, minimumSize.x);
+            if (minimumSize.y != 0) limitedSize.y = glm::max(limitedSize.y, minimumSize.y);
+            if (maximumSize.x != 0) limitedSize.x = glm::min(limitedSize.x, maximumSize.x);
+            if (maximumSize.y != 0) limitedSize.y = glm::min(limitedSize.y, maximumSize.y);
+        }
+
+        if (!Resize(limitedSize)) return;
 
         if (!resizable) ApplySizeLimits();
         if (libdecorFrame != nullptr && configured) CommitFrameState(libdecorFrame, size);
@@ -344,6 +355,7 @@ namespace Sierra
         maximumSize = newMaximumSize;
 
         ApplySizeLimits();
+        if (resizable && IsFloating()) SetSize(size);
         if (libdecorFrame != nullptr && configured) CommitFrameState(libdecorFrame, size);
     }
 
@@ -370,7 +382,8 @@ namespace Sierra
 
     Vector2Int WaylandWindow::GetPosition() const noexcept
     {
-        return { 0, 0 }; // TODO: Figure out a way
+        // NOTE: Wayland deliberately never tells windows where they are placed, so there is no position to report
+        return { 0, 0 };
     }
 
     float32 WaylandWindow::GetOpacity() const noexcept
@@ -378,12 +391,12 @@ namespace Sierra
         return 1.0f;
     }
 
-    uint32 WaylandWindow::GetSize() const noexcept
+    Vector2UInt WaylandWindow::GetSize() const noexcept
     {
         return size;
     }
 
-    uint32 WaylandWindow::GetFramebufferSize() const noexcept
+    Vector2UInt WaylandWindow::GetFramebufferSize() const noexcept
     {
         return framebufferSize;
     }
@@ -665,6 +678,13 @@ namespace Sierra
         wl_region_destroy(region);
     }
 
+    Vector2Int WaylandWindow::SurfaceToCursorPosition(const Vector2 surfacePosition) const noexcept
+    {
+        // NOTE: Compositor reports positions in logical units, measured downwards from the top, while cursor positions are in physical pixels (those of the framebuffer), measured upwards from the bottom, as on the other platforms
+        const Vector2 physicalPosition = surfacePosition * GetScaling();
+        return { static_cast<int32>(physicalPosition.x), static_cast<int32>(framebufferSize.y) - static_cast<int32>(physicalPosition.y) };
+    }
+
     Vector2UInt WaylandWindow::GetAspectRatioFittedSize(Vector2UInt targetSize) const noexcept
     {
         if (aspectRatioNumerator == 0 || aspectRatioDenominator == 0 || targetSize.x == 0 || targetSize.y == 0) return targetSize;
@@ -680,8 +700,7 @@ namespace Sierra
 
     void WaylandWindow::HandlePointerEnter(const Vector2 position)
     {
-        // NOTE: Wayland uses -Y coordinates
-        cursorManager.RegisterCursorEnter({ static_cast<int32>(position.x), static_cast<int32>(size.y) - static_cast<int32>(position.y) });
+        cursorManager.RegisterCursorEnter(SurfaceToCursorPosition(position));
     }
 
     void WaylandWindow::HandlePointerLeave()
@@ -691,8 +710,7 @@ namespace Sierra
 
     void WaylandWindow::HandlePointerMotion(const Vector2 position)
     {
-        // NOTE: Wayland uses -Y coordinates
-        cursorManager.RegisterCursorMove({ static_cast<int32>(position.x), static_cast<int32>(size.y) - static_cast<int32>(position.y) });
+        cursorManager.RegisterCursorMove(SurfaceToCursorPosition(position));
     }
 
     void WaylandWindow::HandlePointerButton(const uint32 buttonCode, const bool pressed)

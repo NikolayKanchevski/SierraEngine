@@ -139,7 +139,6 @@ namespace SierraEngine
             if (requiredMemorySize <= currentMemorySize)
                 return;
 
-            // Grow geometrically, so a UI that keeps growing does not reallocate every frame
             std::unique_ptr<Sierra::Buffer> newBuffer = drawFrame.device.CreateBuffer({
                 .name = name,
                 .memorySize = glm::max(requiredMemorySize, currentMemorySize * 2),

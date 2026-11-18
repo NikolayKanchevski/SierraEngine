@@ -5,336 +5,359 @@
 #include "UnixFileManager.h"
 
 #include <fcntl.h>
+#include <pwd.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
-#include "../PathErrors.h"
 #include "UnixFileStream.h"
-#include "UnixFileErrorHandler.h"
 
 namespace Sierra
 {
 
+    namespace
+    {
+        [[nodiscard]] PathResult ErrnoToPathResult(const int errorCode) noexcept
+        {
+            switch (errorCode)
+            {
+                case 0:                     return PathResult::Success;
+                case ENOENT:
+                case ENOTDIR:               return PathResult::NotFound;
+                case EEXIST:                return PathResult::AlreadyExists;
+                case EACCES:
+                case EPERM:                 return PathResult::PermissionDenied;
+                case EROFS:                 return PathResult::ReadOnly;
+                case ETXTBSY:
+                case EBUSY:                 return PathResult::Locked;
+                case EFBIG:
+                case ENOSPC:
+                case EDQUOT:                return PathResult::SizeExceeded;
+                default:                    break;
+            }
+
+            return PathResult::Unknown;
+        }
+
+        [[nodiscard]] int StreamAccessToFlags(const StreamAccess access) noexcept
+        {
+            int flags = 0;
+            switch (access)
+            {
+                case StreamAccess::ReadOnly:      { flags |= O_RDONLY; break; }
+                case StreamAccess::WriteOnly:     { flags |= O_WRONLY; break; }
+                case StreamAccess::ReadWrite:     { flags |= O_RDWR;   break; }
+            }
+
+            return flags;
+        }
+
+        [[nodiscard]] int FileStreamBufferingToFlags(const FileStreamBuffering buffering) noexcept
+        {
+            return buffering == FileStreamBuffering::Unbuffered ? O_SYNC | O_DIRECT : 0;
+        }
+
+        [[nodiscard]] PathResult CreateDirectories(const Path& directoryPath)
+        {
+            if (directoryPath.IsEmpty())
+                return PathResult::Success;
+
+            std::error_code errorCode = { };
+            std::filesystem::create_directories(directoryPath.GetStandardPath(), errorCode);
+            return ErrnoToPathResult(errorCode.value());
+        }
+
+        [[nodiscard]] PathResult CopyPathContents(const Path& sourcePath, const Path& destinationPath)
+        {
+            std::error_code errorCode = { };
+            std::filesystem::copy(sourcePath.GetStandardPath(), destinationPath.GetStandardPath(), std::filesystem::copy_options::recursive, errorCode);
+            return ErrnoToPathResult(errorCode.value());
+        }
+    }
+
     /* --- POLLING METHODS --- */
 
-    bool UnixFileManager::FileExists(const std::filesystem::path& filePath) const noexcept
+    bool UnixFileManager::PathExists(const Path& path) const noexcept
     {
-        const std::string path = filePath.string();
-
-        struct stat buffer = { };
-        return (stat(path.c_str(), &buffer) == 0);
-    }
-
-    std::unique_ptr<FileStream> UnixFileManager::CreateFileStream(const FileStreamCreateInfo& createInfo) const
-    {
-        SR_THROW_IF(!FileExists(createInfo.filePath), PathMissingError("Cannot open file stream, as the specified file path does not exist", createInfo.filePath));
-        return std::make_unique<UnixFileStream>(createInfo);
-    }
-
-    void UnixFileManager::CreateFile(const std::filesystem::path& filePath, const FilePathConflictPolicy conflictPolicy) const
-    {
-        FileManager::CreateFile(filePath, conflictPolicy);
-
-        std::filesystem::path resolvedFilePath = filePath;
-        ResolveFilePathConflict(filePath, resolvedFilePath, conflictPolicy);
-        CreateDirectory(resolvedFilePath.parent_path());
-
-        const std::string path = resolvedFilePath.string();
-        const int fileDescriptor = open(path.c_str(), O_CREAT | O_WRONLY, S_IRWXU);
-
-        if (fileDescriptor == -1) HandleUnixFileError(errno, "Could not create file", filePath);
-        close(fileDescriptor);
-    }
-
-    void UnixFileManager::RenameFile(const std::filesystem::path& filePath, const std::string_view name) const
-    {
-        FileManager::RenameFile(filePath, name);
-
-        const std::string sourcePath = filePath.string();
-        const std::string renamedPath = (filePath.parent_path() / name).string();
-
-        if (rename(sourcePath.c_str(), renamedPath.c_str()) != 0)
-        {
-            HandleUnixFileError(errno, SR_FORMAT("Could not rename file to [{0}]", name), filePath);
-        }
-    }
-
-    void UnixFileManager::CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
-    {
-        FileManager::CopyFile(sourceFilePath, destinationDirectoryPath, conflictPolicy);
-
-        std::filesystem::path resolvedFilePath = destinationDirectoryPath / sourceFilePath.filename();
-        ResolveFilePathConflict(sourceFilePath, resolvedFilePath, conflictPolicy);
-        CreateDirectory(destinationDirectoryPath);
-
-        const std::string sourcePath = sourceFilePath.string();
-        const std::string destinationPath = resolvedFilePath.string();
-
-        const int sourceFileDescriptor = open(sourcePath.c_str(), O_RDONLY);
-        if (sourceFileDescriptor == -1) HandleUnixFileError(errno, "Could not open file to copy from", sourceFilePath);
-
-        const int destinationFileDescriptor = open(destinationPath.c_str(), O_CREAT | O_WRONLY, S_IRWXU);
-        if (destinationFileDescriptor == -1) HandleUnixFileError(errno, "Could not open file to copy to", sourceFilePath);
-
-        constexpr size BUFFER_SIZE = 4096;
-        std::array<uint8, BUFFER_SIZE> buffer = { };
-
-        size readByteCount = 0;
-        while (readByteCount = read(sourceFileDescriptor, buffer.data(), buffer.size()), readByteCount > 0)
-        {
-            uint8* writePointer = buffer.data();
-
-            size writtenByteCount = 0;
-            do
-            {
-                writtenByteCount = write(destinationFileDescriptor, writePointer, readByteCount);
-                if (writtenByteCount < 0)
-                {
-                    close(destinationFileDescriptor);
-                    close(sourceFileDescriptor);
-
-                    HandleUnixFileError(errno, "Could not copy from file", sourceFilePath);
-                }
-
-                readByteCount -= writtenByteCount;
-                writePointer += writtenByteCount;
-
-            } while (readByteCount > 0);
-        }
-
-        close(destinationFileDescriptor);
-        close(sourceFileDescriptor);
-
-        if (readByteCount != 0)
-        {
-            HandleUnixFileError(errno, SR_FORMAT("Could not copy file to [{0}]", resolvedFilePath.string()), sourceFilePath);
-        }
-    }
-
-    void UnixFileManager::MoveFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
-    {
-        FileManager::MoveFile(sourceFilePath, destinationDirectoryPath, conflictPolicy);
-
-        CopyFile(sourceFilePath, destinationDirectoryPath, conflictPolicy);
-        DeleteFile(sourceFilePath);
-    }
-
-    void UnixFileManager::DeleteFile(const std::filesystem::path& filePath) const
-    {
-        FileManager::DeleteFile(filePath);
-        const std::string path = filePath.string();
-
-        if (remove(path.c_str()) != 0)
-        {
-            HandleUnixFileError(errno, "Could not delete file", filePath);
-        }
-    }
-
-    bool UnixFileManager::DirectoryExists(const std::filesystem::path& directoryPath) const noexcept
-    {
-        const std::string path = directoryPath.string();
+        const std::string pathString = path.GetString();
 
         struct stat status = { };
-        return (stat(path.c_str(), &status) == 0);
+        return stat(pathString.c_str(), &status) == 0;
     }
 
-    void UnixFileManager::EnumerateDirectoryFiles(const std::filesystem::path& directoryPath, bool recursive, const FileEnumerationPredicate& Predicate) const
+    PathResult UnixFileManager::CreateFile(const Path& filePath, const PathConflictPolicy conflictPolicy) const
     {
-        FileManager::EnumerateDirectoryFiles(directoryPath, recursive, Predicate);
+        if (const PathResult result = FileManager::CreateFile(filePath, conflictPolicy); result != PathResult::Success)
+            return result;
 
-        if (!recursive)
-        {
-            for (const std::filesystem::path& path : std::filesystem::directory_iterator(directoryPath))
-            {
-                if (!std::filesystem::is_regular_file(path)) continue;
-                Predicate(path);
-            }
-        }
-        else
-        {
-            for (const std::filesystem::path& path : std::filesystem::recursive_directory_iterator(directoryPath))
-            {
-                if (!std::filesystem::is_regular_file(path)) continue;
-                Predicate(path);
-            }
-        }
+        Path resolvedFilePath = filePath;
+        if (const PathResult result = ResolvePathConflict(filePath, conflictPolicy, resolvedFilePath); result != PathResult::Success)
+            return result;
+
+        // NOTE: Parent directories are created without a conflict policy, as resolving one would delete them (along with their contents) when they already exist
+        if (const PathResult result = CreateDirectories(resolvedFilePath.GetParentPath()); result != PathResult::Success)
+            return result;
+
+        const std::string pathString = resolvedFilePath.GetString();
+        const int fileDescriptor = open(pathString.c_str(), O_CREAT | O_WRONLY | O_CLOEXEC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+
+        if (fileDescriptor == -1)
+            return ErrnoToPathResult(errno);
+
+        close(fileDescriptor);
+        return PathResult::Success;
     }
 
-    void UnixFileManager::CreateDirectory(const std::filesystem::path& directoryPath) const
+    PathResult UnixFileManager::CreateDirectory(const Path& directoryPath, const PathConflictPolicy conflictPolicy) const
     {
-        FileManager::CreateDirectory(directoryPath);
-        if (DirectoryExists(directoryPath)) return;
+        if (const PathResult result = FileManager::CreateDirectory(directoryPath, conflictPolicy); result != PathResult::Success)
+            return result;
 
-        const std::string path = directoryPath.string();
-        if (mkdir(path.c_str(), S_IRWXU) != 0)
-        {
-            HandleUnixFileError(errno, "Could not create directory", directoryPath);
-        }
+        Path resolvedDirectoryPath = directoryPath;
+        if (const PathResult result = ResolvePathConflict(directoryPath, conflictPolicy, resolvedDirectoryPath); result != PathResult::Success)
+            return result;
+
+        return CreateDirectories(resolvedDirectoryPath);
     }
 
-    void UnixFileManager::RenameDirectory(const std::filesystem::path& directoryPath, const std::string_view name) const
+    PathResult UnixFileManager::CopyPath(const Path& sourcePath, const Path& destinationPath, const PathConflictPolicy conflictPolicy) const
     {
-        FileManager::RenameDirectory(directoryPath, name);
+        if (const PathResult result = FileManager::CopyPath(sourcePath, destinationPath, conflictPolicy); result != PathResult::Success)
+            return result;
 
-        const std::string sourcePath = directoryPath.string();
-        const std::string renamedPath = (directoryPath.parent_path() / name).string();
+        const Path destinationItemPath = destinationPath / sourcePath.GetFileName();
 
-        if (rename(sourcePath.c_str(), renamedPath.c_str()) != 0)
-        {
-            HandleUnixFileError(errno, SR_FORMAT("Could not rename directory to [{0}]", name), directoryPath);
-        }
+        Path resolvedPath = destinationItemPath;
+        if (const PathResult result = ResolvePathConflict(destinationItemPath, conflictPolicy, resolvedPath); result != PathResult::Success)
+            return result;
+
+        if (const PathResult result = CreateDirectories(destinationPath); result != PathResult::Success)
+            return result;
+
+        return CopyPathContents(sourcePath, resolvedPath);
     }
 
-    void UnixFileManager::CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
+    PathResult UnixFileManager::RenamePath(const Path& path, const std::string_view name) const
     {
-        FileManager::CopyDirectory(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
+        // NOTE: Base implementation makes sure nothing exists under the new name, as rename() would otherwise silently replace it
+        if (const PathResult result = FileManager::RenamePath(path, name); result != PathResult::Success)
+            return result;
 
-        std::filesystem::path resolvedDirectoryPath = destinationDirectoryPath / sourceDirectoryPath.filename();
-        ResolveDirectoryPathConflict(sourceDirectoryPath, resolvedDirectoryPath, conflictPolicy);
-        CreateDirectory(resolvedDirectoryPath);
+        const std::string sourcePathString = path.GetString();
+        const std::string renamedPathString = (path.GetParentPath() / name).GetString();
+
+        if (rename(sourcePathString.c_str(), renamedPathString.c_str()) != 0)
+            return ErrnoToPathResult(errno);
+
+        return PathResult::Success;
+    }
+
+    PathResult UnixFileManager::MovePath(const Path& sourcePath, const Path& destinationPath, const PathConflictPolicy conflictPolicy) const
+    {
+        if (const PathResult result = FileManager::MovePath(sourcePath, destinationPath, conflictPolicy); result != PathResult::Success)
+            return result;
+
+        const Path destinationItemPath = destinationPath / sourcePath.GetFileName();
+
+        Path resolvedPath = destinationItemPath;
+        if (const PathResult result = ResolvePathConflict(destinationItemPath, conflictPolicy, resolvedPath); result != PathResult::Success)
+            return result;
+
+        if (const PathResult result = CreateDirectories(destinationPath); result != PathResult::Success)
+            return result;
+
+        const std::string sourcePathString = sourcePath.GetString();
+        const std::string resolvedPathString = resolvedPath.GetString();
+
+        if (rename(sourcePathString.c_str(), resolvedPathString.c_str()) == 0)
+            return PathResult::Success;
+
+        if (errno != EXDEV)
+            return ErrnoToPathResult(errno);
+
+        // Paths cannot be renamed across file systems, so they are copied over and then deleted instead
+        if (const PathResult result = CopyPathContents(sourcePath, resolvedPath); result != PathResult::Success)
+            return result;
+
+        return DeletePath(sourcePath);
+    }
+
+    PathResult UnixFileManager::DeletePath(const Path& path) const
+    {
+        if (const PathResult result = FileManager::DeletePath(path); result != PathResult::Success)
+            return result;
 
         std::error_code errorCode = { };
-        std::filesystem::copy(sourceDirectoryPath, resolvedDirectoryPath, errorCode);
+        std::filesystem::remove_all(path.GetStandardPath(), errorCode);
 
-        if (errorCode.value() != 0)
+        return ErrnoToPathResult(errorCode.value());
+    }
+
+    PathResult UnixFileManager::OpenFileStream(const FileStreamCreateInfo& createInfo, std::unique_ptr<FileStream>& outFileStream) const
+    {
+        if (!IsFile(createInfo.filePath))
+            return PathResult::NotFound;
+
+        const std::string pathString = createInfo.filePath.GetString();
+        const int fileDescriptor = open(pathString.c_str(), StreamAccessToFlags(createInfo.access) | FileStreamBufferingToFlags(createInfo.buffering) | O_CLOEXEC);
+
+        if (fileDescriptor == -1)
+            return ErrnoToPathResult(errno);
+
+        outFileStream = std::make_unique<UnixFileStream>(fileDescriptor, createInfo);
+        return PathResult::Success;
+    }
+
+    PathResult UnixFileManager::EnumeratePaths(const Path& path, const PathEnumerationPredicate& Predicate) const
+    {
+        if (const PathResult result = FileManager::EnumeratePaths(path, Predicate); result != PathResult::Success)
+            return result;
+
+        if (!IsDirectory(path))
         {
-            HandleUnixFileError(errno, SR_FORMAT("Could not copy directory to [{0}]", resolvedDirectoryPath.string()), sourceDirectoryPath);
+            Predicate(path);
+            return PathResult::Success;
         }
-    }
-
-    void UnixFileManager::MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, const FilePathConflictPolicy conflictPolicy) const
-    {
-        FileManager::MoveDirectory(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
-
-        CopyDirectory(sourceDirectoryPath, destinationDirectoryPath, conflictPolicy);
-        DeleteDirectory(sourceDirectoryPath);
-    }
-
-    void UnixFileManager::DeleteDirectory(const std::filesystem::path& directoryPath) const
-    {
-        FileManager::DeleteDirectory(directoryPath);
 
         std::error_code errorCode = { };
-        std::filesystem::remove_all(directoryPath, errorCode);
+        std::filesystem::recursive_directory_iterator iterator(path.GetStandardPath(), std::filesystem::directory_options::skip_permission_denied, errorCode);
+        const std::filesystem::recursive_directory_iterator end;
 
-        if (errorCode.value() != 0)
+        while (errorCode.value() == 0 && iterator != end)
         {
-            HandleUnixFileError(errno, "Could not delete directory", directoryPath);
+            if (Predicate(iterator->path()))
+            {
+                iterator.disable_recursion_pending();
+            }
+
+            iterator.increment(errorCode);
         }
+
+        return ErrnoToPathResult(errorCode.value());
     }
 
     /* --- GETTER METHODS --- */
 
-    FileMetadata UnixFileManager::GetFileMetadata(const std::filesystem::path& filePath) const
+    bool UnixFileManager::IsFile(const Path& path) const
     {
-        const std::string path = filePath.string();
+        const std::string pathString = path.GetString();
 
         struct stat status = { };
-        if (stat(path.c_str(), &status) != 0) HandleUnixFileError(errno, "Could not get file metadata", filePath);
-
-        const TimePoint dateCreated = TimePoint(std::chrono::system_clock::from_time_t(status.st_ctime));
-        const TimePoint dateLastModified = TimePoint(std::chrono::system_clock::from_time_t(status.st_mtime));
-
-        return
-        {
-            .type = FilePathToFileType(filePath),
-            .memorySize = static_cast<size>(status.st_size),
-            .dateCreated = dateCreated,
-            .dateLastModified = dateLastModified
-        };
+        return stat(pathString.c_str(), &status) == 0 && S_ISREG(status.st_mode);
     }
 
-    DirectoryMetadata UnixFileManager::GetDirectoryMetadata(const std::filesystem::path& directoryPath) const
+    bool UnixFileManager::IsDirectory(const Path& path) const
     {
-        const std::string path = directoryPath.string();
+        const std::string pathString = path.GetString();
 
         struct stat status = { };
-        if (stat(path.c_str(), &status) != 0) HandleUnixFileError(errno, "Could not get directory metadata", directoryPath);
+        return stat(pathString.c_str(), &status) == 0 && S_ISDIR(status.st_mode);
+    }
 
-        const TimePoint dateCreated = TimePoint(std::chrono::system_clock::from_time_t(status.st_ctime));
-        const TimePoint dateLastModified = TimePoint(std::chrono::system_clock::from_time_t(status.st_mtime));
+    PathResult UnixFileManager::GetPathMetadata(const Path& path, PathMetadata& outMetadata) const
+    {
+        const std::string pathString = path.GetString();
 
-        uint32 fileCount = 0;
-        size memorySize = 0;
-        for (const std::filesystem::path& filePath : std::filesystem::recursive_directory_iterator(directoryPath))
+        struct stat status = { };
+        if (stat(pathString.c_str(), &status) != 0)
+            return ErrnoToPathResult(errno);
+
+        outMetadata =
         {
-            if (!std::filesystem::is_regular_file(filePath)) continue;
-            memorySize += std::filesystem::file_size(filePath);
-            fileCount++;
+            .itemCount = 1,
+            .memorySize = static_cast<size>(status.st_size),
+            .timeCreated = TimePoint(std::chrono::system_clock::from_time_t(status.st_ctime)),
+            .timeLastModified = TimePoint(std::chrono::system_clock::from_time_t(status.st_mtime))
+        };
+
+        if (S_ISDIR(status.st_mode))
+        {
+            uint32 itemCount = 0;
+
+            std::error_code errorCode = { };
+            std::filesystem::directory_iterator iterator(path.GetStandardPath(), errorCode);
+            const std::filesystem::directory_iterator end;
+
+            for (; errorCode.value() == 0 && iterator != end; iterator.increment(errorCode))
+            {
+                itemCount++;
+            }
+
+            outMetadata.itemCount = itemCount;
         }
 
-        return
-        {
-            .fileCount = fileCount,
-            .memorySize = memorySize,
-            .dateCreated = dateCreated,
-            .dateLastModified = dateLastModified
-        };
+        return PathResult::Success;
     }
 
-    std::filesystem::path UnixFileManager::GetApplicationDirectoryPath() const noexcept
+    Path UnixFileManager::GetApplicationDirectoryPath() const noexcept
     {
         return GetExecutableDirectoryPath();
     }
 
-    std::filesystem::path UnixFileManager::GetExecutableDirectoryPath() const noexcept
+    Path UnixFileManager::GetExecutableDirectoryPath() const noexcept
     {
-        char buffer[PATH_MAX];
-        realpath("/proc/self/exe", buffer);
-        return buffer;
+        std::error_code errorCode = { };
+        const std::filesystem::path executablePath = std::filesystem::read_symlink("/proc/self/exe", errorCode);
+        return executablePath.parent_path();
     }
 
-    std::filesystem::path UnixFileManager::GetResourcesDirectoryPath() const noexcept
+    Path UnixFileManager::GetResourcesDirectoryPath() const noexcept
     {
         return GetExecutableDirectoryPath() / "Resources";
     }
 
-    std::filesystem::path UnixFileManager::GetHomeDirectoryPath() const noexcept
+    Path UnixFileManager::GetHomeDirectoryPath() const noexcept
     {
         return "/home";
     }
 
-    std::filesystem::path UnixFileManager::GetUserDirectoryPath() const noexcept
+    Path UnixFileManager::GetUserDirectoryPath() const noexcept
     {
-        return std::getenv("HOME");
+        if (const char* const homePath = std::getenv("HOME"); homePath != nullptr)
+            return homePath;
+
+        if (const passwd* const user = getpwuid(getuid()); user != nullptr)
+            return user->pw_dir;
+
+        return { };
     }
 
-    std::filesystem::path UnixFileManager::GetTemporaryDirectoryPath() const noexcept
+    Path UnixFileManager::GetTemporaryDirectoryPath() const noexcept
     {
-        return std::filesystem::temp_directory_path();
+        std::error_code errorCode = { };
+        return std::filesystem::temp_directory_path(errorCode);
     }
 
-    std::filesystem::path UnixFileManager::GetCachesDirectoryPath() const noexcept
+    Path UnixFileManager::GetCachesDirectoryPath() const noexcept
     {
         return GetUserDirectoryPath() / ".cache";
     }
 
-    std::filesystem::path UnixFileManager::GetDesktopDirectoryPath() const noexcept
+    Path UnixFileManager::GetDesktopDirectoryPath() const noexcept
     {
         return GetUserDirectoryPath() / "Desktop";
     }
 
-    std::filesystem::path UnixFileManager::GetDownloadsDirectoryPath() const noexcept
+    Path UnixFileManager::GetDownloadsDirectoryPath() const noexcept
     {
         return GetUserDirectoryPath() / "Downloads";
     }
 
-    std::filesystem::path UnixFileManager::GetDocumentsDirectoryPath() const noexcept
+    Path UnixFileManager::GetDocumentsDirectoryPath() const noexcept
     {
         return GetUserDirectoryPath() / "Documents";
     }
 
-    std::filesystem::path UnixFileManager::GetPicturesDirectoryPath() const noexcept
+    Path UnixFileManager::GetPicturesDirectoryPath() const noexcept
     {
         return GetUserDirectoryPath() / "Pictures";
     }
 
-    std::filesystem::path UnixFileManager::GetMusicDirectoryPath() const noexcept
+    Path UnixFileManager::GetMusicDirectoryPath() const noexcept
     {
         return GetUserDirectoryPath() / "Music";
     }
 
-    std::filesystem::path UnixFileManager::GetVideosDirectoryPath() const noexcept
+    Path UnixFileManager::GetVideosDirectoryPath() const noexcept
     {
         return GetUserDirectoryPath() / "Videos";
     }

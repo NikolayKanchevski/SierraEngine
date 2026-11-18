@@ -16,43 +16,38 @@ namespace Sierra
         UnixFileManager() noexcept = default;
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] bool FileExists(const std::filesystem::path& filePath) const noexcept override;
-        [[nodiscard]] std::unique_ptr<FileStream> CreateFileStream(const FileStreamCreateInfo& createInfo) const override;
+        [[nodiscard]] bool PathExists(const Path& path) const noexcept override;
+        [[nodiscard]] PathResult CreateFile(const Path& filePath, PathConflictPolicy conflictPolicy) const override;
+        [[nodiscard]] PathResult CreateDirectory(const Path& directoryPath, PathConflictPolicy conflictPolicy) const override;
 
-        void CreateFile(const std::filesystem::path& filePath, FilePathConflictPolicy conflictPolicy) const override;
-        void RenameFile(const std::filesystem::path& filePath, std::string_view name) const override;
-        void CopyFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const override;
-        void MoveFile(const std::filesystem::path& sourceFilePath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const override;
-        void DeleteFile(const std::filesystem::path& filePath) const override;
+        [[nodiscard]] PathResult CopyPath(const Path& sourcePath, const Path& destinationPath, PathConflictPolicy conflictPolicy) const override;
+        [[nodiscard]] PathResult RenamePath(const Path& path, std::string_view name) const override;
+        [[nodiscard]] PathResult MovePath(const Path& sourcePath, const Path& destinationPath, PathConflictPolicy conflictPolicy) const override;
+        [[nodiscard]] PathResult DeletePath(const Path& path) const override;
 
-        [[nodiscard]] bool DirectoryExists(const std::filesystem::path& directoryPath) const noexcept override;
-        void EnumerateDirectoryFiles(const std::filesystem::path& directoryPath, bool recursive, const FileEnumerationPredicate& Predicate) const override;
-
-        void CreateDirectory(const std::filesystem::path& directoryPath) const override;
-        void RenameDirectory(const std::filesystem::path& directoryPath, std::string_view name) const override;
-        void CopyDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const override;
-        void MoveDirectory(const std::filesystem::path& sourceDirectoryPath, const std::filesystem::path& destinationDirectoryPath, FilePathConflictPolicy conflictPolicy) const override;
-        void DeleteDirectory(const std::filesystem::path& directoryPath) const override;
+        [[nodiscard]] PathResult OpenFileStream(const FileStreamCreateInfo& createInfo, std::unique_ptr<FileStream>& outFileStream) const override;
+        PathResult EnumeratePaths(const Path& path, const PathEnumerationPredicate& Predicate) const override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] FileMetadata GetFileMetadata(const std::filesystem::path& filePath) const override;
-        [[nodiscard]] DirectoryMetadata GetDirectoryMetadata(const std::filesystem::path& directoryPath) const override;
+        [[nodiscard]] bool IsFile(const Path& path) const override;
+        [[nodiscard]] bool IsDirectory(const Path& path) const override;
+        [[nodiscard]] PathResult GetPathMetadata(const Path& path, PathMetadata& outMetadata) const override;
 
-        [[nodiscard]] std::filesystem::path GetApplicationDirectoryPath() const noexcept override;
-        [[nodiscard]] std::filesystem::path GetExecutableDirectoryPath() const noexcept override;
-        [[nodiscard]] std::filesystem::path GetResourcesDirectoryPath() const noexcept override;
+        [[nodiscard]] Path GetApplicationDirectoryPath() const noexcept override;
+        [[nodiscard]] Path GetExecutableDirectoryPath() const noexcept override;
+        [[nodiscard]] Path GetResourcesDirectoryPath() const noexcept override;
 
-        [[nodiscard]] std::filesystem::path GetHomeDirectoryPath() const noexcept override;
-        [[nodiscard]] std::filesystem::path GetUserDirectoryPath() const noexcept override;
-        [[nodiscard]] std::filesystem::path GetTemporaryDirectoryPath() const noexcept override;
-        [[nodiscard]] std::filesystem::path GetCachesDirectoryPath() const noexcept override;
+        [[nodiscard]] Path GetHomeDirectoryPath() const noexcept override;
+        [[nodiscard]] Path GetUserDirectoryPath() const noexcept override;
+        [[nodiscard]] Path GetTemporaryDirectoryPath() const noexcept override;
+        [[nodiscard]] Path GetCachesDirectoryPath() const noexcept override;
 
-        [[nodiscard]] std::filesystem::path GetDesktopDirectoryPath() const noexcept override;
-        [[nodiscard]] std::filesystem::path GetDownloadsDirectoryPath() const noexcept override;
-        [[nodiscard]] std::filesystem::path GetDocumentsDirectoryPath() const noexcept override;
-        [[nodiscard]] std::filesystem::path GetPicturesDirectoryPath() const noexcept override;
-        [[nodiscard]] std::filesystem::path GetMusicDirectoryPath() const noexcept override;
-        [[nodiscard]] std::filesystem::path GetVideosDirectoryPath() const noexcept override;
+        [[nodiscard]] Path GetDesktopDirectoryPath() const noexcept override;
+        [[nodiscard]] Path GetDownloadsDirectoryPath() const noexcept override;
+        [[nodiscard]] Path GetDocumentsDirectoryPath() const noexcept override;
+        [[nodiscard]] Path GetPicturesDirectoryPath() const noexcept override;
+        [[nodiscard]] Path GetMusicDirectoryPath() const noexcept override;
+        [[nodiscard]] Path GetVideosDirectoryPath() const noexcept override;
 
         /* --- COPY SEMANTICS --- */
         UnixFileManager(const UnixFileManager&) = delete;

@@ -22,7 +22,7 @@ namespace Sierra
         if (const StreamResult result = Stream::Read(outMemory); result != StreamResult::Success)
             return result;
 
-        std::memcpy(outMemory.data(), outMemory.data() + offset, outMemory.size());
+        std::memcpy(outMemory.data(), buffer.data() + offset, outMemory.size());
         offset += outMemory.size();
 
         return StreamResult::Success;
@@ -37,7 +37,7 @@ namespace Sierra
 
     StreamResult ReadStream::SetOffset(const size givenOffset)
     {
-        if (const StreamResult result = Stream::SetOffset(offset); result != StreamResult::Success)
+        if (const StreamResult result = Stream::SetOffset(givenOffset); result != StreamResult::Success)
             return result;
 
         offset = givenOffset;

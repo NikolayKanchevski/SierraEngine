@@ -69,6 +69,7 @@
         #include <type_traits>
         #include <unordered_map>
         #include <vector>
+        #include <variant>
     #pragma endregion
 
     #pragma region External Libraries

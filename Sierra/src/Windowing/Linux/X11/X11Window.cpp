@@ -20,7 +20,11 @@ namespace Sierra
         constexpr uint32 SCROLL_RIGHT_BUTTON = 7;
 
         // Action field of _NET_WM_STATE client messages
+        constexpr long NET_WM_STATE_REMOVE = 0;
         constexpr long NET_WM_STATE_ADD = 1;
+
+        // Largest size a window can have along an axis, which stands in for axes without a maximum size limit
+        constexpr int MAXIMUM_WINDOW_EXTENT = std::numeric_limits<int16>::max();
 
         // Source indication of client messages, stating that they come from an application (as opposed to a pager or taskbar)
         constexpr long SOURCE_APPLICATION = 1;
@@ -118,6 +122,13 @@ namespace Sierra
         }
         else
         {
+            // Nothing else remembers where the window was, so that is saved here, for it to be restored to later
+            if (!maximized)
+            {
+                unmaximizedPosition = QueryPosition();
+                unmaximizedSize = size;
+            }
+
             const X11Screen& screen = x11Context.GetWindowScreen(window);
             const Vector2Int physicalOrigin = x11Context.GetPhysicalPosition(screen.GetWorkAreaOrigin());
             const Vector2UInt physicalSize = x11Context.GetPhysicalSize({ screen.GetWorkAreaWidth(), screen.GetWorkAreaHeight() });
@@ -128,6 +139,33 @@ namespace Sierra
             {
                 maximized = true;
                 GetWindowMaximizeDispatcher().DispatchEvent();
+            }
+        }
+
+        XFlush(display);
+    }
+
+    void X11Window::Restore()
+    {
+        if (closed) return;
+
+        Display* const display = x11Context.GetDisplay();
+        if (minimized)
+        {
+            // Mapping a minimized window is what asks the window manager to bring it back
+            XMapWindow(display, window);
+        }
+        else if (maximized)
+        {
+            if (IsWindowStateSupported())
+            {
+                // Window manager returns the window to its previous geometry itself, and the outcome is reported through the state of the window
+                x11Context.RegisterWindowEvent(window, x11Context.GetAtom(AtomType::NET_WM_STATE), NET_WM_STATE_REMOVE, x11Context.GetAtom(AtomType::NET_WM_STATE_MAXIMIZED_VERT), x11Context.GetAtom(AtomType::NET_WM_STATE_MAXIMIZED_HORZ), SOURCE_APPLICATION);
+            }
+            else
+            {
+                XMoveResizeWindow(display, window, unmaximizedPosition.x, unmaximizedPosition.y, unmaximizedSize.x, unmaximizedSize.y);
+                maximized = false;
             }
         }
 
@@ -147,6 +185,23 @@ namespace Sierra
         if (closed) return;
 
         XUnmapWindow(x11Context.GetDisplay(), window);
+        XFlush(x11Context.GetDisplay());
+    }
+
+    void X11Window::RequestFocus(const WindowFocusRequestType requestType)
+    {
+        if (closed || focused) return;
+
+        // Window manager highlights the window (such as in the taskbar), without taking focus away from the user
+        if (x11Context.GetAtom(AtomType::NET_WM_STATE) != None && x11Context.GetAtom(AtomType::NET_WM_STATE_DEMANDS_ATTENTION) != None)
+        {
+            x11Context.RegisterWindowEvent(window, x11Context.GetAtom(AtomType::NET_WM_STATE), NET_WM_STATE_ADD, x11Context.GetAtom(AtomType::NET_WM_STATE_DEMANDS_ATTENTION), 0, SOURCE_APPLICATION);
+        }
+
+        // Critical requests are also marked as urgent, which window managers keep signaling (such as by flashing), until the window is focused
+        if (requestType == WindowFocusRequestType::Critical) SetUrgencyHint(true);
+
+        attentionRequested = true;
         XFlush(x11Context.GetDisplay());
     }
 
@@ -204,6 +259,41 @@ namespace Sierra
         SetSizeHints(physicalSize);
 
         XResizeWindow(x11Context.GetDisplay(), window, physicalSize.x, physicalSize.y);
+        XFlush(x11Context.GetDisplay());
+    }
+
+    void X11Window::SetSizeLimits(const Vector2UInt newMinimumSize, const Vector2UInt newMaximumSize)
+    {
+        // NOTE: A limit of zero stands for no limit along that axis
+        minimumSize = newMinimumSize;
+        maximumSize = newMaximumSize;
+        if (closed) return;
+
+        SetSizeHints(size);
+
+        // Window managers only have to respect limits, once the window gets resized, so it is brought within them right away
+        if (resizable && !maximized)
+        {
+            if (const Vector2UInt constrainedSize = GetConstrainedSize(GetSize()); constrainedSize != GetSize()) SetSize(constrainedSize);
+        }
+
+        XFlush(x11Context.GetDisplay());
+    }
+
+    void X11Window::SetAspectRatio(const uint32 numerator, const uint32 denominator)
+    {
+        // NOTE: A ratio of zero stands for no ratio at all
+        aspectRatio = { numerator, denominator };
+        if (closed) return;
+
+        SetSizeHints(size);
+
+        // Window is fitted to the ratio right away, the same way as on Wayland
+        if (resizable && !maximized)
+        {
+            if (const Vector2UInt constrainedSize = GetConstrainedSize(GetSize()); constrainedSize != GetSize()) SetSize(constrainedSize);
+        }
+
         XFlush(x11Context.GetDisplay());
     }
 
@@ -308,6 +398,19 @@ namespace Sierra
                 if (focused) break;
 
                 focused = true;
+
+                // Attention, which was requested, has now been given, so the window manager is told to stop signaling it
+                if (attentionRequested)
+                {
+                    if (x11Context.GetAtom(AtomType::NET_WM_STATE) != None && x11Context.GetAtom(AtomType::NET_WM_STATE_DEMANDS_ATTENTION) != None)
+                    {
+                        x11Context.RegisterWindowEvent(window, x11Context.GetAtom(AtomType::NET_WM_STATE), NET_WM_STATE_REMOVE, x11Context.GetAtom(AtomType::NET_WM_STATE_DEMANDS_ATTENTION), 0, SOURCE_APPLICATION);
+                    }
+
+                    SetUrgencyHint(false);
+                    attentionRequested = false;
+                }
+
                 GetWindowFocusDispatcher().DispatchEvent(true);
                 break;
             }
@@ -390,25 +493,21 @@ namespace Sierra
         return x11Context.GetLogicalPosition(QueryPosition());
     }
 
-    uint32 X11Window::GetWidth() const noexcept
+    Vector2UInt X11Window::GetSize() const noexcept
     {
-        return x11Context.GetLogicalSize(size).x;
+        return x11Context.GetLogicalSize(size);
     }
 
-    uint32 X11Window::GetHeight() const noexcept
-    {
-        return x11Context.GetLogicalSize(size).y;
-    }
-
-    uint32 X11Window::GetFramebufferWidth() const noexcept
+    Vector2UInt X11Window::GetFramebufferSize() const noexcept
     {
         // Framebuffer is the content of the window in physical pixels, which is what the server reports
-        return size.x;
+        return size;
     }
 
-    uint32 X11Window::GetFramebufferHeight() const noexcept
+    float32 X11Window::GetScaling() const noexcept
     {
-        return size.y;
+        // X11 has no scale of its own per window, so it is that of the desktop
+        return x11Context.GetScaling();
     }
 
     float32 X11Window::GetOpacity() const noexcept
@@ -481,8 +580,50 @@ namespace Sierra
             sizeHints->min_width = sizeHints->max_width = static_cast<int>(fixedSize.x);
             sizeHints->min_height = sizeHints->max_height = static_cast<int>(fixedSize.y);
         }
+        else
+        {
+            if (minimumSize.x != 0 || minimumSize.y != 0)
+            {
+                const Vector2UInt physicalMinimumSize = x11Context.GetPhysicalSize(minimumSize);
+
+                sizeHints->flags |= PMinSize;
+                sizeHints->min_width = static_cast<int>(physicalMinimumSize.x);
+                sizeHints->min_height = static_cast<int>(physicalMinimumSize.y);
+            }
+
+            if (maximumSize.x != 0 || maximumSize.y != 0)
+            {
+                const Vector2UInt physicalMaximumSize = x11Context.GetPhysicalSize(maximumSize);
+
+                sizeHints->flags |= PMaxSize;
+                sizeHints->max_width = maximumSize.x != 0 ? static_cast<int>(physicalMaximumSize.x) : MAXIMUM_WINDOW_EXTENT;
+                sizeHints->max_height = maximumSize.y != 0 ? static_cast<int>(physicalMaximumSize.y) : MAXIMUM_WINDOW_EXTENT;
+            }
+
+            if (aspectRatio.x != 0 && aspectRatio.y != 0)
+            {
+                sizeHints->flags |= PAspect;
+                sizeHints->min_aspect.x = sizeHints->max_aspect.x = static_cast<int>(aspectRatio.x);
+                sizeHints->min_aspect.y = sizeHints->max_aspect.y = static_cast<int>(aspectRatio.y);
+            }
+        }
 
         XSetWMNormalHints(x11Context.GetDisplay(), window, sizeHints.get());
+    }
+
+    void X11Window::SetUrgencyHint(const bool urgent) const noexcept
+    {
+        Display* const display = x11Context.GetDisplay();
+
+        // Other hints, which may already be set, are kept as they are
+        std::unique_ptr<XWMHints, std::function<void(void*)>> hints = { XGetWMHints(display, window), XFree };
+        if (hints == nullptr) hints.reset(XAllocWMHints());
+        if (hints == nullptr) return;
+
+        if (urgent) hints->flags |= XUrgencyHint;
+        else hints->flags &= ~XUrgencyHint;
+
+        XSetWMHints(display, window, hints.get());
     }
 
     void X11Window::ApplyTitle() const noexcept
@@ -557,6 +698,27 @@ namespace Sierra
 
         // Position of the window is that of its frame, which lies the extents of the decorations away from its content
         return { xPosition - extents.x, yPosition - extents.z };
+    }
+
+    Vector2UInt X11Window::GetConstrainedSize(Vector2UInt targetSize) const noexcept
+    {
+        // Ratio is matched by shrinking whichever side is too long, the same way as on Wayland
+        if (aspectRatio.x != 0 && aspectRatio.y != 0 && targetSize.x != 0 && targetSize.y != 0)
+        {
+            const float32 currentAspectRatio = static_cast<float32>(targetSize.x) / static_cast<float32>(targetSize.y);
+            const float32 targetAspectRatio = static_cast<float32>(aspectRatio.x) / static_cast<float32>(aspectRatio.y);
+
+            if (currentAspectRatio < targetAspectRatio) targetSize.y = static_cast<uint32>(static_cast<float32>(targetSize.x) / targetAspectRatio);
+            else if (currentAspectRatio > targetAspectRatio) targetSize.x = static_cast<uint32>(static_cast<float32>(targetSize.y) * targetAspectRatio);
+        }
+
+        // Limits take precedence over the ratio, when the two cannot both be met
+        if (minimumSize.x != 0) targetSize.x = glm::max(targetSize.x, minimumSize.x);
+        if (minimumSize.y != 0) targetSize.y = glm::max(targetSize.y, minimumSize.y);
+        if (maximumSize.x != 0) targetSize.x = glm::min(targetSize.x, maximumSize.x);
+        if (maximumSize.y != 0) targetSize.y = glm::min(targetSize.y, maximumSize.y);
+
+        return glm::max(targetSize, Vector2UInt(1, 1));
     }
 
     void X11Window::Destroy() noexcept

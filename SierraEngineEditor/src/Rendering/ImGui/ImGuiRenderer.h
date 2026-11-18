@@ -37,7 +37,7 @@ namespace SierraEngine
         explicit ImGuiRenderer(const ImGuiRendererCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Update(const ApplicationFrame& applicationFrame, Vector2UInt framebufferSize, float32 scaling = 1.0f) const;
+        void Update(const ApplicationFrame& applicationFrame, Vector2UInt framebufferSize, float32 scaling) const;
         void Render(const DrawFrame& drawFrame, const Sierra::Framebuffer& framebuffer);
 
         /* --- GETTER METHODS --- */

@@ -8,11 +8,13 @@
     #error "Including the LinuxContext.h file is only allowed in Linux builds!"
 #endif
 
+#include <QApplication>
+
 #include "../PlatformContext.h"
 
 #include "../../Files/Unix/UnixFileManager.h"
-#include "../../Windowing/Linux/Wayland/WaylandContext.h"
 #include "../../Windowing/Linux/X11/X11Context.h"
+#include "../../Windowing/Linux/Wayland/WaylandContext.h"
 
 namespace Sierra
 {
@@ -23,12 +25,17 @@ namespace Sierra
         /* --- CONSTRUCTORS --- */
         LinuxContext();
 
+        /* --- POLLING METHODS --- */
+        bool OpenAlertDialog(const AlertDialogOpenInfo& openInfo) const noexcept override;
+        [[nodiscard]] std::vector<Path> OpenPathSelectionDialog(const PathSelectionDialogOpenInfo& openInfo) const noexcept override;
+        [[nodiscard]] std::optional<Path> OpenPathSaveDialog(const PathSaveDialogOpenInfo& openInfo) const noexcept override;
+        bool OpenPath(const Path& path) const noexcept override;
+
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string GetUserName() const noexcept override;
         [[nodiscard]] const WindowManager& GetWindowManager() const noexcept override { return *windowManager; }
         [[nodiscard]] const FileManager& GetFileManager() const noexcept override { return fileManager; }
-
         [[nodiscard]] PlatformType GetType() const noexcept override { return PlatformType::Linux; }
-        [[nodiscard]] WindowingBackendType GetWindowingBackendType() const noexcept { return windowingBackendType; }
 
         /* --- COPY SEMANTICS --- */
         LinuxContext(const LinuxContext&) = delete;
@@ -42,14 +49,11 @@ namespace Sierra
         ~LinuxContext() noexcept override = default;
 
     private:
-        // Exactly one of these is created, as the windowing backend is picked upon construction
-        std::unique_ptr<WaylandContext> waylandContext = nullptr;
-        std::unique_ptr<X11Context> x11Context = nullptr;
+        QApplication application;
+        std::variant<std::monostate, WaylandContext, X11Context> windowingContext = std::monostate();
 
-        // NOTE: Window manager references the context above, so it must be destroyed before it, which is why it is declared after
         std::unique_ptr<WindowManager> windowManager = nullptr;
-        UnixFileManager fileManager;
-        WindowingBackendType windowingBackendType = WindowingBackendType::X11;
+        UnixFileManager fileManager = { };
 
         void Update() override;
 

@@ -34,6 +34,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y pkg-config libx11-dev libxcb-xkb-dev libxcursor-dev libxrandr-dev libwayland-dev libwayland-bin libxkbcommon-dev libdecor-0-dev
 
+      # Platform dialogs are built with Qt, and paths are opened through GIO
+      - name: Install Platform Libraries
+        run: sudo apt-get install -y qt6-base-dev libgl-dev libglib2.0-dev
+
       - name: Prepare Vulkan SDK
         uses: humbletim/setup-vulkan-sdk@v1.2.1
         with:

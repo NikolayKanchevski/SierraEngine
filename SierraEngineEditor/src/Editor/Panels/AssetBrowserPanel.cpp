@@ -339,6 +339,14 @@ namespace SierraEngine
             ImGui::SameLine();
             DrawEntries(applicationFrame, { entriesWidth, bodyHeight });
 
+            if (pendingNavigationPath.has_value())
+            {
+                const Sierra::Path navigationPath = std::move(*pendingNavigationPath);
+                pendingNavigationPath.reset();
+
+                NavigateTo(applicationFrame, navigationPath);
+            }
+
             if (showDetails)
             {
                 ImGui::SameLine();
@@ -917,7 +925,7 @@ namespace SierraEngine
         const bool current = givenRelativeDirectoryPath == relativeDirectoryPath;
         const bool ancestor = givenRelativeDirectoryPath.IsAncestor(relativeDirectoryPath);
 
-        std::vector<Sierra::Path> children = ListChildDirectoryPaths(applicationFrame.platformContext.GetFileManager(), absoluteDirectoryPath);
+        const std::vector<Sierra::Path> children = ListChildDirectoryPaths(applicationFrame.platformContext.GetFileManager(), absoluteDirectoryPath);
         const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DrawLinesToNodes | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth | (givenRelativeDirectoryPath.IsEmpty() * ImGuiTreeNodeFlags_DefaultOpen) | (current * ImGuiTreeNodeFlags_Selected) | (children.empty() * ImGuiTreeNodeFlags_Leaf);
 
         // Folders leading to the current one are opened when navigating to it
@@ -1020,7 +1028,7 @@ namespace SierraEngine
         const ImVec2 tileSizeVector = { tileSize + 2.0f * TILE_PADDING, TILE_PADDING + tileSize + 6.0f + fontSize * 2.0f + 3.0f + TILE_PADDING };
 
         const float32 availableWidth = ImGui::GetContentRegionAvail().x;
-        const size columns = glm::max<size>(1, static_cast<size>((availableWidth + spacing) / (tileSizeVector.x + spacing)));
+        const size columns = glm::max<size>(1, (availableWidth + spacing) / (tileSizeVector.x + spacing));
 
         for (size i = 0; i < visibleEntryIndices.size(); i++)
         {
@@ -1038,7 +1046,7 @@ namespace SierraEngine
         }
     }
 
-    void AssetBrowserPanel::DrawGridEntry(const ApplicationFrame& applicationFrame, const AssetBrowserEntry& entry, Vector2 size)
+    void AssetBrowserPanel::DrawGridEntry(const ApplicationFrame& applicationFrame, const AssetBrowserEntry& entry, const Vector2 size)
     {
         const ImVec2 origin = ImGui::GetCursorScreenPos();
         ImGui::InvisibleButton("##Tile", size);
@@ -1148,7 +1156,6 @@ namespace SierraEngine
         ImGui::TextUnformatted(Sierra::TimePointToString(entry.timeLastModified).c_str());
     }
 
-
     void AssetBrowserPanel::HandleEntryInteraction(const ApplicationFrame& applicationFrame, const AssetBrowserEntry& entry)
     {
         if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
@@ -1164,7 +1171,8 @@ namespace SierraEngine
 
         if (entry.type == AssetBrowserEntryType::Folder && ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
         {
-            NavigateTo(applicationFrame, entry.relativePath);
+            // NOTE: Navigating replaces all entries, including this one, which is still being drawn, so it is postponed until drawing of entries is done
+            pendingNavigationPath = entry.relativePath;
         }
 
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) && !ImGui::IsMouseDragging(ImGuiMouseButton_Left))

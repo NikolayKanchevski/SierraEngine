@@ -5,7 +5,6 @@
 #include "TextureImporter.h"
 
 #include "ImageConverter.h"
-#include "../../../../SierraEngineEditor/bin/arm64-Clang-Debug/vendor/fastgltf/simdjson/simdjson.h"
 #include "Transcoders/BasisUniversalTranscoder.h"
 
 namespace SierraEngine

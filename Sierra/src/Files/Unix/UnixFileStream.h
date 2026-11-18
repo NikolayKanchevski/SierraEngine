@@ -13,21 +13,20 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit UnixFileStream(const FileStreamCreateInfo& createInfo);
+        explicit UnixFileStream(int fileDescriptor, const FileStreamCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::vector<uint8> Read(size memorySize) override;
-        void Write(const void* memory, size memorySize) override;
+        [[nodiscard]] StreamResult Read(std::span<uint8> outMemory) override;
+        [[nodiscard]] StreamResult Write(std::span<const uint8> memory) override;
 
         /* --- SETTER METHODS --- */
-        void SetOffset(size offset) override;
+        [[nodiscard]] StreamResult SetOffset(size offset) override;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] const Path& GetFilePath() const noexcept override { return filePath; }
         [[nodiscard]] size GetOffset() const override;
         [[nodiscard]] size GetSize() const override;
-
         [[nodiscard]] StreamAccess GetAccess() const noexcept override { return access; }
-        [[nodiscard]] const std::filesystem::path& GetFilePath() const noexcept override { return filePath; }
 
         [[nodiscard]] int GetFileDescriptor() const noexcept { return fileDescriptor; }
 
@@ -36,16 +35,16 @@ namespace Sierra
         UnixFileStream& operator=(const UnixFileStream&) = delete;
 
         /* --- MOVE SEMANTICS --- */
-        UnixFileStream(UnixFileStream&&) = delete;
-        UnixFileStream& operator=(UnixFileStream&&) = delete;
+        UnixFileStream(UnixFileStream&&) noexcept = default;
+        UnixFileStream& operator=(UnixFileStream&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~UnixFileStream() noexcept override;
 
     private:
-        const int fileDescriptor;
-        const std::filesystem::path filePath;
-        const StreamAccess access = StreamAccess::ReadWrite;
+        int fileDescriptor = 0;
+        Path filePath = { };
+        StreamAccess access = StreamAccess::ReadWrite;
     };
     
 }

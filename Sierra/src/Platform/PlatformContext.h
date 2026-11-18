@@ -1,12 +1,10 @@
-    //
+//
 // Created by Nikolay Kanchevski on 10.09.23.
 //
 
 #pragma once
 
 #include "../Files/FileManager.h"
-#include "../Windowing/Screen.h"
-#include "../Windowing/Window.h"
 #include "../Windowing/WindowManager.h"
 
 namespace Sierra
@@ -74,10 +72,7 @@ namespace Sierra
     class SIERRA_API PlatformContext
     {
     public:
-        /* --- GETTER METHODS --- */
-        [[nodiscard]] virtual const WindowManager& GetWindowManager() const noexcept = 0;
-        [[nodiscard]] virtual const FileManager& GetFileManager() const noexcept = 0;
-
+        /* --- POLLING METHODS --- */
         virtual bool OpenAlertDialog(const AlertDialogOpenInfo& openInfo) const noexcept = 0;
         [[nodiscard]] virtual std::vector<Path> OpenPathSelectionDialog(const PathSelectionDialogOpenInfo& openInfo) const noexcept = 0;
         [[nodiscard]] virtual std::optional<Path> OpenPathSaveDialog(const PathSaveDialogOpenInfo& openInfo) const noexcept = 0;
@@ -85,7 +80,8 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] virtual std::string GetUserName() const noexcept = 0;
-
+        [[nodiscard]] virtual const WindowManager& GetWindowManager() const noexcept = 0;
+        [[nodiscard]] virtual const FileManager& GetFileManager() const noexcept = 0;
         [[nodiscard]] virtual PlatformType GetType() const noexcept = 0;
 
         /* --- COPY SEMANTICS --- */

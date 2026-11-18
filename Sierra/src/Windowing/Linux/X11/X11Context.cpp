@@ -3,7 +3,6 @@
 //
 
 #include <X11/Xatom.h>
-#include <X11/Xcursor/Xcursor.h>
 
 #include "X11Window.h"
 
@@ -118,10 +117,12 @@ namespace Sierra
         // Deallocate atom data
         if (supportedAtomCount > 0) XFree(supportedAtoms);
 
-        // Create invisible cursor
-        XcursorImage* const emptyCursorImage = XcursorImageCreate(1, 1);
-        invisibleCursor = XcursorImageLoadCursor(display, emptyCursorImage);
-        XcursorImageDestroy(emptyCursorImage);
+        // Create invisible cursor from an empty bitmap, using the core protocol, as servers (such as XWayland) may reject ARGB cursors created through XRender
+        constexpr char EMPTY_BITMAP_DATA = 0;
+        const Pixmap emptyBitmap = XCreateBitmapFromData(display, rootWindow, &EMPTY_BITMAP_DATA, 1, 1);
+        XColor black = { };
+        invisibleCursor = XCreatePixmapCursor(display, emptyBitmap, emptyBitmap, &black, &black, 0, 0);
+        XFreePixmap(display, emptyBitmap);
 
         // Work area changes are reported as property changes of the root window, and monitor changes as RandR events of it
         XSelectInput(display, rootWindow, PropertyChangeMask);

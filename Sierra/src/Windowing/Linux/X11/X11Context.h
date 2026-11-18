@@ -10,8 +10,8 @@
 
 #include <X11/Xlib.h>
 
-#include "X11Extensions.h"
 #include "X11Screen.h"
+#include "X11Extensions.h"
 
 namespace Sierra
 {
@@ -124,6 +124,7 @@ namespace Sierra
 
         std::vector<X11Screen> screens = {  };
         void ReloadScreens() noexcept;
+
     };
 
 }

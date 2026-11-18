@@ -52,7 +52,6 @@ namespace Sierra
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] wl_display* GetDisplay() const noexcept { return display; }
-        [[nodiscard]] bool IsValid() const noexcept { return compositor != nullptr && wmBase != nullptr; }
         [[nodiscard]] const char* const* GetTag() const noexcept;
 
         [[nodiscard]] wl_compositor* GetCompositor() const noexcept { return compositor; }

@@ -149,6 +149,7 @@ namespace Sierra
 
         [[nodiscard]] bool IsFloating() const noexcept { return !maximized && !fullscreen; }
         [[nodiscard]] Vector2UInt GetAspectRatioFittedSize(Vector2UInt targetSize) const noexcept;
+        [[nodiscard]] Vector2Int SurfaceToCursorPosition(Vector2 surfacePosition) const noexcept;
 
         // Input and screens are tracked by the context, which notifies the windows they concern
         friend class WaylandContext;

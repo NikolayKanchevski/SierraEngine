@@ -58,7 +58,8 @@ namespace Sierra
 
     void X11CursorManager::SetCursorPosition(const Vector2Int position)
     {
-        WarpCursor(x11Context.GetPhysicalPosition(position));
+        // NOTE: Cursor positions are in physical pixels (those of the framebuffer), as on the other platforms
+        WarpCursor(position);
     }
 
     /* --- GETTER METHODS --- */
@@ -70,15 +71,13 @@ namespace Sierra
 
     Vector2Int X11CursorManager::GetCursorPosition() const noexcept
     {
-        return x11Context.GetLogicalPosition(cursorPosition);
+        // NOTE: Server reports positions in physical pixels (those of the framebuffer), which is what cursor positions are measured in on every platform
+        return cursorPosition;
     }
 
     Vector2 X11CursorManager::GetCursorDelta() const noexcept
     {
         Vector2 delta = { cursorPosition.x - lastCursorPosition.x, cursorPosition.y - lastCursorPosition.y };
-
-        // Motion is measured in physical pixels, so that small motions are not lost to rounding, and is then converted to logical units
-        delta /= x11Context.GetScaling();
 
         // Hidden cursor is kept in place, so its motion is inverted, as on the other platforms
         if (!cursorShown) delta *= -1.0f;

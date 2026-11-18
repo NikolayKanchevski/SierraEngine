@@ -457,13 +457,13 @@ namespace Sierra
 
     void CocoaWindow::SetSizeLimits(const Vector2UInt minimumSize, const Vector2UInt maximumSize)
     {
-        if (minimumSize.x == 0 || minimumSize.x == 0)
+        if (minimumSize.x == 0 || minimumSize.y == 0)
         {
             [window setContentMinSize:NSMakeSize(0, 0)];
         }
         else
         {
-            [window setContentMinSize:NSMakeSize(minimumSize.x, minimumSize.x)];
+            [window setContentMinSize:NSMakeSize(minimumSize.x, minimumSize.y)];
         }
 
         if (maximumSize.x == 0 || maximumSize.y == 0)

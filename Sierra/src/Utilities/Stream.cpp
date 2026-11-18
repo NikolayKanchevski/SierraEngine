@@ -22,11 +22,9 @@ namespace Sierra
 
     StreamResult Stream::Write(std::span<const uint8> memory)
     {
+        // NOTE: Unlike reads, writes are allowed to go past the end, as that is how streams grow
         if (GetAccess() == StreamAccess::ReadOnly)
             return StreamResult::InvalidAccess;
-
-        if (GetOffset() + memory.size() > GetSize())
-            return StreamResult::InvalidRange;
 
         return StreamResult::Success;
     }
@@ -50,7 +48,8 @@ namespace Sierra
 
     StreamResult Stream::SetOffset(const size offset)
     {
-        if (offset >= GetSize())
+        // NOTE: Offset is allowed to be at the very end, so that empty streams can be read from and appended to
+        if (offset > GetSize())
             return StreamResult::InvalidOffset;
 
         return StreamResult::Success;

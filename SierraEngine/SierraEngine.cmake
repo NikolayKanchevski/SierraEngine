@@ -68,7 +68,8 @@ function(SierraEngineBuildApplication SOURCE_FILES)
     SierraBuildApplication(${SOURCE_FILES})
 
     # Build library
-    add_subdirectory(${SIERRA_ENGINE_DIRECTORY_PATH}/src/ ${SIERRA_ENGINE_DIRECTORY_PATH}/src/)
+    # NOTE: Library is built within the build directory of the application, as building it within its sources would also make every library it adds (relative to where it is built) build within theirs
+    add_subdirectory(${SIERRA_ENGINE_DIRECTORY_PATH}/src/ ${CMAKE_BINARY_DIR}/SierraEngine/)
 
     # Delete static library after build
     if(SIERRA_ENGINE_BUILD_STATIC_LIBRARY)

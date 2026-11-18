@@ -76,7 +76,8 @@ namespace Sierra
         if (const PathResult result = ResolvePathConflict(filePath, conflictPolicy, resolvedFilePath); result != PathResult::Success)
             return result;
 
-        if (const PathResult result = CreateDirectory(resolvedFilePath.GetParentPath(), PathConflictPolicy::Overwrite); result != PathResult::Success)
+        // NOTE: Parent directory is created without overwriting, as that would delete it (along with its contents) when it already exists
+        if (const PathResult result = CreateDirectory(resolvedFilePath.GetParentPath(), PathConflictPolicy::KeepExisting); result != PathResult::Success && result != PathResult::AlreadyExists)
             return result;
 
         const std::string pathString = resolvedFilePath.GetString();
@@ -95,7 +96,7 @@ namespace Sierra
         if (const PathResult result = ResolvePathConflict(directoryPath, conflictPolicy, resolvedDirectoryPath); result != PathResult::Success)
             return result;
 
-        NSURL* URL = PathToNSURL(directoryPath);
+        NSURL* URL = PathToNSURL(resolvedDirectoryPath);
 
         NSError* error = nil;
         [fileManager createDirectoryAtURL: URL withIntermediateDirectories: YES attributes: nil error: &error];
@@ -109,24 +110,15 @@ namespace Sierra
         if (const PathResult result = FileManager::CopyPath(sourcePath, destinationPath, conflictPolicy); result != PathResult::Success)
             return result;
 
-        Path resolvedPath = destinationPath / sourcePath.GetFileName();
-        if (const PathResult result = ResolvePathConflict(sourcePath, conflictPolicy, resolvedPath); result != PathResult::Success)
+        const Path destinationItemPath = destinationPath / sourcePath.GetFileName();
+
+        Path resolvedPath = destinationItemPath;
+        if (const PathResult result = ResolvePathConflict(destinationItemPath, conflictPolicy, resolvedPath); result != PathResult::Success)
             return result;
 
-        if (IsFile(sourcePath))
-        {
-            if (const PathResult result = CreateFile(resolvedPath, PathConflictPolicy::Overwrite); result != PathResult::Success)
-                return result;
-        }
-        else if (IsDirectory(sourcePath))
-        {
-            if (const PathResult result = CreateDirectory(resolvedPath, PathConflictPolicy::Overwrite); result != PathResult::Success)
-                return result;
-        }
-        else
-        {
-            return PathResult::Unknown;
-        }
+        // NOTE: Only the destination directory is created beforehand, as copying fails when an item already exists at the resolved path
+        if (const PathResult result = CreateDirectory(destinationPath, PathConflictPolicy::KeepExisting); result != PathResult::Success && result != PathResult::AlreadyExists)
+            return result;
 
         NSURL* sourceURL = PathToNSURL(sourcePath);
         NSURL* destinationURL = PathToNSURL(resolvedPath);
@@ -162,24 +154,15 @@ namespace Sierra
         if (const PathResult result = FileManager::MovePath(sourcePath, destinationPath, conflictPolicy); result != PathResult::Success)
             return result;
 
-        Path resolvedPath = destinationPath / sourcePath.GetFileName();
-        if (const PathResult result = ResolvePathConflict(sourcePath, conflictPolicy, resolvedPath); result != PathResult::Success)
+        const Path destinationItemPath = destinationPath / sourcePath.GetFileName();
+
+        Path resolvedPath = destinationItemPath;
+        if (const PathResult result = ResolvePathConflict(destinationItemPath, conflictPolicy, resolvedPath); result != PathResult::Success)
             return result;
 
-        if (IsFile(sourcePath))
-        {
-            if (const PathResult result = CreateFile(resolvedPath, PathConflictPolicy::Overwrite); result != PathResult::Success)
-                return result;
-        }
-        else if (IsDirectory(sourcePath))
-        {
-            if (const PathResult result = CreateDirectory(resolvedPath, PathConflictPolicy::Overwrite); result != PathResult::Success)
-                return result;
-        }
-        else
-        {
-            return PathResult::Unknown;
-        }
+        // NOTE: Only the destination directory is created beforehand, as moving fails when an item already exists at the resolved path
+        if (const PathResult result = CreateDirectory(destinationPath, PathConflictPolicy::KeepExisting); result != PathResult::Success && result != PathResult::AlreadyExists)
+            return result;
 
         NSURL* sourceURL = PathToNSURL(sourcePath);
         NSURL* destinationURL = PathToNSURL(resolvedPath);

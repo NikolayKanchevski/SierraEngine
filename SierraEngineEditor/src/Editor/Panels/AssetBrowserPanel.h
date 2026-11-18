@@ -134,6 +134,9 @@ namespace SierraEngine
         void DrawBackgroundContextMenu(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame);
         void DrawSelectionContextMenu(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame);
 
+        // Folder, which an entry asked to be navigated to, which is only done once all entries have been drawn, as navigating replaces them
+        std::optional<Sierra::Path> pendingNavigationPath = std::nullopt;
+
         std::vector<Sierra::Path> backHistory = { };
         std::vector<Sierra::Path> forwardHistory = { };
 

@@ -27,34 +27,36 @@ namespace Sierra
         void Update() override;
         void Minimize() override;
         void Maximize() override;
+        void Restore() override;
         void Show() override;
         void Hide() override;
+        void RequestFocus(WindowFocusRequestType requestType) override;
         void Focus() override;
         void Close() override;
-
-        void HandleX11Event(XEvent& event);
 
         /* --- SETTER METHODS --- */
         void SetTitle(std::string_view title) override;
         void SetPosition(Vector2Int position) override;
         void SetSize(Vector2UInt size) override;
+        void SetSizeLimits(Vector2UInt minimumSize, Vector2UInt maximumSize) override;
+        void SetAspectRatio(uint32 numerator, uint32 denominator) override;
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
         [[nodiscard]] std::string GetTitle() const noexcept override;
         [[nodiscard]] Vector2Int GetPosition() const noexcept override;
-        [[nodiscard]] uint32 GetWidth() const noexcept override;
-        [[nodiscard]] uint32 GetHeight() const noexcept override;
-        [[nodiscard]] uint32 GetFramebufferWidth() const noexcept override;
-        [[nodiscard]] uint32 GetFramebufferHeight() const noexcept override;
         [[nodiscard]] float32 GetOpacity() const noexcept override;
 
-        [[nodiscard]] bool IsClosed() const noexcept override;
+        [[nodiscard]] Vector2UInt GetSize() const noexcept override;
+        [[nodiscard]] Vector2UInt GetFramebufferSize() const noexcept override;
+        [[nodiscard]] float32 GetScaling() const noexcept override;
+
+        [[nodiscard]] bool IsVisible() const noexcept override;
+        [[nodiscard]] bool IsTransparent() const noexcept override;
         [[nodiscard]] bool IsMinimized() const noexcept override;
         [[nodiscard]] bool IsMaximized() const noexcept override;
         [[nodiscard]] bool IsFocused() const noexcept override;
-        [[nodiscard]] bool IsVisible() const noexcept override;
-        [[nodiscard]] bool IsTransparent() const noexcept override;
+        [[nodiscard]] bool IsClosed() const noexcept override;
 
         [[nodiscard]] InputManager* GetInputManager() noexcept override { return &inputManager; }
         [[nodiscard]] const InputManager* GetInputManager() const noexcept override { return &inputManager; }
@@ -98,20 +100,36 @@ namespace Sierra
         Vector2UInt size = { 0, 0 };
         Vector2Int lastPosition = { 0, 0 };
 
+        // Constraints of the window's content in logical units, which the window manager is asked to respect (zero stands for no constraint along that axis)
+        Vector2UInt minimumSize = { 0, 0 };
+        Vector2UInt maximumSize = { 0, 0 };
+        Vector2UInt aspectRatio = { 0, 0 };
+
+        // Geometry to go back to, when restoring a window, which had to be maximized without the help of a window manager (in physical units)
+        Vector2Int unmaximizedPosition = { 0, 0 };
+        Vector2UInt unmaximizedSize = { 0, 0 };
+
         bool closed = false;
         bool mapped = false;
         bool focused = false;
         bool minimized = false;
         bool maximized = false;
+        bool attentionRequested = false;
 
         void SetSizeHints(Vector2UInt fixedSize) const noexcept;
+        void SetUrgencyHint(bool urgent) const noexcept;
         void ApplyTitle() const noexcept;
         void ReadFrameExtents() noexcept;
         [[nodiscard]] bool ReadMinimized() const noexcept;
         [[nodiscard]] bool ReadMaximized() const noexcept;
         [[nodiscard]] bool IsWindowStateSupported() const noexcept;
         [[nodiscard]] Vector2Int QueryPosition() const noexcept;
+        [[nodiscard]] Vector2UInt GetConstrainedSize(Vector2UInt targetSize) const noexcept;
         void Destroy() noexcept;
+
+        // Events are read by the context, which routes them to the windows they concern
+        friend class X11Context;
+        void HandleX11Event(XEvent& event);
 
     };
 

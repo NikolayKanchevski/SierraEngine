@@ -31,7 +31,7 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     WaylandCursorManager::WaylandCursorManager(const WaylandContext& waylandContext, const WaylandWindow& window)
-        : waylandContext(waylandContext), window(window) // TODO: ONE INSIDE ANOTHER
+        : waylandContext(waylandContext), window(window)
     {
 
     }
@@ -62,7 +62,12 @@ namespace Sierra
     {
         // NOTE: Wayland does not allow moving the cursor. The only exception is hinting where a locked one is to reappear, once it gets unlocked
         if (lockedPointer == nullptr) return;
-        zwp_locked_pointer_v1_set_cursor_position_hint(lockedPointer, wl_fixed_from_int(position.x), wl_fixed_from_int(static_cast<int32>(window.GetHeight()) - position.y));
+
+        // Position is in physical pixels, measured upwards from the bottom, while the hint is in logical units, measured downwards from the top
+        const float32 scaling = window.GetScaling();
+        const float64 hintX = static_cast<float64>(position.x) / scaling;
+        const float64 hintY = (static_cast<float64>(window.GetFramebufferHeight()) - static_cast<float64>(position.y)) / scaling;
+        zwp_locked_pointer_v1_set_cursor_position_hint(lockedPointer, wl_fixed_from_double(hintX), wl_fixed_from_double(hintY));
 
         // Reset mouse delta
         lastCursorPosition = position;
@@ -83,7 +88,8 @@ namespace Sierra
 
     Vector2 WaylandCursorManager::GetCursorDelta() const noexcept
     {
-        if (lockedPointer != nullptr) return relativeMotion;
+        // NOTE: Relative motion is reported in logical units, so it is scaled to physical pixels, which positions are measured in
+        if (lockedPointer != nullptr) return relativeMotion * window.GetScaling();
         return { cursorPosition.x - lastCursorPosition.x, cursorPosition.y - lastCursorPosition.y };
     }
 
