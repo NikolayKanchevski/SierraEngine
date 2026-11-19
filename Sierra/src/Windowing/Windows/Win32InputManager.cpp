@@ -4,262 +4,83 @@
 
 #include "Win32InputManager.h"
 
+#if !defined(WIN32_LEAN_AND_MEAN)
+    #define WIN32_LEAN_AND_MEAN
+#endif
+#if !defined(NOMINMAX)
+    #define NOMINMAX
+#endif
+#include <Windows.h>
+
 namespace Sierra
 {
 
-    namespace
-    {
-        /* === Reference: https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes === */
-        constexpr std::array<Key, 223> KEY_TABLE
-        {
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Backspace,
-            Key::Tab,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Enter,
-            Key::Unknown,
-            Key::Unknown,
-            Key::LeftShift,
-            Key::LeftControl,
-            Key::LeftAlt,
-            Key::Pause,
-            Key::CapsLock,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Escape,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Space,
-            Key::PageUp,
-            Key::PageDown,
-            Key::End,
-            Key::Home,
-            Key::LeftArrow,
-            Key::UpArrow,
-            Key::RightArrow,
-            Key::DownArrow,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::PrintScreen,
-            Key::Insert,
-            Key::Delete,
-            Key::Unknown,
-            Key::Number0,
-            Key::Number1,
-            Key::Number2,
-            Key::Number3,
-            Key::Number4,
-            Key::Number5,
-            Key::Number6,
-            Key::Number7,
-            Key::Number8,
-            Key::Number9,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::A,
-            Key::B,
-            Key::C,
-            Key::D,
-            Key::E,
-            Key::F,
-            Key::G,
-            Key::H,
-            Key::I,
-            Key::J,
-            Key::K,
-            Key::L,
-            Key::M,
-            Key::N,
-            Key::O,
-            Key::P,
-            Key::Q,
-            Key::R,
-            Key::S,
-            Key::T,
-            Key::U,
-            Key::V,
-            Key::W,
-            Key::X,
-            Key::Y,
-            Key::Z,
-            Key::LeftWindows,
-            Key::RightWindows,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::KeypadNumber0,
-            Key::KeypadNumber1,
-            Key::KeypadNumber2,
-            Key::KeypadNumber3,
-            Key::KeypadNumber4,
-            Key::KeypadNumber5,
-            Key::KeypadNumber6,
-            Key::KeypadNumber7,
-            Key::KeypadNumber8,
-            Key::KeypadNumber9,
-            Key::KeypadMultiply,
-            Key::KeypadAdd,
-            Key::Unknown,
-            Key::KeypadSubtract,
-            Key::KeypadDecimal,
-            Key::KeypadDivide,
-            Key::F1,
-            Key::F2,
-            Key::F3,
-            Key::F4,
-            Key::F5,
-            Key::F6,
-            Key::F7,
-            Key::F8,
-            Key::F9,
-            Key::F10,
-            Key::F11,
-            Key::F12,
-            Key::F13,
-            Key::F14,
-            Key::F15,
-            Key::F16,
-            Key::F17,
-            Key::F18,
-            Key::F19,
-            Key::F20,
-            Key::F21,
-            Key::F22,
-            Key::F23,
-            Key::F24,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::NumpadLock,
-            Key::ScrollLock,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::LeftShift,
-            Key::RightShift,
-            Key::LeftControl,
-            Key::RightShift,
-            Key::LeftAlt,
-            Key::RightAlt,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Semicolon,
-            Key::Equals,
-            Key::Comma,
-            Key::Minus,
-            Key::Period,
-            Key::Slash,
-            Key::Grave,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::Unknown,
-            Key::LeftBracket,
-            Key::Backslash,
-            Key::RightBracket,
-            Key::Apostrophe
-        };
-
-        constexpr std::array<MouseButton, 6> MOUSE_BUTTON_TABLE
-        {
-            MouseButton::Unknown,
-            MouseButton::Left,
-            MouseButton::Right,
-            MouseButton::Unknown,
-            MouseButton::Extra1,
-            MouseButton::Extra2
-        };
-    }
-
     /* --- CONVERSIONS --- */
 
-    Key VirtualKeyCodeToKey(const UINT keyCode)
+    Key VirtualKeyCodeToKey(const uint32 virtualKeyCode) noexcept
     {
-        if (keyCode >= KEY_TABLE.size()) return Key::Unknown;
-        return KEY_TABLE[keyCode];
-    }
+        /* === Reference: https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes === */
+        if (virtualKeyCode >= 'A' && virtualKeyCode <= 'Z') return static_cast<Key>(static_cast<uint32>(Key::A) + (virtualKeyCode - 'A'));
+        if (virtualKeyCode >= '0' && virtualKeyCode <= '9') return static_cast<Key>(static_cast<uint32>(Key::Number0) + (virtualKeyCode - '0'));
+        if (virtualKeyCode >= VK_NUMPAD0 && virtualKeyCode <= VK_NUMPAD9) return static_cast<Key>(static_cast<uint32>(Key::KeypadNumber0) + (virtualKeyCode - VK_NUMPAD0));
+        if (virtualKeyCode >= VK_F1 && virtualKeyCode <= VK_F24) return static_cast<Key>(static_cast<uint32>(Key::F1) + (virtualKeyCode - VK_F1));
 
-    MouseButton VirtualKeyCodeToMouseButton(const UINT keyCode)
-    {
-        if (keyCode >= MOUSE_BUTTON_TABLE.size()) return MouseButton::Unknown;
-        return MOUSE_BUTTON_TABLE[keyCode];
+        switch (virtualKeyCode)
+        {
+            case VK_SPACE:          return Key::Space;
+            case VK_ESCAPE:         return Key::Escape;
+            case VK_OEM_MINUS:      return Key::Minus;
+            case VK_OEM_PLUS:       return Key::Equal;
+            case VK_OEM_COMMA:      return Key::Comma;
+            case VK_OEM_PERIOD:     return Key::Period;
+            case VK_OEM_7:          return Key::Apostrophe;
+            case VK_OEM_1:          return Key::Semicolon;
+            case VK_OEM_2:          return Key::Slash;
+            case VK_OEM_5:          return Key::Backslash;
+            case VK_OEM_4:          return Key::LeftBracket;
+            case VK_OEM_6:          return Key::RightBracket;
+            case VK_OEM_3:          return Key::Grave;
+            case VK_OEM_8:          return Key::World1;
+            case VK_OEM_102:        return Key::World2;
+            case VK_RETURN:         return Key::Enter;
+            case VK_BACK:           return Key::Backspace;
+            case VK_DELETE:         return Key::Delete;
+            case VK_TAB:            return Key::Tab;
+            case VK_CAPITAL:        return Key::CapsLock;
+            case VK_INSERT:         return Key::Insert;
+            case VK_RIGHT:          return Key::RightArrow;
+            case VK_LEFT:           return Key::LeftArrow;
+            case VK_DOWN:           return Key::DownArrow;
+            case VK_UP:             return Key::UpArrow;
+            case VK_PRIOR:          return Key::PageUp;
+            case VK_NEXT:           return Key::PageDown;
+            case VK_HOME:           return Key::Home;
+            case VK_END:            return Key::End;
+            case VK_SCROLL:         return Key::ScrollLock;
+            case VK_NUMLOCK:        return Key::NumpadLock;
+            case VK_SNAPSHOT:       return Key::PrintScreen;
+            case VK_PAUSE:          return Key::Pause;
+            case VK_DECIMAL:        return Key::KeypadPeriod;
+            case VK_DIVIDE:         return Key::KeypadSlash;
+            case VK_MULTIPLY:       return Key::KeypadAsterisk;
+            case VK_SUBTRACT:       return Key::KeypadMinus;
+            case VK_ADD:            return Key::KeypadPlus;
+            case VK_SHIFT:
+            case VK_LSHIFT:         return Key::LeftShift;
+            case VK_RSHIFT:         return Key::RightShift;
+            case VK_CONTROL:
+            case VK_LCONTROL:       return Key::LeftControl;
+            case VK_RCONTROL:       return Key::RightControl;
+            case VK_MENU:
+            case VK_LMENU:          return Key::LeftAlt;
+            case VK_RMENU:          return Key::RightAlt;
+            case VK_LWIN:           return Key::LeftSystem;
+            case VK_RWIN:           return Key::RightSystem;
+            case VK_APPS:           return Key::Menu;
+            default:                break;
+        }
+
+        return Key::Unknown;
     }
 
     /* --- POLLING METHODS --- */
@@ -294,7 +115,9 @@ namespace Sierra
 
     void Win32InputManager::RegisterMouseScroll(const Vector2 scroll)
     {
-        mouseScroll = scroll;
+        // Several scroll steps may happen between two updates (such as with high-resolution wheels and touchpads), so they are accumulated
+        mouseScroll += scroll;
+        GetMouseScrollDispatcher().DispatchEvent(scroll);
     }
 
     /* --- GETTER METHODS --- */
@@ -349,14 +172,39 @@ namespace Sierra
         return WindowingBackendType::Win32;
     }
 
-    /* --- POLLING METHODS --- */
+    /* --- PRIVATE METHODS --- */
 
     void Win32InputManager::Update()
     {
-        // Swap out current key/mouse states and move them to the array for the last frame
-        std::copy(keyStates.begin(), keyStates.end(), lastKeyStates.begin());
-        std::copy(mouseButtonStates.begin(), mouseButtonStates.end(), lastMouseButtonStates.begin());
+        std::ranges::copy(keyStates, lastKeyStates.begin());
+        std::ranges::copy(mouseButtonStates, lastMouseButtonStates.begin());
         mouseScroll = { 0, 0 };
+    }
+
+    void Win32InputManager::ReleaseKeys()
+    {
+        for (uint32 i = 0; i < KEY_COUNT; i++)
+        {
+            if (keyStates[i] == InputAction::Press) RegisterKeyRelease(static_cast<Key>(i));
+        }
+    }
+
+    void Win32InputManager::ReleaseMouseButtons()
+    {
+        for (uint32 i = 0; i < MOUSE_BUTTON_COUNT; i++)
+        {
+            if (mouseButtonStates[i] == InputAction::Press) RegisterMouseButtonRelease(static_cast<MouseButton>(i));
+        }
+    }
+
+    bool Win32InputManager::IsKeyDown(const Key key) const noexcept
+    {
+        return keyStates[GetKeyIndex(key)] == InputAction::Press;
+    }
+
+    bool Win32InputManager::IsAnyMouseButtonDown() const noexcept
+    {
+        return std::ranges::any_of(mouseButtonStates, [](const InputAction action) -> bool { return action == InputAction::Press; });
     }
 
 }

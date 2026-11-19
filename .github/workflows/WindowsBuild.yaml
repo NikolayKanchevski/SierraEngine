@@ -28,9 +28,9 @@ jobs:
         with:
           submodules: true
 
-      # Slang has many submodules of its own, of which only the ones its compiler library is built from are fetched
+      # Slang has many submodules of its own, of which only the ones its compiler library is built from are fetched (mimalloc being one only on Windows, where Slang uses it when built with MSVC)
       - name: Fetch Slang Dependencies
-        run: git -C SierraEngineEditor/vendor/slang submodule update --init external/unordered_dense external/miniz external/lz4 external/cmark external/vulkan external/fast_float external/spirv-headers external/lua
+        run: git -C SierraEngineEditor/vendor/slang submodule update --init external/unordered_dense external/miniz external/lz4 external/cmark external/vulkan external/fast_float external/spirv-headers external/lua external/mimalloc
 
       - name: Prepare Vulkan SDK
         uses: ./.github/actions/setup-vulkan-sdk
@@ -44,13 +44,18 @@ jobs:
         shell: bash
         run: echo "buildDirectory=${{ github.workspace }}/bin/SierraEngineEditor-Windows-MSVC/" >> "$GITHUB_OUTPUT"
 
+      # Configuring downloads some dependencies (such as fastgltf's simdjson), which occasionally fails on GitHub's runners, so it is retried once
       - name: Configure Editor CMake Project
-        run: >
-          cmake -B ${{ steps.editorStrings.outputs.buildDirectory }}
-          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -S ${{ github.workspace }}/SierraEngineEditor/
+        shell: bash
+        run: |
+          for attempt in 1 2; do
+            cmake -B "${{ steps.editorStrings.outputs.buildDirectory }}" \
+              -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
+              -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              -S "${{ github.workspace }}/SierraEngineEditor/" && exit 0
+          done
+          exit 1
 
       - name: Build Editor CMake Project
         run: cmake --build ${{ steps.editorStrings.outputs.buildDirectory }} --config ${{ matrix.build_type }} --parallel

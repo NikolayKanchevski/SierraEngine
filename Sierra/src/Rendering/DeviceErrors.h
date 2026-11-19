@@ -11,8 +11,8 @@ namespace Sierra
     {
     public:
         /* --- COPY SEMANTICS --- */
-        DeviceError(const DeviceError&) = delete;
-        DeviceError& operator=(const DeviceError&) = delete;
+        DeviceError(const DeviceError&) noexcept = default;
+        DeviceError& operator=(const DeviceError&) noexcept = default;
 
         /* --- MOVE SEMANTICS --- */
         DeviceError(DeviceError&&) noexcept = default;
@@ -34,8 +34,8 @@ namespace Sierra
         explicit UnknownDeviceError(std::string_view message) noexcept;
 
         /* --- COPY SEMANTICS --- */
-        UnknownDeviceError(const UnknownDeviceError&) = delete;
-        UnknownDeviceError& operator=(const UnknownDeviceError&) = delete;
+        UnknownDeviceError(const UnknownDeviceError&) noexcept = default;
+        UnknownDeviceError& operator=(const UnknownDeviceError&) noexcept = default;
 
         /* --- MOVE SEMANTICS --- */
         UnknownDeviceError(UnknownDeviceError&&) noexcept = default;
@@ -52,8 +52,8 @@ namespace Sierra
         explicit DeviceOutOfMemory(std::string_view message) noexcept;
 
         /* --- COPY SEMANTICS --- */
-        DeviceOutOfMemory(const DeviceOutOfMemory&) = delete;
-        DeviceOutOfMemory& operator=(const DeviceOutOfMemory&) = delete;
+        DeviceOutOfMemory(const DeviceOutOfMemory&) noexcept = default;
+        DeviceOutOfMemory& operator=(const DeviceOutOfMemory&) noexcept = default;
 
         /* --- MOVE SEMANTICS --- */
         DeviceOutOfMemory(DeviceOutOfMemory&&) noexcept = default;

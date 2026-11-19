@@ -35,7 +35,7 @@ namespace SierraEngine
                     for (size i = 0; i < meshInfo.primitives.size(); i++)
                     {
                         meshOffset += i > 0;
-                        node.meshIndices.emplace_back(*nodeInfo.meshIndex + meshOffset);
+                        node.meshIndices.emplace_back(static_cast<uint32>(*nodeInfo.meshIndex + meshOffset));
                     }
                 }
             }
@@ -128,7 +128,7 @@ namespace SierraEngine
 
                     if (primitive.materialIndex.has_value())
                     {
-                        mesh.materialIndex = *primitive.materialIndex;
+                        mesh.materialIndex = static_cast<uint32>(*primitive.materialIndex);
                     }
                 }
             }

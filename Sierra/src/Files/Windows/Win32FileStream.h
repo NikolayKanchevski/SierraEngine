@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include "../FileStream.h"
+#if !SR_PLATFORM_WINDOWS
+    #error "Including the Win32FileStream.h file is only allowed in Windows builds!"
+#endif
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+#include "../FileStream.h"
 
 namespace Sierra
 {
@@ -16,19 +17,23 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Win32FileStream(HANDLE fileHandle, const std::filesystem::path& filePath);
+        explicit Win32FileStream(void* fileHandle, const FileStreamCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
-        void Seek(size offset) override;
-        [[nodiscard]] std::vector<uint8> Read(size memorySize) override;
-        void Write(const void* memory, size offset, size memorySize) override;
+        [[nodiscard]] StreamResult Read(std::span<uint8> outMemory) override;
+        [[nodiscard]] StreamResult Write(std::span<const uint8> memory) override;
+
+        /* --- SETTER METHODS --- */
+        [[nodiscard]] StreamResult SetOffset(size offset) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] size GetCurrentOffset() const override;
-        [[nodiscard]] size GetMemorySize() const override;
-        [[nodiscard]] const std::filesystem::path& GetFilePath() const noexcept override { return filePath; }
+        [[nodiscard]] const Path& GetFilePath() const noexcept override { return filePath; }
+        [[nodiscard]] size GetOffset() const override;
+        [[nodiscard]] size GetSize() const override;
+        [[nodiscard]] StreamAccess GetAccess() const noexcept override { return access; }
 
-        [[nodiscard]] HANDLE GetFileHandle() const noexcept { return fileHandle; }
+        // NOTE: Handle is a HANDLE, which is spelled out as void*, so that Windows.h does not have to be included here
+        [[nodiscard]] void* GetFileHandle() const noexcept { return fileHandle; }
 
         /* --- COPY SEMANTICS --- */
         Win32FileStream(const Win32FileStream&) = delete;
@@ -42,8 +47,9 @@ namespace Sierra
         ~Win32FileStream() noexcept override;
 
     private:
-        const std::filesystem::path filePath;
-        HANDLE fileHandle = INVALID_HANDLE_VALUE;
+        void* fileHandle = nullptr;
+        Path filePath = { };
+        StreamAccess access = StreamAccess::ReadWrite;
 
     };
 

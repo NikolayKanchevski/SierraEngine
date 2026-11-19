@@ -54,6 +54,8 @@ namespace SierraEngine
                 return glm::ortho(-orthographicWidth * 0.5f, orthographicWidth * 0.5f, -orthographicHeight * 0.5f, orthographicHeight * 0.5f, nearClip, farClip);
             }
         }
+
+        return Matrix4x4(1.0f);
     }
 
 }

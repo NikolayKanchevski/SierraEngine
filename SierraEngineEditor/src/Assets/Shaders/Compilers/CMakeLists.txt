@@ -26,11 +26,7 @@ set(SLANG_ENABLE_TESTS OFF)
 set(SLANG_ENABLE_EXAMPLES OFF)
 add_subdirectory(${SLANG_DIRECTORY_PATH} ${CMAKE_BINARY_DIR}/vendor/slang EXCLUDE_FROM_ALL)
 target_link_libraries(SierraEngineEditor PRIVATE slang)
-
-# Windows only looks for libraries next to executables (other platforms find it through the executable's runtime search paths)
-if(WIN32)
-    add_custom_command(TARGET SierraEngineEditor POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:slang> $<TARGET_FILE_DIR:SierraEngineEditor>)
-endif()
+# NOTE: On Windows, the library is copied next to the executable by the editor's root CMakeLists.txt, as post-build steps can only be attached to a target from the directory it was created in
 
 # Link SPIRV-Cross (only what translating SPIR-V to Metal requires, as the Metal backend builds on top of the GLSL one)
 set(SPIRV_CROSS_DIRECTORY_PATH ../../../../vendor/SPIRV-Cross)

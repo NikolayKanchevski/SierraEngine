@@ -128,10 +128,14 @@ namespace SierraEngine
 
         MenuPanel::Draw(applicationFrame, editorFrame);
 
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Wdeprecated-enum-enum-conversion"
+        #if defined(__clang__)
+            #pragma clang diagnostic push
+            #pragma clang diagnostic ignored "-Wdeprecated-enum-enum-conversion"
+        #endif
         ImGui::DockSpace(dockID, { 0.0f, 0.0f }, static_cast<ImGuiDockNodeFlags>(ImGuiDockNodeFlags_NoWindowMenuButton) | ImGuiDockNodeFlags_PassthruCentralNode);
-        #pragma clang diagnostic pop
+        #if defined(__clang__)
+            #pragma clang diagnostic pop
+        #endif
 
         ImGui::End();
 

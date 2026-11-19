@@ -95,7 +95,7 @@ namespace Sierra
         return path.has_parent_path() && path != "/";
     }
 
-    bool Path::IsAncestor(const Sierra::Path& descendantPath) const noexcept
+    bool Path::IsAncestor(const Path& descendantPath) const noexcept
     {
         const auto [a, d] = std::ranges::mismatch(path, descendantPath.path);
         return a == path.end() && d != descendantPath.path.end();
@@ -119,6 +119,11 @@ namespace Sierra
     std::string Path::GetString() const
     {
         return path.string();
+    }
+
+    std::wstring Path::GetWideString() const
+    {
+        return path.wstring();
     }
 
     std::string Path::GetStem() const

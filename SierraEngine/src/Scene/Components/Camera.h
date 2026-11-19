@@ -17,7 +17,7 @@ namespace SierraEngine
         Orthographic
     };
 
-    class Camera final : public Component
+    class SIERRA_ENGINE_API Camera final : public Component
     {
     public:
         /* --- CONSTRUCTORS --- */

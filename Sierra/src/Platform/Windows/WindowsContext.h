@@ -12,6 +12,7 @@
 
 #include "Win32Context.h"
 #include "../../Files/Windows/Win32FileManager.h"
+#include "../../Windowing/Windows/Win32WindowManager.h"
 
 namespace Sierra
 {
@@ -23,17 +24,16 @@ namespace Sierra
         WindowsContext();
 
         /* --- POLLING METHODS --- */
-        [[nodiscard]] std::unique_ptr<Window> CreateWindow(const WindowCreateInfo& createInfo) const override;
+        bool OpenAlertDialog(const AlertDialogOpenInfo& openInfo) const noexcept override;
+        [[nodiscard]] std::vector<Path> OpenPathSelectionDialog(const PathSelectionDialogOpenInfo& openInfo) const noexcept override;
+        [[nodiscard]] std::optional<Path> OpenPathSaveDialog(const PathSaveDialogOpenInfo& openInfo) const noexcept override;
+        bool OpenPath(const Path& path) const noexcept override;
 
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::string GetUserName() const noexcept override;
+        [[nodiscard]] const WindowManager& GetWindowManager() const noexcept override { return windowManager; }
         [[nodiscard]] const FileManager& GetFileManager() const noexcept override { return fileManager; }
-
-        [[nodiscard]] Screen& GetPrimaryScreen() noexcept override { return win32Context.GetPrimaryScreen(); }
-        [[nodiscard]] Screen& GetWindowScreen(const Window& window) override;
-        void EnumerateScreens(const ScreenEnumerationPredicate& Predicate) override;
-
         [[nodiscard]] PlatformType GetType() const noexcept override { return PlatformType::Windows; }
-        [[nodiscard]] Win32Context& GetWin32Context() { return win32Context; }
 
         /* --- COPY SEMANTICS --- */
         WindowsContext(const WindowsContext&) = delete;
@@ -48,7 +48,8 @@ namespace Sierra
 
     private:
         Win32Context win32Context;
-        Win32FileManager fileManager;
+        Win32WindowManager windowManager;
+        Win32FileManager fileManager = { };
 
         void Update() override;
 

@@ -7,4 +7,6 @@ target_sources(Sierra PRIVATE
     Win32Screen.h
     Win32Window.cpp
     Win32Window.h
+    Win32WindowManager.cpp
+    Win32WindowManager.h
 )

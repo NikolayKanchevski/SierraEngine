@@ -56,6 +56,8 @@ namespace Sierra
         [[nodiscard]] bool IsWithinHiddenPath() const noexcept;
 
         [[nodiscard]] std::string GetString() const;
+        [[nodiscard]] std::wstring GetWideString() const;
+
         [[nodiscard]] std::string GetStem() const;
         [[nodiscard]] std::string GetFileName() const;
         [[nodiscard]] std::string GetExtension() const;
@@ -80,6 +82,7 @@ namespace Sierra
 
         /* --- OPERATORS --- */
         [[nodiscard]] operator std::string() const { return GetString(); }
+        [[nodiscard]] operator std::wstring() const { return GetWideString(); }
         [[nodiscard]] operator std::filesystem::path() const { return path; }
 
         [[nodiscard]] Path operator/(const Path& other) const;

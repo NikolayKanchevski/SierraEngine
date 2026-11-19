@@ -16,7 +16,7 @@ namespace SierraEngine
             const ImGuiStyle& style = ImGui::GetStyle();
 
             constexpr std::string_view BROWSE_BUTTON_LABEL = "Browse";
-            float32 buttonWidth = ImGui::CalcTextSize(BROWSE_BUTTON_LABEL.begin(), BROWSE_BUTTON_LABEL.end()).x + 2 * style.FramePadding.x;
+            float32 buttonWidth = ImGui::CalcTextSize(BROWSE_BUTTON_LABEL.data(), BROWSE_BUTTON_LABEL.data() + BROWSE_BUTTON_LABEL.size()).x + 2 * style.FramePadding.x;
 
             const float32 filePathWidth = width - (buttonWidth + style.ItemSpacing.x);
 
@@ -127,13 +127,13 @@ namespace SierraEngine
 
     void ImGuiWidgets::BeginProperty(const std::string_view label, const std::string_view tooltip)
     {
-        ImGui::PushID(label.begin(), label.end());
+        ImGui::PushID(label.data(), label.data() + label.size());
 
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
 
         ImGui::AlignTextToFramePadding();
-        ImGui::TextEx(label.begin(), label.end());
+        ImGui::TextEx(label.data(), label.data() + label.size());
 
         if (!tooltip.empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
         {
@@ -325,7 +325,7 @@ namespace SierraEngine
 
     bool ImGuiWidgets::VectorInput(const std::string_view label, void* value, const size length, const ImGuiDataType dataType, const ImGuiVectorInputInfo& inputInfo)
     {
-        ImGui::PushID(label.begin(), label.end());
+        ImGui::PushID(label.data(), label.data() + label.size());
         const float32 buttonWidth = ImGui::GetFrameHeight();
 
         ImDrawFlags inputFieldRounding = ImDrawFlags_RoundCornersRight;
@@ -487,7 +487,7 @@ namespace SierraEngine
         }
 
         constexpr std::string_view BROWSE_BUTTON_LABEL = "Browse";
-        const float32 browseButtonWidth = ImGui::CalcTextSize(BROWSE_BUTTON_LABEL.begin(), BROWSE_BUTTON_LABEL.end()).x + 2 * style.FramePadding.x;
+        const float32 browseButtonWidth = ImGui::CalcTextSize(BROWSE_BUTTON_LABEL.data(), BROWSE_BUTTON_LABEL.data() + BROWSE_BUTTON_LABEL.size()).x + 2 * style.FramePadding.x;
 
         ImGuiWidgets::BeginHorizontalPadding((size - browseButtonWidth) / 2.0f);
 

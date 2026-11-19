@@ -351,10 +351,13 @@ namespace Sierra
     /* --- DESTRUCTOR --- */
     void VulkanSwapchain::Recreate()
     {
-        while (window->IsMinimized())
+        while (window->IsMinimized() && !window->IsClosed())
         {
             window->Update();
         }
+
+        // Window may have been closed while it was being waited on (such as from the taskbar, while minimized), after which there is nothing left to present to
+        if (window->IsClosed()) return;
 
         // Rendering to, and presenting, the images (as well as converting semaphores of them) may happen on any queue, all of which must be done using them, and their semaphores, before they are replaced
         device->WaitForQueuesIdle();

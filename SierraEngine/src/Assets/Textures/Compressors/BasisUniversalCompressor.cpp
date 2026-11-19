@@ -4,11 +4,15 @@
 
 #include "BasisUniversalCompressor.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-builtins"
+#if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdeprecated-builtins"
+#endif
 #include <encoder/basisu_enc.h>
 #include <encoder/basisu_comp.h>
-#pragma clang diagnostic pop
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
 
 namespace SierraEngine
 {

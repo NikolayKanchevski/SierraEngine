@@ -19,7 +19,7 @@ namespace Sierra
     concept EventType = std::is_base_of_v<Event, T> && !std::is_same_v<Event, T>;
 
     template<EventType EventType>
-    class SIERRA_API EventDispatcher final
+    class EventDispatcher final
     {
     public:
         /* --- TYPE DEFINITIONS --- */

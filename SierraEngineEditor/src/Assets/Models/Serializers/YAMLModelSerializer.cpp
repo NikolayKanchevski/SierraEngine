@@ -184,7 +184,7 @@ namespace SierraEngine
                 materialSerializeInfo.metadata.name = material.name;
 
                 MaterialSettings& settings = materialSerializeInfo.settings;
-                const auto AssignTexture = [&textures = outDependencies.textures](const std::optional<uint32>& textureIndex, TextureID& outID) -> void
+                const auto AssignTexture = [&textures = outDependencies.textures](const std::optional<size>& textureIndex, TextureID& outID) -> void
                 {
                     if (!textureIndex.has_value() || *textureIndex >= textures.size())
                     {

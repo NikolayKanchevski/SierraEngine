@@ -1,7 +1,6 @@
 //
 // Created by Nikolay Kanchevski on 8.21.2023.
 //
-//
 
 #pragma once
 
@@ -9,10 +8,8 @@
     #error "Including the Win32Window.h file is only allowed in Windows builds!"
 #endif
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
 #include "../Window.h"
+
 #include "Win32InputManager.h"
 #include "Win32CursorManager.h"
 #include "../../Platform/Windows/Win32Context.h"
@@ -24,14 +21,16 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Win32Window(const Win32Context& win32Context, const WindowCreateInfo& createInfo);
+        explicit Win32Window(Win32Context& win32Context, const WindowCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
         void Update() override;
         void Minimize() override;
         void Maximize() override;
+        void Restore() override;
         void Show() override;
         void Hide() override;
+        void RequestFocus(WindowFocusRequestType requestType) override;
         void Focus() override;
         void Close() override;
 
@@ -39,22 +38,25 @@ namespace Sierra
         void SetTitle(std::string_view title) override;
         void SetPosition(Vector2Int position) override;
         void SetSize(Vector2UInt size) override;
+        void SetSizeLimits(Vector2UInt minimumSize, Vector2UInt maximumSize) override;
+        void SetAspectRatio(uint32 numerator, uint32 denominator) override;
         void SetOpacity(float32 opacity) override;
 
         /* --- GETTER METHODS --- */
-        [[nodiscard]] std::string_view GetTitle() const noexcept override;
+        [[nodiscard]] std::string GetTitle() const noexcept override;
         [[nodiscard]] Vector2Int GetPosition() const noexcept override;
-        [[nodiscard]] uint32 GetWidth() const noexcept override;
-        [[nodiscard]] uint32 GetHeight() const noexcept override;
-        [[nodiscard]] uint32 GetFramebufferWidth() const noexcept override;
-        [[nodiscard]] uint32 GetFramebufferHeight() const noexcept override;
         [[nodiscard]] float32 GetOpacity() const noexcept override;
 
-        [[nodiscard]] bool IsClosed() const noexcept override;
+        [[nodiscard]] Vector2UInt GetSize() const noexcept override;
+        [[nodiscard]] Vector2UInt GetFramebufferSize() const noexcept override;
+        [[nodiscard]] float32 GetScaling() const noexcept override;
+
+        [[nodiscard]] bool IsVisible() const noexcept override;
+        [[nodiscard]] bool IsTransparent() const noexcept override;
         [[nodiscard]] bool IsMinimized() const noexcept override;
         [[nodiscard]] bool IsMaximized() const noexcept override;
         [[nodiscard]] bool IsFocused() const noexcept override;
-        [[nodiscard]] bool IsHidden() const noexcept override;
+        [[nodiscard]] bool IsClosed() const noexcept override;
 
         [[nodiscard]] InputManager* GetInputManager() noexcept override { return &inputManager; }
         [[nodiscard]] const InputManager* GetInputManager() const noexcept override { return &inputManager; }
@@ -66,8 +68,9 @@ namespace Sierra
         [[nodiscard]] const TouchManager* GetTouchManager() const noexcept override { return nullptr;  }
 
         [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override { return WindowingBackendType::Win32; }
-        [[nodiscard]] HWND GetHwnd() const { return window; }
-        [[nodiscard]] HINSTANCE GetHInstance() const { return win32Context.GetHInstance(); }
+
+        [[nodiscard]] HWND GetHwnd() const noexcept { return window; }
+        [[nodiscard]] HINSTANCE GetHInstance() const noexcept { return win32Context.GetHInstance(); }
 
         /* --- MOVE SEMANTICS --- */
         Win32Window(Win32Window&&) = delete;
@@ -81,18 +84,51 @@ namespace Sierra
         ~Win32Window() noexcept override;
 
     private:
-        const Win32Context& win32Context;
-        HWND window;
+        Win32Context& win32Context;
+        HWND window = nullptr;
 
         Win32InputManager inputManager;
         Win32CursorManager cursorManager;
 
-        std::string title;
-        bool closed = false;
+        std::string title = { };
+        bool resizable = false;
 
-        bool justBecameShown = false;      // This is to prevent all the made up events the window manager sends when showing a hidden window
-        bool nextMoveEventBlocked = false; // This is to prevent detecting when window manager moves window to [x: ~-32000, y: ~-32000] when hiding/minimizing it
-        static LRESULT CALLBACK WindowProc(HWND callingWindow, UINT message, WPARAM wParam, LPARAM lParam);
+        // DPI of the monitor the window is on, which its logical units get scaled by (96 being an unscaled one)
+        UINT dpi = USER_DEFAULT_SCREEN_DPI;
+
+        Vector2UInt size = { 0, 0 };
+        Vector2Int lastPosition = { 0, 0 };
+
+        Vector2UInt minimumSize = { 0, 0 };
+        Vector2UInt maximumSize = { 0, 0 };
+        Vector2UInt aspectRatio = { 0, 0 };
+
+        bool closed = false;
+        bool focused = false;
+        bool minimized = false;
+        bool maximized = false;
+
+        [[nodiscard]] DWORD GetStyle() const noexcept;
+        [[nodiscard]] DWORD GetExStyle() const noexcept;
+        [[nodiscard]] float32 GetDPIScaling() const noexcept;
+
+        [[nodiscard]] Vector2UInt ToPhysicalSize(Vector2UInt logicalSize) const noexcept;
+        [[nodiscard]] Vector2UInt ToLogicalSize(Vector2UInt physicalSize) const noexcept;
+        [[nodiscard]] Vector2Int ToPhysicalPosition(Vector2Int logicalPosition) const noexcept;
+        [[nodiscard]] Vector2Int ToLogicalPosition(Vector2Int physicalPosition) const noexcept;
+
+        [[nodiscard]] Vector2UInt GetFrameSize(Vector2UInt physicalSize) const noexcept;
+        [[nodiscard]] Vector2UInt GetConstrainedSize(Vector2UInt targetSize) const noexcept;
+        [[nodiscard]] Vector2Int QueryPosition() const noexcept;
+        [[nodiscard]] Vector2UInt QuerySize() const noexcept;
+
+        void ApplyAspectRatio(WPARAM edge, RECT& frameRect) const noexcept;
+        void ReleaseStuckKeys();
+        void Destroy() noexcept;
+
+        friend class Win32Context;
+        [[nodiscard]] LRESULT HandleWin32Message(UINT message, WPARAM wParam, LPARAM lParam);
+        void HandleKeyMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
     };
 

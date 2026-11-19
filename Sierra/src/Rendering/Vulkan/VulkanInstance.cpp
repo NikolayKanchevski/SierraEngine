@@ -193,6 +193,32 @@ namespace Sierra
                 },
             #endif
         };
+
+        #if SR_ENABLE_LOGGING
+            // NOTE: Callback is a function of its own, rather than a lambda, as calling conventions (such as __stdcall on Windows) cannot be specified for lambdas on every compiler
+            VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessengerCallback(const VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, const VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void*)
+            {
+                switch (messageSeverity)
+                {
+                    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+                    {
+                        SR_WARNING("Vulkan {0}", callbackData->pMessage);
+                        break;
+                    }
+                    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+                    {
+                        SR_ERROR("Vulkan {0}", callbackData->pMessage);
+                        break;
+                    }
+                    default:
+                    {
+                        break;
+                    }
+                }
+
+                return VK_FALSE;
+            }
+        #endif
     }
 
     /* --- CONSTRUCTORS --- */
@@ -319,28 +345,7 @@ namespace Sierra
                 debugMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
                 debugMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
                 debugMessengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-                debugMessengerCreateInfo.pfnUserCallback = [](const VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, const VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void*) VKAPI_PTR -> VkBool32
-                {
-                    switch (messageSeverity)
-                    {
-                        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-                        {
-                            SR_WARNING("Vulkan {0}", callbackData->pMessage);
-                            break;
-                        }
-                        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-                        {
-                            SR_ERROR("Vulkan {0}", callbackData->pMessage);
-                            break;
-                        }
-                        default:
-                        {
-                            break;
-                        }
-                    }
-
-                    return VK_FALSE;
-                };
+                debugMessengerCreateInfo.pfnUserCallback = DebugMessengerCallback;
 
                 AddToPNextChain(&instanceCreateInfo, &debugMessengerCreateInfo);
             }

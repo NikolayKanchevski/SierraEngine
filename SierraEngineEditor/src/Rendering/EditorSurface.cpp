@@ -103,7 +103,7 @@ namespace SierraEngine
             const uint32 index = viewportIndex++;
             if (viewport.IsHidden()) return;
 
-            const SceneRenderInfo& renderInfo
+            const SceneRenderInfo renderInfo
             {
                 .renderTarget = viewport.GetRenderTarget(),
                 .width = viewport.GetWidth(),

@@ -14,12 +14,12 @@ namespace Sierra
         explicit UnsupportedFeatureError(std::string_view message) noexcept;
 
         /* --- COPY SEMANTICS --- */
-        UnsupportedFeatureError(const UnsupportedFeatureError&) = delete;
-        UnsupportedFeatureError& operator=(const UnsupportedFeatureError&) = delete;
+        UnsupportedFeatureError(const UnsupportedFeatureError&) noexcept = default;
+        UnsupportedFeatureError& operator=(const UnsupportedFeatureError&) noexcept = default;
 
         /* --- MOVE SEMANTICS --- */
-        UnsupportedFeatureError(UnsupportedFeatureError&&) = delete;
-        UnsupportedFeatureError& operator=(UnsupportedFeatureError&&) = delete;
+        UnsupportedFeatureError(UnsupportedFeatureError&&) noexcept = default;
+        UnsupportedFeatureError& operator=(UnsupportedFeatureError&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~UnsupportedFeatureError() noexcept override = default;
@@ -32,12 +32,12 @@ namespace Sierra
         explicit UnexpectedTypeError(std::string_view message) noexcept;
 
         /* --- COPY SEMANTICS --- */
-        UnexpectedTypeError(const UnexpectedTypeError&) = delete;
-        UnexpectedTypeError& operator=(const UnexpectedTypeError&) = delete;
+        UnexpectedTypeError(const UnexpectedTypeError&) noexcept = default;
+        UnexpectedTypeError& operator=(const UnexpectedTypeError&) noexcept = default;
 
         /* --- MOVE SEMANTICS --- */
-        UnexpectedTypeError(UnexpectedTypeError&&) = delete;
-        UnexpectedTypeError& operator=(UnexpectedTypeError&&) = delete;
+        UnexpectedTypeError(UnexpectedTypeError&&) noexcept = default;
+        UnexpectedTypeError& operator=(UnexpectedTypeError&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~UnexpectedTypeError() noexcept override = default;
@@ -50,12 +50,12 @@ namespace Sierra
         explicit InvalidValueError(std::string_view message) noexcept;
 
         /* --- COPY SEMANTICS --- */
-        InvalidValueError(const InvalidValueError&) = delete;
-        InvalidValueError& operator=(const InvalidValueError&) = delete;
+        InvalidValueError(const InvalidValueError&) noexcept = default;
+        InvalidValueError& operator=(const InvalidValueError&) noexcept = default;
 
         /* --- MOVE SEMANTICS --- */
-        InvalidValueError(InvalidValueError&&) = delete;
-        InvalidValueError& operator=(InvalidValueError&&) = delete;
+        InvalidValueError(InvalidValueError&&) noexcept = default;
+        InvalidValueError& operator=(InvalidValueError&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~InvalidValueError() noexcept override = default;
@@ -68,12 +68,12 @@ namespace Sierra
         explicit InvalidConfigurationError(std::string_view message) noexcept;
 
         /* --- COPY SEMANTICS --- */
-        InvalidConfigurationError(const InvalidConfigurationError&) = delete;
-        InvalidConfigurationError& operator=(const InvalidConfigurationError&) = delete;
+        InvalidConfigurationError(const InvalidConfigurationError&) noexcept = default;
+        InvalidConfigurationError& operator=(const InvalidConfigurationError&) noexcept = default;
 
         /* --- MOVE SEMANTICS --- */
-        InvalidConfigurationError(InvalidConfigurationError&&) = delete;
-        InvalidConfigurationError& operator=(InvalidConfigurationError&&) = delete;
+        InvalidConfigurationError(InvalidConfigurationError&&) noexcept = default;
+        InvalidConfigurationError& operator=(InvalidConfigurationError&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~InvalidConfigurationError() noexcept override = default;
@@ -86,12 +86,12 @@ namespace Sierra
         explicit InvalidOperationError(std::string_view message) noexcept;
 
         /* --- COPY SEMANTICS --- */
-        InvalidOperationError(const InvalidOperationError&) = delete;
-        InvalidOperationError& operator=(const InvalidOperationError&) = delete;
+        InvalidOperationError(const InvalidOperationError&) noexcept = default;
+        InvalidOperationError& operator=(const InvalidOperationError&) noexcept = default;
 
         /* --- MOVE SEMANTICS --- */
-        InvalidOperationError(InvalidOperationError&&) = delete;
-        InvalidOperationError& operator=(InvalidOperationError&&) = delete;
+        InvalidOperationError(InvalidOperationError&&) noexcept = default;
+        InvalidOperationError& operator=(InvalidOperationError&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~InvalidOperationError() noexcept override = default;
@@ -104,12 +104,12 @@ namespace Sierra
         explicit UnexpectedSizeError(const std::string_view message, const size actualSize, const size expectedSize) noexcept;
 
         /* --- COPY SEMANTICS --- */
-        UnexpectedSizeError(const UnexpectedSizeError&) = delete;
-        UnexpectedSizeError& operator=(const UnexpectedSizeError&) = delete;
+        UnexpectedSizeError(const UnexpectedSizeError&) noexcept = default;
+        UnexpectedSizeError& operator=(const UnexpectedSizeError&) noexcept = default;
 
         /* --- MOVE SEMANTICS --- */
-        UnexpectedSizeError(UnexpectedSizeError&&) = delete;
-        UnexpectedSizeError& operator=(UnexpectedSizeError&&) = delete;
+        UnexpectedSizeError(UnexpectedSizeError&&) noexcept = default;
+        UnexpectedSizeError& operator=(UnexpectedSizeError&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~UnexpectedSizeError() noexcept override = default;
@@ -127,12 +127,12 @@ namespace Sierra
         }
 
         /* --- COPY SEMANTICS --- */
-        ValueOutOfRangeError(const ValueOutOfRangeError&) = delete;
-        ValueOutOfRangeError& operator=(const ValueOutOfRangeError&) = delete;
+        ValueOutOfRangeError(const ValueOutOfRangeError&) noexcept = default;
+        ValueOutOfRangeError& operator=(const ValueOutOfRangeError&) noexcept = default;
 
         /* --- MOVE SEMANTICS --- */
-        ValueOutOfRangeError(ValueOutOfRangeError&&) = delete;
-        ValueOutOfRangeError& operator=(ValueOutOfRangeError&&) = delete;
+        ValueOutOfRangeError(ValueOutOfRangeError&&) noexcept = default;
+        ValueOutOfRangeError& operator=(ValueOutOfRangeError&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~ValueOutOfRangeError() noexcept override = default;
@@ -150,12 +150,12 @@ namespace Sierra
         }
 
         /* --- COPY SEMANTICS --- */
-        InvalidRangeError(const InvalidRangeError&) = delete;
-        InvalidRangeError& operator=(const InvalidRangeError&) = delete;
+        InvalidRangeError(const InvalidRangeError&) noexcept = default;
+        InvalidRangeError& operator=(const InvalidRangeError&) noexcept = default;
 
         /* --- MOVE SEMANTICS --- */
-        InvalidRangeError(InvalidRangeError&&) = delete;
-        InvalidRangeError& operator=(InvalidRangeError&&) = delete;
+        InvalidRangeError(InvalidRangeError&&) noexcept = default;
+        InvalidRangeError& operator=(InvalidRangeError&&) noexcept = default;
 
         /* --- DESTRUCTOR --- */
         ~InvalidRangeError() noexcept override = default;

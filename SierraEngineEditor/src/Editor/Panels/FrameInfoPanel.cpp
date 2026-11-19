@@ -4,6 +4,8 @@
 
 #include "FrameInfoPanel.h"
 
+#include <numeric>
+
 namespace SierraEngine
 {
 

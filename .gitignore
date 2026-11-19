@@ -9,11 +9,8 @@ Makefile
 CMakeFiles/
 cmake_install.cmake
 
-SierraEngineEditor/cmake-build-debug/
-SierraEngineEditor/cmake-build-release
-
-SierraEngineRuntime/cmake-build-debug/
-SierraEngineRuntime/cmake-build-release/
+SierraEngineEditor/bin/
+SierraEngineRuntime/bin/
 
 .gradle/
 .android/

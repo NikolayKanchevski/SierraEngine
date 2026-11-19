@@ -13,8 +13,9 @@ namespace Sierra
     template<typename T>
     concept HandleType = std::is_same_v<T, Handle<typename T::ValueType>> || std::is_base_of_v<Handle<typename T::ValueType>, T>;
 
+    // NOTE: Template is not exported (with SIERRA_API), as it is fully defined here, and every module instantiates it itself (exported templates are only importable for arguments the library itself has instantiated them with)
     template<HandleType HandleType, typename Item = void>
-    class SIERRA_API HandleManager
+    class HandleManager
     {
     public:
         /* --- TYPE DEFINITIONS --- */

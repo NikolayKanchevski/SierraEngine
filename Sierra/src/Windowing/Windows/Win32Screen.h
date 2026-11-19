@@ -8,8 +8,23 @@
     #error "Including the Win32Screen.h file is only allowed in Windows builds!"
 #endif
 
-#define WIN32_LEAN_AND_MEAN
+#if !defined(WIN32_LEAN_AND_MEAN)
+    #define WIN32_LEAN_AND_MEAN
+#endif
+#if !defined(NOMINMAX)
+    #define NOMINMAX
+#endif
 #include <Windows.h>
+
+#pragma region Windows Macros // Windows.h defines macros, which collide with names of Sierra's methods, so they are removed
+    #undef CreateWindow
+    #undef CreateFile
+    #undef CreateDirectory
+    #undef CopyFile
+    #undef MoveFile
+    #undef DeleteFile
+    #undef GetUserName
+#pragma endregion
 
 #include "../Screen.h"
 
@@ -19,6 +34,7 @@ namespace Sierra
     struct Win32ScreenCreateInfo
     {
         HMONITOR hMonitor = nullptr;
+        float32 scaling = 1.0f;
     };
 
     class SIERRA_API Win32Screen final : public Screen
@@ -39,9 +55,12 @@ namespace Sierra
         [[nodiscard]] Vector2Int GetWorkAreaOrigin() const noexcept override { return workAreaOrigin; }
         [[nodiscard]] uint32 GetWorkAreaWidth() const noexcept override { return workAreaSize.x; }
         [[nodiscard]] uint32 GetWorkAreaHeight() const noexcept override { return workAreaSize.y; }
+
         [[nodiscard]] WindowingBackendType GetBackendType() const noexcept override { return WindowingBackendType::Win32; }
 
-        [[nodiscard]] HMONITOR GetHMonitor() const { return hMonitor; }
+        [[nodiscard]] HMONITOR GetHMonitor() const noexcept { return hMonitor; }
+        [[nodiscard]] float32 GetScaling() const noexcept { return scaling; }
+        [[nodiscard]] bool IsPrimary() const noexcept { return primary; }
 
         /* --- COPY SEMANTICS --- */
         Win32Screen(const Win32Screen&) = delete;
@@ -56,6 +75,8 @@ namespace Sierra
 
     private:
         HMONITOR hMonitor = nullptr;
+        float32 scaling = 1.0f;
+        bool primary = false;
 
         std::string name = "Unknown";
         uint16 refreshRate = 0;

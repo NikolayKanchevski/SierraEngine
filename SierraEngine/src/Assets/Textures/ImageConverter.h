@@ -15,7 +15,7 @@ namespace SierraEngine
         Sierra::ImageFormat format = Sierra::ImageFormat::Undefined;
     };
 
-    class ImageConverter
+    class SIERRA_ENGINE_API ImageConverter
     {
     public:
         /* --- CONSTRUCTORS --- */

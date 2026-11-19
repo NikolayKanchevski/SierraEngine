@@ -8,10 +8,9 @@
     #error "Including the Win32CursorManager.h file is only allowed in Windows builds!"
 #endif
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
 #include "../CursorManager.h"
+
+#include "../../Platform/Windows/Win32Context.h"
 
 namespace Sierra
 {
@@ -20,7 +19,7 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit Win32CursorManager(HWND window);
+        explicit Win32CursorManager(HWND window, Vector2UInt windowSize);
 
         /* --- POLLING METHODS --- */
         void RegisterCursorMove(Vector2Int position) override;
@@ -47,15 +46,20 @@ namespace Sierra
         ~Win32CursorManager() noexcept override = default;
 
     private:
-        HWND window;
+        HWND window = nullptr;
+        Vector2UInt windowSize = { 0, 0 };
+
         Vector2Int cursorPosition = { 0, 0 };
         Vector2Int lastCursorPosition = { 0, 0 };
 
         bool cursorShown = true;
-        bool justHidCursor = false;
 
         friend class Win32Window;
-        void Update();
+        void Update(bool focused);
+        void SetWindowSize(Vector2UInt size);
+        void WarpCursor(Vector2Int physicalPosition);
+        void ApplyCursor() const;
+        [[nodiscard]] bool IsCursorOverClientArea() const;
 
     };
 

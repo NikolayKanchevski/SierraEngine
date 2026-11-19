@@ -9,7 +9,7 @@
 namespace SierraEngine
 {
 
-    class Transform final : public Component
+    class SIERRA_ENGINE_API Transform final : public Component
     {
     public:
         /* --- CONSTRUCTORS --- */

@@ -8,17 +8,14 @@
     #error "Including the Win32InputManager.h file is only allowed in Windows builds!"
 #endif
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
 #include "../InputManager.h"
 
 namespace Sierra
 {
 
     /* --- CONVERSIONS --- */
-    [[nodiscard]] SIERRA_API Key VirtualKeyCodeToKey(UINT keyCode);
-    [[nodiscard]] SIERRA_API MouseButton VirtualKeyCodeToMouseButton(UINT keyCode);
+    // Translates a virtual key code, which does not tell left and right keys apart (they are distinguished by the window, which knows their scan codes)
+    [[nodiscard]] SIERRA_API Key VirtualKeyCodeToKey(uint32 virtualKeyCode) noexcept;
 
     class SIERRA_API Win32InputManager final : public InputManager
     {
@@ -70,6 +67,11 @@ namespace Sierra
 
         friend class Win32Window;
         void Update();
+        void ReleaseKeys();
+        void ReleaseMouseButtons();
+
+        [[nodiscard]] bool IsKeyDown(Key key) const noexcept;
+        [[nodiscard]] bool IsAnyMouseButtonDown() const noexcept;
 
     };
 
