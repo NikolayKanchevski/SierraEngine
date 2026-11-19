@@ -144,4 +144,14 @@ namespace Sierra
 
     }
 
+    void CommandBuffer::BeginTimestampRegion(const std::string_view regionName)
+    {
+        SR_THROW_IF(regionName.empty(), InvalidValueError(SR_FORMAT("Cannot begin timestamp region within command buffer [{0}], as specified region name must not be empty", GetName())));
+    }
+
+    void CommandBuffer::EndTimestampRegion()
+    {
+
+    }
+
 }

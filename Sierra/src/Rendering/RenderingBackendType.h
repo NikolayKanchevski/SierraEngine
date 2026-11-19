@@ -9,6 +9,7 @@ namespace Sierra
 
     enum class RenderingBackendType : uint8
     {
+        Undefined,
         Vulkan,
         DirectX,
         Metal,

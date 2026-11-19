@@ -1,0 +1,50 @@
+target_sources(SierraEngineEditor PRIVATE
+    SlangShaderCompiler.cpp
+    SlangShaderCompiler.h
+)
+
+# Locate Sierra's shader include directory, which the compiler searches alongside the directory of the shader being compiled
+target_compile_definitions(SierraEngineEditor PRIVATE "SR_EDITOR_SHADER_INCLUDE_DIRECTORY_PATH=\"${SIERRA_DIRECTORY_PATH}/include\"")
+
+# Link Slang (only its compiler library is built, and as a shared one, as linking all of it into the editor would make every build relink it)
+set(SLANG_DIRECTORY_PATH ../../../../vendor/slang)
+set(SLANG_LIB_TYPE SHARED)
+set(SLANG_EMBED_CORE_MODULE ON)
+set(SLANG_ENABLE_SPLIT_DEBUG_INFO OFF) # Splitting rewrites the library after it is linked, which makes Ninja consider it out of date and relink it on every build
+set(SLANG_SLANG_LLVM_FLAVOR DISABLE)
+set(SLANG_ENABLE_SLANG_GLSLANG OFF)
+set(SLANG_ENABLE_SLANG_RHI OFF)
+set(SLANG_ENABLE_SLANG_PROXY OFF)
+set(SLANG_ENABLE_GFX OFF)
+set(SLANG_ENABLE_DXIL OFF)
+set(SLANG_ENABLE_SLANGC OFF)
+set(SLANG_ENABLE_SLANGD OFF)
+set(SLANG_ENABLE_SLANGI OFF)
+set(SLANG_ENABLE_SLANGRT OFF)
+set(SLANG_ENABLE_REPLAYER OFF)
+set(SLANG_ENABLE_TESTS OFF)
+set(SLANG_ENABLE_EXAMPLES OFF)
+add_subdirectory(${SLANG_DIRECTORY_PATH} ${CMAKE_BINARY_DIR}/vendor/slang EXCLUDE_FROM_ALL)
+target_link_libraries(SierraEngineEditor PRIVATE slang)
+
+# Windows only looks for libraries next to executables (other platforms find it through the executable's runtime search paths)
+if(WIN32)
+    add_custom_command(TARGET SierraEngineEditor POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:slang> $<TARGET_FILE_DIR:SierraEngineEditor>)
+endif()
+
+# Link SPIRV-Cross (only what translating SPIR-V to Metal requires, as the Metal backend builds on top of the GLSL one)
+set(SPIRV_CROSS_DIRECTORY_PATH ../../../../vendor/SPIRV-Cross)
+set(SPIRV_CROSS_STATIC ON)
+set(SPIRV_CROSS_SHARED OFF)
+set(SPIRV_CROSS_CLI OFF)
+set(SPIRV_CROSS_ENABLE_TESTS OFF)
+set(SPIRV_CROSS_ENABLE_GLSL ON)
+set(SPIRV_CROSS_ENABLE_MSL ON)
+set(SPIRV_CROSS_ENABLE_HLSL OFF)
+set(SPIRV_CROSS_ENABLE_CPP OFF)
+set(SPIRV_CROSS_ENABLE_REFLECT OFF)
+set(SPIRV_CROSS_ENABLE_C_API OFF)
+set(SPIRV_CROSS_ENABLE_UTIL OFF)
+set(SPIRV_CROSS_SKIP_INSTALL ON)
+add_subdirectory(${SPIRV_CROSS_DIRECTORY_PATH} ${CMAKE_BINARY_DIR}/vendor/SPIRV-Cross EXCLUDE_FROM_ALL)
+target_link_libraries(SierraEngineEditor PRIVATE spirv-cross-msl spirv-cross-glsl spirv-cross-core)

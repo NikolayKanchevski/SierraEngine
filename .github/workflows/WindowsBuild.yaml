@@ -26,10 +26,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          submodules: recursive
+          submodules: true
+
+      # Slang has many submodules of its own, of which only the ones its compiler library is built from are fetched
+      - name: Fetch Slang Dependencies
+        run: git -C SierraEngineEditor/vendor/slang submodule update --init external/unordered_dense external/miniz external/lz4 external/cmark external/vulkan external/fast_float external/spirv-headers external/lua
 
       - name: Prepare Vulkan SDK
-        uses: humbletim/setup-vulkan-sdk@v1.2.1
+        uses: ./.github/actions/setup-vulkan-sdk
         with:
           vulkan-query-version: latest
           vulkan-components: Vulkan-Headers, Vulkan-Loader

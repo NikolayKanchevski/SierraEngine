@@ -20,8 +20,8 @@ namespace Sierra
     struct ShaderCreateInfo
     {
         std::string_view name = "Shader";
-        std::span<const uint8> buffer = { };
         ShaderType shaderType = ShaderType::Undefined;
+        std::span<const uint8> code = { };
     };
 
     class SIERRA_API Shader : public virtual RenderingResource
@@ -37,22 +37,6 @@ namespace Sierra
     protected:
         /* --- CONSTRUCTORS --- */
         explicit Shader(const ShaderCreateInfo& createInfo);
-
-        /* --- TYPES --- */
-        struct ShaderFileHeader
-        {
-            size spvMemorySize = 0;
-            size macOSMetalLibMemorySize = 0;
-            size iOSMetalLibMemorySize = 0;
-            size iOSSimulatorMetalLibMemorySize = 0;
-            size dxilMemorySize = 0;
-
-            [[nodiscard]] constexpr size GetSpvOffset() const noexcept { return 0; }
-            [[nodiscard]] size GetMacOSMetalLibOffset() const noexcept { return GetSpvOffset() + spvMemorySize; }
-            [[nodiscard]] size GetIOSMetalLibOffset() const noexcept { return GetMacOSMetalLibOffset() + macOSMetalLibMemorySize; }
-            [[nodiscard]] size GetIOSSimulatorMetalLibOffset() const noexcept { return GetIOSMetalLibOffset() + iOSMetalLibMemorySize; }
-            [[nodiscard]] size GetDxilOffset() const noexcept { return GetIOSSimulatorMetalLibOffset() + iOSSimulatorMetalLibMemorySize; }
-        };
 
         /* --- MOVE SEMANTICS --- */
         Shader(Shader&&) noexcept = default;

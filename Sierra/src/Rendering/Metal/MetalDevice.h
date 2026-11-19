@@ -59,9 +59,13 @@ namespace Sierra
 
         [[nodiscard]] id<MTLDevice> GetMetalDevice() const noexcept { return device; }
 
+        // NOTE: Every queue is the command queue of the device (just as every Vulkan queue of a family is its first one), so command buffers are all committed through here, where each signals
+        // the semaphore with a value greater than any before it (returned here, as what to wait for to know it has completed), so that values are signalled in the order of committing
+        [[nodiscard]] uint64 CommitCommandBuffer(id<MTLCommandBuffer> commandBuffer, uint64 semaphoreValueToWait) const;
+
+        [[nodiscard]] id<MTLCommandQueue> GetMetalCommandQueue() const noexcept { return commandQueue; }
         [[nodiscard]] id<MTLSharedEvent> GetSemaphore() const noexcept { return semaphore; }
-        [[nodiscard]] uint64 GetLastSemaphoreSignalValue() const noexcept { return lastReservedSemaphoreSignalValue; }
-        [[nodiscard]] uint64 GetNewSemaphoreSignalValue() const noexcept { return ++lastReservedSemaphoreSignalValue; }
+        [[nodiscard]] uint64 GetLastSemaphoreSignalValue() const; // As of the last commit
 
         /* --- SETTER METHODS --- */
         void SetResourceName(const MTLResource* resource, std::string_view name) const noexcept;
@@ -98,10 +102,12 @@ namespace Sierra
         id<MTLDevice> device = nil;
         Version driverVersion = Version({ 1, 0, 0 });
 
-        mutable uint64 lastReservedSemaphoreSignalValue = 0;
+        id<MTLCommandQueue> commandQueue = nil;
         id<MTLSharedEvent> semaphore = nil;
+        mutable uint64 lastSemaphoreSignalValue = 0;
+        std::unique_ptr<std::mutex> commitMutex = std::make_unique<std::mutex>(); // Guards the last signal value (and is kept behind a pointer so that the device stays movable)
 
-        // NOTE: These must match the values in specified in https://github.com/NikolayKanchevski/ShaderConnect/blob/sierra/src/Platform/MetalSL/MetalSLShaderCompiler.cpp#L104
+        // NOTE: These must match the argument buffer layout shaders are translated to Metal with (see SierraEngineEditor/src/Assets/Shaders/Compilers/SlangShaderCompiler.cpp)
         constexpr static uint32 RESOURCE_TABLE_UNIFORM_BUFFER_CAPACITY         = 8192;
         constexpr static uint32 RESOURCE_TABLE_STORAGE_BUFFER_CAPACITY         = 8192;
         constexpr static uint32 RESOURCE_TABLE_SAMPLED_IMAGE_CAPACITY          = 8192;

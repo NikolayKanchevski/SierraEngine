@@ -15,6 +15,9 @@ namespace SierraEngine
     struct SceneRendererCreateInfo
     {
         const RenderingContext& renderingContext;
+
+        const Sierra::Shader& vertexShader;
+        const Sierra::Shader& fragmentShader;
     };
 
     /* --- TYPE DEFINITIONS --- */
@@ -38,6 +41,8 @@ namespace SierraEngine
         explicit SceneRenderer(const SceneRendererCreateInfo& createInfo);
 
         /* --- POLLING METHODS --- */
+        void SetShaders(const Sierra::Shader& vertexShader, const Sierra::Shader& fragmentShader);
+
         [[nodiscard]] RenderTargetID CreateRenderTarget();
         bool DestroyRenderTarget(RenderTargetID ID);
 
@@ -61,9 +66,16 @@ namespace SierraEngine
         const RenderingContext* renderingContext;
 
         std::unique_ptr<Sierra::RenderPass> renderPass = nullptr;
-        std::unique_ptr<Sierra::Shader> vertexShader = nullptr;
-        std::unique_ptr<Sierra::Shader> fragmentShader = nullptr;
         std::unique_ptr<Sierra::GraphicsPipeline> graphicsPipeline = { };
+
+        // NOTE: Rendering is mocked up with a single triangle (a vertex of which is one of these), regardless of what the scene holds
+        struct TriangleVertex
+        {
+            Vector3 position = { 0.0f, 0.0f, 0.0f };
+            std::array<uint8, 4> color = { 0, 0, 0, 0 }; // RGBA, as read by [Sierra::VertexInput::Color]
+        };
+        std::unique_ptr<Sierra::Buffer> triangleVertexBuffer = nullptr;
+        [[nodiscard]] std::unique_ptr<Sierra::GraphicsPipeline> CreateGraphicsPipeline(const Sierra::Shader& vertexShader, const Sierra::Shader& fragmentShader) const;
 
         Sierra::ImageFormat colorFormat = Sierra::ImageFormat::Undefined;
         Sierra::ImageFormat depthFormat = Sierra::ImageFormat::Undefined;

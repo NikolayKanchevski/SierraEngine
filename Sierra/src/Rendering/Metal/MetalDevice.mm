@@ -44,9 +44,46 @@ namespace Sierra
             static_cast<uint8>(NSProcessInfo.processInfo.operatingSystemVersion.patchVersion)
         });
 
+        // Create command queue, which every queue uses
+        commandQueue = [device newCommandQueue];
+        SR_THROW_IF(commandQueue == nil, UnknownDeviceError(SR_FORMAT("Could not create device [{0}], as creation of command queue failed", GetName())));
+        SetResourceName(commandQueue, SR_FORMAT("Command queue of device [{0}]", GetName()));
+
         // Create synchronization
         semaphore = [device newSharedEvent];
-        SR_THROW_IF(semaphore == nil, UnknownDeviceError(SR_FORMAT("Could not create buffer [{0}], as creation of shared signal semaphore failed", GetName())));
+        SR_THROW_IF(semaphore == nil, UnknownDeviceError(SR_FORMAT("Could not create device [{0}], as creation of shared signal semaphore failed", GetName())));
+    }
+
+    /* --- POLLING METHODS --- */
+
+    uint64 MetalDevice::CommitCommandBuffer(const id<MTLCommandBuffer> commandBuffer, const uint64 semaphoreValueToWait) const
+    {
+        // The value is only reserved once locked, so that values are signalled in the same order command buffers are committed in
+        const std::lock_guard lock(*commitMutex);
+
+        // A wait only blocks what is encoded after it, and the command buffer has already been recorded, so it is encoded into a separate one, committed right before (a queue executes its command buffers in order of committing)
+        if (semaphoreValueToWait > 0)
+        {
+            const id<MTLCommandBuffer> waitCommandBuffer = [commandQueue commandBuffer];
+            SetResourceName(waitCommandBuffer, SR_FORMAT("Wait command buffer of device [{0}]", GetName()));
+            [waitCommandBuffer encodeWaitForEvent: semaphore value: semaphoreValueToWait];
+            [waitCommandBuffer commit];
+        }
+
+        const uint64 signalValue = lastSemaphoreSignalValue + 1;
+        [commandBuffer encodeSignalEvent: semaphore value: signalValue];
+        [commandBuffer commit];
+
+        lastSemaphoreSignalValue = signalValue;
+        return signalValue;
+    }
+
+    /* --- GETTER METHODS --- */
+
+    uint64 MetalDevice::GetLastSemaphoreSignalValue() const
+    {
+        const std::lock_guard lock(*commitMutex);
+        return lastSemaphoreSignalValue;
     }
 
     /* --- POLLING METHODS --- */
@@ -260,6 +297,7 @@ namespace Sierra
     MetalDevice::~MetalDevice() noexcept
     {
         [semaphore release];
+        [commandQueue release];
         [device release];
     }
 

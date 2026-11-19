@@ -97,6 +97,7 @@ namespace Sierra
         const MetalCommandBuffer& metalCommandBuffer = static_cast<const MetalCommandBuffer&>(commandBuffer);
 
         SR_THROW_IF(window->IsClosed(), InvalidOperationError(SR_FORMAT("Cannot present swapchain [{0}], as its corresponding window [{1}] has been closed", GetName(), window->GetTitle())));
+        SR_THROW_IF(metalCommandBuffer.GetCompletionSemaphoreSignalValue() == 0, InvalidOperationError(SR_FORMAT("Cannot present swapchain [{0}] using command buffer [{1}], as it has never been submitted", GetName(), metalCommandBuffer.GetName())));
 
         // Record presentation commands to a new command buffer (width a dependency to passed one)
         const id<MTLCommandBuffer> presentationCommandBuffer = [metalCommandBuffer.GetQueue().GetMetalCommandQueue() commandBuffer];

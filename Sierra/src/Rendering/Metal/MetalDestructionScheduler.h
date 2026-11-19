@@ -36,12 +36,16 @@ namespace Sierra
     private:
         const MetalDevice* device;
 
-        struct ResourceQueueEntry
+        // Resources queued since the last flush, which are yet to be given the value to wait for
+        std::vector<std::unique_ptr<RenderingResource>> unscheduledResources = { };
+
+        // Resources to destroy once the semaphore of the device reaches the value it had when they were scheduled
+        struct ResourceBatch
         {
-            uint64 waitValue = 0;
-            std::unique_ptr<RenderingResource> resource = nullptr;
+            uint64 semaphoreValueToWait = 0;
+            std::vector<std::unique_ptr<RenderingResource>> resources = { };
         };
-        std::deque<ResourceQueueEntry> resourceQueue = { };
+        std::deque<ResourceBatch> scheduledResourceBatches = { };
 
     };
 

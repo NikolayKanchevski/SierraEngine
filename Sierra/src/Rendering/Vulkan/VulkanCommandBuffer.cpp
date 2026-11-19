@@ -156,12 +156,39 @@ namespace Sierra
         result = queue->GetDevice().GetFunctionTable().vkAllocateCommandBuffers(queue->GetDevice().GetVulkanDevice(), &allocateInfo, &commandBuffer);
         if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create command buffer [{0}]", createInfo.name));
         queue->GetDevice().SetResourceName(commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, createInfo.name);
+
+        // Timestamps can only be written if the queue supports them (otherwise, timestamp regions are still validated, but never measured)
+        const uint32 timestampValidBits = queue->GetDevice().GetQueueFamilyProperties(queue->GetFamily()).timestampValidBits;
+        if (timestampValidBits > 0)
+        {
+            // Set up query pool create info
+            constexpr VkQueryPoolCreateInfo queryPoolCreateInfo
+            {
+                .sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
+                .queryType = VK_QUERY_TYPE_TIMESTAMP,
+                .queryCount = TIMESTAMP_QUERY_POOL_SIZE
+            };
+
+            // Create query pool
+            result = queue->GetDevice().GetFunctionTable().vkCreateQueryPool(queue->GetDevice().GetVulkanDevice(), &queryPoolCreateInfo, nullptr, &timestampQueryPool);
+            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not create command buffer [{0}], as creation of timestamp query pool failed", createInfo.name));
+            queue->GetDevice().SetResourceName(timestampQueryPool, VK_OBJECT_TYPE_QUERY_POOL, SR_FORMAT("Timestamp query pool of command buffer [{0}]", createInfo.name));
+
+            timestampPeriod = queue->GetDevice().GetPhysicalDeviceProperties().limits.timestampPeriod;
+            timestampMask = timestampValidBits >= 64 ? std::numeric_limits<uint64>::max() : (uint64(1) << timestampValidBits) - 1;
+        }
+
+        timestampRegionNames.reserve(MAX_TIMESTAMP_REGION_COUNT);
+        timestampRegions.reserve(MAX_TIMESTAMP_REGION_COUNT);
     }
 
     /* --- POLLING METHODS --- */
 
     void VulkanCommandBuffer::Begin()
     {
+        // The previous recording has finished executing by now (as a pending command buffer cannot be begun), so its timestamps are available
+        ReadTimestampRegions();
+
         // Reset command buffer
         queue->GetDevice().GetFunctionTable().vkResetCommandPool(queue->GetDevice().GetVulkanDevice(), commandPool, 0);
 
@@ -176,9 +203,11 @@ namespace Sierra
         const VkResult result = queue->GetDevice().GetFunctionTable().vkBeginCommandBuffer(commandBuffer, &beginInfo);
         if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not begin command buffer [{0}]", GetName()));
 
-        // Get new code
-        completionSemaphoreSignalValue = queue->GetDevice().GetNewSemaphoreSignalValue();
-        queue->GetDevice().SetResourceName(commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, SR_FORMAT("{0} - {1}", GetName(), completionSemaphoreSignalValue));
+        // NOTE: Its completion value is only assigned once submitted (as values must be signalled in the order of submission, which can differ from that of beginning), so until then, it remains that of its previous submission, which has completed
+        acquisitionSemaphoreValues.clear();
+
+        // Queries must be reset before being written to again (which is done outside any render pass, as required)
+        if (timestampQueryPool != VK_NULL_HANDLE) queue->GetDevice().GetFunctionTable().vkCmdResetQueryPool(commandBuffer, timestampQueryPool, 0, TIMESTAMP_QUERY_POOL_SIZE);
 
         operations = QueueOperations::None;
     }
@@ -186,6 +215,7 @@ namespace Sierra
     void VulkanCommandBuffer::End()
     {
         SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot end command buffer [{0}], as current render pass [{1}] has not been ended", GetName(), currentRenderPass->GetName())));
+        SR_THROW_IF(timestampRegionBegan, InvalidOperationError(SR_FORMAT("Cannot end command buffer [{0}], as current timestamp region [{1}] has not been ended", GetName(), timestampRegionNames.back())));
 
         // End command buffer
         const VkResult result = queue->GetDevice().GetFunctionTable().vkEndCommandBuffer(commandBuffer);
@@ -227,6 +257,7 @@ namespace Sierra
         const VulkanImage& vulkanImage = static_cast<const VulkanImage&>(image);
 
         CommandBuffer::SynchronizeImageUsage(vulkanImage, synchronizeInfo);
+        WaitForImageAcquisition(vulkanImage);
 
         // Set up pipeline barrier
         const VkImageMemoryBarrier pipelineBarrier
@@ -270,6 +301,7 @@ namespace Sierra
         };
 
         // Record copy
+        WriteTimestampRegionStart();
         queue->GetDevice().GetFunctionTable().vkCmdCopyBuffer(commandBuffer, vulkanSourceBuffer.GetVulkanBuffer(), vulkanDestinationBuffer.GetVulkanBuffer(), 1, &copyRegion);
         operations |= QueueOperations::Transfer;
     }
@@ -283,6 +315,7 @@ namespace Sierra
         const VulkanImage& vulkanDestinationImage = static_cast<const VulkanImage&>(destinationImage);
 
         CommandBuffer::CopyBufferToImage(vulkanSourceBuffer, vulkanDestinationImage, copyInfo);
+        WaitForImageAcquisition(vulkanDestinationImage);
 
         // Set copy region
         const VkBufferImageCopy copyRegion
@@ -309,6 +342,7 @@ namespace Sierra
         };
 
         // Copy data and change layout
+        WriteTimestampRegionStart();
         queue->GetDevice().GetFunctionTable().vkCmdCopyBufferToImage(commandBuffer, vulkanSourceBuffer.GetVulkanBuffer(), vulkanDestinationImage.GetVulkanImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
         operations |= QueueOperations::Transfer;
     }
@@ -319,12 +353,15 @@ namespace Sierra
         const VulkanImage& vulkanImage = static_cast<const VulkanImage&>(image);
 
         CommandBuffer::GenerateMipMapsForImage(vulkanImage);
+        WaitForImageAcquisition(vulkanImage);
 
         if (vulkanImage.GetLevelCount() == 1)
         {
             SR_WARNING("Did not generate any mip maps for image [{0}], as it only contains a single level.", vulkanImage.GetName());
             return;
         }
+
+        WriteTimestampRegionStart();
 
         // Set up base pipeline barrier
         VkImageMemoryBarrier pipelineBarrier
@@ -414,6 +451,11 @@ namespace Sierra
         CommandBuffer::BeginRenderPass(vulkanRenderPass, framebuffer);
         SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot begin render pass [{0}] within command buffer [{1}], as current render pass [{2}] has not been ended", vulkanRenderPass.GetName(), GetName(), currentRenderPass->GetName())));
 
+        for (const VulkanImage* const swapchainImage : vulkanFramebuffer.GetSwapchainImages())
+        {
+            WaitForImageAcquisition(*swapchainImage);
+        }
+
         // Set up begin info
         const VkRenderPassBeginInfo renderPassBeginInfo
         {
@@ -435,6 +477,7 @@ namespace Sierra
         };
 
         // Begin render pass
+        WriteTimestampRegionStart();
         queue->GetDevice().GetFunctionTable().vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         // Define viewport
@@ -480,7 +523,7 @@ namespace Sierra
         SR_THROW_IF(currentSubpass + 1 >= currentRenderPass->GetSubpassCount(), ValueOutOfRangeError(SR_FORMAT("Cannot begin next subpass [{0}] of render pass [{1}] within command buffer [{2}]", currentSubpass + 1, currentRenderPass->GetName(), GetName()), currentSubpass, uint32(0), currentRenderPass->GetSubpassCount() - 1));
 
         queue->GetDevice().GetFunctionTable().vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
-        currentRenderPass++;
+        currentSubpass++;
     }
 
     void VulkanCommandBuffer::EndRenderPass()
@@ -600,7 +643,7 @@ namespace Sierra
         const VulkanComputePipeline& vulkanComputePipeline = static_cast<const VulkanComputePipeline&>(computePipeline);
 
         CommandBuffer::BeginComputePipeline(vulkanComputePipeline);
-        SR_THROW_IF(currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as no render pass has been begun", vulkanComputePipeline.GetName(), GetName())));
+        SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as current render pass [{2}] has not been ended, and compute pipelines can only be begun outside of render passes", vulkanComputePipeline.GetName(), GetName(), currentRenderPass->GetName())));
         SR_THROW_IF(currentComputePipeline != nullptr && currentComputePipeline != &vulkanComputePipeline, InvalidOperationError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as current compute pipeline [{2}] has not been ended", vulkanComputePipeline.GetName(), GetName(), currentComputePipeline->GetName())));
 
         if (currentResourceTable != nullptr)
@@ -609,6 +652,7 @@ namespace Sierra
             queue->GetDevice().GetFunctionTable().vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, vulkanComputePipeline.GetVulkanPipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
         }
 
+        WriteTimestampRegionStart();
         queue->GetDevice().GetFunctionTable().vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, vulkanComputePipeline.GetVulkanPipeline());
         currentComputePipeline = &vulkanComputePipeline;
 
@@ -640,6 +684,9 @@ namespace Sierra
         CommandBuffer::BeginDebugRegion(regionName, color);
         SR_THROW_IF(debugRegionBegan, InvalidOperationError(SR_FORMAT("Cannot begin debug region [{0}] within command buffer [{1}], as current debug region has not been ended", regionName, GetName())));
 
+        // Tracked even when unsupported, so that regions are validated the same on every device
+        debugRegionBegan = true;
+
         if (!queue->GetDevice().IsExtensionLoaded(VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
         {
             SR_WARNING("Cannot begin debug region [{0}] within command buffer [{1}], as device [{2}] does not support this feature.", regionName, GetName(), queue->GetDevice().GetName());
@@ -654,7 +701,6 @@ namespace Sierra
             .color = { color.r, color.g, color.b, color.a }
         };
 
-        debugRegionBegan = true;
         queue->GetDevice().GetFunctionTable().vkCmdDebugMarkerBeginEXT(commandBuffer, &markerInfo);
     }
 
@@ -683,7 +729,8 @@ namespace Sierra
     void VulkanCommandBuffer::EndDebugRegion()
     {
         CommandBuffer::EndDebugRegion();
-        SR_THROW_IF(debugRegionBegan, InvalidOperationError(SR_FORMAT("Cannot end debug region within command buffer [{0}], as one must have been begun first", GetName())));
+        SR_THROW_IF(!debugRegionBegan, InvalidOperationError(SR_FORMAT("Cannot end debug region within command buffer [{0}], as one must have been begun first", GetName())));
+        debugRegionBegan = false;
 
         if (!queue->GetDevice().IsExtensionLoaded(VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
         {
@@ -692,13 +739,105 @@ namespace Sierra
         }
 
         queue->GetDevice().GetFunctionTable().vkCmdDebugMarkerEndEXT(commandBuffer);
-        debugRegionBegan = false;
+    }
+
+    void VulkanCommandBuffer::BeginTimestampRegion(const std::string_view regionName)
+    {
+        CommandBuffer::BeginTimestampRegion(regionName);
+        SR_THROW_IF(timestampRegionBegan, InvalidOperationError(SR_FORMAT("Cannot begin timestamp region [{0}] within command buffer [{1}], as current timestamp region [{2}] has not been ended, and timestamp regions cannot be nested", regionName, GetName(), timestampRegionNames.back())));
+        SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot begin timestamp region [{0}] within command buffer [{1}], as current render pass [{2}] has not been ended, and timestamp regions can only be begun outside of render passes", regionName, GetName(), currentRenderPass->GetName())));
+        SR_THROW_IF(currentComputePipeline != nullptr, InvalidOperationError(SR_FORMAT("Cannot begin timestamp region [{0}] within command buffer [{1}], as current compute pipeline [{2}] has not been ended, and timestamp regions can only be begun outside of compute pipelines", regionName, GetName(), currentComputePipeline->GetName())));
+        SR_THROW_IF(timestampRegionNames.size() >= MAX_TIMESTAMP_REGION_COUNT, InvalidOperationError(SR_FORMAT("Cannot begin timestamp region [{0}] within command buffer [{1}], as [{2}] timestamp regions (the most allowed per recording) have already been begun", regionName, GetName(), MAX_TIMESTAMP_REGION_COUNT)));
+
+        // NOTE: Its start is only written once a pass is recorded within it, just as Metal can only sample timestamps at the start of encoders
+        timestampRegionNames.emplace_back(regionName);
+        timestampRegionBegan = true;
+        timestampRegionStarted = false;
+    }
+
+    void VulkanCommandBuffer::EndTimestampRegion()
+    {
+        CommandBuffer::EndTimestampRegion();
+        SR_THROW_IF(!timestampRegionBegan, InvalidOperationError(SR_FORMAT("Cannot end timestamp region within command buffer [{0}], as one must have been begun first", GetName())));
+        SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot end timestamp region [{0}] within command buffer [{1}], as current render pass [{2}] has not been ended, and timestamp regions can only be ended outside of render passes", timestampRegionNames.back(), GetName(), currentRenderPass->GetName())));
+        SR_THROW_IF(currentComputePipeline != nullptr, InvalidOperationError(SR_FORMAT("Cannot end timestamp region [{0}] within command buffer [{1}], as current compute pipeline [{2}] has not been ended, and timestamp regions can only be ended outside of compute pipelines", timestampRegionNames.back(), GetName(), currentComputePipeline->GetName())));
+
+        // Regions with no pass within them have no start written, so neither is their end, and they are never measured
+        if (timestampRegionStarted && timestampQueryPool != VK_NULL_HANDLE)
+        {
+            const uint32 endQuery = static_cast<uint32>(timestampRegionNames.size() - 1) * 2 + 1;
+            queue->GetDevice().GetFunctionTable().vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, timestampQueryPool, endQuery);
+        }
+
+        timestampRegionBegan = false;
+        timestampRegionStarted = false;
+    }
+
+    /* --- PRIVATE METHODS --- */
+
+    void VulkanCommandBuffer::WriteTimestampRegionStart()
+    {
+        if (!timestampRegionBegan || timestampRegionStarted) return;
+        timestampRegionStarted = true;
+
+        if (timestampQueryPool == VK_NULL_HANDLE) return;
+        const uint32 startQuery = static_cast<uint32>(timestampRegionNames.size() - 1) * 2;
+        queue->GetDevice().GetFunctionTable().vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, timestampQueryPool, startQuery);
+    }
+
+    void VulkanCommandBuffer::WaitForImageAcquisition(const VulkanImage& image)
+    {
+        // Only swapchain images are acquired, and the presentation engine may still be reading from them until then
+        const VulkanSemaphoreValue& acquisitionSemaphoreValue = image.GetAcquisitionSemaphoreValue();
+        if (acquisitionSemaphoreValue.semaphore == VK_NULL_HANDLE) return;
+
+        // Only the latest point of every semaphore needs to be waited for
+        const auto iterator = std::ranges::find_if(acquisitionSemaphoreValues, [&acquisitionSemaphoreValue](const VulkanSemaphoreValue& semaphoreValue) -> bool { return semaphoreValue.semaphore == acquisitionSemaphoreValue.semaphore; });
+        if (iterator == acquisitionSemaphoreValues.end()) acquisitionSemaphoreValues.emplace_back(acquisitionSemaphoreValue);
+        else iterator->value = glm::max(iterator->value, acquisitionSemaphoreValue.value);
+    }
+
+    void VulkanCommandBuffer::ReadTimestampRegions()
+    {
+        timestampRegions.clear();
+        if (timestampQueryPool == VK_NULL_HANDLE || timestampRegionNames.empty())
+        {
+            timestampRegionNames.clear();
+            return;
+        }
+
+        // Every query is read as a pair of its value and availability, so that regions which were never measured can be skipped
+        struct QueryResult
+        {
+            uint64 value = 0;
+            uint64 available = 0;
+        };
+
+        std::array<QueryResult, TIMESTAMP_QUERY_POOL_SIZE> queryResults = { };
+        const uint32 queryCount = static_cast<uint32>(timestampRegionNames.size()) * 2;
+
+        const VkResult result = queue->GetDevice().GetFunctionTable().vkGetQueryPoolResults(queue->GetDevice().GetVulkanDevice(), timestampQueryPool, 0, queryCount, queryCount * sizeof(QueryResult), queryResults.data(), sizeof(QueryResult), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT);
+        if (result != VK_SUCCESS && result != VK_NOT_READY) HandleVulkanError(result, SR_FORMAT("Could not read timestamps of command buffer [{0}]", GetName()));
+
+        for (size i = 0; i < timestampRegionNames.size(); i++)
+        {
+            const QueryResult& start = queryResults[i * 2];
+            const QueryResult& end = queryResults[i * 2 + 1];
+            if (start.available == 0 || end.available == 0) continue;
+
+            // Masking makes the difference correct even if the counter has wrapped around in between
+            const uint64 tickCount = (end.value - start.value) & timestampMask;
+            timestampRegions.push_back({ .name = std::move(timestampRegionNames[i]), .duration = TimeStep(static_cast<float64>(tickCount) * timestampPeriod, TimeStepUnit::Nanoseconds) });
+        }
+
+        timestampRegionNames.clear();
     }
 
     /* --- DESTRUCTOR --- */
 
     VulkanCommandBuffer::~VulkanCommandBuffer() noexcept
     {
+        if (timestampQueryPool != VK_NULL_HANDLE) queue->GetDevice().GetFunctionTable().vkDestroyQueryPool(queue->GetDevice().GetVulkanDevice(), timestampQueryPool, nullptr);
         queue->GetDevice().GetFunctionTable().vkFreeCommandBuffers(queue->GetDevice().GetVulkanDevice(), commandPool, 1, &commandBuffer);
         queue->GetDevice().GetFunctionTable().vkDestroyCommandPool(queue->GetDevice().GetVulkanDevice(), commandPool, nullptr);
     }

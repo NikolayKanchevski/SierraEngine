@@ -33,6 +33,8 @@ namespace Sierra
             const VulkanImage& vulkanImage = static_cast<const VulkanImage&>(attachment.image);
 
             attachments[i] = vulkanImage.GetVulkanImageView();
+            if (vulkanImage.IsSwapchainImage()) swapchainImages.emplace_back(&vulkanImage);
+
             switch (vulkanImage.GetFormat())
             {
                 case ImageFormat::D16_UNorm:

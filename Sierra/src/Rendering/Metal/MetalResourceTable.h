@@ -77,7 +77,7 @@ namespace Sierra
             using MTLResource = void;
         #endif
 
-        // NOTE: These must match the values in specified in https://github.com/NikolayKanchevski/ShaderConnect/blob/sierra/src/Platform/MetalSL/MetalSLShaderCompiler.cpp#L104
+        // NOTE: These must match the argument buffer layout shaders are translated to Metal with (see SierraEngineEditor/src/Assets/Shaders/Compilers/SlangShaderCompiler.cpp)
         constexpr static uint32 UNIFORM_BUFFER_CAPACITY         = 8192;
         constexpr static uint32 STORAGE_BUFFER_CAPACITY         = 8192;
         constexpr static uint32 SAMPLED_IMAGE_CAPACITY          = 8192;

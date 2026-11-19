@@ -13,12 +13,13 @@ namespace Sierra
     {
     public:
         /* --- CONSTRUCTORS --- */
-        explicit WriteStream(size capacity = 0);
+        WriteStream(size capacity = 0);
 
         /* --- POLLING METHODS --- */
         [[nodiscard]] StreamResult Write(std::span<const uint8> buffer) override;
         StreamResult Read(std::span<uint8> outBuffer) override;
 
+        void Resize(size memorySize) noexcept;
         std::vector<uint8> Release() noexcept;
 
         /* --- SETTER METHODS --- */

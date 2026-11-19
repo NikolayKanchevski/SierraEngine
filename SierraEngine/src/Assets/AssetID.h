@@ -10,6 +10,7 @@ namespace SierraEngine
     /* --- TYPE DEFINITIONS --- */
     using AssetID = Sierra::Handle<uint64>;
     struct TextureID  final : public AssetID { };
+    struct ShaderID   final : public AssetID { };
     struct MaterialID final : public AssetID { };
     struct ModelID    final : public AssetID { };
 

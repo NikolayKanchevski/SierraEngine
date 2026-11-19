@@ -26,7 +26,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          submodules: recursive
+          submodules: true
+
+      # Slang has many submodules of its own, of which only the ones its compiler library is built from are fetched
+      - name: Fetch Slang Dependencies
+        run: git -C SierraEngineEditor/vendor/slang submodule update --init external/unordered_dense external/miniz external/lz4 external/cmark external/vulkan external/fast_float external/spirv-headers external/lua
+
+      # Without the Vulkan SDK, only the Metal backend would be built
+      - name: Prepare Vulkan SDK
+        uses: ./.github/actions/setup-vulkan-sdk
+        with:
+          vulkan-query-version: latest
+          vulkan-components: Vulkan-Headers, Vulkan-Loader
+          vulkan-use-cache: true
 
       - name: Configure Editor Build Directory
         id: editorStrings

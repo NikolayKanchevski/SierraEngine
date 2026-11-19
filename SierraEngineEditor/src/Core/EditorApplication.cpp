@@ -13,6 +13,27 @@ namespace SierraEngine
         const Sierra::Version APPLICATION_VERSION = Sierra::Version({ 1, 0, 0 });
 
         constexpr uint32 VIEWPORT_COUNT = 4;
+
+        struct GraphicsShaders
+        {
+            const Sierra::Shader& vertexShader;
+            const Sierra::Shader& fragmentShader;
+        };
+
+        [[nodiscard]] std::optional<GraphicsShaders> GetGraphicsShaders(const EditorAssetManager& assetManager, const ShaderID ID, const std::string_view name)
+        {
+            // NOTE: Entry points are looked up by the names given to them within the shader sources
+            const Sierra::Shader* vertexShader = assetManager.GetShader(ID, "vertexMain");
+            const Sierra::Shader* fragmentShader = assetManager.GetShader(ID, "fragmentMain");
+
+            if (vertexShader == nullptr || fragmentShader == nullptr)
+            {
+                APP_WARNING("Built-in shader [{0}] must have entry points [vertexMain] and [fragmentMain]", name);
+                return std::nullopt;
+            }
+
+            return GraphicsShaders { .vertexShader = *vertexShader, .fragmentShader = *fragmentShader };
+        }
     }
 
     /* --- CONSTRUCTORS --- */
@@ -23,8 +44,19 @@ namespace SierraEngine
             project({ .directoryPath = createInfo.projectDirectoryPath }),
             renderingContext({ .renderingInstance = GetRenderingInstance() }),
             queue(renderingContext.GetDevice().CreateQueue({ .name = "General Queue" })),
-            arenaAllocator({ .device = renderingContext.GetDevice() })
+            arenaAllocator({ .device = renderingContext.GetDevice() }),
+            assetManager({ .device = renderingContext.GetDevice(), .fileManager = GetFileManager() })
     {
+        SR_PROFILE_SCOPE();
+
+        // The scene renderer is a mockup drawing a triangle, with a shader from the project's assets, which is compiled whenever present, and otherwise loaded from the Resources folder, as last compiled
+        const Sierra::Path sceneShaderFilePath = project.GetAssetPath() / "Shaders" / "Triangle.slang";
+        const std::optional<ShaderID> sceneShaderID = assetManager.LoadBuiltInShader({ .name = "Triangle", .sourceFilePath = sceneShaderFilePath });
+        APP_THROW_IF(!sceneShaderID.has_value(), Sierra::InvalidOperationError(SR_FORMAT("Cannot create editor application, as scene shader [{0}] could not be loaded", sceneShaderFilePath.GetString())));
+
+        const std::optional<GraphicsShaders> sceneShaders = GetGraphicsShaders(assetManager, *sceneShaderID, "Triangle");
+        APP_THROW_IF(!sceneShaders.has_value(), Sierra::InvalidOperationError(SR_FORMAT("Cannot create editor application, as scene shader [{0}] is missing entry points", sceneShaderFilePath.GetString())));
+
         const std::unique_ptr<Sierra::CommandBuffer> commandBuffer = queue->CreateCommandBuffer({ .name = "Staging Command Buffer" });
         commandBuffer->Begin();
 
@@ -39,7 +71,8 @@ namespace SierraEngine
         commandBuffer->End();
         queue->SubmitCommandBuffer(*commandBuffer);
 
-        sceneRenderer = std::make_shared<SceneRenderer>(SceneRendererCreateInfo { .renderingContext = renderingContext });
+        sceneRenderer = std::make_shared<SceneRenderer>(SceneRendererCreateInfo { .renderingContext = renderingContext, .vertexShader = sceneShaders->vertexShader, .fragmentShader = sceneShaders->fragmentShader });
+
         for (size i = 0; i < VIEWPORT_COUNT; i++)
         {
             ViewportID viewportID;

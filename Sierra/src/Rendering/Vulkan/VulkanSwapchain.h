@@ -52,7 +52,6 @@ namespace Sierra
         Window* window = nullptr;
 
         VkSurfaceKHR surface = VK_NULL_HANDLE;
-        VkQueue presentationQueue = VK_NULL_HANDLE;
         uint32 presentationQueueFamily = std::numeric_limits<uint32>::max();
 
         SwapchainPresentationMode preferredPresentationMode = SwapchainPresentationMode::VSync;
@@ -62,7 +61,11 @@ namespace Sierra
         VkSwapchainKHR swapchain = VK_NULL_HANDLE;
         std::vector<std::unique_ptr<VulkanImage>> swapchainImages = { };
 
+        // One per frame, each converted into a point on the timeline of the presentation queue (which is only reused once that has been reached), as binary semaphores can only be waited for once
         std::vector<VkSemaphore> isImageAcquiredSemaphores = { };
+        std::vector<VulkanSemaphoreValue> imageAcquisitionSemaphoreValues = { };
+
+        // One per image, as presentation can only wait for binary semaphores, and only the image being acquired again guarantees the presentation engine is done waiting for its last one
         std::vector<VkSemaphore> isPresentationCommandBufferFreeSemaphores = { };
 
         uint32 concurrentFrameCount = 0;
@@ -74,6 +77,7 @@ namespace Sierra
 
         void CreateSwapchain();
         void CreateSynchronization();
+        void DestroySynchronization();
         void Recreate();
 
     };

@@ -13,11 +13,8 @@ namespace Sierra
     /* --- CONSTRUCTORS --- */
 
     MetalQueue::MetalQueue(const MetalDevice& givenDevice, const QueueCreateInfo& createInfo)
-        : MetalResource(createInfo.name), Queue(createInfo), device(&givenDevice), commandQueue([device->GetMetalDevice() newCommandQueue]), semaphoreListener([[MTLSharedEventListener alloc] initWithDispatchQueue: dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0)])
+        : MetalResource(createInfo.name), Queue(createInfo), device(&givenDevice), semaphoreListener([[MTLSharedEventListener alloc] initWithDispatchQueue: dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0)])
     {
-        SR_THROW_IF(commandQueue == nil, UnknownDeviceError(SR_FORMAT("Could not create device [{0}], as creation of command queue failed", GetName())));
-        device->SetResourceName(commandQueue, SR_FORMAT("Command queue of queue [{0}]", GetName()));
-
         SR_THROW_IF(semaphoreListener == nil, UnknownDeviceError(SR_FORMAT("Could not create queue [{0}], as creation of semaphore listener failed", GetName())));
     }
 
@@ -45,21 +42,11 @@ namespace Sierra
             const MetalCommandBuffer& metalCommandBufferToWait = static_cast<const MetalCommandBuffer&>(commandBufferToWait);
 
             SR_THROW_IF(&metalCommandBufferToWait == &metalCommandBuffer, InvalidValueError(SR_FORMAT("Cannot wait for the same command buffer [{0}] prior to submitting it", metalCommandBuffer.GetName())));
-            waitValue = glm::max(waitValue, metalCommandBufferToWait.GetCompletionSemaphoreSignalValue());
+            waitValue = glm::max(waitValue, metalCommandBufferToWait.GetCompletionSemaphoreSignalValue()); // Command buffers which have never been submitted have a value of 0, which needs no waiting for
         }
 
-        // A wait only blocks what is encoded after it, and the command buffer has already been recorded, so it is encoded into a separate command buffer, submitted right before (a queue executes its command buffers in order of submission)
-        if (waitValue > 0)
-        {
-            const id<MTLCommandBuffer> waitCommandBuffer = [metalCommandBuffer.GetQueue().GetMetalCommandQueue() commandBuffer];
-            device->SetResourceName(waitCommandBuffer, SR_FORMAT("Wait command buffer of command buffer [{0}]", metalCommandBuffer.GetName()));
-            [waitCommandBuffer encodeWaitForEvent: device->GetSemaphore() value: waitValue];
-            [waitCommandBuffer commit];
-        }
-
-        // Submit command buffer
-        [metalCommandBuffer.GetMetalCommandBuffer() encodeSignalEvent: device->GetSemaphore() value: metalCommandBuffer.GetCompletionSemaphoreSignalValue()];
-        [metalCommandBuffer.GetMetalCommandBuffer() commit];
+        // Submit command buffer, which gives it the value to wait for to know it has completed
+        metalCommandBuffer.completionSemaphoreSignalValue = device->CommitCommandBuffer(metalCommandBuffer.GetMetalCommandBuffer(), waitValue);
     }
 
     void MetalQueue::WaitForCommandBuffer(const CommandBuffer& commandBuffer) const
@@ -91,7 +78,6 @@ namespace Sierra
     MetalQueue::~MetalQueue() noexcept
     {
         [semaphoreListener release];
-        [commandQueue release];
     }
 
 }

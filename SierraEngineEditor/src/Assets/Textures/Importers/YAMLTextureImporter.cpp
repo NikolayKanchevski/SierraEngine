@@ -173,6 +173,12 @@ namespace SierraEngine
 
     std::optional<ImportedTexture> YAMLTextureImporter::Import(const TextureImportInfo& importInfo) const
     {
+        if (importInfo.format == Sierra::ImageFormat::Undefined)
+        {
+            APP_WARNING("Cannot import texture, as specified format must not be [ImageFormat::Undefined]");
+            return std::nullopt;
+        }
+
         Sierra::ReadStream blob(importInfo.serializedTexture.blob);
 
         AssetHeader header = { };

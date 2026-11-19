@@ -34,7 +34,7 @@ namespace Sierra
         /* --- GETTER METHODS --- */
         [[nodiscard]] QueueOperations GetOperations() const noexcept override { return QueueOperations::All; }
 
-        [[nodiscard]] id<MTLCommandQueue> GetMetalCommandQueue() const noexcept { return commandQueue; }
+        [[nodiscard]] id<MTLCommandQueue> GetMetalCommandQueue() const noexcept { return device->GetMetalCommandQueue(); } // Shared by every queue (see MetalDevice::CommitCommandBuffer())
         [[nodiscard]] const MetalDevice& GetDevice() const noexcept { return *device; }
 
         /* --- COPY SEMANTICS --- */
@@ -51,7 +51,6 @@ namespace Sierra
     private:
         const MetalDevice* device = nullptr;
 
-        id<MTLCommandQueue> commandQueue = nil;
         MTLSharedEventListener* semaphoreListener = nil;
 
     };

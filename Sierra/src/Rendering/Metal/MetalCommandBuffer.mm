@@ -78,8 +78,8 @@ namespace Sierra
         commandBuffer = [queue->GetMetalCommandQueue() commandBufferWithDescriptor: commandBufferDescriptor];
         queue->GetDevice().SetResourceName(commandBuffer, GetName());
 
-        // Create completion synchronization
-        completionSemaphoreSignalValue = queue->GetDevice().GetNewSemaphoreSignalValue();
+        // NOTE: Its completion value is only assigned once submitted (as values must be signalled in the order of submission, which can differ from that of beginning), so until then, it remains that of its previous submission, which has completed
+        timestampRegionCount = 0;
         #if SR_ENABLE_LOGGING
             [commandBuffer addCompletedHandler: ^(id<MTLCommandBuffer> executedCommandBuffer)
             {
@@ -94,6 +94,7 @@ namespace Sierra
     void MetalCommandBuffer::End()
     {
         SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot end command buffer [{0}], as current render pass [{1}] has not been ended", GetName(), currentRenderPass->GetName())));
+        SR_THROW_IF(timestampRegionBegan, InvalidOperationError(SR_FORMAT("Cannot end command buffer [{0}], as current timestamp region [{1}] has not been ended", GetName(), currentTimestampRegionName)));
 
         if (currentBlitEncoder != nil)
         {
@@ -452,7 +453,7 @@ namespace Sierra
         const MetalComputePipeline& metalComputePipeline = static_cast<const MetalComputePipeline&>(computePipeline);
 
         CommandBuffer::BeginComputePipeline(metalComputePipeline);
-        SR_THROW_IF(currentComputePipeline == nullptr, InvalidOperationError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as no render pass has been begun", metalComputePipeline.GetName(), GetName())));
+        SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as current render pass [{2}] has not been ended, and compute pipelines can only be begun outside of render passes", metalComputePipeline.GetName(), GetName(), currentRenderPass->GetName())));
         SR_THROW_IF(currentComputePipeline != nullptr && currentComputePipeline != &metalComputePipeline, InvalidOperationError(SR_FORMAT("Cannot begin compute pipeline [{0}] within command buffer [{1}], as current compute pipeline [{2}] has not been ended", metalComputePipeline.GetName(), GetName(), currentComputePipeline->GetName())));
 
         // End any prior transfer operations
@@ -533,6 +534,29 @@ namespace Sierra
         [commandBuffer popDebugGroup];
 
         debugRegionBegan = false;
+    }
+
+    void MetalCommandBuffer::BeginTimestampRegion(const std::string_view regionName)
+    {
+        CommandBuffer::BeginTimestampRegion(regionName);
+        SR_THROW_IF(timestampRegionBegan, InvalidOperationError(SR_FORMAT("Cannot begin timestamp region [{0}] within command buffer [{1}], as current timestamp region [{2}] has not been ended, and timestamp regions cannot be nested", regionName, GetName(), currentTimestampRegionName)));
+        SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot begin timestamp region [{0}] within command buffer [{1}], as current render pass [{2}] has not been ended, and timestamp regions can only be begun outside of render passes", regionName, GetName(), currentRenderPass->GetName())));
+        SR_THROW_IF(currentComputePipeline != nullptr, InvalidOperationError(SR_FORMAT("Cannot begin timestamp region [{0}] within command buffer [{1}], as current compute pipeline [{2}] has not been ended, and timestamp regions can only be begun outside of compute pipelines", regionName, GetName(), currentComputePipeline->GetName())));
+        SR_THROW_IF(timestampRegionCount >= MAX_TIMESTAMP_REGION_COUNT, InvalidOperationError(SR_FORMAT("Cannot begin timestamp region [{0}] within command buffer [{1}], as [{2}] timestamp regions (the most allowed per recording) have already been begun", regionName, GetName(), MAX_TIMESTAMP_REGION_COUNT)));
+
+        currentTimestampRegionName = std::string(regionName);
+        timestampRegionBegan = true;
+        timestampRegionCount++;
+    }
+
+    void MetalCommandBuffer::EndTimestampRegion()
+    {
+        CommandBuffer::EndTimestampRegion();
+        SR_THROW_IF(!timestampRegionBegan, InvalidOperationError(SR_FORMAT("Cannot end timestamp region within command buffer [{0}], as one must have been begun first", GetName())));
+        SR_THROW_IF(currentRenderPass != nullptr, InvalidOperationError(SR_FORMAT("Cannot end timestamp region [{0}] within command buffer [{1}], as current render pass [{2}] has not been ended, and timestamp regions can only be ended outside of render passes", currentTimestampRegionName, GetName(), currentRenderPass->GetName())));
+        SR_THROW_IF(currentComputePipeline != nullptr, InvalidOperationError(SR_FORMAT("Cannot end timestamp region [{0}] within command buffer [{1}], as current compute pipeline [{2}] has not been ended, and timestamp regions can only be ended outside of compute pipelines", currentTimestampRegionName, GetName(), currentComputePipeline->GetName())));
+
+        timestampRegionBegan = false;
     }
 
     /* --- POLLING METHODS --- */

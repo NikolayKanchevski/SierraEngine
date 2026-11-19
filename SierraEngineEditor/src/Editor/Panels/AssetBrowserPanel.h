@@ -24,7 +24,8 @@ namespace SierraEngine
         Image,
         Texture,
         Material,
-        Model
+        Model,
+        Shader
     };
 
     struct AssetBrowserEntry
@@ -104,7 +105,7 @@ namespace SierraEngine
 
         bool revealCurrentDirectory = true;
         void DrawTree(const ApplicationFrame& applicationFrame, float32 height);
-        void DrawTreeNode(const ApplicationFrame& applicationFrame, const Sierra::Path& relativeDirectoryPath);
+        bool DrawTreeNode(const ApplicationFrame& applicationFrame, const Sierra::Path& relativeDirectoryPath);
 
         std::vector<AssetBrowserEntry> entries = { };
         std::vector<size> visibleEntryIndices = { };
@@ -134,11 +135,10 @@ namespace SierraEngine
         void DrawBackgroundContextMenu(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame);
         void DrawSelectionContextMenu(const ApplicationFrame& applicationFrame, const EditorFrame& editorFrame);
 
-        // Folder, which an entry asked to be navigated to, which is only done once all entries have been drawn, as navigating replaces them
-        std::optional<Sierra::Path> pendingNavigationPath = std::nullopt;
-
         std::vector<Sierra::Path> backHistory = { };
         std::vector<Sierra::Path> forwardHistory = { };
+        void ValidateHistory(const ApplicationFrame& applicationFrame);
+        void RemapHistory(const Sierra::Path& oldRelativeDirectoryPath, const Sierra::Path& newRelativeDirectoryPath);
 
         [[nodiscard]] AssetBrowserEntry* GetSelectedEntry() noexcept { return !selectedEntryIndices.empty() ? &entries[selectedEntryIndices.front()] : nullptr; }
     };

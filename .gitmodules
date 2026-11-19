@@ -38,3 +38,9 @@
 [submodule "SierraEngineEditor/vendor/easy-args"]
 	path = SierraEngineEditor/vendor/easy-args
 	url = https://github.com/gouwsxander/easy-args
+[submodule "SierraEngineEditor/vendor/slang"]
+	path = SierraEngineEditor/vendor/slang
+	url = https://github.com/shader-slang/slang
+[submodule "SierraEngineEditor/vendor/SPIRV-Cross"]
+	path = SierraEngineEditor/vendor/SPIRV-Cross
+	url = https://github.com/KhronosGroup/SPIRV-Cross

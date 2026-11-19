@@ -14,6 +14,7 @@
 #include "VulkanRenderPass.h"
 #include "VulkanResourceTable.h"
 #include "VulkanBuffer.h"
+#include "VulkanImage.h"
 
 namespace Sierra
 {
@@ -68,14 +69,20 @@ namespace Sierra
         void InsertDebugMarker(std::string_view markerName, Color32 color) override;
         void EndDebugRegion() override;
 
+        void BeginTimestampRegion(std::string_view regionName) override;
+        void EndTimestampRegion() override;
+
         /* --- GETTER METHODS --- */
+        [[nodiscard]] std::span<const TimestampRegion> GetTimestampRegions() const noexcept override { return timestampRegions; }
+
         [[nodiscard]] std::string_view GetName() const noexcept override { return name; }
 
         [[nodiscard]] VkCommandBuffer GetVulkanCommandBuffer() const noexcept { return commandBuffer; }
         [[nodiscard]] uint32 GetQueueFamily() const noexcept { return queue->GetFamily(); }
 
         [[nodiscard]] QueueOperations GetOperations() const noexcept { return operations; }
-        [[nodiscard]] uint64 GetCompletionSemaphoreSignalValue() const noexcept { return completionSemaphoreSignalValue; }
+        [[nodiscard]] const VulkanSemaphoreValue& GetCompletionSemaphoreValue() const noexcept { return completionSemaphoreValue; } // Signalled once its last submission completes (none until first submitted)
+        [[nodiscard]] std::span<const VulkanSemaphoreValue> GetAcquisitionSemaphoreValues() const noexcept { return acquisitionSemaphoreValues; } // Of swapchain images used within it
 
         /* --- DESTRUCTOR --- */
         ~VulkanCommandBuffer() noexcept override;
@@ -88,9 +95,20 @@ namespace Sierra
         VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 
         QueueOperations operations = QueueOperations::None;
-        uint64 completionSemaphoreSignalValue = 0;
+        friend class VulkanQueue;
+        mutable VulkanSemaphoreValue completionSemaphoreValue = { }; // Only ever set by the queue it is submitted to
+        std::vector<VulkanSemaphoreValue> acquisitionSemaphoreValues = { };
 
         bool debugRegionBegan = false;
+
+        VkQueryPool timestampQueryPool = VK_NULL_HANDLE; // Only created if the queue supports timestamps
+        float64 timestampPeriod = 0.0; // Nanoseconds per tick
+        uint64 timestampMask = 0; // Bits of a timestamp which are valid
+
+        bool timestampRegionBegan = false;
+        bool timestampRegionStarted = false; // Whether the start of the current region has been written, which happens right before the first pass within it
+        std::vector<std::string> timestampRegionNames = { }; // Of every region begun within the current recording, the [i]-th one using queries [2i] and [2i + 1]
+        std::vector<TimestampRegion> timestampRegions = { };
         const VulkanResourceTable* currentResourceTable = nullptr;
 
         uint32 currentSubpass = 0;
@@ -101,6 +119,10 @@ namespace Sierra
 
         const VulkanBuffer* currentVertexBuffer = nullptr;
         const VulkanBuffer* currentIndexBuffer = nullptr;
+
+        void WriteTimestampRegionStart();
+        void ReadTimestampRegions();
+        void WaitForImageAcquisition(const VulkanImage& image);
 
     };
 

@@ -57,31 +57,41 @@ namespace Sierra
         // Drivers do not always report a change of framebuffer (such as when the scale of a Wayland window changes), so the swapchain is checked against it, and recreated if it differs
         if (window->GetFramebufferSize() != requestedFramebufferSize) Recreate();
 
-        // Acquire next image
-        VkResult result = device->GetFunctionTable().vkAcquireNextImageKHR(device->GetVulkanDevice(), swapchain, std::numeric_limits<uint64>::max(), isImageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &currentImage);
+        // The acquisition semaphore of the frame was last waited for frames ago, which must have happened for it to be signalled again
+        if (const VulkanSemaphoreValue& previousAcquisition = imageAcquisitionSemaphoreValues[currentFrame]; previousAcquisition.semaphore != VK_NULL_HANDLE)
+        {
+            const VkSemaphoreWaitInfo waitInfo
+            {
+                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
+                .semaphoreCount = 1,
+                .pSemaphores = &previousAcquisition.semaphore,
+                .pValues = &previousAcquisition.value
+            };
 
-        // Resize swapchain if needed
+            const VkResult result = device->GetFunctionTable().vkWaitSemaphores(device->GetVulkanDevice(), &waitInfo, std::numeric_limits<uint64>::max());
+            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not acquire next image of swapchain [{0}], as waiting for its previous acquisition failed", GetName()));
+        }
+
+        // Acquire next image (a suboptimal swapchain can still be presented to, and is recreated after presenting)
+        VkResult result = device->GetFunctionTable().vkAcquireNextImageKHR(device->GetVulkanDevice(), swapchain, std::numeric_limits<uint64>::max(), isImageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &currentImage);
         if (result == VK_ERROR_OUT_OF_DATE_KHR)
         {
             Recreate();
 
             // Try to re-acquire next image
             result = device->GetFunctionTable().vkAcquireNextImageKHR(device->GetVulkanDevice(), swapchain, std::numeric_limits<uint64>::max(), isImageAcquiredSemaphores[currentFrame], VK_NULL_HANDLE, &currentImage);
-            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not acquire image [{0}] of swapchain [{1}]", currentImage, GetName()));
         }
+        if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) HandleVulkanError(result, SR_FORMAT("Could not acquire next image of swapchain [{0}]", GetName()));
 
-        constexpr VkPipelineStageFlags IMAGE_ACQUIRE_WAIT_STAGE = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        const VkSubmitInfo imageAcquireWaitSubmitInfo
-        {
-            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-            .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &isImageAcquiredSemaphores[currentFrame],
-            .pWaitDstStageMask = &IMAGE_ACQUIRE_WAIT_STAGE
-        };
+        // The semaphore can only be waited for once, while any number of submissions may use the image, so it is converted into a point on the timeline of the presentation queue, which they wait for instead (see VulkanCommandBuffer::WaitForImageAcquisition())
+        const VulkanSemaphoreValue imageAcquiredSemaphoreValue = { .semaphore = isImageAcquiredSemaphores[currentFrame] };
+        VulkanSemaphoreValue acquisitionSemaphoreValue = { };
 
-        // Wait until swapchain image has been acquired
-        result = device->GetFunctionTable().vkQueueSubmit(presentationQueue, 1, &imageAcquireWaitSubmitInfo, VK_NULL_HANDLE);
-        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot present swapchain [{0}], as awaiting image [{1}]'s swap-out failed", GetName(), currentImage));
+        result = device->SubmitToQueue({ .family = presentationQueueFamily, .semaphoresToWait = { &imageAcquiredSemaphoreValue, 1 } }, acquisitionSemaphoreValue);
+        if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not acquire next image of swapchain [{0}], as waiting for image [{1}] to be acquired failed", GetName(), currentImage));
+
+        imageAcquisitionSemaphoreValues[currentFrame] = acquisitionSemaphoreValue;
+        swapchainImages[currentImage]->acquisitionSemaphoreValue = acquisitionSemaphoreValue;
     }
 
     void VulkanSwapchain::Present(CommandBuffer& commandBuffer)
@@ -91,72 +101,24 @@ namespace Sierra
         SR_THROW_IF(commandBuffer.GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot present swapchain [{0}] using command buffer [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", GetName(), commandBuffer.GetName())));
         const VulkanCommandBuffer& vulkanCommandBuffer = static_cast<const VulkanCommandBuffer&>(commandBuffer);
 
-        const uint64 commandBufferWaitValue = vulkanCommandBuffer.GetCompletionSemaphoreSignalValue();
-        constexpr uint64 BINARY_SEMAPHORE_SIGNAL_VALUE = 1; // Simply using 1, as we are signalling a binary semaphore
+        const VulkanSemaphoreValue& completionSemaphoreValue = vulkanCommandBuffer.GetCompletionSemaphoreValue();
+        SR_THROW_IF(completionSemaphoreValue.semaphore == VK_NULL_HANDLE, InvalidOperationError(SR_FORMAT("Cannot present swapchain [{0}] using command buffer [{1}], as it has never been submitted", GetName(), vulkanCommandBuffer.GetName())));
 
-        // Set up semaphore submit info
-        const VkTimelineSemaphoreSubmitInfoKHR commandBufferSignalSubmitInfo
-        {
-            .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
-            .waitSemaphoreValueCount = 1,
-            .pWaitSemaphoreValues = &commandBufferWaitValue,
-            .signalSemaphoreValueCount = 1,
-            .pSignalSemaphoreValues = &BINARY_SEMAPHORE_SIGNAL_VALUE
-        };
+        // NOTE: The image needs no transfer of ownership between queue families, as it is shared by all of them (see CreateSwapchain())
 
-        // Set up submit info
-        constexpr VkPipelineStageFlags COMMAND_BUFFER_WAIT_STAGE = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        VkSemaphore waitSemaphore = device->GetSemaphore();
+        // Presentation can only wait for binary semaphores, so completion of the command buffer is converted into the one of the image
+        const VkSemaphore isPresentationCommandBufferFreeSemaphore = isPresentationCommandBufferFreeSemaphores[currentImage];
+        VulkanSemaphoreValue unusedSemaphoreValue = { };
 
-        const VkSubmitInfo commandBufferWaitSubmitInfo
-        {
-            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-            .pNext = &commandBufferSignalSubmitInfo,
-            .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &waitSemaphore,
-            .pWaitDstStageMask = &COMMAND_BUFFER_WAIT_STAGE,
-            .commandBufferCount = 0,
-            .pCommandBuffers = nullptr,
-            .signalSemaphoreCount = 1,
-            .pSignalSemaphores = &isPresentationCommandBufferFreeSemaphores[currentFrame]
-        };
-
-        // Wait for command buffer to signal timeline semaphore, and immediately signal binary one
-        VkResult result = device->GetFunctionTable().vkQueueSubmit(presentationQueue, 1, &commandBufferWaitSubmitInfo, VK_NULL_HANDLE);
+        VkResult result = device->SubmitToQueue({ .family = presentationQueueFamily, .semaphoresToWait = { &completionSemaphoreValue, 1 }, .binarySemaphoresToSignal = { &isPresentationCommandBufferFreeSemaphore, 1 } }, unusedSemaphoreValue);
         if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot present swapchain [{0}], as awaiting command buffer [{1}]'s end of execution failed", GetName(), vulkanCommandBuffer.GetName()));
-
-        if (presentationQueueFamily != vulkanCommandBuffer.GetQueueFamily())
-        {
-            const VulkanImage& swapchainImage = *swapchainImages[currentImage];
-            const VkImageMemoryBarrier pipelineBarrier
-            {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                .dstAccessMask = VK_ACCESS_NONE,
-                .oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                .srcQueueFamilyIndex = vulkanCommandBuffer.GetQueueFamily(),
-                .dstQueueFamilyIndex = presentationQueueFamily,
-                .image = swapchainImage.GetVulkanImage(),
-                .subresourceRange = {
-                    .aspectMask = swapchainImage.GetVulkanAspectFlags(),
-                    .baseMipLevel = 0,
-                    .levelCount = swapchainImage.GetLevelCount(),
-                    .baseArrayLayer = 0,
-                    .layerCount = swapchainImage.GetLayerCount()
-                }
-            };
-
-            // Transfer ownership of image over to presentation queue
-            device->GetFunctionTable().vkCmdPipelineBarrier(vulkanCommandBuffer.GetVulkanCommandBuffer(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &pipelineBarrier);
-        }
 
         // Set up presentation info
         const VkPresentInfoKHR presentInfo
         {
             .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
             .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &isPresentationCommandBufferFreeSemaphores[currentFrame],
+            .pWaitSemaphores = &isPresentationCommandBufferFreeSemaphore,
             .swapchainCount = 1,
             .pSwapchains = &swapchain,
             .pImageIndices = &currentImage,
@@ -164,7 +126,7 @@ namespace Sierra
         };
 
         // Submit presentation queue and resize the swapchain if needed
-        result = device->GetFunctionTable().vkQueuePresentKHR(presentationQueue, &presentInfo);
+        result = device->PresentToQueue(presentationQueueFamily, presentInfo);
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
         {
             Recreate();
@@ -197,32 +159,18 @@ namespace Sierra
 
     void VulkanSwapchain::CreateSwapchain()
     {
-        // Retrieve queue family properties count
-        uint32 queueFamilyPropertiesCount = 0;
-        instance->GetFunctionTable().vkGetPhysicalDeviceQueueFamilyProperties(device->GetVulkanPhysicalDevice(), &queueFamilyPropertiesCount, nullptr);
-
-        // Retrieve queue family properties
-        std::vector<VkQueueFamilyProperties> queueFamilyProperties;
-        instance->GetFunctionTable().vkGetPhysicalDeviceQueueFamilyProperties(device->GetVulkanPhysicalDevice(), &queueFamilyPropertiesCount, queueFamilyProperties.data());
-
-        // Try to find a queue family, which supports presentation for the surface
-        for (uint32 i = 0; i < queueFamilyPropertiesCount; i++)
+        // Find a family the device has a queue of, which supports presentation to the surface (preferably one that also supports graphics, as that is where rendering to it most likely happens)
+        presentationQueueFamily = std::numeric_limits<uint32>::max();
+        for (const std::shared_ptr<VulkanQueueDescription>& queueDescription : device->GetQueueDescriptions())
         {
-            // Check if current family supports presentation
             VkBool32 presentationSupported = VK_FALSE;
-            instance->GetFunctionTable().vkGetPhysicalDeviceSurfaceSupportKHR(device->GetVulkanPhysicalDevice(), i, surface, &presentationSupported);
+            instance->GetFunctionTable().vkGetPhysicalDeviceSurfaceSupportKHR(device->GetVulkanPhysicalDevice(), queueDescription->family, surface, &presentationSupported);
+            if (presentationSupported == VK_FALSE) continue;
 
-            // Save family
-            if (presentationSupported == VK_TRUE)
-            {
-                presentationQueueFamily = i;
-                break;
-            }
+            if (presentationQueueFamily == std::numeric_limits<uint32>::max() || queueDescription->operations & QueueOperations::Graphics) presentationQueueFamily = queueDescription->family;
+            if (queueDescription->operations & QueueOperations::Graphics) break;
         }
         SR_THROW_IF(presentationQueueFamily == std::numeric_limits<uint32>::max(), UnsupportedFeatureError(SR_FORMAT("Device [{0}] cannot create swapchain [{1}], as it does not support presentation", GetName(), device->GetName())));
-
-        // Retrieve presentation queue
-        device->GetFunctionTable().vkGetDeviceQueue(device->GetVulkanDevice(), presentationQueueFamily, 0, &presentationQueue);
 
         // Retrieve supported format count
         uint32 supportedFormatCount = 0;
@@ -261,24 +209,21 @@ namespace Sierra
 
         // Retrieve supported present modes
         std::vector<VkPresentModeKHR> supportedPresentModes(supportedPresentModeCount);
-        instance->GetFunctionTable().vkGetPhysicalDeviceSurfacePresentModesKHR(device->GetVulkanPhysicalDevice(), surface, &supportedFormatCount, supportedPresentModes.data());
+        instance->GetFunctionTable().vkGetPhysicalDeviceSurfacePresentModesKHR(device->GetVulkanPhysicalDevice(), surface, &supportedPresentModeCount, supportedPresentModes.data());
+
+        #if !SR_PLATFORM_MOBILE
+            constexpr VkPresentModeKHR VSYNC_PRESENT_MODE = VK_PRESENT_MODE_MAILBOX_KHR; // VSync with no tearing, no GPU idling, low latency, and high energy consumption
+        #else
+            constexpr VkPresentModeKHR VSYNC_PRESENT_MODE = VK_PRESENT_MODE_FIFO_KHR; // VSync with no tearing, low GPU idling, moderate latency, minimal energy consumption
+        #endif
 
         // Select a present mode in regard to requested
         VkPresentModeKHR selectedPresentMode = VK_PRESENT_MODE_FIFO_KHR; // FIFO is guaranteed to be supported
         for (const VkPresentModeKHR presentMode : supportedPresentModes)
         {
-            if (preferredPresentationMode == SwapchainPresentationMode::Immediate && presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)   // Possible tearing, no GPU idling, minimal latency, and high energy consumption
+            if ((preferredPresentationMode == SwapchainPresentationMode::Immediate && presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) || (preferredPresentationMode == SwapchainPresentationMode::VSync && presentMode == VSYNC_PRESENT_MODE)) // Immediate has possible tearing, no GPU idling, minimal latency, and high energy consumption
             {
-                selectedPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
-                break;
-            }
-            #if !SR_PLATFORM_MOBILE
-                if (preferredPresentationMode == SwapchainPresentationMode::VSync && presentMode == VK_PRESENT_MODE_MAILBOX_KHR)     // VSync with no tearing, no GPU idling, low latency, and high energy consumption
-            #else
-                if (preferredPresentationMode == SwapchainPresentationMode::VSync && presentMode == VK_PRESENT_MODE_FIFO_KHR)        // VSync with no tearing, low GPU idling, moderate latency, minimal energy consumption
-            #endif
-            {
-                selectedPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+                selectedPresentMode = presentMode;
                 break;
             }
         }
@@ -299,6 +244,13 @@ namespace Sierra
         // Remember which framebuffer the swapchain is created for, so that a change of it is noticed
         requestedFramebufferSize = window->GetFramebufferSize();
 
+        // Images are shared by every family the device has queues of, as rendering to them may happen on a different one than presenting them does, which would otherwise require transferring their ownership in between
+        std::vector<uint32> queueFamilies = { };
+        for (const std::shared_ptr<VulkanQueueDescription>& queueDescription : device->GetQueueDescriptions())
+        {
+            if (std::ranges::find(queueFamilies, queueDescription->family) == queueFamilies.end()) queueFamilies.emplace_back(queueDescription->family);
+        }
+
         // Set up swapchain creation info
         const VkSwapchainCreateInfoKHR swapchainCreateInfo
         {
@@ -313,7 +265,9 @@ namespace Sierra
             },
             .imageArrayLayers = 1,
             .imageUsage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-            .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .imageSharingMode = queueFamilies.size() > 1 ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE,
+            .queueFamilyIndexCount = queueFamilies.size() > 1 ? static_cast<uint32>(queueFamilies.size()) : 0,
+            .pQueueFamilyIndices = queueFamilies.size() > 1 ? queueFamilies.data() : nullptr,
             .preTransform = surfaceCapabilities.currentTransform,
             .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
             .presentMode = selectedPresentMode,
@@ -364,20 +318,34 @@ namespace Sierra
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
         };
 
-        // Create sync objects
+        // Create acquisition semaphores (one per frame)
         isImageAcquiredSemaphores.resize(concurrentFrameCount);
-        isPresentationCommandBufferFreeSemaphores.resize(concurrentFrameCount);
-
-        for (size i = 0; i < concurrentFrameCount; i++)
+        imageAcquisitionSemaphoreValues.assign(concurrentFrameCount, { });
+        for (size i = 0; i < isImageAcquiredSemaphores.size(); i++)
         {
-            VkResult result = device->GetFunctionTable().vkCreateSemaphore(device->GetVulkanDevice(), &semaphoreCreateInfo, nullptr, &isImageAcquiredSemaphores[i]);
+            const VkResult result = device->GetFunctionTable().vkCreateSemaphore(device->GetVulkanDevice(), &semaphoreCreateInfo, nullptr, &isImageAcquiredSemaphores[i]);
             if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create swapchain [{0}], as creation of semaphore indicating whether corresponding swapchain image is ready to be used failed", GetName()));
             device->SetResourceName(isImageAcquiredSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, SR_FORMAT("Image free semaphore [{0}] of swapchain [{1}]", i, GetName()));
-
-            result = device->GetFunctionTable().vkCreateSemaphore(device->GetVulkanDevice(), &semaphoreCreateInfo, nullptr, &isPresentationCommandBufferFreeSemaphores[i]);
-            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create swapchain [{0}], as creation of semaphore indicating whether drawing command buffer has finished failed", GetName()));
-            device->SetResourceName(isPresentationCommandBufferFreeSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, SR_FORMAT("Presentation command buffer ready semaphore [{0}] of swapchain [{1}]", i, GetName()));
         }
+
+        // Create presentation semaphores (one per image)
+        isPresentationCommandBufferFreeSemaphores.resize(swapchainImages.size());
+        for (size i = 0; i < isPresentationCommandBufferFreeSemaphores.size(); i++)
+        {
+            const VkResult result = device->GetFunctionTable().vkCreateSemaphore(device->GetVulkanDevice(), &semaphoreCreateInfo, nullptr, &isPresentationCommandBufferFreeSemaphores[i]);
+            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create swapchain [{0}], as creation of semaphore indicating whether drawing command buffer has finished failed", GetName()));
+            device->SetResourceName(isPresentationCommandBufferFreeSemaphores[i], VK_OBJECT_TYPE_SEMAPHORE, SR_FORMAT("Presentation command buffer ready semaphore of image [{0}] of swapchain [{1}]", i, GetName()));
+        }
+    }
+
+    void VulkanSwapchain::DestroySynchronization()
+    {
+        for (const VkSemaphore semaphore : isImageAcquiredSemaphores) device->GetFunctionTable().vkDestroySemaphore(device->GetVulkanDevice(), semaphore, nullptr);
+        isImageAcquiredSemaphores.clear();
+        imageAcquisitionSemaphoreValues.clear();
+
+        for (const VkSemaphore semaphore : isPresentationCommandBufferFreeSemaphores) device->GetFunctionTable().vkDestroySemaphore(device->GetVulkanDevice(), semaphore, nullptr);
+        isPresentationCommandBufferFreeSemaphores.clear();
     }
 
     /* --- DESTRUCTOR --- */
@@ -388,9 +356,13 @@ namespace Sierra
             window->Update();
         }
 
-        device->GetFunctionTable().vkQueueWaitIdle(presentationQueue);
+        // Rendering to, and presenting, the images (as well as converting semaphores of them) may happen on any queue, all of which must be done using them, and their semaphores, before they are replaced
+        device->WaitForQueuesIdle();
+        DestroySynchronization();
 
+        // The image count may differ, which the semaphores of every image depend on
         CreateSwapchain();
+        CreateSynchronization();
         currentFrame = 0;
 
         const uint32 width = swapchainImages[0]->GetWidth();
@@ -400,13 +372,11 @@ namespace Sierra
 
     VulkanSwapchain::~VulkanSwapchain() noexcept
     {
-        device->GetFunctionTable().vkDestroySwapchainKHR(device->GetVulkanDevice(), swapchain, nullptr);
+        // Presentations, and conversions of semaphores, are not part of any command buffer, so they are not covered by waiting for those
+        device->WaitForQueuesIdle();
 
-        for (size i = 0; i < concurrentFrameCount; i++)
-        {
-            device->GetFunctionTable().vkDestroySemaphore(device->GetVulkanDevice(), isImageAcquiredSemaphores[i], nullptr);
-            device->GetFunctionTable().vkDestroySemaphore(device->GetVulkanDevice(), isPresentationCommandBufferFreeSemaphores[i], nullptr);
-        }
+        device->GetFunctionTable().vkDestroySwapchainKHR(device->GetVulkanDevice(), swapchain, nullptr);
+        DestroySynchronization();
 
         instance->GetFunctionTable().vkDestroySurfaceKHR(instance->GetVulkanInstance(), surface, nullptr);
     }

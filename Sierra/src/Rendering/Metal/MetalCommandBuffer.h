@@ -74,6 +74,9 @@ namespace Sierra
         void InsertDebugMarker(std::string_view markerName, Color32 color) override;
         void EndDebugRegion() override;
 
+        void BeginTimestampRegion(std::string_view regionName) override;
+        void EndTimestampRegion() override;
+
         /* --- GETTER METHODS --- */
         [[nodiscard]] id<MTLCommandBuffer> GetMetalCommandBuffer() const noexcept { return commandBuffer; }
         [[nodiscard]] const MetalQueue& GetQueue() const noexcept { return *queue; }
@@ -94,7 +97,9 @@ namespace Sierra
         const MetalQueue* queue = nullptr;
 
         id<MTLCommandBuffer> commandBuffer = nil;
-        uint64 completionSemaphoreSignalValue = 0;
+
+        friend class MetalQueue;
+        mutable uint64 completionSemaphoreSignalValue = 0; // Only ever set by the queue it is submitted to (none until first submitted)
 
         #if !defined(__OBJC__)
             using MTLRenderCommandEncoder = void;
@@ -107,6 +112,12 @@ namespace Sierra
         id<MTLBlitCommandEncoder> currentBlitEncoder = nil;
 
         bool debugRegionBegan = false;
+
+        // NOTE: Timestamp regions are validated as they are on every backend, but not yet measured (which, once implemented, is done by sampling timestamps at the boundaries of encoders)
+        bool timestampRegionBegan = false;
+        uint32 timestampRegionCount = 0;
+        std::string currentTimestampRegionName = { };
+
         const MetalResourceTable* currentResourceTable = nullptr;
 
         int32 currentSubpass = -1;

@@ -21,6 +21,8 @@ namespace Sierra
     {
     public:
         /* --- POLLING METHODS --- */
+        // NOTE: Queued resources are destroyed once all work submitted prior to the following flush completes, so they must only be used by command buffers submitted before it (which is
+        // the case when flushing once per frame, before recording it, as long as command buffers recorded while resources get queued are submitted within the same frame)
         virtual void QueueResource(std::unique_ptr<RenderingResource>&& resource) = 0;
         virtual void Flush() = 0;
 

@@ -9,6 +9,7 @@
 #include "../Wizards/Assets/TextureSerializeWizard.h"
 #include "../Wizards/Assets/MaterialSerializeWizard.h"
 #include "../Wizards/Assets/ModelSerializeWizard.h"
+#include "../../Assets/Shaders/Compilers/SlangShaderCompiler.h"
 
 #include  "../Dialogs/ConfirmationDialog.h"
 #include  "../Dialogs/TextDialog.h"
@@ -27,6 +28,7 @@ namespace SierraEngine
             case AssetBrowserEntryType::Texture:        return "Texture";
             case AssetBrowserEntryType::Material:       return "Material";
             case AssetBrowserEntryType::Model:          return "Model";
+            case AssetBrowserEntryType::Shader:         return "Shader";
         }
 
         return "Unknown";
@@ -75,10 +77,11 @@ namespace SierraEngine
             Models,
             Materials,
             Images,
+            Shaders,
             Other
         };
 
-        constexpr std::array<ImGuiDropdownOption, 7> FILTER_OPTIONS
+        constexpr std::array<ImGuiDropdownOption, 8> FILTER_OPTIONS
         {
             ImGuiDropdownOption { .text = "All Items" },
             ImGuiDropdownOption { .text = "Folders" },
@@ -86,6 +89,7 @@ namespace SierraEngine
             ImGuiDropdownOption { .text = "Models" },
             ImGuiDropdownOption { .text = "Materials" },
             ImGuiDropdownOption { .text = "Images" },
+            ImGuiDropdownOption { .text = "Shaders" },
             ImGuiDropdownOption { .text = "Other" }
         };
 
@@ -186,6 +190,7 @@ namespace SierraEngine
                 case AssetBrowserEntryType::Model:      return IM_COL32(112, 204, 136, 255);
                 case AssetBrowserEntryType::Material:   return IM_COL32(178, 128, 232, 255);
                 case AssetBrowserEntryType::Image:      return IM_COL32(234, 142, 92, 255);
+                case AssetBrowserEntryType::Shader:     return IM_COL32(72, 196, 190, 255);
                 case AssetBrowserEntryType::Blob:       return IM_COL32(150, 152, 164, 255);
                 case AssetBrowserEntryType::Unknown:    return IM_COL32(140, 146, 158, 255);
             }
@@ -251,6 +256,23 @@ namespace SierraEngine
                     drawList->AddCircleFilled({ center.x - extent * 0.08f, center.y - extent * 0.08f }, extent * 0.07f, IM_COL32(255, 255, 255, 140), 16);
                     break;
                 }
+                case AssetBrowserEntryType::Shader:
+                {
+                    // The first triangle of every renderer, blended across its corners
+                    const ImVec2 top = { center.x, center.y - extent * 0.26f };
+                    const ImVec2 bottomRight = { center.x + extent * 0.28f, center.y + extent * 0.22f };
+                    const ImVec2 bottomLeft = { center.x - extent * 0.28f, center.y + extent * 0.22f };
+
+                    // Filled in the type's color first, purely for its anti-aliased edges (which need clockwise winding), as the blended fill on top has none
+                    drawList->AddTriangleFilled(top, bottomRight, bottomLeft, color);
+
+                    const ImVec2 whitePixelUV = ImGui::GetFontTexUvWhitePixel();
+                    drawList->PrimReserve(3, 3);
+                    drawList->PrimVtx(top, whitePixelUV, IM_COL32(235, 64, 52, 255));
+                    drawList->PrimVtx(bottomRight, whitePixelUV, IM_COL32(10, 132, 255, 255));
+                    drawList->PrimVtx(bottomLeft, whitePixelUV, IM_COL32(52, 199, 89, 255));
+                    break;
+                }
                 case AssetBrowserEntryType::Image:
                 {
                     drawList->AddTriangleFilled({ min.x + extent * 0.2f, max.y - extent * 0.22f }, { center.x - extent * 0.04f, center.y - extent * 0.12f }, { max.x - extent * 0.2f, max.y - extent * 0.22f }, color);
@@ -302,6 +324,7 @@ namespace SierraEngine
             if (extension == TextureSerializeWizard::OUTPUT_FILE_EXTENSION) return AssetBrowserEntryType::Texture;
             if (extension == MaterialSerializeWizard::OUTPUT_FILE_EXTENSION) return AssetBrowserEntryType::Material;
             if (extension == ModelSerializeWizard::OUTPUT_FILE_EXTENSION) return AssetBrowserEntryType::Model;
+            if (extension == SlangShaderCompiler::SOURCE_FILE_EXTENSION) return AssetBrowserEntryType::Shader;
 
             return AssetBrowserEntryType::Unknown;
         }
@@ -339,14 +362,6 @@ namespace SierraEngine
             ImGui::SameLine();
             DrawEntries(applicationFrame, { entriesWidth, bodyHeight });
 
-            if (pendingNavigationPath.has_value())
-            {
-                const Sierra::Path navigationPath = std::move(*pendingNavigationPath);
-                pendingNavigationPath.reset();
-
-                NavigateTo(applicationFrame, navigationPath);
-            }
-
             if (showDetails)
             {
                 ImGui::SameLine();
@@ -361,6 +376,14 @@ namespace SierraEngine
 
     void AssetBrowserPanel::Refresh(const ApplicationFrame& applicationFrame)
     {
+        // The current directory may no longer exist (if deleted, renamed or moved outside of the editor), in which case the nearest one containing it is shown instead
+        while (!relativeDirectoryPath.IsEmpty() && !applicationFrame.platformContext.GetFileManager().IsDirectory(rootDirectoryPath / relativeDirectoryPath))
+        {
+            relativeDirectoryPath = relativeDirectoryPath.GetParentPath();
+            revealCurrentDirectory = true;
+        }
+        ValidateHistory(applicationFrame);
+
         selectedEntryIndices.clear();
         entries.clear();
 
@@ -398,8 +421,9 @@ namespace SierraEngine
         RefreshEntryVisibility();
     }
 
-    bool AssetBrowserPanel::NavigateBack(const ApplicationFrame& applicationFrame) // TODO: Validate history
+    bool AssetBrowserPanel::NavigateBack(const ApplicationFrame& applicationFrame)
     {
+        ValidateHistory(applicationFrame);
         if (backHistory.empty())
             return false;
 
@@ -414,6 +438,8 @@ namespace SierraEngine
 
     bool AssetBrowserPanel::NavigateForward(const ApplicationFrame& applicationFrame)
     {
+        // Directories in history may have been deleted, renamed or moved since they were visited
+        ValidateHistory(applicationFrame);
         if (forwardHistory.empty())
             return false;
 
@@ -606,7 +632,10 @@ namespace SierraEngine
 
                 const size extensionSize = newName.size() - name.size();
                 entry.name = newName.substr(0, newName.size() - extensionSize);
+
+                const Sierra::Path oldRelativePath = entry.relativePath;
                 entry.relativePath.ChangeFileName(newName);
+                if (entry.type == AssetBrowserEntryType::Folder) RemapHistory(oldRelativePath, entry.relativePath);
 
                 return true;
             }
@@ -702,6 +731,11 @@ namespace SierraEngine
                     matchesFilter = entry.type == AssetBrowserEntryType::Image;
                     break;
                 }
+                case FilterType::Shaders:
+                {
+                    matchesFilter = entry.type == AssetBrowserEntryType::Shader;
+                    break;
+                }
                 case FilterType::Other:
                 {
                     matchesFilter = entry.type == AssetBrowserEntryType::Unknown;
@@ -767,6 +801,40 @@ namespace SierraEngine
         });
     }
 
+    void AssetBrowserPanel::ValidateHistory(const ApplicationFrame& applicationFrame)
+    {
+        const Sierra::FileManager& fileManager = applicationFrame.platformContext.GetFileManager();
+        const auto Validate = [this, &fileManager](std::vector<Sierra::Path>& history) -> void
+        {
+            // Directories which no longer exist cannot be gone back (or forward) to
+            std::erase_if(history, [this, &fileManager](const Sierra::Path& relativePath) -> bool { return !fileManager.IsDirectory(rootDirectoryPath / relativePath); });
+
+            // Which may leave the same directory several times in a row, or the current one next, either of which would make going through history seem to do nothing
+            const auto [duplicatesBegin, duplicatesEnd] = std::ranges::unique(history);
+            history.erase(duplicatesBegin, duplicatesEnd);
+            while (!history.empty() && history.back() == relativeDirectoryPath) history.pop_back();
+        };
+
+        Validate(backHistory);
+        Validate(forwardHistory);
+    }
+
+    void AssetBrowserPanel::RemapHistory(const Sierra::Path& oldRelativeDirectoryPath, const Sierra::Path& newRelativeDirectoryPath)
+    {
+        // Directories within a renamed (or moved) one go along with it, so they are kept in history at their new location
+        const auto Remap = [&oldRelativeDirectoryPath, &newRelativeDirectoryPath](std::vector<Sierra::Path>& history) -> void
+        {
+            for (Sierra::Path& relativePath : history)
+            {
+                if (relativePath == oldRelativeDirectoryPath) relativePath = newRelativeDirectoryPath;
+                else if (oldRelativeDirectoryPath.IsAncestor(relativePath)) relativePath = newRelativeDirectoryPath / Sierra::Path(relativePath.GetStandardPath().lexically_relative(oldRelativeDirectoryPath.GetStandardPath()));
+            }
+        };
+
+        Remap(backHistory);
+        Remap(forwardHistory);
+    }
+
     void AssetBrowserPanel::UpdateRelativeDirectoryPath(const ApplicationFrame& applicationFrame, const Sierra::Path& givenRelativeDirectoryPath)
     {
         relativeDirectoryPath = givenRelativeDirectoryPath;
@@ -799,7 +867,13 @@ namespace SierraEngine
 
         int32 i = 0;
         const std::string rootDirectoryName = rootDirectoryPath.GetStem();
-        if (DrawBreadcrumb(i, rootDirectoryName, true)) NavigateTo(applicationFrame, { });
+        if (DrawBreadcrumb(i, rootDirectoryName, true))
+        {
+            if (NavigateTo(applicationFrame, { }))
+            {
+                return;
+            }
+        }
         i++;
 
         Sierra::Path currentRelativeDirectoryPath = { };
@@ -808,7 +882,13 @@ namespace SierraEngine
             currentRelativeDirectoryPath /= segment;
 
             const std::string  directoryName = segment.GetStem();
-            if (DrawBreadcrumb(i, directoryName)) NavigateTo(applicationFrame, currentRelativeDirectoryPath);
+            if (DrawBreadcrumb(i, directoryName))
+            {
+                if (NavigateTo(applicationFrame, currentRelativeDirectoryPath))
+                {
+                    return;
+                }
+            }
 
             i++;
         }
@@ -914,7 +994,7 @@ namespace SierraEngine
         revealCurrentDirectory = false;
     }
 
-    void AssetBrowserPanel::DrawTreeNode(const ApplicationFrame& applicationFrame, const Sierra::Path& givenRelativeDirectoryPath)
+    bool AssetBrowserPanel::DrawTreeNode(const ApplicationFrame& applicationFrame, const Sierra::Path& givenRelativeDirectoryPath)
     {
         const std::string directoryName = givenRelativeDirectoryPath.IsEmpty() ? rootDirectoryPath.GetStem() : givenRelativeDirectoryPath.GetStem();
         const Sierra::Path absoluteDirectoryPath = rootDirectoryPath / givenRelativeDirectoryPath;
@@ -930,24 +1010,29 @@ namespace SierraEngine
 
         // Folders leading to the current one are opened when navigating to it
         if (revealCurrentDirectory && ancestor && !current) ImGui::SetNextItemOpen(true);
-
         const bool open = ImGui::TreeNodeEx("##Node", flags, "%s", directoryName.c_str());
+
+        bool updated = false;
         if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen())
         {
-            NavigateTo(applicationFrame, givenRelativeDirectoryPath);
+            updated = NavigateTo(applicationFrame, givenRelativeDirectoryPath);
         }
 
         if (open)
         {
             for (const Sierra::Path& child : children)
             {
-                DrawTreeNode(applicationFrame, child.GetRelativePath(rootDirectoryPath));
+                if (!DrawTreeNode(applicationFrame, child.GetRelativePath(rootDirectoryPath)))
+                {
+                    break;
+                }
             }
 
             ImGui::TreePop();
         }
 
         ImGui::PopID();
+        return open && !updated;
     }
 
     void AssetBrowserPanel::AddEntry(const ApplicationFrame& applicationFrame, const Sierra::Path& relativeEntryPath)
@@ -1053,7 +1138,6 @@ namespace SierraEngine
 
         const bool visible = ImGui::IsItemVisible();
         const bool hovered = ImGui::IsItemHovered();
-        HandleEntryInteraction(applicationFrame, entry);
         if (!visible) return;
 
         ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -1086,6 +1170,8 @@ namespace SierraEngine
         const ImVec2 subtitlePosition = { namePosition.x, namePosition.y + fontSize + 3.0f };
         const std::string subtitle = ImGuiWidgets::TruncateText(fontSize * 0.85f, BuildSubtitle(entry), textWidth);
         drawList->AddText(font, fontSize * 0.85f, subtitlePosition, ImGui::GetColorU32(ImGuiCol_TextDisabled), subtitle.c_str());
+
+        HandleEntryInteraction(applicationFrame, entry);
     }
 
     void AssetBrowserPanel::DrawListEntries(const ApplicationFrame& applicationFrame)
@@ -1171,8 +1257,8 @@ namespace SierraEngine
 
         if (entry.type == AssetBrowserEntryType::Folder && ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
         {
-            // NOTE: Navigating replaces all entries, including this one, which is still being drawn, so it is postponed until drawing of entries is done
-            pendingNavigationPath = entry.relativePath;
+            NavigateTo(applicationFrame, entry.relativePath);
+            return;
         }
 
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_DelayNormal) && !ImGui::IsMouseDragging(ImGuiMouseButton_Left))

@@ -34,6 +34,10 @@
 #include "../../src/Assets/Models/ModelLoader.h"
 #include "../../src/Assets/Models/ModelSerializer.h"
 
+#include "../../src/Assets/Shaders/ShaderCompiler.h"
+#include "../../src/Assets/Shaders/ShaderImporter.h"
+#include "../../src/Assets/Shaders/ShaderSerializer.h"
+
 #include "../../src/Assets/Textures/ImageAccessor.h"
 #include "../../src/Assets/Textures/ImageCompressor.h"
 #include "../../src/Assets/Textures/ImageConverter.h"

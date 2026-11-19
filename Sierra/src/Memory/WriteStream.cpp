@@ -43,6 +43,11 @@ namespace Sierra
         return StreamResult::Success;
     }
 
+    void WriteStream::Resize(const size memorySize) noexcept
+    {
+        buffer.resize(memorySize);
+    }
+
     std::vector<uint8> WriteStream::Release() noexcept
     {
         std::vector<uint8> result = std::move(buffer);

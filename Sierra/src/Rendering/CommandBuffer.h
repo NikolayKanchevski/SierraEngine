@@ -12,6 +12,7 @@
 #include "ComputePipeline.h"
 #include "GraphicsPipeline.h"
 #include "RenderingResource.h"
+#include "../Utilities/TimeStep.h"
 
 namespace Sierra
 {
@@ -88,6 +89,12 @@ namespace Sierra
         Vector3UInt pixelRange = { 0, 1, 1 };
     };
 
+    struct TimestampRegion
+    {
+        std::string name = { };
+        TimeStep duration = { }; // GPU time from the start of the first pass within the region, to the end of the last one
+    };
+
     class SIERRA_API CommandBuffer : public virtual RenderingResource
     {
     public:
@@ -133,6 +140,20 @@ namespace Sierra
         virtual void BeginDebugRegion(std::string_view regionName, Color32 color);
         virtual void InsertDebugMarker(std::string_view markerName, Color32 color);
         virtual void EndDebugRegion();
+
+        // NOTE: A timestamp region measures the passes (render passes, compute pipelines, copies and mip map generations) recorded within it. As Metal can only sample timestamps
+        // between encoders, every backend allows regions to only be begun and ended outside of render passes and compute pipelines, not to be nested, and requires them ended before
+        // the command buffer is, while regions with no pass within them are not measured at all
+        virtual void BeginTimestampRegion(std::string_view regionName);
+        virtual void EndTimestampRegion();
+
+        /* --- GETTER METHODS --- */
+        // Measured regions of the last recording to have finished executing, in the order they were recorded in (read back once the command buffer is begun again)
+        [[nodiscard]] virtual std::span<const TimestampRegion> GetTimestampRegions() const noexcept { return { }; }
+
+        /* --- CONSTANTS --- */
+        constexpr static uint32 TIMESTAMP_QUERY_POOL_SIZE = 32;
+        constexpr static uint32 MAX_TIMESTAMP_REGION_COUNT = TIMESTAMP_QUERY_POOL_SIZE / 2; // Every region takes two timestamps, one at its start and one at its end
 
         /* --- COPY SEMANTICS --- */
         CommandBuffer(const CommandBuffer&) = delete;

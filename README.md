@@ -161,13 +161,12 @@ Despite the repository being named after the **[Sierra Engine](SierraEngine)**, 
 **Within [Sierra](Sierra)**:
 * [Vulkan](https://vulkan.org/) - Allows for incredibly fast rendering on a wide variety of platforms.
 * [Metal](https://developer.apple.com/metal/) - Being their native rendering API, it is used for fast, hardware-accelerated rendering on [Apple](https://apple.com) platforms.
-* [ShaderConnect](https://github.com/NikolayKanchevski/ShaderConnect/tree/sierra) - A dedicated branch of the shader cross-compilation framework.
 * [spdlog](https://github.com/gabime/spdlog) - Used for fast, asynchronous debug-only logging.
 * [fmt](https://github.com/fmtlib/fmt) - A faster and more supported counterpart of the standard formatting library.
-* [GLM](https://github.com/g-truc/glm/) - Provides the engine with a powerful set of tools for solving linear algebra problems.
+* [glm](https://github.com/g-truc/glm/) - Provides the engine with a powerful set of tools for solving linear algebra problems.
 * [ios-cmake](https://github.com/leetal/ios-cmake) - Essential for building the engine on iOS.
-* [VMA](https://gpuopen.com/vulkan-memory-allocator/) - For optimal memory management of [Vulkan](https://vulkan.org/) objects.
-* [ImGui](https://github.com/ocornut/imgui) - Used in the ImGui UI extension.
+* [vma](https://gpuopen.com/vulkan-memory-allocator/) - For optimal memory management of [Vulkan](https://vulkan.org/) objects.
+* [imgui](https://github.com/ocornut/imgui) - Used in the ImGui UI extension.
 * [My Brain](https://ih1.redbubble.net/templateOutputImage.528192883.5730/st,small,845x845-pad,1000x1000,f8f8f8.u9.jpg) - There is not much left of it, actually...
 
 **Within [Sierra Engine](SierraEngine)**:
@@ -179,6 +178,8 @@ Despite the repository being named after the **[Sierra Engine](SierraEngine)**, 
 * [fastgltf](https://github.com/spnda/fastgltf) - A library used for the importation of gltf models.
 * [meshoptimizer](https://github.com/zeux/meshoptimizer) - Performs data optimization upon importation of models.
 * [Rapid YAML](https://github.com/biojppm/rapidyaml/) - Fast YAML parser and emitter used for serialization.
+* [Slang](https://github.com/shader-slang/slang) - Shading language which shaders are written in, compiled to SPIR-V within the editor.
+* [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross) - Translates compiled shaders to Metal.
 * [easy-args](https://github.com/gouwsxander/easy-args) - Convenient CLI argument parser.
 
 <br>

@@ -14,27 +14,22 @@ namespace Sierra
     MetalShader::MetalShader(const MetalDevice& device, const ShaderCreateInfo& createInfo)
         : MetalResource(createInfo.name), Shader(createInfo)
     {
-        const ShaderFileHeader& fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.buffer.data());
-        #if SR_PLATFORM_macOS
-            const void* shaderData = createInfo.buffer.data() + sizeof(ShaderFileHeader) + fileHeader.GetMacOSMetalLibOffset();
-            const size shaderDataMemorySize = fileHeader.macOSMetalLibMemorySize;
-        #elif SR_PLATFORM_iOS && !SR_PLATFORM_EMULATOR
-            const void* shaderData = createInfo.buffer.data() + sizeof(ShaderFileHeader) + fileHeader.GetIOSMetalLibOffset();
-            const size shaderDataMemorySize = fileHeader.iOSMetalLibMemorySize;
-        #elif SR_PLATFORM_iOS && SR_PLATFORM_EMULATOR
-            const void* shaderData = createInfo.buffer.data() + sizeof(ShaderFileHeader) + fileHeader.GetIOSSimulatorMetalLibOffset();
-            const size shaderDataMemorySize = fileHeader.iOSSimulatorMetalLibMemorySize;
-        #endif
+        // Compile library from source (the version must match the one the source was translated to)
+        NSString* const source = [[NSString alloc] initWithBytes: createInfo.code.data() length: createInfo.code.size() encoding: NSUTF8StringEncoding];
+        MTLCompileOptions* const compileOptions = [[MTLCompileOptions alloc] init];
+        [compileOptions setLanguageVersion: MTLLanguageVersion3_0];
 
-        // Load library
         NSError* error = nil;
-        const id<MTLLibrary> library = [device.GetMetalDevice() newLibraryWithData: dispatch_data_create(shaderData, shaderDataMemorySize, nullptr, nullptr) error: &error];
-        SR_THROW_IF(library == nil, UnknownDeviceError(SR_FORMAT("Could not create shader [{0}]", createInfo.name)));
+        const id<MTLLibrary> library = [device.GetMetalDevice() newLibraryWithSource: source options: compileOptions error: &error];
+        [compileOptions release];
+        [source release];
+        SR_THROW_IF(library == nil, UnknownDeviceError(SR_FORMAT("Could not create shader [{0}], as its Metal source could not be compiled: {1}", createInfo.name, error != nil ? error.localizedDescription.UTF8String : "Unknown error")));
 
         // Load entry point
         entryFunction = [library newFunctionWithName: @"main0"];
-        device.SetResourceName(entryFunction, SR_FORMAT("Entry function of shader [{0}]", createInfo.name));
         [library release];
+        SR_THROW_IF(entryFunction == nil, UnknownDeviceError(SR_FORMAT("Could not create shader [{0}], as its Metal source has no entry point [main0]", createInfo.name)));
+        device.SetResourceName(entryFunction, SR_FORMAT("Entry function of shader [{0}]", createInfo.name));
     }
 
     /* --- GETTER METHODS --- */

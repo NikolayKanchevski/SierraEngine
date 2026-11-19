@@ -29,13 +29,15 @@ namespace Sierra
     VulkanShader::VulkanShader(const VulkanDevice& givenDevice, const ShaderCreateInfo& createInfo)
         : Shader(createInfo), name(createInfo.name), device(&givenDevice)
     {
+        SR_THROW_IF(createInfo.code.empty(), InvalidValueError(SR_FORMAT("Cannot create shader [{0}], as specified SPIR-V code must not be empty", createInfo.name)));
+        SR_THROW_IF(createInfo.code.size() % sizeof(uint32) != 0, InvalidValueError(SR_FORMAT("Cannot create shader [{0}], as specified SPIR-V code's memory size [{1}] is not a multiple of [sizeof(uint32) = 4]", createInfo.name, createInfo.code.size(), sizeof(uint32))));
+
         // Set up module create info
-        const ShaderFileHeader& fileHeader = *reinterpret_cast<const ShaderFileHeader*>(createInfo.buffer.data());
         const VkShaderModuleCreateInfo shaderModuleCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-            .codeSize = fileHeader.spvMemorySize,
-            .pCode = reinterpret_cast<const uint32*>(createInfo.buffer.data() + sizeof(ShaderFileHeader) + fileHeader.GetSpvOffset())
+            .codeSize = createInfo.code.size(),
+            .pCode = reinterpret_cast<const uint32*>(createInfo.code.data())
         };
 
         // Create shader module

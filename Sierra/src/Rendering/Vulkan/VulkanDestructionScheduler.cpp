@@ -5,6 +5,7 @@
 #include "VulkanDestructionScheduler.h"
 
 #include "VulkanBuffer.h"
+#include "VulkanErrorHandler.h"
 
 namespace Sierra
 {
@@ -24,23 +25,34 @@ namespace Sierra
         SR_THROW_IF(resource == nullptr, InvalidValueError(SR_FORMAT("Cannot queue invalid resource [nullptr] for destruction within destruction scheduler [{0}]", GetName())));
         SR_THROW_IF(resource->GetBackendType() != RenderingBackendType::Vulkan, UnexpectedTypeError(SR_FORMAT("Cannot queue resource [{0}] for destruction within destruction scheduler [{1}], as its backend type differs from [RenderingBackendType::Vulkan]", resource->GetName(), GetName())));
 
-        ResourceQueueEntry entry
-        {
-            .waitValue = device->GetLastSemaphoreSignalValue(),
-            .resource = std::move(resource)
-        };
-
-        resourceQueue.emplace_back(std::move(entry));
+        // NOTE: Command buffers only get their completion values once submitted, so the one being recorded right now (which may well use the resource) has none yet, which is why it is only scheduled on the next flush
+        unscheduledResources.emplace_back(std::move(resource));
     }
 
     void VulkanDestructionScheduler::Flush()
     {
-        uint64 currentValue = 0;
-        device->GetFunctionTable().vkGetSemaphoreCounterValue(device->GetVulkanDevice(), device->GetSemaphore(), &currentValue);
-
-        while (!resourceQueue.empty() && resourceQueue.front().waitValue <= currentValue)
+        // Destroy resources whose every semaphore has reached its value (batches are in the order they were scheduled in, so values within each only ever grow)
+        while (!scheduledResourceBatches.empty())
         {
-            resourceQueue.pop_front();
+            const ResourceBatch& resourceBatch = scheduledResourceBatches.front();
+            const bool completed = std::ranges::all_of(resourceBatch.semaphoreValuesToWait, [this](const VulkanSemaphoreValue& semaphoreValue) -> bool
+            {
+                uint64 currentValue = 0;
+                const VkResult result = device->GetFunctionTable().vkGetSemaphoreCounterValue(device->GetVulkanDevice(), semaphoreValue.semaphore, &currentValue);
+                if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not flush destruction scheduler [{0}], as reading the value of a semaphore failed", GetName()));
+
+                return currentValue >= semaphoreValue.value;
+            });
+
+            if (!completed) break;
+            scheduledResourceBatches.pop_front();
+        }
+
+        // Resources queued since the last flush were used by command buffers submitted since (which flushes must therefore happen after, as they do between frames), so they are destroyed once everything submitted so far completes
+        if (!unscheduledResources.empty())
+        {
+            scheduledResourceBatches.push_back({ .semaphoreValuesToWait = device->GetLastQueueSignalledSemaphoreValues(), .resources = std::move(unscheduledResources) });
+            unscheduledResources.clear();
         }
     }
 

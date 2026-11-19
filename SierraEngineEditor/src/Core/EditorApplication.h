@@ -54,7 +54,7 @@ namespace SierraEngine
         std::shared_ptr<SceneRenderer> sceneRenderer = nullptr;
 
         ArenaAllocator arenaAllocator;
-        EditorAssetManager assetManager = EditorAssetManager({ });
+        EditorAssetManager assetManager;
         std::optional<Editor> editor = std::nullopt;
 
     };

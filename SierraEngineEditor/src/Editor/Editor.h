@@ -11,8 +11,9 @@
 #include "../Rendering/Viewport.h"
 
 #include "Panels/LogPanel.h"
-#include "Panels/AssetBrowserPanel.h"
+#include "Panels/FrameInfoPanel.h"
 #include "Panels/HierarchyPanel.h"
+#include "Panels/AssetBrowserPanel.h"
 
 namespace SierraEngine
 {
@@ -71,6 +72,7 @@ namespace SierraEngine
 
         LogPanel logPanel;
         HierarchyPanel hierarchyPanel = { };
+        FrameInfoPanel frameInfoPanel = { };
 
         Sierra::HandleManager<ViewportID, Viewport> viewports = { };
 

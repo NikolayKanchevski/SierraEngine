@@ -40,12 +40,16 @@ namespace Sierra
         std::string name = { };
         const VulkanDevice* device;
 
-        struct ResourceQueueEntry
+        // Resources queued since the last flush, which are yet to be given the points to wait for
+        std::vector<std::unique_ptr<RenderingResource>> unscheduledResources = { };
+
+        // Resources to destroy once the timeline semaphore of every queue reaches the value it had when they were scheduled
+        struct ResourceBatch
         {
-            uint64 waitValue = 0;
-            std::unique_ptr<RenderingResource> resource = nullptr;
+            std::vector<VulkanSemaphoreValue> semaphoreValuesToWait = { };
+            std::vector<std::unique_ptr<RenderingResource>> resources = { };
         };
-        std::deque<ResourceQueueEntry> resourceQueue = { };
+        std::deque<ResourceBatch> scheduledResourceBatches = { };
     };
 
 }

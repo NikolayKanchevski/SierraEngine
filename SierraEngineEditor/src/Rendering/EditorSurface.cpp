@@ -96,8 +96,11 @@ namespace SierraEngine
         imGuiRenderer.Update(applicationFrame, { window->GetFramebufferWidth(), window->GetFramebufferHeight() }, swapchain->GetScaling());
         editor.Draw(applicationFrame, drawFrame);
 
-        editor.ForEachViewport([&drawFrame, &editor](Viewport& viewport) -> void
+        // Named as their panels are, so that the timings shown in the frame info panel can be told apart
+        uint32 viewportIndex = 0;
+        editor.ForEachViewport([&drawFrame, &editor, &viewportIndex](Viewport& viewport) -> void
         {
+            const uint32 index = viewportIndex++;
             if (viewport.IsHidden()) return;
 
             const SceneRenderInfo& renderInfo
@@ -110,12 +113,17 @@ namespace SierraEngine
                 .eye = viewport.GetTransform()
             };
 
+            drawFrame.commandBuffer.BeginTimestampRegion(SR_FORMAT("Viewport [{0}]", index));
             const Sierra::Image& image = viewport.GetRenderer().Render(drawFrame, renderInfo);
+            drawFrame.commandBuffer.EndTimestampRegion();
+
             drawFrame.resourceTable.UpdateSampledImage(viewport.GetImageID(), image);
         });
 
         drawFrame.commandBuffer.SynchronizeImageUsage(swapchain->GetCurrentImage(), { .previousUsage =  Sierra::ImageCommandUsage::None, .nextUsage = Sierra::ImageCommandUsage::ColorWrite });
+        drawFrame.commandBuffer.BeginTimestampRegion("ImGui");
         imGuiRenderer.Render(drawFrame, *framebuffers[swapchain->GetCurrentImageIndex()]);
+        drawFrame.commandBuffer.EndTimestampRegion();
         drawFrame.commandBuffer.SynchronizeImageUsage(swapchain->GetCurrentImage(), { .previousUsage =  Sierra::ImageCommandUsage::ColorWrite, .nextUsage = Sierra::ImageCommandUsage::Present });
     }
 

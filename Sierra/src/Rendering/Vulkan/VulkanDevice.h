@@ -21,6 +21,20 @@ namespace Sierra
         QueueOperations operations = QueueOperations::None;
     };
 
+    struct VulkanSemaphoreValue
+    {
+        VkSemaphore semaphore = VK_NULL_HANDLE;
+        uint64 value = 0; // Ignored for binary semaphores
+    };
+
+    struct VulkanQueueSubmitInfo
+    {
+        uint32 family = 0;
+        std::span<const VulkanSemaphoreValue> semaphoresToWait = { }; // Waited for prior to any work of the submission
+        std::span<const VkCommandBuffer> commandBuffers = { };
+        std::span<const VkSemaphore> binarySemaphoresToSignal = { }; // Signalled alongside the timeline semaphore of the family
+    };
+
     class SIERRA_API VulkanDevice final : public Device, public VulkanResource
     {
     public:
@@ -65,9 +79,14 @@ namespace Sierra
         [[nodiscard]] VmaAllocator GetVulkanMemoryAllocator() const noexcept { return vmaAllocator; }
         [[nodiscard]] std::span<const std::shared_ptr<VulkanQueueDescription>> GetQueueDescriptions() const noexcept { return queueDescriptions; }
 
-        [[nodiscard]] VkSemaphore GetSemaphore() const noexcept { return semaphore; }
-        [[nodiscard]] uint64 GetLastSemaphoreSignalValue() const noexcept { return lastReservedSemaphoreSignalValue; }
-        [[nodiscard]] uint64 GetNewSemaphoreSignalValue() const noexcept { return ++lastReservedSemaphoreSignalValue; }
+        // NOTE: Every queue of a family is the first VkQueue of it, so all submissions (and presentations) to it go through here, where they are externally synchronized (as Vulkan
+        // requires), and where each signals the timeline semaphore of the family with a value greater than any before it (output here, as what to wait for to know it has completed)
+        [[nodiscard]] VkResult SubmitToQueue(const VulkanQueueSubmitInfo& submitInfo, VulkanSemaphoreValue& outSignalledSemaphoreValue) const;
+        [[nodiscard]] VkResult PresentToQueue(uint32 family, const VkPresentInfoKHR& presentInfo) const;
+        void WaitForQueuesIdle() const;
+
+        [[nodiscard]] VkQueue GetQueue(uint32 family) const;
+        [[nodiscard]] std::vector<VulkanSemaphoreValue> GetLastQueueSignalledSemaphoreValues() const; // Of the timeline semaphore of every family, as of the last submission to it
 
         [[nodiscard]] VkDescriptorSetLayout GetDescriptorSetLayout() const noexcept { return descriptorSetLayout; }
         [[nodiscard]] VkPipelineLayout GetPipelineLayout(const uint16 pushConstantSize) const { return pipelineLayouts[pushConstantSize / 4]; }
@@ -77,6 +96,8 @@ namespace Sierra
 
         [[nodiscard]] VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures() const noexcept;
         VkPhysicalDeviceFeatures2 GetPhysicalDeviceFeatures2(void* pNext = nullptr) const noexcept;
+
+        [[nodiscard]] VkQueueFamilyProperties GetQueueFamilyProperties(uint32 family) const noexcept;
 
         /* --- SETTER METHODS --- */
         void SetResourceName(VkHandle64 object, VkObjectType type, std::string_view name) const noexcept;
@@ -127,8 +148,17 @@ namespace Sierra
         VulkanDeviceFunctionTable functionTable = { };
         std::vector<size> loadedExtensions = { };
 
-        VkSemaphore semaphore = VK_NULL_HANDLE;
-        mutable uint64 lastReservedSemaphoreSignalValue = 0;
+        struct QueueTimeline
+        {
+            uint32 family = 0;
+            VkQueue queue = VK_NULL_HANDLE;
+
+            VkSemaphore semaphore = VK_NULL_HANDLE; // Signalled by every submission to the queue, with values increasing in the order they are submitted in
+            uint64 lastSignalValue = 0;
+            std::mutex mutex = { }; // Guards the queue (which must be externally synchronized) and the last signal value
+        };
+        std::vector<std::unique_ptr<QueueTimeline>> queueTimelines = { };
+        [[nodiscard]] QueueTimeline& GetQueueTimeline(uint32 family) const;
 
         VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
         std::array<VkPipelineLayout, MAX_PUSH_CONSTANT_SIZE / 4 + 1> pipelineLayouts = { };

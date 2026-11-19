@@ -4,6 +4,7 @@
 
 #include "Editor.h"
 
+#include "Panels/FrameInfoPanel.h"
 #include "Panels/MenuPanel.h"
 #include "Panels/ViewportPanel.h"
 #include "Panels/HierarchyPanel.h"
@@ -70,6 +71,16 @@ namespace SierraEngine
             ViewportPanel::Draw(drawInfo);
             i++;
         });
+
+        // GPU time is that of every pass measured within the command buffer, the last time it finished executing (none are, on backends which cannot measure them)
+        std::optional<Sierra::TimeStep> drawTime = std::nullopt;
+        for (const Sierra::TimestampRegion& timestampRegion : drawFrame.commandBuffer.GetTimestampRegions())
+        {
+            drawTime = drawTime.value_or(Sierra::TimeStep()) + timestampRegion.duration;
+        }
+
+        ImGui::SetNextWindowDockID(dockID, ImGuiCond_FirstUseEver);
+        frameInfoPanel.Draw({ .frameTime = applicationFrame.timeStep, .drawTime = drawTime });
 
         modalManager.Draw(applicationFrame, drawFrame);
     }

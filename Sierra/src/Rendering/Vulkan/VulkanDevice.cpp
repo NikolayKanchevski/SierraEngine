@@ -148,7 +148,7 @@ namespace Sierra
         result = vmaCreateAllocator(&vmaCreteInfo, &vmaAllocator);
         if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create Vulkan device [{0}], as creation of memory allocator failed", createInfo.name));
 
-        // Create global timeline semaphore
+        // Create a timeline semaphore for the queue of every family, as submissions to different queues execute in no particular order relative to each other, while values of a timeline semaphore must only ever increase
         {
             SR_THROW_IF(!IsExtensionLoaded(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME), UnsupportedFeatureError(SR_FORMAT("Cannot create device Vulkan device [{0}], as it does not support the [{1}] extension", createInfo.name, VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME)));
 
@@ -160,17 +160,27 @@ namespace Sierra
                 .initialValue = 0
             };
 
-            // Set up shared semaphore create info
+            // Set up semaphore create info
             const VkSemaphoreCreateInfo semaphoreCreateInfo
             {
                 .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
                 .pNext = &semaphoreTypeCreateInfo
             };
 
-            // Create shared fence
-            result = functionTable.vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &semaphore);
-            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create Vulkan device [{0}], as creation of timeline semaphore failed", createInfo.name));
-            SetResourceName(semaphore, VK_OBJECT_TYPE_SEMAPHORE, SR_FORMAT("Semaphore of device [{0}]", createInfo.name));
+            queueTimelines.reserve(queueDescriptions.size());
+            for (const std::shared_ptr<VulkanQueueDescription>& queueDescription : queueDescriptions)
+            {
+                if (std::ranges::any_of(queueTimelines, [&queueDescription](const std::unique_ptr<QueueTimeline>& queueTimeline) -> bool { return queueTimeline->family == queueDescription->family; })) continue;
+
+                std::unique_ptr<QueueTimeline>& queueTimeline = queueTimelines.emplace_back(std::make_unique<QueueTimeline>());
+                queueTimeline->family = queueDescription->family;
+                functionTable.vkGetDeviceQueue(device, queueTimeline->family, 0, &queueTimeline->queue);
+
+                // Create semaphore
+                result = functionTable.vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &queueTimeline->semaphore);
+                if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Cannot create Vulkan device [{0}], as creation of timeline semaphore of queue family [{1}] failed", createInfo.name, queueTimeline->family));
+                SetResourceName(queueTimeline->semaphore, VK_OBJECT_TYPE_SEMAPHORE, SR_FORMAT("Timeline semaphore of queue family [{0}] of device [{1}]", queueTimeline->family, createInfo.name));
+            }
         }
 
         // Create global (bindless) descriptor set layout
@@ -422,6 +432,115 @@ namespace Sierra
         return true;
     }
 
+    VkResult VulkanDevice::SubmitToQueue(const VulkanQueueSubmitInfo& submitInfo, VulkanSemaphoreValue& outSignalledSemaphoreValue) const
+    {
+        QueueTimeline& queueTimeline = GetQueueTimeline(submitInfo.family);
+
+        // Every wait happens before all of the work of the submission
+        std::vector<VkSemaphore> waitSemaphores(submitInfo.semaphoresToWait.size());
+        std::vector<uint64> waitValues(submitInfo.semaphoresToWait.size());
+        const std::vector<VkPipelineStageFlags> waitStages(submitInfo.semaphoresToWait.size(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+        for (size i = 0; i < submitInfo.semaphoresToWait.size(); i++)
+        {
+            waitSemaphores[i] = submitInfo.semaphoresToWait[i].semaphore;
+            waitValues[i] = submitInfo.semaphoresToWait[i].value;
+        }
+
+        // The value is only reserved once the queue is locked, so that values are signalled in the same order submissions are made in
+        const std::lock_guard lock(queueTimeline.mutex);
+        const uint64 signalValue = queueTimeline.lastSignalValue + 1;
+
+        std::vector<VkSemaphore> signalSemaphores = { queueTimeline.semaphore };
+        signalSemaphores.insert(signalSemaphores.end(), submitInfo.binarySemaphoresToSignal.begin(), submitInfo.binarySemaphoresToSignal.end());
+        const std::vector<uint64> signalValues(signalSemaphores.size(), signalValue); // Values of binary semaphores are ignored
+
+        // Set up semaphore submit info
+        const VkTimelineSemaphoreSubmitInfo semaphoreSubmitInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
+            .waitSemaphoreValueCount = static_cast<uint32>(waitValues.size()),
+            .pWaitSemaphoreValues = waitValues.data(),
+            .signalSemaphoreValueCount = static_cast<uint32>(signalValues.size()),
+            .pSignalSemaphoreValues = signalValues.data()
+        };
+
+        // Set up submit info
+        const VkSubmitInfo vkSubmitInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = &semaphoreSubmitInfo,
+            .waitSemaphoreCount = static_cast<uint32>(waitSemaphores.size()),
+            .pWaitSemaphores = waitSemaphores.data(),
+            .pWaitDstStageMask = waitStages.data(),
+            .commandBufferCount = static_cast<uint32>(submitInfo.commandBuffers.size()),
+            .pCommandBuffers = submitInfo.commandBuffers.data(),
+            .signalSemaphoreCount = static_cast<uint32>(signalSemaphores.size()),
+            .pSignalSemaphores = signalSemaphores.data()
+        };
+
+        // Submit, and only count the value as used if it actually will be signalled
+        const VkResult result = functionTable.vkQueueSubmit(queueTimeline.queue, 1, &vkSubmitInfo, VK_NULL_HANDLE);
+        if (result != VK_SUCCESS) return result;
+
+        queueTimeline.lastSignalValue = signalValue;
+        outSignalledSemaphoreValue = { .semaphore = queueTimeline.semaphore, .value = signalValue };
+        return VK_SUCCESS;
+    }
+
+    VkResult VulkanDevice::PresentToQueue(const uint32 family, const VkPresentInfoKHR& presentInfo) const
+    {
+        QueueTimeline& queueTimeline = GetQueueTimeline(family);
+
+        const std::lock_guard lock(queueTimeline.mutex);
+        return functionTable.vkQueuePresentKHR(queueTimeline.queue, &presentInfo);
+    }
+
+    void VulkanDevice::WaitForQueuesIdle() const
+    {
+        for (const std::unique_ptr<QueueTimeline>& queueTimeline : queueTimelines)
+        {
+            const std::lock_guard lock(queueTimeline->mutex);
+            const VkResult result = functionTable.vkQueueWaitIdle(queueTimeline->queue);
+            if (result != VK_SUCCESS) HandleVulkanError(result, SR_FORMAT("Could not wait for queue of family [{0}] of device [{1}] to become idle", queueTimeline->family, GetName()));
+        }
+    }
+
+    VkQueue VulkanDevice::GetQueue(const uint32 family) const
+    {
+        return GetQueueTimeline(family).queue;
+    }
+
+    std::vector<VulkanSemaphoreValue> VulkanDevice::GetLastQueueSignalledSemaphoreValues() const
+    {
+        std::vector<VulkanSemaphoreValue> semaphoreValues(queueTimelines.size());
+        for (size i = 0; i < queueTimelines.size(); i++)
+        {
+            const std::lock_guard lock(queueTimelines[i]->mutex);
+            semaphoreValues[i] = { .semaphore = queueTimelines[i]->semaphore, .value = queueTimelines[i]->lastSignalValue };
+        }
+
+        return semaphoreValues;
+    }
+
+    VulkanDevice::QueueTimeline& VulkanDevice::GetQueueTimeline(const uint32 family) const
+    {
+        const auto iterator = std::ranges::find_if(queueTimelines, [family](const std::unique_ptr<QueueTimeline>& queueTimeline) -> bool { return queueTimeline->family == family; });
+        SR_THROW_IF(iterator == queueTimelines.end(), InvalidValueError(SR_FORMAT("Cannot get queue of family [{0}] of device [{1}], as no queue of it was created", family, GetName())));
+
+        return **iterator;
+    }
+
+    VkQueueFamilyProperties VulkanDevice::GetQueueFamilyProperties(const uint32 family) const noexcept
+    {
+        uint32 queueFamilyPropertiesCount = 0;
+        instance->GetFunctionTable().vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyPropertiesCount, nullptr);
+
+        std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyPropertiesCount);
+        instance->GetFunctionTable().vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyPropertiesCount, queueFamilyProperties.data());
+
+        return family < queueFamilyPropertiesCount ? queueFamilyProperties[family] : VkQueueFamilyProperties { };
+    }
+
     VkPhysicalDeviceProperties VulkanDevice::GetPhysicalDeviceProperties() const noexcept
     {
         VkPhysicalDeviceProperties physicalDeviceProperties = { };
@@ -500,7 +619,7 @@ namespace Sierra
         for (const VkPipelineLayout& pipelineLayout : pipelineLayouts) functionTable.vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
         functionTable.vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
-        functionTable.vkDestroySemaphore(device, semaphore, nullptr);
+        for (const std::unique_ptr<QueueTimeline>& queueTimeline : queueTimelines) functionTable.vkDestroySemaphore(device, queueTimeline->semaphore, nullptr);
 
         vmaDestroyAllocator(vmaAllocator);
         functionTable.vkDestroyDevice(device, nullptr);

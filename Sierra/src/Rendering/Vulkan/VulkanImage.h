@@ -43,6 +43,9 @@ namespace Sierra
         [[nodiscard]] VkImageView GetVulkanImageView() const noexcept { return imageView; }
         [[nodiscard]] VkImageAspectFlags GetVulkanAspectFlags() const noexcept { return aspectFlags; }
 
+        [[nodiscard]] bool IsSwapchainImage() const noexcept { return swapchainImage; }
+        [[nodiscard]] const VulkanSemaphoreValue& GetAcquisitionSemaphoreValue() const noexcept { return acquisitionSemaphoreValue; } // Of swapchain images, which any work using them must wait for
+
         /* --- COPY SEMANTICS --- */
         VulkanImage(const VulkanImage&) = delete;
         VulkanImage& operator=(const VulkanImage&) = delete;
@@ -85,6 +88,7 @@ namespace Sierra
         };
 
         bool swapchainImage = false;
+        VulkanSemaphoreValue acquisitionSemaphoreValue = { }; // Point at which the presentation engine was last done with it (set whenever the swapchain acquires it)
         VulkanImage(const VulkanDevice& device, const SwapchainImageCreateInfo& createInfo);
 
     };

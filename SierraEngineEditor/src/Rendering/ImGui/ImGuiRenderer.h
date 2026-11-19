@@ -74,8 +74,6 @@ namespace SierraEngine
         uint32 concurrentFrameCount = 0;
         uint32 currentFrame = 0;
 
-        std::unique_ptr<Sierra::Shader> vertexShader = nullptr;
-        std::unique_ptr<Sierra::Shader> fragmentShader = nullptr;
         std::unique_ptr<Sierra::RenderPass> renderPass = nullptr;
         std::unique_ptr<Sierra::GraphicsPipeline> pipeline = nullptr;
 

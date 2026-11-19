@@ -8,6 +8,7 @@
 #include "../Framebuffer.h"
 
 #include "VulkanDevice.h"
+#include "VulkanImage.h"
 
 namespace Sierra
 {
@@ -26,6 +27,7 @@ namespace Sierra
 
         [[nodiscard]] VkFramebuffer GetVulkanFramebuffer() const noexcept { return framebuffer; }
         [[nodiscard]] std::span<const VkClearValue> GetVulkanClearValues() const noexcept { return clearValues; }
+        [[nodiscard]] std::span<const VulkanImage* const> GetSwapchainImages() const noexcept { return swapchainImages; } // Attached ones, whose acquisition rendering to them must wait for
 
         /* --- COPY SEMANTICS --- */
         VulkanFramebuffer(const VulkanFramebuffer&) = delete;
@@ -47,6 +49,7 @@ namespace Sierra
 
         VkFramebuffer framebuffer = VK_NULL_HANDLE;
         std::vector<VkClearValue> clearValues = { };
+        std::vector<const VulkanImage*> swapchainImages = { };
 
     };
 
